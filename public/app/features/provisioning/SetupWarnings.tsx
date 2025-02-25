@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 
 import { FeatureToggles, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Alert, Text, Collapse, Box, Button, InteractiveTable, IconButton, Modal } from '@grafana/ui';
+import { Alert, Text, Collapse, Box, Button, InteractiveTable, IconButton, Modal, Card } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
 
@@ -327,41 +327,57 @@ function InstructionsModal({ feature, isOpen, onDismiss }: InstructionsModalProp
   );
 }
 
-function FeaturesTable({ features }: { features: FeatureInfo[] }) {
-  const styles = useStyles2(getStyles);
+function CompactFeaturesList({ features }: { features: FeatureInfo[] }) {
+  const styles = useStyles2(getCompactStyles);
   const [selectedFeature, setSelectedFeature] = useState<FeatureInfo | null>(null);
+  const [expandedFeature, setExpandedFeature] = useState<string | null>(null);
 
-  const columns = [
-    {
-      id: 'feature',
-      header: 'Feature',
-      cell: ({ row }: { row: { original: FeatureInfo } }) => {
-        return <Text weight="medium">{row.original.title}</Text>;
-      },
-    },
-    {
-      id: 'description',
-      header: 'Description',
-      cell: ({ row }: { row: { original: FeatureInfo } }) => {
-        return <Text>{row.original.description}</Text>;
-      },
-    },
-    {
-      id: 'actions',
-      header: '',
-      cell: ({ row }: { row: { original: FeatureInfo } }) => {
-        return (
-          <Button size="sm" variant="secondary" onClick={() => setSelectedFeature(row.original)} icon="info-circle">
-            Setup Instructions
-          </Button>
-        );
-      },
-    },
-  ];
+  const toggleDescription = (featureTitle: string) => {
+    if (expandedFeature === featureTitle) {
+      setExpandedFeature(null);
+    } else {
+      setExpandedFeature(featureTitle);
+    }
+  };
 
   return (
-    <div>
-      <InteractiveTable columns={columns} data={features} getRowId={(row) => row.title} />
+    <ul className={styles.featuresList}>
+      {features.map((feature) => (
+        <li key={feature.title} className={styles.featureItem}>
+          <div className={styles.featureContent}>
+            <Text element="span" weight="medium" className={styles.featureTitle}>
+              {feature.title}
+            </Text>
+            <div className={styles.buttonGroup}>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => toggleDescription(feature.title)}
+                icon="info-circle"
+                className={styles.infoButton}
+              >
+                Info
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => setSelectedFeature(feature)}
+                icon="cog"
+                className={styles.setupButton}
+              >
+                Setup
+              </Button>
+            </div>
+          </div>
+          {expandedFeature === feature.title && (
+            <div className={styles.featureDescription}>
+              <Text element="p" color="secondary">
+                {feature.description}
+              </Text>
+            </div>
+          )}
+        </li>
+      ))}
 
       {selectedFeature && (
         <InstructionsModal
@@ -370,7 +386,7 @@ function FeaturesTable({ features }: { features: FeatureInfo[] }) {
           onDismiss={() => setSelectedFeature(null)}
         />
       )}
-    </div>
+    </ul>
   );
 }
 
@@ -527,7 +543,7 @@ export function SetupWarnings() {
             <Text element="p">These features enhance your whole experience working with Grafana and GitHub.</Text>
           </Box>
 
-          <FeaturesTable features={featuresData} />
+          <CompactFeaturesList features={featuresData} />
         </Alert>
       )}
     </>
@@ -820,6 +836,50 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.borderRadius(),
       fontWeight: theme.typography.fontWeightMedium,
       boxShadow: theme.shadows.z2,
+    }),
+  };
+};
+
+const getCompactStyles = (theme: GrafanaTheme2) => {
+  return {
+    featuresList: css({
+      listStyle: 'none',
+      margin: 0,
+      padding: 0,
+    }),
+    featureItem: css({
+      padding: `${theme.spacing(1)} 0`,
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      '&:last-child': {
+        borderBottom: 'none',
+      },
+    }),
+    featureContent: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    }),
+    featureTitle: css({
+      margin: 0,
+    }),
+    buttonGroup: css({
+      display: 'flex',
+      gap: theme.spacing(1),
+    }),
+    infoButton: css({
+      minWidth: '70px',
+    }),
+    setupButton: css({
+      minWidth: '80px',
+    }),
+    featureDescription: css({
+      marginTop: theme.spacing(1),
+      paddingLeft: theme.spacing(2),
+      paddingRight: theme.spacing(2),
+      paddingBottom: theme.spacing(1),
+      borderLeft: `3px solid ${theme.colors.border.medium}`,
+      backgroundColor: theme.colors.background.canvas,
+      borderRadius: `0 ${theme.shape.borderRadius(1)}px ${theme.shape.borderRadius(1)}px 0`,
     }),
   };
 };
