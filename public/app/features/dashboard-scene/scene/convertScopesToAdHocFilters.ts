@@ -9,25 +9,39 @@ import { AdHocFilterWithLabels, FilterSource } from '@grafana/scenes';
 
 export function convertScopesToAdHocFilters(scopes: Scope[]): AdHocFilterWithLabels[] {
   const formattedFilters: Map<string, AdHocFilterWithLabels> = new Map();
+  // duplicated filters that could not be processed in any way are just appended to the list
+  const duplicatedFilters: AdHocFilterWithLabels[] = [];
   const allFilters = scopes.flatMap((scope) => scope.spec.filters);
 
   for (const filter of allFilters) {
-    processFilter(formattedFilters, filter);
+    processFilter(formattedFilters, duplicatedFilters, filter);
   }
 
-  return [...formattedFilters.values()];
+  return [...formattedFilters.values(), ...duplicatedFilters];
 }
 
-function processFilter(formattedFilters: Map<string, AdHocFilterWithLabels>, filter: ScopeSpecFilter) {
+function processFilter(
+  formattedFilters: Map<string, AdHocFilterWithLabels>,
+  duplicatedFilters: AdHocFilterWithLabels[],
+  filter: ScopeSpecFilter
+) {
   const existingFilter = formattedFilters.get(filter.key);
 
-  if (existingFilter && isScopeFilterSingleOrMultiOperator(filter.operator)) {
+  if (existingFilter && canValueBeMerged(existingFilter.operator, filter.operator)) {
     mergeFilterValues(existingFilter, filter);
   } else if (!existingFilter) {
     // Add filter to map either only if it is new.
     // Otherwise it is an existing filter that cannot be converted to multi-value
-    // and thus will be ignored
+    // and thus will be moved to the duplicatedFilters list
     formattedFilters.set(filter.key, {
+      key: filter.key,
+      operator: reverseScopeFilterOperatorMap[filter.operator],
+      value: filter.value,
+      values: filter.values ?? [filter.value],
+      source: FilterSource.Scopes,
+    });
+  } else {
+    duplicatedFilters.push({
       key: filter.key,
       operator: reverseScopeFilterOperatorMap[filter.operator],
       value: filter.value,
@@ -38,12 +52,6 @@ function processFilter(formattedFilters: Map<string, AdHocFilterWithLabels>, fil
 }
 
 function mergeFilterValues(adHocFilter: AdHocFilterWithLabels, filter: ScopeSpecFilter) {
-  // If the existing filter does NOT support multi-values or the operators are different, ignore the filter
-  // The rest of the filters with the same key will be lost
-  if (invalidOperator(adHocFilter.operator, filter.operator)) {
-    return;
-  }
-
   const values = filter.values ?? [filter.value];
 
   for (const value of values) {
@@ -66,20 +74,22 @@ function mergeFilterValues(adHocFilter: AdHocFilterWithLabels, filter: ScopeSpec
   }
 }
 
-function invalidOperator(adHocFilterOperator: string, filterOperator: string) {
+function canValueBeMerged(adHocFilterOperator: string, filterOperator: string) {
   const scopeConvertedOperator = scopeFilterOperatorMap[adHocFilterOperator];
 
-  // If the existing filter does NOT support multi-values, ignore the filter
-  if (!isScopeFilterSingleOrMultiOperator(scopeConvertedOperator)) {
-    return true;
+  if (
+    !isScopeFilterSingleOrMultiOperator(scopeConvertedOperator) ||
+    !isScopeFilterSingleOrMultiOperator(filterOperator)
+  ) {
+    return false;
   }
 
   if (
     (scopeConvertedOperator.includes('not') && !filterOperator.includes('not')) ||
     (!scopeConvertedOperator.includes('not') && filterOperator.includes('not'))
   ) {
-    return true;
+    return false;
   }
 
-  return false;
+  return true;
 }
