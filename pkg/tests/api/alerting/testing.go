@@ -18,6 +18,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/expr"
@@ -752,7 +753,13 @@ func (a apiClient) SubmitRuleForTesting(t *testing.T, config apimodels.PostableE
 func (a apiClient) CreateTestDatasource(t *testing.T) (result api.CreateOrUpdateDatasourceResponse) {
 	t.Helper()
 
-	payload := fmt.Sprintf(`{"name":"TestData-%s","type":"testdata","access":"proxy","isDefault":false}`, uuid.NewString())
+	return a.CreateDatasource(t, "testdata")
+}
+
+func (a apiClient) CreateDatasource(t *testing.T, dsType string) (result api.CreateOrUpdateDatasourceResponse) {
+	t.Helper()
+
+	payload := fmt.Sprintf(`{"name":"TestDatasource-%s","type":"%s","access":"proxy","isDefault":false}`, uuid.NewString(), dsType)
 	buf := bytes.Buffer{}
 	buf.Write([]byte(payload))
 
@@ -1092,6 +1099,25 @@ func (a apiClient) GetRuleByUID(t *testing.T, ruleUID string) apimodels.Gettable
 	rule, status, raw := sendRequest[apimodels.GettableExtendedRuleNode](t, req, http.StatusOK)
 	requireStatusCode(t, http.StatusOK, status, raw)
 	return rule
+}
+
+func (a apiClient) ConvertPrometheusPostRuleGroup(t *testing.T, namespaceTitle, datasourceUID string, promGroup apimodels.PrometheusRuleGroup, headers map[string]string) {
+	t.Helper()
+
+	data, err := yaml.Marshal(promGroup)
+	require.NoError(t, err)
+	buf := bytes.NewReader(data)
+
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/convert/prometheus/config/v1/rules/%s", a.url, namespaceTitle), buf)
+	require.NoError(t, err)
+	req.Header.Add("X-Grafana-Alerting-Datasource-UID", datasourceUID)
+
+	for key, value := range headers {
+		req.Header.Add(key, value)
+	}
+
+	_, status, raw := sendRequest[apimodels.ConvertPrometheusResponse](t, req, http.StatusAccepted)
+	requireStatusCode(t, http.StatusAccepted, status, raw)
 }
 
 func sendRequest[T any](t *testing.T, req *http.Request, successStatusCode int) (T, int, string) {

@@ -118,7 +118,6 @@ export interface FeatureToggles {
   recoveryThreshold?: boolean;
   lokiStructuredMetadata?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
-  prometheusPromQAIL?: boolean;
   prometheusCodeModeMetricNamesSearch?: boolean;
   addFieldFromCalculationStatFunctions?: boolean;
   alertmanagerRemoteSecondary?: boolean;
@@ -258,4 +257,5 @@ export interface FeatureToggles {
   alertingJiraIntegration?: boolean;
   alertingRuleVersionHistoryRestore?: boolean;
   newShareReportDrawer?: boolean;
+  rendererDisableAppPluginsPreload?: boolean;
 }
