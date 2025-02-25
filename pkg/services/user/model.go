@@ -48,7 +48,7 @@ type User struct {
 	Updated    time.Time
 	LastSeenAt time.Time
 
-	IsProvisioned bool
+	IsProvisioned bool `xorm:"is_provisioned"`
 }
 
 type CreateUserCommand struct {
