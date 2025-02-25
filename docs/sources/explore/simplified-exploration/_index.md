@@ -45,7 +45,7 @@ Easily explore telemetry signals with these specialized tools, tailored specific
 To learn more, read:
 
 - [From multi-line queries to no-code investigations: meeting Grafana users where they are](https://grafana.com/blog/2024/10/22/from-multi-line-queries-to-no-code-investigations-meeting-grafana-users-where-they-are/)
-- [A queryless experience for exploring metrics, logs, traces, and profiles: Introducing the Drilldown apps suite for Grafana](https://grafana.com/blog/2024/09/24/queryless-metrics-logs-traces-profiles/).
+- [A queryless experience for exploring metrics, logs, traces, and profiles: Introducing the Drilldown apps suite for Grafana](https://grafana.com/blog/2025/02/20/grafana-drilldown-apps-the-improved-queryless-experience-formerly-known-as-the-explore-apps/).
 
 {{< youtube id="MSHeWWsHaIA" >}}
 
