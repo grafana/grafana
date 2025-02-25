@@ -36,6 +36,9 @@ runs:
       with:
         app-id: ${{ env.APP_ID }}
         private-key: ${{ env.PRIVATE_KEY }}
+        installation-id: ${{ env.APP_INSTALLATION_ID }}
+        repositories: "grafana-enterprise"
+        owner: "grafana"
 
     - name: Debug Enterprise Access
       if: inputs.debug == 'true'
