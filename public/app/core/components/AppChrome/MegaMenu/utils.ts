@@ -35,21 +35,36 @@ export const enrichHelpItem = (helpItem: NavModelItem) => {
   return helpItem;
 };
 
-export const enrichWithInteractionTracking = (item: NavModelItem, megaMenuDockedState: boolean) => {
+export const enrichWithInteractionTracking = (
+  item: NavModelItem,
+  megaMenuDockedState: boolean,
+  ancestorIsNew = false
+) => {
   // creating a new object here to not mutate the original item object
   const newItem = { ...item };
   const onClick = newItem.onClick;
+
+  let isNew: 'item' | 'ancestor' | undefined = undefined;
+  if (newItem.isNew) {
+    isNew = 'item';
+  } else if (ancestorIsNew) {
+    isNew = 'ancestor';
+  }
+
   newItem.onClick = () => {
     reportInteraction('grafana_navigation_item_clicked', {
       path: newItem.url ?? newItem.id,
       menuIsDocked: megaMenuDockedState,
       itemIsBookmarked: Boolean(config.featureToggles.pinNavItems && newItem?.parentItem?.id === 'bookmarks'),
       bookmarkToggleOn: Boolean(config.featureToggles.pinNavItems),
+      isNew,
     });
     onClick?.();
   };
   if (newItem.children) {
-    newItem.children = newItem.children.map((item) => enrichWithInteractionTracking(item, megaMenuDockedState));
+    newItem.children = newItem.children.map((item) =>
+      enrichWithInteractionTracking(item, megaMenuDockedState, isNew !== undefined)
+    );
   }
   return newItem;
 };
