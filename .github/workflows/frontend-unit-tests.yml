@@ -8,7 +8,7 @@ on:
 
 jobs:
   test-frontend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-8-cores
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
