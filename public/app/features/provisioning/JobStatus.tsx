@@ -24,12 +24,12 @@ export function JobStatus({ name, onStatusChange }: JobStatusProps) {
       onStatusChange(true);
     }
   }, [isSuccess, onStatusChange]);
-
-  if (jobQuery.isLoading || !job) {
+  console.log('j', job);
+  if (jobQuery.isLoading || (!job?.status?.message && !job?.status?.progress)) {
     return (
       <Stack direction="column" alignItems="center" gap={2}>
         <Spinner />
-        <Text>Loading migration status...</Text>
+        <Text>Beginning migration...</Text>
       </Stack>
     );
   }

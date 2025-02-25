@@ -5,12 +5,10 @@ import { getAppEvents } from '@grafana/runtime';
 import { ConfirmModal, IconButton } from '@grafana/ui';
 
 import { useDeleteRepositoryMutation } from './api';
-import { useFrontendSettingsWithDelay } from './hooks/useFrontendSettingsWithDelay';
 
 const appEvents = getAppEvents();
 export function DeleteRepositoryButton({ name }: { name: string }) {
   const [deleteRepository, request] = useDeleteRepositoryMutation();
-  const { refetchWithDelay } = useFrontendSettingsWithDelay();
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
@@ -20,10 +18,8 @@ export function DeleteRepositoryButton({ name }: { name: string }) {
         payload: ['Repository settings queued for deletion'],
       });
       setShowModal(false);
-
-      refetchWithDelay(300);
     }
-  }, [request.isSuccess, refetchWithDelay]);
+  }, [request.isSuccess]);
 
   const onConfirm = useCallback(() => {
     deleteRepository({ name, deleteOptions: {} });
