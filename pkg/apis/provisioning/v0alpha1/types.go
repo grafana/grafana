@@ -28,10 +28,10 @@ type LocalRepositoryConfig struct {
 type Workflow string
 
 const (
+	// WriteWorkflow allows a user to write directly to the repository
+	WriteWorkflow Workflow = "write"
 	// BranchWorkflow creates a branch for changes
 	BranchWorkflow Workflow = "branch"
-	// PushWorkflow pushes changes directly the configured branch
-	PushWorkflow Workflow = "push"
 )
 
 type GitHubRepositoryConfig struct {
@@ -39,22 +39,12 @@ type GitHubRepositoryConfig struct {
 	URL string `json:"url,omitempty"`
 
 	// The branch to use in the repository.
-	// By default, this is the main branch.
-	Branch string `json:"branch,omitempty"`
+	Branch string `json:"branch"`
 	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
 	Token string `json:"token,omitempty"`
 	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
 	// +listType=atomic
 	EncryptedToken []byte `json:"encryptedToken,omitempty"`
-
-	// Workflow allowed for changes to the repository.
-	// The order is relevant for defining the precedence of the workflows.
-	// Possible values: pull-request, branch, push.
-	Workflows []Workflow `json:"workflows,omitempty"`
-
-	// Whether we should commit to change branches and use a Pull Request flow to achieve this.
-	// By default, this is false (i.e. we will commit straight to the main branch).
-	BranchWorkflow bool `json:"branchWorkflow,omitempty"`
 
 	// Whether we should show dashboard previews for pull requests.
 	// By default, this is false (i.e. we will not create previews).
@@ -78,8 +68,10 @@ type RepositorySpec struct {
 	// Repository description
 	Description string `json:"description,omitempty"`
 
-	// ReadOnly  repository does not allow any write commands
-	ReadOnly bool `json:"readOnly"`
+	// UI driven Workflow that allow changes to the contends of the repository.
+	// The order is relevant for defining the precedence of the workflows.
+	// When empty, the repository does not support any edits (eg, readonly)
+	Workflows []Workflow `json:"workflows"`
 
 	// Sync settings -- how values are pulled from the repository into grafana
 	Sync SyncOptions `json:"sync"`
@@ -183,8 +175,8 @@ type SyncStatus struct {
 	// +listType=atomic
 	Message []string `json:"message"`
 
-	// The repository hash when the last sync ran
-	Hash string `json:"hash,omitempty"`
+	// The repository ref when the last successful sync ran
+	LastRef string `json:"lastRef,omitempty"`
 
 	// Incremental synchronization for versioned repositories
 	Incremental bool `json:"incremental,omitempty"`
