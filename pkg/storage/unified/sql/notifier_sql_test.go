@@ -357,4 +357,41 @@ func TestPollingNotifier(t *testing.T) {
 			t.Fatal("timeout waiting for events channel to close")
 		}
 	})
+
+	t.Run("stops polling when context is cancelled", func(t *testing.T) {
+		t.Parallel()
+
+		ctx, cancel := context.WithCancel(context.Background())
+
+		cfg := &pollingNotifierConfig{
+			dialect:         sqltemplate.SQLite,
+			pollingInterval: 10 * time.Millisecond,
+			watchBufferSize: 10,
+			log:             log.NewNopLogger(),
+			tracer:          noop.NewTracerProvider().Tracer("test"),
+			batchLock:       &batchLock{},
+			listLatestRVs:   func(ctx context.Context) (groupResourceRV, error) { return nil, nil },
+			historyPoll: func(ctx context.Context, grp string, res string, since int64) ([]*historyPollResponse, error) {
+				return nil, nil
+			},
+			done: make(chan struct{}),
+		}
+
+		notifier, err := newPollingNotifier(cfg)
+		require.NoError(t, err)
+		require.NotNil(t, notifier)
+
+		events, err := notifier.notify(ctx)
+		require.NoError(t, err)
+		require.NotNil(t, events)
+
+		cancel()
+
+		select {
+		case _, ok := <-events:
+			require.False(t, ok, "events channel should be closed")
+		case <-time.After(time.Second):
+			t.Fatal("timeout waiting for events channel to close")
+		}
+	})
 }
