@@ -528,6 +528,19 @@
       },
       "pause": {
         "label": "Pause evaluation"
+      },
+      "threshold": {
+        "recovery": {
+          "stop-alerting-above": "Stop alerting when above",
+          "stop-alerting-bellow": "Stop alerting when below",
+          "stop-alerting-equal": "Stop alerting when equal to",
+          "stop-alerting-inside-range": "Stop alerting when inside range",
+          "stop-alerting-less": "Stop alerting when less than",
+          "stop-alerting-more": "Stop alerting when more than",
+          "stop-alerting-not-equal": "Stop alerting when not equal to",
+          "stop-alerting-outside-range": "Stop alerting when outside range",
+          "title": "Custom recovery threshold"
+        }
       }
     },
     "rule-groups": {
@@ -1044,6 +1057,11 @@
         }
       }
     },
+    "editpane": {
+      "add": "Add",
+      "configure": "Configure",
+      "outline": "Outline"
+    },
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
       "add-library-panel-button": "Add library panel",
@@ -1181,7 +1199,8 @@
     "toolbar": {
       "add": "Add",
       "add-panel": "Panel",
-      "add-panel-lib": "Import",
+      "add-panel-description": "A container for visualizations and other content",
+      "add-panel-lib": "Import library panel",
       "add-row": "Row",
       "add-tab": "Tab",
       "alert-rules": "Alert rules",
@@ -1206,6 +1225,7 @@
         "label": "Exit edit",
         "tooltip": "Exits edit mode and discards unsaved changes"
       },
+      "libray-panel-description": "Libray panels allow you share and reuse panels between dashboards",
       "mark-favorite": "Mark as favorite",
       "more-save-options": "More save options",
       "open-original": "Open original dashboard",
@@ -1214,6 +1234,7 @@
       "playlist-stop": "Stop playlist",
       "public-dashboard": "Public",
       "refresh": "Refresh dashboard",
+      "row-description": "A group of panels with an optional header",
       "save": "Save dashboard",
       "save-dashboard": {
         "label": "Save dashboard",
@@ -1233,6 +1254,7 @@
       "share-button": "Share",
       "show-hidden-elements": "Show hidden",
       "switch-old-dashboard": "Switch to old dashboard page",
+      "tabs-description": "Break up your dashboard into different horizontal tabs",
       "unlink-library-panel": "Unlink library panel",
       "unmark-favorite": "Unmark as favorite"
     },
@@ -1727,6 +1749,12 @@
     },
     "drawer": {
       "close": "Close"
+    },
+    "feature-badge": {
+      "experimental": "Experimental",
+      "new": "New!",
+      "preview": "Preview",
+      "private-preview": "Private preview"
     },
     "field-link-list": {
       "external-links-heading": "External links"
@@ -2734,7 +2762,6 @@
       "close": "Close menu",
       "dock": "Dock menu",
       "list-label": "Navigation",
-      "new": "New!",
       "open": "Open menu",
       "undock": "Undock menu"
     },
