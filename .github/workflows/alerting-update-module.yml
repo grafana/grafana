@@ -13,6 +13,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      id-token: write
 
     steps:
       - name: Checkout repository
@@ -93,8 +94,8 @@ jobs:
         uses: grafana/shared-workflows/actions/get-vault-secrets@28361cdb22223e5f1e34358c86c20908e7248760 # 1.1.0
         with:
           repo_secrets: |
-            GITHUB_APP_ID=github-app:app-id
-            GITHUB_APP_PRIVATE_KEY=github-app:private-key
+            GITHUB_APP_ID=alerting-team:app-id
+            GITHUB_APP_PRIVATE_KEY=alerting-team:private-key
 
       - name: "Generate token"
         id: generate_token
