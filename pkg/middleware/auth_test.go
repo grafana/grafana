@@ -307,7 +307,6 @@ func TestRoleAppPluginAuth(t *testing.T) {
 					},
 				})
 				logger := &logtest.Fake{}
-				features := featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
 				ac := &actest.FakeAccessControl{
 					ExpectedEvaluate: tc.evalResult,
 					ExpectedErr:      tc.evalErr,

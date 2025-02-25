@@ -502,7 +502,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 				1: {pluginaccesscontrol.ActionAppAccess: []string{"plugins:id:not-the-test-app1"}},
 			}
 			user.OrgRole = identity.RoleNone
-			service.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
+			service.features = featuremgmt.WithFeatures()
 
 			err := service.addAppLinks(&treeRoot, reqCtx)
 			require.NoError(t, err)
@@ -514,7 +514,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 				1: {pluginaccesscontrol.ActionAppAccess: []string{"plugins:id:test-app1"}},
 			}
 			user.OrgRole = identity.RoleNone
-			service.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
+			service.features = featuremgmt.WithFeatures()
 
 			err := service.addAppLinks(&treeRoot, reqCtx)
 			require.NoError(t, err)
@@ -530,7 +530,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 				1: {pluginaccesscontrol.ActionAppAccess: []string{"plugins:id:test-app1"}, catalogReadAction: []string{}},
 			}
 			user.OrgRole = identity.RoleViewer
-			service.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
+			service.features = featuremgmt.WithFeatures()
 
 			err := service.addAppLinks(&treeRoot, reqCtx)
 			require.NoError(t, err)
@@ -548,7 +548,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 				1: {pluginaccesscontrol.ActionAppAccess: []string{"*"}},
 			}
 			user.OrgRole = identity.RoleEditor
-			service.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
+			service.features = featuremgmt.WithFeatures()
 
 			err := service.addAppLinks(&treeRoot, reqCtx)
 			require.NoError(t, err)

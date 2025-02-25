@@ -192,7 +192,7 @@ func TestAccessControlAPI_searchUsersPermissions(t *testing.T) {
 			mockUserSvc := usertest.NewMockService(t)
 			mockUserSvc.On("GetByUID", mock.Anything, &user.GetUserByUIDQuery{UID: "user_2_uid"}).Return(&user.User{ID: 2}, nil).Maybe()
 			mockUserSvc.On("GetByUID", mock.Anything, &user.GetUserByUIDQuery{UID: "non_existent_uid"}).Return(nil, user.ErrUserNotFound).Maybe()
-			api := NewAccessControlAPI(routing.NewRouteRegister(), accessControl, acSvc, mockUserSvc, featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall))
+			api := NewAccessControlAPI(routing.NewRouteRegister(), accessControl, acSvc, mockUserSvc, featuremgmt.WithFeatures())
 			api.RegisterAPIEndpoints()
 
 			server := webtest.NewServer(t, api.RouteRegister)
