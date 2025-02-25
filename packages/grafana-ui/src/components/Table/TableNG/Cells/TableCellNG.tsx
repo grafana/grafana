@@ -122,16 +122,7 @@ export function TableCellNG(props: any) {
       );
       break;
     case TableCellDisplayMode.Actions:
-      cell = (
-        <ActionsCell
-          value={value}
-          field={field}
-          theme={theme}
-          justifyContent={justifyContent}
-          rowIdx={rowIdx}
-          actions={actions}
-        />
-      );
+      cell = <ActionsCell actions={actions} />;
       break;
     case TableCellDisplayMode.Auto:
     default:
