@@ -1,0 +1,294 @@
+package xorm
+
+import (
+	_ "github.com/googleapis/go-sql-spanner"
+	"xorm.io/core"
+)
+
+func init() {
+	core.RegisterDriver("spanner", &spannerDriver{})
+	core.RegisterDialect("spanner", func() core.Dialect { return &spanner{} })
+}
+
+// https://cloud.google.com/spanner/docs/reference/standard-sql/lexical#reserved_keywords
+var spannerReservedKeywords = map[string]bool{
+	"ALL":                  true,
+	"AND":                  true,
+	"ANY":                  true,
+	"ARRAY":                true,
+	"AS":                   true,
+	"ASC":                  true,
+	"ASSERT_ROWS_MODIFIED": true,
+	"AT":                   true,
+	"BETWEEN":              true,
+	"BY":                   true,
+	"CASE":                 true,
+	"CAST":                 true,
+	"COLLATE":              true,
+	"CONTAINS":             true,
+	"CREATE":               true,
+	"CROSS":                true,
+	"CUBE":                 true,
+	"CURRENT":              true,
+	"DEFAULT":              true,
+	"DEFINE":               true,
+	"DESC":                 true,
+	"DISTINCT":             true,
+	"ELSE":                 true,
+	"END":                  true,
+	"ENUM":                 true,
+	"ESCAPE":               true,
+	"EXCEPT":               true,
+	"EXCLUDE":              true,
+	"EXISTS":               true,
+	"EXTRACT":              true,
+	"FALSE":                true,
+	"FETCH":                true,
+	"FOLLOWING":            true,
+	"FOR":                  true,
+	"FROM":                 true,
+	"FULL":                 true,
+	"GROUP":                true,
+	"GROUPING":             true,
+	"GROUPS":               true,
+	"HASH":                 true,
+	"HAVING":               true,
+	"IF":                   true,
+	"IGNORE":               true,
+	"IN":                   true,
+	"INNER":                true,
+	"INTERSECT":            true,
+	"INTERVAL":             true,
+	"INTO":                 true,
+	"IS":                   true,
+	"JOIN":                 true,
+	"LATERAL":              true,
+	"LEFT":                 true,
+	"LIKE":                 true,
+	"LIMIT":                true,
+	"LOOKUP":               true,
+	"MERGE":                true,
+	"NATURAL":              true,
+	"NEW":                  true,
+	"NO":                   true,
+	"NOT":                  true,
+	"NULL":                 true,
+	"NULLS":                true,
+	"OF":                   true,
+	"ON":                   true,
+	"OR":                   true,
+	"ORDER":                true,
+	"OUTER":                true,
+	"OVER":                 true,
+	"PARTITION":            true,
+	"PRECEDING":            true,
+	"PROTO":                true,
+	"RANGE":                true,
+	"RECURSIVE":            true,
+	"RESPECT":              true,
+	"RIGHT":                true,
+	"ROLLUP":               true,
+	"ROWS":                 true,
+	"SELECT":               true,
+	"SET":                  true,
+	"SOME":                 true,
+	"STRUCT":               true,
+	"TABLESAMPLE":          true,
+	"THEN":                 true,
+	"TO":                   true,
+	"TREAT":                true,
+	"TRUE":                 true,
+	"UNBOUNDED":            true,
+	"UNION":                true,
+	"UNNEST":               true,
+	"USING":                true,
+	"WHEN":                 true,
+	"WHERE":                true,
+	"WINDOW":               true,
+	"WITH":                 true,
+	"WITHIN":               true,
+}
+
+type spannerDriver struct{}
+
+func (d *spannerDriver) Parse(_driverName, datasourceName string) (*core.Uri, error) {
+	return &core.Uri{DbType: "spanner", DbName: datasourceName}, nil
+}
+
+type spanner struct {
+	core.Base
+}
+
+func (s *spanner) Init(db *core.DB, uri *core.Uri, driverName string, datasourceName string) error {
+	return s.Base.Init(db, s, uri, driverName, datasourceName)
+}
+func (s *spanner) Filters() []core.Filter { return []core.Filter{&core.IdFilter{}} }
+func (s *spanner) IsReserved(name string) bool {
+	_, exists := spannerReservedKeywords[name]
+	return exists
+}
+func (s *spanner) AndStr() string            { return "AND" }
+func (s *spanner) OrStr() string             { return "OR" }
+func (s *spanner) EqStr() string             { return "=" }
+func (s *spanner) RollBackStr() string       { return "ROLL BACK" }
+func (s *spanner) AutoIncrStr() string       { return "" }    // Spanner does not support auto-increment
+func (s *spanner) SupportInsertMany() bool   { return false } // Needs manual transaction batching
+func (s *spanner) SupportEngine() bool       { return false } // No support for engine selection
+func (s *spanner) SupportCharset() bool      { return false } // ...or charsets
+func (s *spanner) SupportDropIfExists() bool { return false } // Drop should be handled differently
+func (s *spanner) IndexOnTable() bool        { return false }
+func (s *spanner) ShowCreateNull() bool      { return false }
+func (s *spanner) Quote(name string) string  { return "`" + name + "`" }
+func (s *spanner) SqlType(col *core.Column) string {
+	switch col.SQLType.Name {
+	case core.Int, core.BigInt:
+		return "INT64"
+	case core.Varchar, core.Text:
+		return "STRING(MAX)"
+	case core.Bool:
+		return "BOOL"
+	case core.Float, core.Double:
+		return "FLOAT64"
+	case core.Bytea:
+		return "BYTES(MAX)"
+	case core.DateTime, core.TimeStamp:
+		return "TIMESTAMP"
+	default:
+		return "STRING(MAX)" // Default fallback
+	}
+}
+
+func (s *spanner) GetColumns(tableName string) ([]string, map[string]*core.Column, error) {
+	query := `SELECT COLUMN_NAME, SPANNER_TYPE, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @tableName`
+	rows, err := s.DB().Query(query, map[string]any{"tableName": tableName})
+	if err != nil {
+		return nil, nil, err
+	}
+	defer rows.Close()
+
+	columns := make(map[string]*core.Column)
+	var colNames []string
+
+	for rows.Next() {
+		var name, sqlType, isNullable string
+		if err := rows.Scan(&name, &sqlType, &isNullable); err != nil {
+			return nil, nil, err
+		}
+
+		col := &core.Column{
+			Name:     name,
+			SQLType:  core.SQLType{Name: sqlType},
+			Nullable: isNullable == "YES",
+		}
+		columns[name] = col
+		colNames = append(colNames, name)
+	}
+
+	return colNames, columns, nil
+}
+
+func (s *spanner) CreateTableSql(table *core.Table, tableName, _, charset string) string {
+	type Column struct {
+		Name     string
+		Type     string
+		Nullable bool
+		Default  string
+	}
+	type Table struct {
+		Name        string
+		Columns     []Column
+		PrimaryKeys []string
+	}
+	name := tableName
+	if name == "" {
+		name = table.Name
+	}
+
+	columns := make([]Column, 0, len(table.Columns()))
+	for _, c := range table.Columns() {
+		columns = append(columns, Column{
+			Name:     c.Name,
+			Type:     s.SqlType(c),
+			Nullable: c.Nullable,
+			Default:  c.Default,
+		})
+	}
+
+	panic("todo")
+	//sql, err := CreateTable(Table{
+	//Name:        name,
+	//Columns:     columns,
+	//PrimaryKeys: table.PrimaryKeys,
+	//})
+	//if err != nil {
+	//panic(err) // no other way to report an error?
+	//}
+	//return sql
+}
+
+func (s *spanner) IndexCheckSql(tableName, indexName string) (string, []any) {
+	return `SELECT index_name FROM information_schema.indexes
+	        WHERE table_name = ? AND table_schema = "" AND index_name = ?`,
+		[]any{tableName, indexName}
+}
+
+func (s *spanner) TableCheckSql(tableName string) (string, []any) {
+	return `SELECT table_name FROM information_schema.tables
+	        WHERE table_name = ? AND table_schema = ""`,
+		[]any{tableName}
+}
+
+func (s *spanner) GetTables() ([]*core.Table, error) {
+	res, err := s.DB().Query(`
+    SELECT table_name FROM information_schema.tables
+    WHERE table_schema = ""
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	tables := []*core.Table{}
+	for res.Next() {
+		var name string
+		if err := res.Scan(&name); err != nil {
+			return nil, err
+		}
+		t := core.NewEmptyTable()
+		t.Name = name
+		tables = append(tables, t)
+	}
+	return tables, nil
+}
+
+func (s *spanner) GetIndexes(tableName string) (map[string]*core.Index, error) {
+
+	res, err := s.DB().Query(`
+		SELECT index_name, index_type, is_unique FROM information_schema.tables
+		WHERE table_name = ?
+  `, []any{tableName})
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	indices := map[string]*core.Index{}
+	for res.Next() {
+		index := struct {
+			Name     string `xorm:"index_name"`
+			Type     string `xorm:"index_type"`
+			IsUnqiue bool   `xorm:"is_unique"`
+		}{}
+		err := res.Scan(&index)
+		if err != nil {
+			return nil, err
+		}
+		switch {
+		case index.Type == "INDEX":
+			indices[index.Name] = core.NewIndex(index.Name, core.IndexType)
+		case index.Type == "PRIMARY_KEY", index.IsUnqiue:
+			indices[index.Name] = core.NewIndex(index.Name, core.UniqueType)
+		}
+	}
+	return indices, nil
+}
