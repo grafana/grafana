@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { FeatureToggles, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Alert, Text, Collapse, Box, Button, InteractiveTable, IconButton } from '@grafana/ui';
+import { Alert, Text, Collapse, Box, Button, InteractiveTable, IconButton, Modal } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
 
@@ -56,28 +56,19 @@ interface FeatureInfo {
   requiresPublicAccess: boolean;
 }
 
-function FeaturesTable({ features }: { features: FeatureInfo[] }) {
-  const styles = useStyles2(getStyles);
+interface InstructionsModalProps {
+  feature: FeatureInfo;
+  isOpen: boolean;
+  onDismiss: () => void;
+}
 
-  const columns = [
-    {
-      id: 'feature',
-      header: 'Feature',
-      cell: ({ row }: { row: { original: FeatureInfo } }) => {
-        return <Text weight="medium">{row.original.title}</Text>;
-      },
-    },
-    {
-      id: 'description',
-      header: 'Description',
-      cell: ({ row }: { row: { original: FeatureInfo } }) => {
-        return <Text>{row.original.description}</Text>;
-      },
-    },
-  ];
+function InstructionsModal({ feature, isOpen, onDismiss }: InstructionsModalProps) {
+  if (!isOpen) {
+    return null;
+  }
 
-  const renderExpandedRow = (feature: FeatureInfo) => {
-    return (
+  return (
+    <Modal title={`How to enable ${feature.title}`} isOpen={isOpen} onDismiss={onDismiss}>
       <Box padding={2}>
         {feature.configTitle && (
           <Box marginBottom={2}>
@@ -108,17 +99,53 @@ function FeaturesTable({ features }: { features: FeatureInfo[] }) {
           </Box>
         )}
       </Box>
-    );
-  };
+    </Modal>
+  );
+}
+
+function FeaturesTable({ features }: { features: FeatureInfo[] }) {
+  const styles = useStyles2(getStyles);
+  const [selectedFeature, setSelectedFeature] = useState<FeatureInfo | null>(null);
+
+  const columns = [
+    {
+      id: 'feature',
+      header: 'Feature',
+      cell: ({ row }: { row: { original: FeatureInfo } }) => {
+        return <Text weight="medium">{row.original.title}</Text>;
+      },
+    },
+    {
+      id: 'description',
+      header: 'Description',
+      cell: ({ row }: { row: { original: FeatureInfo } }) => {
+        return <Text>{row.original.description}</Text>;
+      },
+    },
+    {
+      id: 'actions',
+      header: '',
+      cell: ({ row }: { row: { original: FeatureInfo } }) => {
+        return (
+          <Button size="sm" variant="secondary" onClick={() => setSelectedFeature(row.original)} icon="info-circle">
+            Setup Instructions
+          </Button>
+        );
+      },
+    },
+  ];
 
   return (
     <div>
-      <InteractiveTable
-        columns={columns}
-        data={features}
-        getRowId={(row) => row.title}
-        renderExpandedRow={(rowData) => renderExpandedRow(rowData)}
-      />
+      <InteractiveTable columns={columns} data={features} getRowId={(row) => row.title} />
+
+      {selectedFeature && (
+        <InstructionsModal
+          feature={selectedFeature}
+          isOpen={selectedFeature !== null}
+          onDismiss={() => setSelectedFeature(null)}
+        />
+      )}
     </div>
   );
 }
