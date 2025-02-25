@@ -60,20 +60,11 @@ interface FeatureInfo {
   requiresPublicAccess: boolean;
 }
 
-function InstructionStepComponent({
-  step,
-  index,
-  totalSteps,
-}: {
-  step: InstructionStep;
-  index: number;
-  totalSteps: number;
-}) {
+function InstructionStepComponent({ step, totalSteps }: { step: InstructionStep; totalSteps: number }) {
   const styles = useStyles2(getStyles);
 
   return (
     <Box marginBottom={3}>
-      <Text element="h5">{totalSteps > 1 ? `Step ${index + 1}: ${step.title}` : step.title}</Text>
       {step.description && (
         <Box marginY={1}>
           <div className={styles.stepDescription} dangerouslySetInnerHTML={{ __html: step.description }} />
@@ -91,6 +82,9 @@ interface InstructionsModalProps {
 }
 
 function InstructionsModal({ feature, isOpen, onDismiss }: InstructionsModalProps) {
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const styles = useStyles2(getStyles);
+
   if (!isOpen) {
     return null;
   }
@@ -114,12 +108,53 @@ function InstructionsModal({ feature, isOpen, onDismiss }: InstructionsModalProp
     );
   }
 
+  const totalSteps = allSteps.length;
+  const currentStep = allSteps[currentStepIndex];
+
+  const handleNext = () => {
+    if (currentStepIndex < totalSteps - 1) {
+      setCurrentStepIndex(currentStepIndex + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStepIndex > 0) {
+      setCurrentStepIndex(currentStepIndex - 1);
+    }
+  };
+
   return (
     <Modal title={`Configure ${feature.title}`} isOpen={isOpen} onDismiss={onDismiss}>
       <Box padding={3}>
-        {allSteps.map((step, index) => (
-          <InstructionStepComponent key={index} step={step} index={index} totalSteps={allSteps.length} />
-        ))}
+        {/* Step title and indicator */}
+        <Box marginBottom={3}>
+          <Text element="h4">{currentStep.title}</Text>
+          {totalSteps > 1 && (
+            <Text element="p">
+              Step {currentStepIndex + 1} of {totalSteps}
+            </Text>
+          )}
+        </Box>
+
+        {/* Current step content */}
+        <InstructionStepComponent step={currentStep} totalSteps={totalSteps} />
+
+        {/* Navigation buttons */}
+        <Box display="flex" justifyContent="space-between" marginTop={3}>
+          <Button onClick={handlePrevious} variant="secondary" icon="angle-left" disabled={currentStepIndex === 0}>
+            Previous
+          </Button>
+
+          {currentStepIndex < totalSteps - 1 ? (
+            <Button onClick={handleNext} variant="primary" icon="angle-right">
+              Next
+            </Button>
+          ) : (
+            <Button onClick={onDismiss} variant="primary" icon="check">
+              Done
+            </Button>
+          )}
+        </Box>
       </Box>
     </Modal>
   );
