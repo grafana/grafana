@@ -138,7 +138,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 			}
 		}
 
-		preview, err := c.previewer.CreatePreview(ctx, f, job.Namespace, repo.Config().Name, cfg.GitHub.Branch, ref, options.URL, cfg.GitHub.GenerateDashboardPreviews)
+		preview, err := c.previewer.Preview(ctx, f, job.Namespace, repo.Config().Name, cfg.GitHub.Branch, ref, options.URL, cfg.GitHub.GenerateDashboardPreviews)
 		if err != nil {
 			result.Error = fmt.Errorf("create preview: %w", err)
 			progress.Record(ctx, result)

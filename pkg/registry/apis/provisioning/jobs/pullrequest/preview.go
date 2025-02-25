@@ -117,8 +117,8 @@ func (p *Previewer) previewURL(u *url.URL, repoName, ref, filePath, pullRequestU
 	return baseURL.String()
 }
 
-// CreatePreview creates a preview for a single file change
-func (p *Previewer) CreatePreview(
+// Preview creates a preview for a single file change
+func (p *Previewer) Preview(
 	ctx context.Context,
 	f repository.VersionedFileChange,
 	namespace string,
@@ -126,7 +126,7 @@ func (p *Previewer) CreatePreview(
 	base string,
 	ref string,
 	pullRequestURL string,
-	generateScreenshot bool,
+	generatePreview bool,
 ) (*resourcePreview, error) {
 	baseURL, err := url.Parse(p.urlProvider(namespace))
 	if err != nil {
@@ -142,14 +142,17 @@ func (p *Previewer) CreatePreview(
 		PreviewURL:  p.getPreviewURL(ctx, f, baseURL, repoName, ref, pullRequestURL),
 	}
 
-	if len(preview.PreviewURL) > 0 && generateScreenshot {
-		screenshotURL, err := p.renderer.RenderDashboardPreview(ctx, namespace, repoName, f.Path, ref)
-		if err != nil {
-			return nil, fmt.Errorf("render dashboard preview: %w", err)
-		}
-		preview.PreviewScreenshotURL = screenshotURL
-		logger.Info("dashboard preview added", "screenshotURL", screenshotURL)
+	if !generatePreview && len(preview.PreviewURL) == 0 {
+		logger.Info("skipping dashboard preview generation", "path", f.Path)
+		return &preview, nil
 	}
+
+	screenshotURL, err := p.renderer.RenderDashboardPreview(ctx, namespace, repoName, f.Path, ref)
+	if err != nil {
+		return nil, fmt.Errorf("render dashboard preview: %w", err)
+	}
+	preview.PreviewScreenshotURL = screenshotURL
+	logger.Info("dashboard preview generated", "screenshotURL", screenshotURL)
 
 	return &preview, nil
 }
