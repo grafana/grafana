@@ -24,6 +24,7 @@ func RegisterApp(
 	specificConfig := checkregistry.AdvisorAppConfig{
 		CheckRegistry: checkRegistry,
 		PluginConfig:  pluginConfig,
+		StackID:       cfg.StackID,
 	}
 	appCfg := &runner.AppBuilderConfig{
 		OpenAPIDefGetter: advisorv0alpha1.GetOpenAPIDefinitions,
