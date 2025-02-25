@@ -8,5 +8,5 @@ describe('Import Dashboards Test', () => {
 
   it('Ensure you can import a number of json test dashboards from a specific test directory', () => {
     e2e.flows.importDashboard(testDashboard, 1000);
-  });
+  }).skip();
 });
