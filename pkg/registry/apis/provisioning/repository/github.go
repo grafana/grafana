@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
-	"os"
 	"regexp"
 	"slices"
 	"strings"
@@ -53,14 +52,21 @@ func NewGitHub(
 	secrets secrets.Service,
 	webhookURL string,
 ) (*githubRepository, error) {
-	owner, repo, _ := parseOwnerRepo(config.Spec.GitHub.URL)
-	decrypted, err := secrets.Decrypt(ctx, config.Spec.GitHub.EncryptedToken)
+	owner, repo, err := parseOwnerRepo(config.Spec.GitHub.URL)
 	if err != nil {
 		return nil, err
 	}
+	token := config.Spec.GitHub.Token
+	if token == "" {
+		decrypted, err := secrets.Decrypt(ctx, config.Spec.GitHub.EncryptedToken)
+		if err != nil {
+			return nil, err
+		}
+		token = string(decrypted)
+	}
 	return &githubRepository{
 		config:     config,
-		gh:         factory.New(ctx, string(decrypted)), // TODO -- base from URL
+		gh:         factory.New(ctx, token), // TODO, baseURL from config
 		secrets:    secrets,
 		webhookURL: webhookURL,
 		owner:      owner,
@@ -104,7 +110,7 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 }
 
 func parseOwnerRepo(giturl string) (owner string, repo string, err error) {
-	parsed, e := url.Parse(giturl)
+	parsed, e := url.Parse(strings.TrimSuffix(giturl, ".git"))
 	if e != nil {
 		err = e
 		return
@@ -117,34 +123,38 @@ func parseOwnerRepo(giturl string) (owner string, repo string, err error) {
 	return parts[1], parts[2], nil
 }
 
+func fromError(err error, code int) *provisioning.TestResults {
+	statusErr, ok := err.(apierrors.APIStatus)
+	if ok {
+		s := statusErr.Status()
+		return &provisioning.TestResults{
+			Code:    int(s.Code),
+			Success: false,
+			Errors:  []string{s.Message},
+		}
+	}
+	return &provisioning.TestResults{
+		Code:    code,
+		Success: false,
+		Errors:  []string{err.Error()},
+	}
+}
+
 // Test implements provisioning.Repository.
 func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
 	if err := r.gh.IsAuthenticated(ctx); err != nil {
-		// TODO: should we return a more specific error or error code?
-		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
-			Success: false,
-			Errors:  []string{err.Error()},
-		}, nil
+		return fromError(err, http.StatusUnauthorized), nil
 	}
 
 	owner, repo, err := parseOwnerRepo(r.config.Spec.GitHub.URL)
 	if err != nil {
-		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
-			Success: false,
-			Errors:  []string{err.Error()},
-		}, nil
+		return fromError(err, http.StatusBadRequest), nil
 	}
 
 	// FIXME: check token permissions
 	ok, err := r.gh.RepoExists(ctx, owner, repo)
 	if err != nil {
-		return &provisioning.TestResults{
-			Code:    http.StatusInternalServerError,
-			Success: false,
-			Errors:  []string{err.Error()},
-		}, nil
+		return fromError(err, http.StatusBadRequest), nil
 	}
 
 	if !ok {
@@ -157,11 +167,7 @@ func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults,
 
 	ok, err = r.gh.BranchExists(ctx, r.owner, r.repo, r.config.Spec.GitHub.Branch)
 	if err != nil {
-		return &provisioning.TestResults{
-			Code:    http.StatusInternalServerError,
-			Success: false,
-			Errors:  []string{err.Error()},
-		}, nil
+		return fromError(err, http.StatusBadRequest), nil
 	}
 
 	if !ok {
@@ -571,13 +577,6 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 		return nil, fmt.Errorf("missing github config")
 	}
 
-	if !r.shouldLintPullRequest() && !cfg.GenerateDashboardPreviews {
-		return &provisioning.WebhookResponse{
-			Code:    http.StatusOK, // Nothing needed
-			Message: "no action required on pull request event",
-		}, nil
-	}
-
 	if event.GetRepo().GetFullName() != fmt.Sprintf("%s/%s", r.owner, r.repo) {
 		return nil, fmt.Errorf("repository mismatch")
 	}
@@ -681,12 +680,6 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 	}
 
 	return changes, nil
-}
-
-func (r *githubRepository) shouldLintPullRequest() bool {
-	// TODO: Figure out how we want to determine this in practice.
-	val, ok := os.LookupEnv("GRAFANA_LINTING")
-	return ok && val == "true"
 }
 
 // ClearAllPullRequestFileComments clears all comments on a pull request
@@ -812,13 +805,23 @@ func (r *githubRepository) deleteWebhook(ctx context.Context) error {
 	return nil
 }
 
+func (r *githubRepository) supportsWebhook() bool {
+	u, err := url.Parse(r.webhookURL)
+	if err != nil || u.Hostname() == "localhost" {
+		return false
+	}
+	return true
+}
+
 func (r *githubRepository) OnCreate(ctx context.Context) (*provisioning.WebhookStatus, error) {
+	if !r.supportsWebhook() {
+		return nil, nil
+	}
 	ctx, _ = r.logger(ctx, "")
 	hook, err := r.createWebhook(ctx)
 	if err != nil {
 		return nil, err
 	}
-
 	return &provisioning.WebhookStatus{
 		ID:               hook.ID,
 		URL:              hook.URL,
@@ -828,6 +831,9 @@ func (r *githubRepository) OnCreate(ctx context.Context) (*provisioning.WebhookS
 }
 
 func (r *githubRepository) OnUpdate(ctx context.Context) (*provisioning.WebhookStatus, error) {
+	if !r.supportsWebhook() {
+		return nil, nil
+	}
 	ctx, _ = r.logger(ctx, "")
 	hook, _, err := r.updateWebhook(ctx)
 	if err != nil {

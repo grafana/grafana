@@ -1750,6 +1750,12 @@
     "drawer": {
       "close": "Close"
     },
+    "feature-badge": {
+      "experimental": "Experimental",
+      "new": "New!",
+      "preview": "Preview",
+      "private-preview": "Private preview"
+    },
     "field-link-list": {
       "external-links-heading": "External links"
     },
@@ -2756,7 +2762,6 @@
       "close": "Close menu",
       "dock": "Dock menu",
       "list-label": "Navigation",
-      "new": "New!",
       "open": "Open menu",
       "undock": "Undock menu"
     },

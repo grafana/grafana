@@ -1,166 +1,202 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Field, FieldSet, Input, MultiCombobox, SecretInput, Stack, Switch, ControlledCollapse } from '@grafana/ui';
+import { AppEvents } from '@grafana/data';
+import { getAppEvents } from '@grafana/runtime';
+import {
+  Field,
+  FieldSet,
+  Input,
+  MultiCombobox,
+  SecretInput,
+  Stack,
+  Switch,
+  ControlledCollapse,
+  Button,
+} from '@grafana/ui';
 
 import { getWorkflowOptions } from '../ConfigForm';
 import { TokenPermissionsInfo } from '../TokenPermissionsInfo';
+import { useCreateRepositoryTestMutation } from '../api';
+import { useCreateOrUpdateRepository } from '../hooks';
+import { dataToSpec } from '../utils/data';
 
 import { RequestErrorAlert } from './RequestErrorAlert';
 import { WizardFormData } from './types';
 
 interface Props {
-  request: {
-    isError: boolean;
-    error?: unknown;
-  };
+  onStatusChange: (success: boolean) => void;
 }
 
-const AdvancedSettingsFields = () => {
-  const { register } = useFormContext<WizardFormData>();
-
-  return (
-    <ControlledCollapse label="Advanced settings" isOpen={true}>
-      <Field label={'Enable sync'}>
-        <Switch {...register('repository.sync.enabled')} />
-      </Field>
-      <Field label={'Sync interval (seconds)'}>
-        <Input
-          {...register('repository.sync.intervalSeconds', { valueAsNumber: true })}
-          type={'number'}
-          placeholder={'60'}
-        />
-      </Field>
-    </ControlledCollapse>
-  );
-};
-
-export function RepositoryStep({ request }: Props) {
+export function RepositoryStep({ onStatusChange }: Props) {
   const {
     register,
     control,
     watch,
     setValue,
+    getValues,
     formState: { errors },
   } = useFormContext<WizardFormData>();
 
   const type = watch('repository.type');
   const [tokenConfigured, setTokenConfigured] = useState(false);
+  const repoName = watch('repositoryName');
+  const [submitData, saveRequest] = useCreateOrUpdateRepository(repoName);
+  const [testConfig, testConfigRequest] = useCreateRepositoryTestMutation();
 
-  const WorkflowsField = () => (
-    <Field
-      label={'Workflows'}
-      required
-      error={errors.repository?.workflows?.message}
-      invalid={!!errors.repository?.workflows}
-    >
-      <Controller
-        name={'repository.workflows'}
-        control={control}
-        rules={{ required: 'This field is required.' }}
-        render={({ field: { ref, onChange, ...field } }) => {
-          return (
-            <MultiCombobox
-              options={getWorkflowOptions(type)}
-              placeholder={'Readonly repository'}
-              onChange={(val) => {
-                onChange(val.map((v) => v.value));
-              }}
-              {...field}
-            />
-          );
-        }}
-      />
-    </Field>
-  );
+  const isLoading = saveRequest.isLoading || testConfigRequest.isLoading;
+  const errorRequest = testConfigRequest.isError ? testConfigRequest : saveRequest.isError ? saveRequest : null;
 
-  if (type === 'github') {
-    return (
-      <FieldSet label="2. Configure repository">
-        <Stack direction="column" gap={1}>
-          <RequestErrorAlert request={request} />
-          <TokenPermissionsInfo />
+  const handleVerify = async () => {
+    const formData = getValues();
+    const spec = dataToSpec(formData.repository);
 
-          <Field
-            label={'Token'}
-            required
-            error={errors.repository?.token?.message}
-            invalid={!!errors.repository?.token}
-          >
-            <Controller
-              name={'repository.token'}
-              control={control}
-              rules={{ required: 'This field is required.' }}
-              render={({ field: { ref, ...field } }) => {
-                return (
-                  <SecretInput
-                    {...field}
-                    id={'token'}
-                    placeholder={'ghp_yourTokenHere1234567890abcdEFGHijklMNOP'}
-                    isConfigured={tokenConfigured}
-                    onReset={() => {
-                      setValue('repository.token', '');
-                      setTokenConfigured(false);
-                    }}
-                  />
-                );
-              }}
-            />
-          </Field>
+    try {
+      const testResponse = await testConfig({ name: 'new', body: { spec } });
+      if ('error' in testResponse || !testResponse.data?.success) {
+        onStatusChange(false);
+        return;
+      }
+      onStatusChange(true);
+      await submitData(spec);
+    } catch (error) {
+      console.error('Repository connection failed:', error);
+      onStatusChange(false);
+    }
+  };
 
-          <Field
-            label={'Repository URL'}
-            error={errors.repository?.url?.message}
-            invalid={!!errors.repository?.url}
-            description={'Enter the GitHub repository URL'}
-            required
-          >
-            <Input
-              {...register('repository.url', {
-                required: 'This field is required.',
-                pattern: {
-                  value: /^(?:https:\/\/github\.com\/)?[^/]+\/[^/]+$/,
-                  message: 'Please enter a valid GitHub repository URL',
-                },
-              })}
-              placeholder={'https://github.com/username/repo-name'}
-            />
-          </Field>
+  useEffect(() => {
+    const appEvents = getAppEvents();
+    if (saveRequest.isSuccess) {
+      if (saveRequest.data?.metadata?.name) {
+        setValue('repositoryName', saveRequest.data.metadata.name);
+        appEvents.publish({
+          type: AppEvents.alertSuccess.name,
+          payload: ['Repository connected successfully'],
+        });
+      }
+    } else if (saveRequest.isError) {
+      onStatusChange(false);
+    }
+  }, [saveRequest.isSuccess, saveRequest.isError, saveRequest.data, setValue, onStatusChange]);
 
-          <Field label={'Branch'} error={errors.repository?.branch?.message} invalid={!!errors.repository?.branch}>
-            <Input {...register('repository.branch')} placeholder={'main'} />
-          </Field>
+  return (
+    <FieldSet label="2. Configure repository">
+      <Stack direction="column">
+        <RequestErrorAlert request={errorRequest} title="Repository verification failed" />
 
-          <Field label={'Show dashboard previews'}>
-            <Switch {...register('repository.generateDashboardPreviews')} />
-          </Field>
+        {type === 'github' && (
+          <>
+            <TokenPermissionsInfo />
+            <Field
+              label={'Token'}
+              required
+              error={errors.repository?.token?.message}
+              invalid={!!errors.repository?.token}
+            >
+              <Controller
+                name={'repository.token'}
+                control={control}
+                rules={{ required: 'This field is required.' }}
+                render={({ field: { ref, ...field } }) => {
+                  return (
+                    <SecretInput
+                      {...field}
+                      id={'token'}
+                      placeholder={'ghp_yourTokenHere1234567890abcdEFGHijklMNOP'}
+                      isConfigured={tokenConfigured}
+                      onReset={() => {
+                        setValue('repository.token', '');
+                        setTokenConfigured(false);
+                      }}
+                    />
+                  );
+                }}
+              />
+            </Field>
 
-          <WorkflowsField />
-          <AdvancedSettingsFields />
-        </Stack>
-      </FieldSet>
-    );
-  }
+            <Field
+              label={'Repository URL'}
+              error={errors.repository?.url?.message}
+              invalid={!!errors.repository?.url}
+              description={'Enter the GitHub repository URL'}
+              required
+            >
+              <Input
+                {...register('repository.url', {
+                  required: 'This field is required.',
+                  pattern: {
+                    value: /^(?:https:\/\/github\.com\/)?[^/]+\/[^/]+$/,
+                    message: 'Please enter a valid GitHub repository URL',
+                  },
+                })}
+                placeholder={'https://github.com/username/repo-name'}
+              />
+            </Field>
 
-  if (type === 'local') {
-    return (
-      <FieldSet label="2. Configure repository">
-        <Stack direction="column" gap={2}>
-          <RequestErrorAlert request={request} />
+            <Field label={'Branch'} error={errors.repository?.branch?.message} invalid={!!errors.repository?.branch}>
+              <Input {...register('repository.branch')} placeholder={'main'} />
+            </Field>
 
+            <Field label={'Show dashboard previews'}>
+              <Switch {...register('repository.generateDashboardPreviews')} />
+            </Field>
+          </>
+        )}
+
+        {type === 'local' && (
           <Field label={'Local path'} error={errors.repository?.path?.message} invalid={!!errors.repository?.path}>
             <Input
               {...register('repository.path', { required: 'This field is required.' })}
               placeholder={'/path/to/repo'}
             />
           </Field>
+        )}
 
-          <WorkflowsField />
-          <AdvancedSettingsFields />
+        <Field
+          label={'Workflows'}
+          required
+          error={errors.repository?.workflows?.message}
+          invalid={!!errors.repository?.workflows}
+        >
+          <Controller
+            name={'repository.workflows'}
+            control={control}
+            rules={{ required: 'This field is required.' }}
+            render={({ field: { ref, onChange, ...field } }) => {
+              return (
+                <MultiCombobox
+                  options={getWorkflowOptions(type)}
+                  placeholder={'Readonly repository'}
+                  onChange={(val) => {
+                    onChange(val.map((v) => v.value));
+                  }}
+                  {...field}
+                />
+              );
+            }}
+          />
+        </Field>
+
+        <ControlledCollapse label="Advanced settings" isOpen={true}>
+          <Field label={'Enable sync'}>
+            <Switch {...register('repository.sync.enabled')} />
+          </Field>
+          <Field label={'Sync interval (seconds)'}>
+            <Input
+              {...register('repository.sync.intervalSeconds', { valueAsNumber: true })}
+              type={'number'}
+              placeholder={'60'}
+            />
+          </Field>
+        </ControlledCollapse>
+
+        <Stack>
+          <Button onClick={handleVerify} disabled={isLoading} icon={isLoading ? 'spinner' : 'check-circle'}>
+            {isLoading ? 'Verifying...' : 'Connect & verify'}
+          </Button>
         </Stack>
-      </FieldSet>
-    );
-  }
-
-  return null;
+      </Stack>
+    </FieldSet>
+  );
 }

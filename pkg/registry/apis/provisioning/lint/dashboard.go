@@ -11,10 +11,12 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type DashboardLinterFactory struct{}
+type DashboardLinterFactory struct {
+	enabled bool
+}
 
-func NewDashboardLinterFactory() *DashboardLinterFactory {
-	return &DashboardLinterFactory{}
+func NewDashboardLinterFactory(enabled bool) *DashboardLinterFactory {
+	return &DashboardLinterFactory{enabled: enabled}
 }
 
 func (f *DashboardLinterFactory) New() Linter {
@@ -28,6 +30,10 @@ func (f *DashboardLinterFactory) NewFromConfig(cfg []byte) (Linter, error) {
 	}
 
 	return &DashboardLinter{rules: lint.NewRuleSet(), cfg: lintCfg}, nil
+}
+
+func (f *DashboardLinterFactory) IsEnabled() bool {
+	return f.enabled
 }
 
 func (f *DashboardLinterFactory) ConfigPath() string {

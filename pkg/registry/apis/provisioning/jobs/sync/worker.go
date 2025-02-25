@@ -77,12 +77,16 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		return fmt.Errorf("sync job submitted for repository that does not support read-write -- this is a bug")
 	}
 
+	syncStatus := job.Status.ToSyncStatus(job.Name)
+	// Preserve last ref as we use replace operation
+	syncStatus.LastRef = repo.Config().Status.Sync.LastRef
+
 	// Update sync status at start using JSON patch
 	patchOperations := []map[string]interface{}{
 		{
 			"op":    "replace",
 			"path":  "/status/sync",
-			"value": job.Status.ToSyncStatus(job.Name),
+			"value": syncStatus,
 		},
 	}
 
@@ -99,7 +103,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 
 	syncError := syncJob.run(ctx, *job.Spec.Sync)
 	jobStatus := progress.Complete(ctx, syncError)
-	syncStatus := jobStatus.ToSyncStatus(job.Name)
+	syncStatus = jobStatus.ToSyncStatus(job.Name)
 
 	// Create sync status and set hash if successful
 	if syncStatus.State == provisioning.JobStateSuccess {

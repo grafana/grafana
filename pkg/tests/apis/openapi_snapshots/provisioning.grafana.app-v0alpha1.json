@@ -2886,8 +2886,7 @@
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.HealthStatus": {
         "type": "object",
         "required": [
-          "healthy",
-          "message"
+          "healthy"
         ],
         "properties": {
           "checked": {
@@ -2901,7 +2900,7 @@
             "default": false
           },
           "message": {
-            "description": "Summary messages (will be shown to users)",
+            "description": "Summary messages (can be shown to users) Will only be populated when not healthy",
             "type": "array",
             "items": {
               "type": "string",

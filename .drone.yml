@@ -4687,9 +4687,9 @@ steps:
     path: /github-app
 - commands:
   - export GITHUB_TOKEN=$(cat /github-app/token)
-  - 'dagger run --silent /src/grafana-build artifacts -a $${ARTIFACTS} --grafana-ref=$${GRAFANA_REF}
-    --enterprise-ref=$${ENTERPRISE_REF} --grafana-repo=$${GRAFANA_REPO} --version=$${VERSION} '
-  - --go-version=1.23.5
+  - dagger run --silent /src/grafana-build artifacts -a $${ARTIFACTS} --grafana-ref=$${GRAFANA_REF}
+    --enterprise-ref=$${ENTERPRISE_REF} --grafana-repo=$${GRAFANA_REPO} --version=$${VERSION}
+    --go-version=1.23.5
   depends_on:
   - github-app-generate-token
   environment:
@@ -4734,6 +4734,8 @@ steps:
   - printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
   - gcloud storage cp -r dist/* $${UPLOAD_TO}
+  depends_on:
+  - rgm-build
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -4774,6 +4776,8 @@ volumes:
   name: docker
 - name: github-app
   path: /github-app
+- name: github-app
+  temp: {}
 ---
 clone:
   retries: 3
@@ -5560,6 +5564,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 6e01278547a6f0803b7723e5f1e73bd94c572fa4805517232d3897717cee30f6
+hmac: 558d477c002eb799c23f6631aafc7df933518e445e59f34ceb989e73f4dc60bc
 
 ...

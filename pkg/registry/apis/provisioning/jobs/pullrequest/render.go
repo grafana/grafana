@@ -13,25 +13,24 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/blob"
 )
 
-type Renderer struct {
+type screenshotRenderer struct {
 	render    rendering.Service
 	blobstore blob.PublicBlobStore
 }
 
-func NewRenderer(render rendering.Service, blobstore blob.PublicBlobStore) *Renderer {
-	return &Renderer{
+func NewScreenshotRenderer(render rendering.Service, blobstore blob.PublicBlobStore) *screenshotRenderer {
+	return &screenshotRenderer{
 		render:    render,
 		blobstore: blobstore,
 	}
 }
 
-func (r *Renderer) IsAvailable(ctx context.Context) bool {
+func (r *screenshotRenderer) IsAvailable(ctx context.Context) bool {
 	return r.render != nil && r.render.IsAvailable(ctx) && r.blobstore.IsAvailable()
 }
 
-func (r *Renderer) RenderDashboardPreview(ctx context.Context, namespace, repoName, path, ref string) (string, error) {
+func (r *screenshotRenderer) RenderDashboardPreview(ctx context.Context, namespace, repoName, path, ref string) (string, error) {
 	url := fmt.Sprintf("admin/provisioning/%s/dashboard/preview/%s?kiosk&ref=%s", repoName, path, ref)
-	// fmt.Printf("RENDER: http://localhost:3000/render/%s\n", url)
 
 	// TODO: why were we using a different context?
 	// renderContext := identity.WithRequester(context.Background(), r.id)

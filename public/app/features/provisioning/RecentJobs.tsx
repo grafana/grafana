@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
-import { Spinner, Alert, Badge, InteractiveTable, Card, Box, Stack, Icon, Text } from '@grafana/ui';
+import { intervalToAbbreviatedDurationString } from '@grafana/data';
+import { Spinner, Alert, Badge, InteractiveTable, Card, Box, Stack, Icon, Text, JSONFormatter } from '@grafana/ui';
 
 import { Repository, JobResourceSummary, Job, SyncStatus } from './api';
 import { useRepositoryJobs } from './hooks';
@@ -59,9 +60,22 @@ const getJobColumns = () => [
     cell: ({ row: { original: job } }: JobCell) => formatTimestamp(job.status?.started),
   },
   {
-    id: 'finished',
-    header: 'Finished',
-    cell: ({ row: { original: job } }: JobCell) => formatTimestamp(job.status?.finished),
+    id: 'duration',
+    header: 'Duration',
+    cell: ({ row: { original: job } }: JobCell) => {
+      const interval = {
+        start: job.status?.started ?? 0,
+        end: job.status?.finished ?? Date.now(),
+      };
+      if (!interval.start) {
+        return null;
+      }
+      const elapsed = interval.end - interval.start;
+      if (elapsed < 1000) {
+        return `${elapsed}ms`;
+      }
+      return intervalToAbbreviatedDurationString(interval, true);
+    },
   },
   {
     id: 'message',
@@ -121,7 +135,6 @@ function ExpandedRow({ row }: ExpandedRowProps) {
   const hasSummary = Boolean(row.status?.summary?.length);
   const hasErrors = Boolean(row.status?.errors?.length);
   const hasSpec = Boolean(row.spec);
-  const specJson = hasSpec ? JSON.stringify(row.spec, null, 2) : '';
 
   if (!hasSummary && !hasErrors && !hasSpec) {
     console.log('no summary, errors, or spec', row);
@@ -131,21 +144,12 @@ function ExpandedRow({ row }: ExpandedRowProps) {
   return (
     <Box padding={2}>
       <Stack direction="column" gap={2}>
-        {specJson && (
+        {hasSpec && (
           <Stack direction="column">
             <Text variant="bodySmall" color="secondary">
               Job Specification
             </Text>
-            <pre
-              style={{
-                width: '100%',
-                height: Math.min(400, specJson.split('\n').length * 24),
-                whiteSpace: 'pre-wrap',
-                overflowX: 'auto',
-              }}
-            >
-              {specJson}
-            </pre>
+            <JSONFormatter json={row.spec ?? ''} open={3} config={{}} />
           </Stack>
         )}
         {hasErrors && (
