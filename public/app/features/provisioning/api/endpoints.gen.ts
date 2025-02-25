@@ -263,11 +263,11 @@ const injectedRtkApi = api
       }),
       getFrontendSettings: build.query<GetFrontendSettingsResponse, GetFrontendSettingsArg>({
         query: () => ({ url: `/settings` }),
-        providesTags: ['Provisioning'],
+        providesTags: ['Provisioning', 'Repository'],
       }),
       getResourceStats: build.query<GetResourceStatsResponse, GetResourceStatsArg>({
         query: () => ({ url: `/stats` }),
-        providesTags: ['Provisioning'],
+        providesTags: ['Provisioning', 'Repository'],
       }),
     }),
     overrideExisting: false,

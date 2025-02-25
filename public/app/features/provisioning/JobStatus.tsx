@@ -29,7 +29,7 @@ export function JobStatus({ name, onStatusChange }: JobStatusProps) {
     return (
       <Stack direction="column" alignItems="center" gap={2}>
         <Spinner />
-        <Text>Loading migration status...</Text>
+        <Text>Starting migration...</Text>
       </Stack>
     );
   }

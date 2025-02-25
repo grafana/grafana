@@ -64,7 +64,6 @@ export default function FileStatusPage() {
 }
 
 enum TabSelection {
-  Lint = 'lint',
   File = 'file',
   Existing = 'existing',
   DryRun = 'dryRun',
@@ -146,65 +145,44 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
         ))}
       </TabsBar>
       <TabContent>
-        {tab === TabSelection.Lint && (
-          <div>
-            {wrap.lint ? (
-              wrap.lint.map((r, idx) => {
-                return (
-                  //@ts-expect-error TODO fix lint response types
-                  <Alert title={r.rule} severity={r.severity} key={`${r.rule}/${idx}`}>
-                    {r.message}
-                  </Alert>
-                );
-              })
-            ) : (
-              <div>
-                <h3>No lint issues</h3>
-              </div>
-            )}
+        <div>
+          <div style={{ height: 800 }}>
+            <AutoSizer disableWidth>
+              {({ height }) => (
+                <CodeEditor
+                  width="100%"
+                  height={height}
+                  language={'json'}
+                  showLineNumbers={true}
+                  showMiniMap={true}
+                  value={jsonView}
+                  onBlur={setJsonView}
+                  onSave={setJsonView}
+                />
+              )}
+            </AutoSizer>
           </div>
-        )}
-
-        {tab !== TabSelection.Lint && (
-          <div>
-            <div style={{ height: 800 }}>
-              <AutoSizer disableWidth>
-                {({ height }) => (
-                  <CodeEditor
-                    width="100%"
-                    height={height}
-                    language={'json'}
-                    showLineNumbers={true}
-                    showMiniMap={true}
-                    value={jsonView}
-                    onBlur={setJsonView}
-                    onSave={setJsonView}
-                  />
-                )}
-              </AutoSizer>
-            </div>
-            <Stack direction={'row'}>
-              <Button
-                disabled={replaceFileStatus.isLoading}
-                onClick={() => {
-                  replaceFile({
-                    name: repo,
-                    path: wrap.path!,
-                    body: JSON.parse(jsonView),
-                    message: 'updated from repo test UI',
-                  });
-                }}
-              >
-                {replaceFileStatus.isLoading ? 'Saving' : 'Save'}
-              </Button>
-            </Stack>
-            {replaceFileStatus.isError && (
-              <Alert title="Error saving file">
-                <pre>{JSON.stringify(replaceFileStatus.error)}</pre>
-              </Alert>
-            )}
-          </div>
-        )}
+          <Stack direction={'row'}>
+            <Button
+              disabled={replaceFileStatus.isLoading}
+              onClick={() => {
+                replaceFile({
+                  name: repo,
+                  path: wrap.path!,
+                  body: JSON.parse(jsonView),
+                  message: 'updated from repo test UI',
+                });
+              }}
+            >
+              {replaceFileStatus.isLoading ? 'Saving' : 'Save'}
+            </Button>
+          </Stack>
+          {replaceFileStatus.isError && (
+            <Alert title="Error saving file">
+              <pre>{JSON.stringify(replaceFileStatus.error)}</pre>
+            </Alert>
+          )}
+        </div>
       </TabContent>
     </div>
   );
