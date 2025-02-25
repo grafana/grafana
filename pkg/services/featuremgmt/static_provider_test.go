@@ -20,12 +20,11 @@ featureFour = false
 
 [feature_toggles.openfeature]
 provider = static
-instance_slug = grafana
 `)
 	cfg, err := setting.NewCfgFromBytes(conf)
 	require.NoError(t, err)
 
-	p, err := ProvideOpenFeatureManager(cfg)
+	p, err := ProvideOpenFeatureService(cfg)
 	require.NoError(t, err)
 
 	ctx := context.Background()
