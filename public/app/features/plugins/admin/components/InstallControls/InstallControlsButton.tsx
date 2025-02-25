@@ -162,7 +162,16 @@ export function InstallControlsButton({
             {isInstalling ? 'Updating' : 'Update'}
           </Button>
         )}
-        <Button variant="destructive" disabled={disableUninstall} onClick={onUninstall} title={uninstallTitle}>
+        <ConfirmModal
+          isOpen={isConfirmModalVisible}
+          title={`Uninstall ${plugin.name}`}
+          body="Are you sure you want to uninstall this plugin?"
+          confirmText="Confirm"
+          icon="exclamation-triangle"
+          onConfirm={onUninstall}
+          onDismiss={hideConfirmModal}
+        />
+        <Button variant="destructive" disabled={disableUninstall} onClick={showConfirmModal} title={uninstallTitle}>
           {uninstallBtnText}
         </Button>
       </Stack>
