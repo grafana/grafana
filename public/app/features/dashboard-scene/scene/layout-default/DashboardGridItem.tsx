@@ -13,6 +13,7 @@ import {
   CustomVariable,
   VizPanelState,
   VariableValueSingle,
+  VariableDependencyConfig,
 } from '@grafana/scenes';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -42,8 +43,10 @@ export class DashboardGridItem
   implements SceneGridItemLike, DashboardLayoutItem
 {
   public static Component = DashboardGridItemRenderer;
-
-  protected _variableDependency = new DashboardGridItemVariableDependencyHandler(this);
+  protected _variableDependency = new VariableDependencyConfig(this, {
+    variableNames: this.state.variableName ? [this.state.variableName] : [],
+    onVariableUpdateCompleted: () => this.performRepeat(),
+  });
 
   public readonly isDashboardLayoutItem = true;
 
@@ -207,6 +210,8 @@ export class DashboardGridItem
     if (this.state.body.state.$variables) {
       this.state.body.setState({ $variables: undefined });
     }
+
+    this._variableDependency.setVariableNames(variableName ? [variableName] : []);
 
     this.setState(stateUpdate);
   }
