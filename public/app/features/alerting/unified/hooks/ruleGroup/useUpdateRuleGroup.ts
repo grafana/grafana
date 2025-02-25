@@ -41,9 +41,11 @@ export function useUpdateRuleGroup() {
   return useAsync(async (ruleGroup: RuleGroupIdentifier, delta: UpdateGroupDelta) => {
     const updateActions: Action[] = [];
 
+    const isGrafanaSource = isGrafanaRulesSource(ruleGroup.dataSourceName);
+
     if (delta.namespaceName) {
       // we could technically support moving rule groups to another folder, though we don't have a "move" wizard yet.
-      if (isGrafanaRulesSource(ruleGroup.dataSourceName)) {
+      if (isGrafanaSource) {
         throw new Error('Moving a Grafana-managed rule group to another folder is currently not supported.');
       }
       updateActions.push(moveRuleGroupAction({ newNamespaceName: delta.namespaceName }));
@@ -71,9 +73,6 @@ export function useUpdateRuleGroup() {
 
     const isNamespaceChanged = oldNamespace !== targetNamespace;
     const isGroupRenamed = oldGroupName !== targetGroupName;
-
-    // TODO We should skip this for GMA
-    const shouldRemoveOldGroup = isNamespaceChanged || isGroupRenamed;
 
     // if we're also renaming the group, check if the target does not already exist
     if (targetGroupName && isGroupRenamed) {
@@ -119,6 +118,8 @@ export function useUpdateRuleGroup() {
             },
           } satisfies DataSourceRuleGroupIdentifier);
 
+    // Removing groups is only necessary for Datasource-managed groups
+    const shouldRemoveOldGroup = (isNamespaceChanged || isGroupRenamed) && !isGrafanaSource;
     // TODO How to make this safer?
     if (shouldRemoveOldGroup) {
       // now remove the old one

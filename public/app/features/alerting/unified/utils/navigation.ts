@@ -5,6 +5,8 @@ export const createListFilterLink = (values: Array<[string, string]>) => {
   return createRelativeUrl(`/alerting/list`, params);
 };
 
+export const alertListPageLink = createRelativeUrl(`/alerting/list`);
+
 export const groups = {
   detailsPageLink: (dsUid: string, namespaceId: string, groupName: string) =>
     createRelativeUrl(

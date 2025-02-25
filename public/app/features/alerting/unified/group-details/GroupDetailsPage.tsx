@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { Alert, Badge, LinkButton, Text, withErrorBoundary } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { FolderDTO } from 'app/types';
 import { GrafanaRulesSourceSymbol, RuleGroup } from 'app/types/unified-alerting';
 import { PromRuleType, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
@@ -80,8 +80,8 @@ function GroupDetailsPage() {
       pageNav={{ text: groupName }}
       title={groupName}
       info={[
-        { label: 'Namespace', value: namespaceName },
-        { label: 'Interval', value: groupInterval },
+        { label: t('alerting.group-details.namespace', 'Namespace'), value: namespaceName },
+        { label: t('alerting.group-details.interval', 'Interval'), value: groupInterval },
       ]}
       navId="alert-list"
       isLoading={isLoading}
@@ -114,7 +114,7 @@ function GroupDetailsPage() {
         )}
         {promGroup && <GroupDetails group={promRuleGroupToRuleGroupDetails(promGroup)} />}
         {rulerGroup && <GroupDetails group={rulerRuleGroupToRuleGroupDetails(rulerGroup)} />}
-        {(!promGroup || !rulerGroup) && <EntityNotFound entity={`${namespaceId}/${groupName}`} />}
+        {!promGroup && !rulerGroup && <EntityNotFound entity={`${namespaceId}/${groupName}`} />}
       </>
     </AlertingPageWrapper>
   );
@@ -140,7 +140,7 @@ function GroupActions({ dsFeatures, namespaceId, groupName, folder }: GroupActio
 
   return (
     <LinkButton icon="pen" href={groups.editPageLink(dsFeatures.uid, namespaceId, groupName)} variant="secondary">
-      Edit
+      <Trans i18nKey="alerting.group-details.edit">Edit</Trans>
     </LinkButton>
   );
 }
@@ -187,7 +187,7 @@ function RulesTable({ rules }: { rules: RuleDetails[] }) {
     return [
       {
         id: 'alertName',
-        label: 'Rule name',
+        label: t('alerting.group-details.rule-name', 'Rule name'),
         renderCell: ({ data }) => {
           return <Text truncate>{data.name}</Text>;
         },
@@ -195,20 +195,20 @@ function RulesTable({ rules }: { rules: RuleDetails[] }) {
       },
       {
         id: 'for',
-        label: 'Pending period',
+        label: t('alerting.group-details.pending-period', 'Pending period'),
         renderCell: ({ data }) => {
           switch (data.type) {
             case 'alerting':
               return <>{data.pendingPeriod}</>;
             case 'recording':
-              return <Badge text="Recording" color="purple" />;
+              return <Badge text={t('alerting.group-details.recording', 'Recording')} color="purple" />;
           }
         },
         size: 0.3,
       },
       {
         id: 'numberEvaluations',
-        label: 'Evaluation cycles to fire',
+        label: t('alerting.group-details.evaluations-to-fire', 'Evaluation cycles to fire'),
         renderCell: ({ data }) => {
           switch (data.type) {
             case 'alerting':

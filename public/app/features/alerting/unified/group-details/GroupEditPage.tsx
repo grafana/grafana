@@ -6,7 +6,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { Alert, Button, Field, Input, Stack, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { Alert, Button, ConfirmModal, Field, Input, Stack, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { Trans, t } from 'app/core/internationalization';
@@ -19,6 +19,7 @@ import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { EvaluationGroupQuickPick } from '../components/rule-editor/EvaluationGroupQuickPick';
 import { evaluateEveryValidationOptions } from '../components/rules/EditRuleGroupModal';
+import { useDeleteRuleGroup } from '../hooks/ruleGroup/useDeleteRuleGroup';
 import { UpdateGroupDelta, useUpdateRuleGroup } from '../hooks/ruleGroup/useUpdateRuleGroup';
 import { isLoading, useAsync } from '../hooks/useAsync';
 import { useFolder } from '../hooks/useFolder';
@@ -27,9 +28,125 @@ import { SwapOperation } from '../reducers/ruler/ruleGroups';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/formDefaults';
 import { ruleGroupIdentifierV2toV1 } from '../utils/groupIdentifier';
 import { stringifyErrorLike } from '../utils/misc';
-import { createListFilterLink, groups } from '../utils/navigation';
+import { alertListPageLink, createListFilterLink, groups } from '../utils/navigation';
 
 import { DraggableRulesTable } from './components/DraggableRulesTable';
+
+type GroupEditPageRouteParams = {
+  sourceId?: string;
+  namespaceId?: string;
+  groupName?: string;
+};
+
+const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
+
+function GroupEditPage() {
+  const dispatch = useDispatch();
+  const { sourceId = '', namespaceId = '', groupName = '' } = useParams<GroupEditPageRouteParams>();
+
+  const { folder, loading: isFolderLoading } = useFolder(sourceId === 'grafana' ? namespaceId : '');
+
+  const ruleSourceUid = sourceId === 'grafana' ? GrafanaRulesSourceSymbol : sourceId;
+  const {
+    data: dsFeatures,
+    isLoading: isDsFeaturesLoading,
+    error: dsFeaturesError,
+  } = useDiscoverDsFeaturesQuery({ uid: ruleSourceUid });
+
+  // We use useAsync instead of RTKQ query to avoid cache invalidation issues when the group is being deleted
+  // RTKQ query would refetch the group after it's deleted and we'd end up with a blinking group not found error
+  const [getGroupAction, groupRequestState] = useAsync(async (rulerConfig: RulerDataSourceConfig) => {
+    return dispatch(
+      alertRuleApi.endpoints.getRuleGroupForNamespace.initiate({
+        rulerConfig: rulerConfig,
+        namespace: namespaceId,
+        group: groupName,
+      })
+    ).unwrap();
+  });
+
+  useEffect(() => {
+    if (namespaceId && groupName && dsFeatures?.rulerConfig) {
+      getGroupAction.execute(dsFeatures.rulerConfig);
+    }
+  }, [namespaceId, groupName, dsFeatures?.rulerConfig, getGroupAction]);
+
+  const isLoadingGroup = isFolderLoading || isDsFeaturesLoading || isLoading(groupRequestState);
+  const { result: rulerGroup, error: ruleGroupError } = groupRequestState;
+
+  const pageNav: NavModelItem = {
+    text: t('alerting.group-edit.page-title', 'Edit rule group'),
+    parentItem: {
+      text: folder?.title ?? namespaceId,
+      url: createListFilterLink([
+        ['namespace', folder?.title ?? namespaceId],
+        ['group', groupName],
+      ]),
+    },
+  };
+
+  if (!!dsFeatures && !dsFeatures.rulerConfig) {
+    return (
+      <AlertingPageWrapper pageNav={pageNav} title={groupName} navId="alert-list" isLoading={isLoadingGroup}>
+        <Alert title={t('alerting.group-edit.group-not-editable', 'Selected group cannot be edited')}>
+          <Trans i18nKey="alerting.group-edit.group-not-editable-description">
+            This group belongs to a data source that does not support editing.
+          </Trans>
+        </Alert>
+      </AlertingPageWrapper>
+    );
+  }
+
+  const groupIdentifier: RuleGroupIdentifierV2 =
+    sourceId === 'grafana'
+      ? {
+          namespace: { uid: namespaceId },
+          groupName: groupName,
+          groupOrigin: 'grafana',
+        }
+      : {
+          rulesSource: { uid: sourceId, name: dsFeatures?.name ?? '', ruleSourceType: 'datasource' },
+          namespace: { name: namespaceId },
+          groupName: groupName,
+          groupOrigin: 'datasource',
+        };
+
+  return (
+    <AlertingPageWrapper
+      pageNav={pageNav}
+      title={t('alerting.group-edit.title', 'Edit evaluation group')}
+      navId="alert-list"
+      isLoading={isLoadingGroup}
+    >
+      <>
+        {Boolean(dsFeaturesError) && (
+          <Alert
+            title={t('alerting.group-edit.ds-error', 'Error loading data source details')}
+            bottomSpacing={0}
+            topSpacing={2}
+          >
+            <div>{stringifyErrorLike(dsFeaturesError)}</div>
+          </Alert>
+        )}
+        {/* If the rule group is being deleted, RTKQ will try to referch it due to cache invalidation */}
+        {/* For a few miliseconds before redirecting, the rule group will be missing and 404 error would blink */}
+        {Boolean(ruleGroupError) && (
+          <Alert
+            title={t('alerting.group-edit.rule-group-error', 'Error loading rule group')}
+            bottomSpacing={0}
+            topSpacing={2}
+          >
+            {stringifyErrorLike(ruleGroupError)}
+          </Alert>
+        )}
+      </>
+      {rulerGroup && <GroupEditForm rulerGroup={rulerGroup} groupIdentifier={groupIdentifier} />}
+      {!rulerGroup && <EntityNotFound entity={`${namespaceId}/${groupName}`} />}
+    </AlertingPageWrapper>
+  );
+}
+
+export default withErrorBoundary(GroupEditPage, { style: 'page' });
 
 interface GroupEditFormProps {
   rulerGroup: RulerRuleGroupDTO;
@@ -49,8 +166,11 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
 
   const { waitForGroupConsistency } = useRuleGroupConsistencyCheck();
   const [updateRuleGroup] = useUpdateRuleGroup();
-  const groupIntervalOrDefault = rulerGroup?.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL;
+  const [deleteRuleGroup] = useDeleteRuleGroup();
   const [operations, setOperations] = useState<SwapOperation[]>([]);
+  const [confirmDeleteOpened, setConfirmDeleteOpened] = useState(false);
+
+  const groupIntervalOrDefault = rulerGroup?.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL;
 
   const {
     register,
@@ -96,28 +216,54 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
       await waitForGroupConsistency(updatedGroupIdentifier);
     }
 
-    const successMessage = t('alerting.rule-groups.update.success', 'Successfully updated the rule group');
+    const successMessage = t('alerting.group-edit.form.update-success', 'Successfully updated the rule group');
     appInfo.success(successMessage);
+  };
+
+  const onDelete = async () => {
+    await deleteRuleGroup.execute(ruleGroupIdentifierV2toV1(groupIdentifier));
+    await waitForGroupConsistency(groupIdentifier);
+    redirectToListPage();
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       {groupIdentifier.groupOrigin === 'datasource' && (
-        <Field label="Namespace" required invalid={!!errors.namespace} error={errors.namespace?.message}>
-          <Input id="namespace" {...register('namespace', { required: 'Namespace is required' })} />
+        <Field
+          label={t('alerting.group-edit.form.namespace-label', 'Namespace')}
+          required
+          invalid={!!errors.namespace}
+          error={errors.namespace?.message}
+        >
+          <Input
+            id="namespace"
+            {...register('namespace', {
+              required: t('alerting.group-edit.form.namespace-required', 'Namespace is required'),
+            })}
+          />
         </Field>
       )}
       {groupIdentifier.groupOrigin === 'grafana' && (
-        <Field label="Folder" required>
+        <Field label={t('alerting.group-edit.form.folder-label', 'Folder')} required>
           <Input id="folder" value={folder?.title ?? ''} readOnly />
         </Field>
       )}
-      <Field label="Evaluation group name" required invalid={!!errors.name} error={errors.name?.message}>
-        <Input id="group-name" {...register('name', { required: 'Group name is required' })} />
+      <Field
+        label={t('alerting.group-edit.form.group-name-label', 'Evaluation group name')}
+        required
+        invalid={!!errors.name}
+        error={errors.name?.message}
+      >
+        <Input
+          id="group-name"
+          {...register('name', {
+            required: t('alerting.group-edit.form.group-name-required', 'Group name is required'),
+          })}
+        />
       </Field>
       <Field
-        label="Evaluation interval"
-        description="How often is the group evaluated"
+        label={t('alerting.group-edit.form.interval-label', 'Evaluation interval')}
+        description={t('alerting.group-edit.form.interval-description', 'How often is the group evaluated')}
         invalid={!!errors.interval}
         error={errors.interval?.message}
         htmlFor="interval"
@@ -134,14 +280,32 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
           />
         </>
       </Field>
-      <Field label="Alerting and recording rules" description="Drag rules to reorder">
+      <Field
+        label={t('alerting.group-edit.form.rules-label', 'Alerting and recording rules')}
+        description={t('alerting.group-edit.form.rules-description', 'Drag rules to reorder')}
+      >
         <DraggableRulesTable rules={rulerGroup.rules} groupInterval={groupIntervalOrDefault} onSwap={onSwap} />
       </Field>
 
       <Stack>
         <Button type="submit" disabled={isSubmitting} icon={isSubmitting ? 'spinner' : undefined}>
-          Save
+          <Trans i18nKey="alerting.group-edit.form.save">Save</Trans>
         </Button>
+        {groupIdentifier.groupOrigin === 'datasource' && (
+          <>
+            <Button variant="destructive" onClick={() => setConfirmDeleteOpened(true)}>
+              <Trans i18nKey="alerting.group-edit.form.delete">Delete</Trans>
+            </Button>
+            <ConfirmModal
+              isOpen={confirmDeleteOpened}
+              title={t('alerting.group-edit.form.delete-title', 'Delete rule group')}
+              body={t('alerting.group-edit.form.delete-body', 'Are you sure you want to delete this rule group?')}
+              confirmText={t('alerting.group-edit.form.delete-confirm', 'Delete')}
+              onConfirm={onDelete}
+              onDismiss={() => setConfirmDeleteOpened(false)}
+            />
+          </>
+        )}
       </Stack>
     </form>
   );
@@ -163,118 +327,6 @@ function setMatchingGroupPageUrl(groupIdentifier: RuleGroupIdentifierV2) {
   }
 }
 
-type GroupEditPageRouteParams = {
-  sourceId?: string;
-  namespaceId?: string;
-  groupName?: string;
-};
-
-const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
-
-function GroupEditPage() {
-  const dispatch = useDispatch();
-  const { sourceId = '', namespaceId = '', groupName = '' } = useParams<GroupEditPageRouteParams>();
-
-  const { folder, loading: isFolderLoading } = useFolder(sourceId === 'grafana' ? namespaceId : '');
-
-  const ruleSourceUid = sourceId === 'grafana' ? GrafanaRulesSourceSymbol : sourceId;
-  const {
-    data: dsFeatures,
-    isLoading: isDsFeaturesLoading,
-    error: dsFeaturesError,
-  } = useDiscoverDsFeaturesQuery({ uid: ruleSourceUid });
-
-  // We use useAsync instead of RTKQ query to avoid cache invalidation issues when the group is being deleted
-  // RTKQ query would refetch the group after it's deleted and we'd end up with a blinking group not found error
-  const [getGroupAction, groupRequestState] = useAsync(async (rulerConfig: RulerDataSourceConfig) => {
-    return dispatch(
-      alertRuleApi.endpoints.getRuleGroupForNamespace.initiate({
-        rulerConfig: rulerConfig,
-        namespace: namespaceId,
-        group: groupName,
-      })
-    ).unwrap();
-  });
-
-  useEffect(() => {
-    if (namespaceId && groupName && dsFeatures?.rulerConfig) {
-      getGroupAction.execute(dsFeatures.rulerConfig);
-    }
-  }, [namespaceId, groupName, dsFeatures?.rulerConfig, getGroupAction]);
-
-  const isLoadingGroup = isFolderLoading || isDsFeaturesLoading || isLoading(groupRequestState);
-  const { result: rulerGroup, error: ruleGroupError } = groupRequestState;
-
-  const pageNav: NavModelItem = {
-    text: 'Edit rule group',
-    parentItem: {
-      text: folder?.title ?? namespaceId,
-      url: createListFilterLink([
-        ['namespace', folder?.title ?? namespaceId],
-        ['group', groupName],
-      ]),
-    },
-  };
-
-  if (!!dsFeatures && !dsFeatures.rulerConfig) {
-    return (
-      <AlertingPageWrapper pageNav={pageNav} title={groupName} isLoading={isLoadingGroup}>
-        <Alert title={t('alerting.rule-groups.edit.group-not-editable', 'Selected group cannot be edited')}>
-          <Trans i18nKey="alerting.rule-groups.edit.group-not-editable-description">
-            This group belongs to a data source that does not support editing.
-          </Trans>
-        </Alert>
-      </AlertingPageWrapper>
-    );
-  }
-
-  const groupIdentifier: RuleGroupIdentifierV2 =
-    sourceId === 'grafana'
-      ? {
-          namespace: { uid: namespaceId },
-          groupName: groupName,
-          groupOrigin: 'grafana',
-        }
-      : {
-          rulesSource: { uid: sourceId, name: dsFeatures?.name ?? '', ruleSourceType: 'datasource' },
-          namespace: { name: namespaceId },
-          groupName: groupName,
-          groupOrigin: 'datasource',
-        };
-
-  return (
-    <AlertingPageWrapper
-      pageNav={pageNav}
-      title={t('alerting.rule-groups.edit.title', 'Edit evaluation group')}
-      navId="alert-list"
-      isLoading={isLoadingGroup}
-    >
-      <>
-        {dsFeaturesError && (
-          <Alert
-            title={t('alerting.rule-groups.edit.ds-error', 'Error loading data source details')}
-            bottomSpacing={0}
-            topSpacing={2}
-          >
-            <div>{stringifyErrorLike(dsFeaturesError)}</div>
-          </Alert>
-        )}
-        {/* If the rule group is being deleted, RTKQ will try to referch it due to cache invalidation */}
-        {/* For a few miliseconds before redirecting, the rule group will be missing and 404 error would blink */}
-        {ruleGroupError && (
-          <Alert
-            title={t('alerting.rule-groups.edit.rule-group-error', 'Error loading rule group')}
-            bottomSpacing={0}
-            topSpacing={2}
-          >
-            {stringifyErrorLike(ruleGroupError)}
-          </Alert>
-        )}
-      </>
-      {!isLoadingGroup && !rulerGroup && <EntityNotFound entity={`${namespaceId}/${groupName}`} />}
-      {!isLoadingGroup && rulerGroup && <GroupEditForm rulerGroup={rulerGroup} groupIdentifier={groupIdentifier} />}
-    </AlertingPageWrapper>
-  );
+function redirectToListPage() {
+  locationService.replace(alertListPageLink);
 }
-
-export default withErrorBoundary(GroupEditPage, { style: 'page' });
