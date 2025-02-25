@@ -52,6 +52,7 @@
         "name": "accessControlOnCall",
         "resourceVersion": "1726562036211",
         "creationTimestamp": "2022-10-19T16:10:09Z",
+        "deletionTimestamp": "2025-02-24T14:40:54Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-09-17 08:33:56.211355566 +0000 UTC"
         }
