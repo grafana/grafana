@@ -1023,17 +1023,6 @@ export type DeleteOptions = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
 };
-export type LintIssue = {
-  message: string;
-  rule: string;
-  /** Possible enum values:
-     - `"error"`
-     - `"exclude"`
-     - `"fixed"`
-     - `"quiet"`
-     - `"warning"` */
-  severity: 'error' | 'exclude' | 'fixed' | 'quiet' | 'warning';
-};
 export type Unstructured = {
   [key: string]: any;
 };
@@ -1077,8 +1066,6 @@ export type ResourceWrapper = {
   hash?: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
-  /** Lint results */
-  lint?: LintIssue[];
   /** Path to the remote file */
   path?: string;
   /** The commit hash (if exists) */
