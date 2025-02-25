@@ -9,4 +9,4 @@ export const usePullRequestParam = () => {
   }
 
   return decodeURIComponent(prParam);
-}; 
+};

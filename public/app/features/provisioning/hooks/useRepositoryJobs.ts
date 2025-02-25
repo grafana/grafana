@@ -29,4 +29,4 @@ export function useRepositoryJobs({ name, watch = true }: RepositoryJobsArgs = {
   });
 
   return [sortedItems, query];
-} 
+}

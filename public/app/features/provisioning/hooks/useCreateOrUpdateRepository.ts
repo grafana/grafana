@@ -1,10 +1,6 @@
 import { useCallback } from 'react';
 
-import {
-  RepositorySpec,
-  useCreateRepositoryMutation,
-  useReplaceRepositoryMutation,
-} from '../api';
+import { RepositorySpec, useCreateRepositoryMutation, useReplaceRepositoryMutation } from '../api';
 
 export function useCreateOrUpdateRepository(name?: string) {
   const [create, createRequest] = useCreateRepositoryMutation();
@@ -41,4 +37,4 @@ export function useCreateOrUpdateRepository(name?: string) {
   );
 
   return [updateOrCreate, name ? updateRequest : createRequest] as const;
-} 
+}

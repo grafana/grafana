@@ -12,4 +12,4 @@ export function useRepositoryList(options: ListRepositoryArg = {}): [Repository[
   });
 
   return [sortedItems, query.isLoading];
-} 
+}

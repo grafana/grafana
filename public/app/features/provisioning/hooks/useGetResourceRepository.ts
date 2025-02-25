@@ -21,4 +21,4 @@ export const useGetResourceRepository = ({ name, folderUid }: GetResourceReposit
   }
 
   return items.find((repo) => repo.metadata?.name === repoName);
-}; 
+};
