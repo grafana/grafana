@@ -90,7 +90,8 @@ func NewEncryptionManager(
 		return nil, fmt.Errorf("missing configuration for current encryption provider %s", currentProviderID)
 	}
 
-	s.registerUsageMetrics()
+	//TODO: how to register metrics in api server
+	// s.registerUsageMetrics()
 
 	return s, nil
 }
@@ -107,35 +108,35 @@ func (s *EncryptionManager) InitProviders() (err error) {
 	return
 }
 
-func (s *EncryptionManager) registerUsageMetrics() {
-	s.usageStats.RegisterMetricsFunc(func(ctx context.Context) (map[string]any, error) {
-		usageMetrics := make(map[string]any)
+// func (s *EncryptionManager) registerUsageMetrics() {
+// 	s.usageStats.RegisterMetricsFunc(func(ctx context.Context) (map[string]any, error) {
+// 		usageMetrics := make(map[string]any)
 
-		// Current provider
-		kind, err := s.currentProviderID.Kind()
-		if err != nil {
-			return nil, err
-		}
-		usageMetrics[fmt.Sprintf("stats.encryption.current_provider.%s.count", kind)] = 1
+// 		// Current provider
+// 		kind, err := s.currentProviderID.Kind()
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		usageMetrics[fmt.Sprintf("stats.encryption.current_provider.%s.count", kind)] = 1
 
-		// Count by kind
-		countByKind := make(map[string]int)
-		for id := range s.providers {
-			kind, err := id.Kind()
-			if err != nil {
-				return nil, err
-			}
+// 		// Count by kind
+// 		countByKind := make(map[string]int)
+// 		for id := range s.providers {
+// 			kind, err := id.Kind()
+// 			if err != nil {
+// 				return nil, err
+// 			}
 
-			countByKind[kind]++
-		}
+// 			countByKind[kind]++
+// 		}
 
-		for kind, count := range countByKind {
-			usageMetrics[fmt.Sprintf(`stats.encryption.providers.%s.count`, kind)] = count
-		}
+// 		for kind, count := range countByKind {
+// 			usageMetrics[fmt.Sprintf(`stats.encryption.providers.%s.count`, kind)] = count
+// 		}
 
-		return usageMetrics, nil
-	})
-}
+// 		return usageMetrics, nil
+// 	})
+// }
 
 var b64 = base64.RawStdEncoding
 

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -64,7 +65,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 	})
 
 	t.Run("creating a secure value returns it without any of the value or ref", func(t *testing.T) {
-		keeper := mustGenerateKeeper(t, helper, genericUserEditor, nil)
+		keeper := mustGenerateKeeper(t, helper, genericUserEditor, nil, "")
 		raw := mustGenerateSecureValue(t, helper, genericUserEditor, keeper.GetName())
 
 		secureValue := new(secretv0alpha1.SecureValue)
@@ -109,14 +110,12 @@ func TestIntegrationSecureValue(t *testing.T) {
 		})
 
 		t.Run("and updating the secure value replaces the spec fields and returns them", func(t *testing.T) {
-			newKeeper := mustGenerateKeeper(t, helper, genericUserEditor, nil)
-
 			newRaw := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 			newRaw.SetName(raw.GetName())
 			newRaw.Object["spec"].(map[string]any)["title"] = "New title"
-			newRaw.Object["spec"].(map[string]any)["keeper"] = newKeeper.GetName()
 			newRaw.Object["spec"].(map[string]any)["value"] = "New secure value"
 			newRaw.Object["spec"].(map[string]any)["decrypters"] = []string{}
+			newRaw.Object["spec"].(map[string]any)["keeper"] = keeper.GetName()
 			newRaw.Object["metadata"].(map[string]any)["annotations"] = map[string]any{"newAnnotation": "newValue"}
 
 			updatedRaw, err := client.Resource.Update(ctx, newRaw, metav1.UpdateOptions{})
@@ -130,10 +129,24 @@ func TestIntegrationSecureValue(t *testing.T) {
 
 			require.NotEqualValues(t, updatedSecureValue.Spec, secureValue.Spec)
 		})
+
+		t.Run("and updating the secure value keeper is not allowed and returns error", func(t *testing.T) {
+			newKeeper := mustGenerateKeeper(t, helper, genericUserEditor, nil, "")
+
+			newRaw := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
+			newRaw.SetName(raw.GetName())
+			newRaw.Object["spec"].(map[string]any)["title"] = "New title"
+			newRaw.Object["spec"].(map[string]any)["keeper"] = newKeeper.GetName()
+			newRaw.Object["spec"].(map[string]any)["value"] = "New secure value"
+
+			updatedRaw, err := client.Resource.Update(ctx, newRaw, metav1.UpdateOptions{})
+			require.Error(t, err)
+			require.Nil(t, updatedRaw)
+		})
 	})
 
 	t.Run("creating a secure value with a `value` then updating it to a `ref` returns an error", func(t *testing.T) {
-		keeper := mustGenerateKeeper(t, helper, genericUserEditor, nil)
+		keeper := mustGenerateKeeper(t, helper, genericUserEditor, nil, "")
 		svWithValue := mustGenerateSecureValue(t, helper, genericUserEditor, keeper.GetName())
 
 		testData := svWithValue.DeepCopy()
@@ -175,7 +188,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 	t.Run("deleting a secure value that exists does not return an error", func(t *testing.T) {
 		generatePrefix := "generated-"
 
-		keeper := mustGenerateKeeper(t, helper, genericUserEditor, nil)
+		keeper := mustGenerateKeeper(t, helper, genericUserEditor, nil, "")
 
 		testData := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 		testData.SetGenerateName(generatePrefix)
@@ -218,8 +231,8 @@ func TestIntegrationSecureValue(t *testing.T) {
 		editorOrgA := mustCreateUsers(t, helper, permissions).Editor
 		editorOrgB := mustCreateUsers(t, helper, permissions).Editor
 
-		keeperOrgA := mustGenerateKeeper(t, helper, editorOrgA, nil)
-		keeperOrgB := mustGenerateKeeper(t, helper, editorOrgB, nil)
+		keeperOrgA := mustGenerateKeeper(t, helper, editorOrgA, nil, "")
+		keeperOrgB := mustGenerateKeeper(t, helper, editorOrgB, nil, "")
 
 		secureValueOrgA := mustGenerateSecureValue(t, helper, editorOrgA, keeperOrgA.GetName())
 		secureValueOrgB := mustGenerateSecureValue(t, helper, editorOrgB, keeperOrgB.GetName())
@@ -446,7 +459,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 		})
 
 		// Create an initial Keeper to be able to start creating SecureValues.
-		keeper := mustGenerateKeeper(t, helper, editorLimited, nil)
+		keeper := mustGenerateKeeper(t, helper, editorLimited, nil, "")
 		testSecureValue.Object["spec"].(map[string]any)["keeper"] = keeper.GetName()
 		testSecureValueAnother.Object["spec"].(map[string]any)["keeper"] = keeper.GetName()
 
@@ -549,6 +562,78 @@ func TestIntegrationSecureValue(t *testing.T) {
 			// Delete `secureValueName` from the limited client.
 			err = clientScopedLimited.Resource.Delete(ctx, secureValueName, metav1.DeleteOptions{})
 			require.NoError(t, err)
+		})
+	})
+
+	t.Run("creating a secure value in default sql keeper returns it", func(t *testing.T) {
+		raw := mustGenerateSecureValue(t, helper, genericUserEditor, keepertypes.DefaultSQLKeeper)
+
+		secureValue := new(secretv0alpha1.SecureValue)
+		err := runtime.DefaultUnstructuredConverter.FromUnstructured(raw.Object, secureValue)
+		require.NoError(t, err)
+		require.NotNil(t, secureValue)
+
+		require.Empty(t, secureValue.Spec.Value)
+		require.Empty(t, secureValue.Spec.Ref)
+		require.NotEmpty(t, secureValue.Spec.Title)
+		require.NotEmpty(t, secureValue.Spec.Keeper)
+		require.NotEmpty(t, secureValue.Spec.Decrypters)
+
+		t.Run("and creating another secure value with the same name in the same namespace returns an error", func(t *testing.T) {
+			testSecureValue := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
+			testSecureValue.SetName(raw.GetName())
+
+			raw, err := client.Resource.Create(ctx, testSecureValue, metav1.CreateOptions{})
+			require.Error(t, err)
+			require.Nil(t, raw)
+		})
+
+		t.Run("and reading the secure value returns it same as if when it was created", func(t *testing.T) {
+			raw, err := client.Resource.Get(ctx, secureValue.Name, metav1.GetOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, raw)
+
+			anotherSecureValue := new(secretv0alpha1.SecureValue)
+			err = runtime.DefaultUnstructuredConverter.FromUnstructured(raw.Object, anotherSecureValue)
+			require.NoError(t, err)
+			require.NotNil(t, anotherSecureValue)
+
+			require.EqualValues(t, secureValue, anotherSecureValue)
+		})
+
+		t.Run("and updating the secure value replaces the spec fields and returns them", func(t *testing.T) {
+			newRaw := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
+			newRaw.SetName(raw.GetName())
+			newRaw.Object["spec"].(map[string]any)["title"] = "New title"
+			newRaw.Object["spec"].(map[string]any)["value"] = "New secure value"
+			newRaw.Object["spec"].(map[string]any)["keeper"] = keepertypes.DefaultSQLKeeper
+			newRaw.Object["spec"].(map[string]any)["decrypters"] = []string{"decrypter1/name1", "decrypter2/*"}
+			newRaw.Object["metadata"].(map[string]any)["annotations"] = map[string]any{"newAnnotation": "newValue"}
+
+			updatedRaw, err := client.Resource.Update(ctx, newRaw, metav1.UpdateOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, updatedRaw)
+
+			updatedSecureValue := new(secretv0alpha1.SecureValue)
+			err = runtime.DefaultUnstructuredConverter.FromUnstructured(updatedRaw.Object, updatedSecureValue)
+			require.NoError(t, err)
+			require.NotNil(t, updatedSecureValue)
+
+			require.NotEqualValues(t, updatedSecureValue.Spec, secureValue.Spec)
+		})
+
+		t.Run("and updating the secure value keeper is not allowed and returns error", func(t *testing.T) {
+			newKeeper := mustGenerateKeeper(t, helper, genericUserEditor, nil, "")
+
+			newRaw := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
+			newRaw.SetName(raw.GetName())
+			newRaw.Object["spec"].(map[string]any)["title"] = "New title"
+			newRaw.Object["spec"].(map[string]any)["keeper"] = newKeeper.GetName()
+			newRaw.Object["spec"].(map[string]any)["value"] = "New secure value"
+
+			updatedRaw, err := client.Resource.Update(ctx, newRaw, metav1.UpdateOptions{})
+			require.Error(t, err)
+			require.Nil(t, updatedRaw)
 		})
 	})
 }
