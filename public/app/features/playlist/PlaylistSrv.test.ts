@@ -1,4 +1,5 @@
 // @ts-ignore
+import { Location } from 'history';
 import { Store } from 'redux';
 import configureMockStore from 'redux-mock-store';
 
@@ -9,7 +10,6 @@ import { DashboardQueryResult } from '../search/service/types';
 
 import { PlaylistSrv } from './PlaylistSrv';
 import { Playlist, PlaylistItem } from './types';
-import { Location } from 'history';
 
 jest.mock('./api', () => ({
   getPlaylistAPI: () => ({
