@@ -22,7 +22,8 @@ import { PanelTimeRange } from '../../scene/PanelTimeRange';
 import { AngularDeprecation } from '../../scene/angular/AngularDeprecation';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
-import { getDashboardSceneFor, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
+import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { getVizPanelKeyForPanelId } from '../../utils/utils';
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';
 
 import { layoutSerializerRegistry } from './layoutSerializerRegistry';
@@ -154,21 +155,6 @@ export function getLayout(sceneState: DashboardLayoutManager): DashboardV2Spec['
   return registryItem.serializer.serialize(sceneState);
 }
 
-// Functions to manage the lookup table in dashboard scene that will hold element_identifer : panel_id
-export function getElementIdentifierForVizPanel(vizPanel: VizPanel): string {
-  try {
-    const scene = getDashboardSceneFor(vizPanel);
-    const panelId = getPanelIdForVizPanel(vizPanel);
-    const elementKey = scene.getElementIdentifierForPanel(panelId);
-    if (!elementKey) {
-      throw new Error(`Identifier ${panelId} not found`);
-    }
-    return elementKey;
-  } catch (error) {
-    return `error in getElementIdentifierForVizPanel: ${error}`;
-  }
-}
-
 export function schemaV2SetElementIdentifierForVizPanel(panelId: number, scene: DashboardScene): void {
   const elementKey = 'element-panel-' + panelId;
   const mapping = scene.getElementPanelMapping();
@@ -178,7 +164,7 @@ export function schemaV2SetElementIdentifierForVizPanel(panelId: number, scene: 
 export function schemaV2RemoveElementIdentifierForVizPanel(vizPanel: VizPanel, scene: DashboardScene): void {
   // This function is only for V2 dashboards
   if (config.featureToggles.useV2DashboardsAPI) {
-    const elementKey = getElementIdentifierForVizPanel(vizPanel);
+    const elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(vizPanel);
     console.log('removeElementIdentifierForVizPanel', elementKey);
     const mapping = scene.getElementPanelMapping();
     // remove the mapping for the element key

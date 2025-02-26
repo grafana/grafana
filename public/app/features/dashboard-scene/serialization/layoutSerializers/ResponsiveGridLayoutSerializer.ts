@@ -4,9 +4,10 @@ import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alp
 import { ResponsiveGridItem } from '../../scene/layout-responsive-grid/ResponsiveGridItem';
 import { ResponsiveGridLayoutManager } from '../../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { DashboardLayoutManager, LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
+import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getGridItemKeyForPanelId } from '../../utils/utils';
 
-import { buildVizPanel, getElementIdentifierForVizPanel } from './utils';
+import { buildVizPanel } from './utils';
 
 export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
   serialize(layoutManager: ResponsiveGridLayoutManager): DashboardV2Spec['layout'] {
@@ -22,7 +23,7 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
             throw new Error('Expected ResponsiveGridItem');
           }
           // For serialization we should retrieve the original element key
-          const elementKey = getElementIdentifierForVizPanel(child.state?.body);
+          const elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(child.state?.body);
 
           return {
             kind: 'ResponsiveGridLayoutItem',
