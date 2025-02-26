@@ -55,7 +55,7 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
 
     layoutCategory.addItem(
       new OptionsPaneItemDescriptor({
-        title: 'Type',
+        title: 'Grid',
         render: function renderTitle() {
           return <DashboardLayoutSelector layoutManager={layoutManager} />;
         },
