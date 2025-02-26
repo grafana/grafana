@@ -415,9 +415,11 @@ describe('prepareTimelineLegendItems', () => {
       type: FieldType.number,
       config: {},
       values: [],
-      display: (v) => getDisplayProcessor({ field: finalField, theme: createTheme() })(v),
       ...field,
     };
+
+    finalField.display = getDisplayProcessor({ field: finalField, theme: createTheme() });
+
     const frame = toDataFrame({
       fields: [finalField],
     });
