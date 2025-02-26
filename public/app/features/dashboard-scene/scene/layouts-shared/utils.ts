@@ -1,6 +1,6 @@
 import { SceneObject } from '@grafana/scenes';
 
-import { DashboardLayoutManager, isDashboardLayoutManager } from '../types';
+import { DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 export function findParentLayout(sceneObject: SceneObject): DashboardLayoutManager | null {
   let parent = sceneObject.parent;

@@ -30,6 +30,7 @@ import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
 import store from 'app/core/store';
+import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -58,7 +59,13 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { getViewPanelUrl } from '../utils/urlBuilders';
-import { getClosestVizPanel, getDashboardSceneFor, getDefaultVizPanel, getPanelIdForVizPanel } from '../utils/utils';
+import {
+  getClosestVizPanel,
+  getDashboardSceneFor,
+  getDefaultVizPanel,
+  getLayoutManagerFor,
+  getPanelIdForVizPanel,
+} from '../utils/utils';
 import { SchemaV2EditorDrawer } from '../v2schema/SchemaV2EditorDrawer';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
@@ -71,7 +78,9 @@ import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './ang
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-import { DashboardLayoutManager } from './types';
+import { addNewRowTo, addNewTabTo } from './layouts-shared/addNew';
+import { DashboardLayoutManager } from './types/DashboardLayoutManager';
+import { LayoutParent } from './types/LayoutParent';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 export const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
@@ -122,8 +131,6 @@ export interface DashboardSceneState extends SceneObjectState {
   editPanel?: PanelEditor;
   /** Scene object that handles the current drawer or modal */
   overlay?: SceneObject;
-  /** The dashboard doesn't have panels */
-  isEmpty?: boolean;
   /** Kiosk mode */
   kioskMode?: KioskMode;
   /** Share view */
@@ -136,7 +143,7 @@ export interface DashboardSceneState extends SceneObjectState {
   editPane: DashboardEditPane;
 }
 
-export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
+export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {
   static Component = DashboardSceneRenderer;
 
   /**
@@ -258,7 +265,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.setState({ isEditing: true, showHiddenElements: true });
 
     // Propagate change edit mode change to children
-    this.state.body.editModeChanged(true);
+    this.state.body.editModeChanged?.(true);
 
     // Propagate edit mode to scopes
     this._scopesFacade?.enterReadOnly();
@@ -349,7 +356,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
 
     // Disable grid dragging
-    this.state.body.editModeChanged(false);
+    this.state.body.editModeChanged?.(false);
   }
 
   public canDiscard() {
@@ -368,7 +375,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
     let versionRsp;
-    if (config.featureToggles.kubernetesCliDashboards) {
+    if (config.featureToggles.kubernetesClientDashboardsFolders) {
       // the id here is the resource version in k8s, use this instead to get the specific version
       versionRsp = await historySrv.restoreDashboard(version.uid, version.id);
     } else {
@@ -475,10 +482,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return this._initialState;
   }
 
-  public getNextPanelId(): number {
-    return this.state.body.getMaxPanelId() + 1;
-  }
-
   public addPanel(vizPanel: VizPanel): void {
     if (!this.state.isEditing) {
       this.onEnterEditMode();
@@ -502,7 +505,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public duplicatePanel(vizPanel: VizPanel) {
-    this.state.body.duplicatePanel(vizPanel);
+    getLayoutManagerFor(vizPanel).duplicatePanel?.(vizPanel);
   }
 
   public copyPanel(vizPanel: VizPanel) {
@@ -536,7 +539,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public removePanel(panel: VizPanel) {
-    this.state.body.removePanel(panel);
+    getLayoutManagerFor(panel).removePanel?.(panel);
   }
 
   public unlinkLibraryPanel(panel: VizPanel) {
@@ -592,7 +595,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public onCreateNewRow() {
-    this.state.body.addNewRow();
+    addNewRowTo(this.state.body);
+  }
+
+  public onCreateNewTab() {
+    addNewTabTo(this.state.body);
   }
 
   public onCreateNewPanel(): VizPanel {
@@ -606,6 +613,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public switchLayout(layout: DashboardLayoutManager) {
     this.setState({ body: layout });
     layout.activateRepeaters?.();
+  }
+
+  public getLayout(): DashboardLayoutManager {
+    return this.state.body;
   }
 
   /**
@@ -670,7 +681,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     saveModel?: Dashboard | DashboardV2Spec,
     meta?: DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
   ): void {
-    this._serializer.initialSaveModel = saveModel;
+    this._serializer.initialSaveModel = sortedDeepCloneWithoutNulls(saveModel);
     this._serializer.metadata = meta;
   }
 

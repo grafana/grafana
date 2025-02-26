@@ -280,7 +280,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
   ],
   "preload": false,
   "refresh": "",
-  "schemaVersion": 40,
+  "schemaVersion": 41,
   "tags": [
     "templating",
     "gdev",
@@ -334,7 +334,6 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
   "title": "Repeating rows",
   "uid": "Repeating-rows-uid",
   "version": 1,
-  "weekStart": "",
 }
 `;
 
@@ -548,7 +547,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
   ],
   "preload": false,
   "refresh": "5m",
-  "schemaVersion": 40,
+  "schemaVersion": 41,
   "tags": [
     "tag1",
     "tag2",
@@ -906,7 +905,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
   ],
   "preload": false,
   "refresh": "",
-  "schemaVersion": 40,
+  "schemaVersion": 41,
   "tags": [
     "gdev",
     "graph-ng",

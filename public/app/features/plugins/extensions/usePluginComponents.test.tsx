@@ -6,6 +6,7 @@ import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
 import { log } from './logs/log';
 import { resetLogMock } from './logs/testUtils';
 import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
+import { AddedFunctionsRegistry } from './registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
 import { PluginExtensionRegistries } from './registry/types';
@@ -60,6 +61,7 @@ describe('usePluginComponents()', () => {
       addedComponentsRegistry: new AddedComponentsRegistry(),
       exposedComponentsRegistry: new ExposedComponentsRegistry(),
       addedLinksRegistry: new AddedLinksRegistry(),
+      addedFunctionsRegistry: new AddedFunctionsRegistry(),
     };
 
     jest.mocked(wrapWithPluginContext).mockClear();
@@ -89,6 +91,7 @@ describe('usePluginComponents()', () => {
         addedComponents: [],
         exposedComponents: [],
         extensionPoints: [],
+        addedFunctions: [],
       },
       dependencies: {
         grafanaVersion: '8.0.0',
@@ -154,6 +157,50 @@ describe('usePluginComponents()', () => {
     expect(await screen.findByText('Hello World1')).toBeVisible();
     expect(await screen.findByText('Hello World2')).toBeVisible();
     expect(screen.queryByText('Hello World3')).toBeNull();
+  });
+
+  it('should return component with meta information attached to it', async () => {
+    registries.addedComponentsRegistry.register({
+      pluginId,
+      configs: [
+        {
+          targets: extensionPointId,
+          title: '1',
+          description: '1',
+          component: () => <div>Hello World1</div>,
+        },
+        {
+          targets: extensionPointId,
+          title: '2',
+          description: '2',
+          component: () => <div>Hello World2</div>,
+        },
+        {
+          targets: 'plugins/another-extension/v1',
+          title: '3',
+          description: '3',
+          component: () => <div>Hello World3</div>,
+        },
+      ],
+    });
+
+    const { result } = renderHook(() => usePluginComponents({ extensionPointId }), { wrapper });
+
+    expect(result.current.components.length).toBe(2);
+    expect(result.current.components[0].meta).toEqual({
+      pluginId,
+      title: '1',
+      description: '1',
+      id: '-1921123020',
+      type: 'component',
+    });
+    expect(result.current.components[1].meta).toEqual({
+      pluginId,
+      title: '2',
+      description: '2',
+      id: '-1921123019',
+      type: 'component',
+    });
   });
 
   it('should dynamically update the extensions registered for a certain extension point', () => {
