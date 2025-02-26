@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+import { css, cx } from '@emotion/css';
 import { useLocation } from 'react-router';
 
-import { locationUtil } from '@grafana/data';
+import { GrafanaTheme2, locationUtil } from '@grafana/data';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { Checkbox, clearButtonStyles, useElementSelection, useStyles2 } from '@grafana/ui';
 // eslint-disable-next-line no-restricted-imports
@@ -11,28 +11,47 @@ import { TabItem } from './TabItem';
 
 export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const { title, key } = model.useState();
+  const parentLayout = model.getParentLayout();
+  const { tabs, currentTabIndex } = parentLayout.useState();
   const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
   const { isSelected, onSelect } = useElementSelection(key);
   const myIndex = tabs.findIndex((tab) => tab === model);
   const isActive = myIndex === currentTabIndex;
   const location = useLocation();
   const href = locationUtil.getUrlForPartial(location, { tab: myIndex });
+  const styles = useStyles2(getStyles);
+  const clearStyles = useStyles2(clearButtonStyles);
 
   return (
-    <div className={cx(styles.container, isSelected && 'dashboard-selected-element')} role="presentation">
-      <span onPointerDown={onSelect}>
-        <Checkbox value={!!isSelected} />
-      </span>
+    <>
+      <div className={cx(styles.container, isSelected && 'dashboard-selected-element')} role="presentation">
+        <span onPointerDown={onSelect}>
+          <Checkbox value={!!isSelected} />
+        </span>
 
-      <button
-        className={cx(clearStyles, styles.label, isCurrentTab ? styles.labelActive : styles.labelNotActive)}
-        role="tab"
-        aria-selected={isCurrentTab}
-        onClick={() => model.onChangeTab()}
-      >
-        {titleInterpolated}
-      </button>
-    </div>
+        <a
+          href={href}
+          className={cx(clearStyles, styles.label, isActive ? styles.labelActive : styles.labelNotActive)}
+          role="tab"
+          aria-selected={isActive}
+        >
+          {titleInterpolated}
+        </a>
+      </div>
+
+      {/* <Tab
+        className={!isClone && isSelected ? 'dashboard-selected-element' : undefined}
+        label={titleInterpolated}
+        active={isActive}
+        href={href}
+        onPointerDown={(evt) => {
+          if (isEditing && isActive && !isClone) {
+            evt.stopPropagation();
+            onSelect?.(evt);
+          }
+        }}
+      /> */}
+    </>
   );
 }
 
