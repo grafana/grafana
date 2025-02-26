@@ -1,11 +1,13 @@
 import { isFunction } from 'lodash';
+import { useState } from 'react';
 
 import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax } from '@grafana/data';
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@grafana/schema';
 
 import { BarGauge } from '../BarGauge/BarGauge';
-import { DataLinksContextMenu, DataLinksContextMenuApi } from '../DataLinks/DataLinksContextMenu';
+import { DataLinksContextMenuApi } from '../DataLinks/DataLinksContextMenu';
 
+import { DataLinksActionsTooltip } from './DataLinksActionsTooltip';
 import { TableCellProps } from './types';
 import { getAlignmentFactor, getCellOptions } from './utils';
 
@@ -83,12 +85,24 @@ export const BarGaugeCell = (props: TableCellProps) => {
     );
   };
 
+  const [tooltipCoords, setTooltipCoords] = useState<{ clientX: number; clientY: number }>();
+
   return (
-    <div {...cellProps} className={tableStyles.cellContainer}>
-      {hasLinks || hasActions ? (
-        <DataLinksContextMenu links={getLinks} actions={actions} style={{ display: 'flex', width: '100%' }}>
-          {(api) => renderComponent(api)}
-        </DataLinksContextMenu>
+    <div
+      {...cellProps}
+      className={tableStyles.cellContainer}
+      onClick={({ clientX, clientY }) => {
+        setTooltipCoords({ clientX, clientY });
+      }}
+    >
+      {(hasLinks || hasActions) && tooltipCoords ? (
+        <DataLinksActionsTooltip
+          links={getLinks()}
+          actions={actions}
+          value={renderComponent({})}
+          coords={tooltipCoords}
+          onTooltipClose={() => setTooltipCoords(undefined)}
+        />
       ) : (
         renderComponent({})
       )}
