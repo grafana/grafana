@@ -1,4 +1,3 @@
-import { ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { t } from 'app/core/internationalization';
@@ -8,7 +7,7 @@ import { EditableDashboardElementInfo } from '../types/EditableDashboardElement'
 import { MultiSelectedEditableDashboardElement } from '../types/MultiSelectedEditableDashboardElement';
 
 import { TabItem } from './TabItem';
-import { getEditOptions, renderActions } from './TabItemsEditor';
+import { getEditOptions } from './TabItemsEditor';
 
 export class TabItems implements MultiSelectedEditableDashboardElement {
   public readonly isMultiSelectedEditableDashboardElement = true;
@@ -26,15 +25,11 @@ export class TabItems implements MultiSelectedEditableDashboardElement {
     return getEditOptions(this);
   }
 
-  public renderActions(): ReactNode {
-    return renderActions(this);
-  }
-
   public getTabs(): TabItem[] {
     return this._tabs;
   }
 
-  public onDelete() {
+  public onDelete = () => {
     this._tabs.forEach((tab) => tab.onDelete());
-  }
+  };
 }

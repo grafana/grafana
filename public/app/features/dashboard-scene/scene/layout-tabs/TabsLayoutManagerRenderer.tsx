@@ -7,6 +7,7 @@ import { Divider, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { getDashboardSceneFor } from '../../utils/utils';
 
+import { TabItemMenu } from './TabItemMenu';
 import { TabsLayoutManager } from './TabsLayoutManager';
 
 export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLayoutManager>) {
@@ -19,13 +20,18 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
 
   return (
     <>
-      <TabsBar className={styles.tabsContainer}>
-        {tabs.map((tab, idx) => (
-          <Fragment key={tab.state.key!}>
-            {isEditing && idx > 0 && <Divider direction="vertical" />}
-            <tab.Component model={tab} />
-          </Fragment>
-        ))}
+      <TabsBar className={styles.tabsWrapper}>
+        <div className={styles.tabsRow}>
+          <div className={styles.tabsContainer}>
+            {tabs.map((tab, idx) => (
+              <Fragment key={tab.state.key!}>
+                {isEditing && idx > 0 && <Divider direction="vertical" />}
+                <tab.Component model={tab} />
+              </Fragment>
+            ))}
+          </div>
+          {isEditing && <TabItemMenu model={currentTab} />}
+        </div>
       </TabsBar>
       <TabContent className={styles.tabContentContainer}>
         {currentTab && <layout.Component model={layout} />}
@@ -35,10 +41,21 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  tabsWrapper: css({
+    overflow: 'hidden',
+  }),
+  tabsRow: css({
+    justifyContent: 'space-between',
+    display: 'flex',
+    width: '100%',
+  }),
   tabsContainer: css({
-    flexShrink: 1,
-    padding: '2px 2px 0 2px',
-    marginBottom: theme.spacing(1),
+    display: 'flex',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    overflowX: 'scroll',
+    overflowY: 'visible',
+    paddingInline: theme.spacing(0.125),
   }),
   tabContentContainer: css({
     backgroundColor: 'transparent',
