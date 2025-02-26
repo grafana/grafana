@@ -295,6 +295,9 @@
       "export-all": "Export all",
       "loading": "Loading...",
       "search-by-matchers": "Search by matchers",
+      "titles": {
+        "notification-templates": "Notification Templates"
+      },
       "view": "View"
     },
     "contact-points": {
@@ -403,6 +406,20 @@
       "preview-routing": "Preview routing",
       "title": "Alert instance routing preview",
       "uninitialized": "When you have your folder selected and your query and labels are configured, click \"Preview routing\" to see the results here."
+    },
+    "notification-templates": {
+      "duplicate": {
+        "subTitle": "Duplicate a group of notification templates",
+        "title": "Duplicate notification template group"
+      },
+      "edit": {
+        "subTitle": "Edit a group of notification templates",
+        "title": "Edit notification template group"
+      },
+      "new": {
+        "subTitle": "Create a new group of notification templates",
+        "title": "New notification template group"
+      }
     },
     "policies": {
       "default-policy": {
