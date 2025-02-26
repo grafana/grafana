@@ -293,6 +293,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 
           break;
         case DashboardRoutes.Home:
+          // TODO: Move this fetching to APIClient.getHomeDashboard() to be able to redirect to the correct api depending on the format for the saved dashboard
           rsp = await getBackendSrv().get<HomeDashboardDTO | HomeDashboardRedirectDTO>('/api/dashboards/home');
 
           if (isRedirectResponse(rsp)) {
@@ -302,7 +303,9 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           }
 
           if (isDashboardV2Spec(rsp.dashboard)) {
-            throw new Error('v2 dashboard spec is not supported. Enable useV2DashboardsAPI feature toggle');
+            throw new Error(
+              'You are trying to load a v2 dashboard spec as v1. Use DashboardScenePageStateManagerV2 instead.'
+            );
           }
 
           if (rsp?.meta) {
@@ -501,6 +504,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
           rsp = await buildNewDashboardSaveModelV2(urlFolderUid);
           break;
         case DashboardRoutes.Home:
+          // TODO: Move this fetching to APIClient.getHomeDashboard() to be able to redirect to the correct api depending on the format for the saved dashboard
           const dto = await getBackendSrv().get<HomeDashboardDTO | HomeDashboardRedirectDTO>('/api/dashboards/home');
 
           if (isRedirectResponse(dto)) {
@@ -509,6 +513,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
             return null;
           }
 
+          // TODO: This shouldn't be needed because the api should return the correct format
           rsp = ResponseTransformers.ensureV2Response(dto);
 
           // if custom home dashboard is v2 spec already, ignore the spec transformation

@@ -15,7 +15,7 @@ import { DashboardDTO } from 'app/types';
 import { appEvents } from '../../../core/core';
 import { ResponseTransformers } from '../api/ResponseTransformers';
 import { getDashboardAPI } from '../api/dashboard_api';
-import { DashboardWithAccessInfo } from '../api/types';
+import { DashboardVersionError, DashboardWithAccessInfo } from '../api/types';
 
 import { getDashboardSrv } from './DashboardSrv';
 import { getDashboardSnapshotSrv } from './SnapshotSrv';
@@ -146,7 +146,7 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
         })
         .catch((e) => {
           console.error('Failed to load dashboard', e);
-          if (isFetchError(e)) {
+          if (isFetchError(e) && !(e instanceof DashboardVersionError)) {
             e.isHandled = true;
             if (e.status === 404) {
               appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
@@ -212,7 +212,7 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
         })
         .catch((e) => {
           console.error('Failed to load dashboard', e);
-          if (isFetchError(e)) {
+          if (isFetchError(e) && !(e instanceof DashboardVersionError)) {
             e.isHandled = true;
             if (e.status === 404) {
               appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
