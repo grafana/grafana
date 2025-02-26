@@ -746,7 +746,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 			called = true
 			return nil
 		}
-		err := store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, rule.UID)
+		err := store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, &models.AlertingUserUID, rule.UID)
 		require.NoError(t, err)
 		require.True(t, called)
 	})
@@ -773,7 +773,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		require.Len(t, savedInstances, 1)
 
 		// Delete the rule
-		err = store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, rule.UID)
+		err = store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, &models.AlertingUserUID, rule.UID)
 		require.NoError(t, err)
 
 		// Now there should be no alert rule state
@@ -785,39 +785,63 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		require.Empty(t, savedInstances)
 	})
 
-	t.Run("should reset rule_uid in rule_versions", func(t *testing.T) {
+	t.Run("should remove all version and insert one with empty rule_uid", func(t *testing.T) {
+		orgID := int64(rand.Intn(1000))
+		gen = gen.With(gen.WithOrgID(orgID))
 		// Create a new store to pass the custom bus to check the signal
 		b := &fakeBus{}
 		logger := log.New("test-dbstore")
 		store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
-		rule := gen.GenerateRef()
-		rule.Version = 1
-		res, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.AlertRule{*rule})
+		result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, gen.GenerateMany(3))
+		uids := make([]string, 0, len(result))
+		for _, rule := range result {
+			uids = append(uids, rule.UID)
+		}
 		require.NoError(t, err)
-		rule, err = store.GetRuleByID(context.Background(), models.GetAlertRuleByIDQuery{ID: res[0].ID, OrgID: rule.OrgID})
+		rules, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{OrgID: orgID, RuleUIDs: uids})
 		require.NoError(t, err)
 
-		rule2 := rule.Copy()
-		rule2.Title = rule2.Title + "2"
-		err = store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, []models.UpdateRule{
-			{
+		updates := make([]models.UpdateRule, 0, len(rules))
+		for _, rule := range rules {
+			rule2 := models.CopyRule(rule, gen.WithTitle(util.GenerateShortUID()))
+			updates = append(updates, models.UpdateRule{
 				Existing: rule,
 				New:      *rule2,
-			},
-		})
+			})
+		}
+		err = store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, updates)
 		require.NoError(t, err)
 
-		versions, err := store.GetAlertRuleVersions(context.Background(), rule.OrgID, rule.GUID)
+		versions, err := store.GetAlertRuleVersions(context.Background(), orgID, rules[0].GUID)
 		require.Len(t, versions, 2)
 
-		err = store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, rule.UID)
+		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), uids...)
 		require.NoError(t, err)
+
+		guids := make([]string, 0, len(rules))
+		for _, rule := range rules {
+			guids = append(guids, rule.GUID)
+		}
 
 		_ = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			var versions []alertRuleVersion
-			err = sess.Table(alertRuleVersion{}).Where(`rule_guid = ? AND rule_uid = ''`, rule.GUID).Find(&versions)
+			err = sess.Table(alertRuleVersion{}).Where(`rule_uid = ''`).In("rule_guid", guids).Find(&versions)
 			require.NoError(t, err)
-			require.Len(t, versions, 2)
+			require.Len(t, versions, len(rules)) // should be one version per GUID
+
+			for _, version := range versions {
+				assert.Equal(t, "", version.RuleUID)
+				assert.Equal(t, "test", *version.CreatedBy)
+				// Remove the GUID from guids
+				for i, guid := range guids {
+					if guid == version.RuleGUID {
+						guids = append(guids[:i], guids[i+1:]...)
+						break
+					}
+				}
+			}
+			// Ensure that guids is empty
+			assert.Empty(t, guids, "Some rules are left unrecoverable")
 			return nil
 		})
 	})
