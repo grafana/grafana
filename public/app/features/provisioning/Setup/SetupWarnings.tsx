@@ -33,33 +33,32 @@ export function SetupWarnings({ showSetupButton = true, showSuccessBanner = fals
     );
   }
 
-  // Configure alert based on missing features
-  const alertConfig = missingRequiredFeatures
-    ? {
-        severity: 'error' as const,
-        title: 'Required Features Not Configured',
-        message:
-          'Some required features are not properly configured. Please complete the setup for these features to ensure the system runs properly.',
-      }
-    : {
-        severity: 'info' as const,
-        title: 'Additional Features Not Configured',
-        message:
-          'Some additional features like Github webhook integration or image renderer are not configured. These features may enhance your experience.',
-      };
-
   const handleSetupClick = () => {
     locationService.push('/admin/provisioning/setup');
   };
 
+  const commonSetupButtonProps = showSetupButton
+    ? {
+        buttonContent: 'Set Up Now',
+        onRemove: handleSetupClick,
+      }
+    : {};
+
+  // Required features missing - show error alert
+  if (missingRequiredFeatures) {
+    return (
+      <Alert severity="error" title="Required Features Not Configured" {...commonSetupButtonProps}>
+        Some required features are not properly configured. Please complete the setup for these features to ensure the
+        system runs properly.
+      </Alert>
+    );
+  }
+
+  // Only optional features missing - show info alert
   return (
-    <Alert
-      severity={alertConfig.severity}
-      title={alertConfig.title}
-      buttonContent={showSetupButton ? 'Set Up Now' : undefined}
-      onRemove={showSetupButton ? handleSetupClick : undefined}
-    >
-      {alertConfig.message}
+    <Alert severity="info" title="Additional Features Not Configured" {...commonSetupButtonProps}>
+      Some additional features like Github webhook integration or image renderer are not configured. These features may
+      enhance your experience.
     </Alert>
   );
 }

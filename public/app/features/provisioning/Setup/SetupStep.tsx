@@ -8,7 +8,7 @@ export interface Props {
 
 export const SetupStep = ({ step }: Props) => {
   return (
-    <div>
+    <>
       <Text element="h3" variant="h4">
         {step?.title}
       </Text>
@@ -19,6 +19,6 @@ export const SetupStep = ({ step }: Props) => {
       )}
 
       {step.code && <CodeBlock code={step.code} copyCode={step.copyCode} />}
-    </div>
+    </>
   );
 };
