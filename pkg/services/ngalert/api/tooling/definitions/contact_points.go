@@ -313,15 +313,26 @@ type WebhookIntegration struct {
 
 	URL string `json:"url" yaml:"url" hcl:"url"`
 
-	HTTPMethod               *string    `json:"httpMethod,omitempty" yaml:"httpMethod,omitempty" hcl:"http_method"`
-	MaxAlerts                *int64     `json:"maxAlerts,omitempty" yaml:"maxAlerts,omitempty" hcl:"max_alerts"`
-	AuthorizationScheme      *string    `json:"authorization_scheme,omitempty" yaml:"authorization_scheme,omitempty" hcl:"authorization_scheme"`
-	AuthorizationCredentials *Secret    `json:"authorization_credentials,omitempty" yaml:"authorization_credentials,omitempty" hcl:"authorization_credentials"`
-	User                     *string    `json:"username,omitempty" yaml:"username,omitempty" hcl:"basic_auth_user"`
-	Password                 *Secret    `json:"password,omitempty" yaml:"password,omitempty" hcl:"basic_auth_password"`
-	Title                    *string    `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
-	Message                  *string    `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
-	TLSConfig                *TLSConfig `json:"tlsConfig,omitempty" yaml:"tlsConfig,omitempty" hcl:"tlsConfig,block"`
+	HTTPMethod               *string     `json:"httpMethod,omitempty" yaml:"httpMethod,omitempty" hcl:"http_method"`
+	MaxAlerts                *int64      `json:"maxAlerts,omitempty" yaml:"maxAlerts,omitempty" hcl:"max_alerts"`
+	AuthorizationScheme      *string     `json:"authorization_scheme,omitempty" yaml:"authorization_scheme,omitempty" hcl:"authorization_scheme"`
+	AuthorizationCredentials *Secret     `json:"authorization_credentials,omitempty" yaml:"authorization_credentials,omitempty" hcl:"authorization_credentials"`
+	User                     *string     `json:"username,omitempty" yaml:"username,omitempty" hcl:"basic_auth_user"`
+	Password                 *Secret     `json:"password,omitempty" yaml:"password,omitempty" hcl:"basic_auth_password"`
+	Title                    *string     `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
+	Message                  *string     `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+	TLSConfig                *TLSConfig  `json:"tlsConfig,omitempty" yaml:"tlsConfig,omitempty" hcl:"tlsConfig,block"`
+	HMACConfig               *HMACConfig `json:"hmacConfig,omitempty" yaml:"hmacConfig,omitempty" hcl:"hmacConfig,block"`
+}
+
+type HMACConfig struct {
+	// Secret to use for HMAC signing.
+	Secret *Secret `json:"secret,omitempty" yaml:"secret,omitempty" hcl:"secret"`
+	// Header is the name of the header containing the HMAC signature.
+	Header string `json:"header,omitempty" yaml:"header,omitempty" hcl:"header"`
+	// TimestampHeader is the name of the header containing the timestamp
+	// used to generate the HMAC signature. If empty, timestamp is not included.
+	TimestampHeader string `yaml:"timestampHeader,omitempty" json:"timestampHeader,omitempty" hcl:"timestamp_header"`
 }
 
 type WecomIntegration struct {
