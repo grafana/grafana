@@ -1,16 +1,11 @@
 package resource
 
 import (
-	"sync"
 	"time"
 
 	"github.com/grafana/dskit/instrument"
 	"github.com/prometheus/client_golang/prometheus"
-)
-
-var (
-	once                 sync.Once
-	StorageServerMetrics *StorageApiMetrics
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 type StorageApiMetrics struct {
@@ -18,9 +13,9 @@ type StorageApiMetrics struct {
 	PollerLatency     prometheus.Histogram
 }
 
-func NewStorageMetrics() (*StorageApiMetrics, error) {
-	StorageServerMetrics = &StorageApiMetrics{
-		WatchEventLatency: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+func NewStorageMetrics(reg prometheus.Registerer) StorageApiMetrics {
+	return StorageApiMetrics{
+		WatchEventLatency: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Namespace:                       "storage_server",
 			Name:                            "watch_latency_seconds",
 			Help:                            "Time (in seconds) spent waiting for watch events to be sent",
@@ -29,7 +24,7 @@ func NewStorageMetrics() (*StorageApiMetrics, error) {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"resource"}),
-		PollerLatency: prometheus.NewHistogram(prometheus.HistogramOpts{
+		PollerLatency: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
 			Namespace:                       "storage_server",
 			Name:                            "poller_query_latency_seconds",
 			Help:                            "poller query latency",
@@ -39,21 +34,4 @@ func NewStorageMetrics() (*StorageApiMetrics, error) {
 			NativeHistogramMinResetDuration: time.Hour,
 		}),
 	}
-
-	// register metrics
-	if err := prometheus.Register(StorageServerMetrics); err != nil {
-		return nil, err
-	}
-
-	return StorageServerMetrics, nil
-}
-
-func (s *StorageApiMetrics) Collect(ch chan<- prometheus.Metric) {
-	s.WatchEventLatency.Collect(ch)
-	s.PollerLatency.Collect(ch)
-}
-
-func (s *StorageApiMetrics) Describe(ch chan<- *prometheus.Desc) {
-	s.WatchEventLatency.Describe(ch)
-	s.PollerLatency.Describe(ch)
 }
