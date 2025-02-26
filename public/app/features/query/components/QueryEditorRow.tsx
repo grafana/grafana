@@ -23,7 +23,13 @@ import {
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AngularComponent, getAngularLoader, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import {
+  AngularComponent,
+  getAngularLoader,
+  getDataSourceSrv,
+  reportInteraction,
+  usePluginComponents,
+} from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Badge, ErrorBoundaryAlert } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
@@ -458,6 +464,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
     extraActions.push(this.renderWarnings('info'));
     extraActions.push(this.renderWarnings('warning'));
+    extraActions.push(<AdaptiveTelemetryQueryActions query={query} />);
 
     return extraActions;
   };
@@ -664,4 +671,28 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
 function MaybeQueryLibrarySaveButton(props: { query: DataQuery }) {
   const { renderSaveQueryButton } = useQueryLibraryContext();
   return renderSaveQueryButton(props.query);
+}
+
+function AdaptiveTelemetryQueryActions({ query }: { query: DataQuery }) {
+  const extensionPointId = 'grafana/adaptivetelemetry/query/action';
+
+  type AdaptiveTelemetryQueryActionProps = {
+    /** An ordered list of lower-case [a-z]+ string identifiers to provide context clues of where this component is being embedded and how we might want to consider displaying it */
+    contextHints?: string[];
+    query?: DataQuery;
+  };
+
+  const { isLoading, components } = usePluginComponents<AdaptiveTelemetryQueryActionProps>({ extensionPointId });
+
+  if (isLoading || !components.length) {
+    return null;
+  }
+
+  const actions = components
+    .filter(({ meta }) => meta.pluginId.startsWith('grafana-adaptive'))
+    .map((Component) => {
+      const { meta } = Component;
+      return <Component key={meta.id} query={query} contextHints={['explore', 'queryeditor', 'header']} />;
+    });
+  return <>{actions}</>;
 }
