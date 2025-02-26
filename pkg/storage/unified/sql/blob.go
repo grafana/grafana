@@ -85,6 +85,12 @@ func (b *backend) GetResourceBlob(ctx context.Context, key *resource.ResourceKey
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"GetResourceBlob")
 	defer span.End()
 
+	if info == nil {
+		return &resource.GetBlobResponse{
+			Error: resource.NewBadRequestError("missing blob info"),
+		}, nil
+	}
+
 	rsp := &resource.GetBlobResponse{}
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceBlobQuery, sqlResourceBlobQueryRequest{
