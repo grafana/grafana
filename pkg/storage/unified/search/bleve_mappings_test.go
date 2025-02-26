@@ -3,11 +3,9 @@ package search
 import (
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/blevesearch/bleve/v2/document"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -34,7 +32,7 @@ func TestDocumentMapping(t *testing.T) {
 		Source: &utils.SourceProperties{
 			Path:      "ppp",
 			Checksum:  "hhh",
-			Timestamp: metav1.NewTime(time.UnixMilli(1234)),
+			Timestamp: 1234,
 		},
 	}
 
@@ -48,5 +46,5 @@ func TestDocumentMapping(t *testing.T) {
 
 	fmt.Printf("DOC: fields %d\n", len(doc.Fields))
 	fmt.Printf("DOC: size %d\n", doc.Size())
-	require.Equal(t, 13, len(doc.Fields))
+	require.Equal(t, 14, len(doc.Fields))
 }

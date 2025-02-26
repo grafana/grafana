@@ -7,11 +7,9 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -97,7 +95,7 @@ func TestBleveBackend(t *testing.T) {
 				Source: &utils.SourceProperties{
 					Path:      "path/to/aaa.json",
 					Checksum:  "xyz",
-					Timestamp: metav1.NewTime(time.UnixMilli(1609462800000)), // 2021
+					Timestamp: 1609462800000, // 2021
 				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
@@ -129,7 +127,7 @@ func TestBleveBackend(t *testing.T) {
 				Source: &utils.SourceProperties{
 					Path:      "path/to/bbb.json",
 					Checksum:  "hijk",
-					Timestamp: metav1.NewTime(time.UnixMilli(1640998800000)), // 2022
+					Timestamp: 1640998800000, // 2022
 				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
@@ -282,7 +280,7 @@ func TestBleveBackend(t *testing.T) {
 						"name": "aaa"
 					},
 					"path": "path/to/aaa.json",
-					"hash": "xyz",
+					"checksum": "xyz",
 					"time": 1609462800000,
 					"title": "aaa (dash)",
 					"folder": "xxx"
@@ -295,7 +293,7 @@ func TestBleveBackend(t *testing.T) {
 						"name": "bbb"
 					},
 					"path": "path/to/bbb.json",
-					"hash": "hijk",
+					"checksum": "hijk",
 					"time": 1640998800000,
 					"title": "bbb (dash)",
 					"folder": "xxx"
@@ -350,7 +348,7 @@ func TestBleveBackend(t *testing.T) {
 				Source: &utils.SourceProperties{
 					Path:      "path/to/folder.json",
 					Checksum:  "xxxx",
-					Timestamp: metav1.NewTime(time.UnixMilli(300)),
+					Timestamp: 300,
 				},
 			})
 			_ = index.Write(&resource.IndexableDocument{

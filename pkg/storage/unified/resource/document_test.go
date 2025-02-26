@@ -42,13 +42,11 @@ func TestStandardDocumentBuilder(t *testing.T) {
 		"updatedBy": "user:XYZ",
 		"manager": {
 			"kind": "repo",
-			"id": "something",
-			"allowEdits": true
+			"id": "something"
 		},
 		"source": {
 			"path": "path/in/system.json",
-			"checksum": "xyz",
-			"timestamp": null
+			"checksum": "xyz"
 		}
 	}`, string(jj))
 }
