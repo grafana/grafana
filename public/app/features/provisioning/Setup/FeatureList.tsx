@@ -10,15 +10,6 @@ import { getConfigurationStatus } from './utils';
 // Define minimal styles for elements that need specific styling
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    codeBlock: {
-      backgroundColor: theme.colors.background.canvas,
-      borderRadius: theme.shape.borderRadius(1),
-      padding: theme.spacing(2),
-      fontFamily: theme.typography.fontFamilyMonospace,
-      fontSize: theme.typography.bodySmall.fontSize,
-      overflowX: 'auto',
-      marginBottom: theme.spacing(2),
-    },
     cardContainer: css({
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fill, 320px)',

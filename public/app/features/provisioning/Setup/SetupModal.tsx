@@ -4,7 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { Feature } from './types';
 import { SetupStep } from './SetupStep';
-import { Sidebar } from './SetupModalSidebar';
+import { Sidebar } from './Sidebar';
 
 export interface Props {
   feature: Feature;
