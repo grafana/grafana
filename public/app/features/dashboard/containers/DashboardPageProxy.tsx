@@ -77,7 +77,7 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
     return <DashboardPage {...props} params={params} location={location} />;
   }
 
-  if (canEdit && isScenesSupportedRoute) {
+  if (canEdit && isScenesSupportedRoute && !forceOld) {
     return <DashboardScenePage {...props} />;
   } else {
     return <DashboardPage {...props} params={params} location={location} />;
