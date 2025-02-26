@@ -39,6 +39,9 @@ export interface DashboardSceneSerializerLike<T, M> {
   onSaveComplete(saveModel: T, result: SaveDashboardResponseDTO): void;
   getTrackingInformation: (s: DashboardScene) => DashboardTrackingInfo | undefined;
   getSnapshotUrl: () => string | undefined;
+  getPanelIdForElement: (elementId: string) => number | undefined;
+  getElementIdForPanel: (panelId: number) => string | undefined;
+  getElementPanelMapping: () => Map<string, number>;
 }
 
 interface DashboardTrackingInfo {
@@ -61,6 +64,10 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
     // element keys are panel-id
     // FIXME: Should generate "fake-ids"
     console.log('lookup table', this.elementPanelMap);
+  }
+
+  getElementPanelMapping() {
+    return this.elementPanelMap;
   }
 
   getPanelIdForElement(elementId: string) {
@@ -156,6 +163,10 @@ export class V2DashboardSerializer
   initialSaveModel?: DashboardV2Spec;
   metadata?: DashboardWithAccessInfo<DashboardV2Spec>['metadata'];
   protected elementPanelMap = new Map<string, number>();
+
+  getElementPanelMapping() {
+    return this.elementPanelMap;
+  }
 
   initializeMapping(saveModel: DashboardV2Spec) {
     this.elementPanelMap.clear();

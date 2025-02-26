@@ -48,7 +48,6 @@ import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTrack
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { DashboardChangeInfo } from '../saving/shared';
 import { DashboardSceneSerializerLike, getDashboardSceneSerializer } from '../serialization/DashboardSceneSerializer';
-import { ElementPanelMappingService } from '../serialization/ElementPanelMappingService';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
@@ -140,9 +139,6 @@ export interface DashboardSceneState extends SceneObjectState {
   panelsPerRow?: number;
   /** options pane */
   editPane: DashboardEditPane;
-
-  /** element panel mapping schema v2 */
-  elementPanelMapping?: ElementPanelMappingService;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -679,13 +675,26 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     saveModel?: Dashboard | DashboardV2Spec,
     meta?: DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
   ): void {
-    this._serializer.initialSaveModel = sortedDeepCloneWithoutNulls(saveModel);
-    this._serializer.initializeMapping(sortedDeepCloneWithoutNulls(saveModel));
+    const sortedModel = sortedDeepCloneWithoutNulls(saveModel);
+    this._serializer.initialSaveModel = sortedModel;
+    this._serializer.initializeMapping(sortedModel);
     this._serializer.metadata = meta;
   }
 
   public getTrackingInformation() {
     return this._serializer.getTrackingInformation(this);
+  }
+
+  public getPanelIdForElement(elementId: string) {
+    return this._serializer.getPanelIdForElement(elementId);
+  }
+
+  public getElementPanelMapping() {
+    return this._serializer.getElementPanelMapping();
+  }
+
+  public getElementIdentifierForPanel(panelId: number) {
+    return this._serializer.getElementIdForPanel(panelId);
   }
 
   public async onDashboardDelete() {

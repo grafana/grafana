@@ -22,7 +22,6 @@ import { AngularDeprecation } from '../../scene/angular/AngularDeprecation';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
-import { ElementPanelMappingService } from '../ElementPanelMappingService';
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';
 
 import { layoutSerializerRegistry } from './layoutSerializerRegistry';
@@ -159,30 +158,12 @@ export function getElementIdentifierForVizPanel(vizPanel: VizPanel): string {
   try {
     const scene = getDashboardSceneFor(vizPanel);
     const panelId = getPanelIdForVizPanel(vizPanel);
-    const elementKey = scene.state.elementPanelMapping?.getElementIdentifier(panelId);
+    const elementKey = scene.getElementIdentifierForPanel(panelId);
     if (!elementKey) {
       throw new Error(`Identifier ${panelId} not found`);
     }
     return elementKey;
   } catch (error) {
     return `error in getElementIdentifierForVizPanel: ${error}`;
-  }
-}
-
-export function schemaV2SetElementIdentifierForVizPanel(panelId: number): void {
-  const elementKey = 'element-panel-' + panelId;
-  const mapping = ElementPanelMappingService.getInstance();
-
-  mapping.set(elementKey, panelId);
-}
-
-export function schemaV2RemoveElementIdentifierForVizPanel(vizPanel: VizPanel): void {
-  // This function is only for V2 dashboards
-  if (config.featureToggles.useV2DashboardsAPI) {
-    const elementKey = getElementIdentifierForVizPanel(vizPanel);
-    console.log('removeElementIdentifierForVizPanel', elementKey);
-    const mapping = ElementPanelMappingService.getInstance();
-    mapping.remove(elementKey);
-    console.log('mapping after removing', mapping.getAll());
   }
 }
