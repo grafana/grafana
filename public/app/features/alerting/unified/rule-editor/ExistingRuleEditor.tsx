@@ -37,7 +37,7 @@ export function ExistingRuleEditor({ identifier }: ExistingRuleEditorProps) {
     );
   }
 
-  if (!ruleWithLocation) {
+  if (!ruleWithLocation && !loading) {
     return <AlertWarning title="Rule not found">Sorry! This rule does not exist.</AlertWarning>;
   }
 

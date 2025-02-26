@@ -609,6 +609,7 @@
       }
     },
     "rule-viewer": {
+      "error-loading": "Ŝőmęŧĥįŉģ ŵęŉŧ ŵřőŉģ ľőäđįŉģ ŧĥę řūľę",
       "prometheus-consistency-check": {
         "alert-message": "Åľęřŧ řūľę ĥäş þęęŉ ūpđäŧęđ. Cĥäŉģęş mäy ŧäĸę ūp ŧő ä mįŉūŧę ŧő äppęäř őŉ ŧĥę Åľęřŧ řūľęş ľįşŧ vįęŵ.",
         "alert-title": "Ůpđäŧę įŉ přőģřęşş"
