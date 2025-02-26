@@ -199,14 +199,6 @@ var (
 			Owner:       grafanaSearchAndStorageSquad,
 		},
 		{
-			Name:              "accessControlOnCall",
-			Description:       "Access control primitives for OnCall",
-			Stage:             FeatureStageGeneralAvailability,
-			Owner:             identityAccessTeam,
-			HideFromAdminPage: true,
-			Expression:        "true", // enabled by default
-		},
-		{
 			Name:        "nestedFolders",
 			Description: "Enable folder nesting",
 			Stage:       FeatureStageGeneralAvailability,
@@ -1177,14 +1169,6 @@ var (
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromAdminPage: true,
 			Expression:        "false", // enabled by default
-		},
-		{
-			Name:         "datasourceProxyDisableRBAC",
-			Description:  "Disables applying a plugin route's ReqAction field to authorization",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
 		},
 		{
 			Name:              "alertingDisableSendAlertsExternal",

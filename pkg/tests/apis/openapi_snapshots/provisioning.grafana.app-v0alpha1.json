@@ -2538,7 +2538,8 @@
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/settings": {
       "get": {
         "tags": [
-          "Provisioning"
+          "Provisioning",
+          "Repository"
         ],
         "description": "Get the frontend settings for this namespace",
         "operationId": "getFrontendSettings",
@@ -2570,7 +2571,8 @@
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/stats": {
       "get": {
         "tags": [
-          "Provisioning"
+          "Provisioning",
+          "Repository"
         ],
         "description": "Get resource stats for this namespace",
         "operationId": "getResourceStats",
