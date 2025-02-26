@@ -34,7 +34,7 @@ describe('SearchForm', () => {
     };
     const ds = {
       async metadataRequest(url) {
-        if (url === '/api/services') {
+        if (url === 'services') {
           return Promise.resolve(['jaeger-query', 'service2', 'service3']);
         }
         return undefined;
