@@ -17,7 +17,7 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService, setPluginComponentsHook, setPluginExtensionsHook } from '@grafana/runtime';
+import { config, locationService, setPluginExtensionsHook } from '@grafana/runtime';
 import { PANEL_EDIT_LAST_USED_DATASOURCE } from 'app/features/dashboard/utils/dashboard';
 import { InspectTab } from 'app/features/inspector/types';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
@@ -30,8 +30,6 @@ import { buildPanelEditScene } from '../PanelEditor';
 import { testDashboard, panelWithTransformations, panelWithQueriesOnly } from '../testfiles/testDashboard';
 
 import { PanelDataQueriesTab, PanelDataQueriesTabRendered } from './PanelDataQueriesTab';
-
-setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 
 async function createModelMock() {
   const { queriesTab } = await setupScene('panel-1');
