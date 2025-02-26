@@ -43,7 +43,6 @@ export interface FeatureToggles {
   cloudWatchCrossAccountQuerying?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
-  accessControlOnCall?: boolean;
   nestedFolders?: boolean;
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
@@ -173,7 +172,6 @@ export interface FeatureToggles {
   newDashboardSharingComponent?: boolean;
   alertingListViewV2?: boolean;
   dashboardRestore?: boolean;
-  datasourceProxyDisableRBAC?: boolean;
   alertingDisableSendAlertsExternal?: boolean;
   preserveDashboardStateWhenNavigating?: boolean;
   alertingCentralAlertHistory?: boolean;

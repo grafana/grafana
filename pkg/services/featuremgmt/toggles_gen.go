@@ -107,10 +107,6 @@ const (
 	// Use double quotes to escape keyword in a MySQL query
 	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
 
-	// FlagAccessControlOnCall
-	// Access control primitives for OnCall
-	FlagAccessControlOnCall = "accessControlOnCall"
-
 	// FlagNestedFolders
 	// Enable folder nesting
 	FlagNestedFolders = "nestedFolders"
@@ -626,10 +622,6 @@ const (
 	// FlagDashboardRestore
 	// Enables deleted dashboard restore feature
 	FlagDashboardRestore = "dashboardRestore"
-
-	// FlagDatasourceProxyDisableRBAC
-	// Disables applying a plugin route&#39;s ReqAction field to authorization
-	FlagDatasourceProxyDisableRBAC = "datasourceProxyDisableRBAC"
 
 	// FlagAlertingDisableSendAlertsExternal
 	// Disables the ability to send alerts to an external Alertmanager datasource.

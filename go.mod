@@ -74,10 +74,9 @@ require (
 	github.com/googleapis/gax-go/v2 v2.14.1 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.3 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20250221202230-9d7e00921e44 // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20250224133628-2acbeef29642 // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20250219100139-6a3b1bbb50e7 // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20250219092154-21ce22b49f31 // @grafana/identity-access-team
-	github.com/grafana/dashboard-linter v0.0.0-20241106223805-1e7999311752 // @grafana/grafana-app-platform-squad
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
 	github.com/grafana/dataplane/sdata v0.0.9 // @grafana/observability-metrics
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040 // @grafana/grafana-backend-group
@@ -172,13 +171,13 @@ require (
 	go.uber.org/goleak v1.3.0 // @grafana/grafana-search-and-storage
 	go.uber.org/zap v1.27.0 // @grafana/identity-access-team
 	gocloud.dev v0.40.0 // @grafana/grafana-app-platform-squad
-	golang.org/x/crypto v0.32.0 // @grafana/grafana-backend-group
+	golang.org/x/crypto v0.35.0 // @grafana/grafana-backend-group
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // @grafana/alerting-backend
 	golang.org/x/mod v0.22.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/net v0.34.0 // @grafana/oss-big-tent @grafana/partner-datasources
-	golang.org/x/oauth2 v0.26.0 // @grafana/identity-access-team
+	golang.org/x/net v0.35.0 // @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/oauth2 v0.27.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.11.0 // @grafana/alerting-backend
-	golang.org/x/text v0.21.0 // @grafana/grafana-backend-group
+	golang.org/x/text v0.22.0 // @grafana/grafana-backend-group
 	golang.org/x/time v0.9.0 // @grafana/grafana-backend-group
 	golang.org/x/tools v0.29.0 // indirect; @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.15.1 // @grafana/oss-big-tent
@@ -369,7 +368,6 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/s2a-go v0.1.8 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
-	github.com/grafana/grafana-foundation-sdk/go v0.0.0-20241101005901-83e3491f2a70 // indirect
 	github.com/grafana/jsonparser v0.0.0-20240425183733-ea80629e1a32 // indirect
 	github.com/grafana/loki/pkg/push v0.0.0-20231124142027-e52380921608 // indirect
 	github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc // indirect
@@ -533,7 +531,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go4.org/netipx v0.0.0-20230125063823-8449b0a6169f // indirect
 	golang.org/x/sys v0.30.0 // indirect
-	golang.org/x/term v0.28.0 // indirect
+	golang.org/x/term v0.29.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/genproto v0.0.0-20241021214115-324edc3d5d38 // indirect
@@ -561,7 +559,10 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-require github.com/google/go-github/v64 v64.0.0 // indirect
+require (
+	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
+	github.com/google/go-github/v64 v64.0.0 // indirect
+)
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
