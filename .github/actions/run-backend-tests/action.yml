@@ -1,9 +1,9 @@
 name: 'Run Backend Tests'
-description: 'Runs the Grafana backend unit tests'
+description: 'Runs the Grafana backend unit tests with code generation'
 
 runs:
   using: "composite"
   steps:
-    - name: Run tests
+    - name: Run tests with code generation
       shell: bash
-      run: make test-go-unit
+      run: make gen-go test-go-unit

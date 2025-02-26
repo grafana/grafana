@@ -54,9 +54,6 @@ jobs:
       - name: Verify Jsonnet generation
         run: CODEGEN_VERIFY=1 make gen-jsonnet
 
-      - name: Wire install
-        run: make gen-go
-
       - name: Run backend tests
         uses: ./.github/actions/run-backend-tests
 
