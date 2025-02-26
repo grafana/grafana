@@ -93,9 +93,9 @@ func TestBleveBackend(t *testing.T) {
 					Identity: "repo-1",
 				},
 				Source: &utils.SourceProperties{
-					Path:      "path/to/aaa.json",
-					Checksum:  "xyz",
-					Timestamp: 1609462800000, // 2021
+					Path:            "path/to/aaa.json",
+					Checksum:        "xyz",
+					TimestampMillis: 1609462800000, // 2021
 				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
@@ -125,9 +125,9 @@ func TestBleveBackend(t *testing.T) {
 					Identity: "repo-1",
 				},
 				Source: &utils.SourceProperties{
-					Path:      "path/to/bbb.json",
-					Checksum:  "hijk",
-					Timestamp: 1640998800000, // 2022
+					Path:            "path/to/bbb.json",
+					Checksum:        "hijk",
+					TimestampMillis: 1640998800000, // 2022
 				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
@@ -346,9 +346,9 @@ func TestBleveBackend(t *testing.T) {
 					Identity: "repo-1",
 				},
 				Source: &utils.SourceProperties{
-					Path:      "path/to/folder.json",
-					Checksum:  "xxxx",
-					Timestamp: 300,
+					Path:            "path/to/folder.json",
+					Checksum:        "xxxx",
+					TimestampMillis: 300,
 				},
 			})
 			_ = index.Write(&resource.IndexableDocument{

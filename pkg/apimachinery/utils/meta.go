@@ -730,7 +730,7 @@ func (m *grafanaMetaAccessor) GetSourceProperties() (SourceProperties, bool) {
 	}
 	if ok && t != "" {
 		var err error
-		res.Timestamp, err = strconv.ParseInt(t, 10, 64)
+		res.TimestampMillis, err = strconv.ParseInt(t, 10, 64)
 		if err != nil {
 			found = true
 		}
@@ -757,8 +757,8 @@ func (m *grafanaMetaAccessor) SetSourceProperties(v SourceProperties) {
 		delete(annot, AnnoKeySourceChecksum)
 	}
 
-	if v.Timestamp > 0 {
-		annot[AnnoKeySourceTimestamp] = strconv.FormatInt(v.Timestamp, 10)
+	if v.TimestampMillis > 0 {
+		annot[AnnoKeySourceTimestamp] = strconv.FormatInt(v.TimestampMillis, 10)
 	} else {
 		delete(annot, AnnoKeySourceTimestamp)
 	}

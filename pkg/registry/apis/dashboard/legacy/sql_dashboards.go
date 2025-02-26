@@ -321,9 +321,9 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 					return nil, err
 				}
 				meta.SetSourceProperties(utils.SourceProperties{
-					Path:      originPath, // relative path within source
-					Checksum:  origin_hash.String,
-					Timestamp: origin_ts.Int64,
+					Path:            originPath, // relative path within source
+					Checksum:        origin_hash.String,
+					TimestampMillis: origin_ts.Int64,
 				})
 				meta.SetManagerProperties(utils.ManagerProperties{
 					Kind:     utils.ManagerKindClassicFP,

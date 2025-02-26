@@ -95,7 +95,7 @@ func TestScanRow(t *testing.T) {
 		require.Equal(t, "../"+pathToFile, s.Path)       // relative to provisioner
 		require.Equal(t, "hashing", s.Checksum)
 		require.NoError(t, err)
-		require.Equal(t, int64(100000), s.Timestamp)
+		require.Equal(t, int64(100000), s.TimestampMillis)
 	})
 
 	t.Run("Plugin provisioned dashboard should have annotations", func(t *testing.T) {

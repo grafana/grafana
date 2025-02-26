@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/rand"
 	"k8s.io/apimachinery/pkg/api/apitesting"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/storage"
@@ -94,9 +93,9 @@ func TestPrepareObjectForStorage(t *testing.T) {
 			Identity: "test-repo",
 		})
 		meta.SetSourceProperties(utils.SourceProperties{
-			Path:      "test/path",
-			Checksum:  "hash",
-			Timestamp: metav1.NewTime(time.Now()),
+			Path:            "test/path",
+			Checksum:        "hash",
+			TimestampMillis: now.UnixMilli(),
 		})
 
 		encodedData, err := s.prepareObjectForStorage(ctx, obj)
@@ -115,7 +114,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.Equal(t, m.Identity, "test-repo")
 		require.Equal(t, s.Checksum, "hash")
 		require.Equal(t, s.Path, "test/path")
-		require.Equal(t, s.Timestamp.UTC().Format(time.RFC3339), now.UTC().Format(time.RFC3339))
+		require.Equal(t, s.TimestampMillis, now.UnixMilli())
 	})
 
 	s.opts.RequireDeprecatedInternalID = true

@@ -1562,7 +1562,7 @@ func (dr *DashboardServiceImpl) saveProvisionedDashboardThroughK8s(ctx context.C
 		m.Identity = provisioning.Name
 		s.Path = provisioning.ExternalID
 		s.Checksum = provisioning.CheckSum
-		s.Timestamp = time.Unix(provisioning.Updated, 0).UnixMilli()
+		s.TimestampMillis = time.Unix(provisioning.Updated, 0).UnixMilli()
 	}
 	meta.SetManagerProperties(m)
 	meta.SetSourceProperties(s)
@@ -1894,8 +1894,8 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 					},
 					DashboardUID: hit.Name,
 				}
-				if source.Timestamp > 0 {
-					provisioning.Updated = time.UnixMilli(source.Timestamp).Unix()
+				if source.TimestampMillis > 0 {
+					provisioning.Updated = time.UnixMilli(source.TimestampMillis).Unix()
 				}
 
 				mu.Lock()

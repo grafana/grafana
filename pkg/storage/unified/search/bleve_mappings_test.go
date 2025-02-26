@@ -30,9 +30,9 @@ func TestDocumentMapping(t *testing.T) {
 			Identity: "nnn",
 		},
 		Source: &utils.SourceProperties{
-			Path:      "ppp",
-			Checksum:  "hhh",
-			Timestamp: 1234,
+			Path:            "ppp",
+			Checksum:        "hhh",
+			TimestampMillis: 1234,
 		},
 	}
 
