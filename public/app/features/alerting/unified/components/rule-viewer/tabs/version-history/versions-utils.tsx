@@ -131,7 +131,7 @@ export function parseVersionInfoToSummary(version: RulerGrafanaRuleDTO<GrafanaRu
   })();
 
   return {
-    created: version.grafana_alert.updated || unknown,
+    createdAt: version.grafana_alert.updated || unknown,
     createdBy,
     version: version.grafana_alert.version || unknown,
   };

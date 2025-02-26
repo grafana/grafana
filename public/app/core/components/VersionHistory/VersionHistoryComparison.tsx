@@ -12,7 +12,7 @@ import { jsonDiff } from 'app/features/dashboard-scene/settings/version-history/
 export interface RevisionModel {
   version: number | string;
   /** When was this version created? */
-  created: string;
+  createdAt: string;
   /** Who created/edited this version? */
   createdBy: string;
   /** Optional message describing change encapsulated in this version */
@@ -45,8 +45,8 @@ type DiffViewProps<T extends DiffArgument> = {
 };
 
 const VersionChangeSummary = ({ info }: { info: RevisionModel }) => {
-  const { created, createdBy, version, message = '' } = info;
-  const ageString = dateTimeFormatTimeAgo(created);
+  const { createdAt, createdBy, version, message = '' } = info;
+  const ageString = dateTimeFormatTimeAgo(createdAt);
   return (
     <Trans i18nKey="core.versionHistory.comparison.header.text">
       Version {{ version }} updated by {{ createdBy }} ({{ ageString }}) {{ message }}
