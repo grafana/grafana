@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -714,6 +715,9 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
+	cfg.UnifiedAlerting.RuleVersionRecordLimit = -1
+
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	logger := log.New("test-dbstore")
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
@@ -779,6 +783,43 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Empty(t, savedInstances)
+	})
+
+	t.Run("should reset rule_uid in rule_versions", func(t *testing.T) {
+		// Create a new store to pass the custom bus to check the signal
+		b := &fakeBus{}
+		logger := log.New("test-dbstore")
+		store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
+		rule := gen.GenerateRef()
+		rule.Version = 1
+		res, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.AlertRule{*rule})
+		require.NoError(t, err)
+		rule, err = store.GetRuleByID(context.Background(), models.GetAlertRuleByIDQuery{ID: res[0].ID, OrgID: rule.OrgID})
+		require.NoError(t, err)
+
+		rule2 := rule.Copy()
+		rule2.Title = rule2.Title + "2"
+		err = store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, []models.UpdateRule{
+			{
+				Existing: rule,
+				New:      *rule2,
+			},
+		})
+		require.NoError(t, err)
+
+		versions, err := store.GetAlertRuleVersions(context.Background(), rule.OrgID, rule.GUID)
+		require.Len(t, versions, 2)
+
+		err = store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, rule.UID)
+		require.NoError(t, err)
+
+		_ = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			var versions []alertRuleVersion
+			err = sess.Table(alertRuleVersion{}).Where(`rule_guid = ? AND rule_uid = ''`, rule.GUID).Find(&versions)
+			require.NoError(t, err)
+			require.Len(t, versions, 2)
+			return nil
+		})
 	})
 }
 
