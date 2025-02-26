@@ -39,7 +39,7 @@
     "storybook:build": "storybook build -o ./dist/storybook -c .storybook",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && ALIAS_PACKAGE_NAME=unstable node ../../scripts/prepare-npm-package.js",
-    "postpack": "mv package.json.bak package.json"
+    "postpack": "mv package.json.bak package.json && rimraf ./unstable"
   },
   "browserslist": [
     "defaults",
