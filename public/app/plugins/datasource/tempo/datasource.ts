@@ -97,6 +97,16 @@ interface ServiceMapQueryResponseWithRates {
   edges: DataFrame;
 }
 
+interface TempoQueryMetrics {
+  success: boolean;
+  streaming?: boolean;
+  latencyMs: number;
+  query?: string;
+  error?: string;
+  statusCode?: number;
+  statusText?: string;
+}
+
 export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJsonData> {
   tracesToLogs?: TraceToLogsOptions;
   serviceMap?: {
@@ -433,14 +443,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
                 end: options.range.to.unix(),
               }).pipe(
                 map((response) => {
-                  reportInteraction('grafana_traces_traceql_response', {
-                    datasourceType: 'tempo',
-                    app: options.app ?? '',
-                    grafana_version: config.buildInfo.version,
-                    query: queryFromFilters ?? '',
+                  reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
                     success: true,
-                    streaming: true,
+                    streaming: false,
                     latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+                    query: queryFromFilters ?? '',
                   });
                   return {
                     data: formatTraceQLResponse(
@@ -451,14 +458,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
                   };
                 }),
                 catchError((err) => {
-                  reportInteraction('grafana_traces_traceql_response', {
-                    datasourceType: 'tempo',
-                    app: options.app ?? '',
-                    grafana_version: config.buildInfo.version,
-                    query: queryFromFilters ?? '',
+                  reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
                     success: false,
                     streaming: false,
                     latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+                    query: queryFromFilters ?? '',
                     error: getErrorMessage(err.message),
                     statusCode: err.status,
                     statusText: err.statusText,
@@ -603,40 +607,31 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return super.query(request).pipe(
       map((response) => {
         if (response.error) {
-          reportInteraction('grafana_traces_traceID_response', {
-            datasourceType: 'tempo',
-            app: options.app ?? '',
-            grafana_version: config.buildInfo.version,
-            query: query ?? '',
+          reportTempoQueryMetrics('grafana_traces_traceID_response', options, {
             success: false,
             streaming: false,
             latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+            query: query ?? '',
             error: getErrorMessage(response.error.message),
             statusCode: response.error.status,
             statusText: response.error.statusText,
           });
           return response;
         }
-        reportInteraction('grafana_traces_traceID_response', {
-          datasourceType: 'tempo',
-          app: options.app ?? '',
-          grafana_version: config.buildInfo.version,
-          query: query ?? '',
+        reportTempoQueryMetrics('grafana_traces_traceID_response', options, {
           success: true,
           streaming: false,
           latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+          query: query ?? '',
         });
         return transformTrace(response, this.instanceSettings, this.nodeGraph?.enabled);
       }),
       catchError((error) => {
-        reportInteraction('grafana_traces_traceID_response', {
-          datasourceType: 'tempo',
-          app: options.app ?? '',
-          grafana_version: config.buildInfo.version,
-          query: query ?? '',
+        reportTempoQueryMetrics('grafana_traces_traceID_response', options, {
           success: false,
           streaming: false,
           latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+          query: query ?? '',
           error: getErrorMessage(error.message),
           statusCode: error.status,
           statusText: error.statusText,
@@ -665,28 +660,22 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         end: options.range.to.unix(),
       }).pipe(
         map((response) => {
-          reportInteraction('grafana_traces_traceql_response', {
-            datasourceType: 'tempo',
-            app: options.app ?? '',
-            grafana_version: config.buildInfo.version,
-            query: queryValue ?? '',
+          reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
             success: true,
             streaming: false,
             latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+            query: queryValue ?? '',
           });
           return {
             data: formatTraceQLResponse(response.data.traces, this.instanceSettings, targets.traceql[0].tableType),
           };
         }),
         catchError((err) => {
-          reportInteraction('grafana_traces_traceql_response', {
-            datasourceType: 'tempo',
-            app: options.app ?? '',
-            grafana_version: config.buildInfo.version,
-            query: queryValue ?? '',
+          reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
             success: false,
             streaming: false,
             latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+            query: queryValue ?? '',
             error: getErrorMessage(err.message),
             statusCode: err.status,
             statusText: err.statusText,
@@ -715,28 +704,20 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     const request = { ...options, targets: validTargets };
     return super.query(request).pipe(
       map((response) => {
-        const latencyMs = performance.now() - startTime;
-        reportInteraction('grafana_traces_traceql_metrics_response', {
-          datasourceType: 'tempo',
-          app: options.app ?? '',
-          grafana_version: config.buildInfo.version,
-          query: query ?? '',
+        reportTempoQueryMetrics('grafana_traces_traceql_metrics_response', options, {
           success: true,
           streaming: false,
-          latencyMs: Math.round(latencyMs), // rounded to nearest millisecond
+          latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+          query: query ?? '',
         });
         return enhanceTraceQlMetricsResponse(response, this.instanceSettings);
       }),
       catchError((err) => {
-        const latencyMs = performance.now() - startTime;
-        reportInteraction('grafana_traces_traceql_metrics_response', {
-          datasourceType: 'tempo',
-          app: options.app ?? '',
-          grafana_version: config.buildInfo.version,
-          query: query ?? '',
+        reportTempoQueryMetrics('grafana_traces_traceql_metrics_response', options, {
           success: false,
           streaming: false,
-          latencyMs: Math.round(latencyMs), // rounded to nearest millisecond
+          latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+          query: query ?? '',
           error: getErrorMessage(err.data.message),
           statusCode: err.status,
           statusText: err.statusText,
@@ -774,14 +755,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }).pipe(
       map((response) => {
         if (!response.data.summaries) {
-          reportInteraction('grafana_traces_metrics_summary_response', {
-            datasourceType: 'tempo',
-            app: options.app ?? '',
-            grafana_version: config.buildInfo.version,
-            query: query ?? '',
+          reportTempoQueryMetrics('grafana_traces_metrics_summary_response', options, {
             success: false,
             streaming: false,
             latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+            query: query ?? '',
             error: getErrorMessage(`No summary data for '${groupBy}'.`),
           });
           return {
@@ -794,14 +772,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         // Check if any of the results have series data as older versions of Tempo placed the series data in a different structure
         const hasSeries = response.data.summaries.some((summary: MetricsSummary) => summary.series.length > 0);
         if (!hasSeries) {
-          reportInteraction('grafana_traces_metrics_summary_response', {
-            datasourceType: 'tempo',
-            app: options.app ?? '',
-            grafana_version: config.buildInfo.version,
-            query: query ?? '',
+          reportTempoQueryMetrics('grafana_traces_metrics_summary_response', options, {
             success: false,
             streaming: false,
             latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+            query: query ?? '',
             error: getErrorMessage(`No series data. Ensure you are using an up to date version of Tempo`),
           });
           return {
@@ -811,28 +786,22 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             data: emptyResponse,
           };
         }
-        reportInteraction('grafana_traces_metrics_summary_response', {
-          datasourceType: 'tempo',
-          app: options.app ?? '',
-          grafana_version: config.buildInfo.version,
-          query: query ?? '',
+        reportTempoQueryMetrics('grafana_traces_metrics_summary_response', options, {
           success: true,
           streaming: false,
           latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
-        });              
+          query: query ?? '',
+        });
         return {
           data: createTableFrameFromMetricsSummaryQuery(response.data.summaries, query, this.instanceSettings),
         };
       }),
       catchError((error) => {
-        reportInteraction('grafana_traces_metrics_summary_response', {
-          datasourceType: 'tempo',
-          app: options.app ?? '',
-          grafana_version: config.buildInfo.version,
-          query: query ?? '',
+        reportTempoQueryMetrics('grafana_traces_metrics_summary_response', options, {
           success: false,
           streaming: false,
           latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+          query: query ?? '',
           error: getErrorMessage(error.data.message),
           statusCode: error.status,
           statusText: error.statusText,
@@ -868,14 +837,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       )
     ).pipe(
       catchError((error) => {
-        reportInteraction('grafana_traces_traceql_response', {
-          datasourceType: 'tempo',
-          app: options.app ?? '',
-          grafana_version: config.buildInfo.version,
-          query: query ?? '',
+        reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
           success: false,
           streaming: true,
           latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+          query: query ?? '',
           error: getErrorMessage(error.data.message),
           statusCode: error.status,
           statusText: error.statusText,
@@ -884,13 +850,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         throw error;
       }),
       finalize(() => {
-        reportInteraction('grafana_traces_traceql_response', {
-          datasourceType: 'tempo',
-          app: options.app ?? '',
-          grafana_version: config.buildInfo.version,
-          query: query ?? '',
+        reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
           success: true,
           streaming: true,
+          query: query ?? '',
           latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
         });
       })
@@ -919,14 +882,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       )
     ).pipe(
       catchError((error) => {
-        reportInteraction('grafana_traces_traceql_metrics_response', {
-          datasourceType: 'tempo',
-          app: options.app ?? '',
-          grafana_version: config.buildInfo.version,
-          query: query ?? '',
+        reportTempoQueryMetrics('grafana_traces_traceql_metrics_response', options, {
           success: false,
           streaming: true,
           latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+          query: query ?? '',
           error: getErrorMessage(error.data.message),
           statusCode: error.status,
           statusText: error.statusText,
@@ -935,13 +895,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         throw error;
       }),
       finalize(() => {
-        reportInteraction('grafana_traces_traceql_metrics_response', {
-          datasourceType: 'tempo',
-          app: options.app ?? '',
-          grafana_version: config.buildInfo.version,
-          query: query ?? '',
+        reportTempoQueryMetrics('grafana_traces_traceql_metrics_response', options, {
           success: true,
           streaming: true,
+          query: query ?? '',
           latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
         });
       })
@@ -1645,6 +1602,44 @@ function getServiceGraphViewDataFrames(
   }
 
   return df;
+}
+
+/**
+ * Reports metrics for Tempo query interactions.
+ *
+ * @param options - The data query request options containing app and other context
+ * @param metrics - Object containing metrics to report:
+ *   - success: Whether the query was successful
+ *   - streaming: (optional) Whether streaming was used
+ *   - latencyMs: Query execution time in milliseconds
+ *   - query: (optional) The query string that was executed
+ *   - error: (optional) Error message if query failed
+ *   - statusCode: (optional) HTTP status code if query failed
+ *   - statusText: (optional) HTTP status text if query failed
+ * @param interactionName - (optional) Name of the interaction to report.
+ *                         Defaults to 'grafana_traces_traceql_response'
+ *
+ * @example
+ * ```typescript
+ * reportTempoQueryMetrics(options, {
+ *   success: true,
+ *   streaming: true,
+ *   latencyMs: Math.round(performance.now() - startTime),
+ *   query: 'my query'
+ * });
+ * ```
+ */
+function reportTempoQueryMetrics(
+  interactionName: string,
+  options: DataQueryRequest<TempoQuery>,
+  metrics: TempoQueryMetrics,
+) {
+  reportInteraction(interactionName, {
+    datasourceType: 'tempo',
+    app: options.app ?? '',
+    grafana_version: config.buildInfo.version,
+    ...metrics,
+  });
 }
 
 export function buildExpr(
