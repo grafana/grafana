@@ -1,9 +1,8 @@
-import { render, screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render, screen, within } from 'test/test-utils';
 
-import { locationService, setAngularLoader, setDataSourceSrv } from '@grafana/runtime';
-import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
+import { locationService, setAngularLoader } from '@grafana/runtime';
+import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 
 import { DashboardModel } from '../../state/DashboardModel';
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
@@ -18,11 +17,7 @@ function setup(dashboard: DashboardModel, editIndex?: number) {
     },
   };
 
-  return render(
-    <TestProvider>
-      <AnnotationsSettings sectionNav={sectionNav} dashboard={dashboard} editIndex={editIndex} />
-    </TestProvider>
-  );
+  return render(<AnnotationsSettings sectionNav={sectionNav} dashboard={dashboard} editIndex={editIndex} />);
 }
 
 describe('AnnotationsSettings', () => {
@@ -56,7 +51,7 @@ describe('AnnotationsSettings', () => {
     ),
   };
 
-  setDataSourceSrv(new MockDataSourceSrv(dataSources));
+  setupDataSources(...Object.values(dataSources));
 
   const getTableBody = () => screen.getAllByRole('rowgroup')[1];
   const getTableBodyRows = () => within(getTableBody()).getAllByRole('row');
@@ -149,7 +144,7 @@ describe('AnnotationsSettings', () => {
       },
     ];
 
-    setup(dashboard);
+    const { user } = setup(dashboard);
 
     // Check that we have sorting buttons
     expect(within(getTableBodyRows()[0]).queryByRole('button', { name: 'Move up' })).not.toBeInTheDocument();
@@ -166,9 +161,9 @@ describe('AnnotationsSettings', () => {
     expect(within(getTableBodyRows()[1]).queryByText(/annotation 2/i)).toBeInTheDocument();
     expect(within(getTableBodyRows()[2]).queryByText(/annotation 3/i)).toBeInTheDocument();
 
-    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'Move down' })[0]);
-    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'Move down' })[1]);
-    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'Move up' })[0]);
+    await user.click(within(getTableBody()).getAllByRole('button', { name: 'Move down' })[0]);
+    await user.click(within(getTableBody()).getAllByRole('button', { name: 'Move down' })[1]);
+    await user.click(within(getTableBody()).getAllByRole('button', { name: 'Move up' })[0]);
 
     // Checking if it has changed the sorting accordingly
     expect(within(getTableBodyRows()[0]).queryByText(/annotation 3/i)).toBeInTheDocument();
@@ -177,9 +172,9 @@ describe('AnnotationsSettings', () => {
   });
 
   test('Adding a new annotation', async () => {
-    setup(dashboard);
+    const { user } = setup(dashboard);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Add annotation query' }));
+    await user.click(screen.getByRole('button', { name: 'Add annotation query' }));
 
     expect(locationService.getSearchObject().editIndex).toBe('1');
     expect(dashboard.annotations.list.length).toBe(2);
@@ -193,18 +188,18 @@ describe('AnnotationsSettings', () => {
       enable: true,
     });
 
-    setup(dashboard, 1);
+    const { user } = setup(dashboard, 1);
 
     const nameInput = screen.getByRole('textbox', { name: /name/i });
-    await userEvent.clear(nameInput);
-    await userEvent.type(nameInput, 'My Prometheus Annotation');
+    await user.clear(nameInput);
+    await user.type(nameInput, 'My Prometheus Annotation');
 
-    await userEvent.click(screen.getByPlaceholderText(/testdata/i));
+    await user.click(screen.getByPlaceholderText(/testdata/i));
 
     expect(await screen.findByText(/Prometheus/i)).toBeVisible();
     expect(screen.queryAllByText(/testdata/i)).toHaveLength(1);
 
-    await userEvent.click(screen.getByText(/prometheus/i));
+    await user.click(screen.getByText(/prometheus/i));
 
     expect(screen.getByRole('checkbox', { name: /hidden/i })).not.toBeChecked();
   });
@@ -222,9 +217,9 @@ describe('AnnotationsSettings', () => {
         type: 'dashboard',
       },
     ];
-    setup(dashboard, 1); // Edit the not built-in annotations
+    const { user } = setup(dashboard, 1); // Edit the not built-in annotations
 
-    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
 
     expect(locationService.getSearchObject().editIndex).toBe(undefined);
     expect(dashboard.annotations.list.length).toBe(1); // started with two

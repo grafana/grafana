@@ -18,8 +18,10 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -1606,7 +1608,7 @@ func TestProvisiongWithFullpath(t *testing.T) {
 	fStore := folderimpl.ProvideStore(sqlStore)
 	folderService := folderimpl.ProvideService(
 		fStore, ac, inProcBus, dashboardStore, folderStore,
-		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
+		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
 
 	ruleService := createAlertRuleService(t, folderService)
 	var orgID int64 = 1
@@ -1642,7 +1644,7 @@ func TestProvisiongWithFullpath(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, namespaceTitle, res2.FolderFullpath)
 
-		res3, err := ruleService.GetAlertGroupsWithFolderFullpath(context.Background(), &signedInUser, []string{namespaceUID})
+		res3, err := ruleService.GetAlertGroupsWithFolderFullpath(context.Background(), &signedInUser, &FilterOptions{NamespaceUIDs: []string{namespaceUID}})
 		require.NoError(t, err)
 		assert.Equal(t, namespaceTitle, res3[0].FolderFullpath)
 	})
@@ -1673,7 +1675,7 @@ func TestProvisiongWithFullpath(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "my-namespace/my-other-namespace containing multiple \\/\\/", res2.FolderFullpath)
 
-		res3, err := ruleService.GetAlertGroupsWithFolderFullpath(context.Background(), &signedInUser, []string{otherNamespaceUID})
+		res3, err := ruleService.GetAlertGroupsWithFolderFullpath(context.Background(), &signedInUser, &FilterOptions{NamespaceUIDs: []string{otherNamespaceUID}})
 		require.NoError(t, err)
 		assert.Equal(t, "my-namespace/my-other-namespace containing multiple \\/\\/", res3[0].FolderFullpath)
 	})

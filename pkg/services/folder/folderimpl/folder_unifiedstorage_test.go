@@ -36,9 +36,11 @@ import (
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -46,10 +48,10 @@ type rcp struct {
 	Host string
 }
 
-func (r rcp) GetRestConfig(ctx context.Context) *clientrest.Config {
+func (r rcp) GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
 	return &clientrest.Config{
 		Host: r.Host,
-	}
+	}, nil
 }
 
 func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
@@ -178,11 +180,11 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	}
 
 	featuresArr := []any{
-		featuremgmt.FlagKubernetesFoldersServiceV2}
+		featuremgmt.FlagKubernetesClientDashboardsFolders}
 	features := featuremgmt.WithFeatures(featuresArr...)
 
 	dashboardStore := dashboards.NewFakeDashboardStore(t)
-	k8sCli := client.NewK8sHandler(cfg, request.GetNamespaceMapper(cfg), v0alpha1.FolderResourceInfo.GroupVersionResource(), restCfgProvider.GetRestConfig, dashboardStore, userService)
+	k8sCli := client.NewK8sHandler(dualwrite.ProvideTestService(), request.GetNamespaceMapper(cfg), v0alpha1.FolderResourceInfo.GroupVersionResource(), restCfgProvider.GetRestConfig, dashboardStore, userService, nil, sort.ProvideService())
 	unifiedStore := ProvideUnifiedStore(k8sCli, userService)
 
 	ctx := context.Background()
@@ -205,6 +207,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 
 	publicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 
+	fakeK8sClient := new(client.MockK8sHandler)
 	folderService := &Service{
 		log:                    slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
 		unifiedStore:           unifiedStore,
@@ -215,7 +218,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		metrics:                newFoldersMetrics(nil),
 		tracer:                 tracing.InitializeTracerForTest(),
 		k8sclient:              k8sCli,
-		dashboardStore:         dashboardStore,
+		dashboardK8sClient:     fakeK8sClient,
 		publicDashboardService: publicDashboardService,
 	}
 
@@ -347,7 +350,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid should not return access denied error - ForceDeleteRules false", func(t *testing.T) {
-				dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{}, nil).Once()
+				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{Results: &resource.ResourceTable{}}, nil).Once()
 				publicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 				err := folderService.Delete(ctx, &folder.DeleteFolderCommand{
@@ -361,6 +364,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 
 			t.Run("When deleting folder by uid, expectedForceDeleteRules as false, and dashboard Restore turned on should not return access denied error", func(t *testing.T) {
 				folderService.features = featuremgmt.WithFeatures(append(featuresArr, featuremgmt.FlagDashboardRestore)...)
+				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{Results: &resource.ResourceTable{}}, nil).Once()
 
 				expectedForceDeleteRules := false
 				err := folderService.Delete(ctx, &folder.DeleteFolderCommand{
@@ -374,6 +378,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 
 			t.Run("When deleting folder by uid, expectedForceDeleteRules as true, and dashboard Restore turned on should not return access denied error", func(t *testing.T) {
 				folderService.features = featuremgmt.WithFeatures(append(featuresArr, featuremgmt.FlagDashboardRestore)...)
+				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{Results: &resource.ResourceTable{}}, nil).Once()
 
 				expectedForceDeleteRules := true
 				err := folderService.Delete(ctx, &folder.DeleteFolderCommand{
@@ -525,7 +530,7 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 	}
 	service := Service{
 		k8sclient:    fakeK8sClient,
-		features:     featuremgmt.WithFeatures(featuremgmt.FlagKubernetesFoldersServiceV2),
+		features:     featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders),
 		unifiedStore: folderStore,
 	}
 	user := &user.SignedInUser{OrgID: 1}
@@ -549,7 +554,7 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 				},
 				Labels: []*resource.Requirement{},
 			},
-			Limit: 100000}).Return(&resource.ResourceSearchResponse{
+			Limit: folderSearchLimit}).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
@@ -644,7 +649,7 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 					},
 				},
 			},
-			Limit: 100000}).Return(&resource.ResourceSearchResponse{
+			Limit: folderSearchLimit}).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
@@ -711,7 +716,7 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 			},
 			Query:  "*test*",
 			Fields: dashboardsearch.IncludeFields,
-			Limit:  100000}).Return(&resource.ResourceSearchResponse{
+			Limit:  folderSearchLimit}).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
@@ -778,7 +783,7 @@ func TestDeleteFoldersFromApiServer(t *testing.T) {
 		dashboardStore:         dashboardStore,
 		publicDashboardService: publicDashboardFakeService,
 		registry:               make(map[string]folder.RegistryService),
-		features:               featuremgmt.WithFeatures(featuremgmt.FlagKubernetesFoldersServiceV2),
+		features:               featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders),
 	}
 	user := &user.SignedInUser{OrgID: 1}
 	ctx := identity.WithRequester(context.Background(), user)
@@ -797,52 +802,22 @@ func TestDeleteFoldersFromApiServer(t *testing.T) {
 	require.NoError(t, service.RegisterService(alertingStore))
 
 	t.Run("Should delete folder", func(t *testing.T) {
-		dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{}, nil).Once()
-		publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+		publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{}).Return(nil).Once()
+		dashboardK8sclient.On("Search", mock.Anything, int64(1), mock.Anything).Return(&resource.ResourceSearchResponse{Results: &resource.ResourceTable{}}, nil).Once()
 		err := service.deleteFromApiServer(ctx, &folder.DeleteFolderCommand{
-			UID:          "uid",
+			UID:          "uid1",
 			OrgID:        1,
 			SignedInUser: user,
 		})
 		require.NoError(t, err)
-	})
-
-	t.Run("Should delete dashboards and public dashboards within the folder", func(t *testing.T) {
-		dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{
-			{
-				UID:   "test",
-				OrgID: 1,
-			},
-			{
-				UID:   "test2",
-				OrgID: 1,
-			},
-		}, nil).Once()
-		dashboardStore.On("DeleteDashboard", mock.Anything, &dashboards.DeleteDashboardCommand{
-			UID:   "test",
-			OrgID: 1,
-		}).Return(nil).Once()
-		dashboardStore.On("DeleteDashboard", mock.Anything, &dashboards.DeleteDashboardCommand{
-			UID:   "test2",
-			OrgID: 1,
-		}).Return(nil).Once()
-		publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"test", "test2"}).Return(nil).Once()
-		err := service.deleteFromApiServer(ctx, &folder.DeleteFolderCommand{
-			UID:          "uid",
-			OrgID:        1,
-			SignedInUser: user,
-		})
-		require.NoError(t, err)
-		dashboardStore.AssertExpectations(t)
+		dashboardK8sclient.AssertExpectations(t)
 		publicDashboardFakeService.AssertExpectations(t)
 	})
 
-	// enable k8s ff for dashboards, retest
-	service.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesFoldersServiceV2, featuremgmt.FlagKubernetesCliDashboards)
-
-	t.Run("Should delete dashboards and public dashboards within the folder through k8s if the ff is enabled", func(t *testing.T) {
-		publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"uid1"}).Return(nil).Once()
-		dashboardK8sclient.On("Delete", mock.Anything, "uid1", int64(1), mock.Anything).Return(nil).Once()
+	t.Run("Should delete folders, dashboards, and public dashboards within the folder", func(t *testing.T) {
+		fakeFolderStore.ExpectedFolders = []*folder.Folder{{UID: "uid2", ID: 2}}
+		dashboardK8sclient.On("Delete", mock.Anything, "test", int64(1), mock.Anything).Return(nil).Once()
+		dashboardK8sclient.On("Delete", mock.Anything, "test2", int64(1), mock.Anything).Return(nil).Once()
 		dashboardK8sclient.On("Search", mock.Anything, int64(1), &resource.ResourceSearchRequest{
 			Options: &resource.ListOptions{
 				Labels: []*resource.Requirement{},
@@ -850,11 +825,11 @@ func TestDeleteFoldersFromApiServer(t *testing.T) {
 					{
 						Key:      resource.SEARCH_FIELD_FOLDER,
 						Operator: string(selection.In),
-						Values:   []string{"uid1"},
+						Values:   []string{"uid2", "uid"},
 					},
 				},
 			},
-			Limit: 100000}).Return(&resource.ResourceSearchResponse{
+			Limit: folderSearchLimit}).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
@@ -869,11 +844,21 @@ func TestDeleteFoldersFromApiServer(t *testing.T) {
 				Rows: []*resource.ResourceTableRow{
 					{
 						Key: &resource.ResourceKey{
-							Name:     "uid1",
-							Resource: "folder",
+							Name:     "test",
+							Resource: "dashboard",
 						},
 						Cells: [][]byte{
-							[]byte("folder1"),
+							[]byte("uid"),
+							[]byte(""),
+						},
+					},
+					{
+						Key: &resource.ResourceKey{
+							Name:     "test2",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("uid2"),
 							[]byte(""),
 						},
 					},
@@ -881,13 +866,14 @@ func TestDeleteFoldersFromApiServer(t *testing.T) {
 			},
 			TotalHits: 1,
 		}, nil).Once()
+		publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"test", "test2"}).Return(nil).Once()
 		err := service.deleteFromApiServer(ctx, &folder.DeleteFolderCommand{
-			UID:          "uid1",
+			UID:          "uid",
 			OrgID:        1,
 			SignedInUser: user,
 		})
 		require.NoError(t, err)
+		dashboardStore.AssertExpectations(t)
 		publicDashboardFakeService.AssertExpectations(t)
-		dashboardK8sclient.AssertExpectations(t)
 	})
 }
