@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Button, useStyles2, Icon } from '@grafana/ui';
 import { FeatureInfo } from './types';
 import { css } from '@emotion/css';
-import { CodeBlockWithCopy } from './CodeBlockWithCopy';
+import { InstructionStepComponent } from './InstructionStepComponent';
 
 // Moved from types.ts and renamed to Props
 export interface Props {
@@ -106,22 +106,8 @@ export const InstructionsModal = ({ feature, isOpen, onDismiss }: Props) => {
         </div>
 
         <div className={customStyles.mainContent}>
-          <div className={customStyles.stepIndicator}>
-            <span className={customStyles.stepTitle}>{currentStepData?.title}</span>
-          </div>
-
           <div className={customStyles.content}>
-            <p className={customStyles.description}>{currentStepData?.description}</p>
-
-            {currentStepData?.code && (
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
-                <CodeBlockWithCopy
-                  code={currentStepData.code}
-                  className={customStyles.codeBlockCustom}
-                  copyCode={currentStepData.copyCode}
-                />
-              </div>
-            )}
+            <InstructionStepComponent step={currentStepData} />
           </div>
 
           <div className={customStyles.footer}>
@@ -245,31 +231,12 @@ const getCustomStyles = () => {
       color: white;
       font-weight: 500;
     `,
-    stepIndicator: css`
-      display: flex;
-      align-items: center;
-      padding: 16px 24px 12px;
-      border-bottom: 1px solid #222426;
-    `,
-    stepTitle: css`
-      font-size: 18px;
-      font-weight: 500;
-      color: #d8d9da;
-    `,
     content: css`
-      padding: 16px 24px;
       flex: 1;
       display: flex;
       flex-direction: column;
       overflow-y: auto;
       margin-bottom: 60px;
-    `,
-    description: css`
-      margin-bottom: 16px;
-      font-size: 14px;
-    `,
-    codeBlockCustom: css`
-      margin: 0;
     `,
     footer: css`
       position: absolute;
