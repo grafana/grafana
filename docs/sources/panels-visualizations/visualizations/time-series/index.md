@@ -362,7 +362,7 @@ Set the position of the bar relative to a data point. In the examples below, **S
 
 {{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-### Data links
+### Data links and actions
 
 {{< docs/shared lookup="visualizations/datalink-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 

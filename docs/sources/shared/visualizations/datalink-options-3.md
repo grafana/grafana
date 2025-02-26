@@ -1,7 +1,7 @@
 ---
 title: Data links and actions options
 comments: |
-  This file is used in the following visualizations: bar chart, candlestick, state timeline, status history, time series, trend, xy chart
+  This file is used in the following visualizations: table
 ---
 
 _Data links_ allow you to link to other panels, dashboards, and external resources and _actions_ let you trigger basic, unauthenticated, API calls.
@@ -12,7 +12,9 @@ For each data link, set the following options:
 - **Title**
 - **URL**
 - **Open in new tab**
-- **One click** - Opens the data link with a single click. Only one data link can have **One click** enabled at a time.
+
+Data links for this visualization don't include the **One click** switch, however, if there's only one data link configured, that data link has single-click functionality.
+If multiple data links are configured, then clicking the visualization opens a menu that displays all the data links.
 
 For each action, define the following API call settings:
 
