@@ -1,4 +1,5 @@
-import { useStyles2, Text, IconButton } from '@grafana/ui';
+import React from 'react';
+import { useStyles2, Text, IconButton, Box, Stack } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -17,37 +18,41 @@ export const InstructionsSidebar = ({ steps, currentStep, onStepClick }: Instruc
 
   return (
     <div className={styles.sidebar}>
-      {steps.map((step, index) => {
-        const isCompleted = index < currentStep;
-        const isCurrent = index === currentStep;
-        const isPending = index > currentStep;
+      <Stack direction="column" gap={2}>
+        {steps.map((step, index) => {
+          const isCompleted = index < currentStep;
+          const isCurrent = index === currentStep;
+          const isPending = index > currentStep;
 
-        const iconColor = isCompleted ? 'success' : isCurrent ? 'primary' : 'secondary';
-        const iconAriaLabel = isCompleted ? 'Completed step' : isCurrent ? 'Current step' : 'Pending step';
+          const iconColor = isCompleted ? 'success' : isCurrent ? 'primary' : 'secondary';
+          const iconAriaLabel = isCompleted ? 'Completed step' : isCurrent ? 'Current step' : 'Pending step';
 
-        return (
-          <div
-            key={index}
-            className={`${styles.stepItem} ${isCurrent ? styles.activeStep : ''}`}
-            onClick={() => onStepClick(index)}
-          >
-            <IconButton
-              name={isCompleted ? 'check-circle' : 'circle'}
-              size="sm"
-              variant={isPending ? 'secondary' : 'primary'}
-              color={iconColor}
-              aria-label={iconAriaLabel}
-              onClick={(e) => {
-                e.stopPropagation();
-                onStepClick(index);
-              }}
-            />
-            <Text color={isCurrent ? 'primary' : 'secondary'} weight={isCurrent ? 'medium' : 'regular'}>
-              {step}
-            </Text>
-          </div>
-        );
-      })}
+          return (
+            <div
+              key={index}
+              className={`${styles.stepItem} ${isCurrent ? styles.activeStep : ''}`}
+              onClick={() => onStepClick(index)}
+            >
+              <Stack direction="row" alignItems="center" gap={2}>
+                <IconButton
+                  name={isCompleted ? 'check-circle' : 'circle'}
+                  size="sm"
+                  variant={isPending ? 'secondary' : 'primary'}
+                  color={iconColor}
+                  aria-label={iconAriaLabel}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStepClick(index);
+                  }}
+                />
+                <Text color={isCurrent ? 'primary' : 'secondary'} weight={isCurrent ? 'medium' : 'regular'}>
+                  {step}
+                </Text>
+              </Stack>
+            </div>
+          );
+        })}
+      </Stack>
     </div>
   );
 };
@@ -61,11 +66,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflow-y: auto;
     `,
     stepItem: css`
-      display: flex;
-      align-items: center;
-      gap: ${theme.spacing(2)};
       padding: ${theme.spacing(1)};
-      margin-bottom: ${theme.spacing(1)};
       border-radius: ${theme.shape.borderRadius()};
       cursor: pointer;
       &:hover {
