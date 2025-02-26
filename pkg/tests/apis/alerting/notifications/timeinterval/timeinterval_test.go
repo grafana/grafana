@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -353,7 +352,7 @@ func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
 	adminClient := newClient(t, helper.Org1.Admin)
 
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 
@@ -577,7 +576,7 @@ func TestIntegrationTimeIntervalListSelector(t *testing.T) {
 	interval2, err = adminClient.Create(ctx, interval2, v1.CreateOptions{})
 	require.NoError(t, err)
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 	require.NoError(t, db.SetProvenance(ctx, &definitions.MuteTimeInterval{
@@ -637,7 +636,7 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 	orgID := helper.Org1.Admin.Identity.GetOrgID()
@@ -665,7 +664,8 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
 
 	currentRoute := legacyCli.GetRoute(t)
-	currentRuleGroup := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
+	currentRuleGroup, status := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
+	require.Equal(t, http.StatusAccepted, status)
 
 	adminClient := newClient(t, helper.Org1.Admin)
 
@@ -697,7 +697,8 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 			actual, err := adminClient.Update(ctx, renamed, v1.UpdateOptions{})
 			require.NoError(t, err)
 
-			updatedRuleGroup := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
+			updatedRuleGroup, status := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
+			require.Equal(t, http.StatusAccepted, status)
 			for idx, rule := range updatedRuleGroup.Rules {
 				expectedTimeIntervals := currentRuleGroup.Rules[idx].GrafanaManagedAlert.NotificationSettings.MuteTimeIntervals
 				expectedTimeIntervals = replace(expectedTimeIntervals, interval.Spec.Name, actual.Spec.Name)

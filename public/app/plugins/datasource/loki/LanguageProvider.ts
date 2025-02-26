@@ -1,7 +1,7 @@
 import { flatten } from 'lodash';
 import { LRUCache } from 'lru-cache';
 
-import { LanguageProvider, AbstractQuery, KeyValue, getDefaultTimeRange, TimeRange, ScopedVars } from '@grafana/data';
+import { AbstractQuery, getDefaultTimeRange, KeyValue, LanguageProvider, ScopedVars, TimeRange } from '@grafana/data';
 import { BackendSrvRequest, config } from '@grafana/runtime';
 
 import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
@@ -13,7 +13,7 @@ import {
   extractLogParserFromDataFrame,
   extractUnwrapLabelKeysFromDataFrame,
 } from './responseUtils';
-import { ParserAndLabelKeysResult, LokiQuery, LokiQueryType, LabelType } from './types';
+import { DetectedFieldsResult, LabelType, LokiQuery, LokiQueryType, ParserAndLabelKeysResult } from './types';
 
 const NS_IN_MS = 1000000;
 const EMPTY_SELECTOR = '{}';
@@ -256,6 +256,60 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return nanoseconds ? Math.floor(nanoseconds / NS_IN_MS / 1000 / 60 / 5) : 0;
   }
 
+  async fetchDetectedFields(
+    queryOptions: {
+      expr: string;
+      timeRange?: TimeRange;
+      limit?: number;
+      scopedVars?: ScopedVars;
+    },
+    requestOptions?: Partial<BackendSrvRequest>
+  ): Promise<DetectedFieldsResult | Error> {
+    const interpolatedExpr =
+      queryOptions.expr && queryOptions.expr !== EMPTY_SELECTOR
+        ? this.datasource.interpolateString(queryOptions.expr, queryOptions.scopedVars)
+        : undefined;
+
+    if (!interpolatedExpr) {
+      throw new Error('fetchDetectedFields requires query expression');
+    }
+
+    const url = `detected_fields`;
+    const range = queryOptions?.timeRange ?? this.getDefaultTimeRange();
+    const rangeParams = this.datasource.getTimeRangeParams(range);
+    const { start, end } = rangeParams;
+    const params: KeyValue<string | number> = { start, end, limit: queryOptions?.limit ?? 1000 };
+    params.query = interpolatedExpr;
+
+    return new Promise(async (resolve, reject) => {
+      try {
+        const data = await this.request(url, params, true, requestOptions);
+        resolve(data);
+      } catch (error) {
+        console.error('error', error);
+        reject(error);
+      }
+    });
+  }
+
+  async fetchDetectedFieldValues(
+    labelName: string,
+    queryOptions?: {
+      expr?: string;
+      timeRange?: TimeRange;
+      limit?: number;
+      scopedVars?: ScopedVars;
+      throwError?: boolean;
+    },
+    requestOptions?: Partial<BackendSrvRequest>
+  ): Promise<string[] | Error> {
+    // This function was named poorly, it's not detected label values, it's detected field values! :facepalm
+    return this.fetchDetectedLabelValues(labelName, queryOptions, requestOptions);
+  }
+
+  /**
+   * @deprecated: use fetchDetectedFieldValues instead
+   */
   async fetchDetectedLabelValues(
     labelName: string,
     queryOptions?: {

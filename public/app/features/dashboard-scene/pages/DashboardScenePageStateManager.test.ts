@@ -1,10 +1,7 @@
 import { advanceBy } from 'jest-date-mock';
 
 import { BackendSrv, setBackendSrv } from '@grafana/runtime';
-import {
-  DashboardV2Spec,
-  defaultDashboardV2Spec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { DashboardV2Spec, defaultDashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import store from 'app/core/store';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
@@ -12,7 +9,7 @@ import { getDashboardSnapshotSrv } from 'app/features/dashboard/services/Snapsho
 import { DASHBOARD_FROM_LS_KEY, DashboardRoutes } from 'app/types';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { setupLoadDashboardMock } from '../utils/test-utils';
+import { setupLoadDashboardMock, setupLoadDashboardMockReject } from '../utils/test-utils';
 
 import {
   DashboardScenePageStateManager,
@@ -48,14 +45,34 @@ describe('DashboardScenePageStateManager v1', () => {
     });
 
     it("should error when the dashboard doesn't exist", async () => {
-      setupLoadDashboardMock({ dashboard: undefined, meta: {} });
+      setupLoadDashboardMockReject({
+        status: 404,
+        statusText: 'Not Found',
+        data: {
+          message: 'Dashboard not found',
+        },
+        config: {
+          method: 'GET',
+          url: 'api/dashboards/uid/adfjq9edwm0hsdsa',
+          retry: 0,
+          headers: {
+            'X-Grafana-Org-Id': 1,
+          },
+          hideFromInspector: true,
+        },
+        isHandled: true,
+      });
 
       const loader = new DashboardScenePageStateManager({});
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
 
       expect(loader.state.dashboard).toBeUndefined();
       expect(loader.state.isLoading).toBe(false);
-      expect(loader.state.loadError).toBe('Dashboard not found');
+      expect(loader.state.loadError).toEqual({
+        status: 404,
+        messageId: undefined,
+        message: 'Dashboard not found',
+      });
     });
 
     it('should clear current dashboard while loading next', async () => {
@@ -131,18 +148,37 @@ describe('DashboardScenePageStateManager v1', () => {
         await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
 
         expect(loader.state.dashboard).toBeUndefined();
-        expect(loader.state.loadError).toEqual('Failed to load home dashboard');
+        expect(loader.state.loadError).toEqual({
+          message: 'Failed to load home dashboard',
+          messageId: undefined,
+          status: 500,
+        });
+      });
+
+      it('should throw when v2 custom home dashboard is provided', async () => {
+        setBackendSrv({
+          get: () => Promise.resolve({ dashboard: customHomeDashboardV2Spec, meta: {} }),
+        } as unknown as BackendSrv);
+
+        const loader = new DashboardScenePageStateManager({});
+        await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
+
+        expect(loader.state.dashboard).toBeUndefined();
+        expect(loader.state.loadError).toEqual({
+          message: 'v2 dashboard spec is not supported. Enable useV2DashboardsAPI feature toggle',
+          messageId: undefined,
+          status: undefined,
+        });
       });
     });
 
     describe('New dashboards', () => {
-      it('Should have new empty model with meta.isNew and should not be cached', async () => {
+      it('Should have new empty model and should not be cached', async () => {
         const loader = new DashboardScenePageStateManager({});
 
         await loader.loadDashboard({ uid: '', route: DashboardRoutes.New });
         const dashboard = loader.state.dashboard!;
 
-        expect(dashboard.state.meta.isNew).toBe(true);
         expect(dashboard.state.isEditing).toBe(undefined);
         expect(dashboard.state.isDirty).toBe(false);
 
@@ -403,13 +439,12 @@ describe('DashboardScenePageStateManager v2', () => {
     });
 
     describe('Home dashboard', () => {
-      // TODO: Unskip when redirect is implemented in v2 API
-      it.skip('should handle home dashboard redirect', async () => {
+      it('should handle home dashboard redirect', async () => {
         setBackendSrv({
           get: () => Promise.resolve({ redirectUri: '/d/asd' }),
         } as unknown as BackendSrv);
 
-        const loader = new DashboardScenePageStateManager({});
+        const loader = new DashboardScenePageStateManagerV2({});
         await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
 
         expect(loader.state.dashboard).toBeUndefined();
@@ -429,18 +464,60 @@ describe('DashboardScenePageStateManager v2', () => {
         await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
 
         expect(loader.state.dashboard).toBeUndefined();
-        expect(loader.state.loadError).toEqual('Failed to load home dashboard');
+        expect(loader.state.loadError).toEqual({
+          message: 'Failed to load home dashboard',
+          messageId: undefined,
+          status: 500,
+        });
+      });
+
+      it('should not transform v2 custom home dashboard spec', async () => {
+        setBackendSrv({
+          get: () =>
+            Promise.resolve({
+              dashboard: customHomeDashboardV2Spec,
+              meta: {
+                canSave: false,
+                canEdit: true,
+                canAdmin: false,
+                canStar: false,
+                canDelete: false,
+                slug: '',
+                url: '',
+                expires: '0001-01-01T00:00:00Z',
+                created: '0001-01-01T00:00:00Z',
+                updated: '0001-01-01T00:00:00Z',
+                updatedBy: '',
+                createdBy: '',
+                version: 0,
+                hasAcl: false,
+                isFolder: false,
+                folderId: 0,
+                folderUid: '',
+                folderTitle: 'General',
+                folderUrl: '',
+                provisioned: false,
+                provisionedExternalId: '',
+                annotationsPermissions: null,
+              },
+            }),
+        } as unknown as BackendSrv);
+
+        const loader = new DashboardScenePageStateManagerV2({});
+        await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
+
+        expect(loader.state.dashboard?.getInitialSaveModel()).toEqual(customHomeDashboardV2Spec);
+        expect(loader.state.loadError).toBeUndefined();
       });
     });
 
     describe('New dashboards', () => {
-      it('Should have new empty model with meta.isNew and should not be cached', async () => {
+      it('Should have new empty model and should not be cached', async () => {
         const loader = new DashboardScenePageStateManagerV2({});
 
         await loader.loadDashboard({ uid: '', route: DashboardRoutes.New });
         const dashboard = loader.state.dashboard!;
 
-        expect(dashboard.state.meta.isNew).toBe(true);
         expect(dashboard.state.isEditing).toBe(undefined);
         expect(dashboard.state.isDirty).toBe(false);
 
@@ -570,3 +647,76 @@ describe('DashboardScenePageStateManager v2', () => {
     });
   });
 });
+
+const customHomeDashboardV2Spec = {
+  title: 'Home Dashboard v2 schema',
+  cursorSync: 'Off',
+  preload: false,
+  editable: true,
+  links: [],
+  tags: [],
+  timeSettings: {
+    timezone: 'browser',
+    from: 'now-6h',
+    to: 'now',
+    autoRefresh: '',
+    autoRefreshIntervals: ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'],
+    hideTimepicker: false,
+    fiscalYearStartMonth: 0,
+  },
+  variables: [],
+  elements: {
+    text_panel: {
+      kind: 'Panel',
+      spec: {
+        id: 0,
+        title: 'Welcome',
+        description: 'Welcome to the home dashboard!',
+        links: [],
+        data: {
+          kind: 'QueryGroup',
+          spec: {
+            queries: [],
+            transformations: [],
+            queryOptions: {},
+          },
+        },
+        vizConfig: {
+          kind: 'text',
+          spec: {
+            pluginVersion: '',
+            options: {
+              mode: 'markdown',
+              content: '# Welcome to the home dashboard!\n\n## Example of v2 schema home dashboard',
+            },
+            fieldConfig: {
+              defaults: {},
+              overrides: [],
+            },
+          },
+        },
+      },
+    },
+  },
+  annotations: [],
+  layout: {
+    kind: 'GridLayout',
+    spec: {
+      items: [
+        {
+          kind: 'GridLayoutItem',
+          spec: {
+            x: 6,
+            y: 0,
+            width: 12,
+            height: 6,
+            element: {
+              kind: 'ElementReference',
+              name: 'text_panel',
+            },
+          },
+        },
+      ],
+    },
+  },
+};

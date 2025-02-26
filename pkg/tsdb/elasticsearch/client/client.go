@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // Used in logging to mark a stage
@@ -57,7 +59,7 @@ type Client interface {
 var NewClient = func(ctx context.Context, ds *DatasourceInfo, logger log.Logger) (Client, error) {
 	logger = logger.FromContext(ctx).With("entity", "client")
 
-	ip, err := newIndexPattern(ds.Interval, ds.Database)
+	ip, err := NewIndexPattern(ds.Interval, ds.Database)
 	if err != nil {
 		logger.Error("Failed creating index pattern", "error", err, "interval", ds.Interval, "index", ds.Database)
 		return nil, err
@@ -133,7 +135,7 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 	c.logger.Debug("Sending request to Elasticsearch", "url", c.ds.URL)
 	u, err := url.Parse(c.ds.URL)
 	if err != nil {
-		return nil, err
+		return nil, backend.DownstreamError(fmt.Errorf("URL could not be parsed: %w", err))
 	}
 	u.Path = path.Join(u.Path, uriPath)
 	u.RawQuery = uriQuery
@@ -202,8 +204,6 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	c.logger.Info("Response received from Elasticsearch", "status", "ok", "statusCode", res.StatusCode, "contentLength", res.ContentLength, "duration", time.Since(start), "stage", StageDatabaseRequest)
 
 	start = time.Now()
-	var msr MultiSearchResponse
-	dec := json.NewDecoder(res.Body)
 	_, resSpan := tracing.DefaultTracer().Start(c.ctx, "datasource.elasticsearch.queryData.executeMultisearch.decodeResponse")
 	defer func() {
 		if err != nil {
@@ -212,17 +212,216 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 		}
 		resSpan.End()
 	}()
-	err = dec.Decode(&msr)
+
+	var msr MultiSearchResponse
+	improvedParsingEnabled := isFeatureEnabled(c.ctx, featuremgmt.FlagElasticsearchImprovedParsing)
+	if improvedParsingEnabled {
+		err = StreamMultiSearchResponse(res.Body, &msr)
+	} else {
+		dec := json.NewDecoder(res.Body)
+		err = dec.Decode(&msr)
+	}
 	if err != nil {
-		c.logger.Error("Failed to decode response from Elasticsearch", "error", err, "duration", time.Since(start))
+		c.logger.Error("Failed to decode response from Elasticsearch", "error", err, "duration", time.Since(start), "improvedParsingEnabled", improvedParsingEnabled)
 		return nil, err
 	}
 
-	c.logger.Debug("Completed decoding of response from Elasticsearch", "duration", time.Since(start))
+	c.logger.Debug("Completed decoding of response from Elasticsearch", "duration", time.Since(start), "improvedParsingEnabled", improvedParsingEnabled)
 
 	msr.Status = res.StatusCode
 
 	return &msr, nil
+}
+
+// StreamMultiSearchResponse processes the JSON response in a streaming fashion
+func StreamMultiSearchResponse(body io.Reader, msr *MultiSearchResponse) error {
+	dec := json.NewDecoder(body)
+
+	_, err := dec.Token() // reads the `{` opening brace
+	if err != nil {
+		return err
+	}
+
+	for dec.More() {
+		tok, err := dec.Token()
+		if err != nil {
+			return err
+		}
+
+		if tok == "responses" {
+			_, err := dec.Token() // reads the `[` opening bracket for responses array
+			if err != nil {
+				return err
+			}
+
+			for dec.More() {
+				var sr SearchResponse
+
+				_, err := dec.Token() // reads `{` for each SearchResponse
+				if err != nil {
+					return err
+				}
+
+				for dec.More() {
+					field, err := dec.Token()
+					if err != nil {
+						return err
+					}
+
+					switch field {
+					case "hits":
+						sr.Hits = &SearchResponseHits{}
+						err := processHits(dec, &sr)
+						if err != nil {
+							return err
+						}
+					case "aggregations":
+						err := dec.Decode(&sr.Aggregations)
+						if err != nil {
+							return err
+						}
+					case "error":
+						err := dec.Decode(&sr.Error)
+						if err != nil {
+							return err
+						}
+					default:
+						// skip over unknown fields
+						err := skipUnknownField(dec)
+						if err != nil {
+							return err
+						}
+					}
+				}
+
+				msr.Responses = append(msr.Responses, &sr)
+
+				_, err = dec.Token() // reads `}` closing for each SearchResponse
+				if err != nil {
+					return err
+				}
+			}
+
+			_, err = dec.Token() // reads the `]` closing bracket for responses array
+			if err != nil {
+				return err
+			}
+		} else {
+			err := skipUnknownField(dec)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	_, err = dec.Token() // reads the `}` closing brace for the entire JSON
+	return err
+}
+
+// processHits processes the hits in the JSON response incrementally.
+func processHits(dec *json.Decoder, sr *SearchResponse) error {
+	tok, err := dec.Token() // reads the `{` opening brace for the hits object
+	if err != nil {
+		return err
+	}
+
+	if tok != json.Delim('{') {
+		return fmt.Errorf("expected '{' for hits object, got %v", tok)
+	}
+
+	for dec.More() {
+		tok, err := dec.Token()
+		if err != nil {
+			return err
+		}
+
+		if tok == "hits" {
+			if err := streamHitsArray(dec, sr); err != nil {
+				return err
+			}
+		} else {
+			// ignore these fields as they are not used in the current implementation
+			err := skipUnknownField(dec)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// read the closing `}` for the hits object
+	_, err = dec.Token()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// streamHitsArray processes the hits array field incrementally.
+func streamHitsArray(dec *json.Decoder, sr *SearchResponse) error {
+	tok, err := dec.Token()
+	if err != nil {
+		return err
+	}
+
+	// read the opening `[` for the hits array
+	if tok != json.Delim('[') {
+		return fmt.Errorf("expected '[' for hits array, got %v", tok)
+	}
+
+	for dec.More() {
+		var hit map[string]interface{}
+		err = dec.Decode(&hit)
+		if err != nil {
+			return err
+		}
+
+		sr.Hits.Hits = append(sr.Hits.Hits, hit)
+	}
+
+	// read the closing bracket `]` for the hits array
+	tok, err = dec.Token()
+	if err != nil {
+		return err
+	}
+
+	if tok != json.Delim(']') {
+		return fmt.Errorf("expected ']' for closing hits array, got %v", tok)
+	}
+
+	return nil
+}
+
+// skipUnknownField skips over an unknown JSON field's value in the stream.
+func skipUnknownField(dec *json.Decoder) error {
+	tok, err := dec.Token()
+	if err != nil {
+		return err
+	}
+
+	switch tok {
+	case json.Delim('{'):
+		// skip everything inside the object until we reach the closing `}`
+		for dec.More() {
+			if err := skipUnknownField(dec); err != nil {
+				return err
+			}
+		}
+		_, err = dec.Token() // read the closing `}`
+		return err
+	case json.Delim('['):
+		// skip everything inside the array until we reach the closing `]`
+		for dec.More() {
+			if err := skipUnknownField(dec); err != nil {
+				return err
+			}
+		}
+		_, err = dec.Token() // read the closing `]`
+		return err
+	default:
+		// no further action needed for primitives
+		return nil
+	}
 }
 
 func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchRequest) []*multiRequest {
@@ -263,4 +462,8 @@ func (c *baseClientImpl) getMultiSearchQueryParameters() string {
 
 func (c *baseClientImpl) MultiSearch() *MultiSearchRequestBuilder {
 	return NewMultiSearchRequestBuilder()
+}
+
+func isFeatureEnabled(ctx context.Context, feature string) bool {
+	return backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(feature)
 }

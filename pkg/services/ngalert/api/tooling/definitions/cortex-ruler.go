@@ -20,6 +20,18 @@ import (
 //       403: ForbiddenError
 //       404: description: Not found.
 
+// swagger:route Get /ruler/grafana/api/v1/rule/{RuleUID}/versions ruler RouteGetRuleVersionsByUID
+//
+// Get rule versions by UID
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: GettableRuleVersions
+//       403: ForbiddenError
+//       404: description: Not found.
+
 // swagger:route Get /ruler/grafana/api/v1/rules ruler RouteGetGrafanaRulesConfig
 //
 // List rule groups
@@ -155,6 +167,7 @@ import (
 //     Responses:
 //       202: RuleGroupConfigResponse
 //       403: ForbiddenError
+//		 404: NotFound
 
 // swagger:route Get /ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetRulegGroupConfig
 //
@@ -218,7 +231,7 @@ type PathGetRulesParams struct {
 	PanelID int64
 }
 
-// swagger:parameters RouteGetRuleByUID
+// swagger:parameters RouteGetRuleByUID RouteGetRuleVersionsByUID
 type PathGetRuleByUIDParams struct {
 	// in: path
 	RuleUID string
@@ -289,6 +302,9 @@ func (c *PostableRuleGroupConfig) validate() error {
 	}
 	return nil
 }
+
+// swagger:model
+type GettableRuleVersions []GettableExtendedRuleNode
 
 // swagger:model
 type GettableRuleGroupConfig struct {
@@ -364,7 +380,7 @@ const (
 type PostableExtendedRuleNode struct {
 	// note: this works with yaml v3 but not v2 (the inline tag isn't accepted on pointers in v2)
 	*ApiRuleNode `yaml:",inline"`
-	//GrafanaManagedAlert yaml.Node `yaml:"grafana_alert,omitempty"`
+	// GrafanaManagedAlert yaml.Node `yaml:"grafana_alert,omitempty"`
 	GrafanaManagedAlert *PostableGrafanaRule `yaml:"grafana_alert,omitempty" json:"grafana_alert,omitempty"`
 }
 
@@ -401,7 +417,7 @@ func (n *PostableExtendedRuleNode) validate() error {
 type GettableExtendedRuleNode struct {
 	// note: this works with yaml v3 but not v2 (the inline tag isn't accepted on pointers in v2)
 	*ApiRuleNode `yaml:",inline"`
-	//GrafanaManagedAlert yaml.Node `yaml:"grafana_alert,omitempty"`
+	// GrafanaManagedAlert yaml.Node `yaml:"grafana_alert,omitempty"`
 	GrafanaManagedAlert *GettableGrafanaRule `yaml:"grafana_alert,omitempty" json:"grafana_alert,omitempty"`
 }
 
@@ -535,12 +551,11 @@ type PostableGrafanaRule struct {
 
 // swagger:model
 type GettableGrafanaRule struct {
-	ID                   int64                          `json:"id" yaml:"id"`
-	OrgID                int64                          `json:"orgId" yaml:"orgId"`
 	Title                string                         `json:"title" yaml:"title"`
 	Condition            string                         `json:"condition" yaml:"condition"`
 	Data                 []AlertQuery                   `json:"data" yaml:"data"`
 	Updated              time.Time                      `json:"updated" yaml:"updated"`
+	UpdatedBy            *UserInfo                      `json:"updated_by" yaml:"updated_by"`
 	IntervalSeconds      int64                          `json:"intervalSeconds" yaml:"intervalSeconds"`
 	Version              int64                          `json:"version" yaml:"version"`
 	UID                  string                         `json:"uid" yaml:"uid"`
@@ -553,6 +568,12 @@ type GettableGrafanaRule struct {
 	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings,omitempty" yaml:"notification_settings,omitempty"`
 	Record               *Record                        `json:"record,omitempty" yaml:"record,omitempty"`
 	Metadata             *AlertRuleMetadata             `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+}
+
+// UserInfo represents user-related information, including a unique identifier and a name.
+type UserInfo struct {
+	UID  string `json:"uid"`
+	Name string `json:"name"`
 }
 
 // AlertQuery represents a single query associated with an alert definition.

@@ -414,7 +414,7 @@ describe('LogsPanel', () => {
         await userEvent.click(screen.getByLabelText(/show context/i));
 
         const getRowContextCb = logRowContextModalMock.mock.calls[0][0].getRowContext;
-        getRowContextCb();
+        getRowContextCb({}, {});
         expect(showContextDs.getLogRowContext).toBeCalled();
       });
     });
@@ -517,6 +517,22 @@ describe('LogsPanel', () => {
 
       expect(await screen.findByRole('row')).toBeInTheDocument();
       expect(jest.mocked(styles.getLogRowStyles).mock.calls.length).toBeGreaterThan(3);
+    });
+
+    it('does not re-render when data is loading', async () => {
+      const { rerender, props } = setup({
+        data: {
+          ...defaultProps.data,
+          series,
+        },
+      });
+
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+
+      rerender(<LogsPanel {...props} data={{ ...props.data, state: LoadingState.Loading }} />);
+
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+      expect(styles.getLogRowStyles).toHaveBeenCalledTimes(3);
     });
   });
 

@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -78,6 +79,7 @@ type API struct {
 	Historian            Historian
 	Tracer               tracing.Tracer
 	AppUrl               *url.URL
+	UserService          user.Service
 
 	// Hooks can be used to replace API handlers for specific paths.
 	Hooks *Hooks
@@ -135,6 +137,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			amConfigStore:      api.AlertingStore,
 			amRefresher:        api.MultiOrgAlertmanager,
 			featureManager:     api.FeatureManager,
+			userService:        api.UserService,
 		},
 	), m)
 	api.RegisterTestingApiEndpoints(NewTestingApi(
@@ -182,4 +185,10 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		receiverService:   api.ReceiverService,
 		muteTimingService: api.MuteTimings,
 	}), m)
+
+	if api.FeatureManager.IsEnabledGlobally(featuremgmt.FlagAlertingConversionAPI) {
+		api.RegisterConvertPrometheusApiEndpoints(NewConvertPrometheusApi(
+			NewConvertPrometheusSrv(&api.Cfg.UnifiedAlerting, logger, api.RuleStore, api.DatasourceCache, api.AlertRules),
+		), m)
+	}
 }

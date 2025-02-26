@@ -23,7 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardsDB "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
@@ -36,9 +36,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards/service/intervalv2"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -1395,10 +1397,13 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 	fStore := folderimpl.ProvideStore(testDB)
 	folderPermissions := acmock.NewMockedPermissionsService()
 	folderStore := folderimpl.ProvideDashboardFolderStore(testDB)
-	folderSvc := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore, testDB, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+	folderSvc := folderimpl.ProvideService(
+		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore,
+		nil, testDB, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
 
-	dashboardService, err := dashsvc.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuremgmt.WithFeatures(), folderPermissions, &actest.FakePermissionsService{}, ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil, nil, nil, quotatest.New(false, nil), nil)
+	dashboardService, err := dashsvc.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuremgmt.WithFeatures(), folderPermissions, ac, folderSvc, fStore, nil, client.MockTestRestConfig{}, nil, quotatest.New(false, nil), nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService())
 	require.NoError(t, err)
+	dashboardService.RegisterDashboardPermissions(&actest.FakePermissionsService{})
 	fakeGuardian := &guardian.FakeDashboardGuardian{
 		CanSaveValue: true,
 		CanEditUIDs:  []string{},
@@ -2051,42 +2056,6 @@ func TestPublicDashboardServiceImpl_NewPublicDashboardAccessToken(t *testing.T) 
 			}
 		})
 	}
-}
-
-func TestDeleteByDashboard(t *testing.T) {
-	t.Run("will return nil when pubdash not found", func(t *testing.T) {
-		store := NewFakePublicDashboardStore(t)
-		pd := &PublicDashboardServiceImpl{store: store, serviceWrapper: ProvideServiceWrapper(store)}
-		dashboard := &dashboards.Dashboard{UID: "1", OrgID: 1, IsFolder: false}
-		store.On("FindByDashboardUid", mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
-
-		err := pd.DeleteByDashboard(context.Background(), dashboard)
-		assert.Nil(t, err)
-	})
-	t.Run("will delete pubdash when dashboard deleted", func(t *testing.T) {
-		store := NewFakePublicDashboardStore(t)
-		pd := &PublicDashboardServiceImpl{store: store, serviceWrapper: ProvideServiceWrapper(store)}
-		dashboard := &dashboards.Dashboard{UID: "1", OrgID: 1, IsFolder: false}
-		pubdash := &PublicDashboard{Uid: "2", OrgId: 1, DashboardUid: dashboard.UID}
-		store.On("FindByDashboardUid", mock.Anything, mock.Anything, mock.Anything).Return(pubdash, nil)
-		store.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(int64(1), nil)
-
-		err := pd.DeleteByDashboard(context.Background(), dashboard)
-		require.NoError(t, err)
-	})
-
-	t.Run("will delete pubdashes when dashboard folder deleted", func(t *testing.T) {
-		store := NewFakePublicDashboardStore(t)
-		pd := &PublicDashboardServiceImpl{store: store, serviceWrapper: ProvideServiceWrapper(store)}
-		dashboard := &dashboards.Dashboard{UID: "1", OrgID: 1, IsFolder: true}
-		pubdash1 := &PublicDashboard{Uid: "2", OrgId: 1, DashboardUid: dashboard.UID}
-		pubdash2 := &PublicDashboard{Uid: "3", OrgId: 1, DashboardUid: dashboard.UID}
-		store.On("FindByFolder", mock.Anything, mock.Anything, mock.Anything).Return([]*PublicDashboard{pubdash1, pubdash2}, nil)
-		store.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(int64(1), nil)
-
-		err := pd.DeleteByDashboard(context.Background(), dashboard)
-		require.NoError(t, err)
-	})
 }
 
 func TestGenerateAccessToken(t *testing.T) {

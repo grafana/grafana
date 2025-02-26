@@ -12,12 +12,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -36,7 +37,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -45,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
@@ -72,7 +73,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 		preInstalledPlugin               bool
 	}
 	tcs := []testCase{
-		{expectedCode: http.StatusNotFound, permissionOrg: globalOrg, permissions: canInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: true},
+		{expectedCode: http.StatusOK, permissionOrg: globalOrg, permissions: canInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: true},
 		{expectedCode: http.StatusNotFound, permissionOrg: globalOrg, permissions: canInstall, pluginAdminEnabled: false, pluginAdminExternalManageEnabled: true},
 		{expectedCode: http.StatusNotFound, permissionOrg: globalOrg, permissions: canInstall, pluginAdminEnabled: false, pluginAdminExternalManageEnabled: false},
 		{expectedCode: http.StatusForbidden, permissionOrg: globalOrg, permissions: cannotInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: false},
@@ -111,6 +112,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 				},
 			})
 			hs.managedPluginsService = managedplugins.NewNoop()
+			hs.pluginPreinstall = plugininstaller.ProvidePreinstall(hs.Cfg)
 
 			expectedIdentity := &authn.Identity{
 				OrgID:       tc.permissionOrg,
@@ -759,7 +761,7 @@ func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
 			}
 			hs.log = logger
 			hs.accesscontrolService = actest.FakeService{}
-			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 
 			expectedIdentity := &authn.Identity{
 				OrgID:       tt.orgID,

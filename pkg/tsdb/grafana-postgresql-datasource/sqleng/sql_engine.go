@@ -235,7 +235,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		emptyFrame.SetMeta(&data.FrameMeta{
 			ExecutedQueryString: query,
 		})
-		if backend.IsDownstreamError(err) {
+		if isDownstreamError(err) {
 			source = backend.ErrorSourceDownstream
 		}
 		queryResult.dataResponse.Error = fmt.Errorf("%s: %w", frameErr, err)
@@ -447,7 +447,7 @@ func (e *DataSourceHandler) newProcessCfg(query backend.DataQuery, queryContext 
 			}
 		}
 
-		if qm.Format == dataQueryFormatTable && col == "timeend" {
+		if qm.Format == dataQueryFormatTable && strings.EqualFold(col, "timeend") {
 			qm.timeEndIndex = i
 			continue
 		}
@@ -645,4 +645,21 @@ func epochPrecisionToMS(value float64) float64 {
 	}
 
 	return value
+}
+
+func isDownstreamError(err error) bool {
+	if backend.IsDownstreamError(err) {
+		return true
+	}
+	resultProcessingDownstreamErrors := []error{
+		data.ErrorInputFieldsWithoutRows,
+		data.ErrorSeriesUnsorted,
+		data.ErrorNullTimeValues,
+	}
+	for _, e := range resultProcessingDownstreamErrors {
+		if errors.Is(err, e) {
+			return true
+		}
+	}
+	return false
 }

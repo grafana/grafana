@@ -9,7 +9,9 @@ import {
   GroupByVariable,
   IntervalVariable,
   QueryVariable,
+  SceneCSSGridLayout,
   SceneGridLayout,
+  SceneGridRow,
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,
@@ -23,6 +25,12 @@ import {
   VariableSort as VariableSortV1,
 } from '@grafana/schema/dist/esm/index.gen';
 
+import {
+  GridLayoutSpec,
+  ResponsiveGridLayoutSpec,
+  RowsLayoutSpec,
+  TabsLayoutSpec,
+} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
@@ -31,6 +39,14 @@ import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
+import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
+import { ResponsiveGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
+import { RowItem } from '../scene/layout-rows/RowItem';
+import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
+import { TabItem } from '../scene/layout-tabs/TabItem';
+import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
+import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
 
@@ -140,6 +156,8 @@ describe('transformSceneToSaveModelSchemaV2', () => {
           isLazy: false,
           children: [
             new DashboardGridItem({
+              y: 0,
+              height: 10,
               body: new VizPanel({
                 key: 'panel-1',
                 pluginId: 'timeseries',
@@ -172,11 +190,36 @@ describe('transformSceneToSaveModelSchemaV2', () => {
               // repeatDirection?: RepeatDirection,
               // maxPerRow?: number,
             }),
+            new SceneGridRow({
+              key: 'panel-4',
+              title: 'Test Row',
+              y: 10,
+              $behaviors: [new RowRepeaterBehavior({ variableName: 'customVar' })],
+              children: [
+                new DashboardGridItem({
+                  y: 11,
+                  body: new VizPanel({
+                    key: 'panel-2',
+                    pluginId: 'graph',
+                    title: 'Test Panel 2',
+                    description: 'Test Description 2',
+                    fieldConfig: { defaults: {}, overrides: [] },
+                    displayMode: 'transparent',
+                    pluginVersion: '7.0.0',
+                    $timeRange: new SceneTimeRange({
+                      timeZone: 'UTC',
+                      from: 'now-3h',
+                      to: 'now',
+                    }),
+                  }),
+                }),
+              ],
+            }),
           ],
         }),
       }),
       meta: {},
-      editPane: new DashboardEditPane({}),
+      editPane: new DashboardEditPane(),
       $behaviors: [
         new behaviors.CursorSync({
           sync: DashboardCursorSyncV1.Crosshair,
@@ -196,7 +239,10 @@ describe('transformSceneToSaveModelSchemaV2', () => {
             hide: VariableHideV1.hideLabel,
             value: 'value1',
             text: 'text1',
-            query: 'query1',
+            query: {
+              expr: 'label_values(node_boot_time_seconds)',
+              refId: 'A',
+            },
             definition: 'definition1',
             datasource: { uid: 'datasource1', type: 'prometheus' },
             sort: VariableSortV1.alphabeticalDesc,
@@ -330,6 +376,186 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     expect(result.annotations).toHaveLength(3);
     // check annotation layer 3 with no datasource has the default datasource defined as type
     expect(result.annotations?.[2].spec.datasource?.type).toBe('loki');
+  });
+});
+
+function getMinimalSceneState(body: DashboardLayoutManager): Partial<DashboardSceneState> {
+  return {
+    id: 1,
+    title: 'Test Dashboard',
+    description: 'Test Description',
+    preload: true,
+    tags: ['tag1', 'tag2'],
+    uid: 'test-uid',
+    version: 1,
+
+    controls: new DashboardControls({
+      refreshPicker: new SceneRefreshPicker({
+        refresh: '5s',
+        intervals: ['5s', '10s', '30s'],
+        autoEnabled: true,
+        autoMinInterval: '5s',
+        autoValue: '5s',
+        isOnCanvas: true,
+        primary: true,
+        withText: true,
+        minRefreshInterval: '5s',
+      }),
+      timePicker: new SceneTimePicker({
+        isOnCanvas: true,
+        hidePicker: true,
+      }),
+    }),
+
+    $timeRange: new SceneTimeRange({
+      timeZone: 'UTC',
+      from: 'now-1h',
+      to: 'now',
+      weekStart: 'monday',
+      fiscalYearStartMonth: 1,
+      UNSAFE_nowDelay: '1m',
+      refreshOnActivate: {
+        afterMs: 10,
+        percent: 0.1,
+      },
+    }),
+
+    body,
+  };
+}
+
+describe('dynamic layouts', () => {
+  it('should transform scene with rows layout with default grids in rows to save model schema v2', () => {
+    const scene = setupDashboardScene(
+      getMinimalSceneState(
+        new RowsLayoutManager({
+          rows: [
+            new RowItem({
+              layout: new DefaultGridLayoutManager({
+                grid: new SceneGridLayout({
+                  children: [
+                    new DashboardGridItem({
+                      y: 0,
+                      height: 10,
+                      body: new VizPanel({}),
+                    }),
+                  ],
+                }),
+              }),
+            }),
+          ],
+        })
+      )
+    );
+
+    const result = transformSceneToSaveModelSchemaV2(scene);
+    expect(result.layout.kind).toBe('RowsLayout');
+    const rowsLayout = result.layout.spec as RowsLayoutSpec;
+    expect(rowsLayout.rows.length).toBe(1);
+    expect(rowsLayout.rows[0].kind).toBe('RowsLayoutRow');
+    expect(rowsLayout.rows[0].spec.layout.kind).toBe('GridLayout');
+  });
+
+  it('should transform scene with rows layout with multiple rows with different grids to save model schema v2', () => {
+    const scene = setupDashboardScene(
+      getMinimalSceneState(
+        new RowsLayoutManager({
+          rows: [
+            new RowItem({
+              layout: new ResponsiveGridLayoutManager({
+                layout: new SceneCSSGridLayout({
+                  children: [
+                    new ResponsiveGridItem({
+                      body: new VizPanel({}),
+                    }),
+                  ],
+                }),
+              }),
+            }),
+            new RowItem({
+              layout: new DefaultGridLayoutManager({
+                grid: new SceneGridLayout({
+                  children: [
+                    new DashboardGridItem({
+                      y: 0,
+                      height: 10,
+                      body: new VizPanel({}),
+                    }),
+                  ],
+                }),
+              }),
+            }),
+          ],
+        })
+      )
+    );
+
+    const result = transformSceneToSaveModelSchemaV2(scene);
+    expect(result.layout.kind).toBe('RowsLayout');
+    const rowsLayout = result.layout.spec as RowsLayoutSpec;
+    expect(rowsLayout.rows.length).toBe(2);
+    expect(rowsLayout.rows[0].kind).toBe('RowsLayoutRow');
+    expect(rowsLayout.rows[0].spec.layout.kind).toBe('ResponsiveGridLayout');
+    const layout1 = rowsLayout.rows[0].spec.layout.spec as ResponsiveGridLayoutSpec;
+    expect(layout1.items[0].kind).toBe('ResponsiveGridLayoutItem');
+
+    expect(rowsLayout.rows[1].spec.layout.kind).toBe('GridLayout');
+    const layout2 = rowsLayout.rows[1].spec.layout.spec as GridLayoutSpec;
+    expect(layout2.items[0].kind).toBe('GridLayoutItem');
+  });
+
+  it('should transform scene with responsive grid layout to schema v2', () => {
+    const scene = setupDashboardScene(
+      getMinimalSceneState(
+        new ResponsiveGridLayoutManager({
+          layout: new SceneCSSGridLayout({
+            autoRows: 'rowString',
+            templateColumns: 'colString',
+            children: [
+              new ResponsiveGridItem({
+                body: new VizPanel({}),
+              }),
+              new ResponsiveGridItem({
+                body: new VizPanel({}),
+              }),
+            ],
+          }),
+        })
+      )
+    );
+    const result = transformSceneToSaveModelSchemaV2(scene);
+    expect(result.layout.kind).toBe('ResponsiveGridLayout');
+    const respGridLayout = result.layout.spec as ResponsiveGridLayoutSpec;
+    expect(respGridLayout.col).toBe('colString');
+    expect(respGridLayout.row).toBe('rowString');
+    expect(respGridLayout.items.length).toBe(2);
+    expect(respGridLayout.items[0].kind).toBe('ResponsiveGridLayoutItem');
+  });
+
+  it('should transform scene with tabs layout to schema v2', () => {
+    const tabs = [
+      new TabItem({
+        layout: new DefaultGridLayoutManager({
+          grid: new SceneGridLayout({
+            children: [
+              new DashboardGridItem({
+                y: 0,
+                height: 10,
+                body: new VizPanel({}),
+              }),
+            ],
+          }),
+        }),
+      }),
+    ];
+
+    const scene = setupDashboardScene(getMinimalSceneState(new TabsLayoutManager({ tabs })));
+    const result = transformSceneToSaveModelSchemaV2(scene);
+    expect(result.layout.kind).toBe('TabsLayout');
+    const tabsLayout = result.layout.spec as TabsLayoutSpec;
+    expect(tabsLayout.tabs.length).toBe(1);
+    expect(tabsLayout.tabs[0].kind).toBe('TabsLayoutTab');
+    expect(tabsLayout.tabs[0].spec.layout.kind).toBe('GridLayout');
   });
 });
 

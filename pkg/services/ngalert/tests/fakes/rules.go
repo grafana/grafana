@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
@@ -22,6 +23,7 @@ type RuleStore struct {
 	mtx sync.Mutex
 	// OrgID -> RuleGroup -> Namespace -> Rules
 	Rules       map[int64][]*models.AlertRule
+	History     map[models.AlertRuleKey][]*models.AlertRule
 	Hook        func(cmd any) error // use Hook if you need to intercept some query and return an error
 	RecordedOps []any
 	Folders     map[int64][]*folder.Folder
@@ -40,6 +42,7 @@ func NewRuleStore(t *testing.T) *RuleStore {
 			return nil
 		},
 		Folders: map[int64][]*folder.Folder{},
+		History: map[models.AlertRuleKey][]*models.AlertRule{},
 	}
 }
 
@@ -50,6 +53,8 @@ func (f *RuleStore) PutRule(_ context.Context, rules ...*models.AlertRule) {
 mainloop:
 	for _, r := range rules {
 		rgs := f.Rules[r.OrgID]
+		cp := models.CopyRule(r)
+		f.History[r.GetKey()] = append(f.History[r.GetKey()], cp)
 		for idx, rulePtr := range rgs {
 			if rulePtr.UID == r.UID {
 				rgs[idx] = r
@@ -131,11 +136,7 @@ func (f *RuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertRuleB
 	if err := f.Hook(*q); err != nil {
 		return nil, err
 	}
-	rules, ok := f.Rules[q.OrgID]
-	if !ok {
-		return nil, nil
-	}
-
+	rules := f.Rules[q.OrgID]
 	for _, rule := range rules {
 		if rule.UID == q.UID {
 			return rule, nil
@@ -258,7 +259,41 @@ func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64
 	return nil, fmt.Errorf("not found")
 }
 
-func (f *RuleStore) UpdateAlertRules(_ context.Context, q []models.UpdateRule) error {
+func (f *RuleStore) GetOrCreateNamespaceInRootByTitle(ctx context.Context, title string, orgID int64, user identity.Requester) (*folder.Folder, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	for _, folder := range f.Folders[orgID] {
+		if folder.Title == title {
+			return folder, nil
+		}
+	}
+
+	newFolder := &folder.Folder{
+		ID:       rand.Int63(), // nolint:staticcheck
+		UID:      util.GenerateShortUID(),
+		Title:    title,
+		Fullpath: "fullpath_" + title,
+	}
+
+	f.Folders[orgID] = append(f.Folders[orgID], newFolder)
+	return newFolder, nil
+}
+
+func (f *RuleStore) GetNamespaceInRootByTitle(ctx context.Context, title string, orgID int64, user identity.Requester) (*folder.Folder, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	for _, folder := range f.Folders[orgID] {
+		if folder.Title == title && folder.ParentUID == "" {
+			return folder, nil
+		}
+	}
+
+	return nil, dashboards.ErrFolderNotFound
+}
+
+func (f *RuleStore) UpdateAlertRules(_ context.Context, _ *models.UserUID, q []models.UpdateRule) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, q)
@@ -268,7 +303,7 @@ func (f *RuleStore) UpdateAlertRules(_ context.Context, q []models.UpdateRule) e
 	return nil
 }
 
-func (f *RuleStore) InsertAlertRules(_ context.Context, q []models.AlertRule) ([]models.AlertRuleKeyWithId, error) {
+func (f *RuleStore) InsertAlertRules(_ context.Context, _ *models.UserUID, q []models.AlertRule) ([]models.AlertRuleKeyWithId, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, q)
@@ -371,4 +406,23 @@ func (f *RuleStore) GetNamespacesByRuleUID(ctx context.Context, orgID int64, uid
 	}
 
 	return namespacesMap, nil
+}
+
+func (f *RuleStore) GetAlertRuleVersions(_ context.Context, key models.AlertRuleKey) ([]*models.AlertRule, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	q := GenericRecordedQuery{
+		Name:   "GetAlertRuleVersions",
+		Params: []any{key},
+	}
+	defer func() {
+		f.RecordedOps = append(f.RecordedOps, q)
+	}()
+
+	if err := f.Hook(key); err != nil {
+		return nil, err
+	}
+
+	return f.History[key], nil
 }

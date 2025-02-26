@@ -96,8 +96,10 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/dashboard-solo/:type/:slug',
       routeName: DashboardRoutes.Normal,
       chromeless: true,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage')
+      component: SafeDynamicImport(() =>
+        config.featureToggles.dashboardSceneSolo
+          ? import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/solo/SoloPanelPage')
+          : import(/* webpackChunkName: "SoloPanelPageOld" */ '../features/dashboard/containers/SoloPanelPage')
       ),
     },
     {
@@ -159,6 +161,10 @@ export function getAppRoutes(): RouteDescriptor[] {
           ? import(/* webpackChunkName: "explore" */ 'app/features/explore/ExplorePage')
           : import(/* webpackChunkName: "explore-feature-toggle-page" */ 'app/features/explore/FeatureTogglePage')
       ),
+    },
+    {
+      path: '/drilldown',
+      component: () => <NavLandingPage navId="drilldown" />,
     },
     {
       path: '/apps',
@@ -515,11 +521,20 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     config.featureToggles.exploreMetrics && {
       path: '/explore/metrics/*',
-      chromeless: false,
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DataTrailsPage"*/ 'app/features/trails/DataTrailsPage')
-      ),
+      ...(config.featureToggles.exploreMetricsUseExternalAppPlugin
+        ? {
+            component: SafeDynamicImport(
+              () =>
+                import(/* webpackChunkName: "MetricsDrilldownRedirect"*/ 'app/features/trails/RedirectToDrilldownApp')
+            ),
+          }
+        : {
+            chromeless: false,
+            component: SafeDynamicImport(
+              () => import(/* webpackChunkName: "DataTrailsPage"*/ 'app/features/trails/DataTrailsPage')
+            ),
+          }),
     },
     {
       path: '/bookmarks',

@@ -40,7 +40,12 @@ jest.mock('app/features/live/dashboard/dashboardWatcher', () => ({
 describe('Legacy dashboard API', () => {
   it('should throw an error if requesting a folder', async () => {
     const api = new LegacyDashboardAPI();
-    expect(async () => await api.getDashboardDTO('folderUid')).rejects.toThrowError('Dashboard not found');
+
+    await expect(api.getDashboardDTO('folderUid')).rejects.toMatchObject({
+      status: 404,
+      config: { url: `/api/dashboards/uid/folderUid` },
+      data: { message: 'Dashboard not found' },
+    });
   });
 
   it('should return a valid dashboard', async () => {

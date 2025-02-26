@@ -12,7 +12,7 @@ import (
 	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashdb "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
@@ -23,10 +23,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -101,7 +103,25 @@ func TestValidateDashboardExists(t *testing.T) {
 	feats := featuremgmt.WithFeatures()
 	dashboardStore, err := dashdb.ProvideDashboardStore(sqlStore, cfg, feats, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
-	dashSvc, err := dashsvc.ProvideDashboardServiceImpl(cfg, dashboardStore, folderimpl.ProvideDashboardFolderStore(sqlStore), feats, nil, nil, acmock.New(), foldertest.NewFakeService(), folder.NewFakeStore(), nil, zanzana.NewNoopClient(), nil, nil, nil, quotatest.New(false, nil), nil)
+	dashSvc, err := dashsvc.ProvideDashboardServiceImpl(
+		cfg,
+		dashboardStore,
+		folderimpl.ProvideDashboardFolderStore(sqlStore),
+		feats,
+		nil,
+		acmock.New(),
+		foldertest.NewFakeService(),
+		folder.NewFakeStore(),
+		nil,
+		client.MockTestRestConfig{},
+		nil,
+		quotatest.New(false, nil),
+		nil,
+		nil,
+		nil,
+		dualwrite.ProvideTestService(),
+		sort.ProvideService(),
+	)
 	require.NoError(t, err)
 	s := ProvideService(dsStore, secretsService, dashSvc)
 	ctx := context.Background()

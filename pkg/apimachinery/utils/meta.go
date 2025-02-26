@@ -17,6 +17,18 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+// LabelKeyGetHistory is used to select object history for an given resource
+const LabelKeyGetHistory = "grafana.app/get-history"
+
+// LabelKeyGetTrash is used to list objects that have been (soft) deleted
+const LabelKeyGetTrash = "grafana.app/get-trash"
+
+// AnnoKeyKubectlLastAppliedConfig is the annotation kubectl writes with the entire previous config
+const AnnoKeyKubectlLastAppliedConfig = "kubectl.kubernetes.io/last-applied-configuration"
+
+// DeletedGeneration is set on Resources that have been (soft) deleted
+const DeletedGeneration = int64(-999)
+
 // Annotation keys
 
 const AnnoKeyCreatedBy = "grafana.app/createdBy"
@@ -34,6 +46,19 @@ const AnnoKeyRepoPath = "grafana.app/repoPath"
 const AnnoKeyRepoHash = "grafana.app/repoHash"
 const AnnoKeyRepoTimestamp = "grafana.app/repoTimestamp"
 
+// Annotations used to store manager properties
+
+const AnnoKeyManagerKind = "grafana.app/managedBy"
+const AnnoKeyManagerIdentity = "grafana.app/managerId"
+const AnnoKeyManagerAllowsEdits = "grafana.app/managerAllowsEdits"
+const AnnoKeyManagerSuspended = "grafana.app/managerSuspended"
+
+// Annotations used to store source properties
+
+const AnnoKeySourcePath = "grafana.app/sourcePath"
+const AnnoKeySourceHash = "grafana.app/sourceHash"
+const AnnoKeySourceTimestamp = "grafana.app/sourceTimestamp"
+
 // LabelKeyDeprecatedInternalID gives the deprecated internal ID of a resource
 // Deprecated: will be removed in grafana 13
 const LabelKeyDeprecatedInternalID = "grafana.app/deprecatedInternalID"
@@ -44,15 +69,6 @@ const oldAnnoKeyOriginName = "grafana.app/originName"
 const oldAnnoKeyOriginPath = "grafana.app/originPath"
 const oldAnnoKeyOriginHash = "grafana.app/originHash"
 const oldAnnoKeyOriginTimestamp = "grafana.app/originTimestamp"
-
-// annoKeyFullPath encodes the full path in folder resources
-// revisit keeping these folder-specific annotations once we have complete support for mode 1
-// Deprecated: this goes away when folders have a better solution
-const annoKeyFullPath = "grafana.app/fullPath"
-
-// annoKeyFullPathUIDs encodes the full path in folder resources
-// Deprecated: this goes away when folders have a better solution
-const annoKeyFullPathUIDs = "grafana.app/fullPathUIDs"
 
 // ResourceRepositoryInfo is encoded into kubernetes metadata annotations.
 // This value identifies indicates the state of the resource in its provisioning source when
@@ -128,18 +144,6 @@ type GrafanaMetaAccessor interface {
 	// NOTE the type must match the existing value, or an error will be thrown
 	SetStatus(any) error
 
-	// Deprecated: this is a temporary hack for folders, it will be removed without notice soon
-	GetFullPath() string
-
-	// Deprecated: this is a temporary hack for folders, it will be removed without notice soon
-	SetFullPath(path string)
-
-	// Deprecated: this is a temporary hack for folders, it will be removed without notice soon
-	GetFullPathUIDs() string
-
-	// Deprecated: this is a temporary hack for folders, it will be removed without notice soon
-	SetFullPathUIDs(path string)
-
 	// Find a title in the object
 	// This will reflect the object and try to get:
 	//  * spec.title
@@ -147,6 +151,22 @@ type GrafanaMetaAccessor interface {
 	//  * title
 	// and return an empty string if nothing was found
 	FindTitle(defaultTitle string) string
+
+	// GetManagerProperties returns the identity of the tool,
+	// which is responsible for managing the resource.
+	//
+	// If the identity is not known, the second return value will be false.
+	GetManagerProperties() (ManagerProperties, bool)
+
+	// SetManagerProperties sets the identity of the tool,
+	// which is responsible for managing the resource.
+	SetManagerProperties(ManagerProperties)
+
+	// GetSourceProperties returns the source properties of the resource.
+	GetSourceProperties() (SourceProperties, bool)
+
+	// SetSourceProperties sets the source properties of the resource.
+	SetSourceProperties(SourceProperties)
 }
 
 var _ GrafanaMetaAccessor = (*grafanaMetaAccessor)(nil)
@@ -694,26 +714,6 @@ func (m *grafanaMetaAccessor) SetStatus(s any) (err error) {
 	return
 }
 
-func (m *grafanaMetaAccessor) GetFullPath() string {
-	// nolint:staticcheck
-	return m.get(annoKeyFullPath)
-}
-
-func (m *grafanaMetaAccessor) SetFullPath(path string) {
-	// nolint:staticcheck
-	m.SetAnnotation(annoKeyFullPath, path)
-}
-
-func (m *grafanaMetaAccessor) GetFullPathUIDs() string {
-	// nolint:staticcheck
-	return m.get(annoKeyFullPathUIDs)
-}
-
-func (m *grafanaMetaAccessor) SetFullPathUIDs(path string) {
-	// nolint:staticcheck
-	m.SetAnnotation(annoKeyFullPathUIDs, path)
-}
-
 func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {
 	// look for Spec.Title or Spec.Name
 	spec := m.r.FieldByName("Spec")
@@ -728,11 +728,124 @@ func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {
 		}
 	}
 
+	obj, ok := m.obj.(*unstructured.Unstructured)
+	if ok {
+		title, ok, _ := unstructured.NestedString(obj.Object, "spec", "title")
+		if ok && title != "" {
+			return title
+		}
+		title, ok, _ = unstructured.NestedString(obj.Object, "spec", "name")
+		if ok && title != "" {
+			return title
+		}
+	}
+
 	title := m.r.FieldByName("Title")
 	if title.IsValid() && title.Kind() == reflect.String {
 		return title.String()
 	}
 	return defaultTitle
+}
+
+func (m *grafanaMetaAccessor) GetManagerProperties() (ManagerProperties, bool) {
+	res := ManagerProperties{
+		Identity:    "",
+		Kind:        ManagerKindUnknown,
+		AllowsEdits: true,
+		Suspended:   false,
+	}
+
+	annot := m.obj.GetAnnotations()
+
+	id, ok := annot[AnnoKeyManagerIdentity]
+	if !ok || id == "" {
+		// If the identity is not set, we should ignore the other annotations and return the default values.
+		//
+		// This is to prevent inadvertently marking resources as managed,
+		// since that can potentially block updates from other sources.
+		return res, false
+	}
+	res.Identity = id
+
+	if v, ok := annot[AnnoKeyManagerKind]; ok {
+		res.Kind = ParseManagerKindString(v)
+	}
+
+	if v, ok := annot[AnnoKeyManagerAllowsEdits]; ok {
+		res.AllowsEdits = v == "true"
+	}
+
+	if v, ok := annot[AnnoKeyManagerSuspended]; ok {
+		res.Suspended = v == "true"
+	}
+
+	return res, true
+}
+
+func (m *grafanaMetaAccessor) SetManagerProperties(v ManagerProperties) {
+	annot := m.obj.GetAnnotations()
+	if annot == nil {
+		annot = make(map[string]string, 4)
+	}
+
+	annot[AnnoKeyManagerIdentity] = v.Identity
+	annot[AnnoKeyManagerKind] = string(v.Kind)
+	annot[AnnoKeyManagerAllowsEdits] = strconv.FormatBool(v.AllowsEdits)
+	annot[AnnoKeyManagerSuspended] = strconv.FormatBool(v.Suspended)
+
+	m.obj.SetAnnotations(annot)
+}
+
+func (m *grafanaMetaAccessor) GetSourceProperties() (SourceProperties, bool) {
+	var (
+		res   SourceProperties
+		found bool
+	)
+
+	annot := m.obj.GetAnnotations()
+	if annot == nil {
+		return res, false
+	}
+
+	if path, ok := annot[AnnoKeySourcePath]; ok && path != "" {
+		res.Path = path
+		found = true
+	}
+
+	if hash, ok := annot[AnnoKeySourceHash]; ok && hash != "" {
+		res.Checksum = hash
+		found = true
+	}
+
+	if timestamp, ok := annot[AnnoKeySourceTimestamp]; ok && timestamp != "" {
+		if t, err := time.Parse(time.RFC3339, timestamp); err == nil {
+			res.Timestamp = t
+			found = true
+		}
+	}
+
+	return res, found
+}
+
+func (m *grafanaMetaAccessor) SetSourceProperties(v SourceProperties) {
+	annot := m.obj.GetAnnotations()
+	if annot == nil {
+		annot = make(map[string]string, 3)
+	}
+
+	if v.Path != "" {
+		annot[AnnoKeySourcePath] = v.Path
+	}
+
+	if v.Checksum != "" {
+		annot[AnnoKeySourceHash] = v.Checksum
+	}
+
+	if !v.Timestamp.IsZero() {
+		annot[AnnoKeySourceTimestamp] = v.Timestamp.Format(time.RFC3339)
+	}
+
+	m.obj.SetAnnotations(annot)
 }
 
 type BlobInfo struct {

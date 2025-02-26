@@ -10,10 +10,10 @@ labels:
     - cloud
 tags:
   - beginner
-title: Get started with Grafana Alerting - Part 2 of 3
+title: Get started with Grafana Alerting - Part 2
 weight: 50
 killercoda:
-  title: Get started with Grafana Alerting - Part 2 of 3
+  title: Get started with Grafana Alerting - Part 2
   description: Learn to use alert instances and route notifications by labels to contacts, building on your alerting skills in Grafana for more advanced workflows — Part 2.
   backend:
     imageid: ubuntu
@@ -21,7 +21,7 @@ killercoda:
 
 <!-- INTERACTIVE page intro.md START -->
 
-# Get started with Grafana Alerting - Part 2 of 3
+# Get started with Grafana Alerting - Part 2
 
 The Get started with Grafana Alerting tutorial Part 2 is a continuation of [Get started with Grafana Alerting tutorial Part 1](http://www.grafana.com/tutorials/alerting-get-started/).
 
@@ -188,7 +188,7 @@ Create a notification policy if you want to handle metrics returned by alert rul
 
    This new child policy routes alerts that match the label `device=desktop` to the Webhook contact point.
 
-1. **Repeat the steps above to create a second child policy** to match another alert instance. For labels use: `device=mobile`. Use the Webhook integration for the contact point. Alternatively, experiment by using a different Webhook endpoint or a [different integration](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/#list-of-supported-integrations).
+1. **Repeat the steps above to create a second child policy** to match another alert instance. For labels use: `device=mobile`. Use the Webhook integration for the contact point. Alternatively, experiment by using a different Webhook endpoint or a [different integration](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/#supported-contact-point-integrations).
 
 <!-- INTERACTIVE ignore END -->
 
@@ -206,7 +206,7 @@ Create a notification policy if you want to handle metrics returned by alert rul
 
    This new child policy routes alerts that match the label `device=desktop` to the Webhook contact point.
 
-1. **Repeat the steps above to create a second child policy** to match another alert instance. For labels use: `device=mobile`. Use the Webhook integration for the contact point. Alternatively, experiment by using a different Webhook endpoint or a [different integration](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/#list-of-supported-integrations).
+1. **Repeat the steps above to create a second child policy** to match another alert instance. For labels use: `device=mobile`. Use the Webhook integration for the contact point. Alternatively, experiment by using a different Webhook endpoint or a [different integration](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/#supported-contact-point-integrations).
 
 {{< /docs/ignore >}}
 
@@ -222,7 +222,7 @@ The alert rule that you are about to create is meant to monitor web traffic page
 
 ### Create an alert rule
 
-1. Navigate to **Alerting > Alert rules**.
+1. Navigate to **Alerts & IRM > Alerting > Alert rules**.
 1. Click **New alert rule**.
 
 ### Enter an alert rule name
@@ -260,18 +260,21 @@ It should return two series.`desktop` in Firing state, and `mobile` in Normal st
 <!-- INTERACTIVE page step6.md END -->
 <!-- INTERACTIVE page step7.md START -->
 
+### Add folders and labels
+
+1. In **Folder**, click **+ New folder** and enter a name. For example: `web-traffic-alerts` . This folder contains our alert rules.
+
 ### Set evaluation behavior
 
 In the [life cycle](http://grafana.com/docs/grafana/next/alerting/fundamentals/alert-rule-evaluation/) of alert instances, when an alert condition (threshold) is not met, the alert instance state is **Normal**. Similarly, when the condition is breached (for longer than the pending period, which in this tutorial will be 0), the alert instance state switches back to **Alerting**, which means that the alert rule state is **Firing**, and a notification is sent.
 
 To set up evaluation behavior:
 
-1. In **Folder**, click **+ New folder** and enter a name. For example: `web-traffic-alerts`. This folder contains our alert rules.
-1. In **Evaluation group**, repeat the above step to create a new evaluation group. Name it `1m` (referring to “1 minute”).
-1. Choose an Evaluation interval (how often the alert will be evaluated). Choose `1m`.
-1. Set the pending period to `0s` (zero seconds), so the alert rule fires the moment the condition is met.
+1. In **Evaluation group and interval**, repeat the above step to create a new evaluation group. Name it `1m` (referring to “1 minute”).
+1. Choose an **Evaluation interval** (how often the alert will be evaluated). Choose `1m`.
+1. Set the **pending period** to `0s` (zero seconds), so the alert rule fires the moment the condition is met.
 
-### Configure labels and notifications
+### Configure notifications
 
 In this section, you can select how you want to route your alert instances. Since we want to route by notification policy, we need to ensure that the labels match the alert instance.
 

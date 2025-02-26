@@ -38,7 +38,7 @@ saveDashboardDrawer,2022-03-30T17:07:41Z,2022-05-02T16:29:22Z,edf384c730a448a5e9
 accesscontrol-builtins,2022-03-31T09:40:57Z,2022-05-19T07:29:36Z,0d87de153a2b8406d03efe0cf43b5a926ce7acab,Gabriel MABILLE
 alertProvisioning,2022-04-01T06:32:00Z,2022-06-05T05:45:36Z,b8e277ee4c070b64ba4cf024b18c460626d1a2d3,Alexander Weaver
 explore2Dashboard,2022-04-07T08:26:01Z,2022-11-07T16:06:40Z,ca286a238d1e9ce1e5357fde8148476a9d618cee,Giordano Ricci
-publicDashboards,2022-04-07T18:30:19Z,,4a4d87dbdcaf4dca753bcf29205ac036b6c59862,Jeff Levin
+publicDashboards,2022-04-07T18:30:19Z,2024-11-20T14:36:19Z,4a4d87dbdcaf4dca753bcf29205ac036b6c59862,Jeff Levin
 persistNotifications,2022-04-20T09:42:32Z,2022-05-26T11:03:04Z,c48d8d1d488e0ce5870c54eb5828660081743108,kay delaney
 serviceAccounts,2022-04-21T09:41:37Z,2022-06-27T08:22:49Z,8677552dda7b63f5d44df6fe51ca8a28726c5a5c,Eric Leijonmarck
 commandPalette,2022-04-21T21:50:34Z,2023-02-02T14:44:21Z,3e7db088acd1da32ea489b0756cdf4e15ec2da69,Kristina
@@ -62,7 +62,7 @@ dataConnectionsConsole,2022-06-10T10:13:31Z,2024-02-29T09:29:41Z,9a85a2e44102662
 internationalization,2022-06-10T11:02:52Z,2023-06-02T08:24:40Z,9a62849dc39e960640b5762cc5eace1baf29c0ee,Josh Hunt
 autoMigrateGraphPanels,2022-06-11T00:12:56Z,2023-03-23T04:02:36Z,ae8dd737704bb6232c52e19090e593d9165f5e77,Ryan McKinley
 lokiDataframeApi,2022-06-13T06:33:46Z,2023-04-13T13:22:09Z,8fd9cb48548313cf43ebcf5dcfa0daad0bfdfe0c,Gábor Farkas
-topnav,2022-06-20T14:25:43Z,,3c3293df78344a782fb65e5f977fd148daa597ce,Torkel Ödegaard
+topnav,2022-06-20T14:25:43Z,2024-10-17T09:18:30Z,3c3293df78344a782fb65e5f977fd148daa597ce,Torkel Ödegaard
 customBranding,2022-06-22T15:05:52Z,2022-10-05T12:07:35Z,405df77e3e6abcf5264ba192abe33630bd64da20,Tania
 useLegacyHeatmapPanel,2022-06-23T18:48:28Z,2022-11-23T18:46:21Z,dd5a3b77472884035de13ddd441f41d0dd007e4b,Ryan McKinley
 scenes,2022-07-07T06:53:02Z,2024-06-27T07:03:46Z,935334cbdabef8b0516bfe6c8ed45dd063cce7e9,Torkel Ödegaard
@@ -119,7 +119,7 @@ individualCookiePreferences,2023-02-21T10:19:07Z,,0caacb3333152015bf0369f54315a2
 newTraceView,2023-02-28T15:41:40Z,2023-04-21T10:31:24Z,82bcfb492867138bcc4744f88d36eb081c1b6811,Joey
 drawerDataSourcePicker,2023-03-01T10:26:19Z,2023-04-14T11:01:10Z,dc1600ff14acc3deecc5de02f6584dcf20d3c8b1,Oscar Kilhed
 traceqlSearch,2023-03-06T16:31:08Z,2023-07-24T15:26:10Z,fd37ff29b57520036fdc02f8a93a7d74770fd153,Andre Pereira
-prometheusMetricEncyclopedia,2023-03-07T18:41:05Z,,9b6e531549e145d1a1a0ede870a6163c69b0bfd5,Brendan O'Handley
+prometheusMetricEncyclopedia,2023-03-07T18:41:05Z,2024-12-30T21:16:04Z,9b6e531549e145d1a1a0ede870a6163c69b0bfd5,Brendan O'Handley
 timeSeriesTable,2023-03-10T12:41:06Z,2023-10-13T08:00:42Z,548a5054ad8fa5c199bd01e20a02fbbe558d52fe,Domas
 lokiQuerySplittingConfig,2023-03-20T15:51:36Z,,68551ac9ca5b92621e6ab895c759822797bbf418,Sven Grossmann
 onlyExternalOrgRoleSync,2023-03-22T17:41:59Z,2023-07-25T09:51:47Z,3cd952b8bad8d23daee10fcc303a6d19c8b6d0a0,Eric Leijonmarck
@@ -142,7 +142,7 @@ externalServiceAuth,2023-04-11T13:21:19Z,2024-02-26T10:29:09Z,5df9e64986e8c0324b
 disableElasticsearchBackendQuerying,2023-04-12T12:20:43Z,2023-04-14T09:24:35Z,303777e682758076d6a8e1df6b82f97b3b2393a7,Ivana Huckova
 disableSSEDataplane,2023-04-12T16:24:34Z,,e78be44e1a38b7afb85909b807b6a2e9e5a98830,Kyle Brandt
 useCachingService,2023-04-12T16:30:33Z,2024-01-17T21:53:25Z,5626461b3c358f5c5c5c690b82977c09744d09b4,Michael Mandrus
-lokiMetricDataplane,2023-04-13T13:07:08Z,,531caec60263738ed6b31878b1ec093de635e4e2,Gábor Farkas
+lokiMetricDataplane,2023-04-13T13:07:08Z,2024-11-26T16:32:17Z,531caec60263738ed6b31878b1ec093de635e4e2,Gábor Farkas
 authenticationConfigUI,2023-04-13T14:07:43Z,2023-06-14T16:58:15Z,7476219b0c2876f60bc9c6e28b22190f239e1426,Alexander Zobnin
 enableElasticsearchBackendQuerying,2023-04-14T09:24:35Z,2024-06-05T15:03:29Z,f48c858ca22b3f246d1033670f14605adb13cdf3,Ivana Huckova
 advancedDataSourcePicker,2023-04-14T11:01:10Z,2024-02-06T09:20:07Z,7bc31ab04b5c87f06bdb383c7f4a6195e70d53d1,Ivan Ortega Alba
@@ -166,7 +166,7 @@ lokiExperimentalStreaming,2023-06-19T10:03:51Z,,271cdb4baa6d5b021e013b463350f227
 flameGraphV2,2023-06-19T14:34:06Z,2023-07-11T12:58:43Z,5ca03a82f042808efabae84b46991106c23de514,Andrej Ocenas
 pluginsDynamicAngularDetectionPatterns,2023-06-26T13:33:21Z,2024-04-15T08:37:28Z,cca9d897339ae2de087bc5b7177849a730d4b38d,Giuseppe Guerra
 elasticToggleableFilters,2023-06-27T08:38:20Z,2023-07-28T12:49:02Z,c1ce24c90f75daa133e2cb59288ecc14195e5194,Matias Chomicki
-vizAndWidgetSplit,2023-06-27T10:22:13Z,,2785ed80d999b9ee1770e1209284d4fccd985401,Alexa V
+vizAndWidgetSplit,2023-06-27T10:22:13Z,2024-10-30T16:12:03Z,2785ed80d999b9ee1770e1209284d4fccd985401,Alexa V
 nestedFolderPicker,2023-06-28T09:40:29Z,2024-06-04T09:16:12Z,f18a7f7d9696a6e80606dc49d5ac0064384f111d,Josh Hunt
 frontendSandboxMonitorOnly,2023-07-05T11:48:25Z,,72f6793344fb3a63f5a8a86570b786b518264366,Esteban Beltran
 prometheusIncrementalQueryInstrumentation,2023-07-05T19:39:49Z,2024-06-20T13:04:22Z,daf9f9cd199e0bbc110222a3f005dc05dab1681a,Galen Kistler
@@ -186,7 +186,7 @@ toggleLabelsInLogsUI,2023-07-24T08:22:47Z,2023-10-27T11:00:49Z,84f94cdc24c3b911a
 azureMonitorDataplane,2023-07-24T13:50:49Z,2023-11-08T15:02:46Z,ee60d8c82dbcc8496d52d673bfc000901d72f232,Kyle Brandt
 gcomOnlyExternalOrgRoleSync,2023-07-25T12:27:02Z,2023-11-13T09:56:02Z,f7c6491f7317f3fbaf4f21b8beec967d76778a87,Ieva
 traceQLStreaming,2023-07-26T13:33:16Z,,89092a1e697788428f76fead65371b7c904cd13f,Andre Pereira
-prometheusConfigOverhaulAuth,2023-07-26T16:09:53Z,,98cb3ce3b63ee4d1b82e6b04d11f8a6a065de7b4,Brendan O'Handley
+prometheusConfigOverhaulAuth,2023-07-26T16:09:53Z,2025-01-02T21:19:11Z,98cb3ce3b63ee4d1b82e6b04d11f8a6a065de7b4,Brendan O'Handley
 configurableSchedulerTick,2023-07-26T16:44:12Z,,c7598cc6fb492cb7cc34eec90fbd2a08d859cffd,Yuri Tseretyan
 permissionsFilterRemoveSubquery,2023-08-02T07:39:25Z,,2c26a02b82238e0f89ca08844914cff22a84255a,Sofia Papagiannaki
 influxdbSqlSupport,2023-08-02T16:27:43Z,2024-04-18T14:29:27Z,77e7ae2a1b253276ceae4ef5cda1dffc0e674b4d,ismail simsek
@@ -221,14 +221,13 @@ recoveryThreshold,2023-10-10T14:51:50Z,,810fbc3327841da6d21f945e75cad9daf040e625
 libraryPanelRBAC,2023-10-11T23:30:50Z,,a12cb8cbf3a9b33841b2f2cb1522be11de78c86a,kay delaney
 awsDatasourcesNewFormStyling,2023-10-12T08:59:10Z,2024-07-22T12:48:17Z,2771fb940342aa152377b26b9554eb15082f90ac,Ida Štambuk
 cachingOptimizeSerializationMemoryUsage,2023-10-12T16:56:49Z,,94ce87571ddfcede0fb7a229a65502b385d5bca3,Michael Mandrus
-panelTitleSearchInV1,2023-10-13T12:04:24Z,,bf2f2540da7a4e4b8d80e1fa4ae3d05868cf7b69,Arati R
+panelTitleSearchInV1,2023-10-13T12:04:24Z,2025-01-21T09:59:32Z,bf2f2540da7a4e4b8d80e1fa4ae3d05868cf7b69,Arati R
 exploreContentOutline,2023-10-13T16:57:13Z,2024-06-24T15:45:42Z,4ec54bc2c39ba43843c693fdb2a4529b6a4703f2,Haris Rozajac
 formatString,2023-10-13T18:17:12Z,,889576ac1d9278b1c6e3e278e8195968646a2db0,Sol
 pluginsInstrumentationStatusSource,2023-10-17T08:27:45Z,2024-02-21T11:57:40Z,f5076d1868caa14ce44a70e812315541b4199d9f,Giuseppe Guerra
 teamHttpHeaders,2023-10-17T10:23:54Z,,be5ba6813209b5b24e955e0f761032cb5826b578,Eric Leijonmarck
 costManagementUi,2023-10-17T16:15:51Z,2024-01-08T14:25:11Z,de1ed216f4bbf6f341aa22b144fa66d583a63981,Adam Bannach
 managedPluginsInstall,2023-10-18T13:17:03Z,,43add83d1a84fe0945860a9cc700df92c7e8341f,Hugo Kiyodi Oshiro
-prometheusPromQAIL,2023-10-19T15:45:32Z,,5580d061019bee46ea2e69c94041f3da14585ceb,Brendan O'Handley
 cloudWatchBatchQueries,2023-10-20T19:09:41Z,,ecbc52f51529e1f35e26895db1a10f8a1c2f4244,Isabella Siu
 alertingContactPointsV2,2023-10-25T13:57:53Z,2023-11-30T12:37:14Z,e12e40fc2493160338237b0b94e72fa530a78ef4,Gilles De Mey
 alertmanagerRemoteOnly,2023-10-30T16:27:08Z,,363830883cb1f5de30f7015df5cba419df47468e,Santiago
@@ -299,7 +298,7 @@ betterPageScrolling,2024-03-06T15:06:47Z,2024-06-18T13:33:08Z,6a4e0c692ab26f4d4c
 emailVerificationEnforcement,2024-03-11T14:09:44Z,2024-03-22T13:30:58Z,0b55d72fb5698e1ea2cf73eaceae166cd5619daa,Karl Persson
 ssoSettingsSAML,2024-03-14T11:04:45Z,,831ee9ee1696c0aa7a6e4ca022ddfc0ab28b86dc,linoman
 publicDashboardsScene,2024-03-22T14:48:21Z,,8d4ca72f2a0e66c446d58d8bf13fadbc988fce11,Juan Cabanas
-autoMigrateXYChartPanel,2024-03-22T15:44:37Z,,d7fa99e2df8269425eefb6373a665d8ec0b219d9,Leon Sorokin
+autoMigrateXYChartPanel,2024-03-22T15:44:37Z,2024-11-14T16:36:18Z,d7fa99e2df8269425eefb6373a665d8ec0b219d9,Leon Sorokin
 usePrometheusFrontendPackage,2024-03-23T00:47:53Z,2024-04-15T21:45:23Z,d0845952117152e7707f964cc343790497220990,Brendan O'Handley
 oauthRequireSubClaim,2024-03-25T13:22:24Z,,2f3a01f79fda7f6c465dd64adf5cf5c7227f9d19,Karl Persson
 authAPIAccessTokenAuth,2024-04-02T15:45:15Z,,5340a6e548b1e5fcd3af66695ca34d7e943fd068,Jo
@@ -317,7 +316,7 @@ logsExploreTableDefaultVisualization,2024-05-02T15:28:15Z,,840aeddbd1957117d9b62
 autofixDSUID,2024-05-03T11:32:07Z,2024-06-20T10:56:39Z,b6f899d953a0924760dc5fd5a3d40669c86d475d,Andres Martinez Gotor
 newDashboardSharingComponent,2024-05-03T15:02:18Z,,d1434fad3a68bc1d2b49725be31e45526e6ad349,Juan Cabanas
 tlsMemcached,2024-05-09T19:12:08Z,,b009536329d110afd807ef2f27f2b7dcc7d310ba,lean.dev
-notificationBanner,2024-05-13T09:32:34Z,,f3953b4955c218cc4678e842faa3d3380fd0f8f7,Alex Khomenko
+notificationBanner,2024-05-13T09:32:34Z,2025-01-10T10:18:43Z,f3953b4955c218cc4678e842faa3d3380fd0f8f7,Alex Khomenko
 dualWritePlaylistsMode2,2024-05-14T12:11:56Z,2024-05-31T18:18:09Z,6836bfe1ea1bf62f4eb66dc1328a456183874f81,Arati R
 dualWritePlaylistsMode3,2024-05-14T12:11:56Z,2024-05-31T18:18:09Z,6836bfe1ea1bf62f4eb66dc1328a456183874f81,Arati R
 dashboardRestore,2024-05-16T17:36:26Z,,42d75ac737d7ac001a6d53376e25512408a01db5,Ezequiel Victorero
@@ -338,31 +337,90 @@ databaseReadReplica,2024-06-18T15:07:15Z,2024-09-25T23:21:39Z,50244ed4a1435cbf3e
 disableClassicHTTPHistogram,2024-06-18T19:37:44Z,,3bbc821131f1b10ace139dbb4a6880fb77686646,Dave Henderson
 zanzana,2024-06-19T13:59:47Z,,3fe29809bec39239c45d672d686392725773f2e1,Karl Persson
 failWrongDSUID,2024-06-20T10:56:39Z,,44fd13c742e606b8409e23eb62cab8bab24310f1,Andres Martinez Gotor
-passScopeToDashboardApi,2024-06-20T15:49:19Z,,543e71eb2862187d12e8ee7742badb06e4c913e8,Bogdan Matei
+passScopeToDashboardApi,2024-06-20T15:49:19Z,2024-10-25T12:56:54Z,543e71eb2862187d12e8ee7742badb06e4c913e8,Bogdan Matei
 alertingApiServer,2024-06-20T20:52:03Z,,b07592620279f16b0353444e7aba3c457c50d7ec,Yuri Tseretyan
-dashboardRestoreUI,2024-06-25T14:43:13Z,,a3879e02bb3b7e8e917ba1bb4163bb230f917f2c,Laura Fernández
+dashboardRestoreUI,2024-06-25T14:43:13Z,2024-10-11T08:29:58Z,a3879e02bb3b7e8e917ba1bb4163bb230f917f2c,Laura Fernández
 cloudWatchRoundUpEndTime,2024-06-27T15:10:28Z,,ba5b33227c343cb2c7dad15ff85a745869c68da9,Ida Štambuk
 bodyScrolling,2024-07-01T10:28:39Z,2024-09-24T12:23:18Z,c0058f9c7e390d8a196f5b375382334287633ea9,Ashley Harrison
-cloudwatchMetricInsightsCrossAccount,2024-07-02T10:34:12Z,,36ff0fe63a7710eb496f2f048feb71e6eb6e3c56,Ida Štambuk
+cloudwatchMetricInsightsCrossAccount,2024-07-02T10:34:12Z,2025-01-10T22:23:23Z,36ff0fe63a7710eb496f2f048feb71e6eb6e3c56,Ida Štambuk
 dataplaneAggregator,2024-08-09T08:41:07Z,,122e291134c689ff57eae4461cd5953914b5a36c,Todd Treece
 adhocFilterOneOf,2024-08-12T08:56:42Z,2024-09-05T12:49:24Z,ab3e8652aa865e43a3f2c164b626c42dfffab33e,Ashley Harrison
 prometheusRunQueriesInParallel,2024-08-12T12:31:39Z,,c9ddc688a2b2c4ebb49e8ecf71dc01e33704da32,Vijay Samuel
 backgroundPluginInstaller,2024-08-12T14:39:31Z,2024-09-23T13:49:18Z,d342e76f636e3a5751c5e7baccd1c8910b50d863,Andres Martinez Gotor
 pluginsDetailsRightPanel,2024-08-13T09:55:30Z,,8044cb50f17a021a32e7ac0b83cf8d723457a9ae,Yulia Shanyrova
 lokiSendDashboardPanelNames,2024-08-22T19:30:43Z,,ec857e1de99d228668e3fb2c0bfd30230a96e180,Sven Grossmann
-singleTopNav,2024-08-29T08:48:32Z,,8aaa155cb0215119d2455732a9e37f7c2aeff35c,Laura Fernández
+mysqlParseTime,2024-08-27T11:16:04Z,2024-12-10T21:13:13Z,c59dddf7afb227f756259a50fc1d2b1946a4a72f,Ryan McKinley
+singleTopNav,2024-08-29T08:48:32Z,2024-12-17T13:32:38Z,8aaa155cb0215119d2455732a9e37f7c2aeff35c,Laura Fernández
 exploreLogsAggregatedMetrics,2024-08-29T13:55:59Z,,15a4ff992bd925f5714bc4e73fa9766a995b5711,Sven Grossmann
 exploreLogsLimitedTimeRange,2024-08-29T13:55:59Z,,15a4ff992bd925f5714bc4e73fa9766a995b5711,Sven Grossmann
 exploreLogsShardSplitting,2024-08-29T13:55:59Z,,15a4ff992bd925f5714bc4e73fa9766a995b5711,Sven Grossmann
 newFiltersUI,2024-08-30T12:48:13Z,,00ae49a61adff11e5fbac3341941b35185d9e8d9,Sergej-Vlasov
-appPlatformAccessTokens,2024-09-05T16:18:44Z,,d5ebaa0ef92edecfb9511dc7c8080be25f8cc7e7,Claudiu Dragalina-Paraipan
+appPlatformAccessTokens,2024-09-05T16:18:44Z,2024-10-14T10:47:18Z,d5ebaa0ef92edecfb9511dc7c8080be25f8cc7e7,Claudiu Dragalina-Paraipan
 appSidecar,2024-09-09T12:45:05Z,,5e2ac24890906e5070323d87730dd78a4f885963,Andrej Ocenas
 vizActions,2024-09-09T14:11:55Z,,af48d3db1eb2d8681843f5997e50fea5e5ea3096,Adela Almasan
 groupAttributeSync,2024-09-09T15:29:43Z,,6ded6a8872204a818b3795dc733cc5fe5db066a0,Aaron Godin
-kubernetesFolders,2024-09-10T09:22:08Z,,b12a29a1dac8b9aec4a99be08e1665939cb27dc5,Arati R.
 alertingFilterV2,2024-09-11T11:29:26Z,,90ee52e8d9c14237f8a57b622c0def7512e657cd,Gilles De Mey
 improvedExternalSessionHandling,2024-09-17T10:54:39Z,,41cd0f51800d4849345fc0980ca4173967fc8e9e,Misi
 datasourceAPIServers,2024-09-19T08:28:27Z,,f21a5987a22bcdb596d6a258d2960e4151348b63,Ryan McKinley
 useSessionStorageForRedirection,2024-09-23T09:31:23Z,,b369341868ec182f076e2e6003b371fdf071f690,Misi
 homeSetupGuide,2024-09-25T17:20:04Z,,c822feff9edd6da63da44d935f7cac4365871f01,Serena
 alertingQueryAndExpressionsStepMode,2024-09-26T06:33:14Z,,536edee7bff0e393054775b02a9362c8d49ed699,Sonia Aguilar
+rolePickerDrawer,2024-09-26T12:51:38Z,,e2816ee51a1497f1cced62584a026fc8121b59a0,linoman
+alertingPrometheusRulesPrimary,2024-09-27T12:27:16Z,,db42af20ca8875fbe3410ddd49e0effba6d8594a,Konrad Lalik
+unifiedStorageSearch,2024-09-30T19:46:14Z,,6a3eb276efb8ba7a2ccb9cb79977e2def76d406d,owensmallwood
+grafanaAPIServerTestingWithExperimentalAPIs,2024-10-03T10:11:40Z,,a42caa7a61ffb0c2694ff294af3403913e4fc103,Arati R.
+pluginsSriChecks,2024-10-04T12:55:09Z,,0db65d229e36b78802c1e8bd0713ac44e7a7cdc7,Giuseppe Guerra
+onPremToCloudMigrationsAlerts,2024-10-07T10:53:24Z,2024-12-17T11:56:18Z,712314e8324fd86ec33ecb840f868eb1f1cac154,Matheus Macabu
+appPlatformGrpcClientAuth,2024-10-14T10:47:18Z,,a69ee676babc7644da41781efc5ae2c301f06de6,Claudiu Dragalina-Paraipan
+kubernetesDashboardsAPI,2024-10-15T19:30:05Z,2024-12-10T18:35:36Z,644a16048f034f6bc79883678f1f1a4b48233483,Stephanie Hingtgen
+unifiedStorageBigObjectsSupport,2024-10-17T10:18:29Z,,3457f219be1c8bce99f713d7a907ee339ef38229,Ryan McKinley
+timeRangeProvider,2024-10-22T10:52:33Z,,3bf3290340a7842bb1d83647343234b2e9e83b18,Andrej Ocenas
+dashboardNewLayouts,2024-10-23T08:55:45Z,,b700de81224caacd327fafb6ce0dfda8b38d39c6,Torkel Ödegaard
+prometheusUsesCombobox,2024-10-23T11:18:33Z,,2cf6a6388ba36246ed425664783682a0be4f37f8,Josh Hunt
+lokiShardSplitting,2024-10-23T11:21:03Z,,2573cbec083e8f5160888a455efd435b8d03549f,Matias Chomicki
+azureMonitorDisableLogLimit,2024-10-24T13:32:09Z,,2a65de8aaa98ddf5db9f69afe0cfb13a052b98de,Andreas Christou
+reloadDashboardsOnParamsChange,2024-10-25T12:56:54Z,,97c0ff2ae467452aa2ea1619b6e014bc005e09fa,Bogdan Matei
+dashboardSchemaV2,2024-10-29T10:35:18Z,2024-12-19T12:28:20Z,f062c66f89b09fca7716438ac488a76bf81ed7f8,Alexa V
+playlistsWatcher,2024-11-01T17:47:24Z,2024-12-20T03:09:31Z,403b60723d9960b29c1ad9b1fd5b22b3bc340bef,Todd Treece
+sqlQuerybuilderFunctionParameters,2024-11-04T16:13:35Z,,85c696c4ad5d7e29fa6d66e0239a0efa653ffdd2,Zoltán Bedi
+enableExtensionsAdminPage,2024-11-05T15:55:10Z,,c7a7f7dce5d93dc5044c4be140433ee2d6150fb9,Marcus Andersson
+exploreMetricsRelatedLogs,2024-11-05T16:28:43Z,,82ac9e2bb67a665c3b56e3a80c47d8aea7f7d044,ismail simsek
+enableScopesInMetricsExplore,2024-11-06T13:11:33Z,,a80517d6fecf245cb9366b5662ab6d8760200389,Bogdan Matei
+zipkinBackendMigration,2024-11-07T09:35:53Z,,c151021b162d99da2cb0f09485f90a2b5d38c11c,Ivana Huckova
+preinstallAutoUpdate,2024-11-07T12:14:25Z,,a415c0b83184ad473b3f8e10c0319c46d9e5c515,Andres Martinez Gotor
+enableSCIM,2024-11-07T14:38:46Z,,3d51ca7377eff46b39750a8e0311ead7b75fd359,linoman
+logQLScope,2024-11-11T11:53:24Z,,c7b6822a5e9cba703e521536947682aaf801203e,Carl Bergquist
+userStorageAPI,2024-11-12T11:56:41Z,,c3494614e39638f6d78b79397cf6032cbcde4b9f,Andres Martinez Gotor
+crashDetection,2024-11-12T15:07:27Z,,3a6858cf2602207da6e351f7fa6beb1d18fd35ad,Piotr Jamróz
+passwordlessMagicLinkAuthentication,2024-11-14T13:50:55Z,,6abe99efd64b8867112d9d9c74971d96840ce32d,colin-stuart
+reportingUseRawTimeRange,2024-11-14T20:08:03Z,,ec1a722504b5c09ba01b96b95907a3bdd1c0b106,Juan Cabanas
+jaegerBackendMigration,2024-11-15T14:40:20Z,,cc1d76fc0aabf229605451d015e75ebd6bae2a0c,Gareth Dawson
+alertingUIOptimizeReducer,2024-11-18T10:59:00Z,,76444c7913851303d8fae61046d8c2b0d858080d,Sonia Aguilar
+onPremToCloudMigrationsAuthApiMig,2024-11-21T18:46:06Z,,e9fae5bd7fe1bd5194caeaf1d0180cbba09e08a0,lean.dev
+provisioning,2024-11-22T09:03:50Z,,53245e274288caac8b1599e74184f40578a996fb,Ryan McKinley
+alertingNotificationsStepMode,2024-11-22T11:07:45Z,,977184b878f4ba0c5ef19eb6c2ba43bcbefeceb8,Sonia Aguilar
+scopeApi,2024-11-27T07:58:25Z,,21bd47e512180001e4dfb81cc04553bdd56f8789,Carl Bergquist
+azureMonitorEnableUserAuth,2024-11-27T14:01:54Z,,b898a4540d986eb7ccf3127924f47eec3c0e1542,Adam Yeats
+feedbackButton,2024-12-02T17:08:15Z,,8a1b89a5ebb847f6b29e92dcea796f00c30431d6,Michael Mandrus
+elasticsearchCrossClusterSearch,2024-12-12T22:20:04Z,,b3a12f486eba69e20dd7ff3a3d4dd065ede7a99f,Isabella Siu
+unifiedHistory,2024-12-13T10:41:18Z,,aac62c89dae1092836a91d1b6ae6bd7127fe676a,Laura Fernández
+lokiLabelNamesQueryApi,2024-12-13T14:31:41Z,,5ac7443fcec0db412d3333044a82c2c26b5aece7,Sven Grossmann
+useV2DashboardsAPI,2024-12-17T21:17:09Z,,070f0e4457c5967102ef157197073dc2662f6fb8,Dominik Prokop
+investigationsBackend,2024-12-18T08:31:03Z,,f46c07aba7b6faccd2ecafc83051d1410cacc867,Jackson Coelho
+unifiedStorageSearchSprinkles,2024-12-18T17:00:54Z,,4837585cab0fd84184a8c6f5d6891f442a2b95f1,owensmallwood
+prometheusSpecialCharsInLabelValues,2024-12-18T21:31:08Z,,721c50a304588ebd7cea76e301ec0f68a5a55d68,Nick Richmond
+unifiedStorageSearchUI,2024-12-19T18:21:48Z,,a8f347144ddc16f2033fdeb4f3474e49239ba7ab,Scott Lepper
+playlistsReconciler,2024-12-20T03:09:31Z,,24bf337c562dc9b9d8684cc9acb7ea171ea83414,Charandas
+k8SFolderCounts,2024-12-27T17:10:44Z,,df36e77cd31d2ad77e3d708748d040367a0c8c9c,Leonor Oliveira
+k8SFolderMove,2024-12-27T17:10:44Z,,df36e77cd31d2ad77e3d708748d040367a0c8c9c,Leonor Oliveira
+kubernetesRestore,2025-01-03T14:48:47Z,,5429512779bd5f25b88ff728ea91efdef7dfafa0,Stephanie Hingtgen
+improvedExternalSessionHandlingSAML,2025-01-09T17:02:49Z,,c52ec21c75ab72c2f7d28259bac0364edae560d0,Misi
+teamHttpHeadersMimir,2025-01-13T10:42:47Z,,04acbcdef23f673bd6bbfdbbece29c9769ce155a,Eric Leijonmarck
+ABTestFeatureToggleA,2025-01-13T21:13:13Z,,009d7f42b3d09b3a6be1f00f07314e2b25af7ebc,Nathan Marrs
+ABTestFeatureToggleB,2025-01-13T21:13:13Z,,009d7f42b3d09b3a6be1f00f07314e2b25af7ebc,Nathan Marrs
+queryLibraryDashboards,2025-01-14T11:01:15Z,,740cd22fe51a3543c182857f31fc97fd42263306,Ashley Harrison
+elasticsearchImprovedParsing,2025-01-15T17:05:54Z,,bab55a4cb84f2ba57838f96a492ab9aa7f307957,Adam Yeats
+grafanaAdvisor,2025-01-20T10:08:00Z,,c1364d6be6f552203ba786f17a89664304b89247,Andres Martinez Gotor
+datasourceConnectionsTab,2025-01-21T17:39:48Z,,97d8f68b705f9949493079d1833abfe80e7b48f3,Syerikjan Kh
+unifiedStorageSearchPermissionFiltering,2025-01-22T11:38:37Z,,dd483fc17fa4a2931848e3574cfc31ea6f6530d9,owensmallwood
+kubernetesClientDashboardsFolders,2025-02-18T21:15:35Z,,766d645d827f5e6e0872ae30e5fe23226ae85785,Stephanie Hingtgen

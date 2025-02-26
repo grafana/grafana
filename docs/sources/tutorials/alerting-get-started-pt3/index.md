@@ -338,7 +338,7 @@ Following the above example, [notification policies](ref:notification-policies) 
 
 In this section we configure an alert rule based on our application monitoring example.
 
-1. Navigate to **Alerting > Alert rules**.
+1. Navigate to **Alerts & IRM > Alerting > Alert rules**.
 2. Click **New alert rule**.
 
 ### Enter an alert rule name
@@ -383,16 +383,19 @@ Grafana includes a [test data source](https://grafana.com/docs/grafana/latest/da
 
    {{< figure src="/media/docs/alerting/regions-alert-instance-preview.png" max-width="750px" alt="Preview of a query returning alert instances." >}}
 
+### Add folders and labels
+
+1. In **Folder**, click **+ New folder** and enter a name. For example: `Multi-region alerts` . This folder contains our alert rules.
+
 ### Set evaluation behavior
 
 Every alert rule is assigned to an evaluation group. You can assign the alert rule to an existing evaluation group or create a new one.
 
-1. In **Folder**, click **+ New folder** and enter a name. For example: `Multi-region alerts`. This folder contains our alert rules.
-1. In the **Evaluation group**, repeat the above step to create a new evaluation group. Name it `Multi-region group`.
+1. In the **Evaluation group and interval**, repeat the above step to create a new evaluation group. Name it `Multi-region group`.
 1. Choose an **Evaluation interval** (how often the alert are evaluated). Choose `1m`.
-1. Set the pending period to `0s` (zero seconds), so the alert rule fires the moment the condition is met (this minimizes the waiting time for the demonstration).
+1. Set the **pending period** to `0s` (zero seconds), so the alert rule fires the moment the condition is met (this minimizes the waiting time for the demonstration).
 
-### Configure labels and notifications
+### Configure notifications
 
 Select who should receive a notification when an alert rule fires.
 
@@ -507,5 +510,25 @@ _Detail of memory alert instances grouped into a separate notification for us-ea
 ## Conclusion
 
 By configuring **notification policies** and using **labels** (such as _region_), you can group alert notifications based on specific criteria and route them to the appropriate teams. Fine-tuning **timing options**—including group wait, group interval, and repeat interval—further can reduce noise and ensures notifications remain actionable without overwhelming on-call engineers.
+
+## Learn more in [Grafana Alerting Part 4](http://www.grafana.com/tutorials/alerting-get-started-pt4/)
+
+<!-- INTERACTIVE ignore START -->
+
+{{< admonition type="tip" >}}
+
+In [Get started with Grafana Alerting - Part 4](http://www.grafana.com/tutorials/alerting-get-started-pt4/) you learn how to use templates to create customized and concise notifications.
+
+{{< /admonition >}}
+
+<!-- INTERACTIVE ignore END -->
+
+{{< docs/ignore >}}
+
+In [Get started with Grafana Alerting - Part 4](http://www.grafana.com/tutorials/alerting-get-started-pt4/) you learn how to use templates to create customized and concise notifications.
+
+{{< /docs/ignore >}}
+
+<!-- INTERACTIVE page finish.md END -->
 
 <!-- INTERACTIVE page finish.md END -->

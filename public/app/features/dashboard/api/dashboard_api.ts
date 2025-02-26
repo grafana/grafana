@@ -1,17 +1,17 @@
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { Dashboard } from '@grafana/schema';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { DashboardDTO } from 'app/types';
 
 import { LegacyDashboardAPI } from './legacy';
 import { DashboardAPI, DashboardWithAccessInfo } from './types';
 import { getDashboardsApiVersion } from './utils';
-import { K8sDashboardAPI } from './v0';
+import { K8sDashboardAPI } from './v1';
 import { K8sDashboardV2API } from './v2';
 
 type DashboardAPIClients = {
-  legacy: DashboardAPI<DashboardDTO>;
-  v0: DashboardAPI<DashboardDTO>;
-  // v1: DashboardDTO; TODO[schema]: enable v1 when available
-  v2: DashboardAPI<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>>;
+  legacy: DashboardAPI<DashboardDTO, Dashboard>;
+  v1: DashboardAPI<DashboardDTO, Dashboard>;
+  v2: DashboardAPI<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>, DashboardV2Spec>;
 };
 
 type DashboardReturnTypes = DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>;
@@ -26,16 +26,20 @@ export function setDashboardAPI(override: Partial<DashboardAPIClients> | undefin
 }
 
 // Overloads
-export function getDashboardAPI(): DashboardAPI<DashboardDTO>;
-export function getDashboardAPI(requestV2Response: 'v2'): DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec>>;
-export function getDashboardAPI(requestV2Response?: 'v2'): DashboardAPI<DashboardReturnTypes> {
+export function getDashboardAPI(): DashboardAPI<DashboardDTO, Dashboard>;
+export function getDashboardAPI(
+  requestV2Response: 'v2'
+): DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec>, DashboardV2Spec>;
+export function getDashboardAPI(
+  requestV2Response?: 'v2'
+): DashboardAPI<DashboardReturnTypes, Dashboard | DashboardV2Spec> {
   const v = getDashboardsApiVersion();
   const isConvertingToV1 = !requestV2Response;
 
   if (!clients) {
     clients = {
       legacy: new LegacyDashboardAPI(),
-      v0: new K8sDashboardAPI(),
+      v1: new K8sDashboardAPI(),
       v2: new K8sDashboardV2API(isConvertingToV1),
     };
   }

@@ -42,11 +42,6 @@ func (d *directResourceClient) GetStats(ctx context.Context, in *resource.Resour
 	return d.server.GetStats(ctx, in)
 }
 
-// History implements ResourceClient.
-func (d *directResourceClient) History(ctx context.Context, in *resource.HistoryRequest, opts ...grpc.CallOption) (*resource.HistoryResponse, error) {
-	return d.server.History(ctx, in)
-}
-
 // IsHealthy implements ResourceClient.
 func (d *directResourceClient) IsHealthy(ctx context.Context, in *resource.HealthCheckRequest, opts ...grpc.CallOption) (*resource.HealthCheckResponse, error) {
 	return d.server.IsHealthy(ctx, in)
@@ -92,5 +87,10 @@ func (d *directResourceClient) Update(ctx context.Context, in *resource.UpdateRe
 
 // Watch implements ResourceClient.
 func (d *directResourceClient) Watch(ctx context.Context, in *resource.WatchRequest, opts ...grpc.CallOption) (resource.ResourceStore_WatchClient, error) {
-	return nil, fmt.Errorf("watch not yet supported with direct resource client")
+	return nil, fmt.Errorf("watch not supported with direct resource client")
+}
+
+// BatchProcess implements resource.ResourceClient.
+func (d *directResourceClient) BatchProcess(ctx context.Context, opts ...grpc.CallOption) (resource.BatchStore_BatchProcessClient, error) {
+	return nil, fmt.Errorf("BatchProcess not supported with direct resource client")
 }

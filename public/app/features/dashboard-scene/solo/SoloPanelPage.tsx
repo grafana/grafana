@@ -5,9 +5,10 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { UrlSyncContextProvider } from '@grafana/scenes';
-import { Alert, Spinner, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Spinner, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
+import { t } from 'app/core/internationalization';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardPageRouteParams } from 'app/features/dashboard/containers/types';
 import { DashboardRoutes } from 'app/types';
@@ -24,16 +25,26 @@ export interface Props extends GrafanaRouteComponentProps<DashboardPageRoutePara
  */
 export function SoloPanelPage({ queryParams }: Props) {
   const stateManager = getDashboardScenePageStateManager();
-  const { dashboard } = stateManager.useState();
-  const { uid = '' } = useParams();
+  const { dashboard, loadError } = stateManager.useState();
+  const { uid = '', type, slug } = useParams();
 
   useEffect(() => {
-    stateManager.loadDashboard({ uid, route: DashboardRoutes.Embedded });
+    stateManager.loadDashboard({ uid, type, slug, route: DashboardRoutes.Embedded });
     return () => stateManager.clearState();
-  }, [stateManager, queryParams, uid]);
+  }, [stateManager, queryParams, uid, type, slug]);
 
   if (!queryParams.panelId) {
     return <EntityNotFound entity="Panel" />;
+  }
+
+  if (loadError) {
+    return (
+      <Box justifyContent={'center'} alignItems={'center'} display={'flex'} height={'100%'}>
+        <Alert severity="error" title={t('dashboard.errors.failed-to-load', 'Failed to load dashboard')}>
+          {loadError.message}
+        </Alert>
+      </Box>
+    );
   }
 
   if (!dashboard) {
@@ -53,7 +64,6 @@ export function SoloPanelRenderer({ dashboard, panelId }: { dashboard: Dashboard
   const [panel, error] = useSoloPanel(dashboard, panelId);
   const { controls } = dashboard.useState();
   const refreshPicker = controls?.useState()?.refreshPicker;
-
   const styles = useStyles2(getStyles);
 
   useEffect(() => {

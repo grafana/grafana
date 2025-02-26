@@ -167,6 +167,10 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 		plugin.Extensions.AddedComponents = []AddedComponent{}
 	}
 
+	if plugin.Extensions.AddedFunctions == nil {
+		plugin.Extensions.AddedFunctions = []AddedFunction{}
+	}
+
 	if plugin.Extensions.ExposedComponents == nil {
 		plugin.Extensions.ExposedComponents = []ExposedComponent{}
 	}
@@ -494,19 +498,14 @@ func (p *Plugin) IsCorePlugin() bool {
 	return p.Class == ClassCore
 }
 
-func (p *Plugin) IsBundledPlugin() bool {
-	return p.Class == ClassBundled
-}
-
 func (p *Plugin) IsExternalPlugin() bool {
-	return !p.IsCorePlugin() && !p.IsBundledPlugin()
+	return !p.IsCorePlugin()
 }
 
 type Class string
 
 const (
 	ClassCore     Class = "core"
-	ClassBundled  Class = "bundled"
 	ClassExternal Class = "external"
 	ClassCDN      Class = "cdn"
 )

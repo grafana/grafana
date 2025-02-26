@@ -116,6 +116,14 @@ export const DashboardInteractions = {
       isScenesContextSet = false;
     };
   },
+
+  // Dashboards versions interactions
+  versionRestoreClicked: (properties: { version: number; index?: number; confirm: boolean; timestamp?: Date }) => {
+    reportDashboardInteraction('version_restore_clicked', properties);
+  },
+  showMoreVersionsClicked: () => {
+    reportDashboardInteraction('show_more_versions_clicked');
+  },
 };
 
 const reportDashboardInteraction: typeof reportInteraction = (name, properties) => {

@@ -61,7 +61,7 @@ The queries use [TraceQL](/docs/tempo/latest/traceql), the query language design
 For general documentation on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data).
 
 {{< admonition type="tip" >}}
-Don't know TraceQL? Try [Explore Traces](ref:explore-traces-app), an intuitive, queryless app that lets you explore your tracing data using RED metrics.
+Don't know TraceQL? Try [Grafana Traces Drilldown](ref:explore-traces-app), an intuitive, queryless app that lets you explore your tracing data using RED metrics.
 {{< /admonition >}}
 
 ## Before you begin
@@ -105,7 +105,7 @@ Refer to the [Search using the TraceQL query builder documentation]({{< relref "
 
 The **TraceQL** query editor lets you search by trace ID and write TraceQL queries using autocomplete.
 
-Refer to the [TraceQL query editor documentation]({{< relref "./traceql-editor" >}}) to learn more about constructing queries using a code-editor-like experience.
+Refer to the [TraceQL query editor documentation](./traceql-editor) to learn more about constructing queries using a code-editor-like experience.
 
 ![The TraceQL query editor](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-traceql-v11.png)
 
@@ -113,8 +113,8 @@ You can also search for a trace ID by entering it into the query field.
 
 ### Service graph view
 
-Grafana’s **Service Graph** view uses metrics to display span request rates, error rates, and durations, as well as service graphs.
-Once the requirements are set up, this preconfigured view is immediately available.
+The **Service Graph** view uses metrics to display span request rates, error rates, and durations, as well as service graphs.
+After the requirements are set up, this preconfigured view is immediately available.
 
 Using the service graph view, you can:
 

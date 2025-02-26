@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -97,7 +97,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	}
 
 	// List must return all folders
-	hits, err := s.service.GetFolders(ctx, folder.GetFoldersQuery{
+	hits, err := s.service.GetFoldersLegacy(ctx, folder.GetFoldersQuery{
 		SignedInUser: user,
 		OrgID:        orgId,
 		// TODO: enable pagination
@@ -133,7 +133,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		return nil, err
 	}
 
-	dto, err := s.service.Get(ctx, &folder.GetFolderQuery{
+	dto, err := s.service.GetLegacy(ctx, &folder.GetFolderQuery{
 		SignedInUser: user,
 		UID:          &name,
 		OrgID:        info.OrgID,
@@ -142,7 +142,8 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		if errors.Is(err, dashboards.ErrFolderNotFound) || err == nil {
 			err = resourceInfo.NewNotFound(name)
 		}
-		return nil, err
+		statusErr := apierrors.ToFolderStatusError(err)
+		return nil, &statusErr
 	}
 
 	r, err := convertToK8sResource(dto, s.namespacer)
@@ -186,7 +187,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 
 	parent := accessor.GetFolder()
 
-	out, err := s.service.Create(ctx, &folder.CreateFolderCommand{
+	out, err := s.service.CreateLegacy(ctx, &folder.CreateFolderCommand{
 		SignedInUser: user,
 		UID:          p.Name,
 		Title:        p.Spec.Title,
@@ -285,7 +286,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 	oldParent := mOld.GetFolder()
 	newParent := mNew.GetFolder()
 	if oldParent != newParent {
-		_, err = s.service.Move(ctx, &folder.MoveFolderCommand{
+		_, err = s.service.MoveLegacy(ctx, &folder.MoveFolderCommand{
 			SignedInUser: user,
 			UID:          name,
 			OrgID:        info.OrgID,
@@ -312,7 +313,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		changed = true
 	}
 	if changed {
-		_, err = s.service.Update(ctx, cmd)
+		_, err = s.service.UpdateLegacy(ctx, cmd)
 		if err != nil {
 			return nil, false, err
 		}
@@ -340,7 +341,7 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	if !ok {
 		return v, false, fmt.Errorf("expected a folder response from Get")
 	}
-	err = s.service.Delete(ctx, &folder.DeleteFolderCommand{
+	err = s.service.DeleteLegacy(ctx, &folder.DeleteFolderCommand{
 		UID:          name,
 		OrgID:        info.OrgID,
 		SignedInUser: user,

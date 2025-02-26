@@ -18,8 +18,10 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -41,8 +43,9 @@ func TestAlertRuleService(t *testing.T) {
 	ruleService := createAlertRuleService(t, nil)
 	var orgID int64 = 1
 	u := &user.SignedInUser{
-		UserID: 1,
-		OrgID:  orgID,
+		UserUID: util.GenerateShortUID(),
+		UserID:  1,
+		OrgID:   orgID,
 	}
 
 	t.Run("group creation should set the right provenance", func(t *testing.T) {
@@ -196,7 +199,7 @@ func TestAlertRuleService(t *testing.T) {
 			},
 		}
 		rule.Metadata = ruleMetadata
-		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), []models.AlertRule{rule})
+		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.AlertRule{rule})
 		require.NoError(t, err)
 		require.Len(t, r, 1)
 
@@ -233,7 +236,7 @@ func TestAlertRuleService(t *testing.T) {
 			},
 		}
 		rule.Metadata = ruleMetadata
-		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), []models.AlertRule{rule})
+		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.AlertRule{rule})
 		require.NoError(t, err)
 		require.Len(t, r, 1)
 
@@ -624,7 +627,7 @@ func TestAlertRuleService(t *testing.T) {
 
 func TestCreateAlertRule(t *testing.T) {
 	orgID := rand.Int63()
-	u := &user.SignedInUser{OrgID: orgID}
+	u := &user.SignedInUser{OrgID: orgID, UserUID: util.GenerateShortUID()}
 	groupKey := models.GenerateGroupKey(orgID)
 	groupIntervalSeconds := int64(30)
 	gen := models.RuleGen
@@ -1008,7 +1011,7 @@ func TestUpdateAlertRule(t *testing.T) {
 
 			rule := models.CopyRule(rules[0])
 
-			_, err := service.ruleStore.InsertAlertRules(context.Background(), []models.AlertRule{*rule})
+			_, err := service.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.AlertRule{*rule})
 			require.NoError(t, err)
 
 			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
@@ -1603,8 +1606,9 @@ func TestProvisiongWithFullpath(t *testing.T) {
 	ac := acmock.New()
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
 	fStore := folderimpl.ProvideStore(sqlStore)
-	folderService := folderimpl.ProvideService(fStore, ac, inProcBus, dashboardStore, folderStore, sqlStore,
-		features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+	folderService := folderimpl.ProvideService(
+		fStore, ac, inProcBus, dashboardStore, folderStore,
+		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
 
 	ruleService := createAlertRuleService(t, folderService)
 	var orgID int64 = 1
@@ -1626,7 +1630,7 @@ func TestProvisiongWithFullpath(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("for a rule under a root folder should set the right fullpath", func(t *testing.T) {
-		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), []models.AlertRule{
+		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(&signedInUser), []models.AlertRule{
 			createTestRule("my-cool-group", "my-cool-group", orgID, namespaceUID),
 		})
 		require.NoError(t, err)
@@ -1640,7 +1644,7 @@ func TestProvisiongWithFullpath(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, namespaceTitle, res2.FolderFullpath)
 
-		res3, err := ruleService.GetAlertGroupsWithFolderFullpath(context.Background(), &signedInUser, []string{namespaceUID})
+		res3, err := ruleService.GetAlertGroupsWithFolderFullpath(context.Background(), &signedInUser, &FilterOptions{NamespaceUIDs: []string{namespaceUID}})
 		require.NoError(t, err)
 		assert.Equal(t, namespaceTitle, res3[0].FolderFullpath)
 	})
@@ -1657,7 +1661,7 @@ func TestProvisiongWithFullpath(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), []models.AlertRule{
+		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(&signedInUser), []models.AlertRule{
 			createTestRule("my-cool-group-2", "my-cool-group-2", orgID, otherNamespaceUID),
 		})
 		require.NoError(t, err)
@@ -1671,7 +1675,7 @@ func TestProvisiongWithFullpath(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "my-namespace/my-other-namespace containing multiple \\/\\/", res2.FolderFullpath)
 
-		res3, err := ruleService.GetAlertGroupsWithFolderFullpath(context.Background(), &signedInUser, []string{otherNamespaceUID})
+		res3, err := ruleService.GetAlertGroupsWithFolderFullpath(context.Background(), &signedInUser, &FilterOptions{NamespaceUIDs: []string{otherNamespaceUID}})
 		require.NoError(t, err)
 		assert.Equal(t, "my-namespace/my-other-namespace containing multiple \\/\\/", res3[0].FolderFullpath)
 	})

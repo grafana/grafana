@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, QueryEditorProps, SelectableValue } from '@grafana/data';
-import { EditorField } from '@grafana/experimental';
+import { EditorField } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 

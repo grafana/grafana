@@ -13,6 +13,11 @@ export type FoundLokiDataSource = Pick<DataSourceSettings, 'name' | 'uid'>;
  */
 export interface MetricsLogsConnector {
   /**
+   * The name of the connector
+   */
+  name: string;
+
+  /**
    * Retrieves the Loki data sources associated with the specified metric.
    */
   getDataSources(selectedMetric: string): Promise<FoundLokiDataSource[]>;
