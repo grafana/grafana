@@ -189,8 +189,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 		case resource.SEARCH_FIELD_MANAGER_ID:
 			if field.Operator == string(selection.NotIn) {
 				for _, val := range vals {
-					name, _ := dashboard.GetProvisionedFileNameFromMeta(val) // ?????? file:/?????
-					query.ManagerIdentityNotIn = append(query.ManagerIdentityNotIn, name)
+					query.ManagerIdentityNotIn = append(query.ManagerIdentityNotIn, val)
 				}
 				continue
 			}
@@ -199,8 +198,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 			if len(vals) != 1 {
 				return nil, fmt.Errorf("only one repo name is supported")
 			}
-
-			query.ManagerIdentity, _ = dashboard.GetProvisionedFileNameFromMeta(vals[0])
+			query.ManagerIdentity = vals[0]
 		}
 	}
 	searchFields := resource.StandardSearchFields()

@@ -1558,11 +1558,11 @@ func (dr *DashboardServiceImpl) saveProvisionedDashboardThroughK8s(ctx context.C
 	m := utils.ManagerProperties{}
 	s := utils.SourceProperties{}
 	if !unprovision {
-		m.Kind = utils.ManagerKindRepo
-		m.Identity = dashboard.ProvisionedFileNameWithPrefix(provisioning.Name)
+		m.Kind = utils.ManagerKindClassicFP // was file:
+		m.Identity = provisioning.Name
 		s.Path = provisioning.ExternalID
 		s.Checksum = provisioning.CheckSum
-		s.Timestamp = time.Unix(provisioning.Updated, 0).UTC()
+		s.Timestamp = time.Unix(provisioning.Updated, 0).UnixMilli()
 	}
 	meta.SetManagerProperties(m)
 	meta.SetSourceProperties(s)
@@ -1838,13 +1838,13 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 	ctx, _ = identity.WithServiceIdentity(ctx, query.OrgId)
 
 	if query.ManagerIdentity != "" {
-		query.ManagerIdentity = dashboard.ProvisionedFileNameWithPrefix(query.ManagerIdentity)
+		query.ManagerIdentity = query.ManagerIdentity
 	}
 
 	if len(query.ManagerIdentityNotIn) > 0 {
 		repos := make([]string, len(query.ManagerIdentityNotIn))
 		for i, v := range query.ManagerIdentityNotIn {
-			repos[i] = dashboard.ProvisionedFileNameWithPrefix(v)
+			repos[i] = v
 		}
 		query.ManagerIdentityNotIn = repos
 	}
@@ -1876,29 +1876,27 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 				}
 
 				m, ok := meta.GetManagerProperties()
-				if !ok {
+				if !ok || m.Kind != utils.ManagerKindClassicFP { // nolint:staticcheck
 					return nil
 				}
 
-				// ensure the repo is set due to file provisioning, otherwise skip it
-				fileRepo, found := dashboard.GetProvisionedFileNameFromMeta(m.Identity)
-				if !found {
+				source, ok := meta.GetSourceProperties()
+				if ok {
 					return nil
 				}
 
 				provisioning := &dashboardProvisioningWithUID{
+					DashboardProvisioning: dashboards.DashboardProvisioning{
+						Name:        m.Identity,
+						ExternalID:  source.Path,
+						CheckSum:    source.Checksum,
+						DashboardID: meta.GetDeprecatedInternalID(), // nolint:staticcheck
+					},
 					DashboardUID: hit.Name,
 				}
-				provisioning.Name = fileRepo
-
-				source, ok := meta.GetSourceProperties()
-				if ok {
-					provisioning.ExternalID = source.Path
-					provisioning.CheckSum = source.Checksum
-					provisioning.Updated = source.Timestamp.Unix()
+				if source.Timestamp > 0 {
+					provisioning.Updated = time.UnixMilli(source.Timestamp).Unix()
 				}
-
-				provisioning.DashboardID = meta.GetDeprecatedInternalID() // nolint:staticcheck
 
 				mu.Lock()
 				dashs = append(dashs, provisioning)

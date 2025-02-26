@@ -455,7 +455,7 @@ func TestMetaAccessor(t *testing.T) {
 				wantProperties: utils.ManagerProperties{
 					Identity:    "",
 					Kind:        utils.ManagerKindUnknown,
-					AllowsEdits: true,
+					AllowsEdits: false,
 					Suspended:   false,
 				},
 				wantOK: false,
@@ -487,7 +487,7 @@ func TestMetaAccessor(t *testing.T) {
 				wantProperties: utils.ManagerProperties{
 					Identity:    "",
 					Kind:        utils.ManagerKindUnknown,
-					AllowsEdits: true,
+					AllowsEdits: false,
 					Suspended:   false,
 				},
 				wantOK: false,

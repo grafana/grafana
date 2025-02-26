@@ -326,7 +326,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 					Timestamp: origin_ts.Int64,
 				})
 				meta.SetManagerProperties(utils.ManagerProperties{
-					Kind:     utils.ManagerKindRepo, // classic?
+					Kind:     utils.ManagerKindClassicFP,
 					Identity: origin_name.String,
 				})
 			}
