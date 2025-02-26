@@ -46,7 +46,7 @@ function GroupDetailsPage() {
     isLoading: isRuleNamespacesLoading,
     error: ruleNamespacesError,
   } = usePrometheusRuleNamespacesQuery(
-    !dsFeatures?.rulerConfig
+    dsFeatures && !dsFeatures.rulerConfig
       ? { ruleSourceName: dsFeatures?.name ?? '', namespace: namespaceId, groupName: groupName }
       : skipToken,
     {
