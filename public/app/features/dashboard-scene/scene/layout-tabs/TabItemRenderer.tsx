@@ -3,9 +3,8 @@ import { useLocation } from 'react-router';
 
 import { GrafanaTheme2, locationUtil } from '@grafana/data';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
-import { Checkbox, clearButtonStyles, useElementSelection, useStyles2 } from '@grafana/ui';
+import { Tab, useElementSelection } from '@grafana/ui';
 // eslint-disable-next-line no-restricted-imports
-import { getFocusStyles } from '@grafana/ui/src/themes/mixins';
 
 import { TabItem } from './TabItem';
 
