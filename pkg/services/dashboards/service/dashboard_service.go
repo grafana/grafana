@@ -1722,7 +1722,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 
 	if query.ManagerIdentity != "" {
 		req := []*resource.Requirement{{
-			Key:      resource.SEARCH_FIELD_REPOSITORY_NAME,
+			Key:      resource.SEARCH_FIELD_MANAGER_ID,
 			Operator: string(selection.In),
 			Values:   []string{query.ManagerIdentity},
 		}}
@@ -1731,7 +1731,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 
 	if len(query.ManagerIdentityNotIn) > 0 {
 		req := []*resource.Requirement{{
-			Key:      resource.SEARCH_FIELD_REPOSITORY_NAME,
+			Key:      resource.SEARCH_FIELD_MANAGER_ID,
 			Operator: string(selection.NotIn),
 			Values:   query.ManagerIdentityNotIn,
 		}}
@@ -1739,7 +1739,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	}
 	if query.SourcePath != "" {
 		req := []*resource.Requirement{{
-			Key:      resource.SEARCH_FIELD_REPOSITORY_PATH,
+			Key:      resource.SEARCH_FIELD_SOURCE_PATH,
 			Operator: string(selection.In),
 			Values:   []string{query.SourcePath},
 		}}

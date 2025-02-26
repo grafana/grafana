@@ -667,7 +667,7 @@ func (m *grafanaMetaAccessor) GetManagerProperties() (ManagerProperties, bool) {
 	if v, ok := annot[AnnoKeyManagerAllowsEdits]; ok {
 		res.AllowsEdits = v == "true"
 	} else if res.Kind == ManagerKindRepo {
-		res.AllowsEdits = true // << actualy depends on the loaded config
+		res.AllowsEdits = true // << actually depends on the loaded config
 	}
 
 	if v, ok := annot[AnnoKeyManagerSuspended]; ok {

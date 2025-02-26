@@ -275,18 +275,6 @@ const SEARCH_FIELD_CREATED_BY = "createdBy"
 const SEARCH_FIELD_UPDATED = "updated"
 const SEARCH_FIELD_UPDATED_BY = "updatedBy"
 
-// Deprecated: use SEARCH_FIELD_MANAGER_ID
-const SEARCH_FIELD_REPOSITORY_NAME = "repo.name"
-
-// Deprecated: use SEARCH_FIELD_SOURCE_PATH
-const SEARCH_FIELD_REPOSITORY_PATH = "repo.path"
-
-// Deprecated: use SEARCH_FIELD_SOURCE_CHECKSUM
-const SEARCH_FIELD_REPOSITORY_HASH = "repo.hash"
-
-// Deprecated: use SEARCH_FIELD_SOURCE_TIME
-const SEARCH_FIELD_REPOSITORY_TIME = "repo.time"
-
 const SEARCH_FIELD_MANAGER_KIND = "manager.kind"
 const SEARCH_FIELD_MANAGER_ID = "manager.id"
 const SEARCH_FIELD_SOURCE_PATH = "source.path"

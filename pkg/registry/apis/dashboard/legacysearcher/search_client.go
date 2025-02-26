@@ -180,13 +180,13 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 			}
 
 			query.FolderUIDs = folders
-		case resource.SEARCH_FIELD_SOURCE_PATH, resource.SEARCH_FIELD_REPOSITORY_PATH: // nolint:staticcheck
+		case resource.SEARCH_FIELD_SOURCE_PATH:
 			// only one value is supported in legacy search
 			if len(vals) != 1 {
 				return nil, fmt.Errorf("only one repo path query is supported")
 			}
 			query.SourcePath = vals[0]
-		case resource.SEARCH_FIELD_MANAGER_ID, resource.SEARCH_FIELD_REPOSITORY_NAME:
+		case resource.SEARCH_FIELD_MANAGER_ID:
 			if field.Operator == string(selection.NotIn) {
 				for _, val := range vals {
 					name, _ := dashboard.GetProvisionedFileNameFromMeta(val) // ?????? file:/?????

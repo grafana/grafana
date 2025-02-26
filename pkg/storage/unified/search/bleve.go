@@ -305,19 +305,20 @@ func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.Li
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
 		Query: &query.TermQuery{
 			Term:     req.Name,
-			FieldVal: resource.SEARCH_FIELD_REPOSITORY_NAME,
+			FieldVal: resource.SEARCH_FIELD_MANAGER_ID,
 		},
 		Fields: []string{
 			resource.SEARCH_FIELD_TITLE,
 			resource.SEARCH_FIELD_FOLDER,
-			resource.SEARCH_FIELD_REPOSITORY_NAME,
-			resource.SEARCH_FIELD_REPOSITORY_PATH,
-			resource.SEARCH_FIELD_REPOSITORY_HASH,
-			resource.SEARCH_FIELD_REPOSITORY_TIME,
+			resource.SEARCH_FIELD_MANAGER_KIND,
+			resource.SEARCH_FIELD_MANAGER_ID,
+			resource.SEARCH_FIELD_SOURCE_PATH,
+			resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+			resource.SEARCH_FIELD_SOURCE_TIME,
 		},
 		Sort: search.SortOrder{
 			&search.SortField{
-				Field: resource.SEARCH_FIELD_REPOSITORY_PATH,
+				Field: resource.SEARCH_FIELD_SOURCE_PATH,
 				Type:  search.SortFieldAsString,
 				Desc:  false,
 			},
@@ -360,9 +361,9 @@ func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.Li
 	for _, hit := range found.Hits {
 		item := &resource.ListRepositoryObjectsResponse_Item{
 			Object: &resource.ResourceKey{},
-			Hash:   asString(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_HASH]),
-			Path:   asString(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_PATH]),
-			Time:   asTime(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_TIME]),
+			Hash:   asString(hit.Fields[resource.SEARCH_FIELD_SOURCE_CHECKSUM]),
+			Path:   asString(hit.Fields[resource.SEARCH_FIELD_SOURCE_PATH]),
+			Time:   asTime(hit.Fields[resource.SEARCH_FIELD_SOURCE_TIME]),
 			Title:  asString(hit.Fields[resource.SEARCH_FIELD_TITLE]),
 			Folder: asString(hit.Fields[resource.SEARCH_FIELD_FOLDER]),
 		}
@@ -380,7 +381,7 @@ func (b *bleveIndex) CountRepositoryObjects(ctx context.Context) ([]*resource.Co
 		Query: bleve.NewMatchAllQuery(),
 		Size:  0,
 		Facets: bleve.FacetsRequest{
-			"count": bleve.NewFacetRequest(resource.SEARCH_FIELD_REPOSITORY_NAME, 1000), // typically less then 5
+			"count": bleve.NewFacetRequest(resource.SEARCH_FIELD_MANAGER_ID, 1000), // typically less then 5
 		},
 	})
 	if err != nil {
