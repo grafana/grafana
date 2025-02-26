@@ -86,7 +86,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   sidebar: css`
     width: 260px;
     padding: ${theme.spacing(1)};
-    border-right: 1px solid ${theme.colors.border.medium};
     overflow-y: auto;
   `,
   stepItem: css`
