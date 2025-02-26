@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { FeatureInfo, requiredFeatureToggles, feature_ini, ngrok_example, root_url_ini, render_ini } from './types';
 import { InstructionsModal } from './InstructionsModal';
 import { config } from '@grafana/runtime';
+import { FeatureCard } from './FeatureCard';
 
 // Define styles directly in this file
 const getStyles = (theme: GrafanaTheme2) => {
@@ -267,14 +268,7 @@ export const SetupWizard = () => {
               <p className={styles.subtitle}>This setup is required for provisioning to work properly.</p>
               <div className={styles.featuresList}>
                 {requiredFeatures.map((feature, index) => {
-                  return (
-                    <div key={index} className={styles.featureItem}>
-                      <div className={styles.featureHeader}>
-                        <h4 className={styles.featureTitle}>{feature.title}</h4>
-                      </div>
-                      <p className={styles.featureDescription}>{feature.description}</p>
-                    </div>
-                  );
+                  return <FeatureCard key={index} feature={feature} onSetup={() => {}} showSetupButton={false} />;
                 })}
               </div>
               {!hasFeatureToggles ? (
@@ -303,26 +297,13 @@ export const SetupWizard = () => {
                     const allStepsFulfilled = feature.steps.every((step) => step.fulfilled);
 
                     return (
-                      <div key={index} className={styles.featureItem}>
-                        <div className={styles.featureHeader}>
-                          <h4 className={styles.featureTitle}>{feature.title}</h4>
-                        </div>
-                        <p className={styles.featureDescription}>{feature.description}</p>
-                        {!allStepsFulfilled && (
-                          <Button
-                            variant="primary"
-                            onClick={() => handleFeatureSelect(featureIndex)}
-                            className={styles.featureButton}
-                          >
-                            Setup Now
-                          </Button>
-                        )}
-                        {allStepsFulfilled && (
-                          <div className={styles.configuredStatus}>
-                            <Icon name="check-circle" className={styles.configuredIcon} /> Configured
-                          </div>
-                        )}
-                      </div>
+                      <FeatureCard
+                        key={index}
+                        feature={feature}
+                        onSetup={() => handleFeatureSelect(featureIndex)}
+                        isConfigured={allStepsFulfilled}
+                        showSetupButton={!allStepsFulfilled}
+                      />
                     );
                   })}
                 </div>
