@@ -10,6 +10,9 @@ import {
   LibraryPanelImport,
   LibraryPanelKind,
   PanelKind,
+  PanelQueryKind,
+  AnnotationQueryKind,
+  QueryVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import config from 'app/core/config';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -344,34 +347,26 @@ export class DashboardExporterV1 implements DashboardExporterLike<DashboardModel
 export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spec, DashboardV2Json> {
   async makeExportable(dashboard: DashboardV2Spec) {
     const requires: DashboardImportableRequirements[] = [];
-    const datasources: DataSources = {};
     const variableLookup: { [key: string]: any } = {};
     const libraryPanels: LibraryPanelImport[] = [];
 
     for (const variable of dashboard.variables) {
-      variableLookup[variable.kind] = variable.spec;
+      variableLookup[variable.spec.name] = variable.spec;
     }
 
-    // TODO: will need to make it type safe so it's easier to reason about
-    const templateizeDatasourceUsage = (obj: any, fallback?: DataSourceRef) => {
-      if (obj === undefined) {
-        obj.datasource = fallback;
+    const templateizeLibraryPanelDatasourceUsage = (obj: any) => {
+      if (obj.datasource === undefined) {
         return;
       }
 
       let datasource = obj.datasource;
-      let datasourceVariable: any = null;
-
-      const datasourceUid: string | undefined = datasource?.uid;
+      const datasourceUid: string | undefined = obj.datasource.uid;
       const match = datasourceUid && variableRegex.exec(datasourceUid);
 
-      // ignore data source properties that contain a variable
-      if (match) {
-        const varName = match[1] || match[2] || match[4];
-        datasourceVariable = variableLookup[varName];
-        if (datasourceVariable && datasourceVariable.current) {
-          datasource = datasourceVariable.current.value;
-        }
+      const { datasourceVariable, datasourceMatch: dataSourceMatch } = getDatasourceFromMatch(match, datasource);
+
+      if (dataSourceMatch) {
+        datasource = dataSourceMatch;
       }
 
       return getDataSourceSrv()
@@ -390,7 +385,6 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
             },
           });
 
-          // if used via variable we can skip templatizing usage
           if (datasourceVariable) {
             return;
           }
@@ -398,33 +392,47 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
           const libraryPanel = obj.libraryPanel;
           const libraryPanelSuffix = !!libraryPanel ? '-for-library-panel' : '';
           let refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase() + libraryPanelSuffix.toUpperCase();
-
-          datasources[refName] = {
-            name: refName,
-            label: ds.name,
-            description: '',
-            type: 'datasource',
-            pluginId: ds.meta?.id,
-            pluginName: ds.meta?.name,
-            usage: datasources[refName]?.usage,
-          };
-
-          if (!!libraryPanel) {
-            const libPanels = datasources[refName]?.usage?.libraryPanels || [];
-            libPanels.push({ name: libraryPanel.name, uid: libraryPanel.uid });
-
-            datasources[refName].usage = {
-              libraryPanels: libPanels,
-            };
-          }
-
           obj.datasource = { type: ds.meta.id, uid: '${' + refName + '}' };
         });
     };
 
+    const templateizeDatasourceUsage = (
+      obj: AnnotationQueryKind['spec'] | QueryVariableKind['spec'] | PanelQueryKind['spec']
+    ) => {
+      if (obj.datasource === undefined) {
+        return;
+      }
+
+      let datasource = obj.datasource;
+      const datasourceUid: string | undefined = obj.datasource?.uid;
+      const match = datasourceUid && variableRegex.exec(datasourceUid);
+
+      // ignore data source properties that contain a variable
+      const { datasourceMatch } = getDatasourceFromMatch(match, datasource);
+
+      if (datasourceMatch) {
+        datasource = datasourceMatch;
+      }
+
+      return getDataSourceSrv()
+        .get(datasource)
+        .then((ds) => {
+          if (ds.meta?.builtIn) {
+            return;
+          }
+
+          requires.push({
+            kind: 'datasource',
+            spec: {
+              id: ds.meta.id,
+              name: ds.meta.name,
+              version: ds.meta.info.version || '1.0.0',
+            },
+          });
+        });
+    };
+
     const processPanel = async (panel: PanelKind) => {
-      await templateizeDatasourceUsage(panel);
-      // TODO:
       if (panel.spec.data.spec.queries) {
         for (const query of panel.spec.data.spec.queries) {
           await templateizeDatasourceUsage(query.spec);
@@ -457,7 +465,7 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
         },
       };
 
-      await templateizeDatasourceUsage(exportableLibPanel.spec.model);
+      await templateizeLibraryPanelDatasourceUsage(exportableLibPanel.spec.model);
 
       libraryPanels.push(exportableLibPanel);
     };
@@ -527,7 +535,7 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
       const newObj: DashboardV2Json = {
         kind: 'ImportableResources',
         spec: {
-          resources: [importableDashboard, ...uniqBy(libraryPanels, 'uid')],
+          resources: [importableDashboard, ...uniqBy(libraryPanels, 'spec.uid')],
           requirements: uniqBy(sortBy(requires, ['id']), 'spec.id'),
         },
       };
@@ -538,6 +546,18 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
       return {
         error: err,
       };
+    }
+
+    function getDatasourceFromMatch(match: string | RegExpExecArray | null | undefined, datasource: any) {
+      let datasourceVariable: any = null;
+      if (match) {
+        const varName = match[1] || match[2] || match[4];
+        const datasourceVariable = variableLookup[varName];
+        if (datasourceVariable && datasourceVariable.current) {
+          datasource = datasourceVariable.current.value;
+        }
+      }
+      return { datasourceVariable, datasourceMatch: datasource };
     }
   }
 }
