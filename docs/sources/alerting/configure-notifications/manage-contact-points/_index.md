@@ -101,6 +101,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/manage-notification-templates/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/manage-notification-templates/
+  jira:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-jira-service-manager/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-jira-service-manager/
 ---
 
 # Configure contact points
@@ -185,6 +190,7 @@ The following table lists the contact point integrations supported by Grafana.
 | [Email](ref:email)           | `email`                   |
 | [Google Chat](ref:gchat)     | `googlechat`              |
 | [Grafana Oncall](ref:oncall) | `oncall`                  |
+| [Jira](ref:jira)             | `jira`                    |
 | Kafka REST Proxy             | `kafka`                   |
 | Line                         | `line`                    |
 | [Microsoft Teams](ref:teams) | `teams`                   |
