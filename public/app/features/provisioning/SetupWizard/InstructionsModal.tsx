@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal, Button, useStyles2, Stack } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
@@ -49,32 +49,28 @@ export const InstructionsModal = ({ feature, isOpen, onDismiss }: Props) => {
       <Stack direction="row" height="100%">
         <InstructionsSidebar steps={sideBarSteps} currentStep={currentStep} onStepClick={setCurrentStep} />
 
-        <div className={styles.mainContent}>
-          <Stack direction="column" gap={0} width="100%">
-            <div className={styles.contentScroll}>
-              <InstructionStepComponent step={currentStepData} />
-            </div>
-
-            <div className={styles.footer}>
-              <Stack direction="row" justifyContent="flex-end" gap={2}>
-                <Button variant="secondary" onClick={handlePrevious} disabled={isFirstStep}>
-                  Previous
-                </Button>
-
-                {isLastStep ? (
-                  <Button variant="primary" onClick={onDismiss} icon="check-circle">
-                    Done
-                  </Button>
-                ) : (
-                  <Button variant="primary" onClick={handleNext}>
-                    Next
-                  </Button>
-                )}
-              </Stack>
-            </div>
-          </Stack>
+        <div className={styles.contentWrapper}>
+          <InstructionStepComponent step={currentStepData} />
         </div>
       </Stack>
+
+      <div className={styles.footer}>
+        <Stack direction="row" justifyContent="flex-end" gap={2}>
+          <Button variant="secondary" onClick={handlePrevious} disabled={isFirstStep}>
+            Previous
+          </Button>
+
+          {isLastStep ? (
+            <Button variant="primary" onClick={onDismiss} icon="check-circle">
+              Done
+            </Button>
+          ) : (
+            <Button variant="primary" onClick={handleNext}>
+              Next
+            </Button>
+          )}
+        </Stack>
+      </div>
     </Modal>
   );
 };
@@ -84,21 +80,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 1100px;
     max-width: 95%;
   `,
-  mainContent: css`
-    flex: 1;
-    min-width: 0;
-  `,
-  contentScroll: css`
+  contentWrapper: css`
     flex: 1;
     overflow-y: auto;
-    padding-bottom: ${theme.spacing(8)};
+    min-width: 0;
   `,
   footer: css`
-    position: sticky;
-    bottom: 0;
-    padding: ${theme.spacing(3)};
+    padding: ${theme.spacing(2)};
     border-top: 1px solid ${theme.colors.border.medium};
-    background: ${theme.colors.background.primary};
-    z-index: 1;
   `,
 });
