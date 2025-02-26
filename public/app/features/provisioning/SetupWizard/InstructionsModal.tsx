@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Button, useStyles2, Icon } from '@grafana/ui';
+import { Modal, Button, useStyles2, Icon, Container } from '@grafana/ui';
 import { FeatureInfo } from './types';
 import { css } from '@emotion/css';
 import { InstructionStepComponent } from './InstructionStepComponent';
@@ -106,10 +106,9 @@ export const InstructionsModal = ({ feature, isOpen, onDismiss }: Props) => {
         </div>
 
         <div className={customStyles.mainContent}>
-          <div className={customStyles.content}>
+          <Container padding="md">
             <InstructionStepComponent step={currentStepData} />
-          </div>
-
+          </Container>
           <div className={customStyles.footer}>
             <div className={customStyles.navigationButtons}>
               <Button variant="secondary" onClick={handlePrevious} disabled={isFirstStep}>
