@@ -24,6 +24,10 @@ export const InstructionsModal = ({ feature, isOpen, onDismiss }: InstructionsMo
     setCurrentStep(index);
   };
 
+  const handleDone = () => {
+    onDismiss();
+  };
+
   // Find the first unfulfilled step
   const firstUnfulfilledStep = feature.steps.findIndex((step) => !step.fulfilled);
   const initialStep = firstUnfulfilledStep === -1 ? 0 : firstUnfulfilledStep;
@@ -43,20 +47,55 @@ export const InstructionsModal = ({ feature, isOpen, onDismiss }: InstructionsMo
     <Modal isOpen={isOpen} title={`Setup ${feature.title}`} onDismiss={onDismiss} className={customStyles.modal}>
       <div className={customStyles.modalContent}>
         <div className={customStyles.sidebar}>
-          {feature.steps.map((step, index) => (
-            <div
-              key={index}
-              className={`${customStyles.timelineItem} ${index === currentStep ? customStyles.activeStep : ''}`}
-              onClick={() => handleStepClick(index)}
-            >
-              <div className={customStyles.timelineConnector}>
-                <div className={customStyles.timelineDot}>
-                  {step.fulfilled ? <Icon name="check" className={customStyles.checkIcon} /> : null}
+          {feature.steps.map((step, index) => {
+            // Determine the status of this step
+            const isCompleted = step.fulfilled;
+            const isCurrent = index === currentStep;
+            const isPending = !isCompleted && !isCurrent;
+
+            // Determine if the connector line should be colored
+            const isConnectorColored =
+              index < feature.steps.length - 1 && feature.steps.slice(0, index + 1).every((s) => s.fulfilled);
+
+            return (
+              <div
+                key={index}
+                className={`${customStyles.timelineItem} ${isCurrent ? customStyles.activeStep : ''}`}
+                onClick={() => handleStepClick(index)}
+              >
+                <div className={customStyles.timelineConnector}>
+                  <div
+                    className={`
+                      ${customStyles.timelineDot} 
+                      ${isCompleted ? customStyles.completedDot : ''} 
+                      ${isCurrent ? customStyles.currentDot : ''} 
+                      ${isPending ? customStyles.pendingDot : ''}
+                    `}
+                  >
+                    {isCompleted && <Icon name="check" className={customStyles.checkIcon} />}
+                    {isCurrent && !isCompleted && <span className={customStyles.currentStepDot}></span>}
+                  </div>
+                  {index < feature.steps.length - 1 && (
+                    <div
+                      className={`
+                        ${customStyles.connector} 
+                        ${isConnectorColored ? customStyles.completedConnector : ''}
+                      `}
+                    ></div>
+                  )}
+                </div>
+                <div
+                  className={`
+                    ${customStyles.timelineContent} 
+                    ${isCompleted ? customStyles.completedText : ''} 
+                    ${isCurrent ? customStyles.currentText : ''}
+                  `}
+                >
+                  {step.title}
                 </div>
               </div>
-              <div className={customStyles.timelineContent}>{step.title}</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className={customStyles.mainContent}>
@@ -69,26 +108,33 @@ export const InstructionsModal = ({ feature, isOpen, onDismiss }: InstructionsMo
             <p className={customStyles.description}>{currentStepData?.description}</p>
 
             {currentStepData?.code && (
-              <CodeBlockWithCopy
-                code={currentStepData.code}
-                className={customStyles.codeBlockCustom}
-                copyCode={currentStepData.copyCode}
-              />
+              <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+                <CodeBlockWithCopy
+                  code={currentStepData.code}
+                  className={customStyles.codeBlockCustom}
+                  copyCode={currentStepData.copyCode}
+                />
+              </div>
             )}
           </div>
 
           <div className={customStyles.footer}>
-            <Button variant="secondary" onClick={onDismiss}>
-              Close
-            </Button>
+            <div></div>
 
             <div className={customStyles.navigationButtons}>
               <Button variant="secondary" onClick={handlePrevious} disabled={isFirstStep}>
                 Previous
               </Button>
-              <Button variant="primary" onClick={handleNext} disabled={isLastStep}>
-                Next
-              </Button>
+
+              {isLastStep ? (
+                <Button variant="primary" onClick={handleDone} icon="check-circle">
+                  Done
+                </Button>
+              ) : (
+                <Button variant="primary" onClick={handleNext}>
+                  Next
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -100,7 +146,7 @@ export const InstructionsModal = ({ feature, isOpen, onDismiss }: InstructionsMo
 const getCustomStyles = () => {
   return {
     modal: css`
-      width: 850px;
+      width: 1100px;
       max-width: 95%;
     `,
     modalContent: css`
@@ -108,7 +154,7 @@ const getCustomStyles = () => {
       height: 100%;
     `,
     sidebar: css`
-      width: 220px;
+      width: 260px;
       padding: 16px 0;
       border-right: 1px solid #222426;
       overflow-y: auto;
@@ -117,6 +163,7 @@ const getCustomStyles = () => {
       flex: 1;
       display: flex;
       flex-direction: column;
+      overflow-y: auto;
     `,
     timelineItem: css`
       display: flex;
@@ -137,43 +184,67 @@ const getCustomStyles = () => {
       align-items: center;
       margin-right: 12px;
       position: relative;
-
-      &:before {
-        content: '';
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: 50%;
-        width: 2px;
-        background: #333;
-        transform: translateX(-50%);
-        z-index: 0;
-      }
+    `,
+    connector: css`
+      position: absolute;
+      top: 20px;
+      bottom: -20px;
+      left: 50%;
+      width: 2px;
+      background: #333;
+      transform: translateX(-50%);
+    `,
+    completedConnector: css`
+      background: #3274d9;
     `,
     timelineDot: css`
       width: 20px;
       height: 20px;
       border-radius: 50%;
-      background: #333;
       display: flex;
       align-items: center;
       justify-content: center;
       position: relative;
       z-index: 1;
     `,
+    completedDot: css`
+      background: #3274d9;
+      border: 2px solid #3274d9;
+    `,
+    currentDot: css`
+      background: #1f60c4;
+      border: 2px solid #3274d9;
+    `,
+    pendingDot: css`
+      background: #333;
+      border: 2px solid #555;
+    `,
+    currentStepDot: css`
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: white;
+    `,
     checkIcon: css`
-      color: #3274d9;
+      color: white;
       font-size: 12px;
     `,
     timelineContent: css`
       flex: 1;
       font-size: 14px;
+      padding-top: 2px;
+    `,
+    completedText: css`
+      color: #3274d9;
+    `,
+    currentText: css`
+      color: white;
+      font-weight: 500;
     `,
     stepIndicator: css`
       display: flex;
       align-items: center;
-      margin-bottom: 16px;
-      padding: 16px 16px 0;
+      padding: 16px 24px 12px;
     `,
     stepNumber: css`
       display: inline-flex;
@@ -193,8 +264,10 @@ const getCustomStyles = () => {
       color: #d8d9da;
     `,
     content: css`
-      padding: 0 16px 24px;
+      padding: 0 24px;
       flex: 1;
+      display: flex;
+      flex-direction: column;
     `,
     description: css`
       margin-bottom: 16px;
@@ -202,12 +275,12 @@ const getCustomStyles = () => {
     `,
     codeBlockCustom: css`
       margin: 0;
-      min-height: 100px;
+      flex-grow: 1;
     `,
     footer: css`
       display: flex;
       justify-content: space-between;
-      padding: 16px;
+      padding: 16px 24px;
       border-top: 1px solid #222426;
     `,
     navigationButtons: css`
