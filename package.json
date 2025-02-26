@@ -276,7 +276,7 @@
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
     "@grafana/saga-icons": "workspace:*",
-    "@grafana/scenes": "6.0.2",
+    "@grafana/scenes": "6.1.2--canary.967.13520771706.0",
     "@grafana/scenes-react": "6.0.2",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",

@@ -3816,6 +3816,30 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/scenes@npm:6.1.2--canary.967.13520771706.0":
+  version: 6.1.2--canary.967.13520771706.0
+  resolution: "@grafana/scenes@npm:6.1.2--canary.967.13520771706.0"
+  dependencies:
+    "@floating-ui/react": "npm:^0.26.16"
+    "@leeoniya/ufuzzy": "npm:^1.0.16"
+    "@tanstack/react-virtual": "npm:^3.9.0"
+    react-grid-layout: "npm:1.3.4"
+    react-use: "npm:17.5.0"
+    react-virtualized-auto-sizer: "npm:1.0.24"
+    uuid: "npm:^9.0.0"
+  peerDependencies:
+    "@grafana/data": ">=10.4"
+    "@grafana/e2e-selectors": ">=10.4"
+    "@grafana/runtime": ">=10.4"
+    "@grafana/schema": ">=10.4"
+    "@grafana/ui": ">=10.4"
+    react: ^18.0.0
+    react-dom: ^18.0.0
+    react-router-dom: ^6.28.0
+  checksum: 10/a83ced606a7b3a586874706f09f1f07ace119c788e6d4d0f68187df214326be3daa1d0c1c124f7b0d3d48db7d525f4cf4c00031ecc3d98fa56d000921b44b52d
+  languageName: node
+  linkType: hard
+
 "@grafana/schema@npm:11.4.0":
   version: 11.4.0
   resolution: "@grafana/schema@npm:11.4.0"
@@ -18126,7 +18150,7 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:6.0.2"
+    "@grafana/scenes": "npm:6.1.2--canary.967.13520771706.0"
     "@grafana/scenes-react": "npm:6.0.2"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
