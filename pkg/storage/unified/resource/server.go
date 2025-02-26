@@ -1177,7 +1177,7 @@ func (s *server) GetBlob(ctx context.Context, req *GetBlobRequest) (*GetBlobResp
 			return &GetBlobResponse{Error: status}, nil
 		}
 
-		info := obj.GetBlob()
+		info = obj.GetBlob()
 		if info == nil || info.UID == "" {
 			return &GetBlobResponse{Error: &ErrorResult{
 				Message: "Resource does not have a linked blob",
