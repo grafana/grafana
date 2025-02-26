@@ -19,6 +19,16 @@ export function ContactPointSelector({ alertManager, onSelectContactPoint }: Con
 
   const contactPointInForm = watch(`contactPoints.${alertManager}.selectedContactPoint`);
 
+  // Wrap in useCallback to avoid infinite render loop
+  const handleError = useCallback(
+    (err: Error) => {
+      setError(`contactPoints.${alertManager}.selectedContactPoint`, {
+        message: err.message,
+      });
+    },
+    [alertManager, setError]
+  );
+
   // if we have a contact point selected, check if it still exists in the event that someone has deleted it
   const validateContactPoint = useCallback(() => {
     if (contactPointInForm) {
@@ -49,11 +59,7 @@ export function ContactPointSelector({ alertManager, onSelectContactPoint }: Con
                     }}
                     showRefreshButton
                     selectedContactPointName={contactPointInForm}
-                    onError={(error) => {
-                      setError(`contactPoints.${alertManager}.selectedContactPoint`, {
-                        message: error.message,
-                      });
-                    }}
+                    onError={handleError}
                   />
                   <LinkToContactPoints />
                 </Stack>
