@@ -5,7 +5,7 @@ import { applyFieldOverrides, createTheme, DataFrame, FieldType, toDataFrame } f
 
 import { Icon } from '../Icon/Icon';
 
-import { Table } from './Table';
+import { Table } from './TableRT/Table';
 import { CustomHeaderRendererProps, Props } from './types';
 
 // mock transition styles to ensure consistent behaviour in unit tests
