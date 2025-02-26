@@ -38,13 +38,12 @@ export function getDashboardAPI(
   apiVersion?: 'v1' | 'v2'
 ): DashboardAPI<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>, Dashboard | DashboardV2Spec> {
   const v = getDashboardsApiVersion();
-  const isConvertingToV1 = !apiVersion;
 
   if (!clients) {
     clients = {
       legacy: new LegacyDashboardAPI(),
       v1: new K8sDashboardAPI(),
-      v2: new K8sDashboardV2API(isConvertingToV1),
+      v2: new K8sDashboardV2API(false),
       unified: new UnifiedDashboardAPI(),
     };
   }

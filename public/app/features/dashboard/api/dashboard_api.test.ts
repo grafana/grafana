@@ -4,6 +4,7 @@ import { getDashboardAPI, setDashboardAPI } from './dashboard_api';
 import { LegacyDashboardAPI } from './legacy';
 import { K8sDashboardAPI } from './v1';
 import { K8sDashboardV2API } from './v2';
+import { UnifiedDashboardAPI } from './UnifiedDashboardAPI';
 
 describe('DashboardApi', () => {
   it('should use legacy api by default', () => {
@@ -29,14 +30,17 @@ describe('DashboardApi', () => {
       expect(getDashboardAPI()).toBeInstanceOf(LegacyDashboardAPI);
     });
 
-    it('should use v1 api when and kubernetesDashboards toggle is enabled', () => {
+    it('should use unified api when and kubernetesDashboards toggle is enabled', () => {
       config.featureToggles.kubernetesDashboards = true;
-      expect(getDashboardAPI()).toBeInstanceOf(K8sDashboardAPI);
+      expect(getDashboardAPI()).toBeInstanceOf(UnifiedDashboardAPI);
     });
 
-    it('should use v2 api when and useV2DashboardsAPI toggle is enabled', () => {
-      config.featureToggles.useV2DashboardsAPI = true;
-      expect(getDashboardAPI()).toBeInstanceOf(K8sDashboardV2API);
+    it('should return v1 if it is passed in the params', () => {
+      expect(getDashboardAPI('v1')).toBeInstanceOf(K8sDashboardAPI);
+    });
+
+    it('should return v2 if it is passed in the params', () => {
+      expect(getDashboardAPI('v2')).toBeInstanceOf(K8sDashboardV2API);
     });
   });
 
@@ -57,19 +61,15 @@ describe('DashboardApi', () => {
 
     it('should use v1 api when kubernetesDashboards toggle is enabled', () => {
       config.featureToggles.kubernetesDashboards = true;
-      expect(getDashboardAPI()).toBeInstanceOf(K8sDashboardAPI);
+      expect(getDashboardAPI()).toBeInstanceOf(UnifiedDashboardAPI);
     });
 
-    it('should use v1 api when kubernetesDashboards and useV2DashboardsAPI toggle is enabled', () => {
-      config.featureToggles.useV2DashboardsAPI = true;
-      config.featureToggles.kubernetesDashboards = true;
-      expect(getDashboardAPI()).toBeInstanceOf(K8sDashboardAPI);
+    it('should use v1 when v1 is passed in the params', () => {
+      expect(getDashboardAPI('v1')).toBeInstanceOf(K8sDashboardAPI);
     });
 
-    it('should use legacy useV2DashboardsAPI toggle is enabled', () => {
-      config.featureToggles.useV2DashboardsAPI = true;
-      config.featureToggles.kubernetesDashboards = undefined;
-      expect(getDashboardAPI()).toBeInstanceOf(LegacyDashboardAPI);
+    it('should use v2 when v2 is passed in the params', () => {
+      expect(getDashboardAPI('v2')).toBeInstanceOf(K8sDashboardV2API);
     });
   });
 });
