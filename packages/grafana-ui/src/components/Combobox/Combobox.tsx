@@ -224,7 +224,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
     selectItem,
   } = useCombobox({
-    isOpen: true,
     menuId,
     labelId,
     inputId: id,
@@ -391,96 +390,59 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
                     const itemId = 'combobox-option-' + item.value.toString();
                     const groupHeaderId = groupHeaderItem
                       ? 'combobox-option-group-' + groupHeaderItem.value.toString()
-                      : null;
+                      : undefined;
 
-                    const useNew = true;
-                    if (useNew) {
-                      /**
-                       * DOM structure:
-                       * <virtual-item>
-                       *     <group-header>Header name</group-header>
-                       *     <option>Option name</option>
-                       * </virtual-item>
-                       *
-                       * The virtual item is a wrapper around the group header and option purely for
-                       * positioning the virtualised list item. It should have no other 'list item' styling.
-                       *
-                       * Group header and option should appear as individual flat list items.
-                       */
-                      return (
-                        <div
-                          key={virtualRow.index}
-                          data-index={virtualRow.index}
-                          data-header={startingNewGroup ? 'true' : 'false'}
-                          data-group={item.group}
-                          className="styles.listItem"
-                          style={{
-                            position: 'absolute',
-                            height: virtualRow.size,
-                            transform: `translateY(${virtualRow.start}px)`,
-                          }}
-                        >
-                          {startingNewGroup && (
-                            <div role="presentation" id={groupHeaderId} className="styles.groupHeader">
-                              {item.group}
-                            </div>
-                          )}
-
-                          <div
-                            className="styles.option"
-                            {...getItemProps({
-                              item: item,
-                              index: virtualRow.index,
-                              id: itemId,
-                              'aria-describedby': groupHeaderId,
-                            })}
-                          >
-                            {item.label ?? item.value}
-                          </div>
-                        </div>
-                      );
-                    }
-
+                    /**
+                     * DOM structure:
+                     * <virtual-item>
+                     *     <group-header>Header name</group-header>
+                     *     <option>Option name</option>
+                     * </virtual-item>
+                     *
+                     * The virtual item is a wrapper around the group header and option purely for
+                     * positioning the virtualised list item. It should have no other 'list item' styling.
+                     *
+                     * Group header and option should appear as individual flat list items.
+                     */
                     return (
                       <div
-                        key={`${item.value}-${virtualRow.index}`}
+                        key={virtualRow.index}
                         data-index={virtualRow.index}
-                        className={styles.optionBasic}
+                        data-header={startingNewGroup ? 'true' : 'false'}
+                        data-group={item.group}
+                        className={styles.listItem}
                         style={{
                           height: virtualRow.size,
                           transform: `translateY(${virtualRow.start}px)`,
                         }}
-                        {...getItemProps({
-                          item: item,
-                          index: virtualRow.index,
-                        })}
                       >
-                        <Stack direction="column" justifyContent="space-between" width="100%" height="100%" gap={0}>
-                          {startingNewGroup && (
-                            <div className={styles.optionGroup}>
-                              <OptionListItem
-                                label={item.group ?? t('combobox.group.undefined', 'No group')}
-                                id={groupHeaderId}
-                                isGroup={true}
-                              />
-                            </div>
-                          )}
-
-                          <div
-                            className={cx(
-                              styles.option,
-                              selectedItem && item.value === selectedItem.value && styles.optionSelected,
-                              highlightedIndex === virtualRow.index && styles.optionFocused
-                            )}
-                          >
-                            <OptionListItem
-                              label={item.label ?? item.value}
-                              description={item.description}
-                              id={itemId}
-                              isGroup={false}
-                            />
+                        {startingNewGroup && (
+                          <div role="presentation" id={groupHeaderId} className={styles.newOptionGroup}>
+                            {item.group}
                           </div>
-                        </Stack>
+                        )}
+
+                        <div
+                          className={cx(
+                            styles.option,
+                            styles.optionBasic,
+                            selectedItem && item.value === selectedItem.value && styles.optionSelected
+                          )}
+                          {...getItemProps({
+                            item: item,
+                            index: virtualRow.index,
+                            id: itemId,
+                            'aria-describedby': groupHeaderId,
+                          })}
+                        >
+                          <div className={styles.optionBody}>
+                            <span className={styles.optionLabel} id={itemId}>
+                              {item.label ?? item.value}
+                            </span>
+
+                            {item.description && <span className={styles.optionDescription}>{item.description}</span>}
+                          </div>
+                        </div>
                       </div>
                     );
                   })}
