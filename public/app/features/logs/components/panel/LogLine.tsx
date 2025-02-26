@@ -145,14 +145,27 @@ export const getStyles = (theme: GrafanaTheme2) => {
         },
       },
       '& .log-syntax-highlight': {
+        '.token.log-token-timestamp': {
+          color: theme.colors.text.disabled,
+        },
         '.token.log-token-string': {
-          color: theme.colors.text.maxContrast,
+          color: theme.colors.text.primary,
         },
         '.token.log-token-number': {
           color: theme.colors.success.text,
         },
-        '.token.log-token-label': {
+        '.token.log-token-size': {
+          color: theme.colors.success.text,
+        },
+        '.token.log-token-key': {
           color: theme.colors.text.secondary,
+        },
+        '.token.log-token-json-key': {
+          color: theme.colors.text.secondary,
+        },
+        '.token.log-token-label': {
+          color: theme.colors.text.maxContrast,
+          fontWeight: theme.typography.fontWeightMedium,
         },
       },
     }),
