@@ -60,7 +60,6 @@ func runStorageBackendBenchmark(ctx context.Context, backend resource.StorageBac
 	}
 	close(jobs)
 
-	// Start workers
 	var wg sync.WaitGroup
 
 	// Initialize each group and resource type combination in the init namespace
@@ -83,7 +82,7 @@ func runStorageBackendBenchmark(ctx context.Context, backend resource.StorageBac
 	startTime := time.Now()
 	for workerID := 0; workerID < opts.Concurrency; workerID++ {
 		wg.Add(1)
-		go func(workerID int) {
+		go func() {
 			defer wg.Done()
 			for jobID := range jobs {
 				// Calculate a unique ID for this job that's guaranteed to be unique across all workers
@@ -101,7 +100,7 @@ func runStorageBackendBenchmark(ctx context.Context, backend resource.StorageBac
 					WithNamespace(namespace),
 					WithGroup(group),
 					WithResource(resourceType),
-					WithValue([]byte(strings.Repeat("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 20)))) // ~1kb
+					WithValue([]byte(strings.Repeat("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 20)))) // ~1.21 KiB
 
 				if err != nil {
 					errors <- err
@@ -110,7 +109,7 @@ func runStorageBackendBenchmark(ctx context.Context, backend resource.StorageBac
 
 				results <- time.Since(writeStart)
 			}
-		}(workerID)
+		}()
 	}
 
 	// Wait for all workers to complete
