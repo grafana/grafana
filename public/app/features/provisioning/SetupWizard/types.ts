@@ -13,6 +13,7 @@ export interface FeatureInfo {
   description: string;
   steps: InstructionStep[];
   additional: boolean;
+  icon?: string; // Optional icon name for the feature
 }
 
 // List of required feature toggles

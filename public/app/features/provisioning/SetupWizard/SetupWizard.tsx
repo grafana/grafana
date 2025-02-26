@@ -54,24 +54,28 @@ export const SetupWizard = () => {
         description: 'Provision your dashboards from Github or other storage system',
         additional: false,
         steps: [],
+        icon: 'sync',
       },
       {
         title: 'Collaborate with Pull Requests',
         description: 'Collaborate with your team by creating pull requests for your dashboards',
         additional: false,
         steps: [],
+        icon: 'code-branch',
       },
       {
         title: 'Migrate Your Dashboards',
         description: 'Migrate your dashboards to Github or other storage system',
         additional: false,
         steps: [],
+        icon: 'arrow-right',
       },
       {
         title: 'Github Webhooks Integration',
         description:
           'Make your Grafana instance accessible from the internet to enable a more seamless provisioning and collaboration with pull requests',
         additional: true,
+        icon: 'github',
         steps: [
           {
             title: 'Start ngrok for temporary public access',
@@ -95,9 +99,10 @@ export const SetupWizard = () => {
         ],
       },
       {
-        title: 'Dashboard Preview Screenshots',
+        title: 'Preview Snapshots',
         description: 'Set up the image renderer to generate screenshots for dashboard previews in GitHub pull requests',
         additional: true,
+        icon: 'camera',
         steps: [
           {
             title: 'Install the Image Renderer Plugin',
@@ -123,6 +128,7 @@ export const SetupWizard = () => {
     title: 'Provisioning',
     description: 'Enable required Grafana features for provisioning',
     additional: false,
+    icon: 'cog',
     steps: [
       {
         title: 'Enable Required Feature Toggles',
