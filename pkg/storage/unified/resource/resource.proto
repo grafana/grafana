@@ -775,6 +775,9 @@ message GetBlobRequest {
 
   // Do not return a pre-signed URL (when possible)
   bool must_proxy_bytes = 3;
+
+  // The blob UID -- when empty, the value is loaded from annotations in the matching resource
+  string uid = 4;
 }
 
 message GetBlobResponse {
