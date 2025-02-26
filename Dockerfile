@@ -87,7 +87,7 @@ RUN if [[ "$BINGO" = "true" ]]; then \
       bingo get -v; \
     fi
 
-COPY embed.go Makefile build.go package.json ./
+COPY Makefile build.go package.json ./
 COPY cue.mod cue.mod
 COPY kinds kinds
 COPY local local
