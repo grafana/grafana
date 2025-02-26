@@ -6,7 +6,6 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { Button, ConfirmModal, Spinner, Stack, useStyles2 } from '@grafana/ui';
-import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { Trans } from 'app/core/internationalization';
@@ -233,61 +232,12 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     locationService.getHistory().goBack();
   };
 
-  const actionButtons = (
-    <Stack justifyContent="flex-end" alignItems="center">
-      {existing && (
-        <Button
-          data-testid="save-rule"
-          variant="primary"
-          type="button"
-          size="sm"
-          onClick={handleSubmit((values) => submit(values, false), onInvalid)}
-          disabled={isSubmitting}
-        >
-          {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
-          Save rule
-        </Button>
-      )}
-      <Button
-        data-testid="save-rule-and-exit"
-        variant="primary"
-        type="button"
-        size="sm"
-        onClick={handleSubmit((values) => submit(values, true), onInvalid)}
-        disabled={isSubmitting}
-      >
-        {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
-        Save rule and exit
-      </Button>
-      <Button variant="secondary" disabled={isSubmitting} type="button" onClick={cancelRuleCreation} size="sm">
-        <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
-      </Button>
-      {existing ? (
-        <Button fill="outline" variant="destructive" type="button" onClick={() => setShowDeleteModal(true)} size="sm">
-          Delete
-        </Button>
-      ) : null}
-      {existing && isCortexLokiOrRecordingRule(watch) && (
-        <Button
-          variant="secondary"
-          type="button"
-          onClick={() => setShowEditYaml(true)}
-          disabled={isSubmitting}
-          size="sm"
-        >
-          Edit YAML
-        </Button>
-      )}
-    </Stack>
-  );
-
   const isPaused = existing && isGrafanaRulerRule(existing.rule) && isGrafanaRulerRulePaused(existing.rule);
   if (!type) {
     return null;
   }
   return (
     <FormProvider {...formAPI}>
-      <AppChromeUpdate actions={actionButtons} />
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
         <div className={styles.contentOuter}>
           {isPaused && <InfoPausedRule />}
@@ -316,9 +266,36 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
                 {!isRecordingRuleByType(type) && <AnnotationsStep />}
               </>
             )}
+
+            {/* actions */}
+            <Stack direction="row" alignItems="center">
+              {existing && (
+                <Button
+                  data-testid="save-rule"
+                  variant="primary"
+                  type="button"
+                  onClick={handleSubmit((values) => submit(values, false), onInvalid)}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
+                  Save rule
+                </Button>
+              )}
+
+              <Button variant="secondary" disabled={isSubmitting} type="button" onClick={cancelRuleCreation}>
+                <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
+              </Button>
+
+              {existing && isCortexLokiOrRecordingRule(watch) && (
+                <Button variant="secondary" type="button" onClick={() => setShowEditYaml(true)} disabled={isSubmitting}>
+                  Edit YAML
+                </Button>
+              )}
+            </Stack>
           </Stack>
         </div>
       </form>
+
       {showDeleteModal ? (
         <ConfirmModal
           isOpen={true}

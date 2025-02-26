@@ -42,9 +42,13 @@ export function PendingPeriodQuickPick({ selectedPendingPeriod, groupEvaluationI
             onSelect(duration);
           }}
         >
-          {duration === '0s' ? 'None' : duration}
+          {stringifyPendingPeriod(duration)}
         </Button>
       ))}
     </Stack>
   );
+}
+
+export function stringifyPendingPeriod(duration: string): string {
+  return duration === '0s' ? 'None' : duration;
 }

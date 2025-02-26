@@ -63,7 +63,7 @@ export const Details = ({ rule }: DetailsProps) => {
   const evaluationDuration = rule.promRule?.evaluationTime;
   const evaluationTimestamp = rule.promRule?.lastEvaluation;
 
-  const annotations = getAnnotations(rule);
+  const annotations = rule.rulerRule ? getAnnotations(rule.rulerRule) : {};
 
   const hasEvaluationDuration = Number.isFinite(evaluationDuration);
 

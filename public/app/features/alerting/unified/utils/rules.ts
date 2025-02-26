@@ -33,6 +33,7 @@ import {
   RulerGrafanaRuleDTO,
   RulerRecordingRuleDTO,
   RulerRuleDTO,
+  RulerRuleGroupDTO,
   mapStateWithReasonToBaseState,
 } from 'app/types/unified-alerting-dto';
 
@@ -162,16 +163,18 @@ export function getPendingPeriod(rule: CombinedRule): string | undefined {
   return undefined;
 }
 
-export function getAnnotations(rule: CombinedRule): Annotations | undefined {
-  if (
-    isRecordingRulerRule(rule.rulerRule) ||
-    isRecordingRule(rule.promRule) ||
-    isGrafanaRecordingRule(rule.rulerRule)
-  ) {
+export function getPendingPeriodFromRulerRule(rule: RulerRuleDTO) {
+  return !isRecordingRulerRule(rule) ? rule.for : undefined;
+}
+
+export function getAnnotations(rule: RulerRuleDTO): Annotations | undefined {
+  if (isRecordingRulerRule(rule) || isGrafanaRecordingRule(rule)) {
     return undefined;
   }
-  return rule.annotations ?? [];
+
+  return rule.annotations ?? {};
 }
+
 export interface RulePluginOrigin {
   pluginId: string;
 }
@@ -296,7 +299,7 @@ export function getFirstActiveAt(promRule?: AlertingRule) {
  *
  * see https://grafana.com/docs/metrics-enterprise/latest/tenant-management/tenant-federation/#cross-tenant-alerting-and-recording-rule-federation
  */
-export function isFederatedRuleGroup(group: CombinedRuleGroup) {
+export function isFederatedRuleGroup(group: CombinedRuleGroup | RulerRuleGroupDTO) {
   return Array.isArray(group.source_tenants);
 }
 

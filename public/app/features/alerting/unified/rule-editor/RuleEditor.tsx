@@ -2,10 +2,8 @@ import { useCallback } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
-import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import { AlertWarning } from '../AlertWarning';
-import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { AlertRuleForm } from '../components/rule-editor/alert-rule-form/AlertRuleForm';
 import { useURLSearchParams } from '../hooks/useURLSearchParams';
 import { useRulesAccess } from '../utils/accessControlHooks';
@@ -16,37 +14,17 @@ import { CloneRuleEditor } from './CloneRuleEditor';
 import { ExistingRuleEditor } from './ExistingRuleEditor';
 import { formValuesFromQueryParams, translateRouteParamToRuleType } from './formDefaults';
 
-type RuleEditorPathParams = {
+export type RuleEditorPathParams = {
   id?: string;
   type?: 'recording' | 'alerting' | 'grafana-recording';
 };
 
-const defaultPageNav: Partial<NavModelItem> = {
-  icon: 'bell',
+export const defaultPageNav: Partial<NavModelItem> = {
   id: 'alert-rule-view',
 };
 
-// sadly we only get the "type" when a new rule is being created, when editing an existing recording rule we can't actually know it from the URL
-const getPageNav = (identifier?: RuleIdentifier, type?: RuleEditorPathParams['type']) => {
-  if (type === 'recording' || type === 'grafana-recording') {
-    if (identifier) {
-      // this branch should never trigger actually, the type param isn't used when editing rules
-      return { ...defaultPageNav, id: 'alert-rule-edit', text: 'Edit recording rule' };
-    } else {
-      return { ...defaultPageNav, id: 'alert-rule-add', text: 'New recording rule' };
-    }
-  }
-
-  if (identifier) {
-    // keep this one ambiguous, don't mentiond a specific alert type here
-    return { ...defaultPageNav, id: 'alert-rule-edit', text: 'Edit rule' };
-  } else {
-    return { ...defaultPageNav, id: 'alert-rule-add', text: 'New alert rule' };
-  }
-};
-
 const RuleEditor = () => {
-  const { identifier, type } = useRuleEditorPathParams();
+  const { identifier } = useRuleEditorPathParams();
   const { copyFromIdentifier, queryDefaults } = useRuleEditorQueryParams();
 
   const { canCreateGrafanaRules, canCreateCloudRules, canEditRules } = useRulesAccess();
@@ -71,11 +49,7 @@ const RuleEditor = () => {
     return <AlertRuleForm prefill={queryDefaults} />;
   }, [canCreateCloudRules, canCreateGrafanaRules, canEditRules, copyFromIdentifier, identifier, queryDefaults]);
 
-  return (
-    <AlertingPageWrapper navId="alert-list" pageNav={getPageNav(identifier, type)}>
-      {getContent()}
-    </AlertingPageWrapper>
-  );
+  return getContent();
 };
 
 // The pageNav property makes it difficult to only rely on AlertingPageWrapper
