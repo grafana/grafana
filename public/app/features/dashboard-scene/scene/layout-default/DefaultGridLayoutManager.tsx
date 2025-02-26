@@ -70,8 +70,8 @@ export class DefaultGridLayoutManager
     vizPanel.setState({ key: getVizPanelKeyForPanelId(panelId) });
     vizPanel.clearParent();
 
-    const scene = getDashboardSceneFor(this);
-    schemaV2SetElementIdentifierForVizPanel(panelId, scene);
+    // const scene = getDashboardSceneFor(this);
+    // schemaV2SetElementIdentifierForVizPanel(panelId, scene);
 
     const newGridItem = new DashboardGridItem({
       height: NEW_PANEL_HEIGHT,

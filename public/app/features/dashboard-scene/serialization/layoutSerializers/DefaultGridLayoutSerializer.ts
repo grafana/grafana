@@ -34,7 +34,12 @@ import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { DashboardLayoutManager, LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
 import { isClonedKey } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import { calculateGridItemDimensions, getVizPanelKeyForPanelId, isLibraryPanel } from '../../utils/utils';
+import {
+  calculateGridItemDimensions,
+  getPanelIdForVizPanel,
+  getVizPanelKeyForPanelId,
+  isLibraryPanel,
+} from '../../utils/utils';
 import { GRID_ROW_HEIGHT } from '../const';
 
 import { buildVizPanel } from './utils';
@@ -144,7 +149,12 @@ function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, yOverride?: n
   const repeatVar = gridItem_.state.variableName;
 
   // For serialization we should retrieve the original element key
-  const elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(gridItem.state.body);
+  let elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(gridItem.state.body);
+
+  if (!elementKey) {
+    // assign a random key based on panel id
+    elementKey = 'random-element-panel-' + getPanelIdForVizPanel(gridItem.state.body);
+  }
 
   elementGridItem = {
     kind: 'GridLayoutItem',

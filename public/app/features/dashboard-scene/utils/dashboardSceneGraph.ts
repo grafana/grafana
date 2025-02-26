@@ -81,17 +81,10 @@ export function getCursorSync(scene: DashboardScene) {
 }
 // Functions to manage the lookup table in dashboard scene that will hold element_identifer : panel_id
 export function getElementIdentifierForVizPanel(vizPanel: VizPanel): string {
-  try {
-    const scene = getDashboardSceneFor(vizPanel);
-    const panelId = getPanelIdForVizPanel(vizPanel);
-    const elementKey = scene.getElementIdentifierForPanel(panelId);
-    if (!elementKey) {
-      throw new Error(`Identifier ${panelId} not found`);
-    }
-    return elementKey;
-  } catch (error) {
-    return `error in getElementIdentifierForVizPanel: ${error}`;
-  }
+  const scene = getDashboardSceneFor(vizPanel);
+  const panelId = getPanelIdForVizPanel(vizPanel);
+  const elementKey = scene.getElementIdentifierForPanel(panelId);
+  return elementKey ?? '';
 }
 
 export const dashboardSceneGraph = {
