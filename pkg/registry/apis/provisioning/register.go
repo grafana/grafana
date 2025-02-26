@@ -699,6 +699,26 @@ spec:
 		}
 	}
 
+	delete(oas.Paths.Paths, repoprefix+"/render")
+	sub = oas.Paths.Paths[repoprefix+"/render/{path}"]
+	if sub != nil {
+		sub.Get.Description = "get a rendered preview image"
+		sub.Get.Responses = &spec3.Responses{
+			ResponsesProps: spec3.ResponsesProps{
+				StatusCodeResponses: map[int]*spec3.Response{
+					200: {
+						ResponseProps: spec3.ResponseProps{
+							Content: map[string]*spec3.MediaType{
+								"image/png": {},
+							},
+							Description: "OK",
+						},
+					},
+				},
+			},
+		}
+	}
+
 	// Add any missing definitions
 	//-----------------------------
 	for k, v := range defs {

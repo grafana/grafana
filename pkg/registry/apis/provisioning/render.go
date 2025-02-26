@@ -22,7 +22,7 @@ type renderConnector struct {
 }
 
 func (*renderConnector) New() runtime.Object {
-	return &provisioning.Job{}
+	return &provisioning.Repository{}
 }
 
 func (*renderConnector) Destroy() {}
@@ -60,7 +60,7 @@ func (c *renderConnector) Connect(
 		}
 		filePath := strings.TrimPrefix(r.URL.Path[idx+len(prefix):], "/")
 		if len(filePath) == 0 {
-			responder.Error(apierrors.NewNotFound(provisioning.JobResourceInfo.GroupResource(), "render"))
+			responder.Error(apierrors.NewNotFound(provisioning.RepositoryResourceInfo.GroupResource(), "render"))
 			return
 		}
 
