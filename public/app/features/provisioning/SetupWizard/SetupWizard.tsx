@@ -72,6 +72,7 @@ export const SetupWizard = () => {
             title: 'Copy your public URL',
             description: 'From the ngrok output, copy the https:// forwarding URL that looks like this:',
             code: ngrok_example,
+            copyCode: false,
             fulfilled: hasPublicAccess,
           },
           {

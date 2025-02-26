@@ -5,6 +5,7 @@ export interface InstructionStep {
   description?: string;
   code?: string;
   fulfilled?: boolean;
+  copyCode?: boolean;
 }
 
 export interface FeatureInfo {
@@ -36,11 +37,6 @@ export interface InstructionsModalProps {
   feature: FeatureInfo;
   isOpen: boolean;
   onDismiss: () => void;
-}
-
-export interface CodeBlockWithCopyProps {
-  code: string;
-  className?: string;
 }
 
 // List of required feature toggles

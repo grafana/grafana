@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import { Modal, Button, useStyles2 } from '@grafana/ui';
-import { getStyles } from './styles';
 import { InstructionsModalProps } from './types';
 import { css } from '@emotion/css';
 import { CodeBlockWithCopy } from './CodeBlockWithCopy';
 
 export const InstructionsModal = ({ feature, isOpen, onDismiss }: InstructionsModalProps) => {
-  const styles = useStyles2(getStyles);
   const customStyles = useStyles2(getCustomStyles);
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -48,7 +46,11 @@ export const InstructionsModal = ({ feature, isOpen, onDismiss }: InstructionsMo
         <p className={customStyles.description}>{currentStepData?.description}</p>
 
         {currentStepData?.code && (
-          <CodeBlockWithCopy code={currentStepData.code} className={customStyles.codeBlockCustom} />
+          <CodeBlockWithCopy
+            code={currentStepData.code}
+            className={customStyles.codeBlockCustom}
+            copyCode={currentStepData.copyCode}
+          />
         )}
       </div>
 

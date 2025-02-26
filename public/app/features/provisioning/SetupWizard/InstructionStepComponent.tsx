@@ -22,7 +22,7 @@ export const InstructionStepComponent = ({ step, totalSteps, copied, onCopy }: I
         </h3>
       </div>
       {step.description && <p>{step.description}</p>}
-      {step.code && <CodeBlockWithCopy code={step.code} />}
+      {step.code && <CodeBlockWithCopy code={step.code} copyCode={step.copyCode} />}
     </div>
   );
 };

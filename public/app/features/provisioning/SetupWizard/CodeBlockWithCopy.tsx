@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { useStyles2, Icon, Button } from '@grafana/ui';
-import { getStyles } from './styles';
-import { CodeBlockWithCopyProps } from './types';
+import { useStyles2, Button } from '@grafana/ui';
 import { css } from '@emotion/css';
 
-export const CodeBlockWithCopy = ({ code, className }: CodeBlockWithCopyProps) => {
-  const styles = useStyles2(getStyles);
+interface Props {
+  code: string;
+  className?: string;
+  copyCode?: boolean;
+}
+
+export const CodeBlockWithCopy = ({ code, className, copyCode = true }: Props) => {
   const customStyles = useStyles2(getCustomStyles);
   const [copied, setCopied] = useState(false);
 
@@ -18,15 +21,17 @@ export const CodeBlockWithCopy = ({ code, className }: CodeBlockWithCopyProps) =
   return (
     <div className={`${customStyles.codeBlockContainer} ${className || ''}`}>
       <pre className={customStyles.pre}>{code}</pre>
-      <Button
-        size="sm"
-        icon={copied ? 'check' : 'copy'}
-        onClick={handleCopy}
-        className={customStyles.copyButton}
-        variant="secondary"
-      >
-        {copied ? 'Copied' : 'Copy'}
-      </Button>
+      {copyCode && (
+        <Button
+          size="sm"
+          icon={copied ? 'check' : 'copy'}
+          onClick={handleCopy}
+          className={customStyles.copyButton}
+          variant="secondary"
+        >
+          {copied ? 'Copied' : 'Copy'}
+        </Button>
+      )}
     </div>
   );
 };
