@@ -692,7 +692,7 @@ function AdaptiveTelemetryQueryActions({ query }: { query: DataQuery }) {
     .filter(({ meta }) => meta.pluginId.startsWith('grafana-adaptive'))
     .map((Component) => {
       const { meta } = Component;
-      return <Component key={meta.id} query={query} contextHints={['explore', 'queryeditor', 'header']} />;
+      return <Component key={meta.id} query={query} contextHints={['queryeditorrow', 'header']} />;
     });
   return <>{actions}</>;
 }
