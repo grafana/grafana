@@ -306,7 +306,6 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		IDTokenClaims:     i.IDTokenClaims,
 		AccessTokenClaims: i.AccessTokenClaims,
 		FallbackType:      i.Type,
-		IsProvisioned:     i.IsProvisioned,
 	}
 
 	if i.IsIdentityType(claims.TypeAPIKey) {
