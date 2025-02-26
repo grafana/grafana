@@ -188,6 +188,7 @@ You can configure actions for the following visualizations:
 - [Candlestick](ref:candlestick)
 - [State timeline](ref:state-timeline)
 - [Status history](ref:status-history)
+- [Table](ref:table)
 - [Time series](ref:time-series)
 - [Trend](ref:trend)
 - [XY chart](ref:xy-chart)
