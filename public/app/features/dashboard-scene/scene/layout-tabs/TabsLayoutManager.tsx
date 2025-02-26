@@ -71,19 +71,19 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     this.state.tabs.forEach((tab) => tab.getLayout().activateRepeaters?.());
   }
 
-  public addTabBefore(tab: TabItem) {
+  public addTabBefore = (tab: TabItem) => {
     const newTab = new TabItem();
     const tabs = this.state.tabs.slice();
     tabs.splice(tabs.indexOf(tab), 0, newTab);
     this.setState({ tabs, currentTab: newTab });
-  }
+  };
 
-  public addTabAfter(tab: TabItem) {
+  public addTabAfter = (tab: TabItem) => {
     const newTab = new TabItem();
     const tabs = this.state.tabs.slice();
     tabs.splice(tabs.indexOf(tab) + 1, 0, newTab);
     this.setState({ tabs, currentTab: newTab });
-  }
+  };
 
   public moveTabLeft(tab: TabItem) {
     const currentIndex = this.state.tabs.indexOf(tab);
@@ -117,8 +117,12 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     if (this.state.currentTab === tab) {
       const currentTabIndex = this.state.tabs.indexOf(tab);
       const nextTabIndex = currentTabIndex === 0 ? 1 : currentTabIndex - 1;
-      const nextTab = this.state.tabs[nextTabIndex];
-      this.setState({ tabs: this.state.tabs.filter((t) => t !== tab), currentTab: nextTab });
+      const filteredTabs = this.state.tabs.filter((t) => t !== tab);
+      if (!filteredTabs.length) {
+        filteredTabs.push(new TabItem());
+      }
+      const nextTab = this.state.tabs[nextTabIndex] || filteredTabs[0];
+      this.setState({ tabs: filteredTabs, currentTab: nextTab });
       return;
     }
 

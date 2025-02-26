@@ -6,16 +6,10 @@ import { Checkbox, clearButtonStyles, useElementSelection, useStyles2 } from '@g
 // eslint-disable-next-line no-restricted-imports
 import { getFocusStyles } from '@grafana/ui/src/themes/mixins';
 
-import { getDashboardSceneFor } from '../../utils/utils';
-
 import { TabItem } from './TabItem';
-import { TabItemAffix } from './TabItemAffix';
-import { TabItemSuffix } from './TabItemSuffix';
 
 export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const { title, key } = model.useState();
-  const dashboard = getDashboardSceneFor(model);
-  const { isEditing } = dashboard.useState();
   const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
   const { isSelected, onSelect } = useElementSelection(key);
   const styles = useStyles2(getStyles);
@@ -24,8 +18,6 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
 
   return (
     <div className={cx(styles.container, isSelected && 'dashboard-selected-element')} role="presentation">
-      {isEditing && <TabItemAffix model={model} />}
-
       <span onPointerDown={onSelect}>
         <Checkbox value={!!isSelected} />
       </span>
@@ -38,8 +30,6 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
       >
         {titleInterpolated}
       </button>
-
-      {isEditing && <TabItemSuffix model={model} />}
     </div>
   );
 }
@@ -51,7 +41,6 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'relative',
       display: 'flex',
       whiteSpace: 'nowrap',
-      padding: theme.spacing(0.5),
       alignItems: 'center',
     }),
     label: css({

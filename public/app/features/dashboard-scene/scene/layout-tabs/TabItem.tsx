@@ -1,5 +1,3 @@
-import { ReactNode } from 'react';
-
 import { SceneObjectState, SceneObjectBase, sceneGraph, VariableDependencyConfig, SceneObject } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -11,7 +9,7 @@ import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { EditableDashboardElement } from '../types/EditableDashboardElement';
 import { LayoutParent } from '../types/LayoutParent';
 
-import { getEditOptions, renderActions } from './TabItemEditor';
+import { getEditOptions } from './TabItemEditor';
 import { TabItemRenderer } from './TabItemRenderer';
 import { TabItems } from './TabItems';
 import { TabsLayoutManager } from './TabsLayoutManager';
@@ -66,14 +64,10 @@ export class TabItem
     return getEditOptions(this);
   }
 
-  public renderActions(): ReactNode {
-    return renderActions(this);
-  }
-
-  public onDelete() {
+  public onDelete = () => {
     const layout = sceneGraph.getAncestor(this, TabsLayoutManager);
     layout.removeTab(this);
-  }
+  };
 
   public createMultiSelectedElement(items: SceneObject[]): TabItems {
     return new TabItems(items.filter((item) => item instanceof TabItem));
@@ -83,13 +77,13 @@ export class TabItem
     this.getLayout().addPanel(panel);
   }
 
-  public onAddTabBefore() {
+  public onAddTabBefore = () => {
     this._getParentLayout().addTabBefore(this);
-  }
+  };
 
-  public onAddTabAfter() {
+  public onAddTabAfter = () => {
     this._getParentLayout().addTabAfter(this);
-  }
+  };
 
   public onMoveLeft() {
     this._getParentLayout().moveTabLeft(this);
