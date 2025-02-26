@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { Modal, Button, useStyles2, Icon } from '@grafana/ui';
-import { FeatureInfo } from './types';
+import React, { useState, useEffect } from 'react';
+import { Modal, Button, useStyles2, Stack } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
+import { FeatureInfo } from './types';
 import { InstructionStepComponent } from './InstructionStepComponent';
 import { InstructionsSidebar } from './InstructionsSidebar';
 
-// Moved from types.ts and renamed to Props
 export interface Props {
   feature: FeatureInfo;
   isOpen: boolean;
@@ -13,8 +13,19 @@ export interface Props {
 }
 
 export const InstructionsModal = ({ feature, isOpen, onDismiss }: Props) => {
-  const customStyles = useStyles2(getCustomStyles);
+  const styles = useStyles2(getStyles);
   const [currentStep, setCurrentStep] = useState(0);
+
+  // Find the first unfulfilled step
+  const firstUnfulfilledStep = feature.steps.findIndex((step) => !step.fulfilled);
+  const initialStep = firstUnfulfilledStep === -1 ? 0 : firstUnfulfilledStep;
+
+  // Use initialStep if currentStep is still 0 (initial render)
+  useEffect(() => {
+    if (currentStep === 0 && initialStep !== 0) {
+      setCurrentStep(initialStep);
+    }
+  }, [currentStep, initialStep]);
 
   const handleNext = () => {
     if (currentStep < feature.steps.length - 1) {
@@ -28,97 +39,66 @@ export const InstructionsModal = ({ feature, isOpen, onDismiss }: Props) => {
     }
   };
 
-  const handleStepClick = (index: number) => {
-    setCurrentStep(index);
-  };
-
-  const handleDone = () => {
-    onDismiss();
-  };
-
-  // Find the first unfulfilled step
-  const firstUnfulfilledStep = feature.steps.findIndex((step) => !step.fulfilled);
-  const initialStep = firstUnfulfilledStep === -1 ? 0 : firstUnfulfilledStep;
-
-  // Use initialStep if currentStep is still 0 (initial render)
-  React.useEffect(() => {
-    if (currentStep === 0 && initialStep !== 0) {
-      setCurrentStep(initialStep);
-    }
-  }, [currentStep, initialStep]);
-
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === feature.steps.length - 1;
   const currentStepData = feature.steps[currentStep];
   const sideBarSteps = feature.steps.map((step) => step.title);
 
   return (
-    <Modal isOpen={isOpen} title={`Setup ${feature.title}`} onDismiss={onDismiss} className={customStyles.modal}>
-      <div className={customStyles.modalContent}>
-        <InstructionsSidebar steps={sideBarSteps} currentStep={currentStep} onStepClick={handleStepClick} />
+    <Modal isOpen={isOpen} title={`Setup ${feature.title}`} onDismiss={onDismiss} className={styles.modal}>
+      <Stack direction="row" height="100%">
+        <InstructionsSidebar steps={sideBarSteps} currentStep={currentStep} onStepClick={setCurrentStep} />
 
-        <div className={customStyles.mainContent}>
-          <div className={customStyles.contentWrapper}>
-            <InstructionStepComponent step={currentStepData} />
-          </div>
-          <div className={customStyles.footer}>
-            <div className={customStyles.navigationButtons}>
-              <Button variant="secondary" onClick={handlePrevious} disabled={isFirstStep}>
-                Previous
-              </Button>
-
-              {isLastStep ? (
-                <Button variant="primary" onClick={handleDone} icon="check-circle">
-                  Done
-                </Button>
-              ) : (
-                <Button variant="primary" onClick={handleNext}>
-                  Next
-                </Button>
-              )}
+        <div className={styles.mainContent}>
+          <Stack direction="column" gap={0} width="100%">
+            <div className={styles.contentScroll}>
+              <InstructionStepComponent step={currentStepData} />
             </div>
-          </div>
+
+            <div className={styles.footer}>
+              <Stack direction="row" justifyContent="flex-end" gap={2}>
+                <Button variant="secondary" onClick={handlePrevious} disabled={isFirstStep}>
+                  Previous
+                </Button>
+
+                {isLastStep ? (
+                  <Button variant="primary" onClick={onDismiss} icon="check-circle">
+                    Done
+                  </Button>
+                ) : (
+                  <Button variant="primary" onClick={handleNext}>
+                    Next
+                  </Button>
+                )}
+              </Stack>
+            </div>
+          </Stack>
         </div>
-      </div>
+      </Stack>
     </Modal>
   );
 };
 
-const getCustomStyles = () => {
-  return {
-    modal: css`
-      width: 1100px;
-      max-width: 95%;
-    `,
-    modalContent: css`
-      display: flex;
-      height: 100%;
-    `,
-    mainContent: css`
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      overflow-y: auto;
-    `,
-    contentWrapper: css`
-      flex: 1;
-      padding-bottom: 70px; /* Space for footer */
-    `,
-    footer: css`
-      position: sticky;
-      bottom: 0;
-      right: 0;
-      left: 0;
-      padding: 16px 24px;
-      border-top: 1px solid #222426;
-      display: flex;
-      justify-content: flex-end;
-      z-index: 1;
-    `,
-    navigationButtons: css`
-      display: flex;
-      gap: 8px;
-    `,
-  };
-};
+const getStyles = (theme: GrafanaTheme2) => ({
+  modal: css`
+    width: 1100px;
+    max-width: 95%;
+  `,
+  mainContent: css`
+    flex: 1;
+    min-width: 0;
+  `,
+  contentScroll: css`
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: ${theme.spacing(8)};
+  `,
+  footer: css`
+    position: sticky;
+    bottom: 0;
+    padding: ${theme.spacing(3)};
+    border-top: 1px solid ${theme.colors.border.medium};
+    background: ${theme.colors.background.primary};
+    z-index: 1;
+  `,
+});
