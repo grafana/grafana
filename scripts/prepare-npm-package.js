@@ -48,8 +48,8 @@ try {
 }
 
 async function createAliasPackageJsonFiles(packageJsonContent, aliasName) {
+  const pkgName = `${packageJsonContent.name}/${aliasName}`;
   try {
-    const pkgName = `${packageJsonContent.name}/${aliasName}`;
     console.log(`📦 Writing alias package.json for ${pkgName}.`);
     const pkgJsonPath = `${cwd}/${aliasName}`;
     await mkdir(pkgJsonPath, { recursive: true });
