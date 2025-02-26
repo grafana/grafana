@@ -35,12 +35,12 @@ require (
 	go.opentelemetry.io/otel v1.30.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk v1.29.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/trace v1.30.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/crypto v0.31.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/crypto v0.35.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/mod v0.20.0 // @grafana/grafana-backend-group
-	golang.org/x/net v0.29.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
-	golang.org/x/oauth2 v0.23.0 // @grafana/identity-access-team
-	golang.org/x/sync v0.10.0 // indirect; @grafana/alerting-backend
-	golang.org/x/text v0.21.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/net v0.35.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/oauth2 v0.27.0 // @grafana/identity-access-team
+	golang.org/x/sync v0.11.0 // indirect; @grafana/alerting-backend
+	golang.org/x/text v0.22.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/time v0.6.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/tools v0.24.0 // indirect; @grafana/grafana-as-code
 	google.golang.org/api v0.191.0 // @grafana/grafana-backend-group
@@ -84,7 +84,7 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.55.0 // indirect
 	go.opentelemetry.io/otel/metric v1.30.0 // indirect
 	go.starlark.net v0.0.0-20230525235612-a134d8f9ddca // indirect
-	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
 	google.golang.org/genproto v0.0.0-20240812133136-8ffd90a71988 // indirect; @grafana/grafana-backend-group
 	google.golang.org/genproto/googleapis/api v0.0.0-20240822170219-fc7c04adadcd // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240822170219-fc7c04adadcd // indirect
