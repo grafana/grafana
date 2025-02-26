@@ -10,7 +10,7 @@ interface Props {
 }
 
 export const Sidebar = ({ steps, currentStep, onStepClick }: Props) => {
-  if (steps.length === 0) {
+  if (steps.length === 0 || steps.length === 1) {
     return null;
   }
 

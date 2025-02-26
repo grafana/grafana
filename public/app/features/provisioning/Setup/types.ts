@@ -4,7 +4,6 @@ export interface Step {
   title: string;
   description?: string;
   code?: string;
-  fulfilled?: boolean;
   copyCode?: boolean;
 }
 
@@ -14,6 +13,7 @@ export interface Feature {
   additional: boolean;
   icon?: string; // Optional icon name for the feature
   setupSteps: Step[];
+  isConfigured: boolean;
 }
 
 // List of required feature toggles

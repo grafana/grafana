@@ -1,4 +1,4 @@
-import { Button, Icon, Text, Box, Card, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Text, Card, useStyles2 } from '@grafana/ui';
 import { Feature } from './types';
 import { IconName } from '@grafana/ui';
 import { css } from '@emotion/css';
@@ -108,7 +108,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 export const FeatureCard = ({ feature, onSetup, showSetupButton = true }: Props) => {
   const styles = useStyles2(getStyles);
-  const isConfigured = feature.setupSteps.length === 0 || feature.setupSteps.every((step) => step.fulfilled);
+  const isConfigured = feature.isConfigured;
   const iconName = (feature.icon || 'apps') as IconName;
 
   return (
@@ -123,7 +123,7 @@ export const FeatureCard = ({ feature, onSetup, showSetupButton = true }: Props)
               {isConfigured ? (
                 <Icon name="check-circle" color="green" />
               ) : (
-                <Icon name="exclamation-triangle" color="orange" />
+                <Icon name="exclamation-triangle" color={feature.additional ? 'orange' : 'red'} />
               )}
             </div>
           </div>

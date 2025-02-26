@@ -15,9 +15,7 @@ export interface Props {
 export const SetupModal = ({ feature, isOpen, onDismiss }: Props) => {
   const styles = useStyles2(getStyles);
 
-  // Initialize to the first unfulfilled step or 0
-  const initialStepIndex = feature.setupSteps.findIndex((step) => !step.fulfilled);
-  const [currentStep, setCurrentStep] = useState(initialStepIndex === -1 ? 0 : initialStepIndex);
+  const [currentStep, setCurrentStep] = useState(0);
 
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === feature.setupSteps.length - 1;
