@@ -33,7 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
-// `authzService` is hardcoded in authz-service
+// AuthzServiceAudience is the audience for the authz service.
 const AuthzServiceAudience = "authzService"
 
 // ProvideAuthZClient provides an AuthZ client and creates the AuthZ service.
