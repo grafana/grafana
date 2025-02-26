@@ -126,24 +126,28 @@ export function InstallControlsButton({
     uninstallTitle = 'Preinstalled plugin. Remove from Grafana config before uninstalling.';
   }
 
+  const renderUninstallControls = (
+    <>
+      <ConfirmModal
+        isOpen={isConfirmModalVisible}
+        title={`Uninstall ${plugin.name}`}
+        body="Are you sure you want to uninstall this plugin?"
+        confirmText="Confirm"
+        icon="exclamation-triangle"
+        onConfirm={onUninstall}
+        onDismiss={hideConfirmModal}
+      />
+      <Button variant="destructive" disabled={disableUninstall} onClick={showConfirmModal} title={uninstallTitle}>
+        {uninstallBtnText}
+      </Button>
+    </>
+  );
+
   if (pluginStatus === PluginStatus.UNINSTALL) {
     return (
-      <>
-        <ConfirmModal
-          isOpen={isConfirmModalVisible}
-          title={`Uninstall ${plugin.name}`}
-          body="Are you sure you want to uninstall this plugin?"
-          confirmText="Confirm"
-          icon="exclamation-triangle"
-          onConfirm={onUninstall}
-          onDismiss={hideConfirmModal}
-        />
-        <Stack alignItems="flex-start" width="auto" height="auto">
-          <Button variant="destructive" disabled={disableUninstall} onClick={showConfirmModal} title={uninstallTitle}>
-            {uninstallBtnText}
-          </Button>
-        </Stack>
-      </>
+      <Stack alignItems="flex-start" width="auto" height="auto">
+        {renderUninstallControls}
+      </Stack>
     );
   }
 
@@ -162,18 +166,7 @@ export function InstallControlsButton({
             {isInstalling ? 'Updating' : 'Update'}
           </Button>
         )}
-        <ConfirmModal
-          isOpen={isConfirmModalVisible}
-          title={`Uninstall ${plugin.name}`}
-          body="Are you sure you want to uninstall this plugin?"
-          confirmText="Confirm"
-          icon="exclamation-triangle"
-          onConfirm={onUninstall}
-          onDismiss={hideConfirmModal}
-        />
-        <Button variant="destructive" disabled={disableUninstall} onClick={showConfirmModal} title={uninstallTitle}>
-          {uninstallBtnText}
-        </Button>
+        {renderUninstallControls}
       </Stack>
     );
   }
