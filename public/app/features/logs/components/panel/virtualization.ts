@@ -194,7 +194,7 @@ export function hasUnderOrOverflow(element: HTMLDivElement, calculatedHeight?: n
   if (element.scrollHeight > height) {
     return element.scrollHeight;
   }
-  const child = element.firstChild;
+  const child = element.children[1];
   if (child instanceof HTMLDivElement && child.clientHeight < height) {
     return child.clientHeight;
   }
