@@ -2,6 +2,12 @@ package prom
 
 import (
 	prommodel "github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+)
+
+var (
+	ErrPrometheusRuleValidationFailed = errutil.ValidationFailed("alerting.prometheusRuleInvalid")
 )
 
 type PrometheusRulesFile struct {
@@ -22,4 +28,12 @@ type PrometheusRule struct {
 	Labels        map[string]string   `yaml:"labels,omitempty"`
 	Annotations   map[string]string   `yaml:"annotations,omitempty"`
 	Record        string              `yaml:"record,omitempty"`
+}
+
+func (r *PrometheusRule) Validate() error {
+	if r.KeepFiringFor != nil {
+		return ErrPrometheusRuleValidationFailed.Errorf("keep_firing_for is not supported")
+	}
+
+	return nil
 }

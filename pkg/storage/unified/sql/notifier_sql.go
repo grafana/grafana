@@ -120,6 +120,8 @@ func (p *pollingNotifier) poller(ctx context.Context, since groupResourceRV, str
 
 	for {
 		select {
+		case <-ctx.Done():
+			return
 		case <-p.done:
 			return
 		case <-t.C:
