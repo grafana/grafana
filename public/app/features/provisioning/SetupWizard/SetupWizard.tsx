@@ -161,6 +161,15 @@ export const SetupWizard = () => {
             <Stack direction="column" gap={2}>
               <Text element="h3" variant="h4">
                 Required Setup
+                {hasFeatureToggles ? (
+                  <Box display="inline" marginLeft={1}>
+                    <Icon name="check-circle" color="green" />
+                  </Box>
+                ) : (
+                  <Box display="inline" marginLeft={1}>
+                    <Icon name="exclamation-triangle" color="red" />
+                  </Box>
+                )}
               </Text>
               <Text color="secondary">This setup is required for provisioning to work properly.</Text>
 
@@ -170,7 +179,7 @@ export const SetupWizard = () => {
                     key={index}
                     feature={feature}
                     onSetup={() => handleShowInstructions(feature)}
-                    showSetupButton={true}
+                    showSetupButton={false}
                   />
                 ))}
               </Stack>
@@ -189,6 +198,13 @@ export const SetupWizard = () => {
             <Stack direction="column" gap={2}>
               <Text element="h3" variant="h4">
                 Additional Features
+                <Box display="inline" marginLeft={1}>
+                  {optionalFeatures.every((f) => f.steps.every((step) => step.fulfilled)) ? (
+                    <Icon name="check-circle" color="green" />
+                  ) : (
+                    <Icon name="exclamation-triangle" color="orange" />
+                  )}
+                </Box>
               </Text>
               <Text color="secondary">
                 These features are additional but can enhance your experience. We encourage you to set them up as well.
