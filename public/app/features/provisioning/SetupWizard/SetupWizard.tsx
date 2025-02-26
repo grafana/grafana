@@ -5,6 +5,7 @@ import { FeatureInfo, requiredFeatureToggles, feature_ini, ngrok_example, root_u
 import { InstructionsModal } from './InstructionsModal';
 import { config } from '@grafana/runtime';
 import { FeatureCard } from './FeatureCard';
+import { css } from '@emotion/css';
 
 // Define minimal styles for elements that need specific styling
 const getStyles = (theme: GrafanaTheme2) => {
@@ -18,6 +19,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflowX: 'auto',
       marginBottom: theme.spacing(2),
     },
+    cardContainer: css({
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fill, 320px)',
+      gap: theme.spacing(2),
+      justifyContent: 'start',
+      marginTop: theme.spacing(2),
+      marginBottom: theme.spacing(2),
+    }),
   };
 };
 
@@ -50,7 +59,7 @@ export const SetupWizard = () => {
 
     const featuresList: FeatureInfo[] = [
       {
-        title: 'As-Code Provisioning',
+        title: 'Provision As-Code',
         description: 'Provision your dashboards from Github or other storage system',
         additional: false,
         steps: [],
@@ -58,7 +67,7 @@ export const SetupWizard = () => {
       },
       {
         title: 'Collaborate with Pull Requests',
-        description: 'Collaborate with your team by creating pull requests for your dashboards',
+        description: 'Collaborate with your team using pull requests',
         additional: false,
         steps: [],
         icon: 'code-branch',
@@ -68,12 +77,11 @@ export const SetupWizard = () => {
         description: 'Migrate your dashboards to Github or other storage system',
         additional: false,
         steps: [],
-        icon: 'arrow-right',
+        icon: 'cloud-upload',
       },
       {
-        title: 'Github Webhooks Integration',
-        description:
-          'Make your Grafana instance accessible from the internet to enable a more seamless provisioning and collaboration with pull requests',
+        title: 'Github Webhooks',
+        description: 'Seamless Github provisioning and collaboration with pull requests',
         additional: true,
         icon: 'github',
         steps: [
@@ -100,7 +108,7 @@ export const SetupWizard = () => {
       },
       {
         title: 'Preview Snapshots',
-        description: 'Set up the image renderer to generate screenshots for dashboard previews in GitHub pull requests',
+        description: 'Attach preview images to pull requests comments',
         additional: true,
         icon: 'camera',
         steps: [
@@ -179,7 +187,7 @@ export const SetupWizard = () => {
               </Text>
               <Text color="secondary">This setup is required for provisioning to work properly.</Text>
 
-              <Stack direction="row" gap={2}>
+              <div className={styles.cardContainer}>
                 {requiredFeatures.map((feature, index) => (
                   <FeatureCard
                     key={index}
@@ -188,7 +196,7 @@ export const SetupWizard = () => {
                     showSetupButton={false}
                   />
                 ))}
-              </Stack>
+              </div>
 
               {!hasFeatureToggles && (
                 <Box marginTop={2}>
@@ -216,7 +224,7 @@ export const SetupWizard = () => {
                 These features are additional but can enhance your experience. We encourage you to set them up as well.
               </Text>
 
-              <Stack direction="row" gap={2}>
+              <div className={styles.cardContainer}>
                 {optionalFeatures.map((feature, index) => (
                   <FeatureCard
                     key={index}
@@ -225,7 +233,7 @@ export const SetupWizard = () => {
                     showSetupButton={true}
                   />
                 ))}
-              </Stack>
+              </div>
             </Stack>
           )}
         </>
