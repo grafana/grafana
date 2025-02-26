@@ -100,7 +100,6 @@ export const InstructionsModal = ({ feature, isOpen, onDismiss }: InstructionsMo
 
         <div className={customStyles.mainContent}>
           <div className={customStyles.stepIndicator}>
-            <span className={customStyles.stepNumber}>{currentStep + 1}</span>
             <span className={customStyles.stepTitle}>{currentStepData?.title}</span>
           </div>
 
@@ -108,7 +107,7 @@ export const InstructionsModal = ({ feature, isOpen, onDismiss }: InstructionsMo
             <p className={customStyles.description}>{currentStepData?.description}</p>
 
             {currentStepData?.code && (
-              <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
                 <CodeBlockWithCopy
                   code={currentStepData.code}
                   className={customStyles.codeBlockCustom}
@@ -119,8 +118,6 @@ export const InstructionsModal = ({ feature, isOpen, onDismiss }: InstructionsMo
           </div>
 
           <div className={customStyles.footer}>
-            <div></div>
-
             <div className={customStyles.navigationButtons}>
               <Button variant="secondary" onClick={handlePrevious} disabled={isFirstStep}>
                 Previous
@@ -163,7 +160,7 @@ const getCustomStyles = () => {
       flex: 1;
       display: flex;
       flex-direction: column;
-      overflow-y: auto;
+      position: relative;
     `,
     timelineItem: css`
       display: flex;
@@ -245,18 +242,7 @@ const getCustomStyles = () => {
       display: flex;
       align-items: center;
       padding: 16px 24px 12px;
-    `,
-    stepNumber: css`
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: #3274d9;
-      color: white;
-      font-weight: 500;
-      margin-right: 12px;
+      border-bottom: 1px solid #222426;
     `,
     stepTitle: css`
       font-size: 18px;
@@ -264,10 +250,12 @@ const getCustomStyles = () => {
       color: #d8d9da;
     `,
     content: css`
-      padding: 0 24px;
+      padding: 16px 24px;
       flex: 1;
       display: flex;
       flex-direction: column;
+      overflow-y: auto;
+      margin-bottom: 60px;
     `,
     description: css`
       margin-bottom: 16px;
@@ -275,13 +263,17 @@ const getCustomStyles = () => {
     `,
     codeBlockCustom: css`
       margin: 0;
-      flex-grow: 1;
     `,
     footer: css`
-      display: flex;
-      justify-content: space-between;
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      left: 0;
       padding: 16px 24px;
       border-top: 1px solid #222426;
+      display: flex;
+      justify-content: flex-end;
+      z-index: 1;
     `,
     navigationButtons: css`
       display: flex;
