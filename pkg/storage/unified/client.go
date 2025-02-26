@@ -15,7 +15,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/flagext"
 	"github.com/grafana/dskit/grpcclient"
@@ -143,24 +142,20 @@ func newClient(opts options.StorageOptions,
 	}
 }
 
-func clientCfgMapping(clientCfg *grpcutils.GrpcClientConfig) authnlib.GrpcClientConfig {
-	return authnlib.GrpcClientConfig{
-		TokenClientConfig: &authnlib.TokenExchangeConfig{
-			Token:            clientCfg.Token,
-			TokenExchangeURL: clientCfg.TokenExchangeURL,
-		},
-		TokenRequest: &authnlib.TokenExchangeRequest{
-			Namespace: clientCfg.TokenNamespace,
-			Audiences: []string{resourceStoreAudience},
-		},
-	}
-}
-
 func newResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (resource.ResourceClient, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
 		return resource.NewLegacyResourceClient(conn), nil
 	}
-	return resource.NewRemoteResourceClient(tracer, conn, clientCfgMapping(grpcutils.ReadGrpcClientConfig(cfg)), cfg.Env == setting.Dev)
+
+	clientCfg := grpcutils.ReadGrpcClientConfig(cfg)
+
+	return resource.NewRemoteResourceClient(tracer, conn, resource.RemoteResourceClientConfig{
+		Token:            clientCfg.Token,
+		TokenExchangeURL: clientCfg.TokenExchangeURL,
+		Audiences:        []string{resourceStoreAudience},
+		Namespace:        clientCfg.TokenNamespace,
+		AllowInsecure:    cfg.Env == setting.Dev,
+	})
 }
 
 // GrpcConn creates a new gRPC connection to the provided address.
