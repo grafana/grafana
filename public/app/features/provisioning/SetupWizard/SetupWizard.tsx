@@ -111,18 +111,6 @@ export const SetupWizard = () => {
 
   return (
     <div>
-      {!hasRequiredFeatures && (
-        <Alert
-          severity="warning"
-          title="Required Features Not Configured"
-          buttonContent="Setup Features"
-          onRemove={handleOpenModal}
-        >
-          Some required features are not properly configured. Please complete the setup for these features to ensure
-          full functionality.
-        </Alert>
-      )}
-
       <div className={styles.featuresList}>
         {features.map((feature, index) => {
           const allStepsFulfilled = feature.steps.every((step) => step.fulfilled);
