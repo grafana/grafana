@@ -1,18 +1,14 @@
 import React, { useState } from 'react';
-import { Modal, Button, useStyles2, HorizontalGroup } from '@grafana/ui';
+import { Modal, Button, useStyles2 } from '@grafana/ui';
 import { getStyles } from './styles';
 import { InstructionsModalProps } from './types';
-import { InstructionStepComponent } from './InstructionStepComponent';
+import { css } from '@emotion/css';
+import { CodeBlockWithCopy } from './CodeBlockWithCopy';
 
 export const InstructionsModal = ({ feature, isOpen, onDismiss }: InstructionsModalProps) => {
   const styles = useStyles2(getStyles);
+  const customStyles = useStyles2(getCustomStyles);
   const [currentStep, setCurrentStep] = useState(0);
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = () => {
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const handleNext = () => {
     if (currentStep < feature.steps.length - 1) {
@@ -28,8 +24,6 @@ export const InstructionsModal = ({ feature, isOpen, onDismiss }: InstructionsMo
 
   // Find the first unfulfilled step
   const firstUnfulfilledStep = feature.steps.findIndex((step) => !step.fulfilled);
-
-  // If all steps are fulfilled, start at the first step
   const initialStep = firstUnfulfilledStep === -1 ? 0 : firstUnfulfilledStep;
 
   // Use initialStep if currentStep is still 0 (initial render)
@@ -41,64 +35,90 @@ export const InstructionsModal = ({ feature, isOpen, onDismiss }: InstructionsMo
 
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === feature.steps.length - 1;
-
-  // Check if the current step is fulfilled
-  const isCurrentStepFulfilled = feature.steps[currentStep]?.fulfilled;
-
-  // Find the next unfulfilled step
-  const findNextUnfulfilledStep = () => {
-    for (let i = currentStep + 1; i < feature.steps.length; i++) {
-      if (!feature.steps[i].fulfilled) {
-        return i;
-      }
-    }
-    return -1; // No unfulfilled steps found
-  };
-
-  const nextUnfulfilledStep = findNextUnfulfilledStep();
-
-  // Handle skip to next unfulfilled step
-  const handleSkipToNext = () => {
-    if (nextUnfulfilledStep !== -1) {
-      setCurrentStep(nextUnfulfilledStep);
-    }
-  };
+  const currentStepData = feature.steps[currentStep];
 
   return (
-    <Modal isOpen={isOpen} title={`Setup ${feature.title}`} onDismiss={onDismiss} className={styles.container}>
-      <div className={styles.content}>
-        <InstructionStepComponent
-          step={feature.steps[currentStep]}
-          totalSteps={currentStep + 1}
-          copied={copied}
-          onCopy={handleCopy}
-        />
+    <Modal isOpen={isOpen} title={`Setup ${feature.title}`} onDismiss={onDismiss} className={customStyles.modal}>
+      <div className={customStyles.stepIndicator}>
+        <span className={customStyles.stepNumber}>{currentStep + 1}</span>
+        <span className={customStyles.stepTitle}>{currentStepData?.title}</span>
       </div>
-      <div className={styles.footer}>
-        <HorizontalGroup>
-          <Button variant="secondary" onClick={onDismiss}>
-            Close
-          </Button>
-          {isCurrentStepFulfilled && nextUnfulfilledStep !== -1 && (
-            <Button variant="primary" onClick={handleSkipToNext}>
-              Skip to Next Step
-            </Button>
-          )}
-        </HorizontalGroup>
-        <HorizontalGroup>
-          <Button
-            variant="secondary"
-            onClick={handlePrevious}
-            disabled={isFirstStep}
-            className={styles.buttonSecondary}
-          >
+
+      <div className={customStyles.content}>
+        <p className={customStyles.description}>{currentStepData?.description}</p>
+
+        {currentStepData?.code && (
+          <CodeBlockWithCopy code={currentStepData.code} className={customStyles.codeBlockCustom} />
+        )}
+      </div>
+
+      <div className={customStyles.footer}>
+        <Button variant="secondary" onClick={onDismiss}>
+          Close
+        </Button>
+
+        <div className={customStyles.navigationButtons}>
+          <Button variant="secondary" onClick={handlePrevious} disabled={isFirstStep}>
             Previous
           </Button>
-          <Button variant="primary" onClick={handleNext} disabled={isLastStep} className={styles.button}>
+          <Button variant="primary" onClick={handleNext} disabled={isLastStep}>
             Next
           </Button>
-        </HorizontalGroup>
+        </div>
       </div>
     </Modal>
   );
+};
+
+const getCustomStyles = () => {
+  return {
+    modal: css`
+      width: 650px;
+      max-width: 95%;
+    `,
+    stepIndicator: css`
+      display: flex;
+      align-items: center;
+      margin-bottom: 16px;
+      padding: 0 8px;
+    `,
+    stepNumber: css`
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #3274d9;
+      color: white;
+      font-weight: 500;
+      margin-right: 12px;
+    `,
+    stepTitle: css`
+      font-size: 18px;
+      font-weight: 500;
+      color: #d8d9da;
+    `,
+    content: css`
+      padding: 0 8px 24px 8px;
+    `,
+    description: css`
+      margin-bottom: 16px;
+      font-size: 14px;
+    `,
+    codeBlockCustom: css`
+      margin: 0;
+      min-height: 100px;
+    `,
+    footer: css`
+      display: flex;
+      justify-content: space-between;
+      padding: 16px 8px;
+      border-top: 1px solid #222426;
+    `,
+    navigationButtons: css`
+      display: flex;
+      gap: 8px;
+    `,
+  };
 };

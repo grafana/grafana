@@ -1,5 +1,4 @@
 export * from './SetupWizard';
-export * from './FeatureSetupModal';
 export * from './InstructionsModal';
 export * from './InstructionStepComponent';
 export * from './CodeBlockWithCopy';

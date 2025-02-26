@@ -56,19 +56,6 @@ export const SetupWizard = () => {
         additional: false,
         steps: [],
       },
-      // {
-      //   title: 'Feature Toggles',
-      //   description: 'Enable required Grafana features for Kubernetes integration and dashboard provisioning',
-      //   additional: false,
-      //   steps: [
-      //     {
-      //       title: 'Enable Required Feature Toggles',
-      //       description: 'Add these settings to your custom.ini file to enable necessary features:',
-      //       code: feature_ini,
-      //       fulfilled: hasFeatureToggles,
-      //     },
-      //   ],
-      // },
       {
         title: 'Github Webhooks Integration',
         description:
@@ -139,6 +126,21 @@ export const SetupWizard = () => {
   const optionalFeatures = features.filter((feature) => feature.additional);
   const hasFeatureToggles = checkRequiredFeatures();
 
+  // Add a state variable to store the basic setup
+  const [basicSetup] = useState<FeatureInfo>({
+    title: 'Provisioning',
+    description: 'Enable required Grafana features for provisioning',
+    additional: false,
+    steps: [
+      {
+        title: 'Enable Required Feature Toggles',
+        description: 'Add these settings to your custom.ini file to enable necessary features:',
+        code: feature_ini,
+        fulfilled: hasFeatureToggles,
+      },
+    ],
+  });
+
   return (
     <div>
       {selectedFeature === null && (
@@ -160,11 +162,7 @@ export const SetupWizard = () => {
                 })}
               </div>
               {!hasFeatureToggles ? (
-                <Button
-                  variant="primary"
-                  // onClick={() => handleFeatureSelect(features.findIndex(f => !f.additional))}
-                  className={styles.featureButton}
-                >
+                <Button variant="primary" onClick={() => setSelectedFeature(-1)} className={styles.featureButton}>
                   Setup Now
                 </Button>
               ) : (
@@ -218,8 +216,12 @@ export const SetupWizard = () => {
         </>
       )}
 
-      {selectedFeature !== null && features[selectedFeature] && (
-        <InstructionsModal feature={features[selectedFeature]} isOpen={true} onDismiss={handleInstructionsClose} />
+      {selectedFeature !== null && (
+        <InstructionsModal
+          feature={selectedFeature === -1 ? basicSetup : features[selectedFeature]}
+          isOpen={true}
+          onDismiss={handleInstructionsClose}
+        />
       )}
     </div>
   );
