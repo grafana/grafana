@@ -464,7 +464,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
     extraActions.push(this.renderWarnings('info'));
     extraActions.push(this.renderWarnings('warning'));
-    extraActions.push(<AdaptiveTelemetryQueryActions query={query} />);
+    extraActions.push(<AdaptiveTelemetryQueryActions key="adaptive-telemetry-actions" query={query} />);
 
     return extraActions;
   };
