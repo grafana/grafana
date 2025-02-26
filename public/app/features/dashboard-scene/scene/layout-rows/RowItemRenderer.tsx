@@ -38,9 +38,9 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
       {(!isHeaderHidden || (isEditing && showHiddenElements)) && (
         <div className={styles.rowHeader}>
           {!isClone && isEditing && (
-            <span onPointerDown={onSelect}>
+            <div className={styles.checkboxWrapper} onPointerDown={onSelect}>
               <Checkbox value={!!isSelected} />
-            </span>
+            </div>
           )}
           <button
             onClick={() => model.onCollapseToggle()}
@@ -111,6 +111,10 @@ function getStyles(theme: GrafanaTheme2) {
     rowActions: css({
       display: 'flex',
       opacity: 0,
+    }),
+    checkboxWrapper: css({
+      display: 'flex',
+      alignItems: 'center',
     }),
   };
 }

@@ -3,6 +3,8 @@ import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { renderTitle } from '../../edit-pane/shared';
+
 import { RowItems } from './RowItems';
 
 export function getEditOptions(model: RowItems): OptionsPaneCategoryDescriptor[] {
@@ -10,6 +12,9 @@ export function getEditOptions(model: RowItems): OptionsPaneCategoryDescriptor[]
     title: t('dashboard.edit-pane.row.multi-select.options-header', 'Multi-selected Row options'),
     id: `ms-row-options-${model.key}`,
     isOpenDefault: true,
+    alwaysExpanded: true,
+    renderTitle: () =>
+      renderTitle({ title: `${model.getNumberOfRowsSelected()} Rows Selected`, onDelete: model.onDelete }),
   }).addItem(
     new OptionsPaneItemDescriptor({
       title: t('dashboard.edit-pane.row.header.title', 'Row header'),
