@@ -106,7 +106,9 @@ export const InstructionsModal = ({ feature, isOpen, onDismiss }: Props) => {
         </div>
 
         <div className={customStyles.mainContent}>
-          <InstructionStepComponent step={currentStepData} />
+          <div className={customStyles.contentWrapper}>
+            <InstructionStepComponent step={currentStepData} />
+          </div>
           <div className={customStyles.footer}>
             <div className={customStyles.navigationButtons}>
               <Button variant="secondary" onClick={handlePrevious} disabled={isFirstStep}>
@@ -151,6 +153,11 @@ const getCustomStyles = () => {
       display: flex;
       flex-direction: column;
       position: relative;
+      overflow-y: auto;
+    `,
+    contentWrapper: css`
+      flex: 1;
+      padding-bottom: 70px; /* Space for footer */
     `,
     timelineItem: css`
       display: flex;
@@ -228,15 +235,8 @@ const getCustomStyles = () => {
       color: white;
       font-weight: 500;
     `,
-    content: css`
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      margin-bottom: 60px;
-    `,
     footer: css`
-      position: absolute;
+      position: sticky;
       bottom: 0;
       right: 0;
       left: 0;
