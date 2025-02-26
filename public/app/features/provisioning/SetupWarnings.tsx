@@ -8,6 +8,7 @@ import { css, cx } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
 
 import { useGetFrontendSettingsQuery } from './api';
+import { SetupWizard } from './SetupWizard';
 
 // Add the CodeBlockWithCopy component
 interface CodeBlockWithCopyProps {
@@ -329,6 +330,7 @@ function InstructionsModal({ feature, isOpen, onDismiss }: InstructionsModalProp
 
 function CompactFeaturesList({ features }: { features: FeatureInfo[] }) {
   const styles = useStyles2(getCompactStyles);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
     <div>
@@ -336,22 +338,31 @@ function CompactFeaturesList({ features }: { features: FeatureInfo[] }) {
         {features.map((feature) => (
           <li key={feature.title} className={styles.featureItem}>
             <div className={styles.featureContent}>
-              <span className={styles.bulletPoint}>•</span>
-              <div className={styles.titleWithInfo}>
+              <span className={styles.featureTitle}>
                 <Text element="span" weight="medium">
                   {feature.title}
                 </Text>
-                <IconButton
-                  name="info-circle"
-                  tooltip={feature.description}
-                  className={styles.infoButton}
-                  tooltipPlacement="top"
-                />
-              </div>
+              </span>
+              <IconButton
+                name="info-circle"
+                tooltip={feature.description}
+                className={styles.infoButton}
+                tooltipPlacement="top"
+              />
             </div>
           </li>
         ))}
       </ul>
+
+      <Box marginTop={2}>
+        <Button variant="secondary" icon="cog" onClick={() => setIsModalOpen(true)}>
+          Setup Features
+        </Button>
+      </Box>
+
+      {isModalOpen && (
+        <FeatureSetupModal features={features} isOpen={isModalOpen} onDismiss={() => setIsModalOpen(false)} />
+      )}
     </div>
   );
 }
@@ -633,126 +644,65 @@ callback_url = http://localhost:3000/
 `;
 
 export function SetupWarnings() {
-  const [isCustomIniModalOpen, setCustomIniModalOpen] = useState(false);
-  const settings = useGetFrontendSettingsQuery();
-  const missingFeatures = requiredFeatureToggles.filter((feature) => !config.featureToggles[feature]);
+  const { data: settings } = useGetFrontendSettingsQuery();
+  const [dismissed, setDismissed] = useLocalStorage<boolean>('grafana.provisioning.setupWarningsDismissed', false);
+  const [showSetupModal, setShowSetupModal] = useState(false);
   const styles = useStyles2(getStyles);
-  const compactStyles = useStyles2(getCompactStyles);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Create a feature info object for the missing features
-  const missingFeaturesInfo: FeatureInfo = {
-    title: 'Required Features',
-    description: 'Configure these required feature toggles for proper functionality',
-    steps: [
-      {
-        title: 'Update your custom.ini file',
-        description: 'Add the following configuration to enable required features:',
-        code: custom_ini,
-      },
-    ],
-    requiresPublicAccess: false,
+  // Check if required feature toggles are enabled
+  const checkRequiredFeatures = () => {
+    const featureToggles = config.featureToggles || {};
+    return requiredFeatureToggles.every((toggle) => featureToggles[toggle]);
   };
 
-  // Prepare features data for the table
-  const featuresData: FeatureInfo[] = [];
+  // Check if public access is configured
+  const checkPublicAccess = () => {
+    // This is a simplified check - in a real implementation, you would check
+    // if the server's root_url is properly configured for external access
+    return Boolean(config.appUrl && config.appUrl !== 'http://localhost:3000/');
+  };
 
-  if (settings.data?.generateDashboardPreviews === false) {
-    featuresData.push({
-      title: 'Dashboard Preview Generation',
-      description: 'This feature generates dashboard preview images in pull requests.',
-      steps: [
-        {
-          title: 'Install the Grafana Image Renderer',
-          description:
-            "You need to run the grafana-image-renderer service locally. Check out the <a href='https://github.com/grafana/grafana-image-renderer' target='_blank' rel='noopener noreferrer'>grafana-image-renderer GitHub repository</a> for more details:",
-          code: 'git clone https://github.com/grafana/grafana-image-renderer.git\ncd grafana-image-renderer\nnpm install\nnpm run build\nnpm run start',
-        },
-        {
-          title: 'Configure the rendering service',
-          description: 'Connect to the rendering service locally with these settings:',
-          code: render_ini,
-        },
-      ],
-      requiresPublicAccess: true,
-    });
-  }
+  const hasRequiredFeatures = checkRequiredFeatures();
+  const hasPublicAccess = checkPublicAccess();
+  const showWarning = !dismissed && (!hasRequiredFeatures || !hasPublicAccess);
 
-  if (settings.data?.githubWebhooks === false) {
-    featuresData.push({
-      title: 'Github Webhook Integration',
-      description:
-        'This feature automatically syncs resources from GitHub when commits are pushed to the configured branch, eliminating the need for regular polling intervals. It also enhances pull requests by automatically adding preview links and dashboard snapshots.',
-      steps: [],
-      requiresPublicAccess: true,
-    });
-  }
+  const handleDismiss = () => {
+    setDismissed(true);
+  };
 
-  if (
-    missingFeatures.length === 0 &&
-    settings.data?.githubWebhooks !== false &&
-    settings.data?.generateDashboardPreviews !== false
-  ) {
+  const handleSetupClick = () => {
+    setShowSetupModal(true);
+  };
+
+  const handleCloseSetupModal = () => {
+    setShowSetupModal(false);
+  };
+
+  if (!showWarning) {
     return null;
   }
 
   return (
     <>
-      {missingFeatures.length > 0 && (
-        <>
-          <Alert title="Some required features are disabled" severity="error" className={styles.alert}>
-            <Box marginBottom={2}>
-              <Text element="p">
-                The following feature toggles are required for proper functionality but are currently disabled:
-              </Text>
-              <ul className={compactStyles.featuresList}>
-                {missingFeatures.map((feature) => (
-                  <li key={feature} className={compactStyles.featureItem}>
-                    <div className={compactStyles.featureContent}>
-                      <span className={compactStyles.bulletPoint}>•</span>
-                      <div className={compactStyles.titleWithInfo}>
-                        <Text element="span" weight="medium">
-                          {feature}
-                        </Text>
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </Box>
-            <div className={styles.alertButtonWrapper}>
-              <Button onClick={() => setCustomIniModalOpen(true)} variant="secondary" icon="info-circle">
-                See example configuration
-              </Button>
-            </div>
-          </Alert>
-
-          <InstructionsModal
-            feature={missingFeaturesInfo}
-            isOpen={isCustomIniModalOpen}
-            onDismiss={() => setCustomIniModalOpen(false)}
-          />
-        </>
-      )}
-
-      {featuresData.length > 0 && (
-        <Alert severity="info" title="Some features are currently unavailable" className={styles.alert}>
-          <Box marginBottom={2}>
-            <Text element="p">These features enhance your whole experience working with Grafana and GitHub.</Text>
-          </Box>
-
-          <CompactFeaturesList features={featuresData} />
-
-          <div className={styles.alertButtonWrapper}>
-            <Button variant="secondary" icon="cog" onClick={() => setIsModalOpen(true)}>
+      <Alert severity="warning" title="Required Features Not Configured" onRemove={handleDismiss}>
+        <div>
+          Some required features are not properly configured. Please complete the setup for these features to ensure
+          full functionality.
+          <div style={{ marginTop: '8px' }}>
+            <Button variant="primary" onClick={handleSetupClick}>
               Setup Features
             </Button>
           </div>
+        </div>
+      </Alert>
 
-          {isModalOpen && (
-            <FeatureSetupModal features={featuresData} isOpen={isModalOpen} onDismiss={() => setIsModalOpen(false)} />
-          )}
-        </Alert>
+      {showSetupModal && (
+        <div className={styles.setupWizardContainer}>
+          <SetupWizard />
+          <Button variant="secondary" onClick={handleCloseSetupModal} className={styles.closeButton}>
+            Close
+          </Button>
+        </div>
       )}
     </>
   );
@@ -1076,20 +1026,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       top: '50%',
       transform: 'translateY(-50%)',
     }),
-    alert: css({
-      position: 'relative',
+    setupWizardContainer: css({
+      padding: theme.spacing(2),
+      backgroundColor: theme.colors.background.primary,
+      borderRadius: theme.shape.borderRadius(),
+      boxShadow: theme.shadows.z3,
+      marginTop: theme.spacing(2),
     }),
-    alertContent: css({
-      display: 'flex',
-      flexDirection: 'column',
-      position: 'relative',
-      paddingTop: theme.spacing(4),
-    }),
-    alertButtonWrapper: css({
-      position: 'absolute',
-      top: theme.spacing(2),
-      right: theme.spacing(2),
-      zIndex: 1,
+    closeButton: css({
+      marginTop: theme.spacing(2),
     }),
   };
 };
@@ -1102,30 +1047,22 @@ const getCompactStyles = (theme: GrafanaTheme2) => {
       padding: 0,
     }),
     featureItem: css({
-      padding: `${theme.spacing(0.5)} 0`,
+      padding: `${theme.spacing(1)} 0`,
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
       '&:last-child': {
         borderBottom: 'none',
       },
     }),
     featureContent: css({
       display: 'flex',
+      justifyContent: 'space-between',
       alignItems: 'center',
-      gap: theme.spacing(0.5),
     }),
-    bulletPoint: css({
-      fontSize: theme.typography.size.lg,
-      color: theme.colors.text.secondary,
-      marginRight: theme.spacing(0.5),
-    }),
-    titleWithInfo: css({
-      display: 'flex',
-      alignItems: 'center',
-      flex: 1,
+    featureTitle: css({
+      margin: 0,
     }),
     infoButton: css({
       color: theme.colors.text.secondary,
-      padding: 0,
-      marginLeft: theme.spacing(0.5),
       '&:hover': {
         color: theme.colors.text.primary,
       },
