@@ -1,6 +1,6 @@
 import { Page } from 'app/core/components/Page/Page';
-import { SetupWarnings } from './SetupWarnings';
-import { SetupFeatures } from './SetupFeatures';
+import { StatusAlerts } from './StatusAlerts';
+import { FeatureList } from './FeatureList';
 
 export default function SetupPage() {
   return (
@@ -9,8 +9,8 @@ export default function SetupPage() {
       subTitle="Configure your Grafana instance to use provisioning to manage your dashboards using Github and other storage systems."
     >
       <Page.Contents>
-        <SetupWarnings showSetupButton={false} showSuccessBanner={true} />
-        <SetupFeatures />
+        <StatusAlerts showSetupButton={false} showSuccessBanner={true} />
+        <FeatureList />
       </Page.Contents>
     </Page>
   );

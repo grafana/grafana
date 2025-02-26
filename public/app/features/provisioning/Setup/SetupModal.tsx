@@ -4,7 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { Feature } from './types';
 import { SetupStep } from './SetupStep';
-import { SetupModalSidebar } from './SetupModalSidebar';
+import { Sidebar } from './SetupModalSidebar';
 
 export interface Props {
   feature: Feature;
@@ -34,7 +34,7 @@ export const SetupModal = ({ feature, isOpen, onDismiss }: Props) => {
         </Text>
       </div>
       <Stack direction="row" height="100%">
-        <SetupModalSidebar steps={stepTitles} currentStep={currentStep} onStepClick={setCurrentStep} />
+        <Sidebar steps={stepTitles} currentStep={currentStep} onStepClick={setCurrentStep} />
 
         <div className={styles.contentWrapper}>
           <SetupStep step={feature.setupSteps[currentStep]} />

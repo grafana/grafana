@@ -3,7 +3,7 @@ import SVG from 'react-inlinesvg';
 import { EmptyState, LinkButton, Alert, Stack, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
-import { SetupWarnings } from './Setup/SetupWarnings';
+import { StatusAlerts } from './Setup/StatusAlerts';
 import { NEW_URL, MIGRATE_URL } from './constants';
 
 export default function OnboardingPage({ legacyStorage }: { legacyStorage?: boolean }) {
@@ -13,7 +13,7 @@ export default function OnboardingPage({ legacyStorage }: { legacyStorage?: bool
       pageNav={{ text: 'Setup provisioning', subTitle: 'Configure this instance to use provisioning' }}
     >
       <Page.Contents>
-        <SetupWarnings />
+        <StatusAlerts />
         {legacyStorage ? (
           <>
             <Alert severity="info" title="Setting up this connection could cause a temporary outage">

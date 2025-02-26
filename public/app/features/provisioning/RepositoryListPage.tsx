@@ -20,7 +20,7 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
 import OnboardingPage from './OnboardingPage';
-import { SetupWarnings } from './Setup/SetupWarnings';
+import { StatusAlerts } from './Setup/StatusAlerts';
 import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
 import { Repository, ResourceCount, useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from './api';
@@ -56,7 +56,7 @@ export default function RepositoryListPage() {
   return (
     <Page navId="provisioning" subTitle="View and manage your configured repositories">
       <Page.Contents isLoading={isLoading}>
-        <SetupWarnings />
+        <StatusAlerts />
         {settings.data?.legacyStorage && (
           <Alert
             title="Legacy storage detected"

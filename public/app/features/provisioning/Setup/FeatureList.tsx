@@ -30,7 +30,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export const SetupFeatures = () => {
+export const FeatureList = () => {
   const styles = useStyles2(getStyles);
   const [features, setFeatures] = useState<Feature[]>([]);
   const [showInstructionsModal, setShowInstructionsModal] = useState(false);

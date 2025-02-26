@@ -16,7 +16,7 @@ interface Props {
   showSuccessBanner?: boolean;
 }
 
-export function SetupWarnings({ showSetupButton = true, showSuccessBanner = false }: Props) {
+export function StatusAlerts({ showSetupButton = true, showSuccessBanner = false }: Props) {
   const { everythingConfigured, missingRequiredFeatures } = getConfigurationStatus();
 
   // Early return if everything is configured and we don't want to show success banner

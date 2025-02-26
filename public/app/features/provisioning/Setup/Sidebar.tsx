@@ -1,7 +1,7 @@
 import { useStyles2, Stack } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { SetupModalSidebarItem, getStyles as getStepItemStyles } from './SetupModalSidebarItem';
+import { SidebarItem, getStyles as getStepItemStyles } from './SidebarItem';
 
 interface Props {
   steps: string[];
@@ -9,7 +9,7 @@ interface Props {
   onStepClick: (index: number) => void;
 }
 
-export const SetupModalSidebar = ({ steps, currentStep, onStepClick }: Props) => {
+export const Sidebar = ({ steps, currentStep, onStepClick }: Props) => {
   if (steps.length === 0) {
     return null;
   }
@@ -21,7 +21,7 @@ export const SetupModalSidebar = ({ steps, currentStep, onStepClick }: Props) =>
     <div className={styles.sidebar}>
       <Stack direction="column" gap={1}>
         {steps.map((step, index) => (
-          <SetupModalSidebarItem
+          <SidebarItem
             key={index}
             step={step}
             index={index}

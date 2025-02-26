@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Page } from 'app/core/components/Page/Page';
 
-import { SetupWarnings } from '../Setup/SetupWarnings';
+import { StatusAlerts } from '../Setup/StatusAlerts';
 import { useGetFrontendSettingsQuery } from '../api';
 import { PROVISIONING_URL } from '../constants';
 
@@ -31,7 +31,7 @@ export default function MigrateToProvisioningPage() {
       pageNav={{ text: 'Migrate to Provisioning', subTitle: 'Manage this instance from provisioning' }}
     >
       <Page.Contents>
-        <SetupWarnings />
+        <StatusAlerts />
         <ProvisioningWizard />
       </Page.Contents>
     </Page>

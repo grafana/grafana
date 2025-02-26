@@ -10,7 +10,7 @@ export interface Props {
   styles: ReturnType<typeof getStyles>;
 }
 
-export const SetupModalSidebarItem = ({ step, index, currentStep, onStepClick, styles }: Props) => {
+export const SidebarItem = ({ step, index, currentStep, onStepClick, styles }: Props) => {
   const isCompleted = index < currentStep;
   const isCurrent = index === currentStep;
   const isPending = index > currentStep;
