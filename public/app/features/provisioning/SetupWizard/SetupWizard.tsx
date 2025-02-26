@@ -1,15 +1,130 @@
 import { useState, useEffect } from 'react';
-import { Button, useStyles2, LinkButton, Box, Alert, Icon } from '@grafana/ui';
-import { getStyles } from './styles';
+import { Button, useStyles2, Box, Icon } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
 import { FeatureInfo, requiredFeatureToggles, feature_ini, ngrok_example, root_url_ini, render_ini } from './types';
 import { InstructionsModal } from './InstructionsModal';
 import { config } from '@grafana/runtime';
-import { SetupWarnings } from '../SetupWarnings';
+
+// Define styles directly in this file
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    title: css({
+      fontSize: theme.typography.h4.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      marginBottom: theme.spacing(1),
+    }),
+    subtitle: css({
+      color: theme.colors.text.secondary,
+      marginBottom: theme.spacing(2),
+    }),
+    featuresList: css({
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+      gap: theme.spacing(2),
+      marginBottom: theme.spacing(3),
+    }),
+    featureItem: css({
+      backgroundColor: theme.colors.background.secondary,
+      borderRadius: theme.shape.borderRadius(1),
+      padding: theme.spacing(2),
+      display: 'flex',
+      flexDirection: 'column',
+      border: `1px solid ${theme.colors.border.weak}`,
+    }),
+    featureHeader: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: theme.spacing(1),
+    }),
+    featureTitle: css({
+      fontSize: theme.typography.h5.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      margin: 0,
+    }),
+    featureDescription: css({
+      color: theme.colors.text.secondary,
+      marginBottom: theme.spacing(2),
+      flex: 1,
+    }),
+    featureButton: css({
+      alignSelf: 'flex-start',
+    }),
+    configuredStatus: css({
+      display: 'flex',
+      alignItems: 'center',
+      color: theme.colors.success.text,
+      fontSize: theme.typography.body.fontSize,
+      marginTop: 'auto',
+    }),
+    configuredIcon: css({
+      color: theme.colors.success.main,
+      marginRight: theme.spacing(1),
+    }),
+    codeBlock: css({
+      backgroundColor: theme.colors.background.canvas,
+      borderRadius: theme.shape.borderRadius(1),
+      padding: theme.spacing(2),
+      fontFamily: theme.typography.fontFamilyMonospace,
+      fontSize: theme.typography.bodySmall.fontSize,
+      overflowX: 'auto',
+      marginBottom: theme.spacing(2),
+    }),
+    copyButton: css({
+      marginLeft: theme.spacing(1),
+    }),
+    copyIcon: css`
+      margin-right: ${theme.spacing(0.5)};
+    `,
+    checkIcon: css({
+      marginRight: theme.spacing(0.5),
+    }),
+  };
+};
+
+// Also include the CompactStyles that were in styles.ts
+export const getCompactStyles = (theme: GrafanaTheme2) => {
+  return {
+    featuresList: css`
+      display: flex;
+      flex-direction: column;
+      gap: ${theme.spacing(1)};
+    `,
+    featureItem: css`
+      display: flex;
+      align-items: flex-start;
+      padding: ${theme.spacing(1)};
+    `,
+    featureContent: css`
+      margin-left: ${theme.spacing(1)};
+    `,
+    bulletPoint: css`
+      color: ${theme.colors.primary.text};
+      margin-right: ${theme.spacing(1)};
+    `,
+    titleWithInfo: css`
+      display: flex;
+      align-items: center;
+      font-weight: ${theme.typography.fontWeightMedium};
+    `,
+    infoButton: css`
+      background: transparent;
+      border: none;
+      color: ${theme.colors.text.secondary};
+      cursor: pointer;
+      padding: 0;
+      margin-left: ${theme.spacing(0.5)};
+      &:hover {
+        color: ${theme.colors.text.primary};
+      }
+    `,
+  };
+};
 
 export const SetupWizard = () => {
   const styles = useStyles2(getStyles);
   const [features, setFeatures] = useState<FeatureInfo[]>([]);
-  const [hasRequiredFeatures, setHasRequiredFeatures] = useState(true);
   const [selectedFeature, setSelectedFeature] = useState<number | null>(null);
 
   // Check if required feature toggles are enabled

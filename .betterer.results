@@ -5885,8 +5885,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "1"],
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "2"],
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "3"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "4"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "5"]
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "4"]
     ],
     "public/app/features/provisioning/SyncRepository.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],

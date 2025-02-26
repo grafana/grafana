@@ -1,10 +1,17 @@
 import React, { useState } from 'react';
 import { Modal, Button, useStyles2, Icon } from '@grafana/ui';
-import { InstructionsModalProps } from './types';
+import { FeatureInfo } from './types';
 import { css } from '@emotion/css';
 import { CodeBlockWithCopy } from './CodeBlockWithCopy';
 
-export const InstructionsModal = ({ feature, isOpen, onDismiss }: InstructionsModalProps) => {
+// Moved from types.ts and renamed to Props
+export interface Props {
+  feature: FeatureInfo;
+  isOpen: boolean;
+  onDismiss: () => void;
+}
+
+export const InstructionsModal = ({ feature, isOpen, onDismiss }: Props) => {
   const customStyles = useStyles2(getCustomStyles);
   const [currentStep, setCurrentStep] = useState(0);
 

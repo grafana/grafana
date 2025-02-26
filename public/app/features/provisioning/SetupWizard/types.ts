@@ -15,30 +15,6 @@ export interface FeatureInfo {
   additional: boolean;
 }
 
-export interface InstructionStepComponentProps {
-  step: InstructionStep;
-  totalSteps: number;
-  copied: boolean;
-  onCopy: () => void;
-}
-
-export interface FeatureSetupModalProps {
-  features: FeatureInfo[];
-  isOpen: boolean;
-  onDismiss: () => void;
-  hasRequiredFeatures: boolean;
-}
-
-export interface CompactFeaturesListProps {
-  features: FeatureInfo[];
-}
-
-export interface InstructionsModalProps {
-  feature: FeatureInfo;
-  isOpen: boolean;
-  onDismiss: () => void;
-}
-
 // List of required feature toggles
 export const requiredFeatureToggles: Array<keyof FeatureToggles> = [
   'provisioning',
