@@ -17,8 +17,7 @@ import { TableCellProps, CustomCellRendererProps, TableCellOptions } from './typ
 import { getCellColors, getCellOptions } from './utils';
 
 export const DefaultCell = (props: TableCellProps) => {
-  const { field, cell, tableStyles, row, cellProps, frame, rowStyled, rowExpanded, textWrapped, height, actions } =
-    props;
+  const { field, cell, tableStyles, row, cellProps, frame, rowStyled, rowExpanded, textWrapped, height } = props;
   const inspectEnabled = Boolean(field.config.custom?.inspect);
   const displayValue = field.display!(cell.value);
 
@@ -26,7 +25,6 @@ export const DefaultCell = (props: TableCellProps) => {
   const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
   const cellOptions = getCellOptions(field);
   const hasLinks = Boolean(getCellLinks(field, row)?.length);
-  const hasActions = Boolean(actions?.length);
   const clearButtonStyle = useStyles2(clearLinkButtonStyles);
   let value: string | ReactElement;
 
@@ -81,8 +79,8 @@ export const DefaultCell = (props: TableCellProps) => {
 
   return (
     <div key={key} {...rest} className={cellStyle}>
-      {hasLinks || hasActions ? (
-        <DataLinksContextMenu links={() => getCellLinks(field, row) || []} actions={actions}>
+      {hasLinks ? (
+        <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
           {(api) => {
             if (api.openMenu) {
               return (
