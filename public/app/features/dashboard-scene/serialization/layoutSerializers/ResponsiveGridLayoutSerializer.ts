@@ -22,7 +22,7 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
             throw new Error('Expected ResponsiveGridItem');
           }
           // For serialization we should retrieve the original element key
-          const elementKey = getElementIdentifierForVizPanel(child.state?.body) ?? 'DefaultName';
+          const elementKey = getElementIdentifierForVizPanel(child.state?.body);
 
           return {
             kind: 'ResponsiveGridLayoutItem',

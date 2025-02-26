@@ -143,7 +143,7 @@ function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, yOverride?: n
   const repeatVar = gridItem_.state.variableName;
 
   // For serialization we should retrieve the original element key
-  const elementKey = getElementIdentifierForVizPanel(gridItem.state.body) ?? 'DefaultName';
+  const elementKey = getElementIdentifierForVizPanel(gridItem.state.body);
 
   elementGridItem = {
     kind: 'GridLayoutItem',
