@@ -37,11 +37,6 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 		return nil
 	}
 
-	// ignore org syncing if the user is provisioned
-	if id.IsProvisioned {
-		return nil
-	}
-
 	ctxLogger := s.log.FromContext(ctx).New("id", id.ID, "login", id.Login)
 
 	if !id.IsIdentityType(claims.TypeUser) {
@@ -52,6 +47,16 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 	userID, err := id.GetInternalID()
 	if err != nil {
 		ctxLogger.Warn("Failed to sync org role, invalid ID for identity", "type", id.GetIdentityType(), "err", err)
+		return nil
+	}
+
+	// ignore org syncing if the user is provisioned
+	usr, err := s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
+	if err != nil {
+		ctxLogger.Error("Failed to get user from provided identity", "error", err)
+		return nil
+	}
+	if usr.IsProvisioned {
 		return nil
 	}
 
