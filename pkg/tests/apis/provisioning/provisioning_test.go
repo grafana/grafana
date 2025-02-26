@@ -1,6 +1,7 @@
 package provisioning
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -52,7 +53,7 @@ type provisioningTestHelper struct {
 
 func (h *provisioningTestHelper) AwaitJobs(t *testing.T, repoName string) {
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		list, err := h.Jobs.Resource.List(t.Context(), metav1.ListOptions{})
+		list, err := h.Jobs.Resource.List(context.Background(), metav1.ListOptions{})
 		if assert.NoError(collect, err) {
 			for _, elem := range list.Items {
 				state := mustNestedString(elem.Object, "status", "state")
@@ -146,7 +147,7 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 	})
 
 	deleteAll := func(client *apis.K8sResourceClient) error {
-		ctx := t.Context()
+		ctx := context.Background()
 		list, err := client.Resource.List(ctx, metav1.ListOptions{})
 		if err != nil {
 			return err
@@ -190,7 +191,7 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 
 	helper := runGrafana(t)
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
-	ctx := t.Context()
+	ctx := context.Background()
 
 	for _, inputFilePath := range []string{
 		"testdata/github-example.json",
@@ -232,7 +233,7 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	}
 
 	helper := runGrafana(t)
-	ctx := t.Context()
+	ctx := context.Background()
 
 	helper.GetEnv().GitHubFactory.Client = ghmock.NewMockedHTTPClient(
 		ghmock.WithRequestMatchHandler(ghmock.GetUser, ghAlwaysWrite(t, &gh.User{Name: gh.Ptr("github-user")})),
@@ -313,7 +314,7 @@ func TestIntegrationProvisioning_SafePathUsages(t *testing.T) {
 	}
 
 	helper := runGrafana(t)
-	ctx := t.Context()
+	ctx := context.Background()
 
 	_, err := helper.Repositories.Resource.Update(ctx,
 		helper.LoadYAMLOrJSONFile("testdata/local-devenv.json"),
@@ -353,7 +354,7 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	}
 
 	helper := runGrafana(t)
-	ctx := t.Context()
+	ctx := context.Background()
 
 	const repo = "local-tmp"
 	// Create the repository.
@@ -428,7 +429,7 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 	}
 
 	helper := runGrafana(t)
-	ctx := t.Context()
+	ctx := context.Background()
 
 	// Set up dashboards first, then the repository, and finally export.
 	dashboard := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/root_dashboard.json")
