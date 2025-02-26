@@ -1040,6 +1040,15 @@
       "rows": "Total number rows",
       "table-title": "Stats"
     },
+    "layout": {
+      "common": {
+        "copy": "Copy",
+        "copy-or-duplicate": "Copy or Duplicate",
+        "delete": "Delete",
+        "duplicate": "Duplicate",
+        "layout": "Layout"
+      }
+    },
     "options": {
       "description": "Description",
       "title": "Dashboard options",
