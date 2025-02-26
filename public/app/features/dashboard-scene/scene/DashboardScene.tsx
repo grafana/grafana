@@ -78,7 +78,9 @@ import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './ang
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { addNewRowTo, addNewTabTo } from './layouts-shared/addNew';
 import { DashboardLayoutManager } from './types/DashboardLayoutManager';
+import { LayoutParent } from './types/LayoutParent';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 export const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
@@ -141,7 +143,7 @@ export interface DashboardSceneState extends SceneObjectState {
   editPane: DashboardEditPane;
 }
 
-export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
+export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {
   static Component = DashboardSceneRenderer;
 
   /**
@@ -373,7 +375,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
     let versionRsp;
-    if (config.featureToggles.kubernetesCliDashboards) {
+    if (config.featureToggles.kubernetesClientDashboardsFolders) {
       // the id here is the resource version in k8s, use this instead to get the specific version
       versionRsp = await historySrv.restoreDashboard(version.uid, version.id);
     } else {
@@ -593,11 +595,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public onCreateNewRow() {
-    this.state.body.addNewRow();
+    addNewRowTo(this.state.body);
   }
 
   public onCreateNewTab() {
-    this.state.body.addNewTab();
+    addNewTabTo(this.state.body);
   }
 
   public onCreateNewPanel(): VizPanel {
@@ -611,6 +613,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public switchLayout(layout: DashboardLayoutManager) {
     this.setState({ body: layout });
     layout.activateRepeaters?.();
+  }
+
+  public getLayout(): DashboardLayoutManager {
+    return this.state.body;
   }
 
   /**

@@ -752,7 +752,7 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 				Value:           iter.Value(),
 			}
 
-			if !checker(iter.Namespace(), iter.Name(), iter.Folder()) {
+			if !checker(iter.Name(), iter.Folder()) {
 				continue
 			}
 
@@ -919,10 +919,11 @@ func (s *server) initWatcher() error {
 			return err
 		}
 		go func() {
-			for {
-				// pipe all events
-				v := <-events
-
+			for v := range events {
+				if v == nil {
+					s.log.Error("received nil event")
+					continue
+				}
 				// Skip events during batch updates
 				if v.PreviousRV < 0 {
 					continue
@@ -952,6 +953,7 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
+		Verb:      utils.VerbGet,
 	})
 	if err != nil {
 		return err
@@ -1033,7 +1035,7 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 			}
 			s.log.Debug("Server Broadcasting", "type", event.Type, "rv", event.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "resource", event.Key.Resource, "name", event.Key.Name)
 			if event.ResourceVersion > since && matchesQueryKey(req.Options.Key, event.Key) {
-				if !checker(event.Key.Namespace, event.Key.Name, event.Folder) {
+				if !checker(event.Key.Name, event.Folder) {
 					continue
 				}
 

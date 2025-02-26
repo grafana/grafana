@@ -39,18 +39,18 @@ export class TabItem
       layout: state?.layout ?? ResponsiveGridLayoutManager.createEmpty(),
     });
 
-    this.addActivationHandler(() => this._activationHandler());
+    // this.addActivationHandler(() => this._activationHandler());
   }
 
-  private _activationHandler() {
-    this._subs.add(
-      this._getParentLayout().subscribeToState((newState, prevState) => {
-        if (newState.tabs !== prevState.tabs || newState.currentTab !== prevState.currentTab) {
-          this.forceRender();
-        }
-      })
-    );
-  }
+  // private _activationHandler() {
+  //   this._subs.add(
+  //     this._getParentLayout().subscribeToState((newState, prevState) => {
+  //       if (newState.tabs !== prevState.tabs || newState.currentTab !== prevState.currentTab) {
+  //         this.forceRender();
+  //       }
+  //     })
+  //   );
+  // }
 
   public getLayout(): DashboardLayoutManager {
     return this.state.layout;
@@ -93,10 +93,6 @@ export class TabItem
     this._getParentLayout().moveTabRight(this);
   }
 
-  public isCurrentTab(): boolean {
-    return this._getParentLayout().isCurrentTab(this);
-  }
-
   public isFirstTab(): boolean {
     return this._getParentLayout().isFirstTab(this);
   }
@@ -105,12 +101,12 @@ export class TabItem
     return this._getParentLayout().isLastTab(this);
   }
 
-  public onChangeTab() {
-    this._getParentLayout().changeTab(this);
-  }
-
   public onChangeTitle(title: string) {
     this.setState({ title });
+  }
+
+  public getParentLayout(): TabsLayoutManager {
+    return this._getParentLayout();
   }
 
   private _getParentLayout(): TabsLayoutManager {
