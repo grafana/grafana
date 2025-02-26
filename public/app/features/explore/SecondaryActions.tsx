@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { ToolbarButton, useTheme2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { useSelector } from 'app/types';
@@ -71,6 +72,7 @@ export function SecondaryActions({
           </ToolbarButton>
           {queryLibraryEnabled && (
             <ToolbarButton
+              data-testid={selectors.pages.Explore.General.addFromQueryLibrary}
               aria-label={t('explore.secondary-actions.add-from-query-library', 'Add query from library')}
               variant="canvas"
               onClick={() => openQueryLibraryDrawer(activeDatasources, onSelectQueryFromLibrary)}
