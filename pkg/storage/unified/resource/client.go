@@ -75,10 +75,9 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 		)
 	}
 
-	clientInt, _ := authnlib.NewGrpcClientInterceptor(
-		&authnlib.GrpcClientConfig{TokenRequest: &authnlib.TokenExchangeRequest{}},
-		authnlib.WithTokenClientOption(grpcutils.ProvideInProcExchanger()),
-		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
+	clientInt := authnlib.NewGrpcClientInterceptor(
+		grpcutils.ProvideInProcExchanger(),
+		authnlib.WithClientInterceptorIDTokenExtractor(idTokenExtractor),
 	)
 
 	cc := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
@@ -92,20 +91,36 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	}
 }
 
-func NewRemoteResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg authnlib.GrpcClientConfig, allowInsecure bool) (ResourceClient, error) {
-	opts := []authnlib.GrpcClientInterceptorOption{
-		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
-		authnlib.WithTracerOption(tracer),
+type RemoteResourceClientConfig struct {
+	Token            string
+	TokenExchangeURL string
+	Audiences        []string
+	Namespace        string
+	AllowInsecure    bool
+}
+
+func NewRemoteResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg RemoteResourceClientConfig) (ResourceClient, error) {
+	exchangeOpts := []authnlib.ExchangeClientOpts{}
+
+	if cfg.AllowInsecure {
+		exchangeOpts = append(exchangeOpts, authnlib.WithHTTPClient(&http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}))
 	}
 
-	if allowInsecure {
-		opts = allowInsecureTransportOpt(&cfg, opts)
-	}
+	tc, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
+		Token:            cfg.Token,
+		TokenExchangeURL: cfg.TokenExchangeURL,
+	}, exchangeOpts...)
 
-	clientInt, err := authnlib.NewGrpcClientInterceptor(&cfg, opts...)
 	if err != nil {
 		return nil, err
 	}
+	clientInt := authnlib.NewGrpcClientInterceptor(
+		tc,
+		authnlib.WithClientInterceptorTracer(tracer),
+		authnlib.WithClientInterceptorNamespace(cfg.Namespace),
+		authnlib.WithClientInterceptorAudience(cfg.Audiences),
+		authnlib.WithClientInterceptorIDTokenExtractor(idTokenExtractor),
+	)
 
 	cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 	return &resourceClient{
@@ -143,10 +158,4 @@ func idTokenExtractor(ctx context.Context) (string, error) {
 	}
 
 	return "", nil
-}
-
-func allowInsecureTransportOpt(grpcClientConfig *authnlib.GrpcClientConfig, opts []authnlib.GrpcClientInterceptorOption) []authnlib.GrpcClientInterceptorOption {
-	client := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
-	tokenClient, _ := authnlib.NewTokenExchangeClient(*grpcClientConfig.TokenClientConfig, authnlib.WithHTTPClient(client))
-	return append(opts, authnlib.WithTokenClientOption(tokenClient))
 }

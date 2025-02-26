@@ -582,7 +582,7 @@ func (nc *StubAccessClient) Check(ctx context.Context, id authlib.AuthInfo, req 
 }
 
 func (nc *StubAccessClient) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, error) {
-	return func(namespace string, name, folder string) bool {
+	return func(name, folder string) bool {
 		return nc.resourceResponses[req.Resource]
 	}, nil
 }
