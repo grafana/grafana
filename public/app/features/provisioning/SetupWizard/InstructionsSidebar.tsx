@@ -1,5 +1,6 @@
-import { useStyles2, Icon } from '@grafana/ui';
+import { useStyles2, Text, Stack, IconButton } from '@grafana/ui';
 import { css } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
 
 interface InstructionsSidebarProps {
   steps: string[];
@@ -8,145 +9,96 @@ interface InstructionsSidebarProps {
 }
 
 export const InstructionsSidebar = ({ steps, currentStep, onStepClick }: InstructionsSidebarProps) => {
-  const customStyles = useStyles2(getCustomStyles);
+  if (steps.length === 0) {
+    return null;
+  }
+
+  const styles = useStyles2(getStyles);
 
   return (
-    <div className={customStyles.sidebar}>
-      {steps.map((step, index) => {
-        // Determine the status of this step
-        const isCompleted = index < currentStep;
-        const isCurrent = index === currentStep;
-        const isPending = index > currentStep;
+    <div className={styles.sidebar}>
+      <Stack direction="column" gap={1}>
+        {steps.map((step, index) => {
+          const isCompleted = index < currentStep;
+          const isCurrent = index === currentStep;
+          const isPending = index > currentStep;
 
-        // Determine if the connector line should be colored
-        const isConnectorColored = index < steps.length - 1 && index < currentStep;
+          const iconColor = isCompleted ? 'success' : isCurrent ? 'primary' : 'secondary';
+          const iconAriaLabel = isCompleted ? 'Completed step' : isCurrent ? 'Current step' : 'Pending step';
 
-        return (
-          <div
-            key={index}
-            className={`${customStyles.timelineItem} ${isCurrent ? customStyles.activeStep : ''}`}
-            onClick={() => onStepClick(index)}
-          >
-            <div className={customStyles.timelineConnector}>
-              <div
-                className={`
-                  ${customStyles.timelineDot} 
-                  ${isCompleted ? customStyles.completedDot : ''} 
-                  ${isCurrent ? customStyles.currentDot : ''} 
-                  ${isPending ? customStyles.pendingDot : ''}
-                `}
-              >
-                {isCompleted && <Icon name="check" className={customStyles.checkIcon} />}
-                {isCurrent && !isCompleted && <span className={customStyles.currentStepDot}></span>}
-              </div>
-              {index < steps.length - 1 && (
-                <div
-                  className={`
-                    ${customStyles.connector} 
-                    ${isConnectorColored ? customStyles.completedConnector : ''}
-                  `}
-                ></div>
-              )}
-            </div>
+          return (
             <div
-              className={`
-                ${customStyles.timelineContent} 
-                ${isCompleted ? customStyles.completedText : ''} 
-                ${isCurrent ? customStyles.currentText : ''}
-              `}
+              key={index}
+              className={`${styles.stepItem} ${isCurrent ? styles.activeStep : ''}`}
+              onClick={() => onStepClick(index)}
             >
-              {step}
+              <Stack direction="row" alignItems="center" gap={1}>
+                <div className={styles.iconWrapper}>
+                  <IconButton
+                    name={isCompleted ? 'check-circle' : 'circle'}
+                    size="sm"
+                    variant={isPending ? 'secondary' : 'primary'}
+                    color={iconColor}
+                    aria-label={iconAriaLabel}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onStepClick(index);
+                    }}
+                  />
+                  {index < steps.length - 1 && (
+                    <div className={`${styles.connector} ${isCompleted ? styles.completedConnector : ''}`} />
+                  )}
+                </div>
+
+                <Text color={isCurrent ? 'primary' : 'secondary'} weight={isCurrent ? 'medium' : 'regular'}>
+                  {step}
+                </Text>
+              </Stack>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </Stack>
     </div>
   );
 };
 
-const getCustomStyles = () => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     sidebar: css`
       width: 260px;
-      padding: 16px 0;
-      border-right: 1px solid #222426;
+      padding: ${theme.spacing(2)} 0;
+      border-right: 1px solid ${theme.colors.border.medium};
       overflow-y: auto;
     `,
-    timelineItem: css`
-      display: flex;
-      padding: 8px 16px;
+    stepItem: css`
+      padding: ${theme.spacing(1)} ${theme.spacing(2)};
       cursor: pointer;
-      position: relative;
       &:hover {
-        background: rgba(204, 204, 220, 0.07);
+        background: ${theme.colors.action.hover};
       }
     `,
     activeStep: css`
-      background: rgba(204, 204, 220, 0.1);
-      font-weight: 500;
+      background: ${theme.colors.background.secondary};
     `,
-    timelineConnector: css`
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-right: 12px;
+    iconWrapper: css`
       position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 24px;
+      height: 24px;
     `,
     connector: css`
       position: absolute;
-      top: 20px;
-      bottom: -20px;
+      top: 24px;
+      bottom: -24px;
       left: 50%;
       width: 2px;
-      background: #333;
+      background: ${theme.colors.border.medium};
       transform: translateX(-50%);
     `,
     completedConnector: css`
-      background: #3274d9;
-    `,
-    timelineDot: css`
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      z-index: 1;
-    `,
-    completedDot: css`
-      background: #3274d9;
-      border: 2px solid #3274d9;
-    `,
-    currentDot: css`
-      background: #1f60c4;
-      border: 2px solid #3274d9;
-    `,
-    pendingDot: css`
-      background: #333;
-      border: 2px solid #555;
-    `,
-    currentStepDot: css`
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: white;
-    `,
-    checkIcon: css`
-      color: white;
-      font-size: 12px;
-    `,
-    timelineContent: css`
-      flex: 1;
-      font-size: 14px;
-      padding-top: 2px;
-    `,
-    completedText: css`
-      color: #3274d9;
-    `,
-    currentText: css`
-      color: white;
-      font-weight: 500;
+      background: ${theme.colors.primary.main};
     `,
   };
 };
