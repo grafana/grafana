@@ -1,13 +1,13 @@
 package provisioning
 
 import (
-	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -27,6 +27,7 @@ import (
 	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -47,6 +48,25 @@ type provisioningTestHelper struct {
 	Folders      *apis.K8sResourceClient
 	Dashboards   *apis.K8sResourceClient
 	REST         *rest.RESTClient
+}
+
+func (h *provisioningTestHelper) AwaitJobs(t *testing.T, repoName string) {
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		list, err := h.Jobs.Resource.List(t.Context(), metav1.ListOptions{})
+		if assert.NoError(collect, err) {
+			for _, elem := range list.Items {
+				state := mustNestedString(elem.Object, "status", "state")
+				if elem.GetLabels()["repository"] == repoName {
+					if state == string(provisioning.JobStateSuccess) {
+						continue // doesn't matter
+					}
+					require.NotEqual(t, provisioning.JobStateError, state, "no jobs may error, but %s did", elem.GetName())
+					collect.Errorf("there are still remaining github-example jobs: %v", elem)
+					return
+				}
+			}
+		}
+	}, time.Second*5, time.Millisecond*20)
 }
 
 type grafanaOption func(opts *testinfra.GrafanaOpts)
@@ -126,7 +146,7 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 	})
 
 	deleteAll := func(client *apis.K8sResourceClient) error {
-		ctx := context.Background()
+		ctx := t.Context()
 		list, err := client.Resource.List(ctx, metav1.ListOptions{})
 		if err != nil {
 			return err
@@ -170,7 +190,7 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 
 	helper := runGrafana(t)
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
-	ctx := context.Background()
+	ctx := t.Context()
 
 	for _, inputFilePath := range []string{
 		"testdata/github-example.json",
@@ -212,7 +232,7 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	}
 
 	helper := runGrafana(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	helper.GetEnv().GitHubFactory.Client = ghmock.NewMockedHTTPClient(
 		ghmock.WithRequestMatchHandler(ghmock.GetUser, ghAlwaysWrite(t, &gh.User{Name: gh.Ptr("github-user")})),
@@ -265,28 +285,14 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	)
 	require.NoError(t, err)
 
+	helper.AwaitJobs(t, "github-example")
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		list, err := helper.Jobs.Resource.List(ctx, metav1.ListOptions{})
-		if assert.NoError(collect, err) {
-			for _, elem := range list.Items {
-				state := mustNestedString(elem.Object, "status", "state")
-				if elem.GetLabels()["repository"] == "github-example" {
-					if state == string(provisioning.JobStateSuccess) {
-						continue // doesn't matter
-					}
-					require.NotEqual(t, provisioning.JobStateError, state, "no jobs may error, but %s did", elem.GetName())
-					collect.Errorf("there are still remaining github-example jobs: %v", elem)
-					return
-				}
-			}
-		}
-
 		repo, err := helper.Repositories.Resource.Get(ctx, "github-example", metav1.GetOptions{})
 		if assert.NoError(collect, err) {
 			assert.Equal(collect, true, mustNested(repo.Object, "status", "health", "healthy"))
 			assert.Equal(collect, "success", mustNestedString(repo.Object, "status", "sync", "state"))
 		}
-	}, time.Second*5, time.Millisecond*20)
+	}, time.Second*3, time.Millisecond*20, "repository is not healthy")
 
 	// By now, we should have synced, meaning we have data to read in the local Grafana instance!
 
@@ -307,7 +313,7 @@ func TestIntegrationProvisioning_SafePathUsages(t *testing.T) {
 	}
 
 	helper := runGrafana(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	_, err := helper.Repositories.Resource.Update(ctx,
 		helper.LoadYAMLOrJSONFile("testdata/local-devenv.json"),
@@ -347,7 +353,7 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	}
 
 	helper := runGrafana(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	const repo = "local-tmp"
 	// Create the repository.
@@ -416,8 +422,57 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	require.Contains(t, names, allPanels, "all-panels dashboard should now exist")
 }
 
+func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	helper := runGrafana(t)
+	ctx := t.Context()
+
+	// Set up dashboards first, then the repository, and finally export.
+	dashboard := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/root_dashboard.json")
+	_, err := helper.Dashboards.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+	require.NoError(t, err, "should be able to create prerequisite dashboard")
+
+	// Now for the repository.
+	const repo = "local-repository"
+	repoPath := path.Join(helper.ProvisioningPath, repo, randomAsciiStr(10))
+	err = os.MkdirAll(repoPath, 0700)
+	require.NoError(t, err, "should be able to create repo path")
+	createBody := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/repository.json")
+	require.NoError(t, unstructured.SetNestedField(createBody.Object, repoPath, "spec", "local", "path"))
+
+	_, err = helper.Repositories.Resource.Create(ctx, createBody, metav1.CreateOptions{})
+	require.NoError(t, err, "should be able to create repository")
+
+	// Now export...
+	result := helper.REST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Name(repo).
+		SubResource("export").
+		Body(asJSON(&provisioning.ExportJobOptions{
+			Folder:     "",   // export entire instance
+			Prefix:     "",   // no prefix necessary for testing
+			Identifier: true, // doesn't _really_ matter, but handy for debugging.
+		})).
+		Do(ctx)
+	require.NoError(t, result.Error())
+
+	// And time to assert.
+	helper.AwaitJobs(t, repo)
+
+	fpath := filepath.Join(repoPath, slugify.Slugify(mustNestedString(dashboard.Object, "spec", "title"))+".json")
+	_, err = os.Stat(fpath)
+	require.NoError(t, err, "exported file was not created at path %s?", fpath)
+}
+
 func mustNestedString(obj map[string]interface{}, fields ...string) string {
-	v, _, _ := unstructured.NestedString(obj, fields...)
+	v, _, err := unstructured.NestedString(obj, fields...)
+	if err != nil {
+		panic(err)
+	}
 	return v
 }
 
