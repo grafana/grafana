@@ -94,7 +94,8 @@ export const TLSAuthSettings = ({ dataSourceConfig, onChange }: HttpSettingsBase
                 label={t('grafana-ui.data-source-settings.tls-server-name-label', 'ServerName')}
                 labelWidth={7}
                 inputWidth={30}
-                placeholder={t('grafana-ui.data-source-settings.tls-server-name-placeholder', 'domain.example.com')}
+                // eslint-disable-next-line @grafana/no-untranslated-strings
+                placeholder="domain.example.com"
                 value={hasServerName && dataSourceConfig.jsonData.serverName}
                 onChange={onServerNameLabelChange}
               />

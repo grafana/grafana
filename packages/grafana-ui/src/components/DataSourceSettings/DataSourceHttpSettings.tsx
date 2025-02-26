@@ -42,7 +42,8 @@ const DEFAULT_ACCESS_OPTION = {
 
 const HttpAccessHelp = () => {
   return (
-    <Alert severity="info" title={t('grafana-ui.data-source-http-settings.alert-title-empty', '')} topSpacing={3}>
+    // eslint-disable-next-line @grafana/no-untranslated-strings
+    <Alert severity="info" title="" topSpacing={3}>
       <p>
         <Trans i18nKey="grafana-ui.data-source-http-settings.access-help-details">
           Access mode controls how requests to the data source will be handled.
