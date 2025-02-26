@@ -33,8 +33,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
-// `authzService` is hardcoded in authz-service
-const authzServiceAudience = "authzService"
+// AuthzServiceAudience is the audience for the authz service.
+const AuthzServiceAudience = "authzService"
 
 // ProvideAuthZClient provides an AuthZ client and creates the AuthZ service.
 func ProvideAuthZClient(
@@ -123,7 +123,7 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer tracing.Tracer) 
 		clientCfg.remoteAddress,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithPerRPCCredentials(
-			newGRPCTokenAuth(authzServiceAudience, clientCfg.tokenNamespace, tokenClient),
+			NewGRPCTokenAuth(AuthzServiceAudience, clientCfg.tokenNamespace, tokenClient),
 		),
 	)
 	if err != nil {
