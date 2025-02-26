@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
@@ -26,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -35,8 +33,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
-// `authzService` is hardcoded in authz-service
-const authzServiceAudience = "authzService"
+// AuthzServiceAudience is the audience for the authz service.
+const AuthzServiceAudience = "authzService"
 
 // ProvideAuthZClient provides an AuthZ client and creates the AuthZ service.
 func ProvideAuthZClient(
@@ -48,21 +46,18 @@ func ProvideAuthZClient(
 	db db.DB,
 	acService accesscontrol.Service,
 ) (authlib.AccessClient, error) {
-	authCfg, err := ReadCfg(cfg)
+	authCfg, err := readAuthzClientSettings(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	isRemoteServer := authCfg.mode == ModeCloud || authCfg.mode == ModeGRPC
-	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) && isRemoteServer {
+	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) && authCfg.mode == clientModeCloud {
 		return nil, errors.New("authZGRPCServer feature toggle is required for cloud and grpc mode")
 	}
 
 	switch authCfg.mode {
-	case ModeGRPC:
-		return newGrpcLegacyClient(authCfg, tracer)
-	case ModeCloud:
-		return newCloudLegacyClient(authCfg, tracer)
+	case clientModeCloud:
+		return newRemoteRBACClient(authCfg, tracer)
 	default:
 		sql := legacysql.NewDatabaseProvider(db)
 
@@ -83,7 +78,18 @@ func ProvideAuthZClient(
 			reg,
 			cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 10 * time.Minute}),
 		)
-		return newInProcLegacyClient(server, tracer)
+
+		channel := &inprocgrpc.Channel{}
+		channel.WithServerUnaryInterceptor(grpcAuth.UnaryServerInterceptor(func(ctx context.Context) (context.Context, error) {
+			ctx = authlib.WithAuthInfo(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
+				Rest: authnlib.AccessTokenClaims{
+					Namespace: "*",
+				},
+			}))
+			return ctx, nil
+		}))
+		authzv1.RegisterAuthzServiceServer(channel, server)
+		return newRBACClient(channel, tracer), nil
 	}
 }
 
@@ -96,119 +102,46 @@ func ProvideStandaloneAuthZClient(
 		return nil, nil
 	}
 
-	authCfg, err := ReadCfg(cfg)
+	authCfg, err := readAuthzClientSettings(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	if authCfg.mode == ModeGRPC {
-		return newGrpcLegacyClient(authCfg, tracer)
-	}
-	return newCloudLegacyClient(authCfg, tracer)
+	return newRemoteRBACClient(authCfg, tracer)
 }
 
-func newInProcLegacyClient(server *rbac.Service, tracer tracing.Tracer) (authlib.AccessClient, error) {
-	// For in-proc use-case authorize add fake service claims - it should be able to access every namespace, as there is only one
-	staticAuth := func(ctx context.Context) (context.Context, error) {
-		ctx = authlib.WithAuthInfo(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
-			Rest: authnlib.AccessTokenClaims{
-				Namespace: "*",
-			},
-		}))
-		return ctx, nil
+func newRemoteRBACClient(clientCfg *authzClientSettings, tracer tracing.Tracer) (authlib.AccessClient, error) {
+	tokenClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
+		Token:            clientCfg.token,
+		TokenExchangeURL: clientCfg.tokenExchangeURL,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize token exchange client: %w", err)
 	}
 
-	channel := &inprocgrpc.Channel{}
-	channel.RegisterService(
-		grpchan.InterceptServer(
-			&authzv1.AuthzService_ServiceDesc,
-			grpcAuth.UnaryServerInterceptor(staticAuth),
-			grpcAuth.StreamServerInterceptor(staticAuth),
+	conn, err := grpc.NewClient(
+		clientCfg.remoteAddress,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithPerRPCCredentials(
+			NewGRPCTokenAuth(AuthzServiceAudience, clientCfg.tokenNamespace, tokenClient),
 		),
-		server,
 	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create authz client to remote server: %w", err)
+	}
 
+	return newRBACClient(conn, tracer), nil
+}
+
+func newRBACClient(conn grpc.ClientConnInterface, tracer tracing.Tracer) authlib.AccessClient {
 	return authzlib.NewClient(
-		&authzlib.ClientConfig{},
-		authzlib.WithGrpcConnectionClientOption(channel),
-		authzlib.WithDisableAccessTokenClientOption(),
-		authzlib.WithTracerClientOption(tracer),
-		authzlib.WithCacheClientOption(cache.NewLocalCache(cache.Config{
-			Expiry:          30 * time.Second,
-			CleanupInterval: 2 * time.Minute,
-		})),
-	)
-}
-
-func newGrpcLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authlib.AccessClient, error) {
-	// This client interceptor is a noop, as we don't send an access token
-	clientConfig := authnlib.GrpcClientConfig{}
-	clientInterceptor, err := authnlib.NewGrpcClientInterceptor(
-		&clientConfig,
-		authnlib.WithDisableAccessTokenOption(),
-		authnlib.WithTracerOption(tracer),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	cfg := authzlib.ClientConfig{RemoteAddress: authCfg.remoteAddress}
-	client, err := authzlib.NewClient(&cfg,
-		authzlib.WithGrpcDialOptionsClientOption(
-			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithUnaryInterceptor(clientInterceptor.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(clientInterceptor.StreamClientInterceptor),
-		),
-		authzlib.WithTracerClientOption(tracer),
-		authzlib.WithCacheClientOption(cache.NewLocalCache(cache.Config{
-			Expiry:          30 * time.Second,
-			CleanupInterval: 2 * time.Minute,
-		})),
-		// TODO: remove this once access tokens are supported on-prem
-		authzlib.WithDisableAccessTokenClientOption(),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return client, nil
-}
-
-func newCloudLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authlib.AccessClient, error) {
-	grpcClientConfig := authnlib.GrpcClientConfig{
-		TokenClientConfig: &authnlib.TokenExchangeConfig{
-			Token:            authCfg.token,
-			TokenExchangeURL: authCfg.tokenExchangeURL,
-		},
-		TokenRequest: &authnlib.TokenExchangeRequest{
-			Namespace: authCfg.tokenNamespace,
-			Audiences: []string{authzServiceAudience},
-		},
-	}
-
-	clientInterceptor, err := authnlib.NewGrpcClientInterceptor(&grpcClientConfig, authnlib.WithTracerOption(tracer))
-	if err != nil {
-		return nil, err
-	}
-
-	clientCfg := authzlib.ClientConfig{RemoteAddress: authCfg.remoteAddress}
-	client, err := authzlib.NewClient(&clientCfg,
-		authzlib.WithGrpcDialOptionsClientOption(
-			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithUnaryInterceptor(clientInterceptor.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(clientInterceptor.StreamClientInterceptor),
-		),
+		conn,
 		authzlib.WithCacheClientOption(cache.NewLocalCache(cache.Config{
 			Expiry:          30 * time.Second,
 			CleanupInterval: 2 * time.Minute,
 		})),
 		authzlib.WithTracerClientOption(tracer),
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	return client, nil
 }
 
 func RegisterRBACAuthZService(
@@ -218,23 +151,27 @@ func RegisterRBACAuthZService(
 	reg prometheus.Registerer,
 	cache cache.Cache,
 	exchangeClient authnlib.TokenExchanger,
-	folderAPIURL string,
+	cfg RBACServerSettings,
 ) {
 	var folderStore store.FolderStore
 	// FIXME: for now we default to using database read proxy for folders if the api url is not configured.
 	// we should remove this and the sql implementation once we have verified that is works correctly
-	if folderAPIURL == "" {
+	if cfg.Folder.Host == "" {
 		folderStore = store.NewSQLFolderStore(db, tracer)
 	} else {
-		folderStore = store.NewAPIFolderStore(tracer, func(ctx context.Context) *rest.Config {
+		folderStore = store.NewAPIFolderStore(tracer, func(ctx context.Context) (*rest.Config, error) {
 			return &rest.Config{
-				Host: folderAPIURL,
+				Host: cfg.Folder.Host,
 				WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
 					return &tokenExhangeRoundTripper{te: exchangeClient, rt: rt}
 				},
+				TLSClientConfig: rest.TLSClientConfig{
+					Insecure: cfg.Folder.Insecure,
+					CAFile:   cfg.Folder.CAFile,
+				},
 				QPS:   50,
 				Burst: 100,
-			}
+			}, nil
 		})
 	}
 
@@ -251,7 +188,6 @@ func RegisterRBACAuthZService(
 
 	srv := handler.GetServer()
 	authzv1.RegisterAuthzServiceServer(srv, server)
-	authzextv1.RegisterAuthzExtentionServiceServer(srv, server)
 }
 
 var _ http.RoundTripper = tokenExhangeRoundTripper{}

@@ -12,27 +12,26 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	healthv1pb "google.golang.org/grpc/health/grpc_health_v1"
-	"google.golang.org/grpc/metadata"
 
 	authnlib "github.com/grafana/authlib/authn"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
-	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
-	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // ProvideZanzana used to register ZanzanaClient.
 // It will also start an embedded ZanzanaSever if mode is set to "embedded".
-func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureToggles) (zanzana.Client, error) {
+func ProvideZanzana(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features featuremgmt.FeatureToggles) (zanzana.Client, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
 		return zanzana.NewNoopClient(), nil
 	}
@@ -53,18 +52,13 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 		if cfg.StackID == "" {
 			return nil, fmt.Errorf("missing stack ID")
 		}
-		namespace := fmt.Sprintf("stacks-%s", cfg.StackID)
-
-		tokenAuthCred := &tokenAuth{
-			cfg:         cfg,
-			namespace:   namespace,
-			tokenClient: tokenClient,
-		}
 
 		dialOptions := []grpc.DialOption{
 			// TODO: add TLS support
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithPerRPCCredentials(tokenAuthCred),
+			grpc.WithPerRPCCredentials(
+				NewGRPCTokenAuth(AuthzServiceAudience, fmt.Sprintf("stacks-%s", cfg.StackID), tokenClient),
+			),
 		}
 
 		conn, err := grpc.NewClient(cfg.ZanzanaClient.Addr, dialOptions...)
@@ -87,7 +81,7 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
 
-		srv, err := zanzana.NewServer(cfg.ZanzanaServer, openfga, logger)
+		srv, err := zanzana.NewServer(cfg.ZanzanaServer, openfga, logger, tracer)
 		if err != nil {
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
@@ -95,7 +89,7 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 		channel := &inprocgrpc.Channel{}
 		// Put * as a namespace so we can properly authorize request with in-proc mode
 		channel.WithServerUnaryInterceptor(grpcAuth.UnaryServerInterceptor(func(ctx context.Context) (context.Context, error) {
-			ctx = claims.WithAuthInfo(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
+			ctx = types.WithAuthInfo(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
 				Rest: authnlib.AccessTokenClaims{
 					Namespace: "*",
 				},
@@ -149,6 +143,18 @@ type Zanzana struct {
 }
 
 func (z *Zanzana) start(ctx context.Context) error {
+	tracingCfg, err := tracing.ProvideTracingConfig(z.cfg)
+	if err != nil {
+		return err
+	}
+
+	tracingCfg.ServiceName = "zanzana"
+
+	tracer, err := tracing.ProvideService(tracingCfg)
+	if err != nil {
+		return err
+	}
+
 	store, err := zanzana.NewStore(z.cfg, z.logger)
 	if err != nil {
 		return fmt.Errorf("failed to initilize zanana store: %w", err)
@@ -159,46 +165,27 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	zanzanaServer, err := zanzana.NewServer(z.cfg.ZanzanaServer, openfgaServer, z.logger)
+	zanzanaServer, err := zanzana.NewServer(z.cfg.ZanzanaServer, openfgaServer, z.logger, tracer)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	tracingCfg, err := tracing.ProvideTracingConfig(z.cfg)
-	if err != nil {
-		return err
-	}
-	tracingCfg.ServiceName = "zanzana"
-
-	tracer, err := tracing.ProvideService(tracingCfg)
-	if err != nil {
-		return err
-	}
-
 	authenticator := authnlib.NewAccessTokenAuthenticator(
 		authnlib.NewAccessTokenVerifier(
-			authnlib.VerifierConfig{
-				AllowedAudiences: []string{authzServiceAudience},
-			},
+			authnlib.VerifierConfig{AllowedAudiences: []string{AuthzServiceAudience}},
 			authnlib.NewKeyRetriever(authnlib.KeyRetrieverConfig{
 				SigningKeysURL: z.cfg.ZanzanaServer.SigningKeysURL,
 			}),
 		),
 	)
 
-	authfn := interceptors.AuthenticatorFunc(func(ctx context.Context) (context.Context, error) {
-		md, ok := metadata.FromIncomingContext(ctx)
-		if !ok {
-			return nil, fmt.Errorf("missing metadata")
-		}
-		c, err := authenticator.Authenticate(ctx, authnlib.NewGRPCTokenProvider(md))
-		if err != nil {
-			return nil, err
-		}
-		return claims.WithAuthInfo(ctx, c), nil
-	})
-
-	z.handle, err = grpcserver.ProvideService(z.cfg, z.features, authfn, tracer, prometheus.DefaultRegisterer)
+	z.handle, err = grpcserver.ProvideService(
+		z.cfg,
+		z.features,
+		grpcutils.NewAuthenticatorInterceptor(authenticator, tracer),
+		tracer,
+		prometheus.DefaultRegisterer,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create zanzana grpc server: %w", err)
 	}
@@ -243,28 +230,4 @@ func (z *Zanzana) stopping(err error) error {
 		z.logger.Error("Stopping zanzana due to unexpected error", "err", err)
 	}
 	return nil
-}
-
-type tokenAuth struct {
-	cfg         *setting.Cfg
-	namespace   string
-	tokenClient *authnlib.TokenExchangeClient
-}
-
-func (t *tokenAuth) GetRequestMetadata(ctx context.Context, _ ...string) (map[string]string, error) {
-	token, err := t.tokenClient.Exchange(ctx, authnlib.TokenExchangeRequest{
-		Namespace: t.namespace,
-		Audiences: []string{authzServiceAudience},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return map[string]string{
-		authnlib.DefaultAccessTokenMetadataKey: token.Token,
-	}, nil
-}
-
-func (t *tokenAuth) RequireTransportSecurity() bool {
-	return false
 }
