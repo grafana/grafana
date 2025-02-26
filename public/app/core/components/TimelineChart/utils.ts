@@ -641,12 +641,12 @@ export function getFieldLegendItem(
     if (label.length > 0) {
       let suffix = '';
 
-      switch (options.duration) {
+      switch (options.durationMode) {
         case LegendDurationMode.Percentage: {
           suffix = ` (${Math.floor(((stateCounts.get(label) ?? 0) * 100) / allValuesCount)}%)`;
           break;
         }
-        case LegendDurationMode.Time: {
+        case LegendDurationMode.Absolute: {
           const durationMs = stateDurationMs.get(label);
           const duration = durationMs ? fmtDuration(durationMs) : '';
 

@@ -232,7 +232,7 @@ GraphFieldConfig: {
 	insertNulls?:     bool | number
 } @cuetsy(kind="interface")
 
-LegendDurationMode: "off" | "percentage" | "time" @cuetsy(kind="enum")
+LegendDurationMode: "off" | "percentage" | "absolute" @cuetsy(kind="enum")
 
 // TODO docs
 VizLegendOptions: {
@@ -245,7 +245,7 @@ VizLegendOptions: {
 	sortDesc?:    bool
 	width?:       number
 	calcs:        [...string]
-	duration?: LegendDurationMode
+	durationMode?: LegendDurationMode
 } @cuetsy(kind="interface")
 
 // Enum expressing the possible display modes

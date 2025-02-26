@@ -90,8 +90,8 @@ export function addLegendOptions<T extends OptionsWithLegend>(
             label: 'Percentage',
           },
           {
-            value: LegendDurationMode.Time,
-            label: 'Time',
+            value: LegendDurationMode.Absolute,
+            label: 'Absolute',
           },
         ],
       },

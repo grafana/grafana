@@ -620,9 +620,9 @@ export interface GraphFieldConfig extends LineConfig, FillConfig, PointsConfig, 
 }
 
 export enum LegendDurationMode {
+  Absolute = 'absolute',
   Off = 'off',
   Percentage = 'percentage',
-  Time = 'time',
 }
 
 /**
@@ -632,7 +632,7 @@ export interface VizLegendOptions {
   asTable?: boolean;
   calcs: Array<string>;
   displayMode: LegendDisplayMode;
-  duration?: LegendDurationMode;
+  durationMode?: LegendDurationMode;
   isVisible?: boolean;
   placement: LegendPlacement;
   showLegend: boolean;

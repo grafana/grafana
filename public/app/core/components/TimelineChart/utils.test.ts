@@ -556,7 +556,7 @@ describe('prepareTimelineLegendItems', () => {
       frames,
       {
         displayMode: LegendDisplayMode.List,
-        duration: LegendDurationMode.Percentage,
+        durationMode: LegendDurationMode.Percentage,
         showLegend: true,
       } as VizLegendOptions,
       theme
@@ -682,7 +682,7 @@ describe('prepareTimelineLegendItems', () => {
       frames,
       {
         displayMode: LegendDisplayMode.List,
-        duration: LegendDurationMode.Time,
+        durationMode: LegendDurationMode.Absolute,
         showLegend: true,
       } as VizLegendOptions,
       theme
