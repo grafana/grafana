@@ -106,9 +106,7 @@ export const InstructionsModal = ({ feature, isOpen, onDismiss }: Props) => {
         </div>
 
         <div className={customStyles.mainContent}>
-          <Container padding="md">
-            <InstructionStepComponent step={currentStepData} />
-          </Container>
+          <InstructionStepComponent step={currentStepData} />
           <div className={customStyles.footer}>
             <div className={customStyles.navigationButtons}>
               <Button variant="secondary" onClick={handlePrevious} disabled={isFirstStep}>
