@@ -141,7 +141,7 @@ export const FeatureCard = ({ feature, onSetup, showSetupButton = true }: Props)
         </Card.Description>
       </div>
 
-      {showSetupButton && (
+      {showSetupButton && !isConfigured && (
         <div className={styles.actions}>
           <Button className={styles.setupButton} variant="primary" onClick={onSetup} icon="cog" size="md">
             Setup Now
