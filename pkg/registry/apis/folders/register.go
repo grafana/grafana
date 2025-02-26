@@ -148,12 +148,11 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	}
 
 	legacyStore := &legacyStorage{
-		service:              b.folderSvc,
-		namespacer:           b.namespacer,
-		tableConverter:       resourceInfo.TableConverter(),
-		folderPermissionsSvc: b.folderPermissionsSvc,
-		features:             b.features,
-		cfg:                  b.cfg,
+		service:        b.folderSvc,
+		namespacer:     b.namespacer,
+		tableConverter: resourceInfo.TableConverter(),
+		features:       b.features,
+		cfg:            b.cfg,
 	}
 
 	opts.StorageOptions(resourceInfo.GroupResource(), apistore.StorageOptions{
