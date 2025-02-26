@@ -30,7 +30,6 @@ import {
   DataLinksFieldConfigSettings,
 } from '@grafana/data';
 import { actionsOverrideProcessor } from '@grafana/data/src/field/overrides/processors';
-import { config } from '@grafana/runtime';
 import { FieldConfig } from '@grafana/schema';
 import { RadioButtonGroup, TimeZonePicker, Switch } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
@@ -349,7 +348,7 @@ export const getAllStandardFieldConfigs = () => {
     category,
   };
 
-  const dataLinksCategory = config.featureToggles.vizActions ? 'Data links and actions' : 'Data links';
+  const dataLinksCategory = 'Data links and actions';
 
   const links: FieldConfigPropertyItem<FieldConfig, DataLink[], DataLinksFieldConfigSettings> = {
     id: 'links',
@@ -379,7 +378,6 @@ export const getAllStandardFieldConfigs = () => {
     shouldApply: () => true,
     category: [dataLinksCategory],
     getItemsCount: (value) => (value ? value.length : 0),
-    showIf: () => config.featureToggles.vizActions,
     hideFromDefaults: true,
   };
 

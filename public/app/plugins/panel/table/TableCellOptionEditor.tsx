@@ -3,7 +3,6 @@ import { merge } from 'lodash';
 import { useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { TableCellOptions } from '@grafana/schema';
 import { Field, Select, TableCellDisplayMode, useStyles2 } from '@grafana/ui';
 
@@ -91,14 +90,8 @@ let cellDisplayModeOptions: Array<SelectableValue<TableCellOptions>> = [
   { value: { type: TableCellDisplayMode.DataLinks }, label: 'Data links' },
   { value: { type: TableCellDisplayMode.JSONView }, label: 'JSON View' },
   { value: { type: TableCellDisplayMode.Image }, label: 'Image' },
+  { value: { type: TableCellDisplayMode.Actions }, label: 'Actions' },
 ];
-
-if (config.featureToggles.vizActions) {
-  cellDisplayModeOptions = [
-    ...cellDisplayModeOptions,
-    { value: { type: TableCellDisplayMode.Actions }, label: 'Actions' },
-  ];
-}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   fixBottomMargin: css({

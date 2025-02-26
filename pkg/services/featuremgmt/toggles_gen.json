@@ -4202,7 +4202,8 @@
       "metadata": {
         "name": "vizActions",
         "resourceVersion": "1722461779830",
-        "creationTimestamp": "2024-09-09T14:11:55Z"
+        "creationTimestamp": "2024-09-09T14:11:55Z",
+        "deletionTimestamp": "2025-02-07T18:50:26Z"
       },
       "spec": {
         "description": "Allow actions in visualizations",
