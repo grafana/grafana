@@ -56,25 +56,9 @@ export function addLegendOptions<T extends OptionsWithLegend>(
       showIf: (c) => c.legend.showLegend && c.legend.placement === 'right',
     });
 
-  if (includeLegendCalcs) {
-    builder.addCustomEditor<StatsPickerConfigSettings, string[]>({
-      id: 'legend.calcs',
-      path: 'legend.calcs',
-      name: 'Values',
-      category: ['Legend'],
-      description: 'Select values or calculations to show in legend',
-      editor: standardEditorsRegistry.get('stats-picker').editor,
-      defaultValue: [],
-      settings: {
-        allowMultiple: true,
-      },
-      showIf: (currentConfig) => currentConfig.legend.showLegend !== false,
-    });
-  }
-
   if (includeDuration) {
     builder.addRadio({
-      path: 'legend.duration',
+      path: 'legend.durationMode',
       name: 'Duration',
       category: ['Legend'],
       description: '',
@@ -95,6 +79,22 @@ export function addLegendOptions<T extends OptionsWithLegend>(
           },
         ],
       },
+    });
+  }
+
+  if (includeLegendCalcs) {
+    builder.addCustomEditor<StatsPickerConfigSettings, string[]>({
+      id: 'legend.calcs',
+      path: 'legend.calcs',
+      name: 'Values',
+      category: ['Legend'],
+      description: 'Select values or calculations to show in legend',
+      editor: standardEditorsRegistry.get('stats-picker').editor,
+      defaultValue: [],
+      settings: {
+        allowMultiple: true,
+      },
+      showIf: (currentConfig) => currentConfig.legend.showLegend !== false,
     });
   }
 }
