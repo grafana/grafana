@@ -4,7 +4,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Stack, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 
-import { EditableDashboardElement, MultiSelectedEditableDashboardElement } from '../scene/types';
+import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { MultiSelectedEditableDashboardElement } from '../scene/types/MultiSelectedEditableDashboardElement';
 
 export interface Props {
   element: EditableDashboardElement | MultiSelectedEditableDashboardElement;
@@ -19,7 +20,7 @@ export function ElementEditPane({ element }: Props) {
       {element.renderActions && (
         <OptionsPaneCategory
           id="selected-item"
-          title={element.getTypeName()}
+          title={element.typeName}
           isOpenDefault={true}
           className={styles.noBorderTop}
         >

@@ -1001,6 +1001,34 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 			wantErr: nil,
 		},
 		{
+			name: "passes when team_ids is an empty array and teams_id_attribute_path and teams_url are empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":               "client-id",
+					"team_ids_attribute_path": "",
+					"teams_url":               "",
+					"auth_url":                "https://example.com/auth",
+					"token_url":               "https://example.com/token",
+					"team_ids":                "[]",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "passes when team_ids is set and teams_id_attribute_path and teams_url are not empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":               "client-id",
+					"team_ids_attribute_path": "teams",
+					"teams_url":               "https://example.com/teams",
+					"auth_url":                "https://example.com/auth",
+					"token_url":               "https://example.com/token",
+					"team_ids":                "[\"123\"]",
+				},
+			},
+			wantErr: nil,
+		},
+		{
 			name: "fails if settings map contains an invalid field",
 			settings: ssoModels.SSOSettings{
 				Settings: map[string]any{
@@ -1112,6 +1140,34 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 					"teams_url": "file://teams",
 					"auth_url":  "https://example.com/auth",
 					"token_url": "https://example.com/token",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails when team_ids is a valid string and teams_id_attribute_path and teams_url are empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":               "client-id",
+					"team_ids_attribute_path": "",
+					"teams_url":               "",
+					"auth_url":                "https://example.com/auth",
+					"token_url":               "https://example.com/token",
+					"team_ids":                "123",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails when team_ids is a valid array and teams_id_attribute_path and teams_url are empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":               "client-id",
+					"team_ids_attribute_path": "",
+					"teams_url":               "",
+					"auth_url":                "https://example.com/auth",
+					"token_url":               "https://example.com/token",
+					"team_ids":                "[\"123\",\"456\",\"789\"]",
 				},
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,

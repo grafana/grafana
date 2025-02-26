@@ -61,7 +61,13 @@ For more information, refer to [this GitHub issue](https://github.com/grafana/gr
 If you have a high number of alert instances, it can happen that the load on the database gets very high, as each state
 transition of an alert instance is saved in the database.
 
-This can be prevented by writing to the database periodically. For this the feature flag `alertingSaveStatePeriodic` needs
+### Compressed alert state
+
+When the `alertingSaveStateCompressed` feature toggle is enabled, Grafana saves the alert rule state in a compressed form, reducing database overhead for alerts with many instances.
+
+### Save state periodically
+
+High load can be also prevented by writing to the database periodically. For this the feature flag `alertingSaveStatePeriodic` needs
 to be enabled. By default, it saves the states every 5 minutes to the database and on each shutdown. The periodic interval
 can also be configured using the `state_periodic_save_interval` configuration flag. During this process, Grafana deletes all existing alert instances from the
 database and then writes the entire current set of instances back in batches in a single transacton.

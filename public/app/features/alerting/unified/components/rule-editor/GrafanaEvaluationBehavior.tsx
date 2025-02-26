@@ -352,7 +352,7 @@ export function GrafanaEvaluationBehaviorStep({
             <>
               <Field
                 htmlFor="no-data-state-input"
-                label="Alert state if no data or all values are null"
+                label={t('alerting.alert.state-no-data', 'Alert state if no data or all values are null')}
                 className={styles.inlineField}
               >
                 <Controller
@@ -372,7 +372,7 @@ export function GrafanaEvaluationBehaviorStep({
 
               <Field
                 htmlFor="exec-err-state-input"
-                label="Alert state if execution error or timeout"
+                label={t('alerting.alert.state-error-timeout', 'Alert state if execution error or timeout')}
                 className={styles.inlineField}
               >
                 <Controller

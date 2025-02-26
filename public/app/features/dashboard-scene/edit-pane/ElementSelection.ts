@@ -2,12 +2,9 @@ import { SceneObject, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { ElementSelectionContextItem } from '@grafana/ui';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import {
-  EditableDashboardElement,
-  isBulkActionElement,
-  isEditableDashboardElement,
-  MultiSelectedEditableDashboardElement,
-} from '../scene/types';
+import { isBulkActionElement } from '../scene/types/BulkActionElement';
+import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { MultiSelectedEditableDashboardElement } from '../scene/types/MultiSelectedEditableDashboardElement';
 
 import { DashboardEditableElement } from './DashboardEditableElement';
 import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
@@ -155,7 +152,7 @@ export class ElementSelection {
       const firstObj = this.selectedObjects?.values().next().value?.resolve();
 
       if (firstObj instanceof VizPanel) {
-        return new MultiSelectedVizPanelsEditableElement(sceneObjects);
+        return new MultiSelectedVizPanelsEditableElement(sceneObjects.filter((obj) => obj instanceof VizPanel));
       }
 
       if (isEditableDashboardElement(firstObj!)) {

@@ -404,6 +404,24 @@ func TestRouteGetRuleByUID(t *testing.T) {
 						Name: "Test",
 					},
 				},
+				{
+					desc:             "recognize system identifier (alerting)",
+					UpdatedBy:        &models.AlertingUserUID,
+					User:             nil,
+					UserServiceError: nil,
+					Expected: &apimodels.UserInfo{
+						UID: string(models.AlertingUserUID),
+					},
+				},
+				{
+					desc:             "recognize system identifier (provisioning)",
+					UpdatedBy:        &models.FileProvisioningUserUID,
+					User:             nil,
+					UserServiceError: nil,
+					Expected: &apimodels.UserInfo{
+						UID: string(models.FileProvisioningUserUID),
+					},
+				},
 			}
 			for _, tc := range testcases {
 				t.Run(tc.desc, func(t *testing.T) {
@@ -675,6 +693,24 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 				require.Fail(t, fmt.Sprintf("rules are not sorted by group index. Expected: %v. Actual: %v", expectedUIDs, actualUIDs))
 			}
 		}
+	})
+	t.Run("should return a 404 when fetching a group that doesn't exist", func(t *testing.T) {
+		orgID := rand.Int63()
+		folder := randFolder()
+		ruleStore := fakes.NewRuleStore(t)
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+		groupKey := models.GenerateGroupKey(orgID)
+		groupKey.NamespaceUID = folder.UID
+
+		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(5, 10)
+		ruleStore.PutRule(context.Background(), expectedRules...)
+
+		perms := createPermissionsForRules(expectedRules, orgID)
+		req := createRequestContextWithPerms(orgID, perms, nil)
+
+		response := createService(ruleStore).RouteGetRulesGroupConfig(req, folder.UID, "non-existent-rule-group")
+
+		require.Equal(t, http.StatusNotFound, response.Status())
 	})
 }
 

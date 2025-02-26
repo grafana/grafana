@@ -14,6 +14,7 @@ import {
   RelativeTimeRange,
   ThresholdsConfig,
   getDefaultRelativeTimeRange,
+  rangeUtil,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -203,12 +204,12 @@ export const QueryWrapper = ({
   // ⚠️ the query editors want the entire array of queries passed as "DataQuery" NOT "AlertQuery"
   // TypeScript isn't complaining here because the interfaces just happen to be compatible
   const editorQueries = cloneDeep(queries.map((query) => query.model));
+  const range = rangeUtil.relativeToTimeRange(query.relativeTimeRange ?? getDefaultRelativeTimeRange());
 
   return (
     <Stack direction="column" gap={1}>
       <div className={styles.wrapper}>
         <QueryEditorRow<AlertDataQuery>
-          alerting
           hideRefId={!isAdvancedMode}
           hideActionButtons={!isAdvancedMode}
           collapsable={false}
@@ -225,6 +226,7 @@ export const QueryWrapper = ({
           onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
           onRunQuery={onRunQueries}
           queries={editorQueries}
+          range={range}
           renderHeaderExtras={() => (
             <HeaderExtras query={query} index={index} error={error} isAdvancedMode={isAdvancedMode} />
           )}

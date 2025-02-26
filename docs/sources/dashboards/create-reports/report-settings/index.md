@@ -11,6 +11,12 @@ menuTitle: Settings
 title: Reporting settings
 description: Manage organizational Reporting settings
 weight: 700
+refs:
+  change-ui-theme:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/organization-preferences/#change-grafana-ui-theme
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/organization-preferences/#change-grafana-ui-theme
 ---
 
 # Reporting settings
