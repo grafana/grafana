@@ -7,6 +7,7 @@ import (
 
 	"github.com/blevesearch/bleve/v2/document"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -33,7 +34,7 @@ func TestDocumentMapping(t *testing.T) {
 		Source: &utils.SourceProperties{
 			Path:      "ppp",
 			Checksum:  "hhh",
-			Timestamp: time.UnixMilli(1234),
+			Timestamp: metav1.NewTime(time.UnixMilli(1234)),
 		},
 	}
 

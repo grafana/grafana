@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/rand"
 	"k8s.io/apimachinery/pkg/api/apitesting"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/storage"
@@ -95,7 +96,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		meta.SetSourceProperties(utils.SourceProperties{
 			Path:      "test/path",
 			Checksum:  "hash",
-			Timestamp: time.Now(),
+			Timestamp: metav1.NewTime(time.Now()),
 		})
 
 		encodedData, err := s.prepareObjectForStorage(ctx, obj)

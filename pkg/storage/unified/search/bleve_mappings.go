@@ -99,7 +99,7 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 		IncludeTermVectors: false,
 		IncludeInAll:       true,
 	})
-	source.AddFieldMappingsAt("time", mapping.NewDateTimeFieldMapping())
+	source.AddFieldMappingsAt("timestamp", mapping.NewDateTimeFieldMapping())
 
 	mapper.AddSubDocumentMapping("manager", manager)
 	mapper.AddSubDocumentMapping("source", source)

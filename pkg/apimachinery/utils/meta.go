@@ -56,7 +56,7 @@ const AnnoKeyManagerSuspended = "grafana.app/managerSuspended"
 // Annotations used to store source properties
 
 const AnnoKeySourcePath = "grafana.app/sourcePath"
-const AnnoKeySourceHash = "grafana.app/sourceHash"
+const AnnoKeySourceChecksum = "grafana.app/sourceChecksum"
 const AnnoKeySourceTimestamp = "grafana.app/sourceTimestamp"
 
 // LabelKeyDeprecatedInternalID gives the deprecated internal ID of a resource
@@ -666,8 +666,6 @@ func (m *grafanaMetaAccessor) GetManagerProperties() (ManagerProperties, bool) {
 
 	if v, ok := annot[AnnoKeyManagerAllowsEdits]; ok {
 		res.AllowsEdits = v == "true"
-	} else if res.Kind == ManagerKindRepo {
-		res.AllowsEdits = true // << actually depends on the loaded config
 	}
 
 	if v, ok := annot[AnnoKeyManagerSuspended]; ok {
@@ -721,7 +719,7 @@ func (m *grafanaMetaAccessor) GetSourceProperties() (SourceProperties, bool) {
 		found = true
 	}
 
-	if hash, ok := annot[AnnoKeySourceHash]; ok && hash != "" {
+	if hash, ok := annot[AnnoKeySourceChecksum]; ok && hash != "" {
 		res.Checksum = hash
 		found = true
 	} else if hash, ok := annot[oldAnnoKeyRepoHash]; ok && hash != "" {
@@ -731,12 +729,12 @@ func (m *grafanaMetaAccessor) GetSourceProperties() (SourceProperties, bool) {
 
 	if timestamp, ok := annot[AnnoKeySourceTimestamp]; ok && timestamp != "" {
 		if t, err := time.Parse(time.RFC3339, timestamp); err == nil {
-			res.Timestamp = t
+			res.Timestamp = metav1.NewTime(t)
 			found = true
 		}
 	} else if timestamp, ok := annot[oldAnnoKeyRepoTimestamp]; ok && timestamp != "" {
 		if t, err := time.Parse(time.RFC3339, timestamp); err == nil {
-			res.Timestamp = t
+			res.Timestamp = metav1.NewTime(t)
 			found = true
 		}
 	}
@@ -757,9 +755,9 @@ func (m *grafanaMetaAccessor) SetSourceProperties(v SourceProperties) {
 	}
 
 	if v.Checksum != "" {
-		annot[AnnoKeySourceHash] = v.Checksum
+		annot[AnnoKeySourceChecksum] = v.Checksum
 	} else {
-		delete(annot, AnnoKeySourceHash)
+		delete(annot, AnnoKeySourceChecksum)
 	}
 
 	if !v.Timestamp.IsZero() {

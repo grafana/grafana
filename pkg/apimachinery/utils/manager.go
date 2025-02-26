@@ -1,6 +1,6 @@
 package utils
 
-import "time"
+import v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 // ManagerProperties is used to identify the manager of the resource.
 type ManagerProperties struct {
@@ -64,5 +64,5 @@ type SourceProperties struct {
 
 	// The timestamp of the source of the resource.
 	// An example could be the file modification time.
-	Timestamp time.Time `json:"time,omitempty"`
+	Timestamp v1.Time `json:"timestamp,omitempty"`
 }

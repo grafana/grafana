@@ -11,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -96,7 +97,7 @@ func TestBleveBackend(t *testing.T) {
 				Source: &utils.SourceProperties{
 					Path:      "path/to/aaa.json",
 					Checksum:  "xyz",
-					Timestamp: time.UnixMilli(1609462800000), // 2021
+					Timestamp: metav1.NewTime(time.UnixMilli(1609462800000)), // 2021
 				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
@@ -128,7 +129,7 @@ func TestBleveBackend(t *testing.T) {
 				Source: &utils.SourceProperties{
 					Path:      "path/to/bbb.json",
 					Checksum:  "hijk",
-					Timestamp: time.UnixMilli(1640998800000), // 2022
+					Timestamp: metav1.NewTime(time.UnixMilli(1640998800000)), // 2022
 				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
@@ -349,7 +350,7 @@ func TestBleveBackend(t *testing.T) {
 				Source: &utils.SourceProperties{
 					Path:      "path/to/folder.json",
 					Checksum:  "xxxx",
-					Timestamp: time.UnixMilli(300),
+					Timestamp: metav1.NewTime(time.UnixMilli(300)),
 				},
 			})
 			_ = index.Write(&resource.IndexableDocument{

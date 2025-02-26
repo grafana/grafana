@@ -262,11 +262,11 @@ func TestMetaAccessor(t *testing.T) {
 		meta.SetFolder("folderUID")
 
 		require.Equal(t, map[string]string{
-			"grafana.app/managedBy":  "repo",
-			"grafana.app/managerId":  "test",
-			"grafana.app/sourcePath": "a/b/c",
-			"grafana.app/sourceHash": "kkk",
-			"grafana.app/folder":     "folderUID",
+			"grafana.app/managedBy":      "repo",
+			"grafana.app/managerId":      "test",
+			"grafana.app/sourcePath":     "a/b/c",
+			"grafana.app/sourceChecksum": "kkk",
+			"grafana.app/folder":         "folderUID",
 		}, res.GetAnnotations())
 
 		meta.SetNamespace("aaa")
@@ -403,11 +403,11 @@ func TestMetaAccessor(t *testing.T) {
 		meta.SetFolder("folderUID")
 
 		require.Equal(t, map[string]string{
-			"grafana.app/managedBy":  "repo",
-			"grafana.app/managerId":  "test",
-			"grafana.app/sourcePath": "a/b/c",
-			"grafana.app/sourceHash": "kkk",
-			"grafana.app/folder":     "folderUID",
+			"grafana.app/managedBy":      "repo",
+			"grafana.app/managerId":      "test",
+			"grafana.app/sourcePath":     "a/b/c",
+			"grafana.app/sourceChecksum": "kkk",
+			"grafana.app/folder":         "folderUID",
 		}, obj.GetAnnotations())
 
 		require.Equal(t, "HELLO", obj.Spec.Title)
@@ -544,12 +544,12 @@ func TestMetaAccessor(t *testing.T) {
 				setProperties: &utils.SourceProperties{
 					Path:      "path",
 					Checksum:  "hash",
-					Timestamp: time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC),
+					Timestamp: metav1.NewTime(time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC)),
 				},
 				wantProperties: utils.SourceProperties{
 					Path:      "path",
 					Checksum:  "hash",
-					Timestamp: time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC),
+					Timestamp: metav1.NewTime(time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC)),
 				},
 				wantOK: true,
 			},
