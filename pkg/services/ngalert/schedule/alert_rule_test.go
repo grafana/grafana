@@ -43,7 +43,7 @@ func TestAlertRule(t *testing.T) {
 			r := blankRuleForTests(context.Background(), models.GenerateRuleKeyWithGroup(1))
 			resultCh := make(chan bool)
 			go func() {
-				resultCh <- r.Update(RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false})
+				resultCh <- r.Update(&Evaluation{rule: gen.With(gen.WithIsPaused(false)).GenerateRef()})
 			}()
 			select {
 			case <-r.updateCh:
@@ -54,8 +54,8 @@ func TestAlertRule(t *testing.T) {
 		})
 		t.Run("update should drop any concurrent sending to updateCh", func(t *testing.T) {
 			r := blankRuleForTests(context.Background(), models.GenerateRuleKeyWithGroup(1))
-			version1 := RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}
-			version2 := RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}
+			version1 := &Evaluation{rule: gen.With(gen.WithIsPaused(false)).GenerateRef()}
+			version2 := &Evaluation{rule: gen.With(gen.WithIsPaused(false)).GenerateRef()}
 
 			wg := sync.WaitGroup{}
 			wg.Add(1)
@@ -178,7 +178,7 @@ func TestAlertRule(t *testing.T) {
 			r := blankRuleForTests(context.Background(), models.GenerateRuleKeyWithGroup(1))
 			r.Stop(errRuleDeleted)
 			require.ErrorIs(t, r.ctx.Err(), errRuleDeleted)
-			require.False(t, r.Update(RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}))
+			require.False(t, r.Update(&Evaluation{rule: gen.GenerateRef()}))
 		})
 		t.Run("eval should do nothing", func(t *testing.T) {
 			ruleSpec := gen.GenerateRef()
@@ -234,7 +234,7 @@ func TestAlertRule(t *testing.T) {
 					}
 					switch rand.Intn(max) + 1 {
 					case 1:
-						r.Update(RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false})
+						r.Update(&Evaluation{rule: gen.GenerateRef()})
 					case 2:
 						r.Eval(&Evaluation{
 							scheduledAt: time.Now(),
@@ -284,7 +284,7 @@ func blankRuleForTests(ctx context.Context, key models.AlertRuleKeyWithGroup) *a
 		Log:       log.NewNopLogger(),
 	}
 	st := state.NewManager(managerCfg, state.NewNoopPersister())
-	return newAlertRule(ctx, key, nil, false, 0, nil, st, nil, nil, nil, nil, log.NewNopLogger(), nil, nil, nil)
+	return newAlertRule(ctx, key, nil, false, 0, nil, st, nil, nil, nil, log.NewNopLogger(), nil, nil, nil)
 }
 
 func TestRuleRoutine(t *testing.T) {
@@ -572,7 +572,6 @@ func TestRuleRoutine(t *testing.T) {
 	t.Run("when a message is sent to update channel", func(t *testing.T) {
 		rule := gen.With(withQueryForState(t, eval.Normal)).GenerateRef()
 		folderTitle := "folderName"
-		ruleFp := ruleWithFolder{rule, folderTitle}.Fingerprint()
 
 		evalAppliedChan := make(chan time.Time)
 
@@ -628,8 +627,8 @@ func TestRuleRoutine(t *testing.T) {
 		require.Greaterf(t, expectedToBeSent, 0, "State manager was expected to return at least one state that can be expired")
 
 		t.Run("should do nothing if version in channel is the same", func(t *testing.T) {
-			ruleInfo.Update(RuleVersionAndPauseStatus{ruleFp, false})
-			ruleInfo.Update(RuleVersionAndPauseStatus{ruleFp, false}) // second time just to make sure that previous messages were handled
+			ruleInfo.Update(&Evaluation{rule: rule, folderTitle: folderTitle})
+			ruleInfo.Update(&Evaluation{rule: rule, folderTitle: folderTitle}) // second time just to make sure that previous messages were handled
 
 			actualStates := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 			require.Len(t, actualStates, len(states))
@@ -638,7 +637,7 @@ func TestRuleRoutine(t *testing.T) {
 		})
 
 		t.Run("should clear the state and expire firing alerts if version in channel is greater", func(t *testing.T) {
-			ruleInfo.Update(RuleVersionAndPauseStatus{ruleFp + 1, false})
+			ruleInfo.Update(&Evaluation{rule: models.CopyRule(rule, gen.WithTitle(util.GenerateShortUID())), folderTitle: folderTitle})
 
 			require.Eventually(t, func() bool {
 				return len(sender.Calls()) > 0
@@ -905,7 +904,7 @@ func TestRuleRoutine(t *testing.T) {
 }
 
 func ruleFactoryFromScheduler(sch *schedule) ruleFactory {
-	return newRuleFactory(sch.appURL, sch.disableGrafanaFolder, sch.maxAttempts, sch.alertsSender, sch.stateManager, sch.evaluatorFactory, &sch.schedulableAlertRules, sch.clock, sch.rrCfg, sch.metrics, sch.log, sch.tracer, sch.recordingWriter, sch.evalAppliedFunc, sch.stopAppliedFunc)
+	return newRuleFactory(sch.appURL, sch.disableGrafanaFolder, sch.maxAttempts, sch.alertsSender, sch.stateManager, sch.evaluatorFactory, sch.clock, sch.rrCfg, sch.metrics, sch.log, sch.tracer, sch.recordingWriter, sch.evalAppliedFunc, sch.stopAppliedFunc)
 }
 
 func stateForRule(rule *models.AlertRule, ts time.Time, evalState eval.State) *state.State {
