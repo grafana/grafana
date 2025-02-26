@@ -3655,6 +3655,16 @@
       "title": "You haven't created any teams yet"
     }
   },
+  "theme-preview": {
+    "breadcrumbs": {
+      "dashboards": "Dashboards",
+      "home": "Home"
+    },
+    "panel": {
+      "form-label": "Form label",
+      "title": "Panel"
+    }
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "Recently used absolute ranges",
