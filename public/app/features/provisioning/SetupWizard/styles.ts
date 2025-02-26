@@ -227,7 +227,6 @@ export const getStyles = (theme: GrafanaTheme2): SetupStyles => {
       display: 'flex',
       alignItems: 'center',
       color: theme.colors.success.text,
-      fontWeight: theme.typography.fontWeightMedium,
       fontSize: theme.typography.body.fontSize,
       marginTop: 'auto',
     }),

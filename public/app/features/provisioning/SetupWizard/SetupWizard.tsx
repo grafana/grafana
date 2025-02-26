@@ -41,7 +41,7 @@ export const SetupWizard = () => {
       {
         title: 'Feature Toggles',
         description: 'Enable required Grafana features for Kubernetes integration and dashboard provisioning',
-        requiresPublicAccess: false,
+        additional: false,
         steps: [
           {
             title: 'Enable Required Feature Toggles',
@@ -52,10 +52,10 @@ export const SetupWizard = () => {
         ],
       },
       {
-        title: 'Public Access',
+        title: 'Github Webhooks Integration',
         description:
           'Make your Grafana instance accessible from the internet so GitHub can send webhook events and Grafana can comment on pull requests',
-        requiresPublicAccess: true,
+        additional: true,
         steps: [
           {
             title: 'Start ngrok for temporary public access',
@@ -78,9 +78,9 @@ export const SetupWizard = () => {
         ],
       },
       {
-        title: 'Image Renderer',
-        description: 'Set up the image renderer to generate dashboard previews in GitHub pull requests',
-        requiresPublicAccess: true,
+        title: 'Dashboard Preview Screenshots',
+        description: 'Set up the image renderer to generate screenshots for dashboard previews in GitHub pull requests',
+        additional: true,
         steps: [
           {
             title: 'Install the Image Renderer Plugin',
@@ -117,8 +117,8 @@ export const SetupWizard = () => {
   };
 
   // Separate required and optional features
-  const requiredFeatures = features.filter((feature) => feature.requiresPublicAccess);
-  const optionalFeatures = features.filter((feature) => !feature.requiresPublicAccess);
+  const requiredFeatures = features.filter((feature) => !feature.additional);
+  const optionalFeatures = features.filter((feature) => feature.additional);
 
   return (
     <div>
@@ -146,11 +146,6 @@ export const SetupWizard = () => {
                     <div key={index} className={styles.featureItem}>
                       <div className={styles.featureHeader}>
                         <h4 className={styles.featureTitle}>{feature.title}</h4>
-                        {allStepsFulfilled && (
-                          <span className={styles.completedBadge}>
-                            <Icon name="check" className={styles.checkIcon} /> Completed
-                          </span>
-                        )}
                       </div>
                       <p className={styles.featureDescription}>{feature.description}</p>
                       {!allStepsFulfilled && (
@@ -177,9 +172,9 @@ export const SetupWizard = () => {
           {optionalFeatures.length > 0 && (
             <>
               <Box marginTop={4}>
-                <h3 className={styles.title}>Optional Features</h3>
+                <h3 className={styles.title}>Additional Features</h3>
                 <p className={styles.subtitle}>
-                  These features are optional but can enhance your experience. Set them up as needed.
+                  These features are additional but can enhance your experience. Set them up as needed.
                 </p>
                 <div className={styles.featuresList}>
                   {optionalFeatures.map((feature, index) => {
@@ -190,16 +185,11 @@ export const SetupWizard = () => {
                       <div key={index} className={styles.featureItem}>
                         <div className={styles.featureHeader}>
                           <h4 className={styles.featureTitle}>{feature.title}</h4>
-                          {allStepsFulfilled && (
-                            <span className={styles.completedBadge}>
-                              <Icon name="check" className={styles.checkIcon} /> Completed
-                            </span>
-                          )}
                         </div>
                         <p className={styles.featureDescription}>{feature.description}</p>
                         {!allStepsFulfilled && (
                           <Button
-                            variant="secondary"
+                            variant="primary"
                             onClick={() => handleFeatureSelect(featureIndex)}
                             className={styles.featureButton}
                           >
@@ -218,16 +208,6 @@ export const SetupWizard = () => {
               </Box>
             </>
           )}
-
-          <div className={styles.footer}>
-            <LinkButton
-              href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/"
-              variant="secondary"
-              target="_blank"
-            >
-              View Documentation
-            </LinkButton>
-          </div>
         </>
       )}
 

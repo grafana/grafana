@@ -11,7 +11,7 @@ export interface FeatureInfo {
   title: string;
   description: string;
   steps: InstructionStep[];
-  requiresPublicAccess: boolean;
+  additional: boolean;
 }
 
 export interface InstructionStepComponentProps {
