@@ -238,7 +238,7 @@ LegendDurationMode: "off" | "percentage" | "absolute" @cuetsy(kind="enum")
 VizLegendOptions: {
 	displayMode:  LegendDisplayMode
 	placement:    LegendPlacement
-	showLegend: 	bool
+	showLegend:   bool
 	asTable?:     bool
 	isVisible?:   bool
 	sortBy?:      string
