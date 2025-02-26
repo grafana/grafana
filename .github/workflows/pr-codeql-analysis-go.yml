@@ -3,7 +3,7 @@ name: "CodeQL for PR / go"
 on:
   workflow_dispatch:
   pull_request:
-    branches: [main]
+    branches-ignore: [main]
     paths:
       - '**/*.go'
 
