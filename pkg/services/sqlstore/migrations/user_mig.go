@@ -155,6 +155,12 @@ func addUserMigrations(mg *Migrator) {
 		Cols: []string{"uid"}, Type: UniqueIndex,
 	}))
 
+	// Modifies the user table to add a new column is_provisioned to indicate if the user is provisioned
+	// by SCIM or not.
+	mg.AddMigration("Add is_provisioned column to user", NewAddColumnMigration(userV2, &Column{
+		Name: "is_provisioned", Type: DB_Bool, Nullable: true, Default: "0",
+	}))
+
 	// Service accounts login were not unique per org. this migration is part of making it unique per org
 	// to be able to create service accounts that are unique per org
 	mg.AddMigration(usermig.AllowSameLoginCrossOrgs, &usermig.ServiceAccountsSameLoginCrossOrgs{})
@@ -166,12 +172,6 @@ func addUserMigrations(mg *Migrator) {
 	mg.AddMigration(usermig.LowerCaseUserLoginAndEmail, &usermig.UsersLowerCaseLoginAndEmail{})
 	// Users login and email should be in lower case - 2, fix for creating users not lowering login and email
 	mg.AddMigration(usermig.LowerCaseUserLoginAndEmail+"2", &usermig.UsersLowerCaseLoginAndEmail{})
-
-	// Modifies the user table to add a new column is_provisioned to indicate if the user is provisioned
-	// by SCIM or not.
-	mg.AddMigration("Add is_provisioned column to user", NewAddColumnMigration(userV2, &Column{
-		Name: "is_provisioned", Type: DB_Bool, Nullable: true,
-	}))
 }
 
 const migSQLITEisServiceAccountNullable = `ALTER TABLE user ADD COLUMN tmp_service_account BOOLEAN DEFAULT 0;
