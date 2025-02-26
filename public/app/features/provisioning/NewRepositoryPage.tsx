@@ -1,7 +1,7 @@
 import { Page } from 'app/core/components/Page/Page';
 
 import { ConfigForm } from './ConfigForm';
-import { SetupWarnings } from './SetupWarnings';
+import { SetupWarnings } from './Setup/SetupWarnings';
 
 export default function NewRepositoryPage() {
   return (

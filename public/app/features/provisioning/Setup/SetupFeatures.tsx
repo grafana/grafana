@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Button, useStyles2, Box, Icon, Text, Stack } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
-import { FeatureInfo, requiredFeatureToggles, feature_ini, ngrok_example, root_url_ini, render_ini } from './types';
-import { InstructionsModal } from './InstructionsModal';
-import { config } from '@grafana/runtime';
+import { Feature, feature_ini, ngrok_example, root_url_ini } from './types';
+import { SetupModal } from './SetupModal';
 import { FeatureCard } from './FeatureCard';
 import { css } from '@emotion/css';
+import { getConfigurationStatus } from './utils';
 
 // Define minimal styles for elements that need specific styling
 const getStyles = (theme: GrafanaTheme2) => {
@@ -30,53 +30,37 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export const SetupWizard = () => {
+export const SetupFeatures = () => {
   const styles = useStyles2(getStyles);
-  const [features, setFeatures] = useState<FeatureInfo[]>([]);
+  const [features, setFeatures] = useState<Feature[]>([]);
   const [showInstructionsModal, setShowInstructionsModal] = useState(false);
-  const [activeFeature, setActiveFeature] = useState<FeatureInfo | null>(null);
+  const [activeFeature, setActiveFeature] = useState<Feature | null>(null);
 
-  // Check if required feature toggles are enabled
-  const checkRequiredFeatures = () => {
-    const featureToggles = config.featureToggles || {};
-    return requiredFeatureToggles.every((toggle) => featureToggles[toggle]);
-  };
-
-  // Check if public access is configured
-  const checkPublicAccess = () => {
-    return Boolean(config.appUrl && config.appUrl !== 'http://localhost:3000/');
-  };
-
-  // Check if image renderer is configured
-  const checkImageRenderer = () => {
-    return Boolean(config.rendererAvailable);
-  };
+  const { hasPublicAccess, hasImageRenderer, hasRequiredFeatures } = getConfigurationStatus();
 
   useEffect(() => {
     // Initialize features with their current status
-    const hasPublicAccess = checkPublicAccess();
-    const hasImageRenderer = checkImageRenderer();
 
-    const featuresList: FeatureInfo[] = [
+    const featuresList: Feature[] = [
       {
         title: 'Provision As-Code',
         description: 'Provision your dashboards from Github or other storage system',
         additional: false,
-        steps: [],
+        setupSteps: [],
         icon: 'sync',
       },
       {
         title: 'Collaborate with Pull Requests',
         description: 'Collaborate with your team using pull requests',
         additional: false,
-        steps: [],
+        setupSteps: [],
         icon: 'code-branch',
       },
       {
         title: 'Migrate Your Dashboards',
         description: 'Migrate your dashboards to Github or other storage system',
         additional: false,
-        steps: [],
+        setupSteps: [],
         icon: 'cloud-upload',
       },
       {
@@ -84,7 +68,7 @@ export const SetupWizard = () => {
         description: 'Seamless Github provisioning and collaboration with pull requests',
         additional: true,
         icon: 'github',
-        steps: [
+        setupSteps: [
           {
             title: 'Start ngrok for temporary public access',
             description: 'Run this command to create a secure tunnel to your local Grafana:',
@@ -111,7 +95,7 @@ export const SetupWizard = () => {
         description: 'Attach preview images to pull requests comments',
         icon: 'camera',
         additional: true,
-        steps: [
+        setupSteps: [
           {
             title: 'Install Node.js',
             description: 'Install Node.js 16 or later on your system',
@@ -151,24 +135,24 @@ rendering_callback_url = http://your-grafana-instance/`,
   }, []);
 
   // Add a state variable to store the basic setup
-  const [basicSetup] = useState<FeatureInfo>({
+  const [basicSetup] = useState<Feature>({
     title: 'Provisioning',
     description: 'Enable required Grafana features for provisioning',
     additional: false,
     icon: 'cog',
-    steps: [
+    setupSteps: [
       {
         title: 'Enable Required Feature Toggles',
         description: 'Add these settings to your custom.ini file to enable necessary features:',
         code: feature_ini,
-        fulfilled: checkRequiredFeatures(),
+        fulfilled: hasRequiredFeatures,
       },
     ],
   });
 
-  const handleShowInstructions = (feature: FeatureInfo) => {
+  const handleShowInstructions = (feature: Feature) => {
     // Only open the modal if the feature is not fully completed
-    const allStepsFulfilled = feature?.steps.every((step) => step.fulfilled);
+    const allStepsFulfilled = feature?.setupSteps.every((step) => step.fulfilled);
     if (!allStepsFulfilled) {
       setActiveFeature(feature);
       setShowInstructionsModal(true);
@@ -184,7 +168,6 @@ rendering_callback_url = http://your-grafana-instance/`,
   // Separate required and optional features
   const requiredFeatures = features.filter((feature) => !feature.additional);
   const optionalFeatures = features.filter((feature) => feature.additional);
-  const hasFeatureToggles = checkRequiredFeatures();
 
   return (
     <Stack direction="column" gap={4}>
@@ -194,7 +177,7 @@ rendering_callback_url = http://your-grafana-instance/`,
             <Stack direction="column" gap={2}>
               <Text element="h3" variant="h4">
                 Required Setup
-                {hasFeatureToggles ? (
+                {hasRequiredFeatures ? (
                   <Box display="inline" marginLeft={1}>
                     <Icon name="check-circle" color="green" />
                   </Box>
@@ -217,7 +200,7 @@ rendering_callback_url = http://your-grafana-instance/`,
                 ))}
               </div>
 
-              {!hasFeatureToggles && (
+              {!hasRequiredFeatures && (
                 <Box marginTop={2}>
                   <Button variant="primary" onClick={() => handleShowInstructions(basicSetup)}>
                     Setup Now
@@ -232,7 +215,7 @@ rendering_callback_url = http://your-grafana-instance/`,
               <Text element="h3" variant="h4">
                 Additional Features
                 <Box display="inline" marginLeft={1}>
-                  {optionalFeatures.every((f) => f.steps.every((step) => step.fulfilled)) ? (
+                  {optionalFeatures.every((f) => f.setupSteps.every((step) => step.fulfilled)) ? (
                     <Icon name="check-circle" color="green" />
                   ) : (
                     <Icon name="exclamation-triangle" color="orange" />
@@ -259,7 +242,7 @@ rendering_callback_url = http://your-grafana-instance/`,
       )}
 
       {showInstructionsModal && activeFeature && (
-        <InstructionsModal feature={activeFeature} isOpen={true} onDismiss={handleInstructionsClose} />
+        <SetupModal feature={activeFeature} isOpen={true} onDismiss={handleInstructionsClose} />
       )}
     </Stack>
   );

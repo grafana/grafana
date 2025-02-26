@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Page } from 'app/core/components/Page/Page';
 
-import { SetupWarnings } from '../SetupWarnings';
+import { SetupWarnings } from '../Setup/SetupWarnings';
 import { useGetFrontendSettingsQuery } from '../api';
 import { PROVISIONING_URL } from '../constants';
 

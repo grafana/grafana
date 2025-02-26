@@ -1,11 +1,11 @@
 import { Button, Icon, Text, Box, Card, Stack, useStyles2 } from '@grafana/ui';
-import { FeatureInfo } from './types';
+import { Feature } from './types';
 import { IconName } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 
 interface Props {
-  feature: FeatureInfo;
+  feature: Feature;
   onSetup: () => void;
   showSetupButton?: boolean;
 }
@@ -108,7 +108,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 export const FeatureCard = ({ feature, onSetup, showSetupButton = true }: Props) => {
   const styles = useStyles2(getStyles);
-  const isConfigured = feature.steps.length === 0 || feature.steps.every((step) => step.fulfilled);
+  const isConfigured = feature.setupSteps.length === 0 || feature.setupSteps.every((step) => step.fulfilled);
   const iconName = (feature.icon || 'apps') as IconName;
 
   return (

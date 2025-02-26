@@ -2,26 +2,26 @@ import { useState } from 'react';
 import { Modal, Button, useStyles2, Stack, Text } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { FeatureInfo } from './types';
-import { InstructionStepComponent } from './InstructionStepComponent';
-import { InstructionsSidebar } from './InstructionsSidebar';
+import { Feature } from './types';
+import { SetupStep } from './SetupStep';
+import { SetupModalSidebar } from './SetupModalSidebar';
 
 export interface Props {
-  feature: FeatureInfo;
+  feature: Feature;
   isOpen: boolean;
   onDismiss: () => void;
 }
 
-export const InstructionsModal = ({ feature, isOpen, onDismiss }: Props) => {
+export const SetupModal = ({ feature, isOpen, onDismiss }: Props) => {
   const styles = useStyles2(getStyles);
 
   // Initialize to the first unfulfilled step or 0
-  const initialStepIndex = feature.steps.findIndex((step) => !step.fulfilled);
+  const initialStepIndex = feature.setupSteps.findIndex((step) => !step.fulfilled);
   const [currentStep, setCurrentStep] = useState(initialStepIndex === -1 ? 0 : initialStepIndex);
 
   const isFirstStep = currentStep === 0;
-  const isLastStep = currentStep === feature.steps.length - 1;
-  const stepTitles = feature.steps.map((step) => step.title);
+  const isLastStep = currentStep === feature.setupSteps.length - 1;
+  const stepTitles = feature.setupSteps.map((step) => step.title);
 
   const handleNext = () => !isLastStep && setCurrentStep(currentStep + 1);
   const handlePrevious = () => !isFirstStep && setCurrentStep(currentStep - 1);
@@ -34,10 +34,10 @@ export const InstructionsModal = ({ feature, isOpen, onDismiss }: Props) => {
         </Text>
       </div>
       <Stack direction="row" height="100%">
-        <InstructionsSidebar steps={stepTitles} currentStep={currentStep} onStepClick={setCurrentStep} />
+        <SetupModalSidebar steps={stepTitles} currentStep={currentStep} onStepClick={setCurrentStep} />
 
         <div className={styles.contentWrapper}>
-          <InstructionStepComponent step={feature.steps[currentStep]} />
+          <SetupStep step={feature.setupSteps[currentStep]} />
         </div>
       </Stack>
 

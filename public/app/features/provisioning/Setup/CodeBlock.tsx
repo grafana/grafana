@@ -6,7 +6,7 @@ interface Props {
   copyCode?: boolean;
 }
 
-export const CodeBlockWithCopy = ({ code, copyCode = true }: Props) => {
+export const CodeBlock = ({ code, copyCode = true }: Props) => {
   const theme = useTheme2();
 
   // Calculate content size

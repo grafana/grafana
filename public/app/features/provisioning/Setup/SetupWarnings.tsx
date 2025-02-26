@@ -1,17 +1,8 @@
-import { FeatureToggles } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
+import { getConfigurationStatus } from './utils';
 
-// List of required feature toggles
-const requiredFeatureToggles: Array<keyof FeatureToggles> = [
-  'provisioning',
-  'kubernetesDashboards',
-  'kubernetesClientDashboardsFolders',
-  'unifiedStorageSearch',
-  'unifiedStorageSearchUI',
-];
-
-interface SetupWarningsProps {
+interface Props {
   /**
    * Whether to show the "Setup Now" button
    * @default true
@@ -25,32 +16,8 @@ interface SetupWarningsProps {
   showSuccessBanner?: boolean;
 }
 
-export function SetupWarnings({ showSetupButton = true, showSuccessBanner = false }: SetupWarningsProps) {
-  // Check if required feature toggles are enabled
-  const checkRequiredFeatures = () => {
-    const featureToggles = config.featureToggles || {};
-    return requiredFeatureToggles.every((toggle) => featureToggles[toggle]);
-  };
-
-  // Check if public access is configured
-  const checkPublicAccess = () => {
-    // This is a simplified check - in a real implementation, you would check
-    // if the server's root_url is properly configured for external access
-    return Boolean(config.appUrl && config.appUrl !== 'http://localhost:3000/');
-  };
-
-  // Check if image renderer is configured
-  const checkImageRenderer = () => {
-    return Boolean(config.rendererAvailable);
-  };
-
-  const hasRequiredFeatures = checkRequiredFeatures();
-  const hasPublicAccess = checkPublicAccess();
-  const hasImageRenderer = checkImageRenderer();
-
-  const missingOnlyOptionalFeatures = hasRequiredFeatures && (!hasPublicAccess || !hasImageRenderer);
-  const missingRequiredFeatures = !hasRequiredFeatures;
-  const everythingConfigured = hasRequiredFeatures && hasPublicAccess && hasImageRenderer;
+export function SetupWarnings({ showSetupButton = true, showSuccessBanner = false }: Props) {
+  const { everythingConfigured, missingOnlyOptionalFeatures, missingRequiredFeatures } = getConfigurationStatus();
 
   const handleSetupClick = () => {
     locationService.push('/admin/provisioning/setup');

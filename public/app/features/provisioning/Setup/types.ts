@@ -1,6 +1,6 @@
 import { FeatureToggles } from '@grafana/data';
 
-export interface InstructionStep {
+export interface Step {
   title: string;
   description?: string;
   code?: string;
@@ -8,12 +8,12 @@ export interface InstructionStep {
   copyCode?: boolean;
 }
 
-export interface FeatureInfo {
+export interface Feature {
   title: string;
   description: string;
-  steps: InstructionStep[];
   additional: boolean;
   icon?: string; // Optional icon name for the feature
+  setupSteps: Step[];
 }
 
 // List of required feature toggles

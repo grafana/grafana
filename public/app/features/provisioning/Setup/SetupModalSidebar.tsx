@@ -2,13 +2,13 @@ import { useStyles2, Text, IconButton, Stack, Card } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 
-interface InstructionsSidebarProps {
+interface Props {
   steps: string[];
   currentStep: number;
   onStepClick: (index: number) => void;
 }
 
-export const InstructionsSidebar = ({ steps, currentStep, onStepClick }: InstructionsSidebarProps) => {
+export const SetupModalSidebar = ({ steps, currentStep, onStepClick }: Props) => {
   if (steps.length === 0) {
     return null;
   }

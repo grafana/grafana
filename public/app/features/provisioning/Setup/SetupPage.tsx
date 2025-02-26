@@ -1,8 +1,8 @@
 import { Page } from 'app/core/components/Page/Page';
 import { SetupWarnings } from './SetupWarnings';
-import { SetupWizard } from './SetupWizard/SetupWizard';
+import { SetupFeatures } from './SetupFeatures';
 
-export default function SetupWarningPage() {
+export default function SetupPage() {
   return (
     <Page
       navModel={{ main: { text: '' }, node: { text: 'Provisioning Setup' } }}
@@ -10,7 +10,7 @@ export default function SetupWarningPage() {
     >
       <Page.Contents>
         <SetupWarnings showSetupButton={false} showSuccessBanner={true} />
-        <SetupWizard />
+        <SetupFeatures />
       </Page.Contents>
     </Page>
   );

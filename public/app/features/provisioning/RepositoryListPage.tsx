@@ -20,7 +20,7 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
 import OnboardingPage from './OnboardingPage';
-import { SetupWarnings } from './SetupWarnings';
+import { SetupWarnings } from './Setup/SetupWarnings';
 import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
 import { Repository, ResourceCount, useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from './api';
