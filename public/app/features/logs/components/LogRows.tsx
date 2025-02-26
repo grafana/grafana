@@ -61,7 +61,6 @@ export interface Props {
   permalinkedRowId?: string;
   scrollIntoView?: (element: HTMLElement) => void;
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
-  pinnedRowId?: string;
   pinnedLogs?: string[];
   /**
    * If false or undefined, the `contain:strict` css property will be added to the wrapping `<table>` for performance reasons.
@@ -305,7 +304,7 @@ export const LogRows = memo(
                   onPinLine={props.onPinLine}
                   onUnpinLine={props.onUnpinLine}
                   pinLineButtonTooltipTitle={props.pinLineButtonTooltipTitle}
-                  pinned={props.pinnedRowId === row.uid || pinnedLogs?.some((logId) => logId === row.rowId)}
+                  pinned={pinnedLogs?.some((logId) => logId === row.rowId || logId === row.uid)}
                   isFilterLabelActive={props.isFilterLabelActive}
                   handleTextSelection={handleSelection}
                   enableLogDetails={enableLogDetails}
