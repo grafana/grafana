@@ -130,7 +130,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		})
 	}
 
-	if hasAccess(ac.EvalPermission(ac.ActionDatasourcesDrilldown)) {
+	if hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
 		drilldownChildNavLinks := s.buildDrilldownNavLinks(c)
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:       "Drilldown",
