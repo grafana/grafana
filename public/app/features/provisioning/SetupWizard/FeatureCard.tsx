@@ -8,7 +8,6 @@ interface Props {
 }
 
 export const FeatureCard = ({ feature, onSetup, showSetupButton = true }: Props) => {
-  // Calculate if the feature is fully configured
   const isConfigured = feature.steps.length > 0 && feature.steps.every((step) => step.fulfilled);
 
   return (
