@@ -1,5 +1,4 @@
-import React from 'react';
-import { useStyles2, Text, IconButton, Box, Stack } from '@grafana/ui';
+import { useStyles2, Text, IconButton, Stack, Card } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -18,7 +17,7 @@ export const InstructionsSidebar = ({ steps, currentStep, onStepClick }: Instruc
 
   return (
     <div className={styles.sidebar}>
-      <Stack direction="column" gap={2}>
+      <Stack direction="column" gap={1}>
         {steps.map((step, index) => {
           const isCompleted = index < currentStep;
           const isCurrent = index === currentStep;
@@ -28,9 +27,9 @@ export const InstructionsSidebar = ({ steps, currentStep, onStepClick }: Instruc
           const iconAriaLabel = isCompleted ? 'Completed step' : isCurrent ? 'Current step' : 'Pending step';
 
           return (
-            <div
+            <Card
               key={index}
-              className={`${styles.stepItem} ${isCurrent ? styles.activeStep : ''}`}
+              className={`${styles.stepItem} ${isCurrent ? styles.activeStep : ''} ${styles.plainCard}`}
               onClick={() => onStepClick(index)}
             >
               <Stack direction="row" alignItems="center" gap={2}>
@@ -49,7 +48,7 @@ export const InstructionsSidebar = ({ steps, currentStep, onStepClick }: Instruc
                   {step}
                 </Text>
               </Stack>
-            </div>
+            </Card>
           );
         })}
       </Stack>
@@ -61,20 +60,24 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     sidebar: css`
       width: 260px;
-      padding: ${theme.spacing(2)};
+      padding: ${theme.spacing(1)};
       border-right: 1px solid ${theme.colors.border.medium};
       overflow-y: auto;
     `,
     stepItem: css`
       padding: ${theme.spacing(1)};
-      border-radius: ${theme.shape.borderRadius()};
       cursor: pointer;
       &:hover {
         background: ${theme.colors.action.hover};
       }
     `,
     activeStep: css`
-      background: ${theme.colors.background.secondary};
+      color: ${theme.colors.primary.text};
+    `,
+    plainCard: css`
+      background: transparent;
+      border: none;
+      box-shadow: none;
     `,
   };
 };
