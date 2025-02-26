@@ -1040,6 +1040,15 @@
       "rows": "Total number rows",
       "table-title": "Stats"
     },
+    "layout": {
+      "common": {
+        "copy": "Copy",
+        "copy-or-duplicate": "Copy or Duplicate",
+        "delete": "Delete",
+        "duplicate": "Duplicate",
+        "layout": "Layout"
+      }
+    },
     "options": {
       "description": "Description",
       "title": "Dashboard options",
@@ -1075,13 +1084,13 @@
         "collapse": "Collapse row",
         "expand": "Expand row",
         "menu": {
-          "add": "Add",
+          "add": "Add row",
           "add-panel": "Panel",
           "add-row-above": "Row above",
           "add-row-below": "Row below",
-          "delete": "Delete",
-          "move-down": "Move down",
-          "move-up": "Move up"
+          "move-down": "Move row down",
+          "move-row": "Move row",
+          "move-up": "Move row up"
         },
         "new": "New row",
         "repeat": {
@@ -1091,18 +1100,14 @@
       },
       "row-options": {
         "height": {
-          "expand": "Expand",
-          "hide-row-header": "Hide row header",
-          "min": "Min",
-          "title": "Height"
+          "hide-row-header": "Hide row header"
         },
         "repeat": {
-          "title": "Repeat options",
           "variable": {
-            "title": "Variable"
+            "title": "Repeat for"
           }
         },
-        "title": "Row options",
+        "title": "Row",
         "title-option": "Title"
       }
     },
