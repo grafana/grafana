@@ -70,12 +70,12 @@ export const defaultImportableResources = (): ImportableResources => ({
 
 // DashboardKind - used for importing/exporting dashboards
 export interface DashboardKind {
-	kind: "DashboardKind";
+	kind: "Dashboard";
 	spec: DashboardV2Spec;
 }
 
 export const defaultDashboardKind = (): DashboardKind => ({
-	kind: "DashboardKind",
+	kind: "Dashboard",
 	spec: defaultDashboardV2Spec(),
 });
 

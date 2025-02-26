@@ -90,8 +90,6 @@ export interface LibraryElementExport {
   kind: LibraryElementKind;
 }
 
-export type DashboardV2Json = ImportableResources;
-
 export interface DashboardExporterLike<T, J> {
   makeExportable(dashboard: T): Promise<J | { error: unknown }>;
 }
@@ -344,7 +342,7 @@ export class DashboardExporterV1 implements DashboardExporterLike<DashboardModel
   }
 }
 
-export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spec, DashboardV2Json> {
+export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spec, ImportableResources> {
   async makeExportable(dashboard: DashboardV2Spec) {
     const requires: DashboardImportableRequirements[] = [];
     const variableLookup: { [key: string]: any } = {};
@@ -528,11 +526,11 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
       }
 
       const importableDashboard: DashboardKind = {
-        kind: 'DashboardKind',
+        kind: 'Dashboard',
         spec: dashboard,
       };
 
-      const newObj: DashboardV2Json = {
+      const newObj: ImportableResources = {
         kind: 'ImportableResources',
         spec: {
           resources: [importableDashboard, ...uniqBy(libraryPanels, 'spec.uid')],
@@ -564,7 +562,7 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
 
 export function getDashboardExporter(): DashboardExporterLike<
   DashboardModel | DashboardV2Spec,
-  DashboardJson | DashboardV2Json
+  DashboardJson | ImportableResources
 > {
   return config.featureToggles.useV2DashboardsAPI ? new DashboardExporterV2() : new DashboardExporterV1();
 }

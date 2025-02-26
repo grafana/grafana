@@ -62,7 +62,7 @@ ImportableResources: {
 
 // DashboardKind - used for importing/exporting dashboards
 DashboardKind: {
-  kind: "DashboardKind"
+  kind: "Dashboard"
   spec: DashboardV2Spec
 }
 
