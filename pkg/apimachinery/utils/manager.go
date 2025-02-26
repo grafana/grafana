@@ -70,5 +70,5 @@ type SourceProperties struct {
 
 	// The unix millis timestamp of the source of the resource.
 	// An example could be the file modification time.
-	Timestamp int64 `json:"timestamp,omitempty"`
+	TimestampMillis int64 `json:"timestampMillis,omitempty"`
 }
