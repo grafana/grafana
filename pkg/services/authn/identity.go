@@ -79,8 +79,6 @@ type Identity struct {
 
 	IDTokenClaims     *authn.Claims[authn.IDTokenClaims]
 	AccessTokenClaims *authn.Claims[authn.AccessTokenClaims]
-
-	IsProvisioned bool
 }
 
 func (i *Identity) GetID() string {
