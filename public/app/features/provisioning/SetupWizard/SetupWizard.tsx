@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Button, useStyles2, LinkButton, Box } from '@grafana/ui';
+import { Button, useStyles2, LinkButton, Box, Alert, Icon } from '@grafana/ui';
 import { getStyles } from './styles';
 import { FeatureInfo, requiredFeatureToggles, feature_ini, ngrok_example, root_url_ini, render_ini } from './types';
 import { InstructionsModal } from './InstructionsModal';
@@ -8,6 +8,7 @@ import { config } from '@grafana/runtime';
 export const SetupWizard = () => {
   const styles = useStyles2(getStyles);
   const [features, setFeatures] = useState<FeatureInfo[]>([]);
+  const [hasRequiredFeatures, setHasRequiredFeatures] = useState(true);
   const [selectedFeature, setSelectedFeature] = useState<number | null>(null);
 
   // Check if required feature toggles are enabled
@@ -101,7 +102,14 @@ export const SetupWizard = () => {
   }, []);
 
   const handleFeatureSelect = (index: number) => {
-    setSelectedFeature(index);
+    // Only open the modal if the feature is not fully completed
+    const feature = features[index];
+    const allStepsFulfilled = feature?.steps.every((step) => step.fulfilled);
+
+    if (!allStepsFulfilled) {
+      setSelectedFeature(index);
+    }
+    // If all steps are fulfilled, don't open the modal
   };
 
   const handleInstructionsClose = () => {
@@ -109,13 +117,20 @@ export const SetupWizard = () => {
   };
 
   // Separate required and optional features
-  const requiredFeatures = features.filter((feature) => !feature.requiresPublicAccess);
-  const optionalFeatures = features.filter((feature) => feature.requiresPublicAccess);
+  const requiredFeatures = features.filter((feature) => feature.requiresPublicAccess);
+  const optionalFeatures = features.filter((feature) => !feature.requiresPublicAccess);
 
   return (
     <div>
       {selectedFeature === null && (
         <>
+          {!hasRequiredFeatures && (
+            <Alert severity="warning" title="Required Features Not Configured">
+              Some required features are not properly configured. Please complete the setup for these features to ensure
+              full functionality.
+            </Alert>
+          )}
+
           {requiredFeatures.length > 0 && (
             <>
               <h3 className={styles.title}>Required Features</h3>
@@ -129,18 +144,29 @@ export const SetupWizard = () => {
 
                   return (
                     <div key={index} className={styles.featureItem}>
-                      <h4 className={styles.featureTitle}>
-                        {feature.title}
-                        {allStepsFulfilled && <span className={styles.fulfilledBadge}>Completed</span>}
-                      </h4>
+                      <div className={styles.featureHeader}>
+                        <h4 className={styles.featureTitle}>{feature.title}</h4>
+                        {allStepsFulfilled && (
+                          <span className={styles.completedBadge}>
+                            <Icon name="check" className={styles.checkIcon} /> Completed
+                          </span>
+                        )}
+                      </div>
                       <p className={styles.featureDescription}>{feature.description}</p>
-                      <Button
-                        variant="primary"
-                        onClick={() => handleFeatureSelect(featureIndex)}
-                        className={styles.featureButton}
-                      >
-                        {allStepsFulfilled ? 'View Setup' : 'Setup Now'}
-                      </Button>
+                      {!allStepsFulfilled && (
+                        <Button
+                          variant="primary"
+                          onClick={() => handleFeatureSelect(featureIndex)}
+                          className={styles.featureButton}
+                        >
+                          Setup Now
+                        </Button>
+                      )}
+                      {allStepsFulfilled && (
+                        <div className={styles.configuredStatus}>
+                          <Icon name="check-circle" className={styles.configuredIcon} /> Configured
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -151,10 +177,9 @@ export const SetupWizard = () => {
           {optionalFeatures.length > 0 && (
             <>
               <Box marginTop={4}>
-                <h3 className={styles.title}>Additional Features</h3>
+                <h3 className={styles.title}>Optional Features</h3>
                 <p className={styles.subtitle}>
-                  These features are additional but can enhance your experience. We encourage you to set them up as
-                  well.
+                  These features are optional but can enhance your experience. Set them up as needed.
                 </p>
                 <div className={styles.featuresList}>
                   {optionalFeatures.map((feature, index) => {
@@ -163,18 +188,29 @@ export const SetupWizard = () => {
 
                     return (
                       <div key={index} className={styles.featureItem}>
-                        <h4 className={styles.featureTitle}>
-                          {feature.title}
-                          {allStepsFulfilled && <span className={styles.fulfilledBadge}>Completed</span>}
-                        </h4>
+                        <div className={styles.featureHeader}>
+                          <h4 className={styles.featureTitle}>{feature.title}</h4>
+                          {allStepsFulfilled && (
+                            <span className={styles.completedBadge}>
+                              <Icon name="check" className={styles.checkIcon} /> Completed
+                            </span>
+                          )}
+                        </div>
                         <p className={styles.featureDescription}>{feature.description}</p>
-                        <Button
-                          variant="secondary"
-                          onClick={() => handleFeatureSelect(featureIndex)}
-                          className={styles.featureButton}
-                        >
-                          {allStepsFulfilled ? 'View Setup' : 'Setup Now'}
-                        </Button>
+                        {!allStepsFulfilled && (
+                          <Button
+                            variant="secondary"
+                            onClick={() => handleFeatureSelect(featureIndex)}
+                            className={styles.featureButton}
+                          >
+                            Setup Now
+                          </Button>
+                        )}
+                        {allStepsFulfilled && (
+                          <div className={styles.configuredStatus}>
+                            <Icon name="check-circle" className={styles.configuredIcon} /> Configured
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -182,6 +218,16 @@ export const SetupWizard = () => {
               </Box>
             </>
           )}
+
+          <div className={styles.footer}>
+            <LinkButton
+              href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/"
+              variant="secondary"
+              target="_blank"
+            >
+              View Documentation
+            </LinkButton>
+          </div>
         </>
       )}
 

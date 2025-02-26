@@ -43,6 +43,15 @@ export interface SetupStyles {
   fulfilledBadge: string;
   fulfilledStepContent: string;
   fulfilledIcon: string;
+  featureHeader: string;
+  completedBadge: string;
+  stepDescription: string;
+  instructionsContainer: string;
+  instructionsTitle: string;
+  instructionsSteps: string;
+  instructionsFooter: string;
+  configuredStatus: string;
+  configuredIcon: string;
 }
 
 // Define a type for our compact styles
@@ -57,36 +66,36 @@ export interface CompactStyles {
 
 export const getStyles = (theme: GrafanaTheme2): SetupStyles => {
   return {
-    container: css`
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      width: 100%;
-    `,
+    container: css({
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+    }),
     header: css`
       padding: ${theme.spacing(2)};
       border-bottom: 1px solid ${theme.colors.border.weak};
     `,
-    title: css`
-      font-size: ${theme.typography.h4.fontSize};
-      font-weight: ${theme.typography.h4.fontWeight};
-      margin-bottom: ${theme.spacing(1)};
-    `,
-    subtitle: css`
-      font-size: ${theme.typography.body.fontSize};
-      color: ${theme.colors.text.secondary};
-    `,
-    content: css`
-      flex: 1;
-      padding: ${theme.spacing(2)};
-      overflow-y: auto;
-    `,
-    footer: css`
-      display: flex;
-      justify-content: space-between;
-      padding: ${theme.spacing(2)};
-      border-top: 1px solid ${theme.colors.border.weak};
-    `,
+    title: css({
+      fontSize: theme.typography.h4.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      marginBottom: theme.spacing(1),
+    }),
+    subtitle: css({
+      color: theme.colors.text.secondary,
+      marginBottom: theme.spacing(2),
+    }),
+    content: css({
+      flex: 1,
+      overflowY: 'auto',
+      padding: theme.spacing(2),
+    }),
+    footer: css({
+      display: 'flex',
+      justifyContent: 'flex-end',
+      padding: theme.spacing(2),
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      marginTop: theme.spacing(2),
+    }),
     button: css`
       margin-left: ${theme.spacing(1)};
     `,
@@ -109,11 +118,11 @@ export const getStyles = (theme: GrafanaTheme2): SetupStyles => {
     stepIndicatorCompleted: css`
       color: ${theme.colors.success.text};
     `,
-    stepTitle: css`
-      font-size: ${theme.typography.h5.fontSize};
-      font-weight: ${theme.typography.h5.fontWeight};
-      margin-bottom: ${theme.spacing(1)};
-    `,
+    stepTitle: css({
+      fontSize: theme.typography.h5.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      marginBottom: theme.spacing(1),
+    }),
     stepTitleActive: css`
       color: ${theme.colors.primary.text};
     `,
@@ -123,123 +132,109 @@ export const getStyles = (theme: GrafanaTheme2): SetupStyles => {
     stepContent: css`
       margin-bottom: ${theme.spacing(2)};
     `,
-    codeBlock: css`
-      background-color: ${theme.colors.background.secondary};
-      border-radius: ${theme.shape.borderRadius()};
-      padding: ${theme.spacing(1)};
-      margin-bottom: ${theme.spacing(2)};
-      position: relative;
-      font-family: monospace;
-      white-space: pre-wrap;
-      word-break: break-all;
-    `,
-    copyButton: css`
-      position: absolute;
-      top: ${theme.spacing(1)};
-      right: ${theme.spacing(1)};
-      background: transparent;
-      border: none;
-      color: ${theme.colors.text.secondary};
-      cursor: pointer;
-      &:hover {
-        color: ${theme.colors.text.primary};
-      }
-    `,
+    codeBlock: css({
+      backgroundColor: theme.colors.background.canvas,
+      borderRadius: theme.shape.borderRadius(1),
+      padding: theme.spacing(2),
+      fontFamily: theme.typography.fontFamilyMonospace,
+      fontSize: theme.typography.bodySmall.fontSize,
+      overflowX: 'auto',
+      marginBottom: theme.spacing(2),
+    }),
+    copyButton: css({
+      marginLeft: theme.spacing(1),
+    }),
     copyIcon: css`
       margin-right: ${theme.spacing(0.5)};
     `,
-    checkIcon: css`
-      margin-right: ${theme.spacing(0.5)};
-      color: ${theme.colors.success.text};
-    `,
-    featuresList: css`
-      display: flex;
-      flex-direction: column;
-      gap: ${theme.spacing(2)};
-    `,
-    featureItem: css`
-      display: flex;
-      flex-direction: column;
-      padding: ${theme.spacing(2)};
-      border: 1px solid ${theme.colors.border.weak};
-      border-radius: ${theme.shape.borderRadius()};
-      background-color: ${theme.colors.background.secondary};
-    `,
-    featureTitle: css`
-      font-size: ${theme.typography.h6.fontSize};
-      font-weight: ${theme.typography.h6.fontWeight};
-      margin-bottom: ${theme.spacing(1)};
-    `,
-    featureDescription: css`
-      font-size: ${theme.typography.body.fontSize};
-      color: ${theme.colors.text.secondary};
-      margin-bottom: ${theme.spacing(2)};
-    `,
-    featureButton: css`
-      align-self: flex-start;
-    `,
-    featureButtonDisabled: css`
-      opacity: 0.5;
-      cursor: not-allowed;
-    `,
-    featureButtonSecondary: css`
-      background-color: ${theme.colors.secondary.main};
-      color: ${theme.colors.secondary.contrastText};
-    `,
-    featureButtonPrimary: css`
-      background-color: ${theme.colors.primary.main};
-      color: ${theme.colors.primary.contrastText};
-    `,
-    featureButtonText: css`
-      font-size: ${theme.typography.body.fontSize};
-      font-weight: ${theme.typography.fontWeightMedium};
-    `,
-    featureButtonIcon: css`
-      margin-right: ${theme.spacing(0.5)};
-    `,
-    featureButtonIconDisabled: css`
-      opacity: 0.5;
-    `,
-    featureButtonIconSecondary: css`
-      color: ${theme.colors.secondary.contrastText};
-    `,
-    featureButtonIconPrimary: css`
-      color: ${theme.colors.primary.contrastText};
-    `,
-    featureButtonIconText: css`
-      display: flex;
-      align-items: center;
-    `,
-    featureButtonIconTextDisabled: css`
-      opacity: 0.5;
-    `,
-    featureButtonIconTextSecondary: css`
-      color: ${theme.colors.secondary.contrastText};
-    `,
-    featureButtonIconTextPrimary: css`
-      color: ${theme.colors.primary.contrastText};
-    `,
-    fulfilledBadge: css`
-      display: inline-flex;
-      align-items: center;
-      background-color: ${theme.colors.success.main};
-      color: ${theme.colors.success.contrastText};
-      padding: ${theme.spacing(0.5, 1)};
-      border-radius: ${theme.shape.borderRadius(1)};
-      font-size: ${theme.typography.bodySmall.fontSize};
-      font-weight: ${theme.typography.fontWeightMedium};
-      margin-left: ${theme.spacing(1)};
-    `,
-    fulfilledStepContent: css`
-      background-color: ${theme.colors.success.transparent};
-      border-left: 3px solid ${theme.colors.success.main};
-      padding: ${theme.spacing(1, 2)};
-      margin-bottom: ${theme.spacing(2)};
-    `,
-    fulfilledIcon: css`
-      color: ${theme.colors.success.text};
-      margin-right: ${theme.spacing(0.5)};
-    `,
+    checkIcon: css({
+      marginRight: theme.spacing(0.5),
+    }),
+    featuresList: css({
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+      gap: theme.spacing(2),
+      marginBottom: theme.spacing(3),
+    }),
+    featureItem: css({
+      backgroundColor: theme.colors.background.secondary,
+      borderRadius: theme.shape.borderRadius(1),
+      padding: theme.spacing(2),
+      display: 'flex',
+      flexDirection: 'column',
+      border: `1px solid ${theme.colors.border.weak}`,
+    }),
+    featureHeader: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: theme.spacing(1),
+    }),
+    featureTitle: css({
+      fontSize: theme.typography.h5.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      margin: 0,
+    }),
+    featureDescription: css({
+      color: theme.colors.text.secondary,
+      marginBottom: theme.spacing(2),
+      flex: 1,
+    }),
+    featureButton: css({
+      alignSelf: 'flex-start',
+    }),
+    completedBadge: css({
+      backgroundColor: theme.colors.success.main,
+      color: theme.colors.success.contrastText,
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
+      borderRadius: theme.shape.borderRadius(0.5),
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+    }),
+    fulfilledBadge: css({
+      backgroundColor: theme.colors.success.main,
+      color: theme.colors.success.contrastText,
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
+      borderRadius: theme.shape.borderRadius(0.5),
+      marginLeft: theme.spacing(1),
+      display: 'inline-block',
+    }),
+    stepDescription: css({
+      marginBottom: theme.spacing(2),
+    }),
+    instructionsContainer: css({
+      padding: theme.spacing(2),
+    }),
+    instructionsTitle: css({
+      fontSize: theme.typography.h4.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      marginBottom: theme.spacing(2),
+    }),
+    instructionsSteps: css({
+      marginBottom: theme.spacing(3),
+    }),
+    instructionsFooter: css({
+      display: 'flex',
+      justifyContent: 'flex-end',
+      gap: theme.spacing(1),
+    }),
+    configuredStatus: css({
+      display: 'flex',
+      alignItems: 'center',
+      color: theme.colors.success.text,
+      fontWeight: theme.typography.fontWeightMedium,
+      fontSize: theme.typography.body.fontSize,
+      marginTop: 'auto',
+    }),
+    configuredIcon: css({
+      color: theme.colors.success.main,
+      marginRight: theme.spacing(1),
+    }),
   };
 };
 
