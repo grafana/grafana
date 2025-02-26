@@ -1,4 +1,4 @@
-import { AdHocFiltersVariable, FilterSource, sceneGraph } from '@grafana/scenes';
+import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
 import { ScopesFacade } from 'app/features/scopes';
 
 import { getDashboardSceneFor } from '../utils/utils';
