@@ -42,6 +42,7 @@ import {
   GraphiteQueryType,
   GraphiteType,
   MetricTankRequestMeta,
+  MetricTankSeriesMeta,
 } from './types';
 import { reduceError } from './utils';
 import { DEFAULT_GRAPHITE_VERSION } from './versions';
@@ -285,7 +286,13 @@ export class GraphiteDatasource
     }
 
     // Series are either at the root or under a node called 'series'
-    const series = result.data.series || result.data;
+    const series: Array<{
+      target: string;
+      title: string;
+      tags: Record<string, string | number>;
+      datapoints: Array<[number, number]>;
+      meta: MetricTankSeriesMeta[];
+    }> = result.data.series || result.data;
 
     if (!isArray(series)) {
       throw { message: 'Missing series in result', data: result };
@@ -293,10 +300,15 @@ export class GraphiteDatasource
 
     for (let i = 0; i < series.length; i++) {
       const s = series[i];
-      // Retrieve the original refID of the query
-      const [target, refId] = s.target.split(' ');
-      s.target = target;
 
+      let refId = '';
+      // Retrieve the original refID of the query
+      const splitTarget = s.target.split(' ');
+      if (splitTarget.length > 1) {
+        // refID should always be the last element
+        refId = splitTarget.pop() || '';
+        s.target = splitTarget.join(' ');
+      }
       // Disables Grafana own series naming
       s.title = s.target;
 
