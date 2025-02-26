@@ -39,6 +39,28 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
     this.api = getPlaylistAPI();
   }
 
+  private navigateToDashboard(replaceHistoryEntry = false) {
+    const url = this.urls[this.index];
+    const queryParams = locationService.getSearchObject();
+    const filteredParams = pickBy(queryParams, (value: unknown, key: string) => queryParamsToPreserve[key]);
+    const nextDashboardUrl = locationUtil.stripBaseFromUrl(url);
+
+    this.index++;
+    this.validPlaylistUrl = nextDashboardUrl;
+    this.nextTimeoutId = setTimeout(() => this.next(), this.interval);
+
+    const urlWithParams = nextDashboardUrl + '?' + urlUtil.toUrlParams(filteredParams);
+
+    // When starting the playlist from the PlaylistStartPage component using the playlist URL, we want to replace the
+    // history entry to support the back button
+    // When starting the playlist from the playlist modal, we want to push a new history entry
+    if (replaceHistoryEntry) {
+      locationService.getHistory().replace(urlWithParams);
+    } else {
+      locationService.push(urlWithParams);
+    }
+  }
+
   next() {
     clearTimeout(this.nextTimeoutId);
 
@@ -55,16 +77,7 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
       this.index = 0;
     }
 
-    const url = this.urls[this.index];
-    const queryParams = locationService.getSearchObject();
-    const filteredParams = pickBy(queryParams, (value: unknown, key: string) => queryParamsToPreserve[key]);
-    const nextDashboardUrl = locationUtil.stripBaseFromUrl(url);
-
-    this.index++;
-    this.validPlaylistUrl = nextDashboardUrl;
-    this.nextTimeoutId = setTimeout(() => this.next(), this.interval);
-
-    locationService.push(nextDashboardUrl + '?' + urlUtil.toUrlParams(filteredParams));
+    this.navigateToDashboard();
   }
 
   prev() {
@@ -115,7 +128,10 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
 
     this.urls = urls;
     this.setState({ isPlaying: true });
-    this.next();
+
+    // Replace current history entry with first dashboard instead of pushing
+    // this is to avoid the back button to go back to the playlist start page which causes a redirection
+    this.navigateToDashboard(true);
     return;
   }
 
