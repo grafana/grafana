@@ -61,13 +61,15 @@ func (c *renderConnector) Connect(
 		filePath := strings.TrimPrefix(r.URL.Path[idx+len(prefix):], "/")
 		if len(filePath) == 0 {
 			responder.Error(apierrors.NewNotFound(provisioning.JobResourceInfo.GroupResource(), "render"))
+			return
 		}
 
 		rsp, err := c.blob.GetBlob(ctx, &resource.GetBlobRequest{
 			Resource: &resource.ResourceKey{
 				Namespace: namespace,
 				Group:     provisioning.GROUP,
-				Resource:  provisioning.JobResourceInfo.GroupResource().Resource,
+				Resource:  provisioning.RepositoryResourceInfo.GroupResource().Resource,
+				Name:      name,
 			},
 			MustProxyBytes: true,
 			Uid:            filePath,
@@ -81,10 +83,23 @@ func (c *renderConnector) Connect(
 			return
 		}
 
-		sss := &v1.Status{
-			Message: filePath,
+		if len(rsp.Value) > 0 {
+			if rsp.ContentType != "" {
+				w.Header().Add("Content-Type", rsp.ContentType)
+			}
+			_, err = w.Write(rsp.Value)
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+		} else {
+			responder.Error(&apierrors.StatusError{
+				ErrStatus: v1.Status{
+					Code:    http.StatusNoContent,
+					Message: "empty body",
+				},
+			})
 		}
-		responder.Object(http.StatusOK, sss)
 	}), nil
 }
 

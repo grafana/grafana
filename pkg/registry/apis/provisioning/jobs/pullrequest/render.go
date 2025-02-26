@@ -6,6 +6,7 @@ import (
 	"mime"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -69,6 +70,7 @@ func (r *screenshotRenderer) RenderDashboardPreview(ctx context.Context, namespa
 			Namespace: namespace,
 			Group:     provisioning.GROUP,
 			Resource:  provisioning.RepositoryResourceInfo.GroupResource().Resource,
+			Name:      repoName,
 		},
 		Method:      resource.PutBlobRequest_GRPC,
 		ContentType: mime.TypeByExtension(ext), // image/png
@@ -80,6 +82,10 @@ func (r *screenshotRenderer) RenderDashboardPreview(ctx context.Context, namespa
 	if rsp.Url != "" {
 		return rsp.Url, nil
 	}
-	return fmt.Sprintf("%s/apis/%s/namespaces/%s/repositories/*s/render/%s",
-		r.urlProvider(namespace), provisioning.APIVERSION, namespace, repoName, rsp.Uid), nil
+	base := r.urlProvider(namespace)
+	if !strings.HasSuffix(base, "/") {
+		base += "/"
+	}
+	return fmt.Sprintf("%sapis/%s/namespaces/%s/repositories/%s/render/%s",
+		base, provisioning.APIVERSION, namespace, repoName, rsp.Uid), nil
 }
