@@ -9,7 +9,7 @@ import { getMessageFromError, getMessageIdFromError, getStatusFromError } from '
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Resource, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -582,11 +582,15 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   }
 
   public async fetchDashboard(options: LoadDashboardOptions) {
+    // getDashboardAPI().getDashboardDTO(uid, params) already handles the version check
+    // but because we need to detect the redirect, the managers forces the loaders, and the loaders forces the dashboardAPI
+    // to be v1 or v2 so the redirection error is thrown with no redirect.
+    // @see getDashboardAPI().getDashboardDTO()
     try {
       // Try V1 first
       return await this.v1Manager.fetchDashboard(options);
     } catch (error) {
-      if (error.status === 404 && error.data?.isV2) {
+      if (error instanceof DashboardVersionError && error.data?.isV2) {
         // If V1 indicates it's a V2 dashboard, use V2 manager
         return await this.v2Manager.fetchDashboard(options);
       }
@@ -599,7 +603,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
       // Try V1 first
       await this.v1Manager.reloadDashboard(params);
     } catch (error) {
-      if (error.status === 404 && error.data?.isV2) {
+      if (error instanceof DashboardVersionError && error.data?.isV2) {
         // If V1 indicates it's a V2 dashboard, use V2 manager
         await this.v2Manager.reloadDashboard(params);
       } else {
@@ -641,9 +645,8 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   public async loadSnapshotScene(slug: string): Promise<DashboardScene> {
     try {
       return await this.v1Manager.loadSnapshotScene(slug);
-      // TODO: Create proper error type
-    } catch (error: any) {
-      if (error.status === 404 && error.data?.isV2) {
+    } catch (error) {
+      if (error instanceof DashboardVersionError && error.data?.isV2) {
         return await this.v2Manager.loadSnapshotScene(slug);
       }
     } finally {

@@ -22,7 +22,8 @@ import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types';
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { ResponseTransformers } from './ResponseTransformers';
-import { DashboardAPI, DashboardWithAccessInfo } from './types';
+import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo } from './types';
+import { isDashboardV2Resource } from './utils';
 
 export class K8sDashboardV2API
   implements DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO, DashboardV2Spec>
@@ -40,6 +41,10 @@ export class K8sDashboardV2API
   async getDashboardDTO(uid: string, params?: UrlQueryMap) {
     try {
       const dashboard = await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto');
+
+      if (!isDashboardV2Resource(dashboard)) {
+        throw new DashboardVersionError(true, 'Dashboard is V1 format');
+      }
 
       let result: DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO | undefined;
 

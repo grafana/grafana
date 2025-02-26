@@ -18,7 +18,8 @@ import { DashboardDataDTO, DashboardDTO, SaveDashboardResponseDTO } from 'app/ty
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
-import { DashboardAPI, DashboardWithAccessInfo } from './types';
+import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo } from './types';
+import { isDashboardV2Resource } from './utils';
 
 export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
   private client: ResourceClient<DashboardDataDTO>;
@@ -95,6 +96,11 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
   async getDashboardDTO(uid: string) {
     try {
       const dash = await this.client.subresource<DashboardWithAccessInfo<DashboardDataDTO>>(uid, 'dto');
+
+      // FIXME: This is just a simulation of the response of the backend
+      if (isDashboardV2Resource(dash)) {
+        throw new DashboardVersionError(true, 'Dashboard is V2 format');
+      }
 
       const result: DashboardDTO = {
         meta: {

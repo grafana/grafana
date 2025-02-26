@@ -16,8 +16,6 @@ import { appEvents } from '../../../core/core';
 import { ResponseTransformers } from '../api/ResponseTransformers';
 import { getDashboardAPI } from '../api/dashboard_api';
 import { DashboardWithAccessInfo } from '../api/types';
-import { DashboardVersionError } from '../api/types';
-import { isDashboardV2Resource } from '../api/utils';
 
 import { getDashboardSrv } from './DashboardSrv';
 import { getDashboardSnapshotSrv } from './SnapshotSrv';
@@ -141,12 +139,9 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
         }
       }
 
-      promise = getDashboardAPI()
+      promise = getDashboardAPI('v1')
         .getDashboardDTO(uid, params)
         .then((result) => {
-          if (isDashboardV2Resource(result)) {
-            throw new DashboardVersionError(true, 'Dashboard is V2 format');
-          }
           return result;
         })
         .catch((e) => {
@@ -213,9 +208,6 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
       promise = getDashboardAPI('v2')
         .getDashboardDTO(uid, params)
         .then((result) => {
-          if (!isDashboardV2Resource(result)) {
-            throw new DashboardVersionError(false, 'Dashboard is V1 format');
-          }
           return result;
         })
         .catch((e) => {
