@@ -1,4 +1,4 @@
-name: Frontend unit tests
+name: Frontend tests
 on:
   pull_request:
   push:
@@ -9,7 +9,7 @@ on:
 jobs:
   test-frontend:
     runs-on: ubuntu-latest-8-cores
-    name: "${{ matrix.chunk }} / 8"
+    name: "Unit tests (${{ matrix.chunk }} / 8)"
     strategy:
       fail-fast: true
       matrix:
