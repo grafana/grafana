@@ -199,7 +199,7 @@ export function EditDataSourceView({
           <div key={Component.meta.id}>
             <Component
               context={{
-                dataSource: cloneDeep(dataSource),
+                dataSource: dataSource,
                 dataSourceMeta: dataSourceMeta,
                 testingStatus,
                 setJsonData: (jsonData) =>
