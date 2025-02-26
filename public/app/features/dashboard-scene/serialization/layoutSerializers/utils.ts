@@ -14,6 +14,7 @@ import { DashboardV2Spec, PanelKind, PanelQueryKind } from '@grafana/schema/dist
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBehaviour';
+import { DashboardScene } from '../../scene/DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
@@ -165,5 +166,23 @@ export function getElementIdentifierForVizPanel(vizPanel: VizPanel): string {
     return elementKey;
   } catch (error) {
     return `error in getElementIdentifierForVizPanel: ${error}`;
+  }
+}
+
+export function schemaV2SetElementIdentifierForVizPanel(panelId: number, scene: DashboardScene): void {
+  const elementKey = 'element-panel-' + panelId;
+  const mapping = scene.getElementPanelMapping();
+  mapping.set(elementKey, panelId);
+}
+
+export function schemaV2RemoveElementIdentifierForVizPanel(vizPanel: VizPanel, scene: DashboardScene): void {
+  // This function is only for V2 dashboards
+  if (config.featureToggles.useV2DashboardsAPI) {
+    const elementKey = getElementIdentifierForVizPanel(vizPanel);
+    console.log('removeElementIdentifierForVizPanel', elementKey);
+    const mapping = scene.getElementPanelMapping();
+    // remove the mapping for the element key
+    mapping.delete(elementKey);
+    console.log('mapping after removing', mapping);
   }
 }

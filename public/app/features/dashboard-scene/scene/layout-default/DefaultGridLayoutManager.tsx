@@ -70,8 +70,8 @@ export class DefaultGridLayoutManager
     vizPanel.setState({ key: getVizPanelKeyForPanelId(panelId) });
     vizPanel.clearParent();
 
-    // set panel id in the elementPanel mapping
-    schemaV2SetElementIdentifierForVizPanel(panelId);
+    const scene = getDashboardSceneFor(this);
+    schemaV2SetElementIdentifierForVizPanel(panelId, scene);
 
     const newGridItem = new DashboardGridItem({
       height: NEW_PANEL_HEIGHT,
@@ -114,7 +114,8 @@ export class DefaultGridLayoutManager
       children: layout.state.children.filter((child) => child !== gridItem),
     });
 
-    schemaV2RemoveElementIdentifierForVizPanel(panel);
+    const scene = getDashboardSceneFor(panel);
+    schemaV2RemoveElementIdentifierForVizPanel(panel, scene);
   }
 
   public duplicatePanel(vizPanel: VizPanel) {
