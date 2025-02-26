@@ -6,7 +6,7 @@ toolchain go1.23.6
 
 require (
 	github.com/google/go-cmp v0.6.0
-	github.com/grafana/authlib/types v0.0.0-20250219092154-21ce22b49f31
+	github.com/grafana/authlib/types v0.0.0-20250224151205-5ef97131cc82
 	github.com/grafana/grafana-app-sdk/logging v0.30.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240701135906-559738ce6ae1
 	github.com/prometheus/client_golang v1.20.5
