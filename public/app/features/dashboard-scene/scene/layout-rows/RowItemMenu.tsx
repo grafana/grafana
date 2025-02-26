@@ -12,6 +12,7 @@ interface RowItemMenuProps {
 
 export function RowItemMenu({ model }: RowItemMenuProps) {
   const styles = useStyles2(getStyles);
+  const {} = model.useState();
 
   return (
     <ToolbarButtonRow className={styles.container}>
@@ -39,43 +40,45 @@ export function RowItemMenu({ model }: RowItemMenuProps) {
         )}
       >
         <ToolbarButton
-          aria-label={t('dashboard.rows-layout.row.menu.add', 'Add')}
-          title={t('dashboard.rows-layout.row.menu.add', 'Add')}
+          aria-label={t('dashboard.rows-layout.row.menu.add', 'Add row')}
+          title={t('dashboard.rows-layout.row.menu.add', 'Add row')}
+          tooltip={t('dashboard.rows-layout.row.menu.add', 'Add row')}
           icon="plus"
           iconSize="sm"
-          variant="primary"
+          variant="default"
         >
-          <Trans i18nKey="dashboard.rows-layout.row.menu.add">Add</Trans>
+          <Trans i18nKey="grafana-ui.tags-input.add">Add</Trans>
         </ToolbarButton>
       </Dropdown>
-      <ToolbarButton
-        aria-label={t('dashboard.rows-layout.row.menu.delete', 'Delete')}
-        title={t('dashboard.rows-layout.row.menu.delete', 'Delete')}
-        icon="trash-alt"
-        iconSize="sm"
-        variant="destructive"
-        onClick={() => model.onDelete()}
-      />
-      {!model.isFirstRow() && (
+      <Dropdown
+        placement="bottom-end"
+        overlay={() => (
+          <Menu>
+            <Menu.Item
+              aria-label={t('dashboard.rows-layout.row.menu.move-up', 'Move row up')}
+              label={t('dashboard.rows-layout.row.menu.move-up', 'Move row up')}
+              onClick={() => model.onMoveUp()}
+              disabled={model.isFirstRow()}
+            />
+            <Menu.Divider />
+            <Menu.Item
+              aria-label={t('dashboard.rows-layout.row.menu.move-down', 'Move row down')}
+              label={t('dashboard.rows-layout.row.menu.move-down', 'Move row down')}
+              onClick={() => model.onMoveDown()}
+              disabled={model.isLastRow()}
+            />
+          </Menu>
+        )}
+      >
         <ToolbarButton
-          aria-label={t('dashboard.rows-layout.row.menu.move-up', 'Move up')}
-          title={t('dashboard.rows-layout.row.menu.move-up', 'Move up')}
-          icon="arrow-up"
-          iconSize="sm"
-          variant="canvas"
-          onClick={() => model.onMoveUp()}
+          aria-label={t('dashboard.rows-layout.row.menu.move-row', 'Move row')}
+          title={t('dashboard.rows-layout.row.menu.move-row', 'Move row')}
+          tooltip={t('dashboard.rows-layout.row.menu.move-row', 'Move row')}
+          icon="arrows-v"
+          iconSize="md"
+          variant="default"
         />
-      )}
-      {!model.isLastRow() && (
-        <ToolbarButton
-          aria-label={t('dashboard.rows-layout.row.menu.move-down', 'Move down')}
-          title={t('dashboard.rows-layout.row.menu.move-down', 'Move down')}
-          icon="arrow-down"
-          iconSize="sm"
-          variant="canvas"
-          onClick={() => model.onMoveDown()}
-        />
-      )}
+      </Dropdown>
     </ToolbarButtonRow>
   );
 }
