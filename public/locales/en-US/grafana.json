@@ -1049,12 +1049,6 @@
           "options-header": "Multi-selected Row options",
           "selection-number": "No. of rows selected: {{length}}"
         }
-      },
-      "tab": {
-        "multi-select": {
-          "options-header": "Multi-selected Tab options",
-          "selection-number": "No. of tabs selected: "
-        }
       }
     },
     "editpane": {
@@ -1128,6 +1122,14 @@
       "rows": "Total number rows",
       "table-title": "Stats"
     },
+    "layout": {
+      "common": {
+        "copy": "Copy",
+        "copy-or-duplicate": "Copy or Duplicate",
+        "delete": "Delete",
+        "duplicate": "Duplicate"
+      }
+    },
     "options": {
       "description": "Description",
       "title": "Dashboard options",
@@ -1197,20 +1199,22 @@
     "tabs-layout": {
       "description": "Tabs layout",
       "name": "Tabs",
+      "row": {
+        "menu": {
+          "move-tab": "Move tab"
+        }
+      },
       "tab": {
-        "affix": {
-          "move-left": "Move left"
-        },
-        "new": "New tab",
-        "suffix": {
-          "add": "Add",
+        "menu": {
+          "add": "Add tab",
           "add-panel": "Panel",
           "add-tab-above": "Tab before",
           "add-tab-after": "Tab after",
           "add-tab-before": "Tab before",
-          "delete": "Delete",
-          "move-right": "Move right"
-        }
+          "move-left": "Move tab left",
+          "move-right": "Move tab right"
+        },
+        "new": "New tab"
       },
       "tab-options": {
         "title": "Tab options",
