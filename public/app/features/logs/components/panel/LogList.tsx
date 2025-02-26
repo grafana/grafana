@@ -100,12 +100,12 @@ export const LogList = ({
 
   useEffect(() => {
     setProcessedLogs(preProcessLogs(logs, { getFieldLinks, escape: forceEscape, order: sortOrder, timeZone }));
-    listRef.current?.resetAfterIndex(0);
   }, [forceEscape, getFieldLinks, logs, sortOrder, timeZone]);
 
   useEffect(() => {
+    resetLogLineSizes();
     listRef.current?.resetAfterIndex(0);
-  }, [wrapLogMessage]);
+  }, [wrapLogMessage, processedLogs]);
 
   useEffect(() => {
     const handleResize = debounce(() => {
