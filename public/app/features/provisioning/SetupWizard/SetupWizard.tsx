@@ -1,69 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Button, useStyles2, Box, Icon } from '@grafana/ui';
-import { css } from '@emotion/css';
+import { Button, useStyles2, Box, Icon, Text, Stack } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { FeatureInfo, requiredFeatureToggles, feature_ini, ngrok_example, root_url_ini, render_ini } from './types';
 import { InstructionsModal } from './InstructionsModal';
 import { config } from '@grafana/runtime';
 import { FeatureCard } from './FeatureCard';
 
-// Define styles directly in this file
+// Define minimal styles for elements that need specific styling
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    title: css({
-      fontSize: theme.typography.h4.fontSize,
-      fontWeight: theme.typography.fontWeightMedium,
-      marginBottom: theme.spacing(1),
-    }),
-    subtitle: css({
-      color: theme.colors.text.secondary,
-      marginBottom: theme.spacing(2),
-    }),
-    featuresList: css({
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-      gap: theme.spacing(2),
-      marginBottom: theme.spacing(3),
-    }),
-    featureItem: css({
-      backgroundColor: theme.colors.background.secondary,
-      borderRadius: theme.shape.borderRadius(1),
-      padding: theme.spacing(2),
-      display: 'flex',
-      flexDirection: 'column',
-      border: `1px solid ${theme.colors.border.weak}`,
-    }),
-    featureHeader: css({
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: theme.spacing(1),
-    }),
-    featureTitle: css({
-      fontSize: theme.typography.h5.fontSize,
-      fontWeight: theme.typography.fontWeightMedium,
-      margin: 0,
-    }),
-    featureDescription: css({
-      color: theme.colors.text.secondary,
-      marginBottom: theme.spacing(2),
-      flex: 1,
-    }),
-    featureButton: css({
-      alignSelf: 'flex-start',
-    }),
-    configuredStatus: css({
-      display: 'flex',
-      alignItems: 'center',
-      color: theme.colors.success.text,
-      fontSize: theme.typography.body.fontSize,
-      marginTop: 'auto',
-    }),
-    configuredIcon: css({
-      color: theme.colors.success.main,
-      marginRight: theme.spacing(1),
-    }),
-    codeBlock: css({
+    codeBlock: {
       backgroundColor: theme.colors.background.canvas,
       borderRadius: theme.shape.borderRadius(1),
       padding: theme.spacing(2),
@@ -71,55 +17,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.bodySmall.fontSize,
       overflowX: 'auto',
       marginBottom: theme.spacing(2),
-    }),
-    copyButton: css({
-      marginLeft: theme.spacing(1),
-    }),
-    copyIcon: css`
-      margin-right: ${theme.spacing(0.5)};
-    `,
-    checkIcon: css({
-      marginRight: theme.spacing(0.5),
-    }),
-  };
-};
-
-// Also include the CompactStyles that were in styles.ts
-export const getCompactStyles = (theme: GrafanaTheme2) => {
-  return {
-    featuresList: css`
-      display: flex;
-      flex-direction: column;
-      gap: ${theme.spacing(1)};
-    `,
-    featureItem: css`
-      display: flex;
-      align-items: flex-start;
-      padding: ${theme.spacing(1)};
-    `,
-    featureContent: css`
-      margin-left: ${theme.spacing(1)};
-    `,
-    bulletPoint: css`
-      color: ${theme.colors.primary.text};
-      margin-right: ${theme.spacing(1)};
-    `,
-    titleWithInfo: css`
-      display: flex;
-      align-items: center;
-      font-weight: ${theme.typography.fontWeightMedium};
-    `,
-    infoButton: css`
-      background: transparent;
-      border: none;
-      color: ${theme.colors.text.secondary};
-      cursor: pointer;
-      padding: 0;
-      margin-left: ${theme.spacing(0.5)};
-      &:hover {
-        color: ${theme.colors.text.primary};
-      }
-    `,
+    },
   };
 };
 
@@ -137,15 +35,11 @@ export const SetupWizard = () => {
 
   // Check if public access is configured
   const checkPublicAccess = () => {
-    // This is a simplified check - in a real implementation, you would check
-    // if the server's root_url is properly configured for external access
     return Boolean(config.appUrl && config.appUrl !== 'http://localhost:3000/');
   };
 
   // Check if image renderer is configured
   const checkImageRenderer = () => {
-    // This is a simplified check - in a real implementation, you would check
-    // if the rendering service is properly configured and accessible
     return Boolean(config.rendererAvailable);
   };
 
@@ -260,54 +154,57 @@ export const SetupWizard = () => {
   const hasFeatureToggles = checkRequiredFeatures();
 
   return (
-    <div>
+    <Stack direction="column" gap={4}>
       {!showInstructionsModal && (
         <>
           {requiredFeatures.length > 0 && (
-            <>
-              <h3 className={styles.title}>Required Setup</h3>
-              <p className={styles.subtitle}>This setup is required for provisioning to work properly.</p>
-              <div className={styles.featuresList}>
-                {requiredFeatures.map((feature, index) => {
-                  return (
-                    <FeatureCard key={index} feature={feature} onSetup={() => {}} showSetupButton={hasFeatureToggles} />
-                  );
-                })}
-              </div>
+            <Stack direction="column" gap={2}>
+              <Text element="h3" variant="h4">
+                Required Setup
+              </Text>
+              <Text color="secondary">This setup is required for provisioning to work properly.</Text>
+
+              <Stack direction="row" gap={2}>
+                {requiredFeatures.map((feature, index) => (
+                  <FeatureCard
+                    key={index}
+                    feature={feature}
+                    onSetup={() => handleShowInstructions(feature)}
+                    showSetupButton={true}
+                  />
+                ))}
+              </Stack>
+
               {!hasFeatureToggles && (
-                <Button
-                  variant="primary"
-                  onClick={() => handleShowInstructions(basicSetup)}
-                  className={styles.featureButton}
-                >
-                  Setup Now
-                </Button>
+                <Box marginTop={2}>
+                  <Button variant="primary" onClick={() => handleShowInstructions(basicSetup)}>
+                    Setup Now
+                  </Button>
+                </Box>
               )}
-            </>
+            </Stack>
           )}
 
           {optionalFeatures.length > 0 && (
-            <>
-              <Box marginTop={4}>
-                <h3 className={styles.title}>Additional Features</h3>
-                <p className={styles.subtitle}>
-                  These features are additional but can enhance your experience. We encourage you to set them up as
-                  well.
-                </p>
-                <div className={styles.featuresList}>
-                  {optionalFeatures.map((feature, index) => {
-                    return (
-                      <FeatureCard
-                        key={index}
-                        feature={feature}
-                        onSetup={() => handleShowInstructions(feature)}
-                        showSetupButton={true}
-                      />
-                    );
-                  })}
-                </div>
-              </Box>
-            </>
+            <Stack direction="column" gap={2}>
+              <Text element="h3" variant="h4">
+                Additional Features
+              </Text>
+              <Text color="secondary">
+                These features are additional but can enhance your experience. We encourage you to set them up as well.
+              </Text>
+
+              <Stack direction="row" gap={2}>
+                {optionalFeatures.map((feature, index) => (
+                  <FeatureCard
+                    key={index}
+                    feature={feature}
+                    onSetup={() => handleShowInstructions(feature)}
+                    showSetupButton={true}
+                  />
+                ))}
+              </Stack>
+            </Stack>
           )}
         </>
       )}
@@ -315,6 +212,6 @@ export const SetupWizard = () => {
       {showInstructionsModal && activeFeature && (
         <InstructionsModal feature={activeFeature} isOpen={true} onDismiss={handleInstructionsClose} />
       )}
-    </div>
+    </Stack>
   );
 };
