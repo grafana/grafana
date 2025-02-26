@@ -1,4 +1,4 @@
-import { PluginExtensionComponentMeta } from '@grafana/data';
+import { type ComponentTypeWithMeta } from '@grafana/data';
 
 export type UsePluginComponentsOptions = {
   extensionPointId: string;
@@ -6,7 +6,7 @@ export type UsePluginComponentsOptions = {
 };
 
 export type UsePluginComponentsResult<Props = {}> = {
-  components: Array<React.ComponentType<Props> & { meta: PluginExtensionComponentMeta }>;
+  components: Array<ComponentTypeWithMeta<Props>>;
   isLoading: boolean;
 };
 

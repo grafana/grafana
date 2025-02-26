@@ -67,7 +67,7 @@ export function UserProfileEditPage({
     <Page navId="profile/settings">
       <Page.Contents isLoading={!user || isLoading}>
         <UserProfileEditTabs components={components}>
-          <Stack direction="column" gap={2}>
+          <Stack direction="column" gap={2} data-testid="user-profile-edit-page">
             <UserProfileEditForm updateProfile={updateUserProfile} isSavingUser={isUpdating} user={user} />
             <SharedPreferences resourceUri="user" preferenceType="user" />
             <Stack direction="column" gap={6}>
