@@ -57,11 +57,17 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUI
 			})
 		}
 
-		rows, err = sess.Table(alertRuleVersion{}).Where("rule_org_id = ?", orgID).In("rule_uid", ruleUID).Delete(alertRule{})
+		args, in := getINSubQueryArgs(ruleUID)
+		// This is soft-delete. We reset UID but keep the resource GUID.
+		args = append([]any{fmt.Sprintf(`UPDATE alert_rule_version SET rule_uid = '' WHERE rule_org_id = ? AND rule_uid IN (%s)`, strings.Join(in, ",")), orgID}, args...)
+		result, err := sess.Exec(args...)
 		if err != nil {
 			return err
 		}
-		logger.Debug("Deleted alert rule versions", "count", rows)
+		rows, err = result.RowsAffected()
+		if err == nil {
+			logger.Debug("Alert rule versions marked as deleted", "count", rows)
+		}
 
 		rows, err = sess.Table("alert_instance").Where("rule_org_id = ?", orgID).In("rule_uid", ruleUID).Delete(alertRule{})
 		if err != nil {
