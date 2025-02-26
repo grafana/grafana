@@ -680,6 +680,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     meta?: DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
   ): void {
     this._serializer.initialSaveModel = sortedDeepCloneWithoutNulls(saveModel);
+    this._serializer.initializeMapping(sortedDeepCloneWithoutNulls(saveModel));
     this._serializer.metadata = meta;
   }
 

@@ -25,6 +25,7 @@ export interface DashboardSceneSerializerLike<T, M> {
    */
   initialSaveModel?: T;
   metadata?: M;
+  initializeMapping(saveModel: T): void;
   getSaveModel: (s: DashboardScene) => T;
   getSaveAsModel: (s: DashboardScene, options: SaveDashboardAsOptions) => T;
   getDashboardChangesFromScene: (
@@ -52,6 +53,29 @@ interface DashboardTrackingInfo {
 export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashboard, DashboardMeta> {
   initialSaveModel?: Dashboard;
   metadata?: DashboardMeta;
+  protected elementPanelMap = new Map<string, number>();
+
+  initializeMapping(saveModel: Dashboard) {
+    this.elementPanelMap.clear();
+
+    // element keys are panel-id
+    // FIXME: Should generate "fake-ids"
+    console.log('lookup table', this.elementPanelMap);
+  }
+
+  getPanelIdForElement(elementId: string) {
+    return this.elementPanelMap.get(elementId);
+  }
+
+  getElementIdForPanel(panelId: number) {
+    // Find element ID by looking for matching panel ID
+    for (const [elementId, id] of this.elementPanelMap.entries()) {
+      if (id === panelId) {
+        return elementId;
+      }
+    }
+    return undefined;
+  }
 
   getSaveModel(s: DashboardScene) {
     return transformSceneToSaveModel(s);
@@ -131,6 +155,39 @@ export class V2DashboardSerializer
 {
   initialSaveModel?: DashboardV2Spec;
   metadata?: DashboardWithAccessInfo<DashboardV2Spec>['metadata'];
+  protected elementPanelMap = new Map<string, number>();
+
+  initializeMapping(saveModel: DashboardV2Spec) {
+    this.elementPanelMap.clear();
+
+    const elementKeys = Object.keys(saveModel.elements);
+    elementKeys.forEach((key) => {
+      const elementPanel = saveModel.elements[key];
+      if (elementPanel.kind === 'Panel') {
+        // check panel id exists and is unique
+        if (this.getElementIdForPanel(elementPanel.spec.id)) {
+          console.error('Panel id is not unique');
+        }
+        this.elementPanelMap.set(key, elementPanel.spec.id);
+      }
+    });
+
+    console.log('lookup table', this.elementPanelMap);
+  }
+
+  getPanelIdForElement(elementId: string) {
+    return this.elementPanelMap.get(elementId);
+  }
+
+  getElementIdForPanel(panelId: number) {
+    // Find element ID by looking for matching panel ID
+    for (const [elementId, id] of this.elementPanelMap.entries()) {
+      if (id === panelId) {
+        return elementId;
+      }
+    }
+    return undefined;
+  }
 
   getSaveModel(s: DashboardScene) {
     return transformSceneToSaveModelSchemaV2(s);
