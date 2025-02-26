@@ -9,7 +9,7 @@ on:
 jobs:
   test-frontend:
     runs-on: ubuntu-latest-8-cores
-    name: Frontend test ${{ matrix.chunk }}
+    name: "${{ matrix.chunk }} / 8"
     strategy:
       fail-fast: true
       matrix:
