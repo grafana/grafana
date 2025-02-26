@@ -1,4 +1,4 @@
-import { Button, useStyles2, Icon } from '@grafana/ui';
+import { Button, useStyles2, Icon, Text, Box } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { FeatureInfo } from './types';
@@ -6,7 +6,6 @@ import { FeatureInfo } from './types';
 interface Props {
   feature: FeatureInfo;
   onSetup: () => void;
-  isConfigured?: boolean;
   showSetupButton?: boolean;
 }
 
@@ -39,13 +38,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     featureButton: css({
       alignSelf: 'flex-start',
     }),
-    configuredStatus: css({
-      display: 'flex',
-      alignItems: 'center',
-      color: theme.colors.success.text,
-      fontSize: theme.typography.body.fontSize,
-      marginTop: 'auto',
-    }),
     configuredIcon: css({
       color: theme.colors.success.main,
       marginRight: theme.spacing(1),
@@ -53,8 +45,9 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export const FeatureCard = ({ feature, onSetup, isConfigured = false, showSetupButton = true }: Props) => {
+export const FeatureCard = ({ feature, onSetup, showSetupButton = true }: Props) => {
   const styles = useStyles2(getStyles);
+  const isConfigured = feature.steps.length > 0 ? feature.steps.every((step) => step.fulfilled) : true;
 
   return (
     <div className={styles.featureItem}>
@@ -67,10 +60,11 @@ export const FeatureCard = ({ feature, onSetup, isConfigured = false, showSetupB
           Setup Now
         </Button>
       )}
-      {isConfigured && (
-        <div className={styles.configuredStatus}>
-          <Icon name="check-circle" className={styles.configuredIcon} /> Configured
-        </div>
+      {showSetupButton && isConfigured && (
+        <Box>
+          <Icon name="check-circle" className={styles.configuredIcon} />
+          <Text color="success">Configured</Text>
+        </Box>
       )}
     </div>
   );

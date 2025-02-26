@@ -126,7 +126,8 @@ export const getCompactStyles = (theme: GrafanaTheme2) => {
 export const SetupWizard = () => {
   const styles = useStyles2(getStyles);
   const [features, setFeatures] = useState<FeatureInfo[]>([]);
-  const [selectedFeature, setSelectedFeature] = useState<number | null>(null);
+  const [showInstructionsModal, setShowInstructionsModal] = useState(false);
+  const [activeFeature, setActiveFeature] = useState<FeatureInfo | null>(null);
 
   // Check if required feature toggles are enabled
   const checkRequiredFeatures = () => {
@@ -223,26 +224,6 @@ export const SetupWizard = () => {
     setFeatures(featuresList);
   }, []);
 
-  const handleFeatureSelect = (index: number) => {
-    // Only open the modal if the feature is not fully completed
-    const feature = features[index];
-    const allStepsFulfilled = feature?.steps.every((step) => step.fulfilled);
-
-    if (!allStepsFulfilled) {
-      setSelectedFeature(index);
-    }
-    // If all steps are fulfilled, don't open the modal
-  };
-
-  const handleInstructionsClose = () => {
-    setSelectedFeature(null);
-  };
-
-  // Separate required and optional features
-  const requiredFeatures = features.filter((feature) => !feature.additional);
-  const optionalFeatures = features.filter((feature) => feature.additional);
-  const hasFeatureToggles = checkRequiredFeatures();
-
   // Add a state variable to store the basic setup
   const [basicSetup] = useState<FeatureInfo>({
     title: 'Provisioning',
@@ -253,14 +234,34 @@ export const SetupWizard = () => {
         title: 'Enable Required Feature Toggles',
         description: 'Add these settings to your custom.ini file to enable necessary features:',
         code: feature_ini,
-        fulfilled: hasFeatureToggles,
+        fulfilled: checkRequiredFeatures(),
       },
     ],
   });
 
+  const handleShowInstructions = (feature: FeatureInfo) => {
+    // Only open the modal if the feature is not fully completed
+    const allStepsFulfilled = feature?.steps.every((step) => step.fulfilled);
+    if (!allStepsFulfilled) {
+      setActiveFeature(feature);
+      setShowInstructionsModal(true);
+    }
+    // If all steps are fulfilled, don't open the modal
+  };
+
+  const handleInstructionsClose = () => {
+    setShowInstructionsModal(false);
+    setActiveFeature(null);
+  };
+
+  // Separate required and optional features
+  const requiredFeatures = features.filter((feature) => !feature.additional);
+  const optionalFeatures = features.filter((feature) => feature.additional);
+  const hasFeatureToggles = checkRequiredFeatures();
+
   return (
     <div>
-      {selectedFeature === null && (
+      {!showInstructionsModal && (
         <>
           {requiredFeatures.length > 0 && (
             <>
@@ -268,17 +269,19 @@ export const SetupWizard = () => {
               <p className={styles.subtitle}>This setup is required for provisioning to work properly.</p>
               <div className={styles.featuresList}>
                 {requiredFeatures.map((feature, index) => {
-                  return <FeatureCard key={index} feature={feature} onSetup={() => {}} showSetupButton={false} />;
+                  return (
+                    <FeatureCard key={index} feature={feature} onSetup={() => {}} showSetupButton={hasFeatureToggles} />
+                  );
                 })}
               </div>
-              {!hasFeatureToggles ? (
-                <Button variant="primary" onClick={() => setSelectedFeature(-1)} className={styles.featureButton}>
+              {!hasFeatureToggles && (
+                <Button
+                  variant="primary"
+                  onClick={() => handleShowInstructions(basicSetup)}
+                  className={styles.featureButton}
+                >
                   Setup Now
                 </Button>
-              ) : (
-                <div className={styles.configuredStatus}>
-                  <Icon name="check-circle" className={styles.configuredIcon} /> Configured
-                </div>
               )}
             </>
           )}
@@ -293,16 +296,12 @@ export const SetupWizard = () => {
                 </p>
                 <div className={styles.featuresList}>
                   {optionalFeatures.map((feature, index) => {
-                    const featureIndex = features.findIndex((f) => f.title === feature.title);
-                    const allStepsFulfilled = feature.steps.every((step) => step.fulfilled);
-
                     return (
                       <FeatureCard
                         key={index}
                         feature={feature}
-                        onSetup={() => handleFeatureSelect(featureIndex)}
-                        isConfigured={allStepsFulfilled}
-                        showSetupButton={!allStepsFulfilled}
+                        onSetup={() => handleShowInstructions(feature)}
+                        showSetupButton={true}
                       />
                     );
                   })}
@@ -313,12 +312,8 @@ export const SetupWizard = () => {
         </>
       )}
 
-      {selectedFeature !== null && (
-        <InstructionsModal
-          feature={selectedFeature === -1 ? basicSetup : features[selectedFeature]}
-          isOpen={true}
-          onDismiss={handleInstructionsClose}
-        />
+      {showInstructionsModal && activeFeature && (
+        <InstructionsModal feature={activeFeature} isOpen={true} onDismiss={handleInstructionsClose} />
       )}
     </div>
   );

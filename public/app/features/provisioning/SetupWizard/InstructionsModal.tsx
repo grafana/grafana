@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Button, useStyles2, Icon, Container } from '@grafana/ui';
+import { Modal, Button, useStyles2, Icon } from '@grafana/ui';
 import { FeatureInfo } from './types';
 import { css } from '@emotion/css';
 import { InstructionStepComponent } from './InstructionStepComponent';
