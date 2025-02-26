@@ -1709,7 +1709,7 @@
       "cancel": "Cancel"
     },
     "confirm-content": {
-      "placeholder": "Type {{confirmPromptText}} to confirm"
+      "placeholder": "Type \"{{confirmPromptText}}\" to confirm"
     },
     "data-link-editor": {
       "info": "With data links you can reference data variables like series name, labels and values. Type CMD+Space, CTRL+Space, or $ to open variable suggestions.",
@@ -1754,7 +1754,6 @@
       "access-label": "Access",
       "access-options-browser": "Browser",
       "access-options-proxy": "Server (default)",
-      "alert-title-empty": "",
       "allowed-cookies": "Allowed cookies",
       "allowed-cookies-tooltip": "Grafana proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source.",
       "auth": "Auth",
@@ -1771,7 +1770,6 @@
       "proxy-url-tooltip": "Your access method is <1>Server</1>, this means the URL needs to be accessible from the grafana backend/server.",
       "server-mode-description": "All requests will be made from the browser to Grafana backend/server which in turn will forward the requests to the data source and by that circumvent possible Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the grafana backend/server if you select this access mode.",
       "server-mode-title": "<0>Server access mode (Default):</0>",
-      "sigV4-auth-label": "SigV4 auth",
       "timeout-form-label": "Timeout",
       "timeout-label": "Timeout in seconds",
       "timeout-tooltip": "HTTP request timeout in seconds",
@@ -1789,19 +1787,17 @@
       "custom-headers-header-placeholder": "Header Value",
       "custom-headers-header-remove": "Remove header",
       "custom-headers-header-value": "Value",
-      "custom-headers-placeholder": "X-Custom-Header",
       "custom-headers-title": "Custom HTTP Headers",
       "secure-socks-heading": "Secure Socks Proxy",
       "secure-socks-label": "Enabled",
       "secure-socks-tooltip": "Connect to this datasource via the secure socks proxy.",
       "tls-certification-label": "CA Cert",
-      "tls-certification-placeholder": "Begins with -----BEGIN CERTIFICATE-----",
+      "tls-certification-placeholder": "Begins with {{certificateBeginsWith}}",
       "tls-client-certification-label": "Client Cert",
       "tls-client-key-label": "Client Key",
-      "tls-client-key-placeholder": "Begins with -----BEGIN RSA PRIVATE KEY-----",
+      "tls-client-key-placeholder": "Begins with {{privateKeyBeginsWith}}",
       "tls-heading": "TLS/SSL Auth Details",
       "tls-server-name-label": "ServerName",
-      "tls-server-name-placeholder": "domain.example.com",
       "tls-tooltip": "TLS/SSL Certs are encrypted and stored in the Grafana database."
     },
     "date-time-picker": {

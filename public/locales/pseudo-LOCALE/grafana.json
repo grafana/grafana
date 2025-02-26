@@ -1709,7 +1709,7 @@
       "cancel": "Cäŉčęľ"
     },
     "confirm-content": {
-      "placeholder": "Ŧypę {{confirmPromptText}} ŧő čőŉƒįřm"
+      "placeholder": "Ŧypę \"{{confirmPromptText}}\" ŧő čőŉƒįřm"
     },
     "data-link-editor": {
       "info": "Ŵįŧĥ đäŧä ľįŉĸş yőū čäŉ řęƒęřęŉčę đäŧä väřįäþľęş ľįĸę şęřįęş ŉämę, ľäþęľş äŉđ väľūęş. Ŧypę CMĐ+Ŝpäčę, CŦŖĿ+Ŝpäčę, őř $ ŧő őpęŉ väřįäþľę şūģģęşŧįőŉş.",
@@ -1754,7 +1754,6 @@
       "access-label": "Åččęşş",
       "access-options-browser": "ßřőŵşęř",
       "access-options-proxy": "Ŝęřvęř (đęƒäūľŧ)",
-      "alert-title-empty": "",
       "allowed-cookies": "Åľľőŵęđ čőőĸįęş",
       "allowed-cookies-tooltip": "Ğřäƒäŉä přőχy đęľęŧęş ƒőřŵäřđęđ čőőĸįęş þy đęƒäūľŧ. Ŝpęčįƒy čőőĸįęş þy ŉämę ŧĥäŧ şĥőūľđ þę ƒőřŵäřđęđ ŧő ŧĥę đäŧä şőūřčę.",
       "auth": "Åūŧĥ",
@@ -1771,7 +1770,6 @@
       "proxy-url-tooltip": "Ÿőūř äččęşş męŧĥőđ įş <1>Ŝęřvęř</1>, ŧĥįş męäŉş ŧĥę ŮŖĿ ŉęęđş ŧő þę äččęşşįþľę ƒřőm ŧĥę ģřäƒäŉä þäčĸęŉđ/şęřvęř.",
       "server-mode-description": "Åľľ řęqūęşŧş ŵįľľ þę mäđę ƒřőm ŧĥę þřőŵşęř ŧő Ğřäƒäŉä þäčĸęŉđ/şęřvęř ŵĥįčĥ įŉ ŧūřŉ ŵįľľ ƒőřŵäřđ ŧĥę řęqūęşŧş ŧő ŧĥę đäŧä şőūřčę äŉđ þy ŧĥäŧ čįřčūmvęŉŧ pőşşįþľę Cřőşş-Øřįģįŉ Ŗęşőūřčę Ŝĥäřįŉģ (CØŖŜ) řęqūįřęmęŉŧş. Ŧĥę ŮŖĿ ŉęęđş ŧő þę äččęşşįþľę ƒřőm ŧĥę ģřäƒäŉä þäčĸęŉđ/şęřvęř įƒ yőū şęľęčŧ ŧĥįş äččęşş mőđę.",
       "server-mode-title": "<0>Ŝęřvęř äččęşş mőđę (Đęƒäūľŧ):</0>",
-      "sigV4-auth-label": "ŜįģV4 äūŧĥ",
       "timeout-form-label": "Ŧįmęőūŧ",
       "timeout-label": "Ŧįmęőūŧ įŉ şęčőŉđş",
       "timeout-tooltip": "ĦŦŦP řęqūęşŧ ŧįmęőūŧ įŉ şęčőŉđş",
@@ -1789,19 +1787,17 @@
       "custom-headers-header-placeholder": "Ħęäđęř Väľūę",
       "custom-headers-header-remove": "Ŗęmővę ĥęäđęř",
       "custom-headers-header-value": "Väľūę",
-      "custom-headers-placeholder": "X-Cūşŧőm-Ħęäđęř",
       "custom-headers-title": "Cūşŧőm ĦŦŦP Ħęäđęřş",
       "secure-socks-heading": "Ŝęčūřę Ŝőčĸş Přőχy",
       "secure-socks-label": "Ēŉäþľęđ",
       "secure-socks-tooltip": "Cőŉŉęčŧ ŧő ŧĥįş đäŧäşőūřčę vįä ŧĥę şęčūřę şőčĸş přőχy.",
       "tls-certification-label": "CÅ Cęřŧ",
-      "tls-certification-placeholder": "ßęģįŉş ŵįŧĥ -----ßĒĞĨŃ CĒŖŦĨFĨCÅŦĒ-----",
+      "tls-certification-placeholder": "ßęģįŉş ŵįŧĥ {{certificateBeginsWith}}",
       "tls-client-certification-label": "Cľįęŉŧ Cęřŧ",
       "tls-client-key-label": "Cľįęŉŧ Ķęy",
-      "tls-client-key-placeholder": "ßęģįŉş ŵįŧĥ -----ßĒĞĨŃ ŖŜÅ PŖĨVÅŦĒ ĶĒŸ-----",
+      "tls-client-key-placeholder": "ßęģįŉş ŵįŧĥ {{privateKeyBeginsWith}}",
       "tls-heading": "ŦĿŜ/ŜŜĿ Åūŧĥ Đęŧäįľş",
       "tls-server-name-label": "ŜęřvęřŃämę",
-      "tls-server-name-placeholder": "đőmäįŉ.ęχämpľę.čőm",
       "tls-tooltip": "ŦĿŜ/ŜŜĿ Cęřŧş äřę ęŉčřypŧęđ äŉđ şŧőřęđ įŉ ŧĥę Ğřäƒäŉä đäŧäþäşę."
     },
     "date-time-picker": {

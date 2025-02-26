@@ -349,7 +349,8 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
           {sigV4AuthToggleEnabled && (
             <div className="gf-form-inline">
               <InlineField
-                label={t('grafana-ui.data-source-http-settings.sigV4-auth-label', 'SigV4 auth')}
+                // eslint-disable-next-line @grafana/no-untranslated-strings
+                label="SigV4 auth"
                 labelWidth={LABEL_WIDTH}
                 disabled={dataSourceConfig.readOnly}
               >

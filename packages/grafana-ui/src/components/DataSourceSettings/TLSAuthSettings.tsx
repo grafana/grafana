@@ -49,6 +49,9 @@ export const TLSAuthSettings = ({ dataSourceConfig, onChange }: HttpSettingsBase
     });
   };
 
+  const certificateBeginsWith = '-----BEGIN CERTIFICATE-----';
+  const privateKeyBeginsWith = '-----BEGIN RSA PRIVATE KEY-----';
+
   return (
     <div className="gf-form-group">
       <div
@@ -80,7 +83,8 @@ export const TLSAuthSettings = ({ dataSourceConfig, onChange }: HttpSettingsBase
             onChange={onCertificateChangeFactory('tlsCACert')}
             placeholder={t(
               'grafana-ui.data-source-settings.tls-certification-placeholder',
-              'Begins with -----BEGIN CERTIFICATE-----'
+              'Begins with {{certificateBeginsWith}}',
+              { certificateBeginsWith }
             )}
             label={t('grafana-ui.data-source-settings.tls-certification-label', 'CA Cert')}
             onClick={onResetClickFactory('tlsCACert')}
@@ -106,7 +110,8 @@ export const TLSAuthSettings = ({ dataSourceConfig, onChange }: HttpSettingsBase
               onChange={onCertificateChangeFactory('tlsClientCert')}
               placeholder={t(
                 'grafana-ui.data-source-settings.tls-certification-placeholder',
-                'Begins with -----BEGIN CERTIFICATE-----'
+                'Begins with {{certificateBeginsWith}}',
+                { certificateBeginsWith }
               )}
               onClick={onResetClickFactory('tlsClientCert')}
             />
@@ -116,7 +121,8 @@ export const TLSAuthSettings = ({ dataSourceConfig, onChange }: HttpSettingsBase
               label={t('grafana-ui.data-source-settings.tls-client-key-label', 'Client Key')}
               placeholder={t(
                 'grafana-ui.data-source-settings.tls-client-key-placeholder',
-                'Begins with -----BEGIN RSA PRIVATE KEY-----'
+                'Begins with {{privateKeyBeginsWith}}',
+                { privateKeyBeginsWith }
               )}
               onChange={onCertificateChangeFactory('tlsClientKey')}
               onClick={onResetClickFactory('tlsClientKey')}
