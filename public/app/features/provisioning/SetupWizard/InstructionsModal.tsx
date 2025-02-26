@@ -14,43 +14,25 @@ export interface Props {
 
 export const InstructionsModal = ({ feature, isOpen, onDismiss }: Props) => {
   const styles = useStyles2(getStyles);
-  const [currentStep, setCurrentStep] = useState(0);
 
-  // Find the first unfulfilled step
-  const firstUnfulfilledStep = feature.steps.findIndex((step) => !step.fulfilled);
-  const initialStep = firstUnfulfilledStep === -1 ? 0 : firstUnfulfilledStep;
-
-  // Use initialStep if currentStep is still 0 (initial render)
-  useEffect(() => {
-    if (currentStep === 0 && initialStep !== 0) {
-      setCurrentStep(initialStep);
-    }
-  }, [currentStep, initialStep]);
-
-  const handleNext = () => {
-    if (currentStep < feature.steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
+  // Initialize to the first unfulfilled step or 0
+  const initialStepIndex = feature.steps.findIndex((step) => !step.fulfilled);
+  const [currentStep, setCurrentStep] = useState(initialStepIndex === -1 ? 0 : initialStepIndex);
 
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === feature.steps.length - 1;
-  const currentStepData = feature.steps[currentStep];
-  const sideBarSteps = feature.steps.map((step) => step.title);
+  const stepTitles = feature.steps.map((step) => step.title);
+
+  const handleNext = () => !isLastStep && setCurrentStep(currentStep + 1);
+  const handlePrevious = () => !isFirstStep && setCurrentStep(currentStep - 1);
 
   return (
     <Modal isOpen={isOpen} title={`Setup ${feature.title}`} onDismiss={onDismiss} className={styles.modal}>
       <Stack direction="row" height="100%">
-        <InstructionsSidebar steps={sideBarSteps} currentStep={currentStep} onStepClick={setCurrentStep} />
+        <InstructionsSidebar steps={stepTitles} currentStep={currentStep} onStepClick={setCurrentStep} />
 
         <div className={styles.contentWrapper}>
-          <InstructionStepComponent step={currentStepData} />
+          <InstructionStepComponent step={feature.steps[currentStep]} />
         </div>
       </Stack>
 
@@ -87,6 +69,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   footer: css`
     padding: ${theme.spacing(2)};
-    border-top: 1px solid ${theme.colors.border.medium};
   `,
 });
