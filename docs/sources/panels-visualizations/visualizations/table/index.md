@@ -334,9 +334,10 @@ Set the following options:
 - **Alt text** - Set the alternative text of an image. The text will be available for screen readers and in cases when images can't be loaded.
 - **Title text** - Set the text that's displayed when the image is hovered over with a cursor.
 
-##### Actions API options
+##### Actions
 
-The following options let you configure basic, unauthenticated API calls triggered by the clicking the table cell:
+The cell displays a button that triggers a basic, unauthenticated API call when clicked.
+Configure the API call with the following options:
 
 <!-- prettier-ignore-start -->
 | Option  | Description  |
