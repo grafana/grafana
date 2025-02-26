@@ -1706,9 +1706,18 @@
         "one-click-description": "Only one link {{ action }} can have one click enabled at a time"
       }
     },
+    "alert": {
+      "close-button": "Close alert"
+    },
     "auto-save-field": {
       "saved": "Saved!",
       "saving": "Saving <1></1>"
+    },
+    "card": {
+      "option": "option"
+    },
+    "cascader": {
+      "clear-button": "Clear selection"
     },
     "color-picker-popover": {
       "palette-tab": "Colors",
@@ -1717,8 +1726,15 @@
     "confirm-button": {
       "cancel": "Cancel"
     },
+    "confirm-content": {
+      "placeholder": "Type \"{{confirmPromptText}}\" to confirm"
+    },
     "data-link-editor": {
-      "info": "With data links you can reference data variables like series name, labels and values. Type CMD+Space, CTRL+Space, or $ to open variable suggestions."
+      "info": "With data links you can reference data variables like series name, labels and values. Type CMD+Space, CTRL+Space, or $ to open variable suggestions.",
+      "new-tab-label": "Open in new tab",
+      "title-label": "Title",
+      "title-placeholder": "Show details",
+      "url-label": "URL"
     },
     "data-link-editor-modal": {
       "cancel": "Cancel",
@@ -1738,32 +1754,77 @@
       "tooltip-remove": "Remove",
       "url-not-provided": "Data link url not provided"
     },
+    "data-source-basic-auth-settings": {
+      "user-label": "User",
+      "user-placeholder": "user"
+    },
+    "data-source-http-proxy-settings": {
+      "oauth-identity-label": "Forward OAuth Identity",
+      "oauth-identity-tooltip": "Forward the user's upstream OAuth identity to the data source (Their access token gets passed along).",
+      "skip-tls-verify-label": "Skip TLS Verify",
+      "ts-client-auth-label": "TLS Client Auth",
+      "with-ca-cert-label": "With CA Cert",
+      "with-ca-cert-tooltip": "Needed for verifying self-signed TLS Certs"
+    },
     "data-source-http-settings": {
       "access-help": "Help <1></1>",
       "access-help-details": "Access mode controls how requests to the data source will be handled.<1> <1>Server</1></1> should be the preferred way if nothing else is stated.",
+      "access-label": "Access",
+      "access-options-browser": "Browser",
+      "access-options-proxy": "Server (default)",
       "allowed-cookies": "Allowed cookies",
+      "allowed-cookies-tooltip": "Grafana proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source.",
       "auth": "Auth",
+      "azure-auth-label": "Azure Authentication",
+      "azure-auth-tooltip": "Use Azure authentication for Azure endpoint.",
       "basic-auth": "Basic Auth Details",
+      "basic-auth-label": "Basic auth",
       "browser-mode-description": "All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.",
       "browser-mode-title": "<0>Browser access mode:</0>",
+      "default-url-access-select": "Access",
       "default-url-tooltip": "Specify a complete HTTP URL (for example http://your_server:8080)",
       "direct-url-tooltip": "Your access method is <1>Browser</1>, this means the URL needs to be accessible from the browser.",
       "heading": "HTTP",
       "proxy-url-tooltip": "Your access method is <1>Server</1>, this means the URL needs to be accessible from the grafana backend/server.",
       "server-mode-description": "All requests will be made from the browser to Grafana backend/server which in turn will forward the requests to the data source and by that circumvent possible Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the grafana backend/server if you select this access mode.",
-      "server-mode-title": "<0>Server access mode (Default):</0>"
+      "server-mode-title": "<0>Server access mode (Default):</0>",
+      "timeout-form-label": "Timeout",
+      "timeout-label": "Timeout in seconds",
+      "timeout-tooltip": "HTTP request timeout in seconds",
+      "url-label": "URL",
+      "with-credential-label": "With Credentials",
+      "with-credential-tooltip": "Whether credentials such as cookies or auth headers should be sent with cross-site requests."
     },
     "data-source-settings": {
       "alerting-settings-heading": "Alerting",
+      "alerting-settings-label": "Manage alert rules in Alerting UI",
+      "alerting-settings-tooltip": "Manage alert rules for this data source. To manage other alerting resources, add an Alertmanager data source.",
       "cert-key-reset": "Reset",
       "custom-headers-add": "Add header",
+      "custom-headers-header": "Header",
+      "custom-headers-header-placeholder": "Header Value",
+      "custom-headers-header-remove": "Remove header",
+      "custom-headers-header-value": "Value",
       "custom-headers-title": "Custom HTTP Headers",
       "secure-socks-heading": "Secure Socks Proxy",
-      "tls-heading": "TLS/SSL Auth Details"
+      "secure-socks-label": "Enabled",
+      "secure-socks-tooltip": "Connect to this datasource via the secure socks proxy.",
+      "tls-certification-label": "CA Cert",
+      "tls-certification-placeholder": "Begins with {{certificateBeginsWith}}",
+      "tls-client-certification-label": "Client Cert",
+      "tls-client-key-label": "Client Key",
+      "tls-client-key-placeholder": "Begins with {{privateKeyBeginsWith}}",
+      "tls-heading": "TLS/SSL Auth Details",
+      "tls-server-name-label": "ServerName",
+      "tls-tooltip": "TLS/SSL Certs are encrypted and stored in the Grafana database."
     },
     "date-time-picker": {
       "apply": "Apply",
-      "cancel": "Cancel"
+      "calendar-icon-label": "Time picker",
+      "cancel": "Cancel",
+      "next-label": "Next month",
+      "previous-label": "Previous month",
+      "select-placeholder": "Select date/time"
     },
     "drawer": {
       "close": "Close"
@@ -1787,6 +1848,10 @@
     "modal": {
       "close-tooltip": "Close"
     },
+    "named-colors-palette": {
+      "text-color-swatch": "Text color",
+      "transparent-swatch": "Transparent"
+    },
     "secret-form-field": {
       "reset": "Reset"
     },
@@ -1799,6 +1864,9 @@
       "default-create-label": "Hit enter to add",
       "no-options-label": "No options found",
       "placeholder": "Choose"
+    },
+    "series-color-picker-popover": {
+      "y-axis-usage": "Use right y-axis"
     },
     "spinner": {
       "aria-label": "Loading"
@@ -1818,6 +1886,9 @@
     },
     "user-icon": {
       "active-text": "Active last 15m"
+    },
+    "value-pill": {
+      "remove-button": "Remove {{children}}"
     },
     "viz-legend": {
       "right-axis-indicator": "(right y-axis)"
@@ -3721,10 +3792,13 @@
       "example": "Example: to select a time range from 10 minutes ago to now",
       "example-details": "From: now-10m To: now",
       "example-title": "Example time ranges",
+      "from-label": "From",
       "from-to": "{{timeOptionFrom}} to {{timeOptionTo}}",
       "more-info": "For more information see <2>docs <1></1></2>.",
       "specify": "Specify time range <1></1>",
-      "supported-formats": "Supported formats: <1>now-[digit]s/m/h/d/w</1>"
+      "submit-button-label": "TimePicker submit button",
+      "supported-formats": "Supported formats: <1>now-[digit]s/m/h/d/w</1>",
+      "to-label": "To"
     },
     "zone": {
       "select-aria-label": "Time zone picker",
