@@ -598,7 +598,6 @@ export function getFieldLegendItem(
     return getThresholdItems(fieldConfig, theme);
   }
 
-  // If thresholds are enabled show each step in the legend
   if (colorMode.startsWith('continuous')) {
     return undefined; // eventually a color bar
   }
