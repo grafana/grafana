@@ -88,7 +88,6 @@ RUN if [[ "$BINGO" = "true" ]]; then \
     fi
 
 COPY Makefile build.go package.json ./
-COPY cue.mod cue.mod
 COPY kinds kinds
 COPY local local
 COPY packages/grafana-schema packages/grafana-schema
