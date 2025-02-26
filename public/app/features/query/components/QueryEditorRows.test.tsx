@@ -1,5 +1,6 @@
 import { fireEvent, queryByLabelText, render, screen } from '@testing-library/react';
 
+import { setPluginComponentsHook } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
@@ -33,6 +34,8 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
     }),
   };
 });
+
+setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 
 const props: Props = {
   queries: [
