@@ -6,6 +6,7 @@ require (
 	buf.build/gen/go/parca-dev/parca/connectrpc/go v1.17.0-20240902100956-02fd72488966.1 // @grafana/observability-traces-and-profiling
 	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.34.2-20240902100956-02fd72488966.2 // @grafana/observability-traces-and-profiling
 	cloud.google.com/go/kms v1.20.0 // @grafana/grafana-backend-group
+	cloud.google.com/go/spanner v1.70.0 // @grafana/grafana-search-and-storage
 	cloud.google.com/go/storage v1.43.0 // @grafana/grafana-backend-group
 	connectrpc.com/connect v1.17.0 // @grafana/observability-traces-and-profiling
 	cuelang.org/go v0.11.1 // @grafana/grafana-as-code
@@ -545,11 +546,6 @@ require (
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.31.0 // indirect
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
-)
-
-require cloud.google.com/go/spanner v1.70.0
-
-require (
 	cloud.google.com/go/monitoring v1.21.1 // indirect
 	github.com/GoogleCloudPlatform/grpc-gcp-go/grpcgcp v1.5.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.25.0 // indirect
