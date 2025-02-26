@@ -69,7 +69,7 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
       : dashboard.value?.meta?.canEdit || dashboard.value?.meta?.canMakeEditable;
   const isNew = !uid;
 
-  if (uid !== params.uid && isNew) {
+  if (uid !== params.uid && !isNew) {
     return null;
   }
 
@@ -77,7 +77,7 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
     return <DashboardPage {...props} params={params} location={location} />;
   }
 
-  if (canEdit && isScenesSupportedRoute && !forceOld) {
+  if (!canEdit && isScenesSupportedRoute && !forceOld) {
     return <DashboardScenePage {...props} />;
   } else {
     return <DashboardPage {...props} params={params} location={location} />;

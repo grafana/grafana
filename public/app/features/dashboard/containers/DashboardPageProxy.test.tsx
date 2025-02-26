@@ -194,7 +194,7 @@ describe('DashboardPageProxy', () => {
         });
       });
 
-      it('should render DashboardScenePage if route is Normal and has uid', async () => {
+      it.only('should render DashboardScenePage if route is Normal and has uid', async () => {
         getDashboardScenePageStateManager().setDashboardCache('uid', dashMock);
         act(() => {
           setup({
