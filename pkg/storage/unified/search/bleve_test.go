@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"testing"
@@ -597,4 +598,71 @@ func (nc StubAccessClient) Write(ctx context.Context, req *authzextv1.WriteReque
 
 func (nc StubAccessClient) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
 	return nil, nil
+}
+
+func TestSafeInt64ToInt(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   int64
+		want    int
+		wantErr bool
+	}{
+		{
+			name:  "Valid int64 within int range",
+			input: 42,
+			want:  42,
+		},
+		{
+			name:    "Overflow int64 value",
+			input:   math.MaxInt64,
+			want:    0,
+			wantErr: true,
+		},
+		{
+			name:    "Underflow int64 value",
+			input:   math.MinInt64,
+			want:    0,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := safeInt64ToInt(tt.input)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_isValidPath(t *testing.T) {
+	tests := []struct {
+		name    string
+		path    string
+		safeDir string
+		want    bool
+	}{
+		{
+			name:    "valid path",
+			path:    "/path/to/file.json",
+			safeDir: "/path/to",
+			want:    true,
+		},
+		{
+			name: "invalid path: ..",
+			path: "/path/../above/file",
+		},
+		{
+			name: "invalid path: \\",
+			path: "\\some/path",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, isValidPath(tt.path, tt.safeDir))
+		})
+	}
 }

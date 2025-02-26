@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"math"
 	"os"
 	"path/filepath"
 	"slices"
@@ -128,6 +129,9 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 			fname = b.start.Format("tmp-20060102-150405")
 		}
 		dir := filepath.Join(resourceDir, fname)
+		if !isValidPath(dir, b.opts.Root) {
+			b.log.Error("Directory is not valid", "directory", dir, "error", err)
+		}
 		if resourceVersion > 0 {
 			info, _ := os.Stat(dir)
 			if info != nil && info.IsDir() {
@@ -214,6 +218,9 @@ func (b *bleveBackend) cleanOldIndexes(dir string, skip string) {
 	for _, file := range files {
 		if file.IsDir() && file.Name() != skip {
 			fpath := filepath.Join(dir, file.Name())
+			if !isValidPath(fpath, b.opts.Root) {
+				b.log.Error("Path is not valid", "directory", fpath, "error", err)
+			}
 			err = os.RemoveAll(fpath)
 			if err != nil {
 				b.log.Error("Unable to remove old index folder", "directory", fpath, "error", err)
@@ -222,6 +229,14 @@ func (b *bleveBackend) cleanOldIndexes(dir string, skip string) {
 			}
 		}
 	}
+}
+
+// isValidPath does a sanity check in case it tries to access dirs above the file tree
+func isValidPath(path, safeDir string) bool {
+	if strings.Contains(path, "\\") || strings.Contains(path, "..") || !strings.HasPrefix(path, safeDir) {
+		return false
+	}
+	return true
 }
 
 // TotalDocs returns the total number of documents across all indices
@@ -557,10 +572,19 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 		fields = append(fields, f)
 	}
 
+	size, err := safeInt64ToInt(req.Limit)
+	if err != nil {
+		return nil, resource.AsErrorResult(err)
+	}
+	offset, err := safeInt64ToInt(req.Offset)
+	if err != nil {
+		return nil, resource.AsErrorResult(err)
+	}
+
 	searchrequest := &bleve.SearchRequest{
 		Fields:  fields,
-		Size:    int(req.Limit),
-		From:    int(req.Offset),
+		Size:    size,
+		From:    offset,
 		Explain: req.Explain,
 		Facets:  facets,
 	}
@@ -666,6 +690,13 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 	}
 
 	return searchrequest, nil
+}
+
+func safeInt64ToInt(i64 int64) (int, error) {
+	if i64 > math.MaxInt32 || i64 < math.MinInt32 {
+		return 0, fmt.Errorf("int64 value %d overflows int", i64)
+	}
+	return int(i64), nil
 }
 
 func getSortFields(req *resource.ResourceSearchRequest) []string {
