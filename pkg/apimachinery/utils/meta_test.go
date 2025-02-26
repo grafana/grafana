@@ -544,12 +544,12 @@ func TestMetaAccessor(t *testing.T) {
 				setProperties: &utils.SourceProperties{
 					Path:      "path",
 					Checksum:  "hash",
-					Timestamp: metav1.NewTime(time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC)),
+					Timestamp: time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC).UnixMilli(),
 				},
 				wantProperties: utils.SourceProperties{
 					Path:      "path",
 					Checksum:  "hash",
-					Timestamp: metav1.NewTime(time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC)),
+					Timestamp: time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC).UnixMilli(),
 				},
 				wantOK: true,
 			},

@@ -644,10 +644,8 @@ func (m *grafanaMetaAccessor) GetManagerProperties() (ManagerProperties, bool) {
 		repo := annot[oldAnnoKeyRepoName]
 		if repo != "" {
 			return ManagerProperties{
-				Kind:        ManagerKindRepo,
-				Identity:    repo,
-				AllowsEdits: true,
-				Suspended:   false,
+				Kind:     ManagerKindRepo,
+				Identity: repo,
 			}, true
 		}
 
@@ -655,7 +653,6 @@ func (m *grafanaMetaAccessor) GetManagerProperties() (ManagerProperties, bool) {
 		//
 		// This is to prevent inadvertently marking resources as managed,
 		// since that can potentially block updates from other sources.
-		res.AllowsEdits = true
 		return res, false
 	}
 	res.Identity = id
@@ -727,14 +724,14 @@ func (m *grafanaMetaAccessor) GetSourceProperties() (SourceProperties, bool) {
 		found = true
 	}
 
-	if timestamp, ok := annot[AnnoKeySourceTimestamp]; ok && timestamp != "" {
-		if t, err := time.Parse(time.RFC3339, timestamp); err == nil {
-			res.Timestamp = metav1.NewTime(t)
-			found = true
-		}
-	} else if timestamp, ok := annot[oldAnnoKeyRepoTimestamp]; ok && timestamp != "" {
-		if t, err := time.Parse(time.RFC3339, timestamp); err == nil {
-			res.Timestamp = metav1.NewTime(t)
+	t, ok := annot[AnnoKeySourceTimestamp]
+	if !ok {
+		t, ok = annot[oldAnnoKeyRepoTimestamp]
+	}
+	if ok && t != "" {
+		var err error
+		res.Timestamp, err = strconv.ParseInt(t, 10, 64)
+		if err != nil {
 			found = true
 		}
 	}
@@ -760,8 +757,8 @@ func (m *grafanaMetaAccessor) SetSourceProperties(v SourceProperties) {
 		delete(annot, AnnoKeySourceChecksum)
 	}
 
-	if !v.Timestamp.IsZero() {
-		annot[AnnoKeySourceTimestamp] = v.Timestamp.Format(time.RFC3339)
+	if v.Timestamp > 0 {
+		annot[AnnoKeySourceTimestamp] = strconv.FormatInt(v.Timestamp, 10)
 	} else {
 		delete(annot, AnnoKeySourceTimestamp)
 	}

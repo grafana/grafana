@@ -323,7 +323,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 				meta.SetSourceProperties(utils.SourceProperties{
 					Path:      originPath, // relative path within source
 					Checksum:  origin_hash.String,
-					Timestamp: time.Unix(origin_ts.Int64, 0),
+					Timestamp: origin_ts.Int64,
 				})
 				meta.SetManagerProperties(utils.ManagerProperties{
 					Kind:     utils.ManagerKindRepo, // classic?

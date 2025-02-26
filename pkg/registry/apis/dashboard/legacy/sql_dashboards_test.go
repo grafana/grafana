@@ -95,7 +95,7 @@ func TestScanRow(t *testing.T) {
 		require.Equal(t, "../"+pathToFile, s.Path)       // relative to provisioner
 		require.Equal(t, "hashing", s.Checksum)
 		require.NoError(t, err)
-		require.Equal(t, int64(100000), s.Timestamp.Unix())
+		require.Equal(t, int64(100000), s.Timestamp)
 	})
 
 	t.Run("Plugin provisioned dashboard should have annotations", func(t *testing.T) {
@@ -116,7 +116,7 @@ func TestScanRow(t *testing.T) {
 		require.True(t, ok)
 
 		require.Equal(t, utils.ManagerKindPlugin, manager.Kind)
-		require.Equal(t, "slo", manager.Identity)                            // the ID of the plugin
-		require.Equal(t, "", meta.GetAnnotations()[utils.AnnoKeySourceHash]) // hash is not used on plugins
+		require.Equal(t, "slo", manager.Identity)                                // the ID of the plugin
+		require.Equal(t, "", meta.GetAnnotations()[utils.AnnoKeySourceChecksum]) // hash is not used on plugins
 	})
 }

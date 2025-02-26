@@ -1,7 +1,5 @@
 package utils
 
-import v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 // ManagerProperties is used to identify the manager of the resource.
 type ManagerProperties struct {
 	// The kind of manager, which is responsible for managing the resource.
@@ -45,6 +43,8 @@ func ParseManagerKindString(v string) ManagerKind {
 		return ManagerKindTerraform
 	case string(ManagerKindKubectl):
 		return ManagerKindKubectl
+	case string(ManagerKindPlugin):
+		return ManagerKindPlugin
 	default:
 		return ManagerKindUnknown
 	}
@@ -62,7 +62,7 @@ type SourceProperties struct {
 	// An example could be a git commit hash.
 	Checksum string `json:"checksum,omitempty"`
 
-	// The timestamp of the source of the resource.
+	// The unix millis timestamp of the source of the resource.
 	// An example could be the file modification time.
-	Timestamp v1.Time `json:"timestamp,omitempty"`
+	Timestamp int64 `json:"timestamp,omitempty"`
 }
