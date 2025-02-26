@@ -1,5 +1,4 @@
 import {
-  cacheFieldDisplayNames,
   DataFrame,
   FALLBACK_COLOR,
   Field,
@@ -7,35 +6,36 @@ import {
   FieldConfig,
   FieldType,
   formattedValueToString,
-  getActiveThreshold,
-  getFieldConfigWithMinMax,
   getFieldDisplayName,
-  getTimeField,
   getValueFormat,
   GrafanaTheme2,
-  outerJoinDataFrames,
+  getActiveThreshold,
   Threshold,
-  ThresholdsConfig,
+  getFieldConfigWithMinMax,
   ThresholdsMode,
   TimeRange,
+  cacheFieldDisplayNames,
+  outerJoinDataFrames,
   ValueMapping,
+  ThresholdsConfig,
+  getTimeField,
 } from '@grafana/data';
 import { maybeSortFrame, NULL_RETAIN } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
 import { nullToValue } from '@grafana/data/src/transformations/transformers/nulls/nullToValue';
 import {
+  VizLegendOptions,
   AxisPlacement,
-  HideableFieldConfig,
-  LegendDurationMode,
-  MappingType,
   ScaleDirection,
   ScaleOrientation,
-  TimelineValueAlignment,
   VisibilityMode,
-  VizLegendOptions,
+  TimelineValueAlignment,
+  HideableFieldConfig,
+  MappingType,
+  LegendDurationMode,
 } from '@grafana/schema';
 import { FIXED_UNIT, UPlotConfigBuilder, UPlotConfigPrepFn, VizLegendItem } from '@grafana/ui';
-import { getStackingGroups, preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
+import { preparePlotData2, getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 
 import { getConfig, TimelineCoreOptions } from './timeline';
 
