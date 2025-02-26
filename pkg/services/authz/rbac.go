@@ -46,18 +46,18 @@ func ProvideAuthZClient(
 	db db.DB,
 	acService accesscontrol.Service,
 ) (authlib.AccessClient, error) {
-	authCfg, err := readAuthzClientSettings(cfg)
+	clientCfg, err := ExtractAuthzClientSettings(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) && authCfg.mode == clientModeCloud {
+	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) && clientCfg.mode == clientModeCloud {
 		return nil, errors.New("authZGRPCServer feature toggle is required for cloud and grpc mode")
 	}
 
-	switch authCfg.mode {
+	switch clientCfg.mode {
 	case clientModeCloud:
-		return newRemoteRBACClient(authCfg, tracer)
+		return NewRemoteAuthZClient(clientCfg, features, tracer)
 	default:
 		sql := legacysql.NewDatabaseProvider(db)
 
@@ -93,24 +93,15 @@ func ProvideAuthZClient(
 	}
 }
 
-// ProvideStandaloneAuthZClient provides a standalone AuthZ client, without registering the AuthZ service.
+// NewRemoteAuthZClient provides a standalone AuthZ client, without registering the AuthZ service.
 // You need to provide a remote address in the configuration
-func ProvideStandaloneAuthZClient(
-	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
+func NewRemoteAuthZClient(
+	clientCfg *AuthzClientSettings, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
 ) (authlib.AccessClient, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
 		return nil, nil
 	}
 
-	authCfg, err := readAuthzClientSettings(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	return newRemoteRBACClient(authCfg, tracer)
-}
-
-func newRemoteRBACClient(clientCfg *authzClientSettings, tracer tracing.Tracer) (authlib.AccessClient, error) {
 	tokenClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
 		Token:            clientCfg.token,
 		TokenExchangeURL: clientCfg.tokenExchangeURL,

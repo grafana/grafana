@@ -21,7 +21,7 @@ const (
 	clientModeInproc clientMode = "inproc"
 )
 
-type authzClientSettings struct {
+type AuthzClientSettings struct {
 	remoteAddress string
 	mode          clientMode
 
@@ -30,7 +30,7 @@ type authzClientSettings struct {
 	tokenNamespace   string
 }
 
-func readAuthzClientSettings(cfg *setting.Cfg) (*authzClientSettings, error) {
+func ExtractAuthzClientSettings(cfg *setting.Cfg) (*AuthzClientSettings, error) {
 	authzSection := cfg.SectionWithEnvOverrides("authorization")
 	grpcClientAuthSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
 
@@ -39,7 +39,7 @@ func readAuthzClientSettings(cfg *setting.Cfg) (*authzClientSettings, error) {
 		return nil, fmt.Errorf("authorization: invalid mode %q", mode)
 	}
 
-	s := &authzClientSettings{}
+	s := &AuthzClientSettings{}
 	s.mode = mode
 	if s.mode == clientModeInproc {
 		return s, nil

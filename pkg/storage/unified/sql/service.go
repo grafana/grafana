@@ -102,7 +102,12 @@ func ProvideUnifiedStorageGrpcService(
 }
 
 func (s *service) start(ctx context.Context) error {
-	authzClient, err := authz.ProvideStandaloneAuthZClient(s.cfg, s.features, s.tracing)
+	authzClientCfg, err := authz.ExtractAuthzClientSettings(s.cfg)
+	if err != nil {
+		return err
+	}
+
+	authzClient, err := authz.NewRemoteAuthZClient(authzClientCfg, s.features, s.tracing)
 	if err != nil {
 		return err
 	}
