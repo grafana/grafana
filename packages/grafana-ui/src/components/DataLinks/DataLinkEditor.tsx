@@ -53,15 +53,19 @@ export const DataLinkEditor = memo(
 
     return (
       <div className={styles.listItem}>
-        <Field label="Title">
-          <Input value={value.title} onChange={onTitleChange} placeholder="Show details" />
+        <Field label={t('grafana-ui.data-link-editor.title-label', 'Title')}>
+          <Input
+            value={value.title}
+            onChange={onTitleChange}
+            placeholder={t('grafana-ui.data-link-editor.title-placeholder', 'Show details')}
+          />
         </Field>
 
-        <Field label="URL">
+        <Field label={t('grafana-ui.data-link-editor.url-label', 'URL')}>
           <DataLinkInput value={value.url} onChange={onUrlChange} suggestions={suggestions} />
         </Field>
 
-        <Field label="Open in new tab">
+        <Field label={t('grafana-ui.data-link-editor.new-tab-label', 'Open in new tab')}>
           <Switch value={value.targetBlank || false} onChange={onOpenInNewTabChanged} />
         </Field>
 
