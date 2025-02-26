@@ -3655,6 +3655,16 @@
       "title": "Ÿőū ĥävęŉ'ŧ čřęäŧęđ äŉy ŧęämş yęŧ"
     }
   },
+  "theme-preview": {
+    "breadcrumbs": {
+      "dashboards": "Đäşĥþőäřđş",
+      "home": "Ħőmę"
+    },
+    "panel": {
+      "form-label": "Főřm ľäþęľ",
+      "title": "Päŉęľ"
+    }
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "Ŗęčęŉŧľy ūşęđ äþşőľūŧę řäŉģęş",
