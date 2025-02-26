@@ -53,6 +53,19 @@ export const requiredFeatureToggles: Array<keyof FeatureToggles> = [
 ];
 
 // Configuration examples
+export const feature_ini = `# In your custom.ini file
+app_mode = development
+[feature_toggles]
+provisioning = true
+kubernetesDashboards = true
+unifiedStorageSearch = true
+unifiedStorageSearchUI = true
+kubernetesClientDashboardsFolders = true
+
+# If you want easy kubectl setup development mode
+grafanaAPIServerEnsureKubectlAccess = true`;
+
+// Configuration examples
 export const custom_ini = `# In your custom.ini file
 app_mode = development
 [feature_toggles]

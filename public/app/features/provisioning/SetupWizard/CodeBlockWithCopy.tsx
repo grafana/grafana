@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useStyles2, Icon } from '@grafana/ui';
 import { getStyles } from './styles';
 import { CodeBlockWithCopyProps } from './types';

@@ -1,12 +1,6 @@
-import { useState } from 'react';
-
-import { FeatureToggles, GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { Button, Alert } from '@grafana/ui';
-import { css } from '@emotion/css';
-import { useStyles2 } from '@grafana/ui';
-
-import { SetupWizard } from './SetupWizard';
+import { FeatureToggles } from '@grafana/data';
+import { config, locationService } from '@grafana/runtime';
+import { Alert } from '@grafana/ui';
 
 // List of required feature toggles
 const requiredFeatureToggles: Array<keyof FeatureToggles> = [
@@ -17,10 +11,21 @@ const requiredFeatureToggles: Array<keyof FeatureToggles> = [
   'unifiedStorageSearchUI',
 ];
 
-export function SetupWarnings() {
-  const [showSetupModal, setShowSetupModal] = useState(false);
-  const styles = useStyles2(getStyles);
+interface SetupWarningsProps {
+  /**
+   * Whether to show the "Setup Now" button
+   * @default true
+   */
+  showSetupButton?: boolean;
 
+  /**
+   * Whether to show a success banner when everything is configured
+   * @default false
+   */
+  showSuccessBanner?: boolean;
+}
+
+export function SetupWarnings({ showSetupButton = true, showSuccessBanner = false }: SetupWarningsProps) {
   // Check if required feature toggles are enabled
   const checkRequiredFeatures = () => {
     const featureToggles = config.featureToggles || {};
@@ -45,20 +50,27 @@ export function SetupWarnings() {
 
   const missingOnlyOptionalFeatures = hasRequiredFeatures && (!hasPublicAccess || !hasImageRenderer);
   const missingRequiredFeatures = !hasRequiredFeatures;
-  const showWarning = missingRequiredFeatures || missingOnlyOptionalFeatures;
+  const everythingConfigured = hasRequiredFeatures && hasPublicAccess && hasImageRenderer;
 
   const handleSetupClick = () => {
-    setShowSetupModal(true);
+    locationService.push('/admin/provisioning/setup');
   };
 
-  const handleCloseSetupModal = () => {
-    setShowSetupModal(false);
-  };
-
-  if (!showWarning) {
+  // If everything is configured and we don't want to show success banner, return null
+  if (everythingConfigured && !showSuccessBanner) {
     return null;
   }
 
+  // If everything is configured and we want to show success banner
+  if (everythingConfigured && showSuccessBanner) {
+    return (
+      <Alert severity="success" title="All Features Configured">
+        All required and optional features are properly configured. Your system is ready to use.
+      </Alert>
+    );
+  }
+
+  // If there are warnings to show
   let alertTitle = '';
   let alertMessage = '';
   let alertSeverity: 'error' | 'info' = 'error';
@@ -76,39 +88,13 @@ export function SetupWarnings() {
   }
 
   return (
-    <>
-      <Alert severity={alertSeverity} title={alertTitle} buttonContent="Setup Features" onRemove={handleSetupClick}>
-        {alertMessage}
-      </Alert>
-
-      {showSetupModal && (
-        <div className={styles.setupWizardContainer}>
-          <SetupWizard />
-          <Button variant="secondary" onClick={handleCloseSetupModal} className={styles.closeButton}>
-            Close
-          </Button>
-        </div>
-      )}
-    </>
+    <Alert
+      severity={alertSeverity}
+      title={alertTitle}
+      buttonContent={showSetupButton ? 'Set Up Now' : undefined}
+      onRemove={showSetupButton ? handleSetupClick : undefined}
+    >
+      {alertMessage}
+    </Alert>
   );
 }
-
-interface SetupWarningsStyles {
-  setupWizardContainer: string;
-  closeButton: string;
-}
-
-const getStyles = (theme: GrafanaTheme2): SetupWarningsStyles => {
-  return {
-    setupWizardContainer: css({
-      padding: theme.spacing(2),
-      backgroundColor: theme.colors.background.primary,
-      borderRadius: theme.shape.borderRadius(),
-      boxShadow: theme.shadows.z3,
-      marginTop: theme.spacing(2),
-    }),
-    closeButton: css({
-      marginTop: theme.spacing(2),
-    }),
-  };
-};
