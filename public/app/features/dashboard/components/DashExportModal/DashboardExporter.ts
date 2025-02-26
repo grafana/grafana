@@ -375,12 +375,10 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
           }
 
           requires.push({
-            kind: 'datasource',
-            spec: {
-              id: ds.meta.id,
-              name: ds.meta.name,
-              version: ds.meta.info.version || '1.0.0',
-            },
+            type: 'datasource',
+            id: ds.meta.id,
+            name: ds.meta.name,
+            version: ds.meta.info.version || '1.0.0',
           });
 
           if (datasourceVariable) {
@@ -420,12 +418,10 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
           }
 
           requires.push({
-            kind: 'datasource',
-            spec: {
-              id: ds.meta.id,
-              name: ds.meta.name,
-              version: ds.meta.info.version || '1.0.0',
-            },
+            type: 'datasource',
+            id: ds.meta.id,
+            name: ds.meta.name,
+            version: ds.meta.info.version || '1.0.0',
           });
         });
     };
@@ -440,12 +436,10 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
       const panelDef: PanelPluginMeta = config.panels[panel.kind];
       if (panelDef) {
         requires.push({
-          kind: 'panel',
-          spec: {
-            id: panelDef.id,
-            name: panelDef.name,
-            version: panelDef.info.version,
-          },
+          type: 'panel',
+          id: panelDef.id,
+          name: panelDef.name,
+          version: panelDef.info.version,
         });
       }
     };
@@ -508,12 +502,10 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
 
       // add grafana version
       requires.push({
-        kind: 'grafana',
-        spec: {
-          id: 'grafana',
-          name: 'Grafana',
-          version: config.buildInfo.version,
-        },
+        type: 'grafana',
+        id: 'grafana',
+        name: 'Grafana',
+        version: config.buildInfo.version,
       });
 
       for (const item of gridLayoutItems) {

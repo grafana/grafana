@@ -68,13 +68,10 @@ DashboardKind: {
 
 // ImportableDashboard requirements 
 DashboardImportableRequirements: {
-  // kind is the type of the requirement
-  kind: string
-  spec: {
-    id: string
-    name: string
-    version: string
-  }
+  type: string
+  id: string
+  name: string
+  version: string
 }
 
 // Supported dashboard elements

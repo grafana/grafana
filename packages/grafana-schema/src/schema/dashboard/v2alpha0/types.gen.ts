@@ -81,22 +81,17 @@ export const defaultDashboardKind = (): DashboardKind => ({
 
 // ImportableDashboard requirements
 export interface DashboardImportableRequirements {
-	// kind is the type of the requirement
-	kind: string;
-	spec: {
-		id: string;
-		name: string;
-		version: string;
-	};
+	type: string;
+	id: string;
+	name: string;
+	version: string;
 }
 
 export const defaultDashboardImportableRequirements = (): DashboardImportableRequirements => ({
-	kind: "",
-	spec: {
+	type: "",
 	id: "",
 	name: "",
 	version: "",
-},
 });
 
 // Supported dashboard elements
