@@ -1,5 +1,6 @@
 import PackageJson from '@npmcli/package-json';
 import { mkdir } from 'node:fs/promises';
+import { join, dirname } from 'node:path';
 
 const cwd = process.cwd();
 
@@ -7,19 +8,26 @@ try {
   const pkgJson = await PackageJson.load(cwd);
   const cjsIndex = pkgJson.content.publishConfig?.main ?? pkgJson.content.main;
   const esmIndex = pkgJson.content.publishConfig?.module ?? pkgJson.content.module;
-  const typesIndex = pkgJson.content.publishConfig?.types ?? pkgJson.content.types;
+  const cjsTypes = pkgJson.content.publishConfig?.types ?? pkgJson.content.types;
+  const esmTypes = `./${join(dirname(esmIndex), 'index.d.mts')}`;
+
   const exports = {
-    '.': {
-      types: typesIndex,
-      import: esmIndex,
-      require: cjsIndex,
-    },
     './package.json': './package.json',
+    '.': {
+      import: {
+        types: esmTypes,
+        default: esmIndex,
+      },
+      require: {
+        types: cjsTypes,
+        default: cjsIndex,
+      },
+    },
   };
 
   pkgJson.update({
     main: cjsIndex,
-    types: typesIndex,
+    types: cjsTypes,
     module: esmIndex,
     exports,
   });
