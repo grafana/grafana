@@ -300,14 +300,11 @@ export class GraphiteDatasource
 
     for (let i = 0; i < series.length; i++) {
       const s = series[i];
-      // Retrieve the original refID of the query
-      const splitTarget = s.target.split(' ');
 
       let refId = '';
-      if (splitTarget.length === 1) {
-        // If there is only one element, it means that there is no refID
-        s.target = splitTarget[0];
-      } else {
+      // Retrieve the original refID of the query
+      const splitTarget = s.target.split(' ');
+      if (splitTarget.length > 1) {
         // refID should always be the last element
         refId = splitTarget.pop() || '';
         s.target = splitTarget.join(' ');
