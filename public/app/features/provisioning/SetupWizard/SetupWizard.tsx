@@ -109,19 +109,38 @@ export const SetupWizard = () => {
       {
         title: 'Preview Snapshots',
         description: 'Attach preview images to pull requests comments',
-        additional: true,
         icon: 'camera',
+        additional: true,
         steps: [
           {
-            title: 'Install the Image Renderer Plugin',
-            description: 'Run this command in your Grafana server to install the official renderer plugin:',
-            code: 'grafana-cli plugins install grafana-image-renderer',
+            title: 'Install Node.js',
+            description: 'Install Node.js 16 or later on your system',
             fulfilled: hasImageRenderer,
           },
           {
-            title: 'Configure the Image Renderer',
-            description: 'Add these settings to your custom.ini file to enable the renderer:',
-            code: render_ini,
+            title: 'Clone the Image Renderer Repository',
+            description: 'Clone the renderer repository:',
+            code: 'git clone https://github.com/grafana/grafana-image-renderer.git',
+            fulfilled: hasImageRenderer,
+          },
+          {
+            title: 'Build the Renderer',
+            description: 'Navigate to the directory and build:',
+            code: 'cd grafana-image-renderer\nnpm install\nnpm run build',
+            fulfilled: hasImageRenderer,
+          },
+          {
+            title: 'Run the Renderer Service',
+            description: 'Start the renderer service:',
+            code: 'node build/app.js server --port=8081',
+            fulfilled: hasImageRenderer,
+          },
+          {
+            title: 'Configure Grafana',
+            description: 'Add these settings to your grafana.ini file:',
+            code: `[rendering]
+rendering_server_url = http://localhost:8081/render
+rendering_callback_url = http://your-grafana-instance/`,
             fulfilled: hasImageRenderer,
           },
         ],
