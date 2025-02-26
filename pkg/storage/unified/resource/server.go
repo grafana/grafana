@@ -919,10 +919,11 @@ func (s *server) initWatcher() error {
 			return err
 		}
 		go func() {
-			for {
-				// pipe all events
-				v := <-events
-
+			for v := range events {
+				if v == nil {
+					s.log.Error("received nil event")
+					continue
+				}
 				// Skip events during batch updates
 				if v.PreviousRV < 0 {
 					continue
