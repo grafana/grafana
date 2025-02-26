@@ -1,4 +1,4 @@
-import { useStyles2, Text, Stack, IconButton } from '@grafana/ui';
+import { useStyles2, Text, IconButton } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -17,47 +17,37 @@ export const InstructionsSidebar = ({ steps, currentStep, onStepClick }: Instruc
 
   return (
     <div className={styles.sidebar}>
-      <Stack direction="column" gap={1}>
-        {steps.map((step, index) => {
-          const isCompleted = index < currentStep;
-          const isCurrent = index === currentStep;
-          const isPending = index > currentStep;
+      {steps.map((step, index) => {
+        const isCompleted = index < currentStep;
+        const isCurrent = index === currentStep;
+        const isPending = index > currentStep;
 
-          const iconColor = isCompleted ? 'success' : isCurrent ? 'primary' : 'secondary';
-          const iconAriaLabel = isCompleted ? 'Completed step' : isCurrent ? 'Current step' : 'Pending step';
+        const iconColor = isCompleted ? 'success' : isCurrent ? 'primary' : 'secondary';
+        const iconAriaLabel = isCompleted ? 'Completed step' : isCurrent ? 'Current step' : 'Pending step';
 
-          return (
-            <div
-              key={index}
-              className={`${styles.stepItem} ${isCurrent ? styles.activeStep : ''}`}
-              onClick={() => onStepClick(index)}
-            >
-              <Stack direction="row" alignItems="center" gap={1}>
-                <div className={styles.iconWrapper}>
-                  <IconButton
-                    name={isCompleted ? 'check-circle' : 'circle'}
-                    size="sm"
-                    variant={isPending ? 'secondary' : 'primary'}
-                    color={iconColor}
-                    aria-label={iconAriaLabel}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onStepClick(index);
-                    }}
-                  />
-                  {index < steps.length - 1 && (
-                    <div className={`${styles.connector} ${isCompleted ? styles.completedConnector : ''}`} />
-                  )}
-                </div>
-
-                <Text color={isCurrent ? 'primary' : 'secondary'} weight={isCurrent ? 'medium' : 'regular'}>
-                  {step}
-                </Text>
-              </Stack>
-            </div>
-          );
-        })}
-      </Stack>
+        return (
+          <div
+            key={index}
+            className={`${styles.stepItem} ${isCurrent ? styles.activeStep : ''}`}
+            onClick={() => onStepClick(index)}
+          >
+            <IconButton
+              name={isCompleted ? 'check-circle' : 'circle'}
+              size="sm"
+              variant={isPending ? 'secondary' : 'primary'}
+              color={iconColor}
+              aria-label={iconAriaLabel}
+              onClick={(e) => {
+                e.stopPropagation();
+                onStepClick(index);
+              }}
+            />
+            <Text color={isCurrent ? 'primary' : 'secondary'} weight={isCurrent ? 'medium' : 'regular'}>
+              {step}
+            </Text>
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -66,12 +56,17 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     sidebar: css`
       width: 260px;
-      padding: ${theme.spacing(2)} 0;
+      padding: ${theme.spacing(2)};
       border-right: 1px solid ${theme.colors.border.medium};
       overflow-y: auto;
     `,
     stepItem: css`
-      padding: ${theme.spacing(1)} ${theme.spacing(2)};
+      display: flex;
+      align-items: center;
+      gap: ${theme.spacing(2)};
+      padding: ${theme.spacing(1)};
+      margin-bottom: ${theme.spacing(1)};
+      border-radius: ${theme.shape.borderRadius()};
       cursor: pointer;
       &:hover {
         background: ${theme.colors.action.hover};
@@ -79,26 +74,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     activeStep: css`
       background: ${theme.colors.background.secondary};
-    `,
-    iconWrapper: css`
-      position: relative;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 24px;
-      height: 24px;
-    `,
-    connector: css`
-      position: absolute;
-      top: 24px;
-      bottom: -24px;
-      left: 50%;
-      width: 2px;
-      background: ${theme.colors.border.medium};
-      transform: translateX(-50%);
-    `,
-    completedConnector: css`
-      background: ${theme.colors.primary.main};
     `,
   };
 };
