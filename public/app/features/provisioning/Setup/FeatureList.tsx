@@ -24,7 +24,7 @@ export const FeatureList = () => {
         icon: 'sync',
       },
       {
-        title: 'Collaborate with Pull Requests',
+        title: 'Pull Request Collaboration',
         description: 'Collaborate with your team using pull requests',
         additional: false,
         setupSteps: [],

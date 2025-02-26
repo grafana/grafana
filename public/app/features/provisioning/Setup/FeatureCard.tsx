@@ -15,7 +15,7 @@ export const FeatureCard = ({ feature, onSetup, showSetupButton = true }: Props)
   return (
     <Card>
       <Card.Heading>
-        <Text element="h3" variant="h3" textAlign="center">
+        <Text element="h3" variant="h3">
           {feature.title}
         </Text>
       </Card.Heading>
@@ -29,8 +29,8 @@ export const FeatureCard = ({ feature, onSetup, showSetupButton = true }: Props)
 
       {showSetupButton && !isConfigured && (
         <Card.Actions>
-          <Button size="sm" variant="secondary" onClick={onSetup}>
-            Setup
+          <Button variant="primary" onClick={onSetup}>
+            Set Up Now
           </Button>
         </Card.Actions>
       )}
