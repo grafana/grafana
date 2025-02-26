@@ -13,7 +13,7 @@ import {
   MappingType,
   ValueMapping,
 } from '@grafana/data';
-import { LegendDisplayMode, LegendDurationMode, VizLegendOptions } from '@grafana/schema';
+import { FieldColorModeId, LegendDisplayMode, LegendDurationMode, VizLegendOptions } from '@grafana/schema';
 
 import { preparePlotFrame } from '../GraphNG/utils';
 
@@ -579,7 +579,7 @@ describe('prepareTimelineLegendItems', () => {
     ]);
   });
 
-  it('should return legend items based on value mappings with time duration', () => {
+  it('should return legend items based on value mappings with absolute duration', () => {
     const mappings: ValueMapping[] = [
       {
         options: {
@@ -702,6 +702,103 @@ describe('prepareTimelineLegendItems', () => {
         label: 'Error (2m)',
         yAxis: 1,
       },
+    ]);
+  });
+
+  it('should return legend items based on value mappings with absolute duration 2', () => {
+    const mappings: ValueMapping[] = [
+      {
+        type: MappingType.RangeToText,
+        options: {
+          from: 0,
+          to: 9.9999,
+          result: {
+            color: 'green',
+            index: 0,
+          },
+        },
+      },
+      {
+        type: MappingType.RangeToText,
+        options: {
+          from: 10,
+          to: 14.9999,
+          result: {
+            color: 'yellow',
+            index: 1,
+          },
+        },
+      },
+      {
+        type: MappingType.RangeToText,
+        options: {
+          from: 15,
+          to: 24.9999,
+          result: {
+            color: 'red',
+            index: 2,
+          },
+        },
+      },
+      {
+        type: MappingType.RangeToText,
+        options: {
+          from: 25,
+          to: 100000,
+          result: {
+            color: 'blue',
+            index: 3,
+          },
+        },
+      },
+    ];
+
+    const frames = [
+      toDataFrame({
+        refId: 'A',
+        fields: [
+          createFieldWithDisplay({
+            name: 'time',
+            config: {
+              color: {
+                mode: FieldColorModeId.PaletteClassic,
+              },
+              mappings,
+            },
+            type: FieldType.time,
+            values: [1674732835000, 1674735535000, 1674738235000, 1674740935000, 1674743635000],
+          }),
+          createFieldWithDisplay({
+            name: 'A-series',
+            config: {
+              color: {
+                mode: FieldColorModeId.PaletteClassic,
+              },
+              mappings,
+            },
+            type: FieldType.number,
+            values: [5, 10, 20, 30, 40],
+          }),
+        ],
+      }),
+    ];
+
+    const result = prepareTimelineLegendItems(
+      frames,
+      {
+        displayMode: LegendDisplayMode.List,
+        durationMode: LegendDurationMode.Absolute,
+        showLegend: true,
+      } as VizLegendOptions,
+      theme
+    );
+
+    expect(result).toEqual([
+      { color: '#73BF69', label: '5 (45m)', yAxis: 1 },
+      { color: '#FADE2A', label: '10 (45m)', yAxis: 1 },
+      { color: '#F2495C', label: '20 (45m)', yAxis: 1 },
+      { color: '#5794F2', label: '30 (45m)', yAxis: 1 },
+      { color: '#5794F2', label: '40 (45m)', yAxis: 1 },
     ]);
   });
 });
