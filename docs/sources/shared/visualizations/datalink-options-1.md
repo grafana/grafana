@@ -1,7 +1,7 @@
 ---
 title: Data links and actions options
 comments: |
-  This file is used in the following visualizations: bar gauge, gauge, pie chart, stat, table
+  This file is used in the following visualizations: bar gauge, gauge, pie chart, stat
 ---
 
 Data links allow you to link to other panels, dashboards, and external resources while maintaining the context of the source panel.
