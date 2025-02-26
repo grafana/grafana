@@ -9,8 +9,8 @@ describe('Rule Viewer page', () => {
     jest.spyOn(console, 'error').mockImplementation((error) => {
       expect(stringifyErrorLike(error)).toContain('Error: Rule ID is required');
     });
-  
+
     render(<RuleViewer />);
     expect(screen.getByText(/Error: Rule ID is required/i)).toBeInTheDocument();
-  });  
+  });
 });
