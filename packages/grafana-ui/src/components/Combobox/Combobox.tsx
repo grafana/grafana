@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import { useVirtualizer, type Range } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import { useId, useMemo } from 'react';
+import { useCallback, useId, useMemo } from 'react';
 
 import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
@@ -175,7 +175,27 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
   const styles = useStyles2(getComboboxStyles);
 
-  const virtualizerOptions = {
+  const rangeExtractor = useCallback(
+    (range: Range) => {
+      const startIndex = Math.max(0, range.startIndex - range.overscan);
+      const endIndex = Math.min(filteredOptions.length - 1, range.endIndex + range.overscan);
+
+      const rangeToReturn = Array.from({ length: endIndex - startIndex + 1 }, (_, i) => startIndex + i);
+
+      // Find the first group header that's not in view
+      for (let offscreenIndex = startIndex - 1; offscreenIndex >= 0; offscreenIndex--) {
+        if (isNewGroup(filteredOptions[offscreenIndex], filteredOptions[offscreenIndex - 1])) {
+          rangeToReturn.unshift(offscreenIndex);
+          break;
+        }
+      }
+
+      return rangeToReturn;
+    },
+    [filteredOptions]
+  );
+
+  const rowVirtualizer = useVirtualizer({
     count: filteredOptions.length,
     getScrollElement: () => scrollRef.current,
     estimateSize: (index: number) => {
@@ -191,9 +211,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       return itemHeight;
     },
     overscan: VIRTUAL_OVERSCAN_ITEMS,
-  };
-
-  const rowVirtualizer = useVirtualizer(virtualizerOptions);
+    rangeExtractor,
+  });
 
   const {
     isOpen,
@@ -205,6 +224,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
     selectItem,
   } = useCombobox({
+    isOpen: true,
     menuId,
     labelId,
     inputId: id,
@@ -355,14 +375,74 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
           {isOpen && (
             <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef} padding={0.5}>
               {!asyncError && (
-                <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
-                  {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                <div style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
+                  {rowVirtualizer.getVirtualItems().map((virtualRow, index, allVirtualRows) => {
                     const item = filteredOptions[virtualRow.index];
                     const startingNewGroup = isNewGroup(item, filteredOptions[virtualRow.index - 1]);
+
+                    const groupHeaderIndex = allVirtualRows.find((row) => {
+                      const rowItem = filteredOptions[row.index];
+                      return rowItem.group === item.group;
+                    });
+
+                    const groupHeaderItem = groupHeaderIndex ? filteredOptions[groupHeaderIndex.index] : null;
+
+                    // TODO: fix this ids if needed
                     const itemId = 'combobox-option-' + item.value.toString();
-                    const groupHeaderid = 'combobox-option-group-' + item.value.toString();
+                    const groupHeaderId = groupHeaderItem
+                      ? 'combobox-option-group-' + groupHeaderItem.value.toString()
+                      : null;
+
+                    const useNew = true;
+                    if (useNew) {
+                      /**
+                       * DOM structure:
+                       * <virtual-item>
+                       *     <group-header>Header name</group-header>
+                       *     <option>Option name</option>
+                       * </virtual-item>
+                       *
+                       * The virtual item is a wrapper around the group header and option purely for
+                       * positioning the virtualised list item. It should have no other 'list item' styling.
+                       *
+                       * Group header and option should appear as individual flat list items.
+                       */
+                      return (
+                        <div
+                          key={virtualRow.index}
+                          data-index={virtualRow.index}
+                          data-header={startingNewGroup ? 'true' : 'false'}
+                          data-group={item.group}
+                          className="styles.listItem"
+                          style={{
+                            position: 'absolute',
+                            height: virtualRow.size,
+                            transform: `translateY(${virtualRow.start}px)`,
+                          }}
+                        >
+                          {startingNewGroup && (
+                            <div role="presentation" id={groupHeaderId} className="styles.groupHeader">
+                              {item.group}
+                            </div>
+                          )}
+
+                          <div
+                            className="styles.option"
+                            {...getItemProps({
+                              item: item,
+                              index: virtualRow.index,
+                              id: itemId,
+                              'aria-describedby': groupHeaderId,
+                            })}
+                          >
+                            {item.label ?? item.value}
+                          </div>
+                        </div>
+                      );
+                    }
+
                     return (
-                      <li
+                      <div
                         key={`${item.value}-${virtualRow.index}`}
                         data-index={virtualRow.index}
                         className={styles.optionBasic}
@@ -380,7 +460,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
                             <div className={styles.optionGroup}>
                               <OptionListItem
                                 label={item.group ?? t('combobox.group.undefined', 'No group')}
-                                id={groupHeaderid}
+                                id={groupHeaderId}
                                 isGroup={true}
                               />
                             </div>
@@ -401,10 +481,10 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
                             />
                           </div>
                         </Stack>
-                      </li>
+                      </div>
                     );
                   })}
-                </ul>
+                </div>
               )}
               <div aria-live="polite">
                 {asyncError && <AsyncError />}

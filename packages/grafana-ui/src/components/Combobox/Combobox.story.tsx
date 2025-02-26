@@ -109,7 +109,7 @@ export const CustomValue: Story = {
 
 export const Groups: Story = {
   args: {
-    options: await generateGroupingOptions(123),
+    options: await generateGroupingOptions(500),
     value: '34',
   },
   render: BaseCombobox,
