@@ -4,6 +4,7 @@ import { getStyles } from './styles';
 import { FeatureInfo, requiredFeatureToggles, feature_ini, ngrok_example, root_url_ini, render_ini } from './types';
 import { InstructionsModal } from './InstructionsModal';
 import { config } from '@grafana/runtime';
+import { SetupWarnings } from '../SetupWarnings';
 
 export const SetupWizard = () => {
   const styles = useStyles2(getStyles);
@@ -35,26 +36,43 @@ export const SetupWizard = () => {
     // Initialize features with their current status
     const hasPublicAccess = checkPublicAccess();
     const hasImageRenderer = checkImageRenderer();
-    const hasFeatureToggles = checkRequiredFeatures();
 
     const featuresList: FeatureInfo[] = [
       {
-        title: 'Feature Toggles',
-        description: 'Enable required Grafana features for Kubernetes integration and dashboard provisioning',
+        title: 'As-Code Provisioning',
+        description: 'Provision your dashboards from Github or other storage system',
         additional: false,
-        steps: [
-          {
-            title: 'Enable Required Feature Toggles',
-            description: 'Add these settings to your custom.ini file to enable necessary features:',
-            code: feature_ini,
-            fulfilled: hasFeatureToggles,
-          },
-        ],
+        steps: [],
       },
+      {
+        title: 'Collaborate with Pull Requests',
+        description: 'Collaborate with your team by creating pull requests for your dashboards',
+        additional: false,
+        steps: [],
+      },
+      {
+        title: 'Migrate Your Dashboards',
+        description: 'Migrate your dashboards to Github or other storage system',
+        additional: false,
+        steps: [],
+      },
+      // {
+      //   title: 'Feature Toggles',
+      //   description: 'Enable required Grafana features for Kubernetes integration and dashboard provisioning',
+      //   additional: false,
+      //   steps: [
+      //     {
+      //       title: 'Enable Required Feature Toggles',
+      //       description: 'Add these settings to your custom.ini file to enable necessary features:',
+      //       code: feature_ini,
+      //       fulfilled: hasFeatureToggles,
+      //     },
+      //   ],
+      // },
       {
         title: 'Github Webhooks Integration',
         description:
-          'Make your Grafana instance accessible from the internet so GitHub can send webhook events and Grafana can comment on pull requests',
+          'Make your Grafana instance accessible from the internet to enable a more seamless provisioning and collaboration with pull requests',
         additional: true,
         steps: [
           {
@@ -119,53 +137,41 @@ export const SetupWizard = () => {
   // Separate required and optional features
   const requiredFeatures = features.filter((feature) => !feature.additional);
   const optionalFeatures = features.filter((feature) => feature.additional);
+  const hasFeatureToggles = checkRequiredFeatures();
 
   return (
     <div>
       {selectedFeature === null && (
         <>
-          {!hasRequiredFeatures && (
-            <Alert severity="warning" title="Required Features Not Configured">
-              Some required features are not properly configured. Please complete the setup for these features to ensure
-              full functionality.
-            </Alert>
-          )}
-
           {requiredFeatures.length > 0 && (
             <>
-              <h3 className={styles.title}>Required Features</h3>
-              <p className={styles.subtitle}>
-                These features are required for full functionality. Please complete their setup.
-              </p>
+              <h3 className={styles.title}>Required Setup</h3>
+              <p className={styles.subtitle}>This setup is required for provisioning to work properly.</p>
               <div className={styles.featuresList}>
                 {requiredFeatures.map((feature, index) => {
-                  const featureIndex = features.findIndex((f) => f.title === feature.title);
-                  const allStepsFulfilled = feature.steps.every((step) => step.fulfilled);
-
                   return (
                     <div key={index} className={styles.featureItem}>
                       <div className={styles.featureHeader}>
                         <h4 className={styles.featureTitle}>{feature.title}</h4>
                       </div>
                       <p className={styles.featureDescription}>{feature.description}</p>
-                      {!allStepsFulfilled && (
-                        <Button
-                          variant="primary"
-                          onClick={() => handleFeatureSelect(featureIndex)}
-                          className={styles.featureButton}
-                        >
-                          Setup Now
-                        </Button>
-                      )}
-                      {allStepsFulfilled && (
-                        <div className={styles.configuredStatus}>
-                          <Icon name="check-circle" className={styles.configuredIcon} /> Configured
-                        </div>
-                      )}
                     </div>
                   );
                 })}
               </div>
+              {!hasFeatureToggles ? (
+                <Button
+                  variant="primary"
+                  // onClick={() => handleFeatureSelect(features.findIndex(f => !f.additional))}
+                  className={styles.featureButton}
+                >
+                  Setup Now
+                </Button>
+              ) : (
+                <div className={styles.configuredStatus}>
+                  <Icon name="check-circle" className={styles.configuredIcon} /> Configured
+                </div>
+              )}
             </>
           )}
 
@@ -174,7 +180,8 @@ export const SetupWizard = () => {
               <Box marginTop={4}>
                 <h3 className={styles.title}>Additional Features</h3>
                 <p className={styles.subtitle}>
-                  These features are additional but can enhance your experience. Set them up as needed.
+                  These features are additional but can enhance your experience. We encourage you to set them up as
+                  well.
                 </p>
                 <div className={styles.featuresList}>
                   {optionalFeatures.map((feature, index) => {
