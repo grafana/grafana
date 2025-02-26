@@ -129,7 +129,7 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 			fname = b.start.Format("tmp-20060102-150405")
 		}
 		dir := filepath.Join(resourceDir, fname)
-		if !isValidPath(dir) {
+		if !isValidPath(dir, b.opts.Root) {
 			b.log.Error("Directory is not valid", "directory", dir, "error", err)
 		}
 		if resourceVersion > 0 {
@@ -218,7 +218,7 @@ func (b *bleveBackend) cleanOldIndexes(dir string, skip string) {
 	for _, file := range files {
 		if file.IsDir() && file.Name() != skip {
 			fpath := filepath.Join(dir, file.Name())
-			if !isValidPath(fpath) {
+			if !isValidPath(fpath, b.opts.Root) {
 				b.log.Error("Path is not valid", "directory", fpath, "error", err)
 			}
 			err = os.RemoveAll(fpath)
@@ -232,8 +232,8 @@ func (b *bleveBackend) cleanOldIndexes(dir string, skip string) {
 }
 
 // isValidPath does a sanity check in case it tries to access dirs above the file tree
-func isValidPath(path string) bool {
-	if strings.Contains(path, "\\") || strings.Contains(path, "..") {
+func isValidPath(path, safeDir string) bool {
+	if strings.Contains(path, "\\") || strings.Contains(path, "..") || !strings.HasPrefix(path, safeDir) {
 		return false
 	}
 	return true

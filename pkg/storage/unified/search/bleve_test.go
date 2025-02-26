@@ -638,27 +638,29 @@ func TestSafeInt64ToInt(t *testing.T) {
 
 func Test_isValidPath(t *testing.T) {
 	tests := []struct {
-		name  string
-		input string
-		want  bool
+		name    string
+		path    string
+		safeDir string
+		want    bool
 	}{
 		{
-			name:  "valid path",
-			input: "/path/to/file.json",
-			want:  true,
+			name:    "valid path",
+			path:    "/path/to/file.json",
+			safeDir: "/path/to",
+			want:    true,
 		},
 		{
-			name:  "invalid path: ..",
-			input: "/path/../above/file",
+			name: "invalid path: ..",
+			path: "/path/../above/file",
 		},
 		{
-			name:  "invalid path: \\",
-			input: "\\some/path",
+			name: "invalid path: \\",
+			path: "\\some/path",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			require.Equal(t, tt.want, isValidPath(tt.input))
+			require.Equal(t, tt.want, isValidPath(tt.path, tt.safeDir))
 		})
 	}
 }
