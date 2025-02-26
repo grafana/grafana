@@ -1,28 +1,9 @@
 name: 'Run Backend Tests'
 description: 'Runs the Grafana backend unit tests'
 
-inputs:
-  timeout:
-    description: 'Test timeout duration'
-    default: '5m'
-    required: false
-  coverage-mode:
-    description: 'Coverage mode for tests'
-    default: 'atomic'
-    required: false
-  short:
-    description: 'Run tests in short mode'
-    default: 'true'
-    required: false
-
 runs:
   using: "composite"
   steps:
     - name: Run tests
       shell: bash
-      run: |
-        SHORT_FLAG=""
-        if [ "${{ inputs.short }}" = "true" ]; then
-          SHORT_FLAG="-short"
-        fi
-        go list -f '{{.Dir}}/...' -m | xargs go test $SHORT_FLAG -covermode=${{ inputs.coverage-mode }} -timeout=${{ inputs.timeout }} 
+      run: make test-go-unit
