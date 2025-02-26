@@ -59,17 +59,17 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
     return null;
   }
 
-  // Force scenes if v2 api and scenes are enabled
+  const uid =
+    dashboard.value && isDashboardV2Resource(dashboard.value)
+      ? dashboard.value.metadata.name
+      : dashboard.value?.meta.uid;
+  const canEdit =
+    dashboard.value && isDashboardV2Resource(dashboard.value)
+      ? dashboard.value?.access.canEdit
+      : dashboard.value?.meta?.canEdit || dashboard.value?.meta?.canMakeEditable;
+  const isNew = !uid;
 
-  const isV2Dashboard = dashboard.value && isDashboardV2Resource(dashboard.value);
-  if (isV2Dashboard && !forceOld) {
-    console.log('DashboardPageProxy: forcing scenes requesting v2 dashboard');
-    return <DashboardScenePage {...props} />;
-  }
-
-  const dashboardValue = dashboard.value ? (dashboard.value as DashboardDTO) : null;
-
-  if (dashboardValue?.dashboard?.uid !== params.uid && dashboardValue?.meta?.isNew !== true) {
+  if (uid !== params.uid && isNew) {
     return null;
   }
 
@@ -77,11 +77,7 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
     return <DashboardPage {...props} params={params} location={location} />;
   }
 
-  if (
-    dashboardValue &&
-    !(dashboardValue.meta?.canEdit || dashboardValue.meta?.canMakeEditable) &&
-    isScenesSupportedRoute
-  ) {
+  if (canEdit && isScenesSupportedRoute) {
     return <DashboardScenePage {...props} />;
   } else {
     return <DashboardPage {...props} params={params} location={location} />;
