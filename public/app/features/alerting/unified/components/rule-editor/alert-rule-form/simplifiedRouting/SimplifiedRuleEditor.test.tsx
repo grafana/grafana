@@ -5,6 +5,7 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { screen, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
+import { setPluginComponentsHook } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
@@ -58,6 +59,8 @@ const selectContactPoint = async (user: UserEvent, contactPointName: string) => 
 };
 
 setupMswServer();
+setPluginComponentsHook(() => ({ components: [], isLoading: false }));
+
 describe('Can create a new grafana managed alert using simplified routing', () => {
   testWithFeatureToggles(['alertingSimplifiedRouting']);
 

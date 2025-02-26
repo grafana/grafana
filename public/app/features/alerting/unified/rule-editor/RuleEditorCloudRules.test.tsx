@@ -3,6 +3,7 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { screen } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { setPluginComponentsHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types';
 
 import { ExpressionEditorProps } from '../components/rule-editor/ExpressionEditor';
@@ -26,6 +27,8 @@ jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
 
 setupMswServer();
 mimirDataSource();
+
+setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 
 describe('RuleEditor cloud', () => {
   beforeEach(() => {
