@@ -10,6 +10,9 @@ import (
 type SearchResults struct {
 	metav1.TypeMeta `json:",inline"`
 
+	// Index resource version (string to match k8s and avoid precision issues)
+	ResourceVersion string `json:"resourceVersion,omitempty"`
+
 	// Where the query started from
 	Offset int64 `json:"offset,omitempty"`
 

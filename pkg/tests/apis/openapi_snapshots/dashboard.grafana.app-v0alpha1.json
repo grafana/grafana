@@ -1406,6 +1406,10 @@
                       "type": "number",
                       "format": "double"
                     },
+                    "resourceVersion": {
+                      "description": "Index resource version (string to match k8s and avoid precision issues)",
+                      "type": "string"
+                    },
                     "sortBy": {
                       "description": "How are the results sorted"
                     },

@@ -9,18 +9,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
-	"github.com/grafana/grafana/pkg/services/user"
-
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -69,8 +68,9 @@ func TestBleveBackend(t *testing.T) {
 			Group:     key.Group,
 			Resource:  key.Resource,
 		}, 2, rv, info.Fields, func(index resource.ResourceIndex) (int64, error) {
+			rv := int64(100)
 			_ = index.Write(&resource.IndexableDocument{
-				RV:   1,
+				RV:   rv,
 				Name: "aaa",
 				Key: &resource.ResourceKey{
 					Name:      "aaa",
@@ -97,8 +97,9 @@ func TestBleveBackend(t *testing.T) {
 					Timestamp: asTimePointer(1609462800000), // 2021
 				},
 			})
+			rv++
 			_ = index.Write(&resource.IndexableDocument{
-				RV:   2,
+				RV:   rv,
 				Name: "bbb",
 				Key: &resource.ResourceKey{
 					Name:      "bbb",
@@ -126,8 +127,9 @@ func TestBleveBackend(t *testing.T) {
 					Timestamp: asTimePointer(1640998800000), // 2022
 				},
 			})
+			rv++
 			_ = index.Write(&resource.IndexableDocument{
-				RV: 3,
+				RV: rv,
 				Key: &resource.ResourceKey{
 					Name:      "ccc",
 					Namespace: "ns",
@@ -173,6 +175,7 @@ func TestBleveBackend(t *testing.T) {
 		require.Nil(t, rsp.Error)
 		require.NotNil(t, rsp.Results)
 		require.NotNil(t, rsp.Facet)
+		require.Equal(t, int64(102), rsp.ResourceVersion)
 
 		resource.AssertTableSnapshot(t, filepath.Join("testdata", "manual-dashboard.json"), rsp.Results)
 

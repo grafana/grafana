@@ -762,6 +762,13 @@ func schema_pkg_apis_dashboard_v0alpha1_SearchResults(ref common.ReferenceCallba
 							Format:      "",
 						},
 					},
+					"resourceVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Index resource version (string to match k8s and avoid precision issues)",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"offset": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Where the query started from",
