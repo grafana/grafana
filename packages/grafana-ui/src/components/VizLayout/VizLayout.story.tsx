@@ -1,8 +1,9 @@
 import { Meta, StoryFn } from '@storybook/react';
 import { useEffect, useState } from 'react';
 
-import { VizLayout } from './VizLayout';
 import { LegendPlacement } from '@grafana/schema';
+
+import { VizLayout } from './VizLayout';
 
 const meta: Meta = {
   title: 'Visualizations/VizLayout',

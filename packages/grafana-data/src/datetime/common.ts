@@ -1,7 +1,8 @@
 import { isEmpty } from 'lodash';
 
-import { TimeZone } from '../types/time';
 import { defaultTimeZone } from '@grafana/schema';
+
+import { TimeZone } from '../types/time';
 
 /**
  * Used for helper functions handling time zones.
