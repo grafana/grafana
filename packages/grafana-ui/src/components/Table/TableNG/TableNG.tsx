@@ -319,6 +319,7 @@ export function TableNG(props: TableNGProps) {
         cellClass: styles.cell,
         renderCell: (props: any) => {
           const { row, rowIdx } = props;
+          const cellType = field.config?.custom?.cellOptions.type;
           const value = row[key];
           // Cell level rendering here
           return (
@@ -342,7 +343,8 @@ export function TableNG(props: TableNGProps) {
                   defaultRowHeight,
                   DEFAULT_CELL_PADDING,
                   textWrap,
-                  cellInspect
+                  cellInspect,
+                  cellType
                 )
               }
               setIsInspecting={setIsInspecting}
