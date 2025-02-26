@@ -1,5 +1,3 @@
-// @ts-ignore
-import { Location } from 'history';
 import { Store } from 'redux';
 import configureMockStore from 'redux-mock-store';
 
