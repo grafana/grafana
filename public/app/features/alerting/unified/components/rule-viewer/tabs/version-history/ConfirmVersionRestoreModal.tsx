@@ -71,6 +71,7 @@ export const ConfirmVersionRestoreModal = ({
     }
     const payload = rulerRuleToFormValues({ ...ruleWithLocation, rule: versionToRestore });
     const ruleFormUrl = urlUtil.renderUrl(`/alerting/${ruleIdentifier.uid}/edit`, {
+      isManualRestore: true,
       defaults: JSON.stringify(payload),
       returnTo: location.pathname + location.search,
     });

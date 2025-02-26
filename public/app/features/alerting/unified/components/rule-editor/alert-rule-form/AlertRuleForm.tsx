@@ -74,11 +74,12 @@ import { QueryAndExpressionsStep } from '../query-and-alert-condition/QueryAndEx
 type Props = {
   existing?: RuleWithLocation;
   prefill?: Partial<RuleFormValues>; // Existing implies we modify existing rule. Prefill only provides default form values
+  isManualRestore?: boolean;
 };
 
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 
-export const AlertRuleForm = ({ existing, prefill }: Props) => {
+export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => {
   const styles = useStyles2(getStyles);
   const notifyApp = useAppNotification();
   const [showEditYaml, setShowEditYaml] = useState(false);
@@ -303,7 +304,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       <AppChromeUpdate actions={actionButtons} />
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
         <div className={styles.contentOuter}>
-          {existing && prefill && (
+          {isManualRestore && (
             <Alert
               severity="warning"
               title={t('alerting.alertVersionHistory.warning-restore-manually-title', 'Restoring rule manually')}

@@ -1,4 +1,5 @@
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import { AlertWarning } from '../AlertWarning';
@@ -21,6 +22,8 @@ export function ExistingRuleEditor({ identifier, prefill }: ExistingRuleEditorPr
     result: ruleWithLocation,
     error,
   } = useRuleWithLocation({ ruleIdentifier: identifier });
+  const [queryParams] = useQueryParams();
+  const isManualRestore = Boolean(queryParams.isManualRestore);
 
   const ruleSourceName = ruleId.ruleIdentifierToRuleSourceName(identifier);
 
@@ -48,5 +51,5 @@ export function ExistingRuleEditor({ identifier, prefill }: ExistingRuleEditorPr
     return <AlertWarning title="Cannot edit rule">Sorry! You do not have permission to edit this rule.</AlertWarning>;
   }
 
-  return <AlertRuleForm existing={ruleWithLocation} prefill={prefill} />;
+  return <AlertRuleForm existing={ruleWithLocation} prefill={prefill} isManualRestore={isManualRestore} />;
 }
