@@ -609,6 +609,7 @@
       }
     },
     "rule-viewer": {
+      "error-loading": "Something went wrong loading the rule",
       "prometheus-consistency-check": {
         "alert-message": "Alert rule has been updated. Changes may take up to a minute to appear on the Alert rules list view.",
         "alert-title": "Update in progress"
