@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 
 import { createTheme } from '@grafana/data';
 
-import PromQlLanguageProvider from '../language_provider';
+import PromQlLanguageProvider from '../../language_provider';
 
 import {
   BrowserProps,
