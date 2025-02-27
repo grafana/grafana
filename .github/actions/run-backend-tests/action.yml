@@ -1,20 +1,24 @@
 name: 'Run Backend Tests'
-description: 'Runs the Grafana backend unit tests with code generation'
+description: 'Runs Grafana backend test suites'
 
 inputs:
-  generate-coverage:
-    description: 'Whether to generate test coverage files'
+  coverage-opts:
+    description: 'Coverage options to pass to the test command (empty for no coverage)'
     required: false
-    default: 'false'
+    default: ''
+  test-command:
+    description: 'The test command to run'
+    required: false
+    default: 'make gen-go test-go-unit'
 
 runs:
   using: "composite"
   steps:
-    - name: Run tests with code generation
+    - name: Run tests
       shell: bash
       run: |
-        if [ "${{ inputs.generate-coverage }}" = "true" ]; then
-          COVER_OPTS="-coverprofile=unit.cov" make gen-go test-go-unit
+        if [ -n "${{ inputs.coverage-opts }}" ]; then
+          COVER_OPTS="${{ inputs.coverage-opts }}" ${{ inputs.test-command }}
         else
-          make gen-go test-go-unit
+          ${{ inputs.test-command }}
         fi
