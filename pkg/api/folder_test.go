@@ -725,6 +725,7 @@ func TestSetDefaultPermissionsWhenCreatingFolder(t *testing.T) {
 			f := ini.Empty()
 			f.Section("rbac").Key("resources_with_managed_permissions_on_creation").SetValue("folder")
 			tempCfg, err := setting.NewCfgFromINIFile(f)
+			require.NoError(t, err)
 			cfg.RBAC = tempCfg.RBAC
 
 			srv := SetupAPITestServer(t, func(hs *HTTPServer) {
