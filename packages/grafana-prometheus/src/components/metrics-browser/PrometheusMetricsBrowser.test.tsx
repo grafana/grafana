@@ -4,15 +4,12 @@ import userEvent from '@testing-library/user-event';
 
 import { createTheme } from '@grafana/data';
 
-import PromQlLanguageProvider from '../language_provider';
+import PromQlLanguageProvider from '../../language_provider';
 
-import {
-  BrowserProps,
-  buildSelector,
-  facetLabels,
-  SelectableLabel,
-  UnthemedPrometheusMetricsBrowser,
-} from './PrometheusMetricsBrowser';
+import { UnthemedPrometheusMetricsBrowser } from './PrometheusMetricsBrowser';
+import { buildSelector, facetLabels } from './selectorBuilder';
+import { BrowserProps, SelectableLabel } from './types';
+
 
 describe('buildSelector()', () => {
   it('returns an empty selector for no labels', () => {
@@ -168,7 +165,11 @@ describe('PrometheusMetricsBrowser', () => {
           case '{label1="value1-1"}':
             return { label1: ['value1-1'], label2: ['value2-1'], label3: ['value3-1'] };
           case '{label1=~"value1-1|value1-2"}':
-            return { label1: ['value1-1', 'value1-2'], label2: ['value2-1'], label3: ['value3-1', 'value3-2'] };
+            return {
+              label1: ['value1-1', 'value1-2'],
+              label2: ['value2-1'],
+              label3: ['value3-1', 'value3-2'],
+            };
         }
         // Allow full set by default
         return {
