@@ -32,11 +32,16 @@ jobs:
         # a pull request then we can checkout the head.
         fetch-depth: 2
         token: ${{ steps.generate_token.outputs.token }}
+        fetch-tags: true
 
     - name: Set go version
       uses: actions/setup-go@v4
       with:
         go-version-file: go.mod
+
+    - name: Fetch main branch to compare against
+      run: |
+        git fetch --no-tags --prune --depth=1 origin +refs/heads/main:refs/remotes/origin/main
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
