@@ -454,6 +454,9 @@ func (b *bleveIndex) Search(
 	response.QueryCost = float64(res.Cost)
 	response.MaxScore = res.MaxScore
 
+	fmt.Println("Total Hits: ", response.TotalHits)
+	fmt.Println("Query Cost: ", response.QueryCost)
+
 	response.Results, err = b.hitsToTable(ctx, searchrequest.Fields, res.Hits, req.Explain)
 	if err != nil {
 		return nil, err
@@ -561,7 +564,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 		Fields:  fields,
 		Size:    int(req.Limit),
 		From:    int(req.Offset),
-		Explain: req.Explain,
+		Explain: true,
 		Facets:  facets,
 	}
 
@@ -593,9 +596,11 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 		// mimic the behavior of the sql search
 		query := strings.ToLower(req.Query)
 		if !strings.Contains(query, "*") {
-			query = "*" + query + "*"
+			//query = "*" + query + "*"
+			//query = "*" + query
 		}
-		queries = append(queries, bleve.NewWildcardQuery(query))
+		fmt.Println("Query: ", query)
+		queries = append(queries, bleve.NewMatchQuery(query))
 	}
 
 	switch len(queries) {
