@@ -27,6 +27,8 @@ import {
   AxisColorMode,
   GraphGradientMode,
   VizOrientation,
+  ScaleDistributionConfig,
+  ScaleDistribution,
 } from '@grafana/schema';
 
 // unit lookup needed to determine if we want power-of-2 or power-of-10 axis ticks
@@ -174,11 +176,20 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
       });
     }
   } else {
+    let scaleDistr: ScaleDistributionConfig = { ...xField.config.custom?.scaleDistribution };
+
+    if ((xField.config.min ?? xField.values[0]) === 0 && scaleDistr?.type === 'log') {
+      scaleDistr.type = ScaleDistribution.Linear;
+    }
+
     builder.addScale({
       scaleKey: xScaleKey,
       orientation: isHorizontal ? ScaleOrientation.Horizontal : ScaleOrientation.Vertical,
       direction: isHorizontal ? ScaleDirection.Right : ScaleDirection.Up,
       range: (u, dataMin, dataMax) => [xField.config.min ?? dataMin, xField.config.max ?? dataMax],
+      distribution: scaleDistr?.type,
+      log: scaleDistr?.log,
+      linearThreshold: scaleDistr?.linearThreshold,
     });
 
     builder.addAxis({
