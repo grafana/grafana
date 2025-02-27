@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -35,13 +34,11 @@ var (
 )
 
 type folderStorage struct {
-	service              folder.Service
-	namespacer           request.NamespaceMapper
 	tableConverter       rest.TableConvertor
 	cfg                  *setting.Cfg
 	features             featuremgmt.FeatureToggles
 	folderPermissionsSvc accesscontrol.FolderPermissionsService
-	x                    grafanarest.Storage
+	store                grafanarest.Storage
 }
 
 func (s *folderStorage) New() runtime.Object {
@@ -67,11 +64,11 @@ func (s *folderStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 }
 
 func (s *folderStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	return s.x.List(ctx, options)
+	return s.store.List(ctx, options)
 }
 
 func (s *folderStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	return s.x.Get(ctx, name, options)
+	return s.store.Get(ctx, name, options)
 }
 
 func (s *folderStorage) Create(ctx context.Context,
@@ -79,7 +76,7 @@ func (s *folderStorage) Create(ctx context.Context,
 	createValidation rest.ValidateObjectFunc,
 	options *metav1.CreateOptions,
 ) (runtime.Object, error) {
-	obj, err := s.x.Create(ctx, obj, createValidation, options)
+	obj, err := s.store.Create(ctx, obj, createValidation, options)
 	if err != nil {
 		return nil, err
 	}
@@ -114,6 +111,27 @@ func (s *folderStorage) Create(ctx context.Context,
 	return obj, nil
 }
 
+func (s *folderStorage) Update(ctx context.Context,
+	name string,
+	objInfo rest.UpdatedObjectInfo,
+	createValidation rest.ValidateObjectFunc,
+	updateValidation rest.ValidateObjectUpdateFunc,
+	forceAllowCreate bool,
+	options *metav1.UpdateOptions,
+) (runtime.Object, bool, error) {
+	return s.store.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+}
+
+// GracefulDeleter
+func (s *folderStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	return s.store.Delete(ctx, name, deleteValidation, options)
+}
+
+// GracefulDeleter
+func (s *folderStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	return nil, fmt.Errorf("DeleteCollection for folders not implemented")
+}
+
 func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, uid string, parentUID string) error {
 	if !s.cfg.RBAC.PermissionsOnCreation("folder") {
 		return nil
@@ -140,25 +158,4 @@ func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID i
 	}
 	_, err := s.folderPermissionsSvc.SetPermissions(ctx, orgID, uid, permissions...)
 	return err
-}
-
-func (s *folderStorage) Update(ctx context.Context,
-	name string,
-	objInfo rest.UpdatedObjectInfo,
-	createValidation rest.ValidateObjectFunc,
-	updateValidation rest.ValidateObjectUpdateFunc,
-	forceAllowCreate bool,
-	options *metav1.UpdateOptions,
-) (runtime.Object, bool, error) {
-	return s.x.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-}
-
-// GracefulDeleter
-func (s *folderStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	return s.x.Delete(ctx, name, deleteValidation, options)
-}
-
-// GracefulDeleter
-func (s *folderStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("DeleteCollection for folders not implemented")
 }

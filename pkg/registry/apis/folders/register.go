@@ -159,13 +159,12 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		RequireDeprecatedInternalID: true})
 
 	folderStore := &folderStorage{
-		service:              b.folderSvc,
-		namespacer:           b.namespacer,
 		tableConverter:       resourceInfo.TableConverter(),
 		folderPermissionsSvc: b.folderPermissionsSvc,
 		features:             b.features,
 		cfg:                  b.cfg,
 	}
+
 	if optsGetter != nil && dualWriteBuilder != nil {
 		store, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)
 		if err != nil {
@@ -177,7 +176,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 			return err
 		}
 
-		folderStore.x = dw
+		folderStore.store = dw
 	}
 	storage[resourceInfo.StoragePath()] = folderStore
 
