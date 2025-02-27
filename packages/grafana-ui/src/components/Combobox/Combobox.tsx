@@ -385,7 +385,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
                     const groupHeaderItem = groupHeaderIndex && filteredOptions[groupHeaderIndex.index];
 
                     const itemId = `${baseId}-option-${item.value}`;
-                    // If we're rendering the group header, this is the ID for it. Otherwise its used in
+                    // If we're rendering the group header, this is the ID for it. Otherwise its used on
+                    // the option for aria-describedby.
                     const groupHeaderId = groupHeaderItem
                       ? `${baseId}-option-group-${groupHeaderItem.value}`
                       : undefined;
