@@ -8,10 +8,21 @@ import (
 	"fmt"
 	"time"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
+)
+
+var (
+	_ rest.Storage              = (DualWriter)(nil)
+	_ rest.Scoper               = (DualWriter)(nil)
+	_ rest.TableConvertor       = (DualWriter)(nil)
+	_ rest.CreaterUpdater       = (DualWriter)(nil)
+	_ rest.CollectionDeleter    = (DualWriter)(nil)
+	_ rest.GracefulDeleter      = (DualWriter)(nil)
+	_ rest.SingularNameProvider = (DualWriter)(nil)
 )
 
 type dualWriteContextKey struct{}
@@ -34,11 +45,36 @@ type Storage interface {
 	rest.TableConvertor
 	rest.SingularNameProvider
 	rest.Getter
-	// TODO: when watch is implemented, we can replace all the below with rest.StandardStorage
 	rest.Lister
 	rest.CreaterUpdater
 	rest.GracefulDeleter
 	rest.CollectionDeleter
+}
+
+// DualWriter is a storage implementation that writes first to LegacyStorage and then to Storage.
+// If writing to LegacyStorage fails, the write to Storage is skipped and the error is returned.
+// Storage is used for all read operations.  This is useful as a migration step from SQL based
+// legacy storage to a more standard kubernetes backed storage interface.
+//
+// NOTE: Only values supported by legacy storage will be preserved in the CREATE/UPDATE commands.
+// For example, annotations, labels, and managed fields may not be preserved.  Everything in upstream
+// storage can be recrated from the data in legacy storage.
+//
+// The LegacyStorage implementation must implement the following interfaces:
+// - rest.Storage
+// - rest.TableConvertor
+// - rest.Scoper
+// - rest.SingularNameProvider
+//
+// These interfaces are optional, but they all should be implemented to fully support dual writes:
+// - rest.Creater
+// - rest.Updater
+// - rest.GracefulDeleter
+// - rest.CollectionDeleter
+
+type DualWriter interface {
+	Storage
+	Mode() DualWriterMode
 }
 
 type DualWriterMode int
@@ -186,4 +222,16 @@ func extractSpec(obj runtime.Object) []byte {
 		return nil
 	}
 	return jsonObj
+}
+
+func getName(o runtime.Object) string {
+	if o == nil {
+		return ""
+	}
+	accessor, err := meta.Accessor(o)
+	if err != nil {
+		klog.Error("failed to get object name: ", err)
+		return ""
+	}
+	return accessor.GetName()
 }

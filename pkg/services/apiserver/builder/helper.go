@@ -26,6 +26,7 @@ import (
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
 	k8stracing "k8s.io/component-base/tracing"
 	utilversion "k8s.io/component-base/version"
+	"k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
@@ -285,7 +286,82 @@ func InstallAPIs(
 
 	// nolint:staticcheck
 	if storageOpts.StorageType != options.StorageTypeLegacy {
-		dualWrite = dualWriteService.NewStorage
+		dualWrite = func(gr schema.GroupResource, legacy grafanarest.Storage, storage grafanarest.Storage) (grafanarest.Storage, error) {
+			// Dashboards + Folders may be managed (depends on feature toggles and database state)
+			if dualWriteService != nil && dualWriteService.ShouldManage(gr) {
+				return dualWriteService.NewStorage(gr, legacy, storage) // eventually this can replace this whole function
+			}
+
+			key := gr.String() // ${resource}.{group} eg playlists.playlist.grafana.app
+
+			// Get the option from custom.ini/command line
+			// when missing this will default to mode zero (legacy only)
+			var mode = grafanarest.DualWriterMode(0)
+
+			var (
+				dualWriterPeriodicDataSyncJobEnabled bool
+				dataSyncerInterval                   = time.Hour
+				dataSyncerRecordsLimit               = 1000
+			)
+
+			resourceConfig, resourceExists := storageOpts.UnifiedStorageConfig[key]
+			if resourceExists {
+				mode = resourceConfig.DualWriterMode
+				dualWriterPeriodicDataSyncJobEnabled = resourceConfig.DualWriterPeriodicDataSyncJobEnabled
+				dataSyncerInterval = resourceConfig.DataSyncerInterval
+				dataSyncerRecordsLimit = resourceConfig.DataSyncerRecordsLimit
+			}
+
+			// Force using storage only -- regardless of internal synchronization state
+			if mode == grafanarest.Mode5 {
+				return storage, nil
+			}
+
+			// TODO: inherited context from main Grafana process
+			ctx := context.Background()
+
+			// Moving from one version to the next can only happen after the previous step has
+			// successfully synchronized.
+			requestInfo := getRequestInfo(gr, namespaceMapper)
+
+			syncerCfg := &grafanarest.SyncerConfig{
+				Kind:                   key,
+				RequestInfo:            requestInfo,
+				Mode:                   mode,
+				LegacyStorage:          legacy,
+				Storage:                storage,
+				ServerLockService:      serverLock,
+				DataSyncerInterval:     dataSyncerInterval,
+				DataSyncerRecordsLimit: dataSyncerRecordsLimit,
+				Reg:                    reg,
+			}
+
+			// This also sets the currentMode on the syncer config.
+			currentMode, err := grafanarest.SetDualWritingMode(ctx, kvStore, syncerCfg)
+			if err != nil {
+				return nil, err
+			}
+			switch currentMode {
+			case grafanarest.Mode0:
+				return legacy, nil
+			case grafanarest.Mode4, grafanarest.Mode5:
+				return storage, nil
+			default:
+			}
+			if dualWriterPeriodicDataSyncJobEnabled {
+				// The mode might have changed in SetDualWritingMode, so apply current mode first.
+				syncerCfg.Mode = currentMode
+				if err := grafanarest.StartPeriodicDataSyncer(ctx, syncerCfg); err != nil {
+					return nil, err
+				}
+			}
+
+			// when unable to use
+			if currentMode != mode {
+				klog.Warningf("Requested DualWrite mode: %d, but using %d for %+v", mode, currentMode, gr)
+			}
+			return dualwrite.NewDualWriter(gr, currentMode, legacy, storage)
+		}
 	}
 
 	// NOTE: we build a map structure by version only for the purposes of InstallAPIGroup

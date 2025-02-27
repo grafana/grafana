@@ -11,6 +11,18 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// NewDualWriter -- temporary shim
+func NewDualWriter(
+	gr schema.GroupResource,
+	mode rest.DualWriterMode,
+	legacy rest.Storage,
+	unified rest.Storage,
+) (rest.Storage, error) {
+	m := &staticService{}
+	m.SetMode(gr, mode)
+	return m.NewStorage(gr, legacy, unified)
+}
+
 type staticService struct {
 	cfg *setting.Cfg
 }
