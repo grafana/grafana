@@ -17,23 +17,26 @@ export const FeatureList = () => {
     const featuresList: Feature[] = [
       {
         title: 'Provision As-Code',
-        description: 'Provision your dashboards from Github or other storage system',
+        description:
+          'Manage your dashboards as code and deploy them automatically from your Github repository or local storage',
         additional: false,
         setupSteps: [],
         isConfigured: hasRequiredFeatures,
         icon: 'sync',
       },
       {
-        title: 'Pull Request Collaboration',
-        description: 'Collaborate with your team using pull requests',
+        title: 'Pull Requests',
+        description:
+          'Review, discuss, and approve dashboard changes with your team before they go live using Github pull requests',
         additional: false,
         setupSteps: [],
         icon: 'code-branch',
         isConfigured: hasRequiredFeatures,
       },
       {
-        title: 'Migrate Your Dashboards',
-        description: 'Migrate your dashboards to Github or other storage system',
+        title: 'Export As-Code',
+        description:
+          'Export your existing dashboards as code and store them in GitHub repositories for version control and collaboration',
         additional: false,
         setupSteps: [],
         icon: 'cloud-upload',
@@ -41,7 +44,8 @@ export const FeatureList = () => {
       },
       {
         title: 'Github Webhooks',
-        description: 'Seamless Github provisioning and collaboration with pull requests',
+        description:
+          'Automatically provision and update your dashboards as soon as changes are pushed to your Github repository',
         additional: true,
         icon: 'github',
         isConfigured: hasPublicAccess && hasRequiredFeatures,
@@ -65,8 +69,9 @@ export const FeatureList = () => {
         ],
       },
       {
-        title: 'Preview Snapshots',
-        description: 'Attach preview images to pull requests comments',
+        title: 'Previews',
+        description:
+          'Preview dashboard changes visually in pull requests before they go live, making team reviews faster and more effective',
         icon: 'camera',
         additional: true,
         isConfigured: hasImageRenderer && hasPublicAccess && hasRequiredFeatures,
