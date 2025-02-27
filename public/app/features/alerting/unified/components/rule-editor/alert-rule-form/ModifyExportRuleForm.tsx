@@ -168,7 +168,7 @@ export const getPayloadToExport = (
   } else {
     // we have to create a new group with the updated rule
     return {
-      name: existingGroup?.name ?? '',
+      name: existingGroup?.name ?? formValues.group,
       rules: [updatedRule],
     };
   }
