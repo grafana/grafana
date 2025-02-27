@@ -70,6 +70,12 @@ describe('<SpanDetail>', () => {
     createFocusSpanLink: jest.fn().mockReturnValue({}),
     traceFlameGraphs: { [span.spanID]: createDataFrame(data) },
     setRedrawListView: jest.fn(),
+    timeRange: {
+      raw: {
+        from: 0,
+        to: 1000000000000,
+      },
+    },
   };
 
   span.tags = [

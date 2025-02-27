@@ -48,6 +48,12 @@ const setup = (propOverrides?: SpanDetailRowProps) => {
     traceStartTime: 1000,
     theme: createTheme(),
     traceFlameGraphs: {},
+    timeRange: {
+      raw: {
+        from: 0,
+        to: 1000000000000,
+      },
+    },
     ...propOverrides,
   };
   return render(<UnthemedSpanDetailRow {...(props as SpanDetailRowProps)} />);

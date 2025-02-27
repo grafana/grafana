@@ -379,7 +379,7 @@ export default function SpanDetail(props: SpanDetailProps) {
   let profileLinkButtons = profileLinkButton;
   
   if (link && profileLinkButton) {
-    const label = 'Open in Profiles Drilldown';
+    const label = 'Open in Grafana Profiles Drilldown';
     profileLinkButtons = (
       <ButtonGroup>
         {profileLinkButton}
