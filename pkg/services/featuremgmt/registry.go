@@ -151,14 +151,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:              "vizActions",
-			Description:       "Allow actions in visualizations",
-			Stage:             FeatureStageExperimental,
-			FrontendOnly:      true,
-			Owner:             grafanaDatavizSquad,
-			HideFromAdminPage: true,
-		},
-		{
 			Name:            "disableSecretsCompatibility",
 			Description:     "Disable duplicated secret storage in legacy tables",
 			Stage:           FeatureStageExperimental,
@@ -197,14 +189,6 @@ var (
 			Description: "Use double quotes to escape keyword in a MySQL query",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSearchAndStorageSquad,
-		},
-		{
-			Name:              "accessControlOnCall",
-			Description:       "Access control primitives for OnCall",
-			Stage:             FeatureStageGeneralAvailability,
-			Owner:             identityAccessTeam,
-			HideFromAdminPage: true,
-			Expression:        "true", // enabled by default
 		},
 		{
 			Name:        "nestedFolders",
@@ -1177,14 +1161,6 @@ var (
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromAdminPage: true,
 			Expression:        "false", // enabled by default
-		},
-		{
-			Name:         "datasourceProxyDisableRBAC",
-			Description:  "Disables applying a plugin route's ReqAction field to authorization",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
 		},
 		{
 			Name:              "alertingDisableSendAlertsExternal",

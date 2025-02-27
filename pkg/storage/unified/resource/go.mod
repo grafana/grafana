@@ -11,8 +11,8 @@ replace (
 require (
 	github.com/fullstorydev/grpchan v1.1.1
 	github.com/google/uuid v1.6.0
-	github.com/grafana/authlib v0.0.0-20250219100139-6a3b1bbb50e7
-	github.com/grafana/authlib/types v0.0.0-20250219092154-21ce22b49f31
+	github.com/grafana/authlib v0.0.0-20250225105729-99e678595501
+	github.com/grafana/authlib/types v0.0.0-20250224151205-5ef97131cc82
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040
 	github.com/grafana/grafana v11.4.0-00010101000000-000000000000+incompatible
 	github.com/grafana/grafana-plugin-sdk-go v0.266.0
@@ -117,7 +117,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/alerting v0.0.0-20250221202230-9d7e00921e44 // indirect
+	github.com/grafana/alerting v0.0.0-20250224133628-2acbeef29642 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/grafana-app-sdk/logging v0.30.0 // indirect
 	github.com/grafana/grafana-aws-sdk v0.31.5 // indirect
@@ -217,14 +217,14 @@ require (
 	go.opentelemetry.io/otel/sdk v1.34.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.5.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
-	golang.org/x/crypto v0.32.0 // indirect
+	golang.org/x/crypto v0.35.0 // indirect
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
 	golang.org/x/mod v0.22.0 // indirect
-	golang.org/x/net v0.34.0 // indirect
-	golang.org/x/oauth2 v0.26.0 // indirect
+	golang.org/x/net v0.35.0 // indirect
+	golang.org/x/oauth2 v0.27.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
-	golang.org/x/term v0.28.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/term v0.29.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/time v0.9.0 // indirect
 	golang.org/x/tools v0.29.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
