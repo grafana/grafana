@@ -54,11 +54,32 @@ jobs:
       - name: Verify Jsonnet generation
         run: CODEGEN_VERIFY=1 make gen-jsonnet
 
+      - name: Check if coverage should be generated
+        id: check-coverage
+        run: |
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]] && \
+             [[ "${{ github.event.head_commit.modified }}" =~ (pkg/|go\.|\.github/workflows/pr-test-backend\.yml) ]]; then
+            echo "generate=true" >> $GITHUB_OUTPUT
+          else
+            echo "generate=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Run backend tests
         uses: ./.github/actions/run-backend-tests
+        with:
+          generate-coverage: ${{ steps.check-coverage.outputs.generate }}
 
       - name: Run backend integration tests
         uses: ./.github/actions/run-backend-integration-tests
+        with:
+          generate-coverage: ${{ steps.check-coverage.outputs.generate }}
+
+      - name: Generate Coverage Report
+        if: steps.check-coverage.outputs.generate == 'true'
+        uses: ./.github/actions/report-coverage
+        with:
+          unit-cov-path: unit.cov
+          integration-cov-path: integration.cov
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
