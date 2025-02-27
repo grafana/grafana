@@ -136,7 +136,7 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 		}
 		dir := filepath.Join(resourceDir, fname)
 		if !isValidPath(dir, b.opts.Root) {
-			b.log.Error("Directory is not valid", "directory", dir, "error", err)
+			b.log.Error("Directory is not valid", "directory", dir)
 		}
 		if resourceVersion > 0 {
 			info, _ := os.Stat(dir)
@@ -239,13 +239,17 @@ func (b *bleveBackend) cleanOldIndexes(dir string, skip string) {
 
 // isValidPath does a sanity check in case it tries to access dirs above the file tree
 func isValidPath(path, safeDir string) bool {
-	if strings.Contains(path, "\\") || // if path contains backslashes
-		strings.Contains(path, "..") || // if path is above the safe dir
-		!strings.HasPrefix(path, safeDir) || // if path is not under the safe dir
-		!strings.HasSuffix(path, "/") { // if path is not a directory
+	if path == "" || safeDir == "" {
 		return false
 	}
-	return true
+	cleanPath := filepath.Clean(path)
+	cleanSafeDir := filepath.Clean(safeDir)
+
+	rel, err := filepath.Rel(cleanSafeDir, cleanPath)
+	if err != nil {
+		return false
+	}
+	return !strings.HasPrefix(rel, "..") && !strings.Contains(rel, "\\")
 }
 
 // TotalDocs returns the total number of documents across all indices

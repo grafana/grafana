@@ -655,6 +655,18 @@ func Test_isValidPath(t *testing.T) {
 			want:    true,
 		},
 		{
+			name:    "valid path without trailing slash",
+			dir:     "/path/to/my-file",
+			safeDir: "/path/to",
+			want:    true,
+		},
+		{
+			name:    "path with double slashes",
+			dir:     "/path//to//my-file/",
+			safeDir: "/path/to/",
+			want:    true,
+		},
+		{
 			name:    "invalid path: ..",
 			dir:     "/path/../above/",
 			safeDir: "/path/to/",
@@ -665,9 +677,29 @@ func Test_isValidPath(t *testing.T) {
 			safeDir: "/path/to/",
 		},
 		{
-			name:    "not a dir:",
+			name:    "invalid path: not under safe dir",
 			dir:     "/path/to.txt",
 			safeDir: "/path/to/",
+		},
+		{
+			name:    "invalid path: not a dir:",
+			dir:     "/path/to.txt",
+			safeDir: "/path/to/",
+		},
+		{
+			name:    "invalid path: empty paths",
+			dir:     "",
+			safeDir: "/path/to/",
+		},
+		{
+			name:    "invalid path: different path",
+			dir:     "/other/path/to/my-file/",
+			safeDir: "/Some/other/path",
+		},
+		{
+			name:    "invalid path: empty safe path",
+			dir:     "/path/to/",
+			safeDir: "",
 		},
 	}
 	for _, tt := range tests {
