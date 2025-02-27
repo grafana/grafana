@@ -289,11 +289,13 @@
     "common": {
       "cancel": "Cancel",
       "clear-filters": "Clear filters",
+      "dashboard": "Dashboard",
       "delete": "Delete",
       "edit": "Edit",
       "export": "Export",
       "export-all": "Export all",
       "loading": "Loading...",
+      "panel": "Panel",
       "search-by-matchers": "Search by matchers",
       "titles": {
         "notification-templates": "Notification Templates"
@@ -346,6 +348,9 @@
         "formats": "Select the format and download the file or copy the contents to clipboard",
         "one-format": "Download the file or copy the contents to clipboard"
       }
+    },
+    "folder-selector": {
+      "new": "New folder"
     },
     "folderAndGroup": {
       "evaluation": {
@@ -403,9 +408,7 @@
       "alertmanager": "Alertmanager:",
       "error": "Could not load routing preview for {{alertmanager}}",
       "initialized": "Based on the labels added, alert instances are routed to the following notification policies. Expand each notification policy below to view more details.",
-      "preview-routing": "Preview routing",
-      "title": "Alert instance routing preview",
-      "uninitialized": "When you have your folder selected and your query and labels are configured, click \"Preview routing\" to see the results here."
+      "title": "Alert instance routing preview"
     },
     "notification-templates": {
       "duplicate": {
@@ -508,7 +511,7 @@
           "alerting": "Turn on to pause evaluation for this alert rule.",
           "recording": "Turn on to pause evaluation for this recording rule."
         },
-        "select-folder-before": "Select a folder before setting evaluation group and interval"
+        "select-folder-before": "An evaluation group defines an evaluation interval - how often a rule is evaluated."
       },
       "evaluation-behaviour": {
         "description": {
@@ -541,7 +544,7 @@
         "help-info": "Folders are used for storing alert rules. You can extend the access provided by a role to alert rules and assign permissions to individual folders."
       },
       "labels": {
-        "help-info": "Labels are used to differentiate an alert from all other alerts.You can use them for searching, silencing, and routing notifications."
+        "help-info": "Labels are used to differentiate an alert from all other alerts. You can use them for searching, silencing, and routing notifications."
       },
       "pause": {
         "label": "Pause evaluation"
@@ -668,6 +671,11 @@
     },
     "threshold": {
       "to": "TO"
+    }
+  },
+  "aleting": {
+    "folder-selector": {
+      "name-placeholder": "Enter a name"
     }
   },
   "annotations": {

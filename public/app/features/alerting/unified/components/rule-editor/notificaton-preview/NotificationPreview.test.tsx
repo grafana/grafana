@@ -38,8 +38,7 @@ const ui = {
   route: byTestId('matching-policy-route'),
   routeButton: byRole('button', { name: /Expand policy route/ }),
   routeMatchingInstances: byTestId('route-matching-instance'),
-  loadingIndicator: byText(/Loading routing preview/i),
-  previewButton: byRole('button', { name: /preview routing/i }),
+  loadingIndicator: byTestId('loading-preview-instances'),
   grafanaAlertManagerLabel: byText(/alertmanager:grafana/i),
   otherAlertManagerLabel: byText(/alertmanager:other_am/i),
   seeDetails: byText(/see details/i),
@@ -121,54 +120,52 @@ describe.each([
   false,
 ])('NotificationPreview with alertingApiServer=%p', (apiServerEnabled) => {
   apiServerEnabled ? testWithFeatureToggles(['alertingApiServer']) : testWithFeatureToggles([]);
-  jest.retryTimes(2);
 
   it('should render notification preview without alert manager label, when having only one alert manager configured to receive alerts', async () => {
     mockOneAlertManager();
     mockPreviewApiResponse(server, [{ labels: [{ tomato: 'red', avocate: 'green' }] }]);
 
-    const { user } = render(
-      <NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />
-    );
-
-    await user.click(ui.previewButton.get());
+    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />);
     await waitFor(() => {
       expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
     });
 
-    // we expect the alert manager label to be missing as there is only one alert manager configured to receive alerts
-    await waitFor(() => {
-      expect(ui.grafanaAlertManagerLabel.query()).not.toBeInTheDocument();
+    await waitFor(async () => {
+      expect(await ui.route.find()).toBeInTheDocument();
     });
-    expect(ui.otherAlertManagerLabel.query()).not.toBeInTheDocument();
+    expect(await ui.route.find()).toHaveTextContent(/tomato = red/);
 
-    const matchingPoliciesElements = ui.route.queryAll;
-    await waitFor(() => {
-      expect(matchingPoliciesElements()).toHaveLength(1);
-    });
-    expect(matchingPoliciesElements()[0]).toHaveTextContent(/tomato = red/);
+    // we expect the alert manager label to be missing as there is only one alert manager configured to receive alerts
+    expect(ui.grafanaAlertManagerLabel.query()).not.toBeInTheDocument();
+    expect(ui.otherAlertManagerLabel.query()).not.toBeInTheDocument();
   });
+
   it('should render notification preview with alert manager sections, when having more than one alert manager configured to receive alerts', async () => {
     // two alert managers configured  to receive alerts
     mockTwoAlertManagers();
     mockPreviewApiResponse(server, [{ labels: [{ tomato: 'red', avocate: 'green' }] }]);
 
-    const { user } = render(
-      <NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />
-    );
+    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />);
+    await waitFor(() => {
+      expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
+    });
 
-    await user.click(await ui.previewButton.find());
+    const matchingPolicies = ui.route;
+    await waitFor(async () => {
+      expect((await matchingPolicies.findAll())[0]).toBeInTheDocument();
+    });
+    expect(matchingPolicies.getAll()[0]).toHaveTextContent(/tomato = red/);
+
+    await waitFor(async () => {
+      expect((await matchingPolicies.findAll())[1]).toBeInTheDocument();
+    });
+    expect(matchingPolicies.getAll()[1]).toHaveTextContent(/tomato = red/);
 
     // we expect the alert manager label to be present as there is more than one alert manager configured to receive alerts
     expect(await ui.grafanaAlertManagerLabel.find()).toBeInTheDocument();
     expect(await ui.otherAlertManagerLabel.find()).toBeInTheDocument();
-
-    const matchingPoliciesElements = await ui.route.findAll();
-
-    expect(matchingPoliciesElements).toHaveLength(2);
-    expect(matchingPoliciesElements[0]).toHaveTextContent(/tomato = red/);
-    expect(matchingPoliciesElements[1]).toHaveTextContent(/tomato = red/);
   });
+
   it('should render details modal when clicking see details button', async () => {
     // two alert managers configured  to receive alerts
     mockOneAlertManager();
@@ -182,7 +179,6 @@ describe.each([
       expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
     });
 
-    await user.click(ui.previewButton.get());
     await user.click(await ui.seeDetails.find());
     expect(ui.details.title.query()).toBeInTheDocument();
     //we expect seeing the default policy
@@ -193,6 +189,7 @@ describe.each([
     expect(within(ui.details.modal.get()).getByText(/slack/i)).toBeInTheDocument();
     expect(ui.details.linkToContactPoint.get()).toBeInTheDocument();
   });
+
   it('should not render contact point link in details modal if user has no permissions for editing contact points', async () => {
     // two alert managers configured  to receive alerts
     mockOneAlertManager();
@@ -206,7 +203,6 @@ describe.each([
       expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
     });
 
-    await user.click(ui.previewButton.get());
     await user.click(await ui.seeDetails.find());
     expect(ui.details.title.query()).toBeInTheDocument();
     //we expect seeing the default policy

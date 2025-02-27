@@ -52,5 +52,7 @@ export const useAdvancedMode = (
     }
   }, [isAdvancedMode, expressionQueries, isGrafanaAlertingType]);
 
-  return { simpleCondition, setSimpleCondition };
+  const simplifiedQueryStep = isGrafanaAlertingType ? simplifiedQueryEditor : false;
+
+  return { simpleCondition, setSimpleCondition, simplifiedQueryStep };
 };

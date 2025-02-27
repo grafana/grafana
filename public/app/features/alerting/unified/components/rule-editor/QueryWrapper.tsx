@@ -18,7 +18,16 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  GraphThresholdsStyleMode,
+  IconButton,
+  InlineField,
+  Input,
+  RelativeTimeRangePicker,
+  Stack,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 import { logInfo } from 'app/features/alerting/unified/Analytics';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
@@ -116,32 +125,6 @@ export const QueryWrapper = ({
     }
   }
 
-  function SelectingDataSourceTooltip() {
-    const styles = useStyles2(getStyles);
-    return (
-      <div className={styles.dsTooltip}>
-        <Tooltip
-          content={
-            <>
-              Not finding the data source you want? Some data sources are not supported for alerting. Click on the icon
-              for more information.
-            </>
-          }
-        >
-          <Icon
-            name="info-circle"
-            onClick={() =>
-              window.open(
-                ' https://grafana.com/docs/grafana/latest/alerting/fundamentals/data-source-alerting/',
-                '_blank'
-              )
-            }
-          />
-        </Tooltip>
-      </div>
-    );
-  }
-
   // TODO add a warning label here too when the data looks like time series data and is used as an alert condition
   function HeaderExtras({
     query,
@@ -167,19 +150,51 @@ export const QueryWrapper = ({
 
     return (
       <Stack direction="row" alignItems="center" gap={1}>
-        <SelectingDataSourceTooltip />
-        <QueryOptions
-          onChangeTimeRange={onChangeTimeRange}
-          query={query}
-          queryOptions={alertQueryOptions}
-          onChangeQueryOptions={onChangeQueryOptions}
-          index={index}
-        />
-        {isAdvancedMode && (
-          <ExpressionStatusIndicator
-            onSetCondition={() => onSetCondition(query.refId)}
-            isCondition={isAlertCondition}
+        <Tooltip
+          placement="top"
+          content={
+            <>
+              Not finding the data source you want? Some data sources are not supported for alerting. Click on the icon
+              for more information.
+            </>
+          }
+        >
+          <IconButton
+            name="info-circle"
+            variant="secondary"
+            aria-label="data source selection help"
+            onClick={() =>
+              window.open(
+                ' https://grafana.com/docs/grafana/latest/alerting/fundamentals/data-source-alerting/',
+                '_blank'
+              )
+            }
           />
+        </Tooltip>
+
+        {/* show just the time range picker for simplified mode */}
+        {!isAdvancedMode && onChangeTimeRange && (
+          <RelativeTimeRangePicker
+            timeRange={query.relativeTimeRange ?? getDefaultRelativeTimeRange()}
+            onChange={(range) => onChangeTimeRange(range, index)}
+          />
+        )}
+
+        {/* show full options for advanced mode */}
+        {isAdvancedMode && (
+          <>
+            <QueryOptions
+              onChangeTimeRange={onChangeTimeRange}
+              query={query}
+              queryOptions={alertQueryOptions}
+              onChangeQueryOptions={onChangeQueryOptions}
+              index={index}
+            />
+            <ExpressionStatusIndicator
+              onSetCondition={() => onSetCondition(query.refId)}
+              isCondition={isAlertCondition}
+            />
+          </>
         )}
       </Stack>
     );
@@ -192,7 +207,7 @@ export const QueryWrapper = ({
   const range = rangeUtil.relativeToTimeRange(query.relativeTimeRange ?? getDefaultRelativeTimeRange());
 
   return (
-    <Stack direction="column" gap={0.5}>
+    <Stack direction="column" gap={1}>
       <div className={styles.wrapper}>
         <QueryEditorRow<AlertDataQuery>
           hideRefId={!isAdvancedMode}
@@ -314,20 +329,9 @@ export function MinIntervalOption({
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     label: 'AlertingQueryWrapper',
-    marginBottom: theme.spacing(1),
-    border: `1px solid ${theme.colors.border.weak}`,
-    borderRadius: theme.shape.radius.default,
 
     button: {
       overflow: 'visible',
-    },
-  }),
-  dsTooltip: css({
-    display: 'flex',
-    alignItems: 'center',
-    '&:hover': {
-      opacity: 0.85,
-      cursor: 'pointer',
     },
   }),
 });

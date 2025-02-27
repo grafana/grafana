@@ -1,9 +1,8 @@
-import { css } from '@emotion/css';
 import { useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Field, VirtualizedSelect, useStyles2 } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
+import { Field, Stack, VirtualizedSelect } from '@grafana/ui';
 
 import { RuleFormValues } from '../../types/rule-form';
 
@@ -21,7 +20,6 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
     setValue,
   } = useFormContext<RuleFormValues>();
 
-  const style = useStyles2(getStyle);
   const { namespaceGroups, isLoading } = useAlertRuleSuggestions(rulesSourceName);
 
   const namespace = watch('namespace');
@@ -41,19 +39,19 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
   );
 
   return (
-    <div className={style.flexRow}>
+    <Stack direction="row" gap={0.5}>
       <Field
         data-testid="namespace-picker"
         label="Namespace"
         error={errors.namespace?.message}
         invalid={!!errors.namespace?.message}
+        style={{ marginBottom: 0 }}
       >
         <Controller
           render={({ field: { onChange, ref, ...field } }) => (
             <VirtualizedSelect
               {...field}
               allowCustomValue
-              className={style.input}
               onChange={(value) => {
                 setValue('group', ''); //reset if namespace changes
                 onChange(value.value);
@@ -62,6 +60,7 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
               width={42}
               isLoading={isLoading}
               disabled={isLoading}
+              placeholder="Choose namespace"
             />
           )}
           name="namespace"
@@ -71,7 +70,13 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
           }}
         />
       </Field>
-      <Field data-testid="group-picker" label="Group" error={errors.group?.message} invalid={!!errors.group?.message}>
+      <Field
+        data-testid="group-picker"
+        label="Group"
+        error={errors.group?.message}
+        invalid={!!errors.group?.message}
+        style={{ marginBottom: 0 }}
+      >
         <Controller
           render={({ field: { ref, ...field } }) => (
             <VirtualizedSelect
@@ -82,9 +87,9 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
               onChange={(value) => {
                 setValue('group', value.value ?? '');
               }}
-              className={style.input}
               isLoading={isLoading}
               disabled={isLoading}
+              placeholder="Choose group"
             />
           )}
           name="group"
@@ -94,21 +99,6 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
           }}
         />
       </Field>
-    </div>
+    </Stack>
   );
 };
-
-const getStyle = (theme: GrafanaTheme2) => ({
-  flexRow: css({
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-
-    '& > * + *': {
-      marginLeft: theme.spacing(3),
-    },
-  }),
-  input: css({
-    width: '330px !important',
-  }),
-});

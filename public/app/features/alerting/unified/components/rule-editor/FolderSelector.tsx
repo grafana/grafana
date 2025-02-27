@@ -12,7 +12,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { useNewFolderMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { AccessControlAction } from 'app/types';
 
-import { Trans } from '../../../../../core/internationalization/index';
+import { Trans, t } from '../../../../../core/internationalization/index';
 import { Folder, RuleFormValues } from '../../types/rule-form';
 
 export function FolderSelector() {
@@ -39,70 +39,58 @@ export function FolderSelector() {
 
   return (
     <>
-      <Stack alignItems="center">
-        {
-          <Field
-            label={
-              <Label htmlFor="folder" description={'Select a folder to store your rule in.'}>
-                <Trans i18nKey="alerting.rule-form.folder.label">Folder</Trans>
-              </Label>
-            }
-            error={errors.folder?.message}
-            data-testid="folder-picker"
-          >
-            <Stack direction="row" alignItems="center">
-              {(!isCreatingFolder && (
-                <>
-                  <Controller
-                    render={({ field: { ref, ...field } }) => (
-                      <div style={{ width: 420 }}>
-                        <NestedFolderPicker
-                          showRootFolder={false}
-                          invalid={!!errors.folder?.message}
-                          {...field}
-                          value={folder?.uid}
-                          onChange={(uid, title) => {
-                            if (uid && title) {
-                              setValue('folder', { title, uid });
-                            } else {
-                              setValue('folder', undefined);
-                            }
+      <Field error={errors.folder?.message} data-testid="folder-picker" style={{ marginBottom: 0 }}>
+        <Stack direction="row" alignItems="center">
+          {(!isCreatingFolder && (
+            <>
+              <Controller
+                render={({ field: { ref, ...field } }) => (
+                  <div style={{ width: 420 }}>
+                    <NestedFolderPicker
+                      showRootFolder={false}
+                      invalid={!!errors.folder?.message}
+                      {...field}
+                      value={folder?.uid}
+                      onChange={(uid, title) => {
+                        if (uid && title) {
+                          setValue('folder', { title, uid });
+                        } else {
+                          setValue('folder', undefined);
+                        }
 
-                            resetGroup();
-                          }}
-                        />
-                      </div>
-                    )}
-                    name="folder"
-                    rules={{
-                      required: { value: true, message: 'Select a folder' },
-                    }}
-                  />
-                  <Text color="secondary">
-                    <Trans i18nKey="alerting.rule-form.folder.new-folder-or">or</Trans>
-                  </Text>
-                  <Button
-                    onClick={onOpenFolderCreationModal}
-                    type="button"
-                    icon="plus"
-                    fill="outline"
-                    variant="secondary"
-                    disabled={!contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
-                    data-testid={selectors.components.AlertRules.newFolderButton}
-                  >
-                    <Trans i18nKey="alerting.rule-form.folder.new-folder">New folder</Trans>
-                  </Button>
-                </>
-              )) || (
-                <div>
-                  <Trans i18nKey="alerting.rule-form.folder.creating-new-folder">Creating new folder</Trans>
-                  {'...'}
-                </div>
-              )}
-            </Stack>
-          </Field>
-        }
-      </Stack>
+                        resetGroup();
+                      }}
+                    />
+                  </div>
+                )}
+                name="folder"
+                rules={{
+                  required: { value: true, message: 'Select a folder' },
+                }}
+              />
+              <Text color="secondary">
+                <Trans i18nKey="alerting.rule-form.folder.new-folder-or">or</Trans>
+              </Text>
+              <Button
+                onClick={onOpenFolderCreationModal}
+                type="button"
+                icon="plus"
+                fill="outline"
+                variant="secondary"
+                disabled={!contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
+                data-testid={selectors.components.AlertRules.newFolderButton}
+              >
+                <Trans i18nKey="alerting.rule-form.folder.new-folder">New folder</Trans>
+              </Button>
+            </>
+          )) || (
+            <div>
+              <Trans i18nKey="alerting.rule-form.folder.creating-new-folder">Creating new folder</Trans>
+              {'...'}
+            </div>
+          )}
+        </Stack>
+      </Field>
 
       {isCreatingFolder && (
         <FolderCreationModal onCreate={handleFolderCreation} onClose={() => setIsCreatingFolder(false)} />
@@ -135,7 +123,13 @@ function FolderCreationModal({
   };
 
   return (
-    <Modal className={styles.modal} isOpen={true} title={'New folder'} onDismiss={onClose} onClickBackdrop={onClose}>
+    <Modal
+      className={styles.modal}
+      isOpen={true}
+      title={t('alerting.folder-selector.new', 'New folder')}
+      onDismiss={onClose}
+      onClickBackdrop={onClose}
+    >
       <Stack direction="column" gap={2}>
         <Text color="secondary">
           <Trans i18nKey="alerting.rule-form.folder.create-folder">
@@ -155,7 +149,7 @@ function FolderCreationModal({
               data-testid={selectors.components.AlertRules.newFolderNameField}
               autoFocus={true}
               id="folderName"
-              placeholder="Enter a name"
+              placeholder={t('aleting.folder-selector.name-placeholder', 'Enter a name')}
               value={title}
               onChange={(e) => setTitle(e.currentTarget.value)}
             />

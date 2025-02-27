@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, Stack, Text, Toggletip, useStyles2 } from '@grafana/ui';
+import { Icon, Stack, Text, TextLink, Toggletip, useStyles2 } from '@grafana/ui';
 
 interface NeedHelpInfoProps {
   contentText: string | JSX.Element;
@@ -14,44 +14,41 @@ export function NeedHelpInfo({ contentText, externalLink, linkText, title = 'Nee
 
   return (
     <Toggletip
-      content={<div className={styles.mutedText}>{contentText}</div>}
+      content={
+        <Text color="primary" variant="bodySmall">
+          {contentText}
+        </Text>
+      }
       title={
         <Stack gap={0.5} direction="row" alignItems="center">
           <Icon name="question-circle" />
-          {title}
+          <Text variant="body" color="primary" weight="medium">
+            {title}
+          </Text>
         </Stack>
       }
       footer={
         externalLink ? (
-          <a href={externalLink} target="_blank" rel="noreferrer">
-            <Stack direction="row" gap={0.5} alignItems="center">
-              <Text color="link">
-                {linkText} <Icon size="sm" name="external-link-alt" />
-              </Text>
-            </Stack>
-          </a>
+          <TextLink variant="bodySmall" href={externalLink} external>
+            {linkText}
+          </TextLink>
         ) : undefined
       }
       closeButton={true}
       placement="bottom-start"
     >
       <div className={styles.helpInfo}>
-        <Stack direction="row" alignItems="center" gap={0.5}>
-          <Icon name="question-circle" size="sm" />
-          <Text variant="bodySmall" color="primary">
-            Need help?
-          </Text>
-        </Stack>
+        <Text variant="bodySmall" color="primary">
+          <Stack direction="row" alignItems="center" gap={0.5}>
+            <Icon name="question-circle" size="sm" /> Need help?
+          </Stack>
+        </Text>
       </div>
     </Toggletip>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  mutedText: css({
-    color: theme.colors.text.secondary,
-    fontSize: theme.typography.size.sm,
-  }),
   helpInfo: css({
     cursor: 'pointer',
     textDecoration: 'underline',
