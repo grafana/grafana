@@ -245,6 +245,14 @@ func SetupConfig(
 
 	serverConfig.EffectiveVersion = v
 
+	// set priority for aggregated discovery
+	for _, b := range builders {
+		gvs := GetGroupVersions(b)
+		for i, gv := range gvs {
+			serverConfig.AggregatedDiscoveryGroupManager.SetGroupVersionPriority(metav1.GroupVersion(gv), 1000, int(i))
+		}
+	}
+
 	if err := AddPostStartHooks(serverConfig, builders); err != nil {
 		return err
 	}
