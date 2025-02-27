@@ -74,9 +74,7 @@ func TestMode1_Create(t *testing.T) {
 				tt.setupStorageFn(us.Mock)
 			}
 
-			m := staticService{}
-			m.SetMode(kind, rest.Mode1)
-			dw, err := m.NewStorage(kind, ls, us)
+			dw, err := NewDualWriter(kind, rest.Mode1, ls, us)
 			require.NoError(t, err)
 
 			obj, err := dw.Create(context.Background(), tt.input, func(context.Context, runtime.Object) error { return nil }, &metav1.CreateOptions{})
@@ -150,9 +148,7 @@ func TestMode1_Get(t *testing.T) {
 				tt.setupStorageFn(us.Mock, name)
 			}
 
-			m := staticService{}
-			m.SetMode(kind, rest.Mode1)
-			dw, err := m.NewStorage(kind, ls, us)
+			dw, err := NewDualWriter(kind, rest.Mode1, ls, us)
 			require.NoError(t, err)
 
 			obj, err := dw.Get(context.Background(), name, &metav1.GetOptions{})
@@ -215,9 +211,7 @@ func TestMode1_List(t *testing.T) {
 				tt.setupStorageFn(us.Mock)
 			}
 
-			m := staticService{}
-			m.SetMode(kind, rest.Mode1)
-			dw, err := m.NewStorage(kind, ls, us)
+			dw, err := NewDualWriter(kind, rest.Mode1, ls, us)
 			require.NoError(t, err)
 
 			_, err = dw.List(context.Background(), &metainternalversion.ListOptions{})
@@ -286,9 +280,7 @@ func TestMode1_Delete(t *testing.T) {
 				tt.setupStorageFn(us.Mock, name)
 			}
 
-			m := staticService{}
-			m.SetMode(kind, rest.Mode1)
-			dw, err := m.NewStorage(kind, ls, us)
+			dw, err := NewDualWriter(kind, rest.Mode1, ls, us)
 			require.NoError(t, err)
 
 			obj, _, err := dw.Delete(context.Background(), name, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
@@ -363,9 +355,7 @@ func TestMode1_DeleteCollection(t *testing.T) {
 				tt.setupStorageFn(us.Mock, tt.input)
 			}
 
-			m := staticService{}
-			m.SetMode(kind, rest.Mode1)
-			dw, err := m.NewStorage(kind, ls, us)
+			dw, err := NewDualWriter(kind, rest.Mode1, ls, us)
 			require.NoError(t, err)
 
 			obj, err := dw.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, tt.input, &metainternalversion.ListOptions{})
@@ -438,9 +428,7 @@ func TestMode1_Update(t *testing.T) {
 				tt.setupStorageFn(us.Mock, name)
 			}
 
-			m := staticService{}
-			m.SetMode(kind, rest.Mode1)
-			dw, err := m.NewStorage(kind, ls, us)
+			dw, err := NewDualWriter(kind, rest.Mode1, ls, us)
 			require.NoError(t, err)
 
 			obj, _, err := dw.Update(context.Background(), name, updatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
