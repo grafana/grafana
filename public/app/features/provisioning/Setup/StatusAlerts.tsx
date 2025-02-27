@@ -57,7 +57,7 @@ export function StatusAlerts({ showSetupButton = true, showSuccessBanner = false
   // Only optional features missing - show info alert
   return (
     <Alert severity="info" title="Additional Features Not Configured" {...commonSetupButtonProps}>
-      Some additional features like Github webhook integration or image renderer are not configured. These features may
+      Some additional features like Github webhook integration or Previews are not configured. These features can
       enhance your experience.
     </Alert>
   );
