@@ -1,3 +1,5 @@
+//go:build enterprise || pro
+
 package xorm
 
 import (

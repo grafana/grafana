@@ -204,7 +204,6 @@ func (dbCfg *DatabaseConfig) buildConnectionString(cfg *setting.Cfg, features fe
 
 		cnnstr += buildExtraConnectionString('&', dbCfg.UrlQueryParams)
 	default:
-		fmt.Println(">>>", dbCfg.Name)
 		cnnstr = dbCfg.Name
 	}
 
