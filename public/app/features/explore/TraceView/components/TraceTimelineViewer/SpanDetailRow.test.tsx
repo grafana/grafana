@@ -61,9 +61,9 @@ const setup = (propOverrides?: SpanDetailRowProps) => {
 
 describe('SpanDetailRow tests', () => {
   beforeEach(() => {
-    setPluginLinksHook(() => ({ 
+    setPluginLinksHook(() => ({
       isLoading: false,
-      links: []
+      links: [],
     }));
   });
 

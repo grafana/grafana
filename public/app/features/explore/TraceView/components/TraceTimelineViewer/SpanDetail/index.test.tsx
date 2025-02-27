@@ -162,9 +162,9 @@ describe('<SpanDetail>', () => {
     props.logsToggle.mockReset();
     props.logItemToggle.mockReset();
 
-    setPluginLinksHook(() => ({ 
+    setPluginLinksHook(() => ({
       isLoading: false,
-      links: []
+      links: [],
     }));
 
     setDataSourceSrv({

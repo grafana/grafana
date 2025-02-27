@@ -48,11 +48,11 @@ function renderTraceViewNew() {
 
 describe('TraceView', () => {
   beforeAll(() => {
-    setPluginLinksHook(() => ({ 
+    setPluginLinksHook(() => ({
       isLoading: false,
-      links: []
+      links: [],
     }));
-    
+
     setDataSourceSrv({
       getInstanceSettings() {
         return undefined;

@@ -143,7 +143,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     profilesForThisSpanButton: css({
       borderTopRightRadius: 0,
       borderBottomRightRadius: 0,
-    })
+    }),
   };
 };
 
@@ -302,7 +302,13 @@ export default function SpanDetail(props: SpanDetailProps) {
     });
   }
 
-  const createLinkButton = (link: SpanLinkDef, type: SpanLinkType, title: string, icon: IconName, className?: string) => {
+  const createLinkButton = (
+    link: SpanLinkDef,
+    type: SpanLinkType,
+    title: string,
+    icon: IconName,
+    className?: string
+  ) => {
     return (
       <DataLinkButton
         link={{
@@ -346,7 +352,13 @@ export default function SpanDetail(props: SpanDetailProps) {
       (link) => link.type === SpanLinkType.Profiles && link.title === RelatedProfilesTitle
     );
     if (links && profilesLink && profilesLink.length > 0) {
-      profileLinkButton = createLinkButton(profilesLink[0], SpanLinkType.Profiles, 'Profiles for this span', 'link', styles.profilesForThisSpanButton);
+      profileLinkButton = createLinkButton(
+        profilesLink[0],
+        SpanLinkType.Profiles,
+        'Profiles for this span',
+        'link',
+        styles.profilesForThisSpanButton
+      );
     }
     const sessionLink = links?.filter((link) => link.type === SpanLinkType.Session);
     if (links && sessionLink && sessionLink.length > 0) {
@@ -367,17 +379,19 @@ export default function SpanDetail(props: SpanDetailProps) {
     profileTypeId: traceToProfilesOptions?.profileTypeId ?? '',
     spanSelector: spanSelector.length === 1 && spanSelector[0].value ? spanSelector[0].value : '',
     timeRange: timeRange.raw,
-    targets: [{
-      datasource: {
-        type: 'grafana-pyroscope-datasource',
-        uid: traceToProfilesOptions?.datasourceUid
-      }
-    }]
+    targets: [
+      {
+        datasource: {
+          type: 'grafana-pyroscope-datasource',
+          uid: traceToProfilesOptions?.datasourceUid,
+        },
+      },
+    ],
   };
   const { links } = usePluginLinks({ extensionPointId, context, limitPerPlugin: 1 });
   const link = links && links.length > 0 ? links.find((link) => link.pluginId === exploreProfilesPluginId) : null;
   let profileLinkButtons = profileLinkButton;
-  
+
   if (link && profileLinkButton) {
     const label = 'Open in Grafana Profiles Drilldown';
     profileLinkButtons = (
@@ -385,9 +399,9 @@ export default function SpanDetail(props: SpanDetailProps) {
         {profileLinkButton}
         <ButtonSelect
           className={styles.profilesDrilldownSelect}
-          variant='primary'
+          variant="primary"
           narrow
-          options={[{label, value: label}]}
+          options={[{ label, value: label }]}
           onChange={(e) => {
             if (e.value === label && link.onClick) {
               reportInteraction('grafana_traces_open_in_profiles_drilldown_clicked');
@@ -396,7 +410,7 @@ export default function SpanDetail(props: SpanDetailProps) {
           }}
         />
       </ButtonGroup>
-    )
+    );
   }
 
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
