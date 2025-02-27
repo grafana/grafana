@@ -1,6 +1,6 @@
 import React, { type ComponentType, Fragment, type ReactElement, useCallback, useMemo } from 'react';
 
-import { type UrlQueryValue } from '@grafana/data';
+import { type ComponentTypeWithExtensionsMeta, type UrlQueryValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -11,7 +11,7 @@ const GENERAL_SETTINGS_TAB = 'general';
 
 type Props = {
   children?: React.ReactNode;
-  components: ComponentTypeWithMeta[];
+  components: ComponentTypeWithExtensionsMeta[];
 };
 
 export function UserProfileEditTabs(props: Props): ReactElement {

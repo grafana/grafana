@@ -550,7 +550,7 @@ export {
   type PluginExtensionLink,
   type PluginExtensionComponent,
   type PluginExtensionComponentMeta,
-  type ComponentTypeWithMeta,
+  type ComponentTypeWithExtensionsMeta,
   type PluginExtensionConfig,
   type PluginExtensionFunction,
   type PluginExtensionLinkConfig,
