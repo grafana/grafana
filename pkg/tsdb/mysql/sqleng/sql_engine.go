@@ -224,7 +224,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 			if theErr, ok := r.(error); ok {
 				queryResult.dataResponse.Error = theErr
 			} else if theErrString, ok := r.(string); ok {
-				queryResult.dataResponse.Error = fmt.Errorf(theErrString)
+				queryResult.dataResponse.Error = errors.New(theErrString)
 			} else {
 				queryResult.dataResponse.Error = fmt.Errorf("unexpected error - %s", e.userError)
 			}

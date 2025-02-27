@@ -85,12 +85,7 @@ func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx 
 		return nil, fmt.Errorf("%v: %w", "failed to get user service", err)
 	}
 	routing := routing.ProvideRegister()
-	if err != nil {
-		return nil, fmt.Errorf("%v: %w", "failed to initialize tracer config", err)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("%v: %w", "failed to initialize tracer service", err)
-	}
+
 	acService, err := acimpl.ProvideService(cfg, replstore, routing, nil, nil, nil, features, tracer, zanzana.NewNoopClient(), permreg.ProvidePermissionRegistry())
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to get access control", err)
@@ -123,9 +118,9 @@ func runListConflictUsers() func(context *cli.Context) error {
 			logger.Info(color.GreenString("No Conflicting users found.\n\n"))
 			return nil
 		}
-		logger.Infof("\n\nShowing conflicts\n\n")
-		logger.Infof(r.ToStringPresentation())
-		logger.Infof("\n")
+		logger.Info("\n\nShowing conflicts\n\n")
+		logger.Info(r.ToStringPresentation())
+		logger.Info("\n")
 		if len(r.DiscardedBlocks) != 0 {
 			r.logDiscardedUsers()
 		}
@@ -461,7 +456,8 @@ func (r *ConflictResolver) showChanges() {
 			}
 		}
 		b.WriteString("Keep the following user.\n")
-		b.WriteString(fmt.Sprintf("%s\n", block))
+		b.WriteString(block)
+		b.WriteByte('\n')
 		b.WriteString(color.GreenString(fmt.Sprintf("id: %s, email: %s, login: %s\n", mainUser.ID, mainUser.Email, mainUser.Login)))
 		for _, r := range fmt.Sprintf("%s%s", mainUser.Email, mainUser.Login) {
 			if unicode.IsUpper(r) {
@@ -482,7 +478,7 @@ func (r *ConflictResolver) showChanges() {
 		b.WriteString("\n\n")
 	}
 	logger.Info("\n\nChanges that will take place\n\n")
-	logger.Infof(b.String())
+	logger.Info(b.String())
 }
 
 // Formatter make it possible for us to write to terminal and to a file
