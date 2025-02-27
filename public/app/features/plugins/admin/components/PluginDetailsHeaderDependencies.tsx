@@ -16,7 +16,6 @@ export function PluginDetailsHeaderDependencies({ plugin, grafanaDependency }: P
   const styles = useStyles2(getStyles);
   const pluginDependencies = plugin.details?.pluginDependencies;
   const hasNoDependencyInfo = !grafanaDependency && (!pluginDependencies || !pluginDependencies.length);
-  const pluginDependants = plugin.details?.dependantPlugins;
 
   if (hasNoDependencyInfo) {
     return null;
@@ -44,19 +43,6 @@ export function PluginDetailsHeaderDependencies({ plugin, grafanaDependency }: P
             );
           })}
         </div>
-      )}
-
-      {pluginDependants && pluginDependants.length > 0 && (
-        <Stack direction="column" gap={1}>
-          {pluginDependants.map((p) => {
-            return (
-              <span key={p.id} className={styles.depBadge}>
-                <Icon name={PluginIconName[p.type]} className={styles.icon} />
-                {p.name}
-              </span>
-            );
-          })}
-        </Stack>
       )}
     </Stack>
   );
