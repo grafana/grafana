@@ -105,6 +105,7 @@ func Convert_to_V1(in *dashboard.Dashboard, out *dashboardV1.Dashboard, scope co
 		anno = make(map[string]string)
 		out.Annotations = anno
 	}
+	anno[">>>INTERNAL-VERSION"] = in.APIVersion
 	anno[">>>INTERNAL-TO-VX"] = "Convert_to_V1"
 
 	return nil

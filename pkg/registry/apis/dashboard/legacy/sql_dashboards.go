@@ -281,6 +281,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		row.RV = version
 		dash.ResourceVersion = fmt.Sprintf("%d", row.RV)
 		dash.Namespace = a.namespacer(orgId)
+		dash.APIVersion = fmt.Sprintf("%s/%s", dashboard.GROUP, "v0alpha1") // unstructured
 		dash.UID = gapiutil.CalculateClusterWideUID(dash)
 		dash.SetCreationTimestamp(metav1.NewTime(created))
 		meta, err := utils.MetaAccessor(dash)
