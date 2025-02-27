@@ -203,6 +203,13 @@ func (p *Converter) convertRule(orgID int64, namespaceUID, group string, rule Pr
 		title = rule.Alert
 	}
 
+	// Temporary workaround for avoiding the uniqueness check for the rule title.
+	// In Grafana alert rule titles must be unique within the same org and folder,
+	// but Prometheus allows multiple rules with the same name. By adding the group name
+	// to the title we ensure that the title is unique within the group.
+	// TODO: Remove this workaround when we have a proper solution for handling rule title uniqueness.
+	title = fmt.Sprintf("[%s] %s", group, title)
+
 	labels := make(map[string]string, len(rule.Labels)+1)
 	for k, v := range rule.Labels {
 		labels[k] = v
