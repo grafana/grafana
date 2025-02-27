@@ -91,8 +91,9 @@ func TestScanRow(t *testing.T) {
 		s, ok := meta.GetSourceProperties()
 		require.True(t, ok)
 
-		require.Equal(t, "file:provisioner", m.Identity) // should be prefixed by file:
-		require.Equal(t, "../"+pathToFile, s.Path)       // relative to provisioner
+		require.Equal(t, utils.ManagerKindClassicFP, m.Kind)
+		require.Equal(t, "provisioner", m.Identity)
+		require.Equal(t, "../"+pathToFile, s.Path) // relative to provisioner
 		require.Equal(t, "hashing", s.Checksum)
 		require.NoError(t, err)
 		require.Equal(t, int64(100000), s.TimestampMillis)

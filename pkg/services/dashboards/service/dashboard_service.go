@@ -1837,18 +1837,6 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 
 	ctx, _ = identity.WithServiceIdentity(ctx, query.OrgId)
 
-	if query.ManagerIdentity != "" {
-		query.ManagerIdentity = query.ManagerIdentity
-	}
-
-	if len(query.ManagerIdentityNotIn) > 0 {
-		repos := make([]string, len(query.ManagerIdentityNotIn))
-		for i, v := range query.ManagerIdentityNotIn {
-			repos[i] = v
-		}
-		query.ManagerIdentityNotIn = repos
-	}
-
 	query.Type = searchstore.TypeDashboard
 
 	searchResults, err := dr.searchDashboardsThroughK8sRaw(ctx, query)

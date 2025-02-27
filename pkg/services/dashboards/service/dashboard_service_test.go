@@ -646,7 +646,7 @@ func TestGetProvisionedDashboardDataByDashboardID(t *testing.T) {
 					utils.LabelKeyDeprecatedInternalID: "1", // nolint:staticcheck
 				},
 				"annotations": map[string]any{
-					utils.AnnoKeyManagerKind:     utils.ManagerKindClassicFP,
+					utils.AnnoKeyManagerKind:     utils.ManagerKindClassicFP, // nolint:staticcheck
 					utils.AnnoKeyManagerIdentity: "test",
 					utils.AnnoKeySourceChecksum:  "hash",
 					utils.AnnoKeySourcePath:      "path/to/file",
@@ -737,7 +737,7 @@ func TestGetProvisionedDashboardDataByDashboardUID(t *testing.T) {
 					utils.LabelKeyDeprecatedInternalID: "1", // nolint:staticcheck
 				},
 				"annotations": map[string]any{
-					utils.AnnoKeyManagerKind:     utils.ManagerKindClassicFP,
+					utils.AnnoKeyManagerKind:     utils.ManagerKindClassicFP, // nolint:staticcheck
 					utils.AnnoKeyManagerIdentity: "test",
 					utils.AnnoKeySourceChecksum:  "hash",
 					utils.AnnoKeySourcePath:      "path/to/file",
@@ -827,7 +827,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 			"metadata": map[string]any{
 				"name": "uid",
 				"annotations": map[string]any{
-					utils.AnnoKeyManagerKind:     utils.ManagerKindClassicFP,
+					utils.AnnoKeyManagerKind:     utils.ManagerKindClassicFP, // nolint:staticcheck
 					utils.AnnoKeyManagerIdentity: "orphaned",
 					utils.AnnoKeySourceChecksum:  "hash",
 					utils.AnnoKeySourcePath:      "path/to/file",
@@ -852,7 +852,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 			"metadata": map[string]any{
 				"name": "uid3",
 				"annotations": map[string]any{
-					utils.AnnoKeyManagerKind:     utils.ManagerKindClassicFP,
+					utils.AnnoKeyManagerKind:     utils.ManagerKindClassicFP, // nolint:staticcheck
 					utils.AnnoKeyManagerIdentity: "orphaned",
 					utils.AnnoKeySourceChecksum:  "hash",
 					utils.AnnoKeySourcePath:      "path/to/file",
@@ -963,7 +963,7 @@ func TestUnprovisionDashboard(t *testing.T) {
 			"metadata": map[string]any{
 				"name": "uid",
 				"annotations": map[string]any{
-					utils.AnnoKeyManagerKind:     utils.ManagerKindClassicFP,
+					utils.AnnoKeyManagerKind:     utils.ManagerKindClassicFP, // nolint:staticcheck
 					utils.AnnoKeyManagerIdentity: "test",
 					utils.AnnoKeySourceChecksum:  "hash",
 					utils.AnnoKeySourcePath:      "path/to/file",
@@ -1998,7 +1998,7 @@ func TestSearchProvisionedDashboardsThroughK8sRaw(t *testing.T) {
 		"metadata": map[string]any{
 			"name": "uid",
 			"annotations": map[string]any{
-				utils.AnnoKeyManagerKind:     utils.ManagerKindClassicFP,
+				utils.AnnoKeyManagerKind:     utils.ManagerKindClassicFP, // nolint:staticcheck
 				utils.AnnoKeyManagerIdentity: "test",
 				utils.AnnoKeySourceChecksum:  "hash",
 				utils.AnnoKeySourcePath:      "path/to/file",
