@@ -5,7 +5,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/apiserver/rest"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
 // For *legacy* services, this will indicate if we have transitioned to Unified storage yet
@@ -36,7 +36,7 @@ type Service interface {
 	ShouldManage(gr schema.GroupResource) bool
 
 	// Create a managed k8s storage instance
-	NewStorage(gr schema.GroupResource, legacy rest.Storage, storage rest.Storage) (rest.Storage, error)
+	NewStorage(gr schema.GroupResource, legacy grafanarest.Storage, storage grafanarest.Storage) (grafanarest.Storage, error)
 
 	// Check if the dual writes is reading from unified storage (mode3++)
 	ReadFromUnified(ctx context.Context, gr schema.GroupResource) (bool, error)
