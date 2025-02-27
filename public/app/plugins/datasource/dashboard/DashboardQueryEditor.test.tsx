@@ -2,8 +2,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { getDefaultTimeRange, LoadingState } from '@grafana/data';
-import { setDataSourceSrv } from '@grafana/runtime';
-import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
+import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
@@ -30,11 +30,7 @@ jest.mock('app/core/config', () => ({
   },
 }));
 
-setDataSourceSrv(
-  new MockDataSourceSrv({
-    test: mockDataSource({ isDefault: true }),
-  })
-);
+setupDataSources(mockDataSource({ isDefault: true }));
 
 describe('DashboardQueryEditor', () => {
   const mockOnChange = jest.fn();

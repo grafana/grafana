@@ -54,10 +54,10 @@ func TestMode2_Create(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (LegacyStorage)(nil)
+			l := (Storage)(nil)
 			s := (Storage)(nil)
 
-			ls := legacyStoreMock{&mock.Mock{}, l}
+			ls := storageMock{&mock.Mock{}, l}
 			us := storageMock{&mock.Mock{}, s}
 
 			if tt.setupLegacyFn != nil {
@@ -122,7 +122,6 @@ func TestMode2_Get(t *testing.T) {
 					m.On("Get", mock.Anything, input, mock.Anything).Return(nil, apierrors.NewNotFound(
 						schema.GroupResource{Group: "", Resource: "pods"}, "not-found"))
 				},
-				wantErr: true,
 			},
 			{
 				name:  "should return an error when getting an object from both the LegacyStorage and Storage fails",
@@ -139,10 +138,10 @@ func TestMode2_Get(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (LegacyStorage)(nil)
+			l := (Storage)(nil)
 			s := (Storage)(nil)
 
-			ls := legacyStoreMock{&mock.Mock{}, l}
+			ls := storageMock{&mock.Mock{}, l}
 			us := storageMock{&mock.Mock{}, s}
 
 			if tt.setupLegacyFn != nil {
@@ -213,10 +212,10 @@ func TestMode2_List(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (LegacyStorage)(nil)
+			l := (Storage)(nil)
 			s := (Storage)(nil)
 
-			ls := legacyStoreMock{&mock.Mock{}, l}
+			ls := storageMock{&mock.Mock{}, l}
 			us := storageMock{&mock.Mock{}, s}
 
 			if tt.setupLegacyFn != nil {
@@ -314,10 +313,10 @@ func TestMode2_Delete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (LegacyStorage)(nil)
+			l := (Storage)(nil)
 			s := (Storage)(nil)
 
-			ls := legacyStoreMock{&mock.Mock{}, l}
+			ls := storageMock{&mock.Mock{}, l}
 			us := storageMock{&mock.Mock{}, s}
 
 			if tt.setupLegacyFn != nil {
@@ -383,10 +382,10 @@ func TestMode2_DeleteCollection(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (LegacyStorage)(nil)
+			l := (Storage)(nil)
 			s := (Storage)(nil)
 
-			ls := legacyStoreMock{&mock.Mock{}, l}
+			ls := storageMock{&mock.Mock{}, l}
 			us := storageMock{&mock.Mock{}, s}
 
 			if tt.setupLegacyFn != nil {
@@ -452,10 +451,10 @@ func TestMode2_Update(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (LegacyStorage)(nil)
+			l := (Storage)(nil)
 			s := (Storage)(nil)
 
-			ls := legacyStoreMock{&mock.Mock{}, l}
+			ls := storageMock{&mock.Mock{}, l}
 			us := storageMock{&mock.Mock{}, s}
 
 			if tt.setupLegacyFn != nil {

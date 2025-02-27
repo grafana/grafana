@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 )
 
 func TestGetAllLibraryElements(t *testing.T) {
@@ -281,7 +281,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 			err := sc.reqContext.Req.ParseForm()
 			require.NoError(t, err)
-			sc.reqContext.Req.Form.Add("sortDirection", search.SortAlphaDesc.Name)
+			sc.reqContext.Req.Form.Add("sortDirection", sort.SortAlphaDesc.Name)
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 

@@ -2,6 +2,7 @@ import { difference, groupBy, take, trim, upperFirst } from 'lodash';
 import { ReactNode } from 'react';
 
 import { config } from '@grafana/runtime';
+import { t } from 'app/core/internationalization';
 import { canAdminEntity, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import {
   AlertManagerCortexConfig,
@@ -49,6 +50,17 @@ export function getReceiverDescription(receiver: ReceiverConfigWithMetadata): Re
     }
     case 'webhook': {
       return settings.url;
+    }
+    case 'jira': {
+      return t(
+        'alerting.contact-points.receiver-summary.jira',
+        `Creates a "{{issueType}}" issue in the "{{project}}" project`,
+        {
+          issueType: settings.issue_type,
+          project: settings.project,
+          url: settings.api_url,
+        }
+      );
     }
     case ReceiverTypes.OnCall: {
       return receiver[RECEIVER_PLUGIN_META_KEY]?.description;

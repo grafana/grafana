@@ -46,9 +46,7 @@ func TestConvertDashboardVersionsToInternal(t *testing.T) {
 			Labels:            labels,
 			ResourceVersion:   rv,
 		},
-		Spec: common.Unstructured{
-			Object: body,
-		},
+		Spec: dashboardinternal.DashboardSpec{Title: title, Unstructured: common.Unstructured{Object: body}},
 	}
 	dashV0 := &dashboardv0alpha1.Dashboard{
 		ObjectMeta: v1.ObjectMeta{

@@ -46,6 +46,19 @@ const AnnoKeyRepoPath = "grafana.app/repoPath"
 const AnnoKeyRepoHash = "grafana.app/repoHash"
 const AnnoKeyRepoTimestamp = "grafana.app/repoTimestamp"
 
+// Annotations used to store manager properties
+
+const AnnoKeyManagerKind = "grafana.app/managedBy"
+const AnnoKeyManagerIdentity = "grafana.app/managerId"
+const AnnoKeyManagerAllowsEdits = "grafana.app/managerAllowsEdits"
+const AnnoKeyManagerSuspended = "grafana.app/managerSuspended"
+
+// Annotations used to store source properties
+
+const AnnoKeySourcePath = "grafana.app/sourcePath"
+const AnnoKeySourceHash = "grafana.app/sourceHash"
+const AnnoKeySourceTimestamp = "grafana.app/sourceTimestamp"
+
 // LabelKeyDeprecatedInternalID gives the deprecated internal ID of a resource
 // Deprecated: will be removed in grafana 13
 const LabelKeyDeprecatedInternalID = "grafana.app/deprecatedInternalID"
@@ -138,6 +151,22 @@ type GrafanaMetaAccessor interface {
 	//  * title
 	// and return an empty string if nothing was found
 	FindTitle(defaultTitle string) string
+
+	// GetManagerProperties returns the identity of the tool,
+	// which is responsible for managing the resource.
+	//
+	// If the identity is not known, the second return value will be false.
+	GetManagerProperties() (ManagerProperties, bool)
+
+	// SetManagerProperties sets the identity of the tool,
+	// which is responsible for managing the resource.
+	SetManagerProperties(ManagerProperties)
+
+	// GetSourceProperties returns the source properties of the resource.
+	GetSourceProperties() (SourceProperties, bool)
+
+	// SetSourceProperties sets the source properties of the resource.
+	SetSourceProperties(SourceProperties)
 }
 
 var _ GrafanaMetaAccessor = (*grafanaMetaAccessor)(nil)
@@ -716,6 +745,107 @@ func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {
 		return title.String()
 	}
 	return defaultTitle
+}
+
+func (m *grafanaMetaAccessor) GetManagerProperties() (ManagerProperties, bool) {
+	res := ManagerProperties{
+		Identity:    "",
+		Kind:        ManagerKindUnknown,
+		AllowsEdits: true,
+		Suspended:   false,
+	}
+
+	annot := m.obj.GetAnnotations()
+
+	id, ok := annot[AnnoKeyManagerIdentity]
+	if !ok || id == "" {
+		// If the identity is not set, we should ignore the other annotations and return the default values.
+		//
+		// This is to prevent inadvertently marking resources as managed,
+		// since that can potentially block updates from other sources.
+		return res, false
+	}
+	res.Identity = id
+
+	if v, ok := annot[AnnoKeyManagerKind]; ok {
+		res.Kind = ParseManagerKindString(v)
+	}
+
+	if v, ok := annot[AnnoKeyManagerAllowsEdits]; ok {
+		res.AllowsEdits = v == "true"
+	}
+
+	if v, ok := annot[AnnoKeyManagerSuspended]; ok {
+		res.Suspended = v == "true"
+	}
+
+	return res, true
+}
+
+func (m *grafanaMetaAccessor) SetManagerProperties(v ManagerProperties) {
+	annot := m.obj.GetAnnotations()
+	if annot == nil {
+		annot = make(map[string]string, 4)
+	}
+
+	annot[AnnoKeyManagerIdentity] = v.Identity
+	annot[AnnoKeyManagerKind] = string(v.Kind)
+	annot[AnnoKeyManagerAllowsEdits] = strconv.FormatBool(v.AllowsEdits)
+	annot[AnnoKeyManagerSuspended] = strconv.FormatBool(v.Suspended)
+
+	m.obj.SetAnnotations(annot)
+}
+
+func (m *grafanaMetaAccessor) GetSourceProperties() (SourceProperties, bool) {
+	var (
+		res   SourceProperties
+		found bool
+	)
+
+	annot := m.obj.GetAnnotations()
+	if annot == nil {
+		return res, false
+	}
+
+	if path, ok := annot[AnnoKeySourcePath]; ok && path != "" {
+		res.Path = path
+		found = true
+	}
+
+	if hash, ok := annot[AnnoKeySourceHash]; ok && hash != "" {
+		res.Checksum = hash
+		found = true
+	}
+
+	if timestamp, ok := annot[AnnoKeySourceTimestamp]; ok && timestamp != "" {
+		if t, err := time.Parse(time.RFC3339, timestamp); err == nil {
+			res.Timestamp = t
+			found = true
+		}
+	}
+
+	return res, found
+}
+
+func (m *grafanaMetaAccessor) SetSourceProperties(v SourceProperties) {
+	annot := m.obj.GetAnnotations()
+	if annot == nil {
+		annot = make(map[string]string, 3)
+	}
+
+	if v.Path != "" {
+		annot[AnnoKeySourcePath] = v.Path
+	}
+
+	if v.Checksum != "" {
+		annot[AnnoKeySourceHash] = v.Checksum
+	}
+
+	if !v.Timestamp.IsZero() {
+		annot[AnnoKeySourceTimestamp] = v.Timestamp.Format(time.RFC3339)
+	}
+
+	m.obj.SetAnnotations(annot)
 }
 
 type BlobInfo struct {

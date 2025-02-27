@@ -157,7 +157,7 @@ The **Page size** option lets you paginate the state timeline visualization to l
 
 {{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-### Data links
+### Data links and actions
 
 {{< docs/shared lookup="visualizations/datalink-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 

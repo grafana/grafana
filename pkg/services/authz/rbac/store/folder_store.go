@@ -102,13 +102,13 @@ func (s *SQLFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo
 
 var _ FolderStore = (*APIFolderStore)(nil)
 
-func NewAPIFolderStore(tracer tracing.Tracer, configProvider func(ctx context.Context) *rest.Config) *APIFolderStore {
+func NewAPIFolderStore(tracer tracing.Tracer, configProvider func(ctx context.Context) (*rest.Config, error)) *APIFolderStore {
 	return &APIFolderStore{tracer, configProvider}
 }
 
 type APIFolderStore struct {
 	tracer         tracing.Tracer
-	configProvider func(ctx context.Context) *rest.Config
+	configProvider func(ctx context.Context) (*rest.Config, error)
 }
 
 func (s *APIFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo) ([]Folder, error) {
@@ -150,7 +150,11 @@ func (s *APIFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo
 }
 
 func (s *APIFolderStore) client(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
-	client, err := dynamic.NewForConfig(s.configProvider(ctx))
+	cfg, err := s.configProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+	client, err := dynamic.NewForConfig(cfg)
 	if err != nil {
 		return nil, err
 	}

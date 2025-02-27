@@ -24,6 +24,7 @@ import (
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -68,8 +69,9 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 	dashStore dashboards.Store,
 	provisioning provisioning.ProvisioningService,
 	softDelete bool,
+	sorter sort.Service,
 ) DashboardAccess {
-	dashboardSearchClient := legacysearcher.NewDashboardSearchClient(dashStore)
+	dashboardSearchClient := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
 	return &dashboardSqlAccess{
 		sql:                   sql,
 		namespacer:            namespacer,

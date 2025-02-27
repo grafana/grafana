@@ -1,4 +1,5 @@
 import { SelectableValue } from '@grafana/data';
+import { sceneGraph, SceneGridLayout } from '@grafana/scenes';
 import { RadioButtonGroup, Select } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -88,14 +89,24 @@ function MaxPerRowOption({ gridItem }: OptionComponentProps) {
 }
 
 function RepeatByOption({ gridItem }: OptionComponentProps) {
-  const { variableName } = gridItem.useState();
+  const { variableName, width } = gridItem.useState();
 
   return (
     <RepeatRowSelect2
       id="repeat-by-variable-select"
       sceneContext={gridItem}
       repeat={variableName}
-      onChange={(value?: string) => gridItem.setRepeatByVariable(value)}
+      onChange={(value?: string) => {
+        if (value !== variableName) {
+          gridItem.setRepeatByVariable(value);
+          gridItem.handleVariableName();
+
+          if (width !== 24) {
+            gridItem.setState({ width: 24 });
+            sceneGraph.getAncestor(gridItem, SceneGridLayout).forceRender();
+          }
+        }
+      }}
     />
   );
 }

@@ -123,6 +123,46 @@ describe('graphiteDatasource', () => {
       expect(result.data[1].meta.notices).toBeUndefined();
       expect(result.data[1].refId).toBe('B');
     });
+    it('handles series with spaces in the name', () => {
+      const refIDMap = {
+        refIDA: 'A',
+        refIDB: 'B',
+      };
+      const result = ctx.ds.convertResponseToDataFrames(
+        createFetchResponse({
+          meta: {
+            stats: {
+              'executeplan.cache-hit-partial.count': 5,
+              'executeplan.cache-hit.count': 10,
+            },
+          },
+          series: [
+            {
+              target: 'series A with spaces refIDA',
+              datapoints: [
+                [100, 200],
+                [101, 201],
+              ],
+            },
+            {
+              target: 'series B with spaces refIDB',
+              datapoints: [
+                [200, 300],
+                [201, 301],
+              ],
+            },
+          ],
+        }),
+        refIDMap
+      );
+
+      expect(result.data.length).toBe(2);
+      expect(getFrameDisplayName(result.data[0])).toBe('series A with spaces');
+      expect(getFrameDisplayName(result.data[1])).toBe('series B with spaces');
+      expect(result.data[0].length).toBe(2);
+      expect(result.data[0].refId).toBe('A');
+      expect(result.data[1].refId).toBe('B');
+    });
   });
 
   describe('When querying graphite with one target using query editor target spec', () => {

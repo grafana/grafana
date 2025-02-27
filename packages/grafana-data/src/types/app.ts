@@ -179,4 +179,6 @@ export enum FeatureState {
   privatePreview = 'private preview',
   /** used to mark features that are in public preview with low/medium risk, or as a shared badge for public and private previews */
   preview = 'preview',
+  /** used to mark new GA features */
+  new = 'new',
 }

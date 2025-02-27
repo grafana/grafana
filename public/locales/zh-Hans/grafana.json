@@ -205,6 +205,41 @@
         "recording": ""
       }
     },
+    "alertVersionHistory": {
+      "alerting": "",
+      "alerting-change-description": "",
+      "annotations": "",
+      "compareVersions": "",
+      "comparing-versions": "",
+      "condition": "",
+      "contactPointRouting": "",
+      "description": "",
+      "errorloading": "",
+      "execErrorState": "",
+      "intervalSeconds": "",
+      "labels": "",
+      "latest": "",
+      "name": "",
+      "namespace_uid": "",
+      "noDataState": "",
+      "noVersionsFound": "",
+      "paused": "",
+      "pendingPeriod": "",
+      "provisioning": "",
+      "provisioning-change-description": "",
+      "queryAndAlertCondition": "",
+      "reset": "",
+      "restore": "",
+      "restore-modal": {
+        "body": "",
+        "summary": "",
+        "title": ""
+      },
+      "rule_group": "",
+      "unknown": "",
+      "unknown-change-description": "",
+      "user-id": ""
+    },
     "annotations": {
       "description": "",
       "title": ""
@@ -260,6 +295,9 @@
       "export-all": "",
       "loading": "",
       "search-by-matchers": "",
+      "titles": {
+        "notification-templates": ""
+      },
       "view": ""
     },
     "contact-points": {
@@ -283,6 +321,9 @@
       "no-delivery-attempts": "",
       "no-integrations": "",
       "only-firing": "",
+      "receiver-summary": {
+        "jira": ""
+      },
       "telegram": {
         "parse-mode-warning-body": "",
         "parse-mode-warning-title": ""
@@ -294,6 +335,10 @@
       "label": ""
     },
     "copy-to-clipboard": "",
+    "dag": {
+      "missing-reference": "",
+      "self-reference": ""
+    },
     "export": {
       "subtitle": {
         "formats": "",
@@ -359,6 +404,20 @@
       "preview-routing": "",
       "title": "",
       "uninitialized": ""
+    },
+    "notification-templates": {
+      "duplicate": {
+        "subTitle": "",
+        "title": ""
+      },
+      "edit": {
+        "subTitle": "",
+        "title": ""
+      },
+      "new": {
+        "subTitle": "",
+        "title": ""
+      }
     },
     "policies": {
       "default-policy": {
@@ -482,6 +541,19 @@
       },
       "pause": {
         "label": ""
+      },
+      "threshold": {
+        "recovery": {
+          "stop-alerting-above": "",
+          "stop-alerting-bellow": "",
+          "stop-alerting-equal": "",
+          "stop-alerting-inside-range": "",
+          "stop-alerting-less": "",
+          "stop-alerting-more": "",
+          "stop-alerting-not-equal": "",
+          "stop-alerting-outside-range": "",
+          "title": ""
+        }
       }
     },
     "rule-groups": {
@@ -524,7 +596,16 @@
       "paused": "",
       "recording-rule": ""
     },
+    "rule-view": {
+      "query": {
+        "datasources-na": {
+          "description": "",
+          "title": ""
+        }
+      }
+    },
     "rule-viewer": {
+      "error-loading": "",
       "prometheus-consistency-check": {
         "alert-message": "",
         "alert-title": ""
@@ -751,6 +832,7 @@
     "collapse": "",
     "edit": "",
     "help": "",
+    "loading": "",
     "locale": {
       "default": "默认"
     },
@@ -772,6 +854,25 @@
     },
     "search": {
       "placeholder": "搜索全部"
+    }
+  },
+  "core": {
+    "versionHistory": {
+      "comparison": {
+        "header": {
+          "hide-json-diff": "",
+          "show-json-diff": "",
+          "text": ""
+        },
+        "select": ""
+      },
+      "no-properties-changed": "",
+      "table": {
+        "updated": "",
+        "updatedBy": "",
+        "version": ""
+      },
+      "view-json-diff": ""
     }
   },
   "correlations": {
@@ -965,6 +1066,11 @@
         }
       }
     },
+    "editpane": {
+      "add": "",
+      "configure": "",
+      "outline": ""
+    },
     "empty": {
       "add-library-panel-body": "添加与其他仪表板共享的可视化。",
       "add-library-panel-button": "添加库面板",
@@ -1102,6 +1208,7 @@
     "toolbar": {
       "add": "添加",
       "add-panel": "",
+      "add-panel-description": "",
       "add-panel-lib": "",
       "add-row": "",
       "add-tab": "",
@@ -1127,6 +1234,7 @@
         "label": "",
         "tooltip": ""
       },
+      "libray-panel-description": "",
       "mark-favorite": "标记为收藏",
       "more-save-options": "",
       "open-original": "打开原始仪表板",
@@ -1135,6 +1243,7 @@
       "playlist-stop": "停止播放列表",
       "public-dashboard": "",
       "refresh": "刷新仪表板",
+      "row-description": "",
       "save": "保存仪表板",
       "save-dashboard": {
         "label": "",
@@ -1154,6 +1263,7 @@
       "share-button": "分享",
       "show-hidden-elements": "",
       "switch-old-dashboard": "",
+      "tabs-description": "",
       "unlink-library-panel": "",
       "unmark-favorite": "取消标记为收藏"
     },
@@ -1259,6 +1369,12 @@
       "time-zone-label": "时区",
       "week-start-label": "每周开始日"
     },
+    "time-regions": {
+      "advanced-description-cron": "",
+      "advanced-description-rest": "",
+      "advanced-description-use": "",
+      "advanced-label": ""
+    },
     "variables": {
       "title": "变量"
     },
@@ -1274,9 +1390,6 @@
     },
     "panel-queries": {
       "add-query-from-library": ""
-    },
-    "query-library": {
-      "add-query-button": ""
     },
     "settings": {
       "variables": {
@@ -1344,6 +1457,11 @@
   },
   "explore": {
     "add-to-dashboard": "添加到仪表板",
+    "drilldownInfo": {
+      "action": "",
+      "description": "",
+      "title": ""
+    },
     "logs": {
       "logs-volume": {
         "add-filters": "",
@@ -1359,7 +1477,6 @@
       "close-tooltip": "关闭查询历史记录",
       "datasource-a-z": "数据源 A-Z",
       "datasource-z-a": "数据源 Z-A",
-      "library-history-dropdown": "",
       "newest-first": "最新在前",
       "oldest-first": "最早在前",
       "query-history": "查询历史记录",
@@ -1463,6 +1580,7 @@
       "switch-datasource-button": ""
     },
     "secondary-actions": {
+      "add-from-query-library": "",
       "query-add-button": "添加查询",
       "query-add-button-aria-label": "添加查询",
       "query-history-button": "查询历史记录",
@@ -1556,6 +1674,10 @@
     "incomplete-request-error": "",
     "send-custom-feedback": ""
   },
+  "get-enterprise": {
+    "requires-license": "",
+    "title": ""
+  },
   "grafana-ui": {
     "action-editor": {
       "button": {
@@ -1575,9 +1697,18 @@
         "one-click-description": ""
       }
     },
+    "alert": {
+      "close-button": ""
+    },
     "auto-save-field": {
       "saved": "",
       "saving": ""
+    },
+    "card": {
+      "option": ""
+    },
+    "cascader": {
+      "clear-button": ""
     },
     "color-picker-popover": {
       "palette-tab": "",
@@ -1586,8 +1717,15 @@
     "confirm-button": {
       "cancel": ""
     },
+    "confirm-content": {
+      "placeholder": ""
+    },
     "data-link-editor": {
-      "info": ""
+      "info": "",
+      "new-tab-label": "",
+      "title-label": "",
+      "title-placeholder": "",
+      "url-label": ""
     },
     "data-link-editor-modal": {
       "cancel": "",
@@ -1607,35 +1745,86 @@
       "tooltip-remove": "",
       "url-not-provided": ""
     },
+    "data-source-basic-auth-settings": {
+      "user-label": "",
+      "user-placeholder": ""
+    },
+    "data-source-http-proxy-settings": {
+      "oauth-identity-label": "",
+      "oauth-identity-tooltip": "",
+      "skip-tls-verify-label": "",
+      "ts-client-auth-label": "",
+      "with-ca-cert-label": "",
+      "with-ca-cert-tooltip": ""
+    },
     "data-source-http-settings": {
       "access-help": "",
       "access-help-details": "",
+      "access-label": "",
+      "access-options-browser": "",
+      "access-options-proxy": "",
       "allowed-cookies": "",
+      "allowed-cookies-tooltip": "",
       "auth": "",
+      "azure-auth-label": "",
+      "azure-auth-tooltip": "",
       "basic-auth": "",
+      "basic-auth-label": "",
       "browser-mode-description": "",
       "browser-mode-title": "",
+      "default-url-access-select": "",
       "default-url-tooltip": "",
       "direct-url-tooltip": "",
       "heading": "",
       "proxy-url-tooltip": "",
       "server-mode-description": "",
-      "server-mode-title": ""
+      "server-mode-title": "",
+      "timeout-form-label": "",
+      "timeout-label": "",
+      "timeout-tooltip": "",
+      "url-label": "",
+      "with-credential-label": "",
+      "with-credential-tooltip": ""
     },
     "data-source-settings": {
       "alerting-settings-heading": "",
+      "alerting-settings-label": "",
+      "alerting-settings-tooltip": "",
       "cert-key-reset": "",
       "custom-headers-add": "",
+      "custom-headers-header": "",
+      "custom-headers-header-placeholder": "",
+      "custom-headers-header-remove": "",
+      "custom-headers-header-value": "",
       "custom-headers-title": "",
       "secure-socks-heading": "",
-      "tls-heading": ""
+      "secure-socks-label": "",
+      "secure-socks-tooltip": "",
+      "tls-certification-label": "",
+      "tls-certification-placeholder": "",
+      "tls-client-certification-label": "",
+      "tls-client-key-label": "",
+      "tls-client-key-placeholder": "",
+      "tls-heading": "",
+      "tls-server-name-label": "",
+      "tls-tooltip": ""
     },
     "date-time-picker": {
       "apply": "",
-      "cancel": ""
+      "calendar-icon-label": "",
+      "cancel": "",
+      "next-label": "",
+      "previous-label": "",
+      "select-placeholder": ""
     },
     "drawer": {
       "close": "关闭"
+    },
+    "feature-badge": {
+      "experimental": "",
+      "new": "",
+      "preview": "",
+      "private-preview": ""
     },
     "field-link-list": {
       "external-links-heading": ""
@@ -1650,6 +1839,10 @@
     "modal": {
       "close-tooltip": "关闭"
     },
+    "named-colors-palette": {
+      "text-color-swatch": "",
+      "transparent-swatch": ""
+    },
     "secret-form-field": {
       "reset": ""
     },
@@ -1662,6 +1855,9 @@
       "default-create-label": "",
       "no-options-label": "未找到选项",
       "placeholder": "选择"
+    },
+    "series-color-picker-popover": {
+      "y-axis-usage": ""
     },
     "spinner": {
       "aria-label": ""
@@ -1681,6 +1877,9 @@
     },
     "user-icon": {
       "active-text": ""
+    },
+    "value-pill": {
+      "remove-button": ""
     },
     "viz-legend": {
       "right-axis-indicator": ""
@@ -1958,6 +2157,7 @@
       "render-image-error-description": ""
     }
   },
+  "lock-icon": "",
   "login": {
     "divider": {
       "connecting-text": ""
@@ -2002,6 +2202,10 @@
   },
   "logs": {
     "infinite-scroll": {
+      "end-of-range": "",
+      "load-more": "",
+      "load-newer": "",
+      "load-older": "",
       "older-logs": ""
     },
     "log-details": {
@@ -2419,6 +2623,9 @@
     "detect": {
       "title": "检测"
     },
+    "drilldown": {
+      "title": ""
+    },
     "explore": {
       "title": "探索"
     },
@@ -2456,6 +2663,8 @@
     "history-wrapper": {
       "collapse": "",
       "expand": "",
+      "icon-selected": "",
+      "icon-unselected": "",
       "show-more": "",
       "today": "",
       "yesterday": ""
@@ -2742,6 +2951,7 @@
   },
   "plugins": {
     "catalog": {
+      "no-updates-available": "",
       "update-all": {
         "all-plugins-updated": "",
         "available-header": "",
@@ -2800,6 +3010,12 @@
     },
     "empty-state": {
       "message": ""
+    },
+    "filter": {
+      "disabled": "",
+      "sort": "",
+      "sort-list": "",
+      "state": ""
     },
     "plugin-help": {
       "error": "",
@@ -3496,6 +3712,16 @@
       "title": ""
     }
   },
+  "theme-preview": {
+    "breadcrumbs": {
+      "dashboards": "",
+      "home": ""
+    },
+    "panel": {
+      "form-label": "",
+      "title": ""
+    }
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "最近使用的绝对范围",
@@ -3552,10 +3778,13 @@
       "example": "",
       "example-details": "",
       "example-title": "示例时间范围",
+      "from-label": "",
       "from-to": "",
       "more-info": "",
       "specify": "指定时间范围 <1></1>",
-      "supported-formats": ""
+      "submit-button-label": "",
+      "supported-formats": "",
+      "to-label": ""
     },
     "zone": {
       "select-aria-label": "时区选择器",

@@ -43,7 +43,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceStats":          schema_pkg_apis_provisioning_v0alpha1_ResourceStats(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceType":           schema_pkg_apis_provisioning_v0alpha1_ResourceType(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceWrapper":        schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref),
-		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.S3RepositoryConfig":     schema_pkg_apis_provisioning_v0alpha1_S3RepositoryConfig(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncJobOptions":         schema_pkg_apis_provisioning_v0alpha1_SyncJobOptions(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncOptions":            schema_pkg_apis_provisioning_v0alpha1_SyncOptions(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncStatus":             schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref),
@@ -238,49 +237,49 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"owner": {
+					"url": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The owner of the repository (e.g. example in `example/test` or `https://github.com/example/test`).",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"repository": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The name of the repository (e.g. test in `example/test` or `https://github.com/example/test`).",
+							Description: "The repository URL (e.g. `https://github.com/example/test`).",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"branch": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The branch to use in the repository. By default, this is the main branch.",
+							Description: "The branch to use in the repository.",
+							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"token": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Token for accessing the repository.",
+							Description: "Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"branchWorkflow": {
+					"encryptedToken": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Whether we should commit to change branches and use a Pull Request flow to achieve this. By default, this is false (i.e. we will commit straight to the main branch).",
-							Type:        []string{"boolean"},
-							Format:      "",
+							Description: "Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.",
+							Type:        []string{"string"},
+							Format:      "byte",
 						},
 					},
 					"generateDashboardPreviews": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Whether we should show dashboard previews in the pull requests caused by the BranchWorkflow option. By default, this is false (i.e. we will not create previews). This option is a no-op if BranchWorkflow is `false` or default.",
+							Description: "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},
 				},
+				Required: []string{"branch"},
 			},
 		},
 	}
@@ -553,6 +552,12 @@ func schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref common.Referen
 							Format: "",
 						},
 					},
+					"total": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
 					"create": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"integer"},
@@ -723,8 +728,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref common.ReferenceCallbac
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.JobResourceSummary"),
+										Ref: ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.JobResourceSummary"),
 									},
 								},
 							},
@@ -951,12 +955,20 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 							Format:      "",
 						},
 					},
-					"readOnly": {
+					"workflows": {
 						SchemaProps: spec.SchemaProps{
-							Description: "ReadOnly  repository does not allow any write commands",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
+							Description: "UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly)",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+										Enum:    []interface{}{"branch", "write"},
+									},
+								},
+							},
 						},
 					},
 					"sync": {
@@ -968,37 +980,31 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 					},
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"github\"`\n - `\"local\"`\n - `\"s3\"`",
+							Description: "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"github\"`\n - `\"local\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"github", "local", "s3"},
+							Enum:        []interface{}{"github", "local"},
 						},
 					},
 					"local": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The repository on the local file system. Mutually exclusive with local | s3 | github.",
+							Description: "The repository on the local file system. Mutually exclusive with local | github.",
 							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.LocalRepositoryConfig"),
-						},
-					},
-					"s3": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The repository in an S3 bucket. Mutually exclusive with local | s3 | github.",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.S3RepositoryConfig"),
 						},
 					},
 					"github": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The repository on GitHub. Mutually exclusive with local | s3 | github.",
+							Description: "The repository on GitHub. Mutually exclusive with local | github.",
 							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.GitHubRepositoryConfig"),
 						},
 					},
 				},
-				Required: []string{"title", "readOnly", "sync", "type"},
+				Required: []string{"title", "workflows", "sync", "type"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.GitHubRepositoryConfig", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.LocalRepositoryConfig", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.S3RepositoryConfig", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncOptions"},
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.GitHubRepositoryConfig", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.LocalRepositoryConfig", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncOptions"},
 	}
 }
 
@@ -1097,11 +1103,11 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref common.ReferenceCa
 					},
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The repository type\n\nPossible enum values:\n - `\"github\"`\n - `\"local\"`\n - `\"s3\"`",
+							Description: "The repository type\n\nPossible enum values:\n - `\"github\"`\n - `\"local\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"github", "local", "s3"},
+							Enum:        []interface{}{"github", "local"},
 						},
 					},
 					"target": {
@@ -1576,30 +1582,6 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref common.ReferenceC
 	}
 }
 
-func schema_pkg_apis_provisioning_v0alpha1_S3RepositoryConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"region": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"bucket": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
 func schema_pkg_apis_provisioning_v0alpha1_SyncJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -1721,9 +1703,9 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref common.ReferenceCallba
 							},
 						},
 					},
-					"hash": {
+					"lastRef": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The repository hash when the last sync ran",
+							Description: "The repository ref when the last successful sync ran",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -1879,6 +1861,12 @@ func schema_pkg_apis_provisioning_v0alpha1_WebhookStatus(ref common.ReferenceCal
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
+						},
+					},
+					"encryptedSecret": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "byte",
 						},
 					},
 					"subscribedEvents": {

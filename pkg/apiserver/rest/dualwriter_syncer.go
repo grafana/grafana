@@ -33,7 +33,7 @@ type SyncerConfig struct {
 	RequestInfo *request.RequestInfo
 
 	Mode              DualWriterMode
-	LegacyStorage     LegacyStorage
+	LegacyStorage     Storage
 	Storage           Storage
 	ServerLockService ServerLockService
 

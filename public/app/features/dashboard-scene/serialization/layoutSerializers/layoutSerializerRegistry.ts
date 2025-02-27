@@ -5,6 +5,7 @@ import { LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManage
 import { DefaultGridLayoutManagerSerializer } from './DefaultGridLayoutSerializer';
 import { ResponsiveGridLayoutSerializer } from './ResponsiveGridLayoutSerializer';
 import { RowsLayoutSerializer } from './RowsLayoutSerializer';
+import { TabsLayoutSerializer } from './TabsLayoutSerializer';
 
 interface LayoutSerializerRegistryItem extends RegistryItem {
   serializer: LayoutManagerSerializer;
@@ -16,5 +17,6 @@ export const layoutSerializerRegistry: Registry<LayoutSerializerRegistryItem> =
       { id: 'GridLayout', name: 'Grid Layout', serializer: new DefaultGridLayoutManagerSerializer() },
       { id: 'ResponsiveGridLayout', name: 'Responsive Grid Layout', serializer: new ResponsiveGridLayoutSerializer() },
       { id: 'RowsLayout', name: 'Rows Layout', serializer: new RowsLayoutSerializer() },
+      { id: 'TabsLayout', name: 'Tabs Layout', serializer: new TabsLayoutSerializer() },
     ];
   });

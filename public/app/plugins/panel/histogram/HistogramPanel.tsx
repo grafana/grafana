@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
-import { PanelProps, buildHistogram, cacheFieldDisplayNames, getHistogramFields } from '@grafana/data';
-import { histogramFieldsToFrame } from '@grafana/data/src/transformations/transformers/histogram';
+import { DataFrameType, PanelProps, buildHistogram, cacheFieldDisplayNames, getHistogramFields } from '@grafana/data';
+import { histogramFieldsToFrame, joinHistograms } from '@grafana/data/src/transformations/transformers/histogram';
 import { TooltipDisplayMode, TooltipPlugin2, useTheme2 } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 
@@ -34,13 +34,19 @@ export const HistogramPanel = ({ data, options, width, height }: Props) => {
 
     cacheFieldDisplayNames(data.series);
 
-    if (data.series.length === 1) {
-      const info = getHistogramFields(data.series[0]);
-      if (info) {
-        return histogramFieldsToFrame(info);
+    if (
+      data.series.length === 1 ||
+      data.series.every(
+        (frame) => frame.meta?.type === DataFrameType.HeatmapCells || frame.meta?.type === DataFrameType.HeatmapRows
+      )
+    ) {
+      const histograms = data.series.map((frame) => getHistogramFields(frame)).filter((hist) => hist != null);
+
+      if (histograms.length) {
+        return histogramFieldsToFrame(joinHistograms(histograms), theme);
       }
     }
-    const hist = buildHistogram(data.series, options);
+    const hist = buildHistogram(data.series, options, theme);
     if (!hist) {
       return undefined;
     }

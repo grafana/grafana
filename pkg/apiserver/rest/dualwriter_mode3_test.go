@@ -61,10 +61,10 @@ func TestMode3_Create(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (LegacyStorage)(nil)
+			l := (Storage)(nil)
 			s := (Storage)(nil)
 
-			ls := legacyStoreMock{&mock.Mock{}, l}
+			ls := storageMock{&mock.Mock{}, l}
 			us := storageMock{&mock.Mock{}, s}
 
 			if tt.setupLegacyFn != nil {
@@ -107,10 +107,7 @@ func TestMode3_Get(t *testing.T) {
 				},
 			},
 			{
-				name: "should return an error when getting an object in the unified store fails",
-				setupLegacyFn: func(m *mock.Mock, name string) {
-					m.On("Get", mock.Anything, name, mock.Anything).Return(exampleObj, nil)
-				},
+				name: "should return an error when getting an object in the unified store fails, and should not go to legacy",
 				setupStorageFn: func(m *mock.Mock, name string) {
 					m.On("Get", mock.Anything, name, mock.Anything).Return(nil, errors.New("error"))
 				},
@@ -131,10 +128,10 @@ func TestMode3_Get(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (LegacyStorage)(nil)
+			l := (Storage)(nil)
 			s := (Storage)(nil)
 
-			ls := legacyStoreMock{&mock.Mock{}, l}
+			ls := storageMock{&mock.Mock{}, l}
 			us := storageMock{&mock.Mock{}, s}
 
 			if tt.setupLegacyFn != nil {
@@ -190,10 +187,10 @@ func TestMode1_GetFromLegacyStorage(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (LegacyStorage)(nil)
+			l := (Storage)(nil)
 			s := (Storage)(nil)
 
-			ls := legacyStoreMock{&mock.Mock{}, l}
+			ls := storageMock{&mock.Mock{}, l}
 			us := storageMock{&mock.Mock{}, s}
 
 			if tt.setupLegacyFn != nil {
@@ -237,10 +234,10 @@ func TestMode3_List(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (LegacyStorage)(nil)
+			l := (Storage)(nil)
 			s := (Storage)(nil)
 
-			ls := legacyStoreMock{&mock.Mock{}, l}
+			ls := storageMock{&mock.Mock{}, l}
 			us := storageMock{&mock.Mock{}, s}
 
 			if tt.setupStorageFn != nil {
@@ -314,10 +311,10 @@ func TestMode3_Delete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (LegacyStorage)(nil)
+			l := (Storage)(nil)
 			s := (Storage)(nil)
 
-			ls := legacyStoreMock{&mock.Mock{}, l}
+			ls := storageMock{&mock.Mock{}, l}
 			us := storageMock{&mock.Mock{}, s}
 
 			if tt.setupLegacyFn != nil {
@@ -383,10 +380,10 @@ func TestMode3_DeleteCollection(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (LegacyStorage)(nil)
+			l := (Storage)(nil)
 			s := (Storage)(nil)
 
-			ls := legacyStoreMock{&mock.Mock{}, l}
+			ls := storageMock{&mock.Mock{}, l}
 			us := storageMock{&mock.Mock{}, s}
 
 			if tt.setupLegacyFn != nil {
@@ -452,10 +449,10 @@ func TestMode3_Update(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (LegacyStorage)(nil)
+			l := (Storage)(nil)
 			s := (Storage)(nil)
 
-			ls := legacyStoreMock{&mock.Mock{}, l}
+			ls := storageMock{&mock.Mock{}, l}
 			us := storageMock{&mock.Mock{}, s}
 
 			if tt.setupLegacyFn != nil {

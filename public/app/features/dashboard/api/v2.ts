@@ -87,7 +87,11 @@ export class K8sDashboardV2API
   }
 
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse> {
-    throw new Error('Method not implemented.');
+    return this.client.delete(uid, showSuccessAlert).then((v) => ({
+      id: 0,
+      message: v.message,
+      title: 'deleted',
+    }));
   }
 
   async saveDashboard(options: SaveDashboardCommand<DashboardV2Spec>): Promise<SaveDashboardResponseDTO> {

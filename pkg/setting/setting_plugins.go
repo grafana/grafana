@@ -55,6 +55,9 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		for _, plugin := range defaultPreinstallPlugins {
 			preinstallPlugins[plugin.ID] = plugin
 		}
+		if cfg.IsFeatureToggleEnabled("grafanaAdvisor") { // Use literal string to avoid circular dependency
+			preinstallPlugins["grafana-advisor-app"] = InstallPlugin{"grafana-advisor-app", "", ""}
+		}
 		// Add the plugins defined in the configuration
 		for _, plugin := range rawInstallPlugins {
 			parts := strings.Split(plugin, "@")

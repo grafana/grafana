@@ -7,13 +7,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAlertmanagerIntegration_ExtraDedupStage(t *testing.T) {
+func TestAlertmanager_ExtraDedupStage(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
 	t.Run("assert no flapping alerts when stopOnExtraDedup is enabled", func(t *testing.T) {
-		t.Skip("skipping flaky test")
 		s, err := NewAlertmanagerScenario()
 		require.NoError(t, err)
 		defer s.Close()

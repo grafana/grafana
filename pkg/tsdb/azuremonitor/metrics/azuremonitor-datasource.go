@@ -269,7 +269,11 @@ func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, c
 
 	res, err := cli.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("failed to request subscription details: %s", err)
+		err = fmt.Errorf("failed to request subscription details: %s", err)
+		if backend.IsDownstreamHTTPError(err) {
+			err = backend.DownstreamError(err)
+		}
+		return "", err
 	}
 
 	defer func() {

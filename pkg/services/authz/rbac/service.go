@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
@@ -38,7 +37,6 @@ const (
 
 type Service struct {
 	authzv1.UnimplementedAuthzServiceServer
-	authzextv1.UnimplementedAuthzExtentionServiceServer
 
 	store           store.Store
 	folderStore     store.FolderStore

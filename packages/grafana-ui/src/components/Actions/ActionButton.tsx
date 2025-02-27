@@ -18,7 +18,13 @@ export function ActionButton({ action, ...buttonProps }: ActionButtonProps) {
 
   return (
     <>
-      <Button variant="primary" size="sm" onClick={() => setShowConfirm(true)} {...buttonProps}>
+      <Button
+        variant="primary"
+        size="sm"
+        onClick={() => setShowConfirm(true)}
+        {...buttonProps}
+        style={{ width: 'fit-content' }}
+      >
         {action.title}
       </Button>
       {showConfirm && (

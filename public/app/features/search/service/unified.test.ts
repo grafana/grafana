@@ -146,7 +146,7 @@ describe('Unified Storage Searcher', () => {
         folder: 'General',
         tags: ['monitoring', 'performance'],
         field: { errors_today: 1 },
-        url: '/dashboards/1',
+        url: '/dashboards/1/main-dashboard-title',
       },
       {
         resource: 'dashboard',
@@ -156,7 +156,7 @@ describe('Unified Storage Searcher', () => {
         folder: 'General',
         tags: ['monitoring', 'performance'],
         field: { errors_today: 2 },
-        url: '/dashboards/1',
+        url: '/dashboards/1/main-dashboard-title',
       },
     ];
 
@@ -184,7 +184,7 @@ describe('Unified Storage Searcher', () => {
         folder: 'General',
         tags: ['monitoring', 'performance'],
         field: { errors_today: 1 },
-        url: '/dashboards/1',
+        url: '/dashboards/1/main-dashboard-title',
       },
     ];
 

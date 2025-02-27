@@ -179,7 +179,11 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
                         </Tooltip>
                       </TimePickerTitle>
                     </div>
-                    <Field label="From" invalid={!from.validation.isValid} error={from.validation.errorMessage}>
+                    <Field
+                      label={t('time-picker.time-range.from-label', 'From')}
+                      invalid={!from.validation.isValid}
+                      error={from.validation.errorMessage}
+                    >
                       <Input
                         onClick={(event) => event.stopPropagation()}
                         onBlur={() => setFrom({ ...from, validation: isRangeValid(from.value) })}
@@ -187,7 +191,11 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
                         value={from.value}
                       />
                     </Field>
-                    <Field label="To" invalid={!to.validation.isValid} error={to.validation.errorMessage}>
+                    <Field
+                      label={t('time-picker.time-range.to-label', 'To')}
+                      invalid={!to.validation.isValid}
+                      error={to.validation.errorMessage}
+                    >
                       <Input
                         onClick={(event) => event.stopPropagation()}
                         onBlur={() => setTo({ ...to, validation: isRangeValid(to.value) })}
@@ -195,7 +203,10 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
                         value={to.value}
                       />
                     </Field>
-                    <Button aria-label="TimePicker submit button" onClick={onApply}>
+                    <Button
+                      aria-label={t('time-picker.time-range.submit-button-label', 'TimePicker submit button')}
+                      onClick={onApply}
+                    >
                       <Trans i18nKey="time-picker.time-range.apply">Apply time range</Trans>
                     </Button>
                   </div>

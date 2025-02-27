@@ -152,10 +152,6 @@ const getCellActions = (
   rowIndex: number,
   replaceVariables: InterpolateFunction | undefined
 ) => {
-  if (!config.featureToggles?.vizActions) {
-    return [];
-  }
-
   const actions: Array<ActionModel<Field>> = [];
   const actionLookup = new Set<string>();
 

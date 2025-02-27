@@ -270,7 +270,7 @@ func (b *batchRunner) Next() bool {
 		if !ok {
 			b.err = fmt.Errorf("missing access control for: %s", k)
 			b.rollback = true
-		} else if !checker(key.Namespace, key.Name, b.request.Folder) {
+		} else if !checker(key.Name, b.request.Folder) {
 			b.err = fmt.Errorf("not allowed to create resource")
 			b.rollback = true
 		}

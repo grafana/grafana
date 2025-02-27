@@ -16,7 +16,7 @@ export interface DashboardV2Spec {
 	// Whether a dashboard is editable or not.
 	editable?: boolean;
 	elements: Record<string, Element>;
-	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind;
+	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind;
 	// Links with references to other dashboards or external websites.
 	links: DashboardLink[];
 	// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
@@ -825,7 +825,7 @@ export interface RowsLayoutRowSpec {
 	title?: string;
 	collapsed: boolean;
 	repeat?: RowRepeatOptions;
-	layout: GridLayoutKind | ResponsiveGridLayoutKind;
+	layout: GridLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind;
 }
 
 export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
@@ -871,6 +871,43 @@ export interface ResponsiveGridLayoutItemSpec {
 
 export const defaultResponsiveGridLayoutItemSpec = (): ResponsiveGridLayoutItemSpec => ({
 	element: defaultElementReference(),
+});
+
+export interface TabsLayoutKind {
+	kind: "TabsLayout";
+	spec: TabsLayoutSpec;
+}
+
+export const defaultTabsLayoutKind = (): TabsLayoutKind => ({
+	kind: "TabsLayout",
+	spec: defaultTabsLayoutSpec(),
+});
+
+export interface TabsLayoutSpec {
+	tabs: TabsLayoutTabKind[];
+}
+
+export const defaultTabsLayoutSpec = (): TabsLayoutSpec => ({
+	tabs: [],
+});
+
+export interface TabsLayoutTabKind {
+	kind: "TabsLayoutTab";
+	spec: TabsLayoutTabSpec;
+}
+
+export const defaultTabsLayoutTabKind = (): TabsLayoutTabKind => ({
+	kind: "TabsLayoutTab",
+	spec: defaultTabsLayoutTabSpec(),
+});
+
+export interface TabsLayoutTabSpec {
+	title?: string;
+	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind;
+}
+
+export const defaultTabsLayoutTabSpec = (): TabsLayoutTabSpec => ({
+	layout: defaultGridLayoutKind(),
 });
 
 export interface PanelSpec {

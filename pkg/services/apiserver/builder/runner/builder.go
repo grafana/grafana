@@ -18,7 +18,7 @@ import (
 
 var _ AppBuilder = (*appBuilder)(nil)
 
-type LegacyStorageGetter func(schema.GroupVersionResource) grafanarest.LegacyStorage
+type LegacyStorageGetter func(schema.GroupVersionResource) grafanarest.Storage
 
 type AppBuilderConfig struct {
 	Authorizer          authorizer.Authorizer

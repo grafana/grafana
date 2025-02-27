@@ -111,7 +111,8 @@ func (s *SocialGenericOAuth) Validate(ctx context.Context, newSettings ssoModels
 		return err
 	}
 
-	if info.Extra[teamIdsKey] != "" && (info.TeamIdsAttributePath == "" || info.TeamsUrl == "") {
+	teamIds := util.SplitString(info.Extra[teamIdsKey])
+	if len(teamIds) > 0 && (info.TeamIdsAttributePath == "" || info.TeamsUrl == "") {
 		return ssosettings.ErrInvalidOAuthConfig("If Team Ids are configured then Team Ids attribute path and Teams URL must be configured.")
 	}
 

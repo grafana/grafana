@@ -4,11 +4,9 @@ import { getFieldDisplayName } from '../../field/fieldState';
 import { DataFrame, Field } from '../../types/dataFrame';
 import { DataTransformerInfo, MatcherConfig } from '../../types/transformations';
 import { getValueMatcher } from '../matchers';
-import { ValueMatcherID } from '../matchers/ids';
 
 import { DataTransformerID } from './ids';
 import { noopTransformer } from './noop';
-import { transformationsVariableSupport } from './utils';
 
 export enum FilterByValueType {
   exclude = 'exclude',
@@ -50,50 +48,6 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
       return source.pipe(noopTransformer.operator({}, ctx));
     }
 
-    const interpolatedFilters: FilterByValueFilter[] = [];
-
-    if (transformationsVariableSupport()) {
-      interpolatedFilters.push(
-        ...filters.map((filter) => {
-          if (filter.config.id === ValueMatcherID.between) {
-            let valueFrom = filter.config.options.from;
-            let valueTo = filter.config.options.to;
-
-            if (typeof filter.config.options.from === 'string') {
-              valueFrom = ctx.interpolate(valueFrom);
-            }
-            if (typeof filter.config.options.to === 'string') {
-              valueTo = ctx.interpolate(valueTo);
-            }
-
-            return {
-              ...filter,
-              config: {
-                ...filter.config,
-                options: {
-                  ...filter.config.options,
-                  to: valueTo,
-                  from: valueFrom,
-                },
-              },
-            };
-          } else if (filter.config.options.value) {
-            let value = filter.config.options.value;
-            if (typeof filter.config.options.value === 'string') {
-              value = ctx.interpolate(value);
-            }
-
-            return {
-              ...filter,
-              config: { ...filter.config, options: { ...filter.config.options, value } },
-            };
-          }
-
-          return filter;
-        })
-      );
-    }
-
     return source.pipe(
       map((data) => {
         if (data.length === 0) {
@@ -106,12 +60,7 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
           const rows = new Set<number>();
           const fieldIndexByName = groupFieldIndexByName(frame, data);
 
-          let matchers;
-          if (transformationsVariableSupport()) {
-            matchers = createFilterValueMatchers(interpolatedFilters, fieldIndexByName);
-          } else {
-            matchers = createFilterValueMatchers(filters, fieldIndexByName);
-          }
+          const matchers = createFilterValueMatchers(filters, fieldIndexByName);
 
           for (let index = 0; index < frame.length; index++) {
             if (rows.has(index)) {

@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -75,7 +76,7 @@ func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 	openfga, err := NewOpenFGAServer(cfg.ZanzanaServer, store, log.NewNopLogger())
 	require.NoError(t, err)
 
-	srv, err := NewServer(cfg.ZanzanaServer, openfga, log.NewNopLogger())
+	srv, err := NewServer(cfg.ZanzanaServer, openfga, log.NewNopLogger(), tracing.NewNoopTracerService())
 	require.NoError(t, err)
 
 	storeInf, err := srv.getStoreInfo(context.Background(), namespace)

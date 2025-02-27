@@ -23,36 +23,31 @@ type LocalRepositoryConfig struct {
 	Path string `json:"path,omitempty"`
 }
 
-type S3RepositoryConfig struct {
-	Region string `json:"region,omitempty"`
-	Bucket string `json:"bucket,omitempty"`
+// Workflow used for changes in the repository.
+// +enum
+type Workflow string
 
-	// TODO: Add ACL?
-	// TODO: Encryption??
-	// TODO: How do we define access? Secrets?
-}
+const (
+	// WriteWorkflow allows a user to write directly to the repository
+	WriteWorkflow Workflow = "write"
+	// BranchWorkflow creates a branch for changes
+	BranchWorkflow Workflow = "branch"
+)
 
 type GitHubRepositoryConfig struct {
-	// The owner of the repository (e.g. example in `example/test` or `https://github.com/example/test`).
-	Owner string `json:"owner,omitempty"`
-	// The name of the repository (e.g. test in `example/test` or `https://github.com/example/test`).
-	Repository string `json:"repository,omitempty"`
+	// The repository URL (e.g. `https://github.com/example/test`).
+	URL string `json:"url,omitempty"`
+
 	// The branch to use in the repository.
-	// By default, this is the main branch.
-	Branch string `json:"branch,omitempty"`
-	// Token for accessing the repository.
-	// TODO: this should be part of secrets and a simple reference.
+	Branch string `json:"branch"`
+	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
 	Token string `json:"token,omitempty"`
-	// TODO: Do we want an SSH url instead maybe?
-	// TODO: On-prem GitHub Enterprise support?
+	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
+	// +listType=atomic
+	EncryptedToken []byte `json:"encryptedToken,omitempty"`
 
-	// Whether we should commit to change branches and use a Pull Request flow to achieve this.
-	// By default, this is false (i.e. we will commit straight to the main branch).
-	BranchWorkflow bool `json:"branchWorkflow,omitempty"`
-
-	// Whether we should show dashboard previews in the pull requests caused by the BranchWorkflow option.
+	// Whether we should show dashboard previews for pull requests.
 	// By default, this is false (i.e. we will not create previews).
-	// This option is a no-op if BranchWorkflow is `false` or default.
 	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
 }
 
@@ -63,7 +58,6 @@ type RepositoryType string
 // RepositoryType values
 const (
 	LocalRepositoryType  RepositoryType = "local"
-	S3RepositoryType     RepositoryType = "s3"
 	GitHubRepositoryType RepositoryType = "github"
 )
 
@@ -74,8 +68,10 @@ type RepositorySpec struct {
 	// Repository description
 	Description string `json:"description,omitempty"`
 
-	// ReadOnly  repository does not allow any write commands
-	ReadOnly bool `json:"readOnly"`
+	// UI driven Workflow that allow changes to the contends of the repository.
+	// The order is relevant for defining the precedence of the workflows.
+	// When empty, the repository does not support any edits (eg, readonly)
+	Workflows []Workflow `json:"workflows"`
 
 	// Sync settings -- how values are pulled from the repository into grafana
 	Sync SyncOptions `json:"sync"`
@@ -84,15 +80,11 @@ type RepositorySpec struct {
 	Type RepositoryType `json:"type"`
 
 	// The repository on the local file system.
-	// Mutually exclusive with local | s3 | github.
+	// Mutually exclusive with local | github.
 	Local *LocalRepositoryConfig `json:"local,omitempty"`
 
-	// The repository in an S3 bucket.
-	// Mutually exclusive with local | s3 | github.
-	S3 *S3RepositoryConfig `json:"s3,omitempty"`
-
 	// The repository on GitHub.
-	// Mutually exclusive with local | s3 | github.
+	// Mutually exclusive with local | github.
 	// TODO: github or just 'git'??
 	GitHub *GitHubRepositoryConfig `json:"github,omitempty"`
 }
@@ -183,8 +175,8 @@ type SyncStatus struct {
 	// +listType=atomic
 	Message []string `json:"message"`
 
-	// The repository hash when the last sync ran
-	Hash string `json:"hash,omitempty"`
+	// The repository ref when the last successful sync ran
+	LastRef string `json:"lastRef,omitempty"`
 
 	// Incremental synchronization for versioned repositories
 	Incremental bool `json:"incremental,omitempty"`
@@ -194,6 +186,7 @@ type WebhookStatus struct {
 	ID               int64    `json:"id,omitempty"`
 	URL              string   `json:"url,omitempty"`
 	Secret           string   `json:"secret,omitempty"`
+	EncryptedSecret  []byte   `json:"encryptedSecret,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
 }
 

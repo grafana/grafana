@@ -52,7 +52,7 @@ const longInfo = {
     <ul>
       <li>Single frame</li>
       <li>1st field is time field</li>
-      <li>Time in ascending order, but may have duplictes</li>
+      <li>Time in ascending order, but may have duplicates</li>
       <li>String values are represented as separate fields rather than as labels</li>
       <li>Multiple value fields may exist</li>
     </ul>

@@ -19,10 +19,11 @@ import (
 
 func New(cfg app.Config) (app.App, error) {
 	// Read config
-	checkRegistry, ok := cfg.SpecificConfig.(checkregistry.CheckService)
+	specificConfig, ok := cfg.SpecificConfig.(checkregistry.AdvisorAppConfig)
 	if !ok {
 		return nil, fmt.Errorf("invalid config type")
 	}
+	checkRegistry := specificConfig.CheckRegistry
 
 	// Prepare storage client
 	clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.ClientConfig{})

@@ -61,7 +61,7 @@ The queries use [TraceQL](/docs/tempo/latest/traceql), the query language design
 For general documentation on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data).
 
 {{< admonition type="tip" >}}
-Don't know TraceQL? Try [Explore Traces](ref:explore-traces-app), an intuitive, queryless app that lets you explore your tracing data using RED metrics.
+Don't know TraceQL? Try [Grafana Traces Drilldown](ref:explore-traces-app), an intuitive, queryless app that lets you explore your tracing data using RED metrics.
 {{< /admonition >}}
 
 ## Before you begin

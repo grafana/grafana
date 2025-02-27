@@ -94,6 +94,6 @@ type MockTestRestConfig struct {
 	cfg *rest.Config
 }
 
-func (r MockTestRestConfig) GetRestConfig(ctx context.Context) *rest.Config {
-	return r.cfg
+func (r MockTestRestConfig) GetRestConfig(ctx context.Context) (*rest.Config, error) {
+	return r.cfg, nil
 }
