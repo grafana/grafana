@@ -18,8 +18,8 @@ import { PrometheusDatasource } from '../datasource';
 import { roundMsToMin } from '../language_utils';
 import { PromOptions, PromQuery } from '../types';
 
-import { PrometheusMetricsBrowser } from './PrometheusMetricsBrowser';
 import { CancelablePromise, isCancelablePromiseRejection, makePromiseCancelable } from './cancelable-promise';
+import { PrometheusMetricsBrowser } from './metrics-browser/PrometheusMetricsBrowser';
 import { MonacoQueryFieldWrapper } from './monaco-query-field/MonacoQueryFieldWrapper';
 
 const LAST_USED_LABELS_KEY = 'grafana.datasources.prometheus.browser.labels';
