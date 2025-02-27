@@ -1,7 +1,9 @@
-import { useMemo, useState, useRef, useLayoutEffect } from 'react';
+import { useMemo, useRef, useEffect, useState } from 'react';
+import { css } from '@emotion/css';
 
 import { SelectableValue } from '@grafana/data';
 import { SQLEditor } from '@grafana/plugin-ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { ExpressionQuery } from '../types';
 
@@ -14,9 +16,9 @@ interface Props {
 export const SqlExpr = ({ onChange, refIds, query }: Props) => {
   const vars = useMemo(() => refIds.map((v) => v.value!), [refIds]);
   const initialQuery = `select * from ${vars[0]} limit 1`;
-  const initialHeight = 200; // Consistent initial height
-  const [height, setHeight] = useState(initialHeight);
+  const styles = useStyles2(getStyles);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ height: 0 });
 
   const onEditorChange = (expression: string) => {
     onChange({
@@ -25,38 +27,31 @@ export const SqlExpr = ({ onChange, refIds, query }: Props) => {
     });
   };
 
-  // Using useLayoutEffect to avoid visual flashing
-  useLayoutEffect(() => {
+  // Set up resize observer to handle container resizing
+  useEffect(() => {
     if (!containerRef.current) return;
 
-    // Set initial height explicitly
-    if (containerRef.current.clientHeight !== initialHeight) {
-      containerRef.current.style.height = `${initialHeight}px`;
-    }
-
     const resizeObserver = new ResizeObserver((entries) => {
-      const newHeight = entries[0].contentRect.height;
-      // Only update height state if it actually changed
-      if (Math.abs(newHeight - height) > 1) {
-        setHeight(newHeight);
-      }
+      const { height } = entries[0].contentRect;
+      setDimensions({ height });
     });
 
     resizeObserver.observe(containerRef.current);
     return () => resizeObserver.disconnect();
-  }, [height]);
+  }, []);
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        resize: 'vertical',
-        overflow: 'auto',
-        height: `${initialHeight}px`, // Set explicit initial height
-        minHeight: '100px',
-      }}
-    >
-      <SQLEditor query={query.expression || initialQuery} onChange={onEditorChange} height={height} />
+    <div ref={containerRef} className={styles.editorContainer}>
+      <SQLEditor query={query.expression || initialQuery} onChange={onEditorChange} height={dimensions.height} />
     </div>
   );
 };
+
+const getStyles = () => ({
+  editorContainer: css({
+    height: '200px',
+    resize: 'vertical',
+    overflow: 'auto',
+    minHeight: '100px',
+  }),
+});
