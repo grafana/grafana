@@ -63,10 +63,10 @@ func TestRuntime_Create(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (rest.LegacyStorage)(nil)
+			l := (rest.Storage)(nil)
 			s := (rest.Storage)(nil)
 
-			ls := legacyStoreMock{&mock.Mock{}, l}
+			ls := storageMock{&mock.Mock{}, l}
 			us := storageMock{&mock.Mock{}, s}
 
 			if tt.setupLegacyFn != nil {
@@ -135,10 +135,10 @@ func TestRuntime_Get(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (rest.LegacyStorage)(nil)
+			l := (rest.Storage)(nil)
 			s := (rest.Storage)(nil)
 
-			ls := legacyStoreMock{&mock.Mock{}, l}
+			ls := storageMock{&mock.Mock{}, l}
 			us := storageMock{&mock.Mock{}, s}
 
 			if tt.setupLegacyFn != nil {
@@ -236,10 +236,10 @@ func TestRuntime_CreateWhileMigrating(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (rest.LegacyStorage)(nil)
+			l := (rest.Storage)(nil)
 			s := (rest.Storage)(nil)
 
-			ls := legacyStoreMock{&mock.Mock{}, l}
+			ls := storageMock{&mock.Mock{}, l}
 			us := storageMock{&mock.Mock{}, s}
 
 			if tt.setupLegacyFn != nil {

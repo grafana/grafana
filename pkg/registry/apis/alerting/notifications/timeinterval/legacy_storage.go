@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	_ grafanaRest.LegacyStorage = (*legacyStorage)(nil)
+	_ grafanaRest.Storage = (*legacyStorage)(nil)
 )
 
 type TimeIntervalService interface {

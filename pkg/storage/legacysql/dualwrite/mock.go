@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
 func ProvideTestService(status ...StorageStatus) Service {
@@ -24,7 +26,7 @@ type mockService struct {
 }
 
 // NewStorage implements Service.
-func (m *mockService) NewStorage(gr schema.GroupResource, legacy Storage, storage Storage) (Storage, error) {
+func (m *mockService) NewStorage(gr schema.GroupResource, legacy rest.Storage, storage rest.Storage) (rest.Storage, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 

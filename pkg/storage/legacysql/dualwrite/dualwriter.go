@@ -16,13 +16,13 @@ import (
 )
 
 var (
-	_ Storage = (*dualWriter)(nil)
+	_ grafanarest.Storage = (*dualWriter)(nil)
 )
 
 // dualWriter will write first to legacy, then to unified keeping the same internal ID
 type dualWriter struct {
-	legacy      Storage
-	unified     Storage
+	legacy      grafanarest.Storage
+	unified     grafanarest.Storage
 	readUnified bool
 	errorIsOK   bool // in "mode1" we try writing both -- but don't block on unified write errors
 	log         logging.Logger

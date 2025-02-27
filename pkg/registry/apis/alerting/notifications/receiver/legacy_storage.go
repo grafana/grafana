@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	_ grafanaRest.LegacyStorage = (*legacyStorage)(nil)
+	_ grafanaRest.Storage = (*legacyStorage)(nil)
 )
 
 type ReceiverService interface {

@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/registry/rest"
+
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
 // For *legacy* services, this will indicate if we have transitioned to Unified storage yet
@@ -35,7 +36,7 @@ type Service interface {
 	ShouldManage(gr schema.GroupResource) bool
 
 	// Create a managed k8s storage instance
-	NewStorage(gr schema.GroupResource, legacy Storage, storage Storage) (Storage, error)
+	NewStorage(gr schema.GroupResource, legacy rest.Storage, storage rest.Storage) (rest.Storage, error)
 
 	// Check if the dual writes is reading from unified storage (mode3++)
 	ReadFromUnified(ctx context.Context, gr schema.GroupResource) (bool, error)
@@ -48,17 +49,4 @@ type Service interface {
 
 	// change the status (finish migration etc)
 	Update(ctx context.Context, status StorageStatus) (StorageStatus, error)
-}
-
-// Storage is a storage implementation that satisfies the same interfaces as genericregistry.Store.
-type Storage interface {
-	rest.Storage
-	rest.Scoper
-	rest.TableConvertor
-	rest.SingularNameProvider
-	rest.Getter
-	rest.Lister
-	rest.CreaterUpdater
-	rest.GracefulDeleter
-	rest.CollectionDeleter
 }

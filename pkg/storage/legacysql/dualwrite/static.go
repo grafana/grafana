@@ -28,7 +28,7 @@ func (m *staticService) SetMode(gr schema.GroupResource, mode rest.DualWriterMod
 	}
 }
 
-func (m *staticService) NewStorage(gr schema.GroupResource, legacy Storage, unified Storage) (Storage, error) {
+func (m *staticService) NewStorage(gr schema.GroupResource, legacy rest.Storage, unified rest.Storage) (rest.Storage, error) {
 	log := logging.DefaultLogger.With("dualwrite", gr.String())
 
 	config := m.cfg.UnifiedStorage[gr.String()]

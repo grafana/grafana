@@ -16,7 +16,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
-func (m *service) NewStorage(gr schema.GroupResource, legacy Storage, unified Storage) (Storage, error) {
+func (m *service) NewStorage(gr schema.GroupResource, legacy grafanarest.Storage, unified grafanarest.Storage) (grafanarest.Storage, error) {
 	status, err := m.Status(context.Background(), gr)
 	if err != nil {
 		return nil, err
@@ -54,8 +54,8 @@ func (m *service) NewStorage(gr schema.GroupResource, legacy Storage, unified St
 // When a resource is marked as "migrating", all write requests will be 503 unavailable
 type runtimeDualWriter struct {
 	service   Service
-	legacy    Storage
-	unified   Storage
+	legacy    grafanarest.Storage
+	unified   grafanarest.Storage
 	dualwrite *dualWriter
 	gr        schema.GroupResource
 }
