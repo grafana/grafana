@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -33,7 +34,7 @@ func errorToResponse(err error) response.Response {
 		return response.Err(err)
 	}
 	if errors.Is(err, datasources.ErrDataSourceNotFound) {
-		return ErrResp(404, err, "")
+		return ErrResp(http.StatusNotFound, err, "")
 	}
 	if errors.Is(err, errUnexpectedDatasourceType) {
 		return ErrResp(400, err, "")
@@ -41,5 +42,5 @@ func errorToResponse(err error) response.Response {
 	if errors.Is(err, errFolderAccess) {
 		return toNamespaceErrorResponse(err)
 	}
-	return ErrResp(500, err, "")
+	return ErrResp(http.StatusInternalServerError, err, "")
 }

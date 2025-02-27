@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"encoding/json"
 	"net/http"
 	"testing"
 	"time"
@@ -8,6 +9,7 @@ import (
 	prommodel "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -100,7 +102,7 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 	testinfra.SQLiteIntegrationTest(t)
 
 	// Setup Grafana and its Database
-	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+	dir, gpath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
@@ -108,7 +110,7 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 		EnableFeatureToggles:  []string{"alertingConversionAPI"},
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)
 
 	// Create users to make authenticated requests
 	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
@@ -168,6 +170,111 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 	t.Run("without permissions to create folders cannot create rule groups either", func(t *testing.T) {
 		_, status, raw := viewerClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, nil)
 		requireStatusCode(t, http.StatusForbidden, status, raw)
+	})
+
+	t.Run("delete one rule group", func(t *testing.T) {
+		_, status, body := apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, nil)
+		requireStatusCode(t, http.StatusAccepted, status, body)
+		_, status, body = apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup2, nil)
+		requireStatusCode(t, http.StatusAccepted, status, body)
+		_, status, body = apiClient.ConvertPrometheusPostRuleGroup(t, namespace2, ds.Body.Datasource.UID, promGroup3, nil)
+		requireStatusCode(t, http.StatusAccepted, status, body)
+
+		apiClient.ConvertPrometheusDeleteRuleGroup(t, namespace1, promGroup1.Name)
+
+		// Check that the promGroup2 and promGroup3 are still there
+		namespaces := apiClient.ConvertPrometheusGetAllRules(t)
+		expectedNamespaces := map[string][]apimodels.PrometheusRuleGroup{
+			namespace1: {promGroup2},
+			namespace2: {promGroup3},
+		}
+		require.Equal(t, expectedNamespaces, namespaces)
+
+		// Delete the second namespace
+		apiClient.ConvertPrometheusDeleteNamespace(t, namespace2)
+
+		// Check that only the first namespace is left
+		namespaces = apiClient.ConvertPrometheusGetAllRules(t)
+		expectedNamespaces = map[string][]apimodels.PrometheusRuleGroup{
+			namespace1: {promGroup2},
+		}
+		require.Equal(t, expectedNamespaces, namespaces)
+	})
+}
+
+func TestIntegrationConvertPrometheusEndpoints_Conflict(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
+	// Setup Grafana and its Database
+	dir, gpath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+		EnableFeatureToggles:  []string{"alertingConversionAPI"},
+	})
+
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)
+
+	// Create users to make authenticated requests
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "password",
+		Login:          "admin",
+	})
+	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleViewer),
+		Password:       "password",
+		Login:          "viewer",
+	})
+
+	namespace1 := "test-namespace-1"
+
+	ds := apiClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
+
+	t.Run("cannot overwrite a rule group with different provenance", func(t *testing.T) {
+		// Create a rule group using the provisioning API and then try to overwrite it
+		// using  the Prometheus Conversion API. It should fail because the provenance
+		// we set for rules in these two APIs is different and we check that when updating.
+		provisionedRuleGroup := apimodels.AlertRuleGroup{
+			Title:     promGroup1.Name,
+			Interval:  60,
+			FolderUID: namespace1,
+			Rules: []apimodels.ProvisionedAlertRule{
+				{
+					Title:        "Rule1",
+					OrgID:        1,
+					RuleGroup:    promGroup1.Name,
+					Condition:    "A",
+					NoDataState:  apimodels.Alerting,
+					ExecErrState: apimodels.AlertingErrState,
+					For:          prommodel.Duration(time.Duration(60) * time.Second),
+					Data: []apimodels.AlertQuery{
+						{
+							RefID: "A",
+							RelativeTimeRange: apimodels.RelativeTimeRange{
+								From: apimodels.Duration(time.Duration(5) * time.Hour),
+								To:   apimodels.Duration(time.Duration(3) * time.Hour),
+							},
+							DatasourceUID: expr.DatasourceUID,
+							Model:         json.RawMessage([]byte(`{"type":"math","expression":"2 + 3 \u003e 1"}`)),
+						},
+					},
+				},
+			},
+		}
+
+		// Create the folder
+		apiClient.CreateFolder(t, namespace1, namespace1)
+		// Create rule in the root folder using another API
+		_, status, response := apiClient.CreateOrUpdateRuleGroupProvisioning(t, provisionedRuleGroup)
+		require.Equalf(t, http.StatusOK, status, response)
+
+		// Should fail to post the group
+		_, status, body := apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, nil)
+		requireStatusCode(t, http.StatusConflict, status, body)
 	})
 }
 

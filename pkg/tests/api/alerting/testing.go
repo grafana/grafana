@@ -1146,6 +1146,22 @@ func (a apiClient) ConvertPrometheusGetAllRules(t *testing.T) map[string][]apimo
 	return result
 }
 
+func (a apiClient) ConvertPrometheusDeleteRuleGroup(t *testing.T, namespaceTitle, groupName string) {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/convert/prometheus/config/v1/rules/%s/%s", a.url, namespaceTitle, groupName), nil)
+	require.NoError(t, err)
+	_, status, raw := sendRequestJSON[apimodels.ConvertPrometheusResponse](t, req, http.StatusAccepted)
+	requireStatusCode(t, http.StatusAccepted, status, raw)
+}
+
+func (a apiClient) ConvertPrometheusDeleteNamespace(t *testing.T, namespaceTitle string) {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/convert/prometheus/config/v1/rules/%s", a.url, namespaceTitle), nil)
+	require.NoError(t, err)
+	_, status, raw := sendRequestJSON[apimodels.ConvertPrometheusResponse](t, req, http.StatusAccepted)
+	requireStatusCode(t, http.StatusAccepted, status, raw)
+}
+
 func sendRequestRaw(t *testing.T, req *http.Request) ([]byte, int, error) {
 	t.Helper()
 	client := &http.Client{}
