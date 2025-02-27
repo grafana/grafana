@@ -1984,6 +1984,7 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 			New:      *rule2,
 		},
 	})
+	require.NoError(t, err)
 	rule2, err = store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: result[0].UID})
 	require.NoError(t, err)
 
