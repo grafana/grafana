@@ -9,7 +9,7 @@ import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { LogLineMenu } from './LogLineMenu';
 import { useLogIsPinned } from './LogListContext';
 import { LogFieldDimension, LogListModel } from './processing';
-import { FIELD_GAP_MULTIPLIER, hasUnderOrOverflow, lineHeight } from './virtualization';
+import { FIELD_GAP_MULTIPLIER, hasUnderOrOverflow, getLineHeight } from './virtualization';
 
 interface Props {
   displayedFields: string[];
@@ -145,7 +145,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
     }),
     menuIcon: css({
-      height: lineHeight,
+      height: getLineHeight(),
       margin: 0,
       padding: theme.spacing(0, 0, 0, 0.5),
     }),
