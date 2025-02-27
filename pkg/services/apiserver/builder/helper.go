@@ -253,7 +253,7 @@ func SetupConfig(
 		}
 		pvs := scheme.PrioritizedVersionsForGroup(gvs[0].Group)
 		for i, gv := range pvs {
-			serverConfig.AggregatedDiscoveryGroupManager.SetGroupVersionPriority(metav1.GroupVersion(gv), 15000, int(len(pvs)-i))
+			serverConfig.AggregatedDiscoveryGroupManager.SetGroupVersionPriority(metav1.GroupVersion(gv), 15000, len(pvs)-i)
 		}
 	}
 
