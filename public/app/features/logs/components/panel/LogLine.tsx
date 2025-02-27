@@ -5,6 +5,7 @@ import tinycolor from 'tinycolor2';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { LogMessageAnsi } from '../LogMessageAnsi';
 
 import { LogLineMenu } from './LogLineMenu';
 import { useLogIsPinned } from './LogListContext';
@@ -77,7 +78,7 @@ const Log = ({ displayedFields, log, showTime, styles }: LogProps) => {
       {displayedFields.length > 0 ? (
         displayedFields.map((field) =>
           field === LOG_LINE_BODY_FIELD_NAME ? (
-            <span className="field log-syntax-highlight" dangerouslySetInnerHTML={{ __html: log.highlightedBody }} />
+            <LogLineBody log={log} />
           ) : (
             <span className="field" title={field} key={field}>
               {getDisplayedFieldValue(field, log)}
@@ -85,10 +86,25 @@ const Log = ({ displayedFields, log, showTime, styles }: LogProps) => {
           )
         )
       ) : (
-        <span className="field log-syntax-highlight" dangerouslySetInnerHTML={{ __html: log.highlightedBody }} />
+        <LogLineBody log={log} />
       )}
     </>
   );
+};
+
+const LogLineBody = ({ log }: { log: LogListModel }) => {
+  if (log.hasAnsi) {
+    const needsHighlighter =
+      log.searchWords && log.searchWords.length > 0 && log.searchWords[0] && log.searchWords[0].length > 0;
+    const highlight = needsHighlighter ? { searchWords: log.searchWords ?? [], highlightClassName: '' } : undefined;
+    return (
+      <span className="field">
+        <LogMessageAnsi value={log.body} highlight={highlight} />
+      </span>
+    );
+  }
+
+  return <span className="field log-syntax-highlight" dangerouslySetInnerHTML={{ __html: log.highlightedBody }} />;
 };
 
 export function getDisplayedFieldValue(fieldName: string, log: LogListModel): string {
