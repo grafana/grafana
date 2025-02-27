@@ -1,4 +1,5 @@
 import { isEqual } from 'lodash';
+import { Unsubscribable } from 'rxjs';
 
 import {
   VizPanel,
@@ -49,17 +50,12 @@ export class DashboardGridItem
 
   private _prevRepeatValues?: VariableValueSingle[];
 
+  private _gridSizeSub: Unsubscribable | undefined;
+
   public constructor(state: DashboardGridItemState) {
     super(state);
 
-    this.addActivationHandler(() => this._activationHandler());
-  }
-
-  private _activationHandler() {
-    if (this.state.variableName) {
-      this._subs.add(this.subscribeToState((newState, prevState) => this._handleGridResize(newState, prevState)));
-      this.performRepeat();
-    }
+    this.addActivationHandler(() => this.handleVariableName());
   }
 
   private _handleGridResize(newState: DashboardGridItemState, prevState: DashboardGridItemState) {
@@ -195,6 +191,23 @@ export class DashboardGridItem
     this._prevRepeatValues = values;
 
     this.publishEvent(new DashboardRepeatsProcessedEvent({ source: this }), true);
+  }
+
+  public handleVariableName() {
+    if (this.state.variableName) {
+      if (!this._gridSizeSub) {
+        this._gridSizeSub = this.subscribeToState((newState, prevState) => this._handleGridResize(newState, prevState));
+        this._subs.add(this._gridSizeSub);
+      }
+    } else {
+      if (this._gridSizeSub) {
+        this._gridSizeSub.unsubscribe();
+        this._subs.remove(this._gridSizeSub);
+        this._gridSizeSub = undefined;
+      }
+    }
+
+    this.performRepeat();
   }
 
   public setRepeatByVariable(variableName: string | undefined) {
