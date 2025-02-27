@@ -49,7 +49,7 @@ export const SqlExpr = ({ onChange, refIds, query }: Props) => {
 
 const getStyles = () => ({
   editorContainer: css({
-    height: '200px',
+    height: '240px',
     resize: 'vertical',
     overflow: 'auto',
     minHeight: '100px',
