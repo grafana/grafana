@@ -1,4 +1,4 @@
-import { type ComponentTypeWithExtensionsMeta } from '@grafana/data';
+import { type ComponentTypeWithExtensionMeta } from '@grafana/data';
 
 export type UsePluginComponentsOptions = {
   extensionPointId: string;
@@ -6,7 +6,7 @@ export type UsePluginComponentsOptions = {
 };
 
 export type UsePluginComponentsResult<Props = {}> = {
-  components: Array<ComponentTypeWithExtensionsMeta<Props>>;
+  components: Array<ComponentTypeWithExtensionMeta<Props>>;
   isLoading: boolean;
 };
 

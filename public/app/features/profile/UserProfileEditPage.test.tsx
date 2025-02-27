@@ -2,7 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
-import { type ComponentTypeWithExtensionsMeta, OrgRole } from '@grafana/data';
+import { type ComponentTypeWithExtensionMeta, OrgRole } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginComponentsHook, usePluginComponents } from '@grafana/runtime';
 
@@ -136,7 +136,7 @@ const tabTwoName = _createTabName(ExtensionPointComponentTabs.Two);
 const _createPluginExtensionPointComponent = (
   id: ExtensionPointComponentId,
   tab: ExtensionPointComponentTabs
-): ComponentTypeWithExtensionsMeta =>
+): ComponentTypeWithExtensionMeta =>
   createComponentWithMeta<{}>(
     {
       title: _createTabName(tab),
@@ -160,7 +160,7 @@ const PluginExtensionPointComponent3 = _createPluginExtensionPointComponent(
   ExtensionPointComponentTabs.Two
 );
 
-async function getTestContext(overrides: Partial<Props & { components: ComponentTypeWithExtensionsMeta[] }> = {}) {
+async function getTestContext(overrides: Partial<Props & { components: ComponentTypeWithExtensionMeta[] }> = {}) {
   const components = overrides.components || [];
 
   jest.clearAllMocks();

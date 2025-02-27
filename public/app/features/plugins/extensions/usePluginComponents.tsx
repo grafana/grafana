@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useObservable } from 'react-use';
 
 import {
-  type ComponentTypeWithExtensionsMeta,
+  type ComponentTypeWithExtensionMeta,
   type PluginExtensionComponentMeta,
   PluginExtensionTypes,
   usePluginContext,
@@ -30,7 +30,7 @@ export function usePluginComponents<Props extends object = {}>({
   return useMemo(() => {
     // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.
     const enableRestrictions = isGrafanaDevMode() && pluginContext;
-    const components: Array<ComponentTypeWithExtensionsMeta<Props>> = [];
+    const components: Array<ComponentTypeWithExtensionMeta<Props>> = [];
     const extensionsByPlugin: Record<string, number> = {};
     const pluginId = pluginContext?.meta.id ?? '';
     const pointLog = log.child({
@@ -89,7 +89,7 @@ export function usePluginComponents<Props extends object = {}>({
 export function createComponentWithMeta<Props extends JSX.IntrinsicAttributes>(
   registryItem: AddedComponentRegistryItem<Props>,
   extensionPointId: string
-): ComponentTypeWithExtensionsMeta<Props> {
+): ComponentTypeWithExtensionMeta<Props> {
   const { component: Component, ...config } = registryItem;
   function ComponentWithMeta(props: Props) {
     return <Component {...props} />;

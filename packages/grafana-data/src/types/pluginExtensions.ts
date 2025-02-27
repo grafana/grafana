@@ -39,7 +39,7 @@ export type PluginExtensionComponent<Props = {}> = PluginExtensionBase & {
   component: React.ComponentType<Props>;
 };
 
-export type ComponentTypeWithExtensionsMeta<Props = {}> = React.ComponentType<Props> & {
+export type ComponentTypeWithExtensionMeta<Props = {}> = React.ComponentType<Props> & {
   meta: PluginExtensionComponentMeta;
 };
 
