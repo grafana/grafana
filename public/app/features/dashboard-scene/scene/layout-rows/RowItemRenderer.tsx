@@ -13,7 +13,7 @@ import { getDashboardSceneFor } from '../../utils/utils';
 import { RowItem } from './RowItem';
 
 export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
-  const { layout, title, isCollapsed, height = 'expand', isHeaderHidden, key } = model.useState();
+  const { layout, title, isCollapsed, height = 'expand', isHeaderHidden, isDropTarget, key } = model.useState();
   const isClone = useMemo(() => isClonedKey(key!), [key]);
   const dashboard = getDashboardSceneFor(model);
   const { isEditing, showHiddenElements } = dashboard.useState();
@@ -25,11 +25,13 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
 
   return (
     <div
+      data-dashboard-drop-target-key={model.state.key}
       className={cx(
         styles.wrapper,
         isCollapsed && styles.wrapperCollapsed,
         shouldGrow && styles.wrapperGrow,
-        !isClone && isSelected && 'dashboard-selected-element'
+        !isClone && isSelected && 'dashboard-selected-element',
+        isDropTarget && 'dashboard-drop-target'
       )}
       ref={ref}
     >
