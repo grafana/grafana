@@ -21,11 +21,16 @@ export const JSONCell = ({ value, justifyContent, rowIdx }: JSONCellProps) => {
     }
   } else {
     // For non-string values, stringify them
-    displayValue = JSON.stringify(value, null, ' ');
+    try {
+      displayValue = JSON.stringify(value, null, ' ');
+    } catch (error) {
+      // Handle circular references or other stringify errors
+      displayValue = String(value);
+    }
   }
 
   // TODO: Implement DataLinksContextMenu + actions
-  return <div className={styles.jsonText}>{String(displayValue)}</div>;
+  return <div className={styles.jsonText}>{displayValue}</div>;
 };
 
 const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent) => ({

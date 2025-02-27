@@ -6,8 +6,7 @@ import { useStyles2 } from '../../../../themes';
 import { DataLinksCellProps } from '../types';
 import { getCellLinks } from '../utils';
 
-export const DataLinksCell = (props: DataLinksCellProps) => {
-  const { field, rowIdx } = props;
+export const DataLinksCell = ({ field, rowIdx }: DataLinksCellProps) => {
   const styles = useStyles2(getStyles);
 
   const links = getCellLinks(field, rowIdx!);
