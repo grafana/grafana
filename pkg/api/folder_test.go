@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -676,4 +677,86 @@ func TestGetFolderLegacyAndUnifiedStorage(t *testing.T) {
 			})
 		}
 	})
+}
+
+func TestSetDefaultPermissionsWhenCreatingFolder(t *testing.T) {
+	folderService := &foldertest.FakeService{}
+	setUpRBACGuardian(t)
+	folderWithoutParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
+
+	type testCase struct {
+		description                   string
+		expectedCallsToSetPermissions int
+		expectedCode                  int
+		expectedFolder                *folder.Folder
+		permissions                   []accesscontrol.Permission
+		featuresArr                   []any
+		input                         string
+	}
+
+	tcs := []testCase{
+		{
+			description:                   "folder creation succeeds, via legacy storage",
+			expectedCallsToSetPermissions: 1,
+			input:                         folderWithoutParentInput,
+			expectedCode:                  http.StatusOK,
+			expectedFolder:                &folder.Folder{UID: "uid", Title: "Folder"},
+			permissions:                   []accesscontrol.Permission{{Action: dashboards.ActionFoldersCreate}},
+		},
+		{
+			description:                   "folder creation succeeds, via API Server",
+			expectedCallsToSetPermissions: 0,
+			input:                         folderWithoutParentInput,
+			expectedCode:                  http.StatusOK,
+			expectedFolder:                &folder.Folder{UID: "uid", Title: "Folder"},
+			permissions:                   []accesscontrol.Permission{{Action: dashboards.ActionFoldersCreate}},
+			featuresArr:                   []any{featuremgmt.FlagKubernetesClientDashboardsFolders},
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.description, func(t *testing.T) {
+			folderService.ExpectedFolder = tc.expectedFolder
+			folderPermService := acmock.NewMockedPermissionsService()
+			folderPermService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
+
+			cfg := setting.NewCfg()
+
+			f := ini.Empty()
+			f.Section("rbac").Key("resources_with_managed_permissions_on_creation").SetValue("folder")
+			tempCfg, err := setting.NewCfgFromINIFile(f)
+			cfg.RBAC = tempCfg.RBAC
+
+			srv := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = cfg
+
+				featuresArr := append(tc.featuresArr, featuremgmt.FlagNestedFolders)
+				hs.Features = featuremgmt.WithFeatures(
+					featuresArr...,
+				)
+				hs.folderService = folderService
+				hs.folderPermissionsService = folderPermService
+				hs.accesscontrolService = actest.FakeService{}
+			})
+
+			input := strings.NewReader(tc.input)
+			req := srv.NewPostRequest("/api/folders", input)
+			req = webtest.RequestWithSignedInUser(req, userWithPermissions(1, tc.permissions))
+			resp, err := srv.SendJSON(req)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedCode, resp.StatusCode)
+
+			folder := dtos.Folder{}
+			err = json.NewDecoder(resp.Body).Decode(&folder)
+			require.NoError(t, err)
+			require.NoError(t, resp.Body.Close())
+
+			folderPermService.AssertNumberOfCalls(t, "SetPermissions", tc.expectedCallsToSetPermissions)
+
+			if tc.expectedCode == http.StatusOK {
+				assert.Equal(t, "uid", folder.UID)
+				assert.Equal(t, "Folder", folder.Title)
+			}
+		})
+	}
 }
