@@ -41,7 +41,7 @@ jobs:
 
     - name: Fetch main branch to compare against
       run: |
-        git fetch --no-tags --prune --depth=1 origin +refs/heads/main:refs/remotes/origin/main
+        git fetch --prune origin main
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
