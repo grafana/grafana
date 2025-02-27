@@ -51,7 +51,7 @@ type service struct {
 
 	log                   log.Logger
 	reg                   prometheus.Registerer
-	unifiedStorageMetrics resource.StorageApiMetrics
+	unifiedStorageMetrics *resource.StorageApiMetrics
 
 	docBuilders resource.DocumentBuilderSupplier
 }
@@ -63,7 +63,7 @@ func ProvideUnifiedStorageGrpcService(
 	log log.Logger,
 	reg prometheus.Registerer,
 	docBuilders resource.DocumentBuilderSupplier,
-	unifiedStorageMetrics resource.StorageApiMetrics,
+	unifiedStorageMetrics *resource.StorageApiMetrics,
 ) (UnifiedStorageGrpcService, error) {
 	tracingCfg, err := tracing.ProvideTracingConfig(cfg)
 	if err != nil {

@@ -18,7 +18,7 @@ import (
 
 // Creates a new ResourceServer
 func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
-	tracer tracing.Tracer, reg prometheus.Registerer, ac types.AccessClient, searchOptions resource.SearchOptions, unifiedStorageMetrics resource.StorageApiMetrics) (resource.ResourceServer, error) {
+	tracer tracing.Tracer, reg prometheus.Registerer, ac types.AccessClient, searchOptions resource.SearchOptions, unifiedStorageMetrics *resource.StorageApiMetrics) (resource.ResourceServer, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	opts := resource.ResourceServerOptions{
 		Tracer: tracer,

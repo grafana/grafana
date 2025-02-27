@@ -52,7 +52,7 @@ type clientMetrics struct {
 }
 
 // This adds a UnifiedStorage client into the wire dependency tree
-func ProvideUnifiedStorageClient(opts *Options, unifiedStorageMetrics resource.StorageApiMetrics) (resource.ResourceClient, error) {
+func ProvideUnifiedStorageClient(opts *Options, unifiedStorageMetrics *resource.StorageApiMetrics) (resource.ResourceClient, error) {
 	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	client, err := newClient(options.StorageOptions{
@@ -80,7 +80,7 @@ func newClient(opts options.StorageOptions,
 	reg prometheus.Registerer,
 	authzc types.AccessClient,
 	docs resource.DocumentBuilderSupplier,
-	unifiedStorageMetrics resource.StorageApiMetrics,
+	unifiedStorageMetrics *resource.StorageApiMetrics,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 	switch opts.StorageType {

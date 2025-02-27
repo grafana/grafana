@@ -187,7 +187,7 @@ func promptYesNo(prompt string) (bool, error) {
 	}
 }
 
-func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB, unifiedStorageMetrics resource.StorageApiMetrics) (resource.ResourceClient, error) {
+func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient, error) {
 	return unified.ProvideUnifiedStorageClient(&unified.Options{
 		Cfg:      cfg,
 		Features: featuremgmt.WithFeatures(), // none??
@@ -196,7 +196,7 @@ func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB, unifiedStorageMetrics re
 		Reg:      prometheus.NewPedanticRegistry(),
 		Authzc:   authlib.FixedAccessClient(true), // always true!
 		Docs:     nil,                             // document supplier
-	}, unifiedStorageMetrics)
+	}, nil)
 }
 
 func newParquetClient(file *os.File) (resource.BatchStoreClient, error) {

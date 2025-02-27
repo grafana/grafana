@@ -13,8 +13,8 @@ type StorageApiMetrics struct {
 	PollerLatency     prometheus.Histogram
 }
 
-func NewStorageMetrics(reg prometheus.Registerer) StorageApiMetrics {
-	return StorageApiMetrics{
+func ProvideStorageMetrics(reg prometheus.Registerer) *StorageApiMetrics {
+	return &StorageApiMetrics{
 		WatchEventLatency: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Namespace:                       "storage_server",
 			Name:                            "watch_latency_seconds",

@@ -40,7 +40,7 @@ type BackendOptions struct {
 	PollingInterval       time.Duration
 	WatchBufferSize       int
 	IsHA                  bool
-	unifiedStorageMetrics resource.StorageApiMetrics
+	unifiedStorageMetrics *resource.StorageApiMetrics
 }
 
 func NewBackend(opts BackendOptions) (Backend, error) {
@@ -85,7 +85,7 @@ type backend struct {
 	// o11y
 	log                   log.Logger
 	tracer                trace.Tracer
-	unifiedStorageMetrics resource.StorageApiMetrics
+	unifiedStorageMetrics *resource.StorageApiMetrics
 
 	// database
 	dbProvider db.DBProvider

@@ -22,7 +22,7 @@ import (
 
 // NewModule returns an instance of a ModuleServer, responsible for managing
 // dskit modules (services).
-func NewModule(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg, unifiedStorageMetrics resource.StorageApiMetrics) (*ModuleServer, error) {
+func NewModule(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg, unifiedStorageMetrics *resource.StorageApiMetrics) (*ModuleServer, error) {
 	s, err := newModuleServer(opts, apiOpts, features, cfg, unifiedStorageMetrics)
 	if err != nil {
 		return nil, err
@@ -35,7 +35,7 @@ func NewModule(opts Options, apiOpts api.ServerOptions, features featuremgmt.Fea
 	return s, nil
 }
 
-func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg, unifiedStorageMetrics resource.StorageApiMetrics) (*ModuleServer, error) {
+func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg, unifiedStorageMetrics *resource.StorageApiMetrics) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
 	s := &ModuleServer{
@@ -73,7 +73,7 @@ type ModuleServer struct {
 	shutdownFinished      chan struct{}
 	isInitialized         bool
 	mtx                   sync.Mutex
-	unifiedStorageMetrics resource.StorageApiMetrics
+	unifiedStorageMetrics *resource.StorageApiMetrics
 
 	pidFile     string
 	version     string
