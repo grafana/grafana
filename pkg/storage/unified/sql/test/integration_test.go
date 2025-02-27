@@ -31,39 +31,43 @@ func TestMain(m *testing.M) {
 
 // TestStorageBackend is a test for the StorageBackend interface.
 func TestIntegrationSQLStorageBackend(t *testing.T) {
-	unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-		dbstore := infraDB.InitTestDB(t)
-		eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
-		require.NoError(t, err)
-		require.NotNil(t, eDB)
+	t.Run("IsHA (polling notifier)", func(t *testing.T) {
+		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
+			dbstore := infraDB.InitTestDB(t)
+			eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
+			require.NoError(t, err)
+			require.NotNil(t, eDB)
 
-		backend, err := sql.NewBackend(sql.BackendOptions{
-			DBProvider: eDB,
-			IsHA:       true,
-		})
-		require.NoError(t, err)
-		require.NotNil(t, backend)
-		err = backend.Init(testutil.NewDefaultTestContext(t))
-		require.NoError(t, err)
-		return backend
-	}, nil)
-	// Run single instance tests with in-process notifier.
-	unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-		dbstore := infraDB.InitTestDB(t)
-		eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
-		require.NoError(t, err)
-		require.NotNil(t, eDB)
+			backend, err := sql.NewBackend(sql.BackendOptions{
+				DBProvider: eDB,
+				IsHA:       true,
+			})
+			require.NoError(t, err)
+			require.NotNil(t, backend)
+			err = backend.Init(testutil.NewDefaultTestContext(t))
+			require.NoError(t, err)
+			return backend
+		}, nil)
+	})
 
-		backend, err := sql.NewBackend(sql.BackendOptions{
-			DBProvider: eDB,
-			IsHA:       false,
-		})
-		require.NoError(t, err)
-		require.NotNil(t, backend)
-		err = backend.Init(testutil.NewDefaultTestContext(t))
-		require.NoError(t, err)
-		return backend
-	}, nil)
+	t.Run("NotHA (in process notifier)", func(t *testing.T) {
+		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
+			dbstore := infraDB.InitTestDB(t)
+			eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
+			require.NoError(t, err)
+			require.NotNil(t, eDB)
+
+			backend, err := sql.NewBackend(sql.BackendOptions{
+				DBProvider: eDB,
+				IsHA:       false,
+			})
+			require.NoError(t, err)
+			require.NotNil(t, backend)
+			err = backend.Init(testutil.NewDefaultTestContext(t))
+			require.NoError(t, err)
+			return backend
+		}, nil)
+	})
 }
 
 func TestClientServer(t *testing.T) {
@@ -99,7 +103,11 @@ func TestClientServer(t *testing.T) {
 	t.Run("Create a client", func(t *testing.T) {
 		conn, err := unified.GrpcConn(svc.GetAddress(), prometheus.NewPedanticRegistry())
 		require.NoError(t, err)
-		client, err = resource.NewRemoteResourceClient(tracing.NewNoopTracerService(), conn, authn.GrpcClientConfig{}, true)
+		client, err = resource.NewRemoteResourceClient(tracing.NewNoopTracerService(), conn, resource.RemoteResourceClientConfig{
+			Token:            "some-token",
+			TokenExchangeURL: "http://some-change-url",
+			AllowInsecure:    true,
+		})
 		require.NoError(t, err)
 	})
 
