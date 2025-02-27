@@ -126,7 +126,7 @@ export function InstallControlsButton({
     uninstallTitle = 'Preinstalled plugin. Remove from Grafana config before uninstalling.';
   }
 
-  const renderUninstallControls = (
+  const uninstallControls = (
     <>
       <ConfirmModal
         isOpen={isConfirmModalVisible}
@@ -146,7 +146,7 @@ export function InstallControlsButton({
   if (pluginStatus === PluginStatus.UNINSTALL) {
     return (
       <Stack alignItems="flex-start" width="auto" height="auto">
-        {renderUninstallControls}
+        {uninstallControls}
       </Stack>
     );
   }
@@ -166,7 +166,7 @@ export function InstallControlsButton({
             {isInstalling ? 'Updating' : 'Update'}
           </Button>
         )}
-        {renderUninstallControls}
+        {uninstallControls}
       </Stack>
     );
   }
