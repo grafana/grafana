@@ -16,12 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-type dualWriteContextKey struct{}
-
-func IsDualWriteUpdate(ctx context.Context) bool {
-	return ctx.Value(dualWriteContextKey{}) == true
-}
-
 type DualWriterMode2 struct {
 	Storage Storage
 	Legacy  Storage
