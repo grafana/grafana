@@ -71,28 +71,10 @@ func (s *SpannerDialect) UpsertMultipleSQL(tableName string, keyCols, updateCols
 	return "", errors.New("not supported")
 }
 
-// func (s *SpannerDialect) ColString(col *Column) string { return s.ColStringNoPk(col) }
-// func (s *SpannerDialect) ColStringNoPk(col *Column) string {
-// sql := s.Quote(col.Name) + " "
-// sqlType := s.SQLType(col)
-// sql += sqlType + " "
-// if s.ShowCreateNull() {
-// if !col.Nullable {
-// sql += "NOT NULL "
-// }
-// }
-// if col.Default != "" {
-// def := s.Default(col)
-// if strings.HasPrefix(sqlType, "STRING") && !strings.HasPrefix(def, "\"") {
-// def = strconv.Quote(def)
-// }
-// sql += "DEFAULT (" + def + ") "
-// }
-// return sql
-// }
 func (s *SpannerDialect) DropIndexSQL(tableName string, index *Index) string {
 	return fmt.Sprintf("DROP INDEX %v", s.Quote(index.XName(tableName)))
 }
+
 func (s *SpannerDialect) DropTable(tableName string) string {
 	return fmt.Sprintf("DROP TABLE %s", s.Quote(tableName))
 }
