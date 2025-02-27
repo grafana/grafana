@@ -7,12 +7,19 @@ import { getConfigurationStatus } from './utils';
 
 export const FeatureList = () => {
   const [features, setFeatures] = useState<Feature[]>([]);
-  const [showInstructionsModal, setShowInstructionsModal] = useState(false);
+  const [showInstructionsModal, setShowModal] = useState(false);
   const [activeFeature, setActiveFeature] = useState<Feature | null>(null);
 
   const { hasPublicAccess, hasImageRenderer, hasRequiredFeatures } = getConfigurationStatus();
 
   useEffect(() => {
+    const enableFeatureSteps = [
+      {
+        title: 'Enable Required Feature Toggles',
+        description: 'Add these settings to your custom.ini file to enable necessary features:',
+        code: feature_ini,
+      },
+    ];
     // Initialize features with their current status
     const featuresList: Feature[] = [
       {
@@ -20,8 +27,9 @@ export const FeatureList = () => {
         description:
           'Manage your dashboards as code and deploy them automatically from your Github repository or local storage',
         additional: false,
-        setupSteps: [],
+        setupSteps: enableFeatureSteps,
         isConfigured: hasRequiredFeatures,
+        docsLink: 'https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles',
         icon: 'sync',
       },
       {
@@ -29,18 +37,20 @@ export const FeatureList = () => {
         description:
           'Review, discuss, and approve dashboard changes with your team before they go live using Github pull requests',
         additional: false,
-        setupSteps: [],
+        setupSteps: enableFeatureSteps,
         icon: 'code-branch',
         isConfigured: hasRequiredFeatures,
+        docsLink: 'https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles',
       },
       {
         title: 'Export As-Code',
         description:
           'Export your existing dashboards as code and store them in GitHub repositories for version control and collaboration',
         additional: false,
-        setupSteps: [],
+        setupSteps: enableFeatureSteps,
         icon: 'cloud-upload',
         isConfigured: hasRequiredFeatures,
+        docsLink: 'https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles',
       },
       {
         title: 'Github Webhooks',
@@ -75,34 +85,8 @@ export const FeatureList = () => {
         icon: 'camera',
         additional: true,
         isConfigured: hasImageRenderer && hasPublicAccess && hasRequiredFeatures,
-        setupSteps: [
-          {
-            title: 'Install Node.js',
-            description: 'Install Node.js 16 or later on your system',
-          },
-          {
-            title: 'Clone the Image Renderer Repository',
-            description: 'Clone the renderer repository:',
-            code: 'git clone https://github.com/grafana/grafana-image-renderer.git',
-          },
-          {
-            title: 'Build the Renderer',
-            description: 'Navigate to the directory and build:',
-            code: 'cd grafana-image-renderer\nnpm install\nnpm run build',
-          },
-          {
-            title: 'Run the Renderer Service',
-            description: 'Start the renderer service:',
-            code: 'node build/app.js server --port=8081',
-          },
-          {
-            title: 'Configure Grafana',
-            description: 'Add these settings to your grafana.ini file:',
-            code: `[rendering]
-rendering_server_url = http://localhost:8081/render
-rendering_callback_url = http://your-grafana-instance/`,
-          },
-        ],
+        docsLink: 'https://grafana.com/grafana/plugins/grafana-image-renderer/',
+        setupSteps: [],
       },
     ];
 
@@ -125,16 +109,16 @@ rendering_callback_url = http://your-grafana-instance/`,
     ],
   });
 
-  const handleShowInstructions = (feature: Feature) => {
+  const showModal = (feature: Feature) => {
     // only show modal if feature is not configured
     if (!feature.isConfigured) {
       setActiveFeature(feature);
-      setShowInstructionsModal(true);
+      setShowModal(true);
     }
   };
 
-  const handleInstructionsClose = () => {
-    setShowInstructionsModal(false);
+  const onDismiss = () => {
+    setShowModal(false);
     setActiveFeature(null);
   };
 
@@ -152,22 +136,22 @@ rendering_callback_url = http://your-grafana-instance/`,
           <FeatureCard
             key={index}
             feature={feature}
-            onSetup={() => handleShowInstructions(basicSetup)}
-            showSetupButton={true}
+            onSetup={() => showModal(basicSetup)}
+            showSetupButton={!feature.isConfigured}
           />
         ))}
         {optionalFeatures.map((feature, index) => (
           <FeatureCard
             key={index}
             feature={feature}
-            onSetup={() => handleShowInstructions(feature)}
-            showSetupButton={true}
+            onSetup={() => showModal(feature)}
+            showSetupButton={!feature.isConfigured}
           />
         ))}
       </Stack>
 
       {showInstructionsModal && activeFeature && (
-        <SetupModal feature={activeFeature} isOpen={true} onDismiss={handleInstructionsClose} />
+        <SetupModal feature={activeFeature} isOpen={true} onDismiss={onDismiss} />
       )}
     </Stack>
   );

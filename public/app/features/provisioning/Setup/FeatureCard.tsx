@@ -28,13 +28,19 @@ export const FeatureCard = ({ feature, onSetup, showSetupButton = true }: Props)
           <Text color="secondary">{feature.description}</Text>
         </Stack>
       </Card.Description>
-
-      {showSetupButton && !isConfigured && (
+      {(feature.docsLink || showSetupButton) && (
         <Card.Actions>
           <Stack justifyContent="center" width="100%">
-            <Button variant="primary" onClick={onSetup}>
-              Set Up Now
-            </Button>
+            {showSetupButton && !isConfigured && onSetup && feature.setupSteps.length > 0 && (
+              <Button variant="primary" onClick={onSetup}>
+                Set Up Now
+              </Button>
+            )}
+            {feature.docsLink && (
+              <Button variant="secondary" onClick={() => window.open(feature.docsLink, '_blank')}>
+                Read Docs
+              </Button>
+            )}
           </Stack>
         </Card.Actions>
       )}

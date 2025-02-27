@@ -14,6 +14,7 @@ export interface Feature {
   icon?: string; // Optional icon name for the feature
   setupSteps: Step[];
   isConfigured: boolean;
+  docsLink?: string;
 }
 
 // List of required feature toggles
