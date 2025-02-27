@@ -15,7 +15,6 @@ import (
 	"gopkg.in/ini.v1"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -62,7 +61,7 @@ func TestSetDefaultPermissionsWhenCreatingFolder(t *testing.T) {
 				obj runtime.Object) error {
 				return nil
 			},
-				&v1.CreateOptions{})
+				&metav1.CreateOptions{})
 
 			require.NoError(t, err)
 			require.NotNil(t, out)
