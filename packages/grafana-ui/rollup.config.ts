@@ -40,9 +40,15 @@ export default [
   tsDeclarationOutput(pkg),
   tsDeclarationOutput(pkg, {
     input: './compiled/unstable.d.ts',
-    output: {
-      file: './dist/unstable.d.ts',
-      format: 'es',
-    },
+    output: [
+      {
+        file: './dist/cjs/unstable.d.cts',
+        format: 'cjs',
+      },
+      {
+        file: './dist/esm/unstable.d.mts',
+        format: 'es',
+      },
+    ],
   }),
 ];

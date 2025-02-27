@@ -34,15 +34,23 @@ try {
 
   await pkgJson.save();
 
+  // If an alias package name is provided we add an exports entry for the alias
+  // then generate an additional "nested" package.json for typescript resolution that
+  // doesn't use the exports property in package.json.
   if (process.env.ALIAS_PACKAGE_NAME) {
     const aliasName = process.env.ALIAS_PACKAGE_NAME;
     pkgJson.update({
       exports: {
         ...pkgJson.content.exports,
         [`./${aliasName}`]: {
-          types: `./dist/${aliasName}.d.ts`,
-          import: `./dist/esm/${aliasName}.js`,
-          require: `./dist/${aliasName}.js`,
+          import: {
+            types: esmTypes.replace('index', aliasName),
+            default: esmIndex.replace('index', aliasName),
+          },
+          require: {
+            types: cjsTypes.replace('index', aliasName),
+            default: cjsTypes.replace('index', aliasName),
+          },
         },
       },
       files: [...pkgJson.content.files, aliasName],
@@ -64,13 +72,13 @@ async function createAliasPackageJsonFiles(packageJsonContent, aliasName) {
     const pkgJson = await PackageJson.create(pkgJsonPath, {
       data: {
         name: pkgName,
-        types: `../dist/${aliasName}.d.ts`,
-        main: `../dist/${aliasName}.js`,
-        module: `../dist/esm/${aliasName}.js`,
+        types: `../dist/cjs/${aliasName}.d.cts`,
+        main: `../dist/cjs/${aliasName}.cjs`,
+        module: `../dist/esm/${aliasName}.mjs`,
       },
     });
     await pkgJson.save();
   } catch (error) {
-    console.error(`Error generating package.json for ${pkgName}`, error);
+    throw new Error(`Error generating package.json for ${pkgName}`, error);
   }
 }
