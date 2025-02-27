@@ -270,6 +270,7 @@ func TestBleveBackend(t *testing.T) {
 		jj, err := json.MarshalIndent(found, "", "  ")
 		require.NoError(t, err)
 		fmt.Printf("%s\n", string(jj))
+		// NOTE "hash" -> "checksum" requires changing the protobuf
 		require.JSONEq(t, `{
 			"items": [
 				{
@@ -280,7 +281,7 @@ func TestBleveBackend(t *testing.T) {
 						"name": "aaa"
 					},
 					"path": "path/to/aaa.json",
-					"checksum": "xyz",
+					"hash": "xyz",
 					"time": 1609462800000,
 					"title": "aaa (dash)",
 					"folder": "xxx"
@@ -293,7 +294,7 @@ func TestBleveBackend(t *testing.T) {
 						"name": "bbb"
 					},
 					"path": "path/to/bbb.json",
-					"checksum": "hijk",
+					"hash": "hijk",
 					"time": 1640998800000,
 					"title": "bbb (dash)",
 					"folder": "xxx"

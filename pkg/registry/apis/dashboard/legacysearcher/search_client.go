@@ -188,9 +188,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 			query.SourcePath = vals[0]
 		case resource.SEARCH_FIELD_MANAGER_ID:
 			if field.Operator == string(selection.NotIn) {
-				for _, val := range vals {
-					query.ManagerIdentityNotIn = append(query.ManagerIdentityNotIn, val)
-				}
+				query.ManagerIdentityNotIn = vals
 				continue
 			}
 

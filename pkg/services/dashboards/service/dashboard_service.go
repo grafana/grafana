@@ -1558,7 +1558,7 @@ func (dr *DashboardServiceImpl) saveProvisionedDashboardThroughK8s(ctx context.C
 	m := utils.ManagerProperties{}
 	s := utils.SourceProperties{}
 	if !unprovision {
-		m.Kind = utils.ManagerKindClassicFP // was file:
+		m.Kind = utils.ManagerKindClassicFP // nolint:staticcheck
 		m.Identity = provisioning.Name
 		s.Path = provisioning.ExternalID
 		s.Checksum = provisioning.CheckSum

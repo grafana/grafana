@@ -349,6 +349,10 @@ func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.Li
 		if ok {
 			return intV
 		}
+		floatV, ok := v.(float64)
+		if ok {
+			return int64(floatV)
+		}
 		str, ok := v.(string)
 		if ok {
 			t, _ := time.Parse(time.RFC3339, str)

@@ -279,7 +279,7 @@ const SEARCH_FIELD_MANAGER_KIND = "manager.kind"
 const SEARCH_FIELD_MANAGER_ID = "manager.id"
 const SEARCH_FIELD_SOURCE_PATH = "source.path"
 const SEARCH_FIELD_SOURCE_CHECKSUM = "source.checksum"
-const SEARCH_FIELD_SOURCE_TIME = "source.time"
+const SEARCH_FIELD_SOURCE_TIME = "source.timestampMillis"
 
 const SEARCH_FIELD_SCORE = "_score"     // the match score
 const SEARCH_FIELD_EXPLAIN = "_explain" // score explanation as JSON object
