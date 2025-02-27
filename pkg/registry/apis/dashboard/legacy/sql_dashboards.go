@@ -256,6 +256,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 	var createdBy sql.NullString
 	var createdByID sql.NullInt64
 	var message sql.NullString
+	var apiVersion sql.NullString
 
 	var plugin_id sql.NullString
 	var origin_name sql.NullString
@@ -270,8 +271,11 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		&origin_name, &origin_path, &origin_hash, &origin_ts,
 		&created, &createdBy, &createdByID,
 		&updated, &updatedBy, &updatedByID,
-		&version, &message, &data,
+		&version, &message, &data, &apiVersion,
 	)
+	if apiVersion.String == "" {
+		apiVersion.String = "v0alpha1" // default value
+	}
 
 	row.token = &continueToken{orgId: orgId, id: dashboard_id}
 	// when listing from the history table, we want to use the version as the ID to continue from
@@ -282,6 +286,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		row.RV = version
 		dash.ResourceVersion = fmt.Sprintf("%d", row.RV)
 		dash.Namespace = a.namespacer(orgId)
+		dash.APIVersion = fmt.Sprintf("%s/%s", dashboard.GROUP, apiVersion.String)
 		dash.UID = gapiutil.CalculateClusterWideUID(dash)
 		dash.SetCreationTimestamp(metav1.NewTime(created))
 		meta, err := utils.MetaAccessor(dash)

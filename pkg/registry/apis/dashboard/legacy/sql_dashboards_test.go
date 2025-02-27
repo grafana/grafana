@@ -28,7 +28,7 @@ func TestScanRow(t *testing.T) {
 		provisioning: provisioner,
 	}
 
-	columns := []string{"orgId", "dashboard_id", "name", "folder_uid", "deleted", "plugin_id", "origin_name", "origin_path", "origin_hash", "origin_ts", "created", "createdBy", "createdByID", "updated", "updatedBy", "updatedByID", "version", "message", "data"}
+	columns := []string{"orgId", "dashboard_id", "name", "folder_uid", "deleted", "plugin_id", "origin_name", "origin_path", "origin_hash", "origin_ts", "created", "createdBy", "createdByID", "updated", "updatedBy", "updatedByID", "version", "message", "data", "api_version"}
 	id := int64(100)
 	title := "Test Dashboard"
 	folderUID := "folder123"
@@ -40,7 +40,7 @@ func TestScanRow(t *testing.T) {
 	updatedUser := "updator"
 
 	t.Run("Should scan a valid row correctly", func(t *testing.T) {
-		rows := sqlmock.NewRows(columns).AddRow(1, id, title, folderUID, nil, "", "", "", "", 0, timestamp, createdUser, 0, timestamp, updatedUser, 0, version, message, []byte(`{"key": "value"}`))
+		rows := sqlmock.NewRows(columns).AddRow(1, id, title, folderUID, nil, "", "", "", "", 0, timestamp, createdUser, 0, timestamp, updatedUser, 0, version, message, []byte(`{"key": "value"}`), "vXyz")
 		mock.ExpectQuery("SELECT *").WillReturnRows(rows)
 		resultRows, err := mockDB.Query("SELECT *")
 		require.NoError(t, err)
@@ -69,10 +69,11 @@ func TestScanRow(t *testing.T) {
 		require.Equal(t, "user:"+updatedUser, meta.GetUpdatedBy()) // should be prefixed by user:
 		require.Equal(t, message, meta.GetMessage())
 		require.Equal(t, folderUID, meta.GetFolder())
+		require.Equal(t, "dashboard.grafana.app/vXyz", row.Dash.APIVersion)
 	})
 
 	t.Run("File provisioned dashboard should have annotations", func(t *testing.T) {
-		rows := sqlmock.NewRows(columns).AddRow(1, id, title, folderUID, nil, "", "provisioner", pathToFile, "hashing", 100000, timestamp, createdUser, 0, timestamp, updatedUser, 0, version, message, []byte(`{"key": "value"}`))
+		rows := sqlmock.NewRows(columns).AddRow(1, id, title, folderUID, nil, "", "provisioner", pathToFile, "hashing", 100000, timestamp, createdUser, 0, timestamp, updatedUser, 0, version, message, []byte(`{"key": "value"}`), "vXyz")
 		mock.ExpectQuery("SELECT *").WillReturnRows(rows)
 		resultRows, err := mockDB.Query("SELECT *")
 		require.NoError(t, err)
@@ -94,7 +95,7 @@ func TestScanRow(t *testing.T) {
 	})
 
 	t.Run("Plugin provisioned dashboard should have annotations", func(t *testing.T) {
-		rows := sqlmock.NewRows(columns).AddRow(1, id, title, folderUID, nil, "slo", "", "", "", 0, timestamp, createdUser, 0, timestamp, updatedUser, 0, version, message, []byte(`{"key": "value"}`))
+		rows := sqlmock.NewRows(columns).AddRow(1, id, title, folderUID, nil, "slo", "", "", "", 0, timestamp, createdUser, 0, timestamp, updatedUser, 0, version, message, []byte(`{"key": "value"}`), "vXyz")
 		mock.ExpectQuery("SELECT *").WillReturnRows(rows)
 		resultRows, err := mockDB.Query("SELECT *")
 		require.NoError(t, err)
