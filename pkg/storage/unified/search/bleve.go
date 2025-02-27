@@ -218,7 +218,7 @@ func (b *bleveBackend) cleanOldIndexes(dir string, skip string) {
 	for _, file := range files {
 		if file.IsDir() && file.Name() != skip {
 			fpath := filepath.Join(dir, file.Name())
-			if !isValidPath(fpath, b.opts.Root) {
+			if !isValidPath(dir, b.opts.Root) {
 				b.log.Error("Path is not valid", "directory", fpath, "error", err)
 			}
 			err = os.RemoveAll(fpath)
@@ -233,7 +233,10 @@ func (b *bleveBackend) cleanOldIndexes(dir string, skip string) {
 
 // isValidPath does a sanity check in case it tries to access dirs above the file tree
 func isValidPath(path, safeDir string) bool {
-	if strings.Contains(path, "\\") || strings.Contains(path, "..") || !strings.HasPrefix(path, safeDir) {
+	if strings.Contains(path, "\\") || // if path contains backslashes
+		strings.Contains(path, "..") || // if path is above the safe dir
+		!strings.HasPrefix(path, safeDir) || // if path is not under the safe dir
+		!strings.HasSuffix(path, "/") { // if path is not a directory
 		return false
 	}
 	return true
