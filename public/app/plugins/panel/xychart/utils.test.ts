@@ -31,7 +31,7 @@ describe('value mapping function', () => {
     };
 
     const { index, getAll } = getEnumConfig(field, createTheme());
-    expect(index).toEqual({ color: ['#73bf69ff', '#f2495cff'], icon: ['', ''], text: ['', ''] });
+    expect(index).toEqual({ color: ['#73bf69ff', '#f2495cff'], icon: ['', ''], text: ['< 30', '≥ 30'] });
     expect(getAll(field.values)).toEqual([0, 0, 0, 1, 1, 1]);
   });
 
