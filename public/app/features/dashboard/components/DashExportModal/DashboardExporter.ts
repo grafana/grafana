@@ -436,7 +436,7 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
         }
       }
 
-      const panelDef: PanelPluginMeta = config.panels[panel.kind];
+      const panelDef: PanelPluginMeta = config.panels[panel.spec.vizConfig.kind];
       if (panelDef) {
         requires.push({
           type: 'panel',
@@ -476,7 +476,7 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
       const elements = dashboard.elements;
 
       for (const item of gridLayoutItems) {
-        if (item.kind === 'GridLayoutItem' && !item.spec.repeat) {
+        if (item.kind === 'GridLayoutItem') {
           const panel = elements[item.spec.element.name];
           if (panel.kind === 'Panel') {
             await processPanel(panel);
