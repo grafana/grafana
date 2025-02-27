@@ -1,9 +1,20 @@
 name: 'Run Backend Integration Tests'
 description: 'Runs the Grafana backend integration tests with code generation'
 
+inputs:
+  generate-coverage:
+    description: 'Whether to generate test coverage files'
+    required: false
+    default: 'false'
+
 runs:
   using: "composite"
   steps:
     - name: Run integration tests with code generation
       shell: bash
-      run: make gen-go test-go-integration
+      run: |
+        if [ "${{ inputs.generate-coverage }}" = "true" ]; then
+          COVER_OPTS="-coverprofile=integration.cov" make gen-go test-go-integration
+        else
+          make gen-go test-go-integration
+        fi
