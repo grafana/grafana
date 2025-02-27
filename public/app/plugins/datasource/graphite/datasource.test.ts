@@ -745,8 +745,8 @@ describe('graphiteDatasource', () => {
         },
         updateText: () => {},
         render: () => {
-          return "";
-        }
+          return '';
+        },
       }));
     });
 

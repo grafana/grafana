@@ -85,11 +85,13 @@ export default class GraphiteQuery {
         // We are removing these for less false positives of query changes.
         const sanitizeQuery = (o: string): string => {
           return o.replace(/\s|'|"|,/g, '');
-        }
+        };
         const oldSanitized = sanitizeQuery(oldQuery);
-        const newSanitized = sanitizeQuery(newQuery)
+        const newSanitized = sanitizeQuery(newQuery);
         if (oldSanitized && newSanitized && oldSanitized !== newSanitized) {
-          throw new Error(`Failed to make a visual query builder query that is equivalent to the query.\nOriginal query: ${oldQuery}\nQuery builder query: ${newQuery}`);
+          throw new Error(
+            `Failed to make a visual query builder query that is equivalent to the query.\nOriginal query: ${oldQuery}\nQuery builder query: ${newQuery}`
+          );
         }
       }
     } catch (err) {
@@ -202,13 +204,13 @@ export default class GraphiteQuery {
         return this.templateSrv ? this.templateSrv.replace(value, this.scopedVars) : value;
       });
     };
-      const metricPath = this.getSegmentPathUpTo(this.segments.length).replace(/\.?select metric$/, '');
-      return reduce(this.functions, wrapFunction, metricPath);
+    const metricPath = this.getSegmentPathUpTo(this.segments.length).replace(/\.?select metric$/, '');
+    return reduce(this.functions, wrapFunction, metricPath);
   }
 
   updateModelTarget(targets: any) {
     if (!this.target.textEditor) {
-      this.target.target = this.generateQueryString()
+      this.target.target = this.generateQueryString();
     }
 
     this.updateRenderedTarget(this.target, targets);

@@ -268,7 +268,9 @@ describe('Graphite query model', () => {
         };
         ctx.targets = [ctx.target];
         ctx.queryModel = new GraphiteQuery(ctx.datasource, ctx.target, ctx.templateSrv);
-        expect(ctx.queryModel.error).toBe('Failed to make a visual query builder query that is equivalent to the query.\nOriginal query: maxSeries(sum(testSeries1), sum(testSeries2))\nQuery builder query: maxSeries(sumSeries(sumSeries(testSeries1), testSeries2))');
+        expect(ctx.queryModel.error).toBe(
+          'Failed to make a visual query builder query that is equivalent to the query.\nOriginal query: maxSeries(sum(testSeries1), sum(testSeries2))\nQuery builder query: maxSeries(sumSeries(sumSeries(testSeries1), testSeries2))'
+        );
       });
     });
   });
