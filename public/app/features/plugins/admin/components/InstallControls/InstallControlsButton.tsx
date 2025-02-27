@@ -139,24 +139,28 @@ export function InstallControlsButton({
     uninstallConfirmationBody = `This plugin has dependencies on ${hasDependency.join(', ')}. Are you sure you want to uninstall this plugin?`;
   }
 
+  const uninstallControls = (
+    <>
+      <ConfirmModal
+        isOpen={isConfirmModalVisible}
+        title={`Uninstall ${plugin.name}`}
+        body={uninstallConfirmationBody}
+        confirmText="Confirm"
+        icon="exclamation-triangle"
+        onConfirm={onUninstall}
+        onDismiss={hideConfirmModal}
+      />
+      <Button variant="destructive" disabled={disableUninstall} onClick={showConfirmModal} title={uninstallTitle}>
+        {uninstallBtnText}
+      </Button>
+    </>
+  );
+
   if (pluginStatus === PluginStatus.UNINSTALL) {
     return (
-      <>
-        <ConfirmModal
-          isOpen={isConfirmModalVisible}
-          title={`Uninstall ${plugin.name}`}
-          body={uninstallConfirmationBody}
-          confirmText="Confirm"
-          icon="exclamation-triangle"
-          onConfirm={onUninstall}
-          onDismiss={hideConfirmModal}
-        />
-        <Stack alignItems="flex-start" width="auto" height="auto">
-          <Button variant="destructive" disabled={disableUninstall} onClick={showConfirmModal} title={uninstallTitle}>
-            {uninstallBtnText}
-          </Button>
-        </Stack>
-      </>
+      <Stack alignItems="flex-start" width="auto" height="auto">
+        {uninstallControls}
+      </Stack>
     );
   }
 
@@ -175,18 +179,7 @@ export function InstallControlsButton({
             {isInstalling ? 'Updating' : 'Update'}
           </Button>
         )}
-        <ConfirmModal
-          isOpen={isConfirmModalVisible}
-          title={`Uninstall ${plugin.name}`}
-          body={uninstallConfirmationBody}
-          confirmText="Confirm"
-          icon="exclamation-triangle"
-          onConfirm={onUninstall}
-          onDismiss={hideConfirmModal}
-        />
-        <Button variant="destructive" disabled={disableUninstall} onClick={showConfirmModal} title={uninstallTitle}>
-          {uninstallBtnText}
-        </Button>
+        {uninstallControls}
       </Stack>
     );
   }

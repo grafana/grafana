@@ -394,6 +394,22 @@ func WithoutInternalLabels() LabelOption {
 	}
 }
 
+func (alertRule *AlertRule) ImportedFromPrometheus() bool {
+	if alertRule.Metadata.PrometheusStyleRule == nil {
+		return false
+	}
+
+	return alertRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition != ""
+}
+
+func (alertRule *AlertRule) PrometheusRuleDefinition() string {
+	if !alertRule.ImportedFromPrometheus() {
+		return ""
+	}
+
+	return alertRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition
+}
+
 // GetLabels returns the labels specified as part of the alert rule.
 func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 	labels := alertRule.Labels
@@ -806,6 +822,8 @@ type ListAlertRulesQuery struct {
 
 	ReceiverName     string
 	TimeIntervalName string
+
+	ImportedPrometheusRule *bool
 }
 
 // CountAlertRulesQuery is the query for counting alert rules
