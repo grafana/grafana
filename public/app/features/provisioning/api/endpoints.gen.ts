@@ -1154,15 +1154,11 @@ export type RepositoryView = {
 export type RepositoryViewList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  /** GenerateDashboardPreviews is available to render dashboard previews */
-  generateDashboardPreviews: boolean;
-  /** GithubWebhooks is available to sync changes from a repository as soon as they are pushed or react to pull requests */
-  githubWebhooks: boolean;
   items: RepositoryView[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   /** The backend is using legacy storage FIXME: Not sure where this should be exposed... but we need it somewhere The UI should force the onboarding workflow when this is true */
-  legacyStorage: boolean;
+  legacyStorage?: boolean;
 };
 export type ResourceStats = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
