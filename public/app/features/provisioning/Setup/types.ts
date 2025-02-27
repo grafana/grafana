@@ -84,8 +84,3 @@ HTTP Requests
 
 export const root_url_ini = `[server]
 root_url = https://d60d-83-33-235-27.ngrok-free.app`;
-
-export const render_ini = `[rendering]
-server_url = http://localhost:8081/render
-callback_url = http://localhost:3000/
-`;

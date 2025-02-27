@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Button, Box, Text, Stack } from '@grafana/ui';
+import { Text, Stack } from '@grafana/ui';
 import { Feature, feature_ini, ngrok_example, root_url_ini } from './types';
 import { SetupModal } from './SetupModal';
 import { FeatureCard } from './FeatureCard';
@@ -9,7 +9,6 @@ export const FeatureList = () => {
   const [features, setFeatures] = useState<Feature[]>([]);
   const [showInstructionsModal, setShowModal] = useState(false);
   const [activeFeature, setActiveFeature] = useState<Feature | null>(null);
-
   const { hasPublicAccess, hasImageRenderer, hasRequiredFeatures } = getConfigurationStatus();
 
   useEffect(() => {
