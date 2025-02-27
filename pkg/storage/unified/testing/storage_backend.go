@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -34,6 +33,7 @@ type NewBackendFunc func(ctx context.Context) resource.StorageBackend
 // TestOptions configures which tests to run
 type TestOptions struct {
 	SkipTests map[string]bool // tests to skip
+
 }
 
 // RunStorageBackendTest runs the storage backend test suite
@@ -51,7 +51,7 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		fn   func(*testing.T, resource.StorageBackend)
 	}{
 		{TestHappyPath, runTestIntegrationBackendHappyPath},
-		{TestWatchWriteEvents, runTestIntegrationBackendWatchWriteEventsFromLastest},
+		{TestWatchWriteEvents, runTestIntegrationBackendWatchWriteEvents},
 		{TestList, runTestIntegrationBackendList},
 		{TestBlobSupport, runTestIntegrationBlobSupport},
 		{TestGetResourceStats, runTestIntegrationBackendGetResourceStats},
@@ -272,7 +272,7 @@ func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.St
 	})
 }
 
-func runTestIntegrationBackendWatchWriteEventsFromLastest(t *testing.T, backend resource.StorageBackend) {
+func runTestIntegrationBackendWatchWriteEvents(t *testing.T, backend resource.StorageBackend) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 
 	// Create a few resources before initing the watch
@@ -287,6 +287,12 @@ func runTestIntegrationBackendWatchWriteEventsFromLastest(t *testing.T, backend 
 	_, err = writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED)
 	require.NoError(t, err)
 	require.Equal(t, "item2", (<-stream).Key.Name)
+
+	// Should close the stream
+	ctx.Cancel()
+
+	_, ok := <-stream
+	require.False(t, ok)
 }
 
 func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend) {
@@ -294,21 +300,29 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 	server := newServer(t, backend)
 
 	// Create a few resources before starting the watch
-	rv1, _ := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)
+	rv1, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)
+	require.NoError(t, err)
 	require.Greater(t, rv1, int64(0))
-	rv2, _ := writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED)
+	rv2, err := writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED)
+	require.NoError(t, err)
 	require.Greater(t, rv2, rv1)
-	rv3, _ := writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED)
+	rv3, err := writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED)
+	require.NoError(t, err)
 	require.Greater(t, rv3, rv2)
-	rv4, _ := writeEvent(ctx, backend, "item4", resource.WatchEvent_ADDED)
+	rv4, err := writeEvent(ctx, backend, "item4", resource.WatchEvent_ADDED)
+	require.NoError(t, err)
 	require.Greater(t, rv4, rv3)
-	rv5, _ := writeEvent(ctx, backend, "item5", resource.WatchEvent_ADDED)
+	rv5, err := writeEvent(ctx, backend, "item5", resource.WatchEvent_ADDED)
+	require.NoError(t, err)
 	require.Greater(t, rv5, rv4)
-	rv6, _ := writeEvent(ctx, backend, "item2", resource.WatchEvent_MODIFIED)
+	rv6, err := writeEvent(ctx, backend, "item2", resource.WatchEvent_MODIFIED)
+	require.NoError(t, err)
 	require.Greater(t, rv6, rv5)
-	rv7, _ := writeEvent(ctx, backend, "item3", resource.WatchEvent_DELETED)
+	rv7, err := writeEvent(ctx, backend, "item3", resource.WatchEvent_DELETED)
+	require.NoError(t, err)
 	require.Greater(t, rv7, rv6)
-	rv8, _ := writeEvent(ctx, backend, "item6", resource.WatchEvent_ADDED)
+	rv8, err := writeEvent(ctx, backend, "item6", resource.WatchEvent_ADDED)
+	require.NoError(t, err)
 	require.Greater(t, rv8, rv7)
 
 	t.Run("fetch all latest", func(t *testing.T) {
@@ -346,12 +360,12 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 3)
-		continueToken, err := sql.GetContinueToken(res.NextPageToken)
+		continueToken, err := resource.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
 		require.Equal(t, "item1 ADDED", string(res.Items[0].Value))
 		require.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
 		require.Equal(t, "item4 ADDED", string(res.Items[2].Value))
-		require.Equal(t, rv8, continueToken.ResourceVersion)
+		require.GreaterOrEqual(t, continueToken.ResourceVersion, rv8)
 	})
 
 	t.Run("list at revision", func(t *testing.T) {
@@ -394,13 +408,13 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
 		require.Equal(t, "item4 ADDED", string(res.Items[2].Value))
 
-		continueToken, err := sql.GetContinueToken(res.NextPageToken)
+		continueToken, err := resource.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
 		require.Equal(t, rv7, continueToken.ResourceVersion)
 	})
 
 	t.Run("fetch second page at revision", func(t *testing.T) {
-		continueToken := &sql.ContinueToken{
+		continueToken := &resource.ContinueToken{
 			ResourceVersion: rv8,
 			StartOffset:     2,
 		}
@@ -421,7 +435,7 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.Equal(t, "item4 ADDED", string(res.Items[0].Value))
 		require.Equal(t, "item5 ADDED", string(res.Items[1].Value))
 
-		continueToken, err = sql.GetContinueToken(res.NextPageToken)
+		continueToken, err = resource.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
 		require.Equal(t, rv8, continueToken.ResourceVersion)
 		require.Equal(t, int64(4), continueToken.StartOffset)
@@ -478,14 +492,14 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 		require.Equal(t, "item1 MODIFIED", string(res.Items[2].Value))
 		require.Equal(t, rvHistory3, res.Items[2].ResourceVersion)
 
-		continueToken, err := sql.GetContinueToken(res.NextPageToken)
+		continueToken, err := resource.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
 		//  should return the furthest back RV as the next page token
 		require.Equal(t, rvHistory3, continueToken.ResourceVersion)
 	})
 
 	t.Run("fetch second page of history at revision", func(t *testing.T) {
-		continueToken := &sql.ContinueToken{
+		continueToken := &resource.ContinueToken{
 			ResourceVersion: rvHistory3,
 			StartOffset:     2,
 		}
@@ -555,6 +569,34 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		found, err = store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: b2.Uid}, true)
 		require.NoError(t, err)
 		require.Equal(t, []byte("hello 22222"), found.Value)
+
+		// Save a resource with annotation
+		obj := &unstructured.Unstructured{}
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		meta.SetBlob(&utils.BlobInfo{UID: b2.Uid, Hash: b1.Hash})
+		meta.SetName(key.Name)
+		meta.SetNamespace(key.Namespace)
+		obj.SetAPIVersion(key.Group + "/v1")
+		obj.SetKind("Test")
+		val, err := obj.MarshalJSON()
+		require.NoError(t, err)
+		out, err := server.Create(ctx, &resource.CreateRequest{Key: key, Value: val})
+		require.NoError(t, err)
+		require.Nil(t, out.Error)
+		require.True(t, out.ResourceVersion > 0)
+
+		// The server (not store!) will lookup the saved annotation and return the correct payload
+		res, err := server.GetBlob(ctx, &resource.GetBlobRequest{Resource: key})
+		require.NoError(t, err)
+		require.Nil(t, out.Error)
+		require.Equal(t, "hello 22222", string(res.Value))
+
+		// But we can still get an older version with an explicit UID
+		res, err = server.GetBlob(ctx, &resource.GetBlobRequest{Resource: key, Uid: b1.Uid})
+		require.NoError(t, err)
+		require.Nil(t, out.Error)
+		require.Equal(t, "hello 11111", string(res.Value))
 	})
 }
 

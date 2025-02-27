@@ -776,6 +776,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/doc-validator.yml @grafana/docs-tooling
 /.github/workflows/deploy-pr-preview.yml @grafana/docs-tooling
 /.github/workflows/epic-add-to-platform-ux-parent-project.yml @meanmina
+/.github/workflows/feature-toggles-ci.yml @grafana/docs-tooling
 /.github/workflows/github-release.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/issue-opened.yml @grafana/grafana-community-support
 /.github/workflows/metrics-collector.yml @torkelo
