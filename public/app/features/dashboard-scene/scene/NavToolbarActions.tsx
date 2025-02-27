@@ -54,7 +54,7 @@ NavToolbarActions.displayName = 'NavToolbarActions';
  * This part is split into a separate component to help test this
  */
 export function ToolbarActions({ dashboard }: Props) {
-  const { isEditing, viewPanelScene, isDirty, uid, meta, editview, editPanel, editable } = dashboard.useState();
+  const { isEditing, tags, viewPanelScene, isDirty, uid, meta, editview, editPanel, editable } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
   const [isAddPanelMenuOpen, setIsAddPanelMenuOpen] = useState(false);
 
@@ -70,6 +70,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
   const showScopesSelector = config.featureToggles.singleTopNav && config.featureToggles.scopeFilters;
+  const isOodleGenerated  = (tags?.filter((tag) => tag === 'oodle-generated')?.length || 0 ) > 0;
 
   if (!isEditingPanel) {
     // This adds the precence indicators in enterprise
@@ -328,7 +329,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isPlaying && editable,
+    condition: !isOodleGenerated && !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isPlaying && editable,
     render: () => (
       <Button
         onClick={() => {
@@ -348,7 +349,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isPlaying && !editable,
+    condition: !isOodleGenerated && !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isPlaying && !editable,
     render: () => (
       <Button
         onClick={() => {
@@ -381,7 +382,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'settings',
-    condition: isEditing && dashboard.canEditDashboard() && isShowingDashboard,
+    condition: !isOodleGenerated && isEditing && dashboard.canEditDashboard() && isShowingDashboard,
     render: () => (
       <Button
         onClick={() => {
