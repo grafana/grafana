@@ -142,8 +142,6 @@ cloud.google.com/go/memcache v1.11.1 h1:2FGuyd3WY7buNDAkMBdmeIOheNWA3gwaXrttLrEd
 cloud.google.com/go/memcache v1.11.1/go.mod h1:3zF+dEqmEmElHuO4NtHiShekQY5okQtssjPBv7jpmZ8=
 cloud.google.com/go/metastore v1.14.1 h1:kGx+IUSSYCVn8LisCT4fpxCC9rauEVonzi7RlygdqWY=
 cloud.google.com/go/metastore v1.14.1/go.mod h1:WDvsAcbQLl9M4xL+eIpbKogH7aEaPWMhO9aRBcFOnJE=
-cloud.google.com/go/monitoring v1.21.1 h1:zWtbIoBMnU5LP9A/fz8LmWMGHpk4skdfeiaa66QdFGc=
-cloud.google.com/go/monitoring v1.21.1/go.mod h1:Rj++LKrlht9uBi8+Eb530dIrzG/cU/lB8mt+lbeFK1c=
 cloud.google.com/go/networkconnectivity v1.15.1 h1:EizN+cFGHzRAyiFTK8jT1PqTo+cSnbc2IGh6OmllS7Y=
 cloud.google.com/go/networkconnectivity v1.15.1/go.mod h1:tYAcT4Ahvq+BiePXL/slYipf/8FF0oNJw3MqFhBnSPI=
 cloud.google.com/go/networkmanagement v1.14.1 h1:0x3hVI6xbp3N/choffKPHMSxbzaPdHSD92cBElebXEk=
@@ -204,8 +202,6 @@ cloud.google.com/go/servicemanagement v1.8.0 h1:fopAQI/IAzlxnVeiKn/8WiV6zKndjFkv
 cloud.google.com/go/serviceusage v1.6.0 h1:rXyq+0+RSIm3HFypctp7WoXxIA563rn206CfMWdqXX4=
 cloud.google.com/go/shell v1.8.1 h1:etoJal+LB7Pn8+5vE2aAh6QcFbBmerIOh5MxNDoXykw=
 cloud.google.com/go/shell v1.8.1/go.mod h1:jaU7OHeldDhTwgs3+clM0KYEDYnBAPevUI6wNLf7ycE=
-cloud.google.com/go/spanner v1.70.0 h1:nj6p/GJTgMDiSQ1gQ034ItsKuJgHiMOjtOlONOg8PSo=
-cloud.google.com/go/spanner v1.70.0/go.mod h1:X5T0XftydYp0K1adeJQDJtdWpbrOeJ7wHecM4tK6FiE=
 cloud.google.com/go/speech v1.25.1 h1:iGZJS3wrdkje/Vqiacx1+r+zVwUZoXVMdklYIVsvfNw=
 cloud.google.com/go/speech v1.25.1/go.mod h1:WgQghvghkZ1htG6BhYn98mP7Tg0mti8dBFDLMVXH/vM=
 cloud.google.com/go/storagetransfer v1.11.1 h1:Hd7H1zXGQGEWyWXxWVXDMuNCGasNQim1y9CIaMZIBX8=
@@ -280,10 +276,6 @@ github.com/DmitriyVTitov/size v1.5.0 h1:/PzqxYrOyOUX1BXj6J9OuVRVGe+66VL4D9FlUaW5
 github.com/DmitriyVTitov/size v1.5.0/go.mod h1:le6rNI4CoLQV1b9gzp1+3d7hMAD/uu2QcJ+aYbNgiU0=
 github.com/GoogleCloudPlatform/cloudsql-proxy v1.36.0 h1:kAtNAWwvTt5+iew6baV0kbOrtjYTXPtWNSyOFlcxkBU=
 github.com/GoogleCloudPlatform/cloudsql-proxy v1.36.0/go.mod h1:VRKXU8C7Y/aUKjRBTGfw0Ndv4YqNxlB8zAPJJDxbASE=
-github.com/GoogleCloudPlatform/grpc-gcp-go/grpcgcp v1.5.0 h1:oVLqHXhnYtUwM89y9T1fXGaK9wTkXHgNp8/ZNMQzUxE=
-github.com/GoogleCloudPlatform/grpc-gcp-go/grpcgcp v1.5.0/go.mod h1:dppbR7CwXD4pgtV9t3wD1812RaLDcBjtblcDF5f1vI0=
-github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.25.0 h1:3c8yed4lgqTt+oTQ+JNMDo+F4xprBf+O/il4ZC0nRLw=
-github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.25.0/go.mod h1:obipzmGjfSjam60XLwGfqUkJsfiheAl+TUjG+4yzyPM=
 github.com/IBM/go-sdk-core/v5 v5.17.4 h1:VGb9+mRrnS2HpHZFM5hy4J6ppIWnwNrw0G+tLSgcJLc=
 github.com/IBM/go-sdk-core/v5 v5.17.4/go.mod h1:KsAAI7eStAWwQa4F96MLy+whYSh39JzNjklZRbN/8ns=
 github.com/IBM/ibm-cos-sdk-go v1.11.0 h1:Jp55NLN3OvBwucMGpP5wNybyjncsmTZ9+GPHai/1cE8=
@@ -387,7 +379,6 @@ github.com/bytedance/sonic v1.10.0-rc3 h1:uNSnscRapXTwUgTyOF0GVljYD08p9X/Lbr9Mwe
 github.com/bytedance/sonic v1.10.0-rc3/go.mod h1:iZcSUejdk5aukTND/Eu/ivjQuEL0Cu9/rf50Hi0u/g4=
 github.com/campoy/embedmd v1.0.0 h1:V4kI2qTJJLf4J29RzI/MAt2c3Bl4dQSYPuflzwFH2hY=
 github.com/campoy/embedmd v1.0.0/go.mod h1:oxyr9RCiSXg0M3VJ3ks0UGfp98BpSSGr0kpiX3MzVl8=
-github.com/census-instrumentation/opencensus-proto v0.4.1 h1:iKLQ0xPNFxR/2hzXZMrBo8f1j86j5WHzznCCQxV/b8g=
 github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d h1:77cEq6EriyTZ0g/qfRdp61a3Uu/AWrgIq2s0ClJV1g0=
 github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d/go.mod h1:8EPpVsBuRksnlj1mLy4AWzRNQYxauNi62uWcE3to6eA=
 github.com/chenzhuoyu/iasm v0.9.0 h1:9fhXjVzq5hUy2gkhhgHl95zG2cEAhw9OSGs8toWWAwo=
@@ -510,6 +501,7 @@ github.com/elastic/go-sysinfo v1.11.2/go.mod h1:GKqR8bbMK/1ITnez9NIsIfXQr25aLhRJ
 github.com/elastic/go-windows v1.0.1 h1:AlYZOldA+UJ0/2nBuqWdo90GFCgG9xuyw9SYzGUtJm0=
 github.com/elastic/go-windows v1.0.1/go.mod h1:FoVvqWSun28vaDQPbj2Elfc0JahhPB7WQEGa3c814Ss=
 github.com/elazarl/goproxy v1.3.0/go.mod h1:X/5W/t+gzDyLfHW4DrMdpjqYjpXsURlBt9lpBDxZZZQ=
+github.com/elazarl/goproxy v1.7.1 h1:1P7LPSxbqtNxusFnXclj6O56pjfq1xOQZ6a0mwwKUlY=
 github.com/emicklei/go-restful v0.0.0-20170410110728-ff4f55a20633 h1:H2pdYOb3KQ1/YsqVWoWNLQO+fusocsw354rqGTZtAgw=
 github.com/fatih/color v1.15.0/go.mod h1:0h5ZqXfHYED7Bhv2ZJamyIOUej9KtShiJESRwBDUSsw=
 github.com/fatih/color v1.16.0/go.mod h1:fL2Sau1YI5c0pdGEVCbKQbLXB6edEj1ZgiY4NijnWvE=
@@ -593,6 +585,7 @@ github.com/gomodule/redigo v1.8.9/go.mod h1:7ArFNvsTjH8GMMzB4uy1snslv2BwmginuMs0
 github.com/google/btree v1.0.1/go.mod h1:xXMiIv4Fb/0kKde4SpL7qlzvu5cMJDRkFDxJfI9uaxA=
 github.com/google/btree v1.1.2/go.mod h1:qOPhT0dTNdNzV6Z/lhRX0YXUafgPLFUh+gZMl761Gm4=
 github.com/google/cel-go v0.22.0/go.mod h1:BuznPXXfQDpXKWQ9sPW3TzlAJN5zzFe+i9tIs0yC4s8=
+github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-github v17.0.0+incompatible h1:N0LgJ1j65A7kfXrZnUDaYCs/Sf4rEjNlfyDHW9dolSY=
 github.com/google/go-jsonnet v0.18.0 h1:/6pTy6g+Jh1a1I2UMoAODkqELFiVIdOxbNwv0DDzoOg=
 github.com/google/go-jsonnet v0.18.0/go.mod h1:C3fTzyVJDslXdiTqw/bTFk7vSGyCtH3MGRbDfvEwGd0=
@@ -907,7 +900,6 @@ github.com/spkg/bom v0.0.0-20160624110644-59b7046e48ad h1:fiWzISvDn0Csy5H0iwgAuJ
 github.com/stoewer/go-strcase v1.2.0/go.mod h1:IBiWB2sKIp3wVVQ3Y035++gc+knqhUQag1KpM8ahLw8=
 github.com/stoewer/parquet-cli v0.0.7 h1:rhdZODIbyMS3twr4OM3am8BPPT5pbfMcHLH93whDM5o=
 github.com/stoewer/parquet-cli v0.0.7/go.mod h1:bskxHdj8q3H1EmfuCqjViFoeO3NEvs5lzZAQvI8Nfjk=
-github.com/stretchr/testify v1.8.3/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
 github.com/substrait-io/substrait v0.57.1 h1:GW8nnYfSowMseHR8Os82/X6lNtQGIK7p4p+lr6r+auw=
 github.com/substrait-io/substrait v0.57.1/go.mod h1:q9s+tjo+gK0lsA+SqYB0lhojNuxvdPdfYlGUP0hjbrA=
 github.com/substrait-io/substrait-go v1.2.0 h1:3ZNRkc8FYD7ifCagKEOZQtUcgMceMQfwo2N1NGaK4Q4=
@@ -1055,8 +1047,6 @@ go.opentelemetry.io/contrib/bridges/prometheus v0.53.0 h1:BdkKDtcrHThgjcEia1737O
 go.opentelemetry.io/contrib/bridges/prometheus v0.53.0/go.mod h1:ZkhVxcJgeXlL/lVyT/vxNHVFiSG5qOaDwYaSgD8IfZo=
 go.opentelemetry.io/contrib/config v0.7.0 h1:b1rK5tGTuhhPirJiMxOcyQfZs76j2VapY6ODn3b2Dbs=
 go.opentelemetry.io/contrib/config v0.7.0/go.mod h1:8tdiFd8N5etOi3XzBmAoMxplEzI3TcL8dU5rM5/xcOQ=
-go.opentelemetry.io/contrib/detectors/gcp v1.32.0 h1:P78qWqkLSShicHmAzfECaTgvslqHxblNE9j62Ws1NK8=
-go.opentelemetry.io/contrib/detectors/gcp v1.32.0/go.mod h1:TVqo0Sda4Cv8gCIixd7LuLwW4EylumVWfhjZJjDD4DU=
 go.opentelemetry.io/contrib/exporters/autoexport v0.53.0 h1:13K+tY7E8GJInkrvRiPAhC0gi/7vKjzDNhtmCf+QXG8=
 go.opentelemetry.io/contrib/exporters/autoexport v0.53.0/go.mod h1:lyQF6xQ4iDnMg4sccNdFs1zf62xd79YI8vZqKjOTwMs=
 go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.53.0/go.mod h1:azvtTADFQJA8mX80jIH/akaE7h+dbm/sVuaHqN13w74=
@@ -1137,12 +1127,9 @@ golang.org/x/net v0.29.0/go.mod h1:gLkgy8jTGERgjzMic6DS9+SP0ajcu6Xu3Orq/SpETg0=
 golang.org/x/net v0.30.0/go.mod h1:2wGyMJ5iFasEhkwi13ChkO/t1ECNC4X4eBKkVFyYFlU=
 golang.org/x/net v0.32.0/go.mod h1:CwU0IoeOlnQQWJ6ioyFrfRuomB8GKF6KbYXZVyeXNfs=
 golang.org/x/net v0.33.0/go.mod h1:HXLR5J+9DxmrqMwG9qjGCxZ+zKXxBru04zlTvWlWuN4=
-golang.org/x/net v0.35.0 h1:T5GQRQb2y08kTAByq9L4/bz8cipCdA8FbRTXewonqY8=
-golang.org/x/net v0.35.0/go.mod h1:EglIi67kWsHKlRzzVMUD93VMSWGFOMSZgxFjparz1Qk=
 golang.org/x/oauth2 v0.21.0/go.mod h1:XYTD2NtWslqkgxebSiOHnXEap4TF09sJSc7H1sXbhtI=
 golang.org/x/oauth2 v0.23.0/go.mod h1:XYTD2NtWslqkgxebSiOHnXEap4TF09sJSc7H1sXbhtI=
-golang.org/x/oauth2 v0.27.0 h1:da9Vo7/tDv5RH/7nZDz1eMGS/q1Vv1N/7FCrBhI9I3M=
-golang.org/x/oauth2 v0.27.0/go.mod h1:onh5ek6nERTohokkhCD/y2cV4Do3fxFHFuAejCkRWT8=
+golang.org/x/oauth2 v0.26.0/go.mod h1:XYTD2NtWslqkgxebSiOHnXEap4TF09sJSc7H1sXbhtI=
 golang.org/x/sync v0.7.0/go.mod h1:Czt+wKu1gCyEFDUtn0jG5QVvpJ6rzVqr5aXyt9drQfk=
 golang.org/x/sync v0.8.0/go.mod h1:Czt+wKu1gCyEFDUtn0jG5QVvpJ6rzVqr5aXyt9drQfk=
 golang.org/x/sys v0.0.0-20220310020820-b874c991c1a5/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
@@ -1200,6 +1187,7 @@ google.golang.org/protobuf v1.35.1/go.mod h1:9fA7Ob0pmnwhb644+1+CVWFRbNajQ6iRojt
 google.golang.org/protobuf v1.35.2/go.mod h1:9fA7Ob0pmnwhb644+1+CVWFRbNajQ6iRojtC/QF5bRE=
 google.golang.org/protobuf v1.36.0/go.mod h1:9fA7Ob0pmnwhb644+1+CVWFRbNajQ6iRojtC/QF5bRE=
 google.golang.org/protobuf v1.36.3/go.mod h1:9fA7Ob0pmnwhb644+1+CVWFRbNajQ6iRojtC/QF5bRE=
+google.golang.org/protobuf v1.36.5 h1:tPhr+woSbjfYvY6/GPufUoYizxw1cF/yFoxJ2fmpwlM=
 gopkg.in/alecthomas/kingpin.v2 v2.2.6 h1:jMFz6MfLP0/4fUyZle81rXUoxOBFi19VUFKVDOQfozc=
 gopkg.in/errgo.v2 v2.1.0 h1:0vLT13EuvQ0hNvakwLuFZ/jYrLp5F3kcWHXdRggjCE8=
 gopkg.in/fsnotify.v1 v1.4.7 h1:xOHLXZwVvI9hhs+cLKq5+I5onOuwQLhQwiu63xxlHs4=

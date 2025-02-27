@@ -6,7 +6,7 @@ toolchain go1.23.6
 
 require (
 	github.com/emicklei/go-restful/v3 v3.11.0
-	github.com/grafana/grafana-plugin-sdk-go v0.266.0
+	github.com/grafana/grafana-plugin-sdk-go v0.267.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240808213237-f4d2e064f435
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20240808213237-f4d2e064f435
 	github.com/mattbaird/jsonpatch v0.0.0-20240118010651-0ba75a80ca38
@@ -39,7 +39,7 @@ require (
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/elazarl/goproxy v1.7.0 // indirect
+	github.com/elazarl/goproxy v1.7.1 // indirect
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/fatih/color v1.17.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
@@ -59,7 +59,7 @@ require (
 	github.com/google/cel-go v0.22.1 // indirect
 	github.com/google/flatbuffers v24.3.25+incompatible // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
-	github.com/google/go-cmp v0.6.0 // indirect
+	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/pprof v0.0.0-20241210010833-40e02aabc2ad // indirect
 	github.com/google/uuid v1.6.0 // indirect
@@ -150,7 +150,7 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20250115164207-1a7da9e5054f // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250115164207-1a7da9e5054f // indirect
 	google.golang.org/grpc v1.70.0 // indirect
-	google.golang.org/protobuf v1.36.4 // indirect
+	google.golang.org/protobuf v1.36.5 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect

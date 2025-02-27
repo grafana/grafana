@@ -15,7 +15,7 @@ require (
 	github.com/grafana/authlib/types v0.0.0-20250224151205-5ef97131cc82
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040
 	github.com/grafana/grafana v11.4.0-00010101000000-000000000000+incompatible
-	github.com/grafana/grafana-plugin-sdk-go v0.266.0
+	github.com/grafana/grafana-plugin-sdk-go v0.267.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250220154326-6e5de80ef295
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250220154326-6e5de80ef295 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.2.0
@@ -28,7 +28,7 @@ require (
 	gocloud.dev v0.40.0
 	golang.org/x/sync v0.11.0
 	google.golang.org/grpc v1.70.0
-	google.golang.org/protobuf v1.36.4
+	google.golang.org/protobuf v1.36.5
 	k8s.io/apimachinery v0.32.1
 )
 
@@ -82,7 +82,7 @@ require (
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/elazarl/goproxy v1.7.0 // indirect
+	github.com/elazarl/goproxy v1.7.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/fatih/color v1.17.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
@@ -110,7 +110,7 @@ require (
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/flatbuffers v24.3.25+incompatible // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
-	github.com/google/go-cmp v0.6.0 // indirect
+	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/s2a-go v0.1.8 // indirect
 	github.com/google/wire v0.6.0 // indirect
