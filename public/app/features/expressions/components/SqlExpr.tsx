@@ -7,6 +7,9 @@ import { useStyles2 } from '@grafana/ui';
 
 import { ExpressionQuery } from '../types';
 
+// Account for Monaco editor's border to prevent clipping
+const EDITOR_BORDER_ADJUSTMENT = 2; // 1px border on top and bottom
+
 interface Props {
   refIds: Array<SelectableValue<string>>;
   query: ExpressionQuery;
@@ -42,7 +45,11 @@ export const SqlExpr = ({ onChange, refIds, query }: Props) => {
 
   return (
     <div ref={containerRef} className={styles.editorContainer}>
-      <SQLEditor query={query.expression || initialQuery} onChange={onEditorChange} height={dimensions.height} />
+      <SQLEditor
+        query={query.expression || initialQuery}
+        onChange={onEditorChange}
+        height={dimensions.height - EDITOR_BORDER_ADJUSTMENT}
+      />
     </div>
   );
 };
