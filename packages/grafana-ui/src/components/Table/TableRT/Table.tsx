@@ -303,10 +303,10 @@ export const Table = memo((props: Props) => {
     );
   }
 
-  // Try to determine the longet field
+  // Try to determine the longest field
   // TODO: do we wrap only one field?
   // What if there are multiple fields with long text?
-  const longestField = guessLongestField(fieldConfig, data);
+  const longestField = fieldConfig ? guessLongestField(fieldConfig, data) : undefined;
   let textWrapField = undefined;
   if (fieldConfig !== undefined) {
     data.fields.forEach((field) => {

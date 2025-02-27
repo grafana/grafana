@@ -5,11 +5,10 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { getFieldTypeIcon } from '../../../types';
 import { Icon } from '../../Icon/Icon';
+import { TableFieldOptions } from '../types';
 
 import { Filter } from './Filter';
-
 import { TableStyles } from './styles';
-import { TableFieldOptions } from '../types';
 
 export interface HeaderRowProps {
   headerGroups: HeaderGroup[];

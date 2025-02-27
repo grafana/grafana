@@ -2,16 +2,11 @@ import { css } from '@emotion/css';
 import { Property } from 'csstype';
 
 import { GrafanaTheme2, formattedValueToString } from '@grafana/data';
-import { TableCellOptions } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes';
-import { CellNGProps } from '../types';
+import { AutoCellProps } from '../types';
 
-interface AutoCellProps extends CellNGProps {
-  cellOptions: TableCellOptions;
-}
-
-export default function AutoCell({ value, field, justifyContent, cellOptions }: AutoCellProps) {
+export default function AutoCell({ value, field, justifyContent, cellOptions, rowIdx }: AutoCellProps) {
   const styles = useStyles2(getStyles, justifyContent);
 
   const displayValue = field.display!(value);
