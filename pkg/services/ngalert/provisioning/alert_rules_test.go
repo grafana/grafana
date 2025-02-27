@@ -1508,6 +1508,40 @@ func TestReplaceGroup(t *testing.T) {
 			require.Len(t, updates, 1)
 		})
 	})
+
+	t.Run("alert rule metadata should be updated correctly", func(t *testing.T) {
+		service, _, _, _ := initServiceWithData(t)
+
+		rule := dummyRule("test#3", orgID)
+		// the rule must have a UID to be updated, otherwise it will be created as new
+		// and the previous version will be deleted
+		rule.UID = util.GenerateShortUID()
+		rule.Metadata = models.AlertRuleMetadata{
+			EditorSettings: models.EditorSettings{
+				SimplifiedQueryAndExpressionsSection: true,
+			},
+			PrometheusStyleRule: &models.PrometheusStyleRule{
+				OriginalRuleDefinition: "old",
+			},
+		}
+		group := models.AlertRuleGroup{
+			Title:     rule.RuleGroup,
+			Interval:  rule.IntervalSeconds,
+			FolderUID: rule.NamespaceUID,
+			Rules:     []models.AlertRule{rule},
+		}
+
+		err := service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceNone)
+		require.NoError(t, err)
+
+		rule.Metadata.PrometheusStyleRule.OriginalRuleDefinition = "new"
+		err = service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceNone)
+		require.NoError(t, err)
+
+		rule, _, err = service.GetAlertRule(context.Background(), u, rule.UID)
+		require.NoError(t, err)
+		require.Equal(t, "new", rule.Metadata.PrometheusStyleRule.OriginalRuleDefinition)
+	})
 }
 
 func TestDeleteRuleGroup(t *testing.T) {
