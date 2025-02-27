@@ -1,12 +1,15 @@
 import { css } from '@emotion/css';
 import { CSSProperties, useEffect, useRef } from 'react';
+import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 
+import { LogLineMenu } from './LogLineMenu';
+import { useLogIsPinned } from './LogListContext';
 import { LogFieldDimension, LogListModel } from './processing';
-import { FIELD_GAP_MULTIPLIER, hasUnderOrOverflow } from './virtualization';
+import { FIELD_GAP_MULTIPLIER, hasUnderOrOverflow, getLineHeight } from './virtualization';
 
 interface Props {
   displayedFields: string[];
@@ -32,6 +35,7 @@ export const LogLine = ({
   wrapLogMessage,
 }: Props) => {
   const logLineRef = useRef<HTMLDivElement | null>(null);
+  const pinned = useLogIsPinned(log);
 
   useEffect(() => {
     if (!onOverflow || !logLineRef.current) {
@@ -45,7 +49,12 @@ export const LogLine = ({
   }, [index, log.uid, onOverflow, style.height]);
 
   return (
-    <div style={style} className={`${styles.logLine} ${variant ?? ''}`} ref={onOverflow ? logLineRef : undefined}>
+    <div
+      style={style}
+      className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''}`}
+      ref={onOverflow ? logLineRef : undefined}
+    >
+      <LogLineMenu styles={styles} log={log} />
       <div className={`${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`}`}>
         <Log displayedFields={displayedFields} log={log} showTime={showTime} styles={styles} />
       </div>
@@ -57,7 +66,7 @@ interface LogProps {
   displayedFields: string[];
   log: LogListModel;
   showTime: boolean;
-  styles: ReturnType<typeof getStyles>;
+  styles: LogLineStyles;
 }
 
 const Log = ({ displayedFields, log, showTime, styles }: LogProps) => {
@@ -67,7 +76,7 @@ const Log = ({ displayedFields, log, showTime, styles }: LogProps) => {
       <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel}</span>
       {displayedFields.length > 0 ? (
         displayedFields.map((field) => (
-          <span className="field" title={field}>
+          <span className="field" title={field} key={field}>
             {getDisplayedFieldValue(field, log)}
           </span>
         ))
@@ -111,6 +120,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
   return {
     logLine: css({
       color: theme.colors.text.primary,
+      display: 'flex',
+      gap: theme.spacing(0.5),
+      flexDirection: 'row',
       fontFamily: theme.typography.fontFamilyMonospace,
       fontSize: theme.typography.fontSize,
       wordBreak: 'break-all',
@@ -128,6 +140,14 @@ export const getStyles = (theme: GrafanaTheme2) => {
           width: '100%',
         },
       },
+    }),
+    pinnedLogLine: css({
+      backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
+    }),
+    menuIcon: css({
+      height: getLineHeight(),
+      margin: 0,
+      padding: theme.spacing(0, 0, 0, 0.5),
     }),
     logLineMessage: css({
       fontFamily: theme.typography.fontFamily,

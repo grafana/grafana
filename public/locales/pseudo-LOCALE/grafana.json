@@ -2257,6 +2257,14 @@
       "log-line": "Ŀőģ ľįŉę",
       "no-details": "Ńő đęŧäįľş äväįľäþľę"
     },
+    "log-line-menu": {
+      "copy-link": "Cőpy ľįŉĸ ŧő ľőģ ľįŉę",
+      "copy-log": "Cőpy ľőģ ľįŉę",
+      "icon-label": "Ŀőģ męŉū",
+      "pin-to-outline": "Pįŉ ľőģ",
+      "show-context": "Ŝĥőŵ čőŉŧęχŧ",
+      "unpin-from-outline": "Ůŉpįŉ ľőģ"
+    },
     "log-row-message": {
       "ellipsis": "… ",
       "more": "mőřę",

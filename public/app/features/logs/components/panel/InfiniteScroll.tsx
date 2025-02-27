@@ -4,7 +4,7 @@ import { ListChildComponentProps, ListOnItemsRenderedProps } from 'react-window'
 
 import { AbsoluteTimeRange, LogsSortOrder, TimeRange } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Spinner, useTheme2 } from '@grafana/ui';
+import { Spinner, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { canScrollBottom, getVisibleRange, ScrollDirection, shouldLoadMore } from '../InfiniteScroll';
@@ -59,8 +59,7 @@ export const InfiniteScroll = ({
   const lastEvent = useRef<Event | WheelEvent | null>(null);
   const countRef = useRef(0);
   const lastLogOfPage = useRef<string[]>([]);
-  const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     // Logs have not changed, ignore effect

@@ -1,4 +1,6 @@
-import { FieldType, LogLevel, LogRowModel, toDataFrame } from '@grafana/data';
+import { FieldType, LogLevel, LogRowModel, LogsSortOrder, toDataFrame } from '@grafana/data';
+
+import { LogListModel, preProcessLogs, PreProcessOptions } from '../panel/processing';
 
 export const createLogRow = (overrides?: Partial<LogRowModel>): LogRowModel => {
   const uid = overrides?.uid || '1';
@@ -35,4 +37,17 @@ export const createLogRow = (overrides?: Partial<LogRowModel>): LogRowModel => {
     searchWords: [],
     ...overrides,
   };
+};
+
+export const createLogLine = (
+  overrides?: Partial<LogRowModel>,
+  processOptions: PreProcessOptions = {
+    escape: false,
+    order: LogsSortOrder.Descending,
+    timeZone: 'browser',
+    wrap: false,
+  }
+): LogListModel => {
+  const logs = preProcessLogs([createLogRow(overrides)], processOptions);
+  return logs[0];
 };
