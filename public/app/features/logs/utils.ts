@@ -315,7 +315,6 @@ export async function handleOpenLogsContextClick(
   getRowContextQuery: GetRowContextQueryFn | undefined,
   onOpenContext: (row: LogRowModel) => void
 ) {
-  event.stopPropagation();
   // if ctrl or meta key is pressed, open query in new Explore tab
   if (getRowContextQuery && (event.nativeEvent.ctrlKey || event.nativeEvent.metaKey || event.nativeEvent.shiftKey)) {
     const win = window.open('about:blank');

@@ -67,6 +67,7 @@ export const LogRowMenuCell = memo(
     }, []);
     const onShowContextClick = useCallback(
       async (event: MouseEvent<HTMLElement>) => {
+        event.stopPropagation();
         handleOpenLogsContextClick(event, row, getRowContextQuery, onOpenContext);
       },
       [onOpenContext, getRowContextQuery, row]
