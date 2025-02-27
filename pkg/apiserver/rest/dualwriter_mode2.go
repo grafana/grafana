@@ -22,6 +22,10 @@ func IsDualWriteUpdate(ctx context.Context) bool {
 	return ctx.Value(dualWriteContextKey{}) == true
 }
 
+func WithDualWriteUpdate(ctx context.Context) context.Context {
+	return context.WithValue(ctx, dualWriteContextKey{}, true)
+}
+
 type DualWriterMode2 struct {
 	Storage Storage
 	Legacy  LegacyStorage

@@ -6,6 +6,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -14,8 +15,37 @@ type staticService struct {
 	cfg *setting.Cfg
 }
 
-func (m *staticService) NewStorage(gr schema.GroupResource, legacy rest.LegacyStorage, storage rest.Storage) (rest.Storage, error) {
-	return nil, fmt.Errorf("not implemented")
+// Used in tests
+func (m *staticService) SetMode(gr schema.GroupResource, mode rest.DualWriterMode) {
+	if m.cfg == nil {
+		m.cfg = &setting.Cfg{}
+	}
+	if m.cfg.UnifiedStorage == nil {
+		m.cfg.UnifiedStorage = make(map[string]setting.UnifiedStorageConfig)
+	}
+	m.cfg.UnifiedStorage[gr.String()] = setting.UnifiedStorageConfig{
+		DualWriterMode: mode,
+	}
+}
+
+func (m *staticService) NewStorage(gr schema.GroupResource, legacy Storage, unified Storage) (Storage, error) {
+	log := logging.DefaultLogger.With("dualwrite", gr.String())
+
+	config := m.cfg.UnifiedStorage[gr.String()]
+	switch config.DualWriterMode {
+	case rest.Mode1:
+		return &dualWriter{log: log, legacy: legacy, unified: unified, errorIsOK: true}, nil
+	case rest.Mode2:
+		return &dualWriter{log: log, legacy: legacy, unified: unified}, nil
+	case rest.Mode3:
+		return &dualWriter{log: log, legacy: legacy, unified: unified, readUnified: true}, nil
+	case rest.Mode4, rest.Mode5:
+		return unified, nil // use unified directly
+	case rest.Mode0:
+		fallthrough
+	default:
+		return legacy, nil
+	}
 }
 
 // ReadFromUnified implements Service.
