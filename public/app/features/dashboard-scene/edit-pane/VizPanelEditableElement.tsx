@@ -25,7 +25,6 @@ import { renderTitle } from './shared';
 export class VizPanelEditableElement implements EditableDashboardElement, BulkActionElement {
   public readonly isEditableDashboardElement = true;
   public readonly typeName = 'Panel';
-  public readonly alwaysExpanded = true;
 
   public constructor(public panel: VizPanel) {}
 
@@ -36,10 +35,6 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
       name: sceneGraph.interpolate(this.panel, this.panel.state.title, undefined, 'text'),
     };
   }
-
-  public getPanel = () => {
-    return this.panel;
-  };
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
     const panel = this.panel;
@@ -52,7 +47,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
         isOpenDefault: true,
         alwaysExpanded: true,
         renderTitle: () =>
-          renderTitle({ title: t('dashboard.viz-panel.options.title', 'Panel'), onDelete: this.onDelete }),
+          renderTitle({ title: t('dashboard.viz-panel.options.title', 'Panel'), onDelete: () => this.onDelete() }),
       })
         .addItem(
           new OptionsPaneItemDescriptor({
