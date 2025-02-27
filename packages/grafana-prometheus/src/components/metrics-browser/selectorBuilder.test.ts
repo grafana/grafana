@@ -261,6 +261,63 @@ describe('selectorBuilder', () => {
       ];
       expect(buildSelector(labels)).toBe('http_requests_total{}');
     });
+
+    it('should handle special characters in label values', () => {
+      const labels: SelectableLabel[] = [
+        {
+          name: 'job',
+          selected: true,
+          values: [{ name: 'value with spaces', selected: true }],
+        },
+        {
+          name: 'instance',
+          selected: true,
+          values: [{ name: 'host:with:colons', selected: true }],
+        },
+      ];
+      expect(buildSelector(labels)).toBe('{job="value with spaces",instance="host:with:colons"}');
+    });
+
+    it('should handle empty string values', () => {
+      const labels: SelectableLabel[] = [
+        {
+          name: 'job',
+          selected: true,
+          values: [{ name: '', selected: true }],
+        },
+      ];
+      expect(buildSelector(labels)).toBe('{job=""}');
+    });
+
+    it('should handle multiple metrics with some unselected', () => {
+      const labels: SelectableLabel[] = [
+        {
+          name: METRIC_LABEL,
+          values: [
+            { name: 'metric1', selected: true },
+            { name: 'metric2', selected: true },
+            { name: 'metric3', selected: false },
+          ],
+        },
+      ];
+      expect(buildSelector(labels)).toBe('{__name__=~"metric1|metric2"}');
+    });
+
+    it('should handle Unicode characters in label names and values', () => {
+      const labels: SelectableLabel[] = [
+        {
+          name: 'région',
+          selected: true,
+          values: [{ name: 'París', selected: true }],
+        },
+        {
+          name: '环境',
+          selected: true,
+          values: [{ name: '测试', selected: true }],
+        },
+      ];
+      expect(buildSelector(labels)).toBe('{"région"="París","环境"="测试"}');
+    });
   });
 
   describe('facetLabels()', () => {
@@ -303,6 +360,82 @@ describe('selectorBuilder', () => {
       // 'cluster' is being facetted, should show all 3 options even though only 1 is possible
       expect(result[1].values!.length).toBe(3);
       expect(result[2].values!.length).toBe(1);
+    });
+
+    it('should preserve loading state during facetting', () => {
+      const labels: SelectableLabel[] = [
+        { name: 'job', selected: true, loading: true },
+        { name: 'instance', selected: false },
+      ];
+
+      const possibleLabels = {
+        job: ['prometheus'],
+      };
+
+      const result = facetLabels(labels, possibleLabels);
+      expect(result[0].loading).toBe(false); // Loading should be reset after facetting
+    });
+
+    it('should handle multiple selected values preservation', () => {
+      const labels: SelectableLabel[] = [
+        {
+          name: 'job',
+          selected: true,
+          values: [
+            { name: 'prometheus', selected: true },
+            { name: 'grafana', selected: true },
+          ],
+        },
+      ];
+
+      const possibleLabels = {
+        job: ['prometheus', 'grafana', 'loki'],
+      };
+
+      const result = facetLabels(labels, possibleLabels);
+      const selectedValues = result[0].values?.filter((v) => v.selected).map((v) => v.name);
+      expect(selectedValues).toEqual(['prometheus', 'grafana']);
+    });
+
+    it('should handle mixed selected/unselected values during facetting', () => {
+      const labels: SelectableLabel[] = [
+        {
+          name: 'job',
+          selected: true,
+          values: [
+            { name: 'prometheus', selected: true },
+            { name: 'grafana', selected: false },
+            { name: 'loki', selected: true },
+          ],
+        },
+      ];
+
+      const possibleLabels = {
+        job: ['prometheus', 'grafana', 'loki', 'tempo'],
+      };
+
+      const result = facetLabels(labels, possibleLabels);
+      expect(result[0].values?.filter((v) => v.selected).map((v) => v.name)).toEqual(['prometheus', 'loki']);
+      expect(result[0].values?.length).toBe(4); // Should include all possible values
+    });
+
+    it('should handle zero facets case', () => {
+      const labels: SelectableLabel[] = [
+        {
+          name: 'job',
+          selected: true,
+          values: [{ name: 'prometheus', selected: true }],
+        },
+      ];
+
+      const possibleLabels = {
+        job: [],
+      };
+
+      const result = facetLabels(labels, possibleLabels);
+      expect(result[0].facets).toBe(0);
+      expect(result[0].hidden).toBe(false); // Should still be visible as it's in possibleLabels
+      expect(result[0].values).toEqual([]); // Should have empty values array
     });
   });
 }); 
