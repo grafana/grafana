@@ -79,10 +79,6 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
-	// FlagVizActions
-	// Allow actions in visualizations
-	FlagVizActions = "vizActions"
-
 	// FlagDisableSecretsCompatibility
 	// Disable duplicated secret storage in legacy tables
 	FlagDisableSecretsCompatibility = "disableSecretsCompatibility"
@@ -622,10 +618,6 @@ const (
 	// FlagDashboardRestore
 	// Enables deleted dashboard restore feature
 	FlagDashboardRestore = "dashboardRestore"
-
-	// FlagDatasourceProxyDisableRBAC
-	// Disables applying a plugin route&#39;s ReqAction field to authorization
-	FlagDatasourceProxyDisableRBAC = "datasourceProxyDisableRBAC"
 
 	// FlagAlertingDisableSendAlertsExternal
 	// Disables the ability to send alerts to an external Alertmanager datasource.
