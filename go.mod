@@ -140,8 +140,8 @@ require (
 	github.com/robfig/cron/v3 v3.0.1 // @grafana/grafana-backend-group
 	github.com/rs/cors v1.11.1 // @grafana/identity-access-team
 	github.com/russellhaering/goxmldsig v1.4.0 // @grafana/grafana-backend-group
-	github.com/spf13/cobra v1.8.1 // @grafana/grafana-app-platform-squad
-	github.com/spf13/pflag v1.0.5 // @grafana-app-platform-squad
+	github.com/spf13/cobra v1.9.1 // @grafana/grafana-app-platform-squad
+	github.com/spf13/pflag v1.0.6 // @grafana-app-platform-squad
 	github.com/spyzhov/ajson v0.9.0 // @grafana/grafana-app-platform-squad
 	github.com/stretchr/testify v1.10.0 // @grafana/grafana-backend-group
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf // @grafana/grafana-backend-group
@@ -170,13 +170,13 @@ require (
 	gocloud.dev v0.40.0 // @grafana/grafana-app-platform-squad
 	golang.org/x/crypto v0.35.0 // @grafana/grafana-backend-group
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // @grafana/alerting-backend
-	golang.org/x/mod v0.22.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/mod v0.23.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/net v0.35.0 // @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.27.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.11.0 // @grafana/alerting-backend
 	golang.org/x/text v0.22.0 // @grafana/grafana-backend-group
 	golang.org/x/time v0.9.0 // @grafana/grafana-backend-group
-	golang.org/x/tools v0.29.0 // indirect; @grafana/grafana-as-code
+	golang.org/x/tools v0.30.0 // indirect; @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.15.1 // @grafana/oss-big-tent
 	google.golang.org/api v0.216.0 // @grafana/grafana-backend-group
 	google.golang.org/grpc v1.70.0 // @grafana/plugins-platform-backend
@@ -319,7 +319,7 @@ require (
 	github.com/cockroachdb/apd/v3 v3.2.1 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dennwc/varint v1.0.0 // indirect
 	github.com/dgryski/go-metro v0.0.0-20180109044635-280f6062b5bc // indirect

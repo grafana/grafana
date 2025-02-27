@@ -27,7 +27,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.34.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/trace v1.34.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/crypto v0.35.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/mod v0.22.0 // @grafana/grafana-backend-group
+	golang.org/x/mod v0.23.0 // @grafana/grafana-backend-group
 	golang.org/x/net v0.35.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.27.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.11.0 // indirect; @grafana/alerting-backend
@@ -48,7 +48,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/bmatcuk/doublestar v1.3.4 // indirect
 	github.com/buildkite/yaml v2.1.0+incompatible // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
