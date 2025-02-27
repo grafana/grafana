@@ -11,7 +11,7 @@ const GENERAL_SETTINGS_TAB = 'general';
 
 type Props = {
   children?: React.ReactNode;
-  components: Array<ComponentType & { meta: { title: string } }>;
+  components: ComponentTypeWithMeta[];
 };
 
 export function UserProfileEditTabs(props: Props): ReactElement {
