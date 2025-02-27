@@ -1043,10 +1043,24 @@
         },
         "modal": {
           "title": "Ŗőŵ őpŧįőŉş"
-        }
+        },
+        "repeat": {
+          "title": "Ŗępęäŧ őpŧįőŉş",
+          "variable": {
+            "title": "Väřįäþľę"
+          }
+        },
+        "title": "Ŗőŵ őpŧįőŉş"
       }
     },
     "edit-pane": {
+      "elements": {
+        "dashboard": "Đäşĥþőäřđ",
+        "objects": "Øþĵęčŧş",
+        "panels": "Päŉęľş",
+        "rows": "Ŗőŵş",
+        "tabs": "Ŧäþş"
+      },
       "objects": {
         "multi-select": {
           "selection-number": "Ńő. őƒ őþĵęčŧş şęľęčŧęđ: {{length}}"
@@ -1150,6 +1164,15 @@
       "description": "Đęşčřįpŧįőŉ",
       "title": "Đäşĥþőäřđ őpŧįőŉş",
       "title-option": "Ŧįŧľę"
+    },
+    "outline": {
+      "tree": {
+        "item": {
+          "collapse": "Cőľľäpşę įŧęm",
+          "empty": "(ęmpŧy)",
+          "expand": "Ēχpäŉđ įŧęm"
+        }
+      }
     },
     "panel-edit": {
       "alerting-tab": {

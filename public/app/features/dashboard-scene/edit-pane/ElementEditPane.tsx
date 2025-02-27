@@ -14,13 +14,14 @@ export interface Props {
 export function ElementEditPane({ element }: Props) {
   const categories = element.useEditPaneOptions ? element.useEditPaneOptions() : [];
   const styles = useStyles2(getStyles);
+  const elementInfo = element.getEditableElementInfo();
 
   return (
     <Stack direction="column" gap={0}>
       {element.renderActions && (
         <OptionsPaneCategory
           id="selected-item"
-          title={element.typeName}
+          title={elementInfo.name}
           isOpenDefault={true}
           className={styles.noBorderTop}
         >

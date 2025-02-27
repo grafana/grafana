@@ -1,15 +1,14 @@
 import { SceneObject, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { ElementSelectionContextItem } from '@grafana/ui';
 
-import { DashboardScene } from '../scene/DashboardScene';
 import { isBulkActionElement } from '../scene/types/BulkActionElement';
 import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
 import { MultiSelectedEditableDashboardElement } from '../scene/types/MultiSelectedEditableDashboardElement';
 
-import { DashboardEditableElement } from './DashboardEditableElement';
 import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
 import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
 import { VizPanelEditableElement } from './VizPanelEditableElement';
+import { getEditableElementFor } from './shared';
 
 export class ElementSelection {
   private selectedObjects?: Map<string, SceneObjectRef<SceneObject>>;
@@ -121,24 +120,7 @@ export class ElementSelection {
 
   private createSingleSelectedElement(): EditableDashboardElement | undefined {
     const sceneObj = this.selectedObjects?.values().next().value?.resolve();
-
-    if (!sceneObj) {
-      return undefined;
-    }
-
-    if (isEditableDashboardElement(sceneObj)) {
-      return sceneObj;
-    }
-
-    if (sceneObj instanceof VizPanel) {
-      return new VizPanelEditableElement(sceneObj);
-    }
-
-    if (sceneObj instanceof DashboardScene) {
-      return new DashboardEditableElement(sceneObj);
-    }
-
-    return undefined;
+    return getEditableElementFor(sceneObj);
   }
 
   private createMultiSelectedElement(): MultiSelectedEditableDashboardElement | undefined {
@@ -161,6 +143,7 @@ export class ElementSelection {
     }
 
     const bulkActionElements = [];
+
     for (const sceneObject of sceneObjects) {
       if (sceneObject instanceof VizPanel) {
         const editableElement = new VizPanelEditableElement(sceneObject);

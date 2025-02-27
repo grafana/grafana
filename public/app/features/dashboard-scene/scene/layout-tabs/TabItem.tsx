@@ -7,7 +7,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { BulkActionElement } from '../types/BulkActionElement';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
-import { EditableDashboardElement } from '../types/EditableDashboardElement';
+import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
 import { LayoutParent } from '../types/LayoutParent';
 
 import { getEditOptions, renderActions } from './TabItemEditor';
@@ -31,7 +31,6 @@ export class TabItem
   });
 
   public readonly isEditableDashboardElement = true;
-  public readonly typeName = 'Tab';
 
   constructor(state?: Partial<TabItemState>) {
     super({
@@ -39,6 +38,10 @@ export class TabItem
       title: state?.title ?? t('dashboard.tabs-layout.tab.new', 'New tab'),
       layout: state?.layout ?? ResponsiveGridLayoutManager.createEmpty(),
     });
+  }
+
+  public getEditableElementInfo(): EditableDashboardElementInfo {
+    return { typeId: 'tab', icon: 'tag-alt', name: sceneGraph.interpolate(this, this.state.title, undefined, 'text') };
   }
 
   public getLayout(): DashboardLayoutManager {

@@ -18,6 +18,7 @@ import { isInCloneChain } from '../utils/clone';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardAddPane } from './DashboardAddPane';
+import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
 import { ElementSelection } from './ElementSelection';
 import { useEditableElement } from './useEditableElement';
@@ -181,6 +182,8 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
     return null;
   }
 
+  const { typeId } = editableElement.getEditableElementInfo();
+
   if (isCollapsed) {
     return (
       <>
@@ -197,7 +200,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
 
         {openOverlay && (
           <Resizable className={cx(styles.fixed, styles.container)} defaultSize={{ height: '100%', width: '20vw' }}>
-            <ElementEditPane element={editableElement} key={editableElement.typeName} />
+            <ElementEditPane element={editableElement} key={typeId} />
           </Resizable>
         )}
       </>
@@ -225,8 +228,8 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
       </TabsBar>
       <div className={styles.tabContent}>
         {tab === 'add' && <DashboardAddPane editPane={editPane} />}
-        {tab === 'configure' && <ElementEditPane element={editableElement} key={editableElement.typeName} />}
-        {tab === 'outline' && <div />}
+        {tab === 'configure' && <ElementEditPane element={editableElement} key={typeId} />}
+        {tab === 'outline' && <DashboardOutline editPane={editPane} />}
       </div>
     </div>
   );

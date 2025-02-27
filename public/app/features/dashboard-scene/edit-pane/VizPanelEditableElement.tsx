@@ -14,14 +14,21 @@ import {
 } from '../panel-edit/getPanelFrameOptions';
 import { BulkActionElement } from '../scene/types/BulkActionElement';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
-import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 
 export class VizPanelEditableElement implements EditableDashboardElement, BulkActionElement {
   public readonly isEditableDashboardElement = true;
-  public readonly typeName = 'Panel';
 
   public constructor(private panel: VizPanel) {}
+
+  public getEditableElementInfo(): EditableDashboardElementInfo {
+    return {
+      typeId: 'panel',
+      icon: 'chart-line',
+      name: sceneGraph.interpolate(this.panel, this.panel.state.title, undefined, 'text'),
+    };
+  }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
     const panel = this.panel;
