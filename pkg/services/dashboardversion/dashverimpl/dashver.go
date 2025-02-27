@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 
@@ -335,22 +334,9 @@ func getRestoreVersion(msg string) (int, error) {
 		return 0, nil
 	}
 
-	ver, err := strconv.ParseInt(parts[1], 10, 64)
+	ver, err := strconv.Atoi(parts[1])
 	if err != nil {
 		return 0, err
 	}
-
-	safeVer, err := safeInt64ToInt(ver)
-	if err != nil {
-		return 0, err
-	}
-
-	return safeVer, nil
-}
-
-func safeInt64ToInt(i64 int64) (int, error) {
-	if i64 > math.MaxInt32 || i64 < math.MinInt32 {
-		return 0, fmt.Errorf("int64 value %d overflows int", i64)
-	}
-	return int(i64), nil
+	return ver, nil
 }
