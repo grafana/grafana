@@ -76,6 +76,8 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
         },
       },
     }),
+
+    /** @deprecated - only used in multicombobox, will refactor it */
     optionGroup: css({
       cursor: 'default',
       padding: MENU_ITEM_PADDING,
@@ -98,6 +100,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       lineHeight: MENU_ITEM_LINE_HEIGHT,
       letterSpacing: 0, // pr todo: text in grafana has a slightly different letter spacing, which causes measureText() to be ~5% off
     }),
+    /** @deprecated - only used in multicombobox, will refactor it */
     optionLabelGroup: css({
       label: 'combobox-option-label-group',
       color: theme.colors.text.secondary,
