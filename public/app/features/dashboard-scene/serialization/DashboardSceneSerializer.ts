@@ -19,11 +19,16 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
 
-export interface DashboardSceneSerializerLike<T, M> {
+/**
+ * T is the type of the save model
+ * M is the type of the metadata
+ * I is the type of the initial save model. By default it's the same as T.
+ */
+export interface DashboardSceneSerializerLike<T, M, I = T> {
   /**
    * The save model which the dashboard scene was originally created from
    */
-  initialSaveModel?: T;
+  initialSaveModel?: I;
   metadata?: M;
   getSaveModel: (s: DashboardScene) => T;
   getSaveAsModel: (s: DashboardScene, options: SaveDashboardAsOptions) => T;
@@ -89,6 +94,7 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
       ...changeInfo,
       hasFolderChanges,
       hasChanges: changeInfo.hasChanges || hasFolderChanges,
+      hasMigratedToV2: false,
     };
   }
 
@@ -127,9 +133,14 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
 }
 
 export class V2DashboardSerializer
-  implements DashboardSceneSerializerLike<DashboardV2Spec, DashboardWithAccessInfo<DashboardV2Spec>['metadata']>
+  implements
+    DashboardSceneSerializerLike<
+      DashboardV2Spec,
+      DashboardWithAccessInfo<DashboardV2Spec>['metadata'],
+      Dashboard | DashboardV2Spec
+    >
 {
-  initialSaveModel?: DashboardV2Spec;
+  initialSaveModel?: DashboardV2Spec | Dashboard;
   metadata?: DashboardWithAccessInfo<DashboardV2Spec>['metadata'];
 
   getSaveModel(s: DashboardScene) {
@@ -167,6 +178,7 @@ export class V2DashboardSerializer
       hasFolderChanges,
       hasChanges: changeInfo.hasChanges || hasFolderChanges,
       isNew,
+      hasMigratedToV2: !!changeInfo.hasMigratedToV2,
     };
   }
 
@@ -205,11 +217,18 @@ export class V2DashboardSerializer
   }
 }
 
-export function getDashboardSceneSerializer(): DashboardSceneSerializerLike<
+export function getDashboardSceneSerializer(): DashboardSceneSerializerLike<Dashboard, DashboardMeta>;
+export function getDashboardSceneSerializer(version: 'v1'): DashboardSceneSerializerLike<Dashboard, DashboardMeta>;
+export function getDashboardSceneSerializer(
+  version: 'v2'
+): DashboardSceneSerializerLike<DashboardV2Spec, DashboardWithAccessInfo<DashboardV2Spec>['metadata']>;
+export function getDashboardSceneSerializer(
+  version?: 'v1' | 'v2'
+): DashboardSceneSerializerLike<
   Dashboard | DashboardV2Spec,
   DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
 > {
-  if (config.featureToggles.useV2DashboardsAPI) {
+  if (version === 'v2') {
     return new V2DashboardSerializer();
   }
 

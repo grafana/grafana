@@ -8,6 +8,9 @@ import {
   DashboardV2Spec,
   VariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
+import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
 import { jsonDiff } from '../settings/version-history/utils';
 
@@ -36,13 +39,25 @@ export function isEqual(a: VariableOption | undefined, b: VariableOption | undef
 }
 
 export function getRawDashboardV2Changes(
-  initial: DashboardV2Spec,
+  initial: DashboardV2Spec | Dashboard,
   changed: DashboardV2Spec,
   saveTimeRange?: boolean,
   saveVariables?: boolean,
   saveRefresh?: boolean
 ) {
-  const initialSaveModel = initial;
+  let initialSaveModel;
+
+  // Use ResponseTransformers to ensure the initial dashboard is a DashboardV2Spec
+  if (!isDashboardV2Spec(initial)) {
+    const dto: DashboardDTO = {
+      dashboard: initial as DashboardDataDTO,
+      meta: {},
+    };
+    initialSaveModel = ResponseTransformers.ensureV2Response(dto).spec;
+  } else {
+    initialSaveModel = initial;
+  }
+
   const changedSaveModel = changed;
   const hasTimeChanged = getHasTimeChanged(changedSaveModel.timeSettings, initialSaveModel.timeSettings);
   const hasVariableValueChanges = applyVariableChangesV2(changedSaveModel, initialSaveModel, saveVariables);
@@ -57,7 +72,7 @@ export function getRawDashboardV2Changes(
     changedSaveModel.timeSettings.autoRefresh = initialSaveModel.timeSettings.autoRefresh;
   }
 
-  const diff = jsonDiff(initialSaveModel, changedSaveModel);
+  const diff = jsonDiff(initial, changedSaveModel);
   const diffCount = Object.values(diff).reduce((acc, cur) => acc + cur.length, 0);
 
   return {
@@ -69,6 +84,7 @@ export function getRawDashboardV2Changes(
     hasTimeChanges: hasTimeChanged,
     hasVariableValueChanges,
     hasRefreshChange: hasRefreshChanged,
+    hasMigratedToV2: !isDashboardV2Spec(initial),
   };
 }
 

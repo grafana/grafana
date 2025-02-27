@@ -178,6 +178,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
   let annotationLayers: SceneDataLayerProvider[] = [];
   let alertStatesLayer: AlertStatesDataLayer | undefined;
   const uid = dto.uid;
+  const serializerVersion = config.featureToggles.dashboardNewLayouts ? 'v2' : 'v1';
 
   if (oldModel.templating?.list?.length) {
     if (oldModel.meta.isSnapshot) {
@@ -251,47 +252,50 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       version: oldModel.version,
     }),
   ];
-  const dashboardScene = new DashboardScene({
-    uid,
-    description: oldModel.description,
-    editable: oldModel.editable,
-    preload: dto.preload ?? false,
-    id: oldModel.id,
-    isDirty: false,
-    links: oldModel.links || [],
-    meta: oldModel.meta,
-    tags: oldModel.tags || [],
-    title: oldModel.title,
-    version: oldModel.version,
-    scopeMeta,
-    body: new DefaultGridLayoutManager({
-      grid: new SceneGridLayout({
-        isLazy: !(dto.preload || contextSrv.user.authenticatedBy === 'render'),
-        children: createSceneObjectsForPanels(oldModel.panels),
+  const dashboardScene = new DashboardScene(
+    {
+      uid,
+      description: oldModel.description,
+      editable: oldModel.editable,
+      preload: dto.preload ?? false,
+      id: oldModel.id,
+      isDirty: false,
+      links: oldModel.links || [],
+      meta: oldModel.meta,
+      tags: oldModel.tags || [],
+      title: oldModel.title,
+      version: oldModel.version,
+      scopeMeta,
+      body: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          isLazy: !(dto.preload || contextSrv.user.authenticatedBy === 'render'),
+          children: createSceneObjectsForPanels(oldModel.panels),
+        }),
       }),
-    }),
-    $timeRange: new SceneTimeRange({
-      from: oldModel.time.from,
-      to: oldModel.time.to,
-      fiscalYearStartMonth: oldModel.fiscalYearStartMonth,
-      timeZone: oldModel.timezone,
-      weekStart: isWeekStart(oldModel.weekStart) ? oldModel.weekStart : undefined,
-      UNSAFE_nowDelay: oldModel.timepicker?.nowDelay,
-    }),
-    $variables: variables,
-    $behaviors: behaviorList,
-    $data: new DashboardDataLayerSet({ annotationLayers, alertStatesLayer }),
-    controls: new DashboardControls({
-      variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
-      timePicker: new SceneTimePicker({}),
-      refreshPicker: new SceneRefreshPicker({
-        refresh: oldModel.refresh,
-        intervals: oldModel.timepicker.refresh_intervals,
-        withText: true,
+      $timeRange: new SceneTimeRange({
+        from: oldModel.time.from,
+        to: oldModel.time.to,
+        fiscalYearStartMonth: oldModel.fiscalYearStartMonth,
+        timeZone: oldModel.timezone,
+        weekStart: isWeekStart(oldModel.weekStart) ? oldModel.weekStart : undefined,
+        UNSAFE_nowDelay: oldModel.timepicker?.nowDelay,
       }),
-      hideTimeControls: oldModel.timepicker.hidden,
-    }),
-  });
+      $variables: variables,
+      $behaviors: behaviorList,
+      $data: new DashboardDataLayerSet({ annotationLayers, alertStatesLayer }),
+      controls: new DashboardControls({
+        variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
+        timePicker: new SceneTimePicker({}),
+        refreshPicker: new SceneRefreshPicker({
+          refresh: oldModel.refresh,
+          intervals: oldModel.timepicker.refresh_intervals,
+          withText: true,
+        }),
+        hideTimeControls: oldModel.timepicker.hidden,
+      }),
+    },
+    serializerVersion
+  );
 
   return dashboardScene;
 }

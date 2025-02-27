@@ -8,7 +8,6 @@ import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
-import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Resource, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
@@ -513,17 +512,15 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
             return null;
           }
 
-          // TODO: This shouldn't be needed because the api should return the correct format
-          rsp = ResponseTransformers.ensureV2Response(dto);
-
           // if custom home dashboard is v2 spec already, ignore the spec transformation
-          if (isDashboardV2Spec(dto.dashboard)) {
-            rsp.spec = dto.dashboard;
+          if (!isDashboardV2Resource(dto)) {
+            throw new Error('Custom home dashboard is not a v2 spec');
           }
 
-          rsp.access.canSave = false;
-          rsp.access.canShare = false;
-          rsp.access.canStar = false;
+          rsp = dto;
+          dto.access.canSave = false;
+          dto.access.canShare = false;
+          dto.access.canStar = false;
 
           break;
         case DashboardRoutes.Public: {
@@ -579,46 +576,44 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
 > {
   private v1Manager: DashboardScenePageStateManager;
   private v2Manager: DashboardScenePageStateManagerV2;
+  private activeManager: DashboardScenePageStateManager | DashboardScenePageStateManagerV2;
 
   constructor(initialState: Partial<DashboardScenePageState>) {
     super(initialState);
     this.v1Manager = new DashboardScenePageStateManager(initialState);
     this.v2Manager = new DashboardScenePageStateManagerV2(initialState);
+
+    // Start with v2 if newDashboardLayout is enabled, otherwise v1
+    this.activeManager = this.v1Manager;
   }
 
-  public async fetchDashboard(options: LoadDashboardOptions) {
-    // getDashboardAPI().getDashboardDTO(uid, params) already handles the version check
-    // but because we need to detect the redirect, the managers forces the loaders, and the loaders forces the dashboardAPI
-    // to be v1 or v2 so the redirection error is thrown with no redirect.
-    // @see getDashboardAPI().getDashboardDTO()
+  private async withVersionHandling<T>(
+    operation: (manager: DashboardScenePageStateManager | DashboardScenePageStateManagerV2) => Promise<T>
+  ): Promise<T> {
     try {
-      // Try V1 first
-      return await this.v1Manager.fetchDashboard(options);
+      return await operation(this.activeManager);
     } catch (error) {
-      if (error instanceof DashboardVersionError && error.data?.isV2) {
-        // If V1 indicates it's a V2 dashboard, use V2 manager
-        return await this.v2Manager.fetchDashboard(options);
+      if (error instanceof DashboardVersionError) {
+        const manager = error.data?.isV2 ? this.v2Manager : this.v1Manager;
+        this.activeManager = manager;
+        return await operation(manager);
       }
       throw error;
     }
   }
 
+  public async fetchDashboard(options: LoadDashboardOptions) {
+    return this.withVersionHandling<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null>((manager) =>
+      manager.fetchDashboard(options)
+    );
+  }
+
   public async reloadDashboard(params: LoadDashboardOptions['params']) {
-    try {
-      // Try V1 first
-      await this.v1Manager.reloadDashboard(params);
-    } catch (error) {
-      if (error instanceof DashboardVersionError && error.data?.isV2) {
-        // If V1 indicates it's a V2 dashboard, use V2 manager
-        await this.v2Manager.reloadDashboard(params);
-      } else {
-        throw error;
-      }
-    }
+    return this.withVersionHandling((manager) => manager.reloadDashboard(params));
   }
 
   public getDashboardFromCache(uid: string) {
-    return this.v1Manager.getDashboardFromCache(uid) || this.v2Manager.getDashboardFromCache(uid);
+    return this.activeManager.getDashboardFromCache(uid);
   }
 
   transformResponseToScene(
@@ -628,23 +623,13 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     if (!rsp) {
       return null;
     }
-    return isDashboardV2Resource(rsp)
-      ? this.v2Manager.transformResponseToScene(rsp, options)
-      : this.v1Manager.transformResponseToScene(rsp, options);
-  }
 
-  public setDashboardCache(uid: string, dashboard: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>) {
-    if (isDashboardV2Resource(dashboard)) {
-      this.v2Manager.setDashboardCache(uid, dashboard);
-    } else {
-      this.v1Manager.setDashboardCache(uid, dashboard);
+    if (isDashboardV2Resource(rsp)) {
+      this.activeManager = this.v2Manager;
+      return this.v2Manager.transformResponseToScene(rsp, options);
     }
-  }
 
-  public setSceneCache(uid: string, scene: DashboardScene) {
-    // Store in both caches as the scene format is the same
-    this.v1Manager.setSceneCache(uid, scene);
-    this.v2Manager.setSceneCache(uid, scene);
+    return this.v1Manager.transformResponseToScene(rsp, options);
   }
 
   public async loadSnapshotScene(slug: string): Promise<DashboardScene> {

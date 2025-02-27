@@ -297,21 +297,20 @@ export const browseDashboardsAPI = createApi({
             const name = response?.title;
 
             if (name) {
-              const payload =
-                config.featureToggles.useV2DashboardsAPI || config.featureToggles.kubernetesDashboards
-                  ? ['Dashboard moved to Recently deleted']
-                  : [
-                      t('browse-dashboards.soft-delete.success', 'Dashboard {{name}} moved to Recently deleted', {
-                        name,
-                      }),
-                    ];
+              const payload = config.featureToggles.kubernetesDashboards
+                ? ['Dashboard moved to Recently deleted']
+                : [
+                    t('browse-dashboards.soft-delete.success', 'Dashboard {{name}} moved to Recently deleted', {
+                      name,
+                    }),
+                  ];
 
               appEvents.publish({
                 type: AppEvents.alertSuccess.name,
                 payload,
               });
             }
-          } else if (config.featureToggles.useV2DashboardsAPI || config.featureToggles.kubernetesDashboards) {
+          } else if (config.featureToggles.kubernetesDashboards) {
             appEvents.publish({
               type: AppEvents.alertSuccess.name,
               payload: ['Dashboard deleted'],
@@ -333,8 +332,7 @@ export const browseDashboardsAPI = createApi({
     saveDashboard: builder.mutation<SaveDashboardResponseDTO, SaveDashboardCommand<Dashboard | DashboardV2Spec>>({
       queryFn: async (cmd) => {
         try {
-          // When we use the `useV2DashboardsAPI` flag, we can save 'v2' schema dashboards
-          if (config.featureToggles.useV2DashboardsAPI && isV2DashboardCommand(cmd)) {
+          if (isV2DashboardCommand(cmd)) {
             const response = await getDashboardAPI('v2').saveDashboard(cmd);
             return { data: response };
           }

@@ -21,7 +21,6 @@ import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
-import { ResponseTransformers } from './ResponseTransformers';
 import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo } from './types';
 import { isDashboardV2Resource } from './utils';
 
@@ -30,7 +29,7 @@ export class K8sDashboardV2API
 {
   private client: ResourceClient<DashboardV2Spec>;
 
-  constructor(private convertToV1: boolean) {
+  constructor() {
     this.client = new ScopedResourceClient<DashboardV2Spec>({
       group: 'dashboard.grafana.app',
       version: 'v2alpha1',
