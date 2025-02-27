@@ -57,10 +57,16 @@ jobs:
       - name: Check if coverage should be generated
         id: check-coverage
         run: |
+          echo "Event: ${{ github.event_name }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Modified files: ${{ github.event.head_commit.modified }}"
+          
           if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]] && \
              [[ "${{ github.event.head_commit.modified }}" =~ (pkg/|go\.|\.github/workflows/pr-test-backend\.yml) ]]; then
+            echo "Coverage will be generated: true"
             echo "generate=true" >> $GITHUB_OUTPUT
           else
+            echo "Coverage will be generated: false"
             echo "generate=false" >> $GITHUB_OUTPUT
           fi
 
