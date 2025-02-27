@@ -108,7 +108,8 @@ export const VersionInstallButton = ({
         tooltip={tooltip}
         tooltipPlacement="bottom-start"
       >
-        {getLabel(installState)} {isInstalling ? <Spinner className={styles.spinner} inline size="sm" /> : getIcon(installState)}
+        {getLabel(installState)}{' '}
+        {isInstalling ? <Spinner className={styles.spinner} inline size="sm" /> : getIcon(installState)}
       </Button>
       <ConfirmModal
         isOpen={isModalOpen}
