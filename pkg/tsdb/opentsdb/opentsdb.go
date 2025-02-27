@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -35,11 +37,20 @@ func ProvideService(httpClientProvider httpclient.Provider) *Service {
 }
 
 type datasourceInfo struct {
-	HTTPClient *http.Client
-	URL        string
+	HTTPClient     *http.Client
+	URL            string
+	TSDBVersion    float32
+	TSDBResolution int32
+	LookupLimit    int32
 }
 
 type DsAccess string
+
+type JSONData struct {
+	TSDBVersion    float32 `json:"tsdbVersion"`
+	TSDBResolution int32   `json:"tsdbResolution"`
+	LookupLimit    int32   `json:"lookupLimit"`
+}
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
@@ -53,9 +64,18 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, err
 		}
 
+		jsonData := JSONData{}
+		err = json.Unmarshal(settings.JSONData, &jsonData)
+		if err != nil {
+			return nil, fmt.Errorf("error reading settings: %w", err)
+		}
+
 		model := &datasourceInfo{
-			HTTPClient: client,
-			URL:        settings.URL,
+			HTTPClient:     client,
+			URL:            settings.URL,
+			TSDBVersion:    jsonData.TSDBVersion,
+			TSDBResolution: jsonData.TSDBResolution,
+			LookupLimit:    jsonData.LookupLimit,
 		}
 
 		return model, nil
@@ -69,7 +89,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	q := req.Queries[0]
 
-	myRefID := q.RefID
+	refID := q.RefID
 
 	tsdbQuery.Start = q.TimeRange.From.UnixNano() / int64(time.Millisecond)
 	tsdbQuery.End = q.TimeRange.To.UnixNano() / int64(time.Millisecond)
@@ -106,7 +126,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		}
 	}()
 
-	result, err := s.parseResponse(logger, res, myRefID)
+	result, err := s.parseResponse(logger, res, refID, dsInfo.TSDBVersion)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
@@ -120,9 +140,11 @@ func (s *Service) createRequest(ctx context.Context, logger log.Logger, dsInfo *
 		return nil, err
 	}
 	u.Path = path.Join(u.Path, "api/query")
-	queryParams := u.Query()
-	queryParams.Set("arrays", "true")
-	u.RawQuery = queryParams.Encode()
+	if dsInfo.TSDBVersion == 4 {
+		queryParams := u.Query()
+		queryParams.Set("arrays", "true")
+		u.RawQuery = queryParams.Encode()
+	}
 
 	postData, err := json.Marshal(data)
 	if err != nil {
@@ -140,7 +162,67 @@ func (s *Service) createRequest(ctx context.Context, logger log.Logger, dsInfo *
 	return req, nil
 }
 
-func (s *Service) parseResponse(logger log.Logger, res *http.Response, myRefID string) (*backend.QueryDataResponse, error) {
+func createInitialFrame(val OpenTsdbCommon, length int, refID string) *data.Frame {
+	labels := data.Labels{}
+	for label, value := range val.Tags {
+		labels[label] = value
+	}
+
+	frame := data.NewFrameOfFieldTypes(val.Metric, length, data.FieldTypeTime, data.FieldTypeFloat64)
+	frame.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti, TypeVersion: data.FrameTypeVersion{0, 1}}
+	frame.RefID = refID
+	timeField := frame.Fields[0]
+	timeField.Name = data.TimeSeriesTimeFieldName
+	dataField := frame.Fields[1]
+	dataField.Name = val.Metric
+	dataField.Labels = labels
+
+	return frame
+}
+
+// Parse response function for OpenTSDB version 2.4
+func parseResponse24(responseData []OpenTsdbResponse24, refID string, frames data.Frames) data.Frames {
+	for _, val := range responseData {
+		frame := createInitialFrame(val.OpenTsdbCommon, len(val.DataPoints), refID)
+
+		for i, point := range val.DataPoints {
+			frame.SetRow(i, time.Unix(int64(point[0]), 0).UTC(), point[1])
+		}
+
+		frames = append(frames, frame)
+	}
+
+	return frames
+}
+
+// Parse response function for OpenTSDB versions < 2.4
+func parseResponseLT24(responseData []OpenTsdbResponse, refID string, frames data.Frames) (data.Frames, error) {
+	for _, val := range responseData {
+		frame := createInitialFrame(val.OpenTsdbCommon, len(val.DataPoints), refID)
+
+		// Order the timestamps in ascending order to avoid issues like https://github.com/grafana/grafana/issues/38729
+		timestamps := make([]string, 0, len(val.DataPoints))
+		for timestamp := range val.DataPoints {
+			timestamps = append(timestamps, timestamp)
+		}
+		sort.Strings(timestamps)
+
+		for i, timeString := range timestamps {
+			timestamp, err := strconv.ParseInt(timeString, 10, 64)
+			if err != nil {
+				logger.Info("Failed to unmarshal opentsdb timestamp", "timestamp", timeString)
+				return frames, err
+			}
+			frame.SetRow(i, time.Unix(timestamp, 0).UTC(), val.DataPoints[timeString])
+		}
+
+		frames = append(frames, frame)
+	}
+
+	return frames, nil
+}
+
+func (s *Service) parseResponse(logger log.Logger, res *http.Response, refID string, tsdbVersion float32) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	body, err := io.ReadAll(res.Body)
@@ -158,38 +240,34 @@ func (s *Service) parseResponse(logger log.Logger, res *http.Response, myRefID s
 		return nil, fmt.Errorf("request failed, status: %s", res.Status)
 	}
 
-	var responseData []OpenTsdbResponse
-	err = json.Unmarshal(body, &responseData)
-	if err != nil {
-		logger.Info("Failed to unmarshal opentsdb response", "error", err, "status", res.Status, "body", string(body))
-		return nil, err
-	}
-
 	frames := data.Frames{}
-	for _, val := range responseData {
-		labels := data.Labels{}
-		for label, value := range val.Tags {
-			labels[label] = value
+
+	var responseData []OpenTsdbResponse
+	var responseData24 []OpenTsdbResponse24
+	if tsdbVersion == 4 {
+		err = json.Unmarshal(body, &responseData24)
+		if err != nil {
+			logger.Info("Failed to unmarshal opentsdb response", "error", err, "status", res.Status, "body", string(body))
+			return nil, err
 		}
 
-		frame := data.NewFrameOfFieldTypes(val.Metric, len(val.DataPoints), data.FieldTypeTime, data.FieldTypeFloat64)
-		frame.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti, TypeVersion: data.FrameTypeVersion{0, 1}}
-		frame.RefID = myRefID
-		timeField := frame.Fields[0]
-		timeField.Name = data.TimeSeriesTimeFieldName
-		dataField := frame.Fields[1]
-		dataField.Name = "value"
-		dataField.Labels = labels
-
-		points := val.DataPoints
-		for i, point := range points {
-			frame.SetRow(i, time.Unix(int64(point[0]), 0).UTC(), point[1])
+		frames = parseResponse24(responseData24, refID, frames)
+	} else {
+		err = json.Unmarshal(body, &responseData)
+		if err != nil {
+			logger.Info("Failed to unmarshal opentsdb response", "error", err, "status", res.Status, "body", string(body))
+			return nil, err
 		}
-		frames = append(frames, frame)
+
+		frames, err = parseResponseLT24(responseData, refID, frames)
+		if err != nil {
+			return nil, err
+		}
 	}
-	result := resp.Responses[myRefID]
+
+	result := resp.Responses[refID]
 	result.Frames = frames
-	resp.Responses[myRefID] = result
+	resp.Responses[refID] = result
 	return resp, nil
 }
 

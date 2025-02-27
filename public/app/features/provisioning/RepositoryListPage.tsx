@@ -62,7 +62,9 @@ export default function RepositoryListPage() {
             title="Legacy storage detected"
             severity="error"
             buttonContent={<>Remove all configured repositories</>}
-            onRemove={() => setShowDeleteModal(true)}
+            onRemove={() => {
+              setShowDeleteModal(true);
+            }}
           >
             Configured repositories will not work while running legacy storage.
           </Alert>

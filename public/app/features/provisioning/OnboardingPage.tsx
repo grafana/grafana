@@ -1,12 +1,16 @@
 import SVG from 'react-inlinesvg';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { EmptyState, LinkButton, Alert, Stack, Text } from '@grafana/ui';
+import { EmptyState, LinkButton, Alert, Stack, Text, Button } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { StatusAlerts } from './Setup/StatusAlerts';
+import { useGetFrontendSettingsQuery } from './api';
 import { NEW_URL, MIGRATE_URL } from './constants';
 
 export default function OnboardingPage({ legacyStorage }: { legacyStorage?: boolean }) {
+  const settingsQuery = useGetFrontendSettingsQuery();
+  const navigate = useNavigate();
   return (
     <Page
       navId="provisioning"
@@ -25,9 +29,16 @@ export default function OnboardingPage({ legacyStorage }: { legacyStorage?: bool
               message="Set up your provisioning connection!"
               image={<SVG src="public/img/provisioning-empty.svg" width={300} />}
               button={
-                <LinkButton size="lg" icon="plus" href={MIGRATE_URL}>
+                <Button
+                  size="lg"
+                  icon="plus"
+                  onClick={async () => {
+                    await settingsQuery.refetch();
+                    navigate(MIGRATE_URL);
+                  }}
+                >
                   Connect Grafana to repository
-                </LinkButton>
+                </Button>
               }
             >
               <Stack direction="column" alignItems="center">

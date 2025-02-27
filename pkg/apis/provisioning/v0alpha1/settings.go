@@ -12,11 +12,7 @@ type RepositoryViewList struct {
 	// The backend is using legacy storage
 	// FIXME: Not sure where this should be exposed... but we need it somewhere
 	// The UI should force the onboarding workflow when this is true
-	LegacyStorage bool `json:"legacyStorage"`
-	// GenerateDashboardPreviews is available to render dashboard previews
-	GenerateDashboardPreviews bool `json:"generateDashboardPreviews"`
-	// GithubWebhooks is available to sync changes from a repository as soon as they are pushed or react to pull requests
-	GithubWebhooks bool `json:"githubWebhooks"`
+	LegacyStorage bool `json:"legacyStorage,omitempty"`
 
 	// +mapType=atomic
 	Items []RepositoryView `json:"items"`

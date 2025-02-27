@@ -53,7 +53,6 @@ import (
 	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
-	"github.com/grafana/grafana/pkg/storage/unified/blob"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -77,7 +76,6 @@ type APIBuilder struct {
 	getter            rest.Getter
 	localFileResolver *repository.LocalFolderResolver
 	render            rendering.Service
-	blobstore         blob.PublicBlobStore
 	client            *resources.ClientFactory
 	parsers           *resources.ParserFactory
 	ghFactory         *github.Factory
@@ -102,7 +100,6 @@ func NewAPIBuilder(
 	features featuremgmt.FeatureToggles,
 	render rendering.Service,
 	unified resource.ResourceClient,
-	blobstore blob.PublicBlobStore,
 	clonedir string, // where repo clones are managed
 	configProvider apiserver.RestConfigProvider,
 	ghFactory *github.Factory,
@@ -129,7 +126,6 @@ func NewAPIBuilder(
 		render:         render,
 		clonedir:       clonedir,
 		resourceLister: resources.NewResourceLister(unified),
-		blobstore:      blobstore,
 		legacyMigrator: legacyMigrator,
 		storageStatus:  storageStatus,
 		unified:        unified,
@@ -159,12 +155,6 @@ func RegisterAPIService(
 		return nil, nil // skip registration unless opting into experimental apis OR the feature specifically
 	}
 
-	// TODO: use wire to initialize this storage
-	store, err := blob.ProvidePublicBlobStore(cfg)
-	if err != nil {
-		return nil, err
-	}
-
 	folderResolver := &repository.LocalFolderResolver{
 		PermittedPrefixes: cfg.PermittedProvisioningPaths,
 		HomePath:          safepath.Clean(cfg.HomePath),
@@ -174,7 +164,7 @@ func RegisterAPIService(
 	}
 
 	builder := NewAPIBuilder(folderResolver, urlProvider, cfg.SecretKey, features,
-		render, client, store,
+		render, client,
 		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
@@ -266,6 +256,9 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		repoGetter: b,
 		jobs:       b.jobs,
 		dual:       b.storageStatus,
+	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("render")] = &renderConnector{
+		blob: b.unified,
 	}
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
 	return nil
@@ -432,7 +425,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			))
 
 			// Pull request worker
-			renderer := pullrequest.NewScreenshotRenderer(b.render, b.blobstore, b.isPublic)
+			renderer := pullrequest.NewScreenshotRenderer(b.render, b.unified, b.isPublic, b.urlProvider)
 			previewer := pullrequest.NewPreviewer(renderer, b.urlProvider)
 			pullRequestWorker, err := pullrequest.NewPullRequestWorker(b.parsers, previewer)
 			if err != nil {
@@ -706,6 +699,26 @@ spec:
 								History: true,
 								Prefix:  "prefix/in/repo/tree",
 							},
+						},
+					},
+				},
+			},
+		}
+	}
+
+	delete(oas.Paths.Paths, repoprefix+"/render")
+	sub = oas.Paths.Paths[repoprefix+"/render/{path}"]
+	if sub != nil {
+		sub.Get.Description = "get a rendered preview image"
+		sub.Get.Responses = &spec3.Responses{
+			ResponsesProps: spec3.ResponsesProps{
+				StatusCodeResponses: map[int]*spec3.Response{
+					200: {
+						ResponseProps: spec3.ResponseProps{
+							Content: map[string]*spec3.MediaType{
+								"image/png": {},
+							},
+							Description: "OK",
 						},
 					},
 				},

@@ -218,6 +218,10 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/migrate`, method: 'POST', body: queryArg.body }),
         invalidatesTags: ['Repository'],
       }),
+      getRepositoryRenderWithPath: build.query<GetRepositoryRenderWithPathResponse, GetRepositoryRenderWithPathArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/render/${queryArg.path}` }),
+        providesTags: ['Repository'],
+      }),
       getRepositoryResources: build.query<GetRepositoryResourcesResponse, GetRepositoryResourcesArg>({
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/resources` }),
         providesTags: ['Repository'],
@@ -263,11 +267,11 @@ const injectedRtkApi = api
       }),
       getFrontendSettings: build.query<GetFrontendSettingsResponse, GetFrontendSettingsArg>({
         query: () => ({ url: `/settings` }),
-        providesTags: ['Provisioning'],
+        providesTags: ['Provisioning', 'Repository'],
       }),
       getResourceStats: build.query<GetResourceStatsResponse, GetResourceStatsArg>({
         query: () => ({ url: `/stats` }),
-        providesTags: ['Provisioning'],
+        providesTags: ['Provisioning', 'Repository'],
       }),
     }),
     overrideExisting: false,
@@ -581,6 +585,13 @@ export type CreateRepositoryMigrateArg = {
     /** Target file prefix */
     prefix?: string;
   };
+};
+export type GetRepositoryRenderWithPathResponse = unknown;
+export type GetRepositoryRenderWithPathArg = {
+  /** name of the Repository */
+  name: string;
+  /** path to the resource */
+  path: string;
 };
 export type GetRepositoryResourcesResponse = /** status 200 OK */ ResourceList;
 export type GetRepositoryResourcesArg = {
@@ -1179,6 +1190,7 @@ export const {
   useGetRepositoryHistoryQuery,
   useGetRepositoryHistoryWithPathQuery,
   useCreateRepositoryMigrateMutation,
+  useGetRepositoryRenderWithPathQuery,
   useGetRepositoryResourcesQuery,
   useGetRepositoryStatusQuery,
   useReplaceRepositoryStatusMutation,

@@ -1148,23 +1148,6 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 					"legacyStorage": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The backend is using legacy storage FIXME: Not sure where this should be exposed... but we need it somewhere The UI should force the onboarding workflow when this is true",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"generateDashboardPreviews": {
-						SchemaProps: spec.SchemaProps{
-							Description: "GenerateDashboardPreviews is available to render dashboard previews",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"githubWebhooks": {
-						SchemaProps: spec.SchemaProps{
-							Description: "GithubWebhooks is available to sync changes from a repository as soon as they are pushed or react to pull requests",
-							Default:     false,
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
@@ -1188,7 +1171,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 						},
 					},
 				},
-				Required: []string{"legacyStorage", "generateDashboardPreviews", "githubWebhooks", "items"},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{

@@ -1,6 +1,6 @@
-import { Button, Icon, Text, Card, Stack, Box } from '@grafana/ui';
+import { Button, Icon, IconName, Text, Card, Stack } from '@grafana/ui';
+
 import { Feature } from './types';
-import { IconName } from '@grafana/ui';
 
 interface Props {
   feature: Feature;
