@@ -174,18 +174,23 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
   const styles = useStyles2(getComboboxStyles);
 
+  // Injects the group header for the first rendered item into the range to render.
+  // Accepts the range that useVirtualizer wants to render, and then returns indexes
+  // to actually render.
   const rangeExtractor = useCallback(
     (range: Range) => {
       const startIndex = Math.max(0, range.startIndex - range.overscan);
       const endIndex = Math.min(filteredOptions.length - 1, range.endIndex + range.overscan);
-
       const rangeToReturn = Array.from({ length: endIndex - startIndex + 1 }, (_, i) => startIndex + i);
 
-      // Find the first group header that's not in view
-      for (let offscreenIndex = startIndex - 1; offscreenIndex >= 0; offscreenIndex--) {
-        if (isNewGroup(filteredOptions[offscreenIndex], filteredOptions[offscreenIndex - 1])) {
-          rangeToReturn.unshift(offscreenIndex);
-          break;
+      // If the first item doesn't have a group, no need to find a header for it
+      if (filteredOptions[rangeToReturn[0]]?.group) {
+        // Find the first group header that's not in view
+        for (let offscreenIndex = startIndex - 1; offscreenIndex >= 0; offscreenIndex--) {
+          if (isNewGroup(filteredOptions[offscreenIndex], filteredOptions[offscreenIndex - 1])) {
+            rangeToReturn.unshift(offscreenIndex);
+            break;
+          }
         }
       }
 
