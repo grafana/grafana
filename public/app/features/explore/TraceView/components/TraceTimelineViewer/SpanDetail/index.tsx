@@ -23,13 +23,15 @@ import {
   GrafanaTheme2,
   IconName,
   LinkModel,
+  PluginExtensionPoints,
+  TimeRange,
   TraceKeyValuePair,
   TraceLog,
 } from '@grafana/data';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { config, locationService, reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
-import { DataLinkButton, Divider, Icon, TextArea, useStyles2 } from '@grafana/ui';
+import { ButtonGroup, ButtonSelect, DataLinkButton, Divider, Icon, TextArea, useStyles2 } from '@grafana/ui';
 import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
@@ -133,6 +135,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexWrap: 'wrap',
       gap: '10px',
     }),
+    profilesDrilldownSelect: css({
+      height: theme.spacing(3),
+      borderTopLeftRadius: 0,
+      borderBottomLeftRadius: 0,
+    }),
+    profilesForThisSpanButton: css({
+      borderTopRightRadius: 0,
+      borderBottomRightRadius: 0,
+    })
   };
 };
 
@@ -168,6 +179,7 @@ export type SpanDetailProps = {
   traceFlameGraphs: TraceFlameGraphs;
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
   setRedrawListView: (redraw: {}) => void;
+  timeRange: TimeRange;
 };
 
 export default function SpanDetail(props: SpanDetailProps) {
@@ -193,6 +205,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     setTraceFlameGraphs,
     traceToProfilesOptions,
     setRedrawListView,
+    timeRange,
   } = props;
   const {
     isTagsOpen,
@@ -289,7 +302,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     });
   }
 
-  const createLinkButton = (link: SpanLinkDef, type: SpanLinkType, title: string, icon: IconName) => {
+  const createLinkButton = (link: SpanLinkDef, type: SpanLinkType, title: string, icon: IconName, className?: string) => {
     return (
       <DataLinkButton
         link={{
@@ -315,7 +328,7 @@ export default function SpanDetail(props: SpanDetailProps) {
             }
           },
         }}
-        buttonProps={{ icon }}
+        buttonProps={{ icon, className }}
       />
     );
   };
@@ -333,7 +346,7 @@ export default function SpanDetail(props: SpanDetailProps) {
       (link) => link.type === SpanLinkType.Profiles && link.title === RelatedProfilesTitle
     );
     if (links && profilesLink && profilesLink.length > 0) {
-      profileLinkButton = createLinkButton(profilesLink[0], SpanLinkType.Profiles, 'Profiles for this span', 'link');
+      profileLinkButton = createLinkButton(profilesLink[0], SpanLinkType.Profiles, 'Profiles for this span', 'link', styles.profilesForThisSpanButton);
     }
     const sessionLink = links?.filter((link) => link.type === SpanLinkType.Session);
     if (links && sessionLink && sessionLink.length > 0) {
@@ -344,6 +357,46 @@ export default function SpanDetail(props: SpanDetailProps) {
         'frontend-observability'
       );
     }
+  }
+
+  const exploreProfilesPluginId = 'grafana-pyroscope-app';
+  const extensionPointId = PluginExtensionPoints.TraceViewDetails;
+  const spanSelector = span.tags.filter((tag) => tag.key === pyroscopeProfileIdTagKey);
+  const context = {
+    serviceName: span.process.serviceName ?? '',
+    profileTypeId: traceToProfilesOptions?.profileTypeId ?? '',
+    spanSelector: spanSelector.length === 1 && spanSelector[0].value ? spanSelector[0].value : '',
+    timeRange: timeRange.raw,
+    targets: [{
+      datasource: {
+        type: 'grafana-pyroscope-datasource',
+        uid: traceToProfilesOptions?.datasourceUid
+      }
+    }]
+  };
+  const { links } = usePluginLinks({ extensionPointId, context, limitPerPlugin: 1 });
+  const link = links && links.length > 0 ? links.find((link) => link.pluginId === exploreProfilesPluginId) : null;
+  let profileLinkButtons = profileLinkButton;
+  
+  if (link && profileLinkButton) {
+    const label = 'Open in Profiles Drilldown';
+    profileLinkButtons = (
+      <ButtonGroup>
+        {profileLinkButton}
+        <ButtonSelect
+          className={styles.profilesDrilldownSelect}
+          variant='primary'
+          narrow
+          options={[{label, value: label}]}
+          onChange={(e) => {
+            if (e.value === label && link.onClick) {
+              reportInteraction('grafana_traces_open_in_profiles_drilldown_clicked');
+              link.onClick();
+            }
+          }}
+        />
+      </ButtonGroup>
+    )
   }
 
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
@@ -359,7 +412,7 @@ export default function SpanDetail(props: SpanDetailProps) {
       </div>
       <div className={styles.linkList}>
         {logLinkButton}
-        {profileLinkButton}
+        {profileLinkButtons}
         {sessionLinkButton}
       </div>
       <Divider spacing={1} />

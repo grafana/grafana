@@ -16,6 +16,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { createTheme } from '@grafana/data';
+import { setPluginLinksHook } from '@grafana/runtime';
 
 import DetailState from './SpanDetail/DetailState';
 import { UnthemedSpanDetailRow, SpanDetailRowProps } from './SpanDetailRow';
@@ -53,6 +54,13 @@ const setup = (propOverrides?: SpanDetailRowProps) => {
 };
 
 describe('SpanDetailRow tests', () => {
+  beforeEach(() => {
+    setPluginLinksHook(() => ({ 
+      isLoading: false,
+      links: []
+    }));
+  });
+
   it('renders without exploding', () => {
     expect(() => setup()).not.toThrow();
   });

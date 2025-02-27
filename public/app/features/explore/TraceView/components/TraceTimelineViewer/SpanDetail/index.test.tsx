@@ -19,7 +19,7 @@ import userEvent from '@testing-library/user-event';
 
 import { createDataFrame, DataSourceInstanceSettings } from '@grafana/data';
 import { data } from '@grafana/flamegraph';
-import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { DataSourceSrv, setDataSourceSrv, setPluginLinksHook } from '@grafana/runtime';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import traceGenerator from '../../demo/trace-generators';
@@ -155,6 +155,11 @@ describe('<SpanDetail>', () => {
     props.processToggle.mockReset();
     props.logsToggle.mockReset();
     props.logItemToggle.mockReset();
+
+    setPluginLinksHook(() => ({ 
+      isLoading: false,
+      links: []
+    }));
 
     setDataSourceSrv({
       getList() {
