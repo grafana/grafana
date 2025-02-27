@@ -1102,6 +1102,253 @@
         }
       }
     },
+    "/convert/prometheus/config/v1/rules": {
+      "get": {
+        "produces": [
+          "application/yaml"
+        ],
+        "tags": [
+          "convert_prometheus"
+        ],
+        "summary": "Gets all Grafana-managed alert rules that were imported from Prometheus-compatible sources, grouped by namespace.",
+        "operationId": "RouteConvertPrometheusGetRules",
+        "responses": {
+          "200": {
+            "description": "PrometheusNamespace",
+            "schema": {
+              "$ref": "#/definitions/PrometheusNamespace"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "404": {
+            "description": "NotFound",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          }
+        }
+      }
+    },
+    "/convert/prometheus/config/v1/rules/{NamespaceTitle}": {
+      "get": {
+        "produces": [
+          "application/yaml"
+        ],
+        "tags": [
+          "convert_prometheus"
+        ],
+        "summary": "Gets Grafana-managed alert rules that were imported from Prometheus-compatible sources for a specified namespace (folder).",
+        "operationId": "RouteConvertPrometheusGetNamespace",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "NamespaceTitle",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PrometheusNamespace",
+            "schema": {
+              "$ref": "#/definitions/PrometheusNamespace"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "404": {
+            "description": "NotFound",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "If the group already exists and was not imported from a Prometheus-compatible source initially,\nit will not be replaced and an error will be returned.",
+        "consumes": [
+          "application/yaml"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "convert_prometheus"
+        ],
+        "summary": "Converts a Prometheus rule group into a Grafana rule group and creates or updates it within the specified namespace.",
+        "operationId": "RouteConvertPrometheusPostRuleGroup",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "NamespaceTitle",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "x-grafana-alerting-datasource-uid",
+            "in": "header"
+          },
+          {
+            "type": "boolean",
+            "name": "x-grafana-alerting-recording-rules-paused",
+            "in": "header"
+          },
+          {
+            "type": "boolean",
+            "name": "x-grafana-alerting-alert-rules-paused",
+            "in": "header"
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/PrometheusRuleGroup"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "ConvertPrometheusResponse",
+            "schema": {
+              "$ref": "#/definitions/ConvertPrometheusResponse"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          }
+        },
+        "x-raw-request": "true"
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "convert_prometheus"
+        ],
+        "summary": "Deletes all rule groups that were imported from Prometheus-compatible sources within the specified namespace.",
+        "operationId": "RouteConvertPrometheusDeleteNamespace",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "NamespaceTitle",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "ConvertPrometheusResponse",
+            "schema": {
+              "$ref": "#/definitions/ConvertPrometheusResponse"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          }
+        }
+      }
+    },
+    "/convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group}": {
+      "get": {
+        "produces": [
+          "application/yaml"
+        ],
+        "tags": [
+          "convert_prometheus"
+        ],
+        "summary": "Gets a single rule group in Prometheus-compatible format if it was imported from a Prometheus-compatible source.",
+        "operationId": "RouteConvertPrometheusGetRuleGroup",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "NamespaceTitle",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Group",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PrometheusRuleGroup",
+            "schema": {
+              "$ref": "#/definitions/PrometheusRuleGroup"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "404": {
+            "description": "NotFound",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "convert_prometheus"
+        ],
+        "summary": "Deletes a specific rule group if it was imported from a Prometheus-compatible source.",
+        "operationId": "RouteConvertPrometheusDeleteRuleGroup",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "NamespaceTitle",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Group",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "ConvertPrometheusResponse",
+            "schema": {
+              "$ref": "#/definitions/ConvertPrometheusResponse"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          }
+        }
+      }
+    },
     "/prometheus/grafana/api/v1/alerts": {
       "get": {
         "description": "gets the current alerts",
@@ -1329,6 +1576,43 @@
             "description": "GettableExtendedRuleNode",
             "schema": {
               "$ref": "#/definitions/GettableExtendedRuleNode"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "404": {
+            "description": " Not found."
+          }
+        }
+      }
+    },
+    "/ruler/grafana/api/v1/rule/{RuleUID}/versions": {
+      "get": {
+        "description": "Get rule versions by UID",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "ruler"
+        ],
+        "operationId": "RouteGetRuleVersionsByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "RuleUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "GettableRuleVersions",
+            "schema": {
+              "$ref": "#/definitions/GettableRuleVersions"
             }
           },
           "403": {
@@ -1595,6 +1879,12 @@
             "description": "ForbiddenError",
             "schema": {
               "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "404": {
+            "description": "NotFound",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
             }
           }
         }
@@ -4088,7 +4378,9 @@
       "description": "adapted from cortex",
       "type": "object",
       "required": [
+        "uid",
         "name",
+        "folderUid",
         "query",
         "health",
         "type",
@@ -4117,6 +4409,9 @@
         "evaluationTime": {
           "type": "number",
           "format": "double"
+        },
+        "folderUid": {
+          "type": "string"
         },
         "health": {
           "type": "string"
@@ -4156,6 +4451,9 @@
           }
         },
         "type": {
+          "type": "string"
+        },
+        "uid": {
           "type": "string"
         }
       }
@@ -4373,6 +4671,20 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/EmbeddedContactPoint"
+      }
+    },
+    "ConvertPrometheusResponse": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "errorType": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        }
       }
     },
     "CounterResetHint": {
@@ -4818,6 +5130,14 @@
         "CounterResetHint": {
           "$ref": "#/definitions/CounterResetHint"
         },
+        "CustomValues": {
+          "description": "Holds the custom (usually upper) bounds for bucket definitions, otherwise nil.\nThis slice is interned, to be treated as immutable and copied by reference.\nThese numbers should be strictly increasing. This field is only used when the\nschema is for custom buckets, and the ZeroThreshold, ZeroCount, NegativeSpans\nand NegativeBuckets fields are not used in that case.",
+          "type": "array",
+          "items": {
+            "type": "number",
+            "format": "double"
+          }
+        },
         "PositiveBuckets": {
           "description": "Observation counts in buckets. Each represents an absolute count and\nmust be zero or positive.",
           "type": "array",
@@ -4834,7 +5154,7 @@
           }
         },
         "Schema": {
-          "description": "Currently valid schema numbers are -4 \u003c= n \u003c= 8.  They are all for\nbase-2 bucket schemas, where 1 is a bucket boundary in each case, and\nthen each power of two is divided into 2^n logarithmic buckets.  Or\nin other words, each bucket boundary is the previous boundary times\n2^(2^-n).",
+          "description": "Currently valid schema numbers are -4 \u003c= n \u003c= 8 for exponential buckets.\nThey are all for base-2 bucket schemas, where 1 is a bucket boundary in\neach case, and then each power of two is divided into 2^n logarithmic buckets.\nOr in other words, each bucket boundary is the previous boundary times\n2^(2^-n). Another valid schema number is -53 for custom buckets, defined by\nthe CustomValues field.",
           "type": "integer",
           "format": "int32"
         },
@@ -5228,10 +5548,6 @@
             "Error"
           ]
         },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
         "intervalSeconds": {
           "type": "integer",
           "format": "int64"
@@ -5256,10 +5572,6 @@
         "notification_settings": {
           "$ref": "#/definitions/AlertRuleNotificationSettings"
         },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
-        },
         "provenance": {
           "$ref": "#/definitions/Provenance"
         },
@@ -5278,6 +5590,9 @@
         "updated": {
           "type": "string",
           "format": "date-time"
+        },
+        "updated_by": {
+          "$ref": "#/definitions/UserInfo"
         },
         "version": {
           "type": "integer",
@@ -5360,6 +5675,12 @@
             "type": "string"
           }
         }
+      }
+    },
+    "GettableRuleVersions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/GettableExtendedRuleNode"
       }
     },
     "GettableStatus": {
@@ -6574,6 +6895,70 @@
         }
       }
     },
+    "PrometheusNamespace": {
+      "type": "object",
+      "properties": {
+        "Body": {
+          "description": "in: body",
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/PrometheusRuleGroup"
+            }
+          }
+        }
+      }
+    },
+    "PrometheusRule": {
+      "type": "object",
+      "properties": {
+        "Alert": {
+          "type": "string"
+        },
+        "Annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "Expr": {
+          "type": "string"
+        },
+        "For": {
+          "type": "string"
+        },
+        "KeepFiringFor": {
+          "type": "string"
+        },
+        "Labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "Record": {
+          "type": "string"
+        }
+      }
+    },
+    "PrometheusRuleGroup": {
+      "type": "object",
+      "properties": {
+        "Interval": {
+          "$ref": "#/definitions/Duration"
+        },
+        "Name": {
+          "type": "string"
+        },
+        "Rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PrometheusRule"
+          }
+        }
+      }
+    },
     "Provenance": {
       "type": "string"
     },
@@ -7220,7 +7605,9 @@
       "description": "adapted from cortex",
       "type": "object",
       "required": [
+        "uid",
         "name",
+        "folderUid",
         "query",
         "health",
         "type"
@@ -7229,6 +7616,9 @@
         "evaluationTime": {
           "type": "number",
           "format": "double"
+        },
+        "folderUid": {
+          "type": "string"
         },
         "health": {
           "type": "string"
@@ -7250,6 +7640,9 @@
           "type": "string"
         },
         "type": {
+          "type": "string"
+        },
+        "uid": {
           "type": "string"
         }
       }
@@ -7283,6 +7676,7 @@
       "required": [
         "name",
         "file",
+        "folderUid",
         "rules",
         "interval"
       ],
@@ -7292,6 +7686,9 @@
           "format": "double"
         },
         "file": {
+          "type": "string"
+        },
+        "folderUid": {
           "type": "string"
         },
         "interval": {
@@ -7419,6 +7816,10 @@
       "description": "Sample is a single sample belonging to a metric. It represents either a float\nsample or a histogram sample. If H is nil, it is a float sample. Otherwise,\nit is a histogram sample.",
       "type": "object",
       "properties": {
+        "DropName": {
+          "description": "DropName is used to indicate whether the __name__ label should be dropped\nas part of the query evaluation.",
+          "type": "boolean"
+        },
         "F": {
           "type": "number",
           "format": "double"
@@ -8097,6 +8498,18 @@
         }
       }
     },
+    "UserInfo": {
+      "type": "object",
+      "title": "UserInfo represents user-related information, including a unique identifier and a name.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
     "Userinfo": {
       "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a [URL]. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
       "type": "object"
@@ -8459,6 +8872,7 @@
       }
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "type": "object",

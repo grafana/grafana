@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -116,7 +117,10 @@ func TestRecordingRule(t *testing.T) {
 					}
 					switch rand.Intn(max) + 1 {
 					case 1:
-						r.Update(RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false})
+						r.Update(&Evaluation{
+							rule:        gen.GenerateRef(),
+							folderTitle: util.GenerateShortUID(),
+						})
 					case 2:
 						r.Eval(&Evaluation{
 							scheduledAt: time.Now(),
@@ -152,18 +156,27 @@ func TestRecordingRule(t *testing.T) {
 	})
 }
 
+func TestRecordingRuleIdentifier(t *testing.T) {
+	t.Run("should return correct identifier", func(t *testing.T) {
+		key := models.GenerateRuleKeyWithGroup(1)
+		r := blankRecordingRuleForTests(context.Background())
+		r.key = key
+		require.Equal(t, key, r.Identifier())
+	})
+}
+
 func blankRecordingRuleForTests(ctx context.Context) *recordingRule {
 	st := setting.RecordingRuleSettings{
 		Enabled: true,
 	}
-	return newRecordingRule(context.Background(), models.AlertRuleKey{}, 0, nil, nil, st, log.NewNopLogger(), nil, nil, writer.FakeWriter{}, nil, nil)
+	return newRecordingRule(context.Background(), models.AlertRuleKeyWithGroup{}, 0, nil, nil, st, log.NewNopLogger(), nil, nil, writer.FakeWriter{}, nil, nil)
 }
 
 func TestRecordingRule_Integration(t *testing.T) {
 	gen := models.RuleGen.With(models.RuleGen.WithAllRecordingRules(), models.RuleGen.WithOrgID(123))
 	ruleStore := newFakeRulesStore()
 	reg := prometheus.NewPedanticRegistry()
-	sch := setupScheduler(t, ruleStore, nil, reg, nil, nil)
+	sch := setupScheduler(t, ruleStore, nil, reg, nil, nil, nil)
 	writeTarget := writer.NewTestRemoteWriteTarget(t)
 	defer writeTarget.Close()
 	writerReg := prometheus.NewPedanticRegistry()
@@ -483,7 +496,7 @@ func TestRecordingRule_Integration(t *testing.T) {
 		t.Run("status shows evaluation", func(t *testing.T) {
 			status := process.(*recordingRule).Status()
 
-			//TODO: assert "error" to fix test, update to "nodata" in the future
+			// TODO: assert "error" to fix test, update to "nodata" in the future
 			require.Equal(t, "error", status.Health)
 		})
 	})

@@ -190,6 +190,8 @@ type FrontendSettingsDTO struct {
 
 	AnalyticsConsoleReporting bool `json:"analyticsConsoleReporting"`
 
+	DashboardPerformanceMetrics []string `json:"dashboardPerformanceMetrics"`
+
 	FeedbackLinksEnabled                bool     `json:"feedbackLinksEnabled"`
 	ApplicationInsightsConnectionString string   `json:"applicationInsightsConnectionString"`
 	ApplicationInsightsEndpointUrl      string   `json:"applicationInsightsEndpointUrl"`
@@ -210,6 +212,7 @@ type FrontendSettingsDTO struct {
 	CSPReportOnlyEnabled                bool     `json:"cspReportOnlyEnabled"`
 	EnableFrontendSandboxForPlugins     []string `json:"enableFrontendSandboxForPlugins"`
 	ExploreDefaultTimeOffset            string   `json:"exploreDefaultTimeOffset"`
+	ExploreHideLogsDownload             bool     `json:"exploreHideLogsDownload"`
 
 	Auth FrontendSettingsAuthDTO `json:"auth"`
 

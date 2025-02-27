@@ -2,6 +2,10 @@ import { act } from '@testing-library/react';
 
 import { FeatureToggles } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { AccessControlAction } from 'app/types';
+
+import { grantUserPermissions } from '../mocks';
+import { setFolderAccessControl } from '../mocks/server/configure';
 
 /**
  * Flushes out microtasks so we don't get warnings from `@floating-ui/react`
@@ -46,4 +50,14 @@ export const testWithLicenseFeatures = (features: string[]) => {
   afterEach(() => {
     config.licenseInfo.enabledFeatures = originalFeatures;
   });
+};
+
+/**
+ * "Grants" permissions via contextSrv mock, and additionally sets folder access control
+ * API response to match
+ */
+export const grantPermissionsHelper = (permissions: AccessControlAction[]) => {
+  const permissionsHash = permissions.reduce((hash, permission) => ({ ...hash, [permission]: true }), {});
+  grantUserPermissions(permissions);
+  setFolderAccessControl(permissionsHash);
 };

@@ -60,16 +60,23 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
   // if a better solution is found.
   const isInAutoSizeInput = useContext(AutoSizeInputContext);
   const accessoriesWidth = (prefixRect.width || 0) + (suffixRect.width || 0);
-  const finalWidth = isInAutoSizeInput && width ? width + accessoriesWidth / 8 : width;
+  const autoSizeWidth = isInAutoSizeInput && width ? width + accessoriesWidth / 8 : undefined;
 
   const theme = useTheme2();
 
-  const styles = getInputStyles({ theme, invalid: !!invalid, width: finalWidth });
+  // Don't pass the width prop, as this causes an unnecessary amount of Emotion calls when auto sizing
+  const styles = getInputStyles({ theme, invalid: !!invalid, width: autoSizeWidth ? undefined : width });
 
   const suffix = suffixProp || (loading && <Spinner inline={true} />);
 
   return (
-    <div className={cx(styles.wrapper, className)} data-testid="input-wrapper">
+    <div
+      className={cx(styles.wrapper, className)}
+      // If the component is in an AutoSizeInput, set the width here to prevent emotion doing stuff
+      // on every keypress
+      style={autoSizeWidth ? { width: theme.spacing(autoSizeWidth) } : undefined}
+      data-testid="input-wrapper"
+    >
       {!!addonBefore && <div className={styles.addon}>{addonBefore}</div>}
       <div className={styles.inputWrapper}>
         {prefix && (

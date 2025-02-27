@@ -60,6 +60,20 @@ func (j JobState) Finished() bool {
 type JobSpec struct {
 	Action JobAction `json:"action"`
 
+	// The the repository reference (for now also in labels)
+	Repository string `json:"repository"`
+
+	// Pull request options
+	PullRequest *PullRequestJobOptions `json:"pr,omitempty"`
+
+	// Required when the action is `export`
+	Export *ExportJobOptions `json:"export,omitempty"`
+
+	// Required when the action is `sync`
+	Sync *SyncJobOptions `json:"sync,omitempty"`
+}
+
+type PullRequestJobOptions struct {
 	// The branch of commit hash
 	Ref string `json:"ref,omitempty"`
 
@@ -71,6 +85,28 @@ type JobSpec struct {
 	URL string `json:"url,omitempty"`
 }
 
+type SyncJobOptions struct {
+	// Incremental synchronization for versioned repositories
+	Incremental bool `json:"incremental"`
+}
+
+type ExportJobOptions struct {
+	// The source folder (or empty) to export
+	Folder string `json:"folder,omitempty"`
+
+	// Preserve history (if possible)
+	History bool `json:"history,omitempty"`
+
+	// Target branch for export (only git)
+	Branch string `json:"branch,omitempty"`
+
+	// Target file prefix
+	Prefix string `json:"prefix,omitempty"`
+
+	// Include the identifier in the exported metadata
+	Identifier bool `json:"identifier"`
+}
+
 // The job status
 type JobStatus struct {
 	State    JobState `json:"state,omitempty"`
@@ -78,6 +114,31 @@ type JobStatus struct {
 	Finished int64    `json:"finished,omitempty"`
 	Message  string   `json:"message,omitempty"`
 	Errors   []string `json:"errors,omitempty"`
+
+	// Optional value 0-100 that can be set while running
+	Progress float64 `json:"progress,omitempty"`
+
+	// Summary of processed actions
+	Summary []*JobResourceSummary `json:"summary,omitempty"`
+}
+
+type JobResourceSummary struct {
+	Group    string `json:"group,omitempty"`
+	Resource string `json:"resource,omitempty"`
+	Total    int64  `json:"total,omitempty"` // the count (if known)
+
+	Create int64 `json:"create,omitempty"`
+	Update int64 `json:"update,omitempty"`
+	Delete int64 `json:"delete,omitempty"`
+	Write  int64 `json:"write,omitempty"` // Create or update (export)
+	Error  int64 `json:"error,omitempty"` // The error count
+
+	// No action required (useful for sync)
+	Noop int64 `json:"noop,omitempty"`
+
+	// Report errors for this resource type
+	// This may not be an exhaustive list and recommend looking at the logs for more info
+	Errors []string `json:"errors,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

@@ -49,9 +49,6 @@ func TestIntegrationPlaylist(t *testing.T) {
 			EnableFeatureToggles: []string{},
 		}))
 
-		// Ensure the k8s version is valid
-		_ = h.GetVersionInfo()
-
 		// The accepted verbs will change when dual write is enabled
 		disco := h.GetGroupVersionInfoJSON("playlist.grafana.app")
 		// fmt.Printf("%s", disco)
@@ -194,7 +191,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    false,
 			DisableAnonymous:     true,
-			APIServerStorageType: options.StorageTypeUnifiedGrpc, // start a real grpc server
+			APIServerStorageType: options.StorageTypeUnified,
 			EnableFeatureToggles: []string{},
 		}))
 	})
@@ -203,7 +200,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    false, // required for  unified storage
 			DisableAnonymous:     true,
-			APIServerStorageType: "unified", // use the entity api tables
+			APIServerStorageType: options.StorageTypeUnified, // use the entity api tables
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
@@ -219,7 +216,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    false, // required for  unified storage
 			DisableAnonymous:     true,
-			APIServerStorageType: "unified", // use the entity api tables
+			APIServerStorageType: options.StorageTypeUnified, // use the entity api tables
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
@@ -235,7 +232,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    false, // required for  unified storage
 			DisableAnonymous:     true,
-			APIServerStorageType: "unified", // use the entity api tables
+			APIServerStorageType: options.StorageTypeUnified, // use the entity api tables
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
@@ -254,7 +251,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    true,
 			DisableAnonymous:     true,
-			APIServerStorageType: "etcd", // requires etcd running on localhost:2379
+			APIServerStorageType: options.StorageTypeEtcd, // requires etcd running on localhost:2379
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode0,
@@ -283,7 +280,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    true,
 			DisableAnonymous:     true,
-			APIServerStorageType: "etcd", // requires etcd running on localhost:2379
+			APIServerStorageType: options.StorageTypeEtcd, // requires etcd running on localhost:2379
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
@@ -312,7 +309,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    true,
 			DisableAnonymous:     true,
-			APIServerStorageType: "etcd", // requires etcd running on localhost:2379
+			APIServerStorageType: options.StorageTypeEtcd, // requires etcd running on localhost:2379
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
@@ -341,7 +338,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    true,
 			DisableAnonymous:     true,
-			APIServerStorageType: "etcd", // requires etcd running on localhost:2379
+			APIServerStorageType: options.StorageTypeEtcd, // requires etcd running on localhost:2379
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
@@ -370,7 +367,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    true,
 			DisableAnonymous:     true,
-			APIServerStorageType: "etcd", // requires etcd running on localhost:2379
+			APIServerStorageType: options.StorageTypeEtcd, // requires etcd running on localhost:2379
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},

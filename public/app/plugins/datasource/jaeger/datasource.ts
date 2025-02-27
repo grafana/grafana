@@ -5,7 +5,6 @@ import { catchError, map } from 'rxjs/operators';
 import {
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceApi,
   DataSourceInstanceSettings,
   DataSourceJsonData,
   dateMath,
@@ -17,7 +16,14 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { NodeGraphOptions, SpanBarOptions } from '@grafana/o11y-ds-frontend';
-import { BackendSrvRequest, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import {
+  BackendSrvRequest,
+  config,
+  DataSourceWithBackend,
+  getBackendSrv,
+  getTemplateSrv,
+  TemplateSrv,
+} from '@grafana/runtime';
 
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
 import { TraceIdTimeParamsOptions } from './configuration/TraceIdTimeParams';
@@ -32,7 +38,7 @@ export interface JaegerJsonData extends DataSourceJsonData {
   traceIdTimeParams?: TraceIdTimeParamsOptions;
 }
 
-export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData> {
+export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJsonData> {
   uploadedJson: string | ArrayBuffer | null = null;
   nodeGraph?: NodeGraphOptions;
   traceIdTimeParams?: TraceIdTimeParamsOptions;
@@ -46,8 +52,15 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     this.traceIdTimeParams = instanceSettings.jsonData.traceIdTimeParams;
   }
 
+  /**
+   * Migrated to backend with feature toggle `jaegerBackendMigration`
+   */
   async metadataRequest(url: string, params?: Record<string, unknown>) {
-    const res = await lastValueFrom(this._request(url, params, { hideFromInspector: true }));
+    if (config.featureToggles.jaegerBackendMigration) {
+      return await this.getResource(url, params);
+    }
+
+    const res = await lastValueFrom(this._request('/api/' + url, params, { hideFromInspector: true }));
     return res.data.data;
   }
 
@@ -187,7 +200,14 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     };
   }
 
+  /**
+   * Migrated to backend with feature toggle `jaegerBackendMigration`
+   */
   async testDatasource() {
+    if (config.featureToggles.jaegerBackendMigration) {
+      return await super.testDatasource();
+    }
+
     return lastValueFrom(
       this._request('/api/services').pipe(
         map((res) => {

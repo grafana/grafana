@@ -52,6 +52,15 @@ type RecordingWriter interface {
 	Write(ctx context.Context, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error
 }
 
+// AlertRuleStopReasonProvider is an interface for determining the reason why an alert rule was stopped.
+type AlertRuleStopReasonProvider interface {
+	// FindReason returns two values:
+	// 1. The first value is the reason for stopping the alert rule (error type).
+	// 2. The second value is an error indicating any issues that occurred while determining the stop reason.
+	//	  If this is non-nil, the scheduler uses the default reason.
+	FindReason(ctx context.Context, logger log.Logger, key ngmodels.AlertRuleKeyWithGroup) (error, error)
+}
+
 type schedule struct {
 	// base tick rate (fastest possible configured check)
 	baseInterval time.Duration
@@ -72,6 +81,8 @@ type schedule struct {
 	// function, and then it'll be called from the event loop whenever the
 	// message from stopApplied is handled.
 	stopAppliedFunc func(ngmodels.AlertRuleKey)
+
+	ruleStopReasonProvider AlertRuleStopReasonProvider
 
 	log log.Logger
 
@@ -104,21 +115,22 @@ type schedule struct {
 
 // SchedulerCfg is the scheduler configuration.
 type SchedulerCfg struct {
-	MaxAttempts          int64
-	BaseInterval         time.Duration
-	C                    clock.Clock
-	MinRuleInterval      time.Duration
-	DisableGrafanaFolder bool
-	RecordingRulesCfg    setting.RecordingRuleSettings
-	AppURL               *url.URL
-	JitterEvaluations    JitterStrategy
-	EvaluatorFactory     eval.EvaluatorFactory
-	RuleStore            RulesStore
-	Metrics              *metrics.Scheduler
-	AlertSender          AlertsSender
-	Tracer               tracing.Tracer
-	Log                  log.Logger
-	RecordingWriter      RecordingWriter
+	MaxAttempts            int64
+	BaseInterval           time.Duration
+	C                      clock.Clock
+	MinRuleInterval        time.Duration
+	DisableGrafanaFolder   bool
+	RecordingRulesCfg      setting.RecordingRuleSettings
+	AppURL                 *url.URL
+	JitterEvaluations      JitterStrategy
+	EvaluatorFactory       eval.EvaluatorFactory
+	RuleStore              RulesStore
+	Metrics                *metrics.Scheduler
+	AlertSender            AlertsSender
+	Tracer                 tracing.Tracer
+	Log                    log.Logger
+	RecordingWriter        RecordingWriter
+	RuleStopReasonProvider AlertRuleStopReasonProvider
 }
 
 // NewScheduler returns a new scheduler.
@@ -130,24 +142,25 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 	}
 
 	sch := schedule{
-		registry:              newRuleRegistry(),
-		maxAttempts:           cfg.MaxAttempts,
-		clock:                 cfg.C,
-		baseInterval:          cfg.BaseInterval,
-		log:                   cfg.Log,
-		evaluatorFactory:      cfg.EvaluatorFactory,
-		ruleStore:             cfg.RuleStore,
-		metrics:               cfg.Metrics,
-		appURL:                cfg.AppURL,
-		disableGrafanaFolder:  cfg.DisableGrafanaFolder,
-		jitterEvaluations:     cfg.JitterEvaluations,
-		rrCfg:                 cfg.RecordingRulesCfg,
-		stateManager:          stateManager,
-		minRuleInterval:       cfg.MinRuleInterval,
-		schedulableAlertRules: alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
-		alertsSender:          cfg.AlertSender,
-		tracer:                cfg.Tracer,
-		recordingWriter:       cfg.RecordingWriter,
+		registry:               newRuleRegistry(),
+		maxAttempts:            cfg.MaxAttempts,
+		clock:                  cfg.C,
+		baseInterval:           cfg.BaseInterval,
+		log:                    cfg.Log,
+		evaluatorFactory:       cfg.EvaluatorFactory,
+		ruleStore:              cfg.RuleStore,
+		metrics:                cfg.Metrics,
+		appURL:                 cfg.AppURL,
+		disableGrafanaFolder:   cfg.DisableGrafanaFolder,
+		jitterEvaluations:      cfg.JitterEvaluations,
+		rrCfg:                  cfg.RecordingRulesCfg,
+		stateManager:           stateManager,
+		minRuleInterval:        cfg.MinRuleInterval,
+		schedulableAlertRules:  alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
+		alertsSender:           cfg.AlertSender,
+		tracer:                 cfg.Tracer,
+		recordingWriter:        cfg.RecordingWriter,
+		ruleStopReasonProvider: cfg.RuleStopReasonProvider,
 	}
 
 	return &sch
@@ -180,12 +193,13 @@ func (sch *schedule) Status(key ngmodels.AlertRuleKey) (ngmodels.RuleStatus, boo
 }
 
 // deleteAlertRule stops evaluation of the rule, deletes it from active rules, and cleans up state cache.
-func (sch *schedule) deleteAlertRule(keys ...ngmodels.AlertRuleKey) {
+func (sch *schedule) deleteAlertRule(ctx context.Context, keys ...ngmodels.AlertRuleKey) {
 	for _, key := range keys {
 		// It can happen that the scheduler has deleted the alert rule before the
 		// Ruler API has called DeleteAlertRule. This can happen as requests to
 		// the Ruler API do not hold an exclusive lock over all scheduler operations.
-		if _, ok := sch.schedulableAlertRules.del(key); !ok {
+		_, ok := sch.schedulableAlertRules.del(key)
+		if !ok {
 			sch.log.Info("Alert rule cannot be removed from the scheduler as it is not scheduled", key.LogContext()...)
 		}
 		// Delete the rule routine
@@ -194,12 +208,33 @@ func (sch *schedule) deleteAlertRule(keys ...ngmodels.AlertRuleKey) {
 			sch.log.Info("Alert rule cannot be stopped as it is not running", key.LogContext()...)
 			continue
 		}
+
 		// stop rule evaluation
-		ruleRoutine.Stop(errRuleDeleted)
+		reason := sch.getRuleStopReason(ctx, ruleRoutine.Identifier())
+		ruleRoutine.Stop(reason)
 	}
 	// Our best bet at this point is that we update the metrics with what we hope to schedule in the next tick.
 	alertRules, _ := sch.schedulableAlertRules.all()
 	sch.updateRulesMetrics(alertRules)
+}
+
+func (sch *schedule) getRuleStopReason(ctx context.Context, key ngmodels.AlertRuleKeyWithGroup) error {
+	// If the ruleStopReasonProvider is defined, we will use it to get the reason why the
+	// alert rule was stopped. If it returns an error, we will use the default reason.
+	if sch.ruleStopReasonProvider == nil {
+		return errRuleDeleted
+	}
+
+	stopReason, err := sch.ruleStopReasonProvider.FindReason(ctx, sch.log, key)
+	if err != nil {
+		sch.log.New(key.LogContext()...).Error("Failed to get stop reason", "error", err)
+		return errRuleDeleted
+	}
+	if stopReason == nil {
+		return errRuleDeleted
+	}
+
+	return stopReason
 }
 
 func (sch *schedule) schedulePeriodic(ctx context.Context, t *ticker.T) error {
@@ -267,7 +302,6 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		sch.alertsSender,
 		sch.stateManager,
 		sch.evaluatorFactory,
-		&sch.schedulableAlertRules,
 		sch.clock,
 		sch.rrCfg,
 		sch.metrics,
@@ -337,9 +371,9 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 			// if we do not need to eval the rule, check the whether rule was just updated and if it was, notify evaluation routine about that
 			logger.Debug("Rule has been updated. Notifying evaluation routine")
 			go func(routine Rule, rule *ngmodels.AlertRule) {
-				routine.Update(RuleVersionAndPauseStatus{
-					Fingerprint: ruleWithFolder{rule: rule, folderTitle: folderTitle}.Fingerprint(),
-					IsPaused:    rule.IsPaused,
+				routine.Update(&Evaluation{
+					rule:        rule,
+					folderTitle: folderTitle,
 				})
 			}(ruleRoutine, item)
 			updatedRules = append(updatedRules, ngmodels.AlertRuleKeyWithVersion{
@@ -392,6 +426,6 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	for key := range registeredDefinitions {
 		toDelete = append(toDelete, key)
 	}
-	sch.deleteAlertRule(toDelete...)
+	sch.deleteAlertRule(ctx, toDelete...)
 	return readyToRun, registeredDefinitions, updatedRules
 }

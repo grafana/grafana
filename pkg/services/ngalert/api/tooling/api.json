@@ -459,6 +459,9 @@
      "format": "double",
      "type": "number"
     },
+    "folderUid": {
+     "type": "string"
+    },
     "health": {
      "type": "string"
     },
@@ -498,10 +501,15 @@
     },
     "type": {
      "type": "string"
+    },
+    "uid": {
+     "type": "string"
     }
    },
    "required": [
+    "uid",
     "name",
+    "folderUid",
     "query",
     "health",
     "type",
@@ -725,6 +733,20 @@
     "$ref": "#/definitions/EmbeddedContactPoint"
    },
    "type": "array"
+  },
+  "ConvertPrometheusResponse": {
+   "properties": {
+    "error": {
+     "type": "string"
+    },
+    "errorType": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    }
+   },
+   "type": "object"
   },
   "CounterResetHint": {
    "description": "or alternatively that we are dealing with a gauge histogram, where counter resets do not apply.",
@@ -1166,6 +1188,14 @@
     "CounterResetHint": {
      "$ref": "#/definitions/CounterResetHint"
     },
+    "CustomValues": {
+     "description": "Holds the custom (usually upper) bounds for bucket definitions, otherwise nil.\nThis slice is interned, to be treated as immutable and copied by reference.\nThese numbers should be strictly increasing. This field is only used when the\nschema is for custom buckets, and the ZeroThreshold, ZeroCount, NegativeSpans\nand NegativeBuckets fields are not used in that case.",
+     "items": {
+      "format": "double",
+      "type": "number"
+     },
+     "type": "array"
+    },
     "PositiveBuckets": {
      "description": "Observation counts in buckets. Each represents an absolute count and\nmust be zero or positive.",
      "items": {
@@ -1182,7 +1212,7 @@
      "type": "array"
     },
     "Schema": {
-     "description": "Currently valid schema numbers are -4 \u003c= n \u003c= 8.  They are all for\nbase-2 bucket schemas, where 1 is a bucket boundary in each case, and\nthen each power of two is divided into 2^n logarithmic buckets.  Or\nin other words, each bucket boundary is the previous boundary times\n2^(2^-n).",
+     "description": "Currently valid schema numbers are -4 \u003c= n \u003c= 8 for exponential buckets.\nThey are all for base-2 bucket schemas, where 1 is a bucket boundary in\neach case, and then each power of two is divided into 2^n logarithmic buckets.\nOr in other words, each bucket boundary is the previous boundary times\n2^(2^-n). Another valid schema number is -53 for custom buckets, defined by\nthe CustomValues field.",
      "format": "int32",
      "type": "integer"
     },
@@ -1577,10 +1607,6 @@
      ],
      "type": "string"
     },
-    "id": {
-     "format": "int64",
-     "type": "integer"
-    },
     "intervalSeconds": {
      "format": "int64",
      "type": "integer"
@@ -1605,10 +1631,6 @@
     "notification_settings": {
      "$ref": "#/definitions/AlertRuleNotificationSettings"
     },
-    "orgId": {
-     "format": "int64",
-     "type": "integer"
-    },
     "provenance": {
      "$ref": "#/definitions/Provenance"
     },
@@ -1627,6 +1649,9 @@
     "updated": {
      "format": "date-time",
      "type": "string"
+    },
+    "updated_by": {
+     "$ref": "#/definitions/UserInfo"
     },
     "version": {
      "format": "int64",
@@ -1711,6 +1736,12 @@
     }
    },
    "type": "object"
+  },
+  "GettableRuleVersions": {
+   "items": {
+    "$ref": "#/definitions/GettableExtendedRuleNode"
+   },
+   "type": "array"
   },
   "GettableStatus": {
    "properties": {
@@ -2923,6 +2954,70 @@
    },
    "type": "object"
   },
+  "PrometheusNamespace": {
+   "properties": {
+    "Body": {
+     "additionalProperties": {
+      "items": {
+       "$ref": "#/definitions/PrometheusRuleGroup"
+      },
+      "type": "array"
+     },
+     "description": "in: body",
+     "type": "object"
+    }
+   },
+   "type": "object"
+  },
+  "PrometheusRule": {
+   "properties": {
+    "Alert": {
+     "type": "string"
+    },
+    "Annotations": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "Expr": {
+     "type": "string"
+    },
+    "For": {
+     "type": "string"
+    },
+    "KeepFiringFor": {
+     "type": "string"
+    },
+    "Labels": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "Record": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "PrometheusRuleGroup": {
+   "properties": {
+    "Interval": {
+     "$ref": "#/definitions/Duration"
+    },
+    "Name": {
+     "type": "string"
+    },
+    "Rules": {
+     "items": {
+      "$ref": "#/definitions/PrometheusRule"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
   "Provenance": {
    "type": "string"
   },
@@ -3572,6 +3667,9 @@
      "format": "double",
      "type": "number"
     },
+    "folderUid": {
+     "type": "string"
+    },
     "health": {
      "type": "string"
     },
@@ -3593,10 +3691,15 @@
     },
     "type": {
      "type": "string"
+    },
+    "uid": {
+     "type": "string"
     }
    },
    "required": [
+    "uid",
     "name",
+    "folderUid",
     "query",
     "health",
     "type"
@@ -3636,6 +3739,9 @@
     "file": {
      "type": "string"
     },
+    "folderUid": {
+     "type": "string"
+    },
     "interval": {
      "format": "double",
      "type": "number"
@@ -3665,6 +3771,7 @@
    "required": [
     "name",
     "file",
+    "folderUid",
     "rules",
     "interval"
    ],
@@ -3767,6 +3874,10 @@
   "Sample": {
    "description": "Sample is a single sample belonging to a metric. It represents either a float\nsample or a histogram sample. If H is nil, it is a float sample. Otherwise,\nit is a histogram sample.",
    "properties": {
+    "DropName": {
+     "description": "DropName is used to indicate whether the __name__ label should be dropped\nas part of the query evaluation.",
+     "type": "boolean"
+    },
     "F": {
      "format": "double",
      "type": "number"
@@ -4445,6 +4556,18 @@
      "type": "array"
     }
    },
+   "type": "object"
+  },
+  "UserInfo": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "uid": {
+     "type": "string"
+    }
+   },
+   "title": "UserInfo represents user-related information, including a unique identifier and a name.",
    "type": "object"
   },
   "Userinfo": {

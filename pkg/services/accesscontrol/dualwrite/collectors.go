@@ -5,12 +5,11 @@ import (
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -71,18 +70,11 @@ func folderTreeCollector(folderService folder.Service) legacyTupleCollector {
 		ctx, span := tracer.Start(ctx, "accesscontrol.migrator.folderTreeCollector")
 		defer span.End()
 
-		user := &user.SignedInUser{
-			Login:            "folder-tree-collector",
-			OrgRole:          "Admin",
-			IsGrafanaAdmin:   true,
-			IsServiceAccount: true,
-			Permissions:      map[int64]map[string][]string{orgID: {dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll}}},
-			OrgID:            orgID,
-		}
+		ctx, ident := identity.WithServiceIdentity(ctx, orgID)
 
 		q := folder.GetFoldersQuery{
 			OrgID:        orgID,
-			SignedInUser: user,
+			SignedInUser: ident,
 		}
 
 		folders, err := folderService.GetFolders(ctx, q)

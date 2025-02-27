@@ -13,7 +13,7 @@ import { RuntimeDataSource } from './RuntimeDataSource';
 export interface DataSourceSrv {
   /**
    * Returns the requested dataSource. If it cannot be found it rejects the promise.
-   * @param ref - The datasource identifier, typically an object with UID and type,
+   * @param ref - The datasource identifier, it can be a name, UID or DataSourceRef (an object with UID),
    * @param scopedVars - variables used to interpolate a templated passed as name.
    */
   get(ref?: DataSourceRef | string | null, scopedVars?: ScopedVars): Promise<DataSourceApi>;

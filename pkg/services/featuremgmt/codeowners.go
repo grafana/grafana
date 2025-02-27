@@ -29,4 +29,5 @@ const (
 	grafanaDatabasesFrontend                    codeowner = "@grafana/databases-frontend"
 	grafanaOSSBigTent                           codeowner = "@grafana/oss-big-tent"
 	growthAndOnboarding                         codeowner = "@grafana/growth-and-onboarding"
+	grafanaDatasourcesCoreServicesSquad         codeowner = "@grafana/grafana-datasources-core-services"
 )

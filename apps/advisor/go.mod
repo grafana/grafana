@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/advisor
 go 1.23.4
 
 require (
-	github.com/grafana/grafana-app-sdk v0.30.0
+	github.com/grafana/grafana-app-sdk v0.31.0
 	k8s.io/apimachinery v0.32.0
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/kube-openapi v0.0.0-20241105132330-32ad38e42d3f

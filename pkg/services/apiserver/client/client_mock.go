@@ -5,9 +5,11 @@ import (
 
 	"github.com/stretchr/testify/mock"
 
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/rest"
 )
 
 var _ K8sHandler = (*MockK8sHandler)(nil)
@@ -21,8 +23,8 @@ func (m *MockK8sHandler) GetNamespace(orgID int64) string {
 	return args.String(0)
 }
 
-func (m *MockK8sHandler) Get(ctx context.Context, name string, orgID int64, subresource ...string) (*unstructured.Unstructured, error) {
-	args := m.Called(ctx, name, orgID, subresource)
+func (m *MockK8sHandler) Get(ctx context.Context, name string, orgID int64, options v1.GetOptions, subresource ...string) (*unstructured.Unstructured, error) {
+	args := m.Called(ctx, name, orgID, options, subresource)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -78,4 +80,20 @@ func (m *MockK8sHandler) GetStats(ctx context.Context, orgID int64) (*resource.R
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*resource.ResourceStatsResponse), args.Error(1)
+}
+
+func (m *MockK8sHandler) GetUserFromMeta(ctx context.Context, userMeta string) (*user.User, error) {
+	args := m.Called(ctx, userMeta)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*user.User), args.Error(1)
+}
+
+type MockTestRestConfig struct {
+	cfg *rest.Config
+}
+
+func (r MockTestRestConfig) GetRestConfig(ctx context.Context) (*rest.Config, error) {
+	return r.cfg, nil
 }

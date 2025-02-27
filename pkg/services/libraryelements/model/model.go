@@ -214,6 +214,7 @@ type GetLibraryElementCommand struct {
 	// Deprecated: use FolderUID instead
 	FolderID int64
 	UID      string
+	Name     string
 }
 
 // SearchLibraryElementsQuery is the query used for searching for Elements

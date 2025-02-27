@@ -11,8 +11,6 @@ import (
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
-const ClusterNamespace = "cluster"
-
 const (
 	TypeUser           string = "user"
 	TypeServiceAccount string = "service-account"
@@ -114,8 +112,8 @@ var VerbMapping = map[string]string{
 	utils.VerbPatch:            RelationUpdate,
 	utils.VerbDelete:           RelationDelete,
 	utils.VerbDeleteCollection: RelationDelete,
-	utils.VerbGetPermissions:   RelationGet,
-	utils.VerbSetPermissions:   RelationDelete,
+	utils.VerbGetPermissions:   RelationGetPermissions,
+	utils.VerbSetPermissions:   RelationSetPermissions,
 }
 
 // RelationToVerbMapping is mapping a zanzana relation to k8s verb.

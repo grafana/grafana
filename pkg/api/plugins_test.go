@@ -45,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
@@ -72,7 +73,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 		preInstalledPlugin               bool
 	}
 	tcs := []testCase{
-		{expectedCode: http.StatusNotFound, permissionOrg: globalOrg, permissions: canInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: true},
+		{expectedCode: http.StatusOK, permissionOrg: globalOrg, permissions: canInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: true},
 		{expectedCode: http.StatusNotFound, permissionOrg: globalOrg, permissions: canInstall, pluginAdminEnabled: false, pluginAdminExternalManageEnabled: true},
 		{expectedCode: http.StatusNotFound, permissionOrg: globalOrg, permissions: canInstall, pluginAdminEnabled: false, pluginAdminExternalManageEnabled: false},
 		{expectedCode: http.StatusForbidden, permissionOrg: globalOrg, permissions: cannotInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: false},
@@ -111,6 +112,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 				},
 			})
 			hs.managedPluginsService = managedplugins.NewNoop()
+			hs.pluginPreinstall = plugininstaller.ProvidePreinstall(hs.Cfg)
 
 			expectedIdentity := &authn.Identity{
 				OrgID:       tc.permissionOrg,
