@@ -1043,10 +1043,24 @@
         },
         "modal": {
           "title": "Row options"
-        }
+        },
+        "repeat": {
+          "title": "Repeat options",
+          "variable": {
+            "title": "Variable"
+          }
+        },
+        "title": "Row options"
       }
     },
     "edit-pane": {
+      "elements": {
+        "dashboard": "Dashboard",
+        "objects": "Objects",
+        "panels": "Panels",
+        "rows": "Rows",
+        "tabs": "Tabs"
+      },
       "objects": {
         "multi-select": {
           "selection-number": "No. of objects selected: {{length}}"
@@ -1150,6 +1164,15 @@
       "description": "Description",
       "title": "Dashboard options",
       "title-option": "Title"
+    },
+    "outline": {
+      "tree": {
+        "item": {
+          "collapse": "Collapse item",
+          "empty": "(empty)",
+          "expand": "Expand item"
+        }
+      }
     },
     "panel-edit": {
       "alerting-tab": {
