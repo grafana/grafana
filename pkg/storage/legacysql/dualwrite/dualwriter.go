@@ -29,41 +29,35 @@ type dualWriter struct {
 }
 
 func (d *dualWriter) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	// Call get (send read traffic in cloud)
+	unifiedGet, unifiedErr := d.unified.Get(ctx, name, options)
+	if d.readUnified {
+		return unifiedGet, unifiedErr
+	}
+
 	legacyGet, err := d.legacy.Get(ctx, name, options)
 	if err != nil {
 		return nil, err
 	}
 
-	// Call get (send read traffic in cloud)
-	unifiedGet, err := d.unified.Get(ctx, name, options)
-	if d.readUnified {
-		return unifiedGet, err
-	}
-
-	if err != nil && !apierrors.IsNotFound(err) && !d.errorIsOK {
-		return nil, err // the unified error
+	if unifiedErr != nil && !apierrors.IsNotFound(unifiedErr) && !d.errorIsOK {
+		return nil, unifiedErr // the unified error
 	}
 	return legacyGet, nil
 }
 
 func (d *dualWriter) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
-	legacyList, err := d.legacy.List(ctx, options)
-	if err != nil {
-		return nil, err
-	}
-
 	// Call list (send read traffic in cloud)
 	unifiedList, err := d.unified.List(ctx, options)
 	if d.readUnified {
 		return unifiedList, err
 	}
-	if d.errorIsOK {
-		if err != nil {
-			d.log.Warn("error calling unified storage list")
-		}
-		err = nil
+
+	if err != nil && !d.errorIsOK {
+		return nil, err
 	}
-	return legacyList, err
+
+	return d.legacy.List(ctx, options)
 }
 
 // Create overrides the behavior of the generic DualWriter and writes to LegacyStorage and Storage.
@@ -114,9 +108,9 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 	}
 
 	if d.readUnified {
-		return storageObj, nil
+		return storageObj, errObjectSt
 	}
-	return createdFromLegacy, nil
+	return createdFromLegacy, errObjectSt
 }
 
 func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
@@ -127,7 +121,7 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 	// but legacy failed, the user would get a failure, but not be able to retry the delete
 	// as they would not be able to see the object in unistore anymore.
 	objFromLegacy, asyncLegacy, err := d.legacy.Delete(ctx, name, deleteValidation, options)
-	if err != nil {
+	if err != nil && !d.readUnified {
 		return objFromLegacy, asyncLegacy, err
 	}
 
