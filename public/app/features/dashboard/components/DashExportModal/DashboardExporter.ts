@@ -423,6 +423,9 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
             name: ds.meta.name,
             version: ds.meta.info.version || '1.0.0',
           });
+
+          let refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase();
+          obj.datasource = { type: ds.meta.id, uid: '${' + refName + '}' };
         });
     };
 
@@ -526,7 +529,7 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
         kind: 'ImportableResources',
         spec: {
           resources: [importableDashboard, ...uniqBy(libraryPanels, 'spec.uid')],
-          requirements: uniqBy(sortBy(requires, ['id']), 'spec.id'),
+          requirements: uniqBy(sortBy(requires, ['id']), 'id'),
         },
       };
 

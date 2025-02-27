@@ -2,6 +2,14 @@ import { find } from 'lodash';
 
 import { DataSourceInstanceSettings, DataSourceRef, PanelPluginMeta, TypedVariableModel } from '@grafana/data';
 import { Dashboard, DashboardCursorSync, ThresholdsMode } from '@grafana/schema';
+import {
+  DashboardKind,
+  DatasourceVariableKind,
+  ImportableResources,
+  LibraryPanelImport,
+  QueryVariableKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/examples';
 import config from 'app/core/config';
 
 import { LibraryElementKind } from '../../../library-panels/types';
@@ -12,7 +20,7 @@ import { createDataSourceVariableAdapter } from '../../../variables/datasource/a
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 import { DashboardModel } from '../../state/DashboardModel';
 
-import { DashboardExporterV1, LibraryElementExport } from './DashboardExporter';
+import { DashboardExporterV1, getDashboardExporter, LibraryElementExport } from './DashboardExporter';
 
 jest.mock('app/core/store', () => {
   return {
@@ -518,6 +526,55 @@ describe('DashboardExporter V1', () => {
         },
       });
     });
+  });
+});
+
+describe('DashboardExporter V2', () => {
+  beforeAll(() => {
+    config.featureToggles.useV2DashboardsAPI = true;
+  });
+  afterAll(() => {
+    config.featureToggles.useV2DashboardsAPI = false;
+  });
+
+  const setup = async () => {
+    const exporter = getDashboardExporter();
+    const exported = (await exporter.makeExportable(handyTestingSchema)) as ImportableResources;
+    const dashboardKind = exported.spec.resources[0] as DashboardKind;
+
+    return { dashboardKind, exported };
+  };
+
+  it('exports ImportableResources kind', async () => {
+    const { exported } = await setup();
+    expect(exported.kind).toBe('ImportableResources');
+  });
+
+  it('dashboard spec is part of Dashboard kind', async () => {
+    const { dashboardKind } = await setup();
+
+    expect(dashboardKind.kind).toBe('Dashboard');
+  });
+
+  it('handles a default datasource in a template variable', async () => {
+    const { dashboardKind } = await setup();
+    const variable = dashboardKind.spec.variables[0] as QueryVariableKind;
+    expect(variable.spec.datasource?.uid).toBe('${DS_GFDB}');
+  });
+
+  it('do not expose datasource name and id in datasource variable', async () => {
+    const { dashboardKind } = await setup();
+    const variable = dashboardKind.spec.variables[2] as DatasourceVariableKind;
+    expect(variable.kind).toBe('DatasourceVariable');
+    expect(variable.spec.current).toEqual({ text: '', value: '' });
+  });
+
+  it('should replace datasource ref in library panel', async () => {
+    const { exported } = await setup();
+    const libraryPanel = exported.spec.resources[1] as LibraryPanelImport;
+
+    expect(libraryPanel.kind).toBe('LibraryPanelImport');
+    expect(libraryPanel.spec.model.datasource.uid).toBe('${DS_GFDB}');
   });
 });
 

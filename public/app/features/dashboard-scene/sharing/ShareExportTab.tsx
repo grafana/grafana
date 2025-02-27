@@ -67,6 +67,10 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
   public getExportableDashboardJson = async () => {
     const { isSharingExternally } = this.state;
 
+    // TODO: once we deprecate the old arch, DashboardExporter.makeExportable
+    // can just take dashboardScene as a prop and handle all this logic
+    // then we would just call here this._exporter.makeExportable(getDashboardSceneFor(this))
+
     if (config.featureToggles.useV2DashboardsAPI) {
       const saveModelV2 = transformSceneToSaveModelSchemaV2(getDashboardSceneFor(this));
       const dashboard: DashboardKind = {
