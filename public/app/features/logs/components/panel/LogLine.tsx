@@ -189,8 +189,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
     wrappedLogLine: css({
       whiteSpace: 'pre-wrap',
       paddingBottom: theme.spacing(0.75),
-      '& .field:not(:last-child)': {
+      '& .field': {
         marginRight: theme.spacing(FIELD_GAP_MULTIPLIER),
+      },
+      '& .field:last-child': {
+        marginRight: 0,
       },
     }),
   };
