@@ -81,7 +81,7 @@ const getStyles = (theme: GrafanaTheme2, padding = 0, maxHeight?: number) => {
       borderTop: `1px solid ${theme.colors.border.medium}`,
       padding: theme.spacing(1),
       overflowY: 'auto',
-      maxHeight: maxHeight ?? 'none',
+      maxHeight: maxHeight,
     }),
     exemplarFooter: css({
       display: 'flex',
