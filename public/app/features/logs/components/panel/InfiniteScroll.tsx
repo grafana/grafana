@@ -4,12 +4,12 @@ import { ListChildComponentProps, ListOnItemsRenderedProps } from 'react-window'
 
 import { AbsoluteTimeRange, LogsSortOrder, TimeRange } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Spinner } from '@grafana/ui';
+import { Spinner, useTheme2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { canScrollBottom, getVisibleRange, ScrollDirection, shouldLoadMore } from '../InfiniteScroll';
 
-import { LogLine } from './LogLine';
+import { getStyles, LogLine } from './LogLine';
 import { LogLineMessage } from './LogLineMessage';
 import { LogListModel } from './processing';
 
@@ -22,6 +22,7 @@ interface ChildrenProps {
 
 interface Props {
   children: (props: ChildrenProps) => ReactNode;
+  displayedFields: string[];
   handleOverflow: (index: number, id: string, height: number) => void;
   loadMore?: (range: AbsoluteTimeRange) => void;
   logs: LogListModel[];
@@ -38,6 +39,7 @@ type InfiniteLoaderState = 'idle' | 'out-of-bounds' | 'pre-scroll' | 'loading';
 
 export const InfiniteScroll = ({
   children,
+  displayedFields,
   handleOverflow,
   loadMore,
   logs,
@@ -57,6 +59,8 @@ export const InfiniteScroll = ({
   const lastEvent = useRef<Event | WheelEvent | null>(null);
   const countRef = useRef(0);
   const lastLogOfPage = useRef<string[]>([]);
+  const theme = useTheme2();
+  const styles = getStyles(theme);
 
   useEffect(() => {
     // Logs have not changed, ignore effect
@@ -132,24 +136,40 @@ export const InfiniteScroll = ({
     ({ index, style }: ListChildComponentProps) => {
       if (!logs[index] && infiniteLoaderState !== 'idle') {
         return (
-          <LogLineMessage style={style} onClick={infiniteLoaderState === 'pre-scroll' ? onLoadMore : undefined}>
+          <LogLineMessage
+            style={style}
+            styles={styles}
+            onClick={infiniteLoaderState === 'pre-scroll' ? onLoadMore : undefined}
+          >
             {getMessageFromInfiniteLoaderState(infiniteLoaderState, sortOrder)}
           </LogLineMessage>
         );
       }
       return (
         <LogLine
+          displayedFields={displayedFields}
           index={index}
           log={logs[index]}
           showTime={showTime}
           style={style}
+          styles={styles}
           variant={getLogLineVariant(logs, index, lastLogOfPage.current)}
           wrapLogMessage={wrapLogMessage}
           onOverflow={handleOverflow}
         />
       );
     },
-    [handleOverflow, infiniteLoaderState, logs, onLoadMore, showTime, sortOrder, wrapLogMessage]
+    [
+      displayedFields,
+      handleOverflow,
+      infiniteLoaderState,
+      logs,
+      onLoadMore,
+      showTime,
+      sortOrder,
+      styles,
+      wrapLogMessage,
+    ]
   );
 
   const onItemsRendered = useCallback(
