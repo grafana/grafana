@@ -31,11 +31,14 @@ import (
 	"unicode/utf8"
 
 	"github.com/google/go-cmp/cmp"
+	"golang.org/x/sync/errgroup"
 )
 
 var record = flag.Bool("record", false, "whether to run tests against cloud resources and record the interactions")
 
 func TestWire(t *testing.T) {
+	t.Parallel()
+
 	const testRoot = "testdata"
 	testdataEnts, err := ioutil.ReadDir(testRoot) // ReadDir sorts by name.
 	if err != nil {
@@ -47,18 +50,32 @@ func TestWire(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	tests := make([]*testCase, 0, len(testdataEnts))
-	for _, ent := range testdataEnts {
-		name := ent.Name()
-		if !ent.IsDir() || strings.HasPrefix(name, ".") || strings.HasPrefix(name, "_") {
-			continue
-		}
-		test, err := loadTestCase(filepath.Join(testRoot, name), wireGo)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-		tests = append(tests, test)
+
+	tests := make([]*testCase, len(testdataEnts))
+
+	g := errgroup.Group{}
+	g.SetLimit(len(testdataEnts))
+
+	for i, ent := range testdataEnts {
+		g.Go(func() error {
+			name := ent.Name()
+			if !ent.IsDir() || strings.HasPrefix(name, ".") || strings.HasPrefix(name, "_") {
+				return nil
+			}
+
+			test, err := loadTestCase(filepath.Join(testRoot, name), wireGo)
+			if err != nil {
+
+				return err
+			}
+
+			tests[i] = test
+			return nil
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		t.Error(err)
 	}
 
 	var goToolPath string
