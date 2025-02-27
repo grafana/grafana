@@ -59,11 +59,22 @@ jobs:
         run: |
           echo "Event: ${{ github.event_name }}"
           echo "Ref: ${{ github.ref }}"
-          echo "Modified files: ${{ github.event.head_commit.modified }}"
+          
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "PR changed files:"
+            echo "${{ toJSON(github.event.pull_request.changed_files) }}"
+          else
+            echo "Push modified files:"
+            echo "${{ github.event.head_commit.modified }}"
+          fi
           
           if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]] && \
              [[ "${{ github.event.head_commit.modified }}" =~ (pkg/|go\.|\.github/workflows/pr-test-backend\.yml) ]]; then
-            echo "Coverage will be generated: true"
+            echo "Coverage will be generated: true (push to main)"
+            echo "generate=true" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event_name }}" == "pull_request" ]] && \
+               [[ "${{ toJSON(github.event.pull_request.changed_files) }}" =~ (pkg/|go\.|\.github/workflows/pr-test-backend\.yml) ]]; then
+            echo "Coverage will be generated: true (PR changes)"
             echo "generate=true" >> $GITHUB_OUTPUT
           else
             echo "Coverage will be generated: false"
