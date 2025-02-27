@@ -8,12 +8,10 @@ import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
 import { Input, Props as InputProps } from '../Input/Input';
-import { Stack } from '../Layout/Stack/Stack';
 import { Portal } from '../Portal/Portal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 import { AsyncError, NotFoundError } from './MessageRows';
-import { OptionListItem } from './OptionListItem';
 import { itemToString } from './filter';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
 import { ComboboxOption } from './types';
@@ -132,6 +130,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   // Value can be an actual scalar Value (string or number), or an Option (value + label), so
   // get a consistent Value from it
   const value = typeof valueProp === 'object' ? valueProp?.value : valueProp;
+  const baseId = useId().replace(/:/g, '--');
 
   const {
     options: filteredOptions,
@@ -170,8 +169,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     return typeof valueProp === 'object' ? valueProp : { value: valueProp, label: valueProp.toString() };
   }, [selectedItemIndex, isAsync, valueProp, allOptions]);
 
-  const menuId = `downshift-${useId().replace(/:/g, '--')}-menu`;
-  const labelId = `downshift-${useId().replace(/:/g, '--')}-label`;
+  const menuId = `${baseId}-downshift-menu`;
+  const labelId = `${baseId}-downshift-label`;
 
   const styles = useStyles2(getComboboxStyles);
 
@@ -303,8 +302,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(filteredOptions, isOpen);
 
   const isAutoSize = width === 'auto';
-
   const InputComponent = isAutoSize ? AutoSizeInput : Input;
+  const placeholder = (isOpen ? itemToString(selectedItem) : null) || placeholderProp;
 
   const suffixIcon = asyncLoading
     ? 'spinner'
@@ -313,7 +312,29 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       ? 'search'
       : 'angle-down';
 
-  const placeholder = (isOpen ? itemToString(selectedItem) : null) || placeholderProp;
+  const inputSuffix = (
+    <>
+      {value && value === selectedItem?.value && isClearable && (
+        <Icon
+          name="times"
+          className={styles.clear}
+          title={t('combobox.clear.title', 'Clear value')}
+          tabIndex={0}
+          role="button"
+          onClick={() => {
+            selectItem(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              selectItem(null);
+            }
+          }}
+        />
+      )}
+
+      <Icon name={suffixIcon} />
+    </>
+  );
 
   return (
     <div className={isAutoSize ? styles.addaptToParent : undefined}>
@@ -326,36 +347,10 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         loading={loading}
         invalid={invalid}
         className={styles.input}
-        suffix={
-          <>
-            {!!value && value === selectedItem?.value && isClearable && (
-              <Icon
-                name="times"
-                className={styles.clear}
-                title={t('combobox.clear.title', 'Clear value')}
-                tabIndex={0}
-                role="button"
-                onClick={() => {
-                  selectItem(null);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    selectItem(null);
-                  }
-                }}
-              />
-            )}
-
-            <Icon name={suffixIcon} />
-          </>
-        }
+        suffix={inputSuffix}
         {...getInputProps({
           ref: inputRef,
-          /*  Empty onCall to avoid TS error
-           *  See issue here: https://github.com/downshift-js/downshift/issues/718
-           *  Downshift repo: https://github.com/downshift-js/downshift/tree/master
-           */
-          onChange: noop,
+          onChange: noop, // Empty onCall to avoid TS error https://github.com/downshift-js/downshift/issues/718
           'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
           placeholder,
         })}
@@ -363,9 +358,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       <Portal>
         <div
           className={cx(styles.menu, !isOpen && styles.menuClosed)}
-          style={{
-            ...floatStyles,
-          }}
+          style={floatStyles}
           {...getMenuProps({
             ref: floatingRef,
             'aria-labelledby': ariaLabelledBy,
@@ -379,37 +372,24 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
                     const item = filteredOptions[virtualRow.index];
                     const startingNewGroup = isNewGroup(item, filteredOptions[virtualRow.index - 1]);
 
+                    // Find the item that renders the group header. It can be this same item if this is rendering it.
                     const groupHeaderIndex = allVirtualRows.find((row) => {
                       const rowItem = filteredOptions[row.index];
                       return rowItem.group === item.group;
                     });
+                    const groupHeaderItem = groupHeaderIndex && filteredOptions[groupHeaderIndex.index];
 
-                    const groupHeaderItem = groupHeaderIndex ? filteredOptions[groupHeaderIndex.index] : null;
-
-                    // TODO: fix this ids if needed
-                    const itemId = 'combobox-option-' + item.value.toString();
+                    const itemId = `${baseId}-option-${item.value}`;
+                    // If we're rendering the group header, this is the ID for it. Otherwise its used in
                     const groupHeaderId = groupHeaderItem
-                      ? 'combobox-option-group-' + groupHeaderItem.value.toString()
+                      ? `${baseId}-option-group-${groupHeaderItem.value}`
                       : undefined;
 
-                    /**
-                     * DOM structure:
-                     * <virtual-item>
-                     *     <group-header>Header name</group-header>
-                     *     <option>Option name</option>
-                     * </virtual-item>
-                     *
-                     * The virtual item is a wrapper around the group header and option purely for
-                     * positioning the virtualised list item. It should have no other 'list item' styling.
-                     *
-                     * Group header and option should appear as individual flat list items.
-                     */
                     return (
+                      // Wrapping div should have no styling other than virtual list positioning.
+                      // It's children (header and option) should appear as flat list items.
                       <div
-                        key={virtualRow.index}
-                        data-index={virtualRow.index}
-                        data-header={startingNewGroup ? 'true' : 'false'}
-                        data-group={item.group}
+                        key={item.value}
                         className={styles.listItem}
                         style={{
                           height: virtualRow.size,
@@ -426,7 +406,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
                           className={cx(
                             styles.option,
                             styles.optionBasic,
-                            selectedItem && item.value === selectedItem.value && styles.optionSelected
+                            selectedItem && item.value === selectedItem.value && styles.optionSelected,
+                            highlightedIndex === virtualRow.index && styles.optionFocused
                           )}
                           {...getItemProps({
                             item: item,
@@ -436,10 +417,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
                           })}
                         >
                           <div className={styles.optionBody}>
-                            <span className={styles.optionLabel} id={itemId}>
-                              {item.label ?? item.value}
-                            </span>
-
+                            <span className={styles.optionLabel}>{item.label ?? item.value}</span>
                             {item.description && <span className={styles.optionDescription}>{item.description}</span>}
                           </div>
                         </div>
@@ -448,6 +426,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
                   })}
                 </div>
               )}
+
               <div aria-live="polite">
                 {asyncError && <AsyncError />}
                 {filteredOptions.length === 0 && !asyncError && <NotFoundError />}
