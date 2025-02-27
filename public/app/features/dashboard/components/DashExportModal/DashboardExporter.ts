@@ -466,21 +466,13 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
     };
 
     try {
-      // check panel data sources
-      // support only grid layout for now
-      if (dashboard.layout.kind !== 'GridLayout') {
-        throw new Error('Only GridLayout is supported');
-      }
-
-      const gridLayoutItems = dashboard.layout.spec.items;
       const elements = dashboard.elements;
 
-      for (const item of gridLayoutItems) {
-        if (item.kind === 'GridLayoutItem') {
-          const panel = elements[item.spec.element.name];
-          if (panel.kind === 'Panel') {
-            await processPanel(panel);
-          }
+      for (const element of Object.values(elements)) {
+        if (element.kind === 'Panel') {
+          await processPanel(element);
+        } else if (element.kind === 'LibraryPanel') {
+          await processLibraryPanels(element);
         }
       }
 
@@ -510,15 +502,6 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
         name: 'Grafana',
         version: config.buildInfo.version,
       });
-
-      for (const item of gridLayoutItems) {
-        if (item.kind === 'GridLayoutItem' && !item.spec.repeat) {
-          const panel = elements[item.spec.element.name];
-          if (panel.kind === 'LibraryPanel') {
-            await processLibraryPanels(panel);
-          }
-        }
-      }
 
       const importableDashboard: DashboardKind = {
         kind: 'Dashboard',
