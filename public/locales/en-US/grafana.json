@@ -1164,6 +1164,15 @@
       "rows": "Total number rows",
       "table-title": "Stats"
     },
+    "layout": {
+      "common": {
+        "copy": "Copy",
+        "copy-or-duplicate": "Copy or Duplicate",
+        "delete": "Delete",
+        "duplicate": "Duplicate",
+        "panels-title": "{{length}} Panels Selected"
+      }
+    },
     "options": {
       "description": "Description",
       "title": "Dashboard options",
@@ -1318,7 +1327,8 @@
     "viz-panel": {
       "options": {
         "description": "Description",
-        "title": "Panel options",
+        "open-edit": "Open Panel Edit",
+        "title": "Panel",
         "title-option": "Title",
         "transparent-background": "Transparent background"
       }

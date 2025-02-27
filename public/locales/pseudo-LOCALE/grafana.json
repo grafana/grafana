@@ -1164,6 +1164,15 @@
       "rows": "Ŧőŧäľ ŉūmþęř řőŵş",
       "table-title": "Ŝŧäŧş"
     },
+    "layout": {
+      "common": {
+        "copy": "Cőpy",
+        "copy-or-duplicate": "Cőpy őř Đūpľįčäŧę",
+        "delete": "Đęľęŧę",
+        "duplicate": "Đūpľįčäŧę",
+        "panels-title": "{{length}} Päŉęľş Ŝęľęčŧęđ"
+      }
+    },
     "options": {
       "description": "Đęşčřįpŧįőŉ",
       "title": "Đäşĥþőäřđ őpŧįőŉş",
@@ -1318,7 +1327,8 @@
     "viz-panel": {
       "options": {
         "description": "Đęşčřįpŧįőŉ",
-        "title": "Päŉęľ őpŧįőŉş",
+        "open-edit": "Øpęŉ Päŉęľ Ēđįŧ",
+        "title": "Päŉęľ",
         "title-option": "Ŧįŧľę",
         "transparent-background": "Ŧřäŉşpäřęŉŧ þäčĸģřőūŉđ"
       }
