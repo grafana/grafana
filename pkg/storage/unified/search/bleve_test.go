@@ -641,29 +641,29 @@ func TestSafeInt64ToInt(t *testing.T) {
 func Test_isValidPath(t *testing.T) {
 	tests := []struct {
 		name    string
-		dir    string
+		dir     string
 		safeDir string
 		want    bool
 	}{
 		{
 			name:    "valid path",
-			dir:    "/path/to/my-file/",
+			dir:     "/path/to/my-file/",
 			safeDir: "/path/to/",
 			want:    true,
 		},
 		{
-			name: "invalid path: ..",
-			dir: "/path/../above/",
+			name:    "invalid path: ..",
+			dir:     "/path/../above/",
 			safeDir: "/path/to/",
 		},
 		{
-			name: "invalid path: \\",
-			dir: "\\path/to",
+			name:    "invalid path: \\",
+			dir:     "\\path/to",
 			safeDir: "/path/to/",
 		},
 		{
-			name: "not a dir:",
-			dir: "/path/to.txt",
+			name:    "not a dir:",
+			dir:     "/path/to.txt",
 			safeDir: "/path/to/",
 		},
 	}
