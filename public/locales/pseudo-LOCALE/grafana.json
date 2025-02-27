@@ -1071,11 +1071,6 @@
         }
       },
       "open": "Øpęŉ őpŧįőŉş päŉę",
-      "panels": {
-        "multi-select": {
-          "selection-number": "Ńő. őƒ päŉęľş şęľęčŧęđ: {{length}}"
-        }
-      },
       "row": {
         "header": {
           "hide": "Ħįđę",
@@ -1170,6 +1165,7 @@
         "copy-or-duplicate": "Cőpy őř Đūpľįčäŧę",
         "delete": "Đęľęŧę",
         "duplicate": "Đūpľįčäŧę",
+        "layout": "Ŀäyőūŧ",
         "panels-title": "{{length}} Päŉęľş Ŝęľęčŧęđ"
       }
     },

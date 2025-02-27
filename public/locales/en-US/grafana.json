@@ -1071,11 +1071,6 @@
         }
       },
       "open": "Open options pane",
-      "panels": {
-        "multi-select": {
-          "selection-number": "No. of panels selected: {{length}}"
-        }
-      },
       "row": {
         "header": {
           "hide": "Hide",
@@ -1170,6 +1165,7 @@
         "copy-or-duplicate": "Copy or Duplicate",
         "delete": "Delete",
         "duplicate": "Duplicate",
+        "layout": "Layout",
         "panels-title": "{{length}} Panels Selected"
       }
     },
