@@ -457,7 +457,7 @@ func (service *AlertRuleService) DeleteRuleGroup(ctx context.Context, user ident
 	})
 }
 
-// DeleteGroups deletes alert rule groups by the specified filter options.
+// DeleteRuleGroups deletes alert rule groups by the specified filter options.
 func (service *AlertRuleService) DeleteRuleGroups(ctx context.Context, user identity.Requester, provenance models.Provenance, filterOpts *FilterOptions) error {
 	q := models.ListAlertRulesQuery{}
 	q = filterOpts.apply(q)

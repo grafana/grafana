@@ -644,6 +644,14 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 			})
 			require.Error(t, err)
 			require.Nil(t, remaining)
+
+			// Verify the otherRule from the "other-group" is still present
+			otherRuleRefreshed, err := ruleStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+				UID:   otherRule.UID,
+				OrgID: otherRule.OrgID,
+			})
+			require.NoError(t, err)
+			require.NotNil(t, otherRuleRefreshed)
 		})
 
 		t.Run("fails to delete rules when they are provisioned", func(t *testing.T) {
