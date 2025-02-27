@@ -1,0 +1,29 @@
+name: Frontend tests
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - release-*.*.*
+
+jobs:
+  test-frontend:
+    runs-on: ubuntu-latest-8-cores
+    name: "Unit tests (${{ matrix.chunk }} / 8)"
+    strategy:
+      fail-fast: true
+      matrix:
+        chunk: [1, 2, 3, 4, 5, 6, 7, 8]
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: '.nvmrc'
+        cache: 'yarn'
+        cache-dependency-path: 'yarn.lock'
+    - run: yarn install --immutable --check-cache
+    - run: yarn run test:ci
+      env:
+        TEST_MAX_WORKERS: 2
+        TEST_SHARD: ${{ matrix.chunk }}
+        TEST_SHARD_TOTAL: 8

@@ -31,7 +31,7 @@
     "lint": "yarn run lint:ts && yarn run lint:sass",
     "lint:ts": "eslint ./ ./public/app/extensions/ --cache --no-error-on-unmatched-pattern",
     "lint:sass": "yarn stylelint '{public/sass,packages}/**/*.scss' --cache",
-    "test:ci": "mkdir -p reports/junit && JEST_JUNIT_OUTPUT_DIR=reports/junit jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%}",
+    "test:ci": "mkdir -p reports/junit && JEST_JUNIT_OUTPUT_DIR=reports/junit jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%} --shard=${TEST_SHARD:-1}/${TEST_SHARD_TOTAL:-1}",
     "lint:fix": "yarn lint:ts --fix",
     "packages:build": "nx run-many -t build --projects='tag:scope:package'",
     "packages:clean": "rimraf ./npm-artifacts && nx run-many -t clean --projects='tag:scope:package' --maxParallel=100",
