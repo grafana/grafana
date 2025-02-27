@@ -8,7 +8,7 @@ import { getDefaultVizPanel } from '../../utils/utils';
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { BulkActionElement } from '../types/BulkActionElement';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
-import { EditableDashboardElement } from '../types/EditableDashboardElement';
+import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
 import { LayoutParent } from '../types/LayoutParent';
 
 import { getEditOptions, renderActions } from './RowItemEditor';
@@ -36,7 +36,6 @@ export class RowItem
   });
 
   public readonly isEditableDashboardElement = true;
-  public readonly typeName = 'Row';
 
   public constructor(state?: Partial<RowItemState>) {
     super({
@@ -56,6 +55,10 @@ export class RowItem
         }
       })
     );
+  }
+
+  public getEditableElementInfo(): EditableDashboardElementInfo {
+    return { typeId: 'row', icon: 'line-alt', name: sceneGraph.interpolate(this, this.state.title, undefined, 'text') };
   }
 
   public getLayout(): DashboardLayoutManager {

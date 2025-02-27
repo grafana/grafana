@@ -17,7 +17,7 @@ import (
 )
 
 type DualWriterMode3 struct {
-	Legacy   LegacyStorage
+	Legacy   Storage
 	Storage  Storage
 	watchImp rest.Watcher // watch is only available in mode 3 and 4
 	*dualWriterMetrics
@@ -27,7 +27,7 @@ type DualWriterMode3 struct {
 
 // newDualWriterMode3 returns a new DualWriter in mode 3.
 // Mode 3 represents writing to LegacyStorage and Storage and reading from Storage.
-func newDualWriterMode3(legacy LegacyStorage, storage Storage, dwm *dualWriterMetrics, resource string) *DualWriterMode3 {
+func newDualWriterMode3(legacy Storage, storage Storage, dwm *dualWriterMetrics, resource string) *DualWriterMode3 {
 	return &DualWriterMode3{
 		Legacy:            legacy,
 		Storage:           storage,
@@ -118,6 +118,7 @@ func (d *DualWriterMode3) Get(ctx context.Context, name string, options *metav1.
 	d.recordStorageDuration(err != nil, mode3Str, d.resource, method, startStorage)
 	if err != nil {
 		log.Error(err, "unable to get object in storage")
+		return nil, err
 	}
 
 	//nolint:errcheck
@@ -176,28 +177,22 @@ func (d *DualWriterMode3) Delete(ctx context.Context, name string, deleteValidat
 	// we want to delete from legacy first, otherwise if the delete from unistore was successful,
 	// but legacy failed, the user would get a failure, but not be able to retry the delete
 	// as they would not be able to see the object in unistore anymore.
-
 	startLegacy := time.Now()
 	objFromLegacy, asyncLegacy, err := d.Legacy.Delete(ctx, name, deleteValidation, options)
+	d.recordLegacyDuration(err != nil && !apierrors.IsNotFound(err), mode3Str, d.resource, method, startLegacy)
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			log.WithValues("object", objFromLegacy).Error(err, "could not delete from legacy store")
-			d.recordLegacyDuration(true, mode3Str, d.resource, method, startLegacy)
 			return objFromLegacy, asyncLegacy, err
 		}
 	}
-	d.recordLegacyDuration(false, mode3Str, d.resource, method, startLegacy)
 
 	startStorage := time.Now()
 	objFromStorage, asyncStorage, err := d.Storage.Delete(ctx, name, deleteValidation, options)
+	d.recordStorageDuration(err != nil && !apierrors.IsNotFound(err), mode3Str, d.resource, method, startStorage)
 	if err != nil {
-		if !apierrors.IsNotFound(err) {
-			log.WithValues("object", objFromStorage).Error(err, "could not delete from storage")
-			d.recordStorageDuration(true, mode3Str, d.resource, method, startStorage)
-		}
-		return objFromStorage, asyncStorage, err
+		return nil, false, err
 	}
-	d.recordStorageDuration(false, mode3Str, d.resource, method, startStorage)
 
 	areEqual := Compare(objFromStorage, objFromLegacy)
 	d.recordOutcome(mode3Str, name, areEqual, method)

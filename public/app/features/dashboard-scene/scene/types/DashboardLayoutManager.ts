@@ -1,4 +1,5 @@
 import { SceneObject, VizPanel } from '@grafana/scenes';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { LayoutRegistryItem } from './LayoutRegistryItem';
@@ -44,16 +45,6 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
   hasVizPanels(): boolean;
 
   /**
-   * Add row
-   */
-  addNewRow(): void;
-
-  /**
-   * Add tab
-   */
-  addNewTab(): void;
-
-  /**
    * Notify the layout manager that the edit mode has changed
    * @param isEditing
    */
@@ -79,7 +70,16 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
    * @param ancestorKey
    * @param isSource
    */
-  cloneLayout?(ancestorKey: string, isSource: boolean): DashboardLayoutManager;
+  cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager;
+}
+
+export interface LayoutManagerSerializer {
+  serialize(layout: DashboardLayoutManager, isSnapshot?: boolean): DashboardV2Spec['layout'];
+  deserialize(
+    layout: DashboardV2Spec['layout'],
+    elements: DashboardV2Spec['elements'],
+    preload: boolean
+  ): DashboardLayoutManager;
 }
 
 export function isDashboardLayoutManager(obj: SceneObject): obj is DashboardLayoutManager {

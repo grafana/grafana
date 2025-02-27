@@ -73,6 +73,16 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Equal(t, rule.Version+1, dbrule.Version)
+
+		t.Run("should create version record", func(t *testing.T) {
+			var count int64
+			err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+				count, err = sess.Table(alertRuleVersion{}).Where("rule_uid = ?", rule.UID).Count()
+				return err
+			})
+			require.NoError(t, err)
+			require.EqualValues(t, 1, count) // only the current version, insert did not create version.
+		})
 	})
 
 	t.Run("updating record field should increase version", func(t *testing.T) {
@@ -189,6 +199,32 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 				return err
 			})
 			assert.Nil(t, dbrule.UpdatedBy)
+		})
+	})
+
+	t.Run("should save noop update", func(t *testing.T) {
+		rule := createRule(t, store, gen)
+		newRule := models.CopyRule(rule)
+		err := store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
+			Existing: rule,
+			New:      *newRule,
+		},
+		})
+		require.NoError(t, err)
+
+		newRule, err = store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: rule.UID})
+		require.NoError(t, err)
+
+		assert.Equal(t, rule.Version+1, newRule.Version)
+
+		t.Run("should not create version record", func(t *testing.T) {
+			var count int64
+			err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+				count, err = sess.Table(alertRuleVersion{}).Where("rule_uid = ?", rule.UID).Count()
+				return err
+			})
+			require.NoError(t, err)
+			require.EqualValues(t, 1, count) // only the current version
 		})
 	})
 }
@@ -679,13 +715,22 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
-	b := &fakeBus{}
 	logger := log.New("test-dbstore")
-	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
+	protoInstanceStore := ProtoInstanceDBStore{
+		SQLStore:       sqlStore,
+		Logger:         logger,
+		FeatureToggles: featuremgmt.WithFeatures(),
+	}
 
 	gen := models.RuleGen
 
 	t.Run("should emit event when rules are deleted", func(t *testing.T) {
+		// Create a new store to pass the custom bus to check the signal
+		b := &fakeBus{}
+		logger := log.New("test-dbstore")
+		store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
+
 		rule := createRule(t, store, gen)
 		called := false
 		b.publishFn = func(ctx context.Context, msg bus.Msg) error {
@@ -701,57 +746,39 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		require.NoError(t, err)
 		require.True(t, called)
 	})
-}
 
-func TestIntegration_GetNamespaceByUID(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	t.Run("should delete alert rule state", func(t *testing.T) {
+		rule := createRule(t, store, gen)
 
-	sqlStore := db.InitTestDB(t)
-	cfg := setting.NewCfg()
-	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
-	b := &fakeBus{}
-	logger := log.New("test-dbstore")
-	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
-
-	u := &user.SignedInUser{
-		UserID:         1,
-		OrgID:          1,
-		OrgRole:        org.RoleAdmin,
-		IsGrafanaAdmin: true,
-	}
-
-	uid := uuid.NewString()
-	parentUid := uuid.NewString()
-	title := "folder/title"
-	parentTitle := "parent-title"
-	createFolder(t, store, parentUid, parentTitle, 1, "")
-	createFolder(t, store, uid, title, 1, parentUid)
-
-	actual, err := store.GetNamespaceByUID(context.Background(), uid, 1, u)
-	require.NoError(t, err)
-	require.Equal(t, title, actual.Title)
-	require.Equal(t, uid, actual.UID)
-	require.Equal(t, title, actual.Fullpath)
-
-	t.Run("error when user does not have permissions", func(t *testing.T) {
-		someUser := &user.SignedInUser{
-			UserID:  2,
-			OrgID:   1,
-			OrgRole: org.RoleViewer,
+		// Save state for the alert rule
+		instances := []models.AlertInstance{
+			{
+				AlertInstanceKey: models.AlertInstanceKey{
+					RuleUID:   rule.UID,
+					RuleOrgID: rule.OrgID,
+				},
+			},
 		}
-		_, err = store.GetNamespaceByUID(context.Background(), uid, 1, someUser)
-		require.ErrorIs(t, err, dashboards.ErrFolderAccessDenied)
-	})
-
-	t.Run("when nested folders are enabled full path should be populated with correct value", func(t *testing.T) {
-		store.FolderService = setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
-		actual, err := store.GetNamespaceByUID(context.Background(), uid, 1, u)
+		err := protoInstanceStore.SaveAlertInstancesForRule(context.Background(), rule.GetKeyWithGroup(), instances)
 		require.NoError(t, err)
-		require.Equal(t, title, actual.Title)
-		require.Equal(t, uid, actual.UID)
-		require.Equal(t, "parent-title/folder\\/title", actual.Fullpath)
+		savedInstances, err := protoInstanceStore.ListAlertInstances(context.Background(), &models.ListAlertInstancesQuery{
+			RuleUID:   rule.UID,
+			RuleOrgID: rule.OrgID,
+		})
+		require.NoError(t, err)
+		require.Len(t, savedInstances, 1)
+
+		// Delete the rule
+		err = store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, rule.UID)
+		require.NoError(t, err)
+
+		// Now there should be no alert rule state
+		savedInstances, err = protoInstanceStore.ListAlertInstances(context.Background(), &models.ListAlertInstancesQuery{
+			RuleUID:   rule.UID,
+			RuleOrgID: rule.OrgID,
+		})
+		require.NoError(t, err)
+		require.Empty(t, savedInstances)
 	})
 }
 
@@ -1543,6 +1570,74 @@ func TestIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
 	})
 }
 
+func TestGetRuleVersions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second}
+	sqlStore := db.InitTestDB(t)
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	b := &fakeBus{}
+	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+	orgID := int64(1)
+	gen := models.RuleGen
+	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval), gen.WithOrgID(orgID), gen.WithVersion(1))
+
+	inserted, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.AlertRule{gen.Generate()})
+	require.NoError(t, err)
+	ruleV1, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: inserted[0].UID})
+	require.NoError(t, err)
+	ruleV2 := models.CopyRule(ruleV1, gen.WithTitle(util.GenerateShortUID()), gen.WithGroupIndex(rand.Int()))
+
+	err = store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, []models.UpdateRule{
+		{
+			Existing: ruleV1,
+			New:      *ruleV2,
+		},
+	})
+	require.NoError(t, err)
+
+	t.Run("should return rule versions sorted in decreasing order", func(t *testing.T) {
+		versions, err := store.GetAlertRuleVersions(context.Background(), ruleV2.GetKey())
+		require.NoError(t, err)
+		assert.Len(t, versions, 2)
+		assert.IsDecreasing(t, versions[0].ID, versions[1].ID)
+		diff := versions[1].Diff(versions[0], AlertRuleFieldsToIgnoreInDiff[:]...)
+		assert.ElementsMatch(t, []string{"Title", "RuleGroupIndex"}, diff.Paths())
+	})
+
+	t.Run("should not remove versions without diff", func(t *testing.T) {
+		for i := 0; i < rand.Intn(2)+1; i++ {
+			r, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: ruleV2.UID})
+			require.NoError(t, err)
+			rn := models.CopyRule(r)
+			err = store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, []models.UpdateRule{
+				{
+					Existing: r,
+					New:      *rn,
+				},
+			})
+			require.NoError(t, err)
+		}
+		ruleV2, err = store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: ruleV2.UID})
+		ruleV3 := models.CopyRule(ruleV2, gen.WithGroupName(util.GenerateShortUID()), gen.WithNamespaceUID(util.GenerateShortUID()))
+
+		err = store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, []models.UpdateRule{
+			{
+				Existing: ruleV2,
+				New:      *ruleV3,
+			},
+		})
+
+		versions, err := store.GetAlertRuleVersions(context.Background(), ruleV3.GetKey())
+		require.NoError(t, err)
+		assert.Len(t, versions, 3)
+		diff := versions[0].Diff(versions[1], AlertRuleFieldsToIgnoreInDiff[:]...)
+		assert.ElementsMatch(t, []string{"RuleGroup", "NamespaceUID"}, diff.Paths())
+	})
+}
+
 // createAlertRule creates an alert rule in the database and returns it.
 // If a generator is not specified, uniqueness of primary key is not guaranteed.
 func createRule(t *testing.T, store *DBstore, generator *models.AlertRuleGenerator) *models.AlertRule {
@@ -1730,6 +1825,64 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 	t.Run("limit set to negative should fail", func(t *testing.T) {
 		_, err := store.deleteOldAlertRuleVersions(context.Background(), "", 1, -1)
 		require.Error(t, err)
+	})
+}
+
+func TestIntegration_ListAlertRules(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
+		BaseInterval: time.Duration(rand.Int63n(100)) * time.Second,
+	}
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	b := &fakeBus{}
+	orgID := int64(1)
+	ruleGen := models.RuleGen
+	ruleGen = ruleGen.With(
+		ruleGen.WithIntervalMatching(cfg.UnifiedAlerting.BaseInterval),
+		ruleGen.WithOrgID(orgID),
+	)
+	t.Run("filter by ImportedPrometheusRule", func(t *testing.T) {
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+		regularRule := createRule(t, store, ruleGen)
+		importedRule := createRule(t, store, ruleGen.With(
+			models.RuleMuts.WithPrometheusOriginalRuleDefinition("data"),
+		))
+		tc := []struct {
+			name                   string
+			importedPrometheusRule *bool
+			expectedRules          []*models.AlertRule
+		}{
+			{
+				name:                   "should return only imported prometheus rules when filter is true",
+				importedPrometheusRule: util.Pointer(true),
+				expectedRules:          []*models.AlertRule{importedRule},
+			},
+			{
+				name:                   "should return only non-imported rules when filter is false",
+				importedPrometheusRule: util.Pointer(false),
+				expectedRules:          []*models.AlertRule{regularRule},
+			},
+			{
+				name:                   "should return all rules when filter is not set",
+				importedPrometheusRule: nil,
+				expectedRules:          []*models.AlertRule{regularRule, importedRule},
+			},
+		}
+		for _, tt := range tc {
+			t.Run(tt.name, func(t *testing.T) {
+				query := &models.ListAlertRulesQuery{
+					OrgID:                  orgID,
+					ImportedPrometheusRule: tt.importedPrometheusRule,
+				}
+				result, err := store.ListAlertRules(context.Background(), query)
+				require.NoError(t, err)
+				require.ElementsMatch(t, tt.expectedRules, result)
+			})
+		}
 	})
 }
 

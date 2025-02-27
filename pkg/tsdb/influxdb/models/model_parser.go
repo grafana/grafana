@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -10,6 +11,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+)
+
+var (
+	ErrInvalidQuery = errors.New("invalid InfluxDB query")
 )
 
 type InfluxdbQueryParser struct{}
@@ -33,17 +38,17 @@ func QueryParse(query backend.DataQuery, logger log.Logger) (*Query, error) {
 
 	tags, err := parseTags(model)
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(ErrInvalidQuery, err)
 	}
 
 	groupBys, err := parseGroupBy(model)
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(ErrInvalidQuery, err)
 	}
 
 	selects, err := parseSelects(model)
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(ErrInvalidQuery, err)
 	}
 
 	interval := query.Interval
