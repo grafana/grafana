@@ -3,6 +3,7 @@ import { isEmpty } from 'lodash';
 import { DataFrame, DataFrameView, getDisplayProcessor, SelectableValue, toDataFrame } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
+import kbn from 'app/core/utils/kbn';
 
 import { getAPINamespace } from '../../../api/utils';
 
@@ -101,10 +102,6 @@ export class UnifiedSearcher implements GrafanaSearcher {
         opts.push({ value: `-${sf.name}`, label: `${sf.display} (most)` });
         opts.push({ value: `${sf.name}`, label: `${sf.display} (least)` });
       }
-      for (const sf of sortTimeFields) {
-        opts.push({ value: `-${sf.name}`, label: `${sf.display} (recent)` });
-        opts.push({ value: `${sf.name}`, label: `${sf.display} (oldest)` });
-      }
     }
 
     return Promise.resolve(opts);
@@ -112,7 +109,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
 
   async doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
     const uri = await this.newRequest(query);
-    const rsp = await getBackendSrv().get<SearchAPIResponse>(uri);
+    const rsp = await this.fetchResponse(uri);
 
     const first = toDashboardResults(rsp, query.sort ?? '');
     if (first.name === loadingFrameName) {
@@ -120,12 +117,6 @@ export class UnifiedSearcher implements GrafanaSearcher {
     }
 
     const meta = first.meta?.custom || ({} as SearchResultMeta);
-    const locationInfo = await this.locationInfo;
-    const hasMissing = rsp.hits.some((hit) => !locationInfo[hit.folder]);
-    if (hasMissing) {
-      // sync the location info ( folders )
-      this.locationInfo = loadLocationInfo();
-    }
     meta.locationInfo = await this.locationInfo;
 
     // Set the field name to a better display name
@@ -141,14 +132,13 @@ export class UnifiedSearcher implements GrafanaSearcher {
     let loadMax = 0;
     let pending: Promise<void> | undefined = undefined;
     const getNextPage = async () => {
-      // TODO: implement this correctly
       while (loadMax > view.dataFrame.length) {
         const offset = view.dataFrame.length;
         if (offset >= meta.count) {
           return;
         }
         const nextPageUrl = `${uri}&offset=${offset}`;
-        const resp = await getBackendSrv().get<SearchAPIResponse>(nextPageUrl);
+        const resp = await this.fetchResponse(nextPageUrl);
         const frame = toDashboardResults(resp, query.sort ?? '');
         if (!frame) {
           console.log('no results', frame);
@@ -196,6 +186,44 @@ export class UnifiedSearcher implements GrafanaSearcher {
         return index < view.dataFrame.length;
       },
     };
+  }
+
+  async fetchResponse(uri: string) {
+    const rsp = await getBackendSrv().get<SearchAPIResponse>(uri);
+    const isFolderCacheStale = await this.isFolderCacheStale(rsp.hits);
+    if (!isFolderCacheStale) {
+      return rsp;
+    }
+    // sync the location info ( folders )
+    this.locationInfo = loadLocationInfo();
+    // recheck for missing folders
+    const hasMissing = await this.isFolderCacheStale(rsp.hits);
+    if (!hasMissing) {
+      return rsp;
+    }
+
+    const locationInfo = await this.locationInfo;
+    const hits = rsp.hits.map((hit) => {
+      if (hit.folder === undefined) {
+        return { ...hit, location: 'general', folder: 'general' };
+      }
+
+      // this means user has permission to see this dashboard, but not the folder contents
+      if (locationInfo[hit.folder] === undefined) {
+        return { ...hit, location: 'sharedwithme', folder: 'sharedwithme' };
+      }
+
+      return hit;
+    });
+    const totalHits = rsp.totalHits - (rsp.hits.length - hits.length);
+    return { ...rsp, hits, totalHits };
+  }
+
+  async isFolderCacheStale(hits: SearchHit[]): Promise<boolean> {
+    const locationInfo = await this.locationInfo;
+    return hits.some((hit) => {
+      return hit.folder !== undefined && locationInfo[hit.folder] === undefined;
+    });
   }
 
   private async newRequest(query: SearchQuery): Promise<string> {
@@ -252,12 +280,6 @@ const sortFields = [
   { name: 'errors_last_30_days', display: 'Errors 30 days' },
 ];
 
-// Enterprise only time sort field values for dashboards
-const sortTimeFields = [
-  { name: 'created_at', display: 'Created time' },
-  { name: 'updated_at', display: 'Updated time' },
-];
-
 function noDataResponse(): QueryResponse | PromiseLike<QueryResponse> {
   return {
     view: new DataFrameView({ length: 0, fields: [] }),
@@ -274,11 +296,6 @@ function noDataResponse(): QueryResponse | PromiseLike<QueryResponse> {
 /** Given the internal field name, this gives a reasonable display name for the table colum header */
 function getSortFieldDisplayName(name: string) {
   for (const sf of sortFields) {
-    if (sf.name === name) {
-      return sf.display;
-    }
-  }
-  for (const sf of sortTimeFields) {
     if (sf.name === name) {
       return sf.display;
     }
@@ -305,7 +322,7 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
     return {
       ...hit,
       uid: hit.name,
-      url: toURL(hit.resource, hit.name),
+      url: toURL(hit.resource, hit.name, hit.title),
       tags: hit.tags || [],
       folder: hit.folder || 'general',
       location,
@@ -343,12 +360,17 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
           name: 'Dashboards',
           url: '/dashboards',
         }, // share location info with everyone
+        sharedwithme: {
+          kind: 'sharedwithme',
+          name: 'Shared with me',
+          url: '',
+        },
       };
       for (const hit of rsp.hits) {
         locationInfo[hit.name] = {
           name: hit.title,
           kind: 'folder',
-          url: toURL('folders', hit.name),
+          url: toURL('folders', hit.name, hit.title),
         };
       }
       return locationInfo;
@@ -356,9 +378,10 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
   return rsp;
 }
 
-function toURL(resource: string, name: string): string {
+function toURL(resource: string, name: string, title: string): string {
   if (resource === 'folders') {
     return `/dashboards/f/${name}`;
   }
-  return `/d/${name}`;
+  const slug = kbn.slugifyForUrl(title);
+  return `/d/${name}/${slug}`;
 }

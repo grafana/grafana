@@ -22,6 +22,7 @@ import {
   SceneInteractionProfileEvent,
   SceneObjectState,
 } from '@grafana/scenes';
+import { isWeekStart } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -41,16 +42,16 @@ import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
-import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { AngularDeprecation } from '../scene/angular/AngularDeprecation';
 import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
-import { RowActions } from '../scene/row-actions/RowActions';
+import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
+import { RowActions } from '../scene/layout-default/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDashboardSceneFor, getVizPanelKeyForPanelId } from '../utils/utils';
+import { getVizPanelKeyForPanelId } from '../utils/utils';
 import { createVariablesForDashboard, createVariablesForSnapshot } from '../utils/variables';
 
 import { getAngularPanelMigrationHandler } from './angularMigration';
@@ -267,7 +268,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       grid: new SceneGridLayout({
         isLazy: !(dto.preload || contextSrv.user.authenticatedBy === 'render'),
         children: createSceneObjectsForPanels(oldModel.panels),
-        $behaviors: [trackIfEmpty],
       }),
     }),
     $timeRange: new SceneTimeRange({
@@ -275,7 +275,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       to: oldModel.time.to,
       fiscalYearStartMonth: oldModel.fiscalYearStartMonth,
       timeZone: oldModel.timezone,
-      weekStart: oldModel.weekStart,
+      weekStart: isWeekStart(oldModel.weekStart) ? oldModel.weekStart : undefined,
       UNSAFE_nowDelay: oldModel.timepicker?.nowDelay,
     }),
     $variables: variables,
@@ -425,20 +425,6 @@ export const convertOldSnapshotToScenesSnapshot = (panel: PanelModel) => {
     panel.snapshotData = [];
   }
 };
-
-function trackIfEmpty(grid: SceneGridLayout) {
-  getDashboardSceneFor(grid).setState({ isEmpty: grid.state.children.length === 0 });
-
-  const sub = grid.subscribeToState((n, p) => {
-    if (n.children.length !== p.children.length || n.children !== p.children) {
-      getDashboardSceneFor(grid).setState({ isEmpty: n.children.length === 0 });
-    }
-  });
-
-  return () => {
-    sub.unsubscribe();
-  };
-}
 
 function getDashboardInteractionCallback(uid: string, title: string) {
   return (e: SceneInteractionProfileEvent) => {

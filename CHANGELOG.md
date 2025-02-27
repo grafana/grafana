@@ -1,3 +1,124 @@
+<!-- 11.5.2 START -->
+
+# 11.5.2 (2025-02-18)
+
+### Features and enhancements
+
+- **Docker:** Use our own glibc 2.40 binaries [#99918](https://github.com/grafana/grafana/pull/99918), [@DanCech](https://github.com/DanCech)
+- **TransformationFilter:** Include transformation outputs in transformation filtering options [#99878](https://github.com/grafana/grafana/pull/99878), [@Sergej-Vlasov](https://github.com/Sergej-Vlasov)
+- **grafana-ui:** Update InlineField error prop type to React.ReactNode [#100373](https://github.com/grafana/grafana/pull/100373), [@Clarity-89](https://github.com/Clarity-89)
+
+### Bug fixes
+
+- **Alerting:** Allow specifying uid for new rules added to groups [#100450](https://github.com/grafana/grafana/pull/100450), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Alerting:** Allow specifying uid for new rules added to groups [#100450](https://github.com/grafana/grafana/pull/100450), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Alerting:** Call RLock() before reading sendAlertsTo map [#99880](https://github.com/grafana/grafana/pull/99880), [@santihernandezc](https://github.com/santihernandezc)
+- **Auth:** Fix redirect with JWT auth URL login [#100355](https://github.com/grafana/grafana/pull/100355), [@mgyongyosi](https://github.com/mgyongyosi)
+- **AuthN:** Refetch user on "ErrUserAlreadyExists" [#100582](https://github.com/grafana/grafana/pull/100582), [@kalleep](https://github.com/kalleep)
+- **Azure:** Correctly set application insights resource values [#99599](https://github.com/grafana/grafana/pull/99599), [@aangelisc](https://github.com/aangelisc)
+- **CodeEditor:** Fix cursor alignment [#99863](https://github.com/grafana/grafana/pull/99863), [@ashharrison90](https://github.com/ashharrison90)
+- **DashboardList:** Throttle the re-renders [#100046](https://github.com/grafana/grafana/pull/100046), [@bfmatei](https://github.com/bfmatei)
+- **Dashboards:** Bring back scripted dashboards [#100633](https://github.com/grafana/grafana/pull/100633), [@dprokop](https://github.com/dprokop)
+- **Plugin Metrics:** Eliminate data race in plugin metrics middleware [#100078](https://github.com/grafana/grafana/pull/100078), [@clord](https://github.com/clord)
+- **RBAC:** Don't check folder access if `annotationPermissionUpdate` FT is enabled [#100117](https://github.com/grafana/grafana/pull/100117), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+
+<!-- 11.5.2 END -->
+<!-- 11.4.2 START -->
+
+# 11.4.2 (2025-02-18)
+
+### Features and enhancements
+
+- **Docker:** Use our own glibc 2.40 binaries [#99924](https://github.com/grafana/grafana/pull/99924), [@DanCech](https://github.com/DanCech)
+
+### Bug fixes
+
+- **Auth:** Fix redirect with JWT auth URL login [#100494](https://github.com/grafana/grafana/pull/100494), [@mgyongyosi](https://github.com/mgyongyosi)
+- **AuthN:** Refetch user on "ErrUserAlreadyExists" [#100585](https://github.com/grafana/grafana/pull/100585), [@kalleep](https://github.com/kalleep)
+- **Azure:** Correctly set application insights resource values [#99598](https://github.com/grafana/grafana/pull/99598), [@aangelisc](https://github.com/aangelisc)
+- **Dashboards:** Bring back scripted dashboards [#100629](https://github.com/grafana/grafana/pull/100629), [@dprokop](https://github.com/dprokop)
+- **Plugin Metrics:** Eliminate data race in plugin metrics middleware [#100077](https://github.com/grafana/grafana/pull/100077), [@clord](https://github.com/clord)
+- **RBAC:** Don't check folder access if `annotationPermissionUpdate` FT is enabled [#100116](https://github.com/grafana/grafana/pull/100116), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+
+<!-- 11.4.2 END -->
+<!-- 11.3.4 START -->
+
+# 11.3.4 (2025-02-18)
+
+### Features and enhancements
+
+- **Docker:** Use our own glibc 2.40 binaries [#99923](https://github.com/grafana/grafana/pull/99923), [@DanCech](https://github.com/DanCech)
+
+### Bug fixes
+
+- **Auth:** Fix redirect with JWT auth URL login [#100495](https://github.com/grafana/grafana/pull/100495), [@mgyongyosi](https://github.com/mgyongyosi)
+- **Azure:** Correctly set application insights resource values [#99597](https://github.com/grafana/grafana/pull/99597), [@aangelisc](https://github.com/aangelisc)
+- **Dashboards:** Bring back scripted dashboards [#100627](https://github.com/grafana/grafana/pull/100627), [@dprokop](https://github.com/dprokop)
+- **Plugin Metrics:** Eliminate data race in plugin metrics middleware [#100076](https://github.com/grafana/grafana/pull/100076), [@clord](https://github.com/clord)
+
+<!-- 11.3.4 END -->
+<!-- 11.2.7 START -->
+
+# 11.2.7 (2025-02-18)
+
+### Features and enhancements
+
+- **Docker:** Use our own glibc 2.40 binaries [#99922](https://github.com/grafana/grafana/pull/99922), [@DanCech](https://github.com/DanCech)
+
+### Bug fixes
+
+- **Azure:** Correctly set application insights resource values [#99596](https://github.com/grafana/grafana/pull/99596), [@aangelisc](https://github.com/aangelisc)
+
+<!-- 11.2.7 END -->
+<!-- 11.1.12 START -->
+
+# 11.1.12 (2025-02-18)
+
+### Features and enhancements
+
+- **Docker:** Use our own glibc 2.40 binaries [#99917](https://github.com/grafana/grafana/pull/99917), [@DanCech](https://github.com/DanCech)
+
+### Bug fixes
+
+- **Azure:** Correctly set application insights resource values [#99595](https://github.com/grafana/grafana/pull/99595), [@aangelisc](https://github.com/aangelisc)
+
+<!-- 11.1.12 END -->
+<!-- 11.0.11 START -->
+
+# 11.0.11 (2025-02-18)
+
+### Features and enhancements
+
+- **Docker:** Use our own glibc 2.40 binaries [#100730](https://github.com/grafana/grafana/pull/100730), [@DanCech](https://github.com/DanCech)
+
+### Bug fixes
+
+- **Azure:** Correctly set application insights resource values [#99594](https://github.com/grafana/grafana/pull/99594), [@aangelisc](https://github.com/aangelisc)
+
+<!-- 11.0.11 END -->
+<!-- 10.4.16 START -->
+
+# 10.4.16 (2025-02-18)
+
+### Features and enhancements
+
+- **Docker:** Use our own glibc 2.40 binaries [#99920](https://github.com/grafana/grafana/pull/99920), [@DanCech](https://github.com/DanCech)
+
+### Bug fixes
+
+- **Dashboard:** Fix for overwriting an edited dashboard in the old architecture [#100288](https://github.com/grafana/grafana/pull/100288), [@bfmatei](https://github.com/bfmatei)
+
+<!-- 10.4.16 END -->
+<!-- 11.5.1 START -->
+
+# 11.5.1 (2025-02-03)
+
+### Bug fixes
+
+- **CodeEditor:** Fix cursor alignment [#99090](https://github.com/grafana/grafana/pull/99090), [@ashharrison90](https://github.com/ashharrison90)
+- **TransformationFilter**: Include transformation outputs in transformation filtering options: Include transformation outputs in transformation filtering options [#98323](https://github.com/grafana/grafana/pull/98323), [@Sergej-Vlasov](https://github.com/Sergej-Vlasov)
+
+<!-- 11.5.1 END -->
 <!-- 11.5.0 START -->
 
 # 11.5.0 (2025-01-28)

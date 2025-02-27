@@ -192,7 +192,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	}
 	metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetDashboard).Inc()
 	// lookup folder title & url
-	if dash.FolderUID != "" && hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+	if dash.FolderUID != "" && hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		queryResult, err := hs.folderService.Get(ctx, &folder.GetFolderQuery{
 			OrgID:        c.SignedInUser.GetOrgID(),
 			UID:          &dash.FolderUID,
@@ -201,6 +201,18 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		if errors.Is(err, dashboards.ErrFolderNotFound) {
 			return response.Error(http.StatusNotFound, "Folder not found", err)
 		}
+		if apierrors.IsForbidden(err) {
+			// the dashboard is in a folder the user can't access, so return the dashboard without folder info
+			err = nil
+			queryResult = &folder.Folder{
+				UID: dash.FolderUID,
+			}
+		}
+		if err != nil {
+			hs.log.Error("Failed to get dashboard folder", "error", err)
+			return response.Error(http.StatusInternalServerError, "Dashboard folder could not be read", err)
+		}
+
 		meta.FolderUid = queryResult.UID
 		meta.FolderTitle = queryResult.Title
 		meta.FolderId = queryResult.ID // nolint:staticcheck

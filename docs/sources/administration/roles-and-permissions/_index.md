@@ -121,29 +121,6 @@ For more information about assigning dashboard folder permissions, refer to [Gra
 
 For more information about assigning dashboard permissions, refer to [Grant dashboard permissions]({{< relref "../user-management/manage-dashboard-permissions/#grant-dashboard-permissions" >}}).
 
-## Editors with administrator permissions
-
-If you have access to the Grafana server, you can modify the default editor role so that editors can use administrator permissions to manage dashboard folders, dashboards, and teams that they create.
-
-{{% admonition type="note" %}}
-This permission does not allow editors to manage folders, dashboards, and teams that they do not create.
-{{% /admonition %}}
-
-This setting can be used to enable self-organizing teams to administer their own dashboards.
-
-For more information about assigning administrator permissions to editors, refer to [Grant editors administrator permissions]({{< relref "../user-management/server-user-management/grant-editor-admin-permissions/" >}}).
-
-## Viewers with dashboard preview and Explore permissions
-
-If you have access to the Grafana server, you can modify the default viewer role so that viewers can:
-
-- Edit and preview dashboards, but cannot save their changes or create new dashboards.
-- Access and use [Explore]({{< relref "../../explore" >}}).
-
-Extending the viewer role is useful for public Grafana installations where you want anonymous users to be able to edit panels and queries, but not be able to save or create new dashboards.
-
-For more information about assigning dashboard preview permissions to viewers, refer to [Enable viewers to preview dashboards and use Explore]({{< relref "../user-management/manage-dashboard-permissions/#enable-viewers-to-edit-but-not-save-dashboards-and-use-explore" >}}).
-
 ## Teams and permissions
 
 A team is a group of users within an organization that have common dashboard and data source permission needs. For example, instead of assigning five users access to the same dashboard, you can create a team that consists of those users and assign dashboard permissions to the team. A user can belong to multiple teams.
@@ -153,7 +130,7 @@ You can assign a team member one of the following permissions:
 - **Member**: Includes the user as a member of the team. Members do not have team administrator privileges.
 - **Admin**: Administrators have permission to manage various aspects of the team, including team membership, permissions, and settings.
 
-Because teams exist inside an organization, the organization administrator can manage all teams. When the `editors_can_admin` setting is enabled, editors can create teams and manage teams that they create. For more information about the `editors_can_admin` setting, refer to [Grant editors administrator permissions]({{< relref "../user-management/server-user-management/grant-editor-admin-permissions/" >}}).
+Because teams exist inside an organization, the organization administrator can manage all teams.
 
 For details on managing teams, see [Team management]({{< relref "../team-management/" >}}).
 

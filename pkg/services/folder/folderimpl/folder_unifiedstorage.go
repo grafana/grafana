@@ -10,20 +10,15 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/exp/slices"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
-	"k8s.io/client-go/dynamic"
-	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboardv0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
@@ -32,28 +27,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// interface to allow for testing
-type folderK8sHandler interface {
-	getClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, bool)
-	getNamespace(orgID int64) string
-	getSearcher(ctx context.Context) resource.ResourceClient
-}
-
-var _ folderK8sHandler = (*foldk8sHandler)(nil)
-
-type foldk8sHandler struct {
-	cfg                    *setting.Cfg
-	namespacer             request.NamespaceMapper
-	gvr                    schema.GroupVersionResource
-	restConfigProvider     func(ctx context.Context) *clientrest.Config
-	recourceClientProvider func(ctx context.Context) resource.ResourceClient
-}
+const folderSearchLimit = 100000
 
 func (s *Service) getFoldersFromApiServer(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
 	if q.SignedInUser == nil {
@@ -186,14 +166,14 @@ func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.S
 	request := &resource.ResourceSearchRequest{
 		Options: &resource.ListOptions{
 			Key: &resource.ResourceKey{
-				Namespace: s.k8sclient.getNamespace(query.OrgID),
+				Namespace: s.k8sclient.GetNamespace(query.OrgID),
 				Group:     v0alpha1.FolderResourceInfo.GroupVersionResource().Group,
 				Resource:  v0alpha1.FolderResourceInfo.GroupVersionResource().Resource,
 			},
 			Fields: []*resource.Requirement{},
 			Labels: []*resource.Requirement{},
 		},
-		Limit: 100000}
+		Limit: folderSearchLimit}
 
 	if len(query.UIDs) > 0 {
 		request.Options.Fields = []*resource.Requirement{{
@@ -225,9 +205,7 @@ func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.S
 		request.Limit = query.Limit
 	}
 
-	client := s.k8sclient.getSearcher(ctx)
-
-	res, err := client.Search(ctx, request)
+	res, err := s.k8sclient.Search(ctx, query.OrgID, request)
 	if err != nil {
 		return nil, err
 	}
@@ -276,7 +254,7 @@ func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgI
 	}
 
 	folderkey := &resource.ResourceKey{
-		Namespace: s.k8sclient.getNamespace(orgID),
+		Namespace: s.k8sclient.GetNamespace(orgID),
 		Group:     v0alpha1.FolderResourceInfo.GroupVersionResource().Group,
 		Resource:  v0alpha1.FolderResourceInfo.GroupVersionResource().Resource,
 	}
@@ -293,11 +271,9 @@ func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgI
 				},
 			},
 		},
-		Limit: 100000}
+		Limit: folderSearchLimit}
 
-	client := s.k8sclient.getSearcher(ctx)
-
-	res, err := client.Search(ctx, request)
+	res, err := s.k8sclient.Search(ctx, orgID, request)
 	if err != nil {
 		return nil, err
 	}
@@ -331,24 +307,19 @@ func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64
 	}
 
 	folderkey := &resource.ResourceKey{
-		Namespace: s.k8sclient.getNamespace(orgID),
+		Namespace: s.k8sclient.GetNamespace(orgID),
 		Group:     v0alpha1.FolderResourceInfo.GroupVersionResource().Group,
 		Resource:  v0alpha1.FolderResourceInfo.GroupVersionResource().Resource,
 	}
 
 	request := &resource.ResourceSearchRequest{
 		Options: &resource.ListOptions{
-			Key: folderkey,
-			Fields: []*resource.Requirement{
-				{
-					Key:      resource.SEARCH_FIELD_TITLE_PHRASE,
-					Operator: string(selection.In),
-					Values:   []string{title},
-				},
-			},
+			Key:    folderkey,
+			Fields: []*resource.Requirement{},
 			Labels: []*resource.Requirement{},
 		},
-		Limit: 100000}
+		Query: title,
+		Limit: folderSearchLimit}
 
 	if parentUID != nil {
 		req := []*resource.Requirement{{
@@ -359,9 +330,7 @@ func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64
 		request.Options.Fields = append(request.Options.Fields, req...)
 	}
 
-	client := s.k8sclient.getSearcher(ctx)
-
-	res, err := client.Search(ctx, request)
+	res, err := s.k8sclient.Search(ctx, orgID, request)
 	if err != nil {
 		return nil, err
 	}
@@ -663,10 +632,12 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 		return err
 	}
 
-	folders := []string{cmd.UID}
+	folders := []string{}
 	for _, f := range descFolders {
 		folders = append(folders, f.UID)
 	}
+	// must delete children first, then the parent folder
+	folders = append(folders, cmd.UID)
 
 	if cmd.ForceDeleteRules {
 		if err := s.deleteChildrenInFolder(ctx, cmd.OrgID, folders, cmd.SignedInUser); err != nil {
@@ -686,62 +657,42 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 			return folder.ErrFolderNotEmpty.Errorf("folder contains %d alert rules", alertRulesInFolder)
 		}
 
-		// if dashboard restore is on we don't delete public dashboards, the hard delete will take care of it later
-		if !s.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
-			// We need a list of dashboard uids inside the folder to delete related public dashboards
-			var dashboardUIDs []string
-			// we cannot use the dashboard service directly due to circular dependencies,
-			// so either use the search client if the feature is enabled or use the dashboard store
-			if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
-				dashboardKey := &resource.ResourceKey{
-					Namespace: s.k8sclient.getNamespace(cmd.OrgID),
-					Group:     dashboardv0.DashboardResourceInfo.GroupVersionResource().Group,
-					Resource:  dashboardv0.DashboardResourceInfo.GroupVersionResource().Resource,
-				}
-				request := &resource.ResourceSearchRequest{
-					Options: &resource.ListOptions{
-						Key:    dashboardKey,
-						Labels: []*resource.Requirement{},
-						Fields: []*resource.Requirement{
-							{
-								Key:      resource.SEARCH_FIELD_FOLDER,
-								Operator: string(selection.In),
-								Values:   folders,
-							},
-						},
+		// We need a list of dashboard uids inside the folder to delete related dashboards & public dashboards -
+		// we cannot use the dashboard service directly due to circular dependencies, so use the search client to get the dashboards
+		request := &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Labels: []*resource.Requirement{},
+				Fields: []*resource.Requirement{
+					{
+						Key:      resource.SEARCH_FIELD_FOLDER,
+						Operator: string(selection.In),
+						Values:   folders,
 					},
-					Limit: 100000}
+				},
+			},
+			Limit: folderSearchLimit}
 
-				client := s.k8sclient.getSearcher(ctx)
-				res, err := client.Search(ctx, request)
-				if err != nil {
-					return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
-				}
+		res, err := s.dashboardK8sClient.Search(ctx, cmd.OrgID, request)
+		if err != nil {
+			return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
+		}
 
-				hits, err := dashboardsearch.ParseResults(res, 0)
-				if err != nil {
-					return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
-				}
-
-				dashboardUIDs = make([]string, len(hits.Hits))
-				for i, dashboard := range hits.Hits {
-					dashboardUIDs[i] = dashboard.Name
-				}
-			} else {
-				dashes, err := s.dashboardStore.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{SignedInUser: cmd.SignedInUser, FolderUIDs: folders, OrgId: cmd.OrgID})
-				if err != nil {
-					return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
-				}
-				dashboardUIDs = make([]string, len(dashes))
-				for i, dashboard := range dashes {
-					dashboardUIDs[i] = dashboard.UID
-				}
-			}
-			// Delete all public dashboards in the folders
-			err = s.publicDashboardService.DeleteByDashboardUIDs(ctx, cmd.OrgID, dashboardUIDs)
+		hits, err := dashboardsearch.ParseResults(res, 0)
+		if err != nil {
+			return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
+		}
+		dashboardUIDs := make([]string, len(hits.Hits))
+		for i, dashboard := range hits.Hits {
+			dashboardUIDs[i] = dashboard.Name
+			err = s.dashboardK8sClient.Delete(ctx, dashboard.Name, cmd.OrgID, metav1.DeleteOptions{})
 			if err != nil {
-				return folder.ErrInternal.Errorf("failed to delete public dashboards: %w", err)
+				return folder.ErrInternal.Errorf("failed to delete child dashboard: %w", err)
 			}
+		}
+		// Delete all public dashboards in the folders
+		err = s.publicDashboardService.DeleteByDashboardUIDs(ctx, cmd.OrgID, dashboardUIDs)
+		if err != nil {
+			return folder.ErrInternal.Errorf("failed to delete public dashboards: %w", err)
 		}
 	}
 
@@ -966,30 +917,4 @@ func (s *Service) getDescendantCountsFromApiServer(ctx context.Context, q *folde
 		countsMap[v.Kind()] = c
 	}
 	return countsMap, nil
-}
-
-// -----------------------------------------------------------------------------------------
-// Folder k8s functions
-// -----------------------------------------------------------------------------------------
-
-func (fk8s *foldk8sHandler) getClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, bool) {
-	cfg := fk8s.restConfigProvider(ctx)
-	if cfg == nil {
-		return nil, false
-	}
-
-	dyn, err := dynamic.NewForConfig(cfg)
-	if err != nil {
-		return nil, false
-	}
-
-	return dyn.Resource(fk8s.gvr).Namespace(fk8s.getNamespace(orgID)), true
-}
-
-func (fk8s *foldk8sHandler) getNamespace(orgID int64) string {
-	return fk8s.namespacer(orgID)
-}
-
-func (fk8s *foldk8sHandler) getSearcher(ctx context.Context) resource.ResourceClient {
-	return fk8s.recourceClientProvider(ctx)
 }

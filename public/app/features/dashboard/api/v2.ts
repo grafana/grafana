@@ -56,6 +56,11 @@ export class K8sDashboardV2API
         } catch (e) {
           throw new Error('Failed to load folder');
         }
+      } else if (result.metadata.annotations && !result.metadata.annotations[AnnoKeyFolder]) {
+        // Set AnnoKeyFolder to empty string for top-level dashboards
+        // This ensures NestedFolderPicker correctly identifies it as being in the "Dashboard" root folder
+        // AnnoKeyFolder undefined -> top-level dashboard -> empty string
+        result.metadata.annotations[AnnoKeyFolder] = '';
       }
 
       // Depending on the ui components readiness, we might need to convert the response to v1
@@ -82,7 +87,11 @@ export class K8sDashboardV2API
   }
 
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse> {
-    throw new Error('Method not implemented.');
+    return this.client.delete(uid, showSuccessAlert).then((v) => ({
+      id: 0,
+      message: v.message,
+      title: 'deleted',
+    }));
   }
 
   async saveDashboard(options: SaveDashboardCommand<DashboardV2Spec>): Promise<SaveDashboardResponseDTO> {
@@ -110,6 +119,11 @@ export class K8sDashboardV2API
 
     // add folder annotation
     if (options.folderUid) {
+      // remove frontend folder annotations
+      delete obj.metadata.annotations?.[AnnoKeyFolderTitle];
+      delete obj.metadata.annotations?.[AnnoKeyFolderUrl];
+      delete obj.metadata.annotations?.[AnnoKeyFolderId];
+
       obj.metadata.annotations = {
         ...obj.metadata.annotations,
         [AnnoKeyFolder]: options.folderUid,
@@ -117,6 +131,8 @@ export class K8sDashboardV2API
     }
 
     if (obj.metadata.name) {
+      // remove resource version when updating
+      delete obj.metadata.resourceVersion;
       return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
     }
     return await this.client.create(obj).then((v) => this.asSaveDashboardResponseDTO(v));
@@ -131,10 +147,15 @@ export class K8sDashboardV2API
       })
     );
 
+    let dashId = 0;
+    if (v.metadata.labels?.[DeprecatedInternalId]) {
+      dashId = parseInt(v.metadata.labels[DeprecatedInternalId], 10);
+    }
+
     return {
       uid: v.metadata.name,
       version: parseInt(v.metadata.resourceVersion, 10) ?? 0,
-      id: v.metadata.labels?.[DeprecatedInternalId] ?? 0,
+      id: dashId,
       status: 'success',
       url,
       slug: '',

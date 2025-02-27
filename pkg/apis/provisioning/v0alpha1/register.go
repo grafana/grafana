@@ -2,7 +2,6 @@ package v0alpha1
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,10 +39,8 @@ var RepositoryResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			switch m.Spec.Type {
 			case LocalRepositoryType:
 				target = m.Spec.Local.Path
-			case S3RepositoryType:
-				target = m.Spec.S3.Bucket
 			case GitHubRepositoryType:
-				target = fmt.Sprintf("%s/%s", m.Spec.GitHub.Owner, m.Spec.GitHub.Repository)
+				target = m.Spec.GitHub.URL
 			}
 
 			return []interface{}{
@@ -66,7 +63,7 @@ var JobResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			{Name: "Created At", Type: "date"},
 			{Name: "Action", Type: "string"},
 			{Name: "State", Type: "string"},
-			{Name: "Repository", Type: "string"},
+			{Name: "Message", Type: "string"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
 			m, ok := obj.(*Job)
@@ -79,7 +76,7 @@ var JobResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 				m.CreationTimestamp.UTC().Format(time.RFC3339),
 				m.Spec.Action,
 				m.Status.State,
-				m.Labels["repository"],
+				m.Status.Message,
 			}, nil
 		},
 	})
@@ -111,12 +108,13 @@ func AddKnownTypes(gv schema.GroupVersion, scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(gv,
 		&Repository{},
 		&RepositoryList{},
-		&HelloWorld{},
 		&WebhookResponse{},
 		&ResourceWrapper{},
 		&FileList{},
 		&HistoryList{},
 		&TestResults{},
+		&ResourceList{},
+		&ResourceStats{},
 		&Job{},
 		&JobList{},
 	)
