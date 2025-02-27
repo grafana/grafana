@@ -752,7 +752,7 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 				Value:           iter.Value(),
 			}
 
-			if !checker(iter.Namespace(), iter.Name(), iter.Folder()) {
+			if !checker(iter.Name(), iter.Folder()) {
 				continue
 			}
 
@@ -919,10 +919,7 @@ func (s *server) initWatcher() error {
 			return err
 		}
 		go func() {
-			for {
-				// pipe all events
-				v := <-events
-
+			for v := range events {
 				if v == nil {
 					s.log.Error("received nil event")
 					continue
@@ -1038,7 +1035,7 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 			}
 			s.log.Debug("Server Broadcasting", "type", event.Type, "rv", event.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "resource", event.Key.Resource, "name", event.Key.Name)
 			if event.ResourceVersion > since && matchesQueryKey(req.Options.Key, event.Key) {
-				if !checker(event.Key.Namespace, event.Key.Name, event.Folder) {
+				if !checker(event.Key.Name, event.Folder) {
 					continue
 				}
 
@@ -1174,18 +1171,23 @@ func (s *server) GetBlob(ctx context.Context, req *GetBlobRequest) (*GetBlobResp
 		}}, nil
 	}
 
-	// The linked blob is stored in the resource metadata attributes
-	obj, status := s.getPartialObject(ctx, req.Resource, req.ResourceVersion)
-	if status != nil {
-		return &GetBlobResponse{Error: status}, nil
-	}
+	var info *utils.BlobInfo
+	if req.Uid == "" {
+		// The linked blob is stored in the resource metadata attributes
+		obj, status := s.getPartialObject(ctx, req.Resource, req.ResourceVersion)
+		if status != nil {
+			return &GetBlobResponse{Error: status}, nil
+		}
 
-	info := obj.GetBlob()
-	if info == nil || info.UID == "" {
-		return &GetBlobResponse{Error: &ErrorResult{
-			Message: "Resource does not have a linked blob",
-			Code:    404,
-		}}, nil
+		info = obj.GetBlob()
+		if info == nil || info.UID == "" {
+			return &GetBlobResponse{Error: &ErrorResult{
+				Message: "Resource does not have a linked blob",
+				Code:    404,
+			}}, nil
+		}
+	} else {
+		info = &utils.BlobInfo{UID: req.Uid}
 	}
 
 	rsp, err := s.blob.GetResourceBlob(ctx, req.Resource, info, req.MustProxyBytes)

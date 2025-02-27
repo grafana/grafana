@@ -41,6 +41,9 @@ type BackendOptions struct {
 	WatchBufferSize       int
 	IsHA                  bool
 	unifiedStorageMetrics *resource.StorageApiMetrics
+
+	// testing
+	SimulatedNetworkLatency time.Duration // slows down the create transactions by a fixed amount
 }
 
 func NewBackend(opts BackendOptions) (Backend, error) {
@@ -59,16 +62,17 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		opts.WatchBufferSize = defaultWatchBufferSize
 	}
 	return &backend{
-		isHA:                  opts.IsHA,
-		done:                  ctx.Done(),
-		cancel:                cancel,
-		log:                   log.New("sql-resource-server"),
-		tracer:                opts.Tracer,
-		dbProvider:            opts.DBProvider,
-		pollingInterval:       opts.PollingInterval,
-		watchBufferSize:       opts.WatchBufferSize,
-		unifiedStorageMetrics: opts.unifiedStorageMetrics,
-		batchLock:             &batchLock{running: make(map[string]bool)},
+		isHA:                    opts.IsHA,
+		done:                    ctx.Done(),
+		cancel:                  cancel,
+		log:                     log.New("sql-resource-server"),
+		tracer:                  opts.Tracer,
+		dbProvider:              opts.DBProvider,
+		pollingInterval:         opts.PollingInterval,
+		watchBufferSize:         opts.WatchBufferSize,
+		unifiedStorageMetrics:   opts.unifiedStorageMetrics,
+		batchLock:               &batchLock{running: make(map[string]bool)},
+		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
 	}, nil
 }
 
@@ -98,6 +102,9 @@ type backend struct {
 	pollingInterval time.Duration
 	watchBufferSize int
 	notifier        eventNotifier
+
+	// testing
+	simulatedNetworkLatency time.Duration
 }
 
 func (b *backend) Init(ctx context.Context) error {
@@ -252,7 +259,9 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 			return fmt.Errorf("update resource rv: %w", err)
 		}
 		newVersion = rv
-
+		if b.simulatedNetworkLatency > 0 {
+			time.Sleep(b.simulatedNetworkLatency)
+		}
 		return nil
 	})
 

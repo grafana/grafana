@@ -769,6 +769,98 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 	})
 }
 
+func TestGetFoldersFromApiServer(t *testing.T) {
+	fakeK8sClient := new(client.MockK8sHandler)
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+		CanSaveValue: true,
+		CanViewValue: true,
+	})
+	folderStore := folder.NewFakeStore()
+	folderStore.ExpectedFolder = &folder.Folder{
+		UID:   "parent-uid",
+		ID:    2,
+		Title: "parent title",
+	}
+	service := Service{
+		k8sclient:    fakeK8sClient,
+		features:     featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders),
+		unifiedStore: folderStore,
+	}
+	user := &user.SignedInUser{OrgID: 1}
+	ctx := identity.WithRequester(context.Background(), user)
+	fakeK8sClient.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+
+	t.Run("Get folder by title)", func(t *testing.T) {
+		// the search here will return a parent, this will be the parent folder returned when we query for it to add to the hit info
+		fakeFolderStore := folder.NewFakeStore()
+		fakeFolderStore.ExpectedFolder = &folder.Folder{
+			UID:       "foouid",
+			ParentUID: "parentuid",
+			ID:        2,
+			OrgID:     1,
+			Title:     "foo title",
+			URL:       "/dashboards/f/foouid/foo-title",
+		}
+		service.unifiedStore = fakeFolderStore
+		fakeK8sClient.On("Search", mock.Anything, int64(1), &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Key: &resource.ResourceKey{
+					Namespace: "default",
+					Group:     v0alpha1.FolderResourceInfo.GroupVersionResource().Group,
+					Resource:  v0alpha1.FolderResourceInfo.GroupVersionResource().Resource,
+				},
+				Fields: []*resource.Requirement{},
+				Labels: []*resource.Requirement{},
+			},
+			Query: "foo title",
+			Limit: folderSearchLimit}).Return(&resource.ResourceSearchResponse{
+			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					{
+						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+				},
+				Rows: []*resource.ResourceTableRow{
+					{
+						Key: &resource.ResourceKey{
+							Name:     "uid",
+							Resource: "folder",
+						},
+						Cells: [][]byte{
+							[]byte("foouid"),
+							[]byte("parentuid"),
+						},
+					},
+				},
+			},
+			TotalHits: 1,
+		}, nil).Once()
+
+		result, err := service.getFolderByTitleFromApiServer(ctx, 1, "foo title", nil)
+		require.NoError(t, err)
+
+		expectedResult := &folder.Folder{
+			ID:           2,
+			UID:          "foouid",
+			ParentUID:    "parentuid",
+			Title:        "foo title",
+			OrgID:        1,
+			URL:          "/dashboards/f/foouid/foo-title",
+			Fullpath:     "foo title",
+			FullpathUIDs: "foouid",
+			CreatedByUID: ":0",
+			UpdatedByUID: ":0",
+		}
+		require.Equal(t, expectedResult, result)
+		fakeK8sClient.AssertExpectations(t)
+	})
+}
+
 func TestDeleteFoldersFromApiServer(t *testing.T) {
 	fakeK8sClient := new(client.MockK8sHandler)
 	fakeK8sClient.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
