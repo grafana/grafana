@@ -27,11 +27,11 @@ func TestDocumentMapping(t *testing.T) {
 		RV: 1234,
 		Manager: &utils.ManagerProperties{
 			Kind:     utils.ManagerKindRepo,
-			Identity: "nnn",
+			Identity: "rrr",
 		},
 		Source: &utils.SourceProperties{
 			Path:            "ppp",
-			Checksum:        "hhh",
+			Checksum:        "ooo",
 			TimestampMillis: 1234,
 		},
 	}

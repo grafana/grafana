@@ -237,7 +237,7 @@ func (dr *DashboardServiceImpl) GetProvisionedDashboardData(ctx context.Context,
 			func(orgID int64) {
 				g.Go(func() error {
 					res, err := dr.searchProvisionedDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
-						ManagedBy:       utils.ManagerKindRepo,
+						ManagedBy:       utils.ManagerKindClassicFP, // nolint:staticcheck
 						ManagerIdentity: name,
 						OrgId:           orgID,
 					})
@@ -1720,30 +1720,35 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		})
 	}
 
+	if query.ManagedBy != "" {
+		request.Options.Fields = append(request.Options.Fields, &resource.Requirement{
+			Key:      resource.SEARCH_FIELD_MANAGER_KIND,
+			Operator: string(selection.Equals),
+			Values:   []string{string(query.ManagedBy)},
+		})
+	}
+
 	if query.ManagerIdentity != "" {
-		req := []*resource.Requirement{{
+		request.Options.Fields = append(request.Options.Fields, &resource.Requirement{
 			Key:      resource.SEARCH_FIELD_MANAGER_ID,
 			Operator: string(selection.In),
 			Values:   []string{query.ManagerIdentity},
-		}}
-		request.Options.Fields = append(request.Options.Fields, req...)
+		})
 	}
 
 	if len(query.ManagerIdentityNotIn) > 0 {
-		req := []*resource.Requirement{{
+		request.Options.Fields = append(request.Options.Fields, &resource.Requirement{
 			Key:      resource.SEARCH_FIELD_MANAGER_ID,
 			Operator: string(selection.NotIn),
 			Values:   query.ManagerIdentityNotIn,
-		}}
-		request.Options.Fields = append(request.Options.Fields, req...)
+		})
 	}
 	if query.SourcePath != "" {
-		req := []*resource.Requirement{{
+		request.Options.Fields = append(request.Options.Fields, &resource.Requirement{
 			Key:      resource.SEARCH_FIELD_SOURCE_PATH,
 			Operator: string(selection.In),
 			Values:   []string{query.SourcePath},
-		}}
-		request.Options.Fields = append(request.Options.Fields, req...)
+		})
 	}
 
 	if query.Title != "" {

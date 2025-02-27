@@ -562,8 +562,9 @@ func TestGetProvisionedDashboardData(t *testing.T) {
 		repo := "test"
 		k8sCliMock.On("Search", mock.Anything, int64(1),
 			mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
-				// ensure the prefix is added to the query
-				return req.Options.Fields[0].Values[0] == repo
+				// make sure the kind is added to the query
+				return req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) &&
+					req.Options.Fields[1].Values[0] == repo
 			})).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{},
@@ -572,8 +573,9 @@ func TestGetProvisionedDashboardData(t *testing.T) {
 			TotalHits: 0,
 		}, nil).Once()
 		k8sCliMock.On("Search", mock.Anything, int64(2), mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
-			// ensure the prefix is added to the query
-			return req.Options.Fields[0].Values[0] == repo
+			// make sure the kind is added to the query
+			return req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) &&
+				req.Options.Fields[1].Values[0] == repo
 		})).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
