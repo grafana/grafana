@@ -254,7 +254,8 @@ func convertGettableGrafanaRuleToPostable(gettable *apimodels.GettableGrafanaRul
 }
 
 type apiClient struct {
-	url string
+	url                              string
+	prometheusConversionUseLokiPaths bool
 }
 
 type LegacyApiClient struct {
@@ -1121,7 +1122,13 @@ func (a apiClient) ConvertPrometheusPostRuleGroup(t *testing.T, namespaceTitle, 
 
 func (a apiClient) ConvertPrometheusGetRuleGroupRules(t *testing.T, namespaceTitle, groupName string) apimodels.PrometheusRuleGroup {
 	t.Helper()
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/convert/prometheus/config/v1/rules/%s/%s", a.url, namespaceTitle, groupName), nil)
+
+	path := "%s/api/convert/prometheus/config/v1/rules/%s/%s"
+	if a.prometheusConversionUseLokiPaths {
+		path = "%s/api/convert/api/prom/rules/%s/%s"
+	}
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(path, a.url, namespaceTitle, groupName), nil)
 	require.NoError(t, err)
 	rule, status, raw := sendRequestYAML[apimodels.PrometheusRuleGroup](t, req, http.StatusOK)
 	requireStatusCode(t, http.StatusOK, status, raw)
@@ -1130,7 +1137,13 @@ func (a apiClient) ConvertPrometheusGetRuleGroupRules(t *testing.T, namespaceTit
 
 func (a apiClient) ConvertPrometheusGetNamespaceRules(t *testing.T, namespaceTitle string) map[string][]apimodels.PrometheusRuleGroup {
 	t.Helper()
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/convert/prometheus/config/v1/rules/%s", a.url, namespaceTitle), nil)
+
+	path := "%s/api/convert/prometheus/config/v1/rules/%s"
+	if a.prometheusConversionUseLokiPaths {
+		path = "%s/api/convert/api/prom/rules/%s"
+	}
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(path, a.url, namespaceTitle), nil)
 	require.NoError(t, err)
 	ns, status, raw := sendRequestYAML[map[string][]apimodels.PrometheusRuleGroup](t, req, http.StatusOK)
 	requireStatusCode(t, http.StatusOK, status, raw)
@@ -1139,7 +1152,13 @@ func (a apiClient) ConvertPrometheusGetNamespaceRules(t *testing.T, namespaceTit
 
 func (a apiClient) ConvertPrometheusGetAllRules(t *testing.T) map[string][]apimodels.PrometheusRuleGroup {
 	t.Helper()
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/convert/prometheus/config/v1/rules", a.url), nil)
+
+	path := "%s/api/convert/prometheus/config/v1/rules"
+	if a.prometheusConversionUseLokiPaths {
+		path = "%s/api/convert/api/prom/rules"
+	}
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(path, a.url), nil)
 	require.NoError(t, err)
 	result, status, raw := sendRequestYAML[map[string][]apimodels.PrometheusRuleGroup](t, req, http.StatusOK)
 	requireStatusCode(t, http.StatusOK, status, raw)
@@ -1148,7 +1167,13 @@ func (a apiClient) ConvertPrometheusGetAllRules(t *testing.T) map[string][]apimo
 
 func (a apiClient) ConvertPrometheusDeleteRuleGroup(t *testing.T, namespaceTitle, groupName string) {
 	t.Helper()
-	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/convert/prometheus/config/v1/rules/%s/%s", a.url, namespaceTitle, groupName), nil)
+
+	path := "%s/api/convert/prometheus/config/v1/rules/%s/%s"
+	if a.prometheusConversionUseLokiPaths {
+		path = "%s/api/convert/api/prom/rules/%s/%s"
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf(path, a.url, namespaceTitle, groupName), nil)
 	require.NoError(t, err)
 	_, status, raw := sendRequestJSON[apimodels.ConvertPrometheusResponse](t, req, http.StatusAccepted)
 	requireStatusCode(t, http.StatusAccepted, status, raw)
@@ -1156,7 +1181,13 @@ func (a apiClient) ConvertPrometheusDeleteRuleGroup(t *testing.T, namespaceTitle
 
 func (a apiClient) ConvertPrometheusDeleteNamespace(t *testing.T, namespaceTitle string) {
 	t.Helper()
-	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/convert/prometheus/config/v1/rules/%s", a.url, namespaceTitle), nil)
+
+	path := "%s/api/convert/prometheus/config/v1/rules/%s"
+	if a.prometheusConversionUseLokiPaths {
+		path = "%s/api/convert/api/prom/rules/%s"
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf(path, a.url, namespaceTitle), nil)
 	require.NoError(t, err)
 	_, status, raw := sendRequestJSON[apimodels.ConvertPrometheusResponse](t, req, http.StatusAccepted)
 	requireStatusCode(t, http.StatusAccepted, status, raw)
