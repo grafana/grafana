@@ -174,13 +174,13 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
 function getHeatmapCellLayout(v?: string): HeatmapCellLayout {
   switch (v) {
     case 'upper':
-      return HeatmapCellLayout.ge;
+      return HeatmapCellLayout.Ge;
     case 'lower':
-      return HeatmapCellLayout.le;
+      return HeatmapCellLayout.Le;
     case 'middle':
-      return HeatmapCellLayout.unknown;
+      return HeatmapCellLayout.Unknown;
   }
-  return HeatmapCellLayout.auto;
+  return HeatmapCellLayout.Auto;
 }
 
 function asNumber(v: unknown, defaultValue?: number): number | undefined {

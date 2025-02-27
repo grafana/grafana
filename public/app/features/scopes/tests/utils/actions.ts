@@ -93,7 +93,7 @@ export const updateTimeRange = async (
   dashboardScene: DashboardScene,
   from: DateTime | string = 'now-6h',
   to: DateTime | string = 'now',
-  timeZone: TimeZone = defaultTimeZone
+  timeZone: TimeZone = defaultTimeZone()
 ) =>
   act(async () =>
     sceneGraph
