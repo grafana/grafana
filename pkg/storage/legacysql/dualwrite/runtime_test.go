@@ -76,10 +76,10 @@ func TestManagedMode3_Create(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (rest.LegacyStorage)(nil)
+			l := (rest.Storage)(nil)
 			s := (rest.Storage)(nil)
 
-			ls := legacyStoreMock{&mock.Mock{}, l}
+			ls := storageMock{&mock.Mock{}, l}
 			us := storageMock{&mock.Mock{}, s}
 
 			if tt.setupLegacyFn != nil {
@@ -148,10 +148,10 @@ func TestManagedMode3_Get(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (rest.LegacyStorage)(nil)
+			l := (rest.Storage)(nil)
 			s := (rest.Storage)(nil)
 
-			ls := legacyStoreMock{&mock.Mock{}, l}
+			ls := storageMock{&mock.Mock{}, l}
 			us := storageMock{&mock.Mock{}, s}
 
 			if tt.setupLegacyFn != nil {
@@ -249,10 +249,10 @@ func TestManagedMode3_CreateWhileMigrating(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (rest.LegacyStorage)(nil)
+			l := (rest.Storage)(nil)
 			s := (rest.Storage)(nil)
 
-			ls := legacyStoreMock{&mock.Mock{}, l}
+			ls := storageMock{&mock.Mock{}, l}
 			us := storageMock{&mock.Mock{}, s}
 
 			if tt.setupLegacyFn != nil {

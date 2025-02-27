@@ -16,15 +16,9 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-type dualWriteContextKey struct{}
-
-func IsDualWriteUpdate(ctx context.Context) bool {
-	return ctx.Value(dualWriteContextKey{}) == true
-}
-
 type DualWriterMode2 struct {
 	Storage Storage
-	Legacy  LegacyStorage
+	Legacy  Storage
 	*dualWriterMetrics
 	resource string
 	Log      klog.Logger
@@ -35,7 +29,7 @@ const mode2Str = "2"
 // newDualWriterMode2 returns a new DualWriter in mode 2.
 // Mode 2 represents writing to LegacyStorage first, then to Storage.
 // When reading, values from LegacyStorage will be returned.
-func newDualWriterMode2(legacy LegacyStorage, storage Storage, dwm *dualWriterMetrics, resource string) *DualWriterMode2 {
+func newDualWriterMode2(legacy Storage, storage Storage, dwm *dualWriterMetrics, resource string) *DualWriterMode2 {
 	return &DualWriterMode2{
 		Legacy:            legacy,
 		Storage:           storage,

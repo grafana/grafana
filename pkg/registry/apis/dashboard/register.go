@@ -17,6 +17,8 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboardinternal "github.com/grafana/grafana/pkg/apis/dashboard"
@@ -42,7 +44,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -247,7 +248,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 func (b *DashboardsAPIBuilder) storageForVersion(
 	opts builder.APIGroupOptions,
-	legacyStore grafanarest.LegacyStorage,
+	legacyStore grafanarest.Storage,
 	largeObjects apistore.LargeObjectSupport,
 	newDTOFunc func() runtime.Object,
 ) (map[string]rest.Storage, error) {

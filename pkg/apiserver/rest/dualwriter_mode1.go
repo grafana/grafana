@@ -15,7 +15,7 @@ import (
 )
 
 type DualWriterMode1 struct {
-	Legacy  LegacyStorage
+	Legacy  Storage
 	Storage Storage
 	*dualWriterMetrics
 	resource string
@@ -26,7 +26,7 @@ const mode1Str = "1"
 
 // NewDualWriterMode1 returns a new DualWriter in mode 1.
 // Mode 1 represents writing to and reading from LegacyStorage.
-func newDualWriterMode1(legacy LegacyStorage, storage Storage, dwm *dualWriterMetrics, resource string) *DualWriterMode1 {
+func newDualWriterMode1(legacy Storage, storage Storage, dwm *dualWriterMetrics, resource string) *DualWriterMode1 {
 	return &DualWriterMode1{
 		Legacy:            legacy,
 		Storage:           storage,

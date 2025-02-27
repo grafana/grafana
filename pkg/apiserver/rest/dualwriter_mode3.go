@@ -17,7 +17,7 @@ import (
 )
 
 type DualWriterMode3 struct {
-	Legacy   LegacyStorage
+	Legacy   Storage
 	Storage  Storage
 	watchImp rest.Watcher // watch is only available in mode 3 and 4
 	*dualWriterMetrics
@@ -27,7 +27,7 @@ type DualWriterMode3 struct {
 
 // newDualWriterMode3 returns a new DualWriter in mode 3.
 // Mode 3 represents writing to LegacyStorage and Storage and reading from Storage.
-func newDualWriterMode3(legacy LegacyStorage, storage Storage, dwm *dualWriterMetrics, resource string) *DualWriterMode3 {
+func newDualWriterMode3(legacy Storage, storage Storage, dwm *dualWriterMetrics, resource string) *DualWriterMode3 {
 	return &DualWriterMode3{
 		Legacy:            legacy,
 		Storage:           storage,

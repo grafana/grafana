@@ -14,7 +14,7 @@ type staticService struct {
 	cfg *setting.Cfg
 }
 
-func (m *staticService) NewStorage(gr schema.GroupResource, legacy rest.LegacyStorage, storage rest.Storage) (rest.Storage, error) {
+func (m *staticService) NewStorage(gr schema.GroupResource, legacy rest.Storage, storage rest.Storage) (rest.Storage, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 

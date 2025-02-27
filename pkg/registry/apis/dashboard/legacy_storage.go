@@ -28,7 +28,7 @@ type DashboardStorage struct {
 	Features featuremgmt.FeatureToggles
 }
 
-func (s *DashboardStorage) NewStore(scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter, reg prometheus.Registerer) (grafanarest.LegacyStorage, error) {
+func (s *DashboardStorage) NewStore(scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter, reg prometheus.Registerer) (grafanarest.Storage, error) {
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 		Backend: s.Access,
 		Reg:     reg,

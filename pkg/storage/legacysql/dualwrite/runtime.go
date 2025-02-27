@@ -15,7 +15,7 @@ import (
 )
 
 func (m *service) NewStorage(gr schema.GroupResource,
-	legacy grafanarest.LegacyStorage,
+	legacy grafanarest.Storage,
 	storage grafanarest.Storage,
 ) (grafanarest.Storage, error) {
 	status, err := m.Status(context.Background(), gr)
@@ -53,7 +53,7 @@ func (m *service) NewStorage(gr schema.GroupResource,
 // When a resource is marked as "migrating", all write requests will be 503 unavailable
 type runtimeDualWriter struct {
 	service   Service
-	legacy    grafanarest.LegacyStorage
+	legacy    grafanarest.Storage
 	unified   grafanarest.Storage
 	dualwrite grafanarest.Storage
 	gr        schema.GroupResource
