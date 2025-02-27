@@ -186,6 +186,13 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 				return nil, fmt.Errorf("only one repo path query is supported")
 			}
 			query.SourcePath = vals[0]
+
+		case resource.SEARCH_FIELD_MANAGER_KIND:
+			if len(vals) != 1 {
+				return nil, fmt.Errorf("only one manager kind supported")
+			}
+			query.ManagedBy = utils.ManagerKind(vals[0])
+
 		case resource.SEARCH_FIELD_MANAGER_ID:
 			if field.Operator == string(selection.NotIn) {
 				query.ManagerIdentityNotIn = vals
@@ -217,6 +224,10 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	// if we are querying for provisioning information, we need to use a different
 	// legacy sql query, since legacy search does not support this
 	if query.ManagerIdentity != "" || len(query.ManagerIdentityNotIn) > 0 {
+		if query.ManagedBy == utils.ManagerKindUnknown {
+			return nil, fmt.Errorf("query by manager identity also requires manager.kind parameter")
+		}
+
 		var dashes []*dashboards.Dashboard
 		if query.ManagedBy == utils.ManagerKindPlugin {
 			dashes, err = c.dashboardStore.GetDashboardsByPluginID(ctx, &dashboards.GetDashboardsByPluginIDQuery{
