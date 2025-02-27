@@ -61,12 +61,34 @@ export const setFolderResponse = (response: Partial<FolderDTO>) => {
   server.use(handler);
 };
 
-export const setUpdateRulerRuleNamespaceResolver = (
+export const setUpdateGrafanaRulerRuleNamespaceResolver = (
   resolver: HttpResponseResolver<{ folderUid: string }, RulerRuleGroupDTO, undefined>
 ) => {
   server.use(
     http.post<{ folderUid: string }, RulerRuleGroupDTO, undefined>(
       `/api/ruler/grafana/api/v1/rules/:folderUid`,
+      resolver
+    )
+  );
+};
+
+export const setUpdateRulerRuleNamespaceResolver = (
+  resolver: HttpResponseResolver<{ dataSourceUid: string; namespace: string }, RulerRuleGroupDTO, undefined>
+) => {
+  server.use(
+    http.post<{ dataSourceUid: string; namespace: string }, RulerRuleGroupDTO, undefined>(
+      `/api/ruler/:dataSourceUid/api/v1/rules/:namespace`,
+      resolver
+    )
+  );
+};
+
+export const setDeleteRulerRuleNamespaceResolver = (
+  resolver: HttpResponseResolver<{ dataSourceUid: string; namespace: string; groupName: string }, undefined, undefined>
+) => {
+  server.use(
+    http.delete<{ dataSourceUid: string; namespace: string; groupName: string }, undefined, undefined>(
+      `/api/ruler/:dataSourceUid/api/v1/rules/:namespace/:groupName`,
       resolver
     )
   );

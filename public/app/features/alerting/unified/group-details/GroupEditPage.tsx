@@ -31,6 +31,7 @@ import { stringifyErrorLike } from '../utils/misc';
 import { alertListPageLink, createListFilterLink, groups } from '../utils/navigation';
 
 import { DraggableRulesTable } from './components/DraggableRulesTable';
+import { logError } from '../Analytics';
 
 type GroupEditPageRouteParams = {
   sourceId?: string;
@@ -197,27 +198,35 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
   }, []);
 
   const onSubmit: SubmitHandler<GroupEditFormData> = async (data) => {
-    const changeDelta: UpdateGroupDelta = {
-      namespaceName: dirtyFields.namespace ? data.namespace : undefined,
-      groupName: dirtyFields.name ? data.name : undefined,
-      interval: dirtyFields.interval ? data.interval : undefined,
-      ruleSwaps: operations.length ? operations : undefined,
-    };
+    try {
+      const changeDelta: UpdateGroupDelta = {
+        namespaceName: dirtyFields.namespace ? data.namespace : undefined,
+        groupName: dirtyFields.name ? data.name : undefined,
+        interval: dirtyFields.interval ? data.interval : undefined,
+        ruleSwaps: operations.length ? operations : undefined,
+      };
 
-    const updatedGroupIdentifier = await updateRuleGroup.execute(
-      ruleGroupIdentifierV2toV1(groupIdentifier),
-      changeDelta
-    );
+      const updatedGroupIdentifier = await updateRuleGroup.execute(
+        ruleGroupIdentifierV2toV1(groupIdentifier),
+        changeDelta
+      );
 
-    setMatchingGroupPageUrl(updatedGroupIdentifier);
+      setMatchingGroupPageUrl(updatedGroupIdentifier);
 
-    const shouldWaitForPromConsistency = !!changeDelta.namespaceName || !!changeDelta.groupName;
-    if (shouldWaitForPromConsistency) {
-      await waitForGroupConsistency(updatedGroupIdentifier);
+      const shouldWaitForPromConsistency = !!changeDelta.namespaceName || !!changeDelta.groupName;
+      if (shouldWaitForPromConsistency) {
+        await waitForGroupConsistency(updatedGroupIdentifier);
+      }
+
+      const successMessage = t('alerting.group-edit.form.update-success', 'Successfully updated the rule group');
+      appInfo.success(successMessage);
+    } catch (error) {
+      logError(error instanceof Error ? error : new Error('Failed to update rule group'));
+      appInfo.error(
+        t('alerting.group-edit.form.update-error', 'Failed to update rule group'),
+        stringifyErrorLike(error)
+      );
     }
-
-    const successMessage = t('alerting.group-edit.form.update-success', 'Successfully updated the rule group');
-    appInfo.success(successMessage);
   };
 
   const onDelete = async () => {

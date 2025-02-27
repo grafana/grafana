@@ -1,24 +1,38 @@
 import { HttpResponse } from 'msw';
 import { Route, Routes } from 'react-router-dom-v5-compat';
-import { render } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { locationService } from '@grafana/runtime';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { AccessControlAction } from 'app/types';
+import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
 import {
   mimirDataSource,
+  setDeleteRulerRuleNamespaceResolver,
   setFolderResponse,
   setGrafanaRulerRuleGroupResolver,
   setRulerRuleGroupResolver,
+  setUpdateGrafanaRulerRuleNamespaceResolver,
   setUpdateRulerRuleNamespaceResolver,
 } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
 
 import GroupEditPage from './GroupEditPage';
+
+// Mock the useRuleGroupConsistencyCheck hook
+jest.mock('../hooks/usePrometheusConsistencyCheck', () => ({
+  ...jest.requireActual('../hooks/usePrometheusConsistencyCheck'),
+  useRuleGroupConsistencyCheck: () => ({
+    waitForGroupConsistency: jest.fn().mockResolvedValue(undefined),
+  }),
+}));
+
+window.performance.mark = jest.fn();
+window.performance.measure = jest.fn();
 
 const ui = {
   header: byRole('heading', { level: 1 }),
@@ -28,6 +42,7 @@ const ui = {
   saveButton: byRole('button', { name: /Save/ }),
   rules: byTestId('reorder-alert-rule'),
   successMessage: byText('Successfully updated the rule group'),
+  errorMessage: byText('Failed to update rule group'),
 };
 
 setupMswServer();
@@ -51,12 +66,13 @@ describe('GroupEditPage', () => {
   });
 
   describe('Grafana Managed Rules', () => {
+    const groupsByName = new Map<string, RulerRuleGroupDTO>([[group.name, group]]);
+
     beforeEach(() => {
       setGrafanaRulerRuleGroupResolver(async ({ params: { groupName, folderUid } }) => {
-        if (groupName === 'test-group-cpu' && folderUid === 'test-folder-uid') {
-          return HttpResponse.json(group);
+        if (groupsByName.has(groupName) && folderUid === 'test-folder-uid') {
+          return HttpResponse.json(groupsByName.get(groupName));
         }
-
         return HttpResponse.json(null, { status: 404 });
       });
       setFolderResponse({ uid: 'test-folder-uid', canSave: true });
@@ -84,7 +100,7 @@ describe('GroupEditPage', () => {
     });
 
     it('should save updated interval', async () => {
-      setUpdateRulerRuleNamespaceResolver(async ({ request }) => {
+      setUpdateGrafanaRulerRuleNamespaceResolver(async ({ request }) => {
         const body = await request.json();
         if (body.interval === '1m20s') {
           return HttpResponse.json({}, { status: 202 });
@@ -107,9 +123,10 @@ describe('GroupEditPage', () => {
     });
 
     it('should save a new group and remove the old when renaming', async () => {
-      setUpdateRulerRuleNamespaceResolver(async ({ request }) => {
+      setUpdateGrafanaRulerRuleNamespaceResolver(async ({ request }) => {
         const body = await request.json();
         if (body.name === 'new-group-name') {
+          groupsByName.set('new-group-name', body);
           return HttpResponse.json({}, { status: 202 });
         }
 
@@ -134,22 +151,75 @@ describe('GroupEditPage', () => {
   });
 
   describe('Mimir Rules', () => {
-    it('should save a new group and remove the old when changing the namespace', async () => {
-      setRulerRuleGroupResolver(async ({ params: { groupName, namespace } }) => {
-        if (groupName === 'test-group-cpu' && namespace === 'test-mimir-namespace') {
-          return HttpResponse.json(group);
-        }
+    // Create a map to store groups by name
+    const groupsByName = new Map<string, RulerRuleGroupDTO>([[group.name, group]]);
 
+    beforeEach(() => {
+      groupsByName.clear();
+      groupsByName.set(group.name, group);
+
+      setRulerRuleGroupResolver(async ({ params: { groupName } }) => {
+        if (groupsByName.has(groupName)) {
+          return HttpResponse.json(groupsByName.get(groupName));
+        }
         return HttpResponse.json(null, { status: 404 });
       });
+
       setUpdateRulerRuleNamespaceResolver(async ({ request, params }) => {
-        if (params.folderUid === 'new-namespace-name') {
+        const body = await request.json();
+        groupsByName.set(body.name, body);
+        return HttpResponse.json({}, { status: 202 });
+      });
+
+      setDeleteRulerRuleNamespaceResolver(async ({ params: { groupName } }) => {
+        if (groupsByName.has(groupName)) {
+          groupsByName.delete(groupName);
+        }
+        return HttpResponse.json({ message: 'group does not exist' }, { status: 404 });
+      });
+    });
+
+    it('should save updated interval', async () => {
+      setUpdateRulerRuleNamespaceResolver(async ({ request }) => {
+        const body = await request.json();
+        if (body.interval === '2m') {
           return HttpResponse.json({}, { status: 202 });
         }
 
         return HttpResponse.json(null, { status: 400 });
       });
 
+      const { user } = renderGroupEditPage(mimirDs.uid, 'test-mimir-namespace', 'test-group-cpu');
+
+      const intervalInput = await ui.intervalInput.find();
+      const saveButton = await ui.saveButton.find();
+
+      await user.clear(intervalInput);
+      await user.type(intervalInput, '2m');
+
+      await user.click(saveButton);
+
+      expect(await ui.successMessage.find()).toBeInTheDocument();
+    });
+
+    it('should save a new group and remove the old when changing the group name', async () => {
+      const { user } = renderGroupEditPage(mimirDs.uid, 'test-mimir-namespace', 'test-group-cpu');
+
+      const groupNameInput = await ui.nameInput.find();
+      const saveButton = await ui.saveButton.find();
+
+      await user.clear(groupNameInput);
+      await user.type(groupNameInput, 'new-group-name');
+
+      await user.click(saveButton);
+
+      expect(await ui.successMessage.find()).toBeInTheDocument();
+      expect(locationService.getLocation().pathname).toBe(
+        '/alerting/mimir/namespaces/test-mimir-namespace/groups/new-group-name/edit'
+      );
+    });
+
+    it('should save a new group and delete old one when changing the namespace', async () => {
       const { user } = renderGroupEditPage(mimirDs.uid, 'test-mimir-namespace', 'test-group-cpu');
 
       const namespaceInput = await ui.namespaceInput.find();
@@ -164,6 +234,66 @@ describe('GroupEditPage', () => {
       expect(locationService.getLocation().pathname).toBe(
         '/alerting/mimir/namespaces/new-namespace-name/groups/test-group-cpu/edit'
       );
+    });
+  });
+
+  describe('Form error handling', () => {
+    const groupsByName = new Map<string, RulerRuleGroupDTO>([[group.name, group]]);
+
+    beforeEach(() => {
+      setGrafanaRulerRuleGroupResolver(async ({ params: { groupName, folderUid } }) => {
+        if (groupsByName.has(groupName) && folderUid === 'test-folder-uid') {
+          return HttpResponse.json(groupsByName.get(groupName));
+        }
+        return HttpResponse.json(null, { status: 404 });
+      });
+      setFolderResponse({ uid: 'test-folder-uid', canSave: true });
+    });
+
+    it('should show validation error for empty group name', async () => {
+      const { user } = renderGroupEditPage('grafana', 'test-folder-uid', 'test-group-cpu');
+
+      const nameInput = await ui.nameInput.find();
+      const saveButton = await ui.saveButton.find();
+
+      await user.clear(nameInput);
+      await user.click(saveButton);
+
+      // Check for validation error message
+      expect(screen.getByText('Group name is required')).toBeInTheDocument();
+    });
+
+    it('should show validation error for invalid interval', async () => {
+      const { user } = renderGroupEditPage('grafana', 'test-folder-uid', 'test-group-cpu');
+
+      const intervalInput = await ui.intervalInput.find();
+      const saveButton = await ui.saveButton.find();
+
+      await user.clear(intervalInput);
+      await user.type(intervalInput, 'invalid');
+      await user.click(saveButton);
+
+      // The exact error message depends on your validation logic
+      // This is a common pattern for testing validation errors
+      expect(screen.getByText(/must be of format/i)).toBeInTheDocument();
+    });
+
+    it('should handle API error when saving fails', async () => {
+      setUpdateGrafanaRulerRuleNamespaceResolver(async () => {
+        return HttpResponse.json({ message: 'Failed to save rule group' }, { status: 500 });
+      });
+
+      const { user } = renderGroupEditPage('grafana', 'test-folder-uid', 'test-group-cpu');
+
+      const intervalInput = await ui.intervalInput.find();
+      const saveButton = await ui.saveButton.find();
+
+      await user.clear(intervalInput);
+      await user.type(intervalInput, '1m');
+      await user.click(saveButton);
+
+      expect(ui.successMessage.query()).not.toBeInTheDocument();
+      expect(ui.errorMessage.query()).toBeInTheDocument();
     });
   });
 });
