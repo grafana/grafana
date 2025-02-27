@@ -159,6 +159,7 @@ export const TimeSeriesPanel = ({
                     config={uplotConfig}
                     exemplars={data.annotations}
                     timeZone={timeZone}
+                    maxHeight={options.tooltip.maxHeight}
                   />
                 )}
                 {((canEditThresholds && onThresholdsChange) || showThresholds) && (
