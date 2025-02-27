@@ -1,6 +1,8 @@
 package xorm
 
 import (
+	"strings"
+
 	_ "github.com/googleapis/go-sql-spanner"
 	"xorm.io/core"
 )
@@ -154,7 +156,7 @@ func (s *spanner) SqlType(col *core.Column) string {
 	case core.DateTime, core.TimeStamp:
 		return "TIMESTAMP"
 	default:
-		return "STRING(MAX)" // Default fallback
+		return "STRING(MAX)" // XXX: more types to add
 	}
 }
 
@@ -188,42 +190,29 @@ func (s *spanner) GetColumns(tableName string) ([]string, map[string]*core.Colum
 }
 
 func (s *spanner) CreateTableSql(table *core.Table, tableName, _, charset string) string {
-	type Column struct {
-		Name     string
-		Type     string
-		Nullable bool
-		Default  string
-	}
-	type Table struct {
-		Name        string
-		Columns     []Column
-		PrimaryKeys []string
-	}
-	name := tableName
-	if name == "" {
-		name = table.Name
+	sql := "CREATE TABLE " + s.Quote(tableName) + " ("
+
+	for i, col := range table.Columns() {
+		if i > 0 {
+			sql += ", "
+		}
+		sql += s.Quote(col.Name) + " " + s.SqlType(col)
+		if col.IsPrimaryKey {
+			sql += " PRIMARY KEY"
+		}
 	}
 
-	columns := make([]Column, 0, len(table.Columns()))
-	for _, c := range table.Columns() {
-		columns = append(columns, Column{
-			Name:     c.Name,
-			Type:     s.SqlType(c),
-			Nullable: c.Nullable,
-			Default:  c.Default,
-		})
-	}
+	sql += ") PRIMARY KEY (" + strings.Join(table.PrimaryKeys, ",") + ")"
+	return sql
+}
 
-	panic("todo")
-	//sql, err := CreateTable(Table{
-	//Name:        name,
-	//Columns:     columns,
-	//PrimaryKeys: table.PrimaryKeys,
-	//})
-	//if err != nil {
-	//panic(err) // no other way to report an error?
-	//}
-	//return sql
+func (s *spanner) CreateIndexSql(tableName string, index *core.Index) string {
+	sql := "CREATE "
+	if index.Type == core.UniqueType {
+		sql += "UNIQUE NULL_FILTERED "
+	}
+	sql += "INDEX " + index.XName(tableName) + " ON " + tableName + " (" + strings.Join(index.Cols, ", ") + ")"
+	return sql
 }
 
 func (s *spanner) IndexCheckSql(tableName, indexName string) (string, []any) {
@@ -262,7 +251,6 @@ func (s *spanner) GetTables() ([]*core.Table, error) {
 }
 
 func (s *spanner) GetIndexes(tableName string) (map[string]*core.Index, error) {
-
 	res, err := s.DB().Query(`
 		SELECT index_name, index_type, is_unique FROM information_schema.tables
 		WHERE table_name = ?

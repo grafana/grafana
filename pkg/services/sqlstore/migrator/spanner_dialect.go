@@ -1,6 +1,9 @@
 package migrator
 
 import (
+	"errors"
+	"fmt"
+
 	"cloud.google.com/go/spanner"
 	"google.golang.org/grpc/codes"
 	"xorm.io/core"
@@ -46,7 +49,48 @@ func (s *SpannerDialect) IsUniqueConstraintViolation(err error) bool {
 	return spanner.ErrCode(spanner.ToSpannerError(err)) == codes.AlreadyExists
 }
 
-// FIXME: panics
+func (s *SpannerDialect) CreateTableSQL(table *Table) string {
+	t := core.NewEmptyTable()
+	t.Name = table.Name
+	t.PrimaryKeys = table.PrimaryKeys
+	for _, c := range table.Columns {
+		t.AddColumn(core.NewColumn(c.Name, c.Name, core.SQLType{Name: c.Type}, c.Length, c.Length2, c.Nullable))
+	}
+	return s.d.CreateTableSql(t, t.Name, "", "")
+}
+
+func (s *SpannerDialect) CreateIndexSQL(tableName string, index *Index) string {
+	idx := core.NewIndex(index.Name, index.Type)
+	idx.Cols = index.Cols
+	return s.d.CreateIndexSql(tableName, idx)
+}
+
 func (s *SpannerDialect) UpsertMultipleSQL(tableName string, keyCols, updateCols []string, count int) (string, error) {
-	panic("")
+	return "", errors.New("not supported")
+}
+
+// func (s *SpannerDialect) ColString(col *Column) string { return s.ColStringNoPk(col) }
+// func (s *SpannerDialect) ColStringNoPk(col *Column) string {
+// sql := s.Quote(col.Name) + " "
+// sqlType := s.SQLType(col)
+// sql += sqlType + " "
+// if s.ShowCreateNull() {
+// if !col.Nullable {
+// sql += "NOT NULL "
+// }
+// }
+// if col.Default != "" {
+// def := s.Default(col)
+// if strings.HasPrefix(sqlType, "STRING") && !strings.HasPrefix(def, "\"") {
+// def = strconv.Quote(def)
+// }
+// sql += "DEFAULT (" + def + ") "
+// }
+// return sql
+// }
+func (s *SpannerDialect) DropIndexSQL(tableName string, index *Index) string {
+	return fmt.Sprintf("DROP INDEX %v", s.Quote(index.XName(tableName)))
+}
+func (s *SpannerDialect) DropTable(tableName string) string {
+	return fmt.Sprintf("DROP TABLE %s", s.Quote(tableName))
 }
