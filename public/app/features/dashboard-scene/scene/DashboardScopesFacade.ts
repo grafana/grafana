@@ -19,7 +19,7 @@ export class DashboardScopesFacade extends ScopesFacade {
         }
 
         // push filters as soon as they come
-        this.pushScopeFiltersToAdHocVariable();
+        this.pushScopeFiltersToAdHocVariable(true);
       },
     });
 
@@ -30,12 +30,18 @@ export class DashboardScopesFacade extends ScopesFacade {
     });
   }
 
-  private pushScopeFiltersToAdHocVariable() {
+  private pushScopeFiltersToAdHocVariable(overwrite = false) {
     const dashboard = getDashboardSceneFor(this);
 
     const adhoc = dashboard.state.$variables?.state.variables.find((v) => v instanceof AdHocFiltersVariable);
 
     if (!adhoc) {
+      return;
+    }
+
+    // if there are base filters with source already on the adhoc we don't reconvert the scopes,
+    // unless the scopes themselves change and a full overwrite is requested
+    if (adhoc.state.baseFilters?.length && adhoc.state.baseFilters.some((filter) => filter.origin) && !overwrite) {
       return;
     }
 
