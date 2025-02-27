@@ -315,6 +315,10 @@
       "empty-state": {
         "title": "Ÿőū đőŉ'ŧ ĥävę äŉy čőŉŧäčŧ pőįŉŧş yęŧ"
       },
+      "key-value-map": {
+        "add": "Åđđ",
+        "confirm-add": "Cőŉƒįřm ŧő äđđ"
+      },
       "last-delivery-attempt": "Ŀäşŧ đęľįvęřy äŧŧęmpŧ",
       "last-delivery-failed": "Ŀäşŧ đęľįvęřy äŧŧęmpŧ ƒäįľęđ",
       "no-contact-points-found": "Ńő čőŉŧäčŧ pőįŉŧş ƒőūŉđ",
