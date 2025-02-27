@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react';
 
-import { config } from '@grafana/runtime';
 import { Drawer } from '@grafana/ui';
 import { VersionHistoryComparison } from 'app/core/components/VersionHistory/VersionHistoryComparison';
 import { t } from 'app/core/internationalization';
@@ -18,6 +17,7 @@ interface ComparisonDrawerProps {
   setShowDrawer: (show: boolean) => void;
   onRestoreSuccess: () => void;
   onRestoreError: (error: Error) => void;
+  canRestore: boolean;
 }
 
 export const ComparisonDrawer = ({
@@ -28,6 +28,7 @@ export const ComparisonDrawer = ({
   setShowDrawer,
   onRestoreSuccess,
   onRestoreError,
+  canRestore,
 }: ComparisonDrawerProps) => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const onDismiss = useCallback(() => setShowDrawer(false), [setShowDrawer]);
@@ -46,7 +47,7 @@ export const ComparisonDrawer = ({
           newSummary={newVersionSummary}
           newVersion={newVersion}
           preprocessVersion={preprocessRuleForDiffDisplay}
-          showRestoreButton={config.featureToggles.alertingRuleVersionHistoryRestore && isNewLatest}
+          showRestoreButton={isNewLatest && canRestore}
           onRestore={() => setShowConfirmModal(true)}
         />
       </Drawer>

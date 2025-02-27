@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Badge, Button, Checkbox, Column, InteractiveTable, Stack, Text } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
@@ -22,6 +21,7 @@ export interface VersionHistoryTableProps {
   checkedVersions: Set<string>;
   onRestoreSuccess: () => void;
   onRestoreError: (error: Error) => void;
+  canRestore: boolean;
 }
 export function VersionHistoryTable({
   onVersionsChecked,
@@ -31,6 +31,7 @@ export function VersionHistoryTable({
   checkedVersions,
   onRestoreSuccess,
   onRestoreError,
+  canRestore,
 }: VersionHistoryTableProps) {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [ruleToRestore, setRuleToRestore] = useState<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>();
@@ -128,7 +129,7 @@ export function VersionHistoryTable({
           <Stack direction="row" alignItems="center" justifyContent="flex-end">
             {isFirstItem ? (
               <Badge text={t('alerting.alertVersionHistory.latest', 'Latest')} color="blue" />
-            ) : config.featureToggles.alertingRuleVersionHistoryRestore ? (
+            ) : canRestore ? (
               <>
                 <Button
                   variant="secondary"

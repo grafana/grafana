@@ -1,8 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
 
+import { config } from '@grafana/runtime';
 import { Alert, Button, EmptyState, LoadingPlaceholder, Stack, Text, Tooltip } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
-import { RuleIdentifier } from 'app/types/unified-alerting';
+import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import {
@@ -13,6 +14,7 @@ import {
   trackRuleVersionsRestoreSuccess,
 } from '../../../Analytics';
 import { alertRuleApi } from '../../../api/alertRuleApi';
+import { AlertRuleAction, useAlertRuleAbility } from '../../../hooks/useAbilities';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
 
@@ -23,6 +25,7 @@ import { VersionHistoryTable } from './version-history/VersionHistoryTable';
 const { useGetAlertVersionHistoryQuery } = alertRuleApi;
 
 interface AlertVersionHistoryProps {
+  combinedRule: CombinedRule;
   ruleUid: string;
 }
 
@@ -39,7 +42,7 @@ export const grafanaAlertPropertiesToIgnore: Array<keyof GrafanaRuleDefinition> 
  * Render the version history of a given Grafana managed alert rule, showing different edits
  * and allowing to restore to a previous version.
  */
-export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
+export function AlertVersionHistory({ ruleUid, combinedRule }: AlertVersionHistoryProps) {
   const { isLoading, currentData: ruleVersions = [], error } = useGetAlertVersionHistoryQuery({ uid: ruleUid });
 
   const ruleIdentifier: RuleIdentifier = useMemo(
@@ -53,6 +56,11 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
   // checked versions for comparison. key is the version number, value is whether it's checked
   const [checkedVersions, setCheckedVersions] = useState(new Set<string>());
   const canCompare = useMemo(() => checkedVersions.size > 1, [checkedVersions]);
+
+  // check if restoring is allowed/enabled
+  const [restoreSupported, restoreAllowed] = useAlertRuleAbility(combinedRule, AlertRuleAction.Restore);
+  const canRestore =
+    restoreAllowed && restoreSupported && Boolean(config.featureToggles.alertingRuleVersionHistoryRestore);
 
   //tracking functions for restore action
   const onRestoreSuccess = useCallback(
@@ -180,6 +188,7 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
           setShowDrawer={setShowDrawer}
           onRestoreSuccess={() => onRestoreSuccess('comparison-drawer')}
           onRestoreError={(err: Error) => onRestoreFail('comparison-drawer', err)}
+          canRestore={canRestore}
         />
       )}
       <VersionHistoryTable
@@ -190,6 +199,7 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
         checkedVersions={checkedVersions}
         onRestoreSuccess={() => onRestoreSuccess('version-list')}
         onRestoreError={(err: Error) => onRestoreFail('version-list', err)}
+        canRestore={canRestore}
       />
     </Stack>
   );
