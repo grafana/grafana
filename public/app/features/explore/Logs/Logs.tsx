@@ -1065,7 +1065,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           )}
           {visualisationType === 'logs' && hasData && config.featureToggles.newLogsPanel && (
             <>
-              <div data-testid="logRows" ref={logsContainerRef} className={styles.logRows}>
+              <div data-testid="logRows" ref={logsContainerRef} className={styles.logRowsWrapper}>
                 {logsContainerRef.current && (
                   <LogList
                     app={CoreApp.Explore}
@@ -1191,6 +1191,9 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
     logRows: css({
       overflowX: `${wrapLogMessage ? 'unset' : 'scroll'}`,
       overflowY: 'visible',
+      width: '100%',
+    }),
+    logRowsWrapper: css({
       width: '100%',
     }),
     visualisationType: css({
