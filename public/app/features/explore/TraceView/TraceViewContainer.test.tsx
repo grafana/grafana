@@ -2,6 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 
+import { TimeRange } from '@grafana/data';
+
 import { configureStore } from '../../../store/configureStore';
 
 import { frameOld } from './TraceView.test';
@@ -19,7 +21,12 @@ function renderTraceViewContainer(frames = [frameOld]) {
 
   const { container, baseElement } = render(
     <Provider store={store}>
-      <TraceViewContainer exploreId="left" dataFrames={frames} splitOpenFn={() => {}} />
+      <TraceViewContainer 
+        exploreId="left" 
+        dataFrames={frames} 
+        splitOpenFn={() => {}} 
+        timeRange={{} as TimeRange}
+      />
     </Provider>
   );
   return {
