@@ -1,8 +1,8 @@
-import { ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { VizPanel } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
+import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { MultiSelectedEditableDashboardElement } from '../scene/types/MultiSelectedEditableDashboardElement';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -13,27 +13,33 @@ export class MultiSelectedVizPanelsEditableElement implements MultiSelectedEdita
   public readonly isMultiSelectedEditableDashboardElement = true;
   public readonly typeName = 'Panels';
   public readonly key: string;
-  public readonly alwaysExpanded = true;
 
   constructor(private _panels: VizPanel[]) {
     this.key = uuidv4();
   }
 
-  public renderActions(): ReactNode {
-    return <></>;
+  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
+    const header = new OptionsPaneCategoryDescriptor({
+      title: ``,
+      id: 'panel-header',
+      isOpenDefault: true,
+      alwaysExpanded: true,
+      renderTitle: () =>
+        renderTitle({
+          title: t('dashboard.layout.common.panels-title', '{{length}} Panels Selected', {
+            length: this._panels.length,
+          }),
+          onDelete: () => this.onDelete(),
+        }),
+    });
+
+    return [header];
   }
 
-  public renderTitle: () => ReactNode = () => {
-    return renderTitle({
-      title: `${this._panels.length} ${t('dashboard.layout.common.panels', 'Panels')} ${t('dashboard.layout.common.selected', 'Selected')}`,
-      onDelete: this.onDelete,
-    });
-  };
-
-  public onDelete = () => {
+  public onDelete() {
     this._panels.forEach((panel) => {
       const layout = dashboardSceneGraph.getLayoutManagerFor(panel);
       layout.removePanel?.(panel);
     });
-  };
+  }
 }

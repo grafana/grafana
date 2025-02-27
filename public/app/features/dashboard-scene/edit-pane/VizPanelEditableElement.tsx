@@ -27,11 +27,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   public readonly typeName = 'Panel';
   public readonly alwaysExpanded = true;
 
-  public constructor(private panel: VizPanel) {}
-
-  public getPanel = () => {
-    return this.panel;
-  };
+  public constructor(public panel: VizPanel) {}
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
     const panel = this.panel;
@@ -40,15 +36,16 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     const panelOptions = useMemo(() => {
       return new OptionsPaneCategoryDescriptor({
         title: ``,
-        id: 'panel-options',
+        id: 'panel-header',
         isOpenDefault: true,
         alwaysExpanded: true,
-        renderTitle: () => renderTitle({ title: 'Panel', onDelete: this.onDelete }),
+        renderTitle: () =>
+          renderTitle({ title: t('dashboard.viz-panel.options.title', 'Panel'), onDelete: this.onDelete }),
       })
         .addItem(
           new OptionsPaneItemDescriptor({
             title: '',
-            render: () => <OpenPanelEditViz model={this} />,
+            render: () => <OpenPanelEditViz panel={this.panel} />,
           })
         )
         .addItem(
@@ -95,11 +92,41 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     return categories;
   }
 
-  public onDelete = () => {
+  public onDelete() {
     const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
     layout.removePanel?.(this.panel);
-  };
+  }
 }
+
+type OpenPanelEditVizProps = {
+  panel: VizPanel;
+};
+
+const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
+  const styles = useStyles2(getStyles);
+
+  const plugin = panel.getPlugin();
+  const imgSrc = plugin?.meta.info.logos.small;
+
+  return (
+    <>
+      <Stack alignItems="center" width="100%">
+        {plugin ? (
+          <Tooltip content={t('dashboard.viz-panel.options.open-edit', 'Open Panel Edit')}>
+            <a
+              href={textUtil.sanitizeUrl(getEditPanelUrl(getPanelIdForVizPanel(panel)))}
+              className={cx(styles.pluginDescriptionWrapper)}
+            >
+              <img className={styles.panelVizImg} src={imgSrc} alt="Image of plugin type" />
+              <Text truncate>{plugin.meta.name}</Text>
+              <Icon className={styles.panelVizIcon} name="sliders-v-alt" />
+            </a>
+          </Tooltip>
+        ) : null}
+      </Stack>
+    </>
+  );
+};
 
 const getStyles = (theme: GrafanaTheme2) => ({
   pluginDescriptionWrapper: css({
@@ -125,34 +152,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginLeft: 'auto',
   }),
 });
-
-type OpenPanelEditVizProps = {
-  model: VizPanelEditableElement;
-};
-
-const OpenPanelEditViz = ({ model }: OpenPanelEditVizProps) => {
-  const styles = useStyles2(getStyles);
-
-  const plugin = model.getPanel().getPlugin();
-  const imgSrc = plugin?.meta.info.logos.small;
-
-  return (
-    <>
-      <Stack alignItems="center" width="100%">
-        {plugin ? (
-          <Tooltip content="Open Panel Edit">
-            <a
-              href={textUtil.sanitizeUrl(getEditPanelUrl(getPanelIdForVizPanel(model.getPanel())))}
-              className={cx(styles.pluginDescriptionWrapper)}
-              onClick={() => {}}
-            >
-              <img className={styles.panelVizImg} src={imgSrc} alt="Image of plugin type" />
-              <Text truncate>{plugin.meta.name}</Text>
-              <Icon className={styles.panelVizIcon} name="sliders-v-alt" />
-            </a>
-          </Tooltip>
-        ) : null}
-      </Stack>
-    </>
-  );
-};

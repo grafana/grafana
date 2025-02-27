@@ -1041,8 +1041,7 @@
         "copy-or-duplicate": "Cőpy őř Đūpľįčäŧę",
         "delete": "Đęľęŧę",
         "duplicate": "Đūpľįčäŧę",
-        "panels": "Päŉęľş",
-        "selected": "Ŝęľęčŧęđ"
+        "panels-title": "{{length}} Päŉęľş Ŝęľęčŧęđ"
       }
     },
     "options": {
@@ -1201,6 +1200,8 @@
     "viz-panel": {
       "options": {
         "description": "Đęşčřįpŧįőŉ",
+        "open-edit": "Øpęŉ Päŉęľ Ēđįŧ",
+        "title": "Päŉęľ",
         "title-option": "Ŧįŧľę",
         "transparent-background": "Ŧřäŉşpäřęŉŧ þäčĸģřőūŉđ"
       }

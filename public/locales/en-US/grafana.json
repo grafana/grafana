@@ -1041,8 +1041,7 @@
         "copy-or-duplicate": "Copy or Duplicate",
         "delete": "Delete",
         "duplicate": "Duplicate",
-        "panels": "Panels",
-        "selected": "Selected"
+        "panels-title": "{{length}} Panels Selected"
       }
     },
     "options": {
@@ -1201,6 +1200,8 @@
     "viz-panel": {
       "options": {
         "description": "Description",
+        "open-edit": "Open Panel Edit",
+        "title": "Panel",
         "title-option": "Title",
         "transparent-background": "Transparent background"
       }
