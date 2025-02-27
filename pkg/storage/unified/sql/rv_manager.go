@@ -12,9 +12,40 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
+)
+
+var (
+	rvmWriteDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Name:                        "rvmanager_write_duration_seconds",
+		Help:                        "Duration of ResourceVersionManager write operations",
+		Namespace:                   "grafana",
+		NativeHistogramBucketFactor: 1.1,
+	}, []string{"group", "resource", "status"})
+
+	rvmExecBatchDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Name:                        "rvmanager_exec_batch_duration_seconds",
+		Help:                        "Duration of ResourceVersionManager batch operations",
+		Namespace:                   "grafana",
+		NativeHistogramBucketFactor: 1.1,
+	}, []string{"group", "resource", "status"})
+
+	rvmInflightWrites = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name:      "rvmanager_inflight_writes",
+		Help:      "Number of concurrent write operations",
+		Namespace: "grafana",
+	}, []string{"group", "resource"})
+)
+
+const (
+	tracingPrefix           = "sql.rvmanager."
+	defaultMaxBatchSize     = 10
+	defaultMaxBatchWaitTime = 5 * time.Millisecond
+	defaultBatchTimeout     = 5 * time.Second
 )
 
 // resourceVersionManager handles resource version operations
@@ -30,9 +61,10 @@ type resourceVersionManager struct {
 }
 
 type writeOpResult struct {
-	guid string
-	rv   int64
-	err  error
+	guid           string
+	rv             int64
+	err            error
+	batchTraceLink trace.Link
 }
 
 // writeOp is a write operation that is executed with an incremented resource version
@@ -58,10 +90,10 @@ type ResourceManagerOptions struct {
 // NewResourceVersionManager creates a new ResourceVersionManager
 func NewResourceVersionManager(opts ResourceManagerOptions) (*resourceVersionManager, error) {
 	if opts.MaxBatchSize == 0 {
-		opts.MaxBatchSize = 20
+		opts.MaxBatchSize = defaultMaxBatchSize
 	}
 	if opts.MaxBatchWaitTime == 0 {
-		opts.MaxBatchWaitTime = 5 * time.Millisecond
+		opts.MaxBatchWaitTime = defaultMaxBatchWaitTime
 	}
 	if opts.Tracer == nil {
 		opts.Tracer = noop.NewTracerProvider().Tracer("resource-version-manager")
@@ -84,7 +116,20 @@ func NewResourceVersionManager(opts ResourceManagerOptions) (*resourceVersionMan
 
 // ExecWithRV executes the given function with an incremented resource version
 func (m *resourceVersionManager) ExecWithRV(ctx context.Context, key *resource.ResourceKey, fn WriteEventFunc) (rv int64, err error) {
-	ctx, span := m.tracer.Start(ctx, "ExecWithRV")
+	rvmInflightWrites.WithLabelValues(key.Group, key.Resource).Inc()
+	defer rvmInflightWrites.WithLabelValues(key.Group, key.Resource).Dec()
+
+	var status string
+	timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
+		status = "success"
+		if err != nil {
+			status = "error"
+		}
+		rvmWriteDuration.WithLabelValues(key.Group, key.Resource, status).Observe(v)
+	}))
+	defer timer.ObserveDuration()
+
+	ctx, span := m.tracer.Start(ctx, tracingPrefix+"ExecWithRV")
 	defer span.End()
 
 	span.SetAttributes(
@@ -108,8 +153,12 @@ func (m *resourceVersionManager) ExecWithRV(ctx context.Context, key *resource.R
 		if res.err != nil {
 			span.RecordError(res.err)
 		}
-		span.SetAttributes(attribute.String("guid", res.guid))
-		span.SetAttributes(attribute.Int64("resource_version", res.rv))
+		span.SetAttributes(
+			attribute.String("guid", res.guid),
+			attribute.Int64("resource_version", res.rv),
+		)
+		span.AddLink(res.batchTraceLink)
+
 		return res.rv, res.err
 	case <-ctx.Done():
 		return 0, ctx.Err()
@@ -118,7 +167,7 @@ func (m *resourceVersionManager) ExecWithRV(ctx context.Context, key *resource.R
 
 // startBatchProcessor is responsible for processing batches of write operations
 func (m *resourceVersionManager) startBatchProcessor(group, resource string) {
-	ctx := context.Background() // TODO: use the underlying context
+	ctx := context.TODO()
 	batchKey := fmt.Sprintf("%s/%s", group, resource)
 
 	m.batchMu.Lock()
@@ -158,26 +207,60 @@ func (m *resourceVersionManager) startBatchProcessor(group, resource string) {
 }
 
 func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource string, batch []writeOp) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, span := m.tracer.Start(ctx, tracingPrefix+"execBatch")
+	defer span.End()
+
+	// Add batch size attribute
+	span.SetAttributes(
+		attribute.Int("batch_size", len(batch)),
+		attribute.String("group", group),
+		attribute.String("resource", resource),
+	)
+
+	var err error
+	timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
+		status := "success"
+		if err != nil {
+			status = "error"
+		}
+		rvmExecBatchDuration.WithLabelValues(group, resource, status).Observe(v)
+	}))
+	defer timer.ObserveDuration()
+
+	ctx, cancel := context.WithTimeout(ctx, defaultBatchTimeout)
 	defer cancel()
 
 	guidToRV := make(map[string]int64, len(batch))
 	guids := make([]string, len(batch)) // The GUIDs of the created resources in the same order as the batch
 	rvs := make([]int64, len(batch))    // The RVs of the created resources in the same order as the batch
 
-	err := m.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
+	err = m.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
+		span.AddEvent("starting_batch_transaction")
+
 		for i := range batch {
 			guid, err := batch[i].fn(tx)
 			if err != nil {
+				span.AddEvent("batch_operation_failed", trace.WithAttributes(
+					attribute.Int("operation_index", i),
+					attribute.String("error", err.Error()),
+				))
 				return fmt.Errorf("failed to execute function: %w", err)
 			}
 			guids[i] = guid
 		}
+		span.AddEvent("batch_operations_completed")
 
 		rv, err := m.lock(ctx, tx, group, resource)
 		if err != nil {
+			span.AddEvent("resource_version_lock_failed", trace.WithAttributes(
+				attribute.String("error", err.Error()),
+			))
 			return fmt.Errorf("failed to increment resource version: %w", err)
 		}
+		span.AddEvent("resource_version_locked", trace.WithAttributes(
+			attribute.Int64("initial_rv", rv),
+		))
+
 		// Allocate the RVs
 		for i, guid := range guids {
 			guidToRV[guid] = rv
@@ -189,24 +272,49 @@ func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource 
 			SQLTemplate: sqltemplate.New(m.dialect),
 			GUIDToRV:    guidToRV,
 		}); err != nil {
+			span.AddEvent("resource_update_rv_failed", trace.WithAttributes(
+				attribute.String("error", err.Error()),
+			))
 			return fmt.Errorf("update resource version: %w", err)
 		}
+		span.AddEvent("resource_versions_updated")
+
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryUpdateRV, sqlResourceUpdateRVRequest{
 			SQLTemplate: sqltemplate.New(m.dialect),
 			GUIDToRV:    guidToRV,
 		}); err != nil {
+			span.AddEvent("resource_history_update_rv_failed", trace.WithAttributes(
+				attribute.String("error", err.Error()),
+			))
 			return fmt.Errorf("update resource history version: %w", err)
 		}
+		span.AddEvent("resource_history_versions_updated")
+
 		// Record the latest RV in the resource version table
-		return m.saveRV(ctx, tx, group, resource, rv)
+		err = m.saveRV(ctx, tx, group, resource, rv)
+		if err != nil {
+			span.AddEvent("save_rv_failed", trace.WithAttributes(
+				attribute.String("error", err.Error()),
+			))
+		}
+		return err
 	})
+
+	if err != nil {
+		span.AddEvent("batch_transaction_failed", trace.WithAttributes(
+			attribute.String("error", err.Error()),
+		))
+	} else {
+		span.AddEvent("batch_transaction_completed")
+	}
 
 	// notify the caller that the operations are done
 	for i := range batch {
 		batch[i].done <- writeOpResult{
-			guid: guids[i],
-			rv:   rvs[i],
-			err:  err,
+			guid:           guids[i],
+			rv:             rvs[i],
+			err:            err,
+			batchTraceLink: trace.LinkFromContext(ctx),
 		}
 	}
 }
