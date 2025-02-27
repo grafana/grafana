@@ -754,7 +754,7 @@ embed.go @grafana/grafana-as-code
 /.github/pr-checks.json @tolzhabayev
 /.github/pr-commands.json @tolzhabayev
 /.github/renovate.json5 @grafana/frontend-ops
-/.github/actions/run-backend-integration-tests @grafana/grafana-backend-group
+/.github/actions/report-coverage @grafana/grafana-backend-group
 /.github/actions/run-backend-tests @grafana/grafana-backend-group
 /.github/actions/setup-enterprise @grafana/grafana-backend-group
 /.github/workflows/add-to-whats-new.yml @grafana/docs-tooling
