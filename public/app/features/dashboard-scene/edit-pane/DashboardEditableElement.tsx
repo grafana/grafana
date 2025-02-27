@@ -34,25 +34,19 @@ export class DashboardEditableElement implements EditableDashboardElement {
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.options.title-option', 'Title'),
-            render: function renderTitle() {
-              return <DashboardTitleInput dashboard={dashboard} />;
-            },
+            render: () => <DashboardTitleInput dashboard={dashboard} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.options.description', 'Description'),
-            render: function renderTitle() {
-              return <DashboardDescriptionInput dashboard={dashboard} />;
-            },
+            render: () => <DashboardDescriptionInput dashboard={dashboard} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.layout.common.layout', 'Layout'),
-            render: function renderTitle() {
-              return <DashboardLayoutSelector layoutManager={body} />;
-            },
+            render: () => <DashboardLayoutSelector layoutManager={body} />,
           })
         );
     }, [body, dashboard]);
