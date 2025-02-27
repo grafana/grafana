@@ -17,7 +17,7 @@ func (cfg *Cfg) readAnonymousSettings() {
 	// Deprecated:
 	// only viewer role is supported
 	anonSettings.OrgRole = valueAsString(anonSection, "org_role", "")
-	if anonSettings.OrgRole == "Viewer" {
+	if anonSettings.OrgRole != "Viewer" {
 		cfg.Logger.Warn("auth.anonymous.org_role is deprecated, only viewer role is supported")
 	}
 	anonSettings.HideVersion = anonSection.Key("hide_version").MustBool(false)
