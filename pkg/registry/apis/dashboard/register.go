@@ -22,6 +22,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboardinternal "github.com/grafana/grafana/pkg/apis/dashboard"
+	"github.com/grafana/grafana/pkg/apis/dashboard/migration/conversion"
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	dashboardv1alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	dashboardv2alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
@@ -133,6 +134,12 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	if err := dashboardv2alpha1.AddToScheme(scheme); err != nil {
 		return err
 	}
+
+	// Register the explicit conversions
+	if err := conversion.RegisterConversions(scheme); err != nil {
+		return err
+	}
+
 	return scheme.SetVersionPriority(b.GetGroupVersions()...)
 }
 
