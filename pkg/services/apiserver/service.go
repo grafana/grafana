@@ -281,14 +281,18 @@ func (s *service) start(ctx context.Context) error {
 	for _, b := range builders {
 		gvs := builder.GetGroupVersions(b)
 		groupVersions = append(groupVersions, gvs...)
+		if len(gvs) == 0 {
+			return fmt.Errorf("no group versions found for builder %T", b)
+		}
 		if err := b.InstallSchema(Scheme); err != nil {
 			return err
 		}
+		pvs := Scheme.PrioritizedVersionsForGroup(gvs[0].Group)
 
-		for j, gv := range gvs {
+		for j, gv := range pvs {
 			if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
 				// set the priority for the group+version
-				kubeaggregator.APIVersionPriorities[gv] = kubeaggregator.Priority{Group: 15000, Version: int32(j)}
+				kubeaggregator.APIVersionPriorities[gv] = kubeaggregator.Priority{Group: 15000, Version: int32(len(pvs) - j)}
 			}
 
 			if a, ok := b.(builder.APIGroupAuthorizer); ok {

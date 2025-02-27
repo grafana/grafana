@@ -113,9 +113,9 @@ func RegisterAPIService(
 
 func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 	return []schema.GroupVersion{
-		dashboardv2alpha1.DashboardResourceInfo.GroupVersion(),
-		dashboardv1alpha1.DashboardResourceInfo.GroupVersion(),
 		dashboardv0alpha1.DashboardResourceInfo.GroupVersion(),
+		dashboardv1alpha1.DashboardResourceInfo.GroupVersion(),
+		dashboardv2alpha1.DashboardResourceInfo.GroupVersion(),
 	}
 }
 
@@ -133,11 +133,7 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	if err := dashboardv2alpha1.AddToScheme(scheme); err != nil {
 		return err
 	}
-	return scheme.SetVersionPriority(
-		dashboardv0alpha1.DashboardResourceInfo.GroupVersion(),
-		dashboardv1alpha1.DashboardResourceInfo.GroupVersion(),
-		dashboardv2alpha1.DashboardResourceInfo.GroupVersion(),
-	)
+	return scheme.SetVersionPriority(b.GetGroupVersions()...)
 }
 
 // Validate will prevent deletion of provisioned dashboards, unless the grace period is set to 0, indicating a force deletion
