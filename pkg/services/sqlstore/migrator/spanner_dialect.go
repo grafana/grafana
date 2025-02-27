@@ -16,6 +16,10 @@ type SpannerDialect struct {
 	d core.Dialect
 }
 
+func init() {
+	supportedDialects[Spanner] = NewSpannerDialect
+}
+
 func NewSpannerDialect() Dialect {
 	d := SpannerDialect{d: core.QueryDialect("spanner")}
 	d.BaseDialect.dialect = &d
