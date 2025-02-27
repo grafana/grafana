@@ -1,5 +1,5 @@
 import { Scope, ScopeSpecFilter } from '@grafana/data';
-import { FilterSource } from '@grafana/scenes';
+import { FilterOrigin } from '@grafana/scenes';
 
 import { convertScopesToAdHocFilters } from './convertScopesToAdHocFilters';
 
@@ -25,15 +25,15 @@ describe('convertScopesToAdHocFilters', () => {
     ]);
 
     expect(convertScopesToAdHocFilters(scopes)).toEqual([
-      { key: 'key1', value: 'value1', operator: '=', source: FilterSource.Scopes, values: ['value1'] },
-      { key: 'key2', value: 'value2', operator: '!=', source: FilterSource.Scopes, values: ['value2'] },
-      { key: 'key3', value: 'value3', operator: '!~', source: FilterSource.Scopes, values: ['value3'] },
+      { key: 'key1', value: 'value1', operator: '=', source: FilterOrigin.Scopes, values: ['value1'] },
+      { key: 'key2', value: 'value2', operator: '!=', source: FilterOrigin.Scopes, values: ['value2'] },
+      { key: 'key3', value: 'value3', operator: '!~', source: FilterOrigin.Scopes, values: ['value3'] },
     ]);
 
     scopes = generateScopes([[{ key: 'key3', value: 'value3', operator: 'regex-match' }]]);
 
     expect(convertScopesToAdHocFilters(scopes)).toEqual([
-      { key: 'key3', value: 'value3', operator: '=~', source: FilterSource.Scopes, values: ['value3'] },
+      { key: 'key3', value: 'value3', operator: '=~', source: FilterOrigin.Scopes, values: ['value3'] },
     ]);
   });
 
@@ -44,8 +44,8 @@ describe('convertScopesToAdHocFilters', () => {
     ]);
 
     expect(convertScopesToAdHocFilters(scopes)).toEqual([
-      { key: 'key1', value: 'value1', operator: '=', source: FilterSource.Scopes, values: ['value1'] },
-      { key: 'key2', value: 'value2', operator: '=~', source: FilterSource.Scopes, values: ['value2'] },
+      { key: 'key1', value: 'value1', operator: '=', source: FilterOrigin.Scopes, values: ['value1'] },
+      { key: 'key2', value: 'value2', operator: '=~', source: FilterOrigin.Scopes, values: ['value2'] },
     ]);
   });
 
@@ -62,10 +62,10 @@ describe('convertScopesToAdHocFilters', () => {
     ]);
 
     expect(convertScopesToAdHocFilters(scopes)).toEqual([
-      { key: 'key1', value: 'value1', operator: '=', source: FilterSource.Scopes, values: ['value1'] },
-      { key: 'key2', value: 'value2', operator: '!=', source: FilterSource.Scopes, values: ['value2'] },
-      { key: 'key3', value: 'value3', operator: '=~', source: FilterSource.Scopes, values: ['value3'] },
-      { key: 'key4', value: 'value4', operator: '=~', source: FilterSource.Scopes, values: ['value4'] },
+      { key: 'key1', value: 'value1', operator: '=', source: FilterOrigin.Scopes, values: ['value1'] },
+      { key: 'key2', value: 'value2', operator: '!=', source: FilterOrigin.Scopes, values: ['value2'] },
+      { key: 'key3', value: 'value3', operator: '=~', source: FilterOrigin.Scopes, values: ['value3'] },
+      { key: 'key4', value: 'value4', operator: '=~', source: FilterOrigin.Scopes, values: ['value4'] },
     ]);
   });
 
@@ -87,10 +87,10 @@ describe('convertScopesToAdHocFilters', () => {
         key: 'key1',
         value: 'value1',
         operator: '=|',
-        source: FilterSource.Scopes,
+        source: FilterOrigin.Scopes,
         values: ['value1', 'value3', 'value5'],
       },
-      { key: 'key2', value: 'value2', operator: '!=|', source: FilterSource.Scopes, values: ['value2', 'value4'] },
+      { key: 'key2', value: 'value2', operator: '!=|', source: FilterOrigin.Scopes, values: ['value2', 'value4'] },
     ]);
   });
 
@@ -106,14 +106,14 @@ describe('convertScopesToAdHocFilters', () => {
         key: 'key1',
         value: 'value1',
         operator: '=|',
-        source: FilterSource.Scopes,
+        source: FilterOrigin.Scopes,
         values: ['value1', 'value3'],
       },
       {
         key: 'key1',
         value: 'value2',
         operator: '!=',
-        source: FilterSource.Scopes,
+        source: FilterOrigin.Scopes,
         values: ['value2'],
       },
     ]);
@@ -137,22 +137,22 @@ describe('convertScopesToAdHocFilters', () => {
         key: 'key1',
         value: 'value1',
         operator: '=~',
-        source: FilterSource.Scopes,
+        source: FilterOrigin.Scopes,
         values: ['value1'],
       },
-      { key: 'key2', value: 'value2', operator: '!=|', source: FilterSource.Scopes, values: ['value2', 'value4'] },
+      { key: 'key2', value: 'value2', operator: '!=|', source: FilterOrigin.Scopes, values: ['value2', 'value4'] },
       {
         key: 'key1',
         value: 'value3',
         operator: '=~',
-        source: FilterSource.Scopes,
+        source: FilterOrigin.Scopes,
         values: ['value3'],
       },
       {
         key: 'key1',
         value: 'value5',
         operator: '=',
-        source: FilterSource.Scopes,
+        source: FilterOrigin.Scopes,
         values: ['value5'],
       },
     ]);
@@ -168,21 +168,21 @@ describe('convertScopesToAdHocFilters', () => {
         key: 'key1',
         value: 'value1',
         operator: '=~',
-        source: FilterSource.Scopes,
+        source: FilterOrigin.Scopes,
         values: ['value1'],
       },
       {
         key: 'key1',
         value: 'value5',
         operator: '=',
-        source: FilterSource.Scopes,
+        source: FilterOrigin.Scopes,
         values: ['value5'],
       },
       {
         key: 'key1',
         value: 'value3',
         operator: '=~',
-        source: FilterSource.Scopes,
+        source: FilterOrigin.Scopes,
         values: ['value3'],
       },
     ]);
@@ -200,14 +200,14 @@ describe('convertScopesToAdHocFilters', () => {
         key: 'key1',
         value: 'value1',
         operator: '=|',
-        source: FilterSource.Scopes,
+        source: FilterOrigin.Scopes,
         values: ['value1', 'value3'],
       },
       {
         key: 'key1',
         value: 'value2',
         operator: '=~',
-        source: FilterSource.Scopes,
+        source: FilterOrigin.Scopes,
         values: ['value2'],
       },
     ]);
@@ -240,28 +240,28 @@ describe('convertScopesToAdHocFilters', () => {
         key: 'key1',
         value: 'value1',
         operator: '=|',
-        source: FilterSource.Scopes,
+        source: FilterOrigin.Scopes,
         values: ['value1', 'value3', 'value7', 'value9'],
       },
       {
         key: 'key2',
         value: 'value2',
         operator: '=|',
-        source: FilterSource.Scopes,
+        source: FilterOrigin.Scopes,
         values: ['value2', 'value4', 'value6', 'value10'],
       },
       {
         key: 'key1',
         value: 'value5',
         operator: '=~',
-        source: FilterSource.Scopes,
+        source: FilterOrigin.Scopes,
         values: ['value5'],
       },
       {
         key: 'key2',
         value: 'value8',
         operator: '=~',
-        source: FilterSource.Scopes,
+        source: FilterOrigin.Scopes,
         values: ['value8'],
       },
     ]);

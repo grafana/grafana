@@ -5,7 +5,7 @@ import {
   reverseScopeFilterOperatorMap,
   scopeFilterOperatorMap,
 } from '@grafana/data';
-import { AdHocFilterWithLabels, FilterSource } from '@grafana/scenes';
+import { AdHocFilterWithLabels, FilterOrigin } from '@grafana/scenes';
 
 export function convertScopesToAdHocFilters(scopes: Scope[]): AdHocFilterWithLabels[] {
   const formattedFilters: Map<string, AdHocFilterWithLabels> = new Map();
@@ -38,7 +38,7 @@ function processFilter(
       operator: reverseScopeFilterOperatorMap[filter.operator],
       value: filter.value,
       values: filter.values ?? [filter.value],
-      source: FilterSource.Scopes,
+      source: FilterOrigin.Scopes,
     });
   } else {
     duplicatedFilters.push({
@@ -46,7 +46,7 @@ function processFilter(
       operator: reverseScopeFilterOperatorMap[filter.operator],
       value: filter.value,
       values: filter.values ?? [filter.value],
-      source: FilterSource.Scopes,
+      source: FilterOrigin.Scopes,
     });
   }
 }
