@@ -78,16 +78,18 @@ export default class GraphiteQuery {
     try {
       this.parseTargetRecursive(astNode, null);
       if (this.target.target) {
-        const oldSanitizedQuery = this.target.target;
-        const newSanitizedQuery = this.generateQueryString();
+        const oldQuery = this.target.target;
+        const newQuery = this.generateQueryString();
 
         // Spaces, quotes, and commas are used when rendering the AST back into a string.
         // We are removing these for less false positives of query changes.
         const sanitizeQuery = (o: string): string => {
           return o.replace(/\s|'|"|,/g, '');
         }
-        if (sanitizeQuery(oldSanitizedQuery) !== sanitizeQuery(newSanitizedQuery)) {
-          throw new Error(`Failed to make a visual query builder query that is equivalent to the query.\nOriginal query: ${oldSanitizedQuery}\nQuery builder query: ${newSanitizedQuery}`);
+        const oldSanitized = sanitizeQuery(oldQuery);
+        const newSanitized = sanitizeQuery(newQuery)
+        if (oldSanitized && newSanitized && oldSanitized !== newSanitized) {
+          throw new Error(`Failed to make a visual query builder query that is equivalent to the query.\nOriginal query: ${oldQuery}\nQuery builder query: ${newQuery}`);
         }
       }
     } catch (err) {
