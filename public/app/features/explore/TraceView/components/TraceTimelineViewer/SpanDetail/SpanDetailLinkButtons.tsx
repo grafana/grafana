@@ -17,7 +17,7 @@ import { SpanLinkFunc } from '../../types';
 import { SpanLinkDef, SpanLinkType } from '../../types/links';
 import { TraceSpan } from '../../types/trace';
 
-export type ExploreProfilesContext = {
+export type ProfilesButtonContext = {
   serviceName: string;
   profileTypeId: string;
   spanSelector: string;
@@ -113,7 +113,7 @@ export const getSpanDetailLinkButtons = (props: Props) => {
 
 export const getProfileLinkButtonsContext = (span: TraceSpan, traceToProfilesOptions: TraceToProfilesOptions | undefined, timeRange: TimeRange) => {
   const spanSelector = span.tags.filter((tag) => tag.key === pyroscopeProfileIdTagKey);
-  const context: ExploreProfilesContext = {
+  const context: ProfilesButtonContext = {
     serviceName: span.process.serviceName ?? '',
     profileTypeId: traceToProfilesOptions?.profileTypeId ?? '',
     spanSelector: spanSelector.length === 1 && spanSelector[0].value ? spanSelector[0].value : '',
@@ -131,7 +131,7 @@ export const getProfileLinkButtonsContext = (span: TraceSpan, traceToProfilesOpt
   return context;
 }
 
-export const getProfileLinkPath = (context: ExploreProfilesContext, exploreProfilesPluginId: string) => {
+export const getProfileLinkPath = (context: ProfilesButtonContext, exploreProfilesPluginId: string) => {
   const datasourceParam = context.targets.length > 0 && context.targets[0].datasource?.uid ? `var-dataSource=${context.targets[0].datasource.uid}` : '';
   const serviceNameParam = `&var-serviceName=${context.serviceName}`;
   const profileTypeParam = `&var-profileMetricId=${context.profileTypeId}`;

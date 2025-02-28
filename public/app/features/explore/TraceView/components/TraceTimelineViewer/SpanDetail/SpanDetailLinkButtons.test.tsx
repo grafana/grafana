@@ -4,7 +4,7 @@ import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
 import { SpanLinkType } from '../../types/links';
 import { TraceSpan } from '../../types/trace';
 
-import { getSpanDetailLinkButtons, getProfileLinkButtonsContext, getProfileLinkPath, ExploreProfilesContext } from './SpanDetailLinkButtons';
+import { getSpanDetailLinkButtons, getProfileLinkButtonsContext, getProfileLinkPath, ProfilesButtonContext } from './SpanDetailLinkButtons';
 
 const span = {
   process: {
@@ -189,10 +189,10 @@ describe('getProfileLinkPath', () => {
         uid: 'test-uid',
       },
     }],
-  } as unknown as ExploreProfilesContext;
+  } as unknown as ProfilesButtonContext;
 
   it('should create correct URL path with all parameters', () => {
-    const path = getProfileLinkPath(context as ExploreProfilesContext, 'grafana-pyroscope-app');
+    const path = getProfileLinkPath(context as ProfilesButtonContext, 'grafana-pyroscope-app');
 
     expect(path).toBe(
       '/a/grafana-pyroscope-app/explore?' +
