@@ -1,4 +1,4 @@
-import { EchoBackend, EchoMeta, EchoEvent, EchoSrv } from '@grafana/runtime';
+import { EchoBackend, EchoMeta, EchoEvent, EchoSrv, reportInteraction } from '@grafana/runtime';
 
 import { contextSrv } from '../context_srv';
 
@@ -90,3 +90,16 @@ export class Echo implements EchoSrv {
     };
   };
 }
+
+/** Hackathon 12 - Track Attack
+ * Foundational types and functions for the new tracking event process
+ */
+
+// @file: core/echo.ts
+type EventFunction<P extends object> = (props?: P) => void;
+type EventFunctionFactory<P extends object> = (eventName: string) => EventFunction<P>;
+
+export const createEventFactory = <P extends object>(product: string, featureName: string): EventFunctionFactory<P> => {
+  //@ts-expect-error
+  return (eventName: string) => (props?: P) => reportInteraction(`${product}_${featureName}_${eventName}`, props);
+};
