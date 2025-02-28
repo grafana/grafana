@@ -28,7 +28,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           BRANCH="${{ inputs.branch }}"
-          PR_BRANCH="alerting/update-alerting-module-${{ inputs.branch }}"
+          SANITIZED_BRANCH=$(echo "$BRANCH" | tr '.' '_')
+          PR_BRANCH="alerting/update-alerting-module-${SANITIZED_BRANCH}"
           
           # Check current repo branch
           if ! gh api repos/${{ github.repository }}/branches/$BRANCH --jq '.name' >/dev/null 2>&1;  then
