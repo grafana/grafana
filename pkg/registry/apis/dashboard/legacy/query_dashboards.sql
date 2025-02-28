@@ -33,8 +33,8 @@ WHERE dashboard.is_folder = {{ .Arg .Query.GetFolders }}
   AND dashboard_version.version < {{ .Arg .Query.LastID }}
   {{ end }}
   ORDER BY
-    dashboard_version.created DESC,
-    dashboard_version.version DESC,
+    dashboard_version.created {{ .Query.Order }},
+    dashboard_version.version {{ .Query.Order }},
     dashboard.uid ASC
   {{ else }}
     {{ if .Query.UID }}

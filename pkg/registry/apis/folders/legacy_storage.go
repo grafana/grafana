@@ -116,7 +116,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		}
 		list.Items = append(list.Items, *r)
 	}
-	if len(list.Items) >= int(paging.limit) {
+	if int64(len(list.Items)) >= paging.limit {
 		list.Continue = paging.GetNextPageToken()
 	}
 	return list, nil

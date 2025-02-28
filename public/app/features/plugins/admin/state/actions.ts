@@ -19,7 +19,7 @@ import {
 } from '../api';
 import { STATE_PREFIX } from '../constants';
 import { mapLocalToCatalog, mergeLocalsAndRemotes, updatePanels } from '../helpers';
-import { CatalogPlugin, RemotePlugin, LocalPlugin, InstancePlugin, ProvisionedPlugin } from '../types';
+import { CatalogPlugin, RemotePlugin, LocalPlugin, InstancePlugin, ProvisionedPlugin, PluginStatus } from '../types';
 
 // Fetches
 export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, thunkApi) => {
@@ -188,17 +188,23 @@ export const install = createAsyncThunk<
   {
     id: string;
     version?: string;
-    isUpdating?: boolean;
+    installType?: PluginStatus;
   }
->(`${STATE_PREFIX}/install`, async ({ id, version, isUpdating = false }, thunkApi) => {
-  const changes = isUpdating
-    ? { isInstalled: true, installedVersion: version, hasUpdate: false }
-    : { isInstalled: true, installedVersion: version };
+>(`${STATE_PREFIX}/install`, async ({ id, version, installType = PluginStatus.INSTALL }, thunkApi) => {
+  const changes: Partial<CatalogPlugin> = { isInstalled: true, installedVersion: version };
+
+  if (installType === PluginStatus.UPDATE) {
+    changes.hasUpdate = false;
+  }
+  if (installType === PluginStatus.DOWNGRADE) {
+    changes.hasUpdate = true;
+  }
+
   try {
     await installPlugin(id, version);
     await updatePanels();
 
-    if (isUpdating) {
+    if (installType !== PluginStatus.INSTALL) {
       invalidatePluginInCache(id);
     }
 

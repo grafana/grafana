@@ -574,6 +574,7 @@ ResponsiveGridLayoutItemKind: {
 
 ResponsiveGridLayoutItemSpec: {
   element: ElementReference
+  repeat?: ResponsiveGridRepeatOptions
 }
 
 TabsLayoutKind: {

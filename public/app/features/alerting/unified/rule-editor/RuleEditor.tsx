@@ -61,7 +61,7 @@ const RuleEditor = () => {
     }
 
     if (identifier) {
-      return <ExistingRuleEditor key={JSON.stringify(identifier)} identifier={identifier} />;
+      return <ExistingRuleEditor key={JSON.stringify(identifier)} identifier={identifier} prefill={queryDefaults} />;
     }
 
     if (copyFromIdentifier) {
