@@ -1,6 +1,9 @@
 package conversion
 
 import (
+	"fmt"
+
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -47,79 +50,53 @@ func RegisterConversions(s *runtime.Scheme) error {
 
 func Convert_V0_to_Internal(in *dashboardV0.Dashboard, out *dashboard.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
-
-	anno := out.Annotations
-	if anno == nil {
-		anno = make(map[string]string)
-		out.Annotations = anno
-	}
-	anno[">>>VX-TO-INTERNAL"] = "Convert_V0_to_Internal"
-
+	setAnnos(&out.ObjectMeta, "V0_to_>>>>>>>")
 	return nil
 }
 
 func Convert_V1_to_Internal(in *dashboardV1.Dashboard, out *dashboard.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
-
-	anno := out.Annotations
-	if anno == nil {
-		anno = make(map[string]string)
-		out.Annotations = anno
-	}
-	anno[">>>VX-TO-INTERNAL"] = "Convert_V1_to_Internal"
-
+	setAnnos(&out.ObjectMeta, "V1_to_>>>>>>>")
 	return nil
 }
 
 func Convert_V2_to_Internal(in *dashboardV2.Dashboard, out *dashboard.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
-
-	anno := out.Annotations
-	if anno == nil {
-		anno = make(map[string]string)
-		out.Annotations = anno
-	}
-	anno[">>>VX-TO-INTERNAL"] = "Convert_V2_to_Internal"
-
+	setAnnos(&out.ObjectMeta, "V2_to_>>>>>>>")
 	return nil
 }
 
 func Convert_to_V0(in *dashboard.Dashboard, out *dashboardV0.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
-
-	anno := out.Annotations
-	if anno == nil {
-		anno = make(map[string]string)
-		out.Annotations = anno
-	}
-	anno[">>>INTERNAL-TO-VX"] = "Convert_to_V0"
-
+	setAnnos(&out.ObjectMeta, ">>>>>>__to_V0")
 	return nil
 }
 
 func Convert_to_V1(in *dashboard.Dashboard, out *dashboardV1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
-
-	anno := out.Annotations
-	if anno == nil {
-		anno = make(map[string]string)
-		out.Annotations = anno
-	}
-	anno[">>>INTERNAL-VERSION"] = in.APIVersion
-	anno[">>>INTERNAL-TO-VX"] = "Convert_to_V1"
-
+	setAnnos(&out.ObjectMeta, ">>>>>>__to_V1")
 	return nil
 }
 
 func Convert_to_V2(in *dashboard.Dashboard, out *dashboardV2.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
+	setAnnos(&out.ObjectMeta, ">>>>>>__to_V2")
+	return nil
+}
 
-	anno := out.Annotations
+func setAnnos(meta *v1.ObjectMeta, val string) {
+	anno := meta.Annotations
 	if anno == nil {
 		anno = make(map[string]string)
-		out.Annotations = anno
+		meta.Annotations = anno
 	}
-	anno[">>>INTERNAL-TO-VX"] = "Convert_to_V2"
 
-	return nil
+	for i := range 10 {
+		key := fmt.Sprintf("CONVERSION-%d", i)
+		if anno[key] != "" {
+			continue
+		}
+		anno[key] = val
+		return
+	}
 }
