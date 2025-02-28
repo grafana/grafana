@@ -2434,15 +2434,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@formatjs/ecma402-abstract@npm:2.3.2":
-  version: 2.3.2
-  resolution: "@formatjs/ecma402-abstract@npm:2.3.2"
+"@formatjs/ecma402-abstract@npm:2.3.3":
+  version: 2.3.3
+  resolution: "@formatjs/ecma402-abstract@npm:2.3.3"
   dependencies:
     "@formatjs/fast-memoize": "npm:2.2.6"
-    "@formatjs/intl-localematcher": "npm:0.5.10"
+    "@formatjs/intl-localematcher": "npm:0.6.0"
     decimal.js: "npm:10"
     tslib: "npm:2"
-  checksum: 10/db31d3d9b36033ea11ec905638ac0c1d2282f5bf53c9c06ee1d0ffd924f4bf64030702c92b56261756c4998dfa6235462689d8eda82d5913f2d7cf636a9416ae
+  checksum: 10/c73a704d5cba3b929a9a303a04b4e8a708bb2dea000ee41808c55b22941a70da01b065697cbc5a25898b2007405abd71f414ab8c327fe953f63ae4120c2cc98d
   languageName: node
   linkType: hard
 
@@ -2486,13 +2486,13 @@ __metadata:
   linkType: hard
 
 "@formatjs/intl-durationformat@npm:^0.7.0":
-  version: 0.7.2
-  resolution: "@formatjs/intl-durationformat@npm:0.7.2"
+  version: 0.7.3
+  resolution: "@formatjs/intl-durationformat@npm:0.7.3"
   dependencies:
-    "@formatjs/ecma402-abstract": "npm:2.3.2"
-    "@formatjs/intl-localematcher": "npm:0.5.10"
+    "@formatjs/ecma402-abstract": "npm:2.3.3"
+    "@formatjs/intl-localematcher": "npm:0.6.0"
     tslib: "npm:2"
-  checksum: 10/863784f3ac51779516fa29c87705af6d4f1b32191a2a48172d2ce16a99e385887a5641703a222ca2b1a0d334e1ab2587be5ef65f48c5ae8a16ba55138356a232
+  checksum: 10/781c4f1574e01d2155ca90593b0605de883937ade3d5057a6adf19e21379fd80fb5985cf7115d348f572fb25b281add8d851fb9011fea770e9b1ea1cf5e9b5a1
   languageName: node
   linkType: hard
 
@@ -2505,12 +2505,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@formatjs/intl-localematcher@npm:0.5.10":
-  version: 0.5.10
-  resolution: "@formatjs/intl-localematcher@npm:0.5.10"
+"@formatjs/intl-localematcher@npm:0.6.0":
+  version: 0.6.0
+  resolution: "@formatjs/intl-localematcher@npm:0.6.0"
   dependencies:
     tslib: "npm:2"
-  checksum: 10/119e36974607d5d3586570db93358c1f316c0736b83acc81dce88468435a9519a9e58a5abe6ed3078ffe40d6b4ad4613c6371e2a39cd570c9b6f561372ffb14d
+  checksum: 10/d8fd984c14121949d0ba60732a096aed6dccb2ab93770c4bffaea1170c85f5639d2a71fe6e2c68ab62bf6f3583a9c4b1fcd11bd5fb8837bfb2582228c33398c1
   languageName: node
   linkType: hard
 
