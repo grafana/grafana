@@ -53,8 +53,9 @@ CommonAnnotations: {{ range .CommonAnnotations.SortedPairs }}{{ .Name }}={{ .Val
 		},
 		expected: TestTemplatesResults{
 			Results: []alertingNotify.TestTemplatesResult{{
-				Name: "slack.title",
-				Text: "\nReceiver: TestReceiver\nStatus: firing\nExternalURL: http://localhost:9093\nAlerts: 1\nFiring Alerts: 1\nResolved Alerts: 0\nGroupLabels: group_label=group_label_value \nCommonLabels: alertname=alert1 grafana_folder=folder title lbl1=val1 \nCommonAnnotations: ann1=annv1 \n",
+				Name:  "slack.title",
+				Text:  "\nReceiver: TestReceiver\nStatus: firing\nExternalURL: http://localhost:9093\nAlerts: 1\nFiring Alerts: 1\nResolved Alerts: 0\nGroupLabels: group_label=group_label_value \nCommonLabels: alertname=alert1 grafana_folder=folder title lbl1=val1 \nCommonAnnotations: ann1=annv1 \n",
+				Scope: alertingNotify.TemplateScope(apimodels.RootScope),
 			}},
 			Errors: nil,
 		},
@@ -67,8 +68,9 @@ CommonAnnotations: {{ range .CommonAnnotations.SortedPairs }}{{ .Name }}={{ .Val
 		},
 		expected: TestTemplatesResults{
 			Results: []alertingNotify.TestTemplatesResult{{
-				Name: "slack.title",
-				Text: DefaultLabels[prometheusModel.AlertNameLabel],
+				Name:  "slack.title",
+				Text:  DefaultLabels[prometheusModel.AlertNameLabel],
+				Scope: alertingNotify.TemplateScope(apimodels.RootScope),
 			}},
 			Errors: nil,
 		},
@@ -81,8 +83,9 @@ CommonAnnotations: {{ range .CommonAnnotations.SortedPairs }}{{ .Name }}={{ .Val
 		},
 		expected: TestTemplatesResults{
 			Results: []alertingNotify.TestTemplatesResult{{
-				Name: "slack.title",
-				Text: DefaultLabels[alertingModels.FolderTitleLabel],
+				Name:  "slack.title",
+				Text:  DefaultLabels[alertingModels.FolderTitleLabel],
+				Scope: alertingNotify.TemplateScope(apimodels.RootScope),
 			}},
 			Errors: nil,
 		},
@@ -95,8 +98,9 @@ CommonAnnotations: {{ range .CommonAnnotations.SortedPairs }}{{ .Name }}={{ .Val
 		},
 		expected: TestTemplatesResults{
 			Results: []alertingNotify.TestTemplatesResult{{
-				Name: "slack.title",
-				Text: "B=22 C=1 ",
+				Name:  "slack.title",
+				Text:  "B=22 C=1 ",
+				Scope: alertingNotify.TemplateScope(apimodels.RootScope),
 			}},
 			Errors: nil,
 		},
@@ -109,8 +113,9 @@ CommonAnnotations: {{ range .CommonAnnotations.SortedPairs }}{{ .Name }}={{ .Val
 		},
 		expected: TestTemplatesResults{
 			Results: []alertingNotify.TestTemplatesResult{{
-				Name: "slack.title",
-				Text: DefaultAnnotations[alertingModels.ValueStringAnnotation],
+				Name:  "slack.title",
+				Text:  DefaultAnnotations[alertingModels.ValueStringAnnotation],
+				Scope: alertingNotify.TemplateScope(apimodels.RootScope),
 			}},
 			Errors: nil,
 		},
@@ -127,6 +132,7 @@ CommonAnnotations: {{ range .CommonAnnotations.SortedPairs }}{{ .Name }}={{ .Val
 				Text: fmt.Sprintf("http://localhost:9093/d/%s?orgId=%s",
 					DefaultAnnotations[alertingModels.DashboardUIDAnnotation],
 					DefaultAnnotations[alertingModels.OrgIDAnnotation]),
+				Scope: alertingNotify.TemplateScope(apimodels.RootScope),
 			}},
 			Errors: nil,
 		},
@@ -144,6 +150,7 @@ CommonAnnotations: {{ range .CommonAnnotations.SortedPairs }}{{ .Name }}={{ .Val
 					DefaultAnnotations[alertingModels.DashboardUIDAnnotation],
 					DefaultAnnotations[alertingModels.OrgIDAnnotation],
 					DefaultAnnotations[alertingModels.PanelIDAnnotation]),
+				Scope: alertingNotify.TemplateScope(apimodels.RootScope),
 			}},
 			Errors: nil,
 		},
@@ -156,8 +163,47 @@ CommonAnnotations: {{ range .CommonAnnotations.SortedPairs }}{{ .Name }}={{ .Val
 		},
 		expected: TestTemplatesResults{
 			Results: []alertingNotify.TestTemplatesResult{{
-				Name: "slack.title",
-				Text: fmt.Sprintf("http://localhost:3000?orgId=%s", DefaultAnnotations[alertingModels.OrgIDAnnotation]),
+				Name:  "slack.title",
+				Text:  fmt.Sprintf("http://localhost:3000?orgId=%s", DefaultAnnotations[alertingModels.OrgIDAnnotation]),
+				Scope: alertingNotify.TemplateScope(apimodels.RootScope),
+			}},
+			Errors: nil,
+		},
+	}, {
+		name: "Alerts scoped templated ",
+		input: apimodels.TestTemplatesConfigBodyParams{
+			Alerts: []*amv2.PostableAlert{{Alert: amv2.Alert{GeneratorURL: "http://localhost:3000"}}},
+			Name:   "slack.title",
+			Template: `{{ define "slack.title" }}
+	{{ range . }}
+		Status: {{ .Status }}
+		Starts at: {{ .StartsAt }}
+	{{ end }}
+{{ end }}`,
+		},
+		expected: TestTemplatesResults{
+			Results: []alertingNotify.TestTemplatesResult{{
+				Name:  "slack.title",
+				Text:  "\n\t\n\t\tStatus: firing\n\t\tStarts at: 0001-01-01 00:00:00 +0000 UTC\n\t\n",
+				Scope: alertingNotify.TemplateScope(apimodels.AlertsScope),
+			}},
+			Errors: nil,
+		},
+	}, {
+		name: "Alert scoped templated ",
+		input: apimodels.TestTemplatesConfigBodyParams{
+			Alerts: []*amv2.PostableAlert{{Alert: amv2.Alert{GeneratorURL: "http://localhost:3000"}}},
+			Name:   "slack.title",
+			Template: `{{ define "slack.title" }}
+	Status: {{ .Status }}
+	Starts at: {{ .StartsAt }}
+{{ end }}`,
+		},
+		expected: TestTemplatesResults{
+			Results: []alertingNotify.TestTemplatesResult{{
+				Name:  "slack.title",
+				Text:  "\n\tStatus: firing\n\tStarts at: 0001-01-01 00:00:00 +0000 UTC\n",
+				Scope: alertingNotify.TemplateScope(apimodels.AlertScope),
 			}},
 			Errors: nil,
 		},
