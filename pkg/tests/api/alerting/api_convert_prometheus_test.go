@@ -213,6 +213,94 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 	})
 }
 
+func TestIntegrationConvertPrometheusEndpoints_UpdateRule(t *testing.T) {
+	runTest := func(t *testing.T, enableLokiPaths bool) {
+		testinfra.SQLiteIntegrationTest(t)
+
+		// Setup Grafana and its Database
+		dir, gpath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+			DisableLegacyAlerting: true,
+			EnableUnifiedAlerting: true,
+			DisableAnonymous:      true,
+			AppModeProduction:     true,
+			EnableFeatureToggles:  []string{"alertingConversionAPI"},
+		})
+
+		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)
+
+		// Create a user to make authenticated requests
+		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleAdmin),
+			Password:       "password",
+			Login:          "admin",
+		})
+		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+		apiClient.prometheusConversionUseLokiPaths = enableLokiPaths
+
+		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleViewer),
+			Password:       "password",
+			Login:          "viewer",
+		})
+
+		namespace1 := "test-namespace-1"
+
+		ds := apiClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
+
+		promGroup := apimodels.PrometheusRuleGroup{
+			Name:     "test-group-for-an-update",
+			Interval: prommodel.Duration(60 * time.Second),
+			Rules: []apimodels.PrometheusRule{
+				{
+					Alert: "HighDiskUsage",
+					Expr:  "disk_usage > 80",
+					For:   util.Pointer(prommodel.Duration(1 * time.Minute)),
+					Labels: map[string]string{
+						"severity": "low",
+						"team":     "alerting",
+					},
+					Annotations: map[string]string{
+						"annotation-5": "value-5",
+					},
+				},
+			},
+		}
+
+		t.Run("update a rule", func(t *testing.T) {
+			// Create the rule group
+			_, status, body := apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup, nil)
+			requireStatusCode(t, http.StatusAccepted, status, body)
+
+			// Now get the group
+			group1 := apiClient.ConvertPrometheusGetRuleGroupRules(t, namespace1, promGroup.Name)
+			require.Equal(t, promGroup, group1)
+
+			// Update the rule group interval
+			promGroup.Interval = prommodel.Duration(30 * time.Second)
+			// Update the query
+			promGroup.Rules[0].Expr = "disk_usage > 90"
+			// Labels, and annotations too
+			promGroup.Rules[0].Labels["another-label"] = "something"
+			promGroup.Rules[0].Annotations["another-annotation"] = "also-something"
+			// Update the group
+			_, status, body = apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup, nil)
+			requireStatusCode(t, http.StatusAccepted, status, body)
+
+			// Now get the group again and check that the rule group has been updated
+			group1 = apiClient.ConvertPrometheusGetRuleGroupRules(t, namespace1, promGroup.Name)
+			require.Equal(t, promGroup, group1)
+		})
+	}
+
+	t.Run("with the mimirtool paths", func(t *testing.T) {
+		runTest(t, false)
+	})
+
+	t.Run("with the cortextool Loki paths", func(t *testing.T) {
+		runTest(t, true)
+	})
+}
+
 func TestIntegrationConvertPrometheusEndpoints_Conflict(t *testing.T) {
 	runTest := func(t *testing.T, enableLokiPaths bool) {
 		testinfra.SQLiteIntegrationTest(t)
