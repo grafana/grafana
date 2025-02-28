@@ -8,13 +8,13 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-type StorageApiMetrics struct {
+type StorageMetrics struct {
 	WatchEventLatency *prometheus.HistogramVec
 	PollerLatency     prometheus.Histogram
 }
 
-func ProvideStorageMetrics(reg prometheus.Registerer) *StorageApiMetrics {
-	return &StorageApiMetrics{
+func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
+	return &StorageMetrics{
 		WatchEventLatency: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Namespace:                       "storage_server",
 			Name:                            "watch_latency_seconds",

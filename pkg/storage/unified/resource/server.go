@@ -183,7 +183,7 @@ type ResourceServerOptions struct {
 	// Registerer to register prometheus Metrics for the Resource server
 	Reg prometheus.Registerer
 
-	unifiedStorageMetrics *StorageApiMetrics
+	storageMetrics *StorageMetrics
 }
 
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
@@ -247,7 +247,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		now:                   opts.Now,
 		ctx:                   ctx,
 		cancel:                cancel,
-		unifiedStorageMetrics: opts.unifiedStorageMetrics,
+		storageMetrics: opts.storageMetrics,
 	}
 
 	if opts.Search.Resources != nil {
@@ -281,7 +281,7 @@ type server struct {
 	lifecycle             LifecycleHooks
 	now                   func() int64
 	mostRecentRV          atomic.Int64 // The most recent resource version seen by the server
-	unifiedStorageMetrics *StorageApiMetrics
+	storageMetrics *StorageMetrics
 
 	// Background watch task -- this has permissions for everything
 	ctx         context.Context
@@ -1073,11 +1073,11 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 					return err
 				}
 
-				if s.unifiedStorageMetrics != nil {
+				if s.storageMetrics != nil {
 					// record latency - resource version is a unix timestamp in microseconds so we convert to seconds
 					latencySeconds := float64(time.Now().UnixMicro()-event.ResourceVersion) / 1e6
 					if latencySeconds > 0 {
-						s.unifiedStorageMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
+						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
 					}
 				}
 			}

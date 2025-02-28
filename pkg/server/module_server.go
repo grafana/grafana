@@ -22,8 +22,8 @@ import (
 
 // NewModule returns an instance of a ModuleServer, responsible for managing
 // dskit modules (services).
-func NewModule(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg, unifiedStorageMetrics *resource.StorageApiMetrics) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, unifiedStorageMetrics)
+func NewModule(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg, storageMetrics *resource.StorageMetrics) (*ModuleServer, error) {
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func NewModule(opts Options, apiOpts api.ServerOptions, features featuremgmt.Fea
 	return s, nil
 }
 
-func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg, unifiedStorageMetrics *resource.StorageApiMetrics) (*ModuleServer, error) {
+func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg, storageMetrics *resource.StorageMetrics) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
 	s := &ModuleServer{
@@ -51,7 +51,7 @@ func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremg
 		version:               opts.Version,
 		commit:                opts.Commit,
 		buildBranch:           opts.BuildBranch,
-		unifiedStorageMetrics: unifiedStorageMetrics,
+		storageMetrics: storageMetrics,
 	}
 
 	return s, nil
@@ -73,7 +73,7 @@ type ModuleServer struct {
 	shutdownFinished      chan struct{}
 	isInitialized         bool
 	mtx                   sync.Mutex
-	unifiedStorageMetrics *resource.StorageApiMetrics
+	storageMetrics *resource.StorageMetrics
 
 	pidFile     string
 	version     string
@@ -138,7 +138,7 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, nil, docBuilders, s.unifiedStorageMetrics)
+		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, nil, docBuilders, s.storageMetrics)
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
