@@ -23,23 +23,24 @@ import (
 )
 
 var (
-	_ resource.BatchProcessingBackend = (*backend)(nil)
+	_ resource.BulkProcessingBackend = (*backend)(nil)
 )
 
-type batchRV struct {
+type bulkRV struct {
 	max     int64
 	counter int64
 }
 
-func newBatchRV() *batchRV {
+// When executing a bulk import we can fake the RV values
+func newBulkRV() *bulkRV {
 	t := time.Now().Truncate(time.Second * 10)
-	return &batchRV{
+	return &bulkRV{
 		max:     (t.UnixMicro() / 10000000) * 10000000,
 		counter: 0,
 	}
 }
 
-func (x *batchRV) next(obj metav1.Object) int64 {
+func (x *bulkRV) next(obj metav1.Object) int64 {
 	ts := obj.GetCreationTimestamp().UnixMicro()
 	anno := obj.GetAnnotations()
 	if anno != nil {
@@ -56,23 +57,23 @@ func (x *batchRV) next(obj metav1.Object) int64 {
 	return (ts/10000000)*10000000 + x.counter
 }
 
-type batchLock struct {
+type bulkLock struct {
 	running map[string]bool
 	mu      sync.Mutex
 }
 
-func (x *batchLock) Start(keys []*resource.ResourceKey) error {
+func (x *bulkLock) Start(keys []*resource.ResourceKey) error {
 	x.mu.Lock()
 	defer x.mu.Unlock()
 
 	// First verify that it is not already running
 	ids := make([]string, len(keys))
 	for i, k := range keys {
-		id := k.BatchID()
+		id := k.NSGR()
 		if x.running[id] {
 			return &apierrors.StatusError{ErrStatus: metav1.Status{
 				Code:    http.StatusPreconditionFailed,
-				Message: "batch export is already running",
+				Message: "bulk export is already running",
 			}}
 		}
 		ids[i] = id
@@ -85,47 +86,47 @@ func (x *batchLock) Start(keys []*resource.ResourceKey) error {
 	return nil
 }
 
-func (x *batchLock) Finish(keys []*resource.ResourceKey) {
+func (x *bulkLock) Finish(keys []*resource.ResourceKey) {
 	x.mu.Lock()
 	defer x.mu.Unlock()
 	for _, k := range keys {
-		delete(x.running, k.BatchID())
+		delete(x.running, k.NSGR())
 	}
 }
 
-func (x *batchLock) Active() bool {
+func (x *bulkLock) Active() bool {
 	x.mu.Lock()
 	defer x.mu.Unlock()
 	return len(x.running) > 0
 }
 
-func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettings, iter resource.BatchRequestIterator) *resource.BatchResponse {
-	err := b.batchLock.Start(setting.Collection)
+func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) *resource.BulkResponse {
+	err := b.bulkLock.Start(setting.Collection)
 	if err != nil {
-		return &resource.BatchResponse{
+		return &resource.BulkResponse{
 			Error: resource.AsErrorResult(err),
 		}
 	}
-	defer b.batchLock.Finish(setting.Collection)
+	defer b.bulkLock.Finish(setting.Collection)
 
 	// We may want to first write parquet, then read parquet
 	if b.dialect.DialectName() == "sqlite" {
-		file, err := os.CreateTemp("", "grafana-batch-export-*.parquet")
+		file, err := os.CreateTemp("", "grafana-bulk-export-*.parquet")
 		if err != nil {
-			return &resource.BatchResponse{
+			return &resource.BulkResponse{
 				Error: resource.AsErrorResult(err),
 			}
 		}
 
 		writer, err := parquet.NewParquetWriter(file)
 		if err != nil {
-			return &resource.BatchResponse{
+			return &resource.BulkResponse{
 				Error: resource.AsErrorResult(err),
 			}
 		}
 
-		// write batch to parquet
-		rsp := writer.ProcessBatch(ctx, setting, iter)
+		// write bulk to parquet
+		rsp := writer.ProcessBulk(ctx, setting, iter)
 		if rsp.Error != nil {
 			return rsp
 		}
@@ -135,18 +136,18 @@ func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettin
 		// Replace the iterator with one from parquet
 		iter, err = parquet.NewParquetReader(file.Name(), 50)
 		if err != nil {
-			return &resource.BatchResponse{
+			return &resource.BulkResponse{
 				Error: resource.AsErrorResult(err),
 			}
 		}
 	}
 
-	return b.processBatch(ctx, setting, iter)
+	return b.processBulk(ctx, setting, iter)
 }
 
-// internal batch process
-func (b *backend) processBatch(ctx context.Context, setting resource.BatchSettings, iter resource.BatchRequestIterator) *resource.BatchResponse {
-	rsp := &resource.BatchResponse{}
+// internal bulk process
+func (b *backend) processBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) *resource.BulkResponse {
+	rsp := &resource.BulkResponse{}
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		rollbackWithError := func(err error) error {
 			txerr := tx.Rollback()
@@ -157,7 +158,7 @@ func (b *backend) processBatch(ctx context.Context, setting resource.BatchSettin
 			}
 			return err
 		}
-		batch := &batchWroker{
+		bulk := &bulkWroker{
 			ctx:     ctx,
 			tx:      tx,
 			dialect: b.dialect,
@@ -165,18 +166,18 @@ func (b *backend) processBatch(ctx context.Context, setting resource.BatchSettin
 		}
 
 		// Calculate the RV based on incoming request timestamps
-		rv := newBatchRV()
+		rv := newBulkRV()
 
-		summaries := make(map[string]*resource.BatchResponse_Summary, len(setting.Collection)*4)
+		summaries := make(map[string]*resource.BulkResponse_Summary, len(setting.Collection)*4)
 
 		// First clear everything in the transaction
 		if setting.RebuildCollection {
 			for _, key := range setting.Collection {
-				summary, err := batch.deleteCollection(key)
+				summary, err := bulk.deleteCollection(key)
 				if err != nil {
 					return rollbackWithError(err)
 				}
-				summaries[key.BatchID()] = summary
+				summaries[key.NSGR()] = summary
 				rsp.Summary = append(rsp.Summary, summary)
 			}
 		}
@@ -194,8 +195,8 @@ func (b *backend) processBatch(ctx context.Context, setting resource.BatchSettin
 			}
 			rsp.Processed++
 
-			if req.Action == resource.BatchRequest_UNKNOWN {
-				rsp.Rejected = append(rsp.Rejected, &resource.BatchResponse_Rejected{
+			if req.Action == resource.BulkRequest_UNKNOWN {
+				rsp.Rejected = append(rsp.Rejected, &resource.BulkResponse_Rejected{
 					Key:    req.Key,
 					Action: req.Action,
 					Error:  "unknown action",
@@ -205,7 +206,7 @@ func (b *backend) processBatch(ctx context.Context, setting resource.BatchSettin
 
 			err := obj.UnmarshalJSON(req.Value)
 			if err != nil {
-				rsp.Rejected = append(rsp.Rejected, &resource.BatchResponse_Rejected{
+				rsp.Rejected = append(rsp.Rejected, &resource.BulkResponse_Rejected{
 					Key:    req.Key,
 					Action: req.Action,
 					Error:  "unable to unmarshal json",
@@ -238,7 +239,7 @@ func (b *backend) processBatch(ctx context.Context, setting resource.BatchSettin
 				return rollbackWithError(fmt.Errorf("missing summary key for: %s", k))
 			}
 
-			err := batch.syncCollection(key, summary)
+			err := bulk.syncCollection(key, summary)
 			if err != nil {
 				return err
 			}
@@ -257,7 +258,7 @@ func (b *backend) processBatch(ctx context.Context, setting resource.BatchSettin
 	return rsp
 }
 
-type batchWroker struct {
+type bulkWroker struct {
 	ctx     context.Context
 	tx      db.ContextExecer
 	dialect sqltemplate.Dialect
@@ -265,8 +266,8 @@ type batchWroker struct {
 }
 
 // This will remove everything from the `resource` and `resource_history` table for a given namespace/group/resource
-func (w *batchWroker) deleteCollection(key *resource.ResourceKey) (*resource.BatchResponse_Summary, error) {
-	summary := &resource.BatchResponse_Summary{
+func (w *bulkWroker) deleteCollection(key *resource.ResourceKey) (*resource.BulkResponse_Summary, error) {
+	summary := &resource.BulkResponse_Summary{
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
@@ -303,8 +304,8 @@ func (w *batchWroker) deleteCollection(key *resource.ResourceKey) (*resource.Bat
 }
 
 // Copy the latest value from history into the active resource table
-func (w *batchWroker) syncCollection(key *resource.ResourceKey, summary *resource.BatchResponse_Summary) error {
-	w.logger.Info("synchronize collection", "key", key.BatchID())
+func (w *bulkWroker) syncCollection(key *resource.ResourceKey, summary *resource.BulkResponse_Summary) error {
+	w.logger.Info("synchronize collection", "key", key.NSGR())
 	_, err := dbutil.Exec(w.ctx, w.tx, sqlResourceInsertFromHistory, &sqlResourceInsertFromHistoryRequest{
 		SQLTemplate: sqltemplate.New(w.dialect),
 		Key:         key,
@@ -313,7 +314,7 @@ func (w *batchWroker) syncCollection(key *resource.ResourceKey, summary *resourc
 		return err
 	}
 
-	w.logger.Info("get stats (still in transaction)", "key", key.BatchID())
+	w.logger.Info("get stats (still in transaction)", "key", key.NSGR())
 	rows, err := dbutil.QueryRows(w.ctx, w.tx, sqlResourceStats, &sqlStatsRequest{
 		SQLTemplate: sqltemplate.New(w.dialect),
 		Namespace:   key.Namespace,
