@@ -19,7 +19,7 @@ type GrafanaAuthorizer struct {
 }
 
 // NewGrafanaAuthorizer returns an authorizer configured for a grafana instance.
-// This authorizer is a chain of smaller authorizers that together form the descision if
+// This authorizer is a chain of smaller authorizers that together form the decision if
 // access should be granted.
 //  1. We deny all impersonate request.
 //  2. We allow all identities that belongs to `system:masters` group, regular grafana identities cannot
