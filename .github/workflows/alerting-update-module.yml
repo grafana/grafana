@@ -139,6 +139,9 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@67ccf781d68cd99b580ae25a5c18a1cc84ffff1f # 7.0.6
         id: create-pr
+        env:
+          GIT_TRACE: 1
+          GIT_CURL_VERBOSE: 1
         with:
           token: '${{ steps.generate_token.outputs.token }}'
           title: "${{ inputs.branch == 'main' && 'Alerting: Update alerting module to ' || format('[{0}] Alerting: Update alerting module to ', inputs.branch) }}${{ steps.latest-commit.outputs.to_commit }}"
