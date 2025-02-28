@@ -39,19 +39,19 @@ func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremg
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
 	s := &ModuleServer{
-		opts:                  opts,
-		apiOpts:               apiOpts,
-		context:               rootCtx,
-		shutdownFn:            shutdownFn,
-		shutdownFinished:      make(chan struct{}),
-		log:                   log.New("base-server"),
-		features:              features,
-		cfg:                   cfg,
-		pidFile:               opts.PidFile,
-		version:               opts.Version,
-		commit:                opts.Commit,
-		buildBranch:           opts.BuildBranch,
-		storageMetrics: storageMetrics,
+		opts:             opts,
+		apiOpts:          apiOpts,
+		context:          rootCtx,
+		shutdownFn:       shutdownFn,
+		shutdownFinished: make(chan struct{}),
+		log:              log.New("base-server"),
+		features:         features,
+		cfg:              cfg,
+		pidFile:          opts.PidFile,
+		version:          opts.Version,
+		commit:           opts.Commit,
+		buildBranch:      opts.BuildBranch,
+		storageMetrics:   storageMetrics,
 	}
 
 	return s, nil
@@ -64,16 +64,16 @@ type ModuleServer struct {
 	opts    Options
 	apiOpts api.ServerOptions
 
-	features              featuremgmt.FeatureToggles
-	context               context.Context
-	shutdownFn            context.CancelFunc
-	log                   log.Logger
-	cfg                   *setting.Cfg
-	shutdownOnce          sync.Once
-	shutdownFinished      chan struct{}
-	isInitialized         bool
-	mtx                   sync.Mutex
-	storageMetrics *resource.StorageMetrics
+	features         featuremgmt.FeatureToggles
+	context          context.Context
+	shutdownFn       context.CancelFunc
+	log              log.Logger
+	cfg              *setting.Cfg
+	shutdownOnce     sync.Once
+	shutdownFinished chan struct{}
+	isInitialized    bool
+	mtx              sync.Mutex
+	storageMetrics   *resource.StorageMetrics
 
 	pidFile     string
 	version     string

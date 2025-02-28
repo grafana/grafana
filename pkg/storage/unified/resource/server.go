@@ -236,17 +236,17 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(context.Background())
 	s := &server{
-		tracer:                opts.Tracer,
-		log:                   logger,
-		backend:               opts.Backend,
-		blob:                  blobstore,
-		diagnostics:           opts.Diagnostics,
-		access:                opts.AccessClient,
-		writeHooks:            opts.WriteHooks,
-		lifecycle:             opts.Lifecycle,
-		now:                   opts.Now,
-		ctx:                   ctx,
-		cancel:                cancel,
+		tracer:         opts.Tracer,
+		log:            logger,
+		backend:        opts.Backend,
+		blob:           blobstore,
+		diagnostics:    opts.Diagnostics,
+		access:         opts.AccessClient,
+		writeHooks:     opts.WriteHooks,
+		lifecycle:      opts.Lifecycle,
+		now:            opts.Now,
+		ctx:            ctx,
+		cancel:         cancel,
 		storageMetrics: opts.storageMetrics,
 	}
 
@@ -270,17 +270,17 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 var _ ResourceServer = &server{}
 
 type server struct {
-	tracer                trace.Tracer
-	log                   *slog.Logger
-	backend               StorageBackend
-	blob                  BlobSupport
-	search                *searchSupport
-	diagnostics           DiagnosticsServer
-	access                claims.AccessClient
-	writeHooks            WriteAccessHooks
-	lifecycle             LifecycleHooks
-	now                   func() int64
-	mostRecentRV          atomic.Int64 // The most recent resource version seen by the server
+	tracer         trace.Tracer
+	log            *slog.Logger
+	backend        StorageBackend
+	blob           BlobSupport
+	search         *searchSupport
+	diagnostics    DiagnosticsServer
+	access         claims.AccessClient
+	writeHooks     WriteAccessHooks
+	lifecycle      LifecycleHooks
+	now            func() int64
+	mostRecentRV   atomic.Int64 // The most recent resource version seen by the server
 	storageMetrics *StorageMetrics
 
 	// Background watch task -- this has permissions for everything

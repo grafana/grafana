@@ -31,8 +31,8 @@ type pollingNotifier struct {
 	pollingInterval time.Duration
 	watchBufferSize int
 
-	log                   log.Logger
-	tracer                trace.Tracer
+	log            log.Logger
+	tracer         trace.Tracer
 	storageMetrics *resource.StorageMetrics
 
 	bulkLock      *bulkLock
@@ -47,8 +47,8 @@ type pollingNotifierConfig struct {
 	pollingInterval time.Duration
 	watchBufferSize int
 
-	log                   log.Logger
-	tracer                trace.Tracer
+	log            log.Logger
+	tracer         trace.Tracer
 	storageMetrics *resource.StorageMetrics
 
 	bulkLock      *bulkLock
@@ -103,7 +103,7 @@ func newPollingNotifier(cfg *pollingNotifierConfig) (*pollingNotifier, error) {
 		listLatestRVs:   cfg.listLatestRVs,
 		historyPoll:     cfg.historyPoll,
 		done:            cfg.done,
-		storageMetrics: cfg.storageMetrics,
+		storageMetrics:  cfg.storageMetrics,
 	}, nil
 }
 

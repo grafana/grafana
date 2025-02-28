@@ -49,8 +49,8 @@ type service struct {
 
 	authenticator interceptors.Authenticator
 
-	log                   log.Logger
-	reg                   prometheus.Registerer
+	log            log.Logger
+	reg            prometheus.Registerer
 	storageMetrics *resource.StorageMetrics
 
 	docBuilders resource.DocumentBuilderSupplier
@@ -86,15 +86,15 @@ func ProvideUnifiedStorageGrpcService(
 	authn := grpcutils.NewAuthenticatorWithFallback(cfg, reg, tracing, &grpc.Authenticator{Tracer: tracing})
 
 	s := &service{
-		cfg:                   cfg,
-		features:              features,
-		stopCh:                make(chan struct{}),
-		authenticator:         authn,
-		tracing:               tracing,
-		db:                    db,
-		log:                   log,
-		reg:                   reg,
-		docBuilders:           docBuilders,
+		cfg:            cfg,
+		features:       features,
+		stopCh:         make(chan struct{}),
+		authenticator:  authn,
+		tracing:        tracing,
+		db:             db,
+		log:            log,
+		reg:            reg,
+		docBuilders:    docBuilders,
 		storageMetrics: storageMetrics,
 	}
 
