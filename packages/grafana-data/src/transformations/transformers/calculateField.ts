@@ -131,7 +131,10 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
     const mode = options.mode ?? CalculateFieldMode.ReduceRow;
 
     const asTimeSeries = options.timeSeries !== false;
-    const isBinaryFixed = mode === CalculateFieldMode.BinaryOperation && options.binary?.right.fixed != null;
+
+    const right = options.binary?.right;
+    const rightVal = typeof right === 'string' ? right : typeof right === 'object' ? right.fixed : undefined;
+    const isBinaryFixed = mode === CalculateFieldMode.BinaryOperation && !Number.isNaN(Number(rightVal));
 
     const needsSingleFrame = asTimeSeries && !isBinaryFixed;
 
