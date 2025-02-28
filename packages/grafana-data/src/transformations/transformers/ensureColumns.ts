@@ -7,6 +7,27 @@ import { SynchronousDataTransformerInfo } from '../../types/transformations';
 import { DataTransformerID } from './ids';
 import { joinByFieldTransformer } from './joinByField';
 
+export interface EnsureColumnsOptions {
+  predicate?: (frames: DataFrame[]) => boolean;
+}
+
+export const conditionallyEnsureColumnsTransformer: SynchronousDataTransformerInfo<EnsureColumnsOptions> = {
+  id: DataTransformerID.conditionallyEnsureColumns,
+  name: 'Conditionally Ensure Columns Transformer',
+  description: 'Runs ensureColumns if the predicate returns true',
+
+  operator: (options: EnsureColumnsOptions, ctx) => (source) =>
+    source.pipe(map((data) => conditionallyEnsureColumnsTransformer.transformer(options, ctx)(data))),
+
+  transformer: (options: EnsureColumnsOptions, ctx) => (frames: DataFrame[]) => {
+    if (options.predicate?.(frames)) {
+      return ensureColumnsTransformer.transformer(options, ctx)(frames);
+    } else {
+      return frames;
+    }
+  },
+};
+
 export const ensureColumnsTransformer: SynchronousDataTransformerInfo = {
   id: DataTransformerID.ensureColumns,
   name: 'Ensure Columns Transformer',
