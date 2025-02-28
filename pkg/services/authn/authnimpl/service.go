@@ -57,7 +57,7 @@ func ProvideIdentitySynchronizer(s *Service) authn.IdentitySynchronizer {
 func ProvideService(
 	cfg *setting.Cfg, tracer tracing.Tracer, sessionService auth.UserTokenService,
 	usageStats usagestats.Service, registerer prometheus.Registerer, authTokenService login.AuthInfoService,
-) (*Service, error) {
+) *Service {
 	stackID, _ := strconv.ParseInt(cfg.StackID, 10, 64)
 
 	s := &Service{
@@ -77,7 +77,7 @@ func ProvideService(
 	}
 
 	usageStats.RegisterMetricsFunc(s.getUsageStats)
-	return s, nil
+	return s
 }
 
 type Service struct {
