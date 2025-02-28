@@ -231,5 +231,3 @@ func TestRootDiscoveryHandler_Handle(t *testing.T) {
 		require.Equal(t, "v0alpha1", rec.Body.String())
 	})
 }
-
-// JEV PR test
