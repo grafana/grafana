@@ -1,0 +1,19 @@
+name: Backend Code Checks
+
+on:
+  pull_request:
+    paths-ignore:
+      - '*.md'
+      - 'docs/**'
+      - 'latest.json'
+
+jobs:
+  lint-backend:
+    name: Lint Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint Backend
+        uses: ./.github/actions/backend-lint
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}

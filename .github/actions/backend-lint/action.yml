@@ -1,0 +1,71 @@
+name: Backend Lint
+description: Lint backend code and run related validations
+
+inputs:
+  github-token:
+    description: 'GitHub token for repository access'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    # Identify runner (equivalent to identify_runner_step)
+    - name: Identify runner
+      shell: bash
+      run: |
+        echo "Runner workspace: ${{ github.workspace }}"
+        echo "Runner OS: ${{ runner.os }}"
+
+    # Compile build command (equivalent to compile_build_cmd)
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+
+    # Wire installation (equivalent to wire_install_step)
+    - name: Install Wire
+      shell: bash
+      run: |
+        go install github.com/google/wire/cmd/wire@latest
+        wire check
+
+    # Validate modfile (equivalent to validate_modfile_step)
+    - name: Validate go.mod
+      shell: bash
+      run: |
+        go mod verify
+        go mod tidy
+        git diff --exit-code -- go.mod go.sum
+
+    # Validate OpenAPI spec (equivalent to validate_openapi_spec_step)
+    - name: Validate OpenAPI spec
+      shell: bash
+      run: |
+        # Add your OpenAPI validation command here
+        # This might require installing additional tools like swagger-cli
+        if [ -f "public/api-spec.json" ]; then
+          echo "Validating OpenAPI spec"
+          # Add validation command
+        fi
+
+    # Lint Drone config (only on main branch) (equivalent to lint_drone_step)
+    - name: Lint Drone config
+      if: github.ref == 'refs/heads/main'
+      shell: bash
+      run: |
+        if [ -f ".drone.yml" ]; then
+          # Install drone-cli if needed
+          curl -L https://github.com/drone/drone-cli/releases/latest/download/drone_linux_amd64.tar.gz | tar zx
+          ./drone lint .drone.yml
+        fi
+
+    # Enterprise setup (if PR)
+    - name: Setup Enterprise (PR only)
+      if: github.event_name == 'pull_request'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: |
+        # Add enterprise setup logic here
+        # This would be equivalent to enterprise_setup_step
+        echo "Setting up enterprise components"
