@@ -79,8 +79,6 @@ To use this procedure, you need:
 
 ### Steps {#add-the-traces-panel-query}
 
-<!--updated heading -->
-
 To view and analyze traces data in a dashboard, you need to add the traces visualization to your dashboard and define a query using the panel editor.
 The query determines the data that is displayed in the visualization.
 For more information on the panel editor, refer to the [Panel editor documentation](ref:panel-editor-documentation).
@@ -177,8 +175,6 @@ You should now see a list of matching traces in the table visualization. While s
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### Span filters options
-
-<!-- updated heading -->
 
 The **Span filters** options control the initial state of the span filters when the visualization loads, allowing you to customize your trace analysis view.
 
