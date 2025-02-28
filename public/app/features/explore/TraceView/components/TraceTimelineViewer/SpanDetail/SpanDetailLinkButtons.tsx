@@ -84,7 +84,7 @@ export const getSpanDetailLinkButtons = (props: Props) => {
 
   let profileLinkButtons = profileLinkButton;
   if (profileLinkButton) { // ensure we have a profile link
-    const exploreProfilesPluginId = 'grafana-pyroscope-app';
+    const profilesDrilldownPluginId = 'grafana-pyroscope-app';
     const context = getProfileLinkButtonsContext(span, traceToProfilesOptions, timeRange);
 
     // if in explore, use the plugin extension point to get the link
@@ -92,17 +92,17 @@ export const getSpanDetailLinkButtons = (props: Props) => {
     if (window.location.pathname.startsWith('/explore')) {
       const extensionPointId = PluginExtensionPoints.TraceViewDetails;
       const { links } = usePluginLinks({ extensionPointId, context, limitPerPlugin: 1 });
-      const link = links && links.length > 0 ? links.find((link) => link.pluginId === exploreProfilesPluginId) : null;
+      const link = links && links.length > 0 ? links.find((link) => link.pluginId === profilesDrilldownPluginId) : null;
 
       // if we have a plugin link, add a button to open in Grafana Profiles Drilldown
       if (link) {
         profileLinkButtons = createProfileLinkButtons(profileLinkButton, styles, link);
       }
     } else { // fallback to building a url to open in Grafana Profiles Drilldown
-      const drilldownProfilesAppExists = config.apps[exploreProfilesPluginId];
+      const drilldownProfilesAppExists = config.apps[profilesDrilldownPluginId];
 
       if (drilldownProfilesAppExists) {
-        const path = getProfileLinkPath(context, exploreProfilesPluginId);
+        const path = getProfileLinkPath(context, profilesDrilldownPluginId);
         profileLinkButtons = createProfileLinkButtons(profileLinkButton, styles, undefined, path);    
       }
     }
@@ -131,7 +131,7 @@ export const getProfileLinkButtonsContext = (span: TraceSpan, traceToProfilesOpt
   return context;
 }
 
-export const getProfileLinkPath = (context: ProfilesButtonContext, exploreProfilesPluginId: string) => {
+export const getProfileLinkPath = (context: ProfilesButtonContext, profilesDrilldownPluginId: string) => {
   const datasourceParam = context.targets.length > 0 && context.targets[0].datasource?.uid ? `var-dataSource=${context.targets[0].datasource.uid}` : '';
   const serviceNameParam = `&var-serviceName=${context.serviceName}`;
   const profileTypeParam = `&var-profileMetricId=${context.profileTypeId}`;
@@ -139,7 +139,7 @@ export const getProfileLinkPath = (context: ProfilesButtonContext, exploreProfil
   const timeRangeParam = `&from=${context.timeRange.from}&to=${context.timeRange.to}`;
   const spanSelectorParam = `&spanSelector=${context.spanSelector}`;
 
-  const base = `/a/${exploreProfilesPluginId}/explore?`;
+  const base = `/a/${profilesDrilldownPluginId}/explore?`;
   const params = new URLSearchParams(
     `${datasourceParam}${serviceNameParam}${profileTypeParam}${timeRangeParam}${explorationTypeParam}${spanSelectorParam}`
   ).toString();
