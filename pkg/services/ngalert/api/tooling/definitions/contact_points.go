@@ -118,16 +118,17 @@ type TLSConfig struct {
 type MqttIntegration struct {
 	DisableResolveMessage *bool `json:"-" yaml:"-" hcl:"disable_resolve_message"`
 
-	BrokerURL     *string    `json:"brokerUrl,omitempty" yaml:"brokerUrl,omitempty" hcl:"broker_url"`
-	ClientID      *string    `json:"clientId,omitempty" yaml:"clientId,omitempty" hcl:"client_id"`
-	Topic         *string    `json:"topic,omitempty" yaml:"topic,omitempty" hcl:"topic"`
-	Message       *string    `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
-	MessageFormat *string    `json:"messageFormat,omitempty" yaml:"messageFormat,omitempty" hcl:"message_format"`
-	Username      *string    `json:"username,omitempty" yaml:"username,omitempty" hcl:"username"`
-	Password      *Secret    `json:"password,omitempty" yaml:"password,omitempty" hcl:"password"`
-	QoS           *int64     `json:"qos,omitempty" yaml:"qos,omitempty" hcl:"qos"`
-	Retain        *bool      `json:"retain,omitempty" yaml:"retain,omitempty" hcl:"retain"`
-	TLSConfig     *TLSConfig `json:"tlsConfig,omitempty" yaml:"tlsConfig,omitempty" hcl:"tls_config,block"`
+	BrokerURL          *string    `json:"brokerUrl,omitempty" yaml:"brokerUrl,omitempty" hcl:"broker_url"`
+	ClientID           *string    `json:"clientId,omitempty" yaml:"clientId,omitempty" hcl:"client_id"`
+	Topic              *string    `json:"topic,omitempty" yaml:"topic,omitempty" hcl:"topic"`
+	Message            *string    `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+	MessageFormat      *string    `json:"messageFormat,omitempty" yaml:"messageFormat,omitempty" hcl:"message_format"`
+	Username           *string    `json:"username,omitempty" yaml:"username,omitempty" hcl:"username"`
+	Password           *Secret    `json:"password,omitempty" yaml:"password,omitempty" hcl:"password"`
+	QoS                *int64     `json:"qos,omitempty" yaml:"qos,omitempty" hcl:"qos"`
+	Retain             *bool      `json:"retain,omitempty" yaml:"retain,omitempty" hcl:"retain"`
+	TLSConfig          *TLSConfig `json:"tlsConfig,omitempty" yaml:"tlsConfig,omitempty" hcl:"tls_config,block"`
+	AddGroupKeyToTopic *bool      `json:"addGroupKeyToTopic,omitempty" yaml:"addGroupKeyToTopic,omitempty" hcl:"add_group_key_to_topic"`
 }
 
 type OnCallIntegration struct {
