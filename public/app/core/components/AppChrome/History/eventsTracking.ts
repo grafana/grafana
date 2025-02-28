@@ -42,15 +42,15 @@ export const logClickUnifiedHistoryEntryEvent = createUnifiedHistoryEvent<Unifie
  * so we keep track of duplicated entries and be able to analyze them
  * @owner grafana-frontend-platform
  */
-//@ts-expect-error
 export const logDuplicateUnifiedHistoryEntryEvent =
+  //@ts-expect-error
   createUnifiedHistoryEvent<UnifiedHistoryEntryDuplicated>('duplicated_entry_rendered');
 
 /** We keep track of users open and closing the drawer
  * @owner grafana-frontend-platform
  */
-//@ts-expect-error
 export const logUnifiedHistoryDrawerInteractionEvent =
+  //@ts-expect-error
   createUnifiedHistoryEvent<UnifiedHistoryDrawerInteraction>('drawer_interaction');
 
 /**We keep track of users clicking on the `Show more` button
