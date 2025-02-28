@@ -111,6 +111,10 @@ func TestIntegrationIdentity(t *testing.T) {
 		found = teamClient.SpecJSON(rsp)
 		require.JSONEq(t, `[
 			{
+				"email": "admin-1",
+				"login": "admin-1"
+			},
+			{
 				"email": "admin-3",
 				"login": "admin-3"
 			},
