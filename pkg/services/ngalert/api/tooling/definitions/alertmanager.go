@@ -394,13 +394,13 @@ const (
 	ExecutionError  TemplateErrorKind = "execution_error"
 )
 
-// TemplateScope is the scope used to interpolate the template when testing.
+// swagger:enum TemplateScope
 type TemplateScope string
 
 const (
-	rootScope   TemplateScope = "."
-	alertsScope TemplateScope = ".Alerts"
-	alertScope  TemplateScope = ".Alert"
+	RootScope   TemplateScope = "."
+	AlertsScope TemplateScope = ".Alerts"
+	AlertScope  TemplateScope = ".Alert"
 )
 
 // swagger:parameters RouteCreateSilence RouteCreateGrafanaSilence
