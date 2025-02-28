@@ -61,7 +61,7 @@ export function parseDataplaneLogsFrame(frame: DataFrame): LogsFrame | null {
   const severityField = getField(cache, DATAPLANE_SEVERITY_NAME, FieldType.string) ?? null;
   const idField = getField(cache, DATAPLANE_ID_NAME, FieldType.string) ?? null;
   const labelsField = getField(cache, DATAPLANE_LABELS_NAME, FieldType.other) ?? null;
-  const colorField = getField(cache, DATAPLANE_COLOR_NAME, FieldType.string) ?? null;
+  const colorField = getField(cache, DATAPLANE_COLOR_NAME, FieldType.other) ?? null;
 
   const labels = labelsField === null ? null : labelsField.values;
 
