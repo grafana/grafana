@@ -13,6 +13,12 @@ import (
 	dashboardV2 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
 )
 
+var (
+	_ dashboard.DashboardCommon = (*dashboardV0.Dashboard)(nil)
+	_ dashboard.DashboardCommon = (*dashboardV1.Dashboard)(nil)
+	_ dashboard.DashboardCommon = (*dashboardV2.Dashboard)(nil)
+)
+
 func RegisterConversions(s *runtime.Scheme) error {
 	if err := s.AddConversionFunc((*dashboard.Dashboard)(nil), (*dashboardV0.Dashboard)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_to_V0(a.(*dashboard.Dashboard), b.(*dashboardV0.Dashboard), scope)

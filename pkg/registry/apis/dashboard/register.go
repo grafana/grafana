@@ -184,20 +184,13 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 		return nil
 	}
 	obj := a.GetObject()
-	dash, ok := obj.(*dashboardinternal.Dashboard)
+	dash, ok := obj.(dashboardinternal.DashboardCommon)
 	if !ok {
-		return fmt.Errorf("mutation error: expected *dashboardinternal.Dashboard, got %T", obj)
+		return fmt.Errorf("mutation error: expected to implement dashboardinternal.DashboardCommon, got %T", obj)
 	}
 
-	if id, ok := dash.Spec.Object["id"].(float64); ok {
-		delete(dash.Spec.Object, "id")
-		if id != 0 {
-			meta, err := utils.MetaAccessor(obj)
-			if err != nil {
-				return err
-			}
-			meta.SetDeprecatedInternalID(int64(id)) // nolint:staticcheck
-		}
+	if err := dash.MutateInternalID(); err != nil {
+		return err
 	}
 
 	return nil
