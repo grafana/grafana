@@ -99,6 +99,12 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		return rsp
 	}
 
+	// V2 values should be read from the k8s API
+	if strings.HasPrefix(dash.APIVersion, "v2") {
+		url := fmt.Sprintf("%sapis/dashboard.grafana.app/%s/namespaces/%s/dashboards/%s", hs.Cfg.AppURL, dash.APIVersion, hs.namespacer(c.OrgID), dash.UID)
+		return response.Redirect(url)
+	}
+
 	var (
 		publicDashboardEnabled = false
 		err                    error

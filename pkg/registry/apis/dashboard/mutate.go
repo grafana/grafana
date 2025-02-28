@@ -7,7 +7,6 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboardV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"

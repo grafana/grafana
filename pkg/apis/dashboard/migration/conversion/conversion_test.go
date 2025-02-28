@@ -24,7 +24,8 @@ func TestConversionMatrixExist(t *testing.T) {
 	}
 
 	scheme := runtime.NewScheme()
-	RegisterConversions(scheme)
+	err := RegisterConversions(scheme)
+	require.NoError(t, err)
 
 	for idx, in := range versions {
 		kind := fmt.Sprintf("%T", in)[1:]
@@ -33,7 +34,7 @@ func TestConversionMatrixExist(t *testing.T) {
 				if i == idx {
 					continue // skip the same version
 				}
-				err := scheme.Convert(in, out, nil)
+				err = scheme.Convert(in, out, nil)
 				require.NoError(t, err)
 			}
 		})
