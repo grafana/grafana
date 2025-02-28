@@ -217,6 +217,8 @@ type IdentityResolverClient interface {
 type Request struct {
 	// OrgID will be populated by authn.Service
 	OrgID int64
+	// Namespace will be populated by authn.Service
+	Namespace string
 	// HTTPRequest is the original HTTP request to authenticate
 	HTTPRequest *http.Request
 	// metadata is additional information about the auth request

@@ -26,6 +26,10 @@ func (auth namespaceAuthorizer) Authorize(ctx context.Context, a authorizer.Attr
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 
+	if !a.IsResourceRequest() {
+		return authorizer.DecisionNoOpinion, "", nil
+	}
+
 	// If we have an anonymous user, let the next authorizers decide.
 	if types.IsIdentityType(ident.GetIdentityType(), types.TypeAnonymous) {
 		return authorizer.DecisionNoOpinion, "", nil
