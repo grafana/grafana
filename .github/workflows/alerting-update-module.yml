@@ -140,7 +140,7 @@ jobs:
         id: create-pr
         with:
           token: '${{ steps.generate_token.outputs.token }}'
-          title:  '[${{ inputs.branch }}] Alerting: Update alerting module to ${{ steps.latest-commit.outputs.to_commit }}'
+          title:  "${{ inputs.branch == 'main' && 'Alerting: Update alerting module to ' || format('[%s] Alerting: Update alerting module to ', inputs.branch) }}${{ steps.latest-commit.outputs.to_commit }}"
           branch: '${{ steps.verify-branches.outputs.pr_branch }}'
           delete-branch: true
           body: |
