@@ -399,9 +399,7 @@ export function getLogColorInfo(dataFrame: DataFrame, allDataFrames: DataFrame[]
     return { color };
   }
 
-  const color = fieldCache
-    ? getFieldDisplayName(fieldCache.getFieldByName('color')!!, dataFrame, allDataFrames)
-    : 'gray';
+  const color = getFieldDisplayName(fieldCache.getFieldByName('color')!!, dataFrame, allDataFrames);
 
   return { color };
 }
