@@ -145,4 +145,6 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.AddAlertRuleUpdatedByMigration(mg)
 
 	ualert.AddAlertRuleStateTable(mg)
+
+	ualert.AddAlertRuleGuidMigration(mg)
 }

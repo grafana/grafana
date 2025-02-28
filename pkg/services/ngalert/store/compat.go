@@ -20,6 +20,7 @@ func alertRuleToModelsAlertRule(ar alertRule, l log.Logger) (models.AlertRule, e
 	result := models.AlertRule{
 		ID:              ar.ID,
 		OrgID:           ar.OrgID,
+		GUID:            ar.GUID,
 		Title:           ar.Title,
 		Condition:       ar.Condition,
 		Data:            data,
@@ -107,6 +108,7 @@ func parseNotificationSettings(s string) ([]models.NotificationSettings, error) 
 func alertRuleFromModelsAlertRule(ar models.AlertRule) (alertRule, error) {
 	result := alertRule{
 		ID:              ar.ID,
+		GUID:            ar.GUID,
 		OrgID:           ar.OrgID,
 		Title:           ar.Title,
 		Condition:       ar.Condition,
@@ -180,6 +182,7 @@ func alertRuleFromModelsAlertRule(ar models.AlertRule) (alertRule, error) {
 func alertRuleToAlertRuleVersion(rule alertRule) alertRuleVersion {
 	return alertRuleVersion{
 		RuleOrgID:            rule.OrgID,
+		RuleGUID:             rule.GUID,
 		RuleUID:              rule.UID,
 		RuleNamespaceUID:     rule.NamespaceUID,
 		RuleGroup:            rule.RuleGroup,
@@ -208,6 +211,7 @@ func alertRuleToAlertRuleVersion(rule alertRule) alertRuleVersion {
 func alertRuleVersionToAlertRule(version alertRuleVersion) alertRule {
 	return alertRule{
 		ID:              version.ID,
+		GUID:            version.RuleGUID,
 		OrgID:           version.RuleOrgID,
 		Title:           version.Title,
 		Condition:       version.Condition,
