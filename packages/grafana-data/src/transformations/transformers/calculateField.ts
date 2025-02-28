@@ -12,7 +12,7 @@ import { doStandardCalcs, fieldReducers, ReducerID } from '../fieldReducer';
 import { getFieldMatcher } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
-import { conditionallyEnsureColumnsTransformer, ensureColumnsTransformer } from './ensureColumns';
+import { ensureColumnsTransformer } from './ensureColumns';
 import { DataTransformerID } from './ids';
 import { noopTransformer } from './noop';
 
@@ -135,34 +135,9 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
 
     const needsSingleFrame = asTimeSeries && !isBinaryFixed;
 
-    let operator = needsSingleFrame ? ensureColumnsTransformer.operator(null, ctx) : noopTransformer.operator({}, ctx);
-
-    // if left or right is a string this is the old format
-    if (
-      mode === CalculateFieldMode.BinaryOperation &&
-      typeof options.binary?.right === 'string' &&
-      typeof options.binary?.left === 'string' &&
-      asTimeSeries
-    ) {
-      if (isNaN(Number(options.binary.right))) {
-        operator = conditionallyEnsureColumnsTransformer.operator(
-          {
-            predicate: (frames) => {
-              for (const frame of frames) {
-                for (const field of frame.fields) {
-                  // @ts-ignore This is specifically to handle the old binary calculation format that doesn't have the correct type :(
-                  if (getFieldDisplayName(field, frame, frames) === options.binary?.right) {
-                    return true;
-                  }
-                }
-              }
-              return false;
-            },
-          },
-          ctx
-        );
-      }
-    }
+    const operator = needsSingleFrame
+      ? ensureColumnsTransformer.operator(null, ctx)
+      : noopTransformer.operator({}, ctx);
 
     return outerSource.pipe(
       operator,
