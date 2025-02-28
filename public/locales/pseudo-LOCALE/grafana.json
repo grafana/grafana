@@ -368,6 +368,44 @@
       "export": "Ēχpőřŧ",
       "reorder": "Ŗę-őřđęř řūľęş"
     },
+    "group-details": {
+      "ds-features-error": "Ēřřőř ľőäđįŉģ đäŧä şőūřčę đęŧäįľş",
+      "edit": "Ēđįŧ",
+      "evaluations-to-fire": "Ēväľūäŧįőŉ čyčľęş ŧő ƒįřę",
+      "export": "Ēχpőřŧ",
+      "group-loading-error": "Ēřřőř ľőäđįŉģ ŧĥę ģřőūp",
+      "interval": "Ĩŉŧęřväľ",
+      "namespace": "Ńämęşpäčę",
+      "pending-period": "Pęŉđįŉģ pęřįőđ",
+      "recording": "Ŗęčőřđįŉģ",
+      "rule-name": "Ŗūľę ŉämę"
+    },
+    "group-edit": {
+      "ds-error": "Ēřřőř ľőäđįŉģ đäŧä şőūřčę đęŧäįľş",
+      "form": {
+        "delete": "Đęľęŧę",
+        "delete-body": "Åřę yőū şūřę yőū ŵäŉŧ ŧő đęľęŧę ŧĥįş řūľę ģřőūp?",
+        "delete-confirm": "Đęľęŧę",
+        "delete-title": "Đęľęŧę řūľę ģřőūp",
+        "folder-label": "Főľđęř",
+        "group-name-label": "Ēväľūäŧįőŉ ģřőūp ŉämę",
+        "group-name-required": "Ğřőūp ŉämę įş řęqūįřęđ",
+        "interval-description": "Ħőŵ őƒŧęŉ įş ŧĥę ģřőūp ęväľūäŧęđ",
+        "interval-label": "Ēväľūäŧįőŉ įŉŧęřväľ",
+        "namespace-label": "Ńämęşpäčę",
+        "namespace-required": "Ńämęşpäčę įş řęqūįřęđ",
+        "rules-description": "Đřäģ řūľęş ŧő řęőřđęř",
+        "rules-label": "Åľęřŧįŉģ äŉđ řęčőřđįŉģ řūľęş",
+        "save": "Ŝävę",
+        "update-error": "Fäįľęđ ŧő ūpđäŧę řūľę ģřőūp",
+        "update-success": "Ŝūččęşşƒūľľy ūpđäŧęđ ŧĥę řūľę ģřőūp"
+      },
+      "group-not-editable": "Ŝęľęčŧęđ ģřőūp čäŉŉőŧ þę ęđįŧęđ",
+      "group-not-editable-description": "Ŧĥįş ģřőūp þęľőŉģş ŧő ä đäŧä şőūřčę ŧĥäŧ đőęş ŉőŧ şūppőřŧ ęđįŧįŉģ.",
+      "page-title": "Ēđįŧ řūľę ģřőūp",
+      "rule-group-error": "Ēřřőř ľőäđįŉģ řūľę ģřőūp",
+      "title": "Ēđįŧ ęväľūäŧįőŉ ģřőūp"
+    },
     "list-view": {
       "empty": {
         "new-alert-rule": "Ńęŵ äľęřŧ řūľę",
@@ -563,6 +601,13 @@
           "title": "Cūşŧőm řęčővęřy ŧĥřęşĥőľđ"
         }
       }
+    },
+    "rule-group-action": {
+      "details": "řūľę ģřőūp đęŧäįľş",
+      "edit": "ęđįŧ řūľę ģřőūp",
+      "export-rules-folder": "Ēχpőřŧ řūľęş ƒőľđęř",
+      "go-to-folder": "ģő ŧő ƒőľđęř",
+      "manage-permissions": "mäŉäģę pęřmįşşįőŉş"
     },
     "rule-groups": {
       "delete": {

@@ -4,7 +4,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Badge, ConfirmModal, Icon, LinkButton, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, ConfirmModal, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier, RulesSource } from 'app/types/unified-alerting';
 
 import { LogMessages, logInfo } from '../../Analytics';
@@ -111,22 +112,20 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
       if (isGroupView) {
         actionIcons.push(
           <ActionIcon
-            aria-label="rule group details"
-            data-testid="rule-group-details"
+            aria-label={t('alerting.rule-group-action.details', 'rule group details')}
             key="rule-group-details"
             icon="info-circle"
-            tooltip="rule group details"
+            tooltip={t('alerting.rule-group-action.details', 'rule group details')}
             to={groups.detailsPageLink('grafana', folderUID, group.name)}
           />
         );
         if (folder?.canSave && canEditGroup) {
           actionIcons.push(
             <ActionIcon
-              aria-label="edit rule group"
-              data-testid="edit-rule-group"
+              aria-label={t('alerting.rule-group-action.edit', 'edit rule group')}
               key="rule-group-edit"
               icon="pen"
-              tooltip="edit rule group"
+              tooltip={t('alerting.rule-group-action.edit', 'edit rule group')}
               to={groups.editPageLink('grafana', folderUID, group.name)}
             />
           );
@@ -136,10 +135,10 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
         if (isListView) {
           actionIcons.push(
             <ActionIcon
-              aria-label="go to folder"
+              aria-label={t('alerting.rule-group-action.go-to-folder', 'go to folder')}
               key="goto"
               icon="folder-open"
-              tooltip="go to folder"
+              tooltip={t('alerting.rule-group-action.go-to-folder', 'go to folder')}
               to={baseUrl}
               target="__blank"
             />
@@ -148,10 +147,10 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           if (folder?.canAdmin) {
             actionIcons.push(
               <ActionIcon
-                aria-label="manage permissions"
+                aria-label={t('alerting.rule-group-action.manage-permissions', 'manage permissions')}
                 key="manage-perms"
                 icon="lock"
-                tooltip="manage permissions"
+                tooltip={t('alerting.rule-group-action.manage-permissions', 'manage permissions')}
                 to={baseUrl + '/permissions'}
                 target="__blank"
               />
@@ -163,11 +162,11 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
         if (isListView) {
           actionIcons.push(
             <ActionIcon
-              aria-label="export rule folder"
+              aria-label={t('alerting.rule-group-action.export-rules-folder', 'Export rules folder')}
               data-testid="export-folder"
               key="export-folder"
               icon="download-alt"
-              tooltip="Export rules folder"
+              tooltip={t('alerting.rule-group-action.export-rules-folder', 'Export rules folder')}
               onClick={() => setIsExporting('folder')}
             />
           );
@@ -176,24 +175,22 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
     }
   } else {
     actionIcons.push(
-      <LinkButton
+      <ActionIcon
+        aria-label={t('alerting.rule-group-action.details', 'rule group details')}
+        key="rule-group-details"
         icon="info-circle"
-        key="group-details-link"
-        tooltip="Open group details"
-        href={groups.detailsPageLink(rulesSource.uid, namespace.name, group.name)}
-        size="sm"
-        variant="secondary"
+        tooltip={t('alerting.rule-group-action.details', 'rule group details')}
+        to={groups.detailsPageLink(rulesSource.uid, namespace.name, group.name)}
       />
     );
     if (canEditGroup) {
       actionIcons.push(
-        <LinkButton
+        <ActionIcon
+          aria-label={t('alerting.rule-group-action.edit', 'edit rule group')}
+          key="rule-group-edit"
           icon="pen"
-          key="group-edit-link"
-          tooltip="Edit group"
-          href={groups.editPageLink(rulesSource.uid, namespace.name, group.name)}
-          size="sm"
-          variant="secondary"
+          tooltip={t('alerting.rule-group-action.edit', 'edit rule group')}
+          to={groups.editPageLink(rulesSource.uid, namespace.name, group.name)}
         />
       );
     }

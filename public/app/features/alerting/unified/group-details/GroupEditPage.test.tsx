@@ -36,13 +36,20 @@ window.performance.measure = jest.fn();
 
 const ui = {
   header: byRole('heading', { level: 1 }),
+  folderInput: byRole('textbox', { name: /Folder/ }),
   namespaceInput: byRole('textbox', { name: /Namespace/ }),
   nameInput: byRole('textbox', { name: /Evaluation group name/ }),
   intervalInput: byRole('textbox', { name: /Evaluation interval/ }),
   saveButton: byRole('button', { name: /Save/ }),
+  deleteButton: byRole('button', { name: /Delete/ }),
   rules: byTestId('reorder-alert-rule'),
   successMessage: byText('Successfully updated the rule group'),
   errorMessage: byText('Failed to update rule group'),
+  confirmDeleteModal: {
+    dialog: byRole('dialog'),
+    header: byRole('heading', { level: 2, name: /Delete rule group/ }),
+    confirmButton: byRole('button', { name: /Delete/ }),
+  },
 };
 
 setupMswServer();
@@ -83,12 +90,14 @@ describe('GroupEditPage', () => {
 
       const header = await ui.header.find();
 
+      const folderInput = await ui.folderInput.find();
       const nameInput = await ui.nameInput.find();
       const intervalInput = await ui.intervalInput.find();
       const saveButton = await ui.saveButton.find();
       const rules = await ui.rules.findAll();
 
       expect(header).toHaveTextContent('Edit rule group');
+      expect(folderInput).toHaveAttribute('readonly', '');
       expect(nameInput).toHaveValue('test-group-cpu');
       expect(intervalInput).toHaveValue('4m30s');
       expect(saveButton).toBeInTheDocument();
@@ -234,6 +243,19 @@ describe('GroupEditPage', () => {
       expect(locationService.getLocation().pathname).toBe(
         '/alerting/mimir/namespaces/new-namespace-name/groups/test-group-cpu/edit'
       );
+    });
+
+    it('should display confirmation modal before deleting a group', async () => {
+      const { user } = renderGroupEditPage(mimirDs.uid, 'test-mimir-namespace', 'test-group-cpu');
+
+      const deleteButton = await ui.deleteButton.find();
+
+      await user.click(deleteButton);
+      const confirmDialog = await ui.confirmDeleteModal.dialog.find();
+
+      expect(confirmDialog).toBeInTheDocument();
+      expect(ui.confirmDeleteModal.header.get(confirmDialog)).toBeInTheDocument();
+      expect(ui.confirmDeleteModal.confirmButton.get(confirmDialog)).toBeInTheDocument();
     });
   });
 
