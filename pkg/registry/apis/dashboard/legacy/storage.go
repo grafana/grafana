@@ -11,7 +11,6 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 
-	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -25,29 +24,29 @@ func getDashboardFromEvent(event resource.WriteEvent) (*dashboard.Dashboard, err
 			return v, nil
 
 		case *unstructured.Unstructured:
-			spec, ok := v.Object["spec"].(map[string]interface{})
-			if !ok {
-				return nil, fmt.Errorf("expected dashbaord spec")
-			}
-			meta, ok := v.Object["metadata"].(map[string]interface{})
-			if !ok {
-				return nil, fmt.Errorf("expected dashbaord metadata")
-			}
-			dash := &dashboard.Dashboard{}
-			dash.APIVersion = v.GetAPIVersion() // <<< enough?
-			dash.Kind = v.GetKind()
-			dash.Spec = dashboard.DashboardSpec{
-				Unstructured: v0alpha1.Unstructured{
-					Object: spec,
-				},
-			}
+			// spec, ok := v.Object["spec"].(map[string]interface{})
+			// if !ok {
+			// 	return nil, fmt.Errorf("expected dashboard spec")
+			// }
+			// meta, ok := v.Object["metadata"].(map[string]interface{})
+			// if !ok {
+			// 	return nil, fmt.Errorf("expected dashboard metadata")
+			// }
+			// dash := &dashboard.Dashboard{}
+			// dash.APIVersion = v.GetAPIVersion() //
+			// dash.Kind = v.GetKind()
+			// dash.Spec = dashboard.DashboardSpec{
+			// 	Unstructured: v0alpha1.Unstructured{
+			// 		Object: spec,
+			// 	},
+			// }
 
-			// TODO... there must be a better way... we have ObjectMeta
-			js, err := json.Marshal(meta)
-			if err != nil {
-				return nil, err
-			}
-			return dash, json.Unmarshal(js, &dash.ObjectMeta)
+			// // TODO... there must be a better way... we have ObjectMeta
+			// js, err := json.Marshal(meta)
+			// if err != nil {
+			// 	return nil, err
+			// }
+			// return dash, json.Unmarshal(js, &dash.ObjectMeta)
 		}
 	}
 	dash := &dashboard.Dashboard{}
