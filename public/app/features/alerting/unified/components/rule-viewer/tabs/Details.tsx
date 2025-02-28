@@ -18,7 +18,7 @@ import { isNullDate } from '../../../utils/time';
 import { Tokenize } from '../../Tokenize';
 import { DetailText } from '../../common/DetailText';
 
-import { UpdatedByUser } from './components/UpdatedBy';
+import { UpdatedByUser } from './version-history/UpdatedBy';
 
 enum RuleType {
   GrafanaManagedAlertRule = 'Grafana-managed alert rule',

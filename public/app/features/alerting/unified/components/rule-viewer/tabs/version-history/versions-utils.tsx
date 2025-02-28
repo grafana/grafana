@@ -1,5 +1,6 @@
 import { IconName } from '@grafana/data';
 import { BadgeColor } from '@grafana/ui';
+import { RevisionModel } from 'app/core/components/VersionHistory/VersionHistoryComparison';
 import { t } from 'app/core/internationalization';
 import {
   GrafanaAlertRuleDTOField,
@@ -8,7 +9,7 @@ import {
   TopLevelGrafanaRuleDTOField,
 } from 'app/types/unified-alerting-dto';
 
-import { grafanaAlertPropertiesToIgnore } from './AlertVersionHistory';
+import { grafanaAlertPropertiesToIgnore } from '../AlertVersionHistory';
 
 interface SpecialUidsDisplayMapEntry {
   name: string;
@@ -102,5 +103,36 @@ export function preprocessRuleForDiffDisplay(rulerRule: RulerGrafanaRuleDTO<Graf
   return {
     ...processedTopLevel,
     ...processedGrafanaAlert,
+  };
+}
+
+/**
+ * Turns a version of a Grafana rule definition into data structure
+ * used to display the version summary when comparing versions
+ */
+export function parseVersionInfoToSummary(version: RulerGrafanaRuleDTO<GrafanaRuleDefinition>): RevisionModel {
+  const unknown = t('alerting.alertVersionHistory.unknown', 'Unknown');
+  const SPECIAL_UID_MAP = getSpecialUidsDisplayMap();
+  const createdBy = (() => {
+    const updatedBy = version?.grafana_alert.updated_by;
+    const uid = updatedBy?.uid;
+    const name = updatedBy?.name;
+
+    if (!updatedBy) {
+      return unknown;
+    }
+    if (uid && SPECIAL_UID_MAP[uid]) {
+      return SPECIAL_UID_MAP[uid].name;
+    }
+    if (name) {
+      return name;
+    }
+    return uid ? t('alerting.alertVersionHistory.user-id', 'User ID {{uid}}', { uid }) : unknown;
+  })();
+
+  return {
+    createdAt: version.grafana_alert.updated || unknown,
+    createdBy,
+    version: version.grafana_alert.version || unknown,
   };
 }
