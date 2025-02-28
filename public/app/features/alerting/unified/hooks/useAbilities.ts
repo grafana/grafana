@@ -232,10 +232,7 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
       [AlertRuleAction.Silence]: canSilence,
       [AlertRuleAction.ModifyExport]: [isGrafanaManagedAlertRule, exportAllowed],
       [AlertRuleAction.Pause]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
-      [AlertRuleAction.Restore]: toAbility(
-        MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule,
-        rulesPermissions.create
-      ),
+      [AlertRuleAction.Restore]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
     };
 
     return abilities;
@@ -282,7 +279,7 @@ export function useAllRulerRuleAbilities(
       [AlertRuleAction.Silence]: canSilence,
       [AlertRuleAction.ModifyExport]: [isGrafanaManagedAlertRule, exportAllowed],
       [AlertRuleAction.Pause]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
-      [AlertRuleAction.Restore]: toAbility(MaybeSupportedUnlessImmutable, rulesPermissions.create),
+      [AlertRuleAction.Restore]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
     };
 
     return abilities;
