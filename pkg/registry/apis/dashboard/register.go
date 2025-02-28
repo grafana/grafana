@@ -229,8 +229,13 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	libraryPanels utils.ResourceInfo,
 	newDTOFunc func() runtime.Object,
 ) error {
+	// Register the versioned storage
 	storage := map[string]rest.Storage{}
-	gr := dashboards.GroupResource()
+	apiGroupInfo.VersionedResourcesStorageMap[dashboards.GroupVersion().Version] = storage
+
+	if true {
+		dashboards = dashboardinternal.DashboardResourceInfo // use the same version
+	}
 
 	legacyStore, err := b.legacy.NewStore(dashboards, opts.Scheme, opts.OptsGetter, b.reg)
 	if err != nil {
@@ -241,6 +246,8 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	if err != nil {
 		return err
 	}
+
+	gr := dashboards.GroupResource()
 	storage[dashboards.StoragePath()], err = opts.DualWriteBuilder(gr, legacyStore, store)
 	if err != nil {
 		return err
@@ -271,8 +278,6 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		ResourceInfo: libraryPanels,
 	}
 
-	// Set the versioned storage
-	apiGroupInfo.VersionedResourcesStorageMap[dashboards.GroupVersion().Version] = storage
 	return nil
 }
 
