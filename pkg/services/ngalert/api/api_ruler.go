@@ -339,7 +339,7 @@ func (srv RulerSrv) RouteGetRuleByUID(c *contextmodel.ReqContext, ruleUID string
 func (srv RulerSrv) RouteGetRuleVersionsByUID(c *contextmodel.ReqContext, ruleUID string) response.Response {
 	ctx := c.Req.Context()
 	// make sure the user has access to the current version of the rule. Also, check if it exists
-	_, err := srv.getAuthorizedRuleByUid(ctx, c, ruleUID)
+	rule, err := srv.getAuthorizedRuleByUid(ctx, c, ruleUID)
 	if err != nil {
 		if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
 			return response.Empty(http.StatusNotFound)
@@ -347,7 +347,7 @@ func (srv RulerSrv) RouteGetRuleVersionsByUID(c *contextmodel.ReqContext, ruleUI
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get rule by UID", err)
 	}
 
-	rules, err := srv.store.GetAlertRuleVersions(ctx, ngmodels.AlertRuleKey{OrgID: c.OrgID, UID: ruleUID})
+	rules, err := srv.store.GetAlertRuleVersions(ctx, rule.OrgID, rule.GUID)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get rule history", err)
 	}
