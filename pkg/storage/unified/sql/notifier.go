@@ -25,12 +25,12 @@ func newNotifier(b *backend) (eventNotifier, error) {
 	if b.isHA {
 		b.log.Info("Using polling notifier")
 		notifier, err := newPollingNotifier(&pollingNotifierConfig{
-			pollingInterval:       b.pollingInterval,
-			watchBufferSize:       b.watchBufferSize,
-			log:                   b.log,
-			tracer:                b.tracer,
-			batchLock:             b.batchLock,
-			listLatestRVs:         b.listLatestRVs,
+			pollingInterval: b.pollingInterval,
+			watchBufferSize: b.watchBufferSize,
+			log:             b.log,
+			tracer:          b.tracer,
+			bulkLock:        b.bulkLock,
+			listLatestRVs:   b.listLatestRVs,
 			unifiedStorageMetrics: b.unifiedStorageMetrics,
 			historyPoll: func(ctx context.Context, grp string, res string, since int64) ([]*historyPollResponse, error) {
 				var records []*historyPollResponse

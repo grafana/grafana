@@ -5,17 +5,18 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
-	"go.opentelemetry.io/otel/trace"
 )
 
 var (
 	// Validation errors.
 	errHistoryPollRequired    = fmt.Errorf("historyPoll is required")
 	errListLatestRVsRequired  = fmt.Errorf("listLatestRVs is required")
-	errBatchLockRequired      = fmt.Errorf("batchLock is required")
+	errBulkLockRequired       = fmt.Errorf("bulkLock is required")
 	errTracerRequired         = fmt.Errorf("tracer is required")
 	errLogRequired            = fmt.Errorf("log is required")
 	errInvalidWatchBufferSize = fmt.Errorf("watchBufferSize must be greater than 0")
@@ -34,7 +35,7 @@ type pollingNotifier struct {
 	tracer                trace.Tracer
 	unifiedStorageMetrics *resource.StorageApiMetrics
 
-	batchLock     *batchLock
+	bulkLock      *bulkLock
 	listLatestRVs func(ctx context.Context) (groupResourceRV, error)
 	historyPoll   func(ctx context.Context, grp string, res string, since int64) ([]*historyPollResponse, error)
 
@@ -50,7 +51,7 @@ type pollingNotifierConfig struct {
 	tracer                trace.Tracer
 	unifiedStorageMetrics *resource.StorageApiMetrics
 
-	batchLock     *batchLock
+	bulkLock      *bulkLock
 	listLatestRVs func(ctx context.Context) (groupResourceRV, error)
 	historyPoll   func(ctx context.Context, grp string, res string, since int64) ([]*historyPollResponse, error)
 
@@ -64,8 +65,8 @@ func (cfg *pollingNotifierConfig) validate() error {
 	if cfg.listLatestRVs == nil {
 		return errListLatestRVsRequired
 	}
-	if cfg.batchLock == nil {
-		return errBatchLockRequired
+	if cfg.bulkLock == nil {
+		return errBulkLockRequired
 	}
 	if cfg.tracer == nil {
 		return errTracerRequired
@@ -93,15 +94,15 @@ func newPollingNotifier(cfg *pollingNotifierConfig) (*pollingNotifier, error) {
 		return nil, fmt.Errorf("invalid polling notifier config: %w", err)
 	}
 	return &pollingNotifier{
-		dialect:               cfg.dialect,
-		pollingInterval:       cfg.pollingInterval,
-		watchBufferSize:       cfg.watchBufferSize,
-		log:                   cfg.log,
-		tracer:                cfg.tracer,
-		batchLock:             cfg.batchLock,
-		listLatestRVs:         cfg.listLatestRVs,
-		historyPoll:           cfg.historyPoll,
-		done:                  cfg.done,
+		dialect:         cfg.dialect,
+		pollingInterval: cfg.pollingInterval,
+		watchBufferSize: cfg.watchBufferSize,
+		log:             cfg.log,
+		tracer:          cfg.tracer,
+		bulkLock:        cfg.bulkLock,
+		listLatestRVs:   cfg.listLatestRVs,
+		historyPoll:     cfg.historyPoll,
+		done:            cfg.done,
 		unifiedStorageMetrics: cfg.unifiedStorageMetrics,
 	}, nil
 }

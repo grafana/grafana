@@ -71,7 +71,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		pollingInterval:         opts.PollingInterval,
 		watchBufferSize:         opts.WatchBufferSize,
 		unifiedStorageMetrics:   opts.unifiedStorageMetrics,
-		batchLock:               &batchLock{running: make(map[string]bool)},
+		bulkLock:                &bulkLock{running: make(map[string]bool)},
 		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
 	}, nil
 }
@@ -95,7 +95,7 @@ type backend struct {
 	dbProvider db.DBProvider
 	db         db.DB
 	dialect    sqltemplate.Dialect
-	batchLock  *batchLock
+	bulkLock   *bulkLock
 
 	// watch streaming
 	//stream chan *resource.WatchEvent
