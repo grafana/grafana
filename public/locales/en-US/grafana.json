@@ -315,6 +315,10 @@
       "empty-state": {
         "title": "You don't have any contact points yet"
       },
+      "key-value-map": {
+        "add": "Add",
+        "confirm-add": "Confirm to add"
+      },
       "last-delivery-attempt": "Last delivery attempt",
       "last-delivery-failed": "Last delivery attempt failed",
       "no-contact-points-found": "No contact points found",
@@ -1043,10 +1047,24 @@
         },
         "modal": {
           "title": "Row options"
-        }
+        },
+        "repeat": {
+          "title": "Repeat options",
+          "variable": {
+            "title": "Variable"
+          }
+        },
+        "title": "Row options"
       }
     },
     "edit-pane": {
+      "elements": {
+        "dashboard": "Dashboard",
+        "objects": "Objects",
+        "panels": "Panels",
+        "rows": "Rows",
+        "tabs": "Tabs"
+      },
       "objects": {
         "multi-select": {
           "selection-number": "No. of objects selected: {{length}}"
@@ -1151,6 +1169,15 @@
       "title": "Dashboard options",
       "title-option": "Title"
     },
+    "outline": {
+      "tree": {
+        "item": {
+          "collapse": "Collapse item",
+          "empty": "(empty)",
+          "expand": "Expand item"
+        }
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Dashboard must be saved before alerts can be added.",
@@ -1161,6 +1188,12 @@
       "description": "CSS layout that adjusts to the available space",
       "item-options": {
         "hide-no-data": "Hide when no data",
+        "repeat": {
+          "variable": {
+            "description": "Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.",
+            "title": "Repeat by variable"
+          }
+        },
         "title": "Layout options"
       },
       "name": "Responsive grid",
@@ -1703,7 +1736,7 @@
         "action-query-params": "Query parameters",
         "action-title": "Title",
         "action-title-placeholder": "Action title",
-        "one-click-description": "Only one link {{ action }} can have one click enabled at a time"
+        "one-click-description": "Only one link or action can have one click enabled at a time"
       }
     },
     "alert": {
@@ -2223,6 +2256,14 @@
       "links": "Links",
       "log-line": "Log line",
       "no-details": "No details available"
+    },
+    "log-line-menu": {
+      "copy-link": "Copy link to log line",
+      "copy-log": "Copy log line",
+      "icon-label": "Log menu",
+      "pin-to-outline": "Pin log",
+      "show-context": "Show context",
+      "unpin-from-outline": "Unpin log"
     },
     "log-row-message": {
       "ellipsis": "… ",

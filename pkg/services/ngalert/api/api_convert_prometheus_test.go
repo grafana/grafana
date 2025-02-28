@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -75,6 +76,79 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 
 		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
 		require.Equal(t, http.StatusAccepted, response.Status())
+	})
+
+	t.Run("should replace an existing rule group", func(t *testing.T) {
+		provenanceStore := fakes.NewFakeProvisioningStore()
+		srv, _, ruleStore, folderService := createConvertPrometheusSrv(t, withProvenanceStore(provenanceStore))
+
+		// Create a folder in the root
+		fldr := randFolder()
+		fldr.ParentUID = ""
+		folderService.ExpectedFolder = fldr
+		folderService.ExpectedFolders = []*folder.Folder{fldr}
+		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
+
+		// And a rule
+		rule := models.RuleGen.
+			With(models.RuleGen.WithNamespaceUID(fldr.UID)).
+			With(models.RuleGen.WithGroupName(simpleGroup.Name)).
+			With(models.RuleGen.WithOrgID(1)).
+			With(models.RuleGen.WithPrometheusOriginalRuleDefinition("123")).
+			GenerateRef()
+		ruleStore.PutRule(context.Background(), rule)
+
+		rc := createRequestCtx()
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, fldr.Title, simpleGroup)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		// Get the updated rule
+		remaining, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID: 1,
+		})
+		require.NoError(t, err)
+		require.Len(t, remaining, 1)
+
+		require.Equal(t, simpleGroup.Name, remaining[0].RuleGroup)
+		require.Equal(t, fmt.Sprintf("[%s] %s", simpleGroup.Name, simpleGroup.Rules[0].Alert), remaining[0].Title)
+		promRuleYAML, err := yaml.Marshal(simpleGroup.Rules[0])
+		require.NoError(t, err)
+		require.Equal(t, string(promRuleYAML), remaining[0].PrometheusRuleDefinition())
+	})
+
+	t.Run("should fail to replace a provisioned rule group", func(t *testing.T) {
+		provenanceStore := fakes.NewFakeProvisioningStore()
+		srv, _, ruleStore, folderService := createConvertPrometheusSrv(t, withProvenanceStore(provenanceStore))
+
+		// Create a folder in the root
+		fldr := randFolder()
+		fldr.ParentUID = ""
+		folderService.ExpectedFolder = fldr
+		folderService.ExpectedFolders = []*folder.Folder{fldr}
+		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
+
+		rule := models.RuleGen.
+			With(models.RuleGen.WithNamespaceUID(fldr.UID)).
+			With(models.RuleGen.WithGroupName(simpleGroup.Name)).
+			With(models.RuleGen.WithOrgID(1)).
+			With(models.RuleGen.WithPrometheusOriginalRuleDefinition("123")).
+			GenerateRef()
+		ruleStore.PutRule(context.Background(), rule)
+		// mark the rule as provisioned
+		err := provenanceStore.SetProvenance(context.Background(), rule, 1, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		rc := createRequestCtx()
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, fldr.Title, simpleGroup)
+		require.Equal(t, http.StatusConflict, response.Status())
+
+		// Verify the rule is still present
+		remaining, err := ruleStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+			UID:   rule.UID,
+			OrgID: rule.OrgID,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, remaining)
 	})
 
 	t.Run("with valid pause header values should return 202", func(t *testing.T) {
@@ -420,8 +494,218 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 	})
 }
 
-func createConvertPrometheusSrv(t *testing.T) (*ConvertPrometheusSrv, datasources.CacheService, *fakes.RuleStore, *foldertest.FakeService) {
+func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {
+	t.Run("for non-existent folder should return 404", func(t *testing.T) {
+		srv, _, _, _ := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+
+		response := srv.RouteConvertPrometheusDeleteNamespace(rc, "non-existent")
+		require.Equal(t, http.StatusNotFound, response.Status())
+	})
+
+	t.Run("valid request should delete rules", func(t *testing.T) {
+		initNamespace := func(promDefinition string, opts ...convertPrometheusSrvOptionsFunc) (*ConvertPrometheusSrv, *fakes.RuleStore, *folder.Folder, *models.AlertRule) {
+			srv, _, ruleStore, folderService := createConvertPrometheusSrv(t, opts...)
+
+			// Create a folder in the root
+			fldr := randFolder()
+			fldr.ParentUID = ""
+			folderService.ExpectedFolder = fldr
+			folderService.ExpectedFolders = []*folder.Folder{fldr}
+			ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
+
+			rule := models.RuleGen.
+				With(models.RuleGen.WithNamespaceUID(fldr.UID)).
+				With(models.RuleGen.WithOrgID(1)).
+				With(models.RuleGen.WithPrometheusOriginalRuleDefinition(promDefinition)).
+				GenerateRef()
+			ruleStore.PutRule(context.Background(), rule)
+
+			return srv, ruleStore, fldr, rule
+		}
+
+		t.Run("valid request should delete rules", func(t *testing.T) {
+			srv, ruleStore, fldr, rule := initNamespace("prometheus definition")
+
+			// Create another rule group in a different namespace that should not be deleted
+			otherGroupName := "other-group"
+			otherRule := models.RuleGen.
+				With(models.RuleGen.WithOrgID(1)).
+				With(models.RuleGen.WithGroupName(otherGroupName)).
+				With(models.RuleGen.WithPrometheusOriginalRuleDefinition("other prometheus definition")).
+				GenerateRef()
+			ruleStore.PutRule(context.Background(), otherRule)
+
+			rc := createRequestCtx()
+
+			response := srv.RouteConvertPrometheusDeleteNamespace(rc, fldr.Title)
+			require.Equal(t, http.StatusAccepted, response.Status())
+
+			// Verify the rule in the specified group was deleted
+			remaining, err := ruleStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+				UID:   rule.UID,
+				OrgID: rule.OrgID,
+			})
+			require.Error(t, err)
+			require.Nil(t, remaining)
+
+			// Verify the rule in the other group still exists
+			remainingOther, err := ruleStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+				UID:   otherRule.UID,
+				OrgID: otherRule.OrgID,
+			})
+			require.NoError(t, err)
+			require.NotNil(t, remainingOther)
+		})
+
+		t.Run("fails to delete rules when they are provisioned", func(t *testing.T) {
+			provenanceStore := fakes.NewFakeProvisioningStore()
+			srv, ruleStore, fldr, rule := initNamespace("", withProvenanceStore(provenanceStore))
+			rc := createRequestCtx()
+
+			// Create a provisioned rule
+			rule2 := models.RuleGen.
+				With(models.RuleGen.WithNamespaceUID(fldr.UID)).
+				With(models.RuleGen.WithOrgID(1)).
+				With(models.RuleGen.WithPrometheusOriginalRuleDefinition("prometheus definition")).
+				GenerateRef()
+			ruleStore.PutRule(context.Background(), rule2)
+			err := provenanceStore.SetProvenance(context.Background(), rule2, 1, models.ProvenanceAPI)
+			require.NoError(t, err)
+
+			response := srv.RouteConvertPrometheusDeleteNamespace(rc, fldr.Title)
+			require.Equal(t, http.StatusConflict, response.Status())
+
+			// Verify the rule is still present
+			remaining, err := ruleStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+				UID:   rule.UID,
+				OrgID: rule.OrgID,
+			})
+			require.NoError(t, err)
+			require.NotNil(t, remaining)
+		})
+	})
+}
+
+func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
+	t.Run("for non-existent folder should return 404", func(t *testing.T) {
+		srv, _, _, _ := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+
+		response := srv.RouteConvertPrometheusDeleteRuleGroup(rc, "non-existent", "test-group")
+		require.Equal(t, http.StatusNotFound, response.Status())
+	})
+
+	const groupName = "test-group"
+
+	t.Run("valid request should delete rules", func(t *testing.T) {
+		initGroup := func(promDefinition string, groupName string, opts ...convertPrometheusSrvOptionsFunc) (*ConvertPrometheusSrv, *fakes.RuleStore, *folder.Folder, *models.AlertRule) {
+			srv, _, ruleStore, folderService := createConvertPrometheusSrv(t, opts...)
+
+			// Create a folder in the root
+			fldr := randFolder()
+			fldr.ParentUID = ""
+			folderService.ExpectedFolder = fldr
+			folderService.ExpectedFolders = []*folder.Folder{fldr}
+			ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
+
+			rule := models.RuleGen.
+				With(models.RuleGen.WithNamespaceUID(fldr.UID)).
+				With(models.RuleGen.WithOrgID(1)).
+				With(models.RuleGen.WithGroupName(groupName)).
+				With(models.RuleGen.WithPrometheusOriginalRuleDefinition(promDefinition)).
+				GenerateRef()
+			ruleStore.PutRule(context.Background(), rule)
+
+			return srv, ruleStore, fldr, rule
+		}
+
+		t.Run("valid request should delete rules", func(t *testing.T) {
+			srv, ruleStore, fldr, rule := initGroup("prometheus definition", groupName)
+			rc := createRequestCtx()
+
+			// Create another rule in a different group that should not be deleted
+			otherGroupName := "other-group"
+			otherRule := models.RuleGen.
+				With(models.RuleGen.WithNamespaceUID(fldr.UID)).
+				With(models.RuleGen.WithOrgID(1)).
+				With(models.RuleGen.WithGroupName(otherGroupName)).
+				With(models.RuleGen.WithPrometheusOriginalRuleDefinition("other prometheus definition")).
+				GenerateRef()
+			ruleStore.PutRule(context.Background(), otherRule)
+
+			response := srv.RouteConvertPrometheusDeleteRuleGroup(rc, fldr.Title, groupName)
+			require.Equal(t, http.StatusAccepted, response.Status())
+
+			// Verify the rule was deleted
+			remaining, err := ruleStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+				UID:   rule.UID,
+				OrgID: rule.OrgID,
+			})
+			require.Error(t, err)
+			require.Nil(t, remaining)
+
+			// Verify the otherRule from the "other-group" is still present
+			otherRuleRefreshed, err := ruleStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+				UID:   otherRule.UID,
+				OrgID: otherRule.OrgID,
+			})
+			require.NoError(t, err)
+			require.NotNil(t, otherRuleRefreshed)
+		})
+
+		t.Run("fails to delete rules when they are provisioned", func(t *testing.T) {
+			provenanceStore := fakes.NewFakeProvisioningStore()
+			srv, ruleStore, fldr, rule := initGroup("", groupName, withProvenanceStore(provenanceStore))
+			rc := createRequestCtx()
+
+			// Create a provisioned rule
+			rule2 := models.RuleGen.
+				With(models.RuleGen.WithNamespaceUID(fldr.UID)).
+				With(models.RuleGen.WithOrgID(1)).
+				With(models.RuleGen.WithGroupName(groupName)).
+				With(models.RuleGen.WithPrometheusOriginalRuleDefinition("prometheus definition")).
+				GenerateRef()
+			ruleStore.PutRule(context.Background(), rule2)
+			err := provenanceStore.SetProvenance(context.Background(), rule2, 1, models.ProvenanceAPI)
+			require.NoError(t, err)
+
+			response := srv.RouteConvertPrometheusDeleteRuleGroup(rc, fldr.Title, groupName)
+			require.Equal(t, http.StatusConflict, response.Status())
+
+			// Verify the rule is still present
+			remaining, err := ruleStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+				UID:   rule.UID,
+				OrgID: rule.OrgID,
+			})
+			require.NoError(t, err)
+			require.NotNil(t, remaining)
+		})
+	})
+}
+
+type convertPrometheusSrvOptions struct {
+	provenanceStore provisioning.ProvisioningStore
+}
+
+type convertPrometheusSrvOptionsFunc func(*convertPrometheusSrvOptions)
+
+func withProvenanceStore(store provisioning.ProvisioningStore) convertPrometheusSrvOptionsFunc {
+	return func(opts *convertPrometheusSrvOptions) {
+		opts.provenanceStore = store
+	}
+}
+
+func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOptionsFunc) (*ConvertPrometheusSrv, datasources.CacheService, *fakes.RuleStore, *foldertest.FakeService) {
 	t.Helper()
+
+	options := convertPrometheusSrvOptions{
+		provenanceStore: fakes.NewFakeProvisioningStore(),
+	}
+
+	for _, opt := range opts {
+		opt(&options)
+	}
 
 	ruleStore := fakes.NewRuleStore(t)
 	folder := randFolder()
@@ -441,7 +725,7 @@ func createConvertPrometheusSrv(t *testing.T) (*ConvertPrometheusSrv, datasource
 
 	alertRuleService := provisioning.NewAlertRuleService(
 		ruleStore,
-		fakes.NewFakeProvisioningStore(),
+		options.provenanceStore,
 		folderService,
 		quotas,
 		&provisioning.NopTransactionManager{},
