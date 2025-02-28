@@ -27,7 +27,6 @@ import (
 	dashboardv1alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	dashboardv2alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -101,9 +100,7 @@ func RegisterAPIService(
 		search:                       NewSearchHandler(tracing, dual, legacyDashboardSearcher, unified, features),
 
 		legacy: &DashboardStorage{
-			Resource:       dashboardinternal.DashboardResourceInfo,
-			Access:         legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, softDelete, sorter),
-			TableConverter: dashboardinternal.DashboardResourceInfo.TableConverter(),
+			Access: legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, softDelete, sorter),
 		},
 		reg: reg,
 	}
@@ -198,11 +195,6 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	internalDashResourceInfo := dashboardinternal.DashboardResourceInfo
 
-	legacyStore, err := b.legacy.NewStore(opts.Scheme, opts.OptsGetter, b.reg)
-	if err != nil {
-		return err
-	}
-
 	storageOpts := apistore.StorageOptions{
 		RequireDeprecatedInternalID: true,
 	}
@@ -216,7 +208,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	opts.StorageOptions(internalDashResourceInfo.GroupResource(), storageOpts)
 
 	// v0alpha1
-	if err := b.storageForVersion(apiGroupInfo, opts, legacyStore, largeObjects,
+	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		dashboardv0alpha1.DashboardResourceInfo,
 		dashboardv0alpha1.LibraryPanelResourceInfo,
 		func() runtime.Object {
@@ -226,7 +218,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	}
 
 	// v1alpha1
-	if err := b.storageForVersion(apiGroupInfo, opts, legacyStore, largeObjects,
+	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		dashboardv1alpha1.DashboardResourceInfo,
 		dashboardv1alpha1.LibraryPanelResourceInfo,
 		func() runtime.Object {
@@ -236,7 +228,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	}
 
 	// v2alpha1
-	if err := b.storageForVersion(apiGroupInfo, opts, legacyStore, largeObjects,
+	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		dashboardv2alpha1.DashboardResourceInfo,
 		dashboardv2alpha1.LibraryPanelResourceInfo,
 		func() runtime.Object {
@@ -251,7 +243,6 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 func (b *DashboardsAPIBuilder) storageForVersion(
 	apiGroupInfo *genericapiserver.APIGroupInfo,
 	opts builder.APIGroupOptions,
-	legacyStore grafanarest.Storage,
 	largeObjects apistore.LargeObjectSupport,
 	dashboards utils.ResourceInfo,
 	libraryPanels utils.ResourceInfo,
@@ -259,6 +250,11 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 ) error {
 	storage := map[string]rest.Storage{}
 	gr := dashboards.GroupResource()
+
+	legacyStore, err := b.legacy.NewStore(dashboards, opts.Scheme, opts.OptsGetter, b.reg)
+	if err != nil {
+		return err
+	}
 
 	store, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashboards, opts.OptsGetter)
 	if err != nil {

@@ -19,14 +19,10 @@ import (
 )
 
 type DashboardStorage struct {
-	Resource       utils.ResourceInfo
-	Access         legacy.DashboardAccess
-	TableConverter rest.TableConvertor
-
-	Server resource.ResourceServer
+	Access legacy.DashboardAccess
 }
 
-func (s *DashboardStorage) NewStore(scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter, reg prometheus.Registerer) (grafanarest.Storage, error) {
+func (s *DashboardStorage) NewStore(dash utils.ResourceInfo, scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter, reg prometheus.Registerer) (grafanarest.Storage, error) {
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 		Backend: s.Access,
 		Reg:     reg,
@@ -34,10 +30,8 @@ func (s *DashboardStorage) NewStore(scheme *runtime.Scheme, defaultOptsGetter ge
 	if err != nil {
 		return nil, err
 	}
-	s.Server = server
 
-	resourceInfo := s.Resource
-	defaultOpts, err := defaultOptsGetter.GetRESTOptions(resourceInfo.GroupResource(), nil)
+	defaultOpts, err := defaultOptsGetter.GetRESTOptions(dash.GroupResource(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +40,7 @@ func (s *DashboardStorage) NewStore(scheme *runtime.Scheme, defaultOptsGetter ge
 		defaultOpts.StorageConfig.Config,
 	)
 
-	store, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)
+	store, err := grafanaregistry.NewRegistryStore(scheme, dash, optsGetter)
 	return &storeWrapper{
 		Store: store,
 	}, err
