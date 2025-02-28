@@ -80,9 +80,9 @@ You can configure either HTTP Basic Authentication or the Authorization request 
 
 {{< /admonition >}}
 
-#### HMAC Signature
+#### HMAC signature
 
-You can secure your webhook notifications using HMAC signatures to verify the authenticity and integrity of the requests. When enabled, Grafana will sign the webhook payload with a shared secret using HMAC-SHA256.
+You can secure your webhook notifications using HMAC signatures to verify the authenticity and integrity of the requests. When enabled, Grafana signs the webhook payload with a shared secret using HMAC-SHA256.
 
 | Option           | Description                                                                                                                                                                                                                    |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -98,7 +98,7 @@ HMAC(timestamp + ":" + body)
 
 The timestamp is sent in the specified header. If no timestamp header is specified, the signature is calculated just from the request body. The signature is sent as a hex-encoded string in the specified signature header.
 
-##### Validating a request
+##### Validate a request
 
 To validate incoming webhook requests from Grafana, follow these steps:
 
