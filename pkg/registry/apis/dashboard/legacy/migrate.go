@@ -195,6 +195,7 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 		OrgID:      orgId,
 		Limit:      100000000,
 		GetHistory: opts.WithHistory, // include history
+		Order:      "ASC",            // oldest first
 	}
 
 	blobs := &BlobStoreInfo{}
@@ -301,6 +302,7 @@ func (a *dashboardSqlAccess) migrateFolders(ctx context.Context, orgId int64, op
 		OrgID:      orgId,
 		Limit:      100000000,
 		GetFolders: true,
+		Order:      "ASC",
 	}
 
 	sql, err := a.sql(ctx)
