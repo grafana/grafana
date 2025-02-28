@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/ini.v1"
 	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -714,19 +713,27 @@ func TestSetDefaultPermissionsWhenCreatingFolder(t *testing.T) {
 		},
 	}
 
+	// we need to save these values because they are defined at `setting` package level
+	// and modified when we invoke setting.NewCfgFromINIFile
+	prevCookieSameSiteDisabled := setting.CookieSameSiteDisabled
+	prevCookieSameSiteMode := setting.CookieSameSiteMode
+
+	cfg := setting.NewCfg()
+	cfg.Raw.Section("rbac").Key("resources_with_managed_permissions_on_creation").SetValue("folder")
+	tmpCfg, err := setting.NewCfgFromINIFile(cfg.Raw)
+	require.NoError(t, err)
+	cfg.RBAC = tmpCfg.RBAC
+
+	// restore previous values so other tests don't break
+	// ex: TestHTTPServer_RotateUserAuthToken
+	setting.CookieSameSiteDisabled = prevCookieSameSiteDisabled
+	setting.CookieSameSiteMode = prevCookieSameSiteMode
+
 	for _, tc := range tcs {
 		t.Run(tc.description, func(t *testing.T) {
 			folderService.ExpectedFolder = tc.expectedFolder
 			folderPermService := acmock.NewMockedPermissionsService()
 			folderPermService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
-
-			cfg := setting.NewCfg()
-
-			f := ini.Empty()
-			f.Section("rbac").Key("resources_with_managed_permissions_on_creation").SetValue("folder")
-			tempCfg, err := setting.NewCfgFromINIFile(f)
-			require.NoError(t, err)
-			cfg.RBAC = tempCfg.RBAC
 
 			srv := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = cfg
