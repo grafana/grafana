@@ -85,13 +85,13 @@ jobs:
       - name: Run backend tests
         uses: ./.github/actions/run-backend-tests
         with:
-          coverage-opts: ${{ steps.check-coverage.outputs.generate == 'true' && '-coverprofile=unit.cov' || '' }}
+          coverage-opts: ${{ steps.check-coverage.outputs.generate == 'true' && '-coverprofile=unit.cov -coverpkg=github.com/grafana/grafana/...' || '' }}
           test-command: 'make gen-go test-go-unit'
 
       - name: Run backend integration tests
         uses: ./.github/actions/run-backend-tests
         with:
-          coverage-opts: ${{ steps.check-coverage.outputs.generate == 'true' && '-coverprofile=integration.cov' || '' }}
+          coverage-opts: ${{ steps.check-coverage.outputs.generate == 'true' && '-coverprofile=integration.cov -coverpkg=github.com/grafana/grafana/...' || '' }}
           test-command: 'make gen-go test-go-integration'
 
       - name: Generate Coverage Report
