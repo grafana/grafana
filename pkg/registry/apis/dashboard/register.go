@@ -233,7 +233,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	storage := map[string]rest.Storage{}
 	apiGroupInfo.VersionedResourcesStorageMap[dashboards.GroupVersion().Version] = storage
 
-	if true {
+	if false {
 		dashboards = dashboardinternal.DashboardResourceInfo // use the same version
 	}
 
