@@ -615,18 +615,14 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `webhook`
 
-<!-- vale Grafana.Spelling = NO -->
-
-| Name        | Secure setting |
-| ----------- | -------------- |
-| url         |                |
-| http_method |                |
-| username    |                |
-| password    | yes            |
-| tls_config  |                |
-| hmac_config |                |
-
-<!-- vale Grafana.Spelling = YES -->
+| Name          | Secure setting |
+| ------------- | -------------- |
+| `url`         |                |
+| `http_method` |                |
+| `username`    |                |
+| `password`    | yes            |
+| `tls_config`  |                |
+| `hmac_config` |                |
 
 ##### TLS config
 
@@ -639,15 +635,11 @@ The following sections detail the supported settings and secure settings for eac
 
 ##### HMAC signature configuration
 
-<!-- vale Grafana.Spelling = NO -->
-
 | Name            | Secure setting |
 | --------------- | -------------- |
-| secret          | yes            |
-| header          |                |
-| timestampHeader |                |
-
-<!-- vale Grafana.Spelling = YES -->
+| `secret`          | yes            |
+| `header`          |                |
+| `timestampHeader` |                |
 
 #### Alert notification `googlechat`
 
