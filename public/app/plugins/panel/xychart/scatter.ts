@@ -587,6 +587,12 @@ function getLabelForRange(from: number | null, to: number | null) {
   return text;
 }
 
+// percent enum configs can be combined, percent threasholds are global across multi frames and fields
+// classic palette by value
+// get and getAll, should accept shared min/max to scale percentage
+// merge enums for legend by combo of color+icon+text
+// auto-threshold by % into 10 bukkits?
+
 /** compiler for values to palette color idxs (from thresholds, mappings, by-value gradients) */
 export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues {
   const index: EnumFieldConfig = {
