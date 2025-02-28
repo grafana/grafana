@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { EmptyState, LinkButton, Alert, Stack, Text, Button } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
-import { SetupWarnings } from './SetupWarnings';
+import { StatusAlerts } from './Setup/StatusAlerts';
 import { useGetFrontendSettingsQuery } from './api';
 import { NEW_URL, MIGRATE_URL } from './constants';
 
@@ -17,7 +17,7 @@ export default function OnboardingPage({ legacyStorage }: { legacyStorage?: bool
       pageNav={{ text: 'Setup provisioning', subTitle: 'Configure this instance to use provisioning' }}
     >
       <Page.Contents>
-        <SetupWarnings />
+        <StatusAlerts />
         {legacyStorage ? (
           <>
             <Alert severity="info" title="Setting up this connection could cause a temporary outage">

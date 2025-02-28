@@ -70,6 +70,7 @@ var (
 type APIBuilder struct {
 	urlProvider      func(namespace string) string
 	webhookSecretKey string
+	isPublic         bool
 
 	features          featuremgmt.FeatureToggles
 	getter            rest.Getter
@@ -107,10 +108,15 @@ func NewAPIBuilder(
 	secrets secrets.Service,
 ) *APIBuilder {
 	clientFactory := resources.NewFactory(configProvider)
+
+	// HACK: Assume is only public if it is HTTPS
+	isPublic := strings.HasPrefix(urlProvider(""), "https://")
+
 	return &APIBuilder{
 		urlProvider:       urlProvider,
 		localFileResolver: local,
 		webhookSecretKey:  webhookSecretKey,
+		isPublic:          isPublic,
 		features:          features,
 		ghFactory:         ghFactory,
 		client:            clientFactory,
@@ -220,8 +226,9 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
-		getter: b,
-		jobs:   b.jobs,
+		getter:          b,
+		jobs:            b.jobs,
+		webhooksEnabled: b.isPublic,
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = &testConnector{
 		getter: b,
@@ -418,7 +425,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			))
 
 			// Pull request worker
-			renderer := pullrequest.NewScreenshotRenderer(b.render, b.unified, b.urlProvider)
+			renderer := pullrequest.NewScreenshotRenderer(b.render, b.unified, b.isPublic, b.urlProvider)
 			previewer := pullrequest.NewPreviewer(renderer, b.urlProvider)
 			pullRequestWorker, err := pullrequest.NewPullRequestWorker(b.parsers, previewer)
 			if err != nil {
@@ -916,15 +923,18 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 		return repository.NewLocal(r, b.localFileResolver), nil
 	case provisioning.GitHubRepositoryType:
 		gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
-		webhookURL := fmt.Sprintf(
-			"%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
-			b.urlProvider(r.GetNamespace()),
-			gvr.Group,
-			gvr.Version,
-			r.GetNamespace(),
-			gvr.Resource,
-			r.GetName(),
-		)
+		var webhookURL string
+		if b.isPublic {
+			webhookURL = fmt.Sprintf(
+				"%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
+				b.urlProvider(r.GetNamespace()),
+				gvr.Group,
+				gvr.Version,
+				r.GetNamespace(),
+				gvr.Resource,
+				r.GetName(),
+			)
+		}
 		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL)
 	default:
 		return nil, errors.New("unknown repository type")

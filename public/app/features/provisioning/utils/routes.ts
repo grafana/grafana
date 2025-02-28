@@ -11,7 +11,7 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
       {
         path: PROVISIONING_URL,
         component: SafeDynamicImport(
-          () => import(/* webpackChunkName: "SetupWarningPage"*/ 'app/features/provisioning/SetupWarningPage')
+          () => import(/* webpackChunkName: "SetupPage"*/ 'app/features/provisioning/Setup/SetupPage')
         ),
       },
     ];
@@ -22,6 +22,12 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
       path: PROVISIONING_URL,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "RepositoryListPage"*/ 'app/features/provisioning/RepositoryListPage')
+      ),
+    },
+    {
+      path: PROVISIONING_URL + '/setup',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "SetupPage"*/ 'app/features/provisioning/Setup/SetupPage')
       ),
     },
     {

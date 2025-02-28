@@ -3583,12 +3583,25 @@
         "description": "Summary shows a view of the configuration that is sanitized and is OK for logged in users to see",
         "type": "object",
         "required": [
+          "legacyStorage",
+          "generateDashboardPreviews",
+          "githubWebhooks",
           "items"
         ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
+          },
+          "generateDashboardPreviews": {
+            "description": "GenerateDashboardPreviews is available to render dashboard previews",
+            "type": "boolean",
+            "default": false
+          },
+          "githubWebhooks": {
+            "description": "GithubWebhooks is available to sync changes from a repository as soon as they are pushed or react to pull requests",
+            "type": "boolean",
+            "default": false
           },
           "items": {
             "type": "array",
@@ -3607,7 +3620,8 @@
           },
           "legacyStorage": {
             "description": "The backend is using legacy storage FIXME: Not sure where this should be exposed... but we need it somewhere The UI should force the onboarding workflow when this is true",
-            "type": "boolean"
+            "type": "boolean",
+            "default": false
           }
         }
       },

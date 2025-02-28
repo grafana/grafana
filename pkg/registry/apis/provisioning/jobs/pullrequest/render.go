@@ -20,18 +20,20 @@ type screenshotRenderer struct {
 	render      rendering.Service
 	blobstore   resource.BlobStoreClient
 	urlProvider func(namespace string) string
+	isPublic    bool
 }
 
-func NewScreenshotRenderer(render rendering.Service, blobstore resource.BlobStoreClient, urlProvider func(namespace string) string) *screenshotRenderer {
+func NewScreenshotRenderer(render rendering.Service, blobstore resource.BlobStoreClient, isPublic bool, urlProvider func(namespace string) string) *screenshotRenderer {
 	return &screenshotRenderer{
 		render:      render,
 		blobstore:   blobstore,
 		urlProvider: urlProvider,
+		isPublic:    isPublic,
 	}
 }
 
 func (r *screenshotRenderer) IsAvailable(ctx context.Context) bool {
-	return r.render != nil && r.render.IsAvailable(ctx)
+	return r.render != nil && r.render.IsAvailable(ctx) && r.blobstore != nil && r.isPublic
 }
 
 func (r *screenshotRenderer) RenderDashboardPreview(ctx context.Context, namespace, repoName, path, ref string) (string, error) {

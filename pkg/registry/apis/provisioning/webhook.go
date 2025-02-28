@@ -20,8 +20,9 @@ import (
 
 // This only works for github right now
 type webhookConnector struct {
-	getter RepoGetter
-	jobs   jobs.JobQueue
+	getter          RepoGetter
+	jobs            jobs.JobQueue
+	webhooksEnabled bool
 }
 
 func (*webhookConnector) New() runtime.Object {
@@ -65,6 +66,10 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := logging.FromContext(r.Context()).With("logger", "webhook-connector", "repo", name)
 		ctx := logging.Context(r.Context(), logger)
+		if !s.webhooksEnabled {
+			responder.Error(errors.NewBadRequest("webhooks are not enabled"))
+			return
+		}
 
 		hooks, ok := repo.(repository.Hooks)
 		if !ok {
