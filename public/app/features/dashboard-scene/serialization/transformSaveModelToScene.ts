@@ -322,7 +322,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
 
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(panel.id),
-    title: panel.title?.substring(0, 500),
+    title: panel.title,
     description: panel.description,
     pluginId: panel.type ?? 'timeseries',
     options: panel.options ?? {},
