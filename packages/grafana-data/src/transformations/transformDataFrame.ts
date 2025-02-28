@@ -33,6 +33,7 @@ const getOperator =
           if (typeof v === 'string') {
             return ctx.interpolate(v);
           }
+          return v;
         });
 
     const matcher = config.filter?.options ? getFrameMatchers(config.filter) : undefined;
