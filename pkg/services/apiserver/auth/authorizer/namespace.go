@@ -45,7 +45,7 @@ func (auth namespaceAuthorizer) Authorize(ctx context.Context, a authorizer.Attr
 	}
 
 	if !types.NamespaceMatches(ident.GetNamespace(), a.GetNamespace()) {
-		return authorizer.DecisionDeny, "unauthorizer namespace", nil
+		return authorizer.DecisionDeny, "invalid namespace", nil
 	}
 
 	return 0, "", nil
