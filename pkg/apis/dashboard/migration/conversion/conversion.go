@@ -13,12 +13,6 @@ import (
 	dashboardV2 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
 )
 
-var (
-	_ dashboard.DashboardCommon = (*dashboardV0.Dashboard)(nil)
-	_ dashboard.DashboardCommon = (*dashboardV1.Dashboard)(nil)
-	_ dashboard.DashboardCommon = (*dashboardV2.Dashboard)(nil)
-)
-
 func RegisterConversions(s *runtime.Scheme) error {
 	if err := s.AddConversionFunc((*dashboard.Dashboard)(nil), (*dashboardV0.Dashboard)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_to_V0(a.(*dashboard.Dashboard), b.(*dashboardV0.Dashboard), scope)
@@ -89,7 +83,7 @@ func Convert_V0_to_Internal(in *dashboardV0.Dashboard, out *dashboard.Dashboard,
 	out.Spec = dashboard.DashboardSpec{
 		Unstructured: in.Spec,
 	}
-	setAnnos(&out.ObjectMeta, "V0_to_>>>>>>>")
+	setConversionAnno(&out.ObjectMeta, "V0_to_>>>>>>>")
 	return nil
 }
 
@@ -98,7 +92,7 @@ func Convert_V0_to_V1(in *dashboardV0.Dashboard, out *dashboardV1.Dashboard, sco
 	out.Spec = dashboardV1.DashboardSpec{
 		Unstructured: in.Spec,
 	}
-	setAnnos(&out.ObjectMeta, "V0_to_V1")
+	setConversionAnno(&out.ObjectMeta, "V0_to_V1")
 	return nil
 }
 
@@ -107,74 +101,75 @@ func Convert_V0_to_V2(in *dashboardV0.Dashboard, out *dashboardV2.Dashboard, sco
 	out.Spec = dashboardV2.DashboardSpec{
 		Unstructured: in.Spec,
 	}
-	setAnnos(&out.ObjectMeta, "V0_to_V2")
+	setConversionAnno(&out.ObjectMeta, "V0_to_V2")
 	return nil
 }
 
 func Convert_V1_to_Internal(in *dashboardV1.Dashboard, out *dashboard.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 	out.Spec = dashboard.DashboardSpec(in.Spec)
-	setAnnos(&out.ObjectMeta, "V1_to_>>>>>>>")
+	setConversionAnno(&out.ObjectMeta, "V1_to_>>>>>>>")
 	return nil
 }
 
 func Convert_V1_to_V0(in *dashboardV1.Dashboard, out *dashboardV0.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 	out.Spec = in.Spec.Unstructured
-	setAnnos(&out.ObjectMeta, "V1_to_V0")
+	setConversionAnno(&out.ObjectMeta, "V1_to_V0")
 	return nil
 }
 
 func Convert_V1_to_V2(in *dashboardV1.Dashboard, out *dashboardV2.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 	out.Spec = dashboardV2.DashboardSpec(in.Spec)
-	setAnnos(&out.ObjectMeta, "V1_to_V2")
+	setConversionAnno(&out.ObjectMeta, "V1_to_V2")
 	return nil
 }
 
 func Convert_V2_to_Internal(in *dashboardV2.Dashboard, out *dashboard.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 	out.Spec = dashboard.DashboardSpec(in.Spec)
-	setAnnos(&out.ObjectMeta, "V2_to_>>>>>>>")
+	setConversionAnno(&out.ObjectMeta, "V2_to_>>>>>>>")
 	return nil
 }
 
 func Convert_V2_to_V0(in *dashboardV2.Dashboard, out *dashboardV0.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 	out.Spec = in.Spec.Unstructured
-	setAnnos(&out.ObjectMeta, "V2_to_V0")
+	setConversionAnno(&out.ObjectMeta, "V2_to_V0")
 	return nil
 }
 
 func Convert_V2_to_V1(in *dashboardV2.Dashboard, out *dashboardV1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 	out.Spec = dashboardV1.DashboardSpec(in.Spec)
-	setAnnos(&out.ObjectMeta, "V2_to_V1")
+	setConversionAnno(&out.ObjectMeta, "V2_to_V1")
 	return nil
 }
 
 func Convert_to_V0(in *dashboard.Dashboard, out *dashboardV0.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 	out.Spec = in.Spec.Unstructured
-	setAnnos(&out.ObjectMeta, ">>>>>>__to_V0")
+	setConversionAnno(&out.ObjectMeta, ">>>>>>__to_V0")
 	return nil
 }
 
 func Convert_to_V1(in *dashboard.Dashboard, out *dashboardV1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 	out.Spec = dashboardV1.DashboardSpec(in.Spec)
-	setAnnos(&out.ObjectMeta, ">>>>>>__to_V1")
+	setConversionAnno(&out.ObjectMeta, ">>>>>>__to_V1")
 	return nil
 }
 
 func Convert_to_V2(in *dashboard.Dashboard, out *dashboardV2.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 	out.Spec = dashboardV2.DashboardSpec(in.Spec)
-	setAnnos(&out.ObjectMeta, ">>>>>>__to_V2")
+	setConversionAnno(&out.ObjectMeta, ">>>>>>__to_V2")
 	return nil
 }
 
-func setAnnos(meta *v1.ObjectMeta, val string) {
+// Add an annotation tracking which conversions have been run
+func setConversionAnno(meta *v1.ObjectMeta, val string) {
 	anno := meta.Annotations
 	if anno == nil {
 		anno = make(map[string]string)

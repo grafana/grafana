@@ -173,25 +173,6 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 	return nil
 }
 
-// Mutate removes any internal ID set in the spec & adds it as a label
-func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
-	op := a.GetOperation()
-	if op != admission.Create && op != admission.Update {
-		return nil
-	}
-	obj := a.GetObject()
-	dash, ok := obj.(dashboardinternal.DashboardCommon)
-	if !ok {
-		return fmt.Errorf("mutation error: expected to implement dashboardinternal.DashboardCommon, got %T", obj)
-	}
-
-	if err := dash.MutateInternalID(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	internalDashResourceInfo := dashboardinternal.DashboardResourceInfo
 
