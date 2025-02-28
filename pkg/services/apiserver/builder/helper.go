@@ -246,14 +246,14 @@ func SetupConfig(
 	serverConfig.EffectiveVersion = v
 
 	// set priority for aggregated discovery
-	for _, b := range builders {
+	for i, b := range builders {
 		gvs := GetGroupVersions(b)
 		if len(gvs) == 0 {
 			return fmt.Errorf("builder did not return any API group versions: %T", b)
 		}
 		pvs := scheme.PrioritizedVersionsForGroup(gvs[0].Group)
-		for i, gv := range pvs {
-			serverConfig.AggregatedDiscoveryGroupManager.SetGroupVersionPriority(metav1.GroupVersion(gv), 15000, len(pvs)-i)
+		for j, gv := range pvs {
+			serverConfig.AggregatedDiscoveryGroupManager.SetGroupVersionPriority(metav1.GroupVersion(gv), 15000+i, len(pvs)-j)
 		}
 	}
 
