@@ -91,7 +91,7 @@ jobs:
           
           if [ "$FROM_COMMIT" = "$SHORT_TO_COMMIT" ]; then
             echo "Current version ($FROM_COMMIT) is already at latest ($SHORT_TO_COMMIT). No update needed."
-            exit 0
+            exit 78
           fi
           echo "Updates available: $FROM_COMMIT -> $TO_COMMIT"
 
