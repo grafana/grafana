@@ -229,6 +229,97 @@ func TestAlertRuleService(t *testing.T) {
 		require.Equal(t, ruleMetadata, readGroup.Rules[0].Metadata)
 	})
 
+	t.Run("updating a group with editor settings should override its prometheus rule definition", func(t *testing.T) {
+		namespaceUID := "my-namespace"
+		groupTitle := "test-group-123"
+
+		// create the rule group via the rule store, to persist the editor settings
+		rule := createTestRule(util.GenerateShortUID(), groupTitle, orgID, namespaceUID)
+		ruleMetadata := models.AlertRuleMetadata{
+			EditorSettings: models.EditorSettings{
+				SimplifiedQueryAndExpressionsSection: true,
+			},
+			PrometheusStyleRule: &models.PrometheusStyleRule{
+				OriginalRuleDefinition: "old",
+			},
+		}
+		rule.Metadata = ruleMetadata
+		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.AlertRule{rule})
+		require.NoError(t, err)
+		require.Len(t, r, 1)
+
+		// Set the UID for the rule to update it
+		rule.UID = r[0].UID
+		// clear the editor settings in the metadata to check that the existing setting is not overridden
+		rule.Metadata = models.AlertRuleMetadata{
+			PrometheusStyleRule: &models.PrometheusStyleRule{
+				OriginalRuleDefinition: "new",
+			},
+		}
+
+		// Now update the rule group with the rule to update its metadata
+		group := models.AlertRuleGroup{
+			Title:     groupTitle,
+			Interval:  60,
+			FolderUID: namespaceUID,
+			Rules:     []models.AlertRule{rule},
+		}
+
+		err = ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		readGroup, err := ruleService.GetRuleGroup(context.Background(), u, namespaceUID, groupTitle)
+		require.NoError(t, err)
+		require.NotEmpty(t, readGroup.Rules)
+		require.Len(t, readGroup.Rules, 1)
+
+		// check that the editor settings are still there
+		require.True(t, readGroup.Rules[0].Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection)
+		// check the new prometheus rule definition
+		require.Equal(t, "new", readGroup.Rules[0].Metadata.PrometheusStyleRule.OriginalRuleDefinition)
+	})
+
+	t.Run("updating a group should override its prometheus rule definition", func(t *testing.T) {
+		namespaceUID := "my-namespace"
+		groupTitle := "test-group-123"
+
+		// create the rule group via the rule store, to persist the editor settings
+		rule := createTestRule(util.GenerateShortUID(), groupTitle, orgID, namespaceUID)
+		ruleMetadata := models.AlertRuleMetadata{
+			PrometheusStyleRule: &models.PrometheusStyleRule{
+				OriginalRuleDefinition: "old",
+			},
+		}
+		rule.Metadata = ruleMetadata
+		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.AlertRule{rule})
+		require.NoError(t, err)
+		require.Len(t, r, 1)
+
+		// Set the UID for the rule to update it
+		rule.UID = r[0].UID
+		// make the metadata empty
+		rule.Metadata = models.AlertRuleMetadata{}
+
+		// Now update the rule group with the rule to update its metadata
+		group := models.AlertRuleGroup{
+			Title:     groupTitle,
+			Interval:  60,
+			FolderUID: namespaceUID,
+			Rules:     []models.AlertRule{rule},
+		}
+
+		err = ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		readGroup, err := ruleService.GetRuleGroup(context.Background(), u, namespaceUID, groupTitle)
+		require.NoError(t, err)
+		require.NotEmpty(t, readGroup.Rules)
+		require.Len(t, readGroup.Rules, 1)
+
+		// check that the prometheus rule definition is empty
+		require.Nil(t, readGroup.Rules[0].Metadata.PrometheusStyleRule)
+	})
+
 	t.Run("updating a rule should not override its editor settings", func(t *testing.T) {
 		rule := createTestRule(util.GenerateShortUID(), "my-group", orgID, "my-folder")
 		ruleMetadata := models.AlertRuleMetadata{
