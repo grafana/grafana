@@ -37,7 +37,7 @@ func (auth namespaceAuthorizer) Authorize(ctx context.Context, a authorizer.Attr
 
 	ns, err := types.ParseNamespace(a.GetNamespace())
 	if err != nil {
-		return authorizer.DecisionDeny, "invalida namespace", err
+		return authorizer.DecisionDeny, "invalid namespace", err
 	}
 
 	if ns.OrgID != ident.GetOrgID() {
