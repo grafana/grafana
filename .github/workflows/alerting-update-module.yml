@@ -2,10 +2,16 @@ name: Update Alerting Module
 
 on:
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to use (must exist in both repos - the current repo and alerting repo)'
+        required: false
+        default: 'main'
+        type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.branch }}
+  cancel-in-progress: false
 
 jobs:
   update-grafana:
@@ -16,16 +22,40 @@ jobs:
       id-token: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # 4.2.2
-
-      - name: Check if update branch exists
+      - name: Verify branches exist
+        id: verify-branches
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          if git ls-remote --heads origin update-alerting-module | grep -q 'update-alerting-module'; then
-            echo "Branch 'update-alerting-module' already exists. There might be an open PR with Grafana updates."
+          BRANCH="${{ inputs.branch }}"
+          PR_BRANCH="alerting/update-alerting-module-${{ inputs.branch }}"
+          
+          # Check current repo branch
+          if ! gh api repos/${{ github.repository }}/branches/$BRANCH --jq '.name' >/dev/null 2>&1;  then
+            echo "Error: Branch '$BRANCH' does not exist in current repository"
+          exit 1
+          fi
+                  
+          # Check alerting repo branch
+          if ! gh api repos/grafana/alerting/branches/$BRANCH --jq '.name' >/dev/null 2>&1; then
+            echo "Error: Branch '$BRANCH' does not exist in alerting repository"
+            exit 1
+          fi
+          
+          echo "Branch '$BRANCH' exists in both repositories"
+          
+          if gh api repos/${{ github.repository }}/branches/$PR_BRANCH --jq '.name' >/dev/null 2>&1; then
+            echo "Branch '$PR_BRANCH' already exists. There might be an open PR with Grafana updates."
             echo "Please review and merge/close the existing PR before running this workflow again."
             exit 1
           fi
+
+          echo "pr_branch=$PR_BRANCH" >> $GITHUB_OUTPUT
+
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # 4.2.2
+        with:
+          ref: ${{ inputs.branch }}
 
       - name: Setup Go
         uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # 5.3.0
@@ -38,16 +68,12 @@ jobs:
           FROM_COMMIT=$(go list -m -json github.com/grafana/alerting | jq -r '.Version' | grep -oP '(?<=-)[a-f0-9]+$')
           echo "from_commit=$FROM_COMMIT" >> $GITHUB_OUTPUT
 
-      - name: Get current branch name
-        id: current-branch-name
-        run: echo "name=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> "$GITHUB_OUTPUT"
-
       - name: Get latest commit
         id: latest-commit
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          BRANCH="${{ steps.current-branch-name.outputs.name }}"
+          BRANCH="${{ inputs.branch }}"
           TO_COMMIT=$(gh api repos/grafana/alerting/commits/$BRANCH  --jq '.sha')
            if [ -z "$TO_COMMIT" ]; then
             echo "Branch $BRANCH not found in alerting repo, falling back to main branch"
@@ -114,11 +140,11 @@ jobs:
         id: create-pr
         with:
           token: '${{ steps.generate_token.outputs.token }}'
-          title:  'Alerting: Update alerting module to ${{ steps.latest-commit.outputs.to_commit }}'
-          branch: alerting/update-alerting-module
+          title:  '[${{ inputs.branch }}] Alerting: Update alerting module to ${{ steps.latest-commit.outputs.to_commit }}'
+          branch: '${{ steps.verify-branches.outputs.pr_branch }}'
           delete-branch: true
           body: |
-            Updates Grafana Alerting module to latest version.
+            Updates Grafana Alerting module to latest version in the branch `${{ inputs.branch }}`  
 
             Compare changes: https://github.com/grafana/alerting/compare/${{ steps.current-commit.outputs.from_commit }}...${{ steps.latest-commit.outputs.to_commit }}
             <details>
