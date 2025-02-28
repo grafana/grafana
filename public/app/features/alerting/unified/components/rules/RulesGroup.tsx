@@ -17,7 +17,7 @@ import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
 import { makeFolderLink, makeFolderSettingsLink } from '../../utils/misc';
 import { groups } from '../../utils/navigation';
-import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
+import { isFederatedRuleGroup, isGrafanaRulerRule, isPluginProvidedRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
 import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
@@ -76,8 +76,11 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   const isProvisioned = group.rules.some((rule) => {
     return isGrafanaRulerRule(rule.rulerRule) && rule.rulerRule.grafana_alert.provenance;
   });
+  const isPluginProvided = group.rules.some((rule) => {
+    return isPluginProvidedRule(rule.rulerRule ?? rule.promRule);
+  });
 
-  const canEditGroup = hasRuler && !isProvisioned && !isFederated && canEditRules(rulesSourceName);
+  const canEditGroup = hasRuler && !isProvisioned && !isFederated && !isPluginProvided && canEditRules(rulesSourceName);
 
   // check what view mode we are in
   const isListView = viewMode === 'list';
