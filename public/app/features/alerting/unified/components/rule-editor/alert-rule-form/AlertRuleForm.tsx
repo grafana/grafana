@@ -130,11 +130,11 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
   useEffect(() => {
     // If the user is manually restoring an old version of a rule,
-    // we should trigger validation on the form so any problem areas are clearly highlighted
-    if (existing && prefill) {
+    // we should trigger validation on the form so any problem areas are clearly highlighted for them to action
+    if (isManualRestore) {
       trigger();
     }
-  }, [existing, prefill, trigger]);
+  }, [isManualRestore, trigger]);
   const type = watch('type');
   const grafanaTypeRule = isGrafanaManagedRuleByType(type ?? RuleFormType.grafana);
 
