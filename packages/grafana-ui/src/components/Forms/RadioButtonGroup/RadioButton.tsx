@@ -9,6 +9,7 @@ import { getFocusStyles, getInternalRadius, getMouseFocusStyles } from '../../..
 import { Tooltip } from '../../Tooltip/Tooltip';
 import { getPropertiesForButtonSize } from '../commonStyles';
 
+export const RADIO_GROUP_PADDING = 2;
 export type RadioButtonSize = 'sm' | 'md';
 
 export interface RadioButtonProps {
@@ -131,7 +132,7 @@ const getRadioButtonStyles = (theme: GrafanaTheme2, size: RadioButtonSize, fullW
       color: textColor,
       padding: theme.spacing(0, padding),
       borderRadius: getInternalRadius(theme, {
-        offset: 2,
+        offset: RADIO_GROUP_PADDING,
       }),
       background: theme.colors.background.primary,
       cursor: 'pointer',
