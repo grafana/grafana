@@ -196,7 +196,7 @@ func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient
 		Reg:      prometheus.NewPedanticRegistry(),
 		Authzc:   authlib.FixedAccessClient(true), // always true!
 		Docs:     nil,                             // document supplier
-	})
+	}, nil)
 }
 
 func newParquetClient(file *os.File) (resource.BulkStoreClient, error) {
