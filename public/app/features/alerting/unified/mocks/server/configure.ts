@@ -1,4 +1,4 @@
-import { HttpResponse, HttpResponseResolver, http } from 'msw';
+import { HttpResponse, HttpResponseResolver, PathParams, http } from 'msw';
 
 import { config } from '@grafana/runtime';
 import server from 'app/features/alerting/unified/mockApi';
@@ -140,6 +140,11 @@ export const setRulerRuleGroupHandler = (options?: HandlerOptions) => {
   return handler;
 };
 
+export const setGrafanaRuleGroupExportResolver = (
+  resolver: HttpResponseResolver<PathParams<never>, string, undefined>
+) => {
+  server.use(http.get('/api/ruler/grafana/api/v1/export/rules', resolver));
+};
 /**
  * Makes the mock server respond with an error when fetching list of mute timings
  */

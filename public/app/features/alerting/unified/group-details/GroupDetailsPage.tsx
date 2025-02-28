@@ -1,8 +1,8 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { Alert, Badge, LinkButton, Text, withErrorBoundary } from '@grafana/ui';
+import { Alert, Badge, Button, LinkButton, Text, withErrorBoundary } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { Trans, t } from 'app/core/internationalization';
 import { FolderDTO } from 'app/types';
@@ -21,6 +21,7 @@ import { stringifyErrorLike } from '../utils/misc';
 import { groups } from '../utils/navigation';
 import { getEvaluationsToStartAlerting, isAlertingRulerRule, isGrafanaAlertingRule } from '../utils/rules';
 import { formatPrometheusDuration, safeParsePrometheusDuration } from '../utils/time';
+import { GrafanaRuleGroupExporter } from '../components/export/GrafanaRuleGroupExporter';
 
 type GroupPageRouteParams = {
   sourceId?: string;
@@ -129,6 +130,7 @@ interface GroupActionsProps {
 
 function GroupActions({ dsFeatures, namespaceId, groupName, folder }: GroupActionsProps) {
   const { canEditRules } = useRulesAccess();
+  const [isExporting, setIsExporting] = useState<boolean>(false);
 
   const isGrafanaSource = dsFeatures.uid === GRAFANA_RULES_SOURCE_NAME;
   const canSaveInFolder = isGrafanaSource ? !!folder?.canSave : true;
@@ -139,9 +141,19 @@ function GroupActions({ dsFeatures, namespaceId, groupName, folder }: GroupActio
   }
 
   return (
-    <LinkButton icon="pen" href={groups.editPageLink(dsFeatures.uid, namespaceId, groupName)} variant="secondary">
-      <Trans i18nKey="alerting.group-details.edit">Edit</Trans>
-    </LinkButton>
+    <>
+      {isGrafanaSource && (
+        <Button onClick={() => setIsExporting(true)} icon="file-download" variant="secondary">
+          <Trans i18nKey="alerting.group-details.export">Export</Trans>
+        </Button>
+      )}
+      <LinkButton icon="pen" href={groups.editPageLink(dsFeatures.uid, namespaceId, groupName)} variant="secondary">
+        <Trans i18nKey="alerting.group-details.edit">Edit</Trans>
+      </LinkButton>
+      {folder && isExporting && (
+        <GrafanaRuleGroupExporter folderUid={folder.uid} groupName={groupName} onClose={() => setIsExporting(false)} />
+      )}
+    </>
   );
 }
 

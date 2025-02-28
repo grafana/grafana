@@ -76,6 +76,8 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
     return isGrafanaRulerRule(rule.rulerRule) && rule.rulerRule.grafana_alert.provenance;
   });
 
+  const canEditGroup = hasRuler && !isProvisioned && !isFederated && canEditRules(rulesSourceName);
+
   // check what view mode we are in
   const isListView = viewMode === 'list';
   const isGroupView = viewMode === 'grouped';
@@ -108,28 +110,24 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
       const baseUrl = makeFolderLink(folderUID);
       if (isGroupView) {
         actionIcons.push(
-          <LinkButton
+          <ActionIcon
             aria-label="rule group details"
             data-testid="rule-group-details"
             key="rule-group-details"
             icon="info-circle"
             tooltip="rule group details"
-            href={groups.detailsPageLink('grafana', folderUID, group.name)}
-            size="sm"
-            variant="secondary"
+            to={groups.detailsPageLink('grafana', folderUID, group.name)}
           />
         );
-        if (folder?.canSave) {
+        if (folder?.canSave && canEditGroup) {
           actionIcons.push(
-            <LinkButton
+            <ActionIcon
               aria-label="edit rule group"
               data-testid="edit-rule-group"
               key="rule-group-edit"
               icon="pen"
               tooltip="edit rule group"
-              href={groups.editPageLink('grafana', folderUID, group.name)}
-              size="sm"
-              variant="secondary"
+              to={groups.editPageLink('grafana', folderUID, group.name)}
             />
           );
         }
@@ -187,7 +185,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
         variant="secondary"
       />
     );
-    if (canEditRules(rulesSourceName)) {
+    if (canEditGroup) {
       actionIcons.push(
         <LinkButton
           icon="pen"
