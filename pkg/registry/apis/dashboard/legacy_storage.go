@@ -14,7 +14,6 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -24,8 +23,7 @@ type DashboardStorage struct {
 	Access         legacy.DashboardAccess
 	TableConverter rest.TableConvertor
 
-	Server   resource.ResourceServer
-	Features featuremgmt.FeatureToggles
+	Server resource.ResourceServer
 }
 
 func (s *DashboardStorage) NewStore(scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter, reg prometheus.Registerer) (grafanarest.Storage, error) {

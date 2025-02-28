@@ -104,7 +104,6 @@ func RegisterAPIService(
 			Resource:       dashboardinternal.DashboardResourceInfo,
 			Access:         legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, softDelete, sorter),
 			TableConverter: dashboardinternal.DashboardResourceInfo.TableConverter(),
-			Features:       features,
 		},
 		reg: reg,
 	}
@@ -210,7 +209,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	// Split dashboards when they are large
 	var largeObjects apistore.LargeObjectSupport
-	if b.legacy.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
+	if b.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
 		largeObjects = NewDashboardLargeObjectSupport(opts.Scheme)
 		storageOpts.LargeObjectSupport = largeObjects
 	}
@@ -263,29 +262,21 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	libraryPanels utils.ResourceInfo,
 	newDTOFunc func() runtime.Object,
 ) (map[string]rest.Storage, error) {
-	var err error
 	storage := map[string]rest.Storage{}
-	storage[dashboards.StoragePath()] = legacyStore
+	gr := dashboards.GroupResource()
 
 	store, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashboards, opts.OptsGetter)
 	if err != nil {
 		return nil, err
 	}
-	storage[dashboards.StoragePath()], err = opts.DualWriteBuilder(dashboards.GroupResource(), legacyStore, store)
+	storage[dashboards.StoragePath()], err = opts.DualWriteBuilder(gr, legacyStore, store)
 	if err != nil {
 		return nil, err
 	}
 
 	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesRestore) {
-		storage[dashboards.StoragePath("restore")] = NewRestoreConnector(
-			b.unified,
-			dashboards.GroupResource(),
-		)
-
-		storage[dashboards.StoragePath("latest")] = NewLatestConnector(
-			b.unified,
-			dashboards.GroupResource(),
-		)
+		storage[dashboards.StoragePath("restore")] = NewRestoreConnector(b.unified, gr)
+		storage[dashboards.StoragePath("latest")] = NewLatestConnector(b.unified, gr)
 	}
 
 	// Register the DTO endpoint that will consolidate all dashboard bits

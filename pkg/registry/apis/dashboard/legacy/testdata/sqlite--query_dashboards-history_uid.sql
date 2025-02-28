@@ -17,4 +17,5 @@ LEFT OUTER JOIN "grafana"."user" as updated_user ON dashboard.updated_by = updat
 WHERE dashboard.is_folder = FALSE
   AND dashboard.org_id = 2
     AND dashboard.uid = 'UUU'
+    AND dashboard.deleted IS NULL
   ORDER BY dashboard.id DESC

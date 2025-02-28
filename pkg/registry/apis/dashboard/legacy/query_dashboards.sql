@@ -46,7 +46,7 @@ WHERE dashboard.is_folder = {{ .Arg .Query.GetFolders }}
     {{ end }}
     {{ if .Query.GetTrash }}
     AND dashboard.deleted IS NOT NULL
-    {{ else if .Query.LastID }}
+    {{ else }}
     AND dashboard.deleted IS NULL
     {{ end }}
   ORDER BY dashboard.id DESC
