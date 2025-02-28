@@ -2,10 +2,18 @@ import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectSt
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import { getDashboardSceneFor, getGridItemKeyForPanelId, getVizPanelKeyForPanelId } from '../../utils/utils';
+import {
+  getDashboardSceneFor,
+  getGridItemKeyForPanelId,
+  getPanelIdForVizPanel,
+  getVizPanelKeyForPanelId,
+} from '../../utils/utils';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
+import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
 import { getEditOptions } from './ResponsiveGridLayoutManagerEditor';
@@ -22,7 +30,7 @@ export class ResponsiveGridLayoutManager
 
   public readonly isDashboardLayoutManager = true;
 
-  public static readonly descriptor = {
+  public static readonly descriptor: LayoutRegistryItem = {
     get name() {
       return t('dashboard.responsive-layout.name', 'Responsive grid');
     },
@@ -31,9 +39,16 @@ export class ResponsiveGridLayoutManager
     },
     id: 'responsive-grid',
     createFromLayout: ResponsiveGridLayoutManager.createFromLayout,
+
+    kind: 'ResponsiveGridLayout',
   };
 
   public readonly descriptor = ResponsiveGridLayoutManager.descriptor;
+
+  public static defaultCSS = {
+    templateColumns: 'repeat(auto-fit, minmax(400px, auto))',
+    autoRows: 'minmax(300px, auto)',
+  };
 
   public constructor(state: ResponsiveGridLayoutManagerState) {
     super(state);
@@ -96,10 +111,58 @@ export class ResponsiveGridLayoutManager
     return panels;
   }
 
+  public hasVizPanels(): boolean {
+    for (const child of this.state.layout.state.children) {
+      if (child instanceof ResponsiveGridItem) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
+    return this.clone({
+      layout: this.state.layout.clone({
+        children: this.state.layout.state.children.map((gridItem) => {
+          if (gridItem instanceof ResponsiveGridItem) {
+            // Get the original panel ID from the gridItem's key
+            const panelId = getPanelIdForVizPanel(gridItem.state.body);
+            const gridItemKey = joinCloneKeys(ancestorKey, getGridItemKeyForPanelId(panelId));
+
+            return gridItem.clone({
+              key: gridItemKey,
+              body: gridItem.state.body.clone({
+                key: joinCloneKeys(gridItemKey, getVizPanelKeyForPanelId(panelId)),
+              }),
+            });
+          }
+          throw new Error('Unexpected child type');
+        }),
+      }),
+    });
+  }
+
   public addNewRow() {
+    const shouldAddRow = this.hasVizPanels();
     const rowsLayout = RowsLayoutManager.createFromLayout(this);
-    rowsLayout.addNewRow();
+
+    if (shouldAddRow) {
+      rowsLayout.addNewRow();
+    }
+
     getDashboardSceneFor(this).switchLayout(rowsLayout);
+  }
+
+  public addNewTab() {
+    const shouldAddTab = this.hasVizPanels();
+    const tabsLayout = TabsLayoutManager.createFromLayout(this);
+
+    if (shouldAddTab) {
+      tabsLayout.addNewTab();
+    }
+
+    getDashboardSceneFor(this).switchLayout(tabsLayout);
   }
 
   public getOptions(): OptionsPaneItemDescriptor[] {
@@ -118,8 +181,8 @@ export class ResponsiveGridLayoutManager
     return new ResponsiveGridLayoutManager({
       layout: new SceneCSSGridLayout({
         children: [],
-        templateColumns: 'repeat(auto-fit, minmax(400px, auto))',
-        autoRows: 'minmax(300px, auto)',
+        templateColumns: ResponsiveGridLayoutManager.defaultCSS.templateColumns,
+        autoRows: ResponsiveGridLayoutManager.defaultCSS.autoRows,
       }),
     });
   }

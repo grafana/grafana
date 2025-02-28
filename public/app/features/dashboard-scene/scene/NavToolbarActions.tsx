@@ -20,6 +20,7 @@ import {
 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
+import grafanaConfig from 'app/core/config';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
@@ -77,6 +78,11 @@ export function ToolbarActions({ dashboard }: Props) {
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
   const showScopesSelector = config.featureToggles.scopeFilters && !isEditing;
   const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
+
+  // Internal only;
+  // allows viewer editing without ability to save
+  // used for grafana play
+  const canEdit = grafanaConfig.viewersCanEdit;
 
   if (!isEditingPanel) {
     // This adds the presence indicators in enterprise
@@ -156,64 +162,6 @@ export function ToolbarActions({ dashboard }: Props) {
   }
 
   if (dashboardNewLayouts) {
-    leftActions.push({
-      group: 'add-panel',
-      condition: isEditingAndShowingDashboard,
-      render: () => (
-        <Button
-          key="add-panel-button"
-          variant="secondary"
-          size="sm"
-          icon="plus"
-          fill="text"
-          onClick={() => {
-            dashboard.onCreateNewPanel();
-          }}
-          data-testid={selectors.components.PageToolbar.itemButton('add_visualization')}
-        >
-          <Trans i18nKey="dashboard.toolbar.add-panel">Panel</Trans>
-        </Button>
-      ),
-    });
-    leftActions.push({
-      group: 'add-panel',
-      condition: isEditingAndShowingDashboard,
-      render: () => (
-        <Button
-          key="add-panel-button"
-          variant="secondary"
-          size="sm"
-          icon="plus"
-          fill="text"
-          onClick={() => {
-            dashboard.onCreateNewRow();
-          }}
-          data-testid={selectors.components.PageToolbar.itemButton('add_row')}
-        >
-          <Trans i18nKey="dashboard.toolbar.add-row">Row</Trans>
-        </Button>
-      ),
-    });
-    leftActions.push({
-      group: 'add-panel',
-      condition: isEditingAndShowingDashboard,
-      render: () => (
-        <Button
-          key="add-panel-lib"
-          variant="secondary"
-          size="sm"
-          icon="plus"
-          fill="text"
-          data-testid={selectors.pages.AddDashboard.itemButton('Add new panel from panel library menu item')}
-          onClick={() => {
-            dashboard.onShowAddLibraryPanelDrawer();
-            DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
-          }}
-        >
-          <Trans i18nKey="dashboard.toolbar.add-panel-lib">Import</Trans>
-        </Button>
-      ),
-    });
     leftActions.push({
       group: 'hidden-elements',
       condition: isEditingAndShowingDashboard,
@@ -412,7 +360,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isPlaying && editable,
+    condition: !isEditing && (dashboard.canEditDashboard() || canEdit) && !isViewingPanel && !isPlaying && editable,
     render: () => (
       <Button
         onClick={() => {

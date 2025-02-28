@@ -1,5 +1,6 @@
 import { TimeZone } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
+import { WeekStart } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
@@ -56,7 +57,7 @@ export const updateTimeZoneDashboard =
   };
 
 export const updateWeekStartDashboard =
-  (weekStart: string): ThunkResult<void> =>
+  (weekStart?: WeekStart): ThunkResult<void> =>
   (dispatch) => {
     dispatch(updateWeekStartForSession(weekStart));
     getTimeSrv().refreshTimeModel();

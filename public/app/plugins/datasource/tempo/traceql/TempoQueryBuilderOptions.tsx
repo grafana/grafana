@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
+import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/plugin-ui';
@@ -13,7 +14,8 @@ import { TempoQuery } from '../types';
 interface Props {
   onChange: (value: TempoQuery) => void;
   query: Partial<TempoQuery> & TempoQuery;
-  isStreaming: boolean;
+  searchStreaming: boolean;
+  metricsStreaming: boolean;
 }
 
 /**
@@ -29,8 +31,9 @@ const parseIntWithFallback = (val: string, fallback: number) => {
   return isNaN(parsed) ? fallback : parsed;
 };
 
-export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, isStreaming }) => {
+export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, searchStreaming, metricsStreaming }) => {
   const styles = useStyles2(getStyles);
+  const [isOpen, toggleOpen] = useToggle(false);
 
   if (!query.hasOwnProperty('limit')) {
     query.limit = DEFAULT_LIMIT;
@@ -76,19 +79,26 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, is
     `Spans Limit: ${query.spss || DEFAULT_SPSS}`,
     `Table Format: ${query.tableType === SearchTableType.Traces ? 'Traces' : 'Spans'}`,
     '|',
-    `Streaming: ${isStreaming ? 'Enabled' : 'Disabled'}`,
+    `Streaming: ${searchStreaming ? 'Enabled' : 'Disabled'}`,
   ];
 
   const collapsedMetricsOptions = [
     `Step: ${query.step || 'auto'}`,
     `Type: ${query.metricsQueryType === MetricsQueryType.Range ? 'Range' : 'Instant'}`,
+    '|',
+    `Streaming: ${metricsStreaming ? 'Enabled' : 'Disabled'}`,
     // `Exemplars: ${query.exemplars !== undefined ? query.exemplars : 'auto'}`,
   ];
 
   return (
     <EditorRow>
       <div className={styles.options}>
-        <QueryOptionGroup title="Search Options" collapsedInfo={collapsedSearchOptions}>
+        <QueryOptionGroup
+          title="Search Options"
+          collapsedInfo={collapsedSearchOptions}
+          isOpen={isOpen}
+          onToggle={toggleOpen}
+        >
           <EditorField label="Limit" tooltip="Maximum number of traces to return.">
             <AutoSizeInput
               className="width-4"
@@ -122,11 +132,16 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, is
             />
           </EditorField>
           <EditorField label="Streaming" tooltip={<StreamingTooltip />} tooltipInteractive>
-            <div>{isStreaming ? 'Enabled' : 'Disabled'}</div>
+            <div>{searchStreaming ? 'Enabled' : 'Disabled'}</div>
           </EditorField>
         </QueryOptionGroup>
 
-        <QueryOptionGroup title="Metrics Options" collapsedInfo={collapsedMetricsOptions}>
+        <QueryOptionGroup
+          title="Metrics Options"
+          collapsedInfo={collapsedMetricsOptions}
+          isOpen={isOpen}
+          onToggle={toggleOpen}
+        >
           <EditorField
             label="Step"
             tooltip="Defines the step for metric queries. Use duration notation, for example 30s or 1m"
@@ -149,6 +164,10 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, is
               value={query.metricsQueryType}
               onChange={onMetricsQueryTypeChange}
             />
+          </EditorField>
+
+          <EditorField label="Streaming" tooltip={<StreamingTooltip />} tooltipInteractive>
+            <div>{metricsStreaming ? 'Enabled' : 'Disabled'}</div>
           </EditorField>
           {/*<EditorField*/}
           {/*  label="Exemplars"*/}

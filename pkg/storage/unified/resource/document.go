@@ -237,7 +237,7 @@ func (x *searchableDocumentFields) Fields() []string {
 }
 
 func (x *searchableDocumentFields) Field(name string) *ResourceTableColumnDefinition {
-	name = strings.TrimPrefix(name, "fields.")
+	name = strings.TrimPrefix(name, SEARCH_FIELD_PREFIX)
 
 	f, ok := x.fields[name]
 	if ok {
@@ -246,6 +246,7 @@ func (x *searchableDocumentFields) Field(name string) *ResourceTableColumnDefini
 	return nil
 }
 
+const SEARCH_FIELD_PREFIX = "fields."
 const SEARCH_FIELD_ID = "_id"            // {namespace}/{group}/{resource}/{name}
 const SEARCH_FIELD_KIND = "kind"         // resource ( for federated index filtering )
 const SEARCH_FIELD_GROUP_RESOURCE = "gr" // group/resource

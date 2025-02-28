@@ -3,6 +3,7 @@ import {
   DashboardV2Spec,
   GridLayoutItemKind,
   GridLayoutItemSpec,
+  GridLayoutKind,
   GridLayoutRowSpec,
   PanelKind,
   VariableKind,
@@ -112,8 +113,19 @@ describe('ResponseTransformers', () => {
         timepicker: {
           refresh_intervals: ['5s', '10s', '30s'],
           hidden: false,
-          time_options: ['5m', '15m', '1h'],
           nowDelay: '1m',
+          quick_ranges: [
+            {
+              display: 'Last 6 hours',
+              from: 'now-6h',
+              to: 'now',
+            },
+            {
+              display: 'Last 7 days',
+              from: 'now-7d',
+              to: 'now',
+            },
+          ],
         },
         fiscalYearStartMonth: 1,
         weekStart: 'monday',
@@ -427,7 +439,7 @@ describe('ResponseTransformers', () => {
             [AnnoKeySlug]: 'dashboard-slug',
           },
           labels: {
-            [DeprecatedInternalId]: 123,
+            [DeprecatedInternalId]: '123',
           },
         },
       };
@@ -443,7 +455,7 @@ describe('ResponseTransformers', () => {
       expect(transformed.metadata.annotations?.[AnnoKeyFolder]).toEqual('folder1');
       expect(transformed.metadata.annotations?.[AnnoKeySlug]).toEqual('dashboard-slug');
       expect(transformed.metadata.annotations?.[AnnoKeyDashboardGnetId]).toBe('something-like-a-uid');
-      expect(transformed.metadata.labels?.[DeprecatedInternalId]).toBe(123);
+      expect(transformed.metadata.labels?.[DeprecatedInternalId]).toBe('123');
 
       // Spec
       const spec = transformed.spec;
@@ -461,7 +473,7 @@ describe('ResponseTransformers', () => {
       expect(spec.timeSettings.autoRefresh).toBe(dashboardV1.refresh);
       expect(spec.timeSettings.autoRefreshIntervals).toEqual(dashboardV1.timepicker?.refresh_intervals);
       expect(spec.timeSettings.hideTimepicker).toBe(dashboardV1.timepicker?.hidden);
-      expect(spec.timeSettings.quickRanges).toEqual(dashboardV1.timepicker?.time_options);
+      expect(spec.timeSettings.quickRanges).toEqual(dashboardV1.timepicker?.quick_ranges);
       expect(spec.timeSettings.nowDelay).toBe(dashboardV1.timepicker?.nowDelay);
       expect(spec.timeSettings.fiscalYearStartMonth).toBe(dashboardV1.fiscalYearStartMonth);
       expect(spec.timeSettings.weekStart).toBe(dashboardV1.weekStart);
@@ -469,11 +481,13 @@ describe('ResponseTransformers', () => {
       expect(spec.annotations).toEqual([]);
 
       // Panel
-      expect(spec.layout.spec.items).toHaveLength(4);
-      expect(spec.layout.spec.items[0].spec).toEqual({
+      expect(spec.layout.kind).toBe('GridLayout');
+      const layout = spec.layout as GridLayoutKind;
+      expect(layout.spec.items).toHaveLength(4);
+      expect(layout.spec.items[0].spec).toEqual({
         element: {
           kind: 'ElementReference',
-          name: '1',
+          name: 'panel-1',
         },
         x: 0,
         y: 0,
@@ -481,7 +495,7 @@ describe('ResponseTransformers', () => {
         height: 8,
         repeat: { value: 'var1', direction: 'h', mode: 'variable', maxPerRow: undefined },
       });
-      expect(spec.elements['1']).toEqual({
+      expect(spec.elements['panel-1']).toEqual({
         kind: 'Panel',
         spec: {
           title: 'Panel Title',
@@ -533,17 +547,17 @@ describe('ResponseTransformers', () => {
         },
       });
       // Library Panel
-      expect(spec.layout.spec.items[1].spec).toEqual({
+      expect(layout.spec.items[1].spec).toEqual({
         element: {
           kind: 'ElementReference',
-          name: '2',
+          name: 'panel-2',
         },
         x: 0,
         y: 8,
         width: 12,
         height: 8,
       });
-      expect(spec.elements['2']).toEqual({
+      expect(spec.elements['panel-2']).toEqual({
         kind: 'LibraryPanel',
         spec: {
           libraryPanel: {
@@ -555,7 +569,7 @@ describe('ResponseTransformers', () => {
         },
       });
 
-      const rowSpec = spec.layout.spec.items[2].spec as GridLayoutRowSpec;
+      const rowSpec = layout.spec.items[2].spec as GridLayoutRowSpec;
 
       expect(rowSpec.collapsed).toBe(false);
       expect(rowSpec.title).toBe('Row test title');
@@ -566,7 +580,7 @@ describe('ResponseTransformers', () => {
       expect(panelInRow).toEqual({
         element: {
           kind: 'ElementReference',
-          name: '4',
+          name: 'panel-4',
         },
         x: 0,
         y: 0,
@@ -574,7 +588,7 @@ describe('ResponseTransformers', () => {
         height: 8,
       });
 
-      const collapsedRowSpec = spec.layout.spec.items[3].spec as GridLayoutRowSpec;
+      const collapsedRowSpec = layout.spec.items[3].spec as GridLayoutRowSpec;
       expect(collapsedRowSpec.collapsed).toBe(true);
       expect(collapsedRowSpec.title).toBe('Collapsed row title');
       expect(collapsedRowSpec.repeat).toBeUndefined();
@@ -584,7 +598,7 @@ describe('ResponseTransformers', () => {
       expect(panelInCollapsedRow).toEqual({
         element: {
           kind: 'ElementReference',
-          name: '5',
+          name: 'panel-5',
         },
         x: 0,
         y: 0,
@@ -652,7 +666,18 @@ describe('ResponseTransformers', () => {
             autoRefresh: '5m',
             autoRefreshIntervals: ['5s', '10s', '30s'],
             hideTimepicker: false,
-            quickRanges: ['5m', '15m', '1h'],
+            quickRanges: [
+              {
+                display: 'Last 6 hours',
+                from: 'now-6h',
+                to: 'now',
+              },
+              {
+                display: 'Last 7 days',
+                from: 'now-7d',
+                to: 'now',
+              },
+            ],
             nowDelay: '1m',
             fiscalYearStartMonth: 1,
             weekStart: 'monday',
@@ -727,7 +752,6 @@ describe('ResponseTransformers', () => {
       expect(dashboard.refresh).toBe(dashboardV2.spec.timeSettings.autoRefresh);
       expect(dashboard.timepicker?.refresh_intervals).toEqual(dashboardV2.spec.timeSettings.autoRefreshIntervals);
       expect(dashboard.timepicker?.hidden).toBe(dashboardV2.spec.timeSettings.hideTimepicker);
-      expect(dashboard.timepicker?.time_options).toEqual(dashboardV2.spec.timeSettings.quickRanges);
       expect(dashboard.timepicker?.nowDelay).toBe(dashboardV2.spec.timeSettings.nowDelay);
       expect(dashboard.fiscalYearStartMonth).toBe(dashboardV2.spec.timeSettings.fiscalYearStartMonth);
       expect(dashboard.weekStart).toBe(dashboardV2.spec.timeSettings.weekStart);
@@ -748,9 +772,11 @@ describe('ResponseTransformers', () => {
       validateAnnotation(dashboard.annotations!.list![3], dashboardV2.spec.annotations[3]);
       // panel
       const panelKey = 'panel-1';
+      expect(dashboardV2.spec.elements[panelKey].kind).toBe('Panel');
       const panelV2 = dashboardV2.spec.elements[panelKey] as PanelKind;
       expect(panelV2.kind).toBe('Panel');
-      validatePanel(dashboard.panels![0], panelV2, dashboardV2.spec.layout, panelKey);
+      expect(dashboardV2.spec.layout.kind).toBe('GridLayout');
+      validatePanel(dashboard.panels![0], panelV2, dashboardV2.spec.layout as GridLayoutKind, panelKey);
       // library panel
       expect(dashboard.panels![1].libraryPanel).toEqual({
         uid: 'uid-for-library-panel',
@@ -845,7 +871,7 @@ describe('ResponseTransformers', () => {
     expect(v1.filter).toEqual(v2Spec.filter);
   }
 
-  function validatePanel(v1: Panel, v2: PanelKind, layoutV2: DashboardV2Spec['layout'], panelKey: string) {
+  function validatePanel(v1: Panel, v2: PanelKind, layoutV2: GridLayoutKind, panelKey: string) {
     const { spec: v2Spec } = v2;
 
     expect(v1.id).toBe(v2Spec.id);

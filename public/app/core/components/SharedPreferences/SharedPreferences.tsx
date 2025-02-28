@@ -18,13 +18,14 @@ import {
   Combobox,
   ComboboxOption,
   TextLink,
+  WeekStart,
+  isWeekStart,
 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { t, Trans } from 'app/core/internationalization';
 import { LANGUAGES, PSEUDO_LOCALE } from 'app/core/internationalization/constants';
 import { PreferencesService } from 'app/core/services/PreferencesService';
 import { changeTheme } from 'app/core/services/theme';
-
 export interface Props {
   resourceUri: string;
   disabled?: boolean;
@@ -92,6 +93,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       allowedExtraThemes.push('gildedgrove');
       allowedExtraThemes.push('sapphiredusk');
       allowedExtraThemes.push('tron');
+      allowedExtraThemes.push('gloom');
     }
 
     this.themeOptions = getBuiltInThemes(allowedExtraThemes).map((theme) => ({
@@ -151,8 +153,8 @@ export class SharedPreferences extends PureComponent<Props, State> {
     this.setState({ timezone: timezone });
   };
 
-  onWeekStartChanged = (weekStart: string) => {
-    this.setState({ weekStart: weekStart });
+  onWeekStartChanged = (weekStart?: WeekStart) => {
+    this.setState({ weekStart: weekStart ?? '' });
   };
 
   onHomeDashboardChanged = (dashboardUID: string) => {
@@ -183,7 +185,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
             disabled={isLoading}
             label={t('shared-preferences.fields.theme-label', 'Interface theme')}
             description={
-              config.featureToggles.grafanaconThemes ? (
+              config.featureToggles.grafanaconThemes && config.feedbackLinksEnabled ? (
                 <Trans i18nKey="shared-preferences.fields.theme-description">
                   Enjoying the limited edition themes? Tell us what you'd like to see{' '}
                   <TextLink
@@ -248,7 +250,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
             data-testid={selectors.components.WeekStartPicker.containerV2}
           >
             <WeekStartPicker
-              value={weekStart || ''}
+              value={weekStart && isWeekStart(weekStart) ? weekStart : undefined}
               onChange={this.onWeekStartChanged}
               inputId="shared-preferences-week-start-picker"
             />

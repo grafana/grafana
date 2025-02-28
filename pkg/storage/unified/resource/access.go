@@ -153,7 +153,7 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 	))
 	defer span.End()
 	if fallbackUsed || !c.IsCompatibleWithRBAC(req.Group, req.Resource) {
-		return func(namespace string, name, folder string) bool {
+		return func(name, folder string) bool {
 			return true
 		}, nil
 	}
