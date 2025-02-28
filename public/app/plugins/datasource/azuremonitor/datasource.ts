@@ -165,7 +165,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
 
   /* Azure Monitor REST API methods */
   getResourceGroups(subscriptionId: string) {
-    return this.azureMonitorDatasource.getResourceGroups(this.templateSrv.replace(subscriptionId));
+    return this.azureResourceGraphDatasource.getResourceGroups(this.templateSrv.replace(subscriptionId));
   }
 
   getMetricNamespaces(subscriptionId: string, resourceGroup?: string, resourceUri?: string, custom?: boolean) {
@@ -187,7 +187,12 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
   }
 
   getResourceNames(subscriptionId: string, resourceGroup?: string, metricNamespace?: string, region?: string) {
-    return this.azureMonitorDatasource.getResourceNames({ subscriptionId, resourceGroup, metricNamespace, region });
+    return this.azureResourceGraphDatasource.getResourceNames({
+      subscriptionId,
+      resourceGroup,
+      metricNamespace,
+      region,
+    });
   }
 
   getMetricNames(
