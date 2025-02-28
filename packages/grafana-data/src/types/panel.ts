@@ -1,4 +1,5 @@
 import { defaultsDeep } from 'lodash';
+import React from 'react';
 
 import { EventBus } from '../events/types';
 import { StandardEditorProps } from '../field/standardFieldConfigEditorRegistry';
@@ -86,6 +87,9 @@ export interface PanelProps<T = any> {
 
   /** Panel options set by the user in the panel editor. Includes both default and custom panel options */
   options: T;
+
+  /**  * When set, it disregards the <options.tooltip> in favor of a fully customizable one.*/
+  customTooltip?: React.ReactNode;
 
   /** Indicates whether or not panel should be rendered transparent */
   transparent: boolean;

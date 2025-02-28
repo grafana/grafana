@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { PanelProps, DataFrameType, DashboardCursorSync } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
@@ -17,9 +17,7 @@ import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
 import { getTimezones, prepareGraphableFields } from './utils';
 
-interface TimeSeriesPanelProps extends PanelProps<Options> {
-  customTooltip?: React.ReactNode;
-}
+interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
 export const TimeSeriesPanel = ({
   id,
