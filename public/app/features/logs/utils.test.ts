@@ -1,5 +1,6 @@
 import {
   AbsoluteTimeRange,
+  DataFrame,
   FieldType,
   Labels,
   LogLevel,
@@ -7,7 +8,6 @@ import {
   LogsModel,
   LogsSortOrder,
   MutableDataFrame,
-  DataFrame,
 } from '@grafana/data';
 import { getMockFrames } from 'app/plugins/datasource/loki/__mocks__/frames';
 
@@ -16,15 +16,15 @@ import {
   calculateLogsLabelStats,
   calculateStats,
   checkLogsError,
-  escapeUnescapedString,
+  checkLogsSampled,
   createLogRowsMap,
+  escapeUnescapedString,
   getLogLevel,
   getLogLevelFromKey,
   getLogsVolumeMaximumRange,
   logRowsToReadableJson,
   mergeLogsVolumeDataFrames,
   sortLogsResult,
-  checkLogsSampled,
 } from './utils';
 
 describe('getLoglevel()', () => {
@@ -183,6 +183,7 @@ describe('sortLogsResult', () => {
     timeLocal: '',
     timeUtc: '',
     uid: '1',
+    color: 'gray',
   };
   const sameAsFirstRow = firstRow;
   const secondRow: LogRowModel = {
@@ -201,6 +202,7 @@ describe('sortLogsResult', () => {
     timeLocal: '',
     timeUtc: '',
     uid: '2',
+    color: 'gray',
   };
 
   describe('when called with LogsSortOrder.Descending', () => {
@@ -309,6 +311,7 @@ describe('logRowsToReadableJson', () => {
     timeLocal: '',
     timeUtc: '',
     uid: '2',
+    color: 'gray',
   };
   const testDf: DataFrame = {
     length: 1,
@@ -351,6 +354,7 @@ describe('logRowsToReadableJson', () => {
     timeLocal: '',
     timeUtc: '',
     uid: '2',
+    color: 'gray',
   };
 
   it('should format a single row', () => {

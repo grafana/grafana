@@ -1,16 +1,16 @@
 import { cx } from '@emotion/css';
-import { MouseEvent, ReactNode, useState, useMemo, useCallback, useRef, useEffect, memo } from 'react';
+import { memo, MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
-  TimeZone,
-  LogsDedupStrategy,
-  LogRowModel,
-  Field,
-  LinkModel,
-  LogsSortOrder,
   CoreApp,
   DataFrame,
+  Field,
+  LinkModel,
   LogRowContextOptions,
+  LogRowModel,
+  LogsDedupStrategy,
+  LogsSortOrder,
+  TimeZone,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -73,6 +73,9 @@ export interface Props {
   logRowMenuIconsAfter?: ReactNode[];
   scrollElement: HTMLDivElement | null;
   renderPreview?: boolean;
+
+  enableColorfulMode: boolean;
+  colorfulLogsDefaultColor: string;
 }
 
 type PopoverStateType = {
@@ -309,6 +312,8 @@ export const LogRows = memo(
                   handleTextSelection={handleSelection}
                   enableLogDetails={enableLogDetails}
                   {...props}
+                  enableColorfulMode={props.enableColorfulMode}
+                  colorfulLogsDefaultColor={props.colorfulLogsDefaultColor}
                 />
               ) : (
                 <PreviewLogRow

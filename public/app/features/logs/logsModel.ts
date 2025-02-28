@@ -47,7 +47,7 @@ import { getThemeColor } from 'app/core/utils/colors';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/types';
 
 import { LogsFrame, parseLogsFrame } from './logsFrame';
-import { createLogRowsMap, getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
+import { createLogRowsMap, getColorValue, getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
 
 export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
@@ -398,7 +398,14 @@ export function logSeriesToLogsModel(
   const findMatchingRow = createLogRowsMap();
   for (const info of allSeries) {
     const { logsFrame, rawFrame: series, frameLabels } = info;
-    const { timeField, timeNanosecondField, bodyField: stringField, severityField: logLevelField, idField } = logsFrame;
+    const {
+      timeField,
+      timeNanosecondField,
+      bodyField: stringField,
+      severityField: logLevelField,
+      idField,
+      colorField,
+    } = logsFrame;
 
     for (let j = 0; j < series.length; j++) {
       const { ts, timeEpochMs, timeEpochNs } = parseTime(timeField, timeNanosecondField ?? undefined, j);
@@ -431,6 +438,8 @@ export function logSeriesToLogsModel(
         logLevel = getLogLevel(entry);
       }
 
+      const colorValue = (colorField && colorField.values[j]) || undefined;
+
       const datasourceType = queries.find((query) => query.refId === series.refId)?.datasource?.type;
 
       const row: LogRowModel = {
@@ -438,6 +447,7 @@ export function logSeriesToLogsModel(
         rowIndex: j,
         dataFrame: series,
         logLevel,
+        color: getColorValue(colorValue),
         timeFromNow: dateTimeFormatTimeAgo(ts),
         timeEpochMs,
         timeEpochNs,

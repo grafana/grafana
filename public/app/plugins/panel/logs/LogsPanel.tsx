@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { groupBy } from 'lodash';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { isObservable, lastValueFrom } from 'rxjs';
 
 import {
@@ -18,8 +18,10 @@ import {
   hasLogsContextSupport,
   hasLogsContextUiSupport,
   Labels,
+  LoadingState,
   LogRowContextOptions,
   LogRowModel,
+  LogSortOrderChangeEvent,
   LogsSortOrder,
   PanelData,
   PanelProps,
@@ -27,8 +29,6 @@ import {
   TimeZone,
   toUtc,
   urlUtil,
-  LogSortOrderChangeEvent,
-  LoadingState,
 } from '@grafana/data';
 import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
 import { config, getAppEvents } from '@grafana/runtime';
@@ -126,6 +126,7 @@ export const LogsPanel = ({
     logRowMenuIconsAfter,
     enableInfiniteScrolling,
     onNewLogsReceived,
+    colorful,
     ...options
   },
   id,
@@ -485,6 +486,9 @@ export const LogsPanel = ({
               logRowMenuIconsAfter={isReactNodeArray(logRowMenuIconsAfter) ? logRowMenuIconsAfter : undefined}
               // Ascending order causes scroll to stick to the bottom, so previewing is futile
               renderPreview={isAscending ? false : true}
+              // Colorful
+              enableColorfulMode={colorful.enableColorfulMode}
+              colorfulLogsDefaultColor={colorful.colorfulLogsDefaultColor}
             />
           </InfiniteScroll>
           {showCommonLabels && isAscending && renderCommonLabels()}

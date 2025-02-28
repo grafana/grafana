@@ -1,9 +1,10 @@
 import { flatten } from 'lodash';
-import { Observable, from } from 'rxjs';
+import { from, Observable } from 'rxjs';
 
 import {
   DataFrame,
   DataQueryRequest,
+  DataQueryResponse,
   DataSourceApi,
   DataSourceWithSupplementaryQueriesSupport,
   FieldType,
@@ -11,10 +12,9 @@ import {
   LogLevel,
   LogsVolumeType,
   MutableDataFrame,
-  SupplementaryQueryType,
   SupplementaryQueryOptions,
+  SupplementaryQueryType,
   toDataFrame,
-  DataQueryResponse,
 } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
@@ -107,6 +107,7 @@ const mockRow = (refId: string) => {
     timeLocal: '',
     timeUtc: '',
     uid: '1',
+    color: 'gray',
   };
 };
 

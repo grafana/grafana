@@ -9,6 +9,7 @@ import { KeyValue, Labels } from './data';
 import { DataFrame } from './dataFrame';
 import { DataQueryRequest, DataQueryResponse, DataSourceApi, QueryFixAction, QueryFixType } from './datasource';
 import { AbsoluteTimeRange } from './time';
+
 export { LogsDedupStrategy, LogsSortOrder } from '@grafana/schema';
 
 /**
@@ -87,6 +88,7 @@ export interface LogRowModel {
   hasUnescapedContent: boolean;
   labels: Labels;
   logLevel: LogLevel;
+  color?: string;
   raw: string;
   searchWords?: string[];
   timeFromNow: string;

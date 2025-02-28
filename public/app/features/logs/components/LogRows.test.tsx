@@ -43,6 +43,8 @@ describe('LogRows', () => {
         onClickHideField={() => {}}
         onClickShowField={() => {}}
         scrollElement={null}
+        enableColorfulMode={false}
+        colorfulLogsDefaultColor="gray"
       />
     );
 
@@ -72,6 +74,8 @@ describe('LogRows', () => {
         onClickHideField={() => {}}
         onClickShowField={() => {}}
         scrollElement={null}
+        enableColorfulMode={false}
+        colorfulLogsDefaultColor="gray"
       />
     );
     expect(screen.queryAllByRole('row')).toHaveLength(2);
@@ -102,6 +106,8 @@ describe('LogRows', () => {
         onClickHideField={() => {}}
         onClickShowField={() => {}}
         scrollElement={null}
+        enableColorfulMode={false}
+        colorfulLogsDefaultColor="gray"
       />
     );
 
@@ -132,6 +138,8 @@ describe('LogRows', () => {
         onClickHideField={() => {}}
         onClickShowField={() => {}}
         scrollElement={null}
+        enableColorfulMode={false}
+        colorfulLogsDefaultColor="gray"
       />
     );
 
@@ -159,6 +167,8 @@ describe('Popover menu', () => {
         onClickFilterOutString={() => {}}
         onClickFilterString={() => {}}
         scrollElement={null}
+        enableColorfulMode={false}
+        colorfulLogsDefaultColor="gray"
         {...overrides}
       />
     );

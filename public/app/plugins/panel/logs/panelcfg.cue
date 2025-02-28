@@ -48,7 +48,12 @@ composableKinds: PanelCfg: {
 					logRowMenuIconsAfter?:   _
 					onNewLogsReceived?:      _
 					displayedFields?: [...string]
+					colorful: Colorful
 				} @cuetsy(kind="interface")
+				Colorful: {
+						enableColorfulMode: 			bool
+						colorfulLogsDefaultColor: string
+				}
 			}
 		}]
 		lenses: []

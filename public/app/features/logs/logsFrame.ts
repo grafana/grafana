@@ -1,4 +1,4 @@
-import { DataFrame, FieldCache, FieldType, FieldWithIndex, DataFrameType, Labels } from '@grafana/data';
+import { DataFrame, DataFrameType, FieldCache, FieldType, FieldWithIndex, Labels } from '@grafana/data';
 
 import { parseLegacyLogsFrame } from './legacyLogsFrame';
 
@@ -14,6 +14,7 @@ export type LogsFrame = {
   timeNanosecondField: FieldWithIndex | null;
   severityField: FieldWithIndex | null;
   idField: FieldWithIndex | null;
+  colorField: FieldWithIndex | null;
   getLogFrameLabels: () => LogFrameLabels[] | null; // may be slow, so we only do it when asked for it explicitly
   getLogFrameLabelsAsLabels: () => Labels[] | null; // temporarily exists to make the labels=>attributes migration simpler
   getLabelFieldName: () => string | null;
@@ -34,6 +35,7 @@ const DATAPLANE_BODY_NAME = 'body';
 const DATAPLANE_SEVERITY_NAME = 'severity';
 const DATAPLANE_ID_NAME = 'id';
 const DATAPLANE_LABELS_NAME = 'labels';
+const DATAPLANE_COLOR_NAME = 'row_color';
 
 export function logFrameLabelsToLabels(logFrameLabels: LogFrameLabels): Labels {
   const result: Labels = {};
@@ -59,6 +61,7 @@ export function parseDataplaneLogsFrame(frame: DataFrame): LogsFrame | null {
   const severityField = getField(cache, DATAPLANE_SEVERITY_NAME, FieldType.string) ?? null;
   const idField = getField(cache, DATAPLANE_ID_NAME, FieldType.string) ?? null;
   const labelsField = getField(cache, DATAPLANE_LABELS_NAME, FieldType.other) ?? null;
+  const colorField = getField(cache, DATAPLANE_COLOR_NAME, FieldType.string) ?? null;
 
   const labels = labelsField === null ? null : labelsField.values;
 
@@ -68,7 +71,8 @@ export function parseDataplaneLogsFrame(frame: DataFrame): LogsFrame | null {
       i !== bodyField.index &&
       i !== severityField?.index &&
       i !== idField?.index &&
-      i !== labelsField?.index
+      i !== labelsField?.index &&
+      i !== colorField?.index
   );
 
   return {
@@ -76,6 +80,7 @@ export function parseDataplaneLogsFrame(frame: DataFrame): LogsFrame | null {
     bodyField,
     severityField,
     idField,
+    colorField,
     getLogFrameLabels: () => labels,
     timeNanosecondField: null,
     getLogFrameLabelsAsLabels: () => (labels !== null ? labels.map(logFrameLabelsToLabels) : null),

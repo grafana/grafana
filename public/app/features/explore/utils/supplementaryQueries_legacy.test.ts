@@ -16,8 +16,8 @@ import {
   LogLevel,
   LogsVolumeType,
   MutableDataFrame,
-  SupplementaryQueryType,
   SupplementaryQueryOptions,
+  SupplementaryQueryType,
   toDataFrame,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -107,6 +107,7 @@ const mockRow = (refId: string) => {
     timeLocal: '',
     timeUtc: '',
     uid: '1',
+    color: 'gray',
   };
 };
 

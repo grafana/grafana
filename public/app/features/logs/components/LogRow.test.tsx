@@ -25,6 +25,7 @@ const setup = (propOverrides?: Partial<ComponentProps<typeof LogRow>>, rowOverri
       uid: 'log-row-id',
       logLevel: LogLevel.error,
       timeEpochMs: 1546297200000,
+      color: 'gray',
       ...rowOverrides,
     }),
     enableLogDetails: false,
@@ -39,6 +40,8 @@ const setup = (propOverrides?: Partial<ComponentProps<typeof LogRow>>, rowOverri
     wrapLogMessage: false,
     timeZone: 'utc',
     styles,
+    enableColorfulMode: false,
+    colorfulLogsDefaultColor: 'gray',
     ...(propOverrides || {}),
   };
 

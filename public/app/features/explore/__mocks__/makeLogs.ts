@@ -1,5 +1,6 @@
 import { createDataFrame, LogLevel, LogRowModel, LogsSortOrder } from '@grafana/data';
 import { sortLogRows } from 'app/features/logs/utils';
+
 export const makeLogs = (numberOfLogsToCreate: number, overrides?: Partial<LogRowModel>): LogRowModel[] => {
   const array: LogRowModel[] = [];
 
@@ -25,6 +26,7 @@ export const makeLogs = (numberOfLogsToCreate: number, overrides?: Partial<LogRo
       timeLocal: '',
       timeUtc: '',
       ...overrides,
+      color: 'gray',
     });
   }
 

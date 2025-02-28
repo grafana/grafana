@@ -102,6 +102,8 @@ export function LogsSamplePanel(props: Props) {
             timeZone={timeZone}
             enableLogDetails={true}
             scrollElement={null}
+            enableColorfulMode={false}
+            colorfulLogsDefaultColor="gray"
           />
         </div>
       </>

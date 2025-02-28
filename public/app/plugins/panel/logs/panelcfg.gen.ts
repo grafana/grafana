@@ -35,6 +35,13 @@ export interface Options {
   showTime: boolean;
   sortOrder: common.LogsSortOrder;
   wrapLogMessage: boolean;
+  /**
+   * Colorful
+   * */
+  colorful: {
+    enableColorfulMode: boolean;
+    colorfulLogsDefaultColor: string;
+  }
 }
 
 export const defaultOptions: Partial<Options> = {

@@ -2,15 +2,15 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
+  CoreApp,
+  createDataFrame,
+  createTheme,
+  DataFrameType,
   Field,
+  FieldType,
   LogLevel,
   LogRowModel,
   MutableDataFrame,
-  createTheme,
-  FieldType,
-  createDataFrame,
-  DataFrameType,
-  CoreApp,
 } from '@grafana/data';
 
 import { LogDetails, Props } from './LogDetails';
@@ -25,7 +25,7 @@ const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowMode
     displayedFields: [],
     showDuplicates: false,
     wrapLogMessage: false,
-    row: createLogRow({ logLevel: LogLevel.error, timeEpochMs: 1546297200000, ...rowOverrides }),
+    row: createLogRow({ logLevel: LogLevel.error, timeEpochMs: 1546297200000, color: 'gray', ...rowOverrides }),
     getRows: () => [],
     onClickFilterLabel: () => {},
     onClickFilterOutLabel: () => {},
@@ -34,6 +34,8 @@ const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowMode
     theme,
     styles,
     app: CoreApp.Explore,
+    enableColorfulMode: false,
+    colorfulLogsDefaultColor: 'gray',
     ...(propOverrides || {}),
   };
 

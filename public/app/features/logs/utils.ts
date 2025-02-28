@@ -1,23 +1,23 @@
-import { countBy, chain } from 'lodash';
+import {chain, countBy} from 'lodash';
 
 import {
+  DataFrame,
+  FieldCache,
+  FieldConfig,
+  FieldType,
+  getFieldDisplayName,
+  LogLabelStatsModel,
   LogLevel,
   LogRowModel,
-  LogLabelStatsModel,
   LogsModel,
   LogsSortOrder,
-  DataFrame,
-  FieldConfig,
-  FieldCache,
-  FieldType,
-  MutableDataFrame,
-  QueryResultMeta,
   LogsVolumeType,
+  MutableDataFrame,
   NumericLogLevel,
-  getFieldDisplayName,
+  QueryResultMeta,
 } from '@grafana/data';
 
-import { getDataframeFields } from './components/logParser';
+import {getDataframeFields} from './components/logParser';
 
 /**
  * Returns the log level of a log line.
@@ -44,6 +44,58 @@ export function getLogLevel(line: string): LogLevel {
     }
   }
   return level;
+}
+
+/**
+ * Extracts the first valid CSS color from a log line.
+ * Supports HEX, RGB(A), HSL(A), and named colors.
+ *
+ * Example:
+ *   getColorValue("Error: background color #ff5733 is not supported") // "#ff5733"
+ *   getColorValue("Debug: rgb(255, 87, 51) is applied") // "rgb(255, 87, 51)"
+ *   getColorValue("Notice: hsl(200, 50%, 60%) used") // "hsl(200, 50%, 60%)"
+ *   getColorValue("Using red as the primary color") // "red"
+ *   getColorValue("No color here") // null
+ */
+export function getColorValue(line?: string): string | undefined {
+  if (!line) {
+    return undefined;
+  }
+
+  console.log(`Color line: ${line}`)
+
+  const cssColorRegex = /^(#(?:[0-9a-fA-F]{3}){1,2}|\b(?:rgb|hsl)a?\(\s*\d+\s*,\s*\d+%?\s*,\s*\d+%?(?:\s*,\s*(?:0|0?\.\d+|1))?\s*\)\b)$/;
+  const arrayPattern = /\[\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\]/;
+
+  const hexMatch = cssColorRegex.exec(line);
+  if (hexMatch) {
+    return hexMatch[0];
+  }
+
+  const rgbMatch = cssColorRegex.exec(line);
+  if (rgbMatch) {
+    return rgbMatch[0];
+  }
+
+  const hslMatch = cssColorRegex.exec(line);
+  if (hslMatch) {
+    return hslMatch[0];
+  }
+
+  const namedMatch = cssColorRegex.exec(line);
+  if (namedMatch) {
+    return namedMatch[0];
+  }
+
+  const arrayMatch = arrayPattern.exec(line);
+  if (arrayMatch) {
+    const [r, g, b] = arrayMatch.slice(1, 4).map(Number);
+    if (r <= 255 && g <= 255 && b <= 255) {
+      return `rgb(${r}, ${g}, ${b})`;
+    }
+  }
+
+  return undefined;
 }
 
 export function getLogLevelFromKey(key: string | number): LogLevel {
@@ -317,6 +369,21 @@ export function getLogLevelInfo(dataFrame: DataFrame, allDataFrames: DataFrame[]
 
   const level = valueField ? getFieldDisplayName(valueField, dataFrame, allDataFrames) : 'logs';
   return { level, valueField, timeField };
+}
+
+export function getLogColorInfo(dataFrame: DataFrame, allDataFrames: DataFrame[]) {
+  const fieldCache = new FieldCache(dataFrame);
+
+  if (!fieldCache.hasFieldNamed('color')) {
+    const color = undefined;
+    return { color };
+  }
+
+  const color = fieldCache
+    ? getFieldDisplayName(fieldCache.getFieldByName('color')!!, dataFrame, allDataFrames)
+    : 'gray';
+
+  return { color };
 }
 
 export function targetIsElement(target: EventTarget | null): target is Element {

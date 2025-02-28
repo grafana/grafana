@@ -22,7 +22,7 @@ import { LogDetails } from './LogDetails';
 import { LogLabels } from './LogLabels';
 import { LogRowMessage } from './LogRowMessage';
 import { LogRowMessageDisplayedFields } from './LogRowMessageDisplayedFields';
-import { getLogLevelStyles, LogRowStyles } from './getLogRowStyles';
+import { getLogColorfulStyles, getLogLevelStyles, LogRowStyles } from './getLogRowStyles';
 
 export interface Props {
   row: LogRowModel;
@@ -64,6 +64,9 @@ export interface Props {
   handleTextSelection?: (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => boolean;
   logRowMenuIconsBefore?: ReactNode[];
   logRowMenuIconsAfter?: ReactNode[];
+
+  enableColorfulMode: boolean;
+  colorfulLogsDefaultColor: string;
 }
 
 export const LogRow = ({
@@ -112,6 +115,13 @@ export const LogRow = ({
     [row.timeEpochMs, timeZone]
   );
   const levelStyles = useMemo(() => getLogLevelStyles(theme, row.logLevel), [row.logLevel, theme]);
+  const colorStyles = useMemo(
+    () => getLogColorfulStyles(theme, row.color ?? props.colorfulLogsDefaultColor),
+    [row.color, props.colorfulLogsDefaultColor, theme]
+  );
+
+  console.log(row.color);
+
   const processedRow = useMemo(
     () =>
       row.hasUnescapedContent && forceEscape
@@ -226,7 +236,11 @@ export const LogRow = ({
         )}
         <td
           className={
-            hasError || isSampled ? styles.logsRowWithError : `${levelStyles.logsRowLevelColor} ${styles.logsRowLevel}`
+            hasError || isSampled
+              ? styles.logsRowWithError
+              : props.enableColorfulMode
+                ? `${colorStyles.logsRowLevelColor} ${styles.logsRowLevel}`
+                : `${levelStyles.logsRowLevelColor} ${styles.logsRowLevel}`
           }
         >
           {hasError && (
@@ -320,6 +334,8 @@ export const LogRow = ({
           styles={styles}
           isFilterLabelActive={props.isFilterLabelActive}
           pinLineButtonTooltipTitle={props.pinLineButtonTooltipTitle}
+          enableColorfulMode={props.enableColorfulMode}
+          colorfulLogsDefaultColor={props.colorfulLogsDefaultColor}
         />
       )}
     </>

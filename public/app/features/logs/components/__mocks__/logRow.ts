@@ -33,6 +33,7 @@ export const createLogRow = (overrides?: Partial<LogRowModel>): LogRowModel => {
     timeLocal: '',
     timeUtc: '',
     searchWords: [],
+    color: 'gray',
     ...overrides,
   };
 };

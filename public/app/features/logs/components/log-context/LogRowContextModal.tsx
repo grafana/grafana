@@ -1,21 +1,21 @@
 import { css, cx } from '@emotion/css';
 import { partition } from 'lodash';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import * as React from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import {
   DataQueryResponse,
   DataSourceWithLogsContextSupport,
+  dateTime,
   GrafanaTheme2,
+  LoadingState,
   LogRowContextOptions,
   LogRowContextQueryDirection,
   LogRowModel,
   LogsDedupStrategy,
   LogsSortOrder,
-  dateTime,
   TimeRange,
-  LoadingState,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
@@ -541,6 +541,8 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   onClickShowField={showField}
                   onClickHideField={hideField}
                   scrollElement={null}
+                  enableColorfulMode={false}
+                  colorfulLogsDefaultColor="gray"
                 />
               </td>
             </tr>
@@ -564,6 +566,8 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   pinnedLogs={sticky ? [row.uid] : undefined}
                   overflowingContent={true}
                   scrollElement={null}
+                  enableColorfulMode={false}
+                  colorfulLogsDefaultColor="gray"
                 />
               </td>
             </tr>
@@ -583,6 +587,8 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                     onClickShowField={showField}
                     onClickHideField={hideField}
                     scrollElement={null}
+                    enableColorfulMode={false}
+                    colorfulLogsDefaultColor="gray"
                   />
                 </>
               </td>

@@ -40,6 +40,16 @@ export const getLogLevelStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => 
   };
 };
 
+export const getLogColorfulStyles = (theme: GrafanaTheme2, color: string) => {
+  return {
+    logsRowLevelColor: css({
+      '&::after': {
+        backgroundColor: theme.visualization.getColorByName(color) ?? color,
+      },
+    }),
+  };
+};
+
 export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
   const hoverBgColor = styleMixins.hoverColor(theme.colors.background.secondary, theme);
   const contextOutlineColor = tinycolor(theme.components.dashboard.background).setAlpha(0.7).toRgbString();

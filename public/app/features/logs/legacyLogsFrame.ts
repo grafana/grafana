@@ -1,4 +1,4 @@
-import { DataFrame, FieldCache, FieldType, Field, Labels, FieldWithIndex } from '@grafana/data';
+import { DataFrame, Field, FieldCache, FieldType, FieldWithIndex, Labels } from '@grafana/data';
 
 import { logFrameLabelsToLabels, LogsFrame } from './logsFrame';
 
@@ -47,6 +47,7 @@ export function parseLegacyLogsFrame(frame: DataFrame): LogsFrame | null {
   const timeNanosecondField = cache.getFieldByName('tsNs') ?? null;
   const severityField = cache.getFieldByName('level') ?? cache.getFieldByName('detected_level') ?? null;
   const idField = cache.getFieldByName('id') ?? null;
+  const colorField = cache.getFieldByName('row_color') ?? null;
 
   // extracting the labels is done very differently for old-loki-style and simple-style
   // dataframes, so it's a little awkward to handle it,
@@ -61,7 +62,8 @@ export function parseLegacyLogsFrame(frame: DataFrame): LogsFrame | null {
       i !== timeNanosecondField?.index &&
       i !== severityField?.index &&
       i !== idField?.index &&
-      i !== labelsField?.index
+      i !== labelsField?.index &&
+      i !== colorField?.index
   );
 
   return {
@@ -70,6 +72,7 @@ export function parseLegacyLogsFrame(frame: DataFrame): LogsFrame | null {
     timeNanosecondField,
     severityField,
     idField,
+    colorField,
     getLogFrameLabels: getL,
     getLogFrameLabelsAsLabels: getL,
     getLabelFieldName: () => labelsField?.name ?? null,

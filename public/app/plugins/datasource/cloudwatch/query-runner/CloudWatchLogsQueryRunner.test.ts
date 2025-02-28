@@ -14,8 +14,7 @@ import { setupMockedLogsQueryRunner } from '../__mocks__/LogsQueryRunner';
 import { LogsRequestMock } from '../__mocks__/Request';
 import { validLogsQuery } from '../__mocks__/queries';
 import { CloudWatchLogsQuery } from '../types'; // Add this import statement
-
-import { LOGSTREAM_IDENTIFIER_INTERNAL, LOG_IDENTIFIER_INTERNAL } from './CloudWatchLogsQueryRunner';
+import { LOG_IDENTIFIER_INTERNAL, LOGSTREAM_IDENTIFIER_INTERNAL } from './CloudWatchLogsQueryRunner';
 
 describe('CloudWatchLogsQueryRunner', () => {
   beforeEach(() => {
@@ -48,6 +47,7 @@ describe('CloudWatchLogsQueryRunner', () => {
         timeLocal: '',
         timeUtc: '',
         uid: '1',
+        color: 'gray',
       };
       await runner.getLogRowContext(row, undefined, queryMock);
       expect(queryMock.mock.calls[0][0].targets[0].endTime).toBe(4);

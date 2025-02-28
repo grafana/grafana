@@ -191,6 +191,7 @@ describe('LogsMetaRow', () => {
         timeLocal: '',
         timeUtc: '',
         uid: '2',
+        color: 'gray',
       },
     ];
     setup({ logRows: rows });

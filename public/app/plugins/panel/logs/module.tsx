@@ -1,4 +1,4 @@
-import { PanelPlugin, LogsSortOrder, LogsDedupStrategy, LogsDedupDescription } from '@grafana/data';
+import { LogsDedupDescription, LogsDedupStrategy, LogsSortOrder, PanelPlugin } from '@grafana/data';
 
 import { LogsPanel } from './LogsPanel';
 import { Options } from './panelcfg.gen';
@@ -86,6 +86,22 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
           ],
         },
         defaultValue: LogsSortOrder.Descending,
+      })
+      .addNestedOptions({
+        category: ['Colorful'],
+        path: 'colorful',
+        build: (colorful_builder) => {
+          colorful_builder.addBooleanSwitch({
+            path: 'enableColorfulMode',
+            name: 'Enable',
+            defaultValue: false,
+          });
+          colorful_builder.addColorPicker({
+            path: 'colorfulLogsDefaultColor',
+            name: 'Default color',
+            defaultValue: 'gray',
+          });
+        },
       });
   })
   .setSuggestionsSupplier(new LogsPanelSuggestionsSupplier());

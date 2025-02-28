@@ -1,37 +1,37 @@
 import { css, cx } from '@emotion/css';
 import { capitalize, groupBy } from 'lodash';
-import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import * as React from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePrevious, useUnmount } from 'react-use';
 
 import {
-  SplitOpen,
-  LogRowModel,
-  LogsMetaItem,
-  DataFrame,
   AbsoluteTimeRange,
-  GrafanaTheme2,
-  LoadingState,
-  TimeZone,
-  RawTimeRange,
-  DataQueryResponse,
-  LogRowContextOptions,
-  LinkModel,
-  EventBus,
-  ExplorePanelsState,
-  Field,
-  TimeRange,
-  LogsDedupStrategy,
-  LogsSortOrder,
-  LogLevel,
-  DataTopic,
   CoreApp,
-  LogsDedupDescription,
-  rangeUtil,
-  ExploreLogsPanelState,
+  DataFrame,
   DataHoverClearEvent,
   DataHoverEvent,
+  DataQueryResponse,
+  DataTopic,
+  EventBus,
+  ExploreLogsPanelState,
+  ExplorePanelsState,
+  Field,
+  GrafanaTheme2,
+  LinkModel,
+  LoadingState,
+  LogLevel,
+  LogRowContextOptions,
+  LogRowModel,
+  LogsDedupDescription,
+  LogsDedupStrategy,
+  LogsMetaItem,
+  LogsSortOrder,
+  rangeUtil,
+  RawTimeRange,
   serializeStateToUrlParam,
+  SplitOpen,
+  TimeRange,
+  TimeZone,
   urlUtil,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -57,8 +57,14 @@ import { LogRows } from 'app/features/logs/components/LogRows';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { LogList } from 'app/features/logs/components/panel/LogList';
 import { ScrollToLogsEvent } from 'app/features/logs/components/panel/virtualization';
-import { LogLevelColor, dedupLogRows, filterLogLevels } from 'app/features/logs/logsModel';
-import { getLogLevel, getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
+import { dedupLogRows, filterLogLevels, LogLevelColor } from 'app/features/logs/logsModel';
+import {
+  getColorValue,
+  getLogColorInfo,
+  getLogLevel,
+  getLogLevelFromKey,
+  getLogLevelInfo,
+} from 'app/features/logs/utils';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { isLokiQuery } from 'app/plugins/datasource/loki/queryUtils';
 import { getState } from 'app/store/store';
@@ -80,7 +86,7 @@ import { changeQueries, runQueries } from '../state/query';
 import { LogsFeedback } from './LogsFeedback';
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
-import { LogsTableWrap, getLogsTableHeight } from './LogsTableWrap';
+import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { canKeepDisplayedFields, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
 
@@ -266,10 +272,12 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     }
 
     // check if we have dataFrames that return the same level
-    const logLevelsArray: Array<{ levelStr: string; logLevel: LogLevel }> = [];
+    const logLevelsArray: Array<{ levelStr: string; logLevel: LogLevel; color?: string }> = [];
     logVolumeDataFrames.forEach((dataFrame) => {
       const { level } = getLogLevelInfo(dataFrame, logsVolumeData?.data ?? []);
-      logLevelsArray.push({ levelStr: level, logLevel: getLogLevel(level) });
+      const { color } = getLogColorInfo(dataFrame, logsVolumeData?.data ?? []);
+      console.log(color);
+      logLevelsArray.push({ levelStr: level, logLevel: getLogLevel(level), color: getColorValue(color) });
     });
 
     const sortedLLArray = logLevelsArray.sort(
@@ -297,7 +305,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               contentOutlineTrackLevelFilter(level);
             },
             ref: null,
-            color: LogLevelColor[level.logLevel],
+            color: level.color ?? LogLevelColor[level.logLevel],
           });
         }
       });
@@ -1046,6 +1054,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                     onPinLine={onPinToContentOutlineClick}
                     pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
                     renderPreview
+                    enableColorfulMode={false}
+                    colorfulLogsDefaultColor="gray"
                   />
                 </InfiniteScroll>
               </div>

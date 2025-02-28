@@ -4,17 +4,17 @@ import { ComponentProps } from 'react';
 import { Provider } from 'react-redux';
 
 import {
+  createDataFrame,
   DataFrame,
+  DataQuery,
   EventBusSrv,
+  ExploreLogsPanelState,
   ExplorePanelsState,
   LoadingState,
   LogLevel,
   LogRowModel,
   standardTransformersRegistry,
   toUtc,
-  createDataFrame,
-  ExploreLogsPanelState,
-  DataQuery,
 } from '@grafana/data';
 import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
 import { config } from '@grafana/runtime';
@@ -604,5 +604,6 @@ const makeLog = (overrides: Partial<LogRowModel>): LogRowModel => {
     timeLocal: '',
     timeUtc: '',
     ...overrides,
+    color: 'gray',
   };
 };

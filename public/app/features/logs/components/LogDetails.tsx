@@ -9,8 +9,8 @@ import { calculateLogsLabelStats, calculateStats } from '../utils';
 
 import { LogDetailsBody } from './LogDetailsBody';
 import { LogDetailsRow } from './LogDetailsRow';
-import { getLogLevelStyles, LogRowStyles } from './getLogRowStyles';
-import { getAllFields, createLogLineLinks } from './logParser';
+import { getLogColorfulStyles, getLogLevelStyles, LogRowStyles } from './getLogRowStyles';
+import { createLogLineLinks, getAllFields } from './logParser';
 
 export interface Props extends Themeable2 {
   row: LogRowModel;
@@ -32,6 +32,9 @@ export interface Props extends Themeable2 {
 
   onPinLine?: (row: LogRowModel) => void;
   pinLineButtonTooltipTitle?: PopoverContent;
+
+  enableColorfulMode: boolean;
+  colorfulLogsDefaultColor: string;
 }
 
 class UnThemedLogDetails extends PureComponent<Props> {
@@ -56,6 +59,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
       pinLineButtonTooltipTitle,
     } = this.props;
     const levelStyles = getLogLevelStyles(theme, row.logLevel);
+    const colorStyles = getLogColorfulStyles(theme, row.color ?? this.props.colorfulLogsDefaultColor);
     const labels = row.labels ? row.labels : {};
     const labelsAvailable = Object.keys(labels).length > 0;
     const fieldsAndLinks = getAllFields(row, getFieldLinks);
@@ -78,7 +82,9 @@ class UnThemedLogDetails extends PureComponent<Props> {
     // If logs with error, we are not showing the level color
     const levelClassName = hasError
       ? ''
-      : `${levelStyles.logsRowLevelColor} ${styles.logsRowLevel} ${styles.logsRowLevelDetails}`;
+      : this.props.enableColorfulMode
+        ? `${colorStyles.logsRowLevelColor} ${styles.logsRowLevel} ${styles.logsRowLevelDetails}`
+        : `${levelStyles.logsRowLevelColor} ${styles.logsRowLevel} ${styles.logsRowLevelDetails}`;
 
     return (
       <tr className={cx(className, styles.logDetails)}>

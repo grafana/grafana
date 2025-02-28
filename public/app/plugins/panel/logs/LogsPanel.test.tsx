@@ -4,16 +4,16 @@ import { ComponentProps } from 'react';
 import { DatasourceSrvMock, MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import {
-  LoadingState,
-  createDataFrame,
-  FieldType,
-  LogsSortOrder,
   CoreApp,
-  getDefaultTimeRange,
-  LogsDedupStrategy,
-  EventBusSrv,
+  createDataFrame,
   DataFrameType,
+  EventBusSrv,
+  FieldType,
+  getDefaultTimeRange,
+  LoadingState,
+  LogsDedupStrategy,
   LogSortOrderChangeEvent,
+  LogsSortOrder,
 } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import * as grafanaUI from '@grafana/ui';
@@ -116,6 +116,10 @@ const defaultProps = {
     dedupStrategy: LogsDedupStrategy.none,
     enableLogDetails: false,
     showLogContextToggle: false,
+    colorful: {
+      enableColorfulMode: false,
+      colorfulLogsDefaultColor: '#333',
+    },
   },
   title: 'Logs panel',
   id: 1,
