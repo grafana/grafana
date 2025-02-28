@@ -20,6 +20,30 @@ import (
 //       403: ForbiddenError
 //       404: description: Not found.
 
+// swagger:route Get /alerting/v1/rules ruler RouteGetAllRules
+//
+// Get all alert rules
+//
+//     Produces:
+//     - application/json
+//
+//     Parameters:
+//     - name: limit
+//       in: query
+//       description: Maximum number of rules to return per page
+//       type: integer
+//       default: 100
+//     - name: page
+//       in: query
+//       description: Page number to return (starting from 1)
+//       type: integer
+//       default: 1
+//
+//     Responses:
+//       200: GettableRuleList
+//       403: ForbiddenError
+//       500: description: Internal server error.
+
 // swagger:route Get /ruler/grafana/api/v1/rule/{RuleUID}/versions ruler RouteGetRuleVersionsByUID
 //
 // Get rule versions by UID
@@ -305,6 +329,14 @@ func (c *PostableRuleGroupConfig) validate() error {
 
 // swagger:model
 type GettableRuleVersions []GettableExtendedRuleNode
+
+// swagger:model
+type GettableRuleList struct {
+	Rules []GettableExtendedRuleNode `json:"rules"`
+	Total int                        `json:"total"`
+	Page  int                        `json:"page,omitempty"`
+	Limit int                        `json:"limit,omitempty"`
+}
 
 // swagger:model
 type GettableRuleGroupConfig struct {

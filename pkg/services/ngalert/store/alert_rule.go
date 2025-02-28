@@ -510,31 +510,31 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 		q := sess.Table("alert_rule")
 
 		if query.OrgID >= 0 {
-			q = q.Where("org_id = ?", query.OrgID)
+			q = q.Where("alert_rule.org_id = ?", query.OrgID)
 		}
 
 		if query.DashboardUID != "" {
-			q = q.Where("dashboard_uid = ?", query.DashboardUID)
+			q = q.Where("alert_rule.dashboard_uid = ?", query.DashboardUID)
 			if query.PanelID != 0 {
-				q = q.Where("panel_id = ?", query.PanelID)
+				q = q.Where("alert_rule.panel_id = ?", query.PanelID)
 			}
 		}
 
 		if len(query.NamespaceUIDs) > 0 {
 			args, in := getINSubQueryArgs(query.NamespaceUIDs)
-			q = q.Where(fmt.Sprintf("namespace_uid IN (%s)", strings.Join(in, ",")), args...)
+			q = q.Where(fmt.Sprintf("alert_rule.namespace_uid IN (%s)", strings.Join(in, ",")), args...)
 		}
 
 		if len(query.RuleUIDs) > 0 {
 			args, in := getINSubQueryArgs(query.RuleUIDs)
-			q = q.Where(fmt.Sprintf("uid IN (%s)", strings.Join(in, ",")), args...)
+			q = q.Where(fmt.Sprintf("alert_rule.uid IN (%s)", strings.Join(in, ",")), args...)
 		}
 
 		var groupsMap map[string]struct{}
 		if len(query.RuleGroups) > 0 {
 			groupsMap = make(map[string]struct{})
 			args, in := getINSubQueryArgs(query.RuleGroups)
-			q = q.Where(fmt.Sprintf("rule_group IN (%s)", strings.Join(in, ",")), args...)
+			q = q.Where(fmt.Sprintf("alert_rule.rule_group IN (%s)", strings.Join(in, ",")), args...)
 			for _, group := range query.RuleGroups {
 				groupsMap[group] = struct{}{}
 			}
@@ -561,7 +561,20 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 			}
 		}
 
-		q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
+		// Join with folder table to get folder information for ordering
+		q = q.Join("LEFT", "folder", "alert_rule.namespace_uid = folder.uid AND alert_rule.org_id = folder.org_id")
+
+		// Order by folder name first, then by rule group
+		q = q.OrderBy("folder.title ASC, alert_rule.rule_group ASC")
+
+		// Apply pagination if specified
+		if query.Limit > 0 {
+			offset := int64(0)
+			if query.Page > 0 {
+				offset = (query.Page - 1) * query.Limit
+			}
+			q = q.Limit(int(query.Limit), int(offset))
+		}
 
 		alertRules := make([]*ngmodels.AlertRule, 0)
 		rule := new(alertRule)

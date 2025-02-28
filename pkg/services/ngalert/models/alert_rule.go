@@ -824,6 +824,10 @@ type ListAlertRulesQuery struct {
 	TimeIntervalName string
 
 	ImportedPrometheusRule *bool
+
+	// Pagination parameters
+	Limit int64
+	Page  int64
 }
 
 // CountAlertRulesQuery is the query for counting alert rules
