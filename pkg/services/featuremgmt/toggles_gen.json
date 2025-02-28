@@ -405,10 +405,10 @@
     {
       "metadata": {
         "name": "alertingRuleVersionHistoryRestore",
-        "resourceVersion": "1738831836776",
+        "resourceVersion": "1740739632390",
         "creationTimestamp": "2025-01-16T14:08:12Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-02-06 08:50:36.776739 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-02-28 10:47:12.390917 +0000 UTC"
         }
       },
       "spec": {
@@ -417,7 +417,8 @@
         "codeowner": "@grafana/alerting-squad",
         "frontend": true,
         "hideFromAdminPage": true,
-        "hideFromDocs": true
+        "hideFromDocs": true,
+        "expression": "true"
       }
     },
     {
