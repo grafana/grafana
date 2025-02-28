@@ -66,8 +66,11 @@ func (d *DualWriterMode1) Create(ctx context.Context, in runtime.Object, createV
 
 	createdCopy := created.DeepCopyObject()
 
-	//nolint:errcheck
-	go d.createOnUnifiedStorage(ctx, createValidation, createdCopy, options)
+	go func() {
+		if err := d.createOnUnifiedStorage(ctx, createValidation, createdCopy, options); err != nil {
+			log.Error(err, "unable to create object in unified storage")
+		}
+	}()
 
 	return created, err
 }
@@ -116,9 +119,6 @@ func (d *DualWriterMode1) Get(ctx context.Context, name string, options *metav1.
 	}
 	d.recordLegacyDuration(errLegacy != nil, mode1Str, d.resource, method, startLegacy)
 
-	//nolint:errcheck
-	go d.getFromUnifiedStorage(ctx, res, name, options)
-
 	return res, errLegacy
 }
 
@@ -158,9 +158,6 @@ func (d *DualWriterMode1) List(ctx context.Context, options *metainternalversion
 	if err != nil {
 		log.Error(err, "unable to list object in legacy storage")
 	}
-
-	//nolint:errcheck
-	go d.listFromUnifiedStorage(ctx, options, res)
 
 	return res, err
 }
@@ -202,8 +199,11 @@ func (d *DualWriterMode1) Delete(ctx context.Context, name string, deleteValidat
 		return res, async, err
 	}
 
-	//nolint:errcheck
-	go d.deleteFromUnifiedStorage(ctx, res, name, deleteValidation, options)
+	go func() {
+		if err := d.deleteFromUnifiedStorage(ctx, res, name, deleteValidation, options); err != nil {
+			log.Error(err, "unable to delete object in unified storage")
+		}
+	}()
 
 	return res, async, err
 }
@@ -245,8 +245,11 @@ func (d *DualWriterMode1) DeleteCollection(ctx context.Context, deleteValidation
 		return res, err
 	}
 
-	//nolint:errcheck
-	go d.deleteCollectionFromUnifiedStorage(ctx, res, deleteValidation, options, listOptions)
+	go func() {
+		if err := d.deleteCollectionFromUnifiedStorage(ctx, res, deleteValidation, options, listOptions); err != nil {
+			log.Error(err, "unable to delete collection in unified storage")
+		}
+	}()
 
 	return res, err
 }
@@ -287,8 +290,11 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 		return objLegacy, async, err
 	}
 
-	//nolint:errcheck
-	go d.updateOnUnifiedStorageMode1(ctx, objLegacy, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	go func() {
+		if err := d.updateOnUnifiedStorageMode1(ctx, objLegacy, name, objInfo, createValidation, updateValidation, forceAllowCreate, options); err != nil {
+			log.Error(err, "unable to update object in unified storage")
+		}
+	}()
 
 	return objLegacy, async, err
 }
