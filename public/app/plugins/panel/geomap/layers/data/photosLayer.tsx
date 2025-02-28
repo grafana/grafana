@@ -98,7 +98,6 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
           crop: config.crop,
           kind: config.kind,
           shadow: 0,
-          displacement: config.shadow ? [-1, 1] : [0, 0],
           stroke: new Stroke({
             width: 0,
             color: 'rgba(0,0,0,0)',
