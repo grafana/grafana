@@ -1768,7 +1768,7 @@ var (
 			Name:              "alertingRuleVersionHistoryRestore",
 			Description:       "Enables the alert rule version history restore feature",
 			FrontendOnly:      true,
-			Stage:             FeatureStageExperimental,
+			Stage:             FeatureStageGeneralAvailability,
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
