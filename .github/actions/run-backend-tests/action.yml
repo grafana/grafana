@@ -1,0 +1,24 @@
+name: 'Run Backend Tests'
+description: 'Runs Grafana backend test suites'
+
+inputs:
+  coverage-opts:
+    description: 'Coverage options to pass to the test command (empty for no coverage)'
+    required: false
+    default: ''
+  test-command:
+    description: 'The test command to run'
+    required: false
+    default: 'make gen-go test-go-unit'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run tests
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.coverage-opts }}" ]; then
+          COVER_OPTS="${{ inputs.coverage-opts }}" ${{ inputs.test-command }}
+        else
+          ${{ inputs.test-command }}
+        fi
