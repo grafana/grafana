@@ -23,7 +23,9 @@ import {
   GrafanaTheme2,
   IconName,
   LinkModel,
+  PluginExtensionLink,
   PluginExtensionPoints,
+  RawTimeRange,
   TimeRange,
   TraceKeyValuePair,
   TraceLog,
@@ -180,6 +182,15 @@ export type SpanDetailProps = {
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
   setRedrawListView: (redraw: {}) => void;
   timeRange: TimeRange;
+};
+
+type ExploreProfilesContext = {
+  serviceName: string;
+  profileTypeId: string;
+  spanSelector: string;
+  explorationType: string;
+  timeRange: RawTimeRange;
+  targets: Array<{ datasource: { type: string; uid: string | undefined; }; }>;
 };
 
 export default function SpanDetail(props: SpanDetailProps) {
@@ -339,6 +350,32 @@ export default function SpanDetail(props: SpanDetailProps) {
     );
   };
 
+  const createProfileLinkButtons = (link?: PluginExtensionLink, path?: string) => {
+    const label = 'Open in Grafana Profiles Drilldown';
+    return (
+      <ButtonGroup>
+        {profileLinkButton}
+        <ButtonSelect
+          className={styles.profilesDrilldownSelect}
+          variant="primary"
+          narrow
+          options={[{ label, value: label }]}
+          onChange={(e) => {
+            if (e.value === label) {
+              reportInteraction('grafana_traces_open_in_profiles_drilldown_clicked');
+
+              if (link && link.onClick) {
+                link.onClick();
+              } else if (path) {
+                window.open(path, '_blank', 'noopener,noreferrer');
+              }
+            }
+          }}
+        />
+      </ButtonGroup>
+    );
+  }
+
   let logLinkButton: JSX.Element | null = null;
   let profileLinkButton: JSX.Element | null = null;
   let sessionLinkButton: JSX.Element | null = null;
@@ -371,46 +408,59 @@ export default function SpanDetail(props: SpanDetailProps) {
     }
   }
 
-  const exploreProfilesPluginId = 'grafana-pyroscope-app';
-  const extensionPointId = PluginExtensionPoints.TraceViewDetails;
-  const spanSelector = span.tags.filter((tag) => tag.key === pyroscopeProfileIdTagKey);
-  const context = {
-    serviceName: span.process.serviceName ?? '',
-    profileTypeId: traceToProfilesOptions?.profileTypeId ?? '',
-    spanSelector: spanSelector.length === 1 && spanSelector[0].value ? spanSelector[0].value : '',
-    timeRange: timeRange.raw,
-    targets: [
-      {
-        datasource: {
-          type: 'grafana-pyroscope-datasource',
-          uid: traceToProfilesOptions?.datasourceUid,
-        },
-      },
-    ],
-  };
-  const { links } = usePluginLinks({ extensionPointId, context, limitPerPlugin: 1 });
-  const link = links && links.length > 0 ? links.find((link) => link.pluginId === exploreProfilesPluginId) : null;
   let profileLinkButtons = profileLinkButton;
 
-  if (link && profileLinkButton) {
-    const label = 'Open in Grafana Profiles Drilldown';
-    profileLinkButtons = (
-      <ButtonGroup>
-        {profileLinkButton}
-        <ButtonSelect
-          className={styles.profilesDrilldownSelect}
-          variant="primary"
-          narrow
-          options={[{ label, value: label }]}
-          onChange={(e) => {
-            if (e.value === label && link.onClick) {
-              reportInteraction('grafana_traces_open_in_profiles_drilldown_clicked');
-              link.onClick();
-            }
-          }}
-        />
-      </ButtonGroup>
-    );
+  if (profileLinkButton) { // ensure we have a profile link
+    const exploreProfilesPluginId = 'grafana-pyroscope-app';
+    const spanSelector = span.tags.filter((tag) => tag.key === pyroscopeProfileIdTagKey);
+    const context: ExploreProfilesContext = {
+      serviceName: span.process.serviceName ?? '',
+      profileTypeId: traceToProfilesOptions?.profileTypeId ?? '',
+      spanSelector: spanSelector.length === 1 && spanSelector[0].value ? spanSelector[0].value : '',
+      explorationType: 'flame-graph',
+      timeRange: timeRange.raw,
+      targets: [
+        {
+          datasource: {
+            type: 'grafana-pyroscope-datasource',
+            uid: traceToProfilesOptions?.datasourceUid,
+          },
+        },
+      ],
+    };
+
+    // if in explore, use the plugin extension point to get the link
+    // note: plugin extension point links are not currently supported in panel plugins
+    if (window.location.pathname.startsWith('/explore')) {
+      const extensionPointId = PluginExtensionPoints.TraceViewDetails;
+  
+      const { links } = usePluginLinks({ extensionPointId, context, limitPerPlugin: 1 });
+      const link = links && links.length > 0 ? links.find((link) => link.pluginId === exploreProfilesPluginId) : null;
+  
+      // if we have a plugin link, add a button to open in Grafana Profiles Drilldown
+      if (link) {
+        profileLinkButtons = createProfileLinkButtons(link);
+      }
+    } else { // fallback to building a url to open in Grafana Profiles Drilldown
+      const drilldownProfilesAppExists = config.apps[exploreProfilesPluginId];
+
+      if (drilldownProfilesAppExists) {
+        const datasourceParam = context.targets.length > 0 ? `var-dataSource=${context.targets[0].datasource?.uid}` : '';
+        const serviceNameParam = `&var-serviceName=${context.serviceName}`;
+        const profileTypeParam = `&var-profileMetricId=${context.profileTypeId}`;
+        const explorationTypeParam = `&explorationType=${context.explorationType}`;
+        const timeRangeParam = `&from=${context.timeRange.from}&to=${context.timeRange.to}`;
+        const spanSelectorParam = `&spanSelector=${context.spanSelector}`;
+
+        const base = `/a/${exploreProfilesPluginId}/explore?`;
+        const params = new URLSearchParams(
+          `${datasourceParam}${serviceNameParam}${profileTypeParam}${timeRangeParam}${explorationTypeParam}${spanSelectorParam}`
+        ).toString();
+        const path = `${base}${params}`;
+        
+        profileLinkButtons = createProfileLinkButtons(undefined, path);    
+      }
+    }
   }
 
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
