@@ -26,7 +26,6 @@ import (
 )
 
 var datasourcesLogger = log.New("datasources")
-var secretsPluginError datasources.ErrDatasourceSecretsPluginUserFriendly
 
 // swagger:route GET /datasources datasources getDataSources
 //
@@ -178,9 +177,6 @@ func (hs *HTTPServer) DeleteDataSourceById(c *contextmodel.ReqContext) response.
 
 	err = hs.DataSourcesService.DeleteDataSource(c.Req.Context(), cmd)
 	if err != nil {
-		if errors.As(err, &secretsPluginError) {
-			return response.Error(http.StatusInternalServerError, "Failed to delete datasource: "+err.Error(), err)
-		}
 		return response.Error(http.StatusInternalServerError, "Failed to delete datasource", err)
 	}
 
@@ -257,9 +253,6 @@ func (hs *HTTPServer) DeleteDataSourceByUID(c *contextmodel.ReqContext) response
 
 	err = hs.DataSourcesService.DeleteDataSource(c.Req.Context(), cmd)
 	if err != nil {
-		if errors.As(err, &secretsPluginError) {
-			return response.Error(http.StatusInternalServerError, "Failed to delete datasource: "+err.Error(), err)
-		}
 		return response.Error(http.StatusInternalServerError, "Failed to delete datasource", err)
 	}
 
@@ -307,9 +300,6 @@ func (hs *HTTPServer) DeleteDataSourceByName(c *contextmodel.ReqContext) respons
 	cmd := &datasources.DeleteDataSourceCommand{Name: name, OrgID: c.SignedInUser.GetOrgID()}
 	err = hs.DataSourcesService.DeleteDataSource(c.Req.Context(), cmd)
 	if err != nil {
-		if errors.As(err, &secretsPluginError) {
-			return response.Error(http.StatusInternalServerError, "Failed to delete datasource: "+err.Error(), err)
-		}
 		return response.Error(http.StatusInternalServerError, "Failed to delete datasource", err)
 	}
 
@@ -403,10 +393,6 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNameExists) || errors.Is(err, datasources.ErrDataSourceUidExists) {
 			return response.Error(http.StatusConflict, err.Error(), err)
-		}
-
-		if errors.As(err, &secretsPluginError) {
-			return response.Error(http.StatusInternalServerError, "Failed to add datasource: "+err.Error(), err)
 		}
 
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to add datasource", err)
@@ -530,10 +516,6 @@ func (hs *HTTPServer) updateDataSourceByID(c *contextmodel.ReqContext, ds *datas
 
 		if errors.Is(err, datasources.ErrDataSourceUpdatingOldVersion) {
 			return response.Error(http.StatusConflict, "Datasource has already been updated by someone else. Please reload and try again", err)
-		}
-
-		if errors.As(err, &secretsPluginError) {
-			return response.Error(http.StatusInternalServerError, "Failed to update datasource: "+err.Error(), err)
 		}
 
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update datasource", err)
