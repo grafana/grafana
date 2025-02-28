@@ -38,11 +38,6 @@ type fakeDataSourceRequestValidator struct {
 	err error
 }
 
-type secretsErrorResponseBody struct {
-	Error   string `json:"error"`
-	Message string `json:"message"`
-}
-
 func (rv *fakeDataSourceRequestValidator) Validate(ds *datasources.DataSource, req *http.Request) error {
 	return rv.err
 }
