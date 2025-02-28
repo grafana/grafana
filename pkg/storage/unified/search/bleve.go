@@ -237,7 +237,7 @@ func (b *bleveBackend) cleanOldIndexes(dir string, skip string) {
 	}
 }
 
-// isValidPath does a sanity check in case it tries to access dirs above the file tree
+// isValidPath does a sanity check in case it tries to access a different dir
 func isValidPath(path, safeDir string) bool {
 	if path == "" || safeDir == "" {
 		return false
