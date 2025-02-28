@@ -216,62 +216,57 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	opts.StorageOptions(internalDashResourceInfo.GroupResource(), storageOpts)
 
 	// v0alpha1
-	storage, err := b.storageForVersion(opts, legacyStore, largeObjects,
+	if err := b.storageForVersion(apiGroupInfo, opts, legacyStore, largeObjects,
 		dashboardv0alpha1.DashboardResourceInfo,
 		dashboardv0alpha1.LibraryPanelResourceInfo,
 		func() runtime.Object {
 			return &dashboardv0alpha1.DashboardWithAccessInfo{}
-		})
-	if err != nil {
+		}); err != nil {
 		return err
 	}
-	apiGroupInfo.VersionedResourcesStorageMap[dashboardv0alpha1.VERSION] = storage
 
 	// v1alpha1
-	storage, err = b.storageForVersion(opts, legacyStore, largeObjects,
+	if err := b.storageForVersion(apiGroupInfo, opts, legacyStore, largeObjects,
 		dashboardv1alpha1.DashboardResourceInfo,
 		dashboardv1alpha1.LibraryPanelResourceInfo,
 		func() runtime.Object {
 			return &dashboardv1alpha1.DashboardWithAccessInfo{}
-		})
-	if err != nil {
+		}); err != nil {
 		return err
 	}
-	apiGroupInfo.VersionedResourcesStorageMap[dashboardv1alpha1.VERSION] = storage
 
 	// v2alpha1
-	storage, err = b.storageForVersion(opts, legacyStore, largeObjects,
+	if err := b.storageForVersion(apiGroupInfo, opts, legacyStore, largeObjects,
 		dashboardv2alpha1.DashboardResourceInfo,
 		dashboardv2alpha1.LibraryPanelResourceInfo,
 		func() runtime.Object {
 			return &dashboardv2alpha1.DashboardWithAccessInfo{}
-		})
-	if err != nil {
+		}); err != nil {
 		return err
 	}
-	apiGroupInfo.VersionedResourcesStorageMap[dashboardv2alpha1.VERSION] = storage
 
 	return nil
 }
 
 func (b *DashboardsAPIBuilder) storageForVersion(
+	apiGroupInfo *genericapiserver.APIGroupInfo,
 	opts builder.APIGroupOptions,
 	legacyStore grafanarest.Storage,
 	largeObjects apistore.LargeObjectSupport,
 	dashboards utils.ResourceInfo,
 	libraryPanels utils.ResourceInfo,
 	newDTOFunc func() runtime.Object,
-) (map[string]rest.Storage, error) {
+) error {
 	storage := map[string]rest.Storage{}
 	gr := dashboards.GroupResource()
 
 	store, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashboards, opts.OptsGetter)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	storage[dashboards.StoragePath()], err = opts.DualWriteBuilder(gr, legacyStore, store)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesRestore) {
@@ -290,7 +285,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		newDTOFunc,
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Expose read only library panels
@@ -299,7 +294,9 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		ResourceInfo: libraryPanels,
 	}
 
-	return storage, nil
+	// Set the versioned storage
+	apiGroupInfo.VersionedResourcesStorageMap[dashboards.GroupVersion().Version] = storage
+	return nil
 }
 
 func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
