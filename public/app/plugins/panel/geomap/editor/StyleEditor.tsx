@@ -48,6 +48,7 @@ export interface StyleEditorOptions {
   simpleFixedValues?: boolean;
   displayRotation?: boolean;
   hideSymbol?: boolean;
+  hideSize?: boolean;
   frameMatcher?: FrameMatcher;
 }
 
@@ -202,21 +203,23 @@ export const StyleEditor = (props: Props) => {
 
   return (
     <>
-      <Field label={'Size'}>
-        <ScaleDimensionEditor
-          value={value?.size ?? defaultStyleConfig.size}
-          context={context}
-          onChange={onSizeChange}
-          item={
-            {
-              settings: {
-                min: 1,
-                max: 100,
-              },
-            } as StandardEditorsRegistryItem
-          }
-        />
-      </Field>
+      {!settings?.hideSize && (
+        <Field label={'Size'}>
+          <ScaleDimensionEditor
+            value={value?.size ?? defaultStyleConfig.size}
+            context={context}
+            onChange={onSizeChange}
+            item={
+              {
+                settings: {
+                  min: 1,
+                  max: 100,
+                },
+              } as StandardEditorsRegistryItem
+            }
+          />
+        </Field>
+      )}
       {!settings?.hideSymbol && (
         <>
           <Field label={'Symbol'}>
