@@ -2062,6 +2062,7 @@ func getDeletedRules(t *testing.T, ruleStore *fakes.RuleStore) []deleteRuleOpera
 
 		uid := ""
 		userUID, ok := q.Params[1].(*models.UserUID)
+		require.True(t, ok, "parameter should be UserUID")
 		if userUID != nil {
 			uid = string(*userUID)
 		}
