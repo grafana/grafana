@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -101,4 +102,28 @@ func buildKey(orgId int64, namespace string, typ string) Key {
 		Namespace: namespace,
 		Type:      typ,
 	}
+}
+
+// Fake feature toggle - only need to check the backwards compatibility disabled flag
+type fakeFeatureToggles struct {
+	returnValue bool
+}
+
+func NewFakeFeatureToggles(t *testing.T, returnValue bool) featuremgmt.FeatureToggles {
+	t.Helper()
+	return fakeFeatureToggles{
+		returnValue: returnValue,
+	}
+}
+
+func (f fakeFeatureToggles) IsEnabledGlobally(feature string) bool {
+	return f.returnValue
+}
+
+func (f fakeFeatureToggles) IsEnabled(ctx context.Context, feature string) bool {
+	return f.returnValue
+}
+
+func (f fakeFeatureToggles) GetEnabled(ctx context.Context) map[string]bool {
+	return map[string]bool{}
 }
