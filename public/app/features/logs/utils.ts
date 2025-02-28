@@ -1,12 +1,14 @@
-import { countBy, chain } from 'lodash';
-import { MouseEvent } from 'react';
+import {chain, countBy} from 'lodash';
+import {MouseEvent} from 'react';
 
 import {
   DataFrame,
   FieldCache,
   FieldConfig,
   FieldType,
+  getDefaultTimeRange,
   getFieldDisplayName,
+  locationUtil,
   LogLabelStatsModel,
   LogLevel,
   LogRowModel,
@@ -15,15 +17,13 @@ import {
   LogsVolumeType,
   MutableDataFrame,
   NumericLogLevel,
-  getDefaultTimeRange,
-  locationUtil,
-  urlUtil,
   QueryResultMeta,
+  urlUtil,
 } from '@grafana/data';
-import { getConfig } from 'app/core/config';
+import {getConfig} from 'app/core/config';
 
-import { getDataframeFields } from './components/logParser';
-import { GetRowContextQueryFn } from './components/panel/LogLineMenu';
+import {getDataframeFields} from './components/logParser';
+import {GetRowContextQueryFn} from './components/panel/LogLineMenu';
 
 /**
  * Returns the log level of a log line.
@@ -70,27 +70,13 @@ export function getColorValue(line?: string): string | undefined {
 
   console.log(`Color line: ${line}`)
 
-  const cssColorRegex = /^(#(?:[0-9a-fA-F]{3}){1,2}|\b(?:rgb|hsl)a?\(\s*\d+\s*,\s*\d+%?\s*,\s*\d+%?(?:\s*,\s*(?:0|0?\.\d+|1))?\s*\)\b)$/;
+  const cssColorRegex =
+    /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$|^rgba?\(\s*(?:\d{1,3}\s*,\s*){2}\d{1,3}\s*(?:,\s*(?:0|1|0?\.\d+)\s*)?\)$|^hsla?\(\s*(?:\d{1,3}\s*,\s*){2}\d{1,3}%\s*(?:,\s*(?:0|1|0?\.\d+)\s*)?\)$/;
   const arrayPattern = /\[\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\]/;
 
-  const hexMatch = cssColorRegex.exec(line);
-  if (hexMatch) {
-    return hexMatch[0];
-  }
-
-  const rgbMatch = cssColorRegex.exec(line);
-  if (rgbMatch) {
-    return rgbMatch[0];
-  }
-
-  const hslMatch = cssColorRegex.exec(line);
-  if (hslMatch) {
-    return hslMatch[0];
-  }
-
-  const namedMatch = cssColorRegex.exec(line);
-  if (namedMatch) {
-    return namedMatch[0];
+  const cssMatch = cssColorRegex.exec(line);
+  if (cssMatch) {
+    return cssMatch[0];
   }
 
   const arrayMatch = arrayPattern.exec(line);
