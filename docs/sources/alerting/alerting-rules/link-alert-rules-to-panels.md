@@ -30,9 +30,9 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#annotations
   view-alert-state-on-panels:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/view-alert-state-on-panels/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state/#view-alert-state-on-panels
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/view-alert-state-on-panels/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/view-alert-state/#view-alert-state-on-panels
 ---
 
 # Create and link alert rules to panels
@@ -43,6 +43,10 @@ Grafana allows you to link an alert rule to a dashboard panel. This can help you
 - Visualize the alert state directly from dashboards.
 
 An alert rule is linked to a panel by setting the [`dashboardUId` and `panelId` annotations](ref:annotations). Both annotations must be set together.
+
+{{% admonition type="tutorial" %}}
+For a hands-on example of integrating alert rules with dashboards, check out [Part 5 of our Get Started with Grafana Alerting tutorial](http://www.grafana.com/tutorials/alerting-get-started-pt5/).
+{{% /admonition %}}
 
 ## Link alert rules to panels
 

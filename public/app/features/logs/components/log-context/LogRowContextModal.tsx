@@ -540,6 +540,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   displayedFields={displayedFields}
                   onClickShowField={showField}
                   onClickHideField={hideField}
+                  scrollElement={null}
                 />
               </td>
             </tr>
@@ -560,8 +561,9 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   onClickHideField={hideField}
                   onUnpinLine={() => setSticky(false)}
                   onPinLine={() => setSticky(true)}
-                  pinnedRowId={sticky ? row.uid : undefined}
+                  pinnedLogs={sticky ? [row.uid] : undefined}
                   overflowingContent={true}
+                  scrollElement={null}
                 />
               </td>
             </tr>
@@ -580,6 +582,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                     displayedFields={displayedFields}
                     onClickShowField={showField}
                     onClickHideField={hideField}
+                    scrollElement={null}
                   />
                 </>
               </td>

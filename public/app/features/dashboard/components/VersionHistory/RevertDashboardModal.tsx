@@ -5,12 +5,13 @@ import { ConfirmModal } from '@grafana/ui';
 import { useDashboardRestore } from './useDashboardRestore';
 export interface RevertDashboardModalProps {
   hideModal: () => void;
+  id: number;
   version: number;
 }
 
-export const RevertDashboardModal = ({ hideModal, version }: RevertDashboardModalProps) => {
+export const RevertDashboardModal = ({ hideModal, id, version }: RevertDashboardModalProps) => {
   // TODO: how should state.error be handled?
-  const { state, onRestoreDashboard } = useDashboardRestore(version);
+  const { state, onRestoreDashboard } = useDashboardRestore(id, version);
 
   useEffect(() => {
     if (!state.loading && state.value) {

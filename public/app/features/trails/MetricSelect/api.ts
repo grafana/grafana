@@ -1,11 +1,13 @@
 import { AdHocVariableFilter, RawTimeRange, Scope } from '@grafana/data';
-import { getPrometheusTime } from '@grafana/prometheus/src/language_utils';
+import { getPrometheusTime, PromQueryModeller, utf8Support } from '@grafana/prometheus';
 import { config, getBackendSrv } from '@grafana/runtime';
 
 import { limitOtelMatchTerms } from '../otel/util';
 import { callSuggestionsApi, SuggestionsResponse } from '../utils';
 
 const LIMIT_REACHED = 'results truncated due to limit';
+
+const queryModeller = new PromQueryModeller();
 
 export async function getMetricNames(
   dataSourceUid: string,
@@ -31,7 +33,11 @@ export async function getMetricNamesWithoutScopes(
   instances: string[],
   limit?: number
 ) {
-  const matchTerms = adhocFilters.map((filter) => `${filter.key}${filter.operator}"${filter.value}"`);
+  const matchTerms = config.featureToggles.prometheusSpecialCharsInLabelValues
+    ? adhocFilters.map((filter) =>
+        removeBrackets(queryModeller.renderLabels([{ label: filter.key, op: filter.operator, value: filter.value }]))
+      )
+    : adhocFilters.map((filter) => `${utf8Support(filter.key)}${filter.operator}"${filter.value}"`);
   let missingOtelTargets = false;
 
   if (jobs.length > 0 && instances.length > 0) {
@@ -51,7 +57,7 @@ export async function getMetricNamesWithoutScopes(
     ...(limit ? { limit } : {}),
   };
 
-  const response = await getBackendSrv().get<SuggestionsResponse>(url, params, 'explore-metrics-names');
+  const response = await getBackendSrv().get<SuggestionsResponse>(url, params, 'metrics-drilldown-names');
 
   if (limit && response.warnings?.includes(LIMIT_REACHED)) {
     return { ...response, limitReached: true, missingOtelTargets };
@@ -76,7 +82,7 @@ export async function getMetricNamesWithScopes(
     filters,
     '__name__',
     limit,
-    'explore-metrics-names'
+    'metrics-drilldown-names'
   );
 
   if (jobs.length > 0 && instances.length > 0) {
@@ -98,4 +104,9 @@ export async function getMetricNamesWithScopes(
     limitReached: !!limit && !!response.data.warnings?.includes(LIMIT_REACHED),
     missingOtelTargets: false,
   };
+}
+
+function removeBrackets(input: string): string {
+  const match = input.match(/^\{(.*)\}$/); // extract the content inside the brackets
+  return match?.[1] ?? '';
 }

@@ -21,6 +21,8 @@ import (
 	_ "gocloud.dev/blob/memblob"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 type CDKBackendOptions struct {
@@ -108,7 +110,8 @@ func (s *cdkBackend) getPath(key *ResourceKey, rv int64) string {
 	return buffer.String()
 }
 
-func (s *cdkBackend) Namespaces(ctx context.Context) ([]string, error) {
+// GetResourceStats implements Backend.
+func (s *cdkBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
@@ -128,7 +131,10 @@ func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64
 	if s.stream != nil {
 		go func() {
 			write := &WrittenEvent{
-				WriteEvent:      event,
+				Type:            event.Type,
+				Key:             event.Key,
+				PreviousRV:      event.PreviousRV,
+				Value:           event.Value,
 				Timestamp:       time.Now().UnixMilli(),
 				ResourceVersion: rv,
 			}
@@ -191,7 +197,7 @@ func (s *cdkBackend) ReadResource(ctx context.Context, req *ReadRequest) *Backen
 			err = nil
 		}
 	}
-	if err == nil && isDeletedMarker(raw) {
+	if err == nil && isDeletedValue(raw) {
 		raw = nil
 	}
 	if raw == nil {
@@ -205,11 +211,11 @@ func (s *cdkBackend) ReadResource(ctx context.Context, req *ReadRequest) *Backen
 	}
 }
 
-func isDeletedMarker(raw []byte) bool {
-	if bytes.Contains(raw, []byte(`"DeletedMarker"`)) {
+func isDeletedValue(raw []byte) bool {
+	if bytes.Contains(raw, []byte(`"generation":-999`)) {
 		tmp := &unstructured.Unstructured{}
 		err := tmp.UnmarshalJSON(raw)
-		if err == nil && tmp.GetKind() == "DeletedMarker" {
+		if err == nil && tmp.GetGeneration() == utils.DeletedGeneration {
 			return true
 		}
 	}
@@ -217,6 +223,10 @@ func isDeletedMarker(raw []byte) bool {
 }
 
 func (s *cdkBackend) ListIterator(ctx context.Context, req *ListRequest, cb func(ListIterator) error) (int64, error) {
+	if req.Source != ListRequest_STORE {
+		return 0, fmt.Errorf("listing from history not supported in CDK backend")
+	}
+
 	resources, err := buildTree(ctx, s, req.Options.Key)
 	if err != nil {
 		return 0, err
@@ -285,7 +295,7 @@ func (c *cdkListIterator) Next() bool {
 			c.err = err
 			return false
 		}
-		if !isDeletedMarker(raw) {
+		if !isDeletedValue(raw) {
 			c.currentRV = latest.rv
 			c.currentKey = latest.key
 			c.currentVal = raw
@@ -311,6 +321,11 @@ func (c *cdkListIterator) Value() []byte {
 
 // ContinueToken implements ListIterator.
 func (c *cdkListIterator) ContinueToken() string {
+	return fmt.Sprintf("index:%d/key:%s", c.index, c.currentKey)
+}
+
+// ContinueTokenWithCurrentRV implements ListIterator.
+func (c *cdkListIterator) ContinueTokenWithCurrentRV() string {
 	return fmt.Sprintf("index:%d/key:%s", c.index, c.currentKey)
 }
 

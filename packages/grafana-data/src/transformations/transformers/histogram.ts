@@ -1,5 +1,6 @@
 import { map } from 'rxjs/operators';
 
+import { outerJoinDataFrames } from '../..';
 import { getDisplayProcessor } from '../../field/displayProcessor';
 import { createTheme } from '../../themes/createTheme';
 import { GrafanaTheme2 } from '../../themes/types';
@@ -11,7 +12,6 @@ import { roundDecimals } from '../../utils/numbers';
 import { DataTransformerID } from './ids';
 import { AlignedData, join } from './joinDataFrames';
 import { nullToValueField } from './nulls/nullToValue';
-import { transformationsVariableSupport } from './utils';
 
 /**
  * @internal
@@ -112,9 +112,6 @@ export const histogramTransformer: SynchronousDataTransformerInfo<HistogramTrans
       bucketOffset: number | undefined = undefined;
 
     if (options.bucketSize) {
-      if (transformationsVariableSupport()) {
-        options.bucketSize = ctx.interpolate(options.bucketSize.toString());
-      }
       if (typeof options.bucketSize === 'string') {
         bucketSize = parseFloat(options.bucketSize);
       } else {
@@ -127,9 +124,6 @@ export const histogramTransformer: SynchronousDataTransformerInfo<HistogramTrans
     }
 
     if (options.bucketOffset) {
-      if (transformationsVariableSupport()) {
-        options.bucketOffset = ctx.interpolate(options.bucketOffset.toString());
-      }
       if (typeof options.bucketOffset === 'string') {
         bucketOffset = parseFloat(options.bucketOffset);
       } else {
@@ -332,7 +326,11 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
 /**
  * @alpha
  */
-export function buildHistogram(frames: DataFrame[], options?: HistogramTransformerOptions): HistogramFields | null {
+export function buildHistogram(
+  frames: DataFrame[],
+  options?: HistogramTransformerOptions,
+  theme?: GrafanaTheme2
+): HistogramFields | null {
   let bucketSize = options?.bucketSize;
   let bucketCount = options?.bucketCount ?? DEFAULT_BUCKET_COUNT;
   let bucketOffset = options?.bucketOffset ?? 0;
@@ -419,13 +417,20 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
       if (field.type === FieldType.number) {
         let fieldHist = histogram(field.values, getBucket, histFilter, histSort);
         histograms.push(fieldHist);
-        counts.push({
+
+        const count = {
           ...field,
           config: {
             ...field.config,
             unit: field.config.unit === 'short' ? 'short' : undefined,
           },
+        };
+
+        count.display = getDisplayProcessor({
+          field: count,
+          theme: theme ?? createTheme(),
         });
+        counts.push(count);
         if (!config && field.config.unit) {
           config = field.config;
         }
@@ -580,17 +585,72 @@ export function histogramFieldsToFrame(info: HistogramFields, theme?: GrafanaThe
     info.xMax.display = display;
   }
 
-  // ensure updated units are reflected on the count field used for y axis formatting
-  info.counts[0].display = getDisplayProcessor({
-    field: info.counts[0],
-    theme: theme ?? createTheme(),
-  });
-
   return {
     length: info.xMin.values.length,
     meta: {
       type: DataFrameType.Histogram,
     },
     fields: [info.xMin, info.xMax, ...info.counts],
+    refId: `${DataTransformerID.histogram}`,
   };
+}
+
+/**
+ *
+ * Join multiple histograms into a histogram with multiple counts.
+ * Useful eg if you want to overlay them for comparison.
+ *
+ * This is needed because histogram results from database
+ * will have buckets omitted for 0 counts, but when joining multiple histograms
+ * we need to fill in the 0 values for missing buckets.
+ *
+ * Returns field configs of the first provided histogram.
+ * @alpha
+ */
+
+export function joinHistograms(histograms: HistogramFields[]): HistogramFields {
+  if (histograms.length === 1) {
+    return histograms[0];
+  }
+
+  let joined = outerJoinDataFrames({
+    frames: histograms.map((h) => ({
+      length: h.xMax.values.length,
+      fields: [h.xMax, h.xMin, ...h.counts],
+    })),
+    joinBy: (field) => field.name === 'xMax',
+  })!;
+
+  let xMaxField: Field | null = null;
+  let xMinField: Field | null = null;
+  let countFields: Field[] = [];
+
+  // merge all xMin fields into first xMin field
+  // and default all count fields to 0
+  joined.fields.forEach((f) => {
+    if (f.name === 'xMax') {
+      xMaxField = f;
+    } else if (f.name === 'xMin') {
+      if (xMinField == null) {
+        xMinField = f;
+      } else {
+        for (let i = 0; i < f.values.length; i++) {
+          xMinField.values[i] ??= f.values[i];
+        }
+      }
+    } else {
+      countFields.push({
+        ...f,
+        values: f.values.map((v) => v ?? 0),
+      });
+    }
+  });
+
+  const result: HistogramFields = {
+    xMin: xMinField!,
+    xMax: xMaxField!,
+    counts: countFields,
+  };
+
+  return result;
 }

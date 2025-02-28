@@ -4,8 +4,7 @@ import { memo, ChangeEvent } from 'react';
 import { VariableSuggestion, GrafanaTheme2, DataLink } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/index';
-import { isCompactUrl } from '../../utils/dataLinks';
-import { Trans } from '../../utils/i18n';
+import { t, Trans } from '../../utils/i18n';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
 import { Switch } from '../Switch/Switch';
@@ -18,6 +17,7 @@ interface DataLinkEditorProps {
   value: DataLink;
   suggestions: VariableSuggestion[];
   onChange: (index: number, link: DataLink, callback?: () => void) => void;
+  showOneClick?: boolean;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -31,48 +31,67 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export const DataLinkEditor = memo(({ index, value, onChange, suggestions, isLast }: DataLinkEditorProps) => {
-  const styles = useStyles2(getStyles);
+export const DataLinkEditor = memo(
+  ({ index, value, onChange, suggestions, isLast, showOneClick = false }: DataLinkEditorProps) => {
+    const styles = useStyles2(getStyles);
 
-  const onUrlChange = (url: string, callback?: () => void) => {
-    onChange(index, { ...value, url }, callback);
-  };
-  const onTitleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onChange(index, { ...value, title: event.target.value });
-  };
+    const onUrlChange = (url: string, callback?: () => void) => {
+      onChange(index, { ...value, url }, callback);
+    };
 
-  const onOpenInNewTabChanged = () => {
-    onChange(index, { ...value, targetBlank: !value.targetBlank });
-  };
+    const onTitleChange = (event: ChangeEvent<HTMLInputElement>) => {
+      onChange(index, { ...value, title: event.target.value });
+    };
 
-  return (
-    <div className={styles.listItem}>
-      <Field label="Title">
-        <Input value={value.title} onChange={onTitleChange} placeholder="Show details" />
-      </Field>
+    const onOpenInNewTabChanged = () => {
+      onChange(index, { ...value, targetBlank: !value.targetBlank });
+    };
 
-      <Field
-        label="URL"
-        invalid={isCompactUrl(value.url)}
-        error="Data link is an Explore URL in a deprecated format. Please visit the URL to be redirected, and edit this data link to use that URL."
-      >
-        <DataLinkInput value={value.url} onChange={onUrlChange} suggestions={suggestions} />
-      </Field>
+    const onOneClickChanged = () => {
+      onChange(index, { ...value, oneClick: !value.oneClick });
+    };
 
-      <Field label="Open in new tab">
-        <Switch value={value.targetBlank || false} onChange={onOpenInNewTabChanged} />
-      </Field>
+    return (
+      <div className={styles.listItem}>
+        <Field label={t('grafana-ui.data-link-editor.title-label', 'Title')}>
+          <Input
+            value={value.title}
+            onChange={onTitleChange}
+            placeholder={t('grafana-ui.data-link-editor.title-placeholder', 'Show details')}
+          />
+        </Field>
 
-      {isLast && (
-        <div className={styles.infoText}>
-          <Trans i18nKey="grafana-ui.data-link-editor.info">
-            With data links you can reference data variables like series name, labels and values. Type CMD+Space,
-            CTRL+Space, or $ to open variable suggestions.
-          </Trans>
-        </div>
-      )}
-    </div>
-  );
-});
+        <Field label={t('grafana-ui.data-link-editor.url-label', 'URL')}>
+          <DataLinkInput value={value.url} onChange={onUrlChange} suggestions={suggestions} />
+        </Field>
+
+        <Field label={t('grafana-ui.data-link-editor.new-tab-label', 'Open in new tab')}>
+          <Switch value={value.targetBlank || false} onChange={onOpenInNewTabChanged} />
+        </Field>
+
+        {showOneClick && (
+          <Field
+            label={t('grafana-ui.data-link-inline-editor.one-click', 'One click')}
+            description={t(
+              'grafana-ui.data-link-editor-modal.one-click-description',
+              'Only one link can have one click enabled at a time'
+            )}
+          >
+            <Switch value={value.oneClick || false} onChange={onOneClickChanged} />
+          </Field>
+        )}
+
+        {isLast && (
+          <div className={styles.infoText}>
+            <Trans i18nKey="grafana-ui.data-link-editor.info">
+              With data links you can reference data variables like series name, labels and values. Type CMD+Space,
+              CTRL+Space, or $ to open variable suggestions.
+            </Trans>
+          </div>
+        )}
+      </div>
+    );
+  }
+);
 
 DataLinkEditor.displayName = 'DataLinkEditor';

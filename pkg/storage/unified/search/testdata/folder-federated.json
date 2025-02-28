@@ -1,0 +1,51 @@
+{
+  "metadata": {},
+  "columnDefinitions": [
+    {
+      "name": "title",
+      "type": "string",
+      "format": "",
+      "description": "Display name for the resource",
+      "priority": 0
+    },
+    {
+      "name": "_id",
+      "type": "string",
+      "format": "",
+      "description": "Unique Identifier. {namespace}/{group}/{resource}/{name}",
+      "priority": 0
+    }
+  ],
+  "rows": [
+    {
+      "cells": [
+        "yyy (folder)",
+        "ns/folder.grafana.app/folders/yyy"
+      ],
+      "object": {
+        "kind": "folders",
+        "apiVersion": "folder.grafana.app",
+        "metadata": {
+          "name": "yyy",
+          "namespace": "ns",
+          "creationTimestamp": null
+        }
+      }
+    },
+    {
+      "cells": [
+        "zzz (folder)",
+        "ns/folder.grafana.app/folders/zzz"
+      ],
+      "object": {
+        "kind": "folders",
+        "apiVersion": "folder.grafana.app",
+        "metadata": {
+          "name": "zzz",
+          "namespace": "ns",
+          "creationTimestamp": null
+        }
+      }
+    }
+  ]
+}

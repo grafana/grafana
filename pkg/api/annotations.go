@@ -41,6 +41,7 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 		OrgID:        c.SignedInUser.GetOrgID(),
 		UserID:       c.QueryInt64("userId"),
 		AlertID:      c.QueryInt64("alertId"),
+		AlertUID:     c.Query("alertUID"),
 		DashboardID:  c.QueryInt64("dashboardId"),
 		DashboardUID: c.Query("dashboardUID"),
 		PanelID:      c.QueryInt64("panelId"),
@@ -587,7 +588,7 @@ func (hs *HTTPServer) GetAnnotationTags(c *contextmodel.ReqContext) response.Res
 // where <type> is the type of annotation with id <id>.
 // If annotationPermissionUpdate feature toggle is enabled, dashboard annotation scope will be resolved to the corresponding
 // dashboard and folder scopes (eg, "dashboards:uid:<annotation_dashboard_uid>", "folders:uid:<parent_folder_uid>" etc).
-func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, features featuremgmt.FeatureToggles, dashSvc dashboards.DashboardService, folderStore folder.Store) (string, accesscontrol.ScopeAttributeResolver) {
+func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, features featuremgmt.FeatureToggles, dashSvc dashboards.DashboardService, folderSvc folder.Service) (string, accesscontrol.ScopeAttributeResolver) {
 	prefix := accesscontrol.ScopeAnnotationsProvider.GetResourceScope("")
 	return prefix, accesscontrol.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, initialScope string) ([]string, error) {
 		scopeParts := strings.Split(initialScope, ":")
@@ -649,7 +650,7 @@ func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, feature
 			// Append dashboard parent scopes if dashboard is in a folder or the general scope if dashboard is not in a folder
 			if dashboard.FolderUID != "" {
 				scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.FolderUID))
-				inheritedScopes, err := dashboards.GetInheritedScopes(ctx, orgID, dashboard.FolderUID, folderStore)
+				inheritedScopes, err := dashboards.GetInheritedScopes(ctx, orgID, dashboard.FolderUID, folderSvc)
 				if err != nil {
 					return nil, err
 				}
@@ -744,10 +745,15 @@ type GetAnnotationsParams struct {
 	// in:query
 	// required:false
 	UserID int64 `json:"userId"`
-	// Find annotations for a specified alert.
+	// Find annotations for a specified alert rule by its ID.
+	// deprecated: AlertID is deprecated and will be removed in future versions. Please use AlertUID instead.
 	// in:query
 	// required:false
 	AlertID int64 `json:"alertId"`
+	// Find annotations for a specified alert rule by its UID.
+	// in:query
+	// required:false
+	AlertUID string `json:"alertUID"`
 	// Find annotations that are scoped to a specific dashboard
 	// in:query
 	// required:false

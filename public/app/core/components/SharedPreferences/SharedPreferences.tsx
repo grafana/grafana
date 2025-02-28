@@ -17,13 +17,15 @@ import {
   FeatureBadge,
   Combobox,
   ComboboxOption,
+  TextLink,
+  WeekStart,
+  isWeekStart,
 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { t, Trans } from 'app/core/internationalization';
 import { LANGUAGES, PSEUDO_LOCALE } from 'app/core/internationalization/constants';
 import { PreferencesService } from 'app/core/services/PreferencesService';
 import { changeTheme } from 'app/core/services/theme';
-
 export interface Props {
   resourceUri: string;
   disabled?: boolean;
@@ -80,7 +82,21 @@ export class SharedPreferences extends PureComponent<Props, State> {
       navbar: { bookmarkUrls: [] },
     };
 
-    this.themeOptions = getBuiltInThemes(config.featureToggles.extraThemes).map((theme) => ({
+    const allowedExtraThemes = [];
+
+    if (config.featureToggles.extraThemes) {
+      allowedExtraThemes.push('debug');
+    }
+
+    if (config.featureToggles.grafanaconThemes) {
+      allowedExtraThemes.push('desertbloom');
+      allowedExtraThemes.push('gildedgrove');
+      allowedExtraThemes.push('sapphiredusk');
+      allowedExtraThemes.push('tron');
+      allowedExtraThemes.push('gloom');
+    }
+
+    this.themeOptions = getBuiltInThemes(allowedExtraThemes).map((theme) => ({
       value: theme.id,
       label: getTranslatedThemeName(theme),
     }));
@@ -120,6 +136,10 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
   onThemeChanged = (value: ComboboxOption<string>) => {
     this.setState({ theme: value.value });
+    reportInteraction('grafana_preferences_theme_changed', {
+      toTheme: value.value,
+      preferenceType: this.props.preferenceType,
+    });
 
     if (value.value) {
       changeTheme(value.value, true);
@@ -133,8 +153,8 @@ export class SharedPreferences extends PureComponent<Props, State> {
     this.setState({ timezone: timezone });
   };
 
-  onWeekStartChanged = (weekStart: string) => {
-    this.setState({ weekStart: weekStart });
+  onWeekStartChanged = (weekStart?: WeekStart) => {
+    this.setState({ weekStart: weekStart ?? '' });
   };
 
   onHomeDashboardChanged = (dashboardUID: string) => {
@@ -164,6 +184,20 @@ export class SharedPreferences extends PureComponent<Props, State> {
             loading={isLoading}
             disabled={isLoading}
             label={t('shared-preferences.fields.theme-label', 'Interface theme')}
+            description={
+              config.featureToggles.grafanaconThemes && config.feedbackLinksEnabled ? (
+                <Trans i18nKey="shared-preferences.fields.theme-description">
+                  Enjoying the limited edition themes? Tell us what you'd like to see{' '}
+                  <TextLink
+                    variant="bodySmall"
+                    external
+                    href="https://docs.google.com/forms/d/e/1FAIpQLSeRKAY8nUMEVIKSYJ99uOO-dimF6Y69_If1Q1jTLOZRWqK1cw/viewform?usp=dialog"
+                  >
+                    here.
+                  </TextLink>
+                </Trans>
+              ) : undefined
+            }
           >
             <Combobox
               options={this.themeOptions}
@@ -216,7 +250,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
             data-testid={selectors.components.WeekStartPicker.containerV2}
           >
             <WeekStartPicker
-              value={weekStart || ''}
+              value={weekStart && isWeekStart(weekStart) ? weekStart : undefined}
               onChange={this.onWeekStartChanged}
               inputId="shared-preferences-week-start-picker"
             />

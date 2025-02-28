@@ -15,6 +15,7 @@ import {
   Switch,
   TagsInput,
   TextArea,
+  WeekStart,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
@@ -122,10 +123,8 @@ export class GeneralSettingsEditView
     });
   };
 
-  public onWeekStartChange = (value: string) => {
-    this.getTimeRange().setState({
-      weekStart: value,
-    });
+  public onWeekStartChange = (value?: WeekStart) => {
+    this.getTimeRange().setState({ weekStart: value });
   };
 
   public onRefreshIntervalChange = (value: string[]) => {
@@ -259,7 +258,7 @@ export class GeneralSettingsEditView
             nowDelay={nowDelay || ''}
             liveNow={liveNow}
             timezone={timeZone || ''}
-            weekStart={weekStart || ''}
+            weekStart={weekStart}
           />
 
           {/* @todo: Update "Graph tooltip" description to remove prompt about reloading when resolving #46581 */}

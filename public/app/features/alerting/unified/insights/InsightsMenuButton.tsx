@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { ExploreUrlState, serializeStateToUrlParam, toURLRange, GrafanaTheme2 } from '@grafana/data';
+import { ExploreUrlState, GrafanaTheme2, serializeStateToUrlParam, toURLRange } from '@grafana/data';
 import {
   SceneComponentProps,
-  sceneGraph,
   SceneObjectBase,
   SceneObjectState,
   SceneTimeRangeState,
   SceneVariableSetState,
+  sceneGraph,
 } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { Button, Dropdown, Icon, IconButton, Menu, Modal, useStyles2 } from '@grafana/ui';

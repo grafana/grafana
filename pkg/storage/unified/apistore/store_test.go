@@ -3,14 +3,21 @@
 // Provenance-includes-license: Apache-2.0
 // Provenance-includes-copyright: The Kubernetes Authors.
 
-package apistore
+package apistore_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -19,10 +26,13 @@ import (
 	"k8s.io/apiserver/pkg/apis/example"
 	examplev1 "k8s.io/apiserver/pkg/apis/example/v1"
 	"k8s.io/apiserver/pkg/storage"
+	"k8s.io/apiserver/pkg/storage/storagebackend"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	storagetesting "github.com/grafana/grafana/pkg/apiserver/storage/testing"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 func init() {
@@ -140,6 +150,45 @@ func TestDeleteWithSuggestionAndConflict(t *testing.T) {
 	defer destroyFunc()
 	assert.NoError(t, err)
 	storagetesting.RunTestDeleteWithSuggestionAndConflict(ctx, t, store)
+}
+
+type resourceClientMock struct {
+	resource.ResourceStoreClient
+	resource.ResourceIndexClient
+	resource.RepositoryIndexClient
+	resource.BulkStoreClient
+	resource.BlobStoreClient
+	resource.DiagnosticsClient
+}
+
+// always return GRPC Unauthenticated code
+func (r resourceClientMock) List(ctx context.Context, in *resource.ListRequest, opts ...grpc.CallOption) (*resource.ListResponse, error) {
+	return &resource.ListResponse{}, status.Error(codes.Unauthenticated, "missing token")
+}
+
+func TestGRPCtoHTTPStatusMapping(t *testing.T) {
+	t.Run("ensure that GRPC Unauthenticated code gets translated to HTTP StatusUnauthorized", func(t *testing.T) {
+		s, _, err := apistore.NewStorage(
+			&storagebackend.ConfigForResource{},
+			resourceClientMock{},
+			nil,
+			nil,
+			nil,
+			nil,
+			nil,
+			nil,
+			nil,
+			apistore.StorageOptions{})
+		require.NoError(t, err)
+
+		err = s.GetList(context.Background(), "/group/resource.grafana.app/resource/resources/namespace/default", storage.ListOptions{}, nil)
+		require.Error(t, err)
+
+		var statusError *apierrors.StatusError
+		ok := errors.As(err, &statusError)
+		require.Equal(t, true, ok)
+		require.Equal(t, int(statusError.Status().Code), http.StatusUnauthorized)
+	})
 }
 
 // TODO: this test relies on update

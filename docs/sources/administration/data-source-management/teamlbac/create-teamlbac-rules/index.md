@@ -1,5 +1,5 @@
 ---
-description: Learn how to create LBAC for data sources rules for the Loki data source.
+description: Learn how to create LBAC for data sources rules for a supported data source.
 keywords:
   - loki
   - lbac
@@ -7,35 +7,38 @@ keywords:
 labels:
   products:
     - cloud
-title: Create LBAC for data sources rules for the Loki data source
+title: Create LBAC for data sources rules for a supported data source
 weight: 250
 ---
 
-# Create LBAC for data sources rules for the Loki data source
+# Create LBAC for data source rule
 
-LBAC for data sources is available on Cloud for Loki data sources created with basic authentication. Managed/Provisioned Loki data source can **NOT** be configured with LBAC for data sources as of now.
+LBAC for data sources is available for LBAC-supported data sources created with basic authentication. As of today, managed/provisioned data source can **NOT** be configured with LBAC rules.
 
 ## Before you begin
-
-To be able to use LBAC for data sources rules, you need to enable the feature toggle `teamHttpHeaders` on your Grafana instance. Contact support to enable the feature toggle for you.
 
 - Be sure that you have the permission setup to create a Loki tenant in Grafana Cloud.
 - Be sure that you have admin data source permissions for Grafana.
 - Be sure that you have a team setup in Grafana.
 
-### Create a LBAC for data sources Rule for a team
+### Create a LBAC for data sources rule for a team
 
-1. Navigate to your Loki data source
+1. Navigate to your data source
 1. Navigate to the permissions tab
    - Here, you'll find the LBAC for data sources rules section.
 1. Add a LBAC for data sources Rule
    - Add a new rule for the team in the LBAC for data sources rules section.
 1. Define a label selector for the rule
-   - Add a label selector to the rule. Refer to Loki query documentation for guidance on the types of log selections you can specify.
+   - Add a label selector to the rule. Refer to documentation for guidance on the types of log selections you can specify.
 
 ### LBAC rule
 
-A LBAC rule is a `logql` query that runs as a query to the Loki instance for your logs. Each rule operates independently as its own filter, separate from other rules within a team. For example, you can create a label policy that includes all log lines with a specific label.
+An LBAC rule is a `logql` query that filters logs or metrics based on labels. Each rule operates independently as its own filter, separate from other rules within a team.
+
+For example:
+
+- For logs: `{namespace="dev", cluster="us-west-0"}` filters log lines matching both `namespace="dev"` and `cluster="us-west-0"`.
+- For metrics: `{job="api-server", region="europe"}` filters metric data points matching `job="api-server"` and `region="europe"`.
 
 One rule `{namespace="dev", cluster="us-west-0"}` created with multiple namespaces will be seen as `namespace="dev"` **AND** `cluster="us-west-0"`.
 Two rules `{namespace="dev"}`, `{cluster="us-west-0"}` created for a team will be seen as `namespace="dev"` **OR** `cluster="us-west-0"`.
@@ -46,39 +49,35 @@ We recommend you only add `query` permissions for teams that should use the data
 
 We recommend for a first setup, setting up as few rules as possible for each team and make them additive for simplicity.
 
-To validate the rules, we recommend testing the rules in the Loki Explore view. This will allow you to see the logs that would be returned for the rule.
+To validate the rules, we recommend testing the rules in the Explore view. This will allow you to see the metrics or logs that would be returned for the rule.
 
 #### Tasks
 
-### Task 1: One rule set up for each team
+### Task 1: One rule setup for each team
 
-One common use case for creating an LBAC policy is to have specific access to logs that have a specific label. For example, you can create a label policy that includes all log lines with the label.
+One common use case for creating an LBAC policy is to grant access to logs or metrics with a specific label. For example, you can create a label policy that includes all log lines or metrics with the label `namespace`.
 
-We have two teams, Team A and Team B with `Query` permissions. Loki access is setup with `Admin` roles to have `Admin` permission only.
+We have two teams, Team A and Team B with `Query` permissions. Data source access is set up with `Admin` roles to have `Admin` permission only.
 
 - Team A has a rule `namespace="dev"`.
 
 - Team B has a rule `namespace="prod"`.
 
-A user that is part of Team A will have access to logs that match `namespace="dev"`.
-
-A user that is part of Team B will have access to logs that match `namespace="prod"`.
-
-A user that is part of Team A and Team B will have access to logs that match `namespace="dev"` OR `namespace="prod"`.
+A user that is part of Team A will have access to logs or metrics matching `namespace="dev"`. A user in both Team A and Team B will have access to data matching `namespace="dev"` OR `namespace="prod"`.
 
 ### Task 2: Set up a rule to exclude a label for a team
 
-One common use case for creating an LBAC policy is to exclude logs that have a specific label. For example, you can create a label policy that excludes all log lines with the label `secret=true` by adding a selector with `secret!="true"` when you create an access policy:
+One common use case for creating an LBAC policy is to exclude logs or metrics that have a specific label. For example, you can create a label policy that excludes all log lines with the label `secret=true` by adding a selector with `secret!="true"` when you create an access policy:
 
-We have one team, Team A `Query` permissions. Loki access is setup with `Admin` roles to have `Admin` permission only.
+We have one team, Team A `Query` permissions. Data source access is setup with `Admin` roles to have `Admin` permission only.
 
 - Team A has a rule `secret!="true"`.
 
-A user that is part of Team A will **NOT** have access to logs that match `secret!="true"`.
+A user that is part of Team A will **NOT** have access to logs or metrics that match `secret!="true"`.
 
 ### Task 3: Set up multiple rules for a team
 
-We have two teams, Team A and Team B with `Query` permissions. Loki access is setup with `Admin` roles having `Admin` permission.
+We have two teams, Team A and Team B with `Query` permissions. Data Source access is setup with `Admin` roles having `Admin` permission.
 
 - Team A has rule `cluster="us-west-0", namespace=~"dev|prod"` configured.
 
@@ -114,7 +113,7 @@ A user in Team B will have access to logs that match `namespace!="dev"`.
 
 ### Task 5: Single rule setup for a team
 
-We have two teams, Team A and Team B. Loki access is setup with `Editor`, `Viewer` roles to have `Query` permission.
+We have two teams, Team A and Team B. Data Source access is setup with `Editor`, `Viewer` roles to have `Query` permission.
 
 - Team A has a rule `namespace="dev"` configured.
 
@@ -131,8 +130,8 @@ A user that is not part of Team A and part of Team B, that is `Editor` or `Viewe
 We have team B, user A is part of Team B and has an `Admin` basic role.
 
 - Team B has no roles assigned
-- Team B has Query permissions to data source Loki
+- Team B has Query permissions to data source
 
 - Team B has a rule `{ project_id="project-dev" }`
 
-User A may only access logs for data source Loki that match `{ project_id="project-dev" }` and no other logs on the data source.
+User A may only access logs or metrics for a data source that match `{ project_id="project-dev" }`.

@@ -4,6 +4,7 @@ import { useAsync } from 'react-use';
 
 import { Button, LinkButton, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { Trans } from 'app/core/internationalization';
 
 import { AppChromeUpdate } from '../../../../../../core/components/AppChrome/AppChromeUpdate';
 import {
@@ -15,14 +16,10 @@ import { alertRuleApi } from '../../../api/alertRuleApi';
 import { fetchRulerRulesGroup } from '../../../api/ruler';
 import { useDataSourceFeatures } from '../../../hooks/useCombinedRule';
 import { useReturnTo } from '../../../hooks/useReturnTo';
+import { DEFAULT_GROUP_EVALUATION_INTERVAL, getDefaultFormValues } from '../../../rule-editor/formDefaults';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
-import {
-  DEFAULT_GROUP_EVALUATION_INTERVAL,
-  formValuesToRulerGrafanaRuleDTO,
-  getDefaultFormValues,
-  getDefaultQueries,
-} from '../../../utils/rule-form';
+import { formValuesToRulerGrafanaRuleDTO, getDefaultQueries } from '../../../utils/rule-form';
 import { isGrafanaRulerRule } from '../../../utils/rules';
 import { FileExportPreview } from '../../export/FileExportPreview';
 import { GrafanaExportDrawer } from '../../export/GrafanaExportDrawer';
@@ -63,9 +60,7 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
   const { returnTo } = useReturnTo('/alerting/list');
 
   const [exportData, setExportData] = useState<RuleFormValues | undefined>(undefined);
-
   const [conditionErrorMsg, setConditionErrorMsg] = useState('');
-  const [evaluateEvery, setEvaluateEvery] = useState(ruleForm?.evaluateEvery ?? DEFAULT_GROUP_EVALUATION_INTERVAL);
 
   const onInvalid = (): void => {
     notifyApp.error('There are errors in the form. Please correct them and try again!');
@@ -89,7 +84,7 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
 
   const actionButtons = [
     <LinkButton href={returnTo} key="cancel" size="sm" variant="secondary" onClick={() => submit(undefined)}>
-      Cancel
+      <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
     </LinkButton>,
     <Button key="export-rule" size="sm" onClick={formAPI.handleSubmit((formValues) => submit(formValues), onInvalid)}>
       Export
@@ -111,12 +106,7 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
               <GrafanaFolderAndLabelsStep />
 
               {/* Step 4 & 5 */}
-              <GrafanaEvaluationBehaviorStep
-                evaluateEvery={evaluateEvery}
-                setEvaluateEvery={setEvaluateEvery}
-                existing={Boolean(existing)}
-                enableProvisionedGroups={true}
-              />
+              <GrafanaEvaluationBehaviorStep existing={Boolean(existing)} enableProvisionedGroups={true} />
               {/* Notifications step*/}
               <NotificationsStep alertUid={alertUid} />
               {/* Annotations only for cloud and Grafana */}
@@ -178,7 +168,7 @@ export const getPayloadToExport = (
   } else {
     // we have to create a new group with the updated rule
     return {
-      name: existingGroup?.name ?? '',
+      name: existingGroup?.name ?? formValues.group,
       rules: [updatedRule],
     };
   }

@@ -127,6 +127,20 @@ describe('AutoSizeInput', () => {
 
       expect(onCommitChange).toHaveBeenCalledTimes(1);
     });
+
+    it("allows the input to empty when there's a default value", async () => {
+      const onCommitChange = jest.fn();
+      render(<AutoSizeInput defaultValue="Initial value" onCommitChange={onCommitChange} />);
+      const input: HTMLInputElement = screen.getByTestId('autosize-input');
+      await userEvent.clear(input);
+      await userEvent.type(input, '{enter}');
+
+      expect(input.value).toBe('');
+      expect(onCommitChange).toHaveBeenCalledTimes(1);
+      expect(onCommitChange).toHaveBeenCalledWith(
+        expect.objectContaining({ target: expect.objectContaining({ value: '' }) })
+      );
+    });
   });
 
   describe('as a controlled component', () => {

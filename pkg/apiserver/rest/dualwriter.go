@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 )
@@ -27,8 +26,18 @@ var (
 	_ rest.SingularNameProvider = (DualWriter)(nil)
 )
 
+type dualWriteContextKey struct{}
+
+func IsDualWriteUpdate(ctx context.Context) bool {
+	return ctx.Value(dualWriteContextKey{}) == true
+}
+
+func WithDualWriteUpdate(ctx context.Context) context.Context {
+	return context.WithValue(ctx, dualWriteContextKey{}, true)
+}
+
 // Function that will create a dual writer
-type DualWriteBuilder func(gr schema.GroupResource, legacy LegacyStorage, storage Storage) (Storage, error)
+type DualWriteBuilder func(gr schema.GroupResource, legacy Storage, unified Storage) (Storage, error)
 
 // Storage is a storage implementation that satisfies the same interfaces as genericregistry.Store.
 type Storage interface {
@@ -37,24 +46,10 @@ type Storage interface {
 	rest.TableConvertor
 	rest.SingularNameProvider
 	rest.Getter
-	// TODO: when watch is implemented, we can replace all the below with rest.StandardStorage
 	rest.Lister
 	rest.CreaterUpdater
 	rest.GracefulDeleter
 	rest.CollectionDeleter
-}
-
-// LegacyStorage is a storage implementation that writes to the Grafana SQL database.
-type LegacyStorage interface {
-	rest.Storage
-	rest.Scoper
-	rest.SingularNameProvider
-	rest.CreaterUpdater
-	rest.Lister
-	rest.GracefulDeleter
-	rest.CollectionDeleter
-	rest.TableConvertor
-	rest.Getter
 }
 
 // DualWriter is a storage implementation that writes first to LegacyStorage and then to Storage.
@@ -80,7 +75,6 @@ type LegacyStorage interface {
 
 type DualWriter interface {
 	Storage
-	LegacyStorage
 	Mode() DualWriterMode
 }
 
@@ -95,7 +89,7 @@ const (
 	Mode1
 	// Mode2 is the dual writing mode that represents writing to LegacyStorage and Storage and reading from LegacyStorage.
 	// The objects written to storage will include any labels and annotations.
-	// When reading values, the results will be from Storage when they exist, otherwise from legacy storage
+	// When reading values, the results will be from LegacyStorage.
 	Mode2
 	// Mode3 represents writing to LegacyStorage and Storage and reading from Storage.
 	// NOTE: Requesting mode3 will only happen when after a background sync job succeeds
@@ -111,8 +105,8 @@ const (
 // NewDualWriter returns a new DualWriter.
 func NewDualWriter(
 	mode DualWriterMode,
-	legacy LegacyStorage,
-	storage Storage,
+	legacy Storage,
+	unified Storage,
 	reg prometheus.Registerer,
 	resource string,
 ) Storage {
@@ -123,17 +117,17 @@ func NewDualWriter(
 		return legacy
 	case Mode1:
 		// read and write only from legacy storage
-		return newDualWriterMode1(legacy, storage, metrics, resource)
+		return newDualWriterMode1(legacy, unified, metrics, resource)
 	case Mode2:
 		// write to both, read from storage but use legacy as backup
-		return newDualWriterMode2(legacy, storage, metrics, resource)
+		return newDualWriterMode2(legacy, unified, metrics, resource)
 	case Mode3:
 		// write to both, read from storage only
-		return newDualWriterMode3(legacy, storage, metrics, resource)
+		return newDualWriterMode3(legacy, unified, metrics, resource)
 	case Mode4, Mode5:
-		return storage
+		return unified
 	default:
-		return newDualWriterMode1(legacy, storage, metrics, resource)
+		return newDualWriterMode1(legacy, unified, metrics, resource)
 	}
 }
 
@@ -149,16 +143,13 @@ type ServerLockService interface {
 func SetDualWritingMode(
 	ctx context.Context,
 	kvs NamespacedKVStore,
-	legacy LegacyStorage,
-	storage Storage,
-	entity string,
-	desiredMode DualWriterMode,
-	reg prometheus.Registerer,
-	serverLockService ServerLockService,
-	requestInfo *request.RequestInfo,
+	cfg *SyncerConfig,
 ) (DualWriterMode, error) {
+	if cfg == nil {
+		return Mode0, errors.New("syncer config is nil")
+	}
 	// Mode0 means no DualWriter
-	if desiredMode == Mode0 {
+	if cfg.Mode == Mode0 {
 		return Mode0, nil
 	}
 
@@ -174,58 +165,66 @@ func SetDualWritingMode(
 	errDualWriterSetCurrentMode := errors.New("failed to set current dual writing mode")
 
 	// Use entity name as key
-	m, ok, err := kvs.Get(ctx, entity)
+	m, ok, err := kvs.Get(ctx, cfg.Kind)
 	if err != nil {
 		return Mode0, errors.New("failed to fetch current dual writing mode")
 	}
 
-	currentMode, valid := toMode[m]
+	currentMode, exists := toMode[m]
 
-	if !valid && ok {
+	// If the mode does not exist in our mapping, we log an error.
+	if !exists && ok {
 		// Only log if "ok" because initially all instances will have mode unset for playlists.
-		klog.Infof("invalid dual writing mode for %s mode: %v", entity, m)
+		klog.Infof("invalid dual writing mode for %s mode: %v", cfg.Kind, m)
 	}
 
-	if !valid || !ok {
+	// If the mode does not exist in our mapping, and we also didn't find an entry for this kind, fallback.
+	if !exists || !ok {
 		// Default to mode 1
 		currentMode = Mode1
-
-		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
-		if err != nil {
+		if err := kvs.Set(ctx, cfg.Kind, fmt.Sprint(currentMode)); err != nil {
 			return Mode0, errDualWriterSetCurrentMode
 		}
 	}
 
+	// Handle transitions to the desired mode.
 	switch {
-	case desiredMode == Mode2 || desiredMode == Mode1:
-		currentMode = desiredMode
-		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
-		if err != nil {
+	case cfg.Mode == Mode2 || cfg.Mode == Mode1:
+		// Directly set the mode for Mode1 and Mode2.
+		currentMode = cfg.Mode
+		if err := kvs.Set(ctx, cfg.Kind, fmt.Sprint(currentMode)); err != nil {
 			return Mode0, errDualWriterSetCurrentMode
 		}
-	case desiredMode >= Mode3 && currentMode < Mode3:
-		syncOk, err := runDataSyncer(ctx, currentMode, legacy, storage, entity, reg, serverLockService, requestInfo)
+	case cfg.Mode >= Mode3 && currentMode < Mode3:
+		// Transitioning to Mode3 or higher requires data synchronization.
+		cfgModeTmp := cfg.Mode
+		// Before running the sync, set the syncer config to the current mode, as we have to run the syncer
+		// once in the current active mode before we can upgrade.
+		cfg.Mode = currentMode
+		syncOk, err := runDataSyncer(ctx, cfg)
+		// Once we are done with running the syncer, we can change the mode back on the config to the desired one.
+		cfg.Mode = cfgModeTmp
 		if err != nil {
-			klog.Info("data syncer failed for mode:", m)
-			return currentMode, err
+			klog.Error("data syncer failed for mode:", m, "err", err)
+			return currentMode, nil
 		}
 		if !syncOk {
 			klog.Info("data syncer not ok for mode:", m)
 			return currentMode, nil
 		}
-
-		err = kvs.Set(ctx, entity, fmt.Sprint(desiredMode))
-		if err != nil {
-			return currentMode, errDualWriterSetCurrentMode
+		// If sync is successful, update the mode to the desired one.
+		if err := kvs.Set(ctx, cfg.Kind, fmt.Sprint(cfg.Mode)); err != nil {
+			return Mode0, errDualWriterSetCurrentMode
 		}
-		return desiredMode, nil
-	case desiredMode >= Mode3 && currentMode >= Mode3:
-		currentMode = desiredMode
-		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
-		if err != nil {
-			return currentMode, errDualWriterSetCurrentMode
+		return cfg.Mode, nil
+	case cfg.Mode >= Mode3 && currentMode >= Mode3:
+		// If already in Mode3 or higher, simply update to the desired mode.
+		currentMode = cfg.Mode
+		if err := kvs.Set(ctx, cfg.Kind, fmt.Sprint(currentMode)); err != nil {
+			return Mode0, errDualWriterSetCurrentMode
 		}
 	default:
+		// Handle any unexpected cases (should not normally happen).
 		return Mode0, errDualWriterSetCurrentMode
 	}
 	return currentMode, nil

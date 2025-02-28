@@ -4,6 +4,7 @@ import { Dashboard } from '@grafana/schema';
 export interface HistoryListOpts {
   limit: number;
   start: number;
+  continueToken?: string;
 }
 
 export interface RevisionsModel {

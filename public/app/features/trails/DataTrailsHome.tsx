@@ -25,7 +25,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
 
   public onNewMetricsTrail = () => {
     const app = getAppFor(this);
-    const trail = newMetricsTrail(getDatasourceForNewTrail());
+    const trail = newMetricsTrail(getDatasourceForNewTrail(), true);
     reportExploreMetrics('exploration_started', { cause: 'new_clicked' });
     app.goToUrlForTrail(trail);
   };
@@ -57,8 +57,8 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
     };
 
     return (
-      <div className={styles.container}>
-        <div className={styles.homepageBox}>
+      <article className={styles.container}>
+        <section className={styles.homepageBox}>
           <Stack direction="column" alignItems="center">
             <div>{theme.isDark ? <DarkModeRocket /> : <LightModeRocket />}</div>
             <Text element="h1" textAlignment="center" weight="medium">
@@ -87,10 +87,10 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
               </Button>
             </div>
           </Stack>
-        </div>
+        </section>
         <DataTrailsRecentMetrics onSelect={model.onSelectRecentTrail} />
         <DataTrailsBookmarks onSelect={model.onSelectBookmark} onDelete={onDelete} />
-      </div>
+      </article>
     );
   };
 }
@@ -103,8 +103,8 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
       display: 'flex',
-      justifyContent: 'center',
       alignItems: 'center',
+      marginTop: '84px',
       flexDirection: 'column',
       height: '100%',
       boxSizing: 'border-box', // Ensure padding doesn't cause overflow

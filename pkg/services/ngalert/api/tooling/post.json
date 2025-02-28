@@ -165,6 +165,9 @@
   },
   "AlertRuleEditorSettings": {
    "properties": {
+    "simplified_notifications_section": {
+     "type": "boolean"
+    },
     "simplified_query_and_expressions_section": {
      "type": "boolean"
     }
@@ -456,6 +459,9 @@
      "format": "double",
      "type": "number"
     },
+    "folderUid": {
+     "type": "string"
+    },
     "health": {
      "type": "string"
     },
@@ -495,10 +501,15 @@
     },
     "type": {
      "type": "string"
+    },
+    "uid": {
+     "type": "string"
     }
    },
    "required": [
+    "uid",
     "name",
+    "folderUid",
     "query",
     "health",
     "type",
@@ -723,6 +734,20 @@
    },
    "type": "array"
   },
+  "ConvertPrometheusResponse": {
+   "properties": {
+    "error": {
+     "type": "string"
+    },
+    "errorType": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "CounterResetHint": {
    "description": "or alternatively that we are dealing with a gauge histogram, where counter resets do not apply.",
    "format": "uint8",
@@ -755,7 +780,7 @@
      "type": "string"
     },
     "ErrorSource": {
-     "$ref": "#/definitions/ErrorSource"
+     "$ref": "#/definitions/Source"
     },
     "Frames": {
      "$ref": "#/definitions/Frames"
@@ -895,23 +920,23 @@
     "type": {
      "enum": [
       "alertmanager",
-      " dingding",
-      " discord",
-      " email",
-      " googlechat",
-      " kafka",
-      " line",
-      " opsgenie",
-      " pagerduty",
-      " pushover",
-      " sensugo",
-      " slack",
-      " teams",
-      " telegram",
-      " threema",
-      " victorops",
-      " webhook",
-      " wecom"
+      "dingding",
+      "discord",
+      "email",
+      "googlechat",
+      "kafka",
+      "line",
+      "opsgenie",
+      "pagerduty",
+      "pushover",
+      "sensugo",
+      "slack",
+      "teams",
+      "telegram",
+      "threema",
+      "victorops",
+      "webhook",
+      "wecom"
      ],
      "example": "webhook",
      "type": "string"
@@ -964,10 +989,6 @@
     }
    },
    "type": "object"
-  },
-  "ErrorSource": {
-   "description": "ErrorSource type defines the source of the error",
-   "type": "string"
   },
   "ErrorType": {
    "title": "ErrorType models the different API error types.",
@@ -1167,6 +1188,14 @@
     "CounterResetHint": {
      "$ref": "#/definitions/CounterResetHint"
     },
+    "CustomValues": {
+     "description": "Holds the custom (usually upper) bounds for bucket definitions, otherwise nil.\nThis slice is interned, to be treated as immutable and copied by reference.\nThese numbers should be strictly increasing. This field is only used when the\nschema is for custom buckets, and the ZeroThreshold, ZeroCount, NegativeSpans\nand NegativeBuckets fields are not used in that case.",
+     "items": {
+      "format": "double",
+      "type": "number"
+     },
+     "type": "array"
+    },
     "PositiveBuckets": {
      "description": "Observation counts in buckets. Each represents an absolute count and\nmust be zero or positive.",
      "items": {
@@ -1183,7 +1212,7 @@
      "type": "array"
     },
     "Schema": {
-     "description": "Currently valid schema numbers are -4 \u003c= n \u003c= 8.  They are all for\nbase-2 bucket schemas, where 1 is a bucket boundary in each case, and\nthen each power of two is divided into 2^n logarithmic buckets.  Or\nin other words, each bucket boundary is the previous boundary times\n2^(2^-n).",
+     "description": "Currently valid schema numbers are -4 \u003c= n \u003c= 8 for exponential buckets.\nThey are all for base-2 bucket schemas, where 1 is a bucket boundary in\neach case, and then each power of two is divided into 2^n logarithmic buckets.\nOr in other words, each bucket boundary is the previous boundary times\n2^(2^-n). Another valid schema number is -53 for custom buckets, defined by\nthe CustomValues field.",
      "format": "int32",
      "type": "integer"
     },
@@ -1578,10 +1607,6 @@
      ],
      "type": "string"
     },
-    "id": {
-     "format": "int64",
-     "type": "integer"
-    },
     "intervalSeconds": {
      "format": "int64",
      "type": "integer"
@@ -1606,10 +1631,6 @@
     "notification_settings": {
      "$ref": "#/definitions/AlertRuleNotificationSettings"
     },
-    "orgId": {
-     "format": "int64",
-     "type": "integer"
-    },
     "provenance": {
      "$ref": "#/definitions/Provenance"
     },
@@ -1628,6 +1649,9 @@
     "updated": {
      "format": "date-time",
      "type": "string"
+    },
+    "updated_by": {
+     "$ref": "#/definitions/UserInfo"
     },
     "version": {
      "format": "int64",
@@ -1712,6 +1736,12 @@
     }
    },
    "type": "object"
+  },
+  "GettableRuleVersions": {
+   "items": {
+    "$ref": "#/definitions/GettableExtendedRuleNode"
+   },
+   "type": "array"
   },
   "GettableStatus": {
    "properties": {
@@ -2924,6 +2954,70 @@
    },
    "type": "object"
   },
+  "PrometheusNamespace": {
+   "properties": {
+    "Body": {
+     "additionalProperties": {
+      "items": {
+       "$ref": "#/definitions/PrometheusRuleGroup"
+      },
+      "type": "array"
+     },
+     "description": "in: body",
+     "type": "object"
+    }
+   },
+   "type": "object"
+  },
+  "PrometheusRule": {
+   "properties": {
+    "Alert": {
+     "type": "string"
+    },
+    "Annotations": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "Expr": {
+     "type": "string"
+    },
+    "For": {
+     "type": "string"
+    },
+    "KeepFiringFor": {
+     "type": "string"
+    },
+    "Labels": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "Record": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "PrometheusRuleGroup": {
+   "properties": {
+    "Interval": {
+     "$ref": "#/definitions/Duration"
+    },
+    "Name": {
+     "type": "string"
+    },
+    "Rules": {
+     "items": {
+      "$ref": "#/definitions/PrometheusRule"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
   "Provenance": {
    "type": "string"
   },
@@ -3573,6 +3667,9 @@
      "format": "double",
      "type": "number"
     },
+    "folderUid": {
+     "type": "string"
+    },
     "health": {
      "type": "string"
     },
@@ -3594,10 +3691,15 @@
     },
     "type": {
      "type": "string"
+    },
+    "uid": {
+     "type": "string"
     }
    },
    "required": [
+    "uid",
     "name",
+    "folderUid",
     "query",
     "health",
     "type"
@@ -3606,6 +3708,9 @@
   },
   "RuleDiscovery": {
    "properties": {
+    "groupNextToken": {
+     "type": "string"
+    },
     "groups": {
      "items": {
       "$ref": "#/definitions/RuleGroup"
@@ -3632,6 +3737,9 @@
      "type": "number"
     },
     "file": {
+     "type": "string"
+    },
+    "folderUid": {
      "type": "string"
     },
     "interval": {
@@ -3663,6 +3771,7 @@
    "required": [
     "name",
     "file",
+    "folderUid",
     "rules",
     "interval"
    ],
@@ -3765,6 +3874,10 @@
   "Sample": {
    "description": "Sample is a single sample belonging to a metric. It represents either a float\nsample or a histogram sample. If H is nil, it is a float sample. Otherwise,\nit is a histogram sample.",
    "properties": {
+    "DropName": {
+     "description": "DropName is used to indicate whether the __name__ label should be dropped\nas part of the query evaluation.",
+     "type": "boolean"
+    },
     "F": {
      "format": "double",
      "type": "number"
@@ -3974,6 +4087,10 @@
   },
   "SmtpNotEnabled": {
    "$ref": "#/definitions/ResponseDetails"
+  },
+  "Source": {
+   "title": "Source type defines the status source.",
+   "type": "string"
   },
   "Span": {
    "properties": {
@@ -4376,6 +4493,7 @@
    "type": "object"
   },
   "URL": {
+   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nThe Host field contains the host and port subcomponents of the URL.\nWhen the port is present, it is separated from the host with a colon.\nWhen the host is an IPv6 address, it must be enclosed in square brackets:\n\"[fe80::1]:80\". The [net.JoinHostPort] function combines a host and port\ninto a string suitable for the Host field, adding square brackets to\nthe host when necessary.\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the [URL.EscapedPath] method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -4411,7 +4529,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "URL is a custom URL type that allows validation at configuration load time.",
+   "title": "A URL represents a parsed URL (technically, a URI reference).",
    "type": "object"
   },
   "UpdateRuleGroupResponse": {
@@ -4438,6 +4556,18 @@
      "type": "array"
     }
    },
+   "type": "object"
+  },
+  "UserInfo": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "uid": {
+     "type": "string"
+    }
+   },
+   "title": "UserInfo represents user-related information, including a unique identifier and a name.",
    "type": "object"
   },
   "Userinfo": {
@@ -4641,6 +4771,7 @@
    "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup",
     "type": "object"
@@ -5467,7 +5598,8 @@
   },
   "/alertmanager/grafana/config/api/v1/alerts": {
    "delete": {
-    "description": "deletes the Alerting config for a tenant",
+    "deprecated": true,
+    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
     "operationId": "RouteDeleteGrafanaAlertingConfig",
     "responses": {
      "200": {
@@ -5483,12 +5615,14 @@
       }
      }
     },
+    "summary": "deletes the Alerting config for a tenant",
     "tags": [
      "alertmanager"
     ]
    },
    "get": {
-    "description": "gets an Alerting config",
+    "deprecated": true,
+    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
     "operationId": "RouteGetGrafanaAlertingConfig",
     "responses": {
      "200": {
@@ -5504,12 +5638,14 @@
       }
      }
     },
+    "summary": "gets an Alerting config",
     "tags": [
      "alertmanager"
     ]
    },
    "post": {
-    "description": "sets an Alerting config",
+    "deprecated": true,
+    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
     "operationId": "RoutePostGrafanaAlertingConfig",
     "parameters": [
      {
@@ -5534,6 +5670,7 @@
       }
      }
     },
+    "summary": "sets an Alerting config",
     "tags": [
      "alertmanager"
     ]
@@ -5664,7 +5801,8 @@
   },
   "/alertmanager/grafana/config/history": {
    "get": {
-    "description": "gets Alerting configurations that were successfully applied in the past",
+    "deprecated": true,
+    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
     "operationId": "RouteGetGrafanaAlertingConfigHistory",
     "parameters": [
      {
@@ -5680,6 +5818,7 @@
       "$ref": "#/responses/GettableHistoricUserConfigs"
      }
     },
+    "summary": "gets Alerting configurations that were successfully applied in the past",
     "tags": [
      "alertmanager"
     ]
@@ -5687,7 +5826,8 @@
   },
   "/alertmanager/grafana/config/history/{id}/_activate": {
    "post": {
-    "description": "revert Alerting configuration to the historical configuration specified by the given id",
+    "deprecated": true,
+    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
     "operationId": "RoutePostGrafanaAlertingConfigHistoryActivate",
     "parameters": [
      {
@@ -5719,6 +5859,7 @@
       }
      }
     },
+    "summary": "revert Alerting configuration to the historical configuration specified by the given id",
     "tags": [
      "alertmanager"
     ]
@@ -6260,6 +6401,500 @@
     ]
    }
   },
+  "/convert/api/prom/rules": {
+   "get": {
+    "operationId": "RouteConvertPrometheusCortexGetRules",
+    "produces": [
+     "application/yaml"
+    ],
+    "responses": {
+     "200": {
+      "description": "PrometheusNamespace",
+      "schema": {
+       "$ref": "#/definitions/PrometheusNamespace"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
+     "404": {
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
+      }
+     }
+    },
+    "summary": "Gets all Grafana-managed alert rules that were imported from Prometheus-compatible sources, grouped by namespace.",
+    "tags": [
+     "convert_prometheus"
+    ]
+   }
+  },
+  "/convert/api/prom/rules/{NamespaceTitle}": {
+   "delete": {
+    "operationId": "RouteConvertPrometheusCortexDeleteNamespace",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "NamespaceTitle",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "ConvertPrometheusResponse",
+      "schema": {
+       "$ref": "#/definitions/ConvertPrometheusResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     }
+    },
+    "summary": "Deletes all rule groups that were imported from Prometheus-compatible sources within the specified namespace.",
+    "tags": [
+     "convert_prometheus"
+    ]
+   },
+   "get": {
+    "operationId": "RouteConvertPrometheusCortexGetNamespace",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "NamespaceTitle",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/yaml"
+    ],
+    "responses": {
+     "200": {
+      "description": "PrometheusNamespace",
+      "schema": {
+       "$ref": "#/definitions/PrometheusNamespace"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
+     "404": {
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
+      }
+     }
+    },
+    "summary": "Gets Grafana-managed alert rules that were imported from Prometheus-compatible sources for a specified namespace (folder).",
+    "tags": [
+     "convert_prometheus"
+    ]
+   },
+   "post": {
+    "consumes": [
+     "application/yaml"
+    ],
+    "description": "If the group already exists and was not imported from a Prometheus-compatible source initially,\nit will not be replaced and an error will be returned.",
+    "operationId": "RouteConvertPrometheusCortexPostRuleGroup",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "NamespaceTitle",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "header",
+      "name": "x-grafana-alerting-datasource-uid",
+      "type": "string"
+     },
+     {
+      "in": "header",
+      "name": "x-grafana-alerting-recording-rules-paused",
+      "type": "boolean"
+     },
+     {
+      "in": "header",
+      "name": "x-grafana-alerting-alert-rules-paused",
+      "type": "boolean"
+     },
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/PrometheusRuleGroup"
+      }
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "ConvertPrometheusResponse",
+      "schema": {
+       "$ref": "#/definitions/ConvertPrometheusResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     }
+    },
+    "summary": "Converts a Prometheus rule group into a Grafana rule group and creates or updates it within the specified namespace.",
+    "tags": [
+     "convert_prometheus"
+    ],
+    "x-raw-request": "true"
+   }
+  },
+  "/convert/api/prom/rules/{NamespaceTitle}/{Group}": {
+   "delete": {
+    "operationId": "RouteConvertPrometheusCortexDeleteRuleGroup",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "NamespaceTitle",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "Group",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "ConvertPrometheusResponse",
+      "schema": {
+       "$ref": "#/definitions/ConvertPrometheusResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     }
+    },
+    "summary": "Deletes a specific rule group if it was imported from a Prometheus-compatible source.",
+    "tags": [
+     "convert_prometheus"
+    ]
+   },
+   "get": {
+    "operationId": "RouteConvertPrometheusCortexGetRuleGroup",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "NamespaceTitle",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "Group",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/yaml"
+    ],
+    "responses": {
+     "200": {
+      "description": "PrometheusRuleGroup",
+      "schema": {
+       "$ref": "#/definitions/PrometheusRuleGroup"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
+     "404": {
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
+      }
+     }
+    },
+    "summary": "Gets a single rule group in Prometheus-compatible format if it was imported from a Prometheus-compatible source.",
+    "tags": [
+     "convert_prometheus"
+    ]
+   }
+  },
+  "/convert/prometheus/config/v1/rules": {
+   "get": {
+    "operationId": "RouteConvertPrometheusGetRules",
+    "produces": [
+     "application/yaml"
+    ],
+    "responses": {
+     "200": {
+      "description": "PrometheusNamespace",
+      "schema": {
+       "$ref": "#/definitions/PrometheusNamespace"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
+     "404": {
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
+      }
+     }
+    },
+    "summary": "Gets all Grafana-managed alert rules that were imported from Prometheus-compatible sources, grouped by namespace.",
+    "tags": [
+     "convert_prometheus"
+    ]
+   }
+  },
+  "/convert/prometheus/config/v1/rules/{NamespaceTitle}": {
+   "delete": {
+    "operationId": "RouteConvertPrometheusDeleteNamespace",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "NamespaceTitle",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "ConvertPrometheusResponse",
+      "schema": {
+       "$ref": "#/definitions/ConvertPrometheusResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     }
+    },
+    "summary": "Deletes all rule groups that were imported from Prometheus-compatible sources within the specified namespace.",
+    "tags": [
+     "convert_prometheus"
+    ]
+   },
+   "get": {
+    "operationId": "RouteConvertPrometheusGetNamespace",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "NamespaceTitle",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/yaml"
+    ],
+    "responses": {
+     "200": {
+      "description": "PrometheusNamespace",
+      "schema": {
+       "$ref": "#/definitions/PrometheusNamespace"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
+     "404": {
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
+      }
+     }
+    },
+    "summary": "Gets Grafana-managed alert rules that were imported from Prometheus-compatible sources for a specified namespace (folder).",
+    "tags": [
+     "convert_prometheus"
+    ]
+   },
+   "post": {
+    "consumes": [
+     "application/yaml"
+    ],
+    "description": "If the group already exists and was not imported from a Prometheus-compatible source initially,\nit will not be replaced and an error will be returned.",
+    "operationId": "RouteConvertPrometheusPostRuleGroup",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "NamespaceTitle",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "header",
+      "name": "x-grafana-alerting-datasource-uid",
+      "type": "string"
+     },
+     {
+      "in": "header",
+      "name": "x-grafana-alerting-recording-rules-paused",
+      "type": "boolean"
+     },
+     {
+      "in": "header",
+      "name": "x-grafana-alerting-alert-rules-paused",
+      "type": "boolean"
+     },
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/PrometheusRuleGroup"
+      }
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "ConvertPrometheusResponse",
+      "schema": {
+       "$ref": "#/definitions/ConvertPrometheusResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     }
+    },
+    "summary": "Converts a Prometheus rule group into a Grafana rule group and creates or updates it within the specified namespace.",
+    "tags": [
+     "convert_prometheus"
+    ],
+    "x-raw-request": "true"
+   }
+  },
+  "/convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group}": {
+   "delete": {
+    "operationId": "RouteConvertPrometheusDeleteRuleGroup",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "NamespaceTitle",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "Group",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "ConvertPrometheusResponse",
+      "schema": {
+       "$ref": "#/definitions/ConvertPrometheusResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     }
+    },
+    "summary": "Deletes a specific rule group if it was imported from a Prometheus-compatible source.",
+    "tags": [
+     "convert_prometheus"
+    ]
+   },
+   "get": {
+    "operationId": "RouteConvertPrometheusGetRuleGroup",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "NamespaceTitle",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "Group",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/yaml"
+    ],
+    "responses": {
+     "200": {
+      "description": "PrometheusRuleGroup",
+      "schema": {
+       "$ref": "#/definitions/PrometheusRuleGroup"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
+     "404": {
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
+      }
+     }
+    },
+    "summary": "Gets a single rule group in Prometheus-compatible format if it was imported from a Prometheus-compatible source.",
+    "tags": [
+     "convert_prometheus"
+    ]
+   }
+  },
   "/prometheus/grafana/api/v1/alerts": {
    "get": {
     "description": "gets the current alerts",
@@ -6484,6 +7119,43 @@
       "description": "GettableExtendedRuleNode",
       "schema": {
        "$ref": "#/definitions/GettableExtendedRuleNode"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
+     "404": {
+      "description": " Not found."
+     }
+    },
+    "tags": [
+     "ruler"
+    ]
+   }
+  },
+  "/ruler/grafana/api/v1/rule/{RuleUID}/versions": {
+   "get": {
+    "description": "Get rule versions by UID",
+    "operationId": "RouteGetRuleVersionsByUID",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "RuleUID",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "GettableRuleVersions",
+      "schema": {
+       "$ref": "#/definitions/GettableRuleVersions"
       }
      },
      "403": {
@@ -6786,6 +7458,12 @@
       "description": "ForbiddenError",
       "schema": {
        "$ref": "#/definitions/ForbiddenError"
+      }
+     },
+     "404": {
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
       }
      }
     },
@@ -7257,6 +7935,8 @@
   },
   "/v1/notifications/receivers": {
    "get": {
+    "deprecated": true,
+    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
     "operationId": "RouteGetReceivers",
     "parameters": [
      {
@@ -7304,6 +7984,8 @@
   },
   "/v1/notifications/receivers/{Name}": {
    "get": {
+    "deprecated": true,
+    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
     "operationId": "RouteGetReceiver",
     "parameters": [
      {
@@ -7343,7 +8025,8 @@
   },
   "/v1/notifications/time-intervals": {
    "get": {
-    "description": "Get all the time intervals",
+    "deprecated": true,
+    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
     "operationId": "RouteNotificationsGetTimeIntervals",
     "responses": {
      "200": {
@@ -7356,6 +8039,7 @@
       }
      }
     },
+    "summary": "Get all the time intervals",
     "tags": [
      "notifications"
     ]
@@ -7363,6 +8047,8 @@
   },
   "/v1/notifications/time-intervals/{name}": {
    "get": {
+    "deprecated": true,
+    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
     "operationId": "RouteNotificationsGetTimeInterval",
     "parameters": [
      {
@@ -8452,7 +9138,7 @@
       }
      }
     },
-    "summary": "Get all notification templates.",
+    "summary": "Get all notification template groups.",
     "tags": [
      "provisioning"
     ]
@@ -8463,7 +9149,7 @@
     "operationId": "RouteDeleteTemplate",
     "parameters": [
      {
-      "description": "Template name",
+      "description": "Template group name",
       "in": "path",
       "name": "name",
       "required": true,
@@ -8487,7 +9173,7 @@
       }
      }
     },
-    "summary": "Delete a template.",
+    "summary": "Delete a notification template group.",
     "tags": [
      "provisioning"
     ]
@@ -8496,7 +9182,7 @@
     "operationId": "RouteGetTemplate",
     "parameters": [
      {
-      "description": "Template Name",
+      "description": "Template group name",
       "in": "path",
       "name": "name",
       "required": true,
@@ -8517,7 +9203,7 @@
       }
      }
     },
-    "summary": "Get a notification template.",
+    "summary": "Get a notification template group.",
     "tags": [
      "provisioning"
     ]
@@ -8529,7 +9215,7 @@
     "operationId": "RoutePutTemplate",
     "parameters": [
      {
-      "description": "Template Name",
+      "description": "Template group name",
       "in": "path",
       "name": "name",
       "required": true,
@@ -8568,7 +9254,7 @@
       }
      }
     },
-    "summary": "Updates an existing notification template.",
+    "summary": "Updates an existing notification template group.",
     "tags": [
      "provisioning"
     ]

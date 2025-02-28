@@ -42,7 +42,7 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
   const onDataSourceChange = (dsInstanceSettings: DataSourceInstanceSettings) => {
     const datasource = getDataSourceRef(dsInstanceSettings);
 
-    if (variable.state.datasource && variable.state.datasource.type !== datasource.type) {
+    if ((variable.state.datasource?.type || '') !== datasource.type) {
       variable.setState({ datasource, query: '', definition: '' });
       return;
     }

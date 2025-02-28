@@ -7,8 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/authlib/claims"
 	"go.opentelemetry.io/otel"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/star"
@@ -41,28 +43,24 @@ type dashboardStore struct {
 
 // SQL bean helper to save tags
 type dashboardTag struct {
-	Id          int64
-	DashboardId int64
-	Term        string
+	Id           int64
+	OrgID        int64 `xorm:"org_id"`
+	DashboardId  int64
+	DashboardUID string `xorm:"dashboard_uid"`
+	Term         string
 }
 
 // DashboardStore implements the Store interface
 var _ dashboards.Store = (*dashboardStore)(nil)
 
-func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tagService tag.Service, quotaService quota.Service) (dashboards.Store, error) {
+func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tagService tag.Service) (dashboards.Store, error) {
 	s := &dashboardStore{store: sqlStore, cfg: cfg, log: log.New("dashboard-store"), features: features, tagService: tagService}
 
-	defaultLimits, err := readQuotaConfig(cfg)
+	// fill out dashboard_uid and org_id for dashboard_tags
+	// need to run this at startup in case any downgrade happened after the initial migration
+	err := migrations.RunDashboardTagMigrations(sqlStore.GetEngine().NewSession(), sqlStore.GetDialect().DriverName())
 	if err != nil {
-		return nil, err
-	}
-
-	if err := quotaService.RegisterQuotaReporter(&quota.NewUsageReporter{
-		TargetSrv:     dashboards.QuotaTargetSrv,
-		DefaultLimits: defaultLimits,
-		Reporter:      s.Count,
-	}); err != nil {
-		return nil, err
+		s.log.Error("Failed to run dashboard_tag migrations", "err", err)
 	}
 
 	return s, nil
@@ -72,6 +70,8 @@ func (d *dashboardStore) emitEntityEvent() bool {
 	return d.features != nil && d.features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearch)
 }
 
+// TODO: once the folder service removes usage of this function, remove it here. The dashboard service now implements this
+// on the service level for dashboards.
 func (d *dashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dashboard *dashboards.Dashboard, overwrite bool) (bool, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.ValidateDashboardBeforesave")
 	defer span.End()
@@ -146,25 +146,51 @@ func (d *dashboardStore) GetProvisionedDashboardData(ctx context.Context, name s
 	return result, err
 }
 
-func (d *dashboardStore) SaveProvisionedDashboard(ctx context.Context, cmd dashboards.SaveDashboardCommand, provisioning *dashboards.DashboardProvisioning) (*dashboards.Dashboard, error) {
+func (d *dashboardStore) GetProvisionedDashboardsByName(ctx context.Context, name string) ([]*dashboards.Dashboard, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.database.GetProvisionedDashboardsByName")
+	defer span.End()
+
+	dashes := []*dashboards.Dashboard{}
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table(`dashboard`).
+			Join(`INNER`, `dashboard_provisioning`, `dashboard.id = dashboard_provisioning.dashboard_id`).
+			Where(`dashboard_provisioning.name = ?`, name).Find(&dashes)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return dashes, nil
+}
+
+func (d *dashboardStore) GetOrphanedProvisionedDashboards(ctx context.Context, notIn []string) ([]*dashboards.Dashboard, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.database.GetOrphanedProvisionedDashboards")
+	defer span.End()
+
+	dashes := []*dashboards.Dashboard{}
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table(`dashboard`).
+			Join(`INNER`, `dashboard_provisioning`, `dashboard.id = dashboard_provisioning.dashboard_id`).
+			NotIn(`dashboard_provisioning.name`, notIn).Find(&dashes)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return dashes, nil
+}
+
+func (d *dashboardStore) SaveProvisionedDashboard(ctx context.Context, dash *dashboards.Dashboard, provisioning *dashboards.DashboardProvisioning) error {
 	ctx, span := tracer.Start(ctx, "dashboards.database.SaveProvisionedDashboard")
 	defer span.End()
 
-	var result *dashboards.Dashboard
-	var err error
-	err = d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		result, err = saveDashboard(sess, &cmd, d.emitEntityEvent())
-		if err != nil {
-			return err
-		}
-
+	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		if provisioning.Updated == 0 {
-			provisioning.Updated = result.Updated.Unix()
+			provisioning.Updated = dash.Updated.Unix()
 		}
 
-		return saveProvisionedData(sess, provisioning, result)
+		return saveProvisionedData(sess, provisioning, dash)
 	})
-	return result, err
+
+	return err
 }
 
 func (d *dashboardStore) SaveDashboard(ctx context.Context, cmd dashboards.SaveDashboardCommand) (*dashboards.Dashboard, error) {
@@ -273,6 +299,24 @@ func (d *dashboardStore) Count(ctx context.Context, scopeParams *quota.ScopePara
 	return u, nil
 }
 
+func (d *dashboardStore) CountInOrg(ctx context.Context, orgID int64) (int64, error) {
+	type result struct {
+		Count int64
+	}
+	r := result{}
+	if err := d.store.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM dashboard WHERE org_id=? AND is_folder=%s", d.store.GetDialect().BooleanStr(false))
+		if _, err := sess.SQL(rawSQL, orgID).Get(&r); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return 0, err
+	}
+
+	return r.Count, nil
+}
+
 func getExistingDashboardByIDOrUIDForUpdate(sess *db.Session, dash *dashboards.Dashboard, overwrite bool) (bool, error) {
 	dashWithIdExists := false
 	isParentFolderChanged := false
@@ -354,6 +398,20 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 
 	if userId == 0 {
 		userId = -1
+	}
+
+	// we don't save FolderID in kubernetes object when saving through k8s
+	// this block guarantees we save dashboards with folder_id and folder_uid in those cases
+	if !dash.IsFolder && dash.FolderUID != "" && dash.FolderID == 0 { // nolint:staticcheck
+		var existing dashboards.Dashboard
+		folderIdFound, err := sess.Where("uid=? AND org_id=?", dash.FolderUID, dash.OrgID).Get(&existing)
+		if err != nil {
+			return nil, err
+		}
+
+		if folderIdFound {
+			dash.FolderID = existing.ID // nolint:staticcheck
+		}
 	}
 
 	if dash.ID > 0 {
@@ -438,7 +496,7 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 	}
 
 	// delete existing tags
-	if _, err = sess.Exec("DELETE FROM dashboard_tag WHERE dashboard_id=?", dash.ID); err != nil {
+	if _, err = sess.Exec("DELETE FROM dashboard_tag WHERE dashboard_uid=? AND org_id=?", dash.UID, dash.OrgID); err != nil {
 		return nil, err
 	}
 
@@ -446,7 +504,7 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 	tags := dash.GetTags()
 	if len(tags) > 0 {
 		for _, tag := range tags {
-			if _, err := sess.Insert(dashboardTag{DashboardId: dash.ID, Term: tag}); err != nil {
+			if _, err := sess.Insert(dashboardTag{DashboardId: dash.ID, Term: tag, OrgID: dash.OrgID, DashboardUID: dash.UID}); err != nil {
 				return nil, err
 			}
 		}
@@ -604,7 +662,7 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 	}
 
 	sqlStatements := []statement{
-		{SQL: "DELETE FROM dashboard_tag WHERE dashboard_id = ? ", args: []any{dashboard.ID}},
+		{SQL: "DELETE FROM dashboard_tag WHERE dashboard_uid = ? AND org_id = ?", args: []any{dashboard.UID, dashboard.OrgID}},
 		{SQL: "DELETE FROM star WHERE dashboard_id = ? ", args: []any{dashboard.ID}},
 		{SQL: "DELETE FROM dashboard WHERE id = ?", args: []any{dashboard.ID}},
 		{SQL: "DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?", args: []any{dashboard.ID}},
@@ -655,6 +713,55 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 		}
 	}
 	return nil
+}
+
+func (d *dashboardStore) CleanupAfterDelete(ctx context.Context, cmd *dashboards.DeleteDashboardCommand) error {
+	type statement struct {
+		SQL  string
+		args []any
+	}
+	sqlStatements := []statement{
+		{SQL: "DELETE FROM dashboard_tag WHERE dashboard_uid = ? AND org_id = ?", args: []any{cmd.UID, cmd.OrgID}},
+		{SQL: "DELETE FROM star WHERE dashboard_uid = ? AND org_id = ?", args: []any{cmd.UID, cmd.OrgID}},
+		{SQL: "DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?", args: []any{cmd.ID}},
+		{SQL: "DELETE FROM dashboard_version WHERE dashboard_id = ?", args: []any{cmd.ID}},
+		{SQL: "DELETE FROM dashboard_provisioning WHERE dashboard_id = ?", args: []any{cmd.ID}},
+		{SQL: "DELETE FROM dashboard_acl WHERE dashboard_id = ?", args: []any{cmd.ID}},
+		{SQL: "DELETE FROM annotation WHERE dashboard_id = ? AND org_id = ?", args: []any{cmd.ID, cmd.OrgID}},
+	}
+
+	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+			for _, stmnt := range sqlStatements {
+				_, err := sess.Exec(append([]any{stmnt.SQL}, stmnt.args...)...)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+
+		if err := d.deleteResourcePermissions(sess, cmd.OrgID, ac.GetResourceScopeUID("dashboards", cmd.UID)); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return err
+}
+
+func (d *dashboardStore) DeleteAllDashboards(ctx context.Context, orgID int64) error {
+	ctx, span := tracer.Start(ctx, "dashboards.database.DeleteAllDashboards")
+	defer span.End()
+
+	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Where("org_id = ?", orgID).Delete(&dashboards.Dashboard{})
+		return err
+	})
 }
 
 // FIXME: Remove me and handle nested deletions in the service with the DashboardPermissionsService
@@ -935,8 +1042,8 @@ func (d *dashboardStore) GetDashboardTags(ctx context.Context, query *dashboards
 					  COUNT(*) as count,
 						term
 					FROM dashboard
-					INNER JOIN dashboard_tag on dashboard_tag.dashboard_id = dashboard.id
-					WHERE dashboard.org_id=?
+					INNER JOIN dashboard_tag on dashboard_tag.dashboard_uid = dashboard.uid
+					WHERE dashboard_tag.org_id=?
 					GROUP BY term
 					ORDER BY term`
 
@@ -1028,6 +1135,21 @@ func (d *dashboardStore) GetAllDashboards(ctx context.Context) ([]*dashboards.Da
 	return dashboards, nil
 }
 
+func (d *dashboardStore) GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*dashboards.Dashboard, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.database.GetAllDashboardsByOrgId")
+	defer span.End()
+
+	var dashs = make([]*dashboards.Dashboard, 0)
+	err := d.store.WithDbSession(ctx, func(session *db.Session) error {
+		// "deleted IS NULL" is to avoid deleted dashboards
+		return session.Where("org_id = ? AND deleted IS NULL", orgID).Find(&dashs)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return dashs, nil
+}
+
 func (d *dashboardStore) GetSoftDeletedExpiredDashboards(ctx context.Context, duration time.Duration) ([]*dashboards.Dashboard, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.GetSoftDeletedExpiredDashboards")
 	defer span.End()
@@ -1041,25 +1163,4 @@ func (d *dashboardStore) GetSoftDeletedExpiredDashboards(ctx context.Context, du
 		return nil, err
 	}
 	return dashboards, nil
-}
-
-func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
-	limits := &quota.Map{}
-
-	if cfg == nil {
-		return limits, nil
-	}
-
-	globalQuotaTag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.GlobalScope)
-	if err != nil {
-		return &quota.Map{}, err
-	}
-	orgQuotaTag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.OrgScope)
-	if err != nil {
-		return &quota.Map{}, err
-	}
-
-	limits.Set(globalQuotaTag, cfg.Quota.Global.Dashboard)
-	limits.Set(orgQuotaTag, cfg.Quota.Org.Dashboard)
-	return limits, nil
 }

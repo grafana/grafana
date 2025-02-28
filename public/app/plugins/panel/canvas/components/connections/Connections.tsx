@@ -189,10 +189,10 @@ export class Connections {
       // this.connectionAnchorDiv.style.left = `${relativeLeft / transformScale}px`;
       // this.connectionAnchorDiv.style.height = `${elementBoundingRect.height / transformScale}px`;
       // this.connectionAnchorDiv.style.width = `${elementBoundingRect.width / transformScale}px`;
-      this.connectionAnchorDiv.style.top = `${top}px` ?? '0';
-      this.connectionAnchorDiv.style.left = `${left}px` ?? '0';
-      this.connectionAnchorDiv.style.height = `${height}px` ?? '0';
-      this.connectionAnchorDiv.style.width = `${width}px` ?? '0';
+      this.connectionAnchorDiv.style.top = `${top}px`;
+      this.connectionAnchorDiv.style.left = `${left}px`;
+      this.connectionAnchorDiv.style.height = `${height}px`;
+      this.connectionAnchorDiv.style.width = `${width}px`;
     }
   };
 
@@ -225,8 +225,8 @@ export class Connections {
       return;
     }
 
-    const x = (event.pageX - parentBoundingRect.x) / scale ?? 0;
-    const y = (event.pageY - parentBoundingRect.y) / scale ?? 0;
+    const x = (event.pageX - parentBoundingRect.x) / scale;
+    const y = (event.pageY - parentBoundingRect.y) / scale;
 
     this.connectionLine.setAttribute('x2', `${x}`);
     this.connectionLine.setAttribute('y2', `${y}`);
@@ -374,8 +374,8 @@ export class Connections {
       return;
     }
 
-    const x = (event.pageX - parentBoundingRect.x) / scale ?? 0;
-    const y = (event.pageY - parentBoundingRect.y) / scale ?? 0;
+    const x = (event.pageX - parentBoundingRect.x) / scale;
+    const y = (event.pageY - parentBoundingRect.y) / scale;
 
     this.connectionVertex?.setAttribute('cx', `${x}`);
     this.connectionVertex?.setAttribute('cy', `${y}`);
@@ -539,8 +539,8 @@ export class Connections {
       return;
     }
 
-    const x = (event.pageX - parentBoundingRect.x) / transformScale ?? 0;
-    const y = (event.pageY - parentBoundingRect.y) / transformScale ?? 0;
+    const x = (event.pageX - parentBoundingRect.x) / transformScale;
+    const y = (event.pageY - parentBoundingRect.y) / transformScale;
 
     this.connectionVertex?.setAttribute('cx', `${x}`);
     this.connectionVertex?.setAttribute('cy', `${y}`);

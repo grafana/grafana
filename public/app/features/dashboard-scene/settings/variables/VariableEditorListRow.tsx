@@ -6,13 +6,18 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable } from '@grafana/scenes';
-import { Button, ConfirmModal, Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, ConfirmModal, Icon, IconButton, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+
+import { VariableUsagesButton } from '../../variables/VariableUsagesButton';
+import { UsagesToNetwork, VariableUsageTree, getVariableUsages } from '../../variables/utils';
 
 import { getDefinition } from './utils';
 
 export interface VariableEditorListRowProps {
   index: number;
   variable: SceneVariable;
+  usageTree: VariableUsageTree[];
+  usagesNetwork: UsagesToNetwork[];
   onEdit: (identifier: string) => void;
   onDuplicate: (identifier: string) => void;
   onDelete: (identifier: string) => void;
@@ -21,6 +26,8 @@ export interface VariableEditorListRowProps {
 export function VariableEditorListRow({
   index,
   variable,
+  usageTree,
+  usagesNetwork,
   onEdit: propsOnEdit,
   onDuplicate: propsOnDuplicate,
   onDelete: propsOnDelete,
@@ -30,6 +37,8 @@ export function VariableEditorListRow({
   const definition = getDefinition(variable);
   const variableState = variable.state;
   const identifier = variableState.name;
+  const usages = getVariableUsages(identifier, usageTree);
+  const passed = usages > 0 || variableState.type === 'adhoc';
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const handleDeleteVariableModal = (show: boolean) => () => {
     setShowDeleteModal(show);
@@ -79,6 +88,12 @@ export function VariableEditorListRow({
 
           <td role="gridcell" className={styles.column}>
             <div className={styles.icons}>
+              <VariableCheckIndicator passed={passed} />
+              <VariableUsagesButton
+                id={variableState.name}
+                isAdhoc={variableState.type === 'adhoc'}
+                usages={usagesNetwork}
+              />
               <IconButton
                 onClick={(event) => {
                   event.preventDefault();
@@ -119,6 +134,35 @@ export function VariableEditorListRow({
         </tr>
       )}
     </Draggable>
+  );
+}
+
+interface VariableCheckIndicatorProps {
+  passed: boolean;
+}
+
+function VariableCheckIndicator({ passed }: VariableCheckIndicatorProps): ReactElement {
+  const styles = useStyles2(getStyles);
+  if (passed) {
+    return (
+      <Tooltip content="This variable is referenced by other variables or dashboard.">
+        <Icon
+          name="check"
+          className={styles.iconPassed}
+          aria-label="This variable is referenced by other variables or dashboard."
+        />
+      </Tooltip>
+    );
+  }
+
+  return (
+    <Tooltip content="This variable is not referenced by other variables or dashboard.">
+      <Icon
+        name="exclamation-triangle"
+        className={styles.iconFailed}
+        aria-label="This variable is not referenced by any variable or dashboard."
+      />
+    </Tooltip>
   );
 }
 

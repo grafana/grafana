@@ -30,6 +30,7 @@ var (
 	defaultPreinstallPlugins = map[string]InstallPlugin{
 		// Default preinstalled plugins
 		"grafana-lokiexplore-app": {"grafana-lokiexplore-app", "", ""},
+		"grafana-pyroscope-app":   {"grafana-pyroscope-app", "", ""},
 	}
 )
 
@@ -53,6 +54,9 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		// Add the default preinstalled plugins
 		for _, plugin := range defaultPreinstallPlugins {
 			preinstallPlugins[plugin.ID] = plugin
+		}
+		if cfg.IsFeatureToggleEnabled("grafanaAdvisor") { // Use literal string to avoid circular dependency
+			preinstallPlugins["grafana-advisor-app"] = InstallPlugin{"grafana-advisor-app", "", ""}
 		}
 		// Add the plugins defined in the configuration
 		for _, plugin := range rawInstallPlugins {
