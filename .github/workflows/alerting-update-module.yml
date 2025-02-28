@@ -136,32 +136,45 @@ jobs:
           app-id: ${{ env.GITHUB_APP_ID }}
           private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@67ccf781d68cd99b580ae25a5c18a1cc84ffff1f # 7.0.6
-        id: create-pr
+      - name: Create branch and push changes
         env:
-          GIT_TRACE: 1
-          GIT_CURL_VERBOSE: 1
-        with:
-          token: '${{ steps.generate_token.outputs.token }}'
-          title: "${{ inputs.branch == 'main' && 'Alerting: Update alerting module to ' || format('[{0}] Alerting: Update alerting module to ', inputs.branch) }}${{ steps.latest-commit.outputs.to_commit }}"
-          base: '${{inputs.branch}}'
-          branch: '${{ steps.verify-branches.outputs.pr_branch }}'
-          delete-branch: true
-          body: |
-            Updates Grafana Alerting module to latest version in the branch `${{ inputs.branch }}`  
-
-            Compare changes: https://github.com/grafana/alerting/compare/${{ steps.current-commit.outputs.from_commit }}...${{ steps.latest-commit.outputs.to_commit }}
-            <details>
-            <summary>Commits</summary>
-            
-            ${{ steps.check-commits.outputs.alerting_commits }}
-
-            </details>
-
-            Created by: [GitHub Action Job](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-      - name: Add PR URL to Summary
-        if: steps.create-pr.outputs.pull-request-url != ''
+          GH_TOKEN: '${{ steps.generate_token.outputs.token }}'
         run: |
-          echo "## Pull Request Created" >> $GITHUB_STEP_SUMMARY
-          echo "🔗 [View Pull Request](${{ steps.create-pr.outputs.pull-request-url }})" >> $GITHUB_STEP_SUMMARY
+          # Create and checkout new branch
+          git checkout -b ${{ steps.verify-branches.outputs.pr_branch }}
+          
+          # Stage all changes
+          git add .
+          
+          # Commit changes
+          git commit -m "Update alerting module to latest version"
+          
+          # Push to remote
+          git push origin ${{ steps.verify-branches.outputs.pr_branch }}
+
+#      - name: Create Pull Request
+#        uses: peter-evans/create-pull-request@67ccf781d68cd99b580ae25a5c18a1cc84ffff1f # 7.0.6
+#        id: create-pr
+#        with:
+#          token: '${{ steps.generate_token.outputs.token }}'
+#          title: "${{ inputs.branch == 'main' && 'Alerting: Update alerting module to ' || format('[{0}] Alerting: Update alerting module to ', inputs.branch) }}${{ steps.latest-commit.outputs.to_commit }}"
+#          base: '${{inputs.branch}}'
+#          branch: '${{ steps.verify-branches.outputs.pr_branch }}'
+#          delete-branch: false
+#          body: |
+#            Updates Grafana Alerting module to latest version in the branch `${{ inputs.branch }}`
+#
+#            Compare changes: https://github.com/grafana/alerting/compare/${{ steps.current-commit.outputs.from_commit }}...${{ steps.latest-commit.outputs.to_commit }}
+#            <details>
+#            <summary>Commits</summary>
+#
+#            ${{ steps.check-commits.outputs.alerting_commits }}
+#
+#            </details>
+#
+#            Created by: [GitHub Action Job](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+#      - name: Add PR URL to Summary
+#        if: steps.create-pr.outputs.pull-request-url != ''
+#        run: |
+#          echo "## Pull Request Created" >> $GITHUB_STEP_SUMMARY
+#          echo "🔗 [View Pull Request](${{ steps.create-pr.outputs.pull-request-url }})" >> $GITHUB_STEP_SUMMARY
