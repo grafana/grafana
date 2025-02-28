@@ -245,13 +245,30 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     // We use resource group URI for the filtering here because resource group names are not unique across subscriptions
     // We also add a slash at the end of the resource group URI to ensure we do not pull resources from a resource group
     // that has a similar naming prefix e.g. resourceGroup1 and resourceGroup10
-    const { data: response } = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(`
-      resources
-      | where id hasprefix "${resourceGroupUri}/"
-      ${await this.filterByType(type)}
-    `);
+    const query = `
+    resources 
+    | where id hasprefix "${resourceGroupUri}/"
+    ${await this.filterByType(type)}
+    | order by tolower(name) asc`;
 
-    return response.map((item) => {
+    let resources: RawAzureResourceItem[] = [];
+    let allFetched = false;
+    let $skipToken = undefined;
+    while (!allFetched) {
+      // The response may include several pages
+      let options: Partial<AzureResourceGraphOptions> = {};
+      if ($skipToken) {
+        options = {
+          $skipToken,
+        };
+      }
+      const resourceResponse = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(query, 1, options);
+      resources = resources.concat(resourceResponse.data);
+      $skipToken = resourceResponse.$skipToken;
+      allFetched = !$skipToken;
+    }
+
+    return resources.map((item) => {
       const parsedUri = parseResourceURI(item.id);
       if (!parsedUri || !parsedUri.resourceName) {
         throw new Error('unable to fetch resource details');
