@@ -494,6 +494,123 @@ describe('calculateField transformer w/ timeseries', () => {
     });
   });
 
+  it('transforms multiple queries + field + field in the old format', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        binary: {
+          left: 'A',
+          operator: '+',
+          reducer: 'sum',
+          right: 'B',
+        },
+        mode: CalculateFieldMode.BinaryOperation,
+        reduce: {
+          reducer: 'sum',
+        },
+        replaceFields: true,
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesA, seriesBC])).toEmitValuesWith((received) => {
+      const data = received[0];
+      expect(data).toEqual([
+        {
+          fields: [
+            {
+              config: {},
+              name: 'TheTime',
+              state: {
+                displayName: 'TheTime',
+                multipleFrames: false,
+              },
+              type: 'time',
+              values: [1000, 2000],
+            },
+            {
+              config: {},
+              name: 'A + B',
+              type: 'number',
+              values: [3, 300],
+            },
+          ],
+          length: 2,
+          refId: 'joinByField--',
+        },
+      ]);
+    });
+  });
+
+  it('transforms multiple queries + field + field in the old format (non existent right field)', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        binary: {
+          left: 'A',
+          operator: '+',
+          reducer: 'sum',
+          right: 'Z',
+        },
+        mode: CalculateFieldMode.BinaryOperation,
+        reduce: {
+          reducer: 'sum',
+        },
+        replaceFields: true,
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesA, seriesBC])).toEmitValuesWith((received) => {
+      const data = received[0];
+      expect(data).toEqual([]);
+    });
+  });
+
+  it('transforms multiple queries + field + number in the old format and does not join', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        binary: {
+          left: 'A',
+          operator: '+',
+          reducer: 'sum',
+          right: '1336',
+        },
+        mode: CalculateFieldMode.BinaryOperation,
+        reduce: {
+          reducer: 'sum',
+        },
+        replaceFields: true,
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesA, seriesBC])).toEmitValuesWith((received) => {
+      const data = received[0];
+      expect(data).toEqual([
+        {
+          fields: [
+            {
+              config: {},
+              name: 'TheTime',
+              state: {
+                displayName: 'TheTime',
+                multipleFrames: true,
+              },
+              type: 'time',
+              values: [1000, 2000],
+            },
+            {
+              config: {},
+              name: 'A + 1336',
+              type: 'number',
+              values: [1337, 1436],
+            },
+          ],
+          length: 2,
+        },
+      ]);
+    });
+  });
+
   it('reduces all field', async () => {
     const cfg = {
       id: DataTransformerID.calculateField,
