@@ -113,7 +113,6 @@ This procedure uses dashboard variables and templates to allow you to enter trac
 1. Verify that the panel works by using a valid trace ID for the data source used for the trace panel and editing the ID in the dashboard variable.
 
    {{< figure src="/static/img/docs/panels/traces/screenshot-traces-traceid-panel.png" alt="Results of query in trace panel" >}}
-   <!-- update this image -->
 
 ## Add TraceQL with table visualizations
 
@@ -138,8 +137,6 @@ When results are returned from a query, the results are rendered in the panel’
 {{< figure src="/static/img/docs/panels/traces/screenshot-traces-returned-query.png" alt="Results of a returned query in the panel table" >}}
 
 ### Use a variable to add other links to traces
-
-<!-- try to update these images -->
 
 The results in the traces visualization include links to the **Explore** page that renders the trace. You can add other links to traces in the table that fill in the `traceId` dashboard variable when selected, so that the trace is visualized in the same dashboard.
 
