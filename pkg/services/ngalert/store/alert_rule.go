@@ -330,7 +330,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 				return fmt.Errorf("failed to convert alert rule %s to storage model: %w", r.New.UID, err)
 			}
 			// no way to update multiple rules at once
-			if updated, err := sess.ID(r.Existing.ID).AllCols().Update(converted); err != nil || updated == 0 {
+			if updated, err := sess.ID(r.Existing.ID).AllCols().Omit("rule_guid").Update(converted); err != nil || updated == 0 {
 				if err != nil {
 					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
 						return ruleConstraintViolationToErr(sess, r.New, err, st.Logger)
