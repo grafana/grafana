@@ -31,6 +31,7 @@ func newNotifier(b *backend) (eventNotifier, error) {
 			tracer:          b.tracer,
 			bulkLock:        b.bulkLock,
 			listLatestRVs:   b.listLatestRVs,
+			storageMetrics:  b.storageMetrics,
 			historyPoll: func(ctx context.Context, grp string, res string, since int64) ([]*historyPollResponse, error) {
 				var records []*historyPollResponse
 				err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
