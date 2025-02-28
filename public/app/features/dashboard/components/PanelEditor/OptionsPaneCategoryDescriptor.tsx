@@ -16,7 +16,7 @@ export interface OptionsPaneCategoryDescriptorProps {
   itemsCount?: number;
   customRender?: () => React.ReactNode;
   sandboxId?: string;
-  alwaysExpanded?: boolean;
+  isOpenable?: boolean;
 }
 
 /**

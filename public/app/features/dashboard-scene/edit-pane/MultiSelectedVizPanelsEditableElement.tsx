@@ -8,7 +8,7 @@ import { EditableDashboardElementInfo } from '../scene/types/EditableDashboardEl
 import { MultiSelectedEditableDashboardElement } from '../scene/types/MultiSelectedEditableDashboardElement';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 
-import { renderTitle } from './shared';
+import { EditPaneHeader } from './EditPaneHeader';
 
 export class MultiSelectedVizPanelsEditableElement implements MultiSelectedEditableDashboardElement {
   public readonly isMultiSelectedEditableDashboardElement = true;
@@ -26,15 +26,15 @@ export class MultiSelectedVizPanelsEditableElement implements MultiSelectedEdita
     const header = new OptionsPaneCategoryDescriptor({
       title: ``,
       id: 'panel-header',
-      isOpenDefault: true,
-      alwaysExpanded: true,
-      renderTitle: () =>
-        renderTitle({
-          title: t('dashboard.layout.common.panels-title', '{{length}} Panels Selected', {
+      isOpenable: false,
+      renderTitle: () => (
+        <EditPaneHeader
+          title={t('dashboard.layout.common.panels-title', '{{length}} Panels Selected', {
             length: this._panels.length,
-          }),
-          onDelete: () => this.onDelete(),
-        }),
+          })}
+          onDelete={() => this.onDelete()}
+        />
+      ),
     });
 
     return [header];

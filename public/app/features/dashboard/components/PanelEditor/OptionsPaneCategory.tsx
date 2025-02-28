@@ -21,7 +21,7 @@ export interface OptionsPaneCategoryProps {
   isNested?: boolean;
   children: ReactNode;
   sandboxId?: string;
-  alwaysExpanded?: boolean;
+  isOpenable?: boolean;
 }
 
 const CATEGORY_PARAM_NAME = 'showCategory' as const;
@@ -38,13 +38,13 @@ export const OptionsPaneCategory = React.memo(
     itemsCount,
     isNested = false,
     sandboxId,
-    alwaysExpanded,
+    isOpenable = true,
   }: OptionsPaneCategoryProps) => {
     const [savedState, setSavedState] = useLocalStorage(getOptionGroupStorageKey(id), {
       isExpanded: isOpenDefault,
     });
 
-    const [isExpanded, setIsExpanded] = useState(alwaysExpanded || (savedState?.isExpanded ?? isOpenDefault));
+    const [isExpanded, setIsExpanded] = useState(!isOpenable || (savedState?.isExpanded ?? isOpenDefault));
     const manualClickTime = useRef(0);
     const ref = useRef<HTMLDivElement>(null);
     const [queryParams, updateQueryParams] = useQueryParams();
@@ -68,7 +68,7 @@ export const OptionsPaneCategory = React.memo(
     }, [forceOpen, isExpanded, isOpenFromUrl]);
 
     const onToggle = useCallback(() => {
-      if (alwaysExpanded) {
+      if (!isOpenable) {
         return;
       }
       manualClickTime.current = Date.now();
@@ -80,7 +80,7 @@ export const OptionsPaneCategory = React.memo(
       );
       setSavedState({ isExpanded: !isExpanded });
       setIsExpanded(!isExpanded);
-    }, [alwaysExpanded, updateQueryParams, isExpanded, id, setSavedState]);
+    }, [isOpenable, updateQueryParams, isExpanded, id, setSavedState]);
 
     if (!renderTitle) {
       renderTitle = function defaultTitle(isExpanded: boolean) {
@@ -106,7 +106,7 @@ export const OptionsPaneCategory = React.memo(
     );
 
     const headerStyles = cx(styles.header, {
-      [styles.headerHover]: !alwaysExpanded,
+      [styles.headerHover]: isOpenable,
       [styles.headerExpanded]: isExpanded,
       [styles.headerNested]: isNested,
     });
@@ -129,7 +129,7 @@ export const OptionsPaneCategory = React.memo(
           <h6 id={`button-${id}`} className={styles.title}>
             {renderTitle(isExpanded)}
           </h6>
-          {!alwaysExpanded ? (
+          {isOpenable ? (
             <Button
               data-testid={selectors.components.OptionsGroup.toggle(id)}
               type="button"

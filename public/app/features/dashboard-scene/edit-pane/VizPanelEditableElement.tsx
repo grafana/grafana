@@ -20,7 +20,7 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getEditPanelUrl } from '../utils/urlBuilders';
 import { getPanelIdForVizPanel } from '../utils/utils';
 
-import { renderTitle } from './shared';
+import { EditPaneHeader } from './EditPaneHeader';
 
 export class VizPanelEditableElement implements EditableDashboardElement, BulkActionElement {
   public readonly isEditableDashboardElement = true;
@@ -44,10 +44,10 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
       return new OptionsPaneCategoryDescriptor({
         title: ``,
         id: 'panel-header',
-        isOpenDefault: true,
-        alwaysExpanded: true,
-        renderTitle: () =>
-          renderTitle({ title: t('dashboard.viz-panel.options.title', 'Panel'), onDelete: () => this.onDelete() }),
+        isOpenable: false,
+        renderTitle: () => (
+          <EditPaneHeader title={t('dashboard.viz-panel.options.title', 'Panel')} onDelete={() => this.onDelete()} />
+        ),
       })
         .addItem(
           new OptionsPaneItemDescriptor({
@@ -60,26 +60,20 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
             title: t('dashboard.viz-panel.options.title-option', 'Title'),
             value: panel.state.title,
             popularRank: 1,
-            render: function renderTitle() {
-              return <PanelFrameTitleInput panel={panel} />;
-            },
+            render: () => <PanelFrameTitleInput panel={panel} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.viz-panel.options.description', 'Description'),
             value: panel.state.description,
-            render: function renderDescription() {
-              return <PanelDescriptionTextArea panel={panel} />;
-            },
+            render: () => <PanelDescriptionTextArea panel={panel} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.viz-panel.options.transparent-background', 'Transparent background'),
-            render: function renderTransparent() {
-              return <PanelBackgroundSwitch panel={panel} />;
-            },
+            render: () => <PanelBackgroundSwitch panel={panel} />,
           })
         );
     }, [panel]);
@@ -116,22 +110,24 @@ const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
   const imgSrc = plugin?.meta.info.logos.small;
 
   return (
-    <>
-      <Stack alignItems="center" width="100%">
-        {plugin ? (
-          <Tooltip content={t('dashboard.viz-panel.options.open-edit', 'Open Panel Edit')}>
-            <a
-              href={textUtil.sanitizeUrl(getEditPanelUrl(getPanelIdForVizPanel(panel)))}
-              className={cx(styles.pluginDescriptionWrapper)}
-            >
-              <img className={styles.panelVizImg} src={imgSrc} alt="Image of plugin type" />
-              <Text truncate>{plugin.meta.name}</Text>
-              <Icon className={styles.panelVizIcon} name="sliders-v-alt" />
-            </a>
-          </Tooltip>
-        ) : null}
-      </Stack>
-    </>
+    <Stack alignItems="center" width="100%">
+      {plugin ? (
+        <Tooltip content={t('dashboard.viz-panel.options.open-edit', 'Open Panel Edit')}>
+          <a
+            href={textUtil.sanitizeUrl(getEditPanelUrl(getPanelIdForVizPanel(panel)))}
+            className={cx(styles.pluginDescriptionWrapper)}
+          >
+            <img
+              className={styles.panelVizImg}
+              src={imgSrc}
+              alt={t('dashboard.viz-panel.options.plugin-type-image', 'Image of plugin type')}
+            />
+            <Text truncate>{plugin.meta.name}</Text>
+            <Icon className={styles.panelVizIcon} name="sliders-v-alt" />
+          </a>
+        </Tooltip>
+      ) : null}
+    </Stack>
   );
 };
 

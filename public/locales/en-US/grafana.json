@@ -1324,6 +1324,7 @@
       "options": {
         "description": "Description",
         "open-edit": "Open Panel Edit",
+        "plugin-type-image": "Image of plugin type",
         "title": "Panel",
         "title-option": "Title",
         "transparent-background": "Transparent background"

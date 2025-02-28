@@ -27,14 +27,16 @@ export interface MultiSelectedEditableDashboardElement {
    * Panel Actions
    **/
   renderActions?(): ReactNode;
+
   /**
    * Return custom title for the edit panel header
    */
   renderTitle?(): ReactNode;
+
   /**
    * determines if first edit panel header can be collapsed
    */
-  alwaysExpanded?: Readonly<boolean>;
+  isOpenable?: Readonly<boolean>;
 }
 
 export function isMultiSelectedEditableDashboardElement(obj: object): obj is MultiSelectedEditableDashboardElement {
