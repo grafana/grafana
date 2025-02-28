@@ -199,11 +199,11 @@ func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient
 	})
 }
 
-func newParquetClient(file *os.File) (resource.BatchStoreClient, error) {
+func newParquetClient(file *os.File) (resource.BulkStoreClient, error) {
 	writer, err := parquet.NewParquetWriter(file)
 	if err != nil {
 		return nil, err
 	}
-	client := parquet.NewBatchResourceWriterClient(writer)
+	client := parquet.NewBulkResourceWriterClient(writer)
 	return client, nil
 }

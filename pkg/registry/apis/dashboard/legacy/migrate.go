@@ -25,7 +25,7 @@ import (
 
 type MigrateOptions struct {
 	Namespace    string
-	Store        resource.BatchStoreClient
+	Store        resource.BulkStoreClient
 	LargeObjects apistore.LargeObjectSupport
 	BlobStore    resource.BlobStoreClient
 	Resources    []schema.GroupResource
@@ -36,7 +36,7 @@ type MigrateOptions struct {
 
 // Read from legacy and write into unified storage
 type LegacyMigrator interface {
-	Migrate(ctx context.Context, opts MigrateOptions) (*resource.BatchResponse, error)
+	Migrate(ctx context.Context, opts MigrateOptions) (*resource.BulkResponse, error)
 }
 
 // This can migrate Folders, Dashboards and LibraryPanels
@@ -54,9 +54,9 @@ type BlobStoreInfo struct {
 }
 
 // migrate function -- works for a single kind
-type migrator = func(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.BatchStore_BatchProcessClient) (*BlobStoreInfo, error)
+type migrator = func(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.BulkStore_BulkProcessClient) (*BlobStoreInfo, error)
 
-func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (*resource.BatchResponse, error) {
+func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (*resource.BulkResponse, error) {
 	info, err := authlib.ParseNamespace(opts.Namespace)
 	if err != nil {
 		return nil, err
@@ -71,7 +71,7 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 	}
 
 	migrators := []migrator{}
-	settings := resource.BatchSettings{
+	settings := resource.BulkSettings{
 		RebuildCollection: true,
 		SkipValidation:    true,
 	}
@@ -111,7 +111,7 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 	}
 
 	ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
-	stream, err := opts.Store.BatchProcess(ctx)
+	stream, err := opts.Store.BulkProcess(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +132,7 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 	return stream.CloseAndRecv()
 }
 
-func (a *dashboardSqlAccess) countValues(ctx context.Context, opts MigrateOptions) (*resource.BatchResponse, error) {
+func (a *dashboardSqlAccess) countValues(ctx context.Context, opts MigrateOptions) (*resource.BulkResponse, error) {
 	sql, err := a.sql(ctx)
 	if err != nil {
 		return nil, err
@@ -142,12 +142,12 @@ func (a *dashboardSqlAccess) countValues(ctx context.Context, opts MigrateOption
 		return nil, err
 	}
 	orgId := ns.OrgID
-	rsp := &resource.BatchResponse{}
+	rsp := &resource.BulkResponse{}
 	err = sql.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		for _, res := range opts.Resources {
 			switch fmt.Sprintf("%s/%s", res.Group, res.Resource) {
 			case "folder.grafana.app/folders":
-				summary := &resource.BatchResponse_Summary{}
+				summary := &resource.BulkResponse_Summary{}
 				summary.Group = folders.GROUP
 				summary.Group = folders.RESOURCE
 				_, err = sess.SQL("SELECT COUNT(*) FROM "+sql.Table("dashboard")+
@@ -155,7 +155,7 @@ func (a *dashboardSqlAccess) countValues(ctx context.Context, opts MigrateOption
 				rsp.Summary = append(rsp.Summary, summary)
 
 			case "dashboard.grafana.app/librarypanels":
-				summary := &resource.BatchResponse_Summary{}
+				summary := &resource.BulkResponse_Summary{}
 				summary.Group = dashboard.GROUP
 				summary.Resource = dashboard.LIBRARY_PANEL_RESOURCE
 				_, err = sess.SQL("SELECT COUNT(*) FROM "+sql.Table("library_element")+
@@ -163,7 +163,7 @@ func (a *dashboardSqlAccess) countValues(ctx context.Context, opts MigrateOption
 				rsp.Summary = append(rsp.Summary, summary)
 
 			case "dashboard.grafana.app/dashboards":
-				summary := &resource.BatchResponse_Summary{}
+				summary := &resource.BulkResponse_Summary{}
 				summary.Group = dashboard.GROUP
 				summary.Resource = dashboard.DASHBOARD_RESOURCE
 				rsp.Summary = append(rsp.Summary, summary)
@@ -190,7 +190,7 @@ func (a *dashboardSqlAccess) countValues(ctx context.Context, opts MigrateOption
 	return rsp, nil
 }
 
-func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.BatchStore_BatchProcessClient) (*BlobStoreInfo, error) {
+func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.BulkStore_BulkProcessClient) (*BlobStoreInfo, error) {
 	query := &DashboardQuery{
 		OrgID:      orgId,
 		Limit:      100000000,
@@ -229,7 +229,7 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 			return blobs, err
 		}
 
-		req := &resource.BatchRequest{
+		req := &resource.BulkRequest{
 			Key: &resource.ResourceKey{
 				Namespace: opts.Namespace,
 				Group:     dashboard.GROUP,
@@ -238,12 +238,12 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 			},
 			Value:  body,
 			Folder: rows.row.FolderUID,
-			Action: resource.BatchRequest_ADDED,
+			Action: resource.BulkRequest_ADDED,
 		}
 		if dash.Generation > 1 {
-			req.Action = resource.BatchRequest_MODIFIED
+			req.Action = resource.BulkRequest_MODIFIED
 		} else if dash.Generation < 0 {
-			req.Action = resource.BatchRequest_DELETED
+			req.Action = resource.BulkRequest_DELETED
 		}
 
 		// With large object support
@@ -296,7 +296,7 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 	return blobs, err
 }
 
-func (a *dashboardSqlAccess) migrateFolders(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.BatchStore_BatchProcessClient) (*BlobStoreInfo, error) {
+func (a *dashboardSqlAccess) migrateFolders(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.BulkStore_BulkProcessClient) (*BlobStoreInfo, error) {
 	query := &DashboardQuery{
 		OrgID:      orgId,
 		Limit:      100000000,
@@ -341,7 +341,7 @@ func (a *dashboardSqlAccess) migrateFolders(ctx context.Context, orgId int64, op
 			return nil, err
 		}
 
-		req := &resource.BatchRequest{
+		req := &resource.BulkRequest{
 			Key: &resource.ResourceKey{
 				Namespace: opts.Namespace,
 				Group:     "folder.grafana.app",
@@ -350,12 +350,12 @@ func (a *dashboardSqlAccess) migrateFolders(ctx context.Context, orgId int64, op
 			},
 			Value:  body,
 			Folder: rows.row.FolderUID,
-			Action: resource.BatchRequest_ADDED,
+			Action: resource.BulkRequest_ADDED,
 		}
 		if dash.Generation > 1 {
-			req.Action = resource.BatchRequest_MODIFIED
+			req.Action = resource.BulkRequest_MODIFIED
 		} else if dash.Generation < 0 {
-			req.Action = resource.BatchRequest_DELETED
+			req.Action = resource.BulkRequest_DELETED
 		}
 
 		opts.Progress(i, fmt.Sprintf("[v:%d] %s (%d)", dash.Generation, dash.Name, len(req.Value)))
@@ -377,7 +377,7 @@ func (a *dashboardSqlAccess) migrateFolders(ctx context.Context, orgId int64, op
 	return nil, err
 }
 
-func (a *dashboardSqlAccess) migratePanels(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.BatchStore_BatchProcessClient) (*BlobStoreInfo, error) {
+func (a *dashboardSqlAccess) migratePanels(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.BulkStore_BulkProcessClient) (*BlobStoreInfo, error) {
 	opts.Progress(-1, "migrating library panels...")
 	panels, err := a.GetLibraryPanels(ctx, LibraryPanelQuery{
 		OrgID: orgId,
@@ -396,7 +396,7 @@ func (a *dashboardSqlAccess) migratePanels(ctx context.Context, orgId int64, opt
 			return nil, err
 		}
 
-		req := &resource.BatchRequest{
+		req := &resource.BulkRequest{
 			Key: &resource.ResourceKey{
 				Namespace: opts.Namespace,
 				Group:     dashboard.GROUP,
@@ -405,10 +405,10 @@ func (a *dashboardSqlAccess) migratePanels(ctx context.Context, orgId int64, opt
 			},
 			Value:  body,
 			Folder: meta.GetFolder(),
-			Action: resource.BatchRequest_ADDED,
+			Action: resource.BulkRequest_ADDED,
 		}
 		if panel.Generation > 1 {
-			req.Action = resource.BatchRequest_MODIFIED
+			req.Action = resource.BulkRequest_MODIFIED
 		}
 
 		opts.Progress(i, fmt.Sprintf("[v:%d] %s (%d)", i, meta.GetName(), len(req.Value)))
