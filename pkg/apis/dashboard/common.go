@@ -1,14 +1,11 @@
 package dashboard
 
 import (
-	"k8s.io/apimachinery/pkg/runtime"
-
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 type DashboardCommon interface {
 	MutateInternalID() error
-	WithAccessInfoForDTO(access DashboardAccess) runtime.Object
 }
 
 func (in *Dashboard) MutateInternalID() error {
@@ -23,11 +20,4 @@ func (in *Dashboard) MutateInternalID() error {
 		}
 	}
 	return nil
-}
-
-func (in *Dashboard) WithAccessInfoForDTO(access DashboardAccess) runtime.Object {
-	return &DashboardWithAccessInfo{
-		Dashboard: *in,
-		Access:    access,
-	}
 }

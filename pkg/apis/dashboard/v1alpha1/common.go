@@ -1,10 +1,7 @@
 package v1alpha1
 
 import (
-	"k8s.io/apimachinery/pkg/runtime"
-
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
 )
 
 func (in *Dashboard) MutateInternalID() error {
@@ -19,23 +16,4 @@ func (in *Dashboard) MutateInternalID() error {
 		}
 	}
 	return nil
-}
-
-func (in *Dashboard) WithAccessInfoForDTO(access dashboard.DashboardAccess) runtime.Object {
-	return &DashboardWithAccessInfo{
-		Dashboard: *in,
-		Access: DashboardAccess{
-			Slug:      access.Slug,
-			Url:       access.Url,
-			CanSave:   access.CanSave,
-			CanEdit:   access.CanEdit,
-			CanStar:   access.CanSave,
-			CanAdmin:  access.CanAdmin,
-			CanDelete: access.CanDelete,
-			AnnotationsPermissions: &AnnotationPermission{
-				Dashboard:    AnnotationActions(access.AnnotationsPermissions.Dashboard),
-				Organization: AnnotationActions(access.AnnotationsPermissions.Organization),
-			},
-		},
-	}
 }
