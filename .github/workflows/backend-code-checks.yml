@@ -7,13 +7,21 @@ on:
       - 'docs/**'
       - 'latest.json'
 
+permissions:
+  contents: read
+
 jobs:
-  lint-backend:
-    name: Lint Backend
+  validate-configs:
+    name: Validate Backend Configs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Lint Backend
-        uses: ./.github/actions/backend-lint
+      
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          go-version: '1.23.5'
+          cache: true
+      
+      - name: Validate Backend Specs
+        uses: ./.github/actions/validate_backend_specs

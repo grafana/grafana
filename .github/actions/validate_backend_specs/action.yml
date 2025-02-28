@@ -1,0 +1,16 @@
+name: Validate Backend Specs
+description: Validate go.mod and OpenAPI specifications
+
+runs:
+  using: composite
+  steps:
+    # Validate modfile
+    - name: Validate go.mod
+      shell: bash
+      run: go run scripts/modowners/modowners.go check go.mod
+
+    # Generate and validate swagger specs
+    - name: Generate and Validate OpenAPI Specs
+      shell: bash
+      run: |
+        make swagger-gen
