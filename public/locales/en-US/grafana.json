@@ -3033,8 +3033,8 @@
       },
       "disabled-error": {
         "angular-deprecation-link": "Read more about angular deprecation",
-        "angular-error-text": "The reason this plugin was disabled is that Grafana does not support angular anymore. You can try updating the plugin version to the latest to see if the latest version is working.",
-        "angular-error-text-no-non-angular-version": "The reason this plugin was disabled is that Grafana does not support angular anymore. Unfortunately, the latest version of this plugin is still using angular so you need to wait for the plugin author to migrate away from angular to use this plugin.",
+        "angular-error-text": "This plugin has been disabled as Grafana no longer supports Angular based plugins. You can try updating the plugin to the latest version to resolve this issue. You should then test to confirm it works as expected.",
+        "angular-error-text-no-non-angular-version": "This plugin has been disabled as Grafana no longer supports Angular based plugins. Unfortunately, the latest version of this plugin still uses Angular so you need to wait for the plugin author to migrate to continue using this plugin.",
         "contact-server-admin": "Please contact your server administrator to get this resolved.",
         "failed-backend-start-text": "This plugin failed to start. Server logs can provide more information.",
         "invalid-signature-text": "Grafana Labs checks each plugin to verify that it has a valid digital signature. While doing this, we discovered that it was invalid. We can not guarantee the trustworthy of this plugin and have therefore disabled it. We recommend you to reinstall the plugin to make sure you are running a verified version of this plugin.",

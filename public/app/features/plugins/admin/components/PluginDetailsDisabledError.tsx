@@ -108,7 +108,8 @@ function renderDescriptionFromError(
           <p>
             <Trans i18nKey="plugins.details.disabled-error.angular-error-text">
               This plugin has been disabled as Grafana no longer supports Angular based plugins. You can try updating
-              the plugin to the latest version to resolve this issue. You should then test to confirm it works as expected.
+              the plugin to the latest version to resolve this issue. You should then test to confirm it works as
+              expected.
             </Trans>
           </p>
         );
@@ -117,9 +118,9 @@ function renderDescriptionFromError(
       return (
         <p>
           <Trans i18nKey="plugins.details.disabled-error.angular-error-text-no-non-angular-version">
-            This plugin has been disabled as Grafana no longer supports Angular based plugins. Unfortunately, the
-            latest version of this plugin still uses Angular so you need to wait for the plugin author to migrate
-            to continue using this plugin.
+            This plugin has been disabled as Grafana no longer supports Angular based plugins. Unfortunately, the latest
+            version of this plugin still uses Angular so you need to wait for the plugin author to migrate to continue
+            using this plugin.
           </Trans>
         </p>
       );
