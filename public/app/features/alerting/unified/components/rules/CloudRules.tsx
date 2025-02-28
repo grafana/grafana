@@ -136,7 +136,9 @@ export function CreateRecordingRuleButton() {
         icon="plus"
         variant="secondary"
       >
-        New data source-managed recording rule
+        <Trans i18nKey="alerting.list-view.empty.new-ds-managed-recording-rule">
+          New data source-managed recording rule
+        </Trans>
       </LinkButton>
     );
   }
