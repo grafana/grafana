@@ -1,16 +1,11 @@
-import { reportInteraction } from '@grafana/runtime';
-
-const UNIFIED_HISTORY_ENTRY_CLICKED = 'grafana_unified_history_entry_clicked';
-const UNIFIED_HISTORY_ENTRY_DUPLICATED = 'grafana_unified_history_duplicated_entry_rendered';
-const UNIFIED_HISTORY_DRAWER_INTERACTION = 'grafana_unified_history_drawer_interaction';
-const UNIFIED_HISTORY_DRAWER_SHOW_MORE = 'grafana_unified_history_show_more';
+import { createEventFactory } from 'app/core/services/echo/Echo';
 
 //Currently just 'timeRange' is supported
 //in short term, we could add 'templateVariables' for example
 type subEntryTypes = 'timeRange';
 
 //Whether the user opens or closes the `HistoryDrawer`
-type UnifiedHistoryDrawerInteraction = 'open' | 'close';
+type UnifiedHistoryDrawerActions = 'open' | 'close';
 
 interface UnifiedHistoryEntryClicked {
   //We will also work with the current URL but we will get this from Rudderstack data
@@ -29,36 +24,36 @@ interface UnifiedHistoryEntryDuplicated {
   newEntryURL: string;
 }
 
-//Event triggered when a user clicks on an entry of the `HistoryDrawer`
-export const logClickUnifiedHistoryEntryEvent = ({ entryURL, subEntry }: UnifiedHistoryEntryClicked) => {
-  reportInteraction(UNIFIED_HISTORY_ENTRY_CLICKED, {
-    entryURL,
-    subEntry,
-  });
-};
+interface UnifiedHistoryDrawerInteraction {
+  type: UnifiedHistoryDrawerActions;
+}
 
-//Event triggered when history entry name matches the previous one
-//so we keep track of duplicated entries and be able to analyze them
-export const logDuplicateUnifiedHistoryEntryEvent = ({
-  entryName,
-  lastEntryURL,
-  newEntryURL,
-}: UnifiedHistoryEntryDuplicated) => {
-  reportInteraction(UNIFIED_HISTORY_ENTRY_DUPLICATED, {
-    entryName,
-    lastEntryURL,
-    newEntryURL,
-  });
-};
+const createUnifiedHistoryEvent = createEventFactory('grafana', 'unified_history');
 
-//We keep track of users open and closing the drawer
-export const logUnifiedHistoryDrawerInteractionEvent = ({ type }: { type: UnifiedHistoryDrawerInteraction }) => {
-  reportInteraction(UNIFIED_HISTORY_DRAWER_INTERACTION, {
-    type,
-  });
-};
+/**
+ * Event triggered when a user clicks on an entry of the `HistoryDrawer`
+ * @owner grafana-frontend-platform
+ */
+//@ts-expect-error
+export const logClickUnifiedHistoryEntryEvent = createUnifiedHistoryEvent<UnifiedHistoryEntryClicked>('entry_clicked');
 
-//We keep track of users clicking on the `Show more` button
-export const logUnifiedHistoryShowMoreEvent = () => {
-  reportInteraction(UNIFIED_HISTORY_DRAWER_SHOW_MORE);
-};
+/**
+ * Event triggered when history entry name matches the previous one
+ * so we keep track of duplicated entries and be able to analyze them
+ * @owner grafana-frontend-platform
+ */
+//@ts-expect-error
+export const logDuplicateUnifiedHistoryEntryEvent =
+  createUnifiedHistoryEvent<UnifiedHistoryEntryDuplicated>('duplicated_entry_rendered');
+
+/** We keep track of users open and closing the drawer
+ * @owner grafana-frontend-platform
+ */
+//@ts-expect-error
+export const logUnifiedHistoryDrawerInteractionEvent =
+  createUnifiedHistoryEvent<UnifiedHistoryDrawerInteraction>('drawer_interaction');
+
+/**We keep track of users clicking on the `Show more` button
+ * @owner grafana-frontend-platform
+ */
+export const logUnifiedHistoryShowMoreEvent = createUnifiedHistoryEvent('show_more');
