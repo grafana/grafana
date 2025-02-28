@@ -101,7 +101,11 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 
 	// V2 values should be read from the k8s API
 	if strings.HasPrefix(dash.APIVersion, "v2") {
-		url := fmt.Sprintf("%sapis/dashboard.grafana.app/%s/namespaces/%s/dashboards/%s", hs.Cfg.AppURL, dash.APIVersion, hs.namespacer(c.OrgID), dash.UID)
+		root := hs.Cfg.AppSubURL
+		if !strings.HasSuffix(root, "/") {
+			root += "/"
+		}
+		url := fmt.Sprintf("%sapis/dashboard.grafana.app/%s/namespaces/%s/dashboards/%s", root, dash.APIVersion, hs.namespacer(c.OrgID), dash.UID)
 		return response.Redirect(url)
 	}
 

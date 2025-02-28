@@ -311,6 +311,5 @@ func TestIntegrationLegacySupport(t *testing.T) {
 		User: helper.Org1.Admin,
 		Path: "/api/dashboards/uid/test-v2",
 	}, &dtos.DashboardFullWithMeta{})
-	require.Equal(t, 200, rsp.Response.StatusCode)
-	require.Equal(t, "v2alpha1", rsp.Result.Meta.APIVersion)
+	require.Equal(t, 302, rsp.Response.StatusCode) // redirect
 }
