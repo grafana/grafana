@@ -209,6 +209,8 @@
       "alerting": "Alerting",
       "alerting-change-description": "This update was made by the alerting system due to other changes. For example, when renaming a contact point that is used for simplified routing, this will update affected rules",
       "annotations": "Annotations",
+      "compare": "Compare",
+      "compare-with-latest": "Compare with latest version",
       "compareVersions": "Compare versions",
       "comparing-versions": "Comparing versions",
       "condition": "Alert condition",
@@ -228,17 +230,22 @@
       "provisioning": "Provisioning",
       "provisioning-change-description": "Version update was made via provisioning",
       "queryAndAlertCondition": "Query and alert condition",
-      "reset": "Reset to version {{version}}",
       "restore": "Restore",
+      "restore-manually": "Your alert rule could not be restored. This may be due to changes to other entities such as contact points, data sources etc. Please manually restore the rule version",
       "restore-modal": {
         "body": "Are you sure you want to restore the alert rule definition to this version? All unsaved changes will be lost.",
+        "confirm": "Yes, restore configuration",
+        "error": "Could not restore alert rule version ",
         "summary": "Summary of changes to be applied:",
-        "title": "Restore Version"
+        "title": "Restore version"
       },
+      "restore-version": "Restore to version {{version}}",
       "rule_group": "Rule group",
       "unknown": "Unknown",
       "unknown-change-description": "This update was made prior to the implementation of alert rule version history. The user who made the change is not tracked, but future changes will include the user",
-      "user-id": "User ID {{uid}}"
+      "user-id": "User ID {{uid}}",
+      "warning-restore-manually": "You are manually restoring an old version of this alert rule. Please review the changes carefully before saving the rule definition.",
+      "warning-restore-manually-title": "Restoring rule manually"
     },
     "annotations": {
       "description": "Add more context to your alert notifications.",
