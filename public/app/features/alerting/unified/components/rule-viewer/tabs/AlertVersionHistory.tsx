@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { config } from '@grafana/runtime';
 import { Alert, Button, EmptyState, LoadingPlaceholder, Stack, Text, Tooltip } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
-import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
+import { RuleGroupIdentifierV2, RuleIdentifier } from 'app/types/unified-alerting';
 import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import {
@@ -14,7 +14,7 @@ import {
   trackRuleVersionsRestoreSuccess,
 } from '../../../Analytics';
 import { alertRuleApi } from '../../../api/alertRuleApi';
-import { AlertRuleAction, useAlertRuleAbility } from '../../../hooks/useAbilities';
+import { AlertRuleAction, useRulerRuleAbility } from '../../../hooks/useAbilities';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
 
@@ -25,8 +25,7 @@ import { VersionHistoryTable } from './version-history/VersionHistoryTable';
 const { useGetAlertVersionHistoryQuery } = alertRuleApi;
 
 interface AlertVersionHistoryProps {
-  combinedRule: CombinedRule;
-  ruleUid: string;
+  rule: RulerGrafanaRuleDTO;
 }
 
 /** List of (top level) properties to exclude from being shown in human readable summary of version changes */
@@ -42,7 +41,8 @@ export const grafanaAlertPropertiesToIgnore: Array<keyof GrafanaRuleDefinition> 
  * Render the version history of a given Grafana managed alert rule, showing different edits
  * and allowing to restore to a previous version.
  */
-export function AlertVersionHistory({ ruleUid, combinedRule }: AlertVersionHistoryProps) {
+export function AlertVersionHistory({ rule }: AlertVersionHistoryProps) {
+  const ruleUid = rule.grafana_alert.uid;
   const { isLoading, currentData: ruleVersions = [], error } = useGetAlertVersionHistoryQuery({ uid: ruleUid });
 
   const ruleIdentifier: RuleIdentifier = useMemo(
@@ -58,7 +58,12 @@ export function AlertVersionHistory({ ruleUid, combinedRule }: AlertVersionHisto
   const canCompare = useMemo(() => checkedVersions.size > 1, [checkedVersions]);
 
   // check if restoring is allowed/enabled
-  const [restoreSupported, restoreAllowed] = useAlertRuleAbility(combinedRule, AlertRuleAction.Restore);
+  const groupIdentifier: RuleGroupIdentifierV2 = {
+    namespace: { uid: rule.grafana_alert.namespace_uid },
+    groupName: rule.grafana_alert.rule_group,
+    groupOrigin: 'grafana',
+  };
+  const [restoreSupported, restoreAllowed] = useRulerRuleAbility(rule, groupIdentifier, AlertRuleAction.Restore);
   const canRestore =
     restoreAllowed && restoreSupported && Boolean(config.featureToggles.alertingRuleVersionHistoryRestore);
 
