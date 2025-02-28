@@ -48,5 +48,5 @@ func (auth namespaceAuthorizer) Authorize(ctx context.Context, a authorizer.Attr
 		return authorizer.DecisionDeny, "invalid namespace", nil
 	}
 
-	return 0, "", nil
+	return authorizer.DecisionNoOpinion, "", nil
 }
