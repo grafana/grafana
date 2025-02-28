@@ -2257,6 +2257,14 @@
       "log-line": "Log line",
       "no-details": "No details available"
     },
+    "log-line-menu": {
+      "copy-link": "Copy link to log line",
+      "copy-log": "Copy log line",
+      "icon-label": "Log menu",
+      "pin-to-outline": "Pin log",
+      "show-context": "Show context",
+      "unpin-from-outline": "Unpin log"
+    },
     "log-row-message": {
       "ellipsis": "… ",
       "more": "more",

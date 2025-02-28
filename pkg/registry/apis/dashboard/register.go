@@ -270,49 +270,39 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	libraryPanels utils.ResourceInfo,
 	newDTOFunc func() runtime.Object,
 ) (map[string]rest.Storage, error) {
-	var (
-		err                      error
-		scheme                   = opts.Scheme
-		dualWriteBuilder         = opts.DualWriteBuilder
-		internalDashResourceInfo = dashboardinternal.DashboardResourceInfo
-		libraryPanelResourceInfo = dashboardinternal.LibraryPanelResourceInfo
-	)
-
+	var err error
 	storage := map[string]rest.Storage{}
-	storage[internalDashResourceInfo.StoragePath()] = legacyStore
+	storage[dashboards.StoragePath()] = legacyStore
 
-	// Dual writes if a RESTOptionsGetter is provided
-	if dualWriteBuilder != nil {
-		store, err := grafanaregistry.NewRegistryStore(scheme, internalDashResourceInfo, opts.OptsGetter)
-		if err != nil {
-			return nil, err
-		}
-		storage[internalDashResourceInfo.StoragePath()], err = dualWriteBuilder(internalDashResourceInfo.GroupResource(), legacyStore, store)
-		if err != nil {
-			return nil, err
-		}
+	store, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashboards, opts.OptsGetter)
+	if err != nil {
+		return nil, err
+	}
+	storage[dashboards.StoragePath()], err = opts.DualWriteBuilder(dashboards.GroupResource(), legacyStore, store)
+	if err != nil {
+		return nil, err
 	}
 
 	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesRestore) {
-		storage[internalDashResourceInfo.StoragePath("restore")] = NewRestoreConnector(
+		storage[dashboards.StoragePath("restore")] = NewRestoreConnector(
 			b.unified,
-			internalDashResourceInfo.GroupResource(),
+			dashboards.GroupResource(),
 		)
 
-		storage[internalDashResourceInfo.StoragePath("latest")] = NewLatestConnector(
+		storage[dashboards.StoragePath("latest")] = NewLatestConnector(
 			b.unified,
-			internalDashResourceInfo.GroupResource(),
+			dashboards.GroupResource(),
 		)
 	}
 
 	// Register the DTO endpoint that will consolidate all dashboard bits
-	storage[internalDashResourceInfo.StoragePath("dto")], err = NewDTOConnector(
-		storage[internalDashResourceInfo.StoragePath()],
+	storage[dashboards.StoragePath("dto")], err = NewDTOConnector(
+		storage[dashboards.StoragePath()],
 		largeObjects,
 		b.legacy.Access,
 		b.unified,
 		b.accessControl,
-		scheme,
+		opts.Scheme,
 		newDTOFunc,
 	)
 	if err != nil {
@@ -320,9 +310,9 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	}
 
 	// Expose read only library panels
-	storage[libraryPanelResourceInfo.StoragePath()] = &LibraryPanelStore{
+	storage[libraryPanels.StoragePath()] = &LibraryPanelStore{
 		Access:       b.legacy.Access,
-		ResourceInfo: dashboardinternal.LibraryPanelResourceInfo,
+		ResourceInfo: libraryPanels,
 	}
 
 	return storage, nil
