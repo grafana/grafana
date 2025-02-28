@@ -232,9 +232,11 @@ export const LogsPanel = ({
         return Promise.resolve({ data: [] });
       }
 
+      options.scopedVars = panelData.request?.scopedVars;
+
       return dataSource.getLogRowContext(row, options, query);
     },
-    [panelData.request?.targets, dataSourcesMap]
+    [panelData.request?.targets, panelData.request?.scopedVars, dataSourcesMap]
   );
 
   const getLogRowContextUi = useCallback(
@@ -257,9 +259,9 @@ export const LogsPanel = ({
         return <></>;
       }
 
-      return dataSource.getLogRowContextUi(origRow, runContextQuery, query);
+      return dataSource.getLogRowContextUi(origRow, runContextQuery, query, panelData.request?.scopedVars);
     },
-    [panelData.request?.targets, dataSourcesMap]
+    [panelData.request?.targets, panelData.request?.scopedVars, dataSourcesMap]
   );
 
   // Important to memoize stuff here, as panel rerenders a lot for example when resizing.
@@ -561,7 +563,7 @@ async function copyDashboardUrl(row: LogRowModel, rows: LogRowModel[], timeRange
   return Promise.resolve();
 }
 
-async function requestMoreLogs(
+export async function requestMoreLogs(
   dataSourcesMap: Map<string, DataSourceApi>,
   panelData: PanelData,
   timeRange: AbsoluteTimeRange,

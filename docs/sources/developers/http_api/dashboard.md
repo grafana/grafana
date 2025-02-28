@@ -139,7 +139,6 @@ The **412** status code is used for explaining that you cannot create the dashbo
 There can be different reasons for this:
 
 - The dashboard has been changed by someone else, `status=version-mismatch`
-- A dashboard with the same name in the folder already exists, `status=name-exists`
 - A dashboard with the same uid already exists, `status=name-exists`
 - The dashboard belongs to plugin `<plugin title>`, `status=plugin-dashboard`
 
@@ -155,8 +154,6 @@ Content-Length: 97
   "status": "version-mismatch"
 }
 ```
-
-In case of title already exists the `status` property will be `name-exists`.
 
 ## Get dashboard by uid
 
@@ -358,7 +355,7 @@ Content-Type: application/json
 
 Status Codes:
 
-- **200** – Deleted
+- **200** – Restored
 - **401** – Unauthorized
 - **403** – Access denied
 - **404** – Not found

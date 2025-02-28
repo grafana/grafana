@@ -26,8 +26,18 @@ var (
 	_ rest.SingularNameProvider = (DualWriter)(nil)
 )
 
+type dualWriteContextKey struct{}
+
+func IsDualWriteUpdate(ctx context.Context) bool {
+	return ctx.Value(dualWriteContextKey{}) == true
+}
+
+func WithDualWriteUpdate(ctx context.Context) context.Context {
+	return context.WithValue(ctx, dualWriteContextKey{}, true)
+}
+
 // Function that will create a dual writer
-type DualWriteBuilder func(gr schema.GroupResource, legacy LegacyStorage, storage Storage) (Storage, error)
+type DualWriteBuilder func(gr schema.GroupResource, legacy Storage, unified Storage) (Storage, error)
 
 // Storage is a storage implementation that satisfies the same interfaces as genericregistry.Store.
 type Storage interface {
@@ -36,24 +46,10 @@ type Storage interface {
 	rest.TableConvertor
 	rest.SingularNameProvider
 	rest.Getter
-	// TODO: when watch is implemented, we can replace all the below with rest.StandardStorage
 	rest.Lister
 	rest.CreaterUpdater
 	rest.GracefulDeleter
 	rest.CollectionDeleter
-}
-
-// LegacyStorage is a storage implementation that writes to the Grafana SQL database.
-type LegacyStorage interface {
-	rest.Storage
-	rest.Scoper
-	rest.SingularNameProvider
-	rest.CreaterUpdater
-	rest.Lister
-	rest.GracefulDeleter
-	rest.CollectionDeleter
-	rest.TableConvertor
-	rest.Getter
 }
 
 // DualWriter is a storage implementation that writes first to LegacyStorage and then to Storage.
@@ -79,7 +75,6 @@ type LegacyStorage interface {
 
 type DualWriter interface {
 	Storage
-	LegacyStorage
 	Mode() DualWriterMode
 }
 
@@ -94,7 +89,7 @@ const (
 	Mode1
 	// Mode2 is the dual writing mode that represents writing to LegacyStorage and Storage and reading from LegacyStorage.
 	// The objects written to storage will include any labels and annotations.
-	// When reading values, the results will be from Storage when they exist, otherwise from legacy storage
+	// When reading values, the results will be from LegacyStorage.
 	Mode2
 	// Mode3 represents writing to LegacyStorage and Storage and reading from Storage.
 	// NOTE: Requesting mode3 will only happen when after a background sync job succeeds
@@ -110,8 +105,8 @@ const (
 // NewDualWriter returns a new DualWriter.
 func NewDualWriter(
 	mode DualWriterMode,
-	legacy LegacyStorage,
-	storage Storage,
+	legacy Storage,
+	unified Storage,
 	reg prometheus.Registerer,
 	resource string,
 ) Storage {
@@ -122,17 +117,17 @@ func NewDualWriter(
 		return legacy
 	case Mode1:
 		// read and write only from legacy storage
-		return newDualWriterMode1(legacy, storage, metrics, resource)
+		return newDualWriterMode1(legacy, unified, metrics, resource)
 	case Mode2:
 		// write to both, read from storage but use legacy as backup
-		return newDualWriterMode2(legacy, storage, metrics, resource)
+		return newDualWriterMode2(legacy, unified, metrics, resource)
 	case Mode3:
 		// write to both, read from storage only
-		return newDualWriterMode3(legacy, storage, metrics, resource)
+		return newDualWriterMode3(legacy, unified, metrics, resource)
 	case Mode4, Mode5:
-		return storage
+		return unified
 	default:
-		return newDualWriterMode1(legacy, storage, metrics, resource)
+		return newDualWriterMode1(legacy, unified, metrics, resource)
 	}
 }
 
@@ -210,8 +205,8 @@ func SetDualWritingMode(
 		// Once we are done with running the syncer, we can change the mode back on the config to the desired one.
 		cfg.Mode = cfgModeTmp
 		if err != nil {
-			klog.Info("data syncer failed for mode:", m)
-			return Mode0, err
+			klog.Error("data syncer failed for mode:", m, "err", err)
+			return currentMode, nil
 		}
 		if !syncOk {
 			klog.Info("data syncer not ok for mode:", m)

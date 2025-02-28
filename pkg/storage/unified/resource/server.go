@@ -26,6 +26,7 @@ import (
 // ResourceServer implements all gRPC services
 type ResourceServer interface {
 	ResourceStoreServer
+	BulkStoreServer
 	ResourceIndexServer
 	RepositoryIndexServer
 	BlobStoreServer
@@ -181,6 +182,8 @@ type ResourceServerOptions struct {
 
 	// Registerer to register prometheus Metrics for the Resource server
 	Reg prometheus.Registerer
+
+	storageMetrics *StorageMetrics
 }
 
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
@@ -229,25 +232,22 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	}
 
 	logger := slog.Default().With("logger", "resource-server")
-	// register metrics
-	if err := prometheus.Register(NewStorageMetrics()); err != nil {
-		logger.Warn("failed to register storage metrics", "error", err)
-	}
 
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(context.Background())
 	s := &server{
-		tracer:      opts.Tracer,
-		log:         logger,
-		backend:     opts.Backend,
-		blob:        blobstore,
-		diagnostics: opts.Diagnostics,
-		access:      opts.AccessClient,
-		writeHooks:  opts.WriteHooks,
-		lifecycle:   opts.Lifecycle,
-		now:         opts.Now,
-		ctx:         ctx,
-		cancel:      cancel,
+		tracer:         opts.Tracer,
+		log:            logger,
+		backend:        opts.Backend,
+		blob:           blobstore,
+		diagnostics:    opts.Diagnostics,
+		access:         opts.AccessClient,
+		writeHooks:     opts.WriteHooks,
+		lifecycle:      opts.Lifecycle,
+		now:            opts.Now,
+		ctx:            ctx,
+		cancel:         cancel,
+		storageMetrics: opts.storageMetrics,
 	}
 
 	if opts.Search.Resources != nil {
@@ -260,7 +260,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 
 	err := s.Init(ctx)
 	if err != nil {
-		s.log.Error("error initializing resource server", "error", err)
+		s.log.Error("resource server init failed", "error", err)
 		return nil, err
 	}
 
@@ -270,17 +270,18 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 var _ ResourceServer = &server{}
 
 type server struct {
-	tracer       trace.Tracer
-	log          *slog.Logger
-	backend      StorageBackend
-	blob         BlobSupport
-	search       *searchSupport
-	diagnostics  DiagnosticsServer
-	access       claims.AccessClient
-	writeHooks   WriteAccessHooks
-	lifecycle    LifecycleHooks
-	now          func() int64
-	mostRecentRV atomic.Int64 // The most recent resource version seen by the server
+	tracer         trace.Tracer
+	log            *slog.Logger
+	backend        StorageBackend
+	blob           BlobSupport
+	search         *searchSupport
+	diagnostics    DiagnosticsServer
+	access         claims.AccessClient
+	writeHooks     WriteAccessHooks
+	lifecycle      LifecycleHooks
+	now            func() int64
+	mostRecentRV   atomic.Int64 // The most recent resource version seen by the server
+	storageMetrics *StorageMetrics
 
 	// Background watch task -- this has permissions for everything
 	ctx         context.Context
@@ -314,7 +315,7 @@ func (s *server) Init(ctx context.Context) error {
 		}
 
 		if s.initErr != nil {
-			s.log.Error("error initializing resource server", "error", s.initErr)
+			s.log.Error("error running resource server init", "error", s.initErr)
 		}
 	})
 	return s.initErr
@@ -751,7 +752,7 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 				Value:           iter.Value(),
 			}
 
-			if !checker(iter.Namespace(), iter.Name(), iter.Folder()) {
+			if !checker(iter.Name(), iter.Folder()) {
 				continue
 			}
 
@@ -918,9 +919,16 @@ func (s *server) initWatcher() error {
 			return err
 		}
 		go func() {
-			for {
-				// pipe all events
-				v := <-events
+			for v := range events {
+				if v == nil {
+					s.log.Error("received nil event")
+					continue
+				}
+				// Skip events during batch updates
+				if v.PreviousRV < 0 {
+					continue
+				}
+
 				s.log.Debug("Server. Streaming Event", "type", v.Type, "previousRV", v.PreviousRV, "group", v.Key.Group, "namespace", v.Key.Namespace, "resource", v.Key.Resource, "name", v.Key.Name)
 				s.mostRecentRV.Store(v.ResourceVersion)
 				out <- v
@@ -945,6 +953,7 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
+		Verb:      utils.VerbGet,
 	})
 	if err != nil {
 		return err
@@ -1026,7 +1035,7 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 			}
 			s.log.Debug("Server Broadcasting", "type", event.Type, "rv", event.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "resource", event.Key.Resource, "name", event.Key.Name)
 			if event.ResourceVersion > since && matchesQueryKey(req.Options.Key, event.Key) {
-				if !checker(event.Key.Namespace, event.Key.Name, event.Folder) {
+				if !checker(event.Key.Name, event.Folder) {
 					continue
 				}
 
@@ -1064,10 +1073,12 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 					return err
 				}
 
-				// record latency - resource version is a unix timestamp in microseconds so we convert to seconds
-				latencySeconds := float64(time.Now().UnixMicro()-event.ResourceVersion) / 1e6
-				if latencySeconds > 0 {
-					StorageServerMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
+				if s.storageMetrics != nil {
+					// record latency - resource version is a unix timestamp in microseconds so we convert to seconds
+					latencySeconds := float64(time.Now().UnixMicro()-event.ResourceVersion) / 1e6
+					if latencySeconds > 0 {
+						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
+					}
 				}
 			}
 		}
@@ -1160,18 +1171,23 @@ func (s *server) GetBlob(ctx context.Context, req *GetBlobRequest) (*GetBlobResp
 		}}, nil
 	}
 
-	// The linked blob is stored in the resource metadata attributes
-	obj, status := s.getPartialObject(ctx, req.Resource, req.ResourceVersion)
-	if status != nil {
-		return &GetBlobResponse{Error: status}, nil
-	}
+	var info *utils.BlobInfo
+	if req.Uid == "" {
+		// The linked blob is stored in the resource metadata attributes
+		obj, status := s.getPartialObject(ctx, req.Resource, req.ResourceVersion)
+		if status != nil {
+			return &GetBlobResponse{Error: status}, nil
+		}
 
-	info := obj.GetBlob()
-	if info == nil || info.UID == "" {
-		return &GetBlobResponse{Error: &ErrorResult{
-			Message: "Resource does not have a linked blob",
-			Code:    404,
-		}}, nil
+		info = obj.GetBlob()
+		if info == nil || info.UID == "" {
+			return &GetBlobResponse{Error: &ErrorResult{
+				Message: "Resource does not have a linked blob",
+				Code:    404,
+			}}, nil
+		}
+	} else {
+		info = &utils.BlobInfo{UID: req.Uid}
 	}
 
 	rsp, err := s.blob.GetResourceBlob(ctx, req.Resource, info, req.MustProxyBytes)
