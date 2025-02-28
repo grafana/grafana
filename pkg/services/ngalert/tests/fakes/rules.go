@@ -214,6 +214,15 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 		if len(q.RuleUIDs) > 0 && !slices.Contains(q.RuleUIDs, r.UID) {
 			continue
 		}
+		if q.ImportedPrometheusRule != nil {
+			hasOriginalRuleDefinition := r.PrometheusRuleDefinition() != ""
+			if *q.ImportedPrometheusRule && !hasOriginalRuleDefinition {
+				continue
+			}
+			if !*q.ImportedPrometheusRule && hasOriginalRuleDefinition {
+				continue
+			}
+		}
 
 		ruleList = append(ruleList, r)
 	}
@@ -308,12 +317,21 @@ func (f *RuleStore) InsertAlertRules(_ context.Context, _ *models.UserUID, q []m
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, q)
 	ids := make([]models.AlertRuleKeyWithId, 0, len(q))
+	rulesPerOrg := map[int64][]models.AlertRule{}
 	for _, rule := range q {
 		ids = append(ids, models.AlertRuleKeyWithId{
 			AlertRuleKey: rule.GetKey(),
 			ID:           rand.Int63(),
 		})
+		rulesPerOrg[rule.OrgID] = append(rulesPerOrg[rule.OrgID], rule)
 	}
+
+	for orgID, rules := range rulesPerOrg {
+		for _, rule := range rules {
+			f.Rules[orgID] = append(f.Rules[orgID], &rule)
+		}
+	}
+
 	if err := f.Hook(q); err != nil {
 		return ids, err
 	}

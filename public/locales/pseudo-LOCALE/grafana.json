@@ -315,6 +315,10 @@
       "empty-state": {
         "title": "Ÿőū đőŉ'ŧ ĥävę äŉy čőŉŧäčŧ pőįŉŧş yęŧ"
       },
+      "key-value-map": {
+        "add": "Åđđ",
+        "confirm-add": "Cőŉƒįřm ŧő äđđ"
+      },
       "last-delivery-attempt": "Ŀäşŧ đęľįvęřy äŧŧęmpŧ",
       "last-delivery-failed": "Ŀäşŧ đęľįvęřy äŧŧęmpŧ ƒäįľęđ",
       "no-contact-points-found": "Ńő čőŉŧäčŧ pőįŉŧş ƒőūŉđ",
@@ -1043,10 +1047,24 @@
         },
         "modal": {
           "title": "Ŗőŵ őpŧįőŉş"
-        }
+        },
+        "repeat": {
+          "title": "Ŗępęäŧ őpŧįőŉş",
+          "variable": {
+            "title": "Väřįäþľę"
+          }
+        },
+        "title": "Ŗőŵ őpŧįőŉş"
       }
     },
     "edit-pane": {
+      "elements": {
+        "dashboard": "Đäşĥþőäřđ",
+        "objects": "Øþĵęčŧş",
+        "panels": "Päŉęľş",
+        "rows": "Ŗőŵş",
+        "tabs": "Ŧäþş"
+      },
       "objects": {
         "multi-select": {
           "selection-number": "Ńő. őƒ őþĵęčŧş şęľęčŧęđ: {{length}}"
@@ -1151,6 +1169,15 @@
       "title": "Đäşĥþőäřđ őpŧįőŉş",
       "title-option": "Ŧįŧľę"
     },
+    "outline": {
+      "tree": {
+        "item": {
+          "collapse": "Cőľľäpşę įŧęm",
+          "empty": "(ęmpŧy)",
+          "expand": "Ēχpäŉđ įŧęm"
+        }
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Đäşĥþőäřđ mūşŧ þę şävęđ þęƒőřę äľęřŧş čäŉ þę äđđęđ.",
@@ -1161,6 +1188,12 @@
       "description": "CŜŜ ľäyőūŧ ŧĥäŧ äđĵūşŧş ŧő ŧĥę äväįľäþľę şpäčę",
       "item-options": {
         "hide-no-data": "Ħįđę ŵĥęŉ ŉő đäŧä",
+        "repeat": {
+          "variable": {
+            "description": "Ŗępęäŧ ŧĥįş päŉęľ ƒőř ęäčĥ väľūę įŉ ŧĥę şęľęčŧęđ väřįäþľę. Ŧĥįş įş ŉőŧ vįşįþľę ŵĥįľę įŉ ęđįŧ mőđę. Ÿőū ŉęęđ ŧő ģő þäčĸ ŧő đäşĥþőäřđ äŉđ ŧĥęŉ ūpđäŧę ŧĥę väřįäþľę őř řęľőäđ ŧĥę đäşĥþőäřđ.",
+            "title": "Ŗępęäŧ þy väřįäþľę"
+          }
+        },
         "title": "Ŀäyőūŧ őpŧįőŉş"
       },
       "name": "Ŗęşpőŉşįvę ģřįđ",
@@ -1703,7 +1736,7 @@
         "action-query-params": "Qūęřy päřämęŧęřş",
         "action-title": "Ŧįŧľę",
         "action-title-placeholder": "Åčŧįőŉ ŧįŧľę",
-        "one-click-description": "Øŉľy őŉę ľįŉĸ {{ action }} čäŉ ĥävę őŉę čľįčĸ ęŉäþľęđ äŧ ä ŧįmę"
+        "one-click-description": "Øŉľy őŉę ľįŉĸ őř äčŧįőŉ čäŉ ĥävę őŉę čľįčĸ ęŉäþľęđ äŧ ä ŧįmę"
       }
     },
     "alert": {
@@ -2223,6 +2256,14 @@
       "links": "Ŀįŉĸş",
       "log-line": "Ŀőģ ľįŉę",
       "no-details": "Ńő đęŧäįľş äväįľäþľę"
+    },
+    "log-line-menu": {
+      "copy-link": "Cőpy ľįŉĸ ŧő ľőģ ľįŉę",
+      "copy-log": "Cőpy ľőģ ľįŉę",
+      "icon-label": "Ŀőģ męŉū",
+      "pin-to-outline": "Pįŉ ľőģ",
+      "show-context": "Ŝĥőŵ čőŉŧęχŧ",
+      "unpin-from-outline": "Ůŉpįŉ ľőģ"
     },
     "log-row-message": {
       "ellipsis": "… ",
