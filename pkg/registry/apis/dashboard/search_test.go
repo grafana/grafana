@@ -710,6 +710,6 @@ func (m *MockClient) ListRepositoryObjects(ctx context.Context, in *resource.Lis
 func (m *MockClient) IsHealthy(ctx context.Context, in *resource.HealthCheckRequest, opts ...grpc.CallOption) (*resource.HealthCheckResponse, error) {
 	return nil, nil
 }
-func (m *MockClient) BatchProcess(ctx context.Context, opts ...grpc.CallOption) (resource.BatchStore_BatchProcessClient, error) {
+func (m *MockClient) BulkProcess(ctx context.Context, opts ...grpc.CallOption) (resource.BulkStore_BulkProcessClient, error) {
 	return nil, nil
 }

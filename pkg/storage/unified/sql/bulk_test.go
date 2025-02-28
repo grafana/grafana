@@ -13,7 +13,7 @@ func TestBatch(t *testing.T) {
 	t.Run("rv iterator", func(t *testing.T) {
 		t.Parallel()
 
-		rv := newBatchRV()
+		rv := newBulkRV()
 		v0 := rv.next(&unstructured.Unstructured{})
 		v1 := rv.next(&unstructured.Unstructured{})
 		v2 := rv.next(&unstructured.Unstructured{})

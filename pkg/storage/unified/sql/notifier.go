@@ -29,7 +29,7 @@ func newNotifier(b *backend) (eventNotifier, error) {
 			watchBufferSize: b.watchBufferSize,
 			log:             b.log,
 			tracer:          b.tracer,
-			batchLock:       b.batchLock,
+			bulkLock:        b.bulkLock,
 			listLatestRVs:   b.listLatestRVs,
 			historyPoll: func(ctx context.Context, grp string, res string, since int64) ([]*historyPollResponse, error) {
 				var records []*historyPollResponse

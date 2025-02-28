@@ -10,10 +10,10 @@ import (
 )
 
 var (
-	_ resource.BatchRequestIterator = (*parquetReader)(nil)
+	_ resource.BulkRequestIterator = (*parquetReader)(nil)
 )
 
-func NewParquetReader(inputPath string, batchSize int64) (resource.BatchRequestIterator, error) {
+func NewParquetReader(inputPath string, batchSize int64) (resource.BulkRequestIterator, error) {
 	return newResourceReader(inputPath, batchSize)
 }
 
@@ -39,17 +39,17 @@ type parquetReader struct {
 	bufferIndex int
 	rowGroupIDX int
 
-	req *resource.BatchRequest
+	req *resource.BulkRequest
 	err error
 }
 
-// Next implements resource.BatchRequestIterator.
+// Next implements resource.BulkRequestIterator.
 func (r *parquetReader) Next() bool {
 	r.req = nil
 	for r.err == nil && r.reader != nil {
 		if r.bufferIndex >= r.bufferSize && r.value.reader.HasNext() {
 			r.bufferIndex = 0
-			r.err = r.readBatch()
+			r.err = r.readBulk()
 			if r.err != nil {
 				return false
 			}
@@ -60,14 +60,14 @@ func (r *parquetReader) Next() bool {
 			i := r.bufferIndex
 			r.bufferIndex++
 
-			r.req = &resource.BatchRequest{
+			r.req = &resource.BulkRequest{
 				Key: &resource.ResourceKey{
 					Group:     r.group.buffer[i].String(),
 					Resource:  r.resource.buffer[i].String(),
 					Namespace: r.namespace.buffer[i].String(),
 					Name:      r.name.buffer[i].String(),
 				},
-				Action: resource.BatchRequest_Action(r.action.buffer[i]),
+				Action: resource.BulkRequest_Action(r.action.buffer[i]),
 				Value:  r.value.buffer[i].Bytes(),
 				Folder: r.folder.buffer[i].String(),
 			}
@@ -87,12 +87,12 @@ func (r *parquetReader) Next() bool {
 	return false
 }
 
-// Request implements resource.BatchRequestIterator.
-func (r *parquetReader) Request() *resource.BatchRequest {
+// Request implements resource.BulkRequestIterator.
+func (r *parquetReader) Request() *resource.BulkRequest {
 	return r.req
 }
 
-// RollbackRequested implements resource.BatchRequestIterator.
+// RollbackRequested implements resource.BulkRequestIterator.
 func (r *parquetReader) RollbackRequested() bool {
 	return r.err != nil
 }
@@ -163,7 +163,7 @@ func newResourceReader(inputPath string, batchSize int64) (*parquetReader, error
 	}
 
 	// get the first batch
-	err = reader.readBatch()
+	err = reader.readBulk()
 	if err != nil {
 		_ = rdr.Close()
 		return nil, err
@@ -182,7 +182,7 @@ func (r *parquetReader) open(rgr *file.RowGroupReader) error {
 	return nil
 }
 
-func (r *parquetReader) readBatch() error {
+func (r *parquetReader) readBulk() error {
 	r.bufferIndex = 0
 	r.bufferSize = 0
 	for i, c := range r.columns {
