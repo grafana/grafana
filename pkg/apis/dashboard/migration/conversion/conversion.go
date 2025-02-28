@@ -56,8 +56,28 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddConversionFunc((*dashboardV1.Dashboard)(nil), (*dashboardV0.Dashboard)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_V1_to_V0(a.(*dashboardV1.Dashboard), b.(*dashboardV0.Dashboard), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*dashboardV1.Dashboard)(nil), (*dashboardV2.Dashboard)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_V1_to_V2(a.(*dashboardV1.Dashboard), b.(*dashboardV2.Dashboard), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddConversionFunc((*dashboardV2.Dashboard)(nil), (*dashboard.Dashboard)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_V2_to_Internal(a.(*dashboardV2.Dashboard), b.(*dashboard.Dashboard), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*dashboardV2.Dashboard)(nil), (*dashboardV0.Dashboard)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_V2_to_V0(a.(*dashboardV2.Dashboard), b.(*dashboardV0.Dashboard), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*dashboardV2.Dashboard)(nil), (*dashboardV1.Dashboard)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_V2_to_V1(a.(*dashboardV2.Dashboard), b.(*dashboardV1.Dashboard), scope)
 	}); err != nil {
 		return err
 	}
@@ -87,7 +107,7 @@ func Convert_V0_to_V2(in *dashboardV0.Dashboard, out *dashboardV2.Dashboard, sco
 	out.Spec = dashboardV2.DashboardSpec{
 		Unstructured: in.Spec,
 	}
-	setAnnos(&out.ObjectMeta, "Convert_V0_to_V2")
+	setAnnos(&out.ObjectMeta, "V0_to_V2")
 	return nil
 }
 
@@ -98,10 +118,38 @@ func Convert_V1_to_Internal(in *dashboardV1.Dashboard, out *dashboard.Dashboard,
 	return nil
 }
 
+func Convert_V1_to_V0(in *dashboardV1.Dashboard, out *dashboardV0.Dashboard, scope conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	out.Spec = in.Spec.Unstructured
+	setAnnos(&out.ObjectMeta, "V1_to_V0")
+	return nil
+}
+
+func Convert_V1_to_V2(in *dashboardV1.Dashboard, out *dashboardV2.Dashboard, scope conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	out.Spec = dashboardV2.DashboardSpec(in.Spec)
+	setAnnos(&out.ObjectMeta, "V1_to_V2")
+	return nil
+}
+
 func Convert_V2_to_Internal(in *dashboardV2.Dashboard, out *dashboard.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 	out.Spec = dashboard.DashboardSpec(in.Spec)
 	setAnnos(&out.ObjectMeta, "V2_to_>>>>>>>")
+	return nil
+}
+
+func Convert_V2_to_V0(in *dashboardV2.Dashboard, out *dashboardV0.Dashboard, scope conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	out.Spec = in.Spec.Unstructured
+	setAnnos(&out.ObjectMeta, "V2_to_V0")
+	return nil
+}
+
+func Convert_V2_to_V1(in *dashboardV2.Dashboard, out *dashboardV1.Dashboard, scope conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	out.Spec = dashboardV1.DashboardSpec(in.Spec)
+	setAnnos(&out.ObjectMeta, "V2_to_V1")
 	return nil
 }
 

@@ -7,8 +7,11 @@ import (
 	"net/http"
 	"time"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
 	claims "github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -17,9 +20,34 @@ import (
 func getDashboardFromEvent(event resource.WriteEvent) (*dashboard.Dashboard, error) {
 	obj, ok := event.Object.GetRuntimeObject()
 	if ok && obj != nil {
-		dash, ok := obj.(*dashboard.Dashboard)
-		if ok {
-			return dash, nil
+		switch v := obj.(type) {
+		case *dashboard.Dashboard:
+			return v, nil
+
+		case *unstructured.Unstructured:
+			spec, ok := v.Object["spec"].(map[string]interface{})
+			if !ok {
+				return nil, fmt.Errorf("expected dashbaord spec")
+			}
+			meta, ok := v.Object["metadata"].(map[string]interface{})
+			if !ok {
+				return nil, fmt.Errorf("expected dashbaord metadata")
+			}
+			dash := &dashboard.Dashboard{}
+			dash.APIVersion = v.GetAPIVersion() // <<< enough?
+			dash.Kind = v.GetKind()
+			dash.Spec = dashboard.DashboardSpec{
+				Unstructured: v0alpha1.Unstructured{
+					Object: spec,
+				},
+			}
+
+			// TODO... there must be a better way... we have ObjectMeta
+			js, err := json.Marshal(meta)
+			if err != nil {
+				return nil, err
+			}
+			return dash, json.Unmarshal(js, &dash.ObjectMeta)
 		}
 	}
 	dash := &dashboard.Dashboard{}
