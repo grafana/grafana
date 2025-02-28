@@ -182,6 +182,8 @@ type ResourceServerOptions struct {
 
 	// Registerer to register prometheus Metrics for the Resource server
 	Reg prometheus.Registerer
+
+	storageMetrics *StorageMetrics
 }
 
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
@@ -230,25 +232,22 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	}
 
 	logger := slog.Default().With("logger", "resource-server")
-	// register metrics
-	if err := prometheus.Register(NewStorageMetrics()); err != nil {
-		logger.Warn("failed to register storage metrics", "error", err)
-	}
 
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(context.Background())
 	s := &server{
-		tracer:      opts.Tracer,
-		log:         logger,
-		backend:     opts.Backend,
-		blob:        blobstore,
-		diagnostics: opts.Diagnostics,
-		access:      opts.AccessClient,
-		writeHooks:  opts.WriteHooks,
-		lifecycle:   opts.Lifecycle,
-		now:         opts.Now,
-		ctx:         ctx,
-		cancel:      cancel,
+		tracer:         opts.Tracer,
+		log:            logger,
+		backend:        opts.Backend,
+		blob:           blobstore,
+		diagnostics:    opts.Diagnostics,
+		access:         opts.AccessClient,
+		writeHooks:     opts.WriteHooks,
+		lifecycle:      opts.Lifecycle,
+		now:            opts.Now,
+		ctx:            ctx,
+		cancel:         cancel,
+		storageMetrics: opts.storageMetrics,
 	}
 
 	if opts.Search.Resources != nil {
@@ -271,17 +270,18 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 var _ ResourceServer = &server{}
 
 type server struct {
-	tracer       trace.Tracer
-	log          *slog.Logger
-	backend      StorageBackend
-	blob         BlobSupport
-	search       *searchSupport
-	diagnostics  DiagnosticsServer
-	access       claims.AccessClient
-	writeHooks   WriteAccessHooks
-	lifecycle    LifecycleHooks
-	now          func() int64
-	mostRecentRV atomic.Int64 // The most recent resource version seen by the server
+	tracer         trace.Tracer
+	log            *slog.Logger
+	backend        StorageBackend
+	blob           BlobSupport
+	search         *searchSupport
+	diagnostics    DiagnosticsServer
+	access         claims.AccessClient
+	writeHooks     WriteAccessHooks
+	lifecycle      LifecycleHooks
+	now            func() int64
+	mostRecentRV   atomic.Int64 // The most recent resource version seen by the server
+	storageMetrics *StorageMetrics
 
 	// Background watch task -- this has permissions for everything
 	ctx         context.Context
@@ -1073,10 +1073,12 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 					return err
 				}
 
-				// record latency - resource version is a unix timestamp in microseconds so we convert to seconds
-				latencySeconds := float64(time.Now().UnixMicro()-event.ResourceVersion) / 1e6
-				if latencySeconds > 0 {
-					StorageServerMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
+				if s.storageMetrics != nil {
+					// record latency - resource version is a unix timestamp in microseconds so we convert to seconds
+					latencySeconds := float64(time.Now().UnixMicro()-event.ResourceVersion) / 1e6
+					if latencySeconds > 0 {
+						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
+					}
 				}
 			}
 		}

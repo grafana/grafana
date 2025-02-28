@@ -49,8 +49,9 @@ type service struct {
 
 	authenticator interceptors.Authenticator
 
-	log log.Logger
-	reg prometheus.Registerer
+	log            log.Logger
+	reg            prometheus.Registerer
+	storageMetrics *resource.StorageMetrics
 
 	docBuilders resource.DocumentBuilderSupplier
 }
@@ -62,6 +63,7 @@ func ProvideUnifiedStorageGrpcService(
 	log log.Logger,
 	reg prometheus.Registerer,
 	docBuilders resource.DocumentBuilderSupplier,
+	storageMetrics *resource.StorageMetrics,
 ) (UnifiedStorageGrpcService, error) {
 	tracingCfg, err := tracing.ProvideTracingConfig(cfg)
 	if err != nil {
@@ -84,15 +86,16 @@ func ProvideUnifiedStorageGrpcService(
 	authn := grpcutils.NewAuthenticatorWithFallback(cfg, reg, tracing, &grpc.Authenticator{Tracer: tracing})
 
 	s := &service{
-		cfg:           cfg,
-		features:      features,
-		stopCh:        make(chan struct{}),
-		authenticator: authn,
-		tracing:       tracing,
-		db:            db,
-		log:           log,
-		reg:           reg,
-		docBuilders:   docBuilders,
+		cfg:            cfg,
+		features:       features,
+		stopCh:         make(chan struct{}),
+		authenticator:  authn,
+		tracing:        tracing,
+		db:             db,
+		log:            log,
+		reg:            reg,
+		docBuilders:    docBuilders,
+		storageMetrics: storageMetrics,
 	}
 
 	// This will be used when running as a dskit service
@@ -112,7 +115,7 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	server, err := NewResourceServer(s.db, s.cfg, s.tracing, s.reg, authzClient, searchOptions)
+	server, err := NewResourceServer(s.db, s.cfg, s.tracing, s.reg, authzClient, searchOptions, s.storageMetrics)
 	if err != nil {
 		return err
 	}
