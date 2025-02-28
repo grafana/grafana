@@ -34,7 +34,7 @@ func (j *migrationJob) wipeUnifiedAndSetMigratedFlag(ctx context.Context, dual d
 				return fmt.Errorf("another migration job is running for: %s", gr)
 			}
 		}
-		settings := resource.BatchSettings{
+		settings := resource.BulkSettings{
 			RebuildCollection: true, // wipes everything in the collection
 			Collection: []*resource.ResourceKey{{
 				Namespace: j.namespace,
@@ -43,7 +43,7 @@ func (j *migrationJob) wipeUnifiedAndSetMigratedFlag(ctx context.Context, dual d
 			}},
 		}
 		ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
-		stream, err := j.batch.BatchProcess(ctx)
+		stream, err := j.batch.BulkProcess(ctx)
 		if err != nil {
 			return fmt.Errorf("error clearing unified %s / %w", gr, err)
 		}

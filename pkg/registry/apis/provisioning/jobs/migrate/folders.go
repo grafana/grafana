@@ -18,24 +18,24 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-var _ resource.BatchResourceWriter = (*folderReader)(nil)
+var _ resource.BulkResourceWriter = (*folderReader)(nil)
 
 type folderReader struct {
 	tree           *resources.FolderTree
 	targetRepoName string
 }
 
-// Close implements resource.BatchResourceWrite.
+// Close implements resource.BulkResourceWrite.
 func (f *folderReader) Close() error {
 	return nil
 }
 
-// CloseWithResults implements resource.BatchResourceWrite.
-func (f *folderReader) CloseWithResults() (*resource.BatchResponse, error) {
-	return &resource.BatchResponse{}, nil
+// CloseWithResults implements resource.BulkResourceWrite.
+func (f *folderReader) CloseWithResults() (*resource.BulkResponse, error) {
+	return &resource.BulkResponse{}, nil
 }
 
-// Write implements resource.BatchResourceWrite.
+// Write implements resource.BulkResourceWrite.
 func (f *folderReader) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
 	item := &unstructured.Unstructured{}
 	err := item.UnmarshalJSON(value)
@@ -63,7 +63,7 @@ func (j *migrationJob) loadFolders(ctx context.Context) error {
 			Group:    folders.GROUP,
 			Resource: folders.RESOURCE,
 		}},
-		Store: parquet.NewBatchResourceWriterClient(reader),
+		Store: parquet.NewBulkResourceWriterClient(reader),
 	})
 	if err != nil {
 		return fmt.Errorf("unable to read folders from legacy storage %w", err)

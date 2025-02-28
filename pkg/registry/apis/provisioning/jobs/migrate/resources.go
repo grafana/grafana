@@ -20,23 +20,23 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-var _ resource.BatchResourceWriter = (*resourceReader)(nil)
+var _ resource.BulkResourceWriter = (*resourceReader)(nil)
 
 type resourceReader struct {
 	job *migrationJob
 }
 
-// Close implements resource.BatchResourceWriter.
+// Close implements resource.BulkResourceWriter.
 func (r *resourceReader) Close() error {
 	return nil
 }
 
-// CloseWithResults implements resource.BatchResourceWriter.
-func (r *resourceReader) CloseWithResults() (*resource.BatchResponse, error) {
-	return &resource.BatchResponse{}, nil
+// CloseWithResults implements resource.BulkResourceWriter.
+func (r *resourceReader) CloseWithResults() (*resource.BulkResponse, error) {
+	return &resource.BulkResponse{}, nil
 }
 
-// Write implements resource.BatchResourceWriter.
+// Write implements resource.BulkResourceWriter.
 func (r *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
 	// Reuse the same parse+cleanup logic
 	parsed, err := r.job.parser.Parse(ctx, &repository.FileInfo{
@@ -75,7 +75,7 @@ func (j *migrationJob) loadResources(ctx context.Context) error {
 			Namespace:   j.namespace,
 			WithHistory: j.options.History,
 			Resources:   []schema.GroupResource{gr},
-			Store:       parquet.NewBatchResourceWriterClient(&resourceReader{job: j}),
+			Store:       parquet.NewBulkResourceWriterClient(&resourceReader{job: j}),
 			OnlyCount:   true, // first get the count
 		}
 		stats, err := j.legacy.Migrate(ctx, opts)

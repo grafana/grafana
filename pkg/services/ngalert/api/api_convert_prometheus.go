@@ -103,12 +103,46 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRules(c *contextmodel.
 // RouteConvertPrometheusDeleteNamespace deletes all rule groups that were imported from a Prometheus-compatible source
 // within a specified namespace.
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteNamespace(c *contextmodel.ReqContext, namespaceTitle string) response.Response {
-	return response.Error(501, "Not implemented", nil)
+	logger := srv.logger.FromContext(c.Req.Context())
+
+	logger.Debug("Looking up folder in the root by title", "folder_title", namespaceTitle)
+	namespace, err := srv.ruleStore.GetNamespaceInRootByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.GetOrgID(), c.SignedInUser)
+	if err != nil {
+		return namespaceErrorResponse(err)
+	}
+	logger.Info("Deleting all Prometheus-imported rule groups", "folder_uid", namespace.UID, "folder_title", namespaceTitle)
+
+	filterOpts := &provisioning.FilterOptions{
+		NamespaceUIDs:          []string{namespace.UID},
+		ImportedPrometheusRule: util.Pointer(true),
+	}
+	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, models.ProvenanceConvertedPrometheus, filterOpts)
+	if err != nil {
+		logger.Error("Failed to delete rule groups", "folder_uid", namespace.UID, "error", err)
+		return errorToResponse(err)
+	}
+
+	return successfulResponse()
 }
 
 // RouteConvertPrometheusDeleteRuleGroup deletes a specific rule group if it was imported from a Prometheus-compatible source.
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteRuleGroup(c *contextmodel.ReqContext, namespaceTitle string, group string) response.Response {
-	return response.Error(501, "Not implemented", nil)
+	logger := srv.logger.FromContext(c.Req.Context())
+
+	logger.Debug("Looking up folder in the root by title", "folder_title", namespaceTitle)
+	folder, err := srv.ruleStore.GetNamespaceInRootByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.GetOrgID(), c.SignedInUser)
+	if err != nil {
+		return namespaceErrorResponse(err)
+	}
+	logger.Info("Deleting Prometheus-imported rule group", "folder_uid", folder.UID, "folder_title", namespaceTitle, "group", group)
+
+	err = srv.alertRuleService.DeleteRuleGroup(c.Req.Context(), c.SignedInUser, folder.UID, group, models.ProvenanceConvertedPrometheus)
+	if err != nil {
+		logger.Error("Failed to delete rule group", "folder_uid", folder.UID, "group", group, "error", err)
+		return errorToResponse(err)
+	}
+
+	return successfulResponse()
 }
 
 // RouteConvertPrometheusGetNamespace returns the Grafana-managed alert rules for a specified namespace (folder).
@@ -220,7 +254,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextm
 		return errorToResponse(err)
 	}
 
-	return response.JSON(http.StatusAccepted, map[string]string{"status": "success"})
+	return successfulResponse()
 }
 
 func (srv *ConvertPrometheusSrv) getOrCreateNamespace(c *contextmodel.ReqContext, title string, logger log.Logger) (*folder.Folder, response.Response) {
@@ -362,4 +396,10 @@ func namespaceErrorResponse(err error) response.Response {
 	}
 
 	return toNamespaceErrorResponse(err)
+}
+
+func successfulResponse() response.Response {
+	return response.JSON(http.StatusAccepted, apimodels.ConvertPrometheusResponse{
+		Status: "success",
+	})
 }

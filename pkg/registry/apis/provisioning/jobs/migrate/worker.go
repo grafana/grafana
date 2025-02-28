@@ -39,7 +39,7 @@ type MigrationWorker struct {
 	legacyMigrator legacy.LegacyMigrator
 
 	// Direct access to unified storage... use carefully!
-	batch resource.BatchStoreClient
+	bulk resource.BulkStoreClient
 
 	// Decrypt secret from config object
 	secrets secrets.Service
@@ -52,7 +52,7 @@ func NewMigrationWorker(clients *resources.ClientFactory,
 	legacyMigrator legacy.LegacyMigrator,
 	parsers *resources.ParserFactory, // should not be necessary!
 	storageStatus dualwrite.Service,
-	batch resource.BatchStoreClient,
+	batch resource.BulkStoreClient,
 	secrets secrets.Service,
 	syncWorker *sync.SyncWorker,
 	clonedir string,
@@ -141,7 +141,7 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		return fmt.Errorf("error getting parser: %w", err)
 	}
 
-	worker, err := newMigrationJob(ctx, rw, *options, dynamicClient, parser, w.batch, w.legacyMigrator, progress)
+	worker, err := newMigrationJob(ctx, rw, *options, dynamicClient, parser, w.bulk, w.legacyMigrator, progress)
 	if err != nil {
 		return fmt.Errorf("error creating job: %w", err)
 	}
@@ -208,7 +208,7 @@ type migrationJob struct {
 	legacy legacy.LegacyMigrator
 	client *resources.DynamicClient // used to read users
 	parser *resources.Parser
-	batch  resource.BatchStoreClient
+	batch  resource.BulkStoreClient
 
 	namespace string
 
@@ -225,7 +225,7 @@ func newMigrationJob(ctx context.Context,
 	options provisioning.MigrateJobOptions,
 	client *resources.DynamicClient,
 	parser *resources.Parser,
-	batch resource.BatchStoreClient,
+	batch resource.BulkStoreClient,
 	legacyMigrator legacy.LegacyMigrator,
 	progress jobs.JobProgressRecorder,
 ) (*migrationJob, error) {
