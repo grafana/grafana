@@ -187,18 +187,23 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     type: ResourcePickerQueryType
   ): Promise<ResourceRowGroup> {
     // We can use subscription ID for the filtering here as they're unique
+    // The logic of this query is:
+    // Retrieve _all_ resources a user/app registration/identity has access to
+    // Filter by the namespaces that support metrics
+    // Filter to resources contained within the subscription
+    // Conduct a left-outer join on the resourcecontainers table to allow us to get the case-sensitive resource group name
+    // Return the count of resources in a group, the URI, and name of the group in ascending order
     const query = `
-    resources
-     | join kind=inner (
-       ResourceContainers
-       | where type == 'microsoft.resources/subscriptions/resourcegroups'
-       | project resourceGroupURI=id, resourceGroupName=name, resourceGroup, subscriptionId
-     ) on resourceGroup, subscriptionId
-
-     ${await this.filterByType(type)}
-     | where subscriptionId == '${subscriptionId}'
-     | summarize count() by resourceGroupName, resourceGroupURI
-     | order by resourceGroupURI asc`;
+    resources 
+    ${await this.filterByType(type)}
+    | where subscriptionId == '${subscriptionId}'
+    | extend resourceGroupURI = strcat("/subscriptions/", subscriptionId, "/resourcegroups/", resourceGroup) 
+    | join kind=leftouter (resourcecontainers  
+        | where type =~ 'microsoft.resources/subscriptions/resourcegroups'  
+        | project resourceGroupName=name, resourceGroupURI=tolower(id)) on resourceGroupURI 
+    | project resourceGroupName=iff(resourceGroupName != "", resourceGroupName, resourceGroup), resourceGroupURI
+    | summarize count() by resourceGroupName, resourceGroupURI
+    | order by tolower(resourceGroupName) asc `;
 
     let resourceGroups: RawAzureResourceGroupItem[] = [];
     let allFetched = false;
