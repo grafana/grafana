@@ -24,4 +24,4 @@ jobs:
           cache: true
       
       - name: Validate Backend Specs
-        uses: ./.github/actions/validate_backend_specs
+        uses: ./.github/actions/validate-backend-specs
