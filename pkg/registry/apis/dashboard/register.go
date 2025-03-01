@@ -191,8 +191,16 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		dashboardv0alpha1.DashboardResourceInfo,
 		dashboardv0alpha1.LibraryPanelResourceInfo,
-		func() runtime.Object {
-			return &dashboardv0alpha1.DashboardWithAccessInfo{}
+		func(obj runtime.Object, access *dashboardinternal.DashboardAccess) (v runtime.Object, err error) {
+			dto := &dashboardv0alpha1.DashboardWithAccessInfo{}
+			dash, ok := obj.(*dashboardv0alpha1.Dashboard)
+			if ok {
+				dto.Dashboard = *dash
+			}
+			if access != nil {
+				err = b.scheme.Convert(access, &dto.Access, nil)
+			}
+			return dto, err
 		}); err != nil {
 		return err
 	}
@@ -201,8 +209,16 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		dashboardv1alpha1.DashboardResourceInfo,
 		dashboardv1alpha1.LibraryPanelResourceInfo,
-		func() runtime.Object {
-			return &dashboardv1alpha1.DashboardWithAccessInfo{}
+		func(obj runtime.Object, access *dashboardinternal.DashboardAccess) (v runtime.Object, err error) {
+			dto := &dashboardv1alpha1.DashboardWithAccessInfo{}
+			dash, ok := obj.(*dashboardv1alpha1.Dashboard)
+			if ok {
+				dto.Dashboard = *dash
+			}
+			if access != nil {
+				err = b.scheme.Convert(access, &dto.Access, nil)
+			}
+			return dto, err
 		}); err != nil {
 		return err
 	}
@@ -211,8 +227,16 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		dashboardv2alpha1.DashboardResourceInfo,
 		dashboardv2alpha1.LibraryPanelResourceInfo,
-		func() runtime.Object {
-			return &dashboardv2alpha1.DashboardWithAccessInfo{}
+		func(obj runtime.Object, access *dashboardinternal.DashboardAccess) (v runtime.Object, err error) {
+			dto := &dashboardv2alpha1.DashboardWithAccessInfo{}
+			dash, ok := obj.(*dashboardv2alpha1.Dashboard)
+			if ok {
+				dto.Dashboard = *dash
+			}
+			if access != nil {
+				err = b.scheme.Convert(access, &dto.Access, nil)
+			}
+			return dto, err
 		}); err != nil {
 		return err
 	}
@@ -226,7 +250,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	largeObjects apistore.LargeObjectSupport,
 	dashboards utils.ResourceInfo,
 	libraryPanels utils.ResourceInfo,
-	newDTOFunc func() runtime.Object,
+	newDTOFunc dtoBuilder,
 ) error {
 	// Register the versioned storage
 	storage := map[string]rest.Storage{}
@@ -259,7 +283,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 
 	// Register the DTO endpoint that will consolidate all dashboard bits
 	storage[dashboards.StoragePath("dto")], err = NewDTOConnector(
-		storage[dashboards.StoragePath()],
+		storage[dashboards.StoragePath()].(rest.Getter),
 		largeObjects,
 		b.legacy.Access,
 		b.unified,
