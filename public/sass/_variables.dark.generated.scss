@@ -19,9 +19,9 @@ $colors-action-selected: rgba(204, 204, 220, 0.12);
 
 // New Colors
 // -------------------------
-$blue-light: #6E9FFF;
-$blue-base: #3D71D9;
-$blue-shade: rgb(90, 134, 222);
+$blue-light: #00B7FF;
+$blue-base: #0091cf;
+$blue-shade: rgb(38, 161, 214);
 $red-base: #D10E5C;
 $red-shade: rgb(215, 50, 116);
 $green-base: #1A7F4B;
@@ -77,7 +77,7 @@ $red: $red-base;
 $yellow: #ecbb13;
 $orange: #eb7b18;
 $purple: #9933cc;
-$variable: #6E9FFF;
+$variable: #00B7FF;
 
 $brand-primary: #eb7b18;
 $brand-success: #1A7F4B;
@@ -107,7 +107,7 @@ $text-color-semi-weak: rgba(204, 204, 220, 0.65);
 $text-color-weak: rgba(204, 204, 220, 0.65);
 $text-color-faint: rgba(204, 204, 220, 0.6);
 $text-color-emphasis: #FFFFFF;
-$text-blue: #6E9FFF;
+$text-blue: #00B7FF;
 
 $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
 $textShadow: none;
@@ -121,7 +121,7 @@ $brand-gradient-vertical: linear-gradient(0.01deg, #F55F3E 0.01%, #FF8833 99.99%
 $link-color: rgb(204, 204, 220);
 $link-color-disabled: rgba(204, 204, 220, 0.6);
 $link-hover-color: #FFFFFF;
-$external-link-color: #6E9FFF;
+$external-link-color: #00B7FF;
 
 // Typography
 // -------------------------
@@ -218,8 +218,8 @@ $input-bg-disabled: rgba(204, 204, 220, 0.04);
 $input-color: rgb(204, 204, 220);
 $input-border-color: rgba(204, 204, 220, 0.20);
 $input-box-shadow: none;
-$input-border-focus: #6E9FFF;
-$input-box-shadow-focus: #6E9FFF !default;
+$input-border-focus: #00B7FF;
+$input-box-shadow-focus: #00B7FF !default;
 $input-color-placeholder: rgba(204, 204, 220, 0.6);
 $input-label-bg: #22252b;
 $input-color-select-arrow: $white;
