@@ -174,6 +174,30 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         seriesIndex++;
       }
 
+      const newMapping = field.config.mappings?.map((mapping) => {
+        //@ts-ignore
+        if (mapping.options.selected.text !== undefined) {
+          return {
+            ...mapping,
+            options: {
+              ...mapping.options,
+              selected: {
+                ...mapping.options.result,
+                //@ts-ignore
+                text: options.replaceVariables(mapping.options.selected.text, field.state?.scopedVars),
+              },
+            },
+          };
+        } else {
+          return mapping;
+        }
+      });
+
+      console.log(newMapping);
+
+      // @ts-ignore
+      field.config.mappings = newMapping;
+
       // and set the display processor using it
       field.display = getDisplayProcessor({
         field: field,
