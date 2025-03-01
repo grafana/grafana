@@ -652,7 +652,7 @@ func TestGetProvisionedDashboardDataByDashboardID(t *testing.T) {
 					utils.AnnoKeyManagerIdentity: "test",
 					utils.AnnoKeySourceChecksum:  "hash",
 					utils.AnnoKeySourcePath:      "path/to/file",
-					utils.AnnoKeySourceTimestamp: "2025-01-01T00:00:00Z",
+					utils.AnnoKeySourceTimestamp: "12345000",
 				},
 			},
 			"spec": map[string]any{
@@ -703,7 +703,7 @@ func TestGetProvisionedDashboardDataByDashboardID(t *testing.T) {
 			Name:        "test",
 			ExternalID:  "path/to/file",
 			CheckSum:    "hash",
-			Updated:     1735689600,
+			Updated:     123456789,
 		})
 		k8sCliMock.AssertExpectations(t)
 	})
