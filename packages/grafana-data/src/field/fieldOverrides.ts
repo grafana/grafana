@@ -27,6 +27,7 @@ import {
 import { InterpolateFunction, PanelData } from '../types/panel';
 import { TimeZone } from '../types/time';
 import { FieldMatcher } from '../types/transformations';
+import { ValueMapping } from '../types/valueMapping';
 import { mapInternalLinkToExplore } from '../utils/dataLinks';
 import { locationUtil } from '../utils/location';
 
@@ -177,15 +178,21 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       const newMapping = field.config.mappings?.map((mapping) => {
         const interpolatedMapping = Object.fromEntries(
           Object.entries(mapping.options).map(([mapOptKey, mapOptVal]) => {
-            const obj = { ...mapOptVal, text: options.replaceVariables(mapOptVal.text, field.state?.scopedVars) };
-            return [mapOptKey, obj];
+            if (mapOptVal.text !== undefined) {
+              const newMapVal = {
+                ...mapOptVal,
+                text: options.replaceVariables(mapOptVal.text, field.state?.scopedVars),
+              };
+              return [mapOptKey, newMapVal];
+            } else {
+              return [mapOptKey, mapOptVal];
+            }
           })
         );
 
-        return { ...mapping, options: interpolatedMapping };
+        return { ...mapping, options: interpolatedMapping } as ValueMapping;
       });
 
-      // @ts-ignore
       field.config.mappings = newMapping;
 
       // and set the display processor using it
