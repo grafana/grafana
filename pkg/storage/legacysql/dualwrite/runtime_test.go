@@ -4,33 +4,20 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/apis/example"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-var now = time.Now()
-
-var createFn = func(context.Context, runtime.Object) error { return nil }
-
-var exampleObj = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", CreationTimestamp: metav1.Time{}, GenerateName: "foo"}, Spec: example.PodSpec{}, Status: example.PodStatus{StartTime: &metav1.Time{Time: now}}}
-var exampleObjNoRV = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "", CreationTimestamp: metav1.Time{}, GenerateName: "foo"}, Spec: example.PodSpec{}, Status: example.PodStatus{StartTime: &metav1.Time{Time: now}}}
-var anotherObj = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "bar", ResourceVersion: "2", GenerateName: "foo"}, Spec: example.PodSpec{}, Status: example.PodStatus{StartTime: &metav1.Time{Time: now}}}
-var failingObj = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "object-fail", ResourceVersion: "2", GenerateName: "object-fail"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
-
-var p = prometheus.NewRegistry()
 var kind = schema.GroupResource{Group: "g", Resource: "r"}
 
-func TestManagedMode3_Create(t *testing.T) {
+func TestRuntime_Create(t *testing.T) {
 	type testCase struct {
 		input          runtime.Object
 		setupLegacyFn  func(m *mock.Mock, input runtime.Object)
@@ -105,7 +92,7 @@ func TestManagedMode3_Create(t *testing.T) {
 	}
 }
 
-func TestManagedMode3_Get(t *testing.T) {
+func TestRuntime_Get(t *testing.T) {
 	type testCase struct {
 		setupLegacyFn  func(m *mock.Mock, name string)
 		setupStorageFn func(m *mock.Mock, name string)
@@ -184,7 +171,7 @@ func TestManagedMode3_Get(t *testing.T) {
 	}
 }
 
-func TestManagedMode3_CreateWhileMigrating(t *testing.T) {
+func TestRuntime_CreateWhileMigrating(t *testing.T) {
 	type testCase struct {
 		input          runtime.Object
 		setupLegacyFn  func(m *mock.Mock, input runtime.Object)
