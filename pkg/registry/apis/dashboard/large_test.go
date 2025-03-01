@@ -5,12 +5,13 @@ import (
 	"os"
 	"testing"
 
-	dashboardinternal "github.com/grafana/grafana/pkg/apis/dashboard"
-	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	dashboardinternal "github.com/grafana/grafana/pkg/apis/dashboard"
+	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 )
 
 func TestLargeDashboardSupport(t *testing.T) {

@@ -101,75 +101,75 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 	if err != nil {
 		return nil, err
 	}
+	obj, err := utils.MetaAccessor(rawobj)
+	if err != nil {
+		return nil, err
+	}
 
-	// After reconstruct
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		var access *dashboard.DashboardAccess
-
-		if true {
-			obj, err := utils.MetaAccessor(rawobj)
-			if err != nil {
-				responder.Error(err)
-				return
-			}
-
-			dto := &dashboards.Dashboard{
-				UID:   name,
-				OrgID: info.OrgID,
-				ID:    obj.GetDeprecatedInternalID(), // nolint:staticcheck
-			}
-			repo, err := obj.GetRepositoryInfo()
-			if err != nil {
-				responder.Error(err)
-				return
-			}
-			if repo != nil && repo.Name == dashboard.PluginIDRepoName {
-				dto.PluginID = repo.Path
-			}
-
-			guardian, err := guardian.NewByDashboard(ctx, dto, info.OrgID, user)
-			if err != nil {
-				responder.Error(err)
-				return
-			}
-			canView, err := guardian.CanView()
-			if err != nil || !canView {
-				responder.Error(fmt.Errorf("not allowed to view"))
-				return
-			}
-
-			access = &dashboard.DashboardAccess{}
-			access.CanEdit, _ = guardian.CanEdit()
-			access.CanSave, _ = guardian.CanSave()
-			access.CanAdmin, _ = guardian.CanAdmin()
-			access.CanDelete, _ = guardian.CanDelete()
-			access.CanStar = user.IsIdentityType(claims.TypeUser)
-
-			access.AnnotationsPermissions = &dashboard.AnnotationPermission{}
-			r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
-			r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Organization, accesscontrol.ScopeAnnotationsTypeOrganization)
-
-			// Check for blob info
-			blobInfo := obj.GetBlob()
-			if blobInfo != nil && r.largeObjects != nil {
-				gr := r.largeObjects.GroupResource()
-				err = r.largeObjects.Reconstruct(ctx, &resource.ResourceKey{
-					Group:     gr.Group,
-					Resource:  gr.Resource,
-					Namespace: obj.GetNamespace(),
-					Name:      obj.GetName(),
-				}, r.unified, obj)
-				if err != nil {
-					responder.Error(err)
-					return
-				}
-			}
-			// FIXME!!!! does nto appear to get the title
-			// The title property next to unstructured is getting lost!!!
-			title := obj.FindTitle("")
-			access.Slug = slugify.Slugify(title)
-			access.Url = dashboards.GetDashboardFolderURL(false, name, access.Slug)
+	// Check for blob info
+	blobInfo := obj.GetBlob()
+	if blobInfo != nil && r.largeObjects != nil {
+		gr := r.largeObjects.GroupResource()
+		err = r.largeObjects.Reconstruct(ctx, &resource.ResourceKey{
+			Group:     gr.Group,
+			Resource:  gr.Resource,
+			Namespace: obj.GetNamespace(),
+			Name:      obj.GetName(),
+		}, r.unified, obj)
+		if err != nil {
+			return nil, err
 		}
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		// Skip the access info and return the dashboard that may be loaded with large object support
+		if req.URL.Query().Get("includeAccess") == "false" {
+			responder.Object(200, rawobj)
+			return
+		}
+
+		// Calculate access information -- needed to help smooth transition from /api/dashboard format
+		dto := &dashboards.Dashboard{
+			UID:   name,
+			OrgID: info.OrgID,
+			ID:    obj.GetDeprecatedInternalID(), // nolint:staticcheck
+		}
+		repo, err := obj.GetRepositoryInfo()
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+		if repo != nil && repo.Name == dashboard.PluginIDRepoName {
+			dto.PluginID = repo.Path
+		}
+
+		guardian, err := guardian.NewByDashboard(ctx, dto, info.OrgID, user)
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+		canView, err := guardian.CanView()
+		if err != nil || !canView {
+			responder.Error(fmt.Errorf("not allowed to view"))
+			return
+		}
+
+		access := &dashboard.DashboardAccess{}
+		access.CanEdit, _ = guardian.CanEdit()
+		access.CanSave, _ = guardian.CanSave()
+		access.CanAdmin, _ = guardian.CanAdmin()
+		access.CanDelete, _ = guardian.CanDelete()
+		access.CanStar = user.IsIdentityType(claims.TypeUser)
+
+		access.AnnotationsPermissions = &dashboard.AnnotationPermission{}
+		r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
+		r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Organization, accesscontrol.ScopeAnnotationsTypeOrganization)
+
+		// FIXME!!!! does not get the title!
+		// The title property next to unstructured and not found in this model
+		title := obj.FindTitle("")
+		access.Slug = slugify.Slugify(title)
+		access.Url = dashboards.GetDashboardFolderURL(false, name, access.Slug)
 
 		dash, err := r.builder(rawobj, access)
 		if err != nil {
