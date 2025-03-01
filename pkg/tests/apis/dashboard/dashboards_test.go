@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -248,6 +249,7 @@ func TestIntegrationDashboardsAppV1Alpha1(t *testing.T) {
 }
 
 func TestIntegrationLegacySupport(t *testing.T) {
+	ctx := context.Background()
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{
 			// NOTE: when using this feature toggle, the read is always v0!
@@ -259,7 +261,7 @@ func TestIntegrationLegacySupport(t *testing.T) {
 		User: helper.Org1.Admin,
 		GVR:  dashboardV0.DashboardResourceInfo.GroupVersionResource(),
 	})
-	obj, err := clientV0.Resource.Create(context.Background(),
+	obj, err := clientV0.Resource.Create(ctx,
 		helper.LoadYAMLOrJSONFile("testdata/dashboard-test-v0.yaml"),
 		metav1.CreateOptions{},
 	)
@@ -270,7 +272,7 @@ func TestIntegrationLegacySupport(t *testing.T) {
 		User: helper.Org1.Admin,
 		GVR:  dashboardV1.DashboardResourceInfo.GroupVersionResource(),
 	})
-	obj, err = clientV1.Resource.Create(context.Background(),
+	obj, err = clientV1.Resource.Create(ctx,
 		helper.LoadYAMLOrJSONFile("testdata/dashboard-test-v1.yaml"),
 		metav1.CreateOptions{},
 	)
@@ -281,12 +283,34 @@ func TestIntegrationLegacySupport(t *testing.T) {
 		User: helper.Org1.Admin,
 		GVR:  dashboardV2.DashboardResourceInfo.GroupVersionResource(),
 	})
-	obj, err = clientV2.Resource.Create(context.Background(),
+	obj, err = clientV2.Resource.Create(ctx,
 		helper.LoadYAMLOrJSONFile("testdata/dashboard-test-v2.yaml"),
 		metav1.CreateOptions{},
 	)
 	require.NoError(t, err)
 	require.Equal(t, "test-v2", obj.GetName())
+
+	//---------------------------------------------------------
+	// Now check that we can get each dashboard with any API
+	//---------------------------------------------------------
+	names := []string{"test-v0", "test-v1", "test-v2"}
+	clients := []dynamic.ResourceInterface{
+		clientV0.Resource,
+		clientV1.Resource,
+		clientV2.Resource,
+	}
+	for _, name := range names {
+		for _, client := range clients {
+			obj, err := client.Get(ctx, name, metav1.GetOptions{})
+			require.NoError(t, err)
+			require.Equal(t, name, obj.GetName())
+
+			// Can get the same thing with the /dto endpoint
+			obj, err = client.Get(ctx, name, metav1.GetOptions{}, "dto")
+			require.NoError(t, err)
+			require.Equal(t, name, obj.GetName())
+		}
+	}
 
 	//---------------------------------------------------------
 	// Check that the legacy APIs return the correct apiVersion
