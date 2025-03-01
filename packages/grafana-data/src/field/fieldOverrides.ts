@@ -175,25 +175,15 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       }
 
       const newMapping = field.config.mappings?.map((mapping) => {
-        //@ts-ignore
-        if (mapping.options.selected.text !== undefined) {
-          return {
-            ...mapping,
-            options: {
-              ...mapping.options,
-              selected: {
-                ...mapping.options.result,
-                //@ts-ignore
-                text: options.replaceVariables(mapping.options.selected.text, field.state?.scopedVars),
-              },
-            },
-          };
-        } else {
-          return mapping;
-        }
-      });
+        const interpolatedMapping = Object.fromEntries(
+          Object.entries(mapping.options).map(([mapOptKey, mapOptVal]) => {
+            const obj = { ...mapOptVal, text: options.replaceVariables(mapOptVal.text, field.state?.scopedVars) };
+            return [mapOptKey, obj];
+          })
+        );
 
-      console.log(newMapping);
+        return { ...mapping, options: interpolatedMapping };
+      });
 
       // @ts-ignore
       field.config.mappings = newMapping;
