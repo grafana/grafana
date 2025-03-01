@@ -563,7 +563,7 @@ func TestGetProvisionedDashboardData(t *testing.T) {
 		k8sCliMock.On("Search", mock.Anything, int64(1),
 			mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
 				// make sure the kind is added to the query
-				return req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) &&
+				return req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && // nolint:staticcheck
 					req.Options.Fields[1].Values[0] == repo
 			})).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
@@ -574,7 +574,7 @@ func TestGetProvisionedDashboardData(t *testing.T) {
 		}, nil).Once()
 		k8sCliMock.On("Search", mock.Anything, int64(2), mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
 			// make sure the kind is added to the query
-			return req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) &&
+			return req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && // nolint:staticcheck
 				req.Options.Fields[1].Values[0] == repo
 		})).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{

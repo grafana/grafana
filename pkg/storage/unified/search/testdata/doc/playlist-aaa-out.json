@@ -1,8 +1,8 @@
 {
   "key": {
     "namespace": "default",
-    "group": "dashboard.grafana.app",
-    "resource": "dashboards",
+    "group": "playlist.grafana.app",
+    "resource": "playlists",
     "name": "aaa"
   },
   "name": "aaa",
