@@ -192,13 +192,17 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	rw.Config().Spec.Sync.Enabled = true
 
 	// Delegate the import to a sync (from the already checked out go-git repository!)
-	return w.syncWorker.Process(ctx, rw, provisioning.Job{
+	err = w.syncWorker.Process(ctx, rw, provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Sync: &provisioning.SyncJobOptions{
 				Incremental: false,
 			},
 		},
 	}, progress)
+	if err != nil {
+		return stopReadingUnifiedStorage(ctx, w.storageStatus)
+	}
+	return nil
 }
 
 // MigrationJob holds all context for a running job

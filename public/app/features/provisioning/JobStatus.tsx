@@ -1,7 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useRef, useMemo } from 'react';
 
-import { Stack, Text, TextLink, InteractiveTable, Spinner } from '@grafana/ui';
+import { Stack, Text, TextLink, InteractiveTable, Spinner, ControlledCollapse } from '@grafana/ui';
 
 import ProgressBar from './ProgressBar';
 import { useGetRepositoryQuery, useListJobQuery } from './api';
@@ -43,11 +43,17 @@ export function JobStatus({ name, onStatusChange }: JobStatusProps) {
           </Text>
           <ProgressBar progress={job.status.progress} />
 
-          {job.status.state === 'success' && (
+          {job.status.state === 'success' ? (
             <Stack direction="column" gap={2}>
               {job.status.summary && <MigrationSummaryTable summary={job.status.summary} />}
               <RepositoryLink name={job.metadata?.labels?.repository} />
             </Stack>
+          ) : (
+            <>
+              <ControlledCollapse label="View details" isOpen={false}>
+                <pre>{JSON.stringify(job, null, ' ')}</pre>
+              </ControlledCollapse>
+            </>
           )}
         </Stack>
       )}
