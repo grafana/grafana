@@ -24,8 +24,8 @@ export const palette = {
   // from figma
   lightBorder1: '#E4E7E7',
 
-  blueDarkMain: '#3D71D9', // '#4165F5',
-  blueDarkText: '#6E9FFF', // '#58a6ff', //'#33a2e5', // '#5790FF',
+  blueDarkMain: '#0091cf', // '#4165F5',
+  blueDarkText: '#00B7FF', // '#58a6ff', //'#33a2e5', // '#5790FF',
   redDarkMain: '#D10E5C',
   redDarkText: '#FF5286',
   greenDarkMain: '#1A7F4B',
@@ -33,8 +33,8 @@ export const palette = {
   orangeDarkMain: '#FF9900',
   orangeDarkText: '#fbad37',
 
-  blueLightMain: '#3871DC',
-  blueLightText: '#1F62E0',
+  blueLightMain: '#0098D9',
+  blueLightText: '#007AB8',
   redLightMain: '#E0226E',
   redLightText: '#CF0E5B',
   greenLightMain: '#1B855E',

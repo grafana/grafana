@@ -81,6 +81,10 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
         ref={refs.setReference}
         {...getReferenceProps()}
         {...restProps}
+        style={{
+          borderBottomLeftRadius: 0,
+          borderTopLeftRadius: 0,
+        }}
       >
         {value?.label || (value?.value != null ? String(value?.value) : null)}
       </ToolbarButton>

@@ -19,9 +19,9 @@ $colors-action-selected: rgba(36, 41, 46, 0.08);
 
 // New Colors
 // -------------------------
-$blue-light: #1F62E0;
-$blue-base: #3871DC;
-$blue-shade: rgb(44, 90, 176);
+$blue-light: #007AB8;
+$blue-base: #0098D9;
+$blue-shade: rgb(0, 121, 173);
 $red-base: #E0226E;
 $red-shade: rgb(179, 27, 88);
 $green-base: #1B855E;
@@ -67,12 +67,12 @@ $border1: rgba(36, 41, 46, 0.30);
 
 // Accent colors
 // -------------------------
-$blue: #1F62E0;
+$blue: #007AB8;
 $red: $red-base;
 $yellow: #ecbb13;
 $orange: #eb7b18;
 $purple: #9933cc;
-$variable: #1F62E0;
+$variable: #007AB8;
 
 $brand-primary: #eb7b18;
 $brand-success: #1B855E;
@@ -103,7 +103,7 @@ $text-color-semi-weak: rgba(36, 41, 46, 0.75);
 $text-color-weak: rgba(36, 41, 46, 0.75);
 $text-color-faint: rgba(36, 41, 46, 0.64);
 $text-color-emphasis: #000000;
-$text-blue: #1F62E0;
+$text-blue: #007AB8;
 
 $text-shadow-faint: none;
 
@@ -116,7 +116,7 @@ $brand-gradient-vertical: linear-gradient(0.01deg, #F53E4C -31.2%, #FF8833 113.0
 $link-color: rgba(36, 41, 46, 1);
 $link-color-disabled: rgba(36, 41, 46, 0.64);
 $link-hover-color: #000000;
-$external-link-color: #1F62E0;
+$external-link-color: #007AB8;
 
 // Typography
 // -------------------------
