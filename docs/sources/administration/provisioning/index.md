@@ -635,8 +635,8 @@ The following sections detail the supported settings and secure settings for eac
 
 ##### HMAC signature configuration
 
-| Name            | Secure setting |
-| --------------- | -------------- |
+| Name              | Secure setting |
+| ----------------- | -------------- |
 | `secret`          | yes            |
 | `header`          |                |
 | `timestampHeader` |                |
