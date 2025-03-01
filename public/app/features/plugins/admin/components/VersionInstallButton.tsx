@@ -9,17 +9,10 @@ import { t } from 'app/core/internationalization';
 
 import { isPreinstalledPlugin } from '../helpers';
 import { useInstall } from '../state/hooks';
-import { Version } from '../types';
+import { PluginStatus, Version } from '../types';
 
 const PLUGINS_VERSION_PAGE_UPGRADE_INTERACTION_EVENT_NAME = 'plugins_upgrade_clicked';
 const PLUGINS_VERSION_PAGE_CHANGE_INTERACTION_EVENT_NAME = 'plugins_downgrade_clicked';
-
-enum InstallState {
-  INSTALL = 'Install',
-  UPGRADE = 'Upgrade',
-  DOWNGRADE = 'Downgrade',
-}
-
 interface Props {
   pluginId: string;
   version: Version;
@@ -67,7 +60,7 @@ export const VersionInstallButton = ({
       schema_version: '1.0.0',
     };
 
-    if (installState === InstallState.UPGRADE) {
+    if (installState === PluginStatus.UPDATE) {
       reportInteraction(PLUGINS_VERSION_PAGE_UPGRADE_INTERACTION_EVENT_NAME, trackProps);
     } else {
       reportInteraction(PLUGINS_VERSION_PAGE_CHANGE_INTERACTION_EVENT_NAME, {
@@ -76,13 +69,13 @@ export const VersionInstallButton = ({
       });
     }
 
-    install(pluginId, version.version, true);
+    install(pluginId, version.version, installState);
     setIsInstalling(true);
     onConfirmInstallation();
   };
 
   const onInstallClick = () => {
-    if (installState === InstallState.DOWNGRADE) {
+    if (installState === PluginStatus.DOWNGRADE) {
       setIsModalOpen(true);
     } else {
       performInstallation();
@@ -115,7 +108,8 @@ export const VersionInstallButton = ({
         tooltip={tooltip}
         tooltipPlacement="bottom-start"
       >
-        {installState} {isInstalling ? <Spinner className={styles.spinner} inline size="sm" /> : getIcon(installState)}
+        {getLabel(installState)}{' '}
+        {isInstalling ? <Spinner className={styles.spinner} inline size="sm" /> : getIcon(installState)}
       </Button>
       <ConfirmModal
         isOpen={isModalOpen}
@@ -131,31 +125,44 @@ export const VersionInstallButton = ({
   );
 };
 
-function getIcon(installState: InstallState) {
-  if (installState === InstallState.DOWNGRADE) {
+function getLabel(installState: PluginStatus) {
+  switch (installState) {
+    case PluginStatus.INSTALL:
+      return 'Install';
+    case PluginStatus.UPDATE:
+      return 'Upgrade';
+    case PluginStatus.DOWNGRADE:
+      return 'Downgrade';
+    default:
+      return '';
+  }
+}
+
+function getIcon(installState: PluginStatus) {
+  if (installState === PluginStatus.DOWNGRADE) {
     return <Icon name="arrow-down" />;
   }
-  if (installState === InstallState.UPGRADE) {
+  if (installState === PluginStatus.UPDATE) {
     return <Icon name="arrow-up" />;
   }
   return '';
 }
 
-function getInstallState(installedVersion?: string, version?: string): InstallState {
+function getInstallState(installedVersion?: string, version?: string): PluginStatus {
   if (!installedVersion || !version || !valid(installedVersion) || !valid(version)) {
-    return InstallState.INSTALL;
+    return PluginStatus.INSTALL;
   }
-  return gt(installedVersion, version) ? InstallState.DOWNGRADE : InstallState.UPGRADE;
+  return gt(installedVersion, version) ? PluginStatus.DOWNGRADE : PluginStatus.UPDATE;
 }
 
-function getButtonHiddenState(installState: InstallState, isPreinstalled: { found: boolean; withVersion: boolean }) {
+function getButtonHiddenState(installState: PluginStatus, isPreinstalled: { found: boolean; withVersion: boolean }) {
   // Default state for initial install
-  if (installState === InstallState.INSTALL) {
+  if (installState === PluginStatus.INSTALL) {
     return false;
   }
 
   // Handle downgrade case
-  if (installState === InstallState.DOWNGRADE) {
+  if (installState === PluginStatus.DOWNGRADE) {
     return isPreinstalled.found && Boolean(config.featureToggles.preinstallAutoUpdate);
   }
 

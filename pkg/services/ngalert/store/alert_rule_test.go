@@ -1599,7 +1599,7 @@ func TestGetRuleVersions(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("should return rule versions sorted in decreasing order", func(t *testing.T) {
-		versions, err := store.GetAlertRuleVersions(context.Background(), ruleV2.GetKey())
+		versions, err := store.GetAlertRuleVersions(context.Background(), ruleV2.OrgID, ruleV2.GUID)
 		require.NoError(t, err)
 		assert.Len(t, versions, 2)
 		assert.IsDecreasing(t, versions[0].ID, versions[1].ID)
@@ -1630,7 +1630,7 @@ func TestGetRuleVersions(t *testing.T) {
 			},
 		})
 
-		versions, err := store.GetAlertRuleVersions(context.Background(), ruleV3.GetKey())
+		versions, err := store.GetAlertRuleVersions(context.Background(), ruleV3.OrgID, ruleV3.GUID)
 		require.NoError(t, err)
 		assert.Len(t, versions, 3)
 		diff := versions[0].Diff(versions[1], AlertRuleFieldsToIgnoreInDiff[:]...)

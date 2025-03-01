@@ -2,16 +2,16 @@ import { ReactNode } from 'react';
 
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
+import { EditableDashboardElementInfo } from './EditableDashboardElement';
+
 export interface MultiSelectedEditableDashboardElement {
   /**
    * Marks this object as an element that can be selected and edited directly on the canvas
    */
   isMultiSelectedEditableDashboardElement: true;
 
-  /**
-   * Type name of the element
-   */
-  typeName: Readonly<string>;
+  /** A descriptor used by editing pane */
+  getEditableElementInfo(): EditableDashboardElementInfo;
 
   /**
    * Extremely useful for being able to access the useState inside the contained items
