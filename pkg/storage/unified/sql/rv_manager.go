@@ -34,6 +34,13 @@ var (
 		NativeHistogramBucketFactor: 1.1,
 	}, []string{"group", "resource", "status"})
 
+	rvmExecBatchPhaseDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Name:                        "rvmanager_exec_batch_phase_duration_seconds",
+		Help:                        "Duration of batch operation phases",
+		Namespace:                   "grafana",
+		NativeHistogramBucketFactor: 1.1,
+	}, []string{"group", "resource", "phase"})
+
 	rvmInflightWrites = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name:      "rvmanager_inflight_writes",
 		Help:      "Number of concurrent write operations",
@@ -237,6 +244,9 @@ func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource 
 	err = m.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		span.AddEvent("starting_batch_transaction")
 
+		writeTimer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
+			rvmExecBatchPhaseDuration.WithLabelValues(group, resource, "write_ops").Observe(v)
+		}))
 		for i := range batch {
 			guid, err := batch[i].fn(tx)
 			if err != nil {
@@ -248,9 +258,14 @@ func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource 
 			}
 			guids[i] = guid
 		}
+		writeTimer.ObserveDuration()
 		span.AddEvent("batch_operations_completed")
 
+		lockTimer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
+			rvmExecBatchPhaseDuration.WithLabelValues(group, resource, "waiting_for_lock").Observe(v)
+		}))
 		rv, err := m.lock(ctx, tx, group, resource)
+		lockTimer.ObserveDuration()
 		if err != nil {
 			span.AddEvent("resource_version_lock_failed", trace.WithAttributes(
 				attribute.String("error", err.Error()),
@@ -261,6 +276,10 @@ func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource 
 			attribute.Int64("initial_rv", rv),
 		))
 
+		rvUpdateTimer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
+			rvmExecBatchPhaseDuration.WithLabelValues(group, resource, "update_resource_versions").Observe(v)
+		}))
+		defer rvUpdateTimer.ObserveDuration()
 		// Allocate the RVs
 		for i, guid := range guids {
 			guidToRV[guid] = rv
