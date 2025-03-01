@@ -125,10 +125,10 @@ func (st DBstore) GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAler
 	return result, err
 }
 
-func (st DBstore) GetAlertRuleVersions(ctx context.Context, key ngmodels.AlertRuleKey) ([]*ngmodels.AlertRule, error) {
+func (st DBstore) GetAlertRuleVersions(ctx context.Context, orgID int64, guid string) ([]*ngmodels.AlertRule, error) {
 	alertRules := make([]*ngmodels.AlertRule, 0)
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		rows, err := sess.Table(new(alertRuleVersion)).Where("rule_org_id = ? AND rule_uid = ?", key.OrgID, key.UID).Asc("id").Rows(new(alertRuleVersion))
+		rows, err := sess.Table(new(alertRuleVersion)).Where("rule_org_id = ? AND rule_guid = ?", orgID, guid).Asc("id").Rows(new(alertRuleVersion))
 		if err != nil {
 			return err
 		}
@@ -261,6 +261,11 @@ func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			if err != nil {
 				return fmt.Errorf("failed to convert alert rule %q to storage model: %w", r.Title, err)
 			}
+
+			// assign unique identifier that will identify resource across space and time. The probability of collision is so low that we do not need to check for uniqueness.
+			// The unique keys will ensure uniqueness in rule and versions tables
+			converted.GUID = uuid.NewString()
+
 			newRules = append(newRules, converted)
 			ruleVersions = append(ruleVersions, alertRuleToAlertRuleVersion(converted))
 		}
@@ -313,6 +318,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			r := rules[i]
 			r.New.ID = r.Existing.ID
 			r.New.Version = r.Existing.Version // xorm will take care of increasing it (see https://xorm.io/docs/chapter-06/1.lock/)
+			r.New.GUID = r.Existing.GUID
 			if err := st.validateAlertRule(r.New); err != nil {
 				return err
 			}
@@ -324,7 +330,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 				return fmt.Errorf("failed to convert alert rule %s to storage model: %w", r.New.UID, err)
 			}
 			// no way to update multiple rules at once
-			if updated, err := sess.ID(r.Existing.ID).AllCols().Update(converted); err != nil || updated == 0 {
+			if updated, err := sess.ID(r.Existing.ID).AllCols().Omit("rule_guid").Update(converted); err != nil || updated == 0 {
 				if err != nil {
 					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
 						return ruleConstraintViolationToErr(sess, r.New, err, st.Logger)
