@@ -2,7 +2,6 @@ import {
   AppEvents,
   DataSourceApi,
   DataSourceInstanceSettings,
-  DataSourceRef,
   DataSourceSelectItem,
   ScopedVars,
   matchPluginId,
@@ -19,6 +18,7 @@ import {
   TemplateSrv,
 } from '@grafana/runtime';
 import { ExpressionDatasourceRef, isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { DataSourceRef } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import {
@@ -133,6 +133,10 @@ export class DatasourceSrv implements DataSourceService {
   get(ref?: string | DataSourceRef | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
     let nameOrUid = getNameOrUid(ref);
     if (!nameOrUid) {
+      // type exists, but not the other properties
+      if (ref && 'type' in (ref as DataSourceRef)) {
+        return this.getFirtDataSourceOfType((ref as DataSourceRef).type!);
+      }
       return this.get(this.defaultName);
     }
 
@@ -163,6 +167,11 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     return this.loadDatasource(nameOrUid);
+  }
+
+  async getFirtDataSourceOfType(type: string): Promise<DataSourceApi> {
+    console.log('GET FIRST DATASOURCE OF TYPE', type, this);
+    return Promise.reject('err');
   }
 
   async loadDatasource(key: string): Promise<DataSourceApi> {
