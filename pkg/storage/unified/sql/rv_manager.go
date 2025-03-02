@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -46,25 +47,33 @@ var (
 		Help:      "Number of concurrent write operations",
 		Namespace: "grafana",
 	}, []string{"group", "resource"})
+
+	rvmBatchSize = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Name:                        "rvmanager_batch_size",
+		Help:                        "Number of write operations per batch",
+		Namespace:                   "grafana",
+		NativeHistogramBucketFactor: 1.1,
+	}, []string{"group", "resource"})
 )
 
 const (
 	tracingPrefix           = "sql.rvmanager."
-	defaultMaxBatchSize     = 10
-	defaultMaxBatchWaitTime = 5 * time.Millisecond
+	defaultMaxBatchSize     = 25
+	defaultMaxBatchWaitTime = 100 * time.Millisecond
 	defaultBatchTimeout     = 5 * time.Second
 )
 
 // resourceVersionManager handles resource version operations
 type resourceVersionManager struct {
-	dialect sqltemplate.Dialect
-	db      db.DB
-	tracer  trace.Tracer
-	batchMu sync.RWMutex
-	batchCh map[string]chan *writeOp
+	dialect      sqltemplate.Dialect
+	db           db.DB
+	tracer       trace.Tracer
+	batchMu      sync.RWMutex
+	batchCh      map[string]chan *writeOp
+	lockCounters map[string]*atomic.Int64 // The current number of goroutine waiting for the lock to be released
 
-	maxBatchSize     int
-	maxBatchWaitTime time.Duration
+	maxBatchSize     int           // The maximum number of operations to batch together
+	maxBatchWaitTime time.Duration // The maximum time to wait for a batch to be ready
 }
 
 type writeOpResult struct {
@@ -118,6 +127,7 @@ func NewResourceVersionManager(opts ResourceManagerOptions) (*resourceVersionMan
 		batchCh:          make(map[string]chan *writeOp),
 		maxBatchSize:     opts.MaxBatchSize,
 		maxBatchWaitTime: opts.MaxBatchWaitTime,
+		lockCounters:     make(map[string]*atomic.Int64),
 	}, nil
 }
 
@@ -178,6 +188,11 @@ func (m *resourceVersionManager) startBatchProcessor(group, resource string) {
 	batchKey := fmt.Sprintf("%s/%s", group, resource)
 
 	m.batchMu.Lock()
+	lockCounters, ok := m.lockCounters[batchKey]
+	if !ok {
+		lockCounters = &atomic.Int64{}
+		m.lockCounters[batchKey] = lockCounters
+	}
 	ch, ok := m.batchCh[batchKey]
 	if !ok {
 		m.batchMu.Unlock()
@@ -194,9 +209,13 @@ func (m *resourceVersionManager) startBatchProcessor(group, resource string) {
 		case <-ctx.Done():
 			return
 		}
-
-		// wait for the batch to be ready
 		batchReady := false
+		// If no lock contention, we can just execute the batch immediately.
+		// Lock contention happens when there are multiple goroutines waiting for the lock to be released.
+		if lockCounters.Load() == 0 {
+			batchReady = true
+		}
+		// if there is contention, we add batch more ops until we have a batch that is ready to be executed.
 		timeout := time.After(m.maxBatchWaitTime)
 		for !batchReady {
 			select {
@@ -205,10 +224,15 @@ func (m *resourceVersionManager) startBatchProcessor(group, resource string) {
 				if len(batch) >= m.maxBatchSize {
 					batchReady = true
 				}
+				// if there is no contention, we can execute the batch immediately
+				if lockCounters.Load() == 0 {
+					batchReady = true
+				}
 			case <-timeout:
 				batchReady = true
 			}
 		}
+		rvmBatchSize.WithLabelValues(group, resource).Observe(float64(len(batch)))
 		go m.execBatch(ctx, group, resource, batch)
 	}
 }
@@ -340,6 +364,18 @@ func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource 
 
 // lock locks the resource version for the given key
 func (m *resourceVersionManager) lock(ctx context.Context, x db.ContextExecer, group, resource string) (nextRV int64, err error) {
+	m.batchMu.RLock()
+	lockCounters, ok := m.lockCounters[fmt.Sprintf("%s/%s", group, resource)]
+	m.batchMu.RUnlock()
+
+	if !ok {
+		// This should never happen
+		return 0, fmt.Errorf("lock counter not found for %s/%s", group, resource)
+	}
+
+	lockCounters.Add(1)
+	defer lockCounters.Add(-1)
+
 	// 1. Lock the row and prevent concurrent updates until the transaction is committed
 	res, err := dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionGetRequest{
 		SQLTemplate: sqltemplate.New(m.dialect),
