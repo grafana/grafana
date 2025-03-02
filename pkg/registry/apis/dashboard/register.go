@@ -256,10 +256,6 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	storage := map[string]rest.Storage{}
 	apiGroupInfo.VersionedResourcesStorageMap[dashboards.GroupVersion().Version] = storage
 
-	if false {
-		dashboards = dashboardinternal.DashboardResourceInfo // use the same version
-	}
-
 	legacyStore, err := b.legacy.NewStore(dashboards, opts.Scheme, opts.OptsGetter, b.reg)
 	if err != nil {
 		return err
