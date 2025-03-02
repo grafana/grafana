@@ -209,6 +209,8 @@
       "alerting": "",
       "alerting-change-description": "",
       "annotations": "",
+      "compare": "",
+      "compare-with-latest": "",
       "compareVersions": "",
       "comparing-versions": "",
       "condition": "",
@@ -228,17 +230,22 @@
       "provisioning": "",
       "provisioning-change-description": "",
       "queryAndAlertCondition": "",
-      "reset": "",
       "restore": "",
+      "restore-manually": "",
       "restore-modal": {
         "body": "",
+        "confirm": "",
+        "error": "",
         "summary": "",
         "title": ""
       },
+      "restore-version": "",
       "rule_group": "",
       "unknown": "",
       "unknown-change-description": "",
-      "user-id": ""
+      "user-id": "",
+      "warning-restore-manually": "",
+      "warning-restore-manually-title": ""
     },
     "annotations": {
       "description": "",
@@ -314,6 +321,10 @@
       "delivery-duration": "",
       "empty-state": {
         "title": ""
+      },
+      "key-value-map": {
+        "add": "",
+        "confirm-add": ""
       },
       "last-delivery-attempt": "",
       "last-delivery-failed": "",
@@ -1043,10 +1054,24 @@
         },
         "modal": {
           "title": ""
-        }
+        },
+        "repeat": {
+          "title": "",
+          "variable": {
+            "title": ""
+          }
+        },
+        "title": ""
       }
     },
     "edit-pane": {
+      "elements": {
+        "dashboard": "",
+        "objects": "",
+        "panels": "",
+        "rows": "",
+        "tabs": ""
+      },
       "objects": {
         "multi-select": {
           "selection-number": ""
@@ -1151,6 +1176,15 @@
       "title": "",
       "title-option": ""
     },
+    "outline": {
+      "tree": {
+        "item": {
+          "collapse": "",
+          "empty": "",
+          "expand": ""
+        }
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "",
@@ -1161,6 +1195,12 @@
       "description": "",
       "item-options": {
         "hide-no-data": "",
+        "repeat": {
+          "variable": {
+            "description": "",
+            "title": ""
+          }
+        },
         "title": ""
       },
       "name": "",
@@ -2223,6 +2263,14 @@
       "links": "",
       "log-line": "",
       "no-details": ""
+    },
+    "log-line-menu": {
+      "copy-link": "",
+      "copy-log": "",
+      "icon-label": "",
+      "pin-to-outline": "",
+      "show-context": "",
+      "unpin-from-outline": ""
     },
     "log-row-message": {
       "ellipsis": "",
