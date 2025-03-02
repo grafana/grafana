@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PromQueryField.tsx
 import { css, cx } from '@emotion/css';
-import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useRef, useReducer } from 'react';
 
 import {
   DateTime,
@@ -31,6 +31,51 @@ interface PromQueryFieldProps extends QueryEditorProps<PrometheusDatasource, Pro
   'data-testid'?: string;
 }
 
+interface PromQueryFieldState {
+  syntaxLoaded: boolean;
+  hint: QueryHint | null;
+  labelBrowserVisible: boolean;
+}
+
+type PromQueryFieldAction =
+  | { type: 'DATASOURCE_CHANGED' }
+  | { type: 'METRICS_LOADING_STARTED' }
+  | { type: 'METRICS_LOADING_FINISHED' }
+  | { type: 'SET_HINT'; hint: QueryHint | null }
+  | { type: 'TOGGLE_LABEL_BROWSER'; visible?: boolean };
+
+const reducer = (state: PromQueryFieldState, action: PromQueryFieldAction): PromQueryFieldState => {
+  switch (action.type) {
+    case 'DATASOURCE_CHANGED':
+      return {
+        ...state,
+        syntaxLoaded: false,
+        hint: null,
+      };
+    case 'METRICS_LOADING_STARTED':
+      return {
+        ...state,
+      };
+    case 'METRICS_LOADING_FINISHED':
+      return {
+        ...state,
+        syntaxLoaded: true,
+      };
+    case 'SET_HINT':
+      return {
+        ...state,
+        hint: action.hint,
+      };
+    case 'TOGGLE_LABEL_BROWSER':
+      return {
+        ...state,
+        labelBrowserVisible: action.visible !== undefined ? action.visible : !state.labelBrowserVisible,
+      };
+    default:
+      return state;
+  }
+};
+
 export const PromQueryField = (props: PromQueryFieldProps) => {
   const {
     app,
@@ -44,23 +89,27 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
     onChange,
     onRunQuery,
   } = props;
+
   const theme = useTheme2();
-  const [languageProviderInit, setLanguageProviderInitialization] = useState<CancelablePromise<any> | null>(null);
-  const [labelBrowserVisible, setLabelBrowserVisible] = useState<boolean>(false);
-  const [syntaxLoaded, setSyntaxLoaded] = useState<boolean>(false);
-  const [hint, setQueryHint] = useState<QueryHint | null>(null);
   const lastRangeRef = useRef<{ from: DateTime; to: DateTime } | null>(null);
+  const languageProviderInitRef = useRef<CancelablePromise<any> | null>(null);
+
+  const [state, dispatch] = useReducer(reducer, {
+    syntaxLoaded: false,
+    hint: null,
+    labelBrowserVisible: false,
+  });
 
   const onUpdateLanguage = useCallback(() => {
     if (languageProvider.metrics) {
-      setSyntaxLoaded(true);
+      dispatch({ type: 'METRICS_LOADING_FINISHED' });
     }
   }, [languageProvider]);
 
   const refreshMetrics = useCallback(async () => {
-    // Cancel any existing initialization
-    if (languageProviderInit) {
-      languageProviderInit.cancel();
+    // Cancel any existing initialization using the ref
+    if (languageProviderInitRef.current) {
+      languageProviderInitRef.current.cancel();
     }
 
     if (!languageProvider || !range) {
@@ -69,7 +118,9 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
 
     try {
       const initialization = makePromiseCancelable(languageProvider.start(range));
-      setLanguageProviderInitialization(initialization);
+      languageProviderInitRef.current = initialization;
+
+      dispatch({ type: 'METRICS_LOADING_STARTED' });
 
       const remainingTasks = await initialization.promise;
 
@@ -85,8 +136,10 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
       } else {
         throw err;
       }
+    } finally {
+      languageProviderInitRef.current = null;
     }
-  }, [languageProvider, languageProviderInit, onUpdateLanguage, range]);
+  }, [languageProvider, range, onUpdateLanguage]);
 
   const refreshHint = useCallback(() => {
     const initHints = getInitHints(datasource);
@@ -94,7 +147,7 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
 
     // If no data or empty series, use default hint
     if (!data?.series?.length) {
-      setQueryHint(initHint);
+      dispatch({ type: 'SET_HINT', hint: initHint });
       return;
     }
 
@@ -102,7 +155,7 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
     const queryHints = datasource.getQueryHints(query, result);
     let queryHint = queryHints.length > 0 ? queryHints[0] : null;
 
-    setQueryHint(queryHint ?? initHint);
+    dispatch({ type: 'SET_HINT', hint: queryHint ?? initHint });
   }, [data, datasource, query]);
 
   const onChangeQuery = (value: string, override?: boolean) => {
@@ -120,43 +173,42 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
 
   const onChangeLabelBrowser = (selector: string) => {
     onChangeQuery(selector, true);
-    setLabelBrowserVisible(false);
+    dispatch({ type: 'TOGGLE_LABEL_BROWSER', visible: false });
   };
 
   const onClickChooserButton = () => {
-    setLabelBrowserVisible(!labelBrowserVisible);
+    dispatch({ type: 'TOGGLE_LABEL_BROWSER' });
 
     reportInteraction('user_grafana_prometheus_metrics_browser_clicked', {
-      editorMode: labelBrowserVisible ? 'metricViewClosed' : 'metricViewOpen',
+      editorMode: state.labelBrowserVisible ? 'metricViewClosed' : 'metricViewOpen',
       app: app ?? '',
     });
   };
 
   const onClickHintFix = () => {
-    if (hint?.fix?.action) {
-      onChange(datasource.modifyQuery(query, hint.fix.action));
+    if (state.hint?.fix?.action) {
+      onChange(datasource.modifyQuery(query, state.hint.fix.action));
     }
     onRunQuery();
   };
 
+  // Effect for initial load
   useEffect(() => {
     if (languageProvider) {
       refreshMetrics();
     }
     refreshHint();
 
-    return () => languageProviderInit?.cancel();
+    return () => {
+      if (languageProviderInitRef.current) {
+        languageProviderInitRef.current.cancel();
+        languageProviderInitRef.current = null;
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    setSyntaxLoaded(false);
-  }, [languageProvider]);
-
-  useEffect(() => {
-    refreshHint();
-  }, [data?.series, refreshHint]);
-
+  // Effect for time range changes
   useEffect(() => {
     if (!range) {
       return;
@@ -180,7 +232,12 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
     }
   }, [range, refreshMetrics]);
 
-  const { chooserText, buttonDisabled } = useMetricsState(datasource, languageProvider, syntaxLoaded);
+  // Effect for data changes (refreshing hints)
+  useEffect(() => {
+    refreshHint();
+  }, [data?.series, refreshHint]);
+
+  const { chooserText, buttonDisabled } = useMetricsState(datasource, languageProvider, state.syntaxLoaded);
 
   return (
     <LocalStorageValueProvider<string[]> storageKey={LAST_USED_LABELS_KEY} defaultValue={[]}>
@@ -199,7 +256,7 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
                 data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.openButton}
               >
                 {chooserText}
-                <Icon name={labelBrowserVisible ? 'angle-down' : 'angle-right'} />
+                <Icon name={state.labelBrowserVisible ? 'angle-down' : 'angle-right'} />
               </button>
 
               <div className="flex-grow-1 min-width-15">
@@ -214,7 +271,7 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
                 />
               </div>
             </div>
-            {labelBrowserVisible && (
+            {state.labelBrowserVisible && (
               <div className="gf-form">
                 <PrometheusMetricsBrowser
                   languageProvider={languageProvider}
@@ -227,21 +284,21 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
               </div>
             )}
             {ExtraFieldElement}
-            {hint ? (
+            {state.hint ? (
               <div
                 className={css({
                   flexBasis: '100%',
                 })}
               >
                 <div className="text-warning">
-                  {hint.label}{' '}
-                  {hint.fix ? (
+                  {state.hint.label}{' '}
+                  {state.hint.fix ? (
                     <button
                       type="button"
                       className={cx(clearButtonStyles(theme), 'text-link', 'muted')}
                       onClick={onClickHintFix}
                     >
-                      {hint.fix.label}
+                      {state.hint.fix.label}
                     </button>
                   ) : null}
                 </div>
