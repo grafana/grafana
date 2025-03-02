@@ -1,9 +1,8 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PromQueryField.tsx
 import { css, cx } from '@emotion/css';
-import { ReactNode, useCallback, useEffect, useRef, useReducer } from 'react';
+import { ReactNode, useCallback, useReducer } from 'react';
 
 import {
-  DateTime,
   isDataFrame,
   LocalStorageValueProvider,
   QueryEditorProps,
@@ -15,7 +14,6 @@ import { reportInteraction } from '@grafana/runtime';
 import { clearButtonStyles, Icon, useTheme2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../datasource';
-import { roundMsToMin } from '../language_utils';
 import { getInitHints } from '../query_hints';
 import { PromOptions, PromQuery } from '../types';
 
@@ -23,6 +21,7 @@ import { PrometheusMetricsBrowser } from './PrometheusMetricsBrowser';
 import { CancelablePromise, isCancelablePromiseRejection, makePromiseCancelable } from './cancelable-promise';
 import { MonacoQueryFieldWrapper } from './monaco-query-field/MonacoQueryFieldWrapper';
 import { useMetricsState } from './useMetricsState';
+import { usePromQueryFieldEffects } from './usePromQueryFieldEffects';
 
 const LAST_USED_LABELS_KEY = 'grafana.datasources.prometheus.browser.labels';
 
@@ -91,8 +90,6 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
   } = props;
 
   const theme = useTheme2();
-  const lastRangeRef = useRef<{ from: DateTime; to: DateTime } | null>(null);
-  const languageProviderInitRef = useRef<CancelablePromise<any> | null>(null);
 
   const [state, dispatch] = useReducer(reducer, {
     syntaxLoaded: false,
@@ -106,40 +103,43 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
     }
   }, [languageProvider]);
 
-  const refreshMetrics = useCallback(async () => {
-    // Cancel any existing initialization using the ref
-    if (languageProviderInitRef.current) {
-      languageProviderInitRef.current.cancel();
-    }
-
-    if (!languageProvider || !range) {
-      return;
-    }
-
-    try {
-      const initialization = makePromiseCancelable(languageProvider.start(range));
-      languageProviderInitRef.current = initialization;
-
-      dispatch({ type: 'METRICS_LOADING_STARTED' });
-
-      const remainingTasks = await initialization.promise;
-
-      // If there are remaining tasks, wait for them
-      if (Array.isArray(remainingTasks) && remainingTasks.length > 0) {
-        await Promise.all(remainingTasks);
+  const refreshMetrics = useCallback(
+    async (languageProviderInitRef: React.MutableRefObject<CancelablePromise<any> | null>) => {
+      // Cancel any existing initialization using the ref
+      if (languageProviderInitRef.current) {
+        languageProviderInitRef.current.cancel();
       }
 
-      onUpdateLanguage();
-    } catch (err) {
-      if (isCancelablePromiseRejection(err) && err.isCanceled) {
-        // do nothing, promise was canceled
-      } else {
-        throw err;
+      if (!languageProvider || !range) {
+        return;
       }
-    } finally {
-      languageProviderInitRef.current = null;
-    }
-  }, [languageProvider, range, onUpdateLanguage]);
+
+      try {
+        const initialization = makePromiseCancelable(languageProvider.start(range));
+        languageProviderInitRef.current = initialization;
+
+        dispatch({ type: 'METRICS_LOADING_STARTED' });
+
+        const remainingTasks = await initialization.promise;
+
+        // If there are remaining tasks, wait for them
+        if (Array.isArray(remainingTasks) && remainingTasks.length > 0) {
+          await Promise.all(remainingTasks);
+        }
+
+        onUpdateLanguage();
+      } catch (err) {
+        if (isCancelablePromiseRejection(err) && err.isCanceled) {
+          // do nothing, promise was canceled
+        } else {
+          throw err;
+        }
+      } finally {
+        languageProviderInitRef.current = null;
+      }
+    },
+    [languageProvider, range, onUpdateLanguage]
+  );
 
   const refreshHint = useCallback(() => {
     const initHints = getInitHints(datasource);
@@ -192,50 +192,8 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
     onRunQuery();
   };
 
-  // Effect for initial load
-  useEffect(() => {
-    if (languageProvider) {
-      refreshMetrics();
-    }
-    refreshHint();
-
-    return () => {
-      if (languageProviderInitRef.current) {
-        languageProviderInitRef.current.cancel();
-        languageProviderInitRef.current = null;
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Effect for time range changes
-  useEffect(() => {
-    if (!range) {
-      return;
-    }
-
-    const currentFrom = roundMsToMin(range.from.valueOf());
-    const currentTo = roundMsToMin(range.to.valueOf());
-
-    if (!lastRangeRef.current) {
-      lastRangeRef.current = { from: range.from, to: range.to };
-      refreshMetrics();
-      return;
-    }
-
-    const lastFrom = roundMsToMin(lastRangeRef.current.from.valueOf());
-    const lastTo = roundMsToMin(lastRangeRef.current.to.valueOf());
-
-    if (currentFrom !== lastFrom || currentTo !== lastTo) {
-      lastRangeRef.current = { from: range.from, to: range.to };
-      refreshMetrics();
-    }
-  }, [range, refreshMetrics]);
-
-  // Effect for data changes (refreshing hints)
-  useEffect(() => {
-    refreshHint();
-  }, [data?.series, refreshHint]);
+  // Use our custom effects hook
+  usePromQueryFieldEffects(languageProvider, range, data, refreshMetrics, refreshHint);
 
   const { chooserText, buttonDisabled } = useMetricsState(datasource, languageProvider, state.syntaxLoaded);
 
