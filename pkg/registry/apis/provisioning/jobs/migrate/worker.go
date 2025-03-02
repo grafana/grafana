@@ -200,9 +200,9 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		},
 	}, progress)
 	if err != nil {
-		return stopReadingUnifiedStorage(ctx, w.storageStatus)
+		stopReadingUnifiedStorage(ctx, w.storageStatus)
 	}
-	return nil
+	return err
 }
 
 // MigrationJob holds all context for a running job
