@@ -46,6 +46,8 @@ func runDashboardTest(t *testing.T, helper *apis.K8sTestHelper, gvr schema.Group
 			},
 		}
 		obj.SetGenerateName("aa")
+		obj.SetAPIVersion(gvr.GroupVersion().String())
+		obj.SetKind("Dashboard")
 		obj, err = client.Resource.Create(ctx, obj, metav1.CreateOptions{})
 		require.NoError(t, err)
 		created := obj.GetName()
