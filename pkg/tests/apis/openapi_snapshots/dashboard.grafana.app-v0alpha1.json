@@ -1058,22 +1058,6 @@
             "type": "string",
             "uniqueItems": true
           }
-        },
-        {
-          "name": "path",
-          "in": "query",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "version",
-          "in": "query",
-          "schema": {
-            "type": "integer",
-            "uniqueItems": true
-          }
         }
       ]
     },
