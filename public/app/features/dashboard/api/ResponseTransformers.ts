@@ -298,7 +298,7 @@ function getElementsFromPanels(
 
       const rowElements = [];
 
-      for (const panel of p.panels) {
+      for (const panel of p.panels || []) {
         const [element, name] = buildElement(panel);
         elements[name] = element;
         rowElements.push(buildGridItemKind(panel, name, yOffsetInRows(panel, p.gridPos!.y)));
