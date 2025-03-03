@@ -255,13 +255,26 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	// Register the versioned storage
 	storage := map[string]rest.Storage{}
 	apiGroupInfo.VersionedResourcesStorageMap[dashboards.GroupVersion().Version] = storage
+	optsGetter := &dashboardOptsGetter{
+		optsGetter: opts.OptsGetter,
+		encoderVersioner: runtime.NewMultiGroupVersioner(
+			dashboardv0alpha1.DashboardResourceInfo.GroupVersion(),
+			dashboardv0alpha1.DashboardResourceInfo.GroupVersionKind().GroupKind(),
+			dashboardv0alpha1.LibraryPanelResourceInfo.GroupVersionKind().GroupKind(),
+		),
+	}
 
-	legacyStore, err := b.legacy.NewStore(dashboards, opts.Scheme, opts.OptsGetter, b.reg)
+	if true {
+		dashboards = dashboardinternal.DashboardResourceInfo
+		libraryPanels = dashboardinternal.LibraryPanelResourceInfo
+	}
+
+	legacyStore, err := b.legacy.NewStore(dashboards, opts.Scheme, optsGetter, b.reg)
 	if err != nil {
 		return err
 	}
 
-	store, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashboards, opts.OptsGetter)
+	store, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashboards, optsGetter)
 	if err != nil {
 		return err
 	}
