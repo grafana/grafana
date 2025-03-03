@@ -1,5 +1,6 @@
 import { locationService } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
+
 import { getConfigurationStatus } from './utils';
 
 interface Props {
@@ -57,7 +58,7 @@ export function StatusAlerts({ showSetupButton = true, showSuccessBanner = false
   // Only optional features missing - show info alert
   return (
     <Alert severity="info" title="Additional Features Not Configured" {...commonSetupButtonProps}>
-      Some additional features like Github webhook integration or Previews are not configured. These features can
+      Some additional features like GitHub webhook integration or Previews are not configured. These features can
       enhance your experience.
     </Alert>
   );

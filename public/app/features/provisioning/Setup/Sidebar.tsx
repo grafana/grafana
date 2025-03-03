@@ -1,6 +1,5 @@
-import { useStyles2, Stack } from '@grafana/ui';
-import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2, Stack, Box } from '@grafana/ui';
+
 import { SidebarItem, getStyles as getStepItemStyles } from './SidebarItem';
 
 interface Props {
@@ -14,11 +13,10 @@ export const Sidebar = ({ steps, currentStep, onStepClick }: Props) => {
     return null;
   }
 
-  const styles = useStyles2(getStyles);
   const stepItemStyles = useStyles2(getStepItemStyles);
 
   return (
-    <div className={styles.sidebar}>
+    <Box width={'260px'} padding={1}>
       <Stack direction="column" gap={1}>
         {steps.map((step, index) => (
           <SidebarItem
@@ -31,14 +29,6 @@ export const Sidebar = ({ steps, currentStep, onStepClick }: Props) => {
           />
         ))}
       </Stack>
-    </div>
+    </Box>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  sidebar: css`
-    width: 260px;
-    padding: ${theme.spacing(1)};
-    overflow-y: auto;
-  `,
-});
