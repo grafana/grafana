@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
 
+import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
-import { renderTitle } from '../../edit-pane/shared';
+import { EditPaneHeader } from '../../edit-pane/EditPaneHeader';
 
 import { TabItems } from './TabItems';
 
@@ -12,9 +13,13 @@ export function getEditOptions(model: TabItems): OptionsPaneCategoryDescriptor[]
     return new OptionsPaneCategoryDescriptor({
       title: ``,
       id: 'ms-tab-options',
-      isOpenDefault: true,
-      alwaysExpanded: true,
-      renderTitle: () => renderTitle({ title: `${tabs.length} Tabs Selected`, onDelete: model.onDelete }),
+      isOpenable: false,
+      renderTitle: () => (
+        <EditPaneHeader
+          title={t('dashboard.tabs-layout.multi-select.title', '{{length}} tabs selected', { length: tabs.length })}
+          onDelete={() => model.onDelete()}
+        />
+      ),
     });
   }, [model]);
 

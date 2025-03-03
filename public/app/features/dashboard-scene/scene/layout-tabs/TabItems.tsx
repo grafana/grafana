@@ -29,7 +29,7 @@ export class TabItems implements MultiSelectedEditableDashboardElement {
     return this._tabs;
   }
 
-  public onDelete = () => {
+  public onDelete() {
     this._tabs.forEach((tab) => tab.onDelete());
-  };
+  }
 }

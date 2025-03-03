@@ -38,19 +38,6 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
           {titleInterpolated}
         </a>
       </div>
-
-      {/* <Tab
-        className={!isClone && isSelected ? 'dashboard-selected-element' : undefined}
-        label={titleInterpolated}
-        active={isActive}
-        href={href}
-        onPointerDown={(evt) => {
-          if (isEditing && isActive && !isClone) {
-            evt.stopPropagation();
-            onSelect?.(evt);
-          }
-        }}
-      /> */}
     </>
   );
 }
@@ -106,12 +93,6 @@ function getStyles(theme: GrafanaTheme2) {
       '&::before': {
         backgroundImage: theme.colors.gradients.brandHorizontal,
       },
-    }),
-    affix: css({
-      marginRight: theme.spacing(1),
-    }),
-    suffix: css({
-      marginLeft: theme.spacing(1),
     }),
   };
 }

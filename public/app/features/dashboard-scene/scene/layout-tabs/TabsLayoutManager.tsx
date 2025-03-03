@@ -108,58 +108,9 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     this.state.tabs.forEach((tab) => tab.getLayout().activateRepeaters?.());
   }
 
-  public addTabBefore = (tab: TabItem) => {
-    const newTab = new TabItem();
-    const tabs = this.state.tabs.slice();
-    tabs.splice(tabs.indexOf(tab), 0, newTab);
-    this.setState({ tabs, currentTab: newTab });
-  };
-
-  public addTabAfter = (tab: TabItem) => {
-    const newTab = new TabItem();
-    const tabs = this.state.tabs.slice();
-    tabs.splice(tabs.indexOf(tab) + 1, 0, newTab);
-    this.setState({ tabs, currentTab: newTab });
-  };
-
-  public moveTabLeft(tab: TabItem) {
-    const currentIndex = this.state.tabs.indexOf(tab);
-    const tabs = this.state.tabs.slice();
-    tabs.splice(currentIndex, 1);
-    tabs.splice(currentIndex - 1, 0, tab);
-    this.setState({ tabs });
-  }
-
-  public moveTabRight(tab: TabItem) {
-    const currentIndex = this.state.tabs.indexOf(tab);
-    const tabs = this.state.tabs.slice();
-    tabs.splice(currentIndex, 1);
-    tabs.splice(currentIndex + 1, 0, tab);
-    this.setState({ tabs });
-  }
-
-  public isCurrentTab(tab: TabItem): boolean {
-    return this.state.currentTab === tab;
-  }
-
-  public isFirstTab(tab: TabItem): boolean {
-    return this.state.tabs[0] === tab;
-  }
-
-  public isLastTab(tab: TabItem): boolean {
-    return this.state.tabs[this.state.tabs.length - 1] === tab;
-  }
-
-  public removeTab(tab: TabItem) {
-    if (this.state.currentTab === tab) {
-      const currentTabIndex = this.state.tabs.indexOf(tab);
-      const nextTabIndex = currentTabIndex === 0 ? 1 : currentTabIndex - 1;
-      const filteredTabs = this.state.tabs.filter((t) => t !== tab);
-      if (!filteredTabs.length) {
-        filteredTabs.push(new TabItem());
-      }
-      const nextTab = this.state.tabs[nextTabIndex] || filteredTabs[0];
-      this.setState({ tabs: filteredTabs, currentTab: nextTab });
+  public removeTab(tabToRemove: TabItem) {
+    // Do not allow removing last tab (for now)
+    if (this.state.tabs.length === 1) {
       return;
     }
 
@@ -177,19 +128,19 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     this.setState({ tabs, currentTabIndex: 0 });
   }
 
-  public addTabBefore = (tab: TabItem) => {
+  public addTabBefore(tab: TabItem) {
     const newTab = new TabItem();
     const tabs = this.state.tabs.slice();
     tabs.splice(tabs.indexOf(tab), 0, newTab);
     this.setState({ tabs, currentTabIndex: this.state.currentTabIndex });
-  };
+  }
 
-  public addTabAfter = (tab: TabItem) => {
+  public addTabAfter(tab: TabItem) {
     const newTab = new TabItem();
     const tabs = this.state.tabs.slice();
     tabs.splice(tabs.indexOf(tab) + 1, 0, newTab);
     this.setState({ tabs, currentTabIndex: this.state.currentTabIndex + 1 });
-  };
+  }
 
   public moveTabLeft(tab: TabItem) {
     const currentIndex = this.state.tabs.indexOf(tab);
