@@ -141,7 +141,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
       </Field>
       {type === 'github' && (
         <>
-          <Field label={'Github token'} required error={errors?.token?.message} invalid={!!errors.token}>
+          <Field label={'GitHub token'} required error={errors?.token?.message} invalid={!!errors.token}>
             <Controller
               name={'token'}
               control={control}
