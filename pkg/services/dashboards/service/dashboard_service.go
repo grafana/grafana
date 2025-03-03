@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/dashboard"
-	dashboardOG "github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -959,7 +958,7 @@ func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, que
 	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		dashs, err := dr.searchDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
 			OrgId:           query.OrgID,
-			ProvisionedRepo: dashboardOG.PluginIDRepoName,
+			ProvisionedRepo: dashboard.PluginIDRepoName,
 			ProvisionedPath: query.PluginID,
 		})
 		if err != nil {
@@ -1560,7 +1559,7 @@ func (dr *DashboardServiceImpl) saveProvisionedDashboardThroughK8s(ctx context.C
 		delete(annotations, utils.AnnoKeyRepoHash)
 		delete(annotations, utils.AnnoKeyRepoTimestamp)
 	} else {
-		annotations[utils.AnnoKeyRepoName] = dashboardOG.ProvisionedFileNameWithPrefix(provisioning.Name)
+		annotations[utils.AnnoKeyRepoName] = dashboard.ProvisionedFileNameWithPrefix(provisioning.Name)
 		annotations[utils.AnnoKeyRepoPath] = provisioning.ExternalID
 		annotations[utils.AnnoKeyRepoHash] = provisioning.CheckSum
 		annotations[utils.AnnoKeyRepoTimestamp] = time.Unix(provisioning.Updated, 0).UTC().Format(time.RFC3339)
@@ -1581,7 +1580,7 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 		return nil, err
 	}
 
-	dashboardOG.SetPluginIDMeta(obj, cmd.PluginID)
+	dashboard.SetPluginIDMeta(obj, cmd.PluginID)
 
 	out, err := dr.createOrUpdateDash(ctx, obj, orgID)
 	if err != nil {
@@ -1844,7 +1843,7 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 	if len(query.ProvisionedReposNotIn) > 0 {
 		repos := make([]string, len(query.ProvisionedReposNotIn))
 		for i, v := range query.ProvisionedReposNotIn {
-			repos[i] = dashboardOG.ProvisionedFileNameWithPrefix(v)
+			repos[i] = dashboard.ProvisionedFileNameWithPrefix(v)
 		}
 		query.ProvisionedReposNotIn = repos
 	}
@@ -1876,7 +1875,7 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 				}
 
 				// ensure the repo is set due to file provisioning, otherwise skip it
-				fileRepo, found := dashboardOG.GetProvisionedFileNameFromMeta(meta.GetRepositoryName())
+				fileRepo, found := dashboard.GetProvisionedFileNameFromMeta(meta.GetRepositoryName())
 				if !found {
 					return nil
 				}
@@ -1979,7 +1978,7 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 		out.Deleted = obj.GetDeletionTimestamp().Time
 	}
 
-	out.PluginID = dashboardOG.GetPluginIDFromMeta(obj)
+	out.PluginID = dashboard.GetPluginIDFromMeta(obj)
 
 	creator, err := dr.k8sclient.GetUserFromMeta(ctx, obj.GetCreatedBy())
 	if err != nil {
