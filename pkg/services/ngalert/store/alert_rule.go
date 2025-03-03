@@ -2,10 +2,12 @@ package store
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"golang.org/x/exp/maps"
@@ -567,13 +569,9 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 		// Order by folder name first, then by rule group
 		q = q.OrderBy("folder.title ASC, alert_rule.rule_group ASC")
 
-		// Apply pagination if specified
+		// Apply limit if specified
 		if query.Limit > 0 {
-			offset := int64(0)
-			if query.Page > 0 {
-				offset = (query.Page - 1) * query.Limit
-			}
-			q = q.Limit(int(query.Limit), int(offset))
+			q = q.Limit(int(query.Limit))
 		}
 
 		alertRules := make([]*ngmodels.AlertRule, 0)
@@ -1163,4 +1161,267 @@ func getINSubQueryArgs[T any](inputSlice []T) ([]any, []string) {
 	}
 
 	return args, in
+}
+
+// ListAlertRulesWithPagination is a handler for retrieving alert rules with pagination support.
+// It returns both the rules and the total count of rules that match the query criteria.
+func (st DBstore) ListAlertRulesWithPagination(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (result ngmodels.RulesGroup, totalCount int64, err error) {
+	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		// Build the main query for fetching data
+		q := sess.Table("alert_rule")
+
+		// Apply basic filters
+		if query.OrgID >= 0 {
+			q = q.Where("alert_rule.org_id = ?", query.OrgID)
+		}
+
+		if query.DashboardUID != "" {
+			q = q.Where("alert_rule.dashboard_uid = ?", query.DashboardUID)
+			if query.PanelID != 0 {
+				q = q.Where("alert_rule.panel_id = ?", query.PanelID)
+			}
+		}
+
+		if len(query.NamespaceUIDs) > 0 {
+			args, in := getINSubQueryArgs(query.NamespaceUIDs)
+			q = q.Where(fmt.Sprintf("alert_rule.namespace_uid IN (%s)", strings.Join(in, ",")), args...)
+		}
+
+		if len(query.RuleUIDs) > 0 {
+			args, in := getINSubQueryArgs(query.RuleUIDs)
+			q = q.Where(fmt.Sprintf("alert_rule.uid IN (%s)", strings.Join(in, ",")), args...)
+		}
+
+		var groupsMap map[string]struct{}
+		if len(query.RuleGroups) > 0 {
+			groupsMap = make(map[string]struct{})
+			args, in := getINSubQueryArgs(query.RuleGroups)
+			q = q.Where(fmt.Sprintf("alert_rule.rule_group IN (%s)", strings.Join(in, ",")), args...)
+			for _, group := range query.RuleGroups {
+				groupsMap[group] = struct{}{}
+			}
+		}
+
+		// Create a count query with the same filters
+		countQuery := sess.Table("alert_rule")
+		if query.OrgID >= 0 {
+			countQuery = countQuery.Where("alert_rule.org_id = ?", query.OrgID)
+		}
+
+		if query.DashboardUID != "" {
+			countQuery = countQuery.Where("alert_rule.dashboard_uid = ?", query.DashboardUID)
+			if query.PanelID != 0 {
+				countQuery = countQuery.Where("alert_rule.panel_id = ?", query.PanelID)
+			}
+		}
+
+		if len(query.NamespaceUIDs) > 0 {
+			args, in := getINSubQueryArgs(query.NamespaceUIDs)
+			countQuery = countQuery.Where(fmt.Sprintf("alert_rule.namespace_uid IN (%s)", strings.Join(in, ",")), args...)
+		}
+
+		if len(query.RuleUIDs) > 0 {
+			args, in := getINSubQueryArgs(query.RuleUIDs)
+			countQuery = countQuery.Where(fmt.Sprintf("alert_rule.uid IN (%s)", strings.Join(in, ",")), args...)
+		}
+
+		if len(query.RuleGroups) > 0 {
+			args, in := getINSubQueryArgs(query.RuleGroups)
+			countQuery = countQuery.Where(fmt.Sprintf("alert_rule.rule_group IN (%s)", strings.Join(in, ",")), args...)
+		}
+
+		// Measure count query execution time
+		countQueryStart := time.Now()
+
+		// Get the count before applying pagination
+		count, err := countQuery.Count()
+		if err != nil {
+			return err
+		}
+		totalCount = count
+
+		countQueryTime := time.Since(countQueryStart)
+		st.Logger.Info("Count query execution time", "duration_ms", countQueryTime.Milliseconds())
+
+		// Optimize the join to use our new composite index
+		// Join with folder table for ordering, using the indexed columns
+		q = q.Join("LEFT", "folder", "alert_rule.namespace_uid = folder.uid AND alert_rule.org_id = folder.org_id")
+
+		// Fixed sort order: folder.title, rule_group, id
+		sortField1 := "folder.title"
+		sortField2 := "alert_rule.rule_group"
+		sortField3 := "alert_rule.id"
+		sortDirection := "ASC"
+
+		// Apply cursor-based pagination if a cursor is provided
+		if query.Cursor != "" {
+			// Decode the cursor (base64 encoded JSON)
+			cursorData, err := decodeCursor(query.Cursor)
+			if err != nil {
+				st.Logger.Error("Failed to decode cursor", "error", err)
+				// Fall back to regular query if cursor is invalid
+			} else {
+				// Apply cursor filtering based on the stored values
+				// The cursor contains the last seen folder title, rule group, and ID
+				if cursorData.FolderTitle != "" && cursorData.RuleGroup != "" {
+					// Complex cursor logic for our compound sort
+					q = q.Where(
+						"(folder.title > ?) OR (folder.title = ? AND alert_rule.rule_group > ?) OR (folder.title = ? AND alert_rule.rule_group = ? AND alert_rule.id > ?)",
+						cursorData.FolderTitle,
+						cursorData.FolderTitle, cursorData.RuleGroup,
+						cursorData.FolderTitle, cursorData.RuleGroup, cursorData.ID,
+					)
+				} else {
+					// Fallback to simple ID-based cursor if we don't have folder/group info
+					q = q.Where("alert_rule.id > ?", cursorData.ID)
+				}
+			}
+		}
+
+		// Apply fixed ordering
+		q = q.OrderBy(fmt.Sprintf("%s %s, %s %s, %s %s",
+			sortField1, sortDirection,
+			sortField2, sortDirection,
+			sortField3, sortDirection))
+
+		// Apply limit for pagination
+		if query.Limit > 0 {
+			q = q.Limit(int(query.Limit + 1)) // +1 to check if there are more results
+		} else {
+			// Default limit if none specified
+			q = q.Limit(100)
+		}
+
+		// Measure main query execution time
+		mainQueryStart := time.Now()
+
+		// Fetch the rules
+		alertRules := make([]*ngmodels.AlertRule, 0)
+		rule := new(alertRule)
+		rows, err := q.Rows(rule)
+		if err != nil {
+			return err
+		}
+
+		mainQueryTime := time.Since(mainQueryStart)
+		st.Logger.Info("Main query execution time", "duration_ms", mainQueryTime.Milliseconds())
+
+		// Measure data processing time
+		processingStart := time.Now()
+
+		defer func() {
+			_ = rows.Close()
+		}()
+
+		// Deserialize each rule separately in case any of them contain invalid JSON.
+		hasMore := false
+		for rows.Next() {
+			// If we've reached our limit, just mark that there are more results and stop
+			if query.Limit > 0 && int64(len(alertRules)) >= query.Limit {
+				hasMore = true
+				break
+			}
+
+			rule := new(alertRule)
+			err = rows.Scan(rule)
+			if err != nil {
+				st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "ListAlertRulesWithPagination", "error", err)
+				continue
+			}
+			converted, err := alertRuleToModelsAlertRule(*rule, st.Logger)
+			if err != nil {
+				st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "ListAlertRulesWithPagination", "error", err)
+				continue
+			}
+
+			// MySQL (and potentially other databases) can use case-insensitive comparison.
+			// This code makes sure we return groups that only exactly match the filter.
+			if groupsMap != nil {
+				if _, ok := groupsMap[converted.RuleGroup]; !ok {
+					continue
+				}
+			}
+
+			alertRules = append(alertRules, &converted)
+		}
+
+		// Set cursor information on the last rule if we have more results
+		if len(alertRules) > 0 && hasMore {
+			// If we fetched more than the limit, remove the extra item but mark that there are more
+			if query.Limit > 0 && int64(len(alertRules)) > query.Limit {
+				hasMore = true
+				alertRules = alertRules[:query.Limit]
+			}
+
+			// Set next cursor on the last item
+			if hasMore {
+				lastRule := alertRules[len(alertRules)-1]
+
+				// Get the folder title for the last rule
+				var folderTitle string
+				has, err := sess.Table("folder").
+					Where("uid = ? AND org_id = ?", lastRule.NamespaceUID, lastRule.OrgID).
+					Cols("title").
+					Get(&folderTitle)
+
+				if err != nil || !has {
+					st.Logger.Error("Failed to get folder title for cursor", "error", err)
+					folderTitle = ""
+				}
+
+				// Create and encode the cursor
+				cursor := cursorData{
+					ID:          lastRule.ID,
+					FolderTitle: folderTitle,
+					RuleGroup:   lastRule.RuleGroup,
+				}
+
+				cursorStr, err := encodeCursor(cursor)
+				if err != nil {
+					st.Logger.Error("Failed to encode cursor", "error", err)
+				} else {
+					// Store the cursor in the rule's annotations
+					if lastRule.Annotations == nil {
+						lastRule.Annotations = make(map[string]string)
+					}
+					lastRule.Annotations["_nextCursor"] = cursorStr
+				}
+			}
+		}
+
+		result = alertRules
+
+		processingTime := time.Since(processingStart)
+		st.Logger.Info("Data processing time", "duration_ms", processingTime.Milliseconds())
+
+		return nil
+	})
+	return result, totalCount, err
+}
+
+// cursorData represents the data encoded in a pagination cursor
+type cursorData struct {
+	ID          int64  `json:"id"`           // The ID of the last item
+	FolderTitle string `json:"folder_title"` // The folder title of the last item
+	RuleGroup   string `json:"rule_group"`   // The rule group of the last item
+}
+
+// encodeCursor encodes cursor data into a base64 string
+func encodeCursor(data cursorData) (string, error) {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(jsonData), nil
+}
+
+// decodeCursor decodes a base64 string into cursor data
+func decodeCursor(cursor string) (cursorData, error) {
+	var data cursorData
+	jsonData, err := base64.StdEncoding.DecodeString(cursor)
+	if err != nil {
+		return data, err
+	}
+	err = json.Unmarshal(jsonData, &data)
+	return data, err
 }

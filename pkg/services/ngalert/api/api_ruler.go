@@ -338,6 +338,12 @@ func (srv RulerSrv) RouteGetRuleByUID(c *contextmodel.ReqContext, ruleUID string
 
 // RouteGetAllRules returns all alert rules that the user has access to
 func (srv RulerSrv) RouteGetAllRules(c *contextmodel.ReqContext) response.Response {
+	totalStart := time.Now()
+	defer func() {
+		totalTime := time.Since(totalStart)
+		srv.log.Info("RouteGetAllRules total execution time", "duration_ms", totalTime.Milliseconds())
+	}()
+
 	ctx := c.Req.Context()
 	orgID := c.SignedInUser.GetOrgID()
 
@@ -346,103 +352,126 @@ func (srv RulerSrv) RouteGetAllRules(c *contextmodel.ReqContext) response.Respon
 	if limit <= 0 {
 		limit = 100 // Default limit
 	}
-	page := c.QueryInt64("page")
-	if page <= 0 {
-		page = 1 // Default page
-	}
 
+	// Get cursor for pagination
+	cursor := c.Query("cursor")
+
+	// Measure namespace retrieval time
+	namespaceStart := time.Now()
+
+	// Get namespaces visible to the user
+	// This is a potentially expensive operation, so we could consider caching this result
+	// in a short-lived cache (e.g., 30 seconds) if this becomes a bottleneck
 	namespaceMap, err := srv.store.GetUserVisibleNamespaces(ctx, orgID, c.SignedInUser)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get namespaces visible to the user", err)
 	}
+
+	namespaceTime := time.Since(namespaceStart)
+	srv.log.Info("Namespace retrieval time", "duration_ms", namespaceTime.Milliseconds(), "namespace_count", len(namespaceMap))
 
 	if len(namespaceMap) == 0 {
 		srv.log.Debug("User has no access to any namespaces")
 		return response.JSON(http.StatusOK, apimodels.GettableRuleList{
 			Rules: []apimodels.GettableExtendedRuleNode{},
 			Total: 0,
-			Page:  int(page),
 			Limit: int(limit),
 		})
 	}
 
+	// Extract namespace UIDs
 	namespaceUIDs := make([]string, 0, len(namespaceMap))
 	for k := range namespaceMap {
 		namespaceUIDs = append(namespaceUIDs, k)
 	}
 
+	// Prepare query with cursor-based pagination
 	query := ngmodels.ListAlertRulesQuery{
 		OrgID:         orgID,
 		NamespaceUIDs: namespaceUIDs,
 		Limit:         limit,
-		Page:          page,
+		Cursor:        cursor,
 	}
 
-	rules, err := srv.store.ListAlertRules(ctx, &query)
+	// Measure rule retrieval time
+	ruleStart := time.Now()
+
+	// Get rules with pagination and total count in a single call
+	rules, totalCount, err := srv.store.ListAlertRulesWithPagination(ctx, &query)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get alert rules", err)
 	}
 
+	ruleTime := time.Since(ruleStart)
+	srv.log.Info("Rule retrieval time", "duration_ms", ruleTime.Milliseconds(), "rule_count", len(rules), "total_count", totalCount)
+
+	// Measure provenance retrieval time
+	provenanceStart := time.Now()
+
+	// Get provenances for all rules in a single batch
+	// This is more efficient than getting them one by one
 	provenanceRecords, err := srv.provenanceStore.GetProvenances(ctx, orgID, (&ngmodels.AlertRule{}).ResourceType())
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get rule provenances", err)
 	}
 
+	provenanceTime := time.Since(provenanceStart)
+	srv.log.Info("Provenance retrieval time", "duration_ms", provenanceTime.Milliseconds(), "provenance_count", len(provenanceRecords))
+
+	// Measure rule processing time
+	processingStart := time.Now()
+
+	// Pre-allocate the slice to avoid reallocations
+	accessibleRules := make([]apimodels.GettableExtendedRuleNode, 0, len(rules))
+
+	// Prepare user info resolver function once
+	userInfoFn := srv.resolveUserIdToNameFn(ctx)
+
+	// Track if we have a next cursor
+	var nextCursor string
+
 	// Filter rules based on user access
-	accessibleRules := make([]apimodels.GettableExtendedRuleNode, 0)
 	for _, rule := range rules {
 		// Check if user has access to the rule
 		if err := srv.authz.AuthorizeAccessInFolder(ctx, c.SignedInUser, rule); err != nil {
 			continue
 		}
 
+		// Get provenance for this rule
 		provenance := ngmodels.ProvenanceNone
 		if prov, exists := provenanceRecords[rule.ResourceID()]; exists {
 			provenance = prov
 		}
 
-		accessibleRules = append(accessibleRules, toGettableExtendedRuleNode(*rule, map[string]ngmodels.Provenance{rule.ResourceID(): provenance}, srv.resolveUserIdToNameFn(ctx)))
+		// Check if this rule has a next cursor (will be on the last rule)
+		if rule.Annotations != nil {
+			if cursor, exists := rule.Annotations["_nextCursor"]; exists {
+				nextCursor = cursor
+				// Remove the cursor from annotations before sending to client
+				delete(rule.Annotations, "_nextCursor")
+			}
+		}
+
+		// Convert rule to GettableExtendedRuleNode
+		accessibleRules = append(accessibleRules, toGettableExtendedRuleNode(
+			*rule,
+			map[string]ngmodels.Provenance{rule.ResourceID(): provenance},
+			userInfoFn,
+		))
 	}
 
-	// Get total count for pagination
-	totalCount, err := srv.getTotalRuleCount(ctx, orgID, c.SignedInUser)
-	if err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get total rule count", err)
-	}
+	processingTime := time.Since(processingStart)
+	srv.log.Info("Rule processing time", "duration_ms", processingTime.Milliseconds(), "accessible_rules", len(accessibleRules))
 
+	// Prepare response
 	result := apimodels.GettableRuleList{
-		Rules: accessibleRules,
-		Total: totalCount,
-		Page:  int(page),
-		Limit: int(limit),
+		Rules:      accessibleRules,
+		Total:      int(totalCount),
+		Limit:      int(limit),
+		NextCursor: nextCursor,
 	}
 
 	return response.JSON(http.StatusOK, result)
-}
-
-// getTotalRuleCount returns the total count of alert rules that the user has access to
-func (srv RulerSrv) getTotalRuleCount(ctx context.Context, orgID int64, user identity.Requester) (int, error) {
-	namespaceMap, err := srv.store.GetUserVisibleNamespaces(ctx, orgID, user)
-	if err != nil {
-		return 0, err
-	}
-
-	if len(namespaceMap) == 0 {
-		return 0, nil
-	}
-
-	namespaceUIDs := make([]string, 0, len(namespaceMap))
-	for k := range namespaceMap {
-		namespaceUIDs = append(namespaceUIDs, k)
-	}
-
-	// Use the Count function to get the total number of rules
-	count, err := srv.store.Count(ctx, orgID)
-	if err != nil {
-		return 0, err
-	}
-
-	return int(count), nil
 }
 
 func (srv RulerSrv) RouteGetRuleVersionsByUID(c *contextmodel.ReqContext, ruleUID string) response.Response {

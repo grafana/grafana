@@ -809,25 +809,20 @@ type GetAlertRulesGroupByRuleUIDQuery struct {
 
 // ListAlertRulesQuery is the query for listing alert rules
 type ListAlertRulesQuery struct {
-	OrgID         int64
-	RuleUIDs      []string
-	NamespaceUIDs []string
-	ExcludeOrgs   []int64
-	RuleGroups    []string
-
-	// DashboardUID and PanelID are optional and allow filtering rules
-	// to return just those for a dashboard and panel.
-	DashboardUID string
-	PanelID      int64
-
-	ReceiverName     string
-	TimeIntervalName string
-
+	OrgID                  int64
+	RuleUIDs               []string
+	NamespaceUIDs          []string
+	ExcludeOrgs            []int64
+	RuleGroups             []string
+	DashboardUID           string
+	PanelID                int64
+	ReceiverName           string
+	TimeIntervalName       string
 	ImportedPrometheusRule *bool
 
-	// Pagination parameters
-	Limit int64
-	Page  int64
+	// Cursor-based pagination parameters
+	Cursor string // Base64 encoded cursor for the next page
+	Limit  int64  // Maximum number of items to return
 }
 
 // CountAlertRulesQuery is the query for counting alert rules

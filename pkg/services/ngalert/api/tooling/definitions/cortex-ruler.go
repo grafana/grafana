@@ -332,10 +332,11 @@ type GettableRuleVersions []GettableExtendedRuleNode
 
 // swagger:model
 type GettableRuleList struct {
-	Rules []GettableExtendedRuleNode `json:"rules"`
-	Total int                        `json:"total"`
-	Page  int                        `json:"page,omitempty"`
-	Limit int                        `json:"limit,omitempty"`
+	Rules      []GettableExtendedRuleNode `json:"rules"`
+	Total      int                        `json:"total"`
+	Page       int                        `json:"page,omitempty"`
+	Limit      int                        `json:"limit,omitempty"`
+	NextCursor string                     `json:"nextCursor,omitempty"`
 }
 
 // swagger:model
