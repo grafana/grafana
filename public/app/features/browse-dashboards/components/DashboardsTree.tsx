@@ -109,10 +109,11 @@ export function DashboardsTree({
       onAllSelectionChange,
       onItemSelectionChange,
       treeID,
+      onFolderClick,
     }),
     // we need this to rerender if items changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [table, isSelected, onAllSelectionChange, onItemSelectionChange, items, treeID]
+    [table, isSelected, onAllSelectionChange, onItemSelectionChange, items, treeID, onFolderClick]
   );
 
   const handleIsItemLoaded = useCallback(
@@ -203,12 +204,13 @@ interface VirtualListRowProps {
     onAllSelectionChange: DashboardsTreeCellProps['onAllSelectionChange'];
     onItemSelectionChange: DashboardsTreeCellProps['onItemSelectionChange'];
     treeID: string;
+    onFolderClick: (uid: string, newOpenState: boolean) => void;
   };
 }
 
 function VirtualListRow({ index, style, data }: VirtualListRowProps) {
   const styles = useStyles2(getStyles);
-  const { table, isSelected, onItemSelectionChange, treeID } = data;
+  const { table, isSelected, onItemSelectionChange, treeID, onFolderClick } = data;
   const { rows, prepareRow } = table;
 
   const row = rows[index];
@@ -225,6 +227,14 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
     );
   }
 
+  const handleRowClick = () => {
+    if (dashboardItem.kind === 'folder') {
+      onFolderClick(dashboardItem.uid, !row.original.isOpen);
+    } else if (dashboardItem.kind === 'dashboard' && dashboardItem.url) {
+      window.location.href = dashboardItem.url;
+    }
+  };
+
   return (
     <div
       key={key}
@@ -235,6 +245,7 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
       data-testid={selectors.pages.BrowseDashboards.table.row(
         'title' in dashboardItem ? dashboardItem.title : dashboardItem.uid
       )}
+      onClick={handleRowClick}
     >
       {row.cells.map((cell) => {
         const { key, ...cellProps } = cell.getCellProps();

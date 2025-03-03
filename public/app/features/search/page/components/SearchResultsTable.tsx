@@ -285,7 +285,6 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '&:hover': {
         backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.05),
-        cursor: 'pointer',
         boxShadow: `
           0 4px 12px ${theme.colors.emphasize(theme.colors.background.primary, 0.1)},
           0 0 0 1px ${theme.colors.border.weak}
