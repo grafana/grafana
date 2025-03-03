@@ -151,14 +151,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:              "vizActions",
-			Description:       "Allow actions in visualizations",
-			Stage:             FeatureStageExperimental,
-			FrontendOnly:      true,
-			Owner:             grafanaDatavizSquad,
-			HideFromAdminPage: true,
-		},
-		{
 			Name:            "disableSecretsCompatibility",
 			Description:     "Disable duplicated secret storage in legacy tables",
 			Stage:           FeatureStageExperimental,
@@ -197,14 +189,6 @@ var (
 			Description: "Use double quotes to escape keyword in a MySQL query",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSearchAndStorageSquad,
-		},
-		{
-			Name:              "accessControlOnCall",
-			Description:       "Access control primitives for OnCall",
-			Stage:             FeatureStageGeneralAvailability,
-			Owner:             identityAccessTeam,
-			HideFromAdminPage: true,
-			Expression:        "true", // enabled by default
 		},
 		{
 			Name:        "nestedFolders",
@@ -751,13 +735,6 @@ var (
 			FrontendOnly: false,
 		},
 		{
-			Name:         "prometheusPromQAIL",
-			Description:  "Prometheus and AI/ML to assist users in creating a query",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaOSSBigTent,
-		},
-		{
 			Name:         "prometheusCodeModeMetricNamesSearch",
 			Description:  "Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names",
 			FrontendOnly: true,
@@ -877,7 +854,7 @@ var (
 		},
 		{
 			Name:         "exploreMetrics",
-			Description:  "Enables the new Explore Metrics core app",
+			Description:  "Enables the new Grafana Metrics Drilldown core app",
 			Stage:        FeatureStageGeneralAvailability,
 			Expression:   "true", // enabled by default
 			FrontendOnly: true,
@@ -1186,14 +1163,6 @@ var (
 			Expression:        "false", // enabled by default
 		},
 		{
-			Name:         "datasourceProxyDisableRBAC",
-			Description:  "Disables applying a plugin route's ReqAction field to authorization",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:              "alertingDisableSendAlertsExternal",
 			Description:       "Disables the ability to send alerts to an external Alertmanager datasource.",
 			Stage:             FeatureStageExperimental,
@@ -1346,21 +1315,21 @@ var (
 		},
 		{
 			Name:         "exploreLogsShardSplitting",
-			Description:  "Used in Explore Logs to split queries into multiple queries based on the number of shards",
+			Description:  "Used in Logs Drilldown to split queries into multiple queries based on the number of shards",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:         "exploreLogsAggregatedMetrics",
-			Description:  "Used in Explore Logs to query by aggregated metrics",
+			Description:  "Used in Logs Drilldown to query by aggregated metrics",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:         "exploreLogsLimitedTimeRange",
-			Description:  "Used in Explore Logs to limit the time range",
+			Description:  "Used in Logs Drilldown to limit the time range",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
@@ -1516,11 +1485,11 @@ var (
 		},
 		{
 			Name:         "exploreMetricsRelatedLogs",
-			Description:  "Display Related Logs in Explore Metrics",
+			Description:  "Display Related Logs in Grafana Metrics Drilldown",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityMetricsSquad,
 			FrontendOnly: true,
-			HideFromDocs: true,
+			HideFromDocs: false,
 		},
 		{
 			Name:         "prometheusSpecialCharsInLabelValues",
@@ -1783,10 +1752,11 @@ var (
 			Name:              "alertingRuleVersionHistoryRestore",
 			Description:       "Enables the alert rule version history restore feature",
 			FrontendOnly:      true,
-			Stage:             FeatureStageExperimental,
+			Stage:             FeatureStageGeneralAvailability,
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
+			Expression:        "true", // enabled by default
 		},
 		{
 			Name:              "newShareReportDrawer",
@@ -1795,6 +1765,15 @@ var (
 			Owner:             grafanaSharingSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
+		},
+		{
+			Name:              "rendererDisableAppPluginsPreload",
+			Description:       "Disable pre-loading app plugins when the request is coming from the renderer",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSharingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
 		},
 	}
 )

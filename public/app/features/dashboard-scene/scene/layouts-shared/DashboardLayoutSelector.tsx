@@ -1,24 +1,24 @@
 import { useMemo } from 'react';
 
+import { sceneGraph } from '@grafana/scenes';
 import { Select } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { LayoutOrchestrator } from '../layout-manager/LayoutOrchestrator';
-import { getClosest } from '../layout-manager/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { layoutRegistry } from './layoutRegistry';
 
 export interface Props {
-  layoutOrchestrator: LayoutOrchestrator;
+  layoutManager: DashboardLayoutManager;
 }
 
-export function DashboardLayoutSelector({ layoutOrchestrator }: Props) {
-  const { manager } = layoutOrchestrator.useState();
+export function DashboardLayoutSelector({ layoutManager }: Props) {
   const { options, currentOption } = useMemo(() => {
-    const managerId = manager.descriptor.id;
+    const managerId = layoutManager.descriptor.id;
     const layouts = layoutRegistry.list().map((layout) => ({
       label: layout.name,
       value: layout,
@@ -29,7 +29,7 @@ export function DashboardLayoutSelector({ layoutOrchestrator }: Props) {
       options: layouts.filter((layout) => currentOption?.value !== layout.value),
       currentOption,
     };
-  }, [manager]);
+  }, [layoutManager]);
 
   return (
     <Select
@@ -37,7 +37,7 @@ export function DashboardLayoutSelector({ layoutOrchestrator }: Props) {
       value={currentOption}
       onChange={(option) => {
         if (option.value?.id !== currentOption?.value.id) {
-          changeLayoutTo(layoutOrchestrator, option.value!);
+          changeLayoutTo(layoutManager, option.value!);
         }
       }}
     />
@@ -52,17 +52,12 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
       isOpenDefault: true,
     });
 
-    const layoutOrchestrator = getClosest(layoutManager, (s) => (s instanceof LayoutOrchestrator ? s : undefined));
-    if (layoutOrchestrator) {
-      layoutCategory.addItem(
-        new OptionsPaneItemDescriptor({
-          title: 'Type',
-          render: function renderTitle() {
-            return <DashboardLayoutSelector layoutOrchestrator={layoutOrchestrator} />;
-          },
-        })
-      );
-    }
+    layoutCategory.addItem(
+      new OptionsPaneItemDescriptor({
+        title: t('dashboard.layout.common.layout', 'Layout'),
+        render: () => <DashboardLayoutSelector layoutManager={layoutManager} />,
+      })
+    );
 
     if (layoutManager.getOptions) {
       for (const option of layoutManager.getOptions()) {
@@ -74,6 +69,11 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
   }, [layoutManager]);
 }
 
-function changeLayoutTo(layoutOrchestrator: LayoutOrchestrator, newLayoutDescriptor: LayoutRegistryItem) {
-  layoutOrchestrator.switchLayout(newLayoutDescriptor.createFromLayout(layoutOrchestrator.state.manager));
+function changeLayoutTo(layoutManager: DashboardLayoutManager, newLayoutDescriptor: LayoutRegistryItem) {
+  try {
+    const layoutOrchestrator = sceneGraph.getAncestor(layoutManager, LayoutOrchestrator);
+    layoutOrchestrator.switchLayout(newLayoutDescriptor.createFromLayout(layoutManager));
+  } catch (err) {
+    console.warn(`Expected parent of layout manager with key "${layoutManager.state.key}" to be a layout orchestrator`);
+  }
 }

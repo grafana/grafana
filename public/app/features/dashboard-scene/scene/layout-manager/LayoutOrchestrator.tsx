@@ -226,10 +226,6 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
     return this.state.manager.addPanel(panel);
   }
 
-  addNewRow(): void {
-    return this.state.manager.addNewRow();
-  }
-
   getVizPanels(): VizPanel[] {
     return this.state.manager.getVizPanels();
   }

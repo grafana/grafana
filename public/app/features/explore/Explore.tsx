@@ -41,6 +41,7 @@ import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineCo
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
 import { CorrelationHelper } from './CorrelationHelper';
 import { CustomContainer } from './CustomContainer';
+import { DrilldownAlertBox } from './DrilldownAlertBox';
 import { ExploreToolbar } from './ExploreToolbar';
 import { FlameGraphExploreContainer } from './FlameGraph/FlameGraphExploreContainer';
 import { GraphContainer } from './Graph/GraphContainer';
@@ -593,6 +594,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                   <>
                     <ContentOutlineItem panelId="Queries" title="Queries" icon="arrow" mergeSingleChild={true}>
                       <PanelContainer className={styles.queryContainer}>
+                        <DrilldownAlertBox datasourceType={datasourceInstance?.type || ''} />
                         {correlationsBox}
                         <QueryRows exploreId={exploreId} />
                         <SecondaryActions
