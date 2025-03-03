@@ -13,13 +13,13 @@ import (
 const TITLE_ANALYZER = "title_analyzer"
 
 func RegisterCustomAnalyzers(mapper *mapping.IndexMappingImpl) error {
-	return titleAnalyzer(mapper)
+	return registerTitleAnalyzer(mapper)
 }
 
-// The titleAnalyzer function defines a custom analyzer for the title field.
+// The registerTitleAnalyzer function defines a custom analyzer for the title field.
 // The edgeNgramTokenFilter will create n-grams anchored to the front of each token.
 // For example, the token "hello" will be tokenized into "hel", "hell", "hello".
-func titleAnalyzer(mapper *mapping.IndexMappingImpl) error {
+func registerTitleAnalyzer(mapper *mapping.IndexMappingImpl) error {
 	// Define an N-Gram tokenizer (for substring search)
 	edgeNgramTokenFilter := map[string]interface{}{
 		"type": edgengram.Name,

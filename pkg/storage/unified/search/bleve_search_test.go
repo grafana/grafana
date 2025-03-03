@@ -59,12 +59,8 @@ func TestCanSearchByTitle(t *testing.T) {
 		Resource:  "dashboards",
 	}
 
-	t.Run("can find by words in title", func(t *testing.T) {
+	t.Run("title search will match document", func(t *testing.T) {
 		index := newTestDashboardsIndex(t)
-
-		analyzer := index.(*bleveIndex).index.Mapping().AnalyzerNamed(TITLE_ANALYZER)
-		analyzer.Analyze([]byte("Hello to the World"))
-
 		err := index.Write(&resource.IndexableDocument{
 			RV:   1,
 			Name: "name1",
@@ -74,14 +70,9 @@ func TestCanSearchByTitle(t *testing.T) {
 				Group:     key.Group,
 				Resource:  key.Resource,
 			},
-			Title: "I want to say Hello TO THE WORLD and JEFFREY",
+			Title: "I want to say a wonderful Hello to the WORLD! Hello-world",
 		})
 		require.NoError(t, err)
-
-		//debugAnalyzer(index.(*bleveIndex).index, TITLE_ANALYZER, "I want to say Hello TO THE WORLD and MORRREE")
-		//debugAnalyzer(index.(*bleveIndex).index, standard.Name, "I want to say Hello TO THE WORLD and MORRREE")
-		//debugAnalyzer(index.(*bleveIndex).index, simple.Name, "I want to say Hello TO THE WORLD and MORRREE")
-		//debugIndexedTerms(index.(*bleveIndex).index, resource.SEARCH_FIELD_TITLE)
 
 		// search for word at start
 		query := newQuery("hello")
@@ -90,7 +81,7 @@ func TestCanSearchByTitle(t *testing.T) {
 		require.Equal(t, res.TotalHits, int64(1))
 
 		// search for word larger than ngram max size
-		query = newQuery("jeffrey")
+		query = newQuery("wonderful")
 		res, err = index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
 		require.Equal(t, res.TotalHits, int64(1))
@@ -112,6 +103,46 @@ func TestCanSearchByTitle(t *testing.T) {
 		res, err = index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
 		require.Equal(t, res.TotalHits, int64(1))
+
+		// can search for multiple, non-consecutive words in title
+		query = newQuery("hello world")
+		res, err = index.Search(context.Background(), nil, query, nil)
+		require.NoError(t, err)
+		require.Equal(t, res.TotalHits, int64(1))
+
+		// can search for a term with a hyphen
+		query = newQuery("hello-world")
+		res, err = index.Search(context.Background(), nil, query, nil)
+		require.NoError(t, err)
+		require.Equal(t, res.TotalHits, int64(1))
+	})
+
+	t.Run("title search will NOT match document", func(t *testing.T) {
+		index := newTestDashboardsIndex(t)
+		err := index.Write(&resource.IndexableDocument{
+			RV:   1,
+			Name: "name1",
+			Key: &resource.ResourceKey{
+				Name:      "aaa",
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+			},
+			Title: "I want to say a wonderful Hello to the WORLD! Hello-world",
+		})
+		require.NoError(t, err)
+
+		// word that doesn't exist
+		query := newQuery("cats")
+		res, err := index.Search(context.Background(), nil, query, nil)
+		require.NoError(t, err)
+		require.Equal(t, res.TotalHits, int64(0))
+
+		// string shorter than 3 chars (ngam min)
+		query = newQuery("wa")
+		res, err = index.Search(context.Background(), nil, query, nil)
+		require.NoError(t, err)
+		require.Equal(t, res.TotalHits, int64(0))
 	})
 }
 
