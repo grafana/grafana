@@ -8,6 +8,7 @@ import (
 	"path"
 
 	"github.com/prometheus/client_golang/prometheus"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -156,11 +157,13 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 
 			provisioningData, err := b.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardUID(ctx, nsInfo.OrgID, a.GetName())
 			if err != nil {
-				if errors.Is(err, dashboards.ErrProvisionedDashboardNotFound) {
+				if errors.Is(err, dashboards.ErrProvisionedDashboardNotFound) ||
+					errors.Is(err, dashboards.ErrDashboardNotFound) ||
+					apierrors.IsNotFound(err) {
 					return nil
 				}
 
-				return fmt.Errorf("%v: %w", "failed to check if dashboard is provisioned", err)
+				return fmt.Errorf("%v: %w", "delete hook failed to check if dashboard is provisioned", err)
 			}
 
 			if provisioningData != nil {
