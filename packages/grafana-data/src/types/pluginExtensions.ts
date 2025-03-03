@@ -39,6 +39,10 @@ export type PluginExtensionComponent<Props = {}> = PluginExtensionBase & {
   component: React.ComponentType<Props>;
 };
 
+export type ComponentTypeWithExtensionMeta<Props = {}> = React.ComponentType<Props> & {
+  meta: PluginExtensionComponentMeta;
+};
+
 export type PluginExtensionFunction<Signature = () => void> = PluginExtensionBase & {
   type: PluginExtensionTypes.function;
   fn: Signature;
