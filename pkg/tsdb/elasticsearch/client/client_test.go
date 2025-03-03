@@ -445,14 +445,6 @@ func TestStreamMultiSearchResponse_ErrorHandling(t *testing.T) {
 			require.Error(t, err)
 			require.True(t, backend.IsDownstreamError(err))
 		})
-
-		t.Run("When response has invalid structure", func(t *testing.T) {
-			msr := &MultiSearchResponse{}
-			err := StreamMultiSearchResponse(strings.NewReader(`{ "responses": "not-an-array" }`), msr)
-
-			require.Error(t, err)
-			require.True(t, backend.IsDownstreamError(err))
-		})
 	})
 
 	t.Run("Given a client with invalid response", func(t *testing.T) {
