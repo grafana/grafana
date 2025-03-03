@@ -163,12 +163,8 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteNamespace(c *contex
 
 	logger.Debug("Looking up folder by title", "folder_title", namespaceTitle)
 	namespace, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.GetOrgID(), c.SignedInUser, workingFolderUID)
-	if errors.Is(err, dashboards.ErrFolderNotFound) {
-		// if the folder does not exist, return 202 Accepted
-		return successfulResponse()
-	}
 	if err != nil {
-		return toNamespaceErrorResponse(err)
+		return namespaceErrorResponse(err)
 	}
 	logger.Info("Deleting all Prometheus-imported rule groups", "folder_uid", namespace.UID, "folder_title", namespaceTitle)
 
@@ -178,8 +174,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteNamespace(c *contex
 	}
 	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, models.ProvenanceConvertedPrometheus, filterOpts)
 	if errors.Is(err, models.ErrAlertRuleGroupNotFound) {
-		// if there are no groups, still return 202 Accepted
-		return successfulResponse()
+		return response.Empty(http.StatusNotFound)
 	}
 	if err != nil {
 		logger.Error("Failed to delete rule groups", "folder_uid", namespace.UID, "error", err)
@@ -198,19 +193,14 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteRuleGroup(c *contex
 
 	logger.Debug("Looking up folder by title", "folder_title", namespaceTitle)
 	folder, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.GetOrgID(), c.SignedInUser, workingFolderUID)
-	if errors.Is(err, dashboards.ErrFolderNotFound) {
-		// if the folder does not exist, mimir returns 202 Accepted
-		return successfulResponse()
-	}
 	if err != nil {
-		return toNamespaceErrorResponse(err)
+		return namespaceErrorResponse(err)
 	}
 	logger.Info("Deleting Prometheus-imported rule group", "folder_uid", folder.UID, "folder_title", namespaceTitle, "group", group)
 
 	err = srv.alertRuleService.DeleteRuleGroup(c.Req.Context(), c.SignedInUser, folder.UID, group, models.ProvenanceConvertedPrometheus)
 	if errors.Is(err, models.ErrAlertRuleGroupNotFound) {
-		// if the group does not exist, mimir returns 202 Accepted
-		return successfulResponse()
+		return response.Empty(http.StatusNotFound)
 	}
 	if err != nil {
 		logger.Error("Failed to delete rule group", "folder_uid", folder.UID, "group", group, "error", err)
@@ -232,7 +222,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetNamespace(c *contextmo
 	namespace, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.GetOrgID(), c.SignedInUser, workingFolderUID)
 	if err != nil {
 		logger.Error("Failed to get folder", "error", err)
-		return toNamespaceErrorResponse(err)
+		return namespaceErrorResponse(err)
 	}
 
 	filterOpts := &provisioning.FilterOptions{
@@ -266,7 +256,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRuleGroup(c *contextmo
 	namespace, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.GetOrgID(), c.SignedInUser, workingFolderUID)
 	if err != nil {
 		logger.Error("Failed to get folder", "error", err)
-		return toNamespaceErrorResponse(err)
+		return namespaceErrorResponse(err)
 	}
 	if namespace == nil {
 		return response.Error(http.StatusNotFound, "Folder not found", nil)
@@ -355,7 +345,7 @@ func (srv *ConvertPrometheusSrv) getOrCreateNamespace(c *contextmodel.ReqContext
 	)
 	if err != nil {
 		logger.Error("Failed to get or create a new folder", "error", err)
-		return nil, toNamespaceErrorResponse(err)
+		return nil, namespaceErrorResponse(err)
 	}
 
 	logger.Debug("Using folder for the converted rules", "folder_uid", ns.UID)
@@ -495,4 +485,12 @@ func getWorkingFolderUID(c *contextmodel.ReqContext) string {
 		return folderUID
 	}
 	return folder.RootFolderUID
+}
+
+func namespaceErrorResponse(err error) response.Response {
+	if errors.Is(err, dashboards.ErrFolderNotFound) {
+		return response.Empty(http.StatusNotFound)
+	}
+
+	return toNamespaceErrorResponse(err)
 }

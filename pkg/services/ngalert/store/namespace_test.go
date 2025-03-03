@@ -365,7 +365,7 @@ func TestIntegration_GetNamespaceChildren(t *testing.T) {
 	 *  - Child Folder 1
 	 *    - Nested Child
 	 *  - Child Folder 2
-	 *  Root Folder 2
+	 * Root Folder 2
 	 */
 
 	t.Run("should return direct children of a folder", func(t *testing.T) {
