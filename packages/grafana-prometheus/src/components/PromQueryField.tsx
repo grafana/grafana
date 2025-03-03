@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PromQueryField.tsx
 import { css, cx } from '@emotion/css';
-import { ReactNode, useCallback, useReducer } from 'react';
+import { MutableRefObject, ReactNode, useCallback, useReducer } from 'react';
 
 import {
   isDataFrame,
@@ -97,14 +97,14 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
     labelBrowserVisible: false,
   });
 
-  const onUpdateLanguage = useCallback(() => {
+  const updateLanguage = useCallback(() => {
     if (languageProvider.metrics) {
       dispatch({ type: 'METRICS_LOADING_FINISHED' });
     }
   }, [languageProvider]);
 
   const refreshMetrics = useCallback(
-    async (languageProviderInitRef: React.MutableRefObject<CancelablePromise<any> | null>) => {
+    async (languageProviderInitRef: MutableRefObject<CancelablePromise<any> | null>) => {
       // Cancel any existing initialization using the ref
       if (languageProviderInitRef.current) {
         languageProviderInitRef.current.cancel();
@@ -127,7 +127,7 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
           await Promise.all(remainingTasks);
         }
 
-        onUpdateLanguage();
+        updateLanguage();
       } catch (err) {
         if (isCancelablePromiseRejection(err) && err.isCanceled) {
           // do nothing, promise was canceled
@@ -138,7 +138,7 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
         languageProviderInitRef.current = null;
       }
     },
-    [languageProvider, range, onUpdateLanguage]
+    [languageProvider, range, updateLanguage]
   );
 
   const refreshHint = useCallback(() => {
@@ -193,7 +193,7 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
   };
 
   // Use our custom effects hook
-  usePromQueryFieldEffects(languageProvider, range, data, refreshMetrics, refreshHint);
+  usePromQueryFieldEffects(languageProvider, range, data?.series ?? [], refreshMetrics, refreshHint);
 
   const { chooserText, buttonDisabled } = useMetricsState(datasource, languageProvider, state.syntaxLoaded);
 

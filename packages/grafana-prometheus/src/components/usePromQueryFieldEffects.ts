@@ -1,16 +1,17 @@
-import { useEffect, useRef } from 'react';
+import { MutableRefObject, useEffect, useRef } from 'react';
 
-import { DateTime } from '@grafana/data';
+import { DataFrame, DateTime, TimeRange } from '@grafana/data';
 
+import PromQlLanguageProvider from '../language_provider';
 import { roundMsToMin } from '../language_utils';
 
 import { CancelablePromise } from './cancelable-promise';
 
 export function usePromQueryFieldEffects(
-  languageProvider: any,
-  range: any,
-  data: any,
-  refreshMetrics: (languageProviderInitRef: React.MutableRefObject<CancelablePromise<any> | null>) => Promise<void>,
+  languageProvider: PromQlLanguageProvider,
+  range: TimeRange | undefined,
+  series: DataFrame[],
+  refreshMetrics: (languageProviderInitRef: MutableRefObject<CancelablePromise<any> | null>) => Promise<void>,
   refreshHint: () => void
 ) {
   const lastRangeRef = useRef<{ from: DateTime; to: DateTime } | null>(null);
@@ -43,8 +44,6 @@ export function usePromQueryFieldEffects(
 
     if (!lastRangeRef.current) {
       lastRangeRef.current = { from: range.from, to: range.to };
-      refreshMetrics(languageProviderInitRef);
-      return;
     }
 
     const lastFrom = roundMsToMin(lastRangeRef.current.from.valueOf());
@@ -59,7 +58,7 @@ export function usePromQueryFieldEffects(
   // Effect for data changes (refreshing hints)
   useEffect(() => {
     refreshHint();
-  }, [data?.series, refreshHint]);
+  }, [series, refreshHint]);
 
   return languageProviderInitRef;
 }

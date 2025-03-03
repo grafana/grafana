@@ -3,7 +3,7 @@ import { getByTestId, render, screen } from '@testing-library/react';
 // @ts-ignore
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, DataFrame, LoadingState, PanelData } from '@grafana/data';
+import { CoreApp, DataFrame, dateTime, LoadingState, PanelData } from '@grafana/data';
 
 import { PrometheusDatasource } from '../datasource';
 import * as queryHints from '../query_hints';
@@ -40,6 +40,14 @@ const defaultProps = {
   onRunQuery: () => {},
   onChange: () => {},
   history: [],
+  range: {
+    from: dateTime('2022-01-01T00:00:00Z'),
+    to: dateTime('2022-01-02T00:00:00Z'),
+    raw: {
+      from: 'now-1d',
+      to: 'now',
+    },
+  },
 };
 
 describe('PromQueryField', () => {
