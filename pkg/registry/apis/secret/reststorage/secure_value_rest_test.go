@@ -146,6 +146,24 @@ func TestValidateSecureValue(t *testing.T) {
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec", errs[0].Field)
 		})
+
+		t.Run("when trying to change the `keeper`, it returns an error", func(t *testing.T) {
+			oldSv := &secretv0alpha1.SecureValue{
+				Spec: secretv0alpha1.SecureValueSpec{
+					Keeper: "a-keeper",
+				},
+			}
+
+			sv := &secretv0alpha1.SecureValue{
+				Spec: secretv0alpha1.SecureValueSpec{
+					Keeper: "another-keeper",
+				},
+			}
+
+			errs := ValidateSecureValue(sv, oldSv, admission.Update, nil)
+			require.Len(t, errs, 1)
+			require.Equal(t, "spec", errs[0].Field)
+		})
 	})
 
 	t.Run("`decrypters` must have unique items", func(t *testing.T) {
