@@ -209,6 +209,19 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	err = os.MkdirAll(manifestDir, 0750)
 	require.NoError(t, err)
 	err = os.WriteFile(filepath.Join(manifestDir, "manifest.json"), []byte(`{
+		"app/core/trustedTypePolicies.ts": {
+			"file": "public/build/trustedTypePolicies-pOmZ7Wr2.js",
+			"name": "trustedTypePolicies",
+			"src": "app/core/trustedTypePolicies.ts",
+			"isEntry": true,
+			"imports": [
+				"_braintree-CW7sY1ng.js"
+			]
+  		},
+		"_braintree-CW7sY1ng.js": {
+    		"file": "public/build/braintree-CW7sY1ng.js",
+    		"name": "braintree"
+		},
 		"app/index.ts": {
 			"file": "public/build/index-3exGqndc.js",
 			"src": "app/index.ts",

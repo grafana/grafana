@@ -79,7 +79,7 @@ function countEslintErrors() {
     }
 
     const runner = new ESLint({
-      overrideConfigFile: './.betterer.eslint.config.js',
+      overrideConfigFile: './.betterer.eslint.config.cjs',
       warnIgnored: false,
     });
 
