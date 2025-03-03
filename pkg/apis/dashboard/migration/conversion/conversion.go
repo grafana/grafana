@@ -1,12 +1,11 @@
 package conversion
 
 import (
-	"fmt"
-
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/grafana/grafana/pkg/apis/dashboard/migration"
+	"github.com/grafana/grafana/pkg/apis/dashboard/migration/schemaversion"
 	dashboardV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	dashboardV2 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
@@ -49,59 +48,78 @@ func RegisterConversions(s *runtime.Scheme) error {
 func Convert_V0_to_V1(in *dashboardV0.Dashboard, out *dashboardV1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 	out.Spec = in.Spec
-	setConversionAnno(&out.ObjectMeta, "V0_to_V1")
+	out.Status = &dashboardV1.DashboardStatus{
+		ConversionStatus: &dashboardV1.ConversionStatus{
+			StoredVersion: dashboardV0.VERSION,
+		},
+	}
+	err := migration.Migrate(out.Spec.Object, schemaversion.LATEST_VERSION)
+	if err != nil {
+		out.Status.ConversionStatus.Failed = true
+		out.Status.ConversionStatus.Error = err.Error()
+	}
 	return nil
 }
 
 func Convert_V0_to_V2(in *dashboardV0.Dashboard, out *dashboardV2.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 	out.Spec = in.Spec
-	setConversionAnno(&out.ObjectMeta, "V0_to_V2")
+	out.Status = &dashboardV2.DashboardStatus{
+		ConversionStatus: &dashboardV2.ConversionStatus{
+			StoredVersion: dashboardV0.VERSION,
+			Failed:        true,
+			Error:         "backend conversion not yet implemented",
+		},
+	}
 	return nil
 }
 
 func Convert_V1_to_V0(in *dashboardV1.Dashboard, out *dashboardV0.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 	out.Spec = in.Spec
-	setConversionAnno(&out.ObjectMeta, "V1_to_V0")
+	out.Status = &dashboardV0.DashboardStatus{
+		ConversionStatus: &dashboardV0.ConversionStatus{
+			StoredVersion: dashboardV1.VERSION,
+		},
+	}
 	return nil
 }
 
 func Convert_V1_to_V2(in *dashboardV1.Dashboard, out *dashboardV2.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 	out.Spec = in.Spec
-	setConversionAnno(&out.ObjectMeta, "V1_to_V2")
+	out.Status = &dashboardV2.DashboardStatus{
+		ConversionStatus: &dashboardV2.ConversionStatus{
+			StoredVersion: dashboardV1.VERSION,
+			Failed:        true,
+			Error:         "backend conversion not yet implemented",
+		},
+	}
 	return nil
 }
 
 func Convert_V2_to_V0(in *dashboardV2.Dashboard, out *dashboardV0.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 	out.Spec = in.Spec
-	setConversionAnno(&out.ObjectMeta, "V2_to_V0")
+	out.Status = &dashboardV0.DashboardStatus{
+		ConversionStatus: &dashboardV0.ConversionStatus{
+			StoredVersion: dashboardV2.VERSION,
+			Failed:        true,
+			Error:         "backend conversion not yet implemented",
+		},
+	}
 	return nil
 }
 
 func Convert_V2_to_V1(in *dashboardV2.Dashboard, out *dashboardV1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 	out.Spec = in.Spec
-	setConversionAnno(&out.ObjectMeta, "V2_to_V1")
+	out.Status = &dashboardV1.DashboardStatus{
+		ConversionStatus: &dashboardV1.ConversionStatus{
+			StoredVersion: dashboardV2.VERSION,
+			Failed:        true,
+			Error:         "backend conversion not yet implemented",
+		},
+	}
 	return nil
-}
-
-// Add an annotation tracking which conversions have been run
-func setConversionAnno(meta *v1.ObjectMeta, val string) {
-	anno := meta.Annotations
-	if anno == nil {
-		anno = make(map[string]string)
-		meta.Annotations = anno
-	}
-
-	for i := range 10 {
-		key := fmt.Sprintf("CONVERSION-%d", i)
-		if anno[key] != "" {
-			continue
-		}
-		anno[key] = val
-		return
-	}
 }
