@@ -39,7 +39,7 @@ jobs:
             echo "PR changed files:"
             files=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files --jq '.[].filename')
             echo "$files"
-            if echo "$files" | grep -E "(pkg/|go\.)"; then
+            if echo "$files" | grep -E "(pkg/|go\.|\.github/workflows/pr-test-backend\.yml)"; then
               echo "Coverage will be generated: true (PR changes)"
               echo "generate=true" >> $GITHUB_OUTPUT
             else
