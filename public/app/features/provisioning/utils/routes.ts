@@ -3,10 +3,11 @@ import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynami
 import { RouteDescriptor } from 'app/core/navigation/types';
 import { DashboardRoutes } from 'app/types';
 
+import { requiredFeatureToggles } from '../Setup/types';
 import { PROVISIONING_URL } from '../constants';
 
 export function getProvisioningRoutes(): RouteDescriptor[] {
-  if (!config.featureToggles.provisioning) {
+  if (requiredFeatureToggles.every((toggle) => config.featureToggles[toggle])) {
     return [
       {
         path: PROVISIONING_URL,
@@ -22,12 +23,6 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
       path: PROVISIONING_URL,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "RepositoryListPage"*/ 'app/features/provisioning/RepositoryListPage')
-      ),
-    },
-    {
-      path: PROVISIONING_URL + '/setup',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "SetupPage"*/ 'app/features/provisioning/Setup/SetupPage')
       ),
     },
     {
