@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"net/http"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -40,7 +41,7 @@ type FileInfo struct {
 	// The git hash for a given file
 	Hash string
 	// When was the file changed (if known)
-	Modified int64
+	Modified *metav1.Time
 }
 
 // An entry in the file tree, as returned by 'ReadFileTree'. Like FileInfo, but contains less information.

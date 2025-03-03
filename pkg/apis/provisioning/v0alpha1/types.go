@@ -232,7 +232,7 @@ type ResourceWrapper struct {
 	URLs *ResourceURLs `json:"urls,omitempty"`
 
 	// The modified time in the remote file system
-	TimestampMillis int64 `json:"timestampMillis,omitempty"`
+	Timestamp *metav1.Time `json:"timestamp,omitempty"`
 
 	// Different flavors of the same object
 	Resource ResourceObjects `json:"resource"`
@@ -294,7 +294,7 @@ type ResourceURLs struct {
 	// A URL that will create a new pull requeset for this branch
 	NewPullRequest string `json:"newPullRequest,omitempty"`
 
-	// A URL pointing to the repository this lives in
+	// Compare this version to the target branch
 	Compare string `json:"compare,omitempty"`
 }
 

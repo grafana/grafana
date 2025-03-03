@@ -723,6 +723,10 @@ func (in *ResourceWrapper) DeepCopyInto(out *ResourceWrapper) {
 		*out = new(ResourceURLs)
 		**out = **in
 	}
+	if in.Timestamp != nil {
+		in, out := &in.Timestamp, &out.Timestamp
+		*out = (*in).DeepCopy()
+	}
 	in.Resource.DeepCopyInto(&out.Resource)
 	if in.Errors != nil {
 		in, out := &in.Errors, &out.Errors

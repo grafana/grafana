@@ -265,13 +265,13 @@ func (f *ParsedResource) AsResourceWrapper() *provisioning.ResourceWrapper {
 		res.DryRun = v0alpha1.Unstructured{Object: f.DryRunResponse.Object}
 	}
 	wrap := &provisioning.ResourceWrapper{
-		Path:            info.Path,
-		Ref:             info.Ref,
-		Hash:            info.Hash,
-		Repository:      f.Repo,
-		URLs:            f.URLs,
-		TimestampMillis: info.Modified,
-		Resource:        res,
+		Path:       info.Path,
+		Ref:        info.Ref,
+		Hash:       info.Hash,
+		Repository: f.Repo,
+		URLs:       f.URLs,
+		Timestamp:  info.Modified,
+		Resource:   res,
 	}
 	for _, err := range f.Errors {
 		wrap.Errors = append(wrap.Errors, err.Error())

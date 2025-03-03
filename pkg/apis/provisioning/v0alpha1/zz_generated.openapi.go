@@ -1414,7 +1414,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceRepositoryInfo(ref common.Ref
 					},
 					"namespace": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The namepsace this belongs to",
+							Description: "The namespace this belongs to",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -1552,13 +1552,6 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceURLs(ref common.ReferenceCall
 							Format:      "",
 						},
 					},
-					"pullRequest": {
-						SchemaProps: spec.SchemaProps{
-							Description: "A URL pointing to the repository this lives in",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"newPullRequest": {
 						SchemaProps: spec.SchemaProps{
 							Description: "A URL that will create a new pull requeset for this branch",
@@ -1568,7 +1561,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceURLs(ref common.ReferenceCall
 					},
 					"compare": {
 						SchemaProps: spec.SchemaProps{
-							Description: "A URL pointing to the repository this lives in",
+							Description: "Compare this version to the target branch",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -1634,11 +1627,10 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref common.ReferenceC
 							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceURLs"),
 						},
 					},
-					"timestampMillis": {
+					"timestamp": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The modified time in the remote file system",
-							Type:        []string{"integer"},
-							Format:      "int64",
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
 						},
 					},
 					"resource": {
@@ -1673,7 +1665,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref common.ReferenceC
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceObjects", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceRepositoryInfo", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceURLs"},
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceObjects", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceRepositoryInfo", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceURLs", "k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
 	}
 }
 
