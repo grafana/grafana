@@ -1084,7 +1084,7 @@
           "title": "Row header"
         },
         "multi-select": {
-          "title": "{{length}} Rows Selected"
+          "title": "{{length}} rows selected"
         }
       },
       "tab": {
@@ -1172,7 +1172,7 @@
         "delete": "Delete",
         "duplicate": "Duplicate",
         "layout": "Layout",
-        "panels-title": "{{length}} Panels Selected"
+        "panels-title": "{{length}} panels selected"
       }
     },
     "options": {

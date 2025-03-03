@@ -1084,7 +1084,7 @@
           "title": "Ŗőŵ ĥęäđęř"
         },
         "multi-select": {
-          "title": "{{length}} Ŗőŵş Ŝęľęčŧęđ"
+          "title": "{{length}} řőŵş şęľęčŧęđ"
         }
       },
       "tab": {
@@ -1172,7 +1172,7 @@
         "delete": "Đęľęŧę",
         "duplicate": "Đūpľįčäŧę",
         "layout": "Ŀäyőūŧ",
-        "panels-title": "{{length}} Päŉęľş Ŝęľęčŧęđ"
+        "panels-title": "{{length}} päŉęľş şęľęčŧęđ"
       }
     },
     "options": {

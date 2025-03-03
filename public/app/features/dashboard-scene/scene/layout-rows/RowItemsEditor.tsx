@@ -14,7 +14,7 @@ export function getEditOptions(model: RowItems): OptionsPaneCategoryDescriptor[]
     isOpenable: false,
     renderTitle: () => (
       <EditPaneHeader
-        title={t('dashboard.edit-pane.row.multi-select.title', '{{length}} Rows Selected', {
+        title={t('dashboard.edit-pane.row.multi-select.title', '{{length}} rows selected', {
           length: model.getNumberOfRowsSelected(),
         })}
         onDelete={() => model.onDelete()}
