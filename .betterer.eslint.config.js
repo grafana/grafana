@@ -93,6 +93,13 @@ module.exports = [
           ],
         },
       ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "CallExpression[callee.type='Identifier'][callee.name='reportInteraction']",
+          message: 'reportInteraction() is deprecated. Please use createEventFactory() instead.',
+        },
+      ],
     },
   },
   {
