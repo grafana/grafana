@@ -48,7 +48,7 @@ export function JobStatus({ name, onStatusChange }: JobStatusProps) {
       <Stack direction="row">
         <Spinner />
         <Text element="p" weight="medium">
-          {job.status?.message ?? ''}
+          {job.status?.message ?? job.status?.state!}
         </Text>
       </Stack>
     );
@@ -67,11 +67,9 @@ export function JobStatus({ name, onStatusChange }: JobStatusProps) {
           {job.status.state === 'success' ? (
             <RepositoryLink name={job.metadata?.labels?.repository} />
           ) : (
-            <>
-              <ControlledCollapse label="View details" isOpen={false}>
-                <pre>{JSON.stringify(job, null, ' ')}</pre>
-              </ControlledCollapse>
-            </>
+            <ControlledCollapse label="View details" isOpen={false}>
+              <pre>{JSON.stringify(job, null, ' ')}</pre>
+            </ControlledCollapse>
           )}
         </Stack>
       )}
