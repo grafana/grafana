@@ -70,6 +70,17 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
+	if hasAccess(ac.EvalPermission(ac.ActionBannersWrite)) {
+		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
+			Text:       "Announcement banner",
+			Id:         "banner-settings",
+			SubTitle:   "Show important updates and information at the top of every page",
+			Icon:       "bell",
+			Url:        "/admin/banner-settings",
+			SortWeight: 7,
+		})
+	}
+
 	generalNode := &navtree.NavLink{
 		Text:     "General",
 		SubTitle: "Manage default preferences and settings across Grafana",

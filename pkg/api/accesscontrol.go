@@ -641,6 +641,21 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(org.RoleViewer)},
 	}
 
+	bannerSettingsWriterRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:banners:writer",
+			DisplayName: "Banner settings writer",
+			Description: "Create, read, update, or delete announcement banner settings.",
+			Group:       "Banner settings",
+			Permissions: []ac.Permission{
+				{
+					Action: ac.ActionBannersWrite,
+				},
+			},
+		},
+		Grants: []string{string(org.RoleAdmin)},
+	}
+
 	roles := []ac.RoleRegistration{provisioningWriterRole, datasourcesReaderRole, builtInDatasourceReader, datasourcesWriterRole,
 		datasourcesIdReaderRole, datasourcesCreatorRole, orgReaderRole, orgWriterRole,
 		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, teamsReaderRole, datasourcesExplorerRole,
@@ -649,7 +664,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		foldersCreatorRole, foldersReaderRole, generalFolderReaderRole, foldersWriterRole, apikeyReaderRole, apikeyWriterRole,
 		publicDashboardsWriterRole, featuremgmtReaderRole, featuremgmtWriterRole, libraryPanelsCreatorRole,
 		libraryPanelsReaderRole, libraryPanelsWriterRole, libraryPanelsGeneralReaderRole, libraryPanelsGeneralWriterRole,
-		snapshotsCreatorRole, snapshotsDeleterRole, snapshotsReaderRole}
+		snapshotsCreatorRole, snapshotsDeleterRole, snapshotsReaderRole, bannerSettingsWriterRole}
 
 	if hs.Features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
 		allAnnotationsReaderRole := ac.RoleRegistration{

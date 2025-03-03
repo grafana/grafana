@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	banners "github.com/grafana/grafana/pkg/apis/banners/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	"github.com/grafana/grafana/pkg/extensions/accesscontrol"
 	"github.com/grafana/grafana/pkg/extensions/licensing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -90,7 +89,7 @@ func (b *BannersAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 			switch attr.GetVerb() {
 			case "create", "delete", "deletecollection", "patch":
-				ok, err := b.accessControl.Evaluate(ctx, u, ac.EvalPermission(accesscontrol.ActionBannersWrite))
+				ok, err := b.accessControl.Evaluate(ctx, u, ac.EvalPermission(ac.ActionBannersWrite))
 				if !ok || err != nil {
 					return authorizer.DecisionDeny, "unable to modify settings", err
 				}
