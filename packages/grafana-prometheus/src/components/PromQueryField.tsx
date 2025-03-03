@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PromQueryField.tsx
 import { css, cx } from '@emotion/css';
-import { MutableRefObject, ReactNode, useCallback, useReducer } from 'react';
+import { MutableRefObject, ReactNode, useCallback, useState } from 'react';
 
 import { isDataFrame, QueryEditorProps, QueryHint, toLegacyResponseData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -22,51 +22,6 @@ interface PromQueryFieldProps extends QueryEditorProps<PrometheusDatasource, Pro
   'data-testid'?: string;
 }
 
-interface PromQueryFieldState {
-  syntaxLoaded: boolean;
-  hint: QueryHint | null;
-  labelBrowserVisible: boolean;
-}
-
-type PromQueryFieldAction =
-  | { type: 'DATASOURCE_CHANGED' }
-  | { type: 'METRICS_LOADING_STARTED' }
-  | { type: 'METRICS_LOADING_FINISHED' }
-  | { type: 'SET_HINT'; hint: QueryHint | null }
-  | { type: 'TOGGLE_LABEL_BROWSER'; visible?: boolean };
-
-const reducer = (state: PromQueryFieldState, action: PromQueryFieldAction): PromQueryFieldState => {
-  switch (action.type) {
-    case 'DATASOURCE_CHANGED':
-      return {
-        ...state,
-        syntaxLoaded: false,
-        hint: null,
-      };
-    case 'METRICS_LOADING_STARTED':
-      return {
-        ...state,
-      };
-    case 'METRICS_LOADING_FINISHED':
-      return {
-        ...state,
-        syntaxLoaded: true,
-      };
-    case 'SET_HINT':
-      return {
-        ...state,
-        hint: action.hint,
-      };
-    case 'TOGGLE_LABEL_BROWSER':
-      return {
-        ...state,
-        labelBrowserVisible: action.visible !== undefined ? action.visible : !state.labelBrowserVisible,
-      };
-    default:
-      return state;
-  }
-};
-
 export const PromQueryField = (props: PromQueryFieldProps) => {
   const {
     app,
@@ -82,16 +37,14 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
   } = props;
 
   const theme = useTheme2();
-
-  const [state, dispatch] = useReducer(reducer, {
-    syntaxLoaded: false,
-    hint: null,
-    labelBrowserVisible: false,
-  });
+  
+  const [syntaxLoaded, setSyntaxLoaded] = useState(false);
+  const [hint, setHint] = useState<QueryHint | null>(null);
+  const [labelBrowserVisible, setLabelBrowserVisible] = useState(false);
 
   const updateLanguage = useCallback(() => {
     if (languageProvider.metrics) {
-      dispatch({ type: 'METRICS_LOADING_FINISHED' });
+      setSyntaxLoaded(true);
     }
   }, [languageProvider]);
 
@@ -109,8 +62,6 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
       try {
         const initialization = makePromiseCancelable(languageProvider.start(range));
         languageProviderInitRef.current = initialization;
-
-        dispatch({ type: 'METRICS_LOADING_STARTED' });
 
         const remainingTasks = await initialization.promise;
 
@@ -139,7 +90,7 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
 
     // If no data or empty series, use default hint
     if (!data?.series?.length) {
-      dispatch({ type: 'SET_HINT', hint: initHint });
+      setHint(initHint);
       return;
     }
 
@@ -147,7 +98,7 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
     const queryHints = datasource.getQueryHints(query, result);
     let queryHint = queryHints.length > 0 ? queryHints[0] : null;
 
-    dispatch({ type: 'SET_HINT', hint: queryHint ?? initHint });
+    setHint(queryHint ?? initHint);
   }, [data, datasource, query]);
 
   const onChangeQuery = (value: string, override?: boolean) => {
@@ -165,21 +116,21 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
 
   const onChangeLabelBrowser = (selector: string) => {
     onChangeQuery(selector, true);
-    dispatch({ type: 'TOGGLE_LABEL_BROWSER', visible: false });
+    setLabelBrowserVisible(false);
   };
 
   const onClickChooserButton = () => {
-    dispatch({ type: 'TOGGLE_LABEL_BROWSER' });
+    setLabelBrowserVisible(!labelBrowserVisible);
 
     reportInteraction('user_grafana_prometheus_metrics_browser_clicked', {
-      editorMode: state.labelBrowserVisible ? 'metricViewClosed' : 'metricViewOpen',
+      editorMode: labelBrowserVisible ? 'metricViewClosed' : 'metricViewOpen',
       app: app ?? '',
     });
   };
 
   const onClickHintFix = () => {
-    if (state.hint?.fix?.action) {
-      onChange(datasource.modifyQuery(query, state.hint.fix.action));
+    if (hint?.fix?.action) {
+      onChange(datasource.modifyQuery(query, hint.fix.action));
     }
     onRunQuery();
   };
@@ -187,7 +138,7 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
   // Use our custom effects hook
   usePromQueryFieldEffects(languageProvider, range, data?.series, refreshMetrics, refreshHint);
 
-  const { chooserText, buttonDisabled } = useMetricsState(datasource, languageProvider, state.syntaxLoaded);
+  const { chooserText, buttonDisabled } = useMetricsState(datasource, languageProvider, syntaxLoaded);
 
   return (
     <>
@@ -203,7 +154,7 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
           data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.openButton}
         >
           {chooserText}
-          <Icon name={state.labelBrowserVisible ? 'angle-down' : 'angle-right'} />
+          <Icon name={labelBrowserVisible ? 'angle-down' : 'angle-right'} />
         </button>
 
         <div className="flex-grow-1 min-width-15">
@@ -218,7 +169,7 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
           />
         </div>
       </div>
-      {state.labelBrowserVisible && (
+      {labelBrowserVisible && (
         <div className="gf-form">
           <PrometheusMetricsBrowser
             languageProvider={languageProvider}
@@ -228,21 +179,21 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
         </div>
       )}
       {ExtraFieldElement}
-      {state.hint ? (
+      {hint ? (
         <div
           className={css({
             flexBasis: '100%',
           })}
         >
           <div className="text-warning">
-            {state.hint.label}{' '}
-            {state.hint.fix ? (
+            {hint.label}{' '}
+            {hint.fix ? (
               <button
                 type="button"
                 className={cx(clearButtonStyles(theme), 'text-link', 'muted')}
                 onClick={onClickHintFix}
               >
-                {state.hint.fix.label}
+                {hint.fix.label}
               </button>
             ) : null}
           </div>
