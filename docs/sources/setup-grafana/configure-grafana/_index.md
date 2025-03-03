@@ -2810,6 +2810,102 @@ Used as the default time zone for user preferences. Can be either `browser` for 
 
 Set the default start of the week, valid values are: `saturday`, `sunday`, `monday` or `browser` to use the browser locale to define the first day of the week. Default is `browser`.
 
+### `[time_picker]`
+
+This section controls system-wide defaults for the time picker, such as the default quick ranges.
+
+#### `quick_ranges`
+Set the default set of quick relative offset time ranges that show up in the right column of the time picker. Each config entry should have a `from`, `to` and `display`field.
+
+The following format is used for the `from` and `to` fields:
+
+```
+now-<offset>/<unit>
+```
+
+The `<offset>` is a number and the `<unit>` is a time unit. Omitting `to` will result in the `from` value being used in both fields.
+
+The following time units are supported:
+
+- `m` for minutes
+- `h` for hours
+- `d` for days
+- `w` for weeks
+- `M` for months
+- `y` for years
+- `fy` for fiscal years
+- `fQ` for fiscal quarters
+
+Usage of now:
+
+- `now` is the current time
+- `now-X` is the current time minus time unit(s)
+- `now/X` is the current time divided by X. Essentially the current time rounded down to the nearest X time unit.
+- `now-X/X` is the current time minus X time unit(s) and then rounded down to the nearest X time unit. This is useful for getting the start of a previous time unit
+
+The following quick ranges are the default if no configuration is provided:
+- Last 5 minutes
+- Last 15 minutes
+- Last 30 minutes
+- Last 1 hour
+- Last 6 hours
+- Last 12 hours
+- Last 24 hours
+- Last 2 days
+- Last 7 days
+- Last 30 days
+- Last 90 days
+- Last 6 months
+- Last 1 year
+- Last 5 years
+- Yesterday
+- Day before yesterday
+- This day last week
+- Previous week
+- Previous month
+- Previous fiscal quarter
+- Previous year
+- Previous fiscal year
+- Today
+- Today so far
+- This week
+- This week so far
+- This month
+- This month so far
+- This year
+- This year so far
+- This fiscal quarter so far
+- This fiscal quarter
+- This fiscal year so far
+- This fiscal year
+
+
+
+For example:
+
+```ini
+[time_picker]
+quick_ranges = [
+  {
+    "display": "Last 5 minutes",
+    "from": "now-5m",
+    "to": "now",
+  },
+  {
+    "display": "Yesterday",
+    "from": "now-1d/d",
+  },
+  {
+    "display": "Today so far",
+    "from": "now/d",
+    "to": "now",
+  }
+]
+```
+
+
+
+
 ### `[expressions]`
 
 #### `enabled`
