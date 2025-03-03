@@ -330,11 +330,9 @@ func (c *PostableRuleGroupConfig) validate() error {
 // swagger:model
 type GettableRuleVersions []GettableExtendedRuleNode
 
-// swagger:model
+// GettableRuleList is a list of rules that can be returned by the Alertmanager API.
 type GettableRuleList struct {
 	Rules      []GettableExtendedRuleNode `json:"rules"`
-	Total      int                        `json:"total"`
-	Page       int                        `json:"page,omitempty"`
 	Limit      int                        `json:"limit,omitempty"`
 	NextCursor string                     `json:"nextCursor,omitempty"`
 }

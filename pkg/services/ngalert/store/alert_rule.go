@@ -1163,9 +1163,9 @@ func getINSubQueryArgs[T any](inputSlice []T) ([]any, []string) {
 	return args, in
 }
 
-// ListAlertRulesWithPagination is a handler for retrieving alert rules with pagination support.
-// It returns both the rules and the total count of rules that match the query criteria.
-func (st DBstore) ListAlertRulesWithPagination(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (result ngmodels.RulesGroup, totalCount int64, err error) {
+// ListAlertRulesWithPagination returns alert rules with pagination support.
+// The function returns the rules and a next cursor for pagination.
+func (st DBstore) ListAlertRulesWithPagination(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (result ngmodels.RulesGroup, err error) {
 	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		// Build the main query for fetching data
 		q := sess.Table("alert_rule")
@@ -1201,47 +1201,6 @@ func (st DBstore) ListAlertRulesWithPagination(ctx context.Context, query *ngmod
 				groupsMap[group] = struct{}{}
 			}
 		}
-
-		// Create a count query with the same filters
-		countQuery := sess.Table("alert_rule")
-		if query.OrgID >= 0 {
-			countQuery = countQuery.Where("alert_rule.org_id = ?", query.OrgID)
-		}
-
-		if query.DashboardUID != "" {
-			countQuery = countQuery.Where("alert_rule.dashboard_uid = ?", query.DashboardUID)
-			if query.PanelID != 0 {
-				countQuery = countQuery.Where("alert_rule.panel_id = ?", query.PanelID)
-			}
-		}
-
-		if len(query.NamespaceUIDs) > 0 {
-			args, in := getINSubQueryArgs(query.NamespaceUIDs)
-			countQuery = countQuery.Where(fmt.Sprintf("alert_rule.namespace_uid IN (%s)", strings.Join(in, ",")), args...)
-		}
-
-		if len(query.RuleUIDs) > 0 {
-			args, in := getINSubQueryArgs(query.RuleUIDs)
-			countQuery = countQuery.Where(fmt.Sprintf("alert_rule.uid IN (%s)", strings.Join(in, ",")), args...)
-		}
-
-		if len(query.RuleGroups) > 0 {
-			args, in := getINSubQueryArgs(query.RuleGroups)
-			countQuery = countQuery.Where(fmt.Sprintf("alert_rule.rule_group IN (%s)", strings.Join(in, ",")), args...)
-		}
-
-		// Measure count query execution time
-		countQueryStart := time.Now()
-
-		// Get the count before applying pagination
-		count, err := countQuery.Count()
-		if err != nil {
-			return err
-		}
-		totalCount = count
-
-		countQueryTime := time.Since(countQueryStart)
-		st.Logger.Info("Count query execution time", "duration_ms", countQueryTime.Milliseconds())
 
 		// Optimize the join to use our new composite index
 		// Join with folder table for ordering, using the indexed columns
@@ -1396,7 +1355,7 @@ func (st DBstore) ListAlertRulesWithPagination(ctx context.Context, query *ngmod
 
 		return nil
 	})
-	return result, totalCount, err
+	return result, err
 }
 
 // cursorData represents the data encoded in a pagination cursor

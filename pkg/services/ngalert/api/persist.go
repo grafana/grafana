@@ -21,7 +21,7 @@ type RuleStore interface {
 	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) (*ngmodels.AlertRule, error)
 	GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) ([]*ngmodels.AlertRule, error)
 	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (ngmodels.RulesGroup, error)
-	ListAlertRulesWithPagination(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (ngmodels.RulesGroup, int64, error)
+	ListAlertRulesWithPagination(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (ngmodels.RulesGroup, error)
 	Count(ctx context.Context, orgID int64) (int64, error)
 
 	// InsertAlertRules will insert all alert rules passed into the function

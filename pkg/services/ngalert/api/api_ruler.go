@@ -374,7 +374,6 @@ func (srv RulerSrv) RouteGetAllRules(c *contextmodel.ReqContext) response.Respon
 		srv.log.Debug("User has no access to any namespaces")
 		return response.JSON(http.StatusOK, apimodels.GettableRuleList{
 			Rules: []apimodels.GettableExtendedRuleNode{},
-			Total: 0,
 			Limit: int(limit),
 		})
 	}
@@ -396,14 +395,14 @@ func (srv RulerSrv) RouteGetAllRules(c *contextmodel.ReqContext) response.Respon
 	// Measure rule retrieval time
 	ruleStart := time.Now()
 
-	// Get rules with pagination and total count in a single call
-	rules, totalCount, err := srv.store.ListAlertRulesWithPagination(ctx, &query)
+	// Get rules with pagination
+	rules, err := srv.store.ListAlertRulesWithPagination(ctx, &query)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get alert rules", err)
 	}
 
 	ruleTime := time.Since(ruleStart)
-	srv.log.Info("Rule retrieval time", "duration_ms", ruleTime.Milliseconds(), "rule_count", len(rules), "total_count", totalCount)
+	srv.log.Info("Rule retrieval time", "duration_ms", ruleTime.Milliseconds(), "rule_count", len(rules))
 
 	// Measure provenance retrieval time
 	provenanceStart := time.Now()
@@ -438,9 +437,11 @@ func (srv RulerSrv) RouteGetAllRules(c *contextmodel.ReqContext) response.Respon
 		}
 
 		// Get provenance for this rule
-		provenance := ngmodels.ProvenanceNone
+		var provenance ngmodels.Provenance
 		if prov, exists := provenanceRecords[rule.ResourceID()]; exists {
 			provenance = prov
+		} else {
+			provenance = ngmodels.ProvenanceNone
 		}
 
 		// Check if this rule has a next cursor (will be on the last rule)
@@ -466,7 +467,6 @@ func (srv RulerSrv) RouteGetAllRules(c *contextmodel.ReqContext) response.Respon
 	// Prepare response
 	result := apimodels.GettableRuleList{
 		Rules:      accessibleRules,
-		Total:      int(totalCount),
 		Limit:      int(limit),
 		NextCursor: nextCursor,
 	}
