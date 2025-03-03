@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+
 import { Text, Stack } from '@grafana/ui';
-import { Feature, feature_ini, ngrok_example, root_url_ini } from './types';
-import { SetupModal } from './SetupModal';
+
 import { FeatureCard } from './FeatureCard';
+import { SetupModal } from './SetupModal';
+import { Feature, feature_ini, ngrok_example, root_url_ini } from './types';
 import { getConfigurationStatus } from './utils';
 
 export const FeatureList = () => {
@@ -24,7 +26,7 @@ export const FeatureList = () => {
       {
         title: 'Provision As-Code',
         description:
-          'Manage your dashboards as code and deploy them automatically from your Github repository or local storage',
+          'Manage your dashboards as code and deploy them automatically from your GitHub repository or local storage',
         additional: false,
         setupSteps: enableFeatureSteps,
         isConfigured: hasRequiredFeatures,
@@ -34,7 +36,7 @@ export const FeatureList = () => {
       {
         title: 'Pull Requests',
         description:
-          'Review, discuss, and approve dashboard changes with your team before they go live using Github pull requests',
+          'Review, discuss, and approve dashboard changes with your team before they go live using GitHub pull requests',
         additional: false,
         setupSteps: enableFeatureSteps,
         icon: 'code-branch',
@@ -52,9 +54,9 @@ export const FeatureList = () => {
         docsLink: 'https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles',
       },
       {
-        title: 'Github Webhooks',
+        title: 'GitHub Webhooks',
         description:
-          'Automatically provision and update your dashboards as soon as changes are pushed to your Github repository',
+          'Automatically provision and update your dashboards as soon as changes are pushed to your GitHub repository',
         additional: true,
         icon: 'github',
         isConfigured: hasPublicAccess && hasRequiredFeatures,
@@ -90,7 +92,7 @@ export const FeatureList = () => {
     ];
 
     setFeatures(featuresList);
-  }, []);
+  }, [hasImageRenderer, hasPublicAccess, hasRequiredFeatures]);
 
   // Add a state variable to store the basic setup
   const [basicSetup] = useState<Feature>({
