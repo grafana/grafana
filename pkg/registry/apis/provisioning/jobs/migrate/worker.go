@@ -192,13 +192,21 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	rw.Config().Spec.Sync.Enabled = true
 
 	// Delegate the import to a sync (from the already checked out go-git repository!)
-	return w.syncWorker.Process(ctx, rw, provisioning.Job{
+	err = w.syncWorker.Process(ctx, rw, provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Sync: &provisioning.SyncJobOptions{
 				Incremental: false,
 			},
 		},
 	}, progress)
+	if err != nil { // this will have an error when too many errors exist
+		e2 := stopReadingUnifiedStorage(ctx, w.storageStatus)
+		if e2 != nil {
+			logger := logging.FromContext(ctx)
+			logger.Warn("error trying to revert dual write settings after an error", "err", err)
+		}
+	}
+	return err
 }
 
 // MigrationJob holds all context for a running job
