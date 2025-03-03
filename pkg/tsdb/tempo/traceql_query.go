@@ -71,8 +71,10 @@ func (s *Service) runTraceQlQueryMetrics(ctx context.Context, pCtx backend.Plugi
 
 	resp, responseBody, err := s.performMetricsQuery(ctx, dsInfo, tempoQuery, backendQuery, span)
 	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			ctxLogger.Error("Failed to close response body", "error", err, "function", logEntrypoint())
+		if resp != nil && resp.Body != nil {
+			if err := resp.Body.Close(); err != nil {
+				ctxLogger.Error("Failed to close response body", "error", err, "function", logEntrypoint())
+			}
 		}
 	}()
 	if err != nil {
@@ -105,7 +107,7 @@ func (s *Service) runTraceQlQueryMetrics(ctx context.Context, pCtx backend.Plugi
 			return res, err
 		}
 
-		frames := traceql.TransformMetricsResponse(tempoQuery, queryResponse)
+		frames := traceql.TransformMetricsResponse(*tempoQuery.Query, queryResponse)
 		result.Frames = frames
 	}
 

@@ -1,6 +1,7 @@
-import { css, cx } from '@emotion/css';
+import { useMemo } from 'react';
+import { useLocation } from 'react-router';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { locationUtil } from '@grafana/data';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { Checkbox, clearButtonStyles, useElementSelection, useStyles2 } from '@grafana/ui';
 // eslint-disable-next-line no-restricted-imports
@@ -14,33 +15,31 @@ import { TabItemSuffix } from './TabItemSuffix';
 
 export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const { title, key } = model.useState();
+  const isClone = useMemo(() => isClonedKey(key!), [key]);
+  const parentLayout = model.getParentLayout();
+  const { tabs, currentTabIndex } = parentLayout.useState();
   const dashboard = getDashboardSceneFor(model);
   const { isEditing } = dashboard.useState();
   const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
   const { isSelected, onSelect } = useElementSelection(key);
-  const styles = useStyles2(getStyles);
-  const clearStyles = useStyles2(clearButtonStyles);
-  const isCurrentTab = model.isCurrentTab();
+  const myIndex = tabs.findIndex((tab) => tab === model);
+  const isActive = myIndex === currentTabIndex;
+  const location = useLocation();
+  const href = locationUtil.getUrlForPartial(location, { tab: myIndex });
 
   return (
-    <div className={cx(styles.container, isSelected && 'dashboard-selected-element')} role="presentation">
-      {isEditing && <TabItemAffix model={model} />}
-
-      <span onPointerDown={onSelect}>
-        <Checkbox value={!!isSelected} />
-      </span>
-
-      <button
-        className={cx(clearStyles, styles.label, isCurrentTab ? styles.labelActive : styles.labelNotActive)}
-        role="tab"
-        aria-selected={isCurrentTab}
-        onClick={() => model.onChangeTab()}
-      >
-        {titleInterpolated}
-      </button>
-
-      {isEditing && <TabItemSuffix model={model} />}
-    </div>
+    <Tab
+      className={!isClone && isSelected ? 'dashboard-selected-element' : undefined}
+      label={titleInterpolated}
+      active={isActive}
+      href={href}
+      onPointerDown={(evt) => {
+        if (isEditing && isActive && !isClone) {
+          evt.stopPropagation();
+          onSelect?.(evt);
+        }
+      }}
+    />
   );
 }
 

@@ -30,17 +30,17 @@ WHERE dashboard.is_folder = {{ .Arg .Query.GetFolders }}
   {{ if .Query.Version }}
   AND dashboard_version.version = {{ .Arg .Query.Version }}
   {{ else if .Query.LastID }}
-  AND dashboard_version.version <= {{ .Arg .Query.LastID }}
+  AND dashboard_version.version < {{ .Arg .Query.LastID }}
   {{ end }}
-  ORDER BY 
-    dashboard_version.created DESC,
-    dashboard_version.version DESC,
+  ORDER BY
+    dashboard_version.created {{ .Query.Order }},
+    dashboard_version.version {{ .Query.Order }},
     dashboard.uid ASC
   {{ else }}
     {{ if .Query.UID }}
     AND dashboard.uid = {{ .Arg .Query.UID }}
     {{ else if .Query.LastID }}
-    AND dashboard.id > {{ .Arg .Query.LastID }}
+    AND dashboard.id < {{ .Arg .Query.LastID }}
     {{ end }}
     {{ if .Query.GetTrash }}
     AND dashboard.deleted IS NOT NULL

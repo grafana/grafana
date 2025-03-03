@@ -18,6 +18,7 @@ import { appEvents, contextSrv } from 'app/core/core';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import TimeSeries from 'app/core/time_series2';
+import { arrayMove } from 'app/core/utils/arrayMove';
 import * as flatten from 'app/core/utils/flatten';
 import kbn from 'app/core/utils/kbn';
 import * as ticks from 'app/core/utils/ticks';
@@ -90,7 +91,8 @@ export const sharedDependenciesMap = {
     __useDefault: true,
   },
   ...jQueryFlotDeps,
-  lodash: () => import('lodash').then((module) => ({ ...module, __useDefault: true })),
+  // add move to lodash for backward compatabilty with plugins
+  lodash: () => import('lodash').then((module) => ({ ...module, move: arrayMove, __useDefault: true })),
   moment: () => import('moment').then((module) => ({ ...module, __useDefault: true })),
   prismjs: () => import('prismjs'),
   react: () => import('react'),
