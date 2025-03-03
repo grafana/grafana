@@ -79,10 +79,6 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
-	// FlagVizActions
-	// Allow actions in visualizations
-	FlagVizActions = "vizActions"
-
 	// FlagDisableSecretsCompatibility
 	// Disable duplicated secret storage in legacy tables
 	FlagDisableSecretsCompatibility = "disableSecretsCompatibility"
@@ -106,10 +102,6 @@ const (
 	// FlagMysqlAnsiQuotes
 	// Use double quotes to escape keyword in a MySQL query
 	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
-
-	// FlagAccessControlOnCall
-	// Access control primitives for OnCall
-	FlagAccessControlOnCall = "accessControlOnCall"
 
 	// FlagNestedFolders
 	// Enable folder nesting
@@ -407,10 +399,6 @@ const (
 	// If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
 	FlagCachingOptimizeSerializationMemoryUsage = "cachingOptimizeSerializationMemoryUsage"
 
-	// FlagPrometheusPromQAIL
-	// Prometheus and AI/ML to assist users in creating a query
-	FlagPrometheusPromQAIL = "prometheusPromQAIL"
-
 	// FlagPrometheusCodeModeMetricNamesSearch
 	// Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names
 	FlagPrometheusCodeModeMetricNamesSearch = "prometheusCodeModeMetricNamesSearch"
@@ -476,7 +464,7 @@ const (
 	FlagLogsInfiniteScrolling = "logsInfiniteScrolling"
 
 	// FlagExploreMetrics
-	// Enables the new Explore Metrics core app
+	// Enables the new Grafana Metrics Drilldown core app
 	FlagExploreMetrics = "exploreMetrics"
 
 	// FlagAlertingSimplifiedRouting
@@ -635,10 +623,6 @@ const (
 	// Enables deleted dashboard restore feature
 	FlagDashboardRestore = "dashboardRestore"
 
-	// FlagDatasourceProxyDisableRBAC
-	// Disables applying a plugin route&#39;s ReqAction field to authorization
-	FlagDatasourceProxyDisableRBAC = "datasourceProxyDisableRBAC"
-
 	// FlagAlertingDisableSendAlertsExternal
 	// Disables the ability to send alerts to an external Alertmanager datasource.
 	FlagAlertingDisableSendAlertsExternal = "alertingDisableSendAlertsExternal"
@@ -720,15 +704,15 @@ const (
 	FlagAlertingPrometheusRulesPrimary = "alertingPrometheusRulesPrimary"
 
 	// FlagExploreLogsShardSplitting
-	// Used in Explore Logs to split queries into multiple queries based on the number of shards
+	// Used in Logs Drilldown to split queries into multiple queries based on the number of shards
 	FlagExploreLogsShardSplitting = "exploreLogsShardSplitting"
 
 	// FlagExploreLogsAggregatedMetrics
-	// Used in Explore Logs to query by aggregated metrics
+	// Used in Logs Drilldown to query by aggregated metrics
 	FlagExploreLogsAggregatedMetrics = "exploreLogsAggregatedMetrics"
 
 	// FlagExploreLogsLimitedTimeRange
-	// Used in Explore Logs to limit the time range
+	// Used in Logs Drilldown to limit the time range
 	FlagExploreLogsLimitedTimeRange = "exploreLogsLimitedTimeRange"
 
 	// FlagHomeSetupGuide
@@ -816,7 +800,7 @@ const (
 	FlagPasswordlessMagicLinkAuthentication = "passwordlessMagicLinkAuthentication"
 
 	// FlagExploreMetricsRelatedLogs
-	// Display Related Logs in Explore Metrics
+	// Display Related Logs in Grafana Metrics Drilldown
 	FlagExploreMetricsRelatedLogs = "exploreMetricsRelatedLogs"
 
 	// FlagPrometheusSpecialCharsInLabelValues
@@ -966,4 +950,8 @@ const (
 	// FlagNewShareReportDrawer
 	// Enables the report creation drawer in a dashboard
 	FlagNewShareReportDrawer = "newShareReportDrawer"
+
+	// FlagRendererDisableAppPluginsPreload
+	// Disable pre-loading app plugins when the request is coming from the renderer
+	FlagRendererDisableAppPluginsPreload = "rendererDisableAppPluginsPreload"
 )

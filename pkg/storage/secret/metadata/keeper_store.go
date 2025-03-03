@@ -211,7 +211,7 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 
 	for _, row := range keeperRows {
 		// Check whether the user has permission to access this specific Keeper in the namespace.
-		if !hasPermissionFor(row.Namespace, row.Name, "") {
+		if !hasPermissionFor(row.Name, "") {
 			continue
 		}
 

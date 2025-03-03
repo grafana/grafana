@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -19,6 +20,7 @@ import (
 type Runner struct {
 	checkRegistry checkregistry.CheckService
 	client        resource.Client
+	namespace     string
 }
 
 // NewRunner creates a new Runner.
@@ -29,6 +31,10 @@ func New(cfg app.Config) (app.Runnable, error) {
 		return nil, fmt.Errorf("invalid config type")
 	}
 	checkRegistry := specificConfig.CheckRegistry
+	namespace, err := checks.GetNamespace(specificConfig.StackID)
+	if err != nil {
+		return nil, err
+	}
 
 	// Prepare storage client
 	clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.ClientConfig{})
@@ -40,6 +46,7 @@ func New(cfg app.Config) (app.Runnable, error) {
 	return &Runner{
 		checkRegistry: checkRegistry,
 		client:        client,
+		namespace:     namespace,
 	}, nil
 }
 
@@ -58,7 +65,7 @@ func (r *Runner) Run(ctx context.Context) error {
 		obj := &advisorv0alpha1.CheckType{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      t.ID(),
-				Namespace: metav1.NamespaceDefault,
+				Namespace: r.namespace,
 			},
 			Spec: advisorv0alpha1.CheckTypeSpec{
 				Name:  t.ID(),
