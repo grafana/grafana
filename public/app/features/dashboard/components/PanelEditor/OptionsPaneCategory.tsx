@@ -21,6 +21,7 @@ export interface OptionsPaneCategoryProps {
   isNested?: boolean;
   children: ReactNode;
   sandboxId?: string;
+  isOpenable?: boolean;
 }
 
 const CATEGORY_PARAM_NAME = 'showCategory' as const;
@@ -37,12 +38,13 @@ export const OptionsPaneCategory = React.memo(
     itemsCount,
     isNested = false,
     sandboxId,
+    isOpenable = true,
   }: OptionsPaneCategoryProps) => {
     const [savedState, setSavedState] = useLocalStorage(getOptionGroupStorageKey(id), {
       isExpanded: isOpenDefault,
     });
 
-    const [isExpanded, setIsExpanded] = useState(savedState?.isExpanded ?? isOpenDefault);
+    const [isExpanded, setIsExpanded] = useState(!isOpenable || (savedState?.isExpanded ?? isOpenDefault));
     const manualClickTime = useRef(0);
     const ref = useRef<HTMLDivElement>(null);
     const [queryParams, updateQueryParams] = useQueryParams();
@@ -66,6 +68,9 @@ export const OptionsPaneCategory = React.memo(
     }, [forceOpen, isExpanded, isOpenFromUrl]);
 
     const onToggle = useCallback(() => {
+      if (!isOpenable) {
+        return;
+      }
       manualClickTime.current = Date.now();
       updateQueryParams(
         {
@@ -75,7 +80,7 @@ export const OptionsPaneCategory = React.memo(
       );
       setSavedState({ isExpanded: !isExpanded });
       setIsExpanded(!isExpanded);
-    }, [setSavedState, setIsExpanded, updateQueryParams, isExpanded, id]);
+    }, [isOpenable, updateQueryParams, isExpanded, id, setSavedState]);
 
     if (!renderTitle) {
       renderTitle = function defaultTitle(isExpanded: boolean) {
@@ -101,6 +106,7 @@ export const OptionsPaneCategory = React.memo(
     );
 
     const headerStyles = cx(styles.header, {
+      [styles.headerHover]: isOpenable,
       [styles.headerExpanded]: isExpanded,
       [styles.headerNested]: isNested,
     });
@@ -123,17 +129,19 @@ export const OptionsPaneCategory = React.memo(
           <h6 id={`button-${id}`} className={styles.title}>
             {renderTitle(isExpanded)}
           </h6>
-          <Button
-            data-testid={selectors.components.OptionsGroup.toggle(id)}
-            type="button"
-            fill="text"
-            size="md"
-            variant="secondary"
-            aria-expanded={isExpanded}
-            className={styles.toggleButton}
-            icon={isExpanded ? 'angle-up' : 'angle-down'}
-            onClick={onToggle}
-          />
+          {isOpenable ? (
+            <Button
+              data-testid={selectors.components.OptionsGroup.toggle(id)}
+              type="button"
+              fill="text"
+              size="md"
+              variant="secondary"
+              aria-expanded={isExpanded}
+              className={styles.toggleButton}
+              icon={isExpanded ? 'angle-up' : 'angle-down'}
+              onClick={onToggle}
+            />
+          ) : null}
         </div>
         {isExpanded && (
           <div className={bodyStyles} id={id} aria-labelledby={`button-${id}`}>
@@ -161,15 +169,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontSize: '1rem',
     fontWeight: theme.typography.fontWeightMedium,
     margin: 0,
+    height: theme.spacing(4),
+    display: 'flex',
+    alignItems: 'center',
   }),
   header: css({
     display: 'flex',
-    cursor: 'pointer',
     alignItems: 'center',
     padding: theme.spacing(0.5, 1.5),
     color: theme.colors.text.primary,
     fontWeight: theme.typography.fontWeightMedium,
-
+  }),
+  headerHover: css({
+    cursor: 'pointer',
     '&:hover': {
       background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
     },
