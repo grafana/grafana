@@ -10,10 +10,10 @@ import { AccessControlAction, FolderDTO } from 'app/types';
 import { setupMswServer } from '../mockApi';
 import { mockDataSource, mockFolder, mockRulerAlertingRule, mockRulerGrafanaRule } from '../mocks';
 import { setupDataSources } from '../testSetup/datasources';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 import { useFolder } from './useFolder';
 import { useIsRuleEditable } from './useIsRuleEditable';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 jest.mock('./useFolder');
 

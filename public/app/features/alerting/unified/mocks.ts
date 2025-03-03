@@ -57,8 +57,8 @@ import {
 import { DashboardSearchItem, DashboardSearchItemType } from '../../search/types';
 
 import { SimpleConditionIdentifier } from './components/rule-editor/query-and-alert-condition/SimpleCondition';
-import { parsePromQLStyleMatcherLooseSafe } from './utils/matchers';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { parsePromQLStyleMatcherLooseSafe } from './utils/matchers';
 
 let nextDataSourceId = 1;
 
