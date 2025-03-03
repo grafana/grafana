@@ -15,8 +15,36 @@ runs:
     - name: Join coverage outputs
       shell: bash
       run: |
-        cp ${{ inputs.unit-cov-path }} backend.cov
-        tail -n+2 ${{ inputs.integration-cov-path }} >> backend.cov
+        # Initialize an empty coverage file
+        touch backend.cov
+        
+        # Add unit coverage if exists
+        if [ -n "${{ inputs.unit-cov-path }}" ] && [ -f "${{ inputs.unit-cov-path }}" ]; then
+          cp ${{ inputs.unit-cov-path }} backend.cov
+          echo "Included unit test coverage"
+        else
+          echo "Unit test coverage not available"
+        fi
+        
+        # Add integration coverage if exists
+        if [ -n "${{ inputs.integration-cov-path }}" ] && [ -f "${{ inputs.integration-cov-path }}" ]; then
+          if [ -s backend.cov ]; then
+            # If backend.cov already has content, append integration coverage without the header
+            tail -n+2 ${{ inputs.integration-cov-path }} >> backend.cov
+          else
+            # If backend.cov is empty, copy the entire integration coverage file
+            cp ${{ inputs.integration-cov-path }} backend.cov
+          fi
+          echo "Included integration test coverage"
+        else
+          echo "Integration test coverage not available"
+        fi
+        
+        # Check if we have any coverage data
+        if [ ! -s backend.cov ]; then
+          echo "No coverage data available"
+          echo "mode: set" > backend.cov
+        fi
 
     - name: Convert coverage info to per-func stats
       shell: bash
@@ -41,6 +69,17 @@ runs:
       shell: bash
       run: |
         echo '# Coverage' >> $GITHUB_STEP_SUMMARY
-        echo '```' >> $GITHUB_STEP_SUMMARY
-        grep 'total:' backend-funcs.log | tr '\t' ' ' >> $GITHUB_STEP_SUMMARY
-        echo '```' >> $GITHUB_STEP_SUMMARY 
+        
+        # Check for empty or minimal coverage data
+        if grep -q "total:" backend-funcs.log; then
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          grep 'total:' backend-funcs.log | tr '\t' ' ' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          
+          # Add note if we're working with partial coverage
+          if [ ! -f "${{ inputs.unit-cov-path }}" ] || [ ! -f "${{ inputs.integration-cov-path }}" ]; then
+            echo '> ⚠️ **Partial coverage report** - Some test coverage data is missing' >> $GITHUB_STEP_SUMMARY
+          fi
+        else
+          echo '> ❌ **No coverage data available**' >> $GITHUB_STEP_SUMMARY
+        fi
