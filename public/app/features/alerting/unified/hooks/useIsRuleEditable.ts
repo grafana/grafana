@@ -1,3 +1,5 @@
+import { skipToken } from '@reduxjs/toolkit/query';
+
 import { contextSrv } from 'app/core/services/context_srv';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
@@ -17,29 +19,34 @@ interface ResultBag {
 }
 
 export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO): ResultBag {
-  let dataSourceUID: string;
-
-  try {
-    dataSourceUID = getDatasourceAPIUid(rulesSourceName);
-  } catch (error) {
-    return { isEditable: false, isRemovable: false, loading: false, isRulerAvailable: false, error };
-  }
+  const { dataSourceUID, error: dataSourceError } = useDataSourceUid(rulesSourceName);
 
   const {
     currentData: dsFeatures,
     isLoading,
-    error,
-  } = featureDiscoveryApi.endpoints.discoverDsFeatures.useQuery({
-    uid: dataSourceUID,
-  });
-  if (error) {
-    return { isEditable: false, isRemovable: false, loading: false, isRulerAvailable: false, error };
-  }
+    error: discoveryError,
+  } = featureDiscoveryApi.endpoints.discoverDsFeatures.useQuery(
+    dataSourceUID
+      ? {
+          uid: dataSourceUID,
+        }
+      : skipToken
+  );
 
   const folderUID = rule && isGrafanaRulerRule(rule) ? rule.grafana_alert.namespace_uid : undefined;
 
   const rulePermission = getRulesPermissions(rulesSourceName);
   const { folder, loading } = useFolder(folderUID);
+
+  if (discoveryError || dataSourceError) {
+    return {
+      isEditable: false,
+      isRemovable: false,
+      loading: false,
+      isRulerAvailable: false,
+      error: discoveryError ?? dataSourceError,
+    };
+  }
 
   if (!rule) {
     return { isEditable: false, isRemovable: false, loading: false };
@@ -87,4 +94,12 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
     isRemovable: canRemoveCloudRules && isRulerAvailable,
     loading: isLoading,
   };
+}
+
+function useDataSourceUid(rulesSourceName: string): { dataSourceUID?: string; error?: unknown } {
+  try {
+    return { dataSourceUID: getDatasourceAPIUid(rulesSourceName) };
+  } catch (error) {
+    return { error };
+  }
 }
