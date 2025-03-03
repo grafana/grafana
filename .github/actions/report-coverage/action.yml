@@ -52,5 +52,6 @@ runs:
         flags: unified-backend
         name: backend
         slug: grafana/grafana
-        url: codecov.grafana-dev.net
+        # This URL doesn't use the Google auth, but is much more locked down. As such, it requires OIDC or a CodeCov-provided token to do anything.
+        url: https://codecov-webhook.grafana-dev.net
         use_oidc: true
