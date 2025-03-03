@@ -152,8 +152,18 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Download coverage files
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.5'
+          cache: true
+          
+      - name: Download unit coverage
         continue-on-error: true
+        id: download-unit
         uses: actions/download-artifact@v4
         with:
           name: unit-cov
@@ -161,43 +171,17 @@ jobs:
           
       - name: Download integration coverage
         continue-on-error: true
+        id: download-integration
         uses: actions/download-artifact@v4
         with:
           name: integration-cov
           path: .
 
-      - name: Check coverage files exist
-        id: check-files
-        run: |
-          if [ -f "unit.cov" ] && [ -f "integration.cov" ]; then
-            echo "Both coverage files exist"
-            echo "complete=true" >> $GITHUB_OUTPUT
-          else
-            echo "Some coverage files are missing"
-            echo "complete=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Generate Coverage Report
-        if: steps.check-files.outputs.complete == 'true'
         uses: ./.github/actions/report-coverage
         with:
           unit-cov-path: unit.cov
           integration-cov-path: integration.cov
-
-      - name: Report Partial Coverage
-        if: steps.check-files.outputs.complete == 'false'
-        run: |
-          echo "⚠️ Coverage report is incomplete due to test failures" >> $GITHUB_STEP_SUMMARY
-          if [ -f "unit.cov" ]; then
-            echo "✅ Unit test coverage available" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ Unit test coverage missing" >> $GITHUB_STEP_SUMMARY
-          fi
-          if [ -f "integration.cov" ]; then
-            echo "✅ Integration test coverage available" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ Integration test coverage missing" >> $GITHUB_STEP_SUMMARY
-          fi
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
