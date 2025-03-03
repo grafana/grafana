@@ -184,6 +184,10 @@ jobs:
         with:
           name: enterprise-state
           path: pkg/
+
+      # Need to generate Go files before processing coverage since coverage references generated code
+      - name: Generate Go files
+        run: make gen-go
           
       - name: Download unit coverage
         continue-on-error: true
