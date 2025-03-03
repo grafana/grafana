@@ -9,7 +9,7 @@ export interface ConfigFormGithubCollpaseProps {
 export function ConfigFormGithubCollpase({ previews }: ConfigFormGithubCollpaseProps) {
   return (
     <ControlledCollapse label="Realtime support" isOpen={true}>
-      {!checkPublicAccess() && <Alert title={'Github webhooks require a public URL'} severity={'warning'} />}
+      {!checkPublicAccess() && <Alert title={'GitHub webhooks require a public URL'} severity={'warning'} />}
 
       {!config.rendererAvailable && (
         <Alert
