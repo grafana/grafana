@@ -1,49 +1,68 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { locationService } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
 import { dispatch } from 'app/store/store';
-import { CombinedRule } from 'app/types/unified-alerting';
+import { EditableRuleIdentifier, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 
+import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { useDeleteRuleFromGroup } from '../../hooks/ruleGroup/useDeleteRuleFromGroup';
-import { fetchPromAndRulerRulesAction } from '../../state/actions';
-import { getRuleGroupLocationFromCombinedRule } from '../../utils/rules';
+import { usePrometheusConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
+import { fetchPromAndRulerRulesAction, fetchRulerRulesAction } from '../../state/actions';
+import { ruleGroupIdentifierV2toV1 } from '../../utils/groupIdentifier';
+import { isCloudRuleIdentifier } from '../../utils/rules';
 
-type DeleteModalHook = [JSX.Element, (rule: CombinedRule) => void, () => void];
+type DeleteModalHook = [
+  JSX.Element,
+  (ruleIdentifier: EditableRuleIdentifier, groupIdentifier: RuleGroupIdentifierV2) => void,
+  () => void,
+];
+type DeleteRuleInfo = { ruleIdentifier: EditableRuleIdentifier; groupIdentifier: RuleGroupIdentifierV2 } | undefined;
+
+const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 
 export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
-  const [ruleToDelete, setRuleToDelete] = useState<CombinedRule | undefined>();
-  const [_deleteState, deleteRuleFromGroup] = useDeleteRuleFromGroup();
+  const [ruleToDelete, setRuleToDelete] = useState<DeleteRuleInfo>();
+  const [deleteRuleFromGroup] = useDeleteRuleFromGroup();
+  const { waitForRemoval } = usePrometheusConsistencyCheck();
 
   const dismissModal = useCallback(() => {
     setRuleToDelete(undefined);
   }, []);
 
-  const showModal = useCallback((rule: CombinedRule) => {
-    setRuleToDelete(rule);
+  const showModal = useCallback((ruleIdentifier: EditableRuleIdentifier, groupIdentifier: RuleGroupIdentifierV2) => {
+    setRuleToDelete({ ruleIdentifier, groupIdentifier });
   }, []);
 
-  const deleteRule = useCallback(
-    async (rule?: CombinedRule) => {
-      if (!rule?.rulerRule) {
-        return;
-      }
+  const deleteRule = useCallback(async () => {
+    if (!ruleToDelete) {
+      return;
+    }
 
-      const location = getRuleGroupLocationFromCombinedRule(rule);
-      await deleteRuleFromGroup.execute(location, rule.rulerRule);
+    const { ruleIdentifier, groupIdentifier } = ruleToDelete;
 
-      // refetch rules for this rules source
-      // @TODO remove this when we moved everything to RTKQ – then the endpoint will simply invalidate the tags
-      dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: location.dataSourceName }));
+    const groupIdentifierV1 = ruleGroupIdentifierV2toV1(groupIdentifier);
+    const rulesSourceName = groupIdentifierV1.dataSourceName;
 
-      dismissModal();
+    await deleteRuleFromGroup.execute(groupIdentifierV1, ruleIdentifier);
 
-      if (redirectToListView) {
-        locationService.replace('/alerting/list');
-      }
-    },
-    [deleteRuleFromGroup, dismissModal, redirectToListView]
-  );
+    // refetch rules for this rules source
+    // @TODO remove this when we moved everything to RTKQ – then the endpoint will simply invalidate the tags
+    dispatch(fetchPromAndRulerRulesAction({ rulesSourceName }));
+
+    if (prometheusRulesPrimary && isCloudRuleIdentifier(ruleIdentifier)) {
+      await waitForRemoval(ruleIdentifier);
+    } else {
+      // Without this the delete popup will close and the user will still see the deleted rule
+      await dispatch(fetchRulerRulesAction({ rulesSourceName }));
+    }
+
+    dismissModal();
+
+    if (redirectToListView) {
+      locationService.replace('/alerting/list');
+    }
+  }, [deleteRuleFromGroup, dismissModal, ruleToDelete, redirectToListView, waitForRemoval]);
 
   const modal = useMemo(
     () => (
@@ -53,11 +72,11 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
         body="Deleting this rule will permanently remove it from your alert rule list. Are you sure you want to delete this rule?"
         confirmText="Yes, delete"
         icon="exclamation-triangle"
-        onConfirm={() => deleteRule(ruleToDelete)}
+        onConfirm={deleteRule}
         onDismiss={dismissModal}
       />
     ),
-    [deleteRule, dismissModal, ruleToDelete]
+    [ruleToDelete, deleteRule, dismissModal]
   );
 
   return [modal, showModal, dismissModal];

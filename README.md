@@ -38,12 +38,12 @@ If you're interested in contributing to the Grafana project:
 
 ## Get involved
 
-- Follow [@grafana on Twitter](https://twitter.com/grafana/).
+- Follow [@grafana on X (formerly Twitter)](https://x.com/grafana/).
 - Read and subscribe to the [Grafana blog](https://grafana.com/blog/).
 - If you have a specific question, check out our [discussion forums](https://community.grafana.com/).
 - For general discussions, join us on the [official Slack](https://slack.grafana.com) team.
 
-This project is tested with [BrowserStack](https://www.browserstack.com/)
+This project is tested with [BrowserStack](https://www.browserstack.com/).
 
 ## License
 

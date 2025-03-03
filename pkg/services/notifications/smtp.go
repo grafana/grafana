@@ -8,10 +8,12 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/mail"
 	"net/textproto"
 	"strconv"
 	"strings"
 
+	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/propagation"
@@ -101,6 +103,15 @@ func (sc *SmtpClient) buildEmail(ctx context.Context, msg *Message) *gomail.Mess
 	m.SetHeader("To", msg.To...)
 	m.SetHeader("Subject", msg.Subject)
 
+	from, err := mail.ParseAddress(msg.From)
+	if err == nil {
+		at := strings.LastIndex(from.Address, "@")
+		if at >= 0 {
+			domain := from.Address[at+1:]
+			m.SetHeader("Message-ID", fmt.Sprintf("<%s@%s>", uuid.NewString(), domain))
+		}
+	}
+
 	if sc.cfg.EnableTracing {
 		otel.GetTextMapPropagator().Inject(ctx, gomailHeaderCarrier{m})
 	}
@@ -129,6 +140,13 @@ func (sc *SmtpClient) setFiles(
 ) {
 	for _, file := range msg.EmbeddedFiles {
 		m.Embed(file)
+	}
+
+	for _, file := range msg.EmbeddedContents {
+		m.Embed(file.Name, gomail.SetCopyFunc(func(writer io.Writer) error {
+			_, err := writer.Write(file.Content)
+			return err
+		}))
 	}
 
 	for _, file := range msg.AttachedFiles {

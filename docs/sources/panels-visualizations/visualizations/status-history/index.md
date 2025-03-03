@@ -107,6 +107,14 @@ Use these options to refine the visualization.
 
 Controls whether values are rendered inside the value boxes. Auto will render values if there is sufficient space.
 
+### Row height
+
+Controls the height of boxes. 1 = maximum space and 0 = minimum space.
+
+### Page size (enable pagination)
+
+The **Page size** option lets you paginate the status history visualization to limit how many series are visible at once. This is useful when you have many series.
+
 ### Column width
 
 Controls the width of boxes. 1 = maximum space and 0 = minimum space.
@@ -119,10 +127,6 @@ Controls line width of state regions.
 
 Controls the opacity of state regions.
 
-## Standard options
-
-{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
 ## Legend options
 
 {{< docs/shared lookup="visualizations/legend-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
@@ -131,9 +135,17 @@ Controls the opacity of state regions.
 
 {{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Data links
+## Axis options
 
-{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/axis-options-state-status.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
+
+## Standard options
+
+{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Data links and actions
+
+{{< docs/shared lookup="visualizations/datalink-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Value mappings
 

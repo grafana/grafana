@@ -381,6 +381,15 @@ func TraceIDFromContext(ctx context.Context, requireSampled bool) string {
 	return spanCtx.TraceID().String()
 }
 
+func ServerTimingForSpan(span trace.Span) string {
+	spanCtx := span.SpanContext()
+	if !spanCtx.HasTraceID() || !spanCtx.IsValid() {
+		return ""
+	}
+
+	return fmt.Sprintf("00-%s-%s-01", spanCtx.TraceID().String(), spanCtx.SpanID().String())
+}
+
 // Error sets the status to error and record the error as an exception in the provided span.
 func Error(span trace.Span, err error) error {
 	attr := []attribute.KeyValue{}
@@ -398,4 +407,11 @@ func Error(span trace.Span, err error) error {
 func Errorf(span trace.Span, format string, args ...any) error {
 	err := fmt.Errorf(format, args...)
 	return Error(span, err)
+}
+
+var instrumentationScope = "github.com/grafana/grafana/pkg/infra/tracing"
+
+// Start only creates an OpenTelemetry span if the incoming context already includes a span.
+func Start(ctx context.Context, name string, attributes ...attribute.KeyValue) (context.Context, trace.Span) {
+	return trace.SpanFromContext(ctx).TracerProvider().Tracer(instrumentationScope).Start(ctx, name, trace.WithAttributes(attributes...))
 }

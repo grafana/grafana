@@ -15,6 +15,12 @@ export type InputActionMeta = {
 };
 export type LoadOptionsCallback<T> = (options: Array<SelectableValue<T>>) => void;
 
+export enum ToggleAllState {
+  allSelected = 'allSelected',
+  indeterminate = 'indeterminate',
+  noneSelected = 'noneSelected',
+}
+
 export interface SelectCommonProps<T> {
   /** Aria label applied to the input field */
   ['aria-label']?: string;
@@ -78,6 +84,14 @@ export interface SelectCommonProps<T> {
   onMenuScrollToTop?: (event: WheelEvent | TouchEvent) => void;
   onOpenMenu?: () => void;
   onFocus?: () => void;
+  toggleAllOptions?: {
+    enabled: boolean;
+    optionsFilter?: (v: SelectableValue<T>) => boolean;
+    determineToggleAllState?: (
+      selectedValues: Array<SelectableValue<T>>,
+      options: Array<SelectableValue<T>>
+    ) => ToggleAllState;
+  };
   openMenuOnFocus?: boolean;
   options?: Array<SelectableValue<T>>;
   placeholder?: string;

@@ -6,7 +6,7 @@ import { LanguageProvider } from '@grafana/data';
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
-import { initTemplateSrv } from '../test_utils';
+import { initTemplateSrv } from '../test/test_utils';
 import { keywordOperators, numberOperators, operators, stringOperators } from '../traceql/traceql';
 
 import SearchField from './SearchField';
@@ -153,7 +153,7 @@ describe('SearchField', () => {
     }
   });
 
-  it('should not provide intrinsic as a selectable scope', async () => {
+  it('should provide intrinsic as a selectable scope', async () => {
     const updateFilter = jest.fn((val) => {
       return val;
     });
@@ -171,7 +171,7 @@ describe('SearchField', () => {
       expect(await screen.findByText('resource')).toBeInTheDocument();
       expect(await screen.findByText('span')).toBeInTheDocument();
       expect(await screen.findByText('unscoped')).toBeInTheDocument();
-      expect(screen.queryByText('intrinsic')).not.toBeInTheDocument();
+      expect(await screen.findByText('intrinsic')).toBeInTheDocument();
       expect(await screen.findByText('$templateVariable1')).toBeInTheDocument();
       expect(await screen.findByText('$templateVariable2')).toBeInTheDocument();
     }
@@ -187,6 +187,8 @@ describe('SearchField', () => {
           type: 'keyword',
         },
       ]),
+      getIntrinsics: jest.fn().mockReturnValue(['duration']),
+      getTags: jest.fn().mockReturnValue(['cluster']),
     } as unknown as TempoLanguageProvider;
 
     const { container } = renderSearchField(jest.fn(), filter, [], false, lp);
@@ -235,6 +237,8 @@ describe('SearchField', () => {
           type: 'int',
         },
       ]),
+      getIntrinsics: jest.fn().mockReturnValue(['duration']),
+      getTags: jest.fn().mockReturnValue(['cluster']),
     } as unknown as TempoLanguageProvider;
 
     const { container } = renderSearchField(jest.fn(), filter, [], false, lp);
@@ -280,6 +284,8 @@ const renderSearchField = (
           type: 'string',
         },
       ]),
+      getIntrinsics: jest.fn().mockReturnValue(['duration']),
+      getTags: jest.fn().mockReturnValue(['cluster']),
     } as unknown as TempoLanguageProvider);
 
   const datasource: TempoDatasource = {

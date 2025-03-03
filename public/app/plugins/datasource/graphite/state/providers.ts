@@ -168,7 +168,7 @@ async function getTagsAsSegments(state: GraphiteQueryEditorState, tagPrefix: str
         value: val.text,
         type: 'tag',
         expandable: false,
-      };
+      } as const;
     });
   } catch (err) {
     tagsAsSegments = [];
@@ -199,6 +199,7 @@ async function getTagValues(
   const tagExpressions = state.queryModel.renderTagExpressions(index);
   const tagKey = tag.key;
   const values = await state.datasource.getTagValuesAutoComplete(tagExpressions, tagKey, valuePrefix, {
+    range: state.range,
     limit: MAX_SUGGESTIONS,
   });
   const altValues = map(values, 'text');

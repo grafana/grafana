@@ -1,11 +1,19 @@
 import { Action } from '@reduxjs/toolkit';
 
-import { dispatch, getState } from 'app/store/store';
 import { RuleGroupIdentifier } from 'app/types/unified-alerting';
+import { PostableRulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
+import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
+import { notFoundToNullOrThrow } from '../../api/util';
 import { ruleGroupReducer } from '../../reducers/ruler/ruleGroups';
-import { fetchRulesSourceBuildInfoAction, getDataSourceRulerConfig } from '../../state/actions';
+import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
+
+const { useLazyGetRuleGroupForNamespaceQuery } = alertRuleApi;
+const { useLazyDiscoverDsFeaturesQuery } = featureDiscoveryApi;
+
+export const RulerNotSupportedError = (name: string) =>
+  new Error(`DataSource ${name} does not support ruler API or does not have the ruler API enabled.`);
 
 /**
  * Hook for reuse that handles freshly fetching a rule group's definition, applying an action to it,
@@ -18,10 +26,11 @@ import { fetchRulesSourceBuildInfoAction, getDataSourceRulerConfig } from '../..
  * @throws
  */
 export function useProduceNewRuleGroup() {
-  const [fetchRuleGroup, requestState] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
+  const [fetchRuleGroup, requestState] = useLazyGetRuleGroupForNamespaceQuery();
+  const [discoverDataSourceFeatures] = useLazyDiscoverDsFeaturesQuery();
 
   /**
-   * This function will fetch the latest configuration we have for the rule group, apply a diff to it via a reducer and sends
+   * This function will fetch the latest configuration we have for the rule group, apply a diff to it via a reducer and
    * returns the result.
    *
    * The API does not allow operations on a single rule and will always overwrite the existing rule group with the payload.
@@ -33,20 +42,34 @@ export function useProduceNewRuleGroup() {
   const produceNewRuleGroup = async (ruleGroup: RuleGroupIdentifier, action: Action) => {
     const { dataSourceName, groupName, namespaceName } = ruleGroup;
 
-    // @TODO we should really not work with the redux state (getState) here
-    await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: dataSourceName }));
-    const rulerConfig = getDataSourceRulerConfig(getState, dataSourceName);
+    const { rulerConfig } = await discoverDataSourceFeatures({ rulesSourceName: dataSourceName }).unwrap();
+    if (!rulerConfig) {
+      throw RulerNotSupportedError(dataSourceName);
+    }
 
     const latestRuleGroupDefinition = await fetchRuleGroup({
       rulerConfig,
       namespace: namespaceName,
       group: groupName,
-    }).unwrap();
+      // @TODO maybe only supress if 404?
+      notificationOptions: { showErrorAlert: false },
+    })
+      .unwrap()
+      .catch(notFoundToNullOrThrow);
 
-    const newRuleGroupDefinition = ruleGroupReducer(latestRuleGroupDefinition, action);
+    const newRuleGroupDefinition = ruleGroupReducer(
+      latestRuleGroupDefinition ?? createBlankRuleGroup(ruleGroup.groupName),
+      action
+    );
 
     return { newRuleGroupDefinition, rulerConfig };
   };
 
   return [produceNewRuleGroup, requestState] as const;
 }
+
+const createBlankRuleGroup = (name: string): PostableRulerRuleGroupDTO => ({
+  name,
+  interval: DEFAULT_GROUP_EVALUATION_INTERVAL,
+  rules: [],
+});

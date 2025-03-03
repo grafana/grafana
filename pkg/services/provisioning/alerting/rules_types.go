@@ -66,7 +66,8 @@ type AlertRuleV1 struct {
 	Title                values.StringValue      `json:"title" yaml:"title"`
 	Condition            values.StringValue      `json:"condition" yaml:"condition"`
 	Data                 []QueryV1               `json:"data" yaml:"data"`
-	DashboardUID         values.StringValue      `json:"dasboardUid" yaml:"dashboardUid"`
+	DasboardUID          values.StringValue      `json:"dasboardUid" yaml:"dasboardUid"` // TODO: Grandfathered typo support. TODO: This should be removed in V2.
+	DashboardUID         values.StringValue      `json:"dashboardUid" yaml:"dashboardUid"`
 	PanelID              values.Int64Value       `json:"panelId" yaml:"panelId"`
 	NoDataState          values.StringValue      `json:"noDataState" yaml:"noDataState"`
 	ExecErrState         values.StringValue      `json:"execErrState" yaml:"execErrState"`
@@ -76,6 +77,13 @@ type AlertRuleV1 struct {
 	IsPaused             values.BoolValue        `json:"isPaused" yaml:"isPaused"`
 	NotificationSettings *NotificationSettingsV1 `json:"notification_settings" yaml:"notification_settings"`
 	Record               *RecordV1               `json:"record" yaml:"record"`
+}
+
+func withFallback(value, fallback string) *string {
+	if value == "" {
+		return &fallback
+	}
+	return &value
 }
 
 func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
@@ -89,13 +97,20 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: no UID set", alertRule.Title)
 	}
 	alertRule.OrgID = orgID
-	duration, err := model.ParseDuration(rule.For.Value())
-	if err != nil {
-		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: %w", alertRule.Title, err)
+
+	duration := model.Duration(0)
+	if rule.For.Value() != "" {
+		var err error
+		duration, err = model.ParseDuration(rule.For.Value())
+		if err != nil {
+			return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse 'for' field: %w", alertRule.Title, err)
+		}
 	}
 	alertRule.For = time.Duration(duration)
+
+	dasboardUID := rule.DasboardUID.Value()
 	dashboardUID := rule.DashboardUID.Value()
-	alertRule.DashboardUID = &dashboardUID
+	alertRule.DashboardUID = withFallback(dashboardUID, dasboardUID) // Use correct spelling over supported typo.
 	panelID := rule.PanelID.Value()
 	alertRule.PanelID = &panelID
 	execErrStateValue := strings.TrimSpace(rule.ExecErrState.Value())

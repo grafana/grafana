@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import { Component } from 'react';
-import { match } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { Dashboard } from '@grafana/schema';
@@ -10,7 +9,7 @@ import { DashboardMeta, DashboardRoutes } from 'app/types';
 
 import { getRouteComponentProps } from '../../../core/navigation/__mocks__/routeProps';
 import { Props as DashboardPanelProps } from '../dashgrid/DashboardPanel';
-import { DashboardModel } from '../state';
+import { DashboardModel } from '../state/DashboardModel';
 import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
 
 import { Props, SoloPanelPage } from './SoloPanelPage';
@@ -73,9 +72,6 @@ function soloPanelPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
       mount: (propOverrides?: Partial<Props>) => {
         const props: Props = {
           ...getRouteComponentProps({
-            match: {
-              params: { slug: 'my-dash', uid: '11' },
-            } as unknown as match,
             queryParams: {
               panelId: '1',
             },

@@ -4,8 +4,10 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { AsyncMultiSelect, Icon, Button, useStyles2 } from '@grafana/ui';
+import { config } from 'app/core/config';
+import { Trans } from 'app/core/internationalization';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { DashboardSearchItemType } from 'app/features/search/types';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { FolderInfo, PermissionLevelString } from 'app/types';
 
 export interface FolderFilterProps {
@@ -40,7 +42,7 @@ export function FolderFilter({ onChange, maxMenuHeight }: FolderFilterProps): JS
           onClick={() => onChange([])}
           aria-label="Clear folders"
         >
-          Clear folders
+          <Trans i18nKey="folder-filter.clear-folder-button">Clear folders</Trans>
         </Button>
       )}
       <AsyncMultiSelect
@@ -65,21 +67,47 @@ async function getFoldersAsOptions(
 ): Promise<Array<SelectableValue<FolderInfo>>> {
   setLoading(true);
 
+  // Use Unified Storage API behind toggle
+  if (config.featureToggles.unifiedStorageSearchUI) {
+    const searcher = getGrafanaSearcher();
+    const queryResponse = await searcher.search({
+      query: searchString,
+      kind: ['folder'],
+      limit: 100,
+      permission: PermissionLevelString.View,
+    });
+
+    const options = queryResponse.view.map((item) => ({
+      label: item.name,
+      value: { uid: item.uid, title: item.name },
+    }));
+
+    if (!searchString || 'dashboards'.includes(searchString.toLowerCase())) {
+      options.unshift({ label: 'Dashboards', value: { uid: 'general', title: 'Dashboards' } });
+    }
+
+    setLoading(false);
+    return options;
+  }
+
+  // Use existing backend service search
   const params = {
     query: searchString,
-    type: DashboardSearchItemType.DashFolder,
+    type: 'folder',
     permission: PermissionLevelString.View,
   };
 
-  // FIXME: stop using id from search and use UID instead
   const searchHits = await getBackendSrv().search(params);
-  const options = searchHits.map((d) => ({ label: d.title, value: { uid: d.uid, title: d.title } }));
+  const options = searchHits.map((d) => ({
+    label: d.title,
+    value: { uid: d.uid, title: d.title },
+  }));
+
   if (!searchString || 'dashboards'.includes(searchString.toLowerCase())) {
     options.unshift({ label: 'Dashboards', value: { uid: 'general', title: 'Dashboards' } });
   }
 
   setLoading(false);
-
   return options;
 }
 

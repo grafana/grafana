@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -352,8 +351,8 @@ func TestIntegrationStore_SetResourcePermissions(t *testing.T) {
 					assert.Equal(t, accesscontrol.ResourcePermission{}, permissions[i])
 				} else {
 					assert.Len(t, permissions[i].Actions, len(c.Actions))
-					assert.Equal(t, c.TeamID, permissions[i].TeamId)
-					assert.Equal(t, c.User.ID, permissions[i].UserId)
+					assert.Equal(t, c.TeamID, permissions[i].TeamID)
+					assert.Equal(t, c.User.ID, permissions[i].UserID)
 					assert.Equal(t, c.BuiltinRole, permissions[i].BuiltInRole)
 					assert.Equal(t, accesscontrol.Scope(c.Resource, tt.resourceAttribute, c.ResourceID), permissions[i].Scope)
 				}
@@ -782,183 +781,12 @@ func TestStore_StoreActionSet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			asService := NewActionSetService(featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets))
+			asService := NewInMemoryActionSetStore(featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets))
 			asService.StoreActionSet(GetActionSetName(tt.resource, tt.action), tt.actions)
 
 			actionSetName := GetActionSetName(tt.resource, tt.action)
 			actionSet := asService.ResolveActionSet(actionSetName)
-			require.Equal(t, append(tt.actions, "folders:create"), actionSet)
-		})
-	}
-}
-
-func TestStore_RegisterActionSet(t *testing.T) {
-	type actionSetTest struct {
-		desc               string
-		features           featuremgmt.FeatureToggles
-		pluginID           string
-		pluginActions      []plugins.ActionSet
-		coreActionSets     []ActionSet
-		expectedErr        bool
-		expectedActionSets []ActionSet
-	}
-
-	tests := []actionSetTest{
-		{
-			desc:     "should be able to register a plugin action set if the right feature toggles are enabled",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets, featuremgmt.FlagAccessControlOnCall),
-			pluginID: "test-app",
-			pluginActions: []plugins.ActionSet{
-				{
-					Action:  "folders:view",
-					Actions: []string{"test-app.resource:read"},
-				},
-			},
-			expectedActionSets: []ActionSet{
-				{
-					Action:  "folders:view",
-					Actions: []string{"test-app.resource:read"},
-				},
-			},
-		},
-		{
-			desc:     "should not register plugin action set if feature toggles are missing",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall),
-			pluginID: "test-app",
-			pluginActions: []plugins.ActionSet{
-				{
-					Action:  "folders:view",
-					Actions: []string{"test-app.resource:read"},
-				},
-			},
-			expectedActionSets: []ActionSet{},
-		},
-		{
-			desc:     "should be able to register multiple plugin action sets",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets, featuremgmt.FlagAccessControlOnCall),
-			pluginID: "test-app",
-			pluginActions: []plugins.ActionSet{
-				{
-					Action:  "folders:view",
-					Actions: []string{"test-app.resource:read"},
-				},
-				{
-					Action:  "folders:edit",
-					Actions: []string{"test-app.resource:write", "test-app.resource:delete"},
-				},
-			},
-			expectedActionSets: []ActionSet{
-				{
-					Action:  "folders:view",
-					Actions: []string{"test-app.resource:read"},
-				},
-				{
-					Action:  "folders:edit",
-					Actions: []string{"test-app.resource:write", "test-app.resource:delete"},
-				},
-			},
-		},
-		{
-			desc:     "action set actions should be added not replaced",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets, featuremgmt.FlagAccessControlOnCall),
-			pluginID: "test-app",
-			pluginActions: []plugins.ActionSet{
-				{
-					Action:  "folders:view",
-					Actions: []string{"test-app.resource:read"},
-				},
-				{
-					Action:  "folders:edit",
-					Actions: []string{"test-app.resource:write", "test-app.resource:delete"},
-				},
-			},
-			coreActionSets: []ActionSet{
-				{
-					Action:  "folders:view",
-					Actions: []string{"folders:read"},
-				},
-				{
-					Action:  "folders:edit",
-					Actions: []string{"folders:write", "folders:delete"},
-				},
-				{
-					Action:  "folders:admin",
-					Actions: []string{"folders.permissions:read"},
-				},
-			},
-			expectedActionSets: []ActionSet{
-				{
-					Action:  "folders:view",
-					Actions: []string{"folders:read", "test-app.resource:read"},
-				},
-				{
-					Action:  "folders:edit",
-					Actions: []string{"folders:write", "test-app.resource:write", "folders:delete", "test-app.resource:delete"},
-				},
-				{
-					Action:  "folders:admin",
-					Actions: []string{"folders.permissions:read"},
-				},
-			},
-		},
-		{
-			desc:     "should not be able to register an action that doesn't have a plugin prefix",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets, featuremgmt.FlagAccessControlOnCall),
-			pluginID: "test-app",
-			pluginActions: []plugins.ActionSet{
-				{
-					Action:  "folders:view",
-					Actions: []string{"test-app.resource:read"},
-				},
-				{
-					Action:  "folders:edit",
-					Actions: []string{"users:read", "test-app.resource:delete"},
-				},
-			},
-			expectedErr: true,
-		},
-		{
-			desc:     "should not be able to register action set that is not in the allow list",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets, featuremgmt.FlagAccessControlOnCall),
-			pluginID: "test-app",
-			pluginActions: []plugins.ActionSet{
-				{
-					Action:  "folders:super-admin",
-					Actions: []string{"test-app.resource:read"},
-				},
-			},
-			expectedErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			asService := NewActionSetService(tt.features)
-
-			err := asService.RegisterActionSets(context.Background(), tt.pluginID, tt.pluginActions)
-			if tt.expectedErr {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-
-			for _, set := range tt.coreActionSets {
-				asService.StoreActionSet(set.Action, set.Actions)
-			}
-
-			for _, expected := range tt.expectedActionSets {
-				actions := asService.ResolveActionSet(expected.Action)
-				if expected.Action == "folders:edit" || expected.Action == "folders:admin" {
-					expected.Actions = append(expected.Actions, "folders:create")
-				}
-				assert.ElementsMatch(t, expected.Actions, actions)
-			}
-
-			if len(tt.expectedActionSets) == 0 {
-				for _, set := range tt.pluginActions {
-					registeredActions := asService.ResolveActionSet(set.Action)
-					assert.Empty(t, registeredActions, "no actions from plugin action sets should have been registered")
-				}
-			}
+			require.Equal(t, tt.actions, actionSet)
 		})
 	}
 }

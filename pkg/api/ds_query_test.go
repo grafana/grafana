@@ -36,7 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
-type fakePluginRequestValidator struct {
+type fakeDataSourceRequestValidator struct {
 	err error
 }
 
@@ -45,7 +45,7 @@ type secretsErrorResponseBody struct {
 	Message string `json:"message"`
 }
 
-func (rv *fakePluginRequestValidator) Validate(dsURL string, req *http.Request) error {
+func (rv *fakeDataSourceRequestValidator) Validate(ds *datasources.DataSource, req *http.Request) error {
 	return rv.err
 }
 
@@ -56,7 +56,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 		cfg,
 		nil,
 		nil,
-		&fakePluginRequestValidator{},
+		&fakeDataSourceRequestValidator{},
 		&fakePluginClient{
 			QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 				resp := backend.Responses{
@@ -114,7 +114,7 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 		cfg,
 		nil,
 		nil,
-		&fakePluginRequestValidator{},
+		&fakeDataSourceRequestValidator{},
 		&fakePluginClient{
 			QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 				resp := backend.Responses{
@@ -211,49 +211,79 @@ var reqDatasourceByIdNotFound = `{
 }`
 
 func TestDataSourceQueryError(t *testing.T) {
+	type body struct {
+		Message    string `json:"message"`
+		MessageId  string `json:"messageId"`
+		StatusCode int    `json:"statusCode"`
+	}
+
 	tcs := []struct {
 		request        string
 		clientErr      error
 		expectedStatus int
-		expectedBody   string
+		expectedBody   body
 	}{
 		{
 			request:        reqValid,
 			clientErr:      plugins.ErrPluginUnavailable,
 			expectedStatus: http.StatusInternalServerError,
-			expectedBody:   `{"message":"Plugin unavailable","messageId":"plugin.unavailable","statusCode":500,"traceID":""}`,
+			expectedBody: body{
+				Message:    "Plugin unavailable",
+				MessageId:  "plugin.unavailable",
+				StatusCode: 500,
+			},
 		},
 		{
 			request:        reqValid,
 			clientErr:      plugins.ErrMethodNotImplemented,
 			expectedStatus: http.StatusNotFound,
-			expectedBody:   `{"message":"Method not implemented","messageId":"plugin.notImplemented","statusCode":404,"traceID":""}`,
+			expectedBody: body{
+				Message:    "Method not implemented",
+				MessageId:  "plugin.notImplemented",
+				StatusCode: 404,
+			},
 		},
 		{
 			request:        reqValid,
 			clientErr:      errors.New("surprise surprise"),
 			expectedStatus: errutil.StatusInternal.HTTPStatus(),
-			expectedBody:   `{"message":"An error occurred within the plugin","messageId":"plugin.downstreamError","statusCode":500,"traceID":""}`,
+			expectedBody: body{
+				Message:    "An error occurred within the plugin",
+				MessageId:  "plugin.requestFailureError",
+				StatusCode: 500,
+			},
 		},
 		{
 			request:        reqNoQueries,
 			expectedStatus: http.StatusBadRequest,
-			expectedBody:   `{"message":"No queries found","messageId":"query.noQueries","statusCode":400,"traceID":""}`,
+			expectedBody: body{
+				Message:    "No queries found",
+				MessageId:  "query.noQueries",
+				StatusCode: 400,
+			},
 		},
 		{
 			request:        reqQueryWithInvalidDatasourceID,
 			expectedStatus: http.StatusBadRequest,
-			expectedBody:   `{"message":"Query does not contain a valid data source identifier","messageId":"query.invalidDatasourceId","statusCode":400,"traceID":""}`,
+			expectedBody: body{
+				Message:    "Query does not contain a valid data source identifier",
+				MessageId:  "query.invalidDatasourceId",
+				StatusCode: 400,
+			},
 		},
 		{
 			request:        reqDatasourceByUidNotFound,
 			expectedStatus: http.StatusNotFound,
-			expectedBody:   `{"message":"Data source not found","traceID":""}`,
+			expectedBody: body{
+				Message: "Data source not found",
+			},
 		},
 		{
 			request:        reqDatasourceByIdNotFound,
 			expectedStatus: http.StatusNotFound,
-			expectedBody:   `{"message":"Data source not found","traceID":""}`,
+			expectedBody: body{
+				Message: "Data source not found",
+			},
 		},
 	}
 
@@ -279,7 +309,7 @@ func TestDataSourceQueryError(t *testing.T) {
 					cfg,
 					&fakeDatasources.FakeCacheService{},
 					nil,
-					&fakePluginRequestValidator{},
+					&fakeDataSourceRequestValidator{},
 					pluginClient.ProvideService(r),
 					plugincontext.ProvideService(cfg, localcache.ProvideService(), &pluginstore.FakePluginStore{
 						PluginList: []pluginstore.Plugin{pluginstore.ToGrafanaDTO(p)},
@@ -291,14 +321,24 @@ func TestDataSourceQueryError(t *testing.T) {
 				hs.QuotaService = quotatest.New(false, nil)
 			})
 			req := srv.NewPostRequest("/api/ds/query", strings.NewReader(tc.request))
+
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {datasources.ActionQuery: []string{datasources.ScopeAll}}}})
 			resp, err := srv.SendJSON(req)
 			require.NoError(t, err)
 
 			require.Equal(t, tc.expectedStatus, resp.StatusCode)
-			body, err := io.ReadAll(resp.Body)
+
+			bodyBytes, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
-			require.Equal(t, tc.expectedBody, string(body))
+
+			var responseBody body
+			err = json.Unmarshal(bodyBytes, &responseBody)
+			require.NoError(t, err)
+
+			require.Equal(t, tc.expectedBody.Message, responseBody.Message)
+			require.Equal(t, tc.expectedBody.MessageId, responseBody.MessageId)
+			require.Equal(t, tc.expectedBody.StatusCode, responseBody.StatusCode)
+
 			require.NoError(t, resp.Body.Close())
 		})
 	}

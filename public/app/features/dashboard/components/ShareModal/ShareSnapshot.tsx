@@ -6,7 +6,8 @@ import { getBackendSrv } from '@grafana/runtime';
 import { Button, ClipboardButton, Field, Input, LinkButton, Modal, Select, Spinner, Stack } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { getDashboardSnapshotSrv } from '../../services/SnapshotSrv';
@@ -240,14 +241,14 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     return (
       <>
         <div>
-          <p className="share-modal-info-text">
+          <p>
             <Trans i18nKey="share-modal.snapshot.info-text-1">
               A snapshot is an instant way to share an interactive dashboard publicly. When created, we strip sensitive
               data like queries (metric, template, and annotation) and panel links, leaving only the visible metric data
               and series names embedded in your dashboard.
             </Trans>
           </p>
-          <p className="share-modal-info-text">
+          <p>
             <Trans i18nKey="share-modal.snapshot.info-text-2">
               Keep in mind, your snapshot <em>can be viewed by anyone</em> that has the link and can access the URL.
               Share wisely.
@@ -317,14 +318,12 @@ export class ShareSnapshot extends PureComponent<Props, State> {
 
   renderStep3() {
     return (
-      <div className="share-modal-header">
-        <p className="share-modal-info-text">
-          <Trans i18nKey="share-modal.snapshot.deleted-message">
-            The snapshot has been deleted. If you have already accessed it once, then it might take up to an hour before
-            before it is removed from browser caches or CDN caches.
-          </Trans>
-        </p>
-      </div>
+      <p>
+        <Trans i18nKey="share-modal.snapshot.deleted-message">
+          The snapshot has been deleted. If you have already accessed it once, then it might take up to an hour before
+          before it is removed from browser caches or CDN caches.
+        </Trans>
+      </p>
     );
   }
 

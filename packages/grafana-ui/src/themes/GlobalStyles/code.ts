@@ -21,7 +21,7 @@ export function getCodeStyles(theme: GrafanaTheme2) {
 
     pre: {
       display: 'block',
-      margin: `0 0 ${theme.typography.body.lineHeight}`,
+      margin: theme.spacing(0, 0, 2),
       lineHeight: theme.typography.body.lineHeight,
       wordBreak: 'break-all',
       wordWrap: 'break-word',

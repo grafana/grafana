@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -20,6 +21,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+const defaultAnnotationsLimit = 100
 
 // swagger:route GET /annotations annotations getAnnotations
 //
@@ -38,6 +41,7 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 		OrgID:        c.SignedInUser.GetOrgID(),
 		UserID:       c.QueryInt64("userId"),
 		AlertID:      c.QueryInt64("alertId"),
+		AlertUID:     c.Query("alertUID"),
 		DashboardID:  c.QueryInt64("dashboardId"),
 		DashboardUID: c.Query("dashboardUID"),
 		PanelID:      c.QueryInt64("panelId"),
@@ -46,6 +50,9 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 		Type:         c.Query("type"),
 		MatchAny:     c.QueryBool("matchAny"),
 		SignedInUser: c.SignedInUser,
+	}
+	if query.Limit == 0 {
+		query.Limit = defaultAnnotationsLimit
 	}
 
 	// When dashboard UID present in the request, we ignore dashboard ID
@@ -140,12 +147,7 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "Failed to save annotation", err)
 	}
 
-	// nolint:staticcheck
-	userID, err := c.SignedInUser.GetInternalID()
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to save annotation", err)
-	}
-
+	userID, _ := identity.UserIdentifier(c.GetID())
 	item := annotations.Item{
 		OrgID:       c.SignedInUser.GetOrgID(),
 		UserID:      userID,
@@ -228,12 +230,7 @@ func (hs *HTTPServer) PostGraphiteAnnotation(c *contextmodel.ReqContext) respons
 		return response.Error(http.StatusBadRequest, "Failed to save Graphite annotation", err)
 	}
 
-	// nolint:staticcheck
-	userID, err := c.SignedInUser.GetInternalID()
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to save Graphite annotation", err)
-	}
-
+	userID, _ := identity.UserIdentifier(c.GetID())
 	item := annotations.Item{
 		OrgID:  c.SignedInUser.GetOrgID(),
 		UserID: userID,
@@ -286,12 +283,7 @@ func (hs *HTTPServer) UpdateAnnotation(c *contextmodel.ReqContext) response.Resp
 		}
 	}
 
-	// nolint:staticcheck
-	userID, err := c.SignedInUser.GetInternalID()
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to update annotation", err)
-	}
-
+	userID, _ := identity.UserIdentifier(c.GetID())
 	item := annotations.Item{
 		OrgID:    c.SignedInUser.GetOrgID(),
 		UserID:   userID,
@@ -349,12 +341,7 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 		}
 	}
 
-	// nolint:staticcheck
-	userID, err := c.SignedInUser.GetInternalID()
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to update annotation", err)
-	}
-
+	userID, _ := identity.UserIdentifier(c.GetID())
 	existing := annotations.Item{
 		OrgID:    c.SignedInUser.GetOrgID(),
 		UserID:   userID,
@@ -758,10 +745,15 @@ type GetAnnotationsParams struct {
 	// in:query
 	// required:false
 	UserID int64 `json:"userId"`
-	// Find annotations for a specified alert.
+	// Find annotations for a specified alert rule by its ID.
+	// deprecated: AlertID is deprecated and will be removed in future versions. Please use AlertUID instead.
 	// in:query
 	// required:false
 	AlertID int64 `json:"alertId"`
+	// Find annotations for a specified alert rule by its UID.
+	// in:query
+	// required:false
+	AlertUID string `json:"alertUID"`
 	// Find annotations that are scoped to a specific dashboard
 	// in:query
 	// required:false

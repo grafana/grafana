@@ -5,11 +5,14 @@ import {
   And,
   AttributeField,
   ComparisonOp,
+  Event,
   FieldExpression,
   FieldOp,
   GroupOperation,
   Identifier,
+  Instrumentation,
   IntrinsicField,
+  Link,
   Or,
   Parent,
   parser,
@@ -116,7 +119,7 @@ export const getErrorNodes = (query: string): SyntaxNode[] => {
 };
 
 /**
- * Use red markers (squiggles) to highlight syntax errors in queries.
+ * Use markers (squiggles) to highlight syntax errors or warnings in queries.
  *
  */
 export const setMarkers = (
@@ -157,6 +160,9 @@ export const getWarningMarkers = (severity: number, model: monacoTypes.editor.IT
         // Make sure prevSibling is using the proper scope
         if (
           node.prevSibling?.type.id !== Parent &&
+          node.prevSibling?.type.id !== Event &&
+          node.prevSibling?.type.id !== Instrumentation &&
+          node.prevSibling?.type.id !== Link &&
           node.prevSibling?.type.id !== Resource &&
           node.prevSibling?.type.id !== Span
         ) {

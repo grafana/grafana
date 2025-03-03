@@ -8,9 +8,6 @@ type AccessResources struct {
 	CanAccessDashAnnotations bool
 	// CanAccessOrgAnnotations true if the user is allowed to access organization annotations
 	CanAccessOrgAnnotations bool
-}
-
-type dashboardProjection struct {
-	ID  int64  `xorm:"id"`
-	UID string `xorm:"uid"`
+	// Skip filtering
+	SkipAccessControlFilter bool
 }

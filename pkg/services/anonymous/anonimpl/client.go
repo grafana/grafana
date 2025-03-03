@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
@@ -17,12 +17,15 @@ import (
 )
 
 var (
-	errInvalidOrg = errutil.Unauthorized("anonymous.invalid-org")
-	errInvalidID  = errutil.Unauthorized("anonymous.invalid-id")
+	errInvalidOrg  = errutil.Unauthorized("anonymous.invalid-org")
+	errInvalidID   = errutil.Unauthorized("anonymous.invalid-id")
+	errDeviceLimit = errutil.Unauthorized("anonymous.device-limit-reached", errutil.WithPublicMessage("Anonymous device limit reached. Contact Administrator"))
 )
 
-var _ authn.ContextAwareClient = new(Anonymous)
-var _ authn.IdentityResolverClient = new(Anonymous)
+var (
+	_ authn.ContextAwareClient     = new(Anonymous)
+	_ authn.IdentityResolverClient = new(Anonymous)
+)
 
 type Anonymous struct {
 	cfg               *setting.Cfg
@@ -36,9 +39,9 @@ func (a *Anonymous) Name() string {
 }
 
 func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
-	o, err := a.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: a.cfg.AnonymousOrgName})
+	o, err := a.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: a.cfg.Anonymous.OrgName})
 	if err != nil {
-		a.log.FromContext(ctx).Error("Failed to find organization", "name", a.cfg.AnonymousOrgName, "error", err)
+		a.log.FromContext(ctx).Error("Failed to find organization", "name", a.cfg.Anonymous.OrgName, "error", err)
 		return nil, err
 	}
 
@@ -51,7 +54,7 @@ func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 
 	if err := a.anonDeviceService.TagDevice(ctx, httpReqCopy, anonymous.AnonDeviceUI); err != nil {
 		if errors.Is(err, anonstore.ErrDeviceLimitReached) {
-			return nil, err
+			return nil, errDeviceLimit.Errorf("limit reached for anonymous devices: %w", err)
 		}
 
 		a.log.Warn("Failed to tag anonymous session", "error", err)
@@ -61,7 +64,7 @@ func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 }
 
 func (a *Anonymous) IsEnabled() bool {
-	return a.cfg.AnonymousEnabled
+	return a.cfg.Anonymous.Enabled
 }
 
 func (a *Anonymous) Test(ctx context.Context, r *authn.Request) bool {
@@ -69,12 +72,12 @@ func (a *Anonymous) Test(ctx context.Context, r *authn.Request) bool {
 	return true
 }
 
-func (a *Anonymous) IdentityType() identity.IdentityType {
-	return identity.TypeAnonymous
+func (a *Anonymous) IdentityType() claims.IdentityType {
+	return claims.TypeAnonymous
 }
 
-func (a *Anonymous) ResolveIdentity(ctx context.Context, orgID int64, namespaceID identity.TypedID) (*authn.Identity, error) {
-	o, err := a.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: a.cfg.AnonymousOrgName})
+func (a *Anonymous) ResolveIdentity(ctx context.Context, orgID int64, typ claims.IdentityType, id string) (*authn.Identity, error) {
+	o, err := a.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: a.cfg.Anonymous.OrgName})
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +87,7 @@ func (a *Anonymous) ResolveIdentity(ctx context.Context, orgID int64, namespaceI
 	}
 
 	// Anonymous identities should always have the same namespace id.
-	if namespaceID != identity.AnonymousTypedID {
+	if !claims.IsIdentityType(typ, claims.TypeAnonymous) || id != "0" {
 		return nil, errInvalidID
 	}
 
@@ -96,7 +99,7 @@ func (a *Anonymous) UsageStatFn(ctx context.Context) (map[string]any, error) {
 
 	// Add stats about anonymous auth
 	m["stats.anonymous.customized_role.count"] = 0
-	if !strings.EqualFold(a.cfg.AnonymousOrgRole, "Viewer") {
+	if !strings.EqualFold(a.cfg.Anonymous.OrgRole, "Viewer") {
 		m["stats.anonymous.customized_role.count"] = 1
 	}
 
@@ -109,10 +112,11 @@ func (a *Anonymous) Priority() uint {
 
 func (a *Anonymous) newAnonymousIdentity(o *org.Org) *authn.Identity {
 	return &authn.Identity{
-		ID:           identity.AnonymousTypedID,
+		ID:           "0",
+		Type:         claims.TypeAnonymous,
 		OrgID:        o.ID,
 		OrgName:      o.Name,
-		OrgRoles:     map[int64]org.RoleType{o.ID: org.RoleType(a.cfg.AnonymousOrgRole)},
+		OrgRoles:     map[int64]org.RoleType{o.ID: org.RoleType(a.cfg.Anonymous.OrgRole)},
 		ClientParams: authn.ClientParams{SyncPermissions: true},
 	}
 }

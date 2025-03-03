@@ -11,7 +11,6 @@ import { DEFAULT_POLICY, InfluxQuery, InfluxQueryTag } from './types';
 export default class InfluxQueryModel {
   target: InfluxQuery;
   selectModels: QueryPart[][] = [];
-  queryBuilder: any;
   groupByParts: QueryPart[] = [];
   templateSrv: any;
   scopedVars: ScopedVars | undefined;
@@ -122,7 +121,7 @@ export default class InfluxQueryModel {
     this.updateProjection();
   }
 
-  removeSelectPart(selectParts: any[], part: any) {
+  removeSelectPart(selectParts: QueryPart[], part: QueryPart) {
     // if we remove the field remove the whole statement
     if (part.def.type === 'field') {
       if (this.selectModels.length > 1) {
@@ -137,7 +136,7 @@ export default class InfluxQueryModel {
     this.updatePersistedParts();
   }
 
-  addSelectPart(selectParts: any[], type: string) {
+  addSelectPart(selectParts: QueryPart[], type: string) {
     const partModel = queryPart.create({ type: type });
     partModel.def.addStrategy(selectParts, partModel, this);
     this.updatePersistedParts();

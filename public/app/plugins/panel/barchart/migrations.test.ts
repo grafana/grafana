@@ -1,4 +1,4 @@
-import { FieldConfigSource, PanelModel } from '@grafana/data';
+import { FieldConfigSource, FieldMatcherID, PanelModel } from '@grafana/data';
 
 import { changeToBarChartPanelMigrationHandler } from './migrations';
 
@@ -17,16 +17,41 @@ describe('Bar chart Migrations', () => {
       angular: {
         xaxis: {
           mode: 'series',
-          values: 'avg',
+          values: ['avg'],
         },
       },
     };
 
     const panel = {} as PanelModel;
     panel.options = changeToBarChartPanelMigrationHandler(panel, 'graph', old, prevFieldConfig);
+    const transformations = panel.transformations || [];
+    expect(transformations).toHaveLength(2);
 
-    const transform = panel.transformations![0];
-    expect(transform.id).toBe('reduce');
-    expect(transform.options.reducers).toBe('avg');
+    const reduceTransform = transformations[0];
+    expect(reduceTransform.id).toBe('reduce');
+    expect(reduceTransform.options.reducers).toHaveLength(1);
+    expect(reduceTransform.options.reducers[0]).toBe('mean');
+
+    const transposeTransform = transformations[1];
+    expect(transposeTransform.id).toBe('transpose');
+
+    expect(panel.fieldConfig.overrides).toHaveLength(1);
+    expect(panel.fieldConfig.overrides[0].matcher.id).toBe(FieldMatcherID.byName);
+    expect(panel.fieldConfig.overrides).toMatchInlineSnapshot(`
+        [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Field",
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "hidden",
+              },
+            ],
+          },
+        ]
+    `);
   });
 });

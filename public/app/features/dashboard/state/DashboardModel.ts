@@ -19,7 +19,7 @@ import {
 } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
 import { RefreshEvent, TimeRangeUpdatedEvent, config } from '@grafana/runtime';
-import { Dashboard, DashboardLink } from '@grafana/schema';
+import { Dashboard, DashboardLink, VariableModel } from '@grafana/schema';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -28,7 +28,7 @@ import { isAngularDatasourcePluginAndNotHidden } from 'app/features/plugins/angu
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
-import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
+import { CoreEvents, DashboardMeta } from 'app/types';
 import { DashboardMetaChangedEvent, DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
 
 import { appEvents } from '../../../core/core';
@@ -55,6 +55,12 @@ export interface CloneOptions {
 }
 
 export type DashboardLinkType = 'link' | 'dashboards';
+
+/** @experimental */
+export interface ScopeMeta {
+  trait: string;
+  groups: string[];
+}
 
 export class DashboardModel implements TimeModel {
   /** @deprecated use UID */
@@ -87,6 +93,7 @@ export class DashboardModel implements TimeModel {
   panelInEdit?: PanelModel;
   panelInView?: PanelModel;
   fiscalYearStartMonth?: number;
+  scopeMeta?: ScopeMeta;
   private panelsAffectedByVariableChange: number[] | null;
   private appEventsSubscription: Subscription;
   private lastRefresh: number;
@@ -145,7 +152,7 @@ export class DashboardModel implements TimeModel {
     this.time = data.time ?? { from: 'now-6h', to: 'now' };
     this.timepicker = data.timepicker ?? {};
     this.liveNow = data.liveNow;
-    this.templating = this.ensureListExist(data.templating);
+    this.templating = this.removeNullValuesFromVariables(this.ensureListExist(data.templating));
     this.annotations = this.ensureListExist(data.annotations);
     this.refresh = data.refresh;
     this.snapshot = data.snapshot;
@@ -155,6 +162,8 @@ export class DashboardModel implements TimeModel {
     this.links = data.links ?? [];
     this.gnetId = data.gnetId || null;
     this.panels = map(data.panels ?? [], (panelData) => new PanelModel(panelData));
+    // @ts-expect-error - experimental and it's not included in the schema
+    this.scopeMeta = data.scopeMeta;
     // Deep clone original dashboard to avoid mutations by object reference
     this.originalDashboard = cloneDeep(data);
     this.originalTemplating = cloneDeep(this.templating);
@@ -277,6 +286,8 @@ export class DashboardModel implements TimeModel {
    *
    * @internal and experimental
    */
+  // TODO: remove this as it's not being used anymore
+  // Also remove public/app/features/dashboard/utils/panelMerge.ts
   updatePanels(panels: IPanelModel[]): PanelMergeInfo {
     const info = mergePanels(this.panels, panels ?? []);
     if (info.changed) {
@@ -469,6 +480,28 @@ export class DashboardModel implements TimeModel {
       }
       ids.add(panel.id);
     }
+  }
+
+  private removeNullValuesFromVariables(templating: { list: VariableModel[] }) {
+    if (!templating.list.length) {
+      return templating;
+    }
+
+    for (const variable of templating.list) {
+      if (variable.current) {
+        // this is a safeguard for null value that breaks scenes dashboards.
+        //    expecting error at .includes(null) in order to not adjust
+        //    VariableOption type to avoid breaking changes
+        if (
+          variable.current.value === null ||
+          //@ts-expect-error
+          (Array.isArray(variable.current.value) && variable.current.value.includes(null))
+        ) {
+          variable.current = undefined;
+        }
+      }
+    }
+    return templating;
   }
 
   private ensureListExist(data: any = {}) {
@@ -1108,7 +1141,7 @@ export class DashboardModel implements TimeModel {
     let visibleHeight = viewHeight - navbarHeight - margin;
 
     // add back navbar height
-    if (kioskMode && kioskMode !== KioskMode.TV) {
+    if (kioskMode) {
       visibleHeight += navbarHeight;
     }
 

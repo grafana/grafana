@@ -29,11 +29,6 @@ jest.mock('@grafana/runtime', () => ({
       },
     };
   },
-  config: {
-    featureToggles: {
-      prometheusDataplane: true,
-    },
-  },
 }));
 
 describe('Prometheus Result Transformer', () => {
@@ -266,11 +261,11 @@ describe('Prometheus Result Transformer', () => {
           createDataFrame({
             refId: 'A',
             fields: [
-              { name: 'time', type: FieldType.time, values: [6, 5, 4] },
+              { name: 'time', type: FieldType.time, values: [4, 5, 6] },
               {
                 name: 'value',
                 type: FieldType.number,
-                values: [6, 5, 4],
+                values: [4, 5, 6],
                 labels: { label1: 'value1', label2: 'value2' },
               },
             ],
@@ -293,11 +288,13 @@ describe('Prometheus Result Transformer', () => {
 
       expect(series.data.length).toEqual(1);
       expect(series.data[0].fields[0].name).toEqual('Time');
+      expect(series.data[0].fields[0].values).toEqual([2, 3, 4, 5, 6, 7]);
       expect(series.data[0].fields[1].name).toEqual('label1');
       expect(series.data[0].fields[2].name).toEqual('label2');
       expect(series.data[0].fields[3].name).toEqual('label3');
       expect(series.data[0].fields[4].name).toEqual('label4');
       expect(series.data[0].fields[5].name).toEqual('Value');
+      expect(series.data[0].fields[5].values).toEqual([2, 3, 4, 5, 6, 7]);
       expect(series.data[0].meta?.preferredVisualisationType).toEqual('rawPrometheus' as PreferredVisualisationType);
     });
 
@@ -350,6 +347,62 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[1].meta?.preferredVisualisationType).toEqual('rawPrometheus' as PreferredVisualisationType);
     });
 
+    it('histogram results with table format have le values as strings for table filtering', () => {
+      const options = {
+        targets: [
+          {
+            format: 'table',
+            refId: 'A',
+          },
+        ],
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
+        state: 'Done',
+        data: [
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [10, 10, 0],
+                labels: { le: '1' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [30, 10, 40],
+                labels: { le: '+Inf' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [20, 10, 30],
+                labels: { le: '2' },
+              },
+            ],
+          }),
+        ],
+      } as unknown as DataQueryResponse;
+
+      const series = transformV2(response, options, {});
+      const leFields = series.data[0].fields.filter((f) => f.name === 'le');
+      const leValuesAreStrings = leFields[0].values.every((v) => typeof v === 'string');
+      expect(leValuesAreStrings).toBe(true);
+    });
     // Heatmap frames can either have a name of the metric, or if there is no metric, a name of "Value"
     it('results with heatmap format (no metric name) should be correctly transformed', () => {
       const options = {
@@ -1161,5 +1214,22 @@ describe('Prometheus Result Transformer', () => {
       expect(transformedTableDataFrames[0].meta?.executedQueryString).toEqual(executedQueryForRefA);
       expect(transformedTableDataFrames[1].meta?.executedQueryString).toEqual(executedQueryForRefB);
     });
+  });
+
+  it("transforms dataFrame and retains time field's `config.interval`", () => {
+    const df = createDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2, 3], config: { interval: 1 } },
+        {
+          name: 'value',
+          type: FieldType.number,
+          values: [5, 10, 5],
+        },
+      ],
+    });
+
+    const tableDf = transformDFToTable([df])[0];
+    expect(tableDf.fields[0].config.interval).toEqual(1);
   });
 });

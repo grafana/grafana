@@ -106,22 +106,33 @@ type MigrateDataResponseDTO struct {
 }
 
 type MigrateDataResponseItemDTO struct {
+	Name       string `json:"name"`
+	ParentName string `json:"parentName"`
 	// required:true
 	Type MigrateDataType `json:"type"`
 	// required:true
 	RefID string `json:"refId"`
 	// required:true
-	Status ItemStatus `json:"status"`
-	Error  string     `json:"error,omitempty"`
+	Status    ItemStatus    `json:"status"`
+	Message   string        `json:"message,omitempty"`
+	ErrorCode ItemErrorCode `json:"errorCode,omitempty"`
 }
 
 // swagger:enum MigrateDataType
 type MigrateDataType string
 
 const (
-	DashboardDataType  MigrateDataType = "DASHBOARD"
-	DatasourceDataType MigrateDataType = "DATASOURCE"
-	FolderDataType     MigrateDataType = "FOLDER"
+	DashboardDataType        MigrateDataType = "DASHBOARD"
+	DatasourceDataType       MigrateDataType = "DATASOURCE"
+	FolderDataType           MigrateDataType = "FOLDER"
+	LibraryElementDataType   MigrateDataType = "LIBRARY_ELEMENT"
+	AlertRuleType            MigrateDataType = "ALERT_RULE"
+	AlertRuleGroupType       MigrateDataType = "ALERT_RULE_GROUP"
+	ContactPointType         MigrateDataType = "CONTACT_POINT"
+	NotificationPolicyType   MigrateDataType = "NOTIFICATION_POLICY"
+	NotificationTemplateType MigrateDataType = "NOTIFICATION_TEMPLATE"
+	MuteTimingType           MigrateDataType = "MUTE_TIMING"
+	PluginDataType           MigrateDataType = "PLUGIN"
 )
 
 // swagger:enum ItemStatus
@@ -129,9 +140,27 @@ type ItemStatus string
 
 const (
 	ItemStatusOK      ItemStatus = "OK"
+	ItemStatusWarning ItemStatus = "WARNING"
 	ItemStatusError   ItemStatus = "ERROR"
 	ItemStatusPending ItemStatus = "PENDING"
 	ItemStatusUnknown ItemStatus = "UNKNOWN"
+)
+
+// swagger:enum ItemErrorCode
+type ItemErrorCode string
+
+const (
+	ErrDatasourceNameConflict     ItemErrorCode = "DATASOURCE_NAME_CONFLICT"
+	ErrDatasourceInvalidURL       ItemErrorCode = "DATASOURCE_INVALID_URL"
+	ErrDatasourceAlreadyManaged   ItemErrorCode = "DATASOURCE_ALREADY_MANAGED"
+	ErrFolderNameConflict         ItemErrorCode = "FOLDER_NAME_CONFLICT"
+	ErrDashboardAlreadyManaged    ItemErrorCode = "DASHBOARD_ALREADY_MANAGED"
+	ErrLibraryElementNameConflict ItemErrorCode = "LIBRARY_ELEMENT_NAME_CONFLICT"
+	ErrUnsupportedDataType        ItemErrorCode = "UNSUPPORTED_DATA_TYPE"
+	ErrResourceConflict           ItemErrorCode = "RESOURCE_CONFLICT"
+	ErrUnexpectedStatus           ItemErrorCode = "UNEXPECTED_STATUS_CODE"
+	ErrInternalServiceError       ItemErrorCode = "INTERNAL_SERVICE_ERROR"
+	ErrGeneric                    ItemErrorCode = "GENERIC_ERROR"
 )
 
 // swagger:parameters getCloudMigrationRun
@@ -184,23 +213,6 @@ func convertSessionListToDTO(sl cloudmigration.CloudMigrationSessionListResponse
 	}
 	return CloudMigrationSessionListResponseDTO{
 		Sessions: slDTOs,
-	}
-}
-
-func convertMigrateDataResponseToDTO(r cloudmigration.MigrateDataResponse) MigrateDataResponseDTO {
-	items := make([]MigrateDataResponseItemDTO, len(r.Items))
-	for i := 0; i < len(r.Items); i++ {
-		item := r.Items[i]
-		items[i] = MigrateDataResponseItemDTO{
-			Type:   MigrateDataType(item.Type),
-			RefID:  item.RefID,
-			Status: ItemStatus(item.Status),
-			Error:  item.Error,
-		}
-	}
-	return MigrateDataResponseDTO{
-		RunUID: r.RunUID,
-		Items:  items,
 	}
 }
 
@@ -327,6 +339,11 @@ type GetSnapshotListParams struct {
 	// Session UID of a session
 	// in: path
 	UID string `json:"uid"`
+
+	// Sort with value latest to return results sorted in descending order.
+	// in:query
+	// required:false
+	Sort string `json:"sort"`
 }
 
 // swagger:response snapshotListResponse

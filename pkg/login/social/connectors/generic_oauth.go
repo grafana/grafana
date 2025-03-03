@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/mail"
@@ -54,6 +53,18 @@ type SocialGenericOAuth struct {
 }
 
 func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGenericOAuth {
+	s := newSocialBase(social.GenericOAuthProviderName, orgRoleMapper, info, features, cfg)
+
+	teamIds, err := util.SplitStringWithError(info.Extra[teamIdsKey])
+	if err != nil {
+		s.log.Error("Invalid auth configuration setting", "config", teamIdsKey, "provider", social.GenericOAuthProviderName, "error", err)
+	}
+
+	allowedOrganizations, err := util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid auth configuration setting", "config", allowedOrganizationsKey, "provider", social.GenericOAuthProviderName, "error", err)
+	}
+
 	provider := &SocialGenericOAuth{
 		SocialBase:           newSocialBase(social.GenericOAuthProviderName, orgRoleMapper, info, features, cfg),
 		teamsUrl:             info.TeamsUrl,
@@ -64,8 +75,8 @@ func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMa
 		loginAttributePath:   info.Extra[loginAttributePathKey],
 		idTokenAttributeName: info.Extra[idTokenAttributeNameKey],
 		teamIdsAttributePath: info.TeamIdsAttributePath,
-		teamIds:              util.SplitString(info.Extra[teamIdsKey]),
-		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
+		teamIds:              teamIds,
+		allowedOrganizations: allowedOrganizations,
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
@@ -100,11 +111,12 @@ func (s *SocialGenericOAuth) Validate(ctx context.Context, newSettings ssoModels
 		return err
 	}
 
-	if info.Extra[teamIdsKey] != "" && (info.TeamIdsAttributePath == "" || info.TeamsUrl == "") {
+	teamIds := util.SplitString(info.Extra[teamIdsKey])
+	if len(teamIds) > 0 && (info.TeamIdsAttributePath == "" || info.TeamsUrl == "") {
 		return ssosettings.ErrInvalidOAuthConfig("If Team Ids are configured then Team Ids attribute path and Teams URL must be configured.")
 	}
 
-	if info.AllowedGroups != nil && len(info.AllowedGroups) > 0 && info.GroupsAttributePath == "" {
+	if len(info.AllowedGroups) > 0 && info.GroupsAttributePath == "" {
 		return ssosettings.ErrInvalidOAuthConfig("If Allowed groups is configured then Groups attribute path must be configured.")
 	}
 
@@ -119,7 +131,7 @@ func validateTeamsUrlWhenNotEmpty(info *social.OAuthInfo, requester identity.Req
 }
 
 func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
-	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	newInfo, err := CreateOAuthInfoFromKeyValuesWithLogging(s.log, social.GenericOAuthProviderName, settings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
@@ -129,6 +141,15 @@ func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOS
 
 	s.updateInfo(ctx, social.GenericOAuthProviderName, newInfo)
 
+	teamIds, err := util.SplitStringWithError(newInfo.Extra[teamIdsKey])
+	if err != nil {
+		s.log.Error("Invalid auth configuration setting", "config", teamIdsKey, "provider", social.GenericOAuthProviderName, "error", err)
+	}
+	allowedOrganizations, err := util.SplitStringWithError(newInfo.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid auth configuration setting", "config", allowedOrganizationsKey, "provider", social.GenericOAuthProviderName, "error", err)
+	}
+
 	s.teamsUrl = newInfo.TeamsUrl
 	s.emailAttributeName = newInfo.EmailAttributeName
 	s.emailAttributePath = newInfo.EmailAttributePath
@@ -137,8 +158,8 @@ func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOS
 	s.loginAttributePath = newInfo.Extra[loginAttributePathKey]
 	s.idTokenAttributeName = newInfo.Extra[idTokenAttributeNameKey]
 	s.teamIdsAttributePath = newInfo.TeamIdsAttributePath
-	s.teamIds = util.SplitString(newInfo.Extra[teamIdsKey])
-	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
+	s.teamIds = teamIds
+	s.allowedOrganizations = allowedOrganizations
 
 	return nil
 }
@@ -305,7 +326,7 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
-	if userInfo.Email == "" {
+	if s.canFetchPrivateEmail(userInfo) {
 		var err error
 		userInfo.Email, err = s.fetchPrivateEmail(ctx, client)
 		if err != nil {
@@ -320,11 +341,11 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 	}
 
 	if !s.isTeamMember(ctx, client) {
-		return nil, errors.New("user not a member of one of the required teams")
+		return nil, &SocialError{"User not a member of one of the required teams"}
 	}
 
 	if !s.isOrganizationMember(ctx, client) {
-		return nil, errors.New("user not a member of one of the required organizations")
+		return nil, &SocialError{"User not a member of one of the required organizations"}
 	}
 
 	if !s.isGroupMember(userInfo.Groups) {
@@ -333,6 +354,10 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 
 	s.log.Debug("User info result", "result", userInfo)
 	return userInfo, nil
+}
+
+func (s *SocialGenericOAuth) canFetchPrivateEmail(userinfo *social.BasicUserInfo) bool {
+	return s.info.ApiUrl != "" && userinfo.Email == ""
 }
 
 func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson {
@@ -493,7 +518,7 @@ func (s *SocialGenericOAuth) fetchPrivateEmail(ctx context.Context, client *http
 		IsConfirmed bool   `json:"is_confirmed"`
 	}
 
-	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.info.ApiUrl+"/emails"))
+	response, err := s.httpGet(ctx, client, s.info.ApiUrl+"/emails")
 	if err != nil {
 		s.log.Error("Error getting email address", "url", s.info.ApiUrl+"/emails", "error", err)
 		return "", fmt.Errorf("%v: %w", "Error getting email address", err)
@@ -555,7 +580,7 @@ func (s *SocialGenericOAuth) fetchTeamMembershipsFromDeprecatedTeamsUrl(ctx cont
 		Id int `json:"id"`
 	}
 
-	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.info.ApiUrl+"/teams"))
+	response, err := s.httpGet(ctx, client, s.info.ApiUrl+"/teams")
 	if err != nil {
 		s.log.Error("Error getting team memberships", "url", s.info.ApiUrl+"/teams", "error", err)
 		return []string{}, err
@@ -582,7 +607,7 @@ func (s *SocialGenericOAuth) fetchTeamMembershipsFromTeamsUrl(ctx context.Contex
 		return []string{}, nil
 	}
 
-	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.teamsUrl))
+	response, err := s.httpGet(ctx, client, s.teamsUrl)
 	if err != nil {
 		s.log.Error("Error getting team memberships", "url", s.teamsUrl, "error", err)
 		return nil, err
@@ -596,7 +621,7 @@ func (s *SocialGenericOAuth) fetchOrganizations(ctx context.Context, client *htt
 		Login string `json:"login"`
 	}
 
-	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.info.ApiUrl+"/orgs"))
+	response, err := s.httpGet(ctx, client, s.info.ApiUrl+"/orgs")
 	if err != nil {
 		s.log.Error("Error getting organizations", "url", s.info.ApiUrl+"/orgs", "error", err)
 		return nil, false

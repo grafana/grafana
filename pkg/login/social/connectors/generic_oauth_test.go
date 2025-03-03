@@ -499,6 +499,41 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 			require.Equal(t, tc.ExpectedGrafanaAdmin, actualResult.IsGrafanaAdmin)
 		})
 	}
+
+	t.Run("Generic OAuth with empty API URL shouldn't call fetchPrivateEmail function", func(t *testing.T) {
+		orgSvc := &orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "org_dev"}, {ID: 5, Name: "org_engineering"}}}
+		orgRoleMapper := ProvideOrgRoleMapper(cfg, orgSvc)
+		provider := NewGenericOAuthProvider(&social.OAuthInfo{
+			EmailAttributePath: "email",
+		}, cfg,
+			orgRoleMapper,
+			&ssosettingstests.MockService{},
+			featuremgmt.WithFeatures())
+
+		body, err := json.Marshal(map[string]any{"info": map[string]any{"roles": []string{"engineering", "SRE"}}})
+		require.NoError(t, err)
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "application/json")
+			_, err = w.Write(body)
+			require.NoError(t, err)
+		}))
+
+		provider.info.ApiUrl = ""
+		staticToken := oauth2.Token{
+			AccessToken:  "",
+			TokenType:    "",
+			RefreshToken: "",
+			Expiry:       time.Now(),
+		}
+
+		token := staticToken.WithExtra(map[string]any{
+			"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6IiJ9.hQPKYTPXyEYAD_cS6uxBDJcG8ucLePR3thBBQST6tQs",
+		})
+		actualResult, err := provider.UserInfo(context.Background(), ts.Client(), token)
+		require.NoError(t, err)
+		require.Equal(t, "", actualResult.Email)
+	})
 }
 
 func TestUserInfoSearchesForLogin(t *testing.T) {
@@ -966,6 +1001,34 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 			wantErr: nil,
 		},
 		{
+			name: "passes when team_ids is an empty array and teams_id_attribute_path and teams_url are empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":               "client-id",
+					"team_ids_attribute_path": "",
+					"teams_url":               "",
+					"auth_url":                "https://example.com/auth",
+					"token_url":               "https://example.com/token",
+					"team_ids":                "[]",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "passes when team_ids is set and teams_id_attribute_path and teams_url are not empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":               "client-id",
+					"team_ids_attribute_path": "teams",
+					"teams_url":               "https://example.com/teams",
+					"auth_url":                "https://example.com/auth",
+					"token_url":               "https://example.com/token",
+					"team_ids":                "[\"123\"]",
+				},
+			},
+			wantErr: nil,
+		},
+		{
 			name: "fails if settings map contains an invalid field",
 			settings: ssoModels.SSOSettings{
 				Settings: map[string]any{
@@ -1077,6 +1140,34 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 					"teams_url": "file://teams",
 					"auth_url":  "https://example.com/auth",
 					"token_url": "https://example.com/token",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails when team_ids is a valid string and teams_id_attribute_path and teams_url are empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":               "client-id",
+					"team_ids_attribute_path": "",
+					"teams_url":               "",
+					"auth_url":                "https://example.com/auth",
+					"token_url":               "https://example.com/token",
+					"team_ids":                "123",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails when team_ids is a valid array and teams_id_attribute_path and teams_url are empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":               "client-id",
+					"team_ids_attribute_path": "",
+					"teams_url":               "",
+					"auth_url":                "https://example.com/auth",
+					"token_url":               "https://example.com/token",
+					"team_ids":                "[\"123\",\"456\",\"789\"]",
 				},
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,

@@ -1,7 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import { http, HttpResponse } from 'msw';
+import { HttpResponse, http } from 'msw';
 import { SetupServer } from 'msw/node';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { getWrapper } from 'test/test-utils';
 
 import { DataSourceSettings } from '@grafana/data';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
@@ -13,6 +13,8 @@ import { normalizeDataSourceURL, useExternalDataSourceAlertmanagers } from './us
 
 const server = setupMswServer();
 
+const wrapper = () => getWrapper({ renderWithRouter: true });
+
 describe('useExternalDataSourceAlertmanagers', () => {
   it('Should get the correct data source settings', async () => {
     // Arrange
@@ -20,7 +22,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
     mockAlertmanagersResponse(server, { data: { activeAlertManagers: [], droppedAlertManagers: [] } });
 
     // Act
-    const { result } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper: TestProvider });
+    const { result } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper: wrapper() });
     await waitFor(() => {
       // Assert
       expect(result.current).toHaveLength(1);
@@ -35,7 +37,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
     mockAlertmanagersResponse(server, { data: { activeAlertManagers: [], droppedAlertManagers: [] } });
 
     // Act
-    const { result } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper: TestProvider });
+    const { result } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper: wrapper() });
     await waitFor(() => {
       // Assert
       expect(result.current).toHaveLength(1);
@@ -54,7 +56,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
     });
 
     // Act
-    const { result } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper: TestProvider });
+    const { result } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper: wrapper() });
     await waitFor(() => {
       // Assert
       expect(result.current).toHaveLength(1);
@@ -73,7 +75,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
     });
 
     // Act
-    const { result } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper: TestProvider });
+    const { result } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper: wrapper() });
 
     await waitFor(() => {
       // Assert
@@ -93,7 +95,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
     });
 
     // Act
-    const { result } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper: TestProvider });
+    const { result } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper: wrapper() });
 
     await waitFor(() => {
       // Assert
@@ -113,7 +115,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
     });
 
     // Act
-    const { result } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper: TestProvider });
+    const { result } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper: wrapper() });
 
     await waitFor(() => {
       // Assert
@@ -136,7 +138,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
 
     // Act
     const { result } = renderHook(() => useExternalDataSourceAlertmanagers(), {
-      wrapper: TestProvider,
+      wrapper: wrapper(),
     });
 
     await waitFor(() => {
@@ -159,7 +161,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
 
     // Act
     const { result } = renderHook(() => useExternalDataSourceAlertmanagers(), {
-      wrapper: TestProvider,
+      wrapper: wrapper(),
     });
 
     await waitFor(() => {

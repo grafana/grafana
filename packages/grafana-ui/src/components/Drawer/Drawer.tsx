@@ -11,9 +11,9 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
-import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { getDragStyles } from '../DragHandle/DragHandle';
 import { IconButton } from '../IconButton/IconButton';
+import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { Text } from '../Text/Text';
 
 import 'rc-drawer/assets/index.css';
@@ -45,9 +45,10 @@ export interface Props {
   size?: 'sm' | 'md' | 'lg';
   /** Tabs */
   tabs?: React.ReactNode;
-  // TODO remove this prop next major version
   /**
-   * @deprecated this is now default behaviour. content is always scrollable.
+   * Whether the content should be wrapped in a ScrollContainer
+   * Only change this if you intend to manage scroll behaviour yourself
+   * (e.g. having a split pane with independent scrolling)
    **/
   scrollableContent?: boolean;
   /** Callback for closing the drawer */
@@ -167,7 +168,7 @@ export function Drawer({
             </div>
           )}
           {typeof title !== 'string' && title}
-          {!scrollableContent ? content : <CustomScrollbar>{content}</CustomScrollbar>}
+          {!scrollableContent ? content : <ScrollContainer showScrollIndicators>{content}</ScrollContainer>}
         </div>
       </FocusScope>
     </RcDrawer>
@@ -256,17 +257,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
     }),
     drawer: css({
-      '.main-view &': {
-        top: 80,
-      },
-
-      '.main-view--search-bar-hidden &': {
-        top: 40,
-      },
-
-      '.main-view--chrome-hidden &': {
-        top: 0,
-      },
+      top: 0,
 
       '.rc-drawer-content-wrapper': {
         boxShadow: theme.shadows.z3,
@@ -294,8 +285,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     // but we don't want the backdrop styling to apply over the top bar as it looks weird
     // instead have a child pseudo element to apply the backdrop styling below the top bar
     mask: css({
-      backgroundColor: 'transparent',
-      position: 'fixed',
+      // The !important here is to override the default .rc-drawer-mask styles
+      backgroundColor: 'transparent !important',
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      position: 'fixed !important' as 'fixed',
 
       '&:before': {
         backgroundColor: `${theme.components.overlay.background} !important`,
@@ -305,18 +298,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         left: 0,
         position: 'fixed',
         right: 0,
-
-        '.main-view &': {
-          top: 80,
-        },
-
-        '.main-view--search-bar-hidden &': {
-          top: 40,
-        },
-
-        '.main-view--chrome-hidden &': {
-          top: 0,
-        },
+        top: 0,
       },
     }),
     maskMotion: css({
@@ -356,6 +338,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(2),
       height: '100%',
       flexGrow: 1,
+      minHeight: 0,
     }),
     tabsWrapper: css({
       label: 'drawer-tabs',

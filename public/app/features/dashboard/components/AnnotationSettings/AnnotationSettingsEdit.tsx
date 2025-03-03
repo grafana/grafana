@@ -24,9 +24,11 @@ import {
   Select,
   useStyles2,
   Stack,
+  Alert,
 } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import config from 'app/core/config';
+import { Trans } from 'app/core/internationalization';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 import { AngularEditorLoader } from 'app/features/dashboard-scene/settings/annotations/AngularEditorLoader';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
@@ -189,6 +191,13 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
         <Field label="Data source" htmlFor="data-source-picker">
           <DataSourcePicker annotations variables current={annotation.datasource} onChange={onDataSourceChange} />
         </Field>
+        {!ds?.meta.annotations && (
+          <Alert title="No annotation support for this data source" severity="error">
+            <Trans i18nKey="errors.dashboard-settings.annotations.datasource">
+              The selected data source does not support annotations. Please select a different data source.
+            </Trans>
+          </Alert>
+        )}
         <Field label="Enabled" description="When enabled the annotation query is issued every dashboard refresh">
           <Checkbox name="enable" id="enable" value={annotation.enable} onChange={onChange} />
         </Field>

@@ -1096,10 +1096,10 @@ func (db *postgres) GetTables() ([]*core.Table, error) {
 }
 
 func getIndexColName(indexdef string) []string {
-	var colNames []string
-
 	cs := strings.Split(indexdef, "(")
-	for _, v := range strings.Split(strings.Split(cs[1], ")")[0], ",") {
+	splitNames := strings.Split(strings.Split(cs[1], ")")[0], ",")
+	colNames := make([]string, 0, len(splitNames))
+	for _, v := range splitNames {
 		colNames = append(colNames, strings.Split(strings.TrimLeft(v, " "), " ")[0])
 	}
 

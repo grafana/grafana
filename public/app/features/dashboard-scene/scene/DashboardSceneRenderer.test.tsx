@@ -1,29 +1,46 @@
-import { render, screen } from '@testing-library/react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router';
-import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+import { screen } from '@testing-library/react';
+import { render } from 'test/test-utils';
 
-import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
-import { GrafanaContext } from 'app/core/context/GrafanaContext';
-import { configureStore } from 'app/store/configureStore';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { config, setPluginImportUtils } from '@grafana/runtime';
 
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 
-describe('DashboardSceneRenderer', () => {
-  it('should render Not Found notice when dashboard is not found', async () => {
-    const scene = transformSaveModelToScene({
-      meta: {
-        isSnapshot: true,
-        dashboardNotFound: true,
-        canStar: false,
-        canDelete: false,
-        canSave: false,
-        canEdit: false,
-        canShare: false,
+setPluginImportUtils({
+  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
+  getPanelPluginFromCache: (id: string) => undefined,
+});
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  useChromeHeaderHeight: jest.fn(),
+  getDataSourceSrv: () => {
+    return {
+      getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
+    };
+  },
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    angularSupportEnabled: true,
+    panels: {
+      'briangann-datatable-panel': {
+        id: 'briangann-datatable-panel',
+        state: 'deprecated',
+        angular: { detected: true, hideDeprecation: false },
       },
+    },
+  },
+}));
+
+describe('DashboardSceneRenderer', () => {
+  it('should render angular deprecation notice when dashboard contains angular components', async () => {
+    const noticeText = /This dashboard depends on Angular/i;
+    //enable feature flag angularDeprecationUI
+    config.featureToggles.angularDeprecationUI = true;
+    const scene = transformSaveModelToScene({
+      meta: {},
       dashboard: {
-        title: 'Not found',
+        title: 'Angular dashboard',
         uid: 'uid',
         schemaVersion: 0,
         // Disabling build in annotations to avoid mocking Grafana data source
@@ -43,22 +60,26 @@ describe('DashboardSceneRenderer', () => {
             },
           ],
         },
+
+        panels: [
+          {
+            id: 1,
+            type: 'briangann-datatable-panel',
+            gridPos: { x: 0, y: 0, w: 12, h: 6 },
+            title: 'Angular component',
+            options: {
+              showHeader: true,
+            },
+            fieldConfig: { defaults: {}, overrides: [] },
+            datasource: { uid: 'abcdef' },
+            targets: [{ refId: 'A' }],
+          },
+        ],
       },
     });
 
-    const store = configureStore({});
-    const context = getGrafanaContextMock();
+    render(<scene.Component model={scene} />);
 
-    render(
-      <GrafanaContext.Provider value={context}>
-        <Provider store={store}>
-          <Router history={locationService.getHistory()}>
-            <scene.Component model={scene} />
-          </Router>
-        </Provider>
-      </GrafanaContext.Provider>
-    );
-
-    expect(await screen.findByTestId(selectors.components.EntityNotFound.container)).toBeInTheDocument();
+    expect(await screen.findByText(noticeText)).toBeInTheDocument();
   });
 });

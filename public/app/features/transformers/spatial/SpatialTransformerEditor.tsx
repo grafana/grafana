@@ -149,13 +149,13 @@ export const SetGeometryTransformerEditor = (props: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    wrap: css`
-      margin-bottom: 20px;
-    `,
-    item: css`
-      border-left: 4px solid ${theme.colors.border.strong};
-      padding-left: 10px;
-    `,
+    wrap: css({
+      marginBottom: '20px',
+    }),
+    item: css({
+      borderLeft: `4px solid ${theme.colors.border.strong}`,
+      paddingLeft: '10px',
+    }),
   };
 };
 

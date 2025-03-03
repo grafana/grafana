@@ -2,6 +2,10 @@ name: Generate changelog
 on:
   workflow_call:
     inputs:
+      previous_version:
+        type: string
+        required: false
+        description: 'The release version (semver, git tag, branch or commit) to use for comparison'
       version:
         type: string
         required: true
@@ -26,6 +30,10 @@ on:
 
   workflow_dispatch:
     inputs:
+      previous_version:
+        type: string
+        required: false
+        description: 'The release version (semver, git tag, branch or commit) to use for comparison'
       version:
         type: string
         required: true
@@ -66,8 +74,15 @@ jobs:
           sparse-checkout: |
             .github/workflows
             CHANGELOG.md
+            .nvmrc
+            .prettierignore
+            .prettierrc.js
           fetch-depth: 0
           fetch-tags: true
+      - name: Setup nodejs environment
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
       - name: "Configure git user"
         run: |
           git config --local user.name "github-actions[bot]"
@@ -79,6 +94,7 @@ jobs:
         id: changelog
         uses: ./.github/workflows/actions/changelog
         with:
+          previous: ${{ inputs.previous_version }}
           github_token: ${{ steps.generate_token.outputs.token }}
           target: v${{ inputs.version }}
           output_file: changelog_items.md
@@ -111,9 +127,11 @@ jobs:
           fi
 
           git diff CHANGELOG.md
-          git add CHANGELOG.md
+
+      - name: "Prettify CHANGELOG.md"
+        run: npx prettier --write CHANGELOG.md
       - name: "Commit changelog changes"
-        run: git commit --allow-empty -m "Update changelog" CHANGELOG.md
+        run: git add CHANGELOG.md && git commit --allow-empty -m "Update changelog" CHANGELOG.md
       - name: "git push"
         if: ${{ inputs.dry_run }} != true
         run: git push

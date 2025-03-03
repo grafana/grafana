@@ -269,33 +269,33 @@ export class LivePanel extends PureComponent<Props, State> {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
-  statusWrap: css`
-    margin: auto;
-    position: absolute;
-    top: 0;
-    right: 0;
-    background: ${theme.components.panel.background};
-    padding: 10px;
-    z-index: ${theme.zIndex.modal};
-  `,
+  statusWrap: css({
+    margin: 'auto',
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    background: theme.components.panel.background,
+    padding: '10px',
+    zIndex: theme.zIndex.modal,
+  }),
   status: {
-    [LiveChannelConnectionState.Pending]: css`
-      border: 1px solid ${theme.v1.palette.orange};
-    `,
-    [LiveChannelConnectionState.Connected]: css`
-      border: 1px solid ${theme.colors.success.main};
-    `,
-    [LiveChannelConnectionState.Connecting]: css`
-      border: 1px solid ${theme.v1.palette.brandWarning};
-    `,
-    [LiveChannelConnectionState.Disconnected]: css`
-      border: 1px solid ${theme.colors.warning.main};
-    `,
-    [LiveChannelConnectionState.Shutdown]: css`
-      border: 1px solid ${theme.colors.error.main};
-    `,
-    [LiveChannelConnectionState.Invalid]: css`
-      border: 1px solid red;
-    `,
+    [LiveChannelConnectionState.Pending]: css({
+      border: `1px solid ${theme.v1.palette.orange}`,
+    }),
+    [LiveChannelConnectionState.Connected]: css({
+      border: `1px solid ${theme.colors.success.main}`,
+    }),
+    [LiveChannelConnectionState.Connecting]: css({
+      border: `1px solid ${theme.v1.palette.brandWarning}`,
+    }),
+    [LiveChannelConnectionState.Disconnected]: css({
+      border: `1px solid ${theme.colors.warning.main}`,
+    }),
+    [LiveChannelConnectionState.Shutdown]: css({
+      border: `1px solid ${theme.colors.error.main}`,
+    }),
+    [LiveChannelConnectionState.Invalid]: css({
+      border: '1px solid red',
+    }),
   },
 }));

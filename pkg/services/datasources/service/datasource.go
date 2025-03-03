@@ -255,7 +255,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 	}
 
 	var dataSource *datasources.DataSource
-	return dataSource, s.db.InTransaction(ctx, func(ctx context.Context) error {
+	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
 		var err error
 
 		cmd.EncryptedSecureJsonData = make(map[string][]byte)
@@ -293,12 +293,18 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 			if cmd.UserID != 0 {
 				permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserID, Permission: "Admin"})
 			}
-			_, err = s.permissionsService.SetPermissions(ctx, cmd.OrgID, dataSource.UID, permissions...)
-			return err
+			if _, err = s.permissionsService.SetPermissions(ctx, cmd.OrgID, dataSource.UID, permissions...); err != nil {
+				return err
+			}
 		}
 
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	return dataSource, nil
 }
 
 // This will valid validate the instance settings return a version that is safe to be saved
@@ -367,6 +373,10 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, settings *backend
 		rsp, err := s.pluginClient.ValidateAdmission(ctx, req)
 		if err != nil {
 			if errors.Is(err, plugins.ErrMethodNotImplemented) {
+				if settings.APIVersion == "v0alpha1" {
+					// For v0alpha1 we don't require plugins to implement ValidateAdmission
+					return settings, nil
+				}
 				return nil, errutil.Internal("plugin.unimplemented").
 					Errorf("plugin (%s) with apiVersion=%s must implement ValidateAdmission", p.ID, settings.APIVersion)
 			}
@@ -388,6 +398,10 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, settings *backend
 	rsp, err := s.pluginClient.MutateAdmission(ctx, req)
 	if err != nil {
 		if errors.Is(err, plugins.ErrMethodNotImplemented) {
+			if settings.APIVersion == "v0alpha1" {
+				// For v0alpha1 we don't require plugins to implement MutateAdmission
+				return settings, nil
+			}
 			return nil, errutil.Internal("plugin.unimplemented").
 				Errorf("plugin (%s) with apiVersion=%s must implement MutateAdmission", p.ID, settings.APIVersion)
 		}
@@ -518,6 +532,17 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 			if err != nil {
 				return err
 			}
+		}
+
+		// preserve existing lbac rules when updating datasource if we're not updating lbac rules
+		// TODO: Refactor to store lbac rules separate from a datasource
+		if !cmd.AllowLBACRuleUpdates {
+			s.logger.Debug("Overriding LBAC rules with stored ones using updateLBACRules API",
+				"reason", "overriding_lbac_rules_from_datasource_api",
+				"datasource_id", dataSource.ID,
+				"datasource_uid", dataSource.UID)
+
+			cmd.JsonData = RetainExistingLBACRules(dataSource.JsonData, cmd.JsonData)
 		}
 
 		if cmd.Name != "" && cmd.Name != dataSource.Name {
@@ -720,7 +745,7 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 		}
 	}
 
-	if ds.JsonData != nil && ds.JsonData.Get("enableSecureSocksProxy").MustBool(false) {
+	if ds.IsSecureSocksDSProxyEnabled() {
 		proxyOpts := &sdkproxy.Options{
 			Enabled: true,
 			Auth: &sdkproxy.AuthOptions{
@@ -961,4 +986,31 @@ func (s *Service) CustomHeaders(ctx context.Context, ds *datasources.DataSource)
 		return nil, fmt.Errorf("failed to get custom headers: %w", err)
 	}
 	return s.getCustomHeaders(ds.JsonData, values), nil
+}
+
+func RetainExistingLBACRules(storedJsonData, cmdJsonData *simplejson.Json) *simplejson.Json {
+	// If there are no stored data, we should remove the key from the command json data
+	if storedJsonData == nil {
+		if cmdJsonData != nil {
+			cmdJsonData.Del("teamHttpHeaders")
+		}
+		return cmdJsonData
+	}
+
+	previousRules := storedJsonData.Get("teamHttpHeaders").Interface()
+	// If there are no previous rules, we should remove the key from the command json data
+	if previousRules == nil {
+		if cmdJsonData != nil {
+			cmdJsonData.Del("teamHttpHeaders")
+		}
+		return cmdJsonData
+	}
+
+	if cmdJsonData == nil {
+		// It's fine to instantiate a new JsonData here
+		// Because it's done in the SQLStore.UpdateDataSource anyway
+		cmdJsonData = simplejson.New()
+	}
+	cmdJsonData.Set("teamHttpHeaders", previousRules)
+	return cmdJsonData
 }

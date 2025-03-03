@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { Icon, IconButton, Link, useTheme2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
+import { contextSrv } from 'app/core/services/context_srv';
 
 export interface Props {
   children: React.ReactNode;
@@ -50,7 +51,7 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, onP
       >
         {linkContent}
       </LinkComponent>
-      {config.featureToggles.pinNavItems && url && url !== '/bookmarks' && (
+      {config.featureToggles.pinNavItems && contextSrv.isSignedIn && url && url !== '/bookmarks' && (
         <IconButton
           name="bookmark"
           className={'pin-icon'}
@@ -78,19 +79,19 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
   }),
   wrapperBookmark: css({
     '.pin-icon': {
-      display: 'none',
+      visibility: 'hidden',
     },
     '&:hover, &:focus-within': {
       a: {
         width: 'calc(100% - 20px)',
       },
       '.pin-icon': {
-        display: 'inline-flex',
+        visibility: 'visible',
       },
     },
   }),
   wrapperActive: css({
-    backgroundColor: theme.colors.background.secondary,
+    backgroundColor: theme.colors.action.selected,
     borderTopRightRadius: theme.shape.radius.default,
     borderBottomRightRadius: theme.shape.radius.default,
     position: 'relative',
@@ -113,7 +114,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     position: 'relative',
     width: '100%',
 
-    '&:hover, &:focus-visible': {
+    '&:hover span, &:focus-visible span': {
       color: theme.colors.text.primary,
       textDecoration: 'underline',
     },

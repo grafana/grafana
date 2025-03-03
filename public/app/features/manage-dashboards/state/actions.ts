@@ -3,8 +3,7 @@ import { getBackendSrv, getDataSourceSrv, isFetchError } from '@grafana/runtime'
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { browseDashboardsAPI, ImportInputs } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { FolderInfo, PermissionLevelString, SearchQueryType, ThunkResult } from 'app/types';
+import { PermissionLevelString, SearchQueryType, ThunkResult } from 'app/types';
 
 import {
   Input,
@@ -261,73 +260,14 @@ const getDataSourceDescription = (input: { usage?: InputUsage }): string | undef
   return undefined;
 };
 
-export async function moveFolders(folderUIDs: string[], toFolder: FolderInfo) {
-  const result = {
-    totalCount: folderUIDs.length,
-    successCount: 0,
-  };
-
-  for (const folderUID of folderUIDs) {
-    try {
-      const newFolderDTO = await moveFolder(folderUID, toFolder);
-      if (newFolderDTO !== null) {
-        result.successCount += 1;
-      }
-    } catch (err) {
-      console.error('Failed to move a folder', err);
-    }
-  }
-
-  return result;
-}
-
-function createTask(fn: (...args: any[]) => Promise<any>, ignoreRejections: boolean, ...args: any[]) {
-  return async (result: any) => {
-    try {
-      const res = await fn(...args);
-      return Array.prototype.concat(result, [res]);
-    } catch (err) {
-      if (ignoreRejections) {
-        return result;
-      }
-
-      throw err;
-    }
-  };
-}
-
-export function deleteFoldersAndDashboards(folderUids: string[], dashboardUids: string[]) {
-  const tasks = [];
-
-  for (const folderUid of folderUids) {
-    tasks.push(createTask(deleteFolder, true, folderUid, true));
-  }
-
-  for (const dashboardUid of dashboardUids) {
-    tasks.push(createTask(deleteDashboard, true, dashboardUid, true));
-  }
-
-  return executeInOrder(tasks);
-}
-
-function deleteFolder(uid: string, showSuccessAlert: boolean) {
-  return getBackendSrv().delete(`/api/folders/${uid}?forceDeleteRules=false`, undefined, { showSuccessAlert });
-}
-
+/** @deprecated Use RTK Query methods from features/browse-dashboards/api/browseDashboardsAPI.ts instead */
 export function createFolder(payload: any) {
   return getBackendSrv().post('/api/folders', payload);
 }
 
-export function moveFolder(uid: string, toFolder: FolderInfo) {
-  const payload = {
-    parentUid: toFolder.uid,
-  };
-  return getBackendSrv().post(`/api/folders/${uid}/move`, payload, { showErrorAlert: false });
-}
-
 export const SLICE_FOLDER_RESULTS_TO = 1000;
 
-export function searchFolders(
+export async function searchFolders(
   query: any,
   permission?: PermissionLevelString,
   type: SearchQueryType = SearchQueryType.Folder
@@ -342,17 +282,4 @@ export function searchFolders(
 
 export function getFolderByUid(uid: string): Promise<{ uid: string; title: string }> {
   return getBackendSrv().get(`/api/folders/${uid}`);
-}
-export function getFolderById(id: number): Promise<{ id: number; title: string }> {
-  return getBackendSrv().get(`/api/folders/id/${id}`);
-}
-
-export function deleteDashboard(uid: string, showSuccessAlert: boolean) {
-  return getDashboardAPI().deleteDashboard(uid, showSuccessAlert);
-}
-
-function executeInOrder(tasks: any[]): Promise<unknown> {
-  return tasks.reduce((acc, task) => {
-    return Promise.resolve(acc).then(task);
-  }, []);
 }

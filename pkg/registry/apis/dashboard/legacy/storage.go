@@ -7,11 +7,10 @@ import (
 	"net/http"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -43,7 +42,7 @@ func isDashboardKey(key *resource.ResourceKey, requireName bool) error {
 }
 
 func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.WriteEvent) (rv int64, err error) {
-	info, err := request.ParseNamespace(event.Key.Namespace)
+	info, err := claims.ParseNamespace(event.Key.Namespace)
 	if err == nil {
 		err = isDashboardKey(event.Key, true)
 	}
@@ -88,7 +87,10 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 	if a.subscribers != nil {
 		go func() {
 			write := &resource.WrittenEvent{
-				WriteEvent: event,
+				Type:       event.Type,
+				Key:        event.Key,
+				PreviousRV: event.PreviousRV,
+				Value:      event.Value,
 
 				Timestamp:       time.Now().UnixMilli(),
 				ResourceVersion: rv,
@@ -102,7 +104,12 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 }
 
 func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid string, v int64) (*dashboard.Dashboard, int64, error) {
-	rows, err := a.getRows(ctx, &DashboardQuery{
+	sql, err := a.sql(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	rows, err := a.getRows(ctx, sql, &DashboardQuery{
 		OrgID:   orgId,
 		UID:     uid,
 		Limit:   2, // will only be one!
@@ -123,9 +130,9 @@ func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid 
 }
 
 // Read implements ResourceStoreServer.
-func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.ReadResponse {
-	rsp := &resource.ReadResponse{}
-	info, err := request.ParseNamespace(req.Key.Namespace)
+func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.BackendReadResponse {
+	rsp := &resource.BackendReadResponse{}
+	info, err := claims.ParseNamespace(req.Key.Namespace)
 	if err == nil {
 		err = isDashboardKey(req.Key, true)
 	}
@@ -135,7 +142,7 @@ func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.Rea
 	}
 	version := int64(0)
 	if req.ResourceVersion > 0 {
-		version = getVersionFromRV(req.ResourceVersion)
+		version = req.ResourceVersion
 	}
 
 	dash, rv, err := a.GetDashboard(ctx, info.OrgID, req.Key.Name, version)
@@ -147,20 +154,20 @@ func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.Rea
 		rsp.Error = &resource.ErrorResult{
 			Code: http.StatusNotFound,
 		}
+	} else {
+		rsp.Value, err = json.Marshal(dash)
+		if err != nil {
+			rsp.Error = resource.AsErrorResult(err)
+		}
 	}
-
 	rsp.ResourceVersion = rv
-	rsp.Value, err = json.Marshal(dash)
-	if err != nil {
-		rsp.Error = resource.AsErrorResult(err)
-	}
 	return rsp
 }
 
 // List implements AppendingStore.
 func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	opts := req.Options
-	info, err := request.ParseNamespace(opts.Key.Namespace)
+	info, err := claims.ParseNamespace(opts.Key.Namespace)
 	if err == nil {
 		err = isDashboardKey(opts.Key, false)
 	}
@@ -177,24 +184,38 @@ func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resource.Lis
 	}
 
 	query := &DashboardQuery{
-		OrgID:    info.OrgID,
-		Limit:    int(req.Limit),
-		MaxBytes: 2 * 1024 * 1024, // 2MB,
-		LastID:   token.id,
-		Labels:   req.Options.Labels,
+		OrgID:  info.OrgID,
+		Limit:  int(req.Limit),
+		LastID: token.id,
+		Labels: req.Options.Labels,
 	}
 
-	listRV, err := a.currentRV(ctx)
+	sql, err := a.sql(ctx)
 	if err != nil {
 		return 0, err
 	}
-	rows, err := a.getRows(ctx, query)
+
+	switch req.Source {
+	case resource.ListRequest_HISTORY:
+		query.GetHistory = true
+		query.UID = req.Options.Key.Name
+	case resource.ListRequest_TRASH:
+		query.GetTrash = true
+	case resource.ListRequest_STORE:
+		// normal
+	}
+
+	listRV, err := sql.GetResourceVersion(ctx, "dashboard", "updated")
+	if err != nil {
+		return 0, err
+	}
+	rows, err := a.getRows(ctx, sql, query)
 	if rows != nil {
 		defer func() {
 			_ = rows.Close()
 		}()
 	}
-	if err != nil {
+	if err == nil {
 		err = cb(rows)
 	}
 	return listRV, err
@@ -233,85 +254,23 @@ func (a *dashboardSqlAccess) WatchWriteEvents(ctx context.Context) (<-chan *reso
 }
 
 // Simple wrapper for index implementation
-func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest) (*resource.ReadResponse, error) {
+func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest) (*resource.BackendReadResponse, error) {
 	return a.ReadResource(ctx, req), nil
 }
 
-func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryRequest) (*resource.HistoryResponse, error) {
-	info, err := request.ParseNamespace(req.Key.Namespace)
-	if err == nil {
-		err = isDashboardKey(req.Key, false)
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	token, err := readContinueToken(req.NextPageToken)
-	if err != nil {
-		return nil, err
-	}
-	if token.orgId > 0 && token.orgId != info.OrgID {
-		return nil, fmt.Errorf("token and orgID mismatch")
-	}
-
-	query := &DashboardQuery{
-		OrgID:    info.OrgID,
-		Limit:    int(req.Limit),
-		MaxBytes: 2 * 1024 * 1024, // 2MB,
-		LastID:   token.id,
-		UID:      req.Key.Name,
-	}
-	if req.ShowDeleted {
-		query.GetTrash = true
-	} else {
-		query.GetHistory = true
-	}
-
-	rows, err := a.getRows(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = rows.Close() }()
-
-	totalSize := 0
-	list := &resource.HistoryResponse{}
-	for rows.Next() {
-		if rows.err != nil || rows.row == nil {
-			return list, err
-		}
-		row := rows.row
-
-		partial := &metav1.PartialObjectMetadata{
-			ObjectMeta: row.Dash.ObjectMeta,
-		}
-		partial.UID = "" // it is not useful/helpful/accurate and just confusing now
-
-		val, err := json.Marshal(partial)
-		if err != nil {
-			return list, err
-		}
-
-		totalSize += len(rows.Value())
-		if len(list.Items) > 0 && (totalSize > query.MaxBytes || len(list.Items) >= query.Limit) {
-			// if query.Requirements.Folder != nil {
-			// 	row.token.folder = *query.Requirements.Folder
-			// }
-			row.token.id = getVersionFromRV(row.RV) // Use the version as the increment
-			list.NextPageToken = row.token.String() // will skip this one but start here next time
-			return list, err
-		}
-
-		list.Items = append(list.Items, &resource.ResourceMeta{
-			ResourceVersion:   row.RV,
-			PartialObjectMeta: val,
-			Size:              int32(len(rows.Value())),
-			Hash:              "??", // hash the full?
-		})
-	}
-	return list, err
+func (a *dashboardSqlAccess) Search(ctx context.Context, req *resource.ResourceSearchRequest) (*resource.ResourceSearchResponse, error) {
+	return a.dashboardSearchClient.Search(ctx, req)
 }
 
-// Used for efficient provisioning
-func (a *dashboardSqlAccess) Origin(context.Context, *resource.OriginRequest) (*resource.OriginResponse, error) {
-	return nil, fmt.Errorf("not yet (origin)")
+func (a *dashboardSqlAccess) ListRepositoryObjects(ctx context.Context, req *resource.ListRepositoryObjectsRequest) (*resource.ListRepositoryObjectsResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (a *dashboardSqlAccess) CountRepositoryObjects(context.Context, *resource.CountRepositoryObjectsRequest) (*resource.CountRepositoryObjectsResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+// GetStats implements ResourceServer.
+func (a *dashboardSqlAccess) GetStats(ctx context.Context, req *resource.ResourceStatsRequest) (*resource.ResourceStatsResponse, error) {
+	return a.dashboardSearchClient.GetStats(ctx, req)
 }

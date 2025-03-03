@@ -1,11 +1,8 @@
-import { render } from '@testing-library/react';
 import { noop } from 'lodash';
 import { Props } from 'react-virtualized-auto-sizer';
+import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
-import 'core-js/stable/structured-clone';
-
-import { TestProvider } from '../../../../../../test/helpers/TestProvider';
 import { DashboardSearchItemType } from '../../../../search/types';
 import { mockDashboardApi, setupMswServer } from '../../mockApi';
 import { mockDashboardDto, mockDashboardSearchItem } from '../../mocks';
@@ -59,9 +56,7 @@ const ui = {
 
 describe('DashboardPicker', () => {
   it('Renders panels without ids', async () => {
-    render(<DashboardPicker isOpen={true} onChange={noop} onDismiss={noop} dashboardUid="dash-2" panelId={2} />, {
-      wrapper: TestProvider,
-    });
+    render(<DashboardPicker isOpen={true} onChange={noop} onDismiss={noop} dashboardUid="dash-2" panelId={2} />);
 
     expect(await ui.dashboardButton(/Dashboard 1/).find()).toBeInTheDocument();
     expect(ui.dashboardButton(/Dashboard 2/).get()).toBeInTheDocument();
@@ -71,7 +66,7 @@ describe('DashboardPicker', () => {
     expect(panels).toHaveLength(3);
 
     panels.forEach((panel) => {
-      expect(panel).not.toBeDisabled();
+      expect(panel).toBeEnabled();
     });
   });
 });

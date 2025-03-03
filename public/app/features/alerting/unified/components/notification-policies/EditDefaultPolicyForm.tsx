@@ -1,7 +1,9 @@
 import { ReactNode, useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 
-import { Collapse, Field, Link, MultiSelect, Select, useStyles2 } from '@grafana/ui';
+import { Collapse, Field, Link, MultiSelect, useStyles2 } from '@grafana/ui';
+import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
+import { handleContactPointSelect } from 'app/features/alerting/unified/components/notification-policies/utils';
 import { RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { FormAmRoute } from '../../types/amroutes';
@@ -9,14 +11,12 @@ import {
   amRouteToFormAmRoute,
   commonGroupByOptions,
   mapMultiSelectValueToStrings,
-  mapSelectValueToString,
   promDurationValidator,
   repeatIntervalValidator,
-  stringsToSelectableValues,
   stringToSelectableValue,
+  stringsToSelectableValues,
 } from '../../utils/amroutes';
 import { makeAMLink } from '../../utils/misc';
-import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 
 import { PromDurationInput } from './PromDurationInput';
 import { getFormStyles } from './formStyles';
@@ -26,17 +26,10 @@ export interface AmRootRouteFormProps {
   alertManagerSourceName: string;
   actionButtons: ReactNode;
   onSubmit: (route: Partial<FormAmRoute>) => void;
-  receivers: AmRouteReceiver[];
   route: RouteWithID;
 }
 
-export const AmRootRouteForm = ({
-  actionButtons,
-  alertManagerSourceName,
-  onSubmit,
-  receivers,
-  route,
-}: AmRootRouteFormProps) => {
+export const AmRootRouteForm = ({ actionButtons, alertManagerSourceName, onSubmit, route }: AmRootRouteFormProps) => {
   const styles = useStyles2(getFormStyles);
   const [isTimingOptionsExpanded, setIsTimingOptionsExpanded] = useState(false);
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route.group_by));
@@ -62,13 +55,13 @@ export const AmRootRouteForm = ({
         <>
           <div className={styles.container} data-testid="am-receiver-select">
             <Controller
-              render={({ field: { onChange, ref, ...field } }) => (
-                <Select
-                  aria-label="Default contact point"
-                  {...field}
-                  className={styles.input}
-                  onChange={(value) => onChange(mapSelectValueToString(value))}
-                  options={receivers}
+              render={({ field: { onChange, ref, value, ...field } }) => (
+                <ContactPointSelector
+                  selectProps={{
+                    ...field,
+                    onChange: (changeValue) => handleContactPointSelect(changeValue, onChange),
+                  }}
+                  selectedContactPointName={value}
                 />
               )}
               control={control}

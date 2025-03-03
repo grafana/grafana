@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
-import { Alert, withErrorBoundary } from '@grafana/ui';
+import { Alert } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { t } from 'app/core/internationalization';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertRuleProvider } from './components/rule-viewer/RuleContext';
@@ -12,14 +13,11 @@ import DetailView, { ActiveTab, useActiveTab } from './components/rule-viewer/Ru
 import { useCombinedRule } from './hooks/useCombinedRule';
 import { stringifyErrorLike } from './utils/misc';
 import { getRuleIdFromPathname, parse as parseRuleId } from './utils/rule-id';
+import { withPageErrorBoundary } from './withPageErrorBoundary';
 
-type RuleViewerProps = GrafanaRouteComponentProps<{
-  id: string;
-  sourceName: string;
-}>;
-
-const RuleViewer = (props: RuleViewerProps): JSX.Element => {
-  const id = getRuleIdFromPathname(props.match.params);
+const RuleViewer = (): JSX.Element => {
+  const params = useParams();
+  const id = getRuleIdFromPathname(params);
 
   const [activeTab] = useActiveTab();
   const instancesTab = activeTab === ActiveTab.Instances;
@@ -66,11 +64,16 @@ const RuleViewer = (props: RuleViewerProps): JSX.Element => {
   }
 
   // if we get here assume we can't find the rule
-  return (
-    <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list">
-      <EntityNotFound entity="Rule" />
-    </AlertingPageWrapper>
-  );
+  if (!rule && !loading) {
+    return (
+      <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list">
+        <EntityNotFound entity="Rule" />
+      </AlertingPageWrapper>
+    );
+  }
+
+  // we should never get to this state
+  return <></>;
 };
 
 export const defaultPageNav: NavModelItem = {
@@ -87,7 +90,11 @@ function ErrorMessage({ error }: ErrorMessageProps) {
     return <EntityNotFound entity="Rule" />;
   }
 
-  return <Alert title={'Something went wrong loading the rule'}>{stringifyErrorLike(error)}</Alert>;
+  return (
+    <Alert title={t('alerting.rule-viewer.error-loading', 'Something went wrong loading the rule')}>
+      {stringifyErrorLike(error)}
+    </Alert>
+  );
 }
 
-export default withErrorBoundary(RuleViewer, { style: 'page' });
+export default withPageErrorBoundary(RuleViewer);

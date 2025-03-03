@@ -4,16 +4,17 @@ import { merge, uniqueId } from 'lodash';
 import { openMenu } from 'react-select-event';
 import { Observable } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
-import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { DataSourcePluginMeta, SupportedTransformationType } from '@grafana/data';
+import { DataSourceInstanceSettings, SupportedTransformationType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { BackendSrv, setDataSourceSrv, BackendSrvRequest, reportInteraction } from '@grafana/runtime';
+import { BackendSrv, BackendSrvRequest, reportInteraction, setBackendSrv, setAppEvents } from '@grafana/runtime';
+import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { configureStore } from 'app/store/configureStore';
 
-import { mockDataSource, MockDataSourceSrv } from '../alerting/unified/mocks';
+import { mockDataSource } from '../alerting/unified/mocks';
 
 import CorrelationsPage from './CorrelationsPage';
 import {
@@ -23,10 +24,13 @@ import {
   createRemoveCorrelationResponse,
   createUpdateCorrelationResponse,
 } from './__mocks__/useCorrelations.mocks';
-import { Correlation, CreateCorrelationParams } from './types';
+import { Correlation, CreateCorrelationParams, OmitUnion } from './types';
+
+// Set app events up, otherwise plugin modules will fail to load
+setAppEvents(appEvents);
 
 const renderWithContext = async (
-  datasources: ConstructorParameters<typeof MockDataSourceSrv>[0] = {},
+  datasources: Record<string, DataSourceInstanceSettings>,
   correlations: Correlation[] = []
 ) => {
   const backend = {
@@ -43,7 +47,7 @@ const renderWithContext = async (
 
       throw createFetchCorrelationsError();
     },
-    post: async (url: string, data: Omit<CreateCorrelationParams, 'sourceUID'>) => {
+    post: async (url: string, data: OmitUnion<CreateCorrelationParams, 'sourceUID'>) => {
       const matches = url.match(/^\/api\/datasources\/uid\/(?<sourceUID>[a-zA-Z0-9]+)\/correlations$/);
       if (matches?.groups) {
         const { sourceUID } = matches.groups;
@@ -54,7 +58,7 @@ const renderWithContext = async (
 
       throw createFetchCorrelationsError();
     },
-    patch: async (url: string, data: Omit<CreateCorrelationParams, 'sourceUID'>) => {
+    patch: async (url: string, data: OmitUnion<CreateCorrelationParams, 'sourceUID'>) => {
       const matches = url.match(
         /^\/api\/datasources\/uid\/(?<sourceUID>[a-zA-Z0-9]+)\/correlations\/(?<correlationUid>[a-zA-Z0-9]+)$/
       );
@@ -86,17 +90,8 @@ const renderWithContext = async (
     },
   } as unknown as BackendSrv;
   const grafanaContext = getGrafanaContextMock({ backend });
-
-  const dsServer = new MockDataSourceSrv(datasources);
-  dsServer.get = (name: string) => {
-    const dsApi = new MockDataSourceApi(name);
-    dsApi.components = {
-      QueryEditor: () => <>{name} query editor</>,
-    };
-    return Promise.resolve(dsApi);
-  };
-
-  setDataSourceSrv(dsServer);
+  setBackendSrv(backend);
+  setupDataSources(...Object.values(datasources));
 
   const renderResult = render(
     <TestProvider store={configureStore({})} grafanaContext={grafanaContext}>
@@ -210,10 +205,9 @@ describe('CorrelationsPage', () => {
             name: 'loki',
             readOnly: false,
             jsonData: {},
-            access: 'direct',
             type: 'datasource',
           },
-          { logs: true }
+          { logs: true, module: 'core:plugin/loki' }
         ),
         prometheus: mockDataSource(
           {
@@ -221,10 +215,9 @@ describe('CorrelationsPage', () => {
             name: 'prometheus',
             readOnly: false,
             jsonData: {},
-            access: 'direct',
             type: 'datasource',
           },
-          { metrics: true }
+          { metrics: true, module: 'core:plugin/prometheus' }
         ),
       });
     });
@@ -319,11 +312,11 @@ describe('CorrelationsPage', () => {
               name: 'loki',
               readOnly: false,
               jsonData: {},
-              access: 'direct',
               type: 'datasource',
             },
             {
               logs: true,
+              module: 'core:plugin/loki',
             }
           ),
           prometheus: mockDataSource(
@@ -332,11 +325,11 @@ describe('CorrelationsPage', () => {
               name: 'prometheus',
               readOnly: false,
               jsonData: {},
-              access: 'direct',
               type: 'datasource',
             },
             {
               metrics: true,
+              module: 'core:plugin/prometheus',
             }
           ),
           elastic: mockDataSource(
@@ -345,12 +338,12 @@ describe('CorrelationsPage', () => {
               name: 'elastic',
               readOnly: false,
               jsonData: {},
-              access: 'direct',
               type: 'datasource',
             },
             {
               metrics: true,
               logs: true,
+              module: 'core:plugin/elasticsearch',
             }
           ),
         },
@@ -361,10 +354,10 @@ describe('CorrelationsPage', () => {
             uid: '1',
             label: 'Some label',
             provisioned: false,
+            type: 'query',
             config: {
               field: 'line',
               target: {},
-              type: 'query',
               transformations: [
                 { type: SupportedTransformationType.Regex, expression: 'url=http[s]?://(S*)', mapValue: 'path' },
               ],
@@ -375,7 +368,8 @@ describe('CorrelationsPage', () => {
             targetUID: 'loki',
             uid: '2',
             label: 'Prometheus to Loki',
-            config: { field: 'label', target: {}, type: 'query' },
+            type: 'query',
+            config: { field: 'label', target: {} },
             provisioned: false,
           },
         ]
@@ -588,6 +582,7 @@ describe('CorrelationsPage', () => {
             },
             {
               logs: true,
+              module: 'core:plugin/loki',
             }
           ),
         },
@@ -598,10 +593,10 @@ describe('CorrelationsPage', () => {
             uid: '1',
             label: 'Loki to Loki',
             provisioned: false,
+            type: 'query',
             config: {
               field: 'line',
               target: {},
-              type: 'query',
               transformations: [
                 { type: SupportedTransformationType.Regex, expression: 'url=http[s]?://(S*)', mapValue: 'path' },
               ],
@@ -613,10 +608,10 @@ describe('CorrelationsPage', () => {
             uid: '2',
             label: 'Loki to Prometheus',
             provisioned: false,
+            type: 'query',
             config: {
               field: 'line',
               target: {},
-              type: 'query',
               transformations: [
                 { type: SupportedTransformationType.Regex, expression: 'url=http[s]?://(S*)', mapValue: 'path' },
               ],
@@ -627,7 +622,8 @@ describe('CorrelationsPage', () => {
             targetUID: 'loki',
             uid: '3',
             label: 'Prometheus to Loki',
-            config: { field: 'label', target: {}, type: 'query' },
+            type: 'query',
+            config: { field: 'label', target: {} },
             provisioned: false,
           },
           {
@@ -635,7 +631,8 @@ describe('CorrelationsPage', () => {
             targetUID: 'prometheus',
             uid: '4',
             label: 'Prometheus to Prometheus',
-            config: { field: 'label', target: {}, type: 'query' },
+            type: 'query',
+            config: { field: 'label', target: {} },
             provisioned: false,
           },
         ]
@@ -660,10 +657,10 @@ describe('CorrelationsPage', () => {
         uid: '1',
         label: 'Some label',
         provisioned: true,
+        type: 'query',
         config: {
           field: 'line',
           target: {},
-          type: 'query',
           transformations: [{ type: SupportedTransformationType.Regex, expression: '(?:msg)=' }],
         },
       },
@@ -672,15 +669,17 @@ describe('CorrelationsPage', () => {
     beforeEach(async () => {
       await renderWithContext(
         {
-          loki: mockDataSource({
-            uid: 'loki',
-            name: 'loki',
-            readOnly: true,
-            jsonData: {},
-            access: 'direct',
-            meta: { info: { logos: {} } } as DataSourcePluginMeta,
-            type: 'datasource',
-          }),
+          loki: mockDataSource(
+            {
+              uid: 'loki',
+              name: 'loki',
+              readOnly: true,
+              jsonData: {},
+              access: 'direct',
+              type: 'datasource',
+            },
+            { logs: true, module: 'core:plugin/loki' }
+          ),
         },
         correlations
       );

@@ -1,3 +1,5 @@
+import { SelectableValue } from '@grafana/data';
+
 import { AzureMonitorQuery, AzureQueryType, AzureTracesFilter, ResultFormat } from '../../types';
 
 // Used when switching from a traces exemplar query to a standard Azure Traces query
@@ -48,4 +50,14 @@ export function setFilters(query: AzureMonitorQuery, filters: AzureTracesFilter[
       filters,
     },
   };
+}
+
+export function onLoad(
+  query: AzureMonitorQuery,
+  defaultValue: ResultFormat,
+  handleChange: (change: SelectableValue<ResultFormat>) => void
+) {
+  if (!query.azureTraces?.resultFormat) {
+    handleChange({ value: defaultValue });
+  }
 }

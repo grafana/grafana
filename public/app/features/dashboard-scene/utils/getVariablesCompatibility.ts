@@ -5,7 +5,13 @@ import { sceneVariablesSetToVariables } from '../serialization/sceneVariablesSet
 
 export function getVariablesCompatibility(sceneObject: SceneObject): TypedVariableModel[] {
   const set = sceneGraph.getVariables(sceneObject);
-  const legacyModels = sceneVariablesSetToVariables(set);
+  const keepQueryOptions = true;
+
+  // `sceneVariablesSetToVariables` is also used when transforming the scene to a save model.
+  // In those cases, query options will be stripped out.
+  // However, when `getVariablesCompatibility` is called from `templateSrv`, it is used to get all variables in the scene.
+  // Therefore, options should be kept.
+  const legacyModels = sceneVariablesSetToVariables(set, keepQueryOptions);
 
   // Sadly templateSrv.getVariables returns TypedVariableModel but sceneVariablesSetToVariables return persisted schema model
   // They look close to identical (differ in what is optional in some places).

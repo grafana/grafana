@@ -75,7 +75,7 @@ const generateThresholds = (thresholds: string[], colors: string[]) => {
 };
 
 const migrateTransformations = (
-  panel: PanelModel<Partial<Options>> | any,
+  panel: PanelModel<Partial<Options>>,
   oldOpts: { columns: any; transform: Transformations }
 ) => {
   const transformations: Transformation[] = panel.transformations ?? [];
@@ -237,7 +237,7 @@ const migrateDefaults = (prevDefaults: Style) => {
  * This is called when the panel changes from another panel
  */
 export const tablePanelChangedHandler = (
-  panel: PanelModel<Partial<Options>> | any,
+  panel: PanelModel<Partial<Options>>,
   prevPluginId: string,
   prevOptions: any
 ) => {

@@ -3,18 +3,16 @@ import { useEffect, useMemo } from 'react';
 import { PluginError, PluginType } from '@grafana/data';
 import { useDispatch, useSelector } from 'app/types';
 
-import { sortPlugins, Sorters } from '../helpers';
-import { CatalogPlugin, PluginListDisplayMode } from '../types';
+import { sortPlugins, Sorters, isPluginUpdatable } from '../helpers';
+import { CatalogPlugin, PluginStatus } from '../types';
 
 import { fetchAll, fetchDetails, fetchRemotePlugins, install, uninstall, fetchAllLocal, unsetInstall } from './actions';
-import { setDisplayMode } from './reducer';
 import {
   selectPlugins,
   selectById,
   selectIsRequestPending,
   selectRequestError,
   selectIsRequestNotFetched,
-  selectDisplayMode,
   selectPluginErrors,
   type PluginFilters,
 } from './selectors';
@@ -33,6 +31,16 @@ export const useGetAll = (filters: PluginFilters, sortBy: Sorters = Sorters.name
     isLoading,
     error,
     plugins: sortedPlugins,
+  };
+};
+
+export const useGetUpdatable = () => {
+  const { isLoading } = useFetchStatus();
+  const { plugins: installed } = useGetAll({ isInstalled: true });
+  const updatablePlugins = installed.filter(isPluginUpdatable);
+  return {
+    isLoading,
+    updatablePlugins,
   };
 };
 
@@ -56,7 +64,7 @@ export const useGetErrors = (filterByPluginType?: PluginType): PluginError[] => 
 
 export const useInstall = () => {
   const dispatch = useDispatch();
-  return (id: string, version?: string, isUpdating?: boolean) => dispatch(install({ id, version, isUpdating }));
+  return (id: string, version?: string, installType?: PluginStatus) => dispatch(install({ id, version, installType }));
 };
 
 export const useUnsetInstall = () => {
@@ -149,14 +157,4 @@ export const useFetchDetailsLazy = () => {
   const dispatch = useDispatch();
 
   return (id: string) => dispatch(fetchDetails(id));
-};
-
-export const useDisplayMode = () => {
-  const dispatch = useDispatch();
-  const displayMode = useSelector(selectDisplayMode);
-
-  return {
-    displayMode,
-    setDisplayMode: (v: PluginListDisplayMode) => dispatch(setDisplayMode(v)),
-  };
 };

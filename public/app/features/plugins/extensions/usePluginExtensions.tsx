@@ -1,54 +1,86 @@
+import { useMemo } from 'react';
 import { useObservable } from 'react-use';
 
-import { PluginExtension } from '@grafana/data';
+import { PluginExtension, usePluginContext } from '@grafana/data';
 import { GetPluginExtensionsOptions, UsePluginExtensionsResult } from '@grafana/runtime';
 
+import * as errors from './errors';
 import { getPluginExtensions } from './getPluginExtensions';
-import { ReactivePluginExtensionsRegistry } from './reactivePluginExtensionRegistry';
+import { log } from './logs/log';
+import { PluginExtensionRegistries } from './registry/types';
+import { useLoadAppPlugins } from './useLoadAppPlugins';
+import { getExtensionPointPluginDependencies, isGrafanaDevMode } from './utils';
+import { isExtensionPointIdValid, isExtensionPointMetaInfoMissing } from './validators';
 
-export function createUsePluginExtensions(extensionsRegistry: ReactivePluginExtensionsRegistry) {
-  const observableRegistry = extensionsRegistry.asObservable();
-  const cache: {
-    id: string;
-    extensions: Record<string, { context: GetPluginExtensionsOptions['context']; extensions: PluginExtension[] }>;
-  } = {
-    id: '',
-    extensions: {},
-  };
+export function createUsePluginExtensions(registries: PluginExtensionRegistries) {
+  const observableAddedComponentsRegistry = registries.addedComponentsRegistry.asObservable();
+  const observableAddedLinksRegistry = registries.addedLinksRegistry.asObservable();
 
   return function usePluginExtensions(options: GetPluginExtensionsOptions): UsePluginExtensionsResult<PluginExtension> {
-    const registry = useObservable(observableRegistry);
+    const pluginContext = usePluginContext();
+    const addedComponentsRegistry = useObservable(observableAddedComponentsRegistry);
+    const addedLinksRegistry = useObservable(observableAddedLinksRegistry);
+    const { extensionPointId, context, limitPerPlugin } = options;
+    const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(getExtensionPointPluginDependencies(extensionPointId));
 
-    if (!registry) {
-      return { extensions: [], isLoading: false };
-    }
+    return useMemo(() => {
+      // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.
+      const enableRestrictions = isGrafanaDevMode() && pluginContext !== null;
+      const pluginId = pluginContext?.meta.id ?? '';
+      const pointLog = log.child({
+        pluginId,
+        extensionPointId,
+      });
 
-    if (registry.id !== cache.id) {
-      cache.id = registry.id;
-      cache.extensions = {};
-    }
+      if (!addedLinksRegistry && !addedComponentsRegistry) {
+        return { extensions: [], isLoading: false };
+      }
 
-    // `getPluginExtensions` will return a new array of objects even if it is called with the same options, as it always constructing a frozen objects.
-    // Due to this we are caching the result of `getPluginExtensions` to avoid unnecessary re-renders for components that are using this hook.
-    // (NOTE: we are only checking referential equality of `context` object, so it is important to not mutate the object passed to this hook.)
-    const key = `${options.extensionPointId}-${options.limitPerPlugin}`;
-    if (cache.extensions[key] && cache.extensions[key].context === options.context) {
-      return {
-        extensions: cache.extensions[key].extensions,
-        isLoading: false,
-      };
-    }
+      if (enableRestrictions && !isExtensionPointIdValid({ extensionPointId, pluginId })) {
+        pointLog.error(errors.INVALID_EXTENSION_POINT_ID);
+        return {
+          isLoading: false,
+          extensions: [],
+        };
+      }
 
-    const { extensions } = getPluginExtensions({ ...options, registry });
+      if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)) {
+        pointLog.error(errors.EXTENSION_POINT_META_INFO_MISSING);
+        return {
+          isLoading: false,
+          extensions: [],
+        };
+      }
 
-    cache.extensions[key] = {
-      context: options.context,
-      extensions,
-    };
+      if (isLoadingAppPlugins) {
+        return {
+          isLoading: true,
+          extensions: [],
+        };
+      }
 
-    return {
-      extensions,
-      isLoading: false,
-    };
+      const { extensions } = getPluginExtensions({
+        extensionPointId,
+        context,
+        limitPerPlugin,
+        addedComponentsRegistry,
+        addedLinksRegistry,
+      });
+
+      return { extensions, isLoading: false };
+
+      // Doing the deps like this instead of just `option` because users probably aren't going to memoize the
+      // options object so we are checking it's simple value attributes.
+      // The context though still has to be memoized though and not mutated.
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- TODO: refactor `getPluginExtensions` to accept service dependencies as arguments instead of relying on the sidecar singleton under the hood
+    }, [
+      addedLinksRegistry,
+      addedComponentsRegistry,
+      extensionPointId,
+      context,
+      limitPerPlugin,
+      pluginContext,
+      isLoadingAppPlugins,
+    ]);
   };
 }

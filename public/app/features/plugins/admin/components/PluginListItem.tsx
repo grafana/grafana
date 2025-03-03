@@ -6,7 +6,7 @@ import { locationService, reportInteraction } from '@grafana/runtime';
 import { Badge, Icon, Stack, useStyles2 } from '@grafana/ui';
 import { SkeletonComponent, attachSkeleton } from '@grafana/ui/src/unstable';
 
-import { CatalogPlugin, PluginIconName, PluginListDisplayMode } from '../types';
+import { CatalogPlugin, PluginIconName } from '../types';
 
 import { PluginListItemBadges } from './PluginListItemBadges';
 import { PluginLogo } from './PluginLogo';
@@ -16,24 +16,22 @@ export const LOGO_SIZE = '48px';
 type Props = {
   plugin: CatalogPlugin;
   pathName: string;
-  displayMode?: PluginListDisplayMode;
 };
 
-function PluginListItemComponent({ plugin, pathName, displayMode = PluginListDisplayMode.Grid }: Props) {
+function PluginListItemComponent({ plugin, pathName }: Props) {
   const styles = useStyles2(getStyles);
-  const isList = displayMode === PluginListDisplayMode.List;
 
   const reportUserClickInteraction = () => {
     if (locationService.getSearchObject()?.q) {
-      reportInteraction('plugins_search_user_click', {});
+      reportInteraction('plugins_search_user_click', {
+        plugin_id: plugin.id,
+        creator_team: 'grafana_plugins_catalog',
+        schema_version: '1.0.0',
+      });
     }
   };
   return (
-    <a
-      href={`${pathName}/${plugin.id}`}
-      className={cx(styles.container, { [styles.list]: isList })}
-      onClick={reportUserClickInteraction}
-    >
+    <a href={`${pathName}/${plugin.id}`} className={cx(styles.container)} onClick={reportUserClickInteraction}>
       <PluginLogo src={plugin.info.logos.small} className={styles.pluginLogo} height={LOGO_SIZE} alt="" />
       <h2 className={cx(styles.name, 'plugin-name')}>{plugin.name}</h2>
       <div className={cx(styles.content, 'plugin-content')}>
@@ -47,15 +45,11 @@ function PluginListItemComponent({ plugin, pathName, displayMode = PluginListDis
   );
 }
 
-const PluginListItemSkeleton: SkeletonComponent<Pick<Props, 'displayMode'>> = ({
-  displayMode = PluginListDisplayMode.Grid,
-  rootProps,
-}) => {
+const PluginListItemSkeleton: SkeletonComponent = ({ rootProps }) => {
   const styles = useStyles2(getStyles);
-  const isList = displayMode === PluginListDisplayMode.List;
 
   return (
-    <div className={cx(styles.container, { [styles.list]: isList })} {...rootProps}>
+    <div className={cx(styles.container)} {...rootProps}>
       <Skeleton
         containerClassName={cx(
           styles.pluginLogo,
@@ -107,27 +101,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
 
       '&:hover': {
         background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
-      },
-    }),
-    list: css({
-      rowGap: 0,
-
-      '> img': {
-        alignSelf: 'start',
-      },
-
-      '> .plugin-content': {
-        minHeight: 0,
-        gridArea: '2 / 2 / 4 / 3',
-
-        '> p': {
-          margin: theme.spacing(0, 0, 0.5, 0),
-        },
-      },
-
-      '> .plugin-name': {
-        alignSelf: 'center',
-        gridArea: '1 / 2 / 2 / 3',
       },
     }),
     pluginType: css({

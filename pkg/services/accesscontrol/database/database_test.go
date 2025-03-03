@@ -3,20 +3,17 @@ package database_test
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	rs "github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -149,17 +146,6 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Len(t, permissions, tt.expected)
-
-			policies, err := database.GetAccessPolicies(context.Background(), user.OrgID, sql.GetSqlxSession(),
-				func(ctx context.Context, orgID int64, scope string) ([]string, error) {
-					return strings.Split(scope, ":"), nil
-				})
-			require.NoError(t, err)
-			assert.Len(t, policies, tt.policyCount)
-
-			for idx, p := range policies {
-				fmt.Printf("POLICIES[%d] %+v\n", idx, p.Spec)
-			}
 		})
 	}
 }
@@ -402,15 +388,15 @@ func createUserAndTeam(t *testing.T, store db.DB, userSrv user.Service, teamSvc 
 	})
 	require.NoError(t, err)
 
-	team, err := teamSvc.CreateTeam(context.Background(), "team", "", orgID)
+	createdTeam, err := teamSvc.CreateTeam(context.Background(), "team", "", orgID)
 	require.NoError(t, err)
 
 	err = store.WithDbSession(context.Background(), func(sess *db.Session) error {
-		return teamimpl.AddOrUpdateTeamMemberHook(sess, user.ID, orgID, team.ID, false, dashboardaccess.PERMISSION_VIEW)
+		return teamimpl.AddOrUpdateTeamMemberHook(sess, user.ID, orgID, createdTeam.ID, false, team.PermissionTypeMember)
 	})
 	require.NoError(t, err)
 
-	return user, team
+	return user, createdTeam
 }
 
 type helperServices struct {
@@ -452,11 +438,11 @@ func createUsersAndTeams(t *testing.T, store db.DB, svcs helperServices, orgID i
 			continue
 		}
 
-		team, err := svcs.teamSvc.CreateTeam(context.Background(), fmt.Sprintf("team%v", i+1), "", orgID)
+		createdTeam, err := svcs.teamSvc.CreateTeam(context.Background(), fmt.Sprintf("team%v", i+1), "", orgID)
 		require.NoError(t, err)
 
 		err = store.WithDbSession(context.Background(), func(sess *db.Session) error {
-			return teamimpl.AddOrUpdateTeamMemberHook(sess, user.ID, orgID, team.ID, false, dashboardaccess.PERMISSION_VIEW)
+			return teamimpl.AddOrUpdateTeamMemberHook(sess, user.ID, orgID, createdTeam.ID, false, team.PermissionTypeMember)
 		})
 		require.NoError(t, err)
 
@@ -464,14 +450,14 @@ func createUsersAndTeams(t *testing.T, store db.DB, svcs helperServices, orgID i
 			&org.UpdateOrgUserCommand{Role: users[i].orgRole, OrgID: orgID, UserID: user.ID})
 		require.NoError(t, err)
 
-		res = append(res, dbUser{userID: user.ID, teamID: team.ID})
+		res = append(res, dbUser{userID: user.ID, teamID: createdTeam.ID})
 	}
 
 	return res
 }
 
-func setupTestEnv(t testing.TB) (*database.AccessControlStore, rs.Store, user.Service, team.Service, org.Service, *sqlstore.ReplStore) {
-	sql, cfg := db.InitTestReplDBWithCfg(t)
+func setupTestEnv(t testing.TB) (*database.AccessControlStore, rs.Store, user.Service, team.Service, org.Service, *sqlstore.SQLStore) {
+	sql, cfg := db.InitTestDBWithCfg(t)
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgRole = "Viewer"
 	cfg.AutoAssignOrgId = 1
@@ -626,7 +612,7 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 			},
 			options: accesscontrol.SearchOptions{
 				ActionPrefix: "teams:",
-				TypedID:      identity.NewTypedID(identity.TypeUser, 1),
+				UserID:       1,
 			},
 			wantPerm: map[int64][]accesscontrol.Permission{
 				1: {{Action: "teams:read", Scope: "teams:id:1"}, {Action: "teams:read", Scope: "teams:id:10"},

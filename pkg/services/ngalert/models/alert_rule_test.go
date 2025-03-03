@@ -15,6 +15,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/util"
@@ -137,6 +138,7 @@ func TestSetDashboardAndPanelFromAnnotations(t *testing.T) {
 		name                 string
 		annotations          map[string]string
 		expectedError        error
+		expectedErrContains  string
 		expectedDashboardUID string
 		expectedPanelID      int64
 	}{
@@ -148,41 +150,42 @@ func TestSetDashboardAndPanelFromAnnotations(t *testing.T) {
 			expectedPanelID:      -1,
 		},
 		{
-			name:        "dashboardUID is not present",
-			annotations: map[string]string{PanelIDAnnotation: "1234567890"},
-			expectedError: fmt.Errorf("both annotations %s and %s must be specified",
-				DashboardUIDAnnotation, PanelIDAnnotation),
+			name:                 "dashboardUID is not present",
+			annotations:          map[string]string{PanelIDAnnotation: "1234567890"},
+			expectedError:        ErrAlertRuleFailedValidation,
+			expectedErrContains:  fmt.Sprintf("%s and %s", DashboardUIDAnnotation, PanelIDAnnotation),
 			expectedDashboardUID: "",
 			expectedPanelID:      -1,
 		},
 		{
-			name:        "dashboardUID is present but empty",
-			annotations: map[string]string{DashboardUIDAnnotation: "", PanelIDAnnotation: "1234567890"},
-			expectedError: fmt.Errorf("both annotations %s and %s must be specified",
-				DashboardUIDAnnotation, PanelIDAnnotation),
+			name:                 "dashboardUID is present but empty",
+			annotations:          map[string]string{DashboardUIDAnnotation: "", PanelIDAnnotation: "1234567890"},
+			expectedError:        ErrAlertRuleFailedValidation,
+			expectedErrContains:  fmt.Sprintf("%s and %s", DashboardUIDAnnotation, PanelIDAnnotation),
 			expectedDashboardUID: "",
 			expectedPanelID:      -1,
 		},
 		{
-			name:        "panelID is not present",
-			annotations: map[string]string{DashboardUIDAnnotation: "cKy7f6Hk"},
-			expectedError: fmt.Errorf("both annotations %s and %s must be specified",
-				DashboardUIDAnnotation, PanelIDAnnotation),
+			name:                 "panelID is not present",
+			annotations:          map[string]string{DashboardUIDAnnotation: "cKy7f6Hk"},
+			expectedError:        ErrAlertRuleFailedValidation,
+			expectedErrContains:  fmt.Sprintf("%s and %s", DashboardUIDAnnotation, PanelIDAnnotation),
 			expectedDashboardUID: "",
 			expectedPanelID:      -1,
 		},
 		{
-			name:        "panelID is present but empty",
-			annotations: map[string]string{DashboardUIDAnnotation: "cKy7f6Hk", PanelIDAnnotation: ""},
-			expectedError: fmt.Errorf("both annotations %s and %s must be specified",
-				DashboardUIDAnnotation, PanelIDAnnotation),
+			name:                 "panelID is present but empty",
+			annotations:          map[string]string{DashboardUIDAnnotation: "cKy7f6Hk", PanelIDAnnotation: ""},
+			expectedError:        ErrAlertRuleFailedValidation,
+			expectedErrContains:  fmt.Sprintf("%s and %s", DashboardUIDAnnotation, PanelIDAnnotation),
 			expectedDashboardUID: "",
 			expectedPanelID:      -1,
 		},
 		{
 			name:                 "dashboardUID and panelID are present but panelID is not a correct int64",
 			annotations:          map[string]string{DashboardUIDAnnotation: "cKy7f6Hk", PanelIDAnnotation: "fgh"},
-			expectedError:        fmt.Errorf("annotation %s must be a valid integer Panel ID", PanelIDAnnotation),
+			expectedError:        ErrAlertRuleFailedValidation,
+			expectedErrContains:  PanelIDAnnotation,
 			expectedDashboardUID: "",
 			expectedPanelID:      -1,
 		},
@@ -203,7 +206,10 @@ func TestSetDashboardAndPanelFromAnnotations(t *testing.T) {
 			).Generate()
 			err := rule.SetDashboardAndPanelFromAnnotations()
 
-			require.Equal(t, tc.expectedError, err)
+			require.ErrorIs(t, err, tc.expectedError)
+			if tc.expectedErrContains != "" {
+				require.ErrorContains(t, err, tc.expectedErrContains)
+			}
 			require.Equal(t, tc.expectedDashboardUID, rule.GetDashboardUID())
 			require.Equal(t, tc.expectedPanelID, rule.GetPanelID())
 		})
@@ -253,10 +259,18 @@ func TestPatchPartialAlertRule(t *testing.T) {
 					r.IsPaused = true
 				},
 			},
+			{
+				name: "No metadata",
+				mutator: func(r *AlertRuleWithOptionals) {
+					r.Metadata = AlertRuleMetadata{}
+					r.HasEditorSettings = false
+				},
+			},
 		}
 
 		gen := RuleGen.With(
-			RuleMuts.WithFor(time.Duration(rand.Int63n(1000) + 1)),
+			RuleMuts.WithFor(time.Duration(rand.Int63n(1000)+1)),
+			RuleMuts.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
 		)
 
 		for _, testCase := range testCases {
@@ -394,7 +408,7 @@ func TestDiff(t *testing.T) {
 		rule1 := RuleGen.GenerateRef()
 		rule2 := RuleGen.GenerateRef()
 
-		diffs := rule1.Diff(rule2, "Data", "Annotations", "Labels", "NotificationSettings") // these fields will be tested separately
+		diffs := rule1.Diff(rule2, "Data", "Annotations", "Labels", "NotificationSettings", "Metadata") // these fields will be tested separately
 
 		difCnt := 0
 		if rule1.ID != rule2.ID {
@@ -404,6 +418,15 @@ func TestDiff(t *testing.T) {
 			assert.Equal(t, rule2.ID, diff[0].Right.Int())
 			difCnt++
 		}
+
+		if rule1.GUID != rule2.GUID {
+			diff := diffs.GetDiffsForField("GUID")
+			assert.Len(t, diff, 1)
+			assert.Equal(t, rule1.GUID, diff[0].Left.String())
+			assert.Equal(t, rule2.GUID, diff[0].Right.String())
+			difCnt++
+		}
+
 		if rule1.OrgID != rule2.OrgID {
 			diff := diffs.GetDiffsForField("OrgID")
 			assert.Len(t, diff, 1)
@@ -430,6 +453,11 @@ func TestDiff(t *testing.T) {
 			assert.Len(t, diff, 1)
 			assert.Equal(t, rule1.Updated, diff[0].Left.Interface())
 			assert.Equal(t, rule2.Updated, diff[0].Right.Interface())
+			difCnt++
+		}
+		if rule1.UpdatedBy != rule2.UpdatedBy {
+			diff := diffs.GetDiffsForField("UpdatedBy")
+			assert.Len(t, diff, 1)
 			difCnt++
 		}
 		if rule1.IntervalSeconds != rule2.IntervalSeconds {
@@ -821,6 +849,39 @@ func TestDiff(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("should detect changes in Metadata.EditorSettings", func(t *testing.T) {
+		rule1 := RuleGen.With(RuleGen.WithMetadata(AlertRuleMetadata{EditorSettings: EditorSettings{
+			SimplifiedQueryAndExpressionsSection: false,
+			SimplifiedNotificationsSection:       false,
+		}})).GenerateRef()
+
+		rule2 := CopyRule(rule1, RuleGen.WithMetadata(AlertRuleMetadata{EditorSettings: EditorSettings{
+			SimplifiedQueryAndExpressionsSection: true,
+			SimplifiedNotificationsSection:       true,
+		}}))
+
+		diff := rule1.Diff(rule2)
+		assert.ElementsMatch(t, []string{
+			"Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection",
+			"Metadata.EditorSettings.SimplifiedNotificationsSection",
+		}, diff.Paths())
+	})
+
+	t.Run("should detect changes in Metadata.PrometheusStyleRule", func(t *testing.T) {
+		rule1 := RuleGen.With(RuleGen.WithMetadata(AlertRuleMetadata{PrometheusStyleRule: &PrometheusStyleRule{
+			OriginalRuleDefinition: "data",
+		}})).GenerateRef()
+
+		rule2 := CopyRule(rule1, RuleGen.WithMetadata(AlertRuleMetadata{PrometheusStyleRule: &PrometheusStyleRule{
+			OriginalRuleDefinition: "updated data",
+		}}))
+
+		diff := rule1.Diff(rule2)
+		assert.ElementsMatch(t, []string{
+			"Metadata.PrometheusStyleRule.OriginalRuleDefinition",
+		}, diff.Paths())
+	})
 }
 
 func TestSortByGroupIndex(t *testing.T) {
@@ -876,4 +937,83 @@ func TestTimeRangeYAML(t *testing.T) {
 	serialized, err := yaml.Marshal(rtr)
 	require.NoError(t, err)
 	require.Equal(t, yamlRaw, string(serialized))
+}
+
+func TestAlertRuleGetKey(t *testing.T) {
+	t.Run("should return correct key", func(t *testing.T) {
+		rule := RuleGen.GenerateRef()
+		expected := AlertRuleKey{
+			OrgID: rule.OrgID,
+			UID:   rule.UID,
+		}
+		require.Equal(t, expected, rule.GetKey())
+	})
+}
+
+func TestAlertRuleGetKeyWithGroup(t *testing.T) {
+	t.Run("should return correct key", func(t *testing.T) {
+		rule := RuleGen.With(
+			RuleMuts.WithUniqueGroupIndex(),
+		).GenerateRef()
+		expected := AlertRuleKeyWithGroup{
+			AlertRuleKey: rule.GetKey(),
+			RuleGroup:    rule.RuleGroup,
+		}
+		require.Equal(t, expected, rule.GetKeyWithGroup())
+	})
+}
+
+func TestAlertRuleCopy(t *testing.T) {
+	t.Run("should return a copy of the rule", func(t *testing.T) {
+		for i := 0; i < 100; i++ {
+			rule := RuleGen.GenerateRef()
+			copied := rule.Copy()
+			require.Empty(t, rule.Diff(copied))
+		}
+	})
+
+	t.Run("should create a copy of the prometheus rule definition from the metadata", func(t *testing.T) {
+		rule := RuleGen.With(RuleGen.WithMetadata(AlertRuleMetadata{PrometheusStyleRule: &PrometheusStyleRule{
+			OriginalRuleDefinition: "data",
+		}})).GenerateRef()
+		copied := rule.Copy()
+		require.NotSame(t, rule.Metadata.PrometheusStyleRule, copied.Metadata.PrometheusStyleRule)
+	})
+}
+
+// This test makes sure the default generator
+func TestGeneratorFillsAllFields(t *testing.T) {
+	ignoredFields := map[string]struct{}{
+		"ID":       {},
+		"IsPaused": {},
+		"Record":   {},
+	}
+
+	tpe := reflect.TypeOf(AlertRule{})
+	fields := make(map[string]struct{}, tpe.NumField())
+	for i := 0; i < tpe.NumField(); i++ {
+		if _, ok := ignoredFields[tpe.Field(i).Name]; ok {
+			continue
+		}
+		fields[tpe.Field(i).Name] = struct{}{}
+	}
+
+	for i := 0; i < 1000; i++ {
+		rule := RuleGen.Generate()
+		v := reflect.ValueOf(rule)
+
+		for j := 0; j < tpe.NumField(); j++ {
+			field := tpe.Field(j)
+			value := v.Field(j)
+			if !value.IsValid() || value.Kind() == reflect.Ptr && value.IsNil() || value.IsZero() {
+				continue
+			}
+			delete(fields, field.Name)
+			if len(fields) == 0 {
+				return
+			}
+		}
+	}
+
+	require.FailNow(t, "AlertRule generator does not populate fields", "skipped fields: %v", maps.Keys(fields))
 }

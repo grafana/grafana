@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
@@ -36,11 +36,10 @@ var (
 )
 
 type accessControlGuardianTestCase struct {
-	desc           string
-	dashboard      *dashboards.Dashboard
-	permissions    []accesscontrol.Permission
-	viewersCanEdit bool
-	expected       bool
+	desc        string
+	dashboard   *dashboards.Dashboard
+	permissions []accesscontrol.Permission
+	expected    bool
 }
 
 func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
@@ -258,18 +257,6 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc:      "should be able to edit dashboard with read action when viewer_can_edit is true",
-			dashboard: dashboard,
-			permissions: []accesscontrol.Permission{
-				{
-					Action: dashboards.ActionDashboardsRead,
-					Scope:  "dashboards:uid:1",
-				},
-			},
-			viewersCanEdit: true,
-			expected:       true,
-		},
-		{
 			desc:      "should not be able to edit folder with folder write and dashboard wildcard scope",
 			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
@@ -324,24 +311,11 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 			},
 			expected: false,
 		},
-		{
-			desc:      "should be able to edit folder with folder read action when viewer_can_edit is true",
-			dashboard: fldr,
-			permissions: []accesscontrol.Permission{
-				{
-					Action: dashboards.ActionFoldersRead,
-					Scope:  folderUIDScope,
-				},
-			},
-			viewersCanEdit: true,
-			expected:       true,
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			cfg := setting.NewCfg()
-			cfg.ViewersCanEdit = tt.viewersCanEdit
 			guardian := setupAccessControlGuardianTest(t, tt.dashboard, tt.permissions, cfg)
 
 			can, err := guardian.CanEdit()
@@ -957,12 +931,12 @@ func setupAccessControlGuardianTest(
 	fakeDashboardService := dashboards.NewFakeDashboardService(t)
 	fakeDashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Maybe().Return(d, nil)
 
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	folderSvc := foldertest.NewFakeService()
 
 	folderStore := foldertest.NewFakeFolderStore(t)
 
-	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(folderStore, fakeDashboardService, folderSvc))
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(fakeDashboardService, folderSvc))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(folderSvc))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, folderSvc))
 
@@ -977,7 +951,7 @@ func setupAccessControlGuardianTest(
 		userPermissions[orgID][p.Action] = append(userPermissions[orgID][p.Action], p.Scope)
 	}
 
-	g, err := NewAccessControlDashboardGuardianByDashboard(context.Background(), cfg, d, &user.SignedInUser{OrgID: orgID, Permissions: userPermissions}, ac, fakeDashboardService)
+	g, err := NewAccessControlDashboardGuardianByDashboard(context.Background(), cfg, d, &user.SignedInUser{OrgID: orgID, Permissions: userPermissions}, ac, fakeDashboardService, folderSvc, log.NewNopLogger())
 	require.NoError(t, err)
 	return g
 }

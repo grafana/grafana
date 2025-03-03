@@ -2,12 +2,13 @@ package annotationsimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-
 	"github.com/grafana/dskit/concurrency"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 )
@@ -31,7 +32,7 @@ func (c *CompositeStore) Type() string {
 }
 
 // Get returns annotations from all stores, and combines the results.
-func (c *CompositeStore) Get(ctx context.Context, query *annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
+func (c *CompositeStore) Get(ctx context.Context, query annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
 	itemCh := make(chan []*annotations.ItemDTO, len(c.readers))
 
 	err := concurrency.ForEachJob(ctx, len(c.readers), len(c.readers), func(ctx context.Context, i int) (err error) {
@@ -56,7 +57,7 @@ func (c *CompositeStore) Get(ctx context.Context, query *annotations.ItemQuery, 
 }
 
 // GetTags returns tags from all stores, and combines the results.
-func (c *CompositeStore) GetTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+func (c *CompositeStore) GetTags(ctx context.Context, query annotations.TagsQuery) (annotations.FindTagsResult, error) {
 	resCh := make(chan annotations.FindTagsResult, len(c.readers))
 
 	err := concurrency.ForEachJob(ctx, len(c.readers), len(c.readers), func(ctx context.Context, i int) (err error) {
@@ -88,7 +89,7 @@ func handleJobPanic(logger log.Logger, storeType string, jobErr *error) {
 		errMsg := "concurrent job panic"
 
 		if jobErr != nil {
-			err := fmt.Errorf(errMsg)
+			err := errors.New(errMsg)
 			if panicErr, ok := r.(error); ok {
 				err = fmt.Errorf("%s: %w", errMsg, panicErr)
 			}

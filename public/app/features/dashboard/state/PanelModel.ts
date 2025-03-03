@@ -380,6 +380,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       datasource: this.datasource,
       queries: this.targets,
       panelId: this.id,
+      panelName: this.title,
       panelPluginId: this.type,
       dashboardUID: dashboardUID,
       timezone: dashboardTimezone,

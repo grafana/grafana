@@ -9,21 +9,19 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/idtest"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func Test_ProvideService(t *testing.T) {
-	t.Run("should register post auth hook when feature flag is enabled", func(t *testing.T) {
-		features := featuremgmt.WithFeatures(featuremgmt.FlagIdForwarding)
-
+	t.Run("should register post auth hook", func(t *testing.T) {
 		var hookRegistered bool
 		authnService := &authntest.MockService{
 			RegisterPostAuthHookFunc: func(_ authn.PostAuthHookFn, _ uint) {
@@ -31,27 +29,13 @@ func Test_ProvideService(t *testing.T) {
 			},
 		}
 
-		_ = ProvideService(setting.NewCfg(), nil, nil, features, authnService, nil)
+		_ = ProvideService(setting.NewCfg(), nil, nil, authnService, nil)
 		assert.True(t, hookRegistered)
-	})
-
-	t.Run("should not register post auth hook when feature flag is disabled", func(t *testing.T) {
-		features := featuremgmt.WithFeatures()
-
-		var hookRegistered bool
-		authnService := &authntest.MockService{
-			RegisterPostAuthHookFunc: func(_ authn.PostAuthHookFn, _ uint) {
-				hookRegistered = true
-			},
-		}
-
-		_ = ProvideService(setting.NewCfg(), nil, nil, features, authnService, nil)
-		assert.False(t, hookRegistered)
 	})
 }
 
 func TestService_SignIdentity(t *testing.T) {
-	signer := &idtest.MockSigner{
+	signer := &idtest.FakeSigner{
 		SignIDTokenFn: func(_ context.Context, claims *auth.IDClaims) (string, error) {
 			key := []byte("key")
 			s, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS256, Key: key}, nil)
@@ -67,10 +51,9 @@ func TestService_SignIdentity(t *testing.T) {
 	t.Run("should sign identity", func(t *testing.T) {
 		s := ProvideService(
 			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
-			featuremgmt.WithFeatures(featuremgmt.FlagIdForwarding),
 			&authntest.FakeService{}, nil,
 		)
-		token, _, err := s.SignIdentity(context.Background(), &authn.Identity{ID: identity.MustParseTypedID("user:1")})
+		token, _, err := s.SignIdentity(context.Background(), &authn.Identity{ID: "1", Type: claims.TypeUser})
 		require.NoError(t, err)
 		require.NotEmpty(t, token)
 	})
@@ -78,41 +61,75 @@ func TestService_SignIdentity(t *testing.T) {
 	t.Run("should sign identity with authenticated by if user is externally authenticated", func(t *testing.T) {
 		s := ProvideService(
 			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
-			featuremgmt.WithFeatures(featuremgmt.FlagIdForwarding),
 			&authntest.FakeService{}, nil,
 		)
 		token, _, err := s.SignIdentity(context.Background(), &authn.Identity{
-			ID:              identity.MustParseTypedID("user:1"),
+			ID:              "1",
+			Type:            claims.TypeUser,
 			AuthenticatedBy: login.AzureADAuthModule,
 			Login:           "U1",
-			UID:             identity.NewTypedIDString(identity.TypeUser, "edpu3nnt61se8e")})
+			UID:             "edpu3nnt61se8e",
+		})
 		require.NoError(t, err)
 
 		parsed, err := jwt.ParseSigned(token)
 		require.NoError(t, err)
 
-		claims := &auth.IDClaims{}
-		require.NoError(t, parsed.UnsafeClaimsWithoutVerification(&claims.Claims, &claims.Rest))
-		assert.Equal(t, login.AzureADAuthModule, claims.Rest.AuthenticatedBy)
-		assert.Equal(t, "U1", claims.Rest.Username)
-		assert.Equal(t, "user:edpu3nnt61se8e", claims.Rest.UID)
+		gotClaims := &auth.IDClaims{}
+		require.NoError(t, parsed.UnsafeClaimsWithoutVerification(&gotClaims.Claims, &gotClaims.Rest))
+		assert.Equal(t, login.AzureADAuthModule, gotClaims.Rest.AuthenticatedBy)
+		assert.Equal(t, "U1", gotClaims.Rest.Username)
+		assert.Equal(t, claims.TypeUser, gotClaims.Rest.Type)
+		assert.Equal(t, "edpu3nnt61se8e", gotClaims.Rest.Identifier)
 	})
 
 	t.Run("should sign identity with authenticated by if user is externally authenticated", func(t *testing.T) {
 		s := ProvideService(
 			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
-			featuremgmt.WithFeatures(featuremgmt.FlagIdForwarding),
 			&authntest.FakeService{}, nil,
 		)
 		_, gotClaims, err := s.SignIdentity(context.Background(), &authn.Identity{
-			ID:              identity.MustParseTypedID("user:1"),
+			ID:              "1",
+			Type:            claims.TypeUser,
 			AuthenticatedBy: login.AzureADAuthModule,
 			Login:           "U1",
-			UID:             identity.NewTypedIDString(identity.TypeUser, "edpu3nnt61se8e")})
+			UID:             "edpu3nnt61se8e",
+		})
 		require.NoError(t, err)
 
 		assert.Equal(t, login.AzureADAuthModule, gotClaims.Rest.AuthenticatedBy)
 		assert.Equal(t, "U1", gotClaims.Rest.Username)
-		assert.Equal(t, "user:edpu3nnt61se8e", gotClaims.Rest.UID)
+		assert.Equal(t, claims.TypeUser, gotClaims.Rest.Type)
+		assert.Equal(t, "edpu3nnt61se8e", gotClaims.Rest.Identifier)
+	})
+
+	t.Run("should sign new token if org role has changed", func(t *testing.T) {
+		s := ProvideService(
+			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
+			&authntest.FakeService{}, nil,
+		)
+
+		ident := &authn.Identity{
+			ID:              "1",
+			Type:            claims.TypeUser,
+			AuthenticatedBy: login.AzureADAuthModule,
+			Login:           "U1",
+			UID:             "edpu3nnt61se8e",
+			OrgID:           1,
+			OrgRoles:        map[int64]org.RoleType{1: org.RoleAdmin},
+		}
+
+		first, _, err := s.SignIdentity(context.Background(), ident)
+		require.NoError(t, err)
+
+		second, _, err := s.SignIdentity(context.Background(), ident)
+		require.NoError(t, err)
+
+		assert.Equal(t, first, second)
+
+		ident.OrgRoles[1] = org.RoleEditor
+		third, _, err := s.SignIdentity(context.Background(), ident)
+		require.NoError(t, err)
+		assert.NotEqual(t, first, third)
 	})
 }

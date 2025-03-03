@@ -3,27 +3,29 @@ import * as React from 'react';
 import uPlot from 'uplot';
 
 import {
+  ActionModel,
   DataFrameType,
   Field,
   FieldType,
   formattedValueToString,
   getFieldDisplayName,
+  InterpolateFunction,
   LinkModel,
   PanelData,
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema';
-import { TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
+import { TooltipDisplayMode, useTheme2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
+import { VizTooltipWrapper } from '@grafana/ui/src/components/VizTooltip/VizTooltipWrapper';
 import { ColorIndicator, ColorPlacement, VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
-import { getDataLinks } from '../status-history/utils';
-import { getStyles } from '../timeseries/TimeSeriesTooltip';
+import { getDataLinks, getFieldActions } from '../status-history/utils';
 import { isTooltipScrollable } from '../timeseries/utils';
 
 import { HeatmapData } from './fields';
@@ -43,6 +45,7 @@ interface HeatmapTooltipProps {
   annotate?: () => void;
   maxHeight?: number;
   maxWidth?: number;
+  replaceVariables: InterpolateFunction;
 }
 
 export const HeatmapTooltip = (props: HeatmapTooltipProps) => {
@@ -53,6 +56,7 @@ export const HeatmapTooltip = (props: HeatmapTooltipProps) => {
         rowIndex={props.dataIdxs[2]}
         header={'Exemplar'}
         padding={8}
+        maxHeight={props.maxHeight}
       />
     );
   }
@@ -73,6 +77,7 @@ const HeatmapHoverCell = ({
   annotate,
   maxHeight,
   maxWidth,
+  replaceVariables,
 }: HeatmapTooltipProps) => {
   const index = dataIdxs[1]!;
   const data = dataRef.current;
@@ -291,6 +296,7 @@ const HeatmapHoverCell = ({
 
   if (isPinned) {
     let links: Array<LinkModel<Field>> = [];
+    let actions: Array<ActionModel<Field>> = [];
 
     const linksField = data.series?.fields[yValueIdx + 1];
 
@@ -301,9 +307,11 @@ const HeatmapHoverCell = ({
       if (visible && hasLinks) {
         links = getDataLinks(linksField, xValueIdx);
       }
+
+      actions = getFieldActions(data.series!, linksField, replaceVariables, xValueIdx);
     }
 
-    footer = <VizTooltipFooter dataLinks={links} annotate={annotate} />;
+    footer = <VizTooltipFooter dataLinks={links} annotate={annotate} actions={actions} />;
   }
 
   let can = useRef<HTMLCanvasElement>(null);
@@ -360,10 +368,8 @@ const HeatmapHoverCell = ({
     }
   }
 
-  const styles = useStyles2(getStyles);
-
   return (
-    <div className={styles.wrapper}>
+    <VizTooltipWrapper>
       <VizTooltipHeader item={headerItem} isPinned={isPinned} />
       <VizTooltipContent
         items={contentItems}
@@ -378,6 +384,6 @@ const HeatmapHoverCell = ({
         ))}
       </VizTooltipContent>
       {footer}
-    </div>
+    </VizTooltipWrapper>
   );
 };

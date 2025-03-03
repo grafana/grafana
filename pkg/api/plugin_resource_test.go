@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	pluginClient "github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/caching"
@@ -51,7 +50,7 @@ func TestCallResource(t *testing.T) {
 	cfg.Azure = &azsettings.AzureSettings{}
 
 	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), nil, &cloudwatch.CloudWatchService{}, nil, nil, nil, nil,
-		nil, nil, nil, nil, testdatasource.ProvideService(), nil, nil, nil, nil, nil, nil)
+		nil, nil, nil, nil, testdatasource.ProvideService(), nil, nil, nil, nil, nil, nil, nil, nil)
 
 	testCtx := pluginsintegration.CreateIntegrationTestCtx(t, cfg, coreRegistry)
 
@@ -172,7 +171,7 @@ func TestCallResource(t *testing.T) {
 		},
 	}))
 	middlewares := pluginsintegration.CreateMiddlewares(cfg, &oauthtokentest.Service{}, tracing.InitializeTracerForTest(), &caching.OSSCachingService{}, featuremgmt.WithFeatures(), prometheus.DefaultRegisterer, pluginRegistry)
-	pc, err := pluginClient.NewDecorator(&fakes.FakePluginClient{
+	pc, err := backend.HandlerFromMiddlewares(&fakes.FakePluginClient{
 		CallResourceHandlerFunc: backend.CallResourceHandlerFunc(func(ctx context.Context,
 			req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 			return errors.New("something went wrong")
@@ -199,12 +198,15 @@ func TestCallResource(t *testing.T) {
 		resp, err := srv.SendJSON(req)
 		require.NoError(t, err)
 
-		body := new(strings.Builder)
-		_, err = io.Copy(body, resp.Body)
+		bodyBytes, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
-		expectedBody := `{ "message": "Failed to call resource", "traceID": "" }`
-		require.JSONEq(t, expectedBody, body.String())
+		var responseBody struct {
+			Message string `json:"message"`
+		}
+		err = json.Unmarshal(bodyBytes, &responseBody)
+		require.NoError(t, err)
+		require.Equal(t, responseBody.Message, "Failed to call resource")
 		require.NoError(t, resp.Body.Close())
 		require.Equal(t, 500, resp.StatusCode)
 	})

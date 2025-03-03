@@ -42,32 +42,32 @@ export const DocsCard = ({ card }: Props) => {
 
 const getStyles = (theme: GrafanaTheme2, complete: boolean) => {
   return {
-    card: css`
-      ${cardStyle(theme, complete)}
+    card: css({
+      ...cardStyle(theme, complete),
 
-      min-width: 230px;
+      minWidth: '230px',
 
-      ${theme.breakpoints.down('md')} {
-        min-width: 192px;
-      }
-    `,
-    heading: css`
-      text-transform: uppercase;
-      color: ${complete ? theme.v1.palette.blue95 : '#FFB357'};
-      margin-bottom: ${theme.spacing(2)};
-    `,
-    title: css`
-      margin-bottom: ${theme.spacing(2)};
-    `,
-    url: css`
-      display: inline-block;
-    `,
-    learnUrl: css`
-      border-top: 1px solid ${theme.colors.border.weak};
-      position: absolute;
-      bottom: 0;
-      padding: 8px 16px;
-      width: 100%;
-    `,
+      [theme.breakpoints.down('md')]: {
+        minWidth: '192px',
+      },
+    }),
+    heading: css({
+      textTransform: 'uppercase',
+      color: complete ? theme.v1.palette.blue95 : '#FFB357',
+      marginBottom: theme.spacing(2),
+    }),
+    title: css({
+      marginBottom: theme.spacing(2),
+    }),
+    url: css({
+      display: 'inline-block',
+    }),
+    learnUrl: css({
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      position: 'absolute',
+      bottom: 0,
+      padding: theme.spacing(1, 2),
+      width: '100%',
+    }),
   };
 };

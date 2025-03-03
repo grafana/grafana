@@ -9,9 +9,9 @@ import { useAlertingHomePageExtensions } from '../plugins/useAlertingHomePageExt
 export function PluginIntegrations() {
   const styles = useStyles2(getStyles);
 
-  const { extensions } = useAlertingHomePageExtensions();
+  const { components } = useAlertingHomePageExtensions();
 
-  if (extensions.length === 0) {
+  if (components.length === 0) {
     return null;
   }
 
@@ -21,9 +21,9 @@ export function PluginIntegrations() {
         Speed up your alerts creation now by using one of our tailored apps
       </Text>
       <Stack gap={2} wrap="wrap" direction="row">
-        {extensions.map((extension) => (
-          <div key={extension.id} className={styles.box}>
-            <extension.component />
+        {components.map((Component, i) => (
+          <div key={i} className={styles.box}>
+            <Component />
           </div>
         ))}
       </Stack>

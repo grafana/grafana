@@ -78,7 +78,7 @@ func parseRedisConnStr(connStr string) (*redis.Options, error) {
 	return options, nil
 }
 
-func newRedisStorage(opts *setting.RemoteCacheOptions) (*redisStorage, error) {
+func newRedisStorage(opts *setting.RemoteCacheSettings) (*redisStorage, error) {
 	opt, err := parseRedisConnStr(opts.ConnStr)
 	if err != nil {
 		return nil, err
@@ -109,13 +109,4 @@ func (s *redisStorage) Get(ctx context.Context, key string) ([]byte, error) {
 func (s *redisStorage) Delete(ctx context.Context, key string) error {
 	cmd := s.c.Del(ctx, key)
 	return cmd.Err()
-}
-
-func (s *redisStorage) Count(ctx context.Context, prefix string) (int64, error) {
-	cmd := s.c.Keys(ctx, prefix+"*")
-	if cmd.Err() != nil {
-		return 0, cmd.Err()
-	}
-
-	return int64(len(cmd.Val())), nil
 }

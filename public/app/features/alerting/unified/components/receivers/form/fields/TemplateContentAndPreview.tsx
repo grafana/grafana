@@ -35,6 +35,8 @@ export function TemplateContentAndPreview({
   const { data, error } = usePreviewTemplate(templateContent, templateName, payload, setPayloadFormatError);
   const previewToRender = getPreviewResults(error, payloadFormatError, data);
 
+  const templatePreviewId = 'template-preview';
+
   return (
     <div className={cx(className, styles.mainContainer)}>
       <div className={styles.container}>
@@ -58,9 +60,15 @@ export function TemplateContentAndPreview({
 
       {isGrafanaAlertManager && (
         <div className={styles.container}>
-          <EditorColumnHeader label="Preview with the default payload" />
+          <EditorColumnHeader id={templatePreviewId} label="Preview with the default payload" />
           <Box flex={1}>
-            <div className={styles.viewerContainer({ height: 'minHeight' })}>{previewToRender}</div>
+            <div
+              role="presentation"
+              aria-describedby={templatePreviewId}
+              className={styles.viewerContainer({ height: 'minHeight' })}
+            >
+              {previewToRender}
+            </div>
           </Box>
         </div>
       )}

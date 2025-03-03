@@ -1,9 +1,10 @@
-import { render, renderHook, screen, within } from '@testing-library/react';
+import { renderHook, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { first, noop } from 'lodash';
-import { Router } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom-v5-compat';
+import { render } from 'test/test-utils';
 
-import { config, locationService } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import {
   AlertmanagerGroup,
@@ -14,7 +15,7 @@ import {
 import { ReceiversState } from 'app/types/alerting';
 
 import { useAlertmanagerAbilities } from '../../hooks/useAbilities';
-import { mockAlertGroup, mockAlertmanagerAlert, mockReceiversState } from '../../mocks';
+import { mockReceiversState } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
@@ -56,7 +57,8 @@ describe('Policy', () => {
 
     renderPolicy(
       <Policy
-        routeTree={routeTree}
+        receivers={[{ name: 'grafana-default-email' }]}
+        isDefaultPolicy
         currentRoute={routeTree}
         alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
         onEditPolicy={onEditPolicy}
@@ -78,7 +80,7 @@ describe('Policy', () => {
     // should be editable
     const editDefaultPolicy = screen.getByRole('menuitem', { name: 'Edit' });
     expect(editDefaultPolicy).toBeInTheDocument();
-    expect(editDefaultPolicy).not.toBeDisabled();
+    expect(editDefaultPolicy).toBeEnabled();
     await user.click(editDefaultPolicy);
     expect(onEditPolicy).toHaveBeenCalledWith(routeTree, true);
 
@@ -100,8 +102,9 @@ describe('Policy', () => {
     // for grouping
     expect(within(defaultPolicy).getByTestId('grouping')).toHaveTextContent('grafana_folder, alertname');
 
-    // no mute timings
+    // no timings
     expect(within(defaultPolicy).queryByTestId('mute-timings')).not.toBeInTheDocument();
+    expect(within(defaultPolicy).queryByTestId('active-timings')).not.toBeInTheDocument();
 
     // for timing options
     expect(within(defaultPolicy).getByTestId('timing-options')).toHaveTextContent(
@@ -118,8 +121,8 @@ describe('Policy', () => {
 
       // click "more actions" and check if we can delete
       await user.click(policy.getByTestId('more-actions'));
-      expect(screen.queryByRole('menuitem', { name: 'Edit' })).not.toBeDisabled();
-      expect(screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeDisabled();
+      expect(screen.queryByRole('menuitem', { name: 'Edit' })).toBeEnabled();
+      expect(screen.queryByRole('menuitem', { name: 'Delete' })).toBeEnabled();
 
       await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
       expect(onDeletePolicy).toHaveBeenCalled();
@@ -131,15 +134,17 @@ describe('Policy', () => {
     expect(within(firstPolicy).getByTestId('continue-matching')).toBeInTheDocument();
     // expect(within(firstPolicy).getByTestId('matching-instances')).toHaveTextContent('0instances');
     expect(within(firstPolicy).getByTestId('contact-point')).toHaveTextContent('provisioned-contact-point');
-    expect(within(firstPolicy).getByTestId('mute-timings')).toHaveTextContent('Muted whenmt-1');
-    expect(within(firstPolicy).getByTestId('inherited-properties')).toHaveTextContent('Inherited2 properties');
+    expect(within(firstPolicy).getByTestId('mute-timings')).toHaveTextContent('Muted when mt-1');
+    expect(within(firstPolicy).getByTestId('active-timings')).toHaveTextContent('Active when mt-2');
+    expect(within(firstPolicy).getByTestId('inherited-properties')).toHaveTextContent('Inherited4 properties');
 
     // second custom policy should be correct
     const secondPolicy = customPolicies[1];
     expect(within(secondPolicy).getByTestId('label-matchers')).toHaveTextContent(/^region \= EMEA$/);
     expect(within(secondPolicy).queryByTestId('continue-matching')).not.toBeInTheDocument();
     expect(within(secondPolicy).queryByTestId('mute-timings')).not.toBeInTheDocument();
-    expect(within(secondPolicy).getByTestId('inherited-properties')).toHaveTextContent('Inherited3 properties');
+    expect(within(secondPolicy).queryByTestId('active-timings')).not.toBeInTheDocument();
+    expect(within(secondPolicy).getByTestId('inherited-properties')).toHaveTextContent('Inherited5 properties');
 
     // third custom policy should be correct
     const thirdPolicy = customPolicies[2];
@@ -161,7 +166,7 @@ describe('Policy', () => {
 
     renderPolicy(
       <Policy
-        routeTree={routeTree}
+        isDefaultPolicy
         currentRoute={routeTree}
         alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
         onEditPolicy={onEditPolicy}
@@ -199,7 +204,7 @@ describe('Policy', () => {
 
     renderPolicy(
       <Policy
-        routeTree={routeTree}
+        isDefaultPolicy
         currentRoute={routeTree}
         alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
         onEditPolicy={onEditPolicy}
@@ -236,7 +241,7 @@ describe('Policy', () => {
 
     renderPolicy(
       <Policy
-        routeTree={routeTree}
+        isDefaultPolicy
         currentRoute={routeTree}
         alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
         onEditPolicy={onEditPolicy}
@@ -259,7 +264,6 @@ describe('Policy', () => {
     renderPolicy(
       <Policy
         readOnly
-        routeTree={routeTree}
         currentRoute={routeTree}
         alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
         onEditPolicy={noop}
@@ -278,22 +282,10 @@ describe('Policy', () => {
       routes: [{ id: '1', object_matchers: [['foo', eq, 'bar']] }],
     };
 
-    const matchingGroups: AlertmanagerGroup[] = [
-      mockAlertGroup({
-        labels: {},
-        alerts: [mockAlertmanagerAlert({ labels: { foo: 'bar' } }), mockAlertmanagerAlert({ labels: { foo: 'bar' } })],
-      }),
-      mockAlertGroup({
-        labels: {},
-        alerts: [mockAlertmanagerAlert({ labels: { bar: 'baz' } })],
-      }),
-    ];
-
     renderPolicy(
       <Policy
         readOnly
-        alertGroups={matchingGroups}
-        routeTree={routeTree}
+        isDefaultPolicy
         currentRoute={routeTree}
         alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
         onEditPolicy={noop}
@@ -321,7 +313,7 @@ describe('Policy', () => {
     renderPolicy(
       <Policy
         readOnly
-        routeTree={routeTree}
+        isDefaultPolicy
         currentRoute={routeTree}
         contactPointsState={receiversState}
         alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
@@ -341,11 +333,17 @@ describe('Policy', () => {
   });
 });
 
+// Doesn't matter which path the routes use, it just needs to match the initialEntries history entry to render the element
 const renderPolicy = (element: JSX.Element) =>
   render(
-    <Router history={locationService.getHistory()}>
-      <AlertmanagerProvider accessType="notification">{element}</AlertmanagerProvider>
-    </Router>
+    <Routes>
+      <Route path={'/'} element={<AlertmanagerProvider accessType="notification">{element}</AlertmanagerProvider>} />
+    </Routes>,
+    {
+      historyOptions: {
+        initialEntries: ['/'],
+      },
+    }
   );
 
 const eq = MatcherOperator.equal;
@@ -360,6 +358,7 @@ const mockRoutes: RouteWithID = {
       receiver: 'provisioned-contact-point',
       object_matchers: [['team', eq, 'operations']],
       mute_time_intervals: ['mt-1'],
+      active_time_intervals: ['mt-2'],
       continue: true,
       routes: [
         {
@@ -382,8 +381,8 @@ const mockRoutes: RouteWithID = {
     },
   ],
   group_wait: '30s',
-  group_interval: undefined,
-  repeat_interval: undefined,
+  group_interval: '5m',
+  repeat_interval: '4h',
 };
 
 describe('isAutoGeneratedRootAndSimplifiedEnabled', () => {

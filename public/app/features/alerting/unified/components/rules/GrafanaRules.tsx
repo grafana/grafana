@@ -40,7 +40,7 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
   const loading = prom.loading || ruler.loading;
   const hasResult = !!prom.result || !!ruler.result;
 
-  const wantsListView = queryParams['view'] === 'list';
+  const wantsListView = queryParams.view === 'list';
   const namespacesFormat = wantsListView ? flattenGrafanaManagedRules(namespaces) : namespaces;
 
   const groupsWithNamespaces = useCombinedGroupNamespace(namespacesFormat);
@@ -64,10 +64,13 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
       <div className={styles.sectionHeader}>
         <div className={styles.headerRow}>
           <Text element="h2" variant="h5">
-            <Trans i18nKey="alerting.grafana-rules.title">Grafana</Trans>
+            <Trans i18nKey="alerting.list-view.section.grafanaManaged.title">Grafana-managed</Trans>
           </Text>
           {loading ? (
-            <LoadingPlaceholder className={styles.loader} text={t('alerting.grafana-rules.loading', 'Loading...')} />
+            <LoadingPlaceholder
+              className={styles.loader}
+              text={t('alerting.list-view.section.grafanaManaged.loading', 'Loading...')}
+            />
           ) : (
             <div />
           )}
@@ -81,7 +84,7 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
                 onClick={toggleShowExportDrawer}
                 variant="secondary"
               >
-                <Trans i18nKey="alerting.grafana-rules.export-rules">Export rules</Trans>
+                <Trans i18nKey="alerting.list-view.section.grafanaManaged.export-rules">Export rules</Trans>
               </Button>
             )}
             {grafanaRecordingRulesEnabled && (
@@ -94,7 +97,7 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
                 tooltip="Create new Grafana-managed recording rule"
                 onClick={() => logInfo(LogMessages.grafanaRecording)}
               >
-                <Trans i18nKey="alerting.grafana-rules.new-recording-rule">New recording rule</Trans>
+                <Trans i18nKey="alerting.list-view.section.grafanaManaged.new-recording-rule">New recording rule</Trans>
               </LinkButton>
             )}
           </Stack>

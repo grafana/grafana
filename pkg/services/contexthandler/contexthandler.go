@@ -9,7 +9,9 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	claims "github.com/grafana/authlib/types"
 	authnClients "github.com/grafana/grafana/pkg/services/authn/clients"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -24,20 +26,20 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, authenticator authn.Authenticator,
+func ProvideService(cfg *setting.Cfg, authenticator authn.Authenticator, features featuremgmt.FeatureToggles,
 ) *ContextHandler {
 	return &ContextHandler{
-		Cfg:           cfg,
-		tracer:        tracer,
+		cfg:           cfg,
 		authenticator: authenticator,
+		features:      features,
 	}
 }
 
 // ContextHandler is a middleware.
 type ContextHandler struct {
-	Cfg           *setting.Cfg
-	tracer        tracing.Tracer
+	cfg           *setting.Cfg
 	authenticator authn.Authenticator
+	features      featuremgmt.FeatureToggles
 }
 
 type reqContextKey = ctxkey.Key
@@ -84,23 +86,25 @@ func CopyWithReqContext(ctx context.Context) context.Context {
 func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		_, span := h.tracer.Start(ctx, "Auth - Middleware")
+		// Don't modify context so that the auth middleware span doesn't get propagated as a parent elsewhere
+		_, span := tracing.Start(ctx, "Auth - Middleware")
 
 		reqContext := &contextmodel.ReqContext{
 			Context: web.FromContext(ctx),
 			SignedInUser: &user.SignedInUser{
 				Permissions: map[int64]map[string][]string{},
 			},
-			IsSignedIn:     false,
-			AllowAnonymous: false,
-			SkipDSCache:    false,
-			Logger:         log.New("context"),
+			IsSignedIn:                false,
+			AllowAnonymous:            false,
+			SkipDSCache:               false,
+			Logger:                    log.New("context"),
+			UseSessionStorageRedirect: h.features.IsEnabledGlobally(featuremgmt.FlagUseSessionStorageForRedirection),
 		}
 
 		// inject ReqContext in the context
 		ctx = context.WithValue(ctx, reqContextKey{}, reqContext)
 		// store list of possible auth header in context
-		ctx = WithAuthHTTPHeaders(ctx, h.Cfg)
+		ctx = WithAuthHTTPHeaders(ctx, h.cfg)
 		// Set the context for the http.Request.Context
 		// This modifies both r and reqContext.Req since they point to the same value
 		*reqContext.Req = *reqContext.Req.WithContext(ctx)
@@ -121,6 +125,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			reqContext.IsSignedIn = !reqContext.SignedInUser.IsAnonymous
 			reqContext.AllowAnonymous = reqContext.SignedInUser.IsAnonymous
 			reqContext.IsRenderCall = id.IsAuthenticatedBy(login.RenderModule)
+			ctx = identity.WithRequester(ctx, id)
 		}
 
 		h.excludeSensitiveHeadersFromRequest(reqContext.Req)
@@ -132,14 +137,13 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			attribute.Int64("userId", reqContext.UserID),
 		))
 
-		if h.Cfg.IDResponseHeaderEnabled && reqContext.SignedInUser != nil {
+		if h.cfg.IDResponseHeaderEnabled && reqContext.SignedInUser != nil {
 			reqContext.Resp.Before(h.addIDHeaderEndOfRequestFunc(reqContext.SignedInUser))
 		}
 
 		// End the span to make next handlers not wrapped within middleware span
 		span.End()
-
-		next.ServeHTTP(w, r.WithContext(identity.WithRequester(ctx, id)))
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
@@ -154,22 +158,21 @@ func (h *ContextHandler) addIDHeaderEndOfRequestFunc(ident identity.Requester) w
 			return
 		}
 
-		namespace, id := ident.GetTypedID()
-		if !identity.IsIdentityType(
-			namespace,
-			identity.TypeUser,
-			identity.TypeServiceAccount,
-			identity.TypeAPIKey,
-		) || id == "0" {
+		id, _ := ident.GetInternalID()
+		if !ident.IsIdentityType(
+			claims.TypeUser,
+			claims.TypeServiceAccount,
+			claims.TypeAPIKey,
+		) || id == 0 {
 			return
 		}
 
-		if _, ok := h.Cfg.IDResponseHeaderNamespaces[namespace.String()]; !ok {
+		if _, ok := h.cfg.IDResponseHeaderNamespaces[string(ident.GetIdentityType())]; !ok {
 			return
 		}
 
-		headerName := fmt.Sprintf("%s-Identity-Id", h.Cfg.IDResponseHeaderPrefix)
-		w.Header().Add(headerName, fmt.Sprintf("%s:%s", namespace, id))
+		headerName := fmt.Sprintf("%s-Identity-Id", h.cfg.IDResponseHeaderPrefix)
+		w.Header().Add(headerName, ident.GetID())
 	}
 }
 

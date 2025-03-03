@@ -115,6 +115,6 @@ function trackAction(action: keyof typeof actionMap, selectedItems: Omit<Dashboa
       dashboard: selectedDashboards.length,
     },
     source: 'tree_actions',
-    restore_enabled: config.featureToggles.dashboardRestoreUI,
+    restore_enabled: Boolean(config.featureToggles.dashboardRestore),
   });
 }

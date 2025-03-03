@@ -4,7 +4,7 @@ import {
   VisualQuery,
   QueryBuilderOperation,
   VisualQueryBinary,
-} from '@grafana/experimental';
+} from '@grafana/plugin-ui';
 
 import { operationDefinitions } from './operations';
 import { LokiOperationId, LokiQueryPattern, LokiQueryPatternType, LokiVisualQueryOperationCategory } from './types';
@@ -25,6 +25,9 @@ export class LokiQueryModeller extends QueryModellerBase {
 
   renderOperations(queryString: string, operations: QueryBuilderOperation[]): string {
     for (const operation of operations) {
+      if (operation.disabled) {
+        continue;
+      }
       const def = this.operationsRegistry.getIfExists(operation.id);
       if (!def) {
         console.error(`Could not find operation ${operation.id} in the registry`);

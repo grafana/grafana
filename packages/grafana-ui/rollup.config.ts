@@ -1,14 +1,12 @@
-import resolve from '@rollup/plugin-node-resolve';
-import path from 'path';
+import { createRequire } from 'node:module';
 import copy from 'rollup-plugin-copy';
-import dts from 'rollup-plugin-dts';
-import esbuild from 'rollup-plugin-esbuild';
-import { externals } from 'rollup-plugin-node-externals';
 import svg from 'rollup-plugin-svg-import';
 
-const icons = require('../../public/app/core/icons/cached.json');
+import { cjsOutput, entryPoint, esmOutput, plugins, tsDeclarationOutput } from '../rollup.config.parts';
 
-const pkg = require('./package.json');
+const rq = createRequire(import.meta.url);
+const icons = rq('../../public/app/core/icons/cached.json');
+const pkg = rq('./package.json');
 
 const iconSrcPaths = icons.map((iconSubPath) => {
   return `../../public/img/icons/${iconSubPath}.svg`;
@@ -16,39 +14,16 @@ const iconSrcPaths = icons.map((iconSubPath) => {
 
 export default [
   {
-    input: 'src/index.ts',
+    input: entryPoint,
     plugins: [
-      externals({ deps: true, packagePath: './package.json' }),
+      ...plugins,
       svg({ stringify: true }),
-      resolve(),
       copy({
         targets: [{ src: iconSrcPaths, dest: './dist/public/' }],
         flatten: false,
       }),
-      esbuild(),
     ],
-    output: [
-      {
-        format: 'cjs',
-        sourcemap: true,
-        dir: path.dirname(pkg.publishConfig.main),
-      },
-      {
-        format: 'esm',
-        sourcemap: true,
-        dir: path.dirname(pkg.publishConfig.module),
-        preserveModules: true,
-        // @ts-expect-error (TS cannot assure that `process.env.PROJECT_CWD` is a string)
-        preserveModulesRoot: path.join(process.env.PROJECT_CWD, `packages/grafana-ui/src`),
-      },
-    ],
+    output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-ui')],
   },
-  {
-    input: './compiled/index.d.ts',
-    plugins: [dts()],
-    output: {
-      file: pkg.publishConfig.types,
-      format: 'es',
-    },
-  },
+  tsDeclarationOutput(pkg),
 ];

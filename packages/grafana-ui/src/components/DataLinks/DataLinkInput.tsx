@@ -13,9 +13,9 @@ import { DataLinkBuiltInVars, GrafanaTheme2, VariableOrigin, VariableSuggestion 
 import { SlatePrism } from '../../slate-plugins';
 import { useStyles2 } from '../../themes';
 import { SCHEMA, makeValue } from '../../utils/slate';
-import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 import { getInputStyles } from '../Input/Input';
 import { Portal } from '../Portal/Portal';
+import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 import { DataLinkSuggestions } from './DataLinkSuggestions';
 import { SelectionReference } from './SelectionReference';
@@ -86,6 +86,11 @@ export const DataLinkInput = memo(
     const [linkUrl, setLinkUrl] = useState<Value>(makeValue(value));
     const prevLinkUrl = usePrevious<Value>(linkUrl);
     const [scrollTop, setScrollTop] = useState(0);
+    const scrollRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+      scrollRef.current?.scrollTo(0, scrollTop);
+    }, [scrollTop]);
 
     // the order of middleware is important!
     const middleware = [
@@ -208,10 +213,10 @@ export const DataLinkInput = memo(
             {showingSuggestions && (
               <Portal>
                 <div ref={refs.setFloating} style={floatingStyles}>
-                  <CustomScrollbar
-                    scrollTop={scrollTop}
-                    autoHeightMax="300px"
-                    setScrollTop={({ scrollTop }) => setScrollTop(scrollTop)}
+                  <ScrollContainer
+                    maxHeight="300px"
+                    ref={scrollRef}
+                    onScroll={(event) => setScrollTop(event.currentTarget.scrollTop)}
                   >
                     <DataLinkSuggestions
                       activeRef={activeRef}
@@ -220,7 +225,7 @@ export const DataLinkInput = memo(
                       onClose={() => setShowingSuggestions(false)}
                       activeIndex={suggestionsIndex}
                     />
-                  </CustomScrollbar>
+                  </ScrollContainer>
                 </div>
               </Portal>
             )}

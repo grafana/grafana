@@ -11,13 +11,12 @@ import (
 
 	"github.com/go-jose/go-jose/v3"
 	"github.com/go-jose/go-jose/v3/jwt"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	authnlib "github.com/grafana/authlib/authn"
+	claims "github.com/grafana/authlib/types"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -29,7 +28,7 @@ type (
 
 var (
 	validAccessTokenClaims = accessTokenClaims{
-		Claims: &jwt.Claims{
+		Claims: jwt.Claims{
 			Subject:  "access-policy:this-uid",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
@@ -37,12 +36,12 @@ var (
 		Rest: authnlib.AccessTokenClaims{
 			Scopes:               []string{"profile", "groups"},
 			DelegatedPermissions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
-			Permissions:          []string{"fixed:folders:reader"},
+			Permissions:          []string{"fixed:folders:reader", "folders:read"},
 			Namespace:            "default", // org ID of 1 is special and translates to default
 		},
 	}
 	validIDTokenClaims = idTokenClaims{
-		Claims: &jwt.Claims{
+		Claims: jwt.Claims{
 			Subject:  "user:2",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
@@ -53,7 +52,18 @@ var (
 		},
 	}
 	validIDTokenClaimsWithStackSet = idTokenClaims{
-		Claims: &jwt.Claims{
+		Claims: jwt.Claims{
+			Subject:  "user:2",
+			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+		},
+		Rest: authnlib.IDTokenClaims{
+			AuthenticatedBy: "extended_jwt",
+			Namespace:       "stacks-1234",
+		},
+	}
+	validIDTokenClaimsWithDeprecatedStackClaimSet = idTokenClaims{
+		Claims: jwt.Claims{
 			Subject:  "user:2",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
@@ -63,8 +73,8 @@ var (
 			Namespace:       "stack-1234",
 		},
 	}
-	validAcessTokenClaimsWildcard = accessTokenClaims{
-		Claims: &jwt.Claims{
+	validAccessTokenClaimsWildcard = accessTokenClaims{
+		Claims: jwt.Claims{
 			Subject:  "access-policy:this-uid",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
@@ -73,19 +83,28 @@ var (
 			Namespace: "*",
 		},
 	}
-	invalidWildcardNamespaceIDTokenClaims = idTokenClaims{
-		Claims: &jwt.Claims{
-			Subject:  "user:2",
+	validAccessTokenClaimsWithStackSet = accessTokenClaims{
+		Claims: jwt.Claims{
+			Subject:  "access-policy:this-uid",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		},
-		Rest: authnlib.IDTokenClaims{
-			AuthenticatedBy: "extended_jwt",
-			Namespace:       "*",
+		Rest: authnlib.AccessTokenClaims{
+			Namespace: "stacks-1234",
+		},
+	}
+	validAccessTokenClaimsWithDeprecatedStackClaimSet = accessTokenClaims{
+		Claims: jwt.Claims{
+			Subject:  "access-policy:this-uid",
+			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+		},
+		Rest: authnlib.AccessTokenClaims{
+			Namespace: "stack-1234",
 		},
 	}
 	invalidNamespaceIDTokenClaims = idTokenClaims{
-		Claims: &jwt.Claims{
+		Claims: jwt.Claims{
 			Subject:  "user:2",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
@@ -96,7 +115,7 @@ var (
 		},
 	}
 	invalidSubjectIDTokenClaims = idTokenClaims{
-		Claims: &jwt.Claims{
+		Claims: jwt.Claims{
 			Subject:  "service-account:2",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
@@ -208,28 +227,34 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			accessToken: &validAccessTokenClaims,
 			orgID:       1,
 			want: &authn.Identity{
-				ID:                         identity.MustParseTypedID("access-policy:this-uid"),
-				UID:                        identity.MustParseTypedID("access-policy:this-uid"),
-				OrgID:                      1,
-				AllowedKubernetesNamespace: "default",
-				AuthenticatedBy:            "extendedjwt",
-				AuthID:                     "access-policy:this-uid",
+				ID:                "this-uid",
+				UID:               "this-uid",
+				Name:              "this-uid",
+				Type:              claims.TypeAccessPolicy,
+				OrgID:             1,
+				AccessTokenClaims: &validAccessTokenClaims,
+				Namespace:         "default",
+				AuthenticatedBy:   "extendedjwt",
+				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					SyncPermissions:        true,
-					FetchPermissionsParams: authn.FetchPermissionsParams{Roles: []string{"fixed:folders:reader"}}},
+					FetchPermissionsParams: authn.FetchPermissionsParams{Roles: []string{"fixed:folders:reader"}, AllowedActions: []string{"folders:read"}}},
 			},
 		},
 		{
 			name:        "should authenticate as service using wildcard namespace",
-			accessToken: &validAcessTokenClaimsWildcard,
+			accessToken: &validAccessTokenClaimsWildcard,
 			orgID:       1,
 			want: &authn.Identity{
-				ID:                         identity.MustParseTypedID("access-policy:this-uid"),
-				UID:                        identity.MustParseTypedID("access-policy:this-uid"),
-				OrgID:                      1,
-				AllowedKubernetesNamespace: "*",
-				AuthenticatedBy:            "extendedjwt",
-				AuthID:                     "access-policy:this-uid",
+				ID:                "this-uid",
+				UID:               "this-uid",
+				Name:              "this-uid",
+				Type:              claims.TypeAccessPolicy,
+				OrgID:             1,
+				AccessTokenClaims: &validAccessTokenClaimsWildcard,
+				Namespace:         "*",
+				AuthenticatedBy:   "extendedjwt",
+				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					SyncPermissions: true,
 				},
@@ -241,31 +266,37 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			idToken:     &validIDTokenClaims,
 			orgID:       1,
 			want: &authn.Identity{
-				ID:                         identity.MustParseTypedID("user:2"),
-				OrgID:                      1,
-				AllowedKubernetesNamespace: "default",
-				AuthenticatedBy:            "extendedjwt",
-				AuthID:                     "access-policy:this-uid",
+				ID:                "2",
+				Type:              claims.TypeUser,
+				OrgID:             1,
+				AccessTokenClaims: &validAccessTokenClaims,
+				IDTokenClaims:     &validIDTokenClaims,
+				Namespace:         "default",
+				AuthenticatedBy:   "extendedjwt",
+				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					FetchSyncedUser: true,
 					SyncPermissions: true,
 					FetchPermissionsParams: authn.FetchPermissionsParams{
-						ActionsLookup: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
+						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
 					},
 				},
 			},
 		},
 		{
-			name:        "should authenticate as user using wildcard namespace for access token",
-			accessToken: &validAcessTokenClaimsWildcard,
+			name:        "should authenticate as user in the user namespace",
+			accessToken: &validAccessTokenClaimsWildcard,
 			idToken:     &validIDTokenClaims,
 			orgID:       1,
 			want: &authn.Identity{
-				ID:                         identity.MustParseTypedID("user:2"),
-				OrgID:                      1,
-				AllowedKubernetesNamespace: "*",
-				AuthenticatedBy:            "extendedjwt",
-				AuthID:                     "access-policy:this-uid",
+				ID:                "2",
+				Type:              claims.TypeUser,
+				OrgID:             1,
+				AccessTokenClaims: &validAccessTokenClaimsWildcard,
+				IDTokenClaims:     &validIDTokenClaims,
+				Namespace:         "default",
+				AuthenticatedBy:   "extendedjwt",
+				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					FetchSyncedUser: true,
 					SyncPermissions: true,
@@ -274,7 +305,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 		},
 		{
 			name:        "should authenticate as user using wildcard namespace for access token, setting allowed namespace to specific",
-			accessToken: &validAcessTokenClaimsWildcard,
+			accessToken: &validAccessTokenClaimsWildcard,
 			idToken:     &validIDTokenClaimsWithStackSet,
 			orgID:       1,
 			cfg: &setting.Cfg{
@@ -286,11 +317,14 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				},
 			},
 			want: &authn.Identity{
-				ID:                         identity.MustParseTypedID("user:2"),
-				OrgID:                      1,
-				AllowedKubernetesNamespace: "stack-1234",
-				AuthenticatedBy:            "extendedjwt",
-				AuthID:                     "access-policy:this-uid",
+				ID:                "2",
+				Type:              claims.TypeUser,
+				OrgID:             1,
+				AccessTokenClaims: &validAccessTokenClaimsWildcard,
+				IDTokenClaims:     &validIDTokenClaimsWithStackSet,
+				Namespace:         "stacks-1234",
+				AuthenticatedBy:   "extendedjwt",
+				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					FetchSyncedUser: true,
 					SyncPermissions: true,
@@ -298,14 +332,117 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			},
 		},
 		{
-			name:        "should return error when id token namespace is a wildcard",
-			accessToken: &validAccessTokenClaims,
-			idToken:     &invalidWildcardNamespaceIDTokenClaims,
+			name:        "should authenticate as service using specific namespace claim in access token",
+			accessToken: &validAccessTokenClaimsWithStackSet,
 			orgID:       1,
-			wantErr:     errExtJWTDisallowedNamespaceClaim,
+			cfg: &setting.Cfg{
+				// default org set up by the authenticator is 1
+				StackID: "1234",
+				ExtJWTAuth: setting.ExtJWTSettings{
+					Enabled:      true,
+					ExpectIssuer: "http://localhost:3000",
+				},
+			},
+			want: &authn.Identity{
+				ID:                "this-uid",
+				UID:               "this-uid",
+				Name:              "this-uid",
+				Type:              claims.TypeAccessPolicy,
+				OrgID:             1,
+				AccessTokenClaims: &validAccessTokenClaimsWithStackSet,
+				Namespace:         "stacks-1234",
+				AuthenticatedBy:   "extendedjwt",
+				AuthID:            "access-policy:this-uid",
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+				},
+			},
 		},
 		{
-			name:        "should return error when id token has wildcard namespace",
+			name:        "should authenticate as service using specific deprecated namespace claim in access token",
+			accessToken: &validAccessTokenClaimsWithDeprecatedStackClaimSet,
+			orgID:       1,
+			cfg: &setting.Cfg{
+				// default org set up by the authenticator is 1
+				StackID: "1234",
+				ExtJWTAuth: setting.ExtJWTSettings{
+					Enabled:      true,
+					ExpectIssuer: "http://localhost:3000",
+				},
+			},
+			want: &authn.Identity{
+				ID:                "this-uid",
+				UID:               "this-uid",
+				Name:              "this-uid",
+				Type:              claims.TypeAccessPolicy,
+				OrgID:             1,
+				AccessTokenClaims: &validAccessTokenClaimsWithDeprecatedStackClaimSet,
+				Namespace:         "stack-1234",
+				AuthenticatedBy:   "extendedjwt",
+				AuthID:            "access-policy:this-uid",
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+				},
+			},
+		},
+		{
+			name:        "should authenticate as user using specific deprecated namespace claim in access and id tokens",
+			accessToken: &validAccessTokenClaimsWithDeprecatedStackClaimSet,
+			idToken:     &validIDTokenClaimsWithDeprecatedStackClaimSet,
+			orgID:       1,
+			cfg: &setting.Cfg{
+				// default org set up by the authenticator is 1
+				StackID: "1234",
+				ExtJWTAuth: setting.ExtJWTSettings{
+					Enabled:      true,
+					ExpectIssuer: "http://localhost:3000",
+				},
+			},
+			want: &authn.Identity{
+				ID:                "2",
+				Type:              claims.TypeUser,
+				OrgID:             1,
+				AccessTokenClaims: &validAccessTokenClaimsWithDeprecatedStackClaimSet,
+				IDTokenClaims:     &validIDTokenClaimsWithDeprecatedStackClaimSet,
+				Namespace:         "stack-1234",
+				AuthenticatedBy:   "extendedjwt",
+				AuthID:            "access-policy:this-uid",
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+					FetchSyncedUser: true,
+				},
+			},
+		},
+		{
+			name:        "should authenticate as user using wildcard namespace for access token, setting allowed namespace to specific",
+			accessToken: &validAccessTokenClaimsWildcard,
+			idToken:     &validIDTokenClaimsWithStackSet,
+			orgID:       1,
+			cfg: &setting.Cfg{
+				// default org set up by the authenticator is 1
+				StackID: "1234",
+				ExtJWTAuth: setting.ExtJWTSettings{
+					Enabled:      true,
+					ExpectIssuer: "http://localhost:3000",
+				},
+			},
+			want: &authn.Identity{
+				ID:                "2",
+				Type:              claims.TypeUser,
+				OrgID:             1,
+				AccessTokenClaims: &validAccessTokenClaimsWildcard,
+				IDTokenClaims:     &validIDTokenClaimsWithStackSet,
+				Namespace:         "stacks-1234",
+				AuthenticatedBy:   "extendedjwt",
+				AuthID:            "access-policy:this-uid",
+				ClientParams: authn.ClientParams{
+					FetchSyncedUser: true,
+					SyncPermissions: true,
+				},
+			},
+		},
+		{
+			name:        "should return error when id token has an invalid namespace",
 			accessToken: &validAccessTokenClaims,
 			idToken:     &invalidNamespaceIDTokenClaims,
 			orgID:       1,
@@ -323,7 +460,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 		{
 			name: "should return error when the subject is not an access-policy",
 			accessToken: &accessTokenClaims{
-				Claims: &jwt.Claims{
+				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Subject:  "user:2",
 					Audience: jwt.Audience{"http://localhost:3000"},
@@ -387,7 +524,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "missing iss",
 			payload: &accessTokenClaims{
-				Claims: &jwt.Claims{
+				Claims: jwt.Claims{
 					Subject:  "access-policy:this-uid",
 					Audience: jwt.Audience{"http://localhost:3000"},
 					ID:       "1234567890",
@@ -402,7 +539,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "missing expiry",
 			payload: &accessTokenClaims{
-				Claims: &jwt.Claims{
+				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Subject:  "access-policy:this-uid",
 					Audience: jwt.Audience{"http://localhost:3000"},
@@ -417,7 +554,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "expired token",
 			payload: &accessTokenClaims{
-				Claims: &jwt.Claims{
+				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Subject:  "access-policy:this-uid",
 					Audience: jwt.Audience{"http://localhost:3000"},
@@ -433,7 +570,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "missing aud",
 			payload: &accessTokenClaims{
-				Claims: &jwt.Claims{
+				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Subject:  "access-policy:this-uid",
 					ID:       "1234567890",
@@ -448,7 +585,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "wrong aud",
 			payload: &accessTokenClaims{
-				Claims: &jwt.Claims{
+				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Subject:  "access-policy:this-uid",
 					Audience: jwt.Audience{"http://some-other-host:3000"},
@@ -469,7 +606,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "missing sub",
 			payload: &accessTokenClaims{
-				Claims: &jwt.Claims{
+				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Audience: jwt.Audience{"http://localhost:3000"},
 					ID:       "1234567890",
@@ -484,7 +621,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "missing iat",
 			payload: &accessTokenClaims{
-				Claims: &jwt.Claims{
+				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Subject:  "access-policy:this-uid",
 					Audience: jwt.Audience{"http://localhost:3000"},
@@ -499,7 +636,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "iat later than current time",
 			payload: &accessTokenClaims{
-				Claims: &jwt.Claims{
+				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Subject:  "access-policy:this-uid",
 					Audience: jwt.Audience{"http://localhost:3000"},
@@ -515,7 +652,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "unsupported alg",
 			payload: &accessTokenClaims{
-				Claims: &jwt.Claims{
+				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Subject:  "access-policy:this-uid",
 					Audience: jwt.Audience{"http://localhost:3000"},

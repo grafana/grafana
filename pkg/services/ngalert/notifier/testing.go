@@ -224,7 +224,7 @@ func NewFakeOrgStore(t *testing.T, orgs []int64) *FakeOrgStore {
 	}
 }
 
-func (f *FakeOrgStore) GetOrgs(_ context.Context) ([]int64, error) {
+func (f *FakeOrgStore) FetchOrgIds(_ context.Context) ([]int64, error) {
 	return f.orgs, nil
 }
 
@@ -356,4 +356,46 @@ func createNotificationLog(groupKey string, receiverName string, sentAt, expires
 		},
 		ExpiresAt: expiresAt,
 	}
+}
+
+type call struct {
+	Method string
+	Args   []interface{}
+}
+
+type fakeAlertRuleNotificationStore struct {
+	Calls []call
+
+	RenameReceiverInNotificationSettingsFn func(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
+	ListNotificationSettingsFn             func(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error)
+}
+
+func (f *fakeAlertRuleNotificationStore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
+	call := call{
+		Method: "RenameReceiverInNotificationSettings",
+		Args:   []interface{}{ctx, orgID, oldReceiver, newReceiver, validateProvenance, dryRun},
+	}
+	f.Calls = append(f.Calls, call)
+
+	if f.RenameReceiverInNotificationSettingsFn != nil {
+		return f.RenameReceiverInNotificationSettingsFn(ctx, orgID, oldReceiver, newReceiver, validateProvenance, dryRun)
+	}
+
+	// Default values when no function hook is provided
+	return nil, nil, nil
+}
+
+func (f *fakeAlertRuleNotificationStore) ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error) {
+	call := call{
+		Method: "ListNotificationSettings",
+		Args:   []interface{}{ctx, q},
+	}
+	f.Calls = append(f.Calls, call)
+
+	if f.ListNotificationSettingsFn != nil {
+		return f.ListNotificationSettingsFn(ctx, q)
+	}
+
+	// Default values when no function hook is provided
+	return nil, nil
 }

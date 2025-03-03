@@ -1,9 +1,10 @@
 import { createSelector } from '@reduxjs/toolkit';
+import { debounce } from 'lodash';
 
 import { PluginError, PluginType, unEscapeStringFromRegex } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
-import { filterByKeyword } from '../helpers';
+import { filterByKeyword, isPluginUpdatable } from '../helpers';
 import { RequestStatus, PluginCatalogStoreState } from '../types';
 
 import { pluginsAdapter } from './reducer';
@@ -12,9 +13,15 @@ export const selectRoot = (state: PluginCatalogStoreState) => state.plugins;
 
 export const selectItems = createSelector(selectRoot, ({ items }) => items);
 
-export const selectDisplayMode = createSelector(selectRoot, ({ settings }) => settings.displayMode);
-
 export const { selectAll, selectById } = pluginsAdapter.getSelectors(selectItems);
+
+const debouncedTrackSearch = debounce((count) => {
+  reportInteraction('plugins_search', {
+    resultsCount: count,
+    creator_team: 'grafana_plugins_catalog',
+    schema_version: '1.0.0',
+  });
+}, 300);
 
 export type PluginFilters = {
   // Searches for a string in certain fields (e.g. "name" or "orgName")
@@ -29,17 +36,19 @@ export type PluginFilters = {
 
   // (Optional, only applied if set)
   isEnterprise?: boolean;
+
+  // (Optional, only applied if set)
+  hasUpdate?: boolean;
 };
 
 export const selectPlugins = (filters: PluginFilters) =>
   createSelector(selectAll, (plugins) => {
     const keyword = filters.keyword ? unEscapeStringFromRegex(filters.keyword.toLowerCase()) : '';
+    // Fuzzy search does not consider plugin type filter
     const filteredPluginIds = keyword !== '' ? filterByKeyword(plugins, keyword) : null;
 
-    if (keyword) {
-      reportInteraction('plugins_search', { resultsCount: filteredPluginIds?.length });
-    }
-    return plugins.filter((plugin) => {
+    // Filters are applied here
+    const filteredPlugins = plugins.filter((plugin) => {
       if (keyword && filteredPluginIds == null) {
         return false;
       }
@@ -60,8 +69,18 @@ export const selectPlugins = (filters: PluginFilters) =>
         return false;
       }
 
+      if (filters.hasUpdate !== undefined && (plugin.hasUpdate !== filters.hasUpdate || !isPluginUpdatable(plugin))) {
+        return false;
+      }
+
       return true;
     });
+
+    if (keyword) {
+      debouncedTrackSearch(filteredPlugins.length);
+    }
+
+    return filteredPlugins;
   });
 
 export const selectPluginErrors = (filterByPluginType?: PluginType) =>

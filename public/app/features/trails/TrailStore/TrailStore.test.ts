@@ -1,8 +1,9 @@
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { AdHocFiltersVariable, getUrlSyncManager, sceneGraph } from '@grafana/scenes';
+import { locationService } from '@grafana/runtime';
+import { AdHocFiltersVariable, sceneGraph, sceneUtils } from '@grafana/scenes';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 
-import { MockDataSourceSrv, mockDataSource } from '../../alerting/unified/mocks';
+import { mockDataSource } from '../../alerting/unified/mocks';
 import { DataTrail } from '../DataTrail';
 import { TRAIL_BOOKMARKS_KEY, RECENT_TRAILS_KEY, VAR_FILTERS } from '../shared';
 
@@ -17,6 +18,8 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('TrailStore', () => {
   beforeAll(() => {
+    jest.spyOn(DataTrail.prototype, 'checkDataSourceForOTelResources').mockImplementation(() => Promise.resolve());
+
     let localStore: Record<string, string> = {};
 
     const localStorageMock = {
@@ -29,13 +32,10 @@ describe('TrailStore', () => {
     jest.useFakeTimers();
 
     // Having the mock service set up is required for activating the loaded trails
-    setDataSourceSrv(
-      new MockDataSourceSrv({
-        prom: mockDataSource({
-          name: 'Prometheus',
-          type: DataSourceType.Prometheus,
-          uid: 'ds',
-        }),
+    setupDataSources(
+      mockDataSource({
+        name: 'Prometheus',
+        type: DataSourceType.Prometheus,
       })
     );
   });
@@ -53,14 +53,18 @@ describe('TrailStore', () => {
   });
 
   describe('Initialize store with one recent trail with final current step', () => {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
     const history: SerializedTrail['history'] = [
       {
         urlValues: {
           from: 'now-1h',
           to: 'now',
+          timezone,
           'var-ds': 'cb3a3391-700f-4cc6-81be-a122488e93e6',
           'var-filters': [],
           refresh: '',
+          nativeHistogramMetric: '',
         },
         type: 'start',
         description: 'Test',
@@ -71,9 +75,11 @@ describe('TrailStore', () => {
           metric: 'access_permissions_duration_count',
           from: 'now-1h',
           to: 'now',
+          timezone,
           'var-ds': 'cb3a3391-700f-4cc6-81be-a122488e93e6',
           'var-filters': [],
           refresh: '',
+          nativeHistogramMetric: '',
         },
         type: 'metric',
         description: 'Test',
@@ -151,6 +157,7 @@ describe('TrailStore', () => {
       ['metric', 'different_metric'],
       ['from', 'now-1y'],
       ['to', 'now-30m'],
+      ['timezone', 'utc'],
       ['var-ds', 'ds'],
       ['var-groupby', 'job'],
       ['var-filters', 'cluster|=|dev-eu-west-2'],
@@ -210,14 +217,18 @@ describe('TrailStore', () => {
   });
 
   describe('Initialize store with one recent trail with non final current step', () => {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
     const history: SerializedTrail['history'] = [
       {
         urlValues: {
           from: 'now-1h',
           to: 'now',
+          timezone,
           'var-ds': 'ds',
           'var-filters': [],
           refresh: '',
+          nativeHistogramMetric: '',
         },
         type: 'start',
         description: 'Test',
@@ -228,9 +239,11 @@ describe('TrailStore', () => {
           metric: 'current_metric',
           from: 'now-1h',
           to: 'now',
+          timezone,
           'var-ds': 'ds',
           'var-filters': [],
           refresh: '',
+          nativeHistogramMetric: '',
         },
         type: 'metric',
         description: 'Test',
@@ -241,9 +254,11 @@ describe('TrailStore', () => {
           metric: 'final_metric',
           from: 'now-1h',
           to: 'now',
+          timezone,
           'var-ds': 'ds',
           'var-filters': [],
           refresh: '',
+          nativeHistogramMetric: '',
         },
         type: 'metric',
         description: 'Test',
@@ -303,7 +318,7 @@ describe('TrailStore', () => {
         getTrailStore().load();
         const store = getTrailStore();
         trail = store.recent[0].resolve();
-        const urlState = getUrlSyncManager().getUrlState(trail);
+        const urlState = sceneUtils.getUrlState(trail);
         locationService.partial(urlState);
         trail.activate();
         trail.state.history.activate();
@@ -356,7 +371,7 @@ describe('TrailStore', () => {
         getTrailStore().load();
         const store = getTrailStore();
         trail = store.recent[0].resolve();
-        const urlState = getUrlSyncManager().getUrlState(trail);
+        const urlState = sceneUtils.getUrlState(trail);
         locationService.partial(urlState);
 
         trail.activate();
@@ -448,6 +463,7 @@ describe('TrailStore', () => {
       ['metric', 'different_metric'],
       ['from', 'now-1y'],
       ['to', 'now-30m'],
+      ['timezone', 'utc'],
       ['var-ds', 'different'],
       ['var-groupby', 'job'],
       ['var-filters', 'cluster|=|dev-eu-west-2'],
@@ -483,6 +499,8 @@ describe('TrailStore', () => {
   });
 
   describe('Initialize store with one bookmark trail but no recent trails', () => {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
     beforeEach(() => {
       localStorage.clear();
       localStorage.setItem(
@@ -491,10 +509,15 @@ describe('TrailStore', () => {
           {
             urlValues: {
               metric: 'bookmarked_metric',
+              nativeHistogramMetric: '',
               from: 'now-1h',
               to: 'now',
+              timezone,
               'var-ds': 'prom-mock',
+              'var-otel_resources': [''],
               'var-filters': [],
+              'var-otel_and_metric_filters': [''],
+              'var-deployment_environment': [''],
               refresh: '',
             },
             type: 'time',
@@ -567,6 +590,8 @@ describe('TrailStore', () => {
   });
 
   describe('Initialize store with one legacy bookmark trail', () => {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
     beforeEach(() => {
       localStorage.clear();
       localStorage.setItem(
@@ -578,9 +603,11 @@ describe('TrailStore', () => {
                 urlValues: {
                   from: 'now-1h',
                   to: 'now',
+                  timezone,
                   'var-ds': 'cb3a3391-700f-4cc6-81be-a122488e93e6',
                   'var-filters': [],
                   refresh: '',
+                  nativeHistogramMetric: '',
                 },
                 type: 'start',
                 description: 'Test',
@@ -590,9 +617,11 @@ describe('TrailStore', () => {
                   metric: 'access_permissions_duration_count',
                   from: 'now-1h',
                   to: 'now',
+                  timezone,
                   'var-ds': 'cb3a3391-700f-4cc6-81be-a122488e93e6',
                   'var-filters': [],
                   refresh: '',
+                  nativeHistogramMetric: '',
                 },
                 type: 'time',
                 description: 'Test',
@@ -632,6 +661,7 @@ describe('TrailStore', () => {
                   'var-ds': 'prom-mock',
                   'var-filters': [],
                   refresh: '',
+                  nativeHistogramMetric: '',
                 },
                 type: 'start',
               },
@@ -643,6 +673,7 @@ describe('TrailStore', () => {
                   'var-ds': 'prom-mock',
                   'var-filters': [],
                   refresh: '',
+                  nativeHistogramMetric: '',
                 },
                 type: 'time',
               },
@@ -654,6 +685,7 @@ describe('TrailStore', () => {
                   'var-ds': 'prom-mock',
                   'var-filters': [],
                   refresh: '',
+                  nativeHistogramMetric: '',
                 },
                 type: 'metric',
               },
@@ -679,6 +711,8 @@ describe('TrailStore', () => {
   });
 
   describe('Initialize store with one bookmark matching recent trail not on final step', () => {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
     beforeEach(() => {
       localStorage.clear();
       localStorage.setItem(
@@ -688,10 +722,15 @@ describe('TrailStore', () => {
             history: [
               {
                 urlValues: {
+                  nativeHistogramMetric: '',
                   from: 'now-1h',
                   to: 'now',
+                  timezone,
                   'var-ds': 'prom-mock',
+                  'var-otel_resources': [''],
                   'var-filters': [],
+                  'var-otel_and_metric_filters': [''],
+                  'var-deployment_environment': [''],
                   refresh: '',
                 },
                 type: 'start',
@@ -699,10 +738,15 @@ describe('TrailStore', () => {
               {
                 urlValues: {
                   metric: 'bookmarked_metric',
+                  nativeHistogramMetric: '',
                   from: 'now-1h',
                   to: 'now',
+                  timezone,
                   'var-ds': 'prom-mock',
+                  'var-otel_resources': [''],
                   'var-filters': [],
+                  'var-otel_and_metric_filters': [''],
+                  'var-deployment_environment': [''],
                   refresh: '',
                 },
                 type: 'time',
@@ -710,10 +754,15 @@ describe('TrailStore', () => {
               {
                 urlValues: {
                   metric: 'some_other_metric',
+                  nativeHistogramMetric: '',
                   from: 'now-1h',
                   to: 'now',
+                  timezone,
                   'var-ds': 'prom-mock',
+                  'var-otel_resources': [''],
                   'var-filters': [],
+                  'var-otel_and_metric_filters': [''],
+                  'var-deployment_environment': [''],
                   refresh: '',
                 },
                 type: 'metric',
@@ -729,10 +778,15 @@ describe('TrailStore', () => {
           {
             urlValues: {
               metric: 'bookmarked_metric',
+              nativeHistogramMetric: '',
               from: 'now-1h',
               to: 'now',
+              timezone,
               'var-ds': 'prom-mock',
+              'var-otel_resources': [''],
               'var-filters': [],
+              'var-otel_and_metric_filters': [''],
+              'var-deployment_environment': [''],
               refresh: '',
             },
             type: 'time',

@@ -39,7 +39,7 @@ export function supportsDataQuery(plugin: PanelPlugin | undefined | null): boole
 export const updateDefaultFieldConfigValue = (
   config: FieldConfigSource,
   name: string,
-  value: any,
+  value: unknown,
   isCustom?: boolean
 ) => {
   let defaults = { ...config.defaults };

@@ -5,6 +5,7 @@ import {
   TestDataSourceResponse,
   DataSourceTestSucceeded,
   DataSourceTestFailed,
+  DataSourceApi,
 } from '@grafana/data';
 import {
   config,
@@ -125,6 +126,11 @@ export const initDataSourceSettings = (
   };
 };
 
+const getPluginVersion = (dsApi: DataSourceApi) => {
+  const isCorePlugin = (dsApi?.meta?.module || '').startsWith('core');
+  return isCorePlugin ? config?.buildInfo?.version : dsApi?.meta?.info?.version;
+};
+
 export const testDataSource = (
   dataSourceName: string,
   editRoute = DATASOURCES_ROUTES.Edit,
@@ -153,6 +159,7 @@ export const testDataSource = (
         trackDataSourceTested({
           grafana_version: config.buildInfo.version,
           plugin_id: dsApi.type,
+          plugin_version: getPluginVersion(dsApi),
           datasource_uid: dsApi.uid,
           success: true,
           path: editLink,
@@ -165,6 +172,7 @@ export const testDataSource = (
         trackDataSourceTested({
           grafana_version: config.buildInfo.version,
           plugin_id: dsApi.type,
+          plugin_version: getPluginVersion(dsApi),
           datasource_uid: dsApi.uid,
           success: false,
           path: editLink,
@@ -249,7 +257,7 @@ export function addDataSource(
       plugin_id: plugin.id,
       datasource_uid: result.datasource.uid,
       plugin_version: result.meta?.info?.version,
-      path: editLink,
+      path: location.pathname,
     });
 
     locationService.push(editLink);

@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
@@ -31,7 +32,9 @@ func setupAMTest(t *testing.T) *alertmanager {
 		AppURL:   "http://localhost:9093",
 	}
 
-	m := metrics.NewAlertmanagerMetrics(prometheus.NewRegistry())
+	l := log.New("alertmanager-test")
+
+	m := metrics.NewAlertmanagerMetrics(prometheus.NewRegistry(), l)
 	sqlStore := db.InitTestDB(t)
 	s := &store.DBstore{
 		Cfg: setting.UnifiedAlertingSettings{
@@ -39,7 +42,7 @@ func setupAMTest(t *testing.T) *alertmanager {
 			DefaultRuleEvaluationInterval: time.Minute,
 		},
 		SQLStore:         sqlStore,
-		Logger:           log.New("alertmanager-test"),
+		Logger:           l,
 		DashboardService: dashboards.NewFakeDashboardService(t),
 	}
 
@@ -50,7 +53,7 @@ func setupAMTest(t *testing.T) *alertmanager {
 	orgID := 1
 	stateStore := NewFileStore(int64(orgID), kvStore)
 
-	am, err := NewAlertmanager(context.Background(), 1, cfg, s, stateStore, &NilPeer{}, decryptFn, nil, m, false)
+	am, err := NewAlertmanager(context.Background(), 1, cfg, s, stateStore, &NilPeer{}, decryptFn, nil, m, featuremgmt.WithFeatures())
 	require.NoError(t, err)
 	return am
 }

@@ -41,14 +41,21 @@ func ProvideServiceAccountPermissions(
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*ServiceAccountPermissionsService, error) {
 	options := resourcepermissions.Options{
-		Resource:          "serviceaccounts",
-		ResourceAttribute: "id",
+		Resource:           "serviceaccounts",
+		ResourceAttribute:  "id",
+		ResourceTranslator: serviceaccounts.UIDToIDHandler(serviceAccountRetrieverService),
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
+			ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.ProvideServiceAccountPermissions.ResourceValidator")
+			defer span.End()
+
 			id, err := strconv.ParseInt(resourceID, 10, 64)
 			if err != nil {
 				return err
 			}
-			_, err = serviceAccountRetrieverService.RetrieveServiceAccount(ctx, orgID, id)
+			_, err = serviceAccountRetrieverService.RetrieveServiceAccount(ctx, &serviceaccounts.GetServiceAccountQuery{
+				OrgID: orgID,
+				ID:    id,
+			})
 			return err
 		},
 		Assignments: resourcepermissions.Assignments{

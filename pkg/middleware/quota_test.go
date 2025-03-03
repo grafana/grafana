@@ -5,7 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -53,7 +54,7 @@ func TestMiddlewareQuota(t *testing.T) {
 
 	t.Run("with user logged in", func(t *testing.T) {
 		setUp := func(sc *scenarioContext) {
-			sc.withIdentity(&authn.Identity{ID: identity.MustParseTypedID("user:1"), SessionToken: &auth.UserToken{UserId: 12}})
+			sc.withIdentity(&authn.Identity{ID: "1", Type: claims.TypeUser, SessionToken: &auth.UserToken{UserId: 12}})
 		}
 
 		middlewareScenario(t, "global datasource quota reached", func(t *testing.T, sc *scenarioContext) {
@@ -182,5 +183,5 @@ func getQuotaHandler(reached bool, target string) web.Handler {
 }
 
 func configure(cfg *setting.Cfg) {
-	cfg.AnonymousEnabled = false
+	cfg.Anonymous.Enabled = false
 }

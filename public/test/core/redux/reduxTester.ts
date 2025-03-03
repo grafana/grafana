@@ -1,5 +1,5 @@
 import { AnyAction, configureStore, EnhancedStore, Reducer, Tuple } from '@reduxjs/toolkit';
-import { Middleware, StoreEnhancer, UnknownAction } from 'redux';
+import { Middleware, Store, StoreEnhancer, UnknownAction } from 'redux';
 import { thunk, ThunkDispatch, ThunkMiddleware } from 'redux-thunk';
 
 import { setStore } from '../../../app/store/store';
@@ -79,7 +79,7 @@ export const reduxTester = <State>(args?: ReduxTesterArguments<State>): ReduxTes
       preloadedState,
     });
 
-    setStore(store as any);
+    setStore(store as Store<StoreState>);
 
     return instance;
   };

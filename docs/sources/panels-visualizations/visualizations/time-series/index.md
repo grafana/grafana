@@ -64,17 +64,30 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/panel-editor-overview/#data-section
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/panel-editor-overview/#data-section
+  data-transformation:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/panel-editor-overview/#data-section
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/panel-editor-overview/#data-section
 ---
 
 # Time series
 
-Time series visualizations are the default way to visualize data points over intervals of time, as a graph. They can render series as lines, points, or bars and are versatile enough to display almost any time-series data.
+Time series visualizations are the default way to show the variations of a set of data values over time. Each data point is matched to a timestamp and this _time series_ is displayed as a graph. The visualization can render series as lines, points, or bars and it's versatile enough to display almost any type of [time-series data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries/).
 
 {{< figure src="/static/img/docs/time-series-panel/time_series_small_example.png" max-width="1200px" alt="Time series" >}}
 
 {{< admonition type="note" >}}
 You can migrate from the legacy Graph visualization to the time series visualization. To migrate, open the panel and click the **Migrate** button in the side pane.
 {{< /admonition >}}
+
+A time series visualization displays an x-y graph with time progression on the x-axis and the magnitude of the values on the y-axis. This visualization is ideal for displaying large numbers of timed data points that would be hard to track in a table or list.
+
+You can use the time series visualization if you need track:
+
+- Temperature variations throughout the day
+- The daily progress of your retirement account
+- The distance you jog each day over the course of a year
 
 ## Configure a time series visualization
 
@@ -86,7 +99,72 @@ The following video guides you through the creation steps and common customizati
 
 ## Supported data formats
 
-Time series visualizations require time-series data&mdash;a sequence of measurements, ordered in time, and formatted as a table&mdash;where every row in the table represents one individual measurement at a specific time. Learn more about [time-series data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries/).
+Time series visualizations require time-series data—a sequence of measurements, ordered in time, and formatted as a table—where every row in the table represents one individual measurement at a specific time. Learn more about [time-series data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries/).
+
+The dataset must contain at least one numeric field, and in the case of multiple numeric fields, each one is plotted as a new line, point, or bar labeled with the field name in the tooltip.
+
+### Example 1
+
+In the following example, there are three numeric fields represented by three lines in the chart:
+
+| Time                | value1 | value2 | value3 |
+| ------------------- | ------ | ------ | ------ |
+| 2022-11-01 10:00:00 | 1      | 2      | 3      |
+| 2022-11-01 11:00:00 | 4      | 5      | 6      |
+| 2022-11-01 12:00:00 | 7      | 8      | 9      |
+| 2022-11-01 13:00:00 | 4      | 5      | 6      |
+
+![Time series line chart with multiple numeric fields](/media/docs/grafana/panels-visualizations/screenshot-grafana-11.1-timeseries-example1v2.png 'Time series line chart with multiple numeric fields')
+
+If the time field isn't automatically detected, you might need to convert the data to a time format using a [data transformation](ref:data-transformation).
+
+### Example 2
+
+The time series visualization also supports multiple datasets. If all datasets are in the correct format, the visualization plots the numeric fields of all datasets and labels them using the column name of the field.
+
+#### Query1
+
+| Time                | value1 | value2 | value3 |
+| ------------------- | ------ | ------ | ------ |
+| 2022-11-01 10:00:00 | 1      | 2      | 3      |
+| 2022-11-01 11:00:00 | 4      | 5      | 6      |
+| 2022-11-01 12:00:00 | 7      | 8      | 9      |
+
+#### Query2
+
+| timestamp           | number1 | number2 | number3 |
+| ------------------- | ------- | ------- | ------- |
+| 2022-11-01 10:30:00 | 11      | 12      | 13      |
+| 2022-11-01 11:30:00 | 14      | 15      | 16      |
+| 2022-11-01 12:30:00 | 17      | 18      | 19      |
+| 2022-11-01 13:30:00 | 14      | 15      | 16      |
+
+![Time series line chart with two datasets](/media/docs/grafana/panels-visualizations/screenshot-grafana-11.1-timeseries-example2v2.png 'Time series line chart with two datasets')
+
+### Example 3
+
+If you want to more easily compare events between different, but overlapping, time frames, you can do this by using a time offset while querying the compared dataset:
+
+#### Query1
+
+| Time                | value1 | value2 | value3 |
+| ------------------- | ------ | ------ | ------ |
+| 2022-11-01 10:00:00 | 1      | 2      | 3      |
+| 2022-11-01 11:00:00 | 4      | 5      | 6      |
+| 2022-11-01 12:00:00 | 7      | 8      | 9      |
+
+#### Query2
+
+| timestamp(-30min)   | number1 | number2 | number3 |
+| ------------------- | ------- | ------- | ------- |
+| 2022-11-01 10:30:00 | 11      | 12      | 13      |
+| 2022-11-01 11:30:00 | 14      | 15      | 16      |
+| 2022-11-01 12:30:00 | 17      | 18      | 19      |
+| 2022-11-01 13:30:00 | 14      | 15      | 16      |
+
+![Time Series Example with second Data Set offset](/media/docs/grafana/panels-visualizations/screenshot-grafana-11.1-timeseries-example3v2.png 'Time Series Example with second Data Set offset')
+
+When you add the offset, the resulting visualization makes the datasets appear to be occurring at the same time so that you can compare them more easily.
 
 ## Alert rules
 
@@ -131,21 +209,7 @@ The following example shows three series: Min, Max, and Value. The Min and Max s
 
 ### Axis options
 
-Options under the **Axis** section control how the x- and y-axes are rendered. Some options don't take effect until you click outside of the field option box you're editing. You can also press `Enter`.
-
-| Option                             | Description                                                                                                                                                                                                                                                                                                                                                                      |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Time zone                          | Set the desired time zones to display along the x-axis.                                                                                                                                                                                                                                                                                                                          |
-| [Placement](#placement)            | Select the placement of the y-axis.                                                                                                                                                                                                                                                                                                                                              |
-| Label                              | Set a y-axis text label. If you have more than one y-axis, then you can assign different labels using an override.                                                                                                                                                                                                                                                               |
-| Width                              | Set a fixed width of the axis. By default, Grafana dynamically calculates the width of an axis. By setting the width of the axis, data with different axes types can share the same display proportions. This setting makes it easier for you to compare more than one graph’s worth of data because the axes aren't shifted or stretched within visual proximity to each other. |
-| Show grid lines                    | Set the axis grid line visibility.<br>                                                                                                                                                                                                                                                                                                                                           |
-| Color                              | Set the color of the axis.                                                                                                                                                                                                                                                                                                                                                       |
-| Show border                        | Set the axis border visibility.                                                                                                                                                                                                                                                                                                                                                  |
-| Scale                              | Set the y-axis values scale.<br>                                                                                                                                                                                                                                                                                                                                                 |
-| Centered zero                      | Set the y-axis so it's centered on zero.                                                                                                                                                                                                                                                                                                                                         |
-| [Soft min](#soft-min-and-soft-max) | Set a soft min to better control the y-axis limits. zero.                                                                                                                                                                                                                                                                                                                        |
-| [Soft max](#soft-min-and-soft-max) | Set a soft max to better control the y-axis limits. zero.                                                                                                                                                                                                                                                                                                                        |
+{{< docs/shared lookup="visualizations/axis-options-all.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
 #### Placement
 
@@ -298,9 +362,9 @@ Set the position of the bar relative to a data point. In the examples below, **S
 
 {{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-### Data links
+### Data links and actions
 
-{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/datalink-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### Value mappings
 

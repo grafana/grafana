@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import * as runtimeMock from '@grafana/runtime';
 
-import { LoginPage } from './LoginPage';
+import LoginPage from './LoginPage';
 
 const postMock = jest.fn();
 jest.mock('@grafana/runtime', () => ({

@@ -12,7 +12,8 @@
     "**/*.tmpl.ts",
     "dist",
     "node_modules",
-    "src/utils/storybook"
+    "src/utils/storybook",
+    "../../public/test/setupTests.ts"
   ],
   "extends": "./tsconfig.json"
 }

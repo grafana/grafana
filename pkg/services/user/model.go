@@ -98,13 +98,6 @@ type UpdateUserLastSeenAtCommand struct {
 	OrgID  int64
 }
 
-type ListUsersCommand struct {
-	OrgID            int64
-	Limit            int64
-	ContinueID       int64
-	IsServiceAccount bool
-}
-
 type ListUserResult struct {
 	Users      []*User
 	ContinueID int64
@@ -220,8 +213,7 @@ type GetUserByIDQuery struct {
 }
 
 type GetUserByUIDQuery struct {
-	OrgID int64
-	UID   string
+	UID string
 }
 
 type StartVerifyEmailCommand struct {
@@ -271,6 +263,7 @@ const (
 
 type AdminCreateUserResponse struct {
 	ID      int64  `json:"id"`
+	UID     string `json:"uid"`
 	Message string `json:"message"`
 }
 

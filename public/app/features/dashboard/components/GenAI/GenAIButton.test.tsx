@@ -1,10 +1,9 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Router } from 'react-router-dom';
 import { Observable } from 'rxjs';
+import { render } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
 
 import { GenAIButton, GenAIButtonProps } from './GenAIButton';
 import { StreamStatus, useOpenAIStream } from './hooks';
@@ -33,11 +32,7 @@ describe('GenAIButton', () => {
   const eventTrackingSrc = EventTrackingSrc.unknown;
 
   function setup(props: GenAIButtonProps = { onGenerate, messages: [], eventTrackingSrc }) {
-    return render(
-      <Router history={locationService.getHistory()}>
-        <GenAIButton text="Auto-generate" {...props} />
-      </Router>
-    );
+    return render(<GenAIButton text="Auto-generate" {...props} />);
   }
 
   describe('when LLM plugin is not configured', () => {
@@ -48,7 +43,7 @@ describe('GenAIButton', () => {
         streamStatus: StreamStatus.IDLE,
         reply: 'Some completed genereated text',
         setMessages: jest.fn(),
-        setStopGeneration: jest.fn(),
+        stopGeneration: jest.fn(),
         value: {
           enabled: false,
           stream: new Observable().subscribe(),
@@ -74,9 +69,9 @@ describe('GenAIButton', () => {
         messages: [],
         error: undefined,
         streamStatus: StreamStatus.IDLE,
-        reply: 'Some completed genereated text',
+        reply: 'Some completed generated text',
         setMessages: setMessagesMock,
-        setStopGeneration: setShouldStopMock,
+        stopGeneration: setShouldStopMock,
         value: {
           enabled: true,
           stream: new Observable().subscribe(),
@@ -84,7 +79,7 @@ describe('GenAIButton', () => {
       });
     });
 
-    it('should render text ', async () => {
+    it('should render text', async () => {
       setup();
 
       waitFor(async () => expect(await screen.findByText('Auto-generate')).toBeInTheDocument());
@@ -162,7 +157,7 @@ describe('GenAIButton', () => {
         streamStatus: StreamStatus.GENERATING,
         reply: 'Some incomplete generated text',
         setMessages: jest.fn(),
-        setStopGeneration: setShouldStopMock,
+        stopGeneration: setShouldStopMock,
         value: {
           enabled: true,
           stream: new Observable().subscribe(),
@@ -170,7 +165,7 @@ describe('GenAIButton', () => {
       });
     });
 
-    it('should render loading text ', async () => {
+    it('should render loading text', async () => {
       setup();
 
       waitFor(async () => expect(await screen.findByText('Auto-generate')).toBeInTheDocument());
@@ -204,7 +199,6 @@ describe('GenAIButton', () => {
       await fireEvent.click(generateButton);
 
       expect(setShouldStopMock).toHaveBeenCalledTimes(1);
-      expect(setShouldStopMock).toHaveBeenCalledWith(true);
       expect(onGenerate).not.toHaveBeenCalled();
     });
   });
@@ -213,18 +207,27 @@ describe('GenAIButton', () => {
     const setShouldStopMock = jest.fn();
 
     beforeEach(() => {
-      jest.mocked(useOpenAIStream).mockReturnValue({
+      const reply = 'Some completed generated text';
+      const returnValue = {
         messages: [],
         error: undefined,
         streamStatus: StreamStatus.COMPLETED,
-        reply: 'Some completed generated text',
+        reply,
         setMessages: jest.fn(),
-        setStopGeneration: setShouldStopMock,
+        stopGeneration: setShouldStopMock,
         value: {
           enabled: true,
           stream: new Observable().subscribe(),
         },
-      });
+      };
+
+      jest
+        .mocked(useOpenAIStream)
+        .mockImplementationOnce((options) => {
+          options?.onResponse?.(reply);
+          return returnValue;
+        })
+        .mockImplementation(() => returnValue);
     });
 
     it('should render improve text ', async () => {
@@ -260,7 +263,7 @@ describe('GenAIButton', () => {
         streamStatus: StreamStatus.IDLE,
         reply: '',
         setMessages: setMessagesMock,
-        setStopGeneration: setShouldStopMock,
+        stopGeneration: setShouldStopMock,
         value: {
           enabled: true,
           stream: new Observable().subscribe(),

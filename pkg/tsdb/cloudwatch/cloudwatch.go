@@ -211,8 +211,8 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 	// Since `model.Type` is set during execution on the frontend by the query runner and isn't saved with the query, we are checking here is
 	// missing the `model.Type` property and if it is a log query in order to determine if it is a public dashboard query.
 	queryMode := ""
-	if model.QueryMode != nil {
-		queryMode = string(*model.QueryMode)
+	if model.QueryMode != "" {
+		queryMode = string(model.QueryMode)
 	}
 	fromPublicDashboard := model.Type == "" && queryMode == logsQueryMode
 	isSyncLogQuery := ((fromAlert || fromExpression) && queryMode == logsQueryMode) || fromPublicDashboard
@@ -337,6 +337,10 @@ func (ds *DataSource) newSession(region string) (*session.Session, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error configuring Secure Socks proxy for Transport: %w", err)
 		}
+	} else if sess.Config.HTTPClient != nil {
+		// Workaround for https://github.com/grafana/grafana/issues/91356 - PDC transport set above
+		// stays on the cached session after PDC is disabled
+		sess.Config.HTTPClient.Transport = nil
 	}
 	return sess, nil
 }

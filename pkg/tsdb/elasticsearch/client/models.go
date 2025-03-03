@@ -7,6 +7,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
+// DateFormatEpochMS represents a date format of epoch milliseconds (epoch_millis)
+const DateFormatEpochMS = "epoch_millis"
+
 // SearchRequest represents a search request
 type SearchRequest struct {
 	Index       string
@@ -119,9 +122,6 @@ type RangeFilter struct {
 	Format string
 }
 
-// DateFormatEpochMS represents a date format of epoch milliseconds (epoch_millis)
-const DateFormatEpochMS = "epoch_millis"
-
 // MarshalJSON returns the JSON encoding of the query string filter.
 func (f *RangeFilter) MarshalJSON() ([]byte, error) {
 	root := map[string]map[string]map[string]interface{}{
@@ -207,10 +207,10 @@ func newAggDef(key string, aggregation *aggContainer) *aggDef {
 
 // HistogramAgg represents a histogram aggregation
 type HistogramAgg struct {
-	Interval    int    `json:"interval,omitempty"`
-	Field       string `json:"field"`
-	MinDocCount int    `json:"min_doc_count"`
-	Missing     *int   `json:"missing,omitempty"`
+	Interval    float64 `json:"interval,omitempty"`
+	Field       string  `json:"field"`
+	MinDocCount int     `json:"min_doc_count"`
+	Missing     *int    `json:"missing,omitempty"`
 }
 
 // DateHistogramAgg represents a date histogram aggregation

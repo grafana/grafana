@@ -3,15 +3,14 @@ import { render, screen, userEvent, within } from 'test/test-utils';
 import { config } from '@grafana/runtime';
 import { defaultConfig } from 'app/features/alerting/unified/MuteTimings.test';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import {
-  setGrafanaAlertmanagerConfig,
-  setMuteTimingsListError,
-} from 'app/features/alerting/unified/mocks/server/configure';
+import { setMuteTimingsListError } from 'app/features/alerting/unified/mocks/server/configure';
+import { setAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
-import { TIME_INTERVAL_UID_HAPPY_PATH } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
+import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
 import { grantUserPermissions } from '../../mocks';
+import { TIME_INTERVAL_UID_HAPPY_PATH } from '../../mocks/server/handlers/k8s/timeIntervals.k8s';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
@@ -20,7 +19,7 @@ import { MuteTimingsTable } from './MuteTimingsTable';
 const renderWithProvider = (alertManagerSource?: string) => {
   return render(
     <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={alertManagerSource}>
-      <MuteTimingsTable alertManagerSourceName={alertManagerSource ?? GRAFANA_RULES_SOURCE_NAME} />
+      <MuteTimingsTable />
     </AlertmanagerProvider>
   );
 };
@@ -30,7 +29,7 @@ setupMswServer();
 describe('MuteTimingsTable', () => {
   describe('with necessary permissions', () => {
     beforeEach(() => {
-      setGrafanaAlertmanagerConfig(defaultConfig);
+      setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, defaultConfig);
       config.featureToggles.alertingApiServer = false;
       grantUserPermissions([
         AccessControlAction.AlertingNotificationsRead,
@@ -80,7 +79,7 @@ describe('MuteTimingsTable', () => {
         (r) => r.url.includes('/alertmanager/grafana/config/api/v1/alerts') && r.method === 'POST'
       );
 
-      const body = await amConfigUpdateRequest?.clone().json();
+      const body: AlertManagerCortexConfig = await amConfigUpdateRequest?.clone().json();
       expect(body.alertmanager_config.mute_time_intervals).toHaveLength(0);
     });
 

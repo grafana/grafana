@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"hash/fnv"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
+	alertmanager_config "github.com/prometheus/alertmanager/config"
 )
 
 const disableProvenanceHeaderName = "X-Disable-Provenance"
@@ -39,21 +40,22 @@ type ProvisioningSrv struct {
 
 type ContactPointService interface {
 	GetContactPoints(ctx context.Context, q provisioning.ContactPointQuery, user identity.Requester) ([]definitions.EmbeddedContactPoint, error)
-	CreateContactPoint(ctx context.Context, orgID int64, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) (definitions.EmbeddedContactPoint, error)
+	CreateContactPoint(ctx context.Context, orgID int64, user identity.Requester, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) (definitions.EmbeddedContactPoint, error)
 	UpdateContactPoint(ctx context.Context, orgID int64, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) error
 	DeleteContactPoint(ctx context.Context, orgID int64, uid string) error
 }
 
 type TemplateService interface {
 	GetTemplates(ctx context.Context, orgID int64) ([]definitions.NotificationTemplate, error)
-	SetTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error)
-	DeleteTemplate(ctx context.Context, orgID int64, name string, provenance definitions.Provenance) error
+	GetTemplate(ctx context.Context, orgID int64, nameOrUid string) (definitions.NotificationTemplate, error)
+	UpsertTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error)
+	DeleteTemplate(ctx context.Context, orgID int64, nameOrUid string, provenance definitions.Provenance, version string) error
 }
 
 type NotificationPolicyService interface {
-	GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error)
-	UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p alerting_models.Provenance) error
-	ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error)
+	GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error)
+	UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p alerting_models.Provenance, version string) (definitions.Route, string, error)
+	ResetPolicyTree(ctx context.Context, orgID int64, provenance alerting_models.Provenance) (definitions.Route, error)
 }
 
 type MuteTimingService interface {
@@ -73,25 +75,26 @@ type AlertRuleService interface {
 	GetRuleGroup(ctx context.Context, user identity.Requester, folder, group string) (alerting_models.AlertRuleGroup, error)
 	ReplaceRuleGroup(ctx context.Context, user identity.Requester, group alerting_models.AlertRuleGroup, provenance alerting_models.Provenance) error
 	DeleteRuleGroup(ctx context.Context, user identity.Requester, folder, group string, provenance alerting_models.Provenance) error
+	DeleteRuleGroups(ctx context.Context, user identity.Requester, provenance alerting_models.Provenance, opts *provisioning.FilterOptions) error
 	GetAlertRuleWithFolderFullpath(ctx context.Context, u identity.Requester, ruleUID string) (provisioning.AlertRuleWithFolderFullpath, error)
 	GetAlertRuleGroupWithFolderFullpath(ctx context.Context, u identity.Requester, folder, group string) (alerting_models.AlertRuleGroupWithFolderFullpath, error)
-	GetAlertGroupsWithFolderFullpath(ctx context.Context, u identity.Requester, folderUIDs []string) ([]alerting_models.AlertRuleGroupWithFolderFullpath, error)
+	GetAlertGroupsWithFolderFullpath(ctx context.Context, u identity.Requester, opts *provisioning.FilterOptions) ([]alerting_models.AlertRuleGroupWithFolderFullpath, error)
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTree(c *contextmodel.ReqContext) response.Response {
-	policies, err := srv.policies.GetPolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID())
+	policies, _, err := srv.policies.GetPolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 		return ErrResp(http.StatusNotFound, err, "")
 	}
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get notification policy tree", err)
 	}
 
 	return response.JSON(http.StatusOK, policies)
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTreeExport(c *contextmodel.ReqContext) response.Response {
-	policies, err := srv.policies.GetPolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID())
+	policies, _, err := srv.policies.GetPolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -109,7 +112,7 @@ func (srv *ProvisioningSrv) RouteGetPolicyTreeExport(c *contextmodel.ReqContext)
 
 func (srv *ProvisioningSrv) RoutePutPolicyTree(c *contextmodel.ReqContext, tree definitions.Route) response.Response {
 	provenance := determineProvenance(c)
-	err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID(), tree, alerting_models.Provenance(provenance))
+	_, _, err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID(), tree, alerting_models.Provenance(provenance), "")
 	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 		return ErrResp(http.StatusNotFound, err, "")
 	}
@@ -117,16 +120,17 @@ func (srv *ProvisioningSrv) RoutePutPolicyTree(c *contextmodel.ReqContext, tree 
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to update notification policy tree", err)
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "policies updated"})
 }
 
 func (srv *ProvisioningSrv) RouteResetPolicyTree(c *contextmodel.ReqContext) response.Response {
-	tree, err := srv.policies.ResetPolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID())
+	provenance := determineProvenance(c)
+	tree, err := srv.policies.ResetPolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID(), alerting_models.Provenance(provenance))
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to reset notification policy tree", err)
 	}
 	return response.JSON(http.StatusAccepted, tree)
 }
@@ -165,12 +169,12 @@ func (srv *ProvisioningSrv) RouteGetContactPointsExport(c *contextmodel.ReqConte
 
 func (srv *ProvisioningSrv) RoutePostContactPoint(c *contextmodel.ReqContext, cp definitions.EmbeddedContactPoint) response.Response {
 	provenance := determineProvenance(c)
-	contactPoint, err := srv.contactPointService.CreateContactPoint(c.Req.Context(), c.SignedInUser.GetOrgID(), cp, alerting_models.Provenance(provenance))
+	contactPoint, err := srv.contactPointService.CreateContactPoint(c.Req.Context(), c.SignedInUser.GetOrgID(), c.SignedInUser, cp, alerting_models.Provenance(provenance))
 	if errors.Is(err, provisioning.ErrValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusAccepted, contactPoint)
 }
@@ -202,44 +206,38 @@ func (srv *ProvisioningSrv) RouteDeleteContactPoint(c *contextmodel.ReqContext, 
 func (srv *ProvisioningSrv) RouteGetTemplates(c *contextmodel.ReqContext) response.Response {
 	templates, err := srv.templates.GetTemplates(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusOK, templates)
 }
 
-func (srv *ProvisioningSrv) RouteGetTemplate(c *contextmodel.ReqContext, name string) response.Response {
-	templates, err := srv.templates.GetTemplates(c.Req.Context(), c.SignedInUser.GetOrgID())
+func (srv *ProvisioningSrv) RouteGetTemplate(c *contextmodel.ReqContext, nameOrUid string) response.Response {
+	template, err := srv.templates.GetTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), nameOrUid)
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
-	for _, tmpl := range templates {
-		if tmpl.Name == name {
-			return response.JSON(http.StatusOK, tmpl)
-		}
-	}
-	return response.Empty(http.StatusNotFound)
+	return response.JSON(http.StatusOK, template)
 }
 
 func (srv *ProvisioningSrv) RoutePutTemplate(c *contextmodel.ReqContext, body definitions.NotificationTemplateContent, name string) response.Response {
 	tmpl := definitions.NotificationTemplate{
-		Name:       name,
-		Template:   body.Template,
-		Provenance: determineProvenance(c),
+		Name:            name,
+		Template:        body.Template,
+		Provenance:      determineProvenance(c),
+		ResourceVersion: body.ResourceVersion,
 	}
-	modified, err := srv.templates.SetTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), tmpl)
+	modified, err := srv.templates.UpsertTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), tmpl)
 	if err != nil {
-		if errors.Is(err, provisioning.ErrValidation) {
-			return ErrResp(http.StatusBadRequest, err, "")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusAccepted, modified)
 }
 
-func (srv *ProvisioningSrv) RouteDeleteTemplate(c *contextmodel.ReqContext, name string) response.Response {
-	err := srv.templates.DeleteTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), name, determineProvenance(c))
+func (srv *ProvisioningSrv) RouteDeleteTemplate(c *contextmodel.ReqContext, nameOrUid string) response.Response {
+	version := c.Query("version")
+	err := srv.templates.DeleteTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), nameOrUid, determineProvenance(c), version)
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusNoContent, nil)
 }
@@ -388,6 +386,11 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *contextmodel.ReqContext, ar def
 		)
 	}
 
+	if UID == "" {
+		// If there is no UID, return 404 as the UID is part of the URL.
+		return response.Empty(http.StatusNotFound)
+	}
+
 	updated.OrgID = c.SignedInUser.GetOrgID()
 	updated.UID = UID
 	provenance := determineProvenance(c)
@@ -450,7 +453,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRulesExport(c *contextmodel.ReqContext)
 		return srv.RouteGetAlertRuleGroupExport(c, folderUIDs[0], group)
 	}
 
-	groupsWithFullpath, err := srv.alertRules.GetAlertGroupsWithFolderFullpath(c.Req.Context(), c.SignedInUser, folderUIDs)
+	groupsWithFullpath, err := srv.alertRules.GetAlertGroupsWithFolderFullpath(c.Req.Context(), c.SignedInUser, &provisioning.FilterOptions{NamespaceUIDs: folderUIDs})
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get alert rules", err)
 	}
@@ -572,6 +575,7 @@ func exportResponse(c *contextmodel.ReqContext, body definitions.AlertingFileExp
 		return exportHcl(params.Download, body)
 	}
 
+	body = escapeAlertingFileExport(body)
 	if params.Download {
 		r := response.JSONDownload
 		if params.Format == "yaml" {
@@ -587,35 +591,153 @@ func exportResponse(c *contextmodel.ReqContext, body definitions.AlertingFileExp
 	return r(http.StatusOK, body)
 }
 
+// escape all strings except:
+// Alert rule annotations: groups[].rules[].annotations
+// Alert rule time range: groups[].rules[].relativeTimeRange
+// Alert rule query model: groups[].rules[].data.model
+// Mute timings name: muteTimes[].name
+// Mute timings time intervals: muteTimes[].time_intervals[]
+// Notification template name: templates[].name
+// Notification template content: templates[].template
+func escapeAlertingFileExport(body definitions.AlertingFileExport) definitions.AlertingFileExport {
+	for i, group := range body.Groups {
+		body.Groups[i] = escapeRuleGroup(group)
+	}
+	for i, cp := range body.ContactPoints {
+		body.ContactPoints[i] = escapeContactPoint(cp)
+	}
+	for i, np := range body.Policies {
+		body.Policies[i] = escapeNotificationPolicy(np)
+	}
+	return body
+}
+
+func escapeRouteExport(r *definitions.RouteExport) {
+	r.Receiver = addEscapeCharactersToString(r.Receiver)
+	if r.GroupByStr != nil {
+		groupByStr := make([]string, len(*r.GroupByStr))
+		for i, groupBy := range *r.GroupByStr {
+			groupByStr[i] = addEscapeCharactersToString(groupBy)
+		}
+		r.GroupByStr = &groupByStr
+	}
+	for k, v := range r.Match {
+		r.Match[k] = addEscapeCharactersToString(v)
+	}
+	for k, v := range r.MatchRE {
+		// convert regex to string, escape then covert back to regex
+		stringRepr := addEscapeCharactersToString(v.String())
+		mutated := regexp.MustCompile(stringRepr)
+		r.MatchRE[k] = alertmanager_config.Regexp{Regexp: mutated}
+	}
+	if r.MuteTimeIntervals != nil {
+		muteTimeIntervals := make([]string, len(*r.MuteTimeIntervals))
+		for i, muteTimeInterval := range *r.MuteTimeIntervals {
+			muteTimeIntervals[i] = addEscapeCharactersToString(muteTimeInterval)
+		}
+		r.MuteTimeIntervals = &muteTimeIntervals
+	}
+	for i := range r.Routes {
+		escapeRouteExport(r.Routes[i])
+	}
+}
+
+func escapeNotificationPolicy(np definitions.NotificationPolicyExport) definitions.NotificationPolicyExport {
+	escapeRouteExport(np.RouteExport)
+	return np
+}
+
+func escapeContactPoint(cp definitions.ContactPointExport) definitions.ContactPointExport {
+	cp.Name = addEscapeCharactersToString(cp.Name)
+	for i, receiver := range cp.Receivers {
+		settingsJson, err := receiver.Settings.MarshalJSON()
+		if err != nil {
+			// This should never happen, as the settings are already marshaled to JSON in the API
+			panic(fmt.Errorf("failed to marshal settings to JSON: %w", err))
+		}
+		settingsEscaped := []byte(addEscapeCharactersToString(string(settingsJson)))
+		if err := cp.Receivers[i].Settings.UnmarshalJSON(settingsEscaped); err != nil {
+			// This should never happen, as the settings are already marshaled to JSON in the API
+			panic(fmt.Errorf("failed to unmarshal settings from JSON: %w", err))
+		}
+	}
+	return cp
+}
+
+// escape all strings except:
+// Alert rule annotations: groups[].rules[].annotations
+// Alert rule time range: groups[].rules[].relativeTimeRange
+// Alert rule query model: groups[].rules[].data.model
+func escapeRuleGroup(group definitions.AlertRuleGroupExport) definitions.AlertRuleGroupExport {
+	group.Name = addEscapeCharactersToString(group.Name)
+	group.Folder = addEscapeCharactersToString(group.Folder)
+	for i, rule := range group.Rules {
+		group.Rules[i].Title = addEscapeCharactersToString(rule.Title)
+		if rule.Labels != nil {
+			group.Rules[i].Labels = escapeMapValues(*rule.Labels)
+		}
+		if rule.NotificationSettings != nil {
+			notificationSettings := escapeRuleNotificationSettings(*rule.NotificationSettings)
+			group.Rules[i].NotificationSettings = &notificationSettings
+		}
+	}
+	return group
+}
+
+func escapeRuleNotificationSettings(ns definitions.AlertRuleNotificationSettingsExport) definitions.AlertRuleNotificationSettingsExport {
+	ns.Receiver = addEscapeCharactersToString(ns.Receiver)
+	for j := range ns.GroupBy {
+		ns.GroupBy[j] = addEscapeCharactersToString(ns.GroupBy[j])
+	}
+	for k := range ns.MuteTimeIntervals {
+		ns.MuteTimeIntervals[k] = addEscapeCharactersToString(ns.MuteTimeIntervals[k])
+	}
+	return ns
+}
+
+func escapeMapValues(m map[string]string) *map[string]string {
+	escapedMap := make(map[string]string, len(m))
+	for k, v := range m {
+		escapedMap[k] = addEscapeCharactersToString(v)
+	}
+	return &escapedMap
+}
+
+func addEscapeCharactersToString(s string) string {
+	return strings.ReplaceAll(s, "$", "$$")
+}
+
 func exportHcl(download bool, body definitions.AlertingFileExport) response.Response {
 	resources := make([]hcl.Resource, 0, len(body.Groups)+len(body.ContactPoints)+len(body.Policies)+len(body.MuteTimings))
 	convertToResources := func() error {
 		for _, group := range body.Groups {
 			gr := group
-			sum := fnv.New64()
-			_, _ = sum.Write([]byte(gr.Name))
-			_, _ = sum.Write([]byte(gr.FolderUID))
-			hash := sum.Sum64()
+			hash := getHash([]string{gr.Name, gr.FolderUID})
 			resources = append(resources, hcl.Resource{
 				Type: "grafana_rule_group",
 				Name: fmt.Sprintf("rule_group_%016x", hash),
 				Body: &gr,
 			})
 		}
-		for idx, cp := range body.ContactPoints {
+		for _, cp := range body.ContactPoints {
 			upd, err := ContactPointFromContactPointExport(cp)
 			if err != nil {
 				return fmt.Errorf("failed to convert contact points to HCL:%w", err)
 			}
+			hash := getHash([]string{upd.Name})
 			resources = append(resources, hcl.Resource{
 				Type: "grafana_contact_point",
-				Name: fmt.Sprintf("contact_point_%d", idx),
+				Name: fmt.Sprintf("contact_point_%016x", hash),
 				Body: &upd,
 			})
 		}
 
 		for idx, cp := range body.Policies {
 			policy := cp.RouteExport
+			if policy.GroupByStr == nil {
+				// required field, must be set to empty array
+				policy.GroupByStr = &[]string{}
+			}
 			resources = append(resources, hcl.Resource{
 				Type: "grafana_notification_policy",
 				Name: fmt.Sprintf("notification_policy_%d", idx+1),
@@ -623,14 +745,15 @@ func exportHcl(download bool, body definitions.AlertingFileExport) response.Resp
 			})
 		}
 
-		for idx, mt := range body.MuteTimings {
+		for _, mt := range body.MuteTimings {
 			mthcl, err := MuteTimingIntervalToMuteTimeIntervalHclExport(mt)
 			if err != nil {
 				return fmt.Errorf("failed to convert mute timing [%s] to HCL:%w", mt.Name, err)
 			}
+			hash := getHash([]string{mthcl.Name})
 			resources = append(resources, hcl.Resource{
 				Type: "grafana_mute_timing",
-				Name: fmt.Sprintf("mute_timing_%d", idx+1),
+				Name: fmt.Sprintf("mute_timing_%016x", hash),
 				Body: mthcl,
 			})
 		}

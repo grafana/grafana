@@ -43,6 +43,7 @@ describe('Plugins Selectors', () => {
           isInstalled: true,
           type: PluginType.app,
           isCore: false,
+          hasUpdate: true,
         }),
       ]),
     });
@@ -79,6 +80,13 @@ describe('Plugins Selectors', () => {
 
       expect(results).toHaveLength(1);
       expect(results.map(({ name }) => name)).toEqual(['Plugin 4']);
+    });
+
+    it('should be possible to only search for with update', () => {
+      const results = selectPlugins({ hasUpdate: true })(store.getState());
+
+      expect(results).toHaveLength(1);
+      expect(results.map(({ name }) => name)).toEqual(['Plugin 5']);
     });
 
     it('should be possible to search by multiple filters', () => {

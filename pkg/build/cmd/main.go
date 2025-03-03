@@ -3,11 +3,10 @@ package main
 import (
 	"log"
 	"os"
-	"strings"
 
+	"github.com/grafana/grafana/pkg/build"
+	"github.com/grafana/grafana/pkg/build/cmd/util"
 	"github.com/urfave/cli/v2"
-
-	"github.com/grafana/grafana/pkg/build/docker"
 )
 
 var additionalCommands []*cli.Command = make([]*cli.Command, 0, 5)
@@ -21,28 +20,8 @@ func main() {
 	app := cli.NewApp()
 	app.Commands = cli.Commands{
 		{
-			Name:      "build-backend",
-			Usage:     "Build one or more variants of back-end binaries",
-			ArgsUsage: "[version]",
-			Action:    MaxArgCountWrapper(1, BuildBackend),
-			Flags: []cli.Flag{
-				&jobsFlag,
-				&variantsFlag,
-				&editionFlag,
-				&buildIDFlag,
-			},
-		},
-		{
-			Name:      "build-frontend-packages",
-			Usage:     "Build front-end packages",
-			ArgsUsage: "[version]",
-			Action:    BuildFrontendPackages,
-			Flags: []cli.Flag{
-				&jobsFlag,
-				&editionFlag,
-				&buildIDFlag,
-				&noInstallDepsFlag,
-			},
+			Name:   "build",
+			Action: build.RunCmdCLI,
 		},
 		{
 			Name:   "e2e-tests",
@@ -72,42 +51,9 @@ func main() {
 			},
 		},
 		{
-			Name:      "build-frontend",
-			Usage:     "Build front-end artifacts",
-			ArgsUsage: "[version]",
-			Action:    MaxArgCountWrapper(1, BuildFrontend),
-			Flags: []cli.Flag{
-				&jobsFlag,
-				&editionFlag,
-				&buildIDFlag,
-			},
-		},
-		{
 			Name:   "whatsnew-checker",
 			Usage:  "Checks whatsNewUrl in package.json for differences between the tag and the docs version",
 			Action: WhatsNewChecker,
-		},
-		{
-			Name:   "build-docker",
-			Usage:  "Build Grafana Docker images",
-			Action: MaxArgCountWrapper(1, BuildDocker),
-			Flags: []cli.Flag{
-				&jobsFlag,
-				&editionFlag,
-				&cli.BoolFlag{
-					Name:  "ubuntu",
-					Usage: "Use Ubuntu base image",
-				},
-				&cli.BoolFlag{
-					Name:  "shouldSave",
-					Usage: "Should save docker image to tarball",
-				},
-				&cli.StringFlag{
-					Name:  "archs",
-					Value: strings.Join(docker.AllArchs, ","),
-					Usage: "Comma separated architectures to build",
-				},
-			},
 		},
 		{
 			Name:   "upload-cdn",
@@ -118,56 +64,15 @@ func main() {
 			},
 		},
 		{
-			Name:   "shellcheck",
-			Usage:  "Run shellcheck on shell scripts",
-			Action: Shellcheck,
-		},
-		{
-			Name:   "build-plugins",
-			Usage:  "Build internal plug-ins",
-			Action: MaxArgCountWrapper(1, BuildInternalPlugins),
-			Flags: []cli.Flag{
-				&jobsFlag,
-				&editionFlag,
-				&signingAdminFlag,
-				&signFlag,
-				&noInstallDepsFlag,
-			},
-		},
-		{
 			Name:      "publish-metrics",
 			Usage:     "Publish a set of metrics from stdin",
 			ArgsUsage: "<api-key>",
-			Action:    MaxArgCountWrapper(1, PublishMetrics),
+			Action:    util.MaxArgCountWrapper(1, PublishMetrics),
 		},
 		{
 			Name:   "verify-drone",
 			Usage:  "Verify Drone configuration",
 			Action: VerifyDrone,
-		},
-		{
-			Name:      "verify-starlark",
-			Usage:     "Verify Starlark configuration",
-			ArgsUsage: "<workspace path>",
-			Action:    VerifyStarlark,
-		},
-		{
-			Name:   "export-version",
-			Usage:  "Exports version in dist/grafana.version",
-			Action: ExportVersion,
-		},
-		{
-			Name:      "package",
-			Usage:     "Package one or more Grafana variants",
-			ArgsUsage: "[version]",
-			Action:    MaxArgCountWrapper(1, Package),
-			Flags: []cli.Flag{
-				&jobsFlag,
-				&variantsFlag,
-				&editionFlag,
-				&buildIDFlag,
-				&signFlag,
-			},
 		},
 		{
 			Name:   "store-storybook",
@@ -274,21 +179,9 @@ func main() {
 							Name:      "fetch",
 							Usage:     "Fetch Grafana Docker images",
 							ArgsUsage: "[version]",
-							Action:    MaxArgCountWrapper(1, FetchImages),
+							Action:    util.MaxArgCountWrapper(1, FetchImages),
 							Flags: []cli.Flag{
 								&editionFlag,
-							},
-						},
-						{
-							Name:      "publish-enterprise2",
-							Usage:     "Handle Grafana Enterprise2 Docker images",
-							ArgsUsage: "[version]",
-							Action:    Enterprise2,
-							Flags: []cli.Flag{
-								&cli.StringFlag{
-									Name:  "dockerhub-repo",
-									Usage: "DockerHub repo to push images",
-								},
 							},
 						},
 					},
@@ -337,7 +230,7 @@ func main() {
 					Flags: []cli.Flag{
 						&editionFlag,
 						&buildIDFlag,
-						&dryRunFlag,
+						&util.DryRunFlag,
 						&cli.StringFlag{
 							Name:  "src-bucket",
 							Value: "grafana-downloads",
@@ -350,7 +243,7 @@ func main() {
 					Usage:  "Publish packages to GitHub releases",
 					Action: PublishGithub,
 					Flags: []cli.Flag{
-						&dryRunFlag,
+						&util.DryRunFlag,
 						&cli.StringFlag{
 							Name:  "path",
 							Usage: "Path to the asset to be published",
@@ -375,7 +268,7 @@ func main() {
 					Usage:  "Publish image to AWS Marketplace releases",
 					Action: PublishAwsMarketplace,
 					Flags: []cli.Flag{
-						&dryRunFlag,
+						&util.DryRunFlag,
 						&cli.StringFlag{
 							Name:  "version",
 							Usage: "Release version (default from metadata)",
@@ -395,36 +288,6 @@ func main() {
 							Required: true,
 							Usage:    "AWS Marketplace product identifier",
 						},
-					},
-				},
-			},
-		},
-		{
-			Name:  "enterprise-check",
-			Usage: "Commands for testing against Grafana Enterprise",
-			Subcommands: cli.Commands{
-				{
-					Name:   "begin",
-					Usage:  "Creates the GitHub check in a pull request and begins the tests",
-					Action: EnterpriseCheckBegin,
-					Flags: []cli.Flag{
-						&gitHubTokenFlag,
-					},
-				},
-				{
-					Name:   "success",
-					Usage:  "Updates the GitHub check in a pull request to show a successful build and updates the pull request labels",
-					Action: EnterpriseCheckSuccess,
-					Flags: []cli.Flag{
-						&gitHubTokenFlag,
-					},
-				},
-				{
-					Name:   "fail",
-					Usage:  "Updates the GitHub check in a pull request to show a failed build and updates the pull request labels",
-					Action: EnterpriseCheckFail,
-					Flags: []cli.Flag{
-						&gitHubTokenFlag,
 					},
 				},
 			},

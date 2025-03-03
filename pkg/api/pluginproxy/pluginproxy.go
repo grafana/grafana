@@ -129,8 +129,7 @@ func (proxy *PluginProxy) HandleRequest() {
 }
 
 func (proxy *PluginProxy) hasAccessToRoute(route *plugins.Route) bool {
-	useRBAC := proxy.features.IsEnabled(proxy.ctx.Req.Context(), featuremgmt.FlagAccessControlOnCall) && route.ReqAction != ""
-	if useRBAC {
+	if route.ReqAction != "" {
 		routeEval := pluginac.GetPluginRouteEvaluator(proxy.ps.PluginID, route.ReqAction)
 		hasAccess := ac.HasAccess(proxy.accessControl, proxy.ctx)(routeEval)
 		if !hasAccess {
@@ -185,10 +184,7 @@ func (proxy PluginProxy) director(req *http.Request) {
 	req.Header.Set("X-Grafana-Context", string(ctxJSON))
 
 	proxyutil.ApplyUserHeader(proxy.cfg.SendUserHeader, req, proxy.ctx.SignedInUser)
-
-	if proxy.features.IsEnabled(req.Context(), featuremgmt.FlagIdForwarding) {
-		proxyutil.ApplyForwardIDHeader(req, proxy.ctx.SignedInUser)
-	}
+	proxyutil.ApplyForwardIDHeader(req, proxy.ctx.SignedInUser)
 
 	if err := addHeaders(&req.Header, proxy.matchedRoute, data); err != nil {
 		proxy.ctx.JsonApiErr(500, "Failed to render plugin headers", err)

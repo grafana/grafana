@@ -8,6 +8,11 @@ load(
     "integration_test_services_volumes",
 )
 load(
+    "scripts/drone/steps/github.star",
+    "github_app_generate_token_step",
+    "github_app_pipeline_volumes",
+)
+load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
     "download_grabpl_step",
@@ -50,7 +55,10 @@ def integration_tests(trigger, prefix, ver_mode = "pr"):
 
     if ver_mode == "pr":
         # In pull requests, attempt to clone grafana enterprise.
+        init_steps.append(github_app_generate_token_step())
         init_steps.append(enterprise_setup_step())
+
+        volumes += github_app_pipeline_volumes()
 
     init_steps += [
         download_grabpl_step(),
@@ -63,7 +71,6 @@ def integration_tests(trigger, prefix, ver_mode = "pr"):
 
     # test_steps = [a, b] + [c, d] + [e, f]...
     test_steps = postgres_integration_tests_steps() + \
-                 mysql_integration_tests_steps("mysql57", "5.7") + \
                  mysql_integration_tests_steps("mysql80", "8.0") + \
                  redis_integration_tests_steps() + \
                  memcached_integration_tests_steps() + \

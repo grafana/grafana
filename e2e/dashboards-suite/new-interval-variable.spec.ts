@@ -16,7 +16,7 @@ describe('Variables - Interval', () => {
   });
 
   it('can add a new interval variable', () => {
-    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
+    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=variables` });
     cy.contains(DASHBOARD_NAME).should('be.visible');
 
     // Create a new "Interval" variable
@@ -35,12 +35,13 @@ describe('Variables - Interval', () => {
     assertPreviewValues(['10s', '10m', '60m', '90m', '1h30m']);
 
     // Navigate back to the homepage and change the selected variable value
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
-    e2e.pages.Dashboard.Settings.Actions.close().click();
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.applyButton().click();
+    e2e.components.NavToolbar.editDashboard.backToDashboardButton().click();
+
     e2e.components.RefreshPicker.runButtonV2().click();
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('10s').click();
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('1h30m').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemLabels('Variable under test').next().should('have.text', `10s`).click();
+    e2e.components.Select.option().contains('1h30m').click();
 
     // Assert it was rendered
     cy.get('.markdown-html').should('include.text', 'VariableUnderTest: 1h30m');

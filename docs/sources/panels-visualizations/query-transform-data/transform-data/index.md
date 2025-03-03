@@ -188,6 +188,7 @@ Use this transformation to add a new field calculated from two other fields. Eac
 - **Field name** - Select the names of fields you want to use in the calculation for the new field.
 - **Calculation** - If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Calculation types][].
 - **Operation** - If you select **Binary operation** or **Unary operation** mode, then the **Operation** fields appear. These fields allow you to apply basic math operations on values in a single row from selected fields. You can also use numerical values for binary operations.
+  - **All number fields** - Set the left side of a **Binary operation** to apply the calculation to all number fields.
 - **As percentile** - If you select **Row index** mode, then the **As percentile** switch appears. This switch allows you to transform the row index as a percentage of the total number of rows.
 - **Alias** - (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
 - **Replace all fields** - (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
@@ -285,6 +286,8 @@ In the field mapping specify:
 
 Grafana builds value mappings from your query result and applies them to the real data query results. You should see values being mapped and colored according to the config query results.
 
+> **Note:** When you use this transformation for thresholds, the visualization continues to use the panel's base threshold.
+
 ### Convert field type
 
 Use this transformation to modify the field type of a specified field.
@@ -337,6 +340,8 @@ Use this transformation to select a source of data and extract content from it i
 - **Format** - Choose one of the following:
   - **JSON** - Parse JSON content from the source.
   - **Key+value pairs** - Parse content in the format 'a=b' or 'c:d' from the source.
+  - **RegExp** - Parse content using a regular expression with [named capturing group(s)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Named_capturing_group) like `/(?<NewField>.*)/`.
+    {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-regexp-detail-v11.3-2.png" class="docs-image--no-shadow" max-width= "1100px" alt="Example of a regular expression" >}}
   - **Auto** - Discover fields automatically.
 - **Replace All Fields** - (Optional) Select this option to hide all other fields and display only your calculated field in the visualization.
 - **Keep Time** - (Optional) Available only if **Replace All Fields** is true. Keeps the time field in the output.
@@ -1068,6 +1073,14 @@ Here is the result after adding a Limit transformation with a value of '3':
 | 2020-07-07 11:34:20 | Humidity    | 22    |
 | 2020-07-07 10:32:20 | Humidity    | 29    |
 
+Using a negative number, you can keep values from the end of the set. Here is the result after adding a Limit transformation with a value of '-3':
+
+| Time                | Metric      | Value |
+| ------------------- | ----------- | ----- |
+| 2020-07-07 10:31:22 | Temperature | 22    |
+| 2020-07-07 09:30:57 | Humidity    | 33    |
+| 2020-07-07 09:30:05 | Temperature | 19    |
+
 This transformation helps you tailor the visual presentation of your data to focus on the most relevant information.
 
 ### Merge series/tables
@@ -1205,8 +1218,6 @@ Select this option to transform the time series data frame from the long format 
 | ------------------- | ------ | ------ |
 | 2023-01-01 00:00:00 | 10     | 20     |
 | 2023-01-01 01:00:00 | 15     | 25     |
-
-> **Note:** This transformation is available in Grafana 7.5.10+ and Grafana 8.0.6+.
 
 ### Reduce
 
@@ -1378,8 +1389,6 @@ Here is the result after applying the Series to rows transformation.
 
 This transformation facilitates the consolidation of results from multiple time series queries, providing a streamlined and unified dataset for efficient analysis and visualization in a tabular format.
 
-> **Note:** This transformation is available in Grafana 7.1+.
-
 ### Sort by
 
 Use this transformation to sort each frame within a query result based on a specified field, making your data easier to understand and analyze. By configuring the desired field for sorting, you can control the order in which the data is presented in the table or visualization.
@@ -1422,6 +1431,27 @@ For each generated **Trend** field value, a calculation function can be selected
 {{< figure src="/static/img/docs/transformations/timeseries-table-select-stat.png" class="docs-image--no-shadow" max-width= "1100px" alt="A select box showing available statistics that can be calculated." >}}
 
 > **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify the Grafana [configuration file][] to use it.
+
+### Transpose
+
+Use this transformation to pivot the data frame, converting rows into columns and columns into rows. This transformation is particularly useful when you want to switch the orientation of your data to better suit your visualization needs.
+If you have multiple types it will default to string type.
+
+**Before Transformation:**
+
+| env  | January | February |
+| ---- | ------- | -------- |
+| prod | 1       | 2        |
+| dev  | 3       | 4        |
+
+**After applying transpose transformation:**
+
+| Field    | prod | dev |
+| -------- | ---- | --- |
+| January  | 1    | 3   |
+| February | 2    | 4   |
+
+{{< figure src="/media/docs/grafana/transformations/screenshot-grafana-11-2-transpose-transformation.png" class="docs-image--no-shadow" max-width= "1100px" alt="Before and after transpose transformation" >}}
 
 ### Regression analysis
 

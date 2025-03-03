@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { formatDuration } from 'date-fns';
 import { PureComponent } from 'react';
 
@@ -116,6 +117,10 @@ export class RefreshPicker extends PureComponent<Props> {
         </ToolbarButton>
         {!noIntervalPicker && (
           <ButtonSelect
+            className={css({
+              borderTopLeftRadius: 0,
+              borderBottomLeftRadius: 0,
+            })}
             value={selectedValue}
             options={options}
             onChange={this.onChangeSelect}

@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/concurrency"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -22,19 +22,19 @@ import (
 
 const DEFAULT_BATCH_SIZE = 999
 
-type sqlStore struct {
+type FolderStoreImpl struct {
 	db  db.DB
 	log log.Logger
 }
 
 // sqlStore implements the store interface.
-var _ store = (*sqlStore)(nil)
+var _ folder.Store = (*FolderStoreImpl)(nil)
 
-func ProvideStore(db db.DB) *sqlStore {
-	return &sqlStore{db: db, log: log.New("folder-store")}
+func ProvideStore(db db.DB) *FolderStoreImpl {
+	return &FolderStoreImpl{db: db, log: log.New("folder-store")}
 }
 
-func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) (*folder.Folder, error) {
+func (ss *FolderStoreImpl) Create(ctx context.Context, cmd folder.CreateFolderCommand) (*folder.Folder, error) {
 	if cmd.UID == "" {
 		return nil, folder.ErrBadRequest.Errorf("missing UID")
 	}
@@ -83,7 +83,7 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 	return foldr.WithURL(), err
 }
 
-func (ss *sqlStore) Delete(ctx context.Context, UIDs []string, orgID int64) error {
+func (ss *FolderStoreImpl) Delete(ctx context.Context, UIDs []string, orgID int64) error {
 	if len(UIDs) == 0 {
 		return nil
 	}
@@ -103,7 +103,7 @@ func (ss *sqlStore) Delete(ctx context.Context, UIDs []string, orgID int64) erro
 	})
 }
 
-func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) (*folder.Folder, error) {
+func (ss *FolderStoreImpl) Update(ctx context.Context, cmd folder.UpdateFolderCommand) (*folder.Folder, error) {
 	updated := time.Now()
 	uid := cmd.UID
 
@@ -191,7 +191,7 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 //	└── B/C
 //
 // The full path of C is "A/B\/C".
-func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.Folder, error) {
+func (ss *FolderStoreImpl) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.Folder, error) {
 	foldr := &folder.Folder{}
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		exists := false
@@ -201,8 +201,11 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 		if q.WithFullpath {
 			s.WriteString(fmt.Sprintf(`, %s AS fullpath`, getFullpathSQL(ss.db.GetDialect())))
 		}
+		if q.WithFullpathUIDs {
+			s.WriteString(fmt.Sprintf(`, %s AS fullpath_uids`, getFullapathUIDsSQL(ss.db.GetDialect())))
+		}
 		s.WriteString(" FROM folder f0")
-		if q.WithFullpath {
+		if q.WithFullpath || q.WithFullpathUIDs {
 			s.WriteString(getFullpathJoinsSQL())
 		}
 		switch {
@@ -241,10 +244,11 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 	})
 
 	foldr.Fullpath = strings.TrimLeft(foldr.Fullpath, "/")
+	foldr.FullpathUIDs = strings.TrimLeft(foldr.FullpathUIDs, "/")
 	return foldr.WithURL(), err
 }
 
-func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
+func (ss *FolderStoreImpl) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
 	if q.UID == "" {
 		return []*folder.Folder{}, nil
 	}
@@ -295,7 +299,7 @@ func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([
 	return util.Reverse(folders[1:]), nil
 }
 
-func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) ([]*folder.Folder, error) {
+func (ss *FolderStoreImpl) GetChildren(ctx context.Context, q folder.GetChildrenQuery) ([]*folder.Folder, error) {
 	var folders []*folder.Folder
 
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
@@ -323,7 +327,7 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) 
 		}
 
 		// only list k6 folders when requested by a service account - prevents showing k6 folders in the UI for users
-		if q.SignedInUser == nil || q.SignedInUser.GetID().Type() != identity.TypeServiceAccount {
+		if q.SignedInUser == nil || !q.SignedInUser.IsIdentityType(claims.TypeServiceAccount) {
 			sql.WriteString(" AND uid != ?")
 			args = append(args, accesscontrol.K6FolderUID)
 		}
@@ -353,7 +357,7 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) 
 	return folders, err
 }
 
-func (ss *sqlStore) getParentsMySQL(ctx context.Context, q folder.GetParentsQuery) (folders []*folder.Folder, err error) {
+func (ss *FolderStoreImpl) getParentsMySQL(ctx context.Context, q folder.GetParentsQuery) (folders []*folder.Folder, err error) {
 	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		uid := ""
 		// covered by UQE_folder_org_id_uid
@@ -387,7 +391,7 @@ func (ss *sqlStore) getParentsMySQL(ctx context.Context, q folder.GetParentsQuer
 }
 
 // TODO use a single query to get the height of a folder
-func (ss *sqlStore) GetHeight(ctx context.Context, foldrUID string, orgID int64, parentUID *string) (int, error) {
+func (ss *FolderStoreImpl) GetHeight(ctx context.Context, foldrUID string, orgID int64, parentUID *string) (int, error) {
 	height := -1
 	queue := []string{foldrUID}
 	for len(queue) > 0 && height <= folder.MaxNestedFolderDepth {
@@ -445,7 +449,7 @@ func (ss *sqlStore) GetHeight(ctx context.Context, foldrUID string, orgID int64,
 // The full path UIDs of C is "uid1/uid2/uid3".
 // The full path UIDs of B is "uid1/uid2".
 // The full path UIDs of A is "uid1".
-func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folder.Folder, error) {
+func (ss *FolderStoreImpl) GetFolders(ctx context.Context, q folder.GetFoldersFromStoreQuery) ([]*folder.Folder, error) {
 	if q.BatchSize == 0 {
 		q.BatchSize = DEFAULT_BATCH_SIZE
 	}
@@ -467,7 +471,7 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folde
 			}
 			s.WriteString(` FROM folder f0`)
 			// join the same table multiple times to compute the full path of a folder
-			if q.WithFullpath || q.WithFullpathUIDs || len(q.ancestorUIDs) > 0 {
+			if q.WithFullpath || q.WithFullpathUIDs || len(q.AncestorUIDs) > 0 {
 				s.WriteString(getFullpathJoinsSQL())
 			}
 			// covered by UQE_folder_org_id_uid
@@ -484,12 +488,12 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folde
 			}
 
 			// only list k6 folders when requested by a service account - prevents showing k6 folders in the UI for users
-			if q.SignedInUser == nil || q.SignedInUser.GetID().Type() != identity.TypeServiceAccount {
+			if q.SignedInUser == nil || !q.SignedInUser.IsIdentityType(claims.TypeServiceAccount) {
 				s.WriteString(" AND f0.uid != ? AND (f0.parent_uid != ? OR f0.parent_uid IS NULL)")
 				args = append(args, accesscontrol.K6FolderUID, accesscontrol.K6FolderUID)
 			}
 
-			if len(q.ancestorUIDs) == 0 {
+			if len(q.AncestorUIDs) == 0 {
 				if q.OrderByTitle {
 					s.WriteString(` ORDER BY f0.title ASC`)
 				}
@@ -503,8 +507,8 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folde
 			}
 
 			// filter out folders if they are not in the subtree of the given ancestor folders
-			if err := batch(len(q.ancestorUIDs), int(q.BatchSize), func(start2, end2 int) error {
-				s2, args2 := getAncestorsSQL(ss.db.GetDialect(), q.ancestorUIDs, start2, end2, s.String(), args)
+			if err := batch(len(q.AncestorUIDs), int(q.BatchSize), func(start2, end2 int) error {
+				s2, args2 := getAncestorsSQL(ss.db.GetDialect(), q.AncestorUIDs, start2, end2, s.String(), args)
 				if q.OrderByTitle {
 					s2 += " ORDER BY f0.title ASC"
 				}
@@ -533,7 +537,7 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folde
 	return folders, nil
 }
 
-func (ss *sqlStore) GetDescendants(ctx context.Context, orgID int64, ancestor_uid string) ([]*folder.Folder, error) {
+func (ss *FolderStoreImpl) GetDescendants(ctx context.Context, orgID int64, ancestor_uid string) ([]*folder.Folder, error) {
 	var folders []*folder.Folder
 
 	recursiveQueriesAreSupported, err := ss.db.RecursiveQueriesAreSupported()

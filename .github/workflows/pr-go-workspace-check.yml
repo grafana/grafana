@@ -4,6 +4,15 @@ on:
   workflow_dispatch:
   pull_request:
     branches: [main]
+    paths:
+      - .github/workflows/pr-go-workspace-check.yml
+      - go.mod
+      - go.sum
+      - go.work
+      - go.work.sum
+      - '**/go.mod'
+      - '**/go.sum'
+      - '**.go'
 
 jobs:
   check:
@@ -31,3 +40,5 @@ jobs:
           echo "If there is a change in enterprise dependencies, please update pkg/extensions/main.go."
           exit 1
         fi
+    - name: Ensure Dockerfile contains submodule COPY commands
+      run: ./scripts/go-workspace/validate-dockerfile.sh

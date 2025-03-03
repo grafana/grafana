@@ -16,7 +16,7 @@ import {
   Labels,
 } from '@grafana/data';
 import { DataFrame } from '@grafana/data/';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Dropdown, Menu, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { downloadDataFrameAsCsv, downloadLogsModelAsTxt } from '../../inspector/utils/download';
@@ -28,11 +28,11 @@ import { MetaInfoText, MetaItemProps } from '../MetaInfoText';
 import { getLogsExtractFields } from './LogsTable';
 
 const getStyles = () => ({
-  metaContainer: css`
-    flex: 1;
-    display: flex;
-    flex-wrap: wrap;
-  `,
+  metaContainer: css({
+    flex: 1,
+    display: 'flex',
+    flexWrap: 'wrap',
+  }),
 });
 
 export type Props = {
@@ -139,7 +139,7 @@ export const LogsMetaRow = memo(
         {
           label: '',
           value: (
-            <Button variant="secondary" size="sm" onClick={clearDetectedFields}>
+            <Button variant="primary" fill="outline" size="sm" onClick={clearDetectedFields}>
               Show original line
             </Button>
           ),
@@ -182,11 +182,13 @@ export const LogsMetaRow = memo(
                 };
               })}
             />
-            <Dropdown overlay={downloadMenu}>
-              <ToolbarButton isOpen={false} variant="canvas" icon="download-alt">
-                Download
-              </ToolbarButton>
-            </Dropdown>
+            {!config.exploreHideLogsDownload && (
+              <Dropdown overlay={downloadMenu}>
+                <ToolbarButton isOpen={false} variant="canvas" icon="download-alt">
+                  Download
+                </ToolbarButton>
+              </Dropdown>
+            )}
           </div>
         )}
       </>

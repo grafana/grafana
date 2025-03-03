@@ -8,9 +8,9 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -70,6 +70,7 @@ func (hs *HTTPServer) AdminCreateUser(c *contextmodel.ReqContext) response.Respo
 	result := user.AdminCreateUserResponse{
 		Message: "User created",
 		ID:      usr.ID,
+		UID:     usr.UID,
 	}
 
 	return response.JSON(http.StatusOK, result)
@@ -157,8 +158,7 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *contextmodel.ReqContext) res
 	}
 
 	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &login.GetAuthInfoQuery{UserId: userID}); err == nil && authInfo != nil {
-		oauthInfo := hs.SocialService.GetOAuthInfoProvider(authInfo.AuthModule)
-		if login.IsGrafanaAdminExternallySynced(hs.Cfg, oauthInfo, authInfo.AuthModule) {
+		if hs.isGrafanaAdminExternallySynced(hs.Cfg, authInfo.AuthModule) {
 			return response.Error(http.StatusForbidden, "Cannot change Grafana Admin role for externally synced user", nil)
 		}
 	}
@@ -228,7 +228,7 @@ func (hs *HTTPServer) AdminDeleteUser(c *contextmodel.ReqContext) response.Respo
 		return nil
 	})
 	g.Go(func() error {
-		if err := hs.teamService.RemoveUsersMemberships(ctx, cmd.UserID); err != nil {
+		if err := hs.TeamService.RemoveUsersMemberships(ctx, cmd.UserID); err != nil {
 			return err
 		}
 		return nil
@@ -361,12 +361,13 @@ func (hs *HTTPServer) AdminEnableUser(c *contextmodel.ReqContext) response.Respo
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) AdminLogoutUser(c *contextmodel.ReqContext) response.Response {
-	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	id := web.Params(c.Req)[":id"]
+	userID, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	if c.SignedInUser.GetID() == identity.NewTypedID(identity.TypeUser, userID) {
+	if c.SignedInUser.GetID() == authlib.NewTypeID(authlib.TypeUser, id) {
 		return response.Error(http.StatusBadRequest, "You cannot logout yourself", nil)
 	}
 

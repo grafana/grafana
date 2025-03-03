@@ -1,8 +1,11 @@
-import { delay, http, HttpResponse } from 'msw';
+import { produce } from 'immer';
+import { HttpResponse, delay, http } from 'msw';
 
 export const MOCK_GRAFANA_ALERT_RULE_TITLE = 'Test alert';
 
 import {
+  GrafanaRuleDefinition,
+  PromRulesResponse,
   RulerGrafanaRuleDTO,
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
@@ -25,6 +28,12 @@ export const rulerRulesHandler = () => {
     }, {});
 
     return HttpResponse.json<RulerRulesConfigDTO>(response);
+  });
+};
+
+export const prometheusRulesHandler = () => {
+  return http.get('/api/prometheus/grafana/api/v1/rules', () => {
+    return HttpResponse.json<PromRulesResponse>({ status: 'success', data: { groups: [] } });
   });
 };
 
@@ -92,10 +101,14 @@ export const rulerRuleGroupHandler = (options?: HandlerOptions) => {
   );
 };
 
-export const deleteRulerRuleGroupHandler = () =>
+export const deleteRulerRuleGroupHandler = (options?: HandlerOptions) =>
   http.delete<{ folderUid: string; groupName: string }>(
     `/api/ruler/grafana/api/v1/rules/:folderUid/:groupName`,
     ({ params: { folderUid } }) => {
+      if (options?.response) {
+        return options.response;
+      }
+
       const namespace = namespaces[folderUid];
       if (!namespace) {
         return new HttpResponse(null, { status: 403 });
@@ -124,6 +137,64 @@ export const rulerRuleHandler = () => {
   });
 };
 
+export const rulerRuleVersionHistoryHandler = () => {
+  const grafanaRuleVersions = [
+    produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
+      draft.grafana_alert.version = 6;
+      draft.grafana_alert.updated = '2025-01-18T09:35:17.000Z';
+      draft.grafana_alert.updated_by = {
+        uid: 'service',
+        name: '',
+      };
+    }),
+    produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
+      draft.grafana_alert.version = 5;
+      draft.grafana_alert.updated = '2025-01-17T09:35:17.000Z';
+      draft.grafana_alert.updated_by = {
+        uid: '__alerting__',
+        name: '',
+      };
+    }),
+    produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
+      draft.grafana_alert.version = 4;
+      draft.grafana_alert.title = 'Some new title';
+      draft.grafana_alert.updated = '2025-01-16T09:35:17.000Z';
+      draft.grafana_alert.updated_by = {
+        uid: 'different',
+        name: 'different user',
+      };
+    }),
+    produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
+      draft.grafana_alert.version = 3;
+      draft.grafana_alert.updated = '2025-01-15T09:35:17.000Z';
+      draft.grafana_alert.updated_by = {
+        uid: '1',
+        name: 'user1',
+      };
+    }),
+    produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
+      draft.grafana_alert.version = 2;
+      draft.grafana_alert.updated = '2025-01-14T09:35:17.000Z';
+      draft.for = '2h';
+      draft.labels.foo = 'bar';
+      draft.grafana_alert.notification_settings = { receiver: 'another receiver' };
+      draft.grafana_alert.updated_by = {
+        uid: 'foo',
+        name: '',
+      };
+    }),
+    produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
+      draft.grafana_alert.version = 1;
+      draft.grafana_alert.updated = '2025-01-13T09:35:17.000Z';
+      draft.grafana_alert.updated_by = null;
+    }),
+  ];
+
+  return http.get<{ uid: string }>(`/api/ruler/grafana/api/v1/rule/:uid/versions`, ({ params: { uid } }) => {
+    return HttpResponse.json(grafanaRuleVersions);
+  });
+};
+
 export const historyHandler = () => {
   return http.get('/api/v1/rules/history', () => {
     return HttpResponse.json(getHistoryResponse([time_0, time_0, time_plus_30, time_plus_30]));
@@ -132,11 +203,13 @@ export const historyHandler = () => {
 
 const handlers = [
   rulerRulesHandler(),
+  prometheusRulesHandler(),
   getRulerRuleNamespaceHandler(),
   rulerRuleGroupHandler(),
   rulerRuleHandler(),
   historyHandler(),
   updateRulerRuleNamespaceHandler(),
   deleteRulerRuleGroupHandler(),
+  rulerRuleVersionHistoryHandler(),
 ];
 export default handlers;

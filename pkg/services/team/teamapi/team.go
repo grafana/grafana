@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strconv"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -49,24 +49,17 @@ func (tapi *TeamAPI) createTeam(c *contextmodel.ReqContext) response.Response {
 	// if the request is authenticated using API tokens
 	// the SignedInUser is an empty struct therefore
 	// an additional check whether it is an actual user is required
-	namespace, identifier := c.SignedInUser.GetTypedID()
-	switch namespace {
-	case identity.TypeUser:
-		userID, err := strconv.ParseInt(identifier, 10, 64)
-		if err != nil {
-			c.Logger.Error("Could not add creator to team because user id is not a number", "error", err)
-			break
-		}
+	if c.SignedInUser.IsIdentityType(claims.TypeUser) {
+		userID, _ := c.SignedInUser.GetInternalID()
 		if err := addOrUpdateTeamMember(c.Req.Context(), tapi.teamPermissionsService, userID, c.SignedInUser.GetOrgID(),
 			t.ID, dashboardaccess.PERMISSION_ADMIN.String()); err != nil {
 			c.Logger.Error("Could not add creator to team", "error", err)
 		}
-	default:
-		c.Logger.Warn("Could not add creator to team because is not a real user")
 	}
 
 	return response.JSON(http.StatusOK, &util.DynMap{
 		"teamId":  t.ID,
+		"uid":     t.UID,
 		"message": "Team created",
 	})
 }
@@ -238,7 +231,7 @@ func (tapi *TeamAPI) getTeamByID(c *contextmodel.ReqContext) response.Response {
 	}
 
 	// Add accesscontrol metadata
-	queryResult.AccessControl = tapi.getAccessControlMetadata(c, c.SignedInUser.GetOrgID(), "teams:id:", strconv.FormatInt(queryResult.ID, 10))
+	queryResult.AccessControl = tapi.getAccessControlMetadata(c, "teams:id:", strconv.FormatInt(queryResult.ID, 10))
 
 	queryResult.AvatarURL = dtos.GetGravatarUrlWithDefault(tapi.cfg, queryResult.Email, queryResult.Name)
 	return response.JSON(http.StatusOK, &queryResult)
@@ -370,6 +363,7 @@ type CreateTeamResponse struct {
 	// in: body
 	Body struct {
 		TeamId  int64  `json:"teamId"`
+		Uid     string `json:"uid"`
 		Message string `json:"message"`
 	} `json:"body"`
 }
@@ -392,7 +386,7 @@ func (tapi *TeamAPI) getMultiAccessControlMetadata(c *contextmodel.ReqContext,
 // Metadata helpers
 // getAccessControlMetadata returns the accesscontrol metadata associated with a given resource
 func (tapi *TeamAPI) getAccessControlMetadata(c *contextmodel.ReqContext,
-	orgID int64, prefix string, resourceID string) accesscontrol.Metadata {
+	prefix string, resourceID string) accesscontrol.Metadata {
 	ids := map[string]bool{resourceID: true}
 	return tapi.getMultiAccessControlMetadata(c, prefix, ids)[resourceID]
 }

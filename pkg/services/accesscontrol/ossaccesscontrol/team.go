@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -42,16 +41,20 @@ func ProvideTeamPermissions(
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*TeamPermissionsService, error) {
 	options := resourcepermissions.Options{
-		Resource:          "teams",
-		ResourceAttribute: "id",
-		OnlyManaged:       true,
+		Resource:           "teams",
+		ResourceAttribute:  "id",
+		OnlyManaged:        true,
+		ResourceTranslator: team.UIDToIDHandler(teamService),
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
+			ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.ProvideTeamerPermissions.ResourceValidator")
+			defer span.End()
+
 			id, err := strconv.ParseInt(resourceID, 10, 64)
 			if err != nil {
 				return err
 			}
 
-			_, err = teamService.GetTeamByID(context.Background(), &team.GetTeamByIDQuery{
+			_, err = teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
 				OrgID: orgID,
 				ID:    id,
 			})
@@ -80,9 +83,9 @@ func ProvideTeamPermissions(
 			}
 			switch permission {
 			case "Member":
-				return teamimpl.AddOrUpdateTeamMemberHook(session, user.ID, orgID, teamId, user.IsExternal, 0)
+				return teamimpl.AddOrUpdateTeamMemberHook(session, user.ID, orgID, teamId, user.IsExternal, team.PermissionTypeMember)
 			case "Admin":
-				return teamimpl.AddOrUpdateTeamMemberHook(session, user.ID, orgID, teamId, user.IsExternal, dashboardaccess.PERMISSION_ADMIN)
+				return teamimpl.AddOrUpdateTeamMemberHook(session, user.ID, orgID, teamId, user.IsExternal, team.PermissionTypeAdmin)
 			case "":
 				return teamimpl.RemoveTeamMemberHook(session, &team.RemoveTeamMemberCommand{
 					OrgID:  orgID,

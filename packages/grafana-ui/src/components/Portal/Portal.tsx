@@ -1,9 +1,10 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { PropsWithChildren, useLayoutEffect, useRef } from 'react';
 import * as React from 'react';
 import ReactDOM from 'react-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes';
 
@@ -51,25 +52,25 @@ export function getPortalContainer() {
 /** @internal */
 export function PortalContainer() {
   const styles = useStyles2(getStyles);
-  const isBodyScrolling = window.grafanaBootData?.settings.featureToggles.bodyScrolling;
   return (
     <div
       id="grafana-portal-container"
-      className={cx({
-        [styles.grafanaPortalContainer]: isBodyScrolling,
-      })}
+      data-testid={selectors.components.Portal.container}
+      className={styles.grafanaPortalContainer}
     />
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  grafanaPortalContainer: css({
-    position: 'fixed',
-    top: 0,
-    width: '100%',
-    zIndex: theme.zIndex.portal,
-  }),
-});
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    grafanaPortalContainer: css({
+      position: 'fixed',
+      top: 0,
+      width: '100%',
+      zIndex: theme.zIndex.portal,
+    }),
+  };
+};
 
 export const RefForwardingPortal = React.forwardRef<HTMLDivElement, Props>((props, ref) => {
   return <Portal {...props} forwardedRef={ref} />;

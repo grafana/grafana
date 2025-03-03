@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	secretsFakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -30,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/setting/settingtest"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -1520,6 +1520,38 @@ func TestService_Delete(t *testing.T) {
 
 		require.NoError(t, err)
 	})
+
+	t.Run("should delete SAML SettingsProvider while deleting SAML SSO Settings", func(t *testing.T) {
+		t.Parallel()
+		env := setupTestEnv(t, true, true, true, false)
+
+		mockProvider := &settingtest.MockProvider{}
+		mockProvider.On("Current", mock.Anything).Return(setting.SettingsBag{
+			"auth.saml": map[string]string{
+				"name": "mockedName",
+			},
+		}).Twice()
+		mockProvider.On(
+			"Update",
+			setting.SettingsBag{},
+			setting.SettingsRemovals{"auth.saml": []string{"name"}}).Return(nil).Once()
+		env.service.settingsProvider = mockProvider
+
+		provider := social.SAMLProviderName
+		reloadable := ssosettingstests.NewMockReloadable(t)
+
+		var wg sync.WaitGroup
+		wg.Add(1)
+		reloadable.On("Reload", mock.Anything, mock.MatchedBy(func(settings models.SSOSettings) bool {
+			wg.Done()
+			return settings.Provider == provider && settings.ID == ""
+		})).Return(nil).Once()
+		env.reloadables[provider] = reloadable
+
+		err := env.service.Delete(context.Background(), provider)
+		require.NoError(t, err)
+		wg.Wait()
+	})
 }
 
 // we might not need this test because it is not testing the public interface
@@ -1859,7 +1891,7 @@ func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies, sam
 	store := ssosettingstests.NewFakeStore()
 	fallbackStrategy := ssosettingstests.NewFakeFallbackStrategy()
 	secrets := secretsFakes.NewMockService(t)
-	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	reloadables := make(map[string]ssosettings.Reloadable)
 
 	fallbackStrategy.ExpectedIsMatch = true

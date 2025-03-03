@@ -15,8 +15,6 @@ import (
 type SyncStatePersister struct {
 	log   log.Logger
 	store InstanceStore
-	// doNotSaveNormalState controls whether eval.Normal state is persisted to the database and returned by get methods.
-	doNotSaveNormalState bool
 	// maxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
 	maxStateSaveConcurrency int
 }
@@ -25,17 +23,16 @@ func NewSyncStatePersisiter(log log.Logger, cfg ManagerCfg) StatePersister {
 	return &SyncStatePersister{
 		log:                     log,
 		store:                   cfg.InstanceStore,
-		doNotSaveNormalState:    cfg.DoNotSaveNormalState,
 		maxStateSaveConcurrency: cfg.MaxStateSaveConcurrency,
 	}
 }
 
-func (a *SyncStatePersister) Async(_ context.Context, _ *cache) {
+func (a *SyncStatePersister) Async(_ context.Context, _ AlertInstancesProvider) {
 	a.log.Debug("Async: No-Op")
 }
 
 // Sync persists the state transitions to the database. It deletes stale states and saves the current states.
-func (a *SyncStatePersister) Sync(ctx context.Context, span trace.Span, allStates StateTransitions) {
+func (a *SyncStatePersister) Sync(ctx context.Context, span trace.Span, _ ngModels.AlertRuleKeyWithGroup, allStates StateTransitions) {
 	staleStates := allStates.StaleStates()
 	if len(staleStates) > 0 {
 		a.deleteAlertStates(ctx, staleStates)
@@ -81,11 +78,6 @@ func (a *SyncStatePersister) saveAlertStates(ctx context.Context, states ...Stat
 
 		// Do not save stale state to database.
 		if s.IsStale() {
-			return nil
-		}
-
-		// Do not save normal state to database and remove transition to Normal state but keep mapped states
-		if a.doNotSaveNormalState && IsNormalStateWithNoReason(s.State) && !s.Changed() {
 			return nil
 		}
 

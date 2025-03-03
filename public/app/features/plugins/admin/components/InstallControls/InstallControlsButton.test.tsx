@@ -33,6 +33,7 @@ const plugin: CatalogPlugin = {
   isDeprecated: false,
   isPublished: true,
   isManaged: false,
+  isPreinstalled: { found: false, withVersion: false },
 };
 
 function setup(opts: { angularSupportEnabled: boolean; angularDetected: boolean }) {
@@ -123,16 +124,13 @@ describe('InstallControlsButton', () => {
   });
 
   describe('update button on managed instance', () => {
-    const oldFeatureTogglesManagedPluginsInstall = config.featureToggles.managedPluginsInstall;
     const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
 
     beforeAll(() => {
-      config.featureToggles.managedPluginsInstall = true;
       config.pluginAdminExternalManageEnabled = true;
     });
 
     afterAll(() => {
-      config.featureToggles.managedPluginsInstall = oldFeatureTogglesManagedPluginsInstall;
       config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
     });
 
@@ -198,16 +196,13 @@ describe('InstallControlsButton', () => {
   });
 
   describe('uninstall button on managed instance', () => {
-    const oldFeatureTogglesManagedPluginsInstall = config.featureToggles.managedPluginsInstall;
     const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
 
     beforeAll(() => {
-      config.featureToggles.managedPluginsInstall = true;
       config.pluginAdminExternalManageEnabled = true;
     });
 
     afterAll(() => {
-      config.featureToggles.managedPluginsInstall = oldFeatureTogglesManagedPluginsInstall;
       config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
     });
 
@@ -229,12 +224,40 @@ describe('InstallControlsButton', () => {
       expect(button).toBeDisabled();
     });
 
+    it('should be disabled when isInstalling=false but isUpdatingFromInstance=true', () => {
+      store.dispatch({ type: 'plugins/uninstall/fulfilled', payload: { id: '', changes: {} } });
+      render(
+        <TestProvider store={store}>
+          <InstallControlsButton
+            plugin={{ ...plugin, isUpdatingFromInstance: true }}
+            pluginStatus={PluginStatus.UNINSTALL}
+          />
+        </TestProvider>
+      );
+      const button = screen.getByText('Uninstall').closest('button');
+      expect(button).toBeDisabled();
+    });
+
+    it('should be disabled when isInstalling=false but isFullyInstalled=false', () => {
+      store.dispatch({ type: 'plugins/uninstall/fulfilled', payload: { id: '', changes: {} } });
+      render(
+        <TestProvider store={store}>
+          <InstallControlsButton
+            plugin={{ ...plugin, isFullyInstalled: false }}
+            pluginStatus={PluginStatus.UNINSTALL}
+          />
+        </TestProvider>
+      );
+      const button = screen.getByText('Uninstall').closest('button');
+      expect(button).toBeDisabled();
+    });
+
     it('should be enabled when isInstalling=false and isUninstallingFromInstance=false', () => {
       store.dispatch({ type: 'plugins/uninstall/fulfilled', payload: { id: '', changes: {} } });
       render(
         <TestProvider store={store}>
           <InstallControlsButton
-            plugin={{ ...plugin, isUninstallingFromInstance: false }}
+            plugin={{ ...plugin, isUninstallingFromInstance: false, isFullyInstalled: true }}
             pluginStatus={PluginStatus.UNINSTALL}
           />
         </TestProvider>
@@ -249,6 +272,18 @@ describe('InstallControlsButton', () => {
       render(
         <TestProvider>
           <InstallControlsButton plugin={{ ...plugin, isManaged: true }} pluginStatus={PluginStatus.UPDATE} />
+        </TestProvider>
+      );
+      expect(screen.queryByText('Update')).not.toBeInTheDocument();
+    });
+
+    it('should be hidden when plugin is preinstalled with a specific version', () => {
+      render(
+        <TestProvider>
+          <InstallControlsButton
+            plugin={{ ...plugin, isPreinstalled: { found: true, withVersion: true } }}
+            pluginStatus={PluginStatus.UPDATE}
+          />
         </TestProvider>
       );
       expect(screen.queryByText('Update')).not.toBeInTheDocument();

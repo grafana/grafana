@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
+import { useEffectOnce } from 'react-use';
 
 import { CoreApp, QueryEditorProps } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -9,7 +10,7 @@ import { Alert, Button, CodeEditor, Space } from '@grafana/ui';
 import AzureMonitorDatasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import {
-  AzureDataSourceJsonData,
+  AzureMonitorDataSourceJsonData,
   AzureMonitorErrorish,
   AzureMonitorOption,
   AzureMonitorQuery,
@@ -28,7 +29,7 @@ import usePreparedQuery from './usePreparedQuery';
 export type AzureMonitorQueryEditorProps = QueryEditorProps<
   AzureMonitorDatasource,
   AzureMonitorQuery,
-  AzureDataSourceJsonData
+  AzureMonitorDataSourceJsonData
 >;
 
 const QueryEditor = ({
@@ -43,6 +44,7 @@ const QueryEditor = ({
   const [errorMessage, setError] = useLastError();
   const onRunQuery = useMemo(() => debounce(baseOnRunQuery, 500), [baseOnRunQuery]);
   const [azureLogsCheatSheetModalOpen, setAzureLogsCheatSheetModalOpen] = useState(false);
+  const [defaultSubscriptionId, setDefaultSubscriptionId] = useState('');
 
   const onQueryChange = useCallback(
     (newQuery: AzureMonitorQuery) => {
@@ -52,7 +54,15 @@ const QueryEditor = ({
     [onChange, onRunQuery]
   );
 
-  const query = usePreparedQuery(baseQuery, onQueryChange);
+  useEffectOnce(() => {
+    if (baseQuery.queryType === AzureQueryType.TraceExemplar) {
+      datasource.azureLogAnalyticsDatasource.getDefaultOrFirstSubscription().then((subscription) => {
+        setDefaultSubscriptionId(subscription || '');
+      });
+    }
+  });
+
+  const query = usePreparedQuery(baseQuery, onQueryChange, defaultSubscriptionId);
 
   const subscriptionId = query.subscription || datasource.azureMonitorDatasource.defaultSubscriptionId;
   const basicLogsEnabled =
@@ -64,7 +74,9 @@ const QueryEditor = ({
     options: datasource.getVariables().map((v) => ({ label: v, value: v })),
   };
 
-  const isAzureAuthenticated = config.bootData.user.authenticatedBy === 'oauth_azuread';
+  // Allow authproxy as it may not be clear if an authproxy user is authenticated by Azure
+  const isAzureAuthenticated =
+    config.bootData.user.authenticatedBy === 'oauth_azuread' || config.bootData.user.authenticatedBy === 'authproxy';
   if (datasource.currentUserAuth) {
     if (
       app === CoreApp.UnifiedAlerting &&

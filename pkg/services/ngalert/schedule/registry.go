@@ -15,7 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-var errRuleDeleted = errors.New("rule deleted")
+var (
+	errRuleDeleted   = errors.New("rule deleted")
+	errRuleRestarted = errors.New("rule restarted")
+)
 
 type ruleFactory interface {
 	new(context.Context, *models.AlertRule) Rule
@@ -53,6 +56,14 @@ func (r *ruleRegistry) exists(key models.AlertRuleKey) bool {
 	return ok
 }
 
+// get fetches a rule from the registry by key. It returns (rule, ok) where ok is false if the rule did not exist.
+func (r *ruleRegistry) get(key models.AlertRuleKey) (Rule, bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	ru, ok := r.rules[key]
+	return ru, ok
+}
+
 // del removes pair that has specific key from the registry.
 // Returns 2-tuple where the first element is value of the removed pair
 // and the second element indicates whether element with the specified key existed.
@@ -74,11 +85,6 @@ func (r *ruleRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 		definitionsIDs[k] = struct{}{}
 	}
 	return definitionsIDs
-}
-
-type RuleVersionAndPauseStatus struct {
-	Fingerprint fingerprint
-	IsPaused    bool
 }
 
 type Evaluation struct {
@@ -303,8 +309,6 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 
 	// fields that do not affect the state.
 	// TODO consider removing fields below from the fingerprint
-	writeInt(rule.ID)
-	writeInt(rule.OrgID)
 	writeInt(int64(rule.For))
 	if rule.DashboardUID != nil {
 		writeString(*rule.DashboardUID)

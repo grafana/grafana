@@ -8,26 +8,34 @@ import { stringifyErrorLike } from '../utils/misc';
 export type AsyncStatus = 'loading' | 'success' | 'error' | 'not-executed';
 
 export type AsyncState<Result> =
-  | {
-      status: 'not-executed';
-      error: undefined;
-      result: Result;
-    }
-  | {
-      status: 'success';
-      error: undefined;
-      result: Result;
-    }
-  | {
-      status: 'error';
-      error: Error;
-      result: Result;
-    }
-  | {
-      status: AsyncStatus;
-      error: Error | undefined;
-      result: Result;
-    };
+  | AsyncStateUninitialized<Result>
+  | AsyncStateFulfilled<Result>
+  | AsyncStateWithError<Result>
+  | AsyncStateLoading<Result>;
+
+export type AsyncStateWithError<Result> = {
+  status: 'error';
+  error: Error;
+  result: Result;
+};
+
+export type AsyncStateFulfilled<Result> = {
+  status: 'success';
+  error: undefined;
+  result: Result;
+};
+
+export type AsyncStateUninitialized<Result> = {
+  status: 'not-executed';
+  error: undefined;
+  result: Result;
+};
+
+export type AsyncStateLoading<Result> = {
+  status: 'loading';
+  error: Error | undefined;
+  result: Result;
+};
 
 export type UseAsyncActions<Result, Args extends unknown[] = unknown[]> = {
   /**
@@ -54,11 +62,11 @@ export type UseAsyncMeta<Result, Args extends unknown[] = unknown[]> = {
 export function useAsync<Result, Args extends unknown[] = unknown[]>(
   asyncFn: (...params: Args) => Promise<Result>,
   initialValue: Result
-): [AsyncState<Result>, UseAsyncActions<Result, Args>, UseAsyncMeta<Result, Args>];
+): [UseAsyncActions<Result, Args>, AsyncState<Result>, UseAsyncMeta<Result, Args>];
 export function useAsync<Result, Args extends unknown[] = unknown[]>(
   asyncFn: (...params: Args) => Promise<Result>,
   initialValue?: Result
-): [AsyncState<Result | undefined>, UseAsyncActions<Result, Args>, UseAsyncMeta<Result, Args>];
+): [UseAsyncActions<Result, Args>, AsyncState<Result | undefined>, UseAsyncMeta<Result, Args>];
 
 /**
  * Tracks the result and errors of the provided async function and provides handles to control its execution.
@@ -70,7 +78,7 @@ export function useAsync<Result, Args extends unknown[] = unknown[]>(
 export function useAsync<Result, Args extends unknown[] = unknown[]>(
   asyncFn: (...params: Args) => Promise<Result>,
   initialValue?: Result
-): [AsyncState<Result | undefined>, UseAsyncActions<Result, Args>, UseAsyncMeta<Result, Args>] {
+): [UseAsyncActions<Result, Args>, AsyncState<Result | undefined>, UseAsyncMeta<Result, Args>] {
   const [state, setState] = useState<AsyncState<Result | undefined>>({
     status: 'not-executed',
     error: undefined,
@@ -119,7 +127,6 @@ export function useAsync<Result, Args extends unknown[] = unknown[]>(
   });
 
   return [
-    state,
     useMemo(
       () => ({
         reset() {
@@ -130,6 +137,7 @@ export function useAsync<Result, Args extends unknown[] = unknown[]>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
       []
     ),
+    state,
     { promise: promiseRef.current, lastArgs: argsRef.current },
   ];
 }
@@ -157,19 +165,19 @@ function useSyncedRef<T>(value: T): { readonly current: T } {
 
 // --- utility functions to help with request state assertions ---
 
-export function isError<T>(state: AsyncState<T>) {
+export function isError<T>(state: AsyncState<unknown>): state is AsyncStateWithError<T> {
   return state.status === 'error';
 }
 
-export function isSuccess<T>(state: AsyncState<T>) {
+export function isSuccess<T>(state: AsyncState<T>): state is AsyncStateFulfilled<T> {
   return state.status === 'success';
 }
 
-export function isUninitialized<T>(state: AsyncState<T>) {
+export function isUninitialized<T>(state: AsyncState<T>): state is AsyncStateUninitialized<T> {
   return state.status === 'not-executed';
 }
 
-export function isLoading<T>(state: AsyncState<T>) {
+export function isLoading<T>(state: AsyncState<T>): state is AsyncStateLoading<T> {
   return state.status === 'loading';
 }
 
@@ -185,7 +193,7 @@ export function anyOfRequestState(...states: Array<AsyncState<unknown>>) {
 /**
  * This is only used for testing and serializing the async state
  */
-export function SerializeState({ state }: { state: AsyncState<unknown> }) {
+export function SerializeState<T>({ state }: { state: AsyncState<T> }) {
   return (
     <>
       {isUninitialized(state) && 'uninitialized'}

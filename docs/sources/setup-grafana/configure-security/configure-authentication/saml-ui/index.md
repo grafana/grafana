@@ -75,19 +75,23 @@ Sign in to Grafana and navigate to **Administration > Authentication > Configure
    | **Single logout**                     | The SAML single logout feature enables users to log out from all applications associated with the current IdP session established using SAML SSO. For more information, refer to [SAML single logout documentation]]({{< relref "../saml#single-logout" >}}). |
    | **Identity provider initiated login** | Enables users to log in to Grafana directly from the SAML IdP. For more information, refer to [IdP initiated login documentation]({{< relref "../saml#idp-initiated-single-sign-on-sso" >}}).                                                                 |
 
-1. Click **Next: Key and certificate**.
+1. Click **Next: Sign requests**.
 
-### 2. Key and Certificate Section
+### 2. Sign Requests Section
 
-1. Provide a certificate and a private key that will be used by the service provider (Grafana) and the SAML IdP.
+1. In the **Sign requests** field, specify whether you want the outgoing requests to be signed, and, if so, then:
 
-   Use the [PKCS #8](https://en.wikipedia.org/wiki/PKCS_8) format to issue the private key.
+   1. Provide a certificate and a private key that will be used by the service provider (Grafana) and the SAML IdP.
 
-   For more information, refer to an [example on how to generate SAML credentials]({{< relref "../saml#generate-private-key-for-saml-authentication" >}}).
+      Use the [PKCS #8](https://en.wikipedia.org/wiki/PKCS_8) format to issue the private key.
 
-1. In the **Sign requests** field, specify whether you want the outgoing requests to be signed, and, if so, which signature algorithm should be used.
+      For more information, refer to an [example on how to generate SAML credentials]({{< relref "../saml#generate-private-key-for-saml-authentication" >}}).
 
-   The SAML standard recommends using a digital signature for some types of messages, like authentication or logout requests to avoid [man-in-the-middle attacks](https://en.wikipedia.org/wiki/Man-in-the-middle_attack).
+      Alternatively, you can generate a new private key and certificate pair directly from the UI. Click on the `Generate key and certificate` button to open a form where you enter some information you want to be embedded into the new certificate.
+
+   1. Choose which signature algorithm should be used.
+
+      The SAML standard recommends using a digital signature for some types of messages, like authentication or logout requests to avoid [man-in-the-middle attacks](https://en.wikipedia.org/wiki/Man-in-the-middle_attack).
 
 1. Click **Next: Connect Grafana with Identity Provider**.
 
@@ -109,8 +113,26 @@ Sign in to Grafana and navigate to **Administration > Authentication > Configure
 
 1. If you wish to [map user information from SAML assertions]({{< relref "../saml#assertion-mapping" >}}), complete the **Assertion attributes mappings** section.
 
-   You also need to configure the **Groups attribute** field if you want to use team sync. Team sync automatically maps users to Grafana teams based on their SAML group membership.
-   Learn more about [team sync]({{< relref "../../configure-team-sync" >}}) and [configuring team sync for SAML]({{< relref "../saml#configure-team-sync" >}}).
+If Azure is the Identity Provider over SAML there are caveats for the assertion attribute mappings. Due to how Azure interprets these attributes the full URL will need to be entered in the corresponding fields within the UI, which should match the URLs from the metadata XML. There are differences depending on whether it's a Role or Group claim vs other assertions which Microsoft has [documented](https://learn.microsoft.com/en-us/entra/identity-platform/reference-claims-customization#table-2-saml-restricted-claim-set).
+
+Group and Role:
+
+```
+http://schemas.microsoft.com/ws/2008/06/identity/claims/role
+http://schemas.microsoft.com/ws/2008/06/identity/claims/groups
+http://schemas.microsoft.com/identity/claims/displayname
+```
+
+Other Assertions:
+
+```
+http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress
+```
+
+![image](https://github.com/user-attachments/assets/23910ab8-20ec-4dfd-8ef6-7dbaec51ac90)
+
+You also need to configure the **Groups attribute** field if you want to use group synchronization. Group sync allows you to automatically map users to Grafana teams or role-based access control roles based on their SAML group membership.
+To learn more about how to configure group synchronization, refer to [Configure team sync]({{< relref "../../configure-team-sync" >}}) and [Configure group attribute sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-group-attribute-sync) documentation.
 
 1. If you want to automatically assign users' roles based on their SAML roles, complete the **Role mapping** section.
 

@@ -11,6 +11,7 @@ type ItemQuery struct {
 	To           int64    `json:"to"`
 	UserID       int64    `json:"userId"`
 	AlertID      int64    `json:"alertId"`
+	AlertUID     string   `json:"alertUID"`
 	DashboardID  int64    `json:"dashboardId"`
 	DashboardUID string   `json:"dashboardUID"`
 	PanelID      int64    `json:"panelId"`
@@ -21,6 +22,7 @@ type ItemQuery struct {
 	SignedInUser identity.Requester
 
 	Limit int64 `json:"limit"`
+	Page  int64
 }
 
 // TagsQuery is the query for a tags search.

@@ -1,26 +1,23 @@
+import { css } from '@emotion/css';
 import { useCallback } from 'react';
+import * as React from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
-import { SceneObject, VizPanel } from '@grafana/scenes';
-import { IconName, Menu } from '@grafana/ui';
+import { config, locationService } from '@grafana/runtime';
+import { VizPanel } from '@grafana/scenes';
+import { Icon, IconName, Menu, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
+import { AccessControlAction } from 'app/types';
 
 import { isPublicDashboardsEnabled } from '../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { getTrackingSource, shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
+import { getExternalUserMngLinkUrl } from '../../../users/utils';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
-import { ShareDrawer } from '../ShareDrawer/ShareDrawer';
-import { SceneShareDrawerState } from '../types';
-
-import { ShareExternally } from './share-externally/ShareExternally';
-import { ShareInternally } from './share-internally/ShareInternally';
-import { ShareSnapshot } from './share-snapshot/ShareSnapshot';
 
 const newShareButtonSelector = e2eSelectors.pages.Dashboard.DashNav.newShareButton.menu;
-
-type CustomDashboardDrawer = new (...args: SceneShareDrawerState[]) => SceneObject;
 
 export interface ShareDrawerMenuItem {
   shareId: string;
@@ -30,26 +27,26 @@ export interface ShareDrawerMenuItem {
   icon: IconName;
   renderCondition: boolean;
   onClick: (d: DashboardScene) => void;
+  renderDividerAbove?: boolean;
+  component?: React.ComponentType;
+  className?: string;
 }
 
-const customShareDrawerItem: ShareDrawerMenuItem[] = [];
+let customShareDrawerItems: ShareDrawerMenuItem[] = [];
 
 export function addDashboardShareDrawerItem(item: ShareDrawerMenuItem) {
-  customShareDrawerItem.push(item);
+  customShareDrawerItems.push(item);
+}
+
+export function resetDashboardShareDrawerItems() {
+  customShareDrawerItems = [];
 }
 
 export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardScene; panel?: VizPanel }) {
-  const onMenuItemClick = useCallback(
-    (title: string, component: CustomDashboardDrawer) => {
-      const drawer = new ShareDrawer({
-        title,
-        body: new component({ dashboardRef: dashboard.getRef(), panelRef: panel?.getRef() }),
-      });
-
-      dashboard.showModal(drawer);
-    },
-    [dashboard, panel]
-  );
+  const styles = useStyles2(getStyles);
+  const onMenuItemClick = (shareView: string) => {
+    locationService.partial({ shareView });
+  };
 
   const buildMenuItems = useCallback(() => {
     const menuItems: ShareDrawerMenuItem[] = [];
@@ -59,10 +56,8 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       testId: newShareButtonSelector.shareInternally,
       icon: 'building',
       label: t('share-dashboard.menu.share-internally-title', 'Share internally'),
-      description: t('share-dashboard.menu.share-internally-description', 'Advanced settings'),
       renderCondition: true,
-      onClick: () =>
-        onMenuItemClick(t('share-dashboard.menu.share-internally-title', 'Share internally'), ShareInternally),
+      onClick: () => onMenuItemClick(shareDashboardType.link),
     });
 
     menuItems.push({
@@ -72,25 +67,44 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       label: t('share-dashboard.menu.share-externally-title', 'Share externally'),
       renderCondition: !panel && isPublicDashboardsEnabled(),
       onClick: () => {
-        onMenuItemClick(t('share-dashboard.menu.share-externally-title', 'Share externally'), ShareExternally);
+        onMenuItemClick(shareDashboardType.publicDashboard);
       },
     });
-
-    customShareDrawerItem.forEach((d) => menuItems.push(d));
 
     menuItems.push({
       shareId: shareDashboardType.snapshot,
       testId: newShareButtonSelector.shareSnapshot,
       icon: 'camera',
       label: t('share-dashboard.menu.share-snapshot-title', 'Share snapshot'),
-      renderCondition: contextSrv.isSignedIn && config.snapshotEnabled && dashboard.canEditDashboard(),
+      renderCondition:
+        contextSrv.isSignedIn &&
+        config.snapshotEnabled &&
+        contextSrv.hasPermission(AccessControlAction.SnapshotsCreate),
       onClick: () => {
-        onMenuItemClick(t('share-dashboard.menu.share-snapshot-title', 'Share snapshot'), ShareSnapshot);
+        onMenuItemClick(shareDashboardType.snapshot);
       },
     });
 
+    customShareDrawerItems.forEach((d) => menuItems.push(d));
+
+    menuItems.push({
+      shareId: shareDashboardType.inviteUser,
+      testId: newShareButtonSelector.inviteUser,
+      icon: 'add-user',
+      label: t('share-dashboard.menu.invite-user-title', 'Invite new member'),
+      renderCondition: !!config.externalUserMngLinkUrl && contextSrv.hasPermission(AccessControlAction.OrgUsersAdd),
+      onClick: () => {
+        const url = getExternalUserMngLinkUrl('share-invite');
+
+        window.open(url.toString(), '_blank');
+      },
+      renderDividerAbove: true,
+      component: () => <Icon name="external-link-alt" className={styles.inviteUserItemIcon} />,
+      className: styles.inviteUserItem,
+    });
+
     return menuItems.filter((item) => item.renderCondition);
-  }, [onMenuItemClick, dashboard, panel]);
+  }, [panel, styles]);
 
   const onClick = (item: ShareDrawerMenuItem) => {
     DashboardInteractions.sharingCategoryClicked({
@@ -104,15 +118,33 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
   return (
     <Menu data-testid={newShareButtonSelector.container}>
       {buildMenuItems().map((item) => (
-        <Menu.Item
-          key={item.label}
-          testId={item.testId}
-          label={item.label}
-          icon={item.icon}
-          description={item.description}
-          onClick={() => onClick(item)}
-        />
+        <React.Fragment key={item.shareId}>
+          {item.renderDividerAbove && <Menu.Divider />}
+          <Menu.Item
+            testId={item.testId}
+            label={item.label}
+            icon={item.icon}
+            description={item.description}
+            component={item.component}
+            className={item.className}
+            onClick={() => onClick(item)}
+          />
+        </React.Fragment>
       ))}
     </Menu>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    inviteUserItem: css({
+      display: 'flex',
+      justifyContent: 'start',
+      flexDirection: 'row',
+      alignItems: 'center',
+    }),
+    inviteUserItemIcon: css({
+      color: theme.colors.text.link,
+    }),
+  };
+};

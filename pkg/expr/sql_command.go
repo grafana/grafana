@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/scottlepp/go-duck/duck"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
@@ -32,7 +31,7 @@ func NewSQLCommand(refID, rawSQL string) (*SQLCommand, error) {
 	if err != nil {
 		logger.Warn("invalid sql query", "sql", rawSQL, "error", err)
 		return nil, errutil.BadRequest("sql-invalid-sql",
-			errutil.WithPublicMessage("error reading SQL command"),
+			errutil.WithPublicMessage(fmt.Sprintf("invalid SQL query: %s", err)),
 		)
 	}
 	if len(tables) == 0 {
@@ -94,11 +93,10 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 
 	rsp := mathexp.Results{}
 
-	duckDB := duck.NewInMemoryDB()
-	var frame = &data.Frame{}
+	db := sql.DB{}
 
 	logger.Debug("Executing query", "query", gr.query, "frames", len(allFrames))
-	err := duckDB.QueryFramesInto(gr.refID, gr.query, allFrames, frame)
+	frame, err := db.QueryFrames(ctx, gr.refID, gr.query, allFrames)
 	if err != nil {
 		logger.Error("Failed to query frames", "error", err.Error())
 		rsp.Error = err
@@ -106,12 +104,11 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	}
 	logger.Debug("Done Executing query", "query", gr.query, "rows", frame.Rows())
 
-	frame.RefID = gr.refID
-
 	if frame.Rows() == 0 {
 		rsp.Values = mathexp.Values{
 			mathexp.NoData{Frame: frame},
 		}
+		return rsp, nil
 	}
 
 	rsp.Values = mathexp.Values{

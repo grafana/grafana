@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import RCCascader, { BaseOptionType } from 'rc-cascader';
+import RCCascader, { FieldNames } from 'rc-cascader';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -18,7 +18,7 @@ export interface ButtonCascaderProps {
   icon?: IconName;
   disabled?: boolean;
   value?: string[];
-  fieldNames?: { label: keyof BaseOptionType; value: keyof BaseOptionType; children: keyof BaseOptionType };
+  fieldNames?: FieldNames<CascaderOption, keyof CascaderOption>;
   loadData?: (selectedOptions: CascaderOption[]) => void;
   onChange?: (value: string[], selectedOptions: CascaderOption[]) => void;
   onPopupVisibleChange?: (visible: boolean) => void;

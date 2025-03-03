@@ -30,7 +30,7 @@ func TestClient(t *testing.T) {
 	t.Run("QueryResource", func(t *testing.T) {
 		doer := &MockDoer{}
 		// The method here does not really matter for resource calls
-		client := NewClient(doer, http.MethodGet, "http://localhost:9090")
+		client := NewClient(doer, http.MethodGet, "http://localhost:9090", "60s")
 
 		t.Run("sends correct POST request", func(t *testing.T) {
 			req := &backend.CallResourceRequest{
@@ -86,7 +86,7 @@ func TestClient(t *testing.T) {
 		doer := &MockDoer{}
 
 		t.Run("sends correct POST query", func(t *testing.T) {
-			client := NewClient(doer, http.MethodPost, "http://localhost:9090")
+			client := NewClient(doer, http.MethodPost, "http://localhost:9090", "60s")
 			req := &models.Query{
 				Expr:       "rate(ALERTS{job=\"test\" [$__rate_interval]})",
 				Start:      time.Unix(0, 0),
@@ -108,12 +108,12 @@ func TestClient(t *testing.T) {
 			require.Equal(t, "application/x-www-form-urlencoded", doer.Req.Header.Get("Content-Type"))
 			body, err := io.ReadAll(doer.Req.Body)
 			require.NoError(t, err)
-			require.Equal(t, []byte("end=1234&query=rate%28ALERTS%7Bjob%3D%22test%22+%5B%24__rate_interval%5D%7D%29&start=0&step=1"), body)
+			require.Equal(t, []byte("end=1234&query=rate%28ALERTS%7Bjob%3D%22test%22+%5B%24__rate_interval%5D%7D%29&start=0&step=1&timeout=60s"), body)
 			require.Equal(t, "http://localhost:9090/api/v1/query_range", doer.Req.URL.String())
 		})
 
 		t.Run("sends correct GET query", func(t *testing.T) {
-			client := NewClient(doer, http.MethodGet, "http://localhost:9090")
+			client := NewClient(doer, http.MethodGet, "http://localhost:9090", "60s")
 			req := &models.Query{
 				Expr:       "rate(ALERTS{job=\"test\" [$__rate_interval]})",
 				Start:      time.Unix(0, 0),
@@ -135,7 +135,7 @@ func TestClient(t *testing.T) {
 			body, err := io.ReadAll(doer.Req.Body)
 			require.NoError(t, err)
 			require.Equal(t, []byte{}, body)
-			require.Equal(t, "http://localhost:9090/api/v1/query_range?end=1234&query=rate%28ALERTS%7Bjob%3D%22test%22+%5B%24__rate_interval%5D%7D%29&start=0&step=1", doer.Req.URL.String())
+			require.Equal(t, "http://localhost:9090/api/v1/query_range?end=1234&query=rate%28ALERTS%7Bjob%3D%22test%22+%5B%24__rate_interval%5D%7D%29&start=0&step=1&timeout=60s", doer.Req.URL.String())
 		})
 	})
 }

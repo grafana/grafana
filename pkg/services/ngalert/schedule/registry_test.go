@@ -151,13 +151,14 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 		f2 := ruleWithFolder{rule: rule, folderTitle: uuid.NewString()}.Fingerprint()
 		require.NotEqual(t, f, f2)
 	})
-	t.Run("Version, Updated, IntervalSeconds and Annotations should be excluded from fingerprint", func(t *testing.T) {
+	t.Run("Version, Updated, IntervalSeconds, GUID and Annotations should be excluded from fingerprint", func(t *testing.T) {
 		cp := models.CopyRule(rule)
 		cp.Version++
 		cp.Updated = cp.Updated.Add(1 * time.Second)
 		cp.IntervalSeconds++
 		cp.Annotations = make(map[string]string)
 		cp.Annotations["test"] = "test"
+		cp.GUID = uuid.NewString()
 
 		f2 := ruleWithFolder{rule: cp, folderTitle: title}.Fingerprint()
 		require.Equal(t, f, f2)
@@ -204,6 +205,12 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			NotificationSettings: []models.NotificationSettings{
 				models.NotificationSettingsGen()(),
 			},
+			Metadata: models.AlertRuleMetadata{
+				EditorSettings: models.EditorSettings{
+					SimplifiedQueryAndExpressionsSection: false,
+					SimplifiedNotificationsSection:       false,
+				},
+			},
 		}
 		r2 := &models.AlertRule{
 			ID:        2,
@@ -243,13 +250,22 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			NotificationSettings: []models.NotificationSettings{
 				models.NotificationSettingsGen()(),
 			},
+			Metadata: models.AlertRuleMetadata{
+				EditorSettings: models.EditorSettings{
+					SimplifiedQueryAndExpressionsSection: true,
+				},
+			},
 		}
 
 		excludedFields := map[string]struct{}{
 			"Version":         {},
 			"Updated":         {},
+			"UpdatedBy":       {},
 			"IntervalSeconds": {},
 			"Annotations":     {},
+			"ID":              {},
+			"OrgID":           {},
+			"GUID":            {},
 		}
 
 		tp := reflect.TypeOf(rule).Elem()

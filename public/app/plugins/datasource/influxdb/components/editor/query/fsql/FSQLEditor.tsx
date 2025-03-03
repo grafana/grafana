@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { PureComponent } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
-import { SQLQuery, SqlQueryEditor, applyQueryDefaults } from '@grafana/sql';
+import { SQLQuery, SqlQueryEditorLazy, applyQueryDefaults } from '@grafana/sql';
 import { InlineFormLabel, LinkButton, Themeable2, withTheme2 } from '@grafana/ui/src';
 
 import InfluxDatasource from '../../../../datasource';
@@ -89,7 +89,7 @@ class UnthemedSQLQueryEditor extends PureComponent<Props> {
 
     return (
       <>
-        <SqlQueryEditor
+        <SqlQueryEditorLazy
           datasource={this.datasource}
           query={this.transformQuery(query)}
           onRunQuery={onRunSQLQuery}
@@ -118,17 +118,17 @@ class UnthemedSQLQueryEditor extends PureComponent<Props> {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  editorContainerStyles: css`
-    height: 200px;
-    max-width: 100%;
-    resize: vertical;
-    overflow: auto;
-    background-color: ${theme.isDark ? theme.colors.background.canvas : theme.colors.background.primary};
-    padding-bottom: ${theme.spacing(1)};
-  `,
-  editorActions: css`
-    margin-top: 6px;
-  `,
+  editorContainerStyles: css({
+    height: '200px',
+    maxWidth: '100%',
+    resize: 'vertical',
+    overflow: 'auto',
+    backgroundColor: theme.isDark ? theme.colors.background.canvas : theme.colors.background.primary,
+    paddingBottom: theme.spacing(1),
+  }),
+  editorActions: css({
+    marginTop: '6px',
+  }),
 });
 
 export const FSQLEditor = withTheme2(UnthemedSQLQueryEditor);

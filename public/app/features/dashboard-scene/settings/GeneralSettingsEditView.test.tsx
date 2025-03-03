@@ -1,4 +1,4 @@
-import { behaviors, SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
+import { behaviors, SceneTimeRange } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 
 import * as utils from '../pages/utils';
@@ -125,9 +125,6 @@ async function buildTestScene() {
     meta: {
       canEdit: true,
     },
-    body: new SceneGridLayout({
-      children: [],
-    }),
     editview: settings,
   });
 

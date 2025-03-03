@@ -20,6 +20,7 @@ export interface PromQuery extends GenPromQuery, DataQuery {
   disableTextWrap?: boolean;
   fullMetaSearch?: boolean;
   includeNullMetadata?: boolean;
+  fromExploreMetrics?: boolean;
 }
 
 export enum PrometheusCacheLevel {
@@ -53,6 +54,7 @@ export interface PromOptions extends DataSourceJsonData {
   sigV4Auth?: boolean;
   oauthPassThru?: boolean;
   codeModeMetricNamesSuggestionLimit?: number;
+  seriesEndpoint?: boolean;
 }
 
 export type ExemplarTraceIdDestination = {

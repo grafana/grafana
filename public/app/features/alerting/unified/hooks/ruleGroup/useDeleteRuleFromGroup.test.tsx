@@ -1,4 +1,3 @@
-import userEvent from '@testing-library/user-event';
 import { HttpResponse } from 'msw';
 import { render } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
@@ -8,17 +7,18 @@ import { CombinedRule } from 'app/types/unified-alerting';
 
 import server, { setupMswServer } from '../../mockApi';
 import {
+  grantUserPermissions,
   mockCombinedRule,
   mockGrafanaRulerRule,
-  mockRulerRuleGroup,
   mockRulerAlertingRule,
   mockRulerRecordingRule,
-  grantUserPermissions,
+  mockRulerRuleGroup,
 } from '../../mocks';
 import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
-import { setUpdateRulerRuleNamespaceHandler, setRulerRuleGroupHandler } from '../../mocks/server/configure';
+import { setRulerRuleGroupHandler, setUpdateRulerRuleNamespaceHandler } from '../../mocks/server/configure';
 import { captureRequests, serializeRequests } from '../../mocks/server/events';
 import { rulerRuleGroupHandler, updateRulerRuleNamespaceHandler } from '../../mocks/server/handlers/mimirRuler';
+import { fromRulerRuleAndRuleGroupIdentifier } from '../../utils/rule-id';
 import { getRuleGroupLocationFromCombinedRule } from '../../utils/rules';
 import { SerializeState } from '../useAsync';
 
@@ -60,9 +60,9 @@ describe('delete rule', () => {
 
     const capture = captureRequests();
 
-    render(<DeleteTestComponent rule={rules[1]} />);
+    const { user } = render(<DeleteTestComponent rule={rules[1]} />);
 
-    await userEvent.click(byRole('button').get());
+    await user.click(byRole('button').get());
 
     expect(await byText(/success/i).find()).toBeInTheDocument();
 
@@ -99,9 +99,9 @@ describe('delete rule', () => {
 
     const capture = captureRequests();
 
-    render(<DeleteTestComponent rule={rules[1]} />);
+    const { user } = render(<DeleteTestComponent rule={rules[1]} />);
 
-    await userEvent.click(byRole('button').get());
+    await user.click(byRole('button').get());
 
     expect(await byText(/success/i).find()).toBeInTheDocument();
 
@@ -111,14 +111,23 @@ describe('delete rule', () => {
   });
 
   it('should delete the entire group if no more rules are left', async () => {
-    const capture = captureRequests();
-
-    const combined = mockCombinedRule({
+    const rule = mockCombinedRule({
       rulerRule: grafanaRulerRule,
     });
 
-    render(<DeleteTestComponent rule={combined} />);
-    await userEvent.click(byRole('button').get());
+    const group = mockRulerRuleGroup({
+      name: 'group-1',
+      rules: [rule.rulerRule!],
+    });
+
+    setRulerRuleGroupHandler({
+      response: HttpResponse.json(group),
+    });
+
+    const capture = captureRequests();
+
+    const { user } = render(<DeleteTestComponent rule={rule} />);
+    await user.click(byRole('button').get());
 
     expect(await byText(/success/i).find()).toBeInTheDocument();
 
@@ -132,12 +141,13 @@ type DeleteTestComponentProps = {
   rule: CombinedRule;
 };
 const DeleteTestComponent = ({ rule }: DeleteTestComponentProps) => {
-  const [requestState, deleteRuleFromGroup] = useDeleteRuleFromGroup();
+  const [deleteRuleFromGroup, requestState] = useDeleteRuleFromGroup();
 
   // always handle your errors!
   const ruleGroupID = getRuleGroupLocationFromCombinedRule(rule);
+  const ruleID = fromRulerRuleAndRuleGroupIdentifier(ruleGroupID, rule.rulerRule!);
   const onClick = () => {
-    deleteRuleFromGroup.execute(ruleGroupID, rule.rulerRule!);
+    deleteRuleFromGroup.execute(ruleGroupID, ruleID);
   };
 
   return (

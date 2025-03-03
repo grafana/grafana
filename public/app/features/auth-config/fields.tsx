@@ -1,9 +1,11 @@
 import { validate as uuidValidate } from 'uuid';
 
+import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { TextLink } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 
+import { ServerDiscoveryField } from './components/ServerDiscoveryField';
 import { FieldData, SSOProvider, SSOSettingsField } from './types';
 import { isSelectableValue } from './utils/guards';
 import { isUrlValid } from './utils/url';
@@ -25,8 +27,11 @@ export const sectionFields: Section = {
       id: 'general',
       fields: [
         'name',
+        'clientAuthentication',
         'clientId',
         'clientSecret',
+        'managedIdentityClientId',
+        'federatedCredentialAudience',
         'scopes',
         'authUrl',
         'tokenUrl',
@@ -67,6 +72,7 @@ export const sectionFields: Section = {
         'clientSecret',
         'authStyle',
         'scopes',
+        'serverDiscoveryUrl',
         'authUrl',
         'tokenUrl',
         'apiUrl',
@@ -246,6 +252,18 @@ export const sectionFields: Section = {
  */
 export function fieldMap(provider: string): Record<string, FieldData> {
   return {
+    clientAuthentication: {
+      label: 'Client authentication',
+      type: 'select',
+      description: 'The client authentication method used to authenticate to the token endpoint.',
+      multi: false,
+      options: clientAuthenticationOptions(provider),
+      defaultValue: { value: 'none', label: 'None' },
+      validation: {
+        required: true,
+        message: 'This field is required',
+      },
+    },
     clientId: {
       label: 'Client Id',
       type: 'text',
@@ -259,6 +277,16 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       label: 'Client secret',
       type: 'secret',
       description: 'The client secret of your OAuth2 app.',
+    },
+    managedIdentityClientId: {
+      label: 'FIC managed identity client Id',
+      type: 'text',
+      description: 'The managed identity client Id of the federated identity credential of your OAuth2 app.',
+    },
+    federatedCredentialAudience: {
+      label: 'FIC audience',
+      type: 'text',
+      description: 'The audience of the federated identity credential of your OAuth2 app.',
     },
     allowedOrganizations: {
       label: 'Allowed organizations',
@@ -471,7 +499,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       label: 'Organization attribute path',
       description: 'JMESPath expression to use for organization lookup.',
       type: 'text',
-      hidden: !['generic_oauth', 'okta'].includes(provider),
+      hidden: !(['generic_oauth', 'okta'].includes(provider) && contextSrv.isGrafanaAdmin),
     },
     defineAllowedGroups: {
       label: 'Define allowed groups',
@@ -620,6 +648,13 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         'If enabled, Grafana will match the Hosted Domain retrieved from the Google ID Token against the Allowed Domains list specified by the user.',
       type: 'checkbox',
     },
+    serverDiscoveryUrl: {
+      label: 'OpenID Connect Discovery URL',
+      description:
+        'The .well-known/openid-configuration endpoint for your IdP. The info extracted from this URL will be used to populate the Auth URL, Token URL and API URL fields.',
+      type: 'custom',
+      content: (setValue) => <ServerDiscoveryField setValue={setValue} />,
+    },
   };
 }
 
@@ -641,5 +676,22 @@ function orgMappingDescription(provider: string): string {
     default:
       // Generic OAuth, Okta
       return 'List of "<ExternalName>:<OrgIdOrName>:<Role>" mappings.';
+  }
+}
+
+function clientAuthenticationOptions(provider: string): Array<SelectableValue<string>> {
+  switch (provider) {
+    case 'azuread':
+      return [
+        { value: 'none', label: 'None' },
+        { value: 'client_secret_post', label: 'Client secret' },
+        { value: 'managed_identity', label: 'Managed identity' },
+      ];
+    // Other providers ...
+    default:
+      return [
+        { value: 'none', label: 'None' },
+        { value: 'client_secret_post', label: 'Client secret' },
+      ];
   }
 }

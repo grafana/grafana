@@ -108,20 +108,17 @@ const getServiceStyles = (theme: GrafanaTheme2) => {
 const LoginDivider = () => {
   const styles = useStyles2(getServiceStyles);
   return (
-    <>
-      <div className={styles.divider.base}>
-        <div>
-          <div className={styles.divider.line} />
-        </div>
-        <div>
-          <span>{!config.disableLoginForm && <span>or</span>}</span>
-        </div>
-        <div>
-          <div className={styles.divider.line} />
-        </div>
+    <div className={styles.divider.base}>
+      <div>
+        <div className={styles.divider.line} />
       </div>
-      <div className="clearfix" />
-    </>
+      <div>
+        <span>{!config.disableLoginForm && <Trans i18nKey="login.divider.connecting-text">or</Trans>}</span>
+      </div>
+      <div>
+        <div className={styles.divider.line} />
+      </div>
+    </div>
   );
 };
 

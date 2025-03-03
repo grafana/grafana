@@ -81,7 +81,7 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
   );
 };
 
-const cellDisplayModeOptions: Array<SelectableValue<TableCellOptions>> = [
+let cellDisplayModeOptions: Array<SelectableValue<TableCellOptions>> = [
   { value: { type: TableCellDisplayMode.Auto }, label: 'Auto' },
   { value: { type: TableCellDisplayMode.Sparkline }, label: 'Sparkline' },
   { value: { type: TableCellDisplayMode.ColorText }, label: 'Colored text' },
@@ -90,6 +90,7 @@ const cellDisplayModeOptions: Array<SelectableValue<TableCellOptions>> = [
   { value: { type: TableCellDisplayMode.DataLinks }, label: 'Data links' },
   { value: { type: TableCellDisplayMode.JSONView }, label: 'JSON View' },
   { value: { type: TableCellDisplayMode.Image }, label: 'Image' },
+  { value: { type: TableCellDisplayMode.Actions }, label: 'Actions' },
 ];
 
 const getStyles = (theme: GrafanaTheme2) => ({

@@ -1,5 +1,5 @@
 import { debounce, union, without } from 'lodash';
-import { createContext, useContext, PropsWithChildren, useEffect, useRef } from 'react';
+import { PropsWithChildren, createContext, useContext, useEffect, useRef } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { config, getAppEvents } from '@grafana/runtime';
@@ -45,7 +45,7 @@ const isInternalAlertmanager = (uid: string) => uid === GRAFANA_RULES_SOURCE_NAM
 export const SettingsProvider = (props: PropsWithChildren) => {
   // this list will keep track of Alertmanager UIDs (including internal) that are interested in receiving alert instances
   // this will be used to infer the correct "delivery mode" and update the correct list of datasources with "wantsAlertsReceived"
-  let interestedAlertmanagers: string[] = [];
+  const interestedAlertmanagers: string[] = [];
 
   const forwardingDisabled = config.featureToggles.alertingDisableSendAlertsExternal === true;
 

@@ -2,8 +2,9 @@ import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { Dashboard } from '@grafana/schema';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
+import { SaveDashboardResponseDTO } from 'app/types';
 
 import { SaveDashboardOptions } from '../types';
 
@@ -41,7 +42,7 @@ const renderAndSubmitForm = async (dashboard: DashboardModel, submitSpy: jest.Mo
       onSuccess={() => {}}
       onSubmit={async (jsonModel) => {
         submitSpy(jsonModel);
-        return { status: 'success' };
+        return { status: 'success' } as SaveDashboardResponseDTO;
       }}
       saveModel={{
         clone: dashboard.getSaveModelClone(),
@@ -69,7 +70,7 @@ describe('SaveDashboardAsForm', () => {
           onCancel={() => {}}
           onSuccess={() => {}}
           onSubmit={async () => {
-            return {};
+            return {} as SaveDashboardResponseDTO;
           }}
           saveModel={{
             clone: { id: 1, schemaVersion: 3 },
@@ -132,7 +133,7 @@ describe('SaveDashboardAsForm', () => {
           onCancel={() => {}}
           onSuccess={() => {}}
           onSubmit={async () => {
-            return {};
+            return {} as SaveDashboardResponseDTO;
           }}
           saveModel={{
             clone: createDashboardModelFixture().getSaveModelClone(),

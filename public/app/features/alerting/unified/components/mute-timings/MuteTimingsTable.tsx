@@ -9,6 +9,8 @@ import {
   ALL_MUTE_TIMINGS,
   useExportMuteTimingsDrawer,
 } from 'app/features/alerting/unified/components/mute-timings/useExportMuteTimingsDrawer';
+import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
+import { PROVENANCE_ANNOTATION } from 'app/features/alerting/unified/utils/k8s/constants';
 
 import { Authorize } from '../../components/Authorize';
 import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
@@ -18,24 +20,21 @@ import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
 import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 
-import { MuteTiming, PROVENANCE_ANNOTATION, useMuteTimings } from './useMuteTimings';
+import { MuteTiming, useMuteTimings } from './useMuteTimings';
 import { renderTimeIntervals } from './util';
-
-interface MuteTimingsTableProps {
-  alertManagerSourceName: string;
-  hideActions?: boolean;
-}
 
 type TableItem = {
   id: string;
   data: MuteTiming;
 };
 
-export const MuteTimingsTable = ({ alertManagerSourceName, hideActions }: MuteTimingsTableProps) => {
+export const MuteTimingsTable = () => {
+  const { selectedAlertmanager: alertManagerSourceName = '', hasConfigurationAPI } = useAlertmanager();
+  const hideActions = !hasConfigurationAPI;
   const styles = useStyles2(getStyles);
   const [ExportAllDrawer, showExportAllDrawer] = useExportMuteTimingsDrawer();
 
-  const { data, isLoading, error } = useMuteTimings({ alertmanager: alertManagerSourceName });
+  const { data, isLoading, error } = useMuteTimings({ alertmanager: alertManagerSourceName ?? '' });
 
   const items = useMemo((): TableItem[] => {
     const muteTimings = data || [];
@@ -72,10 +71,10 @@ export const MuteTimingsTable = ({ alertManagerSourceName, hideActions }: MuteTi
   return (
     <div className={styles.container}>
       <Stack direction="row" alignItems="center">
-        <span>
+        <Trans i18nKey="alerting.mute-timings.description">
           Enter specific time intervals when not to send notifications or freeze notifications for recurring periods of
           time.
-        </span>
+        </Trans>
         <Spacer />
         {!hideActions && items.length > 0 && (
           <Authorize actions={[AlertmanagerAction.CreateMuteTiming]}>
@@ -85,7 +84,7 @@ export const MuteTimingsTable = ({ alertManagerSourceName, hideActions }: MuteTi
               variant="primary"
               href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
             >
-              Add mute timing
+              <Trans i18nKey="alerting.mute-timings.add-mute-timing">Add mute timing</Trans>
             </LinkButton>
           </Authorize>
         )}

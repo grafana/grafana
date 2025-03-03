@@ -148,6 +148,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Bulgarian Lev (BGN)', id: 'currencyBGN', fn: currency('BGN') },
       { name: 'Guaraní (₲)', id: 'currencyPYG', fn: currency('₲') },
       { name: 'Uruguay Peso (UYU)', id: 'currencyUYU', fn: currency('UYU') },
+      { name: 'Israeli New Shekels (₪)', id: 'currencyILS', fn: currency('₪') },
     ],
   },
   {
@@ -224,7 +225,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Megawatt (MW)', id: 'megwatt', fn: SIPrefix('W', 2) },
       { name: 'Gigawatt (GW)', id: 'gwatt', fn: SIPrefix('W', 3) },
       { name: 'Milliwatt (mW)', id: 'mwatt', fn: SIPrefix('W', -1) },
-      { name: 'Watt per square meter (W/m²)', id: 'Wm2', fn: toFixedUnit('W/m²') },
+      { name: 'Watt per square meter (W/m²)', id: 'Wm2', fn: SIPrefix('W/m²') },
       { name: 'Volt-Ampere (VA)', id: 'voltamp', fn: SIPrefix('VA') },
       { name: 'Kilovolt-Ampere (kVA)', id: 'kvoltamp', fn: SIPrefix('VA', 1) },
       { name: 'Volt-Ampere reactive (VAr)', id: 'voltampreact', fn: SIPrefix('VAr') },

@@ -8,6 +8,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/klog/v2"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -15,7 +16,7 @@ import (
 func WithRequester(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
-		requester, err := identity.GetRequester(ctx)
+		_, err := identity.GetRequester(ctx)
 		if err == nil {
 			handler.ServeHTTP(w, req)
 			return
@@ -23,52 +24,27 @@ func WithRequester(handler http.Handler) http.Handler {
 
 		// Find the kubernetes user info
 		info, ok := request.UserFrom(ctx)
-		if ok {
-			if info.GetName() == user.Anonymous {
-				requester = &identity.StaticRequester{
-					Type:        identity.TypeAnonymous,
-					Name:        info.GetName(),
-					Login:       info.GetName(),
-					Permissions: map[int64]map[string][]string{},
-				}
-			}
-
-			if info.GetName() == user.APIServerUser ||
-				slices.Contains(info.GetGroups(), user.SystemPrivilegedGroup) {
-				orgId := int64(1)
-				requester = &identity.StaticRequester{
-					Type:    identity.TypeServiceAccount, // system:apiserver
-					UserID:  1,
-					OrgID:   orgId,
-					Name:    info.GetName(),
-					Login:   info.GetName(),
-					OrgRole: identity.RoleAdmin,
-
-					IsGrafanaAdmin:             true,
-					AllowedKubernetesNamespace: "default",
-
-					Permissions: map[int64]map[string][]string{
-						orgId: {
-							"*": {"*"}, // all resources, all scopes
-
-							// Dashboards do not support wildcard action
-							// dashboards.ActionDashboardsRead:   {"*"},
-							// dashboards.ActionDashboardsCreate: {"*"},
-							// dashboards.ActionDashboardsWrite:  {"*"},
-							// dashboards.ActionDashboardsDelete: {"*"},
-							// dashboards.ActionFoldersCreate:    {"*"},
-							// dashboards.ActionFoldersRead:      {dashboards.ScopeFoldersAll}, // access to read all folders
-						},
-					},
-				}
-			}
-
-			if requester != nil {
-				req = req.WithContext(identity.WithRequester(ctx, requester))
-			} else {
-				klog.V(5).Info("unable to map the k8s user to grafana requester", "user", info)
-			}
+		if !ok {
+			handler.ServeHTTP(w, req)
+			return
 		}
+
+		if ok && info.GetName() == user.Anonymous {
+			req = req.WithContext(identity.WithRequester(ctx, &identity.StaticRequester{
+				Type:        claims.TypeAnonymous,
+				Name:        info.GetName(),
+				Login:       info.GetName(),
+				Permissions: map[int64]map[string][]string{},
+			}))
+		} else if ok && info.GetName() == user.APIServerUser ||
+			slices.Contains(info.GetGroups(), user.SystemPrivilegedGroup) {
+			// For system:apiserver we use the identity of the service itself
+			ctx, _ = identity.WithServiceIdentity(ctx, 1)
+			req = req.WithContext(ctx)
+		} else {
+			klog.V(5).Info("unable to map the k8s user to grafana requester", "user", info)
+		}
+
 		handler.ServeHTTP(w, req)
 	})
 }

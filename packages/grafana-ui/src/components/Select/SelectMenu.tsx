@@ -1,34 +1,70 @@
-import { cx } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { max } from 'lodash';
 import { RefCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import * as React from 'react';
-import { MenuListProps } from 'react-select';
 import { FixedSizeList as List } from 'react-window';
 
 import { SelectableValue, toIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
+import { Trans } from '../../utils/i18n';
+import { clearButtonStyles } from '../Button';
 import { Icon } from '../Icon/Icon';
+import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 import { getSelectStyles } from './getSelectStyles';
+import { ToggleAllState } from './types';
+
+export interface ToggleAllOptions {
+  state: ToggleAllState;
+  selectAllClicked: () => void;
+  selectedCount?: number;
+}
 
 interface SelectMenuProps {
   maxHeight: number;
   innerRef: RefCallback<HTMLDivElement>;
   innerProps: {};
+  selectProps: {
+    toggleAllOptions?: ToggleAllOptions;
+    components?: { Option?: (props: React.PropsWithChildren<SelectMenuOptionProps<unknown>>) => JSX.Element };
+  };
 }
 
-export const SelectMenu = ({ children, maxHeight, innerRef, innerProps }: React.PropsWithChildren<SelectMenuProps>) => {
+export const SelectMenu = ({
+  children,
+  maxHeight,
+  innerRef,
+  innerProps,
+  selectProps,
+}: React.PropsWithChildren<SelectMenuProps>) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
 
+  const { toggleAllOptions, components } = selectProps;
+
+  const optionsElement = components?.Option ?? SelectMenuOptions;
+
   return (
-    <div {...innerProps} className={styles.menu} style={{ maxHeight }} aria-label="Select options menu">
-      <CustomScrollbar scrollRefCallback={innerRef} autoHide={false} autoHeightMax="inherit" hideHorizontalTrack>
+    <div
+      {...innerProps}
+      data-testid={selectors.components.Select.menu}
+      className={styles.menu}
+      style={{ maxHeight }}
+      aria-label="Select options menu"
+    >
+      <ScrollContainer ref={innerRef} maxHeight="inherit" overflowX="hidden" showScrollIndicators padding={0.5}>
+        {toggleAllOptions && (
+          <ToggleAllOption
+            state={toggleAllOptions.state}
+            optionComponent={optionsElement}
+            selectedCount={toggleAllOptions.selectedCount}
+            onClick={toggleAllOptions.selectAllClicked}
+          ></ToggleAllOption>
+        )}
         {children}
-      </CustomScrollbar>
+      </ScrollContainer>
     </div>
   );
 };
@@ -39,7 +75,7 @@ const VIRTUAL_LIST_ITEM_HEIGHT = 37;
 const VIRTUAL_LIST_WIDTH_ESTIMATE_MULTIPLIER = 8;
 const VIRTUAL_LIST_PADDING = 8;
 // Some list items have icons or checkboxes so we need some extra width
-const VIRTUAL_LIST_WIDTH_EXTRA = 36;
+const VIRTUAL_LIST_WIDTH_EXTRA = 58;
 
 // A virtualized version of the SelectMenu, descriptions for SelectableValue options not supported since those are of a variable height.
 //
@@ -49,16 +85,33 @@ const VIRTUAL_LIST_WIDTH_EXTRA = 36;
 //
 // VIRTUAL_LIST_ITEM_HEIGHT and WIDTH_ESTIMATE_MULTIPLIER are both magic numbers.
 // Some characters (such as emojis and other unicode characters) may consist of multiple code points in which case the width would be inaccurate (but larger than needed).
+interface VirtualSelectMenuProps<T> {
+  children: React.ReactNode;
+  innerRef: React.Ref<HTMLDivElement>;
+  focusedOption: T;
+  innerProps: JSX.IntrinsicElements['div'];
+  options: T[];
+  maxHeight: number;
+  selectProps: {
+    toggleAllOptions?: ToggleAllOptions;
+    components?: { Option?: (props: React.PropsWithChildren<SelectMenuOptionProps<unknown>>) => JSX.Element };
+  };
+}
+
 export const VirtualizedSelectMenu = ({
   children,
   maxHeight,
   innerRef: scrollRef,
   options,
+  selectProps,
   focusedOption,
-}: MenuListProps<SelectableValue>) => {
+}: VirtualSelectMenuProps<SelectableValue>) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const listRef = useRef<List>(null);
+  const { toggleAllOptions, components } = selectProps;
+
+  const optionComponent = components?.Option ?? SelectMenuOptions;
 
   // we need to check for option groups (categories)
   // these are top level options with child options
@@ -94,6 +147,7 @@ export const VirtualizedSelectMenu = ({
         // add a bottom divider to the last item in the category
         React.cloneElement(child.props.children.at(-1), {
           innerProps: {
+            ...child.props.children.at(-1).props.innerProps,
             style: {
               borderBottom: `1px solid ${theme.colors.border.weak}`,
               height: VIRTUAL_LIST_ITEM_HEIGHT,
@@ -105,7 +159,21 @@ export const VirtualizedSelectMenu = ({
     return [child];
   });
 
-  const longestOption = max(flattenedOptions.map((option) => option.label?.length)) ?? 0;
+  if (toggleAllOptions) {
+    flattenedChildren.unshift(
+      <ToggleAllOption
+        optionComponent={optionComponent}
+        state={toggleAllOptions.state}
+        selectedCount={toggleAllOptions.selectedCount}
+        onClick={toggleAllOptions.selectAllClicked}
+      ></ToggleAllOption>
+    );
+  }
+
+  let longestOption = max(flattenedOptions.map((option) => option.label?.length)) ?? 0;
+  if (toggleAllOptions && longestOption < 12) {
+    longestOption = 12;
+  }
   const widthEstimate =
     longestOption * VIRTUAL_LIST_WIDTH_ESTIMATE_MULTIPLIER + VIRTUAL_LIST_PADDING * 2 + VIRTUAL_LIST_WIDTH_EXTRA;
   const heightEstimate = Math.min(flattenedChildren.length * VIRTUAL_LIST_ITEM_HEIGHT, maxHeight);
@@ -138,11 +206,53 @@ interface SelectMenuOptionProps<T> {
   isDisabled: boolean;
   isFocused: boolean;
   isSelected: boolean;
+  indeterminate?: boolean;
   innerProps: JSX.IntrinsicElements['div'];
   innerRef: RefCallback<HTMLDivElement>;
   renderOptionLabel?: (value: SelectableValue<T>) => JSX.Element;
   data: SelectableValue<T>;
 }
+
+const ToggleAllOption = ({
+  state,
+  onClick,
+  selectedCount,
+  optionComponent,
+}: {
+  state: ToggleAllState;
+  onClick: () => void;
+  selectedCount?: number;
+  optionComponent: (props: React.PropsWithChildren<SelectMenuOptionProps<unknown>>) => JSX.Element;
+}) => {
+  const theme = useTheme2();
+  const styles = getSelectStyles(theme);
+
+  return (
+    <button
+      data-testid={selectors.components.Select.toggleAllOptions}
+      className={css(clearButtonStyles(theme), styles.toggleAllButton, {
+        height: VIRTUAL_LIST_ITEM_HEIGHT,
+      })}
+      onClick={onClick}
+    >
+      {optionComponent({
+        isDisabled: false,
+        isSelected: state === ToggleAllState.allSelected,
+        isFocused: false,
+        data: {},
+        indeterminate: state === ToggleAllState.indeterminate,
+        innerRef: () => {},
+        innerProps: {},
+        children: (
+          <>
+            <Trans i18nKey="select.select-menu.selected-count">Selected </Trans>
+            {`(${selectedCount ?? 0})`}
+          </>
+        ),
+      })}
+    </button>
+  );
+};
 
 export const SelectMenuOptions = ({
   children,

@@ -36,9 +36,9 @@ These resources are useful for all developers.
 
 Our [style guides](https://github.com/grafana/grafana/tree/main/contribute/style-guides) outline Grafana style for frontend, backend, documentation, and more, including best practices. Please read through them before you start editing or coding!
 
-- [Backend style guide](https://github.com/grafana/grafana/blob/main/contribute/style-guides/backend.md) explains how we want to write Go code in the future.
+- [Backend style guide](https://github.com/grafana/grafana/blob/main/contribute/backend/style-guide.md) explains how we want to write Go code in the future.
 
-- [Documentation style guide](https://github.com/grafana/grafana/blob/main/contribute/style-guides/documentation-style-guide.md) applies to all documentation created for Grafana products.
+- [Documentation style guide](https://grafana.com/docs/writers-toolkit/write/style-guide/) applies to all documentation created for Grafana products.
 
 - [End to end test framework](https://github.com/grafana/grafana/blob/main/contribute/style-guides/e2e.md) provides guidance for Grafana e2e tests.
 

@@ -266,7 +266,9 @@ describe('when generating timeseries from influxdb response', () => {
     describe('with empty tagsColumn', () => {
       const options = {
         alias: '',
-        annotation: {},
+        annotation: {
+          refId: '',
+        },
         series: [
           {
             name: 'logins.count',
@@ -290,6 +292,7 @@ describe('when generating timeseries from influxdb response', () => {
         alias: '',
         annotation: {
           tagsColumn: 'datacenter, source',
+          refId: '',
         },
         series: [
           {

@@ -1,7 +1,9 @@
+import { v4 as uuidv4 } from 'uuid';
+
 import { DataSourceInstanceSettings, TimeRange } from '@grafana/data';
-import { CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/experimental';
-import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
-import { DB, formatSQL, SqlDatasource, SQLQuery } from '@grafana/sql';
+import { CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/plugin-ui';
+import { TemplateSrv, getTemplateSrv } from '@grafana/runtime';
+import { COMMON_FNS, DB, FuncParameter, SQLQuery, SqlDatasource, formatSQL } from '@grafana/sql';
 
 import { mapFieldsToTypes } from './fields';
 import { buildColumnQuery, buildTableQuery } from './flightsqlMetaQuery';
@@ -57,7 +59,7 @@ export class FlightSQLDatasource extends SqlDatasource {
     }
     const interpolatedTable = this.templateSrv.replace(query.table);
     const queryString = buildColumnQuery(interpolatedTable, query.dataset);
-    const frame = await this.runSql<string[]>(queryString, { refId: 'fields' });
+    const frame = await this.runSql<string[]>(queryString, { refId: `fields-${uuidv4}` });
     const fields = frame.map((f) => ({
       name: f[0],
       text: f[0],
@@ -102,6 +104,36 @@ export class FlightSQLDatasource extends SqlDatasource {
     }
   }
 
+  getFunctions = (): ReturnType<DB['functions']> => {
+    const fns = [...COMMON_FNS, { name: 'VARIANCE' }, { name: 'STDDEV' }];
+    const columnParam: FuncParameter = {
+      name: 'Column',
+      required: true,
+      options: (query) => this.fetchFields(query),
+    };
+    const intervalParam: FuncParameter = {
+      name: 'Interval',
+      required: true,
+      options: () => {
+        return Promise.resolve([{ label: '$__interval', value: '$__interval' }]);
+      },
+    };
+
+    return [
+      ...fns.map((fn) => ({ ...fn, parameters: [columnParam] })),
+      {
+        name: '$__timeGroup',
+        description: 'Time grouping function',
+        parameters: [columnParam, intervalParam],
+      },
+      {
+        name: '$__timeGroupAlias',
+        description: 'Time grouping function with time as alias',
+        parameters: [columnParam, intervalParam],
+      },
+    ];
+  };
+
   getDB(): DB {
     if (this.db !== undefined) {
       return this.db;
@@ -114,7 +146,7 @@ export class FlightSQLDatasource extends SqlDatasource {
         Promise.resolve({ query, error: '', isError: false, isValid: true }),
       dsID: () => this.id,
       toRawSql,
-      functions: () => ['VARIANCE', 'STDDEV'],
+      functions: () => this.getFunctions(),
       getEditorLanguageDefinition: () => this.getSqlLanguageDefinition(),
     };
   }

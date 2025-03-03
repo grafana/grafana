@@ -1,7 +1,5 @@
 ---
 Feedback Link: https://github.com/grafana/tutorials/issues/new
-authors:
-  - melori_arellano
 categories:
   - alerting
 description: Create alerts with Logs
@@ -10,49 +8,206 @@ labels:
   products:
     - enterprise
     - oss
+    - cloud
     - loki
-status: draft
-summary: Create alerts with Logs
+    - alerting
 tags:
   - advanced
-title: How to create alerts with log data
+title: How to create alert rules with log data
 weight: 70
+killercoda:
+  title: How to create alert rules with log data
+  description: Learn how to use Loki with Grafana Alerting to keep track of what’s happening in your environment with real log data.
+  preprocessing:
+    substitutions:
+      - regexp: docker compose
+        replacement: docker-compose
+  backend:
+    imageid: ubuntu
 ---
 
-# How to create alerts with logs
+<!-- INTERACTIVE page intro.md START -->
 
-Loki stores your logs and only indexes labels for each log stream. Using Loki with Grafana Alerting is a powerful way to keep track of what's happening in your environment. You can create metric alerts based on content in your log lines to notify your team. Even better, you can add label data from the log message directly into your alert notification.
+# How to create alert rules with log data
+
+Loki stores your logs and only indexes labels for each log stream. Using Loki with Grafana Alerting is a powerful way to keep track of what’s happening in your environment. You can create metric alert rules based on content in your log lines to notify your team. What’s even better is that you can add label data from the log message directly into your alert notification.
 
 In this tutorial, you'll:
 
-- Create a conditional alert using Loki.
-- Create a custom alert message template.
-- Configure an email notification that includes part of the log message.
+- Generate sample logs and pull them with Promtail to Grafana.
+- Create an alert rule based on a Loki query (LogQL).
+- Create a Webhook contact point to send alert notifications to.
+
+<!-- INTERACTIVE ignore START -->
+
+{{< admonition type="tip" >}}
+In [Get started with Grafana Alerting - Part 2](http://www.grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
+{{< /admonition >}}
+
+<!-- INTERACTIVE ignore END -->
+
+{{< docs/ignore >}}
+
+> In [Get started with Grafana Alerting - Part 2](http://www.grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
+
+{{< /docs/ignore >}}
+
+<!-- INTERACTIVE page intro.md END -->
+
+<!-- INTERACTIVE page step1.md START -->
 
 ## Before you begin
 
-- Ensure you’ve [configured a Loki datasource](https://grafana.com/docs/grafana/latest/datasources/loki/#configure-the-data-source) in Grafana.
-- If you already have logs to work with, you can skip the optional sections and go straight to [create an alert](#create-an-alert).
-- If you want to use a log-generating sample script to create the logs demonstrated in this tutorial, refer to the optional steps:
-  - [Use promtail and log-generating script](#optional-use-promtail-and-a-python-script-to-create-sample-logs-and-send-them-to-loki)
-  - [Use docker with promtail and the log-generating script](#optional-running-the-tutorial-using-grafana-loki-and-promtail-with-docker-compose)
+<!-- INTERACTIVE ignore START -->
 
-## Create an alert
+There are different ways you can follow along with this tutorial.
 
-In these steps you'll create an alert and define an expression to evaluate. These examples use a classic condition.
+- **Grafana OSS**
 
-### Create a Grafana-managed alert
+  To run a Grafana stack locally, ensure you have the following applications installed:
 
-1. Navigate in Grafana to **Alerting**, then to **Alert Rules** and click **+ New alert rule**.
-1. Choose **Grafana Managed Alert** to create an alert that uses expressions.
-1. Select your Loki datasource from the drop-down.
-1. Enter the alert query in the query editor, switch to **code** mode in the top right corner of the editor to paste the query below:
+  - [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
+  - [Git](https://git-scm.com/)
+
+- **Interactive learning environment**
+
+  - Alternatively, you can [try out this example in our interactive learning environment](https://killercoda.com/grafana-labs/course/grafana/alerting-loki-logs). It's a fully configured environment with all the dependencies already installed.
+
+## Set up the Grafana stack
+
+<!-- INTERACTIVE ignore END -->
+
+To demonstrate the observation of data using the Grafana stack, download and run the following files.
+
+1. Download and save a Docker compose file to run Grafana, Loki and Promtail.
+
+   ```bash
+   wget https://raw.githubusercontent.com/grafana/loki/refs/heads/main/production/docker-compose.yaml -O docker-compose.yaml
+   ```
+
+2. Run the Grafana stack.
+
+   ```bash
+   docker compose up -d
+   ```
+
+The first time you run `docker compose up -d`, Docker downloads all the necessary resources for the tutorial. This might take a few minutes, depending on your internet connection.
+
+<!-- INTERACTIVE ignore START -->
+
+{{< admonition type="note" >}}
+
+If you already have Grafana, Loki, or Prometheus running on your system, you might see errors, because the Docker image is trying to use ports that your local installations are already using. If this is the case, stop the services, then run the command again.
+
+{{< /admonition >}}
+
+<!-- INTERACTIVE ignore END -->
+
+{{< docs/ignore >}}
+
+> If you already have Grafana, Loki, or Prometheus running on your system, you might see errors, because the Docker image is trying to use ports that your local installations are already using. If this is the case, stop the services, then run the command again.
+
+{{< /docs/ignore >}}
+
+<!-- INTERACTIVE page step1.md END -->
+
+<!-- INTERACTIVE page step2.md START -->
+
+## Generate sample logs
+
+To demonstrate how to create alert rules based on logs, you’ll use a script that generates realistic log entries to simulate typical monitoring data in Grafana. Running this script outputs logs continuously, each containing a timestamp, HTTP method (either GET or POST), status code (200 for success or 500 for failures), and request duration in milliseconds.
+
+1. Download and save a Python file that generates logs.
+
+   ```bash
+   wget https://raw.githubusercontent.com/grafana/tutorial-environment/master/app/loki/web-server-logs-simulator.py
+   ```
+
+1. Execute the log-generating Python script.
+
+   ```bash
+   python3 ./web-server-logs-simulator.py | sudo tee -a /var/log/web_requests.log
+   ```
+
+### Troubleshooting the script
+
+If you don't see the sample logs in Explore:
+
+- Does the output file exist, check `/var/log/web_requests.log` to see if it contains logs.
+- If the file is empty, check that you followed the steps above to create the file.
+- If the file exists, verify that promtail container is running.
+- In Grafana Explore, check that the time range is only for the last 5 minutes.
+
+<!-- INTERACTIVE page step2.md END -->
+
+<!-- INTERACTIVE page step3.md START -->
+
+## Create a contact point
+
+Besides being an open-source observability tool, Grafana has its own built-in alerting service. This means that you can receive notifications whenever there is an event of interest in your data, and even see these events graphed in your visualizations.
+
+In this step, we set up a new contact point. This contact point uses the [webhook integration](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/). This contact point uses the _webhooks_ integration. In order to make this work, we also need an endpoint for our webhook integration to receive the alert. We can use [Webhook.site](https://webhook.site/) to quickly set up that test endpoint. This way we can make sure that our alert is actually sending a notification somewhere.
+
+<!-- INTERACTIVE ignore START -->
+
+1. In your browser, **sign in** to your Grafana Cloud account.
+
+   OSS users: To log in, navigate to [http://localhost:3000](http://localhost:3000), where Grafana should be running.
+
+1. In another tab, go to [Webhook.site](https://webhook.site/).
+1. Copy Your unique URL.
+<!-- INTERACTIVE ignore END -->
+
+{{< docs/ignore >}}
+
+1. Navigate to [http://localhost:3000](http://localhost:3000), where Grafana should be running.
+1. In another tab, go to [Webhook.site](https://webhook.site/).
+1. Copy Your unique URL.
+   {{< /docs/ignore >}}
+
+Your webhook endpoint is now waiting for the first request.
+
+Next, let's configure a contact point in Grafana's Alerting UI to send notifications to our webhook endpoint.
+
+1. Return to Grafana. In Grafana's sidebar, hover over the **Alerting** (bell) icon and then click **Contact points**.
+1. Click **+ Create contact point**.
+1. In **Name**, write **Webhook**.
+1. In **Integration**, choose **Webhook**.
+1. In **URL**, paste the endpoint to your webhook endpoint.
+1. Click **Test**, and then click **Send test notification** to send a test alert to your webhook endpoint.
+1. Navigate back to _Webhook.site_. On the left side, there's now a `POST /` entry. Click it to see what information Grafana sent.
+
+   {{< figure src="/media/docs/alerting/alerting-webhook-detail.png" max-width="1200px" caption="A POST entry in Webhook.site" >}}
+
+1. Return to Grafana and click **Save contact point**.
+
+We have created a dummy Webhook endpoint and created a new Alerting contact point in Grafana. Now, we can create an alert rule and link it to this new integration.
+
+<!-- INTERACTIVE page step3.md END -->
+
+<!-- INTERACTIVE page step4.md START -->
+
+## Create an alert rule
+
+Next, we'll establish an [alert rule](http://grafana.com/docs/grafana/next/alerting/fundamentals/alert-rule-evaluation/) within Grafana Alerting to notify us whenever alert rules are triggered and resolved.
+
+1. In Grafana, **navigate to Alerting** > **Alert rules**.
+1. Click on **New alert rule**.
+1. Enter alert rule name for your alert rule. Make it short and descriptive as this appears in your alert notification. For instance, **web-requests-logs**
+
+### Define query and alert condition
+
+In this section, we use the default options for Grafana-managed alert rule creation. The default options let us define the query, a expression (used to manipulate the data -- the `WHEN` field in the UI), and the condition that must be met for the alert to be triggered (in default mode is the threshold).
+
+1. Select the **Loki** datasource from the drop-down.
+1. In the Query editor, switch to **Code** mode by clicking the button on the right.
+1. Paste the query below.
 
    ```
-   sum by (message)(count_over_time({filename="/var/log/web_requests.log"} != `status=200` | pattern `<_> <message> duration<_>` [10m]))
+   sum by (message)(count_over_time({filename="/var/log/web_requests.log"} != "status=200" | pattern "<_> <message> duration<_>" [10m]))
    ```
 
-   This query will count the number of log lines with a status code that is not 200 (OK), then sum the result set by message type using an **instant query** and the time interval indicated in brackets. It uses the logql pattern parser to add a new label called `message` that contains the level, method, url, and status from the log line.
+   This query counts the number of log lines with a status code that is not 200 (OK), then sum the result set by message type using an **instant query** and the time interval indicated in brackets. It uses the LogQL pattern parser to add a new label called `message` that contains the level, method, url, and status from the log line.
 
    You can use the **explain query** toggle button for a full explanation of the query syntax. The optional log-generating script creates a sample log line similar to the one below:
 
@@ -60,373 +215,75 @@ In these steps you'll create an alert and define an expression to evaluate. Thes
    2023-04-22T02:49:32.562825+00:00 level=info method=GET url=test.com status=200 duration=171ms
    ```
 
-   {{% admonition type="note" %}}If you're using your own logs, modify the logql query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
+   <!-- INTERACTIVE ignore START -->
+
+   {{% admonition type="note" %}}
+   If you're using your own logs, modify the LogQL query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
    {{% / admonition %}}
+   <!-- INTERACTIVE ignore END -->
 
-1. Update the default expressions to match the values shown in the tables below:
+   {{< docs/ignore >}}
+   If you're using your own logs, modify the LogQL query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
+   {{< /docs/ignore >}}
 
-   **Box B - reduce expression**
+1. In the **Alert condition** section:
 
-   |          |        |
-   | -------- | ------ |
-   | Function | Sum    |
-   | Input    | A      |
-   | Mode     | Strict |
+   - Keep `Last` as the value for the reducer function (`WHEN`), and `0` as the threshold value. This is the value above which the alert rule should trigger.
 
-   **Box C - threshold expression**
-   | | |
-   | ---------------- | --------------------------|
-   | Input | B |
-   | Expression value | Is above 5 |
-   | Alert condition |This is the alert condition|
+1. Click **Preview alert rule condition** to run the query.
 
-1. Expand **Options** and select **Instant** as the query type.
+   It should return alert instances from log lines with a status code that is not 200 (OK), and that has met the alert condition. The condition for the alert rule to fire is any occurrence that goes over the threshold of `0`. Since the Loki query has returned more than zero alert instances, the alert rule is `Firing`.
 
-1. Click **preview** to see a preview of the query result and alert evaluation.
+   {{< figure src="/media/docs/alerting/firing-loki-alert-rule.png" max-width="1200px" caption="Preview of a firing alert instances" >}}
 
-1. Expression B shows a table of labels and values returned. The message label captured the message string from the log line
-   and the value shows the number of times that string occurred during the evaluation interval.
+### Set evaluation behavior
 
-   | labels                                                 | values |
-   | ------------------------------------------------------ | ------ |
-   | message=level=info method=GET url=test.com status=500  | 27     |
-   | message=level=info method=POST url=test.com status=500 | 1      |
+An [evaluation group](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/) defines when an alert rule fires, and it’s based on two settings:
 
-1. Configure your alert evaluation behavior.
+- **Evaluation group**: how frequently the alert rule is evaluated.
+- **Evaluation interval**: how long the condition must be met to start firing. This allows your data time to stabilize before triggering an alert, helping to reduce the frequency of unnecessary notifications.
 
-   - Choose a folder or use **+add new** to add a new folder for this alert.
-   - Select an existing evaluation group from the drop-down or create a new one if this is your first alert.
-   - Set the **for** value to **0s** so the alert will fire instantly.
-   - Leave Configure no data and error handling No data handling on the default values.
+To set up the evaluation:
 
-1. Add an annotation that refers to labels and values from the query result in your alert notification.
+1. In **Folder**, click **+ New folder** and enter a name. For example: _web-server-alerts_. This folder contains our alerts.
+1. In the **Evaluation group**, repeat the above step to create a new evaluation group. Name it _1m-evaluation_.
+1. Choose an **Evaluation interval** (how often the alert are evaluated).
+   For example, every `1m` (1 minute).
+1. Set the pending period to, `0s` (zero seconds), so the alert rule fires the moment the condition is met.
 
-   - Choose **+Add new** in the drop down and type the annotation name **AlertValues** into the blank box.
-   - In the blank `text` box paste `{{ $labels.message }}  has returned an error status {{$values.B}} times.`
+### Configure labels and notifications
 
-1. Click the **Save and exit** button at the top of the alert definition page.
+Choose the contact point where you want to receive your alert notifications.
 
-### Create a Loki managed alert
+1. Under **Contact point**, select **Webhook** from the drop-down menu.
+1. Click **Save rule and exit** at the top right corner.
 
-[Loki managed alerts](https://grafana.com/docs/loki/latest/rules/#alerting-and-recording-rules) are stored and evaluated by Loki. They use LogQL for their expressions.
+<!-- INTERACTIVE page step4.md END -->
 
-1. Choose Mimir or Loki managed alert to create an alert using Loki.
-1. Select your Loki data source from the drop-down.
-1. The optional script will output a sample log line similar to this:
+<!-- INTERACTIVE page step5.md START -->
 
-   ```
-   2023-04-22T02:49:32.562825+00:00 level=info method=GET url=test.com status=200 duration=171ms
-   ```
+## Trigger the alert rule
 
-1. Enter the alert query below if you’re using the sample logs or modify it for your own file path and condition.
+Since the Python script continues to generate log data that matches the alert rule condition, once the evaluation interval has concluded, you should receive an alert notification in the Webhook endpoint.
 
-   ```
-   sum by (message)(count_over_time({filename="/var/log/web_requests.log"} != `status=200` | pattern `<_> <message> duration<_>` [5m])) > 5
-   ```
+{{< figure src="/media/docs/alerting/alerting-webhook-firing-alert.png" max-width="1200px" caption="Firing alert notification details" >}}
 
-   This query will search the interval period and count the number of log lines with a status code that is not 200 (OK), then sum the result set by message type. It uses the logql pattern parser to add a new label called `message` that captured the level, method, url, and status from the log line.
+<!-- INTERACTIVE page step5.md END -->
 
-   For loki alerts, the interval needs to be specified in brackets instead of a variable and the alert threshold is added to the query. For this example, the interval is 5m and the alert will fire if there are more than 5 non-200 status messages.
+<!-- INTERACTIVE page finish.md START -->
 
-1. Click **preview alert** to see a preview of the labels and value. Hover over the **i** icon under the info column to see the query values.
+<!-- INTERACTIVE ignore START -->
 
-1. Add an annotation that refers to labels and values from the query result in your alert notification.
+{{< admonition type="tip" >}}
+In [Get started with Grafana Alerting - Part 2](http://www.grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
+{{< /admonition >}}
 
-   - Choose **+Add new** in the drop down and type the annotation name **AlertValues** into the blank box.
-   - In the blank `text` box, paste the following:
+<!-- INTERACTIVE ignore END -->
 
-     ```
-     {{ $labels.message }}  has returned an error status {{$values.B}} times
-     ```
+{{< docs/ignore >}}
 
-1. Click **Save rule and exit** at the top of the alert screen.
+> In [Get started with Grafana Alerting - Part 2](http://www.grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
 
-## Create a message template
+{{< /docs/ignore >}}
 
-1. **Add an alert message template** and reference the annotation from your alert.
-
-   - In Alerting under the Contact points tab:
-
-     - Choose **Grafana** to use the built-in alertmanager
-     - Click **+Add template**
-     - Name the template `mynotification`
-     - Add the snippet below to your alert template in the **Content** field. Notice that you will reference the annotation from your alert by name `(.Annotations.AlertValues)` to insert the annotation string into the alert notification:
-
-       ```
-       {{ define "myalert" }}
-       [{{.Status}}] {{ .Labels.alertname }}
-       {{ .Annotations.AlertValues }}
-       {{ end }}
-       {{ define "mymessage" }}
-       {{ if gt (len .Alerts.Firing) 0 }}
-           {{ len .Alerts.Firing }} firing:
-           {{ range .Alerts.Firing }} {{ template "myalert" .}} {{ end }}
-       {{ end }}
-       {{ if gt (len .Alerts.Resolved) 0 }}
-           {{ len .Alerts.Resolved }} resolved:
-           {{ range .Alerts.Resolved }} {{ template "myalert" .}} {{ end }}
-       {{ end }}
-       {{ end }}
-       ```
-
-     - There are two sections to the notification template:
-       1. The `myalert` template creates a single alert notification based on a specific alert.
-       1. The `mymessage` template will find all of the grouped alerts that are firing and send them in a single notification.
-     - Save the template.
-
-1. Add the template to your contact point
-
-   1. Navigate to **Alerts > Contact point** and edit the email contact point. If you're using Grafana Cloud, SMTP is already enabled. Otherwise, for local installations you'll need to [configure SMTP](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#smtp).
-   1. Add an email address in the to field for the recipient.
-   1. Expand Optional Email Settings and refer to the template by adding this to the body field:
-
-      ```
-      {{ template "mynotification" . }}
-      ```
-
-**Tada! You're finished!** Grafana will email an alert with a message that looks similar to the one below. The format varies slightly depending on which type of alert you created - Loki or Grafana managed. The contents should be the same:
-
-```
-1 firing: [firing] LokiAlertTest1 Error message level=info method=GET url=test.com status=500 has occurred 12 times.
-```
-
-## Optional: Use promtail with a sample log-generating script
-
-This optional step uses a python script to generate the sample logs used in this tutorial to create alerts.
-
-1. [Install promtail](https://grafana.com/docs/loki/latest/clients/promtail/installation/) on your local machine and configure it to send logs to your Loki instance.
-1. Install Python3 on your local machine if needed.
-1. Copy the python script below and paste it into a new file on your local machine.
-
-```
-
-#!/bin/env python3
-
-import datetime
-import math
-import random
-import sys
-import time
-
-
-requests_per_second = 2
-failure_rate = 0.05
-get_post_ratio = 0.9
-get_average_duration_ms = 500
-post_average_duration_ms = 2000
-
-
-while True:
-
-    # Exponential distribution random value of average 1/lines_per_second.
-    d = random.expovariate(requests_per_second)
-    time.sleep(d)
-    if random.random() < failure_rate:
-        status = "500"
-    else:
-        status = "200"
-    if random.random() < get_post_ratio:
-        method = "GET"
-        duration_ms = math.floor(random.expovariate(1/get_average_duration_ms))
-    else:
-        method = "POST"
-        duration_ms = math.floor(random.expovariate(1/post_average_duration_ms))
-    timestamp = datetime.datetime.now(tz=datetime.timezone.utc).isoformat()
-    print(f"{timestamp} level=info method={method} url=/ status={status} duration={duration_ms}ms")
-    sys.stdout.flush()
-
-```
-
-1. Give the script executable permissions.
-
-In a terminal window on linux-based systems run the command:
-
-```
-
-chmod 755 ./web-server-logs-simulator.py
-
-
-```
-
-1. Run the script.
-
-- Use `tee` to direct the script output to the console and the specified file path. For example, if promtail is
-  configured to monitor `/var/log` for `.log` files you can direct the script output to `/var/log/web_requests.log` file.
-
-- To avoid running the script with elevated permissions, create the log file manually and change the permissions for the output file only.
-
-  ```
-  sudo touch /var/log/web_requests.log
-  chmod 755 /var/log/web_requests.log
-  python3 ./web-server-logs-simulator.py | tee -a /var/log/web_requests.log
-  ```
-
-1. Verify that the logs are showing up in Grafana’s Explore view:
-
-- Navigate to explore in Grafana.
-- Select the Loki datasource from the drop-down.
-- Check the toggle for **builder | code** in the top right corner of the query box and switch the query mode to builder if it’s not already selected.
-- Select the filename label from the drop-down and choose your `web_requests.log` file from the value drop-down.
-- Click **Run Query**.
-- You should see logs and a graph of log volume.
-
-### Troubleshooting the script
-
-If you don't see the sample logs in Explore:
-
-- Does the output file exist, check /var/log/web_requests.log to see if it contains logs.
-- If the file is empty, check that you followed the steps above to create the file and change the permissions.
-- If the file exists, verify that promtail is running and check that it is configured correctly.
-- In Grafana Explore, check that the time range is only for the last 5 minutes.
-
-## Optional: Use Docker compose to create the tutorial environment
-
-These optional steps walk you through installing Grafana, Loki and Promtail with Docker compose. You'll also configure a log-generating script
-that generates the sample logs used in this tutorial to create alerts.
-
-### Pre-requisites
-
-- [Docker Compose](https://docs.docker.com/compose/install/)
-- Python 3
-
-1. Start a command line from a directory of your choice.
-1. From that directory, get a `docker-compose.yaml` file to run Grafana, Loki, and Promtail:
-
-**Bash**
-
-```
-
-wget https://raw.githubusercontent.com/grafana/loki/v2.8.0/production/docker-compose.yaml -O docker-compose.yaml
-
-```
-
-**Windows Powershell**
-
-```
-
-$client = new-object System.Net.WebClient
-$client.DownloadFile("https://raw.githubusercontent.com/grafana/loki/v2.8.0/production/docker-compose.yaml",
-"C:\Users\$Env:UserName\Desktop\docker-compose.yaml")
-#downloads the file to the Desktop
-
-```
-
-1. Run the container
-
-```
-
-docker compose up -d
-
-```
-
-1. Create and edit a python file that will generate logs.
-
-**Bash**
-
-```
-
-touch web-server-logs-simulator.py && nano web-server-logs-simulator.py
-
-```
-
-**Windows Powershell**
-
-```
-
-New-Item web-server-logs-simulator.py ; notepad web-server-logs-simulator.py
-
-```
-
-1. Paste the following code into the file
-
-```
-
-#!/bin/env python3
-
-import datetime
-import math
-import random
-import sys
-import time
-
-
-
-requests_per_second = 2
-failure_rate = 0.05
-get_post_ratio = 0.9
-get_average_duration_ms = 500
-post_average_duration_ms = 2000
-
-
-while True:
-
-    # Exponential distribution random value of average 1/lines_per_second.
-    d = random.expovariate(requests_per_second)
-    time.sleep(d)
-    if random.random() < failure_rate:
-        status = "500"
-    else:
-        status = "200"
-    if random.random() < get_post_ratio:
-        method = "GET"
-        duration_ms = math.floor(random.expovariate(1/get_average_duration_ms))
-    else:
-        method = "POST"
-        duration_ms = math.floor(random.expovariate(1/post_average_duration_ms))
-    timestamp = datetime.datetime.now(tz=datetime.timezone.utc).isoformat()
-    print(f"{timestamp} level=info method={method} url=/ status={status} duration={duration_ms}ms")
-    sys.stdout.flush()
-
-```
-
-1. Execute the log-generating python script.
-
-In a terminal window on linux-based systems run the command:
-
-```
-
-chmod 755 ./web-server-logs-simulator.py
-
-```
-
-- Use `tee` to direct the script output to the console and the specified file path. For example, if promtail is
-  configured to monitor `/var/log` for `.log` files you can direct the script output to `/var/log/web_requests.log` file.
-
-- To avoid running the script with elevated permissions, create the log file manually and change the permissions for the output file only.
-
-```
-
-sudo touch /var/log/web_requests.log
-chmod 755 /var/log/web_requests.log
-python3 ./web-server-logs-simulator.py | tee -a /var/log/web_requests.log
-
-
-```
-
-**Running on Windows**
-
-Run Powershell as administrator
-
-```
-
-python ./web-server-logs-simulator.py | Tee-Object "C:\ProgramFiles\GrafanaLabs\grafana\var\log\web_requests.log"
-
-```
-
-1. Verify that the logs are showing up in Grafana’s Explore view:
-
-- Navigate to explore in Grafana.
-- Select the Loki datasource from the drop-down.
-- Check the toggle for **builder | code** in the top right corner of the query box and switch the query mode to builder if it’s not already selected.
-- Select the filename label from the drop-down and choose your `web_requests.log` file from the value drop-down.
-- Click **Run Query**.
-- You should see logs and a graph of log volume.
-
-### Troubleshooting the script
-
-If you don't see the logs in Explore, check these things:
-
-- Does the output file exist, check /var/log/web_requests.log to see if it contains logs.
-- If the file is empty, check that you followed the steps above to create the file and change the permissions.
-- If the file exists, verify that promtail is running and check that it is configured correctly.
-- In Grafana Explore, check that the time range is only for the last 5 minutes.
+<!-- INTERACTIVE page finish.md END -->

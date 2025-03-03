@@ -83,7 +83,7 @@ function concatenate(query: string, filter: string, condition = 'AND'): string {
 /**
  * Adds a label:"value" expression to the query.
  */
-export function addAddHocFilter(query: string, filter: AdHocVariableFilter): string {
+export function addAddHocFilter(query: string, filter: AdHocVariableFilter, logLevelField?: string): string {
   if (!filter.key || !filter.value) {
     return query;
   }
@@ -94,23 +94,29 @@ export function addAddHocFilter(query: string, filter: AdHocVariableFilter): str
     value: filter.value.toString(),
   };
 
+  let key = filter.key;
+  if (logLevelField && key === 'level') {
+    key = logLevelField;
+  }
+
   const equalityFilters = ['=', '!='];
   if (equalityFilters.includes(filter.operator)) {
-    return addFilterToQuery(query, filter.key, filter.value, filter.operator === '=' ? '' : '-');
+    return addFilterToQuery(query, key, filter.value, filter.operator === '=' ? '' : '-');
   }
   /**
    * Keys and values in ad hoc filters may contain characters such as
    * colons, which needs to be escaped.
    */
-  const key = escapeFilter(filter.key);
+  key = escapeFilter(key);
   const value = escapeFilterValue(filter.value);
+  const regexValue = escapeFilterValue(filter.value, false);
   let addHocFilter = '';
   switch (filter.operator) {
     case '=~':
-      addHocFilter = `${key}:/${value}/`;
+      addHocFilter = `${key}:/${regexValue}/`;
       break;
     case '!~':
-      addHocFilter = `-${key}:/${value}/`;
+      addHocFilter = `-${key}:/${regexValue}/`;
       break;
     case '>':
       addHocFilter = `${key}:>${value}`;
@@ -186,8 +192,10 @@ export function escapeFilter(value: string) {
  * Values can possibly reserved special characters such as quotes.
  * Use this function to escape filter values.
  */
-export function escapeFilterValue(value: string) {
-  value = value.replace(/\\/g, '\\\\');
+export function escapeFilterValue(value: string, escapeBackslash = true) {
+  if (escapeBackslash) {
+    value = value.replace(/\\/g, '\\\\');
+  }
   return lucene.phrase.escape(value);
 }
 

@@ -1,13 +1,13 @@
-import { isPromAlertingRuleState, PromAlertingRuleState, PromRuleType } from '../../../../types/unified-alerting-dto';
+import { PromAlertingRuleState, PromRuleType, isPromAlertingRuleState } from '../../../../types/unified-alerting-dto';
 import { getRuleHealth, isPromRuleType } from '../utils/rules';
 
 import * as terms from './search.terms';
 import {
-  applyFiltersToQuery,
   FilterExpr,
   FilterSupportedTerm,
-  parseQueryToFilter,
   QueryFilterMapper,
+  applyFiltersToQuery,
+  parseQueryToFilter,
 } from './searchParser';
 
 export interface RulesFilter {
@@ -22,6 +22,7 @@ export interface RulesFilter {
   ruleHealth?: RuleHealth;
   dashboardUid?: string;
   plugins?: 'hide';
+  contactPoint?: string | null;
 }
 
 const filterSupportedTerms: FilterSupportedTerm[] = [
@@ -35,6 +36,7 @@ const filterSupportedTerms: FilterSupportedTerm[] = [
   FilterSupportedTerm.health,
   FilterSupportedTerm.dashboard,
   FilterSupportedTerm.plugins,
+  FilterSupportedTerm.contactPoint,
 ];
 
 export enum RuleHealth {
@@ -59,6 +61,7 @@ export function getSearchFilterFromQuery(query: string): RulesFilter {
     [terms.HealthToken]: (value) => (filter.ruleHealth = getRuleHealth(value)),
     [terms.DashboardToken]: (value) => (filter.dashboardUid = value),
     [terms.PluginsToken]: (value) => (filter.plugins = value === 'hide' ? value : undefined),
+    [terms.ContactPointToken]: (value) => (filter.contactPoint = value),
     [terms.FreeFormExpression]: (value) => filter.freeFormWords.push(value),
   };
 
@@ -106,6 +109,9 @@ export function applySearchFilterToQuery(query: string, filter: RulesFilter): st
   }
   if (filter.freeFormWords) {
     filterStateArray.push(...filter.freeFormWords.map((word) => ({ type: terms.FreeFormExpression, value: word })));
+  }
+  if (filter.contactPoint) {
+    filterStateArray.push({ type: terms.ContactPointToken, value: filter.contactPoint });
   }
 
   return applyFiltersToQuery(query, filterSupportedTerms, filterStateArray);

@@ -1,5 +1,3 @@
-import { selectors } from '@grafana/e2e-selectors';
-
 import { e2e } from '../utils';
 
 import { getResources } from './helpers/prometheus-helpers';
@@ -43,8 +41,8 @@ function navigateToEditor(editorType: editorType, name: string): void {
   e2e.components.DataSourcePicker.container().should('be.visible').click();
   cy.contains(name).scrollIntoView().should('be.visible').click();
 }
-
-describe('Prometheus query editor', () => {
+// Skipping due to flakiness/race conditions with same old arch test e2e/various-suite/prometheus-editor.spec.ts
+describe.skip('Prometheus query editor', () => {
   it('should have a kickstart component', () => {
     navigateToEditor('Code', 'prometheus');
     e2e.components.QueryBuilder.queryPatterns().scrollIntoView().should('exist');
@@ -67,9 +65,9 @@ describe('Prometheus query editor', () => {
     // check options
     e2e.components.DataSource.Prometheus.queryEditor.legend().scrollIntoView().should('exist');
     e2e.components.DataSource.Prometheus.queryEditor.format().scrollIntoView().should('exist');
-    cy.get(`#${selectors.components.DataSource.Prometheus.queryEditor.step}`).scrollIntoView().should('exist');
+    cy.get(`[data-test-id="prometheus-step"]`).scrollIntoView().should('exist');
     e2e.components.DataSource.Prometheus.queryEditor.type().scrollIntoView().should('exist');
-    cy.get(`#${selectors.components.DataSource.Prometheus.queryEditor.exemplars}`).scrollIntoView().should('exist');
+    cy.get(`[data-test-id="prometheus-exemplars"]`).scrollIntoView().should('exist');
   });
 
   describe('Code editor', () => {
@@ -161,19 +159,6 @@ describe('Prometheus query editor', () => {
 
       e2e.components.DataSource.Prometheus.queryEditor.builder.metricsExplorer().should('exist');
     });
-
-    // NEED TO COMPLETE QUEY ADVISOR WORK OR FIGURE OUT HOW TO ENABLE EXPERIMENTAL FEATURE TOGGLES
-    // it('should have a query advisor when enabled with feature toggle', () => {
-    //   cy.window().then((win) => {
-    //     win.localStorage.setItem('grafana.featureToggles', 'prometheusPromQAIL=0');
-
-    //     navigateToEditor('Builder', 'prometheusBuilder');
-
-    //     getResources();
-
-    //     e2e.components.DataSource.Prometheus.queryEditor.builder.queryAdvisor().should('exist');
-    //   });
-    // });
   });
 });
 

@@ -113,12 +113,16 @@ RadioButtonGroup.displayName = 'RadioButtonGroup';
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     radioGroup: css({
+      backgroundColor: theme.colors.background.primary,
       display: 'inline-flex',
       flexDirection: 'row',
       flexWrap: 'nowrap',
       border: `1px solid ${theme.components.input.borderColor}`,
       borderRadius: theme.shape.radius.default,
       padding: '2px',
+      '&:hover': {
+        borderColor: theme.components.input.borderHover,
+      },
     }),
     fullWidth: css({
       display: 'flex',

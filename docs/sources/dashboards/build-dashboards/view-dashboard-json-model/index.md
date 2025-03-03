@@ -58,7 +58,6 @@ In the following JSON, id is shown as null which is the default value assigned t
     "to": "now"
   },
   "timepicker": {
-    "time_options": [],
     "refresh_intervals": []
   },
   "templating": {
@@ -137,16 +136,17 @@ The grid has a negative gravity that moves panels up if there is empty space abo
     "now": true,
     "hidden": false,
     "nowDelay": "",
-    "time_options": [
-      "5m",
-      "15m",
-      "1h",
-      "6h",
-      "12h",
-      "24h",
-      "2d",
-      "7d",
-      "30d"
+    "quick_ranges": [
+      {
+        "display": "Last 6 hours",
+        "from": "now-6h",
+        "to": "now"
+      },
+      {
+        "display": "Last 7 days",
+        "from": "now-7d",
+        "to": "now"
+      }
     ],
     "refresh_intervals": [
       "5s",
@@ -175,7 +175,7 @@ Usage of the fields is explained below:
 | **now**               |                                                                                                                                       |
 | **hidden**            | whether timepicker is hidden or not                                                                                                   |
 | **nowDelay**          | override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values. |
-| **time_options**      | options available in the time picker dropdown                                                                                         |
+| **quick_ranges**      | custom quick ranges                                                                                                                   |
 | **refresh_intervals** | interval options available in the refresh picker dropdown                                                                             |
 | **status**            |                                                                                                                                       |
 | **type**              |                                                                                                                                       |

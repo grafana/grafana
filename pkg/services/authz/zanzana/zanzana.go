@@ -2,64 +2,181 @@ package zanzana
 
 import (
 	"fmt"
-	"strconv"
+	"strings"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+
+	authlib "github.com/grafana/authlib/types"
+
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
 const (
-	TypeUser string = "user"
-	TypeTeam string = "team"
+	TypeUser           = common.TypeUser
+	TypeServiceAccount = common.TypeServiceAccount
+	TypeRenderService  = common.TypeRenderService
+	TypeAnonymous      = common.TypeAnonymous
+	TypeTeam           = common.TypeTeam
+	TypeRole           = common.TypeRole
+	TypeFolder         = common.TypeFolder
+	TypeResource       = common.TypeResource
+	TypeNamespace      = common.TypeGroupResouce
 )
 
 const (
-	RelationTeamMember string = "member"
-	RelationTeamAdmin  string = "admin"
+	RelationTeamMember = common.RelationTeamMember
+	RelationTeamAdmin  = common.RelationTeamAdmin
+	RelationParent     = common.RelationParent
+	RelationAssignee   = common.RelationAssignee
+
+	RelationSetView  = common.RelationSetView
+	RelationSetEdit  = common.RelationSetEdit
+	RelationSetAdmin = common.RelationSetAdmin
+
+	RelationGet    = common.RelationGet
+	RelationUpdate = common.RelationUpdate
+	RelationCreate = common.RelationCreate
+	RelationDelete = common.RelationDelete
+
+	RelationFolderResourceSetView  = common.RelationFolderResourceSetView
+	RelationFolderResourceSetEdit  = common.RelationFolderResourceSetEdit
+	RelationFolderResourceSetAdmin = common.RelationFolderResourceSetAdmin
+
+	RelationFolderResourceRead   = common.RelationFolderResourceGet
+	RelationFolderResourceWrite  = common.RelationFolderResourceUpdate
+	RelationFolderResourceCreate = common.RelationFolderResourceCreate
+	RelationFolderResourceDelete = common.RelationFolderResourceDelete
 )
 
-func NewObject(typ, id string) string {
-	return fmt.Sprintf("%s:%s", typ, id)
+var (
+	RelationsFolder         = common.RelationsFolder
+	RelationsResouce        = common.RelationsResource
+	RelationsFolderResource = common.RelationsFolderResource
+)
+
+const (
+	KindDashboards string = "dashboards"
+	KindFolders    string = "folders"
+)
+
+var (
+	ToAuthzExtTupleKey                  = common.ToAuthzExtTupleKey
+	ToAuthzExtTupleKeys                 = common.ToAuthzExtTupleKeys
+	ToAuthzExtTupleKeyWithoutCondition  = common.ToAuthzExtTupleKeyWithoutCondition
+	ToAuthzExtTupleKeysWithoutCondition = common.ToAuthzExtTupleKeysWithoutCondition
+
+	ToOpenFGATuple                    = common.ToOpenFGATuple
+	ToOpenFGATuples                   = common.ToOpenFGATuples
+	ToOpenFGATupleKey                 = common.ToOpenFGATupleKey
+	ToOpenFGATupleKeyWithoutCondition = common.ToOpenFGATupleKeyWithoutCondition
+)
+
+// NewTupleEntry constructs new openfga entry type:name[#relation].
+// Relation allows to specify group of users (subjects) related to type:name
+// (for example, team:devs#member refers to users which are members of team devs)
+func NewTupleEntry(objectType, name, relation string) string {
+	obj := fmt.Sprintf("%s:%s", objectType, name)
+	if relation != "" {
+		obj = fmt.Sprintf("%s#%s", obj, relation)
+	}
+	return obj
 }
 
-func NewScopedObject(typ, id, scope string) string {
-	return NewObject(typ, fmt.Sprintf("%s-%s", scope, id))
-}
+func TranslateToResourceTuple(subject string, action, kind, name string) (*openfgav1.TupleKey, bool) {
+	translation, ok := resourceTranslations[kind]
 
-// rbac action to relation translation
-var actionTranslations = map[string]string{}
-
-type kindTranslation struct {
-	typ       string
-	orgScoped bool
-}
-
-// all kinds that we can translate into a openFGA object
-var kindTranslations = map[string]kindTranslation{}
-
-func TranslateToTuple(user string, action, kind, identifier string, orgID int64) (*openfgav1.TupleKey, bool) {
-	relation, ok := actionTranslations[action]
 	if !ok {
 		return nil, false
 	}
 
-	t, ok := kindTranslations[kind]
+	m, ok := translation.mapping[action]
 	if !ok {
 		return nil, false
 	}
 
-	tuple := &openfgav1.TupleKey{
-		Relation: relation,
+	if name == "*" {
+		return common.NewGroupResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource), true
 	}
 
-	tuple.User = user
-	tuple.Relation = relation
-
-	// Some uid:s in grafana are not guarantee to be unique across orgs so we need to scope them.
-	if t.orgScoped {
-		tuple.Object = NewScopedObject(t.typ, identifier, strconv.FormatInt(orgID, 10))
-	} else {
-		tuple.Object = NewObject(t.typ, identifier)
+	if translation.typ == TypeResource {
+		return common.NewResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource, name), true
 	}
 
-	return tuple, true
+	if translation.typ == TypeFolder {
+		if m.group != "" && m.resource != "" {
+			return common.NewFolderResourceTuple(subject, m.relation, m.group, m.resource, m.subresource, name), true
+		}
+
+		return common.NewFolderTuple(subject, m.relation, name), true
+	}
+
+	return common.NewTypedTuple(translation.typ, subject, m.relation, name), true
+}
+
+func IsFolderResourceTuple(t *openfgav1.TupleKey) bool {
+	return strings.HasPrefix(t.Object, TypeFolder) && strings.HasPrefix(t.Relation, "resource_")
+}
+
+func MergeFolderResourceTuples(a, b *openfgav1.TupleKey) {
+	va := a.Condition.Context.Fields["group_resources"]
+	vb := b.Condition.Context.Fields["group_resources"]
+	va.GetListValue().Values = append(va.GetListValue().Values, vb.GetListValue().Values...)
+}
+
+func TranslateToCheckRequest(namespace, action, kind, folder, name string) (*authlib.CheckRequest, bool) {
+	translation, ok := resourceTranslations[kind]
+
+	if !ok {
+		return nil, false
+	}
+
+	m, ok := translation.mapping[action]
+	if !ok {
+		return nil, false
+	}
+
+	verb, ok := common.RelationToVerbMapping[m.relation]
+	if !ok {
+		return nil, false
+	}
+
+	req := &authlib.CheckRequest{
+		Namespace: namespace,
+		Verb:      verb,
+		Group:     translation.group,
+		Resource:  translation.resource,
+		Name:      name,
+		Folder:    folder,
+	}
+
+	return req, true
+}
+
+func TranslateToListRequest(namespace, action, kind string) (*authlib.ListRequest, bool) {
+	translation, ok := resourceTranslations[kind]
+
+	if !ok {
+		return nil, false
+	}
+
+	// FIXME: support different verbs
+	req := &authlib.ListRequest{
+		Namespace: namespace,
+		Group:     translation.group,
+		Resource:  translation.resource,
+	}
+
+	return req, true
+}
+
+func TranslateToGroupResource(kind string) string {
+	translation, ok := resourceTranslations[kind]
+	if !ok {
+		return ""
+	}
+	return common.FormatGroupResource(translation.group, translation.resource, "")
+}
+
+func TranslateBasicRole(name string) string {
+	return basicRolesTranslations[name]
 }

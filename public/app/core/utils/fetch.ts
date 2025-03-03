@@ -6,7 +6,7 @@ import { BackendSrvRequest } from '@grafana/runtime';
 export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit => {
   const method = options.method;
   const headers = parseHeaders(options);
-  const isAppJson = isContentTypeApplicationJson(headers);
+  const isAppJson = isContentTypeJson(headers);
   const body = parseBody(options, isAppJson);
   const credentials = parseCredentials(options);
 
@@ -15,6 +15,7 @@ export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit =>
     headers,
     body,
     credentials,
+    signal: options.abortSignal,
   };
 };
 
@@ -57,9 +58,22 @@ const putHeaderParser: HeaderParser = parseHeaderByMethodFactory('put');
 const patchHeaderParser: HeaderParser = parseHeaderByMethodFactory('patch');
 
 const headerParsers = [postHeaderParser, putHeaderParser, patchHeaderParser, defaultHeaderParser];
+const unsafeCharacters = /[^\u0000-\u00ff]/g;
+
+/**
+ * Header values can only contain ISO-8859-1 characters. If a header key or value contains characters outside of this, we will encode the whole value.
+ * Since `encodeURI` also encodes spaces, we won't encode if the value doesn't contain any unsafe characters.
+ */
+function sanitizeHeader(v: string) {
+  return unsafeCharacters.test(v) ? encodeURI(v) : v;
+}
 
 export const parseHeaders = (options: BackendSrvRequest) => {
-  const headers = options?.headers ? new Headers(options.headers) : new Headers();
+  const safeHeaders: Record<string, string> = {};
+  for (let [key, value] of Object.entries(options.headers ?? {})) {
+    safeHeaders[sanitizeHeader(key)] = sanitizeHeader(value);
+  }
+  const headers = new Headers(safeHeaders);
   const parsers = headerParsers.filter((parser) => parser.canParse(options));
   const combinedHeaders = parsers.reduce((prev, parser) => {
     return parser.parse(prev);
@@ -68,13 +82,16 @@ export const parseHeaders = (options: BackendSrvRequest) => {
   return combinedHeaders;
 };
 
-export const isContentTypeApplicationJson = (headers: Headers) => {
+export const isContentTypeJson = (headers: Headers) => {
   if (!headers) {
     return false;
   }
 
   const contentType = headers.get('content-type');
-  if (contentType && contentType.toLowerCase() === 'application/json') {
+  if (
+    contentType &&
+    (contentType.toLowerCase() === 'application/json' || contentType.toLowerCase() === 'application/merge-patch+json')
+  ) {
     return true;
   }
 
@@ -119,7 +136,6 @@ export async function parseResponseBody<T>(
           console.warn(`${response.url} returned an invalid JSON`);
           return {} as T;
         }
-
         return await response.json();
 
       case 'text':

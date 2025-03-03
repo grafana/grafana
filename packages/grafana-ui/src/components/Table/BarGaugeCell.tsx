@@ -84,12 +84,13 @@ export const BarGaugeCell = (props: TableCellProps) => {
 
   return (
     <div {...cellProps} className={tableStyles.cellContainer}>
-      {hasLinks && (
+      {hasLinks ? (
         <DataLinksContextMenu links={getLinks} style={{ display: 'flex', width: '100%' }}>
           {(api) => renderComponent(api)}
         </DataLinksContextMenu>
+      ) : (
+        renderComponent({})
       )}
-      {!hasLinks && renderComponent({})}
     </div>
   );
 };

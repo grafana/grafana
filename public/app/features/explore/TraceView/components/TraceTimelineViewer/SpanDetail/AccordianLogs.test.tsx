@@ -30,6 +30,7 @@ const logs = [
       { key: 'message', value: 'oh the next log message' },
       { key: 'more', value: 'stuff' },
     ],
+    name: 'foo event name',
   },
 ];
 
@@ -71,5 +72,48 @@ describe('AccordianLogs tests', () => {
     expect(screen.queryAllByRole('cell')).toHaveLength(6);
     expect(screen.getByText(/^something$/)).toBeInTheDocument();
     expect(screen.getByText(/^else$/)).toBeInTheDocument();
+  });
+
+  it('shows log entries and long event name when expanded', () => {
+    const longNameLog = {
+      timestamp: 20,
+      name: 'This is a very very very very very very very long name',
+      fields: [{ key: 'foo', value: 'test' }],
+    };
+
+    setup({
+      isOpen: true,
+      logs: [longNameLog],
+      openedItems: new Set([longNameLog]),
+    } as AccordianLogsProps);
+
+    expect(
+      screen.getByRole('switch', {
+        name: '15μs (This is a very very ...)',
+      })
+    ).toBeInTheDocument();
+
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.queryAllByRole('cell')).toHaveLength(6);
+    expect(screen.getByText(/^event name$/)).toBeInTheDocument();
+    expect(screen.getByText(/This is a very very very very very very very long name/)).toBeInTheDocument();
+  });
+
+  it('renders event name and duration when events list is closed', () => {
+    setup({ isOpen: true, openedItems: new Set() } as AccordianLogsProps);
+    expect(
+      screen.getByRole('switch', {
+        name: '15μs (foo event name) : message = oh the next log message more = stuff',
+      })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('switch', { name: '5μs: message = oh the log message something = else' })
+    ).toBeInTheDocument();
+  });
+
+  it('renders event name and duration when events list is open', () => {
+    setup({ isOpen: true, openedItems: new Set(logs) } as AccordianLogsProps);
+    expect(screen.getByRole('switch', { name: '15μs (foo event name)' })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: '5μs' })).toBeInTheDocument();
   });
 });

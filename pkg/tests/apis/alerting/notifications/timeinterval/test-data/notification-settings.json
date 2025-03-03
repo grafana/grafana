@@ -14,7 +14,7 @@
             ]
           ],
           "mute_time_intervals": [
-            "test-interval"
+            "test-interval", "persisted-interval"
           ]
         }
       ]
@@ -22,6 +22,15 @@
     "mute_time_intervals": [
       {
         "name": "test-interval",
+        "time_intervals": [
+          {
+            "start_time": "06:00",
+            "end_time": "23:59"
+          }
+        ]
+      },
+      {
+        "name": "persisted-interval",
         "time_intervals": [
           {
             "start_time": "06:00",
@@ -36,6 +45,7 @@
         "grafana_managed_receiver_configs": [
           {
             "type": "email",
+            "name": "email receiver",
             "settings": {
               "addresses": "<example@email.com>"
             }

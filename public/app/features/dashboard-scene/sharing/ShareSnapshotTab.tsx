@@ -16,7 +16,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { transformSceneToSaveModel, trimDashboardForSnapshot } from '../serialization/transformSceneToSaveModel';
 import { DashboardInteractions } from '../utils/interactions';
 
-import { SceneShareTabState } from './types';
+import { SceneShareTabState, ShareView } from './types';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.SnapshotScene;
 
@@ -55,7 +55,7 @@ export interface ShareSnapshotTabState extends SceneShareTabState {
   snapshotSharingOptions?: SnapshotSharingOptions;
 }
 
-export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
+export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> implements ShareView {
   public tabId = shareDashboardType.snapshot;
   static Component = ShareSnapshotTabRenderer;
 
@@ -90,7 +90,7 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
   }
 
   public onSnasphotNameChange = (snapshotName: string) => {
-    this.setState({ snapshotName: snapshotName.trim() });
+    this.setState({ snapshotName });
   };
 
   public onExpireChange = (option: number) => {
@@ -105,7 +105,7 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
     const saveModel = transformSceneToSaveModel(dashboardRef.resolve(), true);
 
     return trimDashboardForSnapshot(
-      this.state.snapshotName || '',
+      this.state.snapshotName.trim() || '',
       timeRange.state.value,
       saveModel,
       panelRef?.resolve()
@@ -185,14 +185,14 @@ function ShareSnapshotTabRenderer({ model }: SceneComponentProps<ShareSnapshotTa
       {!Boolean(snapshotResult.value) && (
         <>
           <div>
-            <p className="share-modal-info-text">
+            <p>
               <Trans i18nKey="share-modal.snapshot.info-text-1">
                 A snapshot is an instant way to share an interactive dashboard publicly. When created, we strip
                 sensitive data like queries (metric, template, and annotation) and panel links, leaving only the visible
                 metric data and series names embedded in your dashboard.
               </Trans>
             </p>
-            <p className="share-modal-info-text">
+            <p>
               <Trans i18nKey="share-modal.snapshot.info-text-2">
                 Keep in mind, your snapshot <em>can be viewed by anyone</em> that has the link and can access the URL.
                 Share wisely.

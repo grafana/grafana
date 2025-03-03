@@ -5,10 +5,12 @@ import Chance from 'chance';
 import { useState } from 'react';
 
 import { SelectableValue, toIconName } from '@grafana/data';
-import { Icon, Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from '@grafana/ui';
 
 import { getAvailableIcons } from '../../types';
+import { Alert } from '../Alert/Alert';
+import { Icon } from '../Icon/Icon';
 
+import { AsyncMultiSelect, AsyncSelect, MultiSelect, Select } from './Select';
 import mdx from './Select.mdx';
 import { generateOptions, generateThousandsOfOptions } from './mockOptions';
 import { SelectCommonProps } from './types';
@@ -91,6 +93,7 @@ const meta: Meta = {
       },
     },
   },
+  decorators: [DeprecatedDecorator],
 };
 
 const loadAsyncOptions = () => {
@@ -311,6 +314,33 @@ MultiSelectBasic.args = {
   noMultiValueWrap: false,
 };
 
+export const MultiSelectBasicWithSelectAll: StoryFn = (args) => {
+  const [value, setValue] = useState<Array<SelectableValue<string>>>([]);
+
+  return (
+    <div style={{ maxWidth: '450px' }}>
+      <MultiSelect
+        options={generateOptions()}
+        value={value}
+        toggleAllOptions={{ enabled: true }}
+        onChange={(v) => {
+          setValue(v);
+          action('onChange')(v);
+        }}
+        prefix={getPrefix(args.icon)}
+        {...args}
+      />
+    </div>
+  );
+};
+
+MultiSelectBasicWithSelectAll.args = {
+  isClearable: false,
+  closeMenuOnSelect: false,
+  maxVisibleValues: 5,
+  noMultiValueWrap: false,
+};
+
 export const MultiSelectAsync: StoryFn = (args) => {
   const [value, setValue] = useState<Array<SelectableValue<string>>>();
 
@@ -355,7 +385,7 @@ export const AutoMenuPlacement: StoryFn = (args) => {
 
   return (
     <>
-      <div style={{ width: '100%', height: '95vh', display: 'flex', alignItems: 'flex-end' }}>
+      <div style={{ width: '100%', height: 'calc(95vh - 118px)', display: 'flex', alignItems: 'flex-end' }}>
         <Select
           options={generateOptions()}
           value={value}
@@ -427,3 +457,18 @@ CustomValueCreation.args = {
 };
 
 export default meta;
+
+function DeprecatedDecorator(Story: React.ElementType) {
+  return (
+    <div>
+      <Alert title="Deprecated!" severity="warning">
+        The Select component is deprecated.
+        <br />
+        Use Combobox instead - it supports most use cases, is performant by default, and can handle hundreds of
+        thousands of options, and has a simpler API.
+      </Alert>
+
+      <Story />
+    </div>
+  );
+}

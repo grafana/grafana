@@ -59,6 +59,14 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFi
           mode: FieldColorModeId.PaletteClassic,
         },
       },
+      [FieldConfigProperty.Links]: {
+        settings: {
+          showOneClick: true,
+        },
+      },
+      [FieldConfigProperty.Actions]: {
+        hideFromDefaults: false,
+      },
     },
     useCustomConfig: (builder) => {
       builder

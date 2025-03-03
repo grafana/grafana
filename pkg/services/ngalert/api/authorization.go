@@ -8,6 +8,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -40,7 +41,8 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodGet + "/api/ruler/grafana/api/v1/rules",
 		http.MethodGet + "/api/ruler/grafana/api/v1/export/rules":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
-	case http.MethodGet + "/api/ruler/grafana/api/v1/rule/{RuleUID}":
+	case http.MethodGet + "/api/ruler/grafana/api/v1/rule/{RuleUID}",
+		http.MethodGet + "/api/ruler/grafana/api/v1/rule/{RuleUID}/versions":
 		eval = ac.EvalAll(
 			ac.EvalPermission(ac.ActionAlertingRuleRead),
 			ac.EvalPermission(dashboards.ActionFoldersRead),
@@ -78,7 +80,6 @@ func (api *API) authorize(method, path string) web.Handler {
 			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
 		)
 	case http.MethodGet + "/api/v1/notifications/receivers/{Name}":
-		// TODO: scope to :Name
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingReceiversRead),
 			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
@@ -112,7 +113,7 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodGet + "/api/ruler/{DatasourceUID}/api/v1/rules":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 	case http.MethodPost + "/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}":
-		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalWrite, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
+		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalWrite, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 
 	// Lotex Prometheus-compatible Paths
 	case http.MethodGet + "/api/prometheus/{DatasourceUID}/api/v1/rules":
@@ -121,6 +122,43 @@ func (api *API) authorize(method, path string) web.Handler {
 	// Lotex Rules testing
 	case http.MethodPost + "/api/v1/rule/test/{DatasourceUID}":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
+
+	// convert/prometheus API paths
+	case http.MethodGet + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group}",
+		http.MethodGet + "/api/convert/api/prom/rules/{NamespaceTitle}/{Group}",
+		http.MethodGet + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}",
+		http.MethodGet + "/api/convert/api/prom/rules/{NamespaceTitle}":
+		eval = ac.EvalAll(
+			ac.EvalPermission(ac.ActionAlertingRuleRead),
+			ac.EvalPermission(dashboards.ActionFoldersRead),
+		)
+
+	case http.MethodGet + "/api/convert/prometheus/config/v1/rules",
+		http.MethodGet + "/api/convert/api/prom/rules":
+		eval = ac.EvalAll(
+			ac.EvalPermission(ac.ActionAlertingRuleRead),
+			ac.EvalPermission(dashboards.ActionFoldersRead),
+		)
+
+	case http.MethodPost + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}",
+		http.MethodPost + "/api/convert/api/prom/rules/{NamespaceTitle}":
+		eval = ac.EvalAll(
+			ac.EvalPermission(ac.ActionAlertingRuleCreate),
+			ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
+		)
+
+	case http.MethodDelete + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group}",
+		http.MethodDelete + "/api/convert/api/prom/rules/{NamespaceTitle}/{Group}",
+		http.MethodDelete + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}",
+		http.MethodDelete + "/api/convert/api/prom/rules/{NamespaceTitle}":
+		eval = ac.EvalAny(
+			ac.EvalAll(
+				ac.EvalPermission(ac.ActionAlertingRuleRead),
+				ac.EvalPermission(dashboards.ActionFoldersRead),
+				ac.EvalPermission(ac.ActionAlertingRuleDelete),
+				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
+			),
+		)
 
 	// Alert Instances and Silences
 
@@ -210,11 +248,21 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodPost + "/api/alertmanager/grafana/config/history/{id}/_activate":
 		eval = ac.EvalAny(ac.EvalPermission(ac.ActionAlertingNotificationsWrite))
 	case http.MethodGet + "/api/alertmanager/grafana/config/api/v1/receivers":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingNotificationsRead),
+			ac.EvalPermission(ac.ActionAlertingReceiversRead),
+			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
+		)
 	case http.MethodPost + "/api/alertmanager/grafana/config/api/v1/receivers/test":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsWrite)
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+			ac.EvalPermission(ac.ActionAlertingReceiversTest),
+		)
 	case http.MethodPost + "/api/alertmanager/grafana/config/api/v1/templates/test":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsWrite)
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+			ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesRead),
+		)
 
 	// External Alertmanager Paths
 	case http.MethodDelete + "/api/alertmanager/{DatasourceUID}/config/api/v1/alerts":
@@ -243,9 +291,8 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodGet + "/api/v1/ngalert/alertmanagers":
 		return middleware.ReqOrgAdmin
 
-	// Grafana-only Provisioning Read Paths
+	// Grafana-only Provisioning Export Paths for everything except contact points.
 	case http.MethodGet + "/api/v1/provisioning/policies/export",
-		http.MethodGet + "/api/v1/provisioning/contact-points/export",
 		http.MethodGet + "/api/v1/provisioning/mute-timings/export",
 		http.MethodGet + "/api/v1/provisioning/mute-timings/{name}/export":
 		eval = ac.EvalAny(
@@ -254,6 +301,22 @@ func (api *API) authorize(method, path string) web.Handler {
 			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningRead), // organization scope
 			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),       // organization scope
 		)
+
+	// Grafana-only Provisioning Export Paths for contact points.
+	case http.MethodGet + "/api/v1/provisioning/contact-points/export":
+		perms := []ac.Evaluator{
+			ac.EvalPermission(ac.ActionAlertingNotificationsRead),             // organization scope
+			ac.EvalPermission(ac.ActionAlertingProvisioningRead),              // organization scope
+			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningRead), // organization scope
+			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),       // organization scope
+		}
+		if api.FeatureManager.IsEnabledGlobally(featuremgmt.FlagAlertingApiServer) {
+			perms = append(perms,
+				ac.EvalPermission(ac.ActionAlertingReceiversRead),
+				ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
+			)
+		}
+		eval = ac.EvalAny(perms...)
 
 	case http.MethodGet + "/api/v1/provisioning/alert-rules",
 		http.MethodGet + "/api/v1/provisioning/alert-rules/export":

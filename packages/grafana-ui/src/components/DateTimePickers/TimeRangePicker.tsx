@@ -9,6 +9,7 @@ import {
   GrafanaTheme2,
   dateTimeFormat,
   timeZoneFormatUserFriendly,
+  TimeOption,
   TimeRange,
   TimeZone,
   dateMath,
@@ -19,12 +20,14 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { t, Trans } from '../../utils/i18n';
 import { ButtonGroup } from '../Button';
 import { getModalStyles } from '../Modal/getModalStyles';
+import { getPortalContainer } from '../Portal/Portal';
 import { ToolbarButton } from '../ToolbarButton';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { WeekStart } from './WeekStartPicker';
 import { quickOptions } from './options';
+import { useTimeSync } from './utils/useTimeSync';
 
 /** @public */
 export interface TimeRangePickerProps {
@@ -32,8 +35,19 @@ export interface TimeRangePickerProps {
   value: TimeRange;
   timeZone?: TimeZone;
   fiscalYearStartMonth?: number;
+
+  /**
+   * If you handle sync state between pickers yourself use this prop to pass the sync button component.
+   * Otherwise, a default one will show automatically if sync is possible.
+   */
   timeSyncButton?: JSX.Element;
+
+  // Use to manually set the synced styles for the time range picker if you need to control the sync state yourself.
   isSynced?: boolean;
+
+  // Use to manually set the initial sync state for the time range picker. It will use the current value to sync.
+  initialIsSynced?: boolean;
+
   onChange: (timeRange: TimeRange) => void;
   onChangeTimeZone: (timeZone: TimeZone) => void;
   onChangeFiscalYearStartMonth?: (month: number) => void;
@@ -42,6 +56,7 @@ export interface TimeRangePickerProps {
   onZoom: () => void;
   onError?: (error?: string) => void;
   history?: TimeRange[];
+  quickRanges?: TimeOption[];
   hideQuickRanges?: boolean;
   widthOverride?: number;
   isOnCanvas?: boolean;
@@ -65,20 +80,28 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     onError,
     timeZone,
     fiscalYearStartMonth,
-    timeSyncButton,
-    isSynced,
     history,
     onChangeTimeZone,
     onChangeFiscalYearStartMonth,
+    quickRanges,
     hideQuickRanges,
     widthOverride,
     isOnCanvas,
     onToolbarTimePickerClick,
     weekStart,
+    initialIsSynced,
   } = props;
 
+  const { onChangeWithSync, isSynced, timeSyncButton } = useTimeSync({
+    initialIsSynced,
+    value,
+    onChangeProp: props.onChange,
+    isSyncedProp: props.isSynced,
+    timeSyncButtonProp: props.timeSyncButton,
+  });
+
   const onChange = (timeRange: TimeRange) => {
-    props.onChange(timeRange);
+    onChangeWithSync(timeRange);
     setOpen(false);
   };
 
@@ -104,7 +127,8 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
       isDismissable: true,
       isOpen,
       shouldCloseOnInteractOutside: (element) => {
-        return !buttonRef.current?.contains(element);
+        const portalContainer = getPortalContainer();
+        return !buttonRef.current?.contains(element) && !portalContainer.contains(element);
       },
     },
     overlayRef
@@ -120,7 +144,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
   const isFromAfterTo = value?.to?.isBefore(value.from);
   const timePickerIcon = isFromAfterTo ? 'exclamation-triangle' : 'clock-nine';
 
-  const currentTimeRange = formattedRange(value, timeZone);
+  const currentTimeRange = formattedRange(value, timeZone, quickRanges);
 
   return (
     <ButtonGroup className={styles.container}>
@@ -130,6 +154,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
           variant={variant}
           onClick={onMoveBackward}
           icon="angle-left"
+          type="button"
           narrow
         />
       )}
@@ -149,6 +174,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
           onClick={onToolbarButtonSwitch}
           icon={timePickerIcon}
           isOpen={isOpen}
+          type="button"
           variant={variant}
         >
           <TimePickerButtonLabel {...props} />
@@ -164,7 +190,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
                 fiscalYearStartMonth={fiscalYearStartMonth}
                 value={value}
                 onChange={onChange}
-                quickOptions={quickOptions}
+                quickOptions={quickRanges || quickOptions}
                 history={history}
                 showHistory
                 widthOverride={widthOverride}
@@ -187,6 +213,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
           onClick={onMoveForward}
           icon="angle-right"
           narrow
+          type="button"
           variant={variant}
         />
       )}
@@ -196,6 +223,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
           aria-label={t('time-picker.range-picker.zoom-out-button', 'Zoom out time range')}
           onClick={onZoom}
           icon="search-minus"
+          type="button"
           variant={variant}
         />
       </Tooltip>
@@ -230,9 +258,9 @@ export const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRang
   );
 };
 
-type LabelProps = Pick<TimeRangePickerProps, 'hideText' | 'value' | 'timeZone'>;
+type LabelProps = Pick<TimeRangePickerProps, 'hideText' | 'value' | 'timeZone' | 'quickRanges'>;
 
-export const TimePickerButtonLabel = memo<LabelProps>(({ hideText, value, timeZone }) => {
+export const TimePickerButtonLabel = memo<LabelProps>(({ hideText, value, timeZone, quickRanges }) => {
   const styles = useStyles2(getLabelStyles);
 
   if (hideText) {
@@ -241,7 +269,7 @@ export const TimePickerButtonLabel = memo<LabelProps>(({ hideText, value, timeZo
 
   return (
     <span className={styles.container} aria-live="polite" aria-atomic="true">
-      <span>{formattedRange(value, timeZone)}</span>
+      <span>{formattedRange(value, timeZone, quickRanges)}</span>
       <span className={styles.utc}>{rangeUtil.describeTimeRangeAbbreviation(value, timeZone)}</span>
     </span>
   );
@@ -249,12 +277,12 @@ export const TimePickerButtonLabel = memo<LabelProps>(({ hideText, value, timeZo
 
 TimePickerButtonLabel.displayName = 'TimePickerButtonLabel';
 
-const formattedRange = (value: TimeRange, timeZone?: TimeZone) => {
+const formattedRange = (value: TimeRange, timeZone?: TimeZone, quickRanges?: TimeOption[]) => {
   const adjustedTimeRange = {
     to: dateMath.isMathString(value.raw.to) ? value.raw.to : value.to,
     from: dateMath.isMathString(value.raw.from) ? value.raw.from : value.from,
   };
-  return rangeUtil.describeTimeRange(adjustedTimeRange, timeZone);
+  return rangeUtil.describeTimeRange(adjustedTimeRange, timeZone, quickRanges);
 };
 
 const getStyles = (theme: GrafanaTheme2) => {

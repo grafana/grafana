@@ -48,13 +48,20 @@ type Folder struct {
 	URL          string
 	UpdatedBy    int64
 	CreatedBy    int64
+	UpdatedByUID string
+	CreatedByUID string
 	HasACL       bool
 	Fullpath     string `xorm:"fullpath"`
 	FullpathUIDs string `xorm:"fullpath_uids"`
+
+	// When the folder belongs to a repository
+	// NOTE: this is only populated when folders are managed by unified storage
+	// This is not ever used by xorm, but the translation functions flow through this type
+	Repository string `json:"repository,omitempty"`
 }
 
 var GeneralFolder = Folder{ID: 0, Title: "General"}
-var RootFolder = &Folder{ID: 0, Title: "Root", UID: GeneralFolderUID, ParentUID: ""}
+var RootFolder = &Folder{ID: 0, Title: "Dashboards", UID: GeneralFolderUID, ParentUID: ""}
 var SharedWithMeFolder = Folder{
 	Title:       "Shared with me",
 	Description: "Dashboards and folders shared with me",
@@ -148,11 +155,12 @@ type DeleteFolderCommand struct {
 type GetFolderQuery struct {
 	UID *string
 	// Deprecated: use FolderUID instead
-	ID           *int64
-	Title        *string
-	ParentUID    *string
-	OrgID        int64
-	WithFullpath bool
+	ID               *int64
+	Title            *string
+	ParentUID        *string
+	OrgID            int64
+	WithFullpath     bool
+	WithFullpathUIDs bool
 
 	SignedInUser identity.Requester `json:"-"`
 }
@@ -168,6 +176,15 @@ type GetFoldersQuery struct {
 	// Set to true when ordering is meaningful (used for listing folders)
 	// otherwise better to keep it false since ordering can have a performance impact
 	OrderByTitle bool
+	SignedInUser identity.Requester `json:"-"`
+}
+
+type SearchFoldersQuery struct {
+	OrgID        int64
+	UIDs         []string
+	IDs          []int64
+	Title        string
+	Limit        int64
 	SignedInUser identity.Requester `json:"-"`
 }
 

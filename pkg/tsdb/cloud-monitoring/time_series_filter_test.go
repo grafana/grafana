@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	sdkdata "github.com/grafana/grafana-plugin-sdk-go/data"
+	gdata "github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/kinds/dataquery"
 
 	"github.com/stretchr/testify/assert"
@@ -410,7 +410,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 			parameters: &dataquery.TimeSeriesQuery{
 				Query:       "fetch gce_instance::compute.googleapis.com/instance/cpu/utilization | sum",
 				ProjectName: "test",
-				GraphPeriod: strPtr("60s"),
+				GraphPeriod: "60s",
 			},
 		}
 		err = query.parseResponse(res, data, "", service.logger)
@@ -429,7 +429,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 		frames := res.Frames
 		custom, ok := frames[0].Meta.Custom.(map[string]any)
 		require.True(t, ok)
-		labels, ok := custom["labels"].(sdkdata.Labels)
+		labels, ok := custom["labels"].(gdata.Labels)
 		require.True(t, ok)
 		assert.Equal(t, "114250375703598695", labels["resource.label.instance_id"])
 	})
@@ -459,12 +459,12 @@ func TestTimeSeriesFilter(t *testing.T) {
 			require.NoError(t, (&cloudMonitoringTimeSeriesList{parameters: &dataquery.TimeSeriesList{GroupBys: []string{"test_group_by"}}}).parseResponse(res, data, "test_query", service.logger))
 
 			require.NotNil(t, res.Frames[0].Meta)
-			assert.Equal(t, sdkdata.FrameMeta{
+			assert.Equal(t, gdata.FrameMeta{
 				ExecutedQueryString: "test_query",
 				Custom: map[string]any{
 					"groupBys":        []string{"test_group_by"},
 					"alignmentPeriod": "",
-					"labels": sdkdata.Labels{
+					"labels": gdata.Labels{
 						"resource.label.project_id": "grafana-prod",
 						"resource.type":             "https_lb_rule",
 					},
@@ -482,12 +482,12 @@ func TestTimeSeriesFilter(t *testing.T) {
 			require.NoError(t, (&cloudMonitoringTimeSeriesList{parameters: &dataquery.TimeSeriesList{GroupBys: []string{"test_group_by"}}}).parseResponse(res, data, "test_query", service.logger))
 
 			require.NotNil(t, res.Frames[0].Meta)
-			assert.Equal(t, sdkdata.FrameMeta{
+			assert.Equal(t, gdata.FrameMeta{
 				ExecutedQueryString: "test_query",
 				Custom: map[string]any{
 					"groupBys":        []string{"test_group_by"},
 					"alignmentPeriod": "",
-					"labels": sdkdata.Labels{
+					"labels": gdata.Labels{
 						"resource.label.project_id": "grafana-demo",
 						"resource.type":             "global",
 					},
@@ -505,12 +505,12 @@ func TestTimeSeriesFilter(t *testing.T) {
 			require.NoError(t, (&cloudMonitoringTimeSeriesList{parameters: &dataquery.TimeSeriesList{GroupBys: []string{"test_group_by"}}}).parseResponse(res, data, "test_query", service.logger))
 
 			require.NotNil(t, res.Frames[0].Meta)
-			assert.Equal(t, sdkdata.FrameMeta{
+			assert.Equal(t, gdata.FrameMeta{
 				ExecutedQueryString: "test_query",
 				Custom: map[string]any{
 					"groupBys":        []string{"test_group_by"},
 					"alignmentPeriod": "",
-					"labels": sdkdata.Labels{
+					"labels": gdata.Labels{
 						"resource.label.project_id": "grafana-prod",
 						"resource.type":             "https_lb_rule",
 					},
@@ -543,6 +543,22 @@ func TestTimeSeriesFilter(t *testing.T) {
 
 			assert.Contains(t, value, `zone=monitoring.regex.full_match("us-central1-a~")`)
 		})
+	})
+
+	t.Run("time field is appropriately named", func(t *testing.T) {
+		res := &backend.DataResponse{}
+		data, err := loadTestFile("./test-data/4-series-response-distribution-explicit.json")
+		require.NoError(t, err)
+		query := &cloudMonitoringTimeSeriesList{
+			parameters: &dataquery.TimeSeriesList{
+				ProjectName: "test-proj",
+			},
+			aliasBy: "",
+		}
+		err = query.parseResponse(res, data, "", service.logger)
+		require.NoError(t, err)
+		frames := res.Frames
+		assert.Equal(t, gdata.TimeSeriesTimeFieldName, frames[0].Fields[0].Name)
 	})
 }
 

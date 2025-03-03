@@ -16,6 +16,10 @@ Custom branding enables you to replace the Grafana Labs brand and logo with your
 
 {{% admonition type="note" %}}
 Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud). For Cloud Advanced and Enterprise customers, please provide custom elements and logos to our Support team. We will help you host your images and update your custom branding.
+
+This feature is not available for Grafana Free and Pro tiers.
+For more information on feature availability across plans, refer to our [feature comparison page](/docs/grafana-cloud/cost-management-and-billing/understand-grafana-cloud-features/)
+
 {{% /admonition %}}
 
 The `grafana.ini` file includes Grafana Enterprise custom branding. As with all configuration options, you can use environment variables to set custom branding.
@@ -28,9 +32,9 @@ With custom branding, you have the ability to modify the following elements:
 - Side menu top logo
 - Footer and help menu links
 - Fav icon (shown in browser tab)
-- Login title (will not appear if a login logo is set, Grafana v7.0+)
-- Login subtitle (will not appear if a login logo is set, Grafana v7.0+)
-- Login box background (Grafana v7.0+)
+- Login title (will not appear if a login logo is set)
+- Login subtitle (will not appear if a login logo is set)
+- Login box background
 - Loading logo
 
 > You will have to host your logo and other images used by the custom branding feature separately. Make sure Grafana can access the URL where the assets are stored.
@@ -108,22 +112,22 @@ The following two links are always present in the footer:
 
 If you specify `footer_links` or `GF_WHITE_LABELING_FOOTER_LINKS`, then all other default links are removed from the footer, and only what is specified is included.
 
-## Custom branding for public dashboards
+## Custom branding for shared dashboards
 
-In addition to the customizations described below, you can customize the footer of your public dashboards.
-To customize the footer of a public dashboard, add the following section to the `grafana.ini` file.
+In addition to the customizations described below, you can customize the footer of your shared dashboards.
+To customize the footer of a shared dashboard, add the following section to the `grafana.ini` file.
 
 ```ini
 [white_labeling.public_dashboards]
 
-# Hides the footer for the public dashboards if set to `true`.
+# Hides the footer for the shared dashboards if set to `true`.
 # example: footer_hide = "true"
 ;footer_hide =
 
 # Set to text shown in the footer
 ;footer_text =
 
-# Set to complete url to override public dashboard footer logo. Default is `grafana-logo` and will display the Grafana logo.
+# Set to complete url to override shared dashboard footer logo. Default is `grafana-logo` and will display the Grafana logo.
 # An empty value will hide the footer logo.
 ;footer_logo =
 

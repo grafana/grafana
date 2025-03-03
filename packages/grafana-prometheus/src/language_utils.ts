@@ -323,7 +323,7 @@ export function fixSummariesMetadata(metadata: { [metric: string]: PromMetricsMe
   // Synthetic series
   const syntheticMetadata: PromMetricsMetadata = {};
   syntheticMetadata['ALERTS'] = {
-    type: 'counter',
+    type: 'gauge',
     help: 'Time series showing pending and firing alerts. The sample value is set to 1 as long as the alert is in the indicated active (pending or firing) state.',
   };
 
@@ -478,7 +478,10 @@ export function extractLabelMatchers(tokens: Array<string | Token>): AbstractLab
 export function getRangeSnapInterval(
   cacheLevel: PrometheusCacheLevel,
   range: TimeRange
-): { start: string; end: string } {
+): {
+  start: string;
+  end: string;
+} {
   // Don't round the range if we're not caching
   if (cacheLevel === PrometheusCacheLevel.None) {
     return {
@@ -526,6 +529,16 @@ export function getPrometheusTime(date: string | DateTime, roundUp: boolean) {
   return Math.ceil(date.valueOf() / 1000);
 }
 
+/**
+ * Used to truncate metrics, label names and label value in the query builder select components
+ * to improve frontend performance. This is best used with an async select component including
+ * the loadOptions property where we should still allow users to search all results with a string.
+ * This can be done either storing the total results or querying an api that allows for matching a query.
+ *
+ * @param array
+ * @param limit
+ * @returns
+ */
 export function truncateResult<T>(array: T[], limit?: number): T[] {
   if (limit === undefined) {
     limit = PROMETHEUS_QUERY_BUILDER_MAX_RESULTS;

@@ -23,7 +23,7 @@ func selectLibraryElementByParam(params []Pair) (string, []any) {
 		conditions = append(conditions, "le."+p.key+"=?")
 		values = append(values, p.value)
 	}
-	return ` WHERE ` + strings.Join(conditions, " AND "), values
+	return strings.Join(conditions, " AND "), values
 }
 
 func writeParamSelectorSQL(builder *db.SQLBuilder, params ...Pair) {
@@ -162,7 +162,7 @@ func (f *FolderFilter) writeFolderFilterSQL(includeGeneral bool, builder *db.SQL
 		paramsUIDs = append(paramsUIDs, folderUID)
 	}
 	if len(paramsUIDs) > 0 {
-		sql.WriteString(` AND dashboard.uid IN (?` + strings.Repeat(",?", len(paramsUIDs)-1) + ")")
+		sql.WriteString(` AND le.folder_uid IN (?` + strings.Repeat(",?", len(paramsUIDs)-1) + ")")
 		builder.Write(sql.String(), paramsUIDs...)
 	}
 

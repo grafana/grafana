@@ -4,12 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -49,7 +52,9 @@ var (
 	errSignupNotAllowed  = errors.New("system administrator has disabled signup")
 )
 
-func ProvideUserSync(userService user.Service, userProtectionService login.UserProtectionService, authInfoService login.AuthInfoService, quotaService quota.Service, tracer tracing.Tracer) *UserSync {
+func ProvideUserSync(userService user.Service, userProtectionService login.UserProtectionService, authInfoService login.AuthInfoService,
+	quotaService quota.Service, tracer tracing.Tracer, features featuremgmt.FeatureToggles,
+) *UserSync {
 	return &UserSync{
 		userService:           userService,
 		authInfoService:       authInfoService,
@@ -57,6 +62,7 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 		quotaService:          quotaService,
 		log:                   log.New("user.sync"),
 		tracer:                tracer,
+		features:              features,
 	}
 }
 
@@ -67,6 +73,7 @@ type UserSync struct {
 	quotaService          quota.Service
 	log                   log.Logger
 	tracer                tracing.Tracer
+	features              featuremgmt.FeatureToggles
 }
 
 // SyncUserHook syncs a user with the database
@@ -79,29 +86,38 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 	}
 
 	// Does user exist in the database?
-	usr, userAuth, errUserInDB := s.getUser(ctx, id)
-	if errUserInDB != nil && !errors.Is(errUserInDB, user.ErrUserNotFound) {
-		s.log.FromContext(ctx).Error("Failed to fetch user", "error", errUserInDB, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+	usr, userAuth, err := s.getUser(ctx, id)
+	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
+		s.log.FromContext(ctx).Error("Failed to fetch user", "error", err, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
 		return errSyncUserInternal.Errorf("unable to retrieve user")
 	}
 
-	if errors.Is(errUserInDB, user.ErrUserNotFound) {
+	if errors.Is(err, user.ErrUserNotFound) {
 		if !id.ClientParams.AllowSignUp {
 			s.log.FromContext(ctx).Warn("Failed to create user, signup is not allowed for module", "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
 			return errUserSignupDisabled.Errorf("%w", errSignupNotAllowed)
 		}
 
 		// create user
-		var errCreate error
-		usr, errCreate = s.createUser(ctx, id)
-		if errCreate != nil {
-			s.log.FromContext(ctx).Error("Failed to create user", "error", errCreate, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
-			return errSyncUserInternal.Errorf("unable to create user: %w", errCreate)
+		usr, err = s.createUser(ctx, id)
+
+		// There is a possibility for a race condition when creating a user. Most clients will probably not hit this
+		// case but others will. The one we have seen this issue for is auth proxy. First time a new user loads grafana
+		// several requests can get "user.ErrUserNotFound" at the same time but only one of the request will be allowed
+		// to actually create the user, resulting in all other requests getting "user.ErrUserAlreadyExists". So we can
+		// just try to fetch the user one more to make the other request work.
+		if errors.Is(err, user.ErrUserAlreadyExists) {
+			usr, _, err = s.getUser(ctx, id)
+		}
+
+		if err != nil {
+			s.log.FromContext(ctx).Error("Failed to create user", "error", err, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+			return errSyncUserInternal.Errorf("unable to create user: %w", err)
 		}
 	} else {
 		// update user
-		if errUpdate := s.updateUserAttributes(ctx, usr, id, userAuth); errUpdate != nil {
-			s.log.FromContext(ctx).Error("Failed to update user", "error", errUpdate, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+		if err := s.updateUserAttributes(ctx, usr, id, userAuth); err != nil {
+			s.log.FromContext(ctx).Error("Failed to update user", "error", err, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
 			return errSyncUserInternal.Errorf("unable to update user")
 		}
 	}
@@ -118,11 +134,11 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, id *authn.Identity, 
 		return nil
 	}
 
-	if !id.ID.IsType(identity.TypeUser, identity.TypeServiceAccount) {
+	if !id.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		return nil
 	}
 
-	userID, err := id.ID.ParseInt()
+	userID, err := id.GetInternalID()
 	if err != nil {
 		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id.ID, "err", err)
 		return nil
@@ -159,11 +175,11 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, id *authn.Identity, r *
 		return nil
 	}
 
-	if !id.ID.IsType(identity.TypeUser, identity.TypeServiceAccount) {
+	if !id.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		return nil
 	}
 
-	userID, err := id.ID.ParseInt()
+	userID, err := id.GetInternalID()
 	if err != nil {
 		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id.ID, "err", err)
 		return nil
@@ -195,11 +211,11 @@ func (s *UserSync) EnableUserHook(ctx context.Context, id *authn.Identity, _ *au
 		return nil
 	}
 
-	if !id.ID.IsType(identity.TypeUser) {
+	if !id.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		return nil
 	}
 
-	userID, err := id.ID.ParseInt()
+	userID, err := id.GetInternalID()
 	if err != nil {
 		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id.ID, "err", err)
 		return nil
@@ -221,21 +237,30 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 	// This can happen when: using multiple auth client where the same user exists in several or
 	// changing to new auth client
 	if createConnection {
-		return s.authInfoService.SetAuthInfo(ctx, &login.SetAuthInfoCommand{
+		setAuthInfoCmd := &login.SetAuthInfoCommand{
 			UserId:     userID,
 			AuthModule: identity.AuthenticatedBy,
 			AuthId:     identity.AuthID,
-			OAuthToken: identity.OAuthToken,
-		})
+		}
+
+		if !s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
+			setAuthInfoCmd.OAuthToken = identity.OAuthToken
+		}
+		return s.authInfoService.SetAuthInfo(ctx, setAuthInfoCmd)
 	}
 
-	s.log.FromContext(ctx).Debug("Updating auth connection for user", "id", identity.ID)
-	return s.authInfoService.UpdateAuthInfo(ctx, &login.UpdateAuthInfoCommand{
+	updateAuthInfoCmd := &login.UpdateAuthInfoCommand{
 		UserId:     userID,
 		AuthId:     identity.AuthID,
 		AuthModule: identity.AuthenticatedBy,
-		OAuthToken: identity.OAuthToken,
-	})
+	}
+
+	if !s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
+		updateAuthInfoCmd.OAuthToken = identity.OAuthToken
+	}
+
+	s.log.FromContext(ctx).Debug("Updating auth connection for user", "id", identity.ID)
+	return s.authInfoService.UpdateAuthInfo(ctx, updateAuthInfoCmd)
 }
 
 func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id *authn.Identity, userAuth *login.UserAuth) error {
@@ -295,6 +320,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.User, error) {
 	ctx, span := s.tracer.Start(ctx, "user.sync.createUser")
 	defer span.End()
+
 	// FIXME(jguer): this should be done in the user service
 	// quota check: we can have quotas on both global and org level
 	// therefore we need to query check quota for both user and org services
@@ -314,19 +340,18 @@ func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.Us
 		isAdmin = *id.IsGrafanaAdmin
 	}
 
-	usr, errCreateUser := s.userService.Create(ctx, &user.CreateUserCommand{
+	usr, err := s.userService.Create(ctx, &user.CreateUserCommand{
 		Login:        id.Login,
 		Email:        id.Email,
 		Name:         id.Name,
 		IsAdmin:      isAdmin,
 		SkipOrgSetup: len(id.OrgRoles) > 0,
 	})
-	if errCreateUser != nil {
-		return nil, errCreateUser
+	if err != nil {
+		return nil, err
 	}
 
-	err := s.upsertAuthConnection(ctx, usr.ID, id, true)
-	if err != nil {
+	if err := s.upsertAuthConnection(ctx, usr.ID, id, true); err != nil {
 		return nil, err
 	}
 
@@ -418,8 +443,9 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 // syncUserToIdentity syncs a user to an identity.
 // This is used to update the identity with the latest user information.
 func syncUserToIdentity(usr *user.User, id *authn.Identity) {
-	id.ID = identity.NewTypedID(identity.TypeUser, usr.ID)
-	id.UID = identity.NewTypedIDString(identity.TypeUser, usr.UID)
+	id.ID = strconv.FormatInt(usr.ID, 10)
+	id.UID = usr.UID
+	id.Type = claims.TypeUser
 	id.Login = usr.Login
 	id.Email = usr.Email
 	id.Name = usr.Name
@@ -429,14 +455,7 @@ func syncUserToIdentity(usr *user.User, id *authn.Identity) {
 
 // syncSignedInUserToIdentity syncs a user to an identity.
 func syncSignedInUserToIdentity(usr *user.SignedInUser, id *authn.Identity) {
-	var ns identity.IdentityType
-	if id.ID.IsType(identity.TypeServiceAccount) {
-		ns = identity.TypeServiceAccount
-	} else {
-		ns = identity.TypeUser
-	}
-	id.UID = identity.NewTypedIDString(ns, usr.UserUID)
-
+	id.UID = usr.UserUID
 	id.Name = usr.Name
 	id.Login = usr.Login
 	id.Email = usr.Email

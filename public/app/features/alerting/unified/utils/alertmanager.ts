@@ -16,7 +16,8 @@ import { MatcherFieldValue } from '../types/silence-form';
 
 import { getAllDataSources } from './config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './datasource';
-import { MatcherFormatter, parsePromQLStyleMatcherLooseSafe, unquoteWithUnescape } from './matchers';
+import { objectLabelsToArray } from './labels';
+import { MatcherFormatter, matchLabelsSet, parsePromQLStyleMatcherLooseSafe, unquoteWithUnescape } from './matchers';
 
 export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig): AlertManagerCortexConfig {
   // add default receiver if it does not exist
@@ -35,22 +36,22 @@ export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig
   return config;
 }
 
-export function removeMuteTimingFromRoute(muteTiming: string, route: Route): Route {
+export function removeTimeIntervalFromRoute(muteTiming: string, route: Route): Route {
   const newRoute: Route = {
     ...route,
     mute_time_intervals: route.mute_time_intervals?.filter((muteName) => muteName !== muteTiming) ?? [],
-    routes: route.routes?.map((subRoute) => removeMuteTimingFromRoute(muteTiming, subRoute)),
+    active_time_intervals: route.active_time_intervals?.filter((muteName) => muteName !== muteTiming) ?? [],
+    routes: route.routes?.map((subRoute) => removeTimeIntervalFromRoute(muteTiming, subRoute)),
   };
   return newRoute;
 }
 
-export function renameMuteTimings(newMuteTimingName: string, oldMuteTimingName: string, route: Route): Route {
+export function renameTimeInterval(newName: string, oldName: string, route: Route): Route {
   return {
     ...route,
-    mute_time_intervals: route.mute_time_intervals?.map((name) =>
-      name === oldMuteTimingName ? newMuteTimingName : name
-    ),
-    routes: route.routes?.map((subRoute) => renameMuteTimings(newMuteTimingName, oldMuteTimingName, subRoute)),
+    mute_time_intervals: route.mute_time_intervals?.map((name) => (name === oldName ? newName : name)),
+    active_time_intervals: route.active_time_intervals?.map((name) => (name === oldName ? newName : name)),
+    routes: route.routes?.map((subRoute) => renameTimeInterval(newName, oldName, subRoute)),
   };
 }
 
@@ -125,26 +126,10 @@ export function matcherToObjectMatcher(matcher: Matcher): ObjectMatcher {
 }
 
 export function labelsMatchMatchers(labels: Labels, matchers: Matcher[]): boolean {
-  return matchers.every(({ name, value, isRegex, isEqual }) => {
-    return Object.entries(labels).some(([labelKey, labelValue]) => {
-      const nameMatches = name === labelKey;
-      let valueMatches;
-      if (isEqual && !isRegex) {
-        valueMatches = value === labelValue;
-      }
-      if (!isEqual && !isRegex) {
-        valueMatches = value !== labelValue;
-      }
-      if (isEqual && isRegex) {
-        valueMatches = new RegExp(value).test(labelValue);
-      }
-      if (!isEqual && isRegex) {
-        valueMatches = !new RegExp(value).test(labelValue);
-      }
+  const labelsArray = objectLabelsToArray(labels);
+  const objectMatchers = matchers.map(matcherToObjectMatcher);
 
-      return nameMatches && valueMatches;
-    });
-  });
+  return matchLabelsSet(objectMatchers, labelsArray);
 }
 
 export function combineMatcherStrings(...matcherStrings: string[]): string {

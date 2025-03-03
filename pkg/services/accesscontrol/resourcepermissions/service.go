@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 
 	"golang.org/x/exp/slices"
 
@@ -12,7 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -23,7 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ pluginaccesscontrol.ActionSetRegistry = (*InMemoryActionSets)(nil)
+var _ pluginaccesscontrol.ActionSetRegistry = (ActionSetService)(nil)
 
 type Store interface {
 	// SetUserResourcePermission sets permission for managed user role on a resource
@@ -135,6 +138,9 @@ type Service struct {
 }
 
 func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.GetPermissions")
+	defer span.End()
+
 	var inheritedScopes []string
 	if s.options.InheritedScopesSolver != nil {
 		var err error
@@ -203,6 +209,9 @@ func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, r
 }
 
 func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user accesscontrol.User, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.SetUserPermission")
+	defer span.End()
+
 	actions, err := s.mapPermission(permission)
 	if err != nil {
 		return nil, err
@@ -226,6 +235,9 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 }
 
 func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.SetTeamPermission")
+	defer span.End()
+
 	actions, err := s.mapPermission(permission)
 	if err != nil {
 		return nil, err
@@ -249,6 +261,9 @@ func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, re
 }
 
 func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.SetBuiltInRolePermission")
+	defer span.End()
+
 	actions, err := s.mapPermission(permission)
 	if err != nil {
 		return nil, err
@@ -275,6 +290,9 @@ func (s *Service) SetPermissions(
 	ctx context.Context, orgID int64, resourceID string,
 	commands ...accesscontrol.SetResourcePermissionCommand,
 ) ([]accesscontrol.ResourcePermission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.SetPermissions")
+	defer span.End()
+
 	if err := s.validateResource(ctx, orgID, resourceID); err != nil {
 		return nil, err
 	}
@@ -352,6 +370,9 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 }
 
 func (s *Service) validateResource(ctx context.Context, orgID int64, resourceID string) error {
+	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.validateResource")
+	defer span.End()
+
 	if s.options.ResourceValidator != nil {
 		return s.options.ResourceValidator(ctx, orgID, resourceID)
 	}
@@ -359,6 +380,9 @@ func (s *Service) validateResource(ctx context.Context, orgID int64, resourceID 
 }
 
 func (s *Service) validateUser(ctx context.Context, orgID, userID int64) error {
+	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.validateUser")
+	defer span.End()
+
 	if !s.options.Assignments.Users {
 		return ErrInvalidAssignment.Build(ErrInvalidAssignmentData("users"))
 	}
@@ -373,6 +397,9 @@ func (s *Service) validateUser(ctx context.Context, orgID, userID int64) error {
 }
 
 func (s *Service) validateTeam(ctx context.Context, orgID, teamID int64) error {
+	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.validateTeam")
+	defer span.End()
+
 	if !s.options.Assignments.Teams {
 		return ErrInvalidAssignment.Build(ErrInvalidAssignmentData("teams"))
 	}
@@ -388,7 +415,10 @@ func (s *Service) validateTeam(ctx context.Context, orgID, teamID int64) error {
 	return nil
 }
 
-func (s *Service) validateBuiltinRole(_ context.Context, builtinRole string) error {
+func (s *Service) validateBuiltinRole(ctx context.Context, builtinRole string) error {
+	_, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.validateBuiltinRole")
+	defer span.End()
+
 	if !s.options.Assignments.BuiltInRoles {
 		return ErrInvalidAssignment.Build(ErrInvalidAssignmentData("builtInRoles"))
 	}
@@ -437,7 +467,7 @@ type ActionSetService interface {
 	ResolveAction(action string) []string
 	// ResolveActionSet resolves an action set to a list of corresponding actions.
 	ResolveActionSet(actionSet string) []string
-
+	// StoreActionSet stores action set. If a set with the given name has already been stored, the new actions will be appended to the existing actions.
 	StoreActionSet(name string, actions []string)
 
 	pluginaccesscontrol.ActionSetRegistry
@@ -450,21 +480,129 @@ type ActionSet struct {
 	Actions []string `json:"actions"`
 }
 
-// InMemoryActionSets is an in-memory implementation of the ActionSetService.
-type InMemoryActionSets struct {
-	features           featuremgmt.FeatureToggles
-	log                log.Logger
-	actionSetToActions map[string][]string
-	actionToActionSets map[string][]string
+type ActionSetStore interface {
+	// StoreActionSet stores action set. If a set with the given name has already been stored, the new actions will be appended to the existing actions.
+	StoreActionSet(name string, actions []string)
+	// ResolveActionSet resolves an action set to a list of corresponding actions.
+	ResolveActionSet(actionSet string) []string
+	// ResolveAction returns all the action sets that the action belongs to.
+	ResolveAction(action string) []string
+	// ResolveActionPrefix returns all action sets that include at least one action with the specified prefix
+	ResolveActionPrefix(prefix string) []string
+	// ExpandActionSetsWithFilter takes a set of permissions that might include some action set permissions, and returns a set of permissions with action sets expanded into underlying permissions.
+	// When action sets are expanded into the underlying permissions only those permissions whose action is matched by actionMatcher are included.
+	ExpandActionSetsWithFilter(permissions []accesscontrol.Permission, actionMatcher func(action string) bool) []accesscontrol.Permission
+}
+
+type ActionSetSvc struct {
+	features featuremgmt.FeatureToggles
+	store    ActionSetStore
 }
 
 // NewActionSetService returns a new instance of InMemoryActionSetService.
 func NewActionSetService(features featuremgmt.FeatureToggles) ActionSetService {
-	actionSets := &InMemoryActionSets{
-		features:           features,
-		log:                log.New("resourcepermissions.actionsets"),
-		actionSetToActions: make(map[string][]string),
-		actionToActionSets: make(map[string][]string),
+	return &ActionSetSvc{
+		features: features,
+		store:    NewInMemoryActionSetStore(features),
 	}
-	return actionSets
+}
+
+// ResolveAction returns all the action sets that the action belongs to.
+func (a *ActionSetSvc) ResolveAction(action string) []string {
+	sets := a.store.ResolveAction(action)
+	filteredSets := make([]string, 0, len(sets))
+	for _, set := range sets {
+		// Only use action sets for folders and dashboards for now
+		// We need to verify that action sets for other resources do not share names with actions (eg, `datasources:read`)
+		if !isFolderOrDashboardAction(set) {
+			continue
+		}
+		filteredSets = append(filteredSets, set)
+	}
+
+	return filteredSets
+}
+
+// ResolveActionPrefix returns all action sets that include at least one action with the specified prefix
+func (a *ActionSetSvc) ResolveActionPrefix(actionPrefix string) []string {
+	sets := a.store.ResolveActionPrefix(actionPrefix)
+	filteredSets := make([]string, 0, len(sets))
+	for _, set := range sets {
+		// Only use action sets for folders and dashboards for now
+		// We need to verify that action sets for other resources do not share names with actions (eg, `datasources:read`)
+		if !isFolderOrDashboardAction(set) {
+			continue
+		}
+		filteredSets = append(filteredSets, set)
+	}
+
+	return filteredSets
+}
+
+// ResolveActionSet resolves an action set to a list of corresponding actions.
+func (a *ActionSetSvc) ResolveActionSet(actionSet string) []string {
+	// Only use action sets for folders and dashboards for now
+	// We need to verify that action sets for other resources do not share names with actions (eg, `datasources:read`)
+	if !isFolderOrDashboardAction(actionSet) {
+		return nil
+	}
+	return a.store.ResolveActionSet(actionSet)
+}
+
+// StoreActionSet stores action set. If a set with the given name has already been stored, the new actions will be appended to the existing actions.
+func (a *ActionSetSvc) StoreActionSet(name string, actions []string) {
+	// To avoid backwards incompatible changes, we don't want to store these actions in the DB
+	// Once action sets are fully enabled, we can include dashboards.ActionFoldersCreate in the list of other folder edit/admin actions
+	// Tracked in https://github.com/grafana/identity-access-team/issues/794
+	if name == "folders:edit" || name == "folders:admin" {
+		if !slices.Contains(a.ResolveActionSet(name), dashboards.ActionFoldersCreate) {
+			actions = append(actions, dashboards.ActionFoldersCreate)
+		}
+	}
+
+	a.store.StoreActionSet(name, actions)
+}
+
+// ExpandActionSets takes a set of permissions that might include some action set permissions, and returns a set of permissions with action sets expanded into underlying permissions
+func (a *ActionSetSvc) ExpandActionSets(permissions []accesscontrol.Permission) []accesscontrol.Permission {
+	actionMatcher := func(_ string) bool {
+		return true
+	}
+	return a.ExpandActionSetsWithFilter(permissions, actionMatcher)
+}
+
+// ExpandActionSetsWithFilter works like ExpandActionSets, but it also takes a function for action filtering. When action sets are expanded into the underlying permissions,
+// only those permissions whose action is matched by actionMatcher are included.
+func (a *ActionSetSvc) ExpandActionSetsWithFilter(permissions []accesscontrol.Permission, actionMatcher func(action string) bool) []accesscontrol.Permission {
+	return a.store.ExpandActionSetsWithFilter(permissions, actionMatcher)
+}
+
+// RegisterActionSets allow the caller to expand the existing action sets with additional permissions
+// This is intended to be used by plugins, and currently supports extending folder and dashboard action sets
+func (a *ActionSetSvc) RegisterActionSets(ctx context.Context, pluginID string, registrations []plugins.ActionSet) error {
+	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.RegisterActionSets")
+	defer span.End()
+
+	if !a.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
+		return nil
+	}
+	for _, reg := range registrations {
+		if err := pluginutils.ValidatePluginActionSet(pluginID, reg); err != nil {
+			return err
+		}
+		a.StoreActionSet(reg.Action, reg.Actions)
+	}
+	return nil
+}
+
+func isFolderOrDashboardAction(action string) bool {
+	return strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) || strings.HasPrefix(action, dashboards.ScopeFoldersRoot)
+}
+
+// GetActionSetName function creates an action set from a list of actions and stores it inmemory.
+func GetActionSetName(resource, permission string) string {
+	// lower cased
+	resource = strings.ToLower(resource)
+	permission = strings.ToLower(permission)
+	return fmt.Sprintf("%s:%s", resource, permission)
 }

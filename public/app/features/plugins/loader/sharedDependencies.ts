@@ -1,25 +1,4 @@
-import * as emotion from '@emotion/css';
-import * as emotionReact from '@emotion/react';
-import * as kusto from '@kusto/monaco-kusto';
-import * as d3 from 'd3';
-import * as i18next from 'i18next';
 import jquery from 'jquery';
-import _ from 'lodash'; // eslint-disable-line lodash/import-scope
-import moment from 'moment'; // eslint-disable-line no-restricted-imports
-import prismjs from 'prismjs';
-import react from 'react';
-import reactDom from 'react-dom';
-import * as reactInlineSvg from 'react-inlinesvg';
-import * as reactRedux from 'react-redux'; // eslint-disable-line no-restricted-imports
-import * as reactRouterDom from 'react-router-dom';
-import * as reactRouterCompat from 'react-router-dom-v5-compat';
-import * as redux from 'redux';
-import * as rxjs from 'rxjs';
-import * as rxjsOperators from 'rxjs/operators';
-import slate from 'slate';
-import slatePlain from 'slate-plain-serializer';
-import slateReact from 'slate-react';
-
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.selection';
 import 'vendor/flot/jquery.flot.time';
@@ -39,6 +18,7 @@ import { appEvents, contextSrv } from 'app/core/core';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import TimeSeries from 'app/core/time_series2';
+import { arrayMove } from 'app/core/utils/arrayMove';
 import * as flatten from 'app/core/utils/flatten';
 import kbn from 'app/core/utils/kbn';
 import * as ticks from 'app/core/utils/ticks';
@@ -65,14 +45,14 @@ const jQueryFlotDeps = [
   'jquery.flot',
 ].reduce((acc, flotDep) => ({ ...acc, [flotDep]: { fakeDep: 1 } }), {});
 
-export const sharedDependenciesMap: Record<string, System.Module> = {
-  '@emotion/css': emotion,
-  '@emotion/react': emotionReact,
+export const sharedDependenciesMap = {
+  '@emotion/css': () => import('@emotion/css'),
+  '@emotion/react': () => import('@emotion/react'),
   '@grafana/data': grafanaData,
   '@grafana/runtime': grafanaRuntime,
-  '@grafana/slate-react': slateReact, // for backwards compatibility with older plugins
+  '@grafana/slate-react': () => import('slate-react'),
   '@grafana/ui': grafanaUI,
-  '@kusto/monaco-kusto': kusto,
+  '@kusto/monaco-kusto': () => import('@kusto/monaco-kusto'),
   'app/core/app_events': {
     default: appEvents,
     __useDefault: true,
@@ -102,29 +82,24 @@ export const sharedDependenciesMap: Record<string, System.Module> = {
   'app/features/dashboard/impression_store': {
     impressions: impressionSrv,
   },
-  d3: d3,
-  emotion: emotion,
+  d3: () => import('d3'),
+  emotion: () => import('@emotion/css'),
   // bundling grafana-ui in plugins requires sharing i18next state
-  i18next: i18next,
+  i18next: () => import('i18next'),
   jquery: {
     default: jquery,
     __useDefault: true,
   },
   ...jQueryFlotDeps,
-  lodash: {
-    default: _,
-    __useDefault: true,
-  },
-  moment: {
-    default: moment,
-    __useDefault: true,
-  },
-  prismjs: prismjs,
-  react: react,
-  'react-dom': reactDom,
+  // add move to lodash for backward compatabilty with plugins
+  lodash: () => import('lodash').then((module) => ({ ...module, move: arrayMove, __useDefault: true })),
+  moment: () => import('moment').then((module) => ({ ...module, __useDefault: true })),
+  prismjs: () => import('prismjs'),
+  react: () => import('react'),
+  'react-dom': () => import('react-dom'),
   // bundling grafana-ui in plugins requires sharing react-inlinesvg for the icon cache
-  'react-inlinesvg': reactInlineSvg,
-  'react-redux': reactRedux,
+  'react-inlinesvg': () => import('react-inlinesvg'),
+  'react-redux': () => import('react-redux'),
   // Migration - React Router v5 -> v6
   // =================================
   // Plugins that still use "react-router-dom@v5" don't depend on react-router directly, so they will not use this import.
@@ -137,12 +112,12 @@ export const sharedDependenciesMap: Record<string, System.Module> = {
   // just exposing "react-router-dom-v5-compat".
   //
   // (This means that we are exposing two versions of the same package).
-  'react-router-dom': reactRouterDom, // react-router-dom@v5
-  'react-router': reactRouterCompat, // react-router-dom@v6, react-router@v6 (included)
-  redux: redux,
-  rxjs: rxjs,
-  'rxjs/operators': rxjsOperators,
-  slate: slate,
-  'slate-plain-serializer': slatePlain,
-  'slate-react': slateReact,
+  'react-router-dom': () => import('react-router-dom'),
+  'react-router': () => import('react-router-dom-v5-compat'),
+  redux: () => import('redux'),
+  rxjs: () => import('rxjs'),
+  'rxjs/operators': () => import('rxjs/operators'),
+  slate: () => import('slate'),
+  'slate-plain-serializer': () => import('slate-plain-serializer'),
+  'slate-react': () => import('slate-react'),
 };

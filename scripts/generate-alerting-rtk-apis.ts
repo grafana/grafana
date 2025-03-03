@@ -31,9 +31,7 @@ const config: ConfigFile = {
       filterEndpoints: [
         'listNamespacedTimeInterval',
         'createNamespacedTimeInterval',
-        'readNamespacedTimeInterval',
         'deleteNamespacedTimeInterval',
-        'patchNamespacedTimeInterval',
         'replaceNamespacedTimeInterval',
       ],
       exportName: 'generatedTimeIntervalsApi',
@@ -42,8 +40,37 @@ const config: ConfigFile = {
     '../public/app/features/alerting/unified/openapi/receiversApi.gen.ts': {
       apiFile: '../public/app/features/alerting/unified/api/alertingApi.ts',
       apiImport: 'alertingApi',
-      filterEndpoints: ['listNamespacedReceiver'],
+      filterEndpoints: [
+        'listNamespacedReceiver',
+        'createNamespacedReceiver',
+        'readNamespacedReceiver',
+        'deleteNamespacedReceiver',
+        'replaceNamespacedReceiver',
+      ],
       exportName: 'generatedReceiversApi',
+      flattenArg: false,
+    },
+    '../public/app/features/alerting/unified/openapi/templatesApi.gen.ts': {
+      apiFile: '../public/app/features/alerting/unified/api/alertingApi.ts',
+      apiImport: 'alertingApi',
+      filterEndpoints: [
+        'listNamespacedTemplateGroup',
+        'createNamespacedTemplateGroup',
+        'readNamespacedTemplateGroup',
+        'replaceNamespacedTemplateGroup',
+        'deleteNamespacedTemplateGroup',
+      ],
+      exportName: 'generatedTemplatesApi',
+    },
+    '../public/app/features/alerting/unified/openapi/routesApi.gen.ts': {
+      apiFile: '../public/app/features/alerting/unified/api/alertingApi.ts',
+      apiImport: 'alertingApi',
+      filterEndpoints: [
+        'listNamespacedRoutingTree',
+        'replaceNamespacedRoutingTree',
+        'deleteCollectionNamespacedRoutingTree',
+      ],
+      exportName: 'generatedRoutesApi',
       flattenArg: false,
     },
   },

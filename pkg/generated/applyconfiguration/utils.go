@@ -5,32 +5,41 @@
 package applyconfiguration
 
 import (
-	v0alpha1 "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
+	v0alpha1 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	alertingnotificationsv0alpha1 "github.com/grafana/grafana/pkg/generated/applyconfiguration/alerting_notifications/v0alpha1"
+	internal "github.com/grafana/grafana/pkg/generated/applyconfiguration/internal"
+	provisioningv0alpha1 "github.com/grafana/grafana/pkg/generated/applyconfiguration/provisioning/v0alpha1"
 	applyconfigurationservicev0alpha1 "github.com/grafana/grafana/pkg/generated/applyconfiguration/service/v0alpha1"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
+	testing "k8s.io/client-go/testing"
 )
 
 // ForKind returns an apply configuration type for the given GroupVersionKind, or nil if no
 // apply configuration type exists for the given GroupVersionKind.
 func ForKind(kind schema.GroupVersionKind) interface{} {
 	switch kind {
-	// Group=notifications.alerting.grafana.app, Version=v0alpha1
-	case v0alpha1.SchemeGroupVersion.WithKind("Integration"):
-		return &alertingnotificationsv0alpha1.IntegrationApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("Interval"):
-		return &alertingnotificationsv0alpha1.IntervalApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("Receiver"):
-		return &alertingnotificationsv0alpha1.ReceiverApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("ReceiverSpec"):
-		return &alertingnotificationsv0alpha1.ReceiverSpecApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("TimeInterval"):
-		return &alertingnotificationsv0alpha1.TimeIntervalApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("TimeIntervalSpec"):
-		return &alertingnotificationsv0alpha1.TimeIntervalSpecApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("TimeRange"):
-		return &alertingnotificationsv0alpha1.TimeRangeApplyConfiguration{}
+	// Group=provisioning.grafana.app, Version=v0alpha1
+	case v0alpha1.SchemeGroupVersion.WithKind("GitHubRepositoryConfig"):
+		return &provisioningv0alpha1.GitHubRepositoryConfigApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("HealthStatus"):
+		return &provisioningv0alpha1.HealthStatusApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("LocalRepositoryConfig"):
+		return &provisioningv0alpha1.LocalRepositoryConfigApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("Repository"):
+		return &provisioningv0alpha1.RepositoryApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("RepositorySpec"):
+		return &provisioningv0alpha1.RepositorySpecApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("RepositoryStatus"):
+		return &provisioningv0alpha1.RepositoryStatusApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("ResourceCount"):
+		return &provisioningv0alpha1.ResourceCountApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("SyncOptions"):
+		return &provisioningv0alpha1.SyncOptionsApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("SyncStatus"):
+		return &provisioningv0alpha1.SyncStatusApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("WebhookStatus"):
+		return &provisioningv0alpha1.WebhookStatusApplyConfiguration{}
 
 		// Group=service.grafana.app, Version=v0alpha1
 	case servicev0alpha1.SchemeGroupVersion.WithKind("ExternalName"):
@@ -40,4 +49,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 
 	}
 	return nil
+}
+
+func NewTypeConverter(scheme *runtime.Scheme) *testing.TypeConverter {
+	return &testing.TypeConverter{Scheme: scheme, TypeResolver: internal.Parser()}
 }

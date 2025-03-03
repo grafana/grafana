@@ -29,6 +29,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
+      "id": "grafana-default-email",
       "name": "grafana-default-email",
       "policies": [
         {
@@ -38,6 +39,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           },
         },
       ],
+      "provisioned": false,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -47,7 +49,9 @@ exports[`useContactPoints should return contact points with status 1`] = `
           "secureFields": {},
           "settings": {
             "addresses": "gilles.demey+1@grafana.com, gilles.demey+2@grafana.com, gilles.demey+3@grafana.com, gilles.demey+4@grafana.com",
+            "message": "{{ template "slack-template" . }}",
             "singleEmail": false,
+            "subject": "some custom value",
           },
           "type": "email",
           "uid": "af306c96-35a2-4d6e-908a-4993e245dbb2",
@@ -64,8 +68,10 @@ exports[`useContactPoints should return contact points with status 1`] = `
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
+      "id": "lotsa-emails",
       "name": "lotsa-emails",
       "policies": [],
+      "provisioned": false,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -87,8 +93,10 @@ exports[`useContactPoints should return contact points with status 1`] = `
           },
         },
       ],
+      "id": "OnCall Conctact point",
       "name": "OnCall Conctact point",
       "policies": [],
+      "provisioned": false,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -116,6 +124,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
+      "id": "provisioned-contact-point",
       "name": "provisioned-contact-point",
       "policies": [
         {
@@ -125,6 +134,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           },
         },
       ],
+      "provisioned": true,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -175,8 +185,10 @@ exports[`useContactPoints should return contact points with status 1`] = `
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
+      "id": "Slack with multiple channels",
       "name": "Slack with multiple channels",
       "policies": [],
+      "provisioned": false,
     },
   ],
   "error": undefined,
@@ -213,6 +225,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
+      "id": "grafana-default-email",
       "name": "grafana-default-email",
       "policies": [
         {
@@ -222,6 +235,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           },
         },
       ],
+      "provisioned": false,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -231,7 +245,9 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           "secureFields": {},
           "settings": {
             "addresses": "gilles.demey+1@grafana.com, gilles.demey+2@grafana.com, gilles.demey+3@grafana.com, gilles.demey+4@grafana.com",
+            "message": "{{ template "slack-template" . }}",
             "singleEmail": false,
+            "subject": "some custom value",
           },
           "type": "email",
           "uid": "af306c96-35a2-4d6e-908a-4993e245dbb2",
@@ -248,8 +264,10 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
+      "id": "lotsa-emails",
       "name": "lotsa-emails",
       "policies": [],
+      "provisioned": false,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -274,8 +292,10 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           },
         },
       ],
+      "id": "OnCall Conctact point",
       "name": "OnCall Conctact point",
       "policies": [],
+      "provisioned": false,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -303,6 +323,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
+      "id": "provisioned-contact-point",
       "name": "provisioned-contact-point",
       "policies": [
         {
@@ -312,6 +333,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           },
         },
       ],
+      "provisioned": true,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -362,8 +384,10 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
+      "id": "Slack with multiple channels",
       "name": "Slack with multiple channels",
       "policies": [],
+      "provisioned": false,
     },
   ],
   "error": undefined,

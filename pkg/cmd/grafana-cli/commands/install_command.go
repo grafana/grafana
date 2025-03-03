@@ -51,7 +51,10 @@ func validateInput(c utils.CommandLine) error {
 
 	fileInfo, err := os.Stat(pluginsDir)
 	if err != nil {
-		if err = os.MkdirAll(pluginsDir, 0o750); err != nil {
+		// If the directory does not exist, try to create it with permissions enough
+		// so the server running Grafana can write to it to install new plugins.
+		// nolint: gosec
+		if err = os.MkdirAll(pluginsDir, os.ModePerm); err != nil {
 			return fmt.Errorf("pluginsDir (%s) is not a writable directory", pluginsDir)
 		}
 		return nil
@@ -87,6 +90,7 @@ type pluginInstallOpts struct {
 	repoURL   string
 	pluginURL string
 	pluginDir string
+	gcomToken string
 }
 
 func newInstallPluginOpts(c utils.CommandLine) pluginInstallOpts {
@@ -95,6 +99,7 @@ func newInstallPluginOpts(c utils.CommandLine) pluginInstallOpts {
 		repoURL:   c.PluginRepoURL(),
 		pluginURL: c.PluginURL(),
 		pluginDir: c.PluginDirectory(),
+		gcomToken: c.GcomToken(),
 	}
 }
 
@@ -117,29 +122,53 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 
 	// If a version is specified, check if it is already installed
 	if version != "" {
-		if services.PluginVersionInstalled(pluginID, version, o.pluginDir) {
+		if p, ok := services.PluginVersionInstalled(pluginID, version, o.pluginDir); ok {
 			services.Logger.Successf("Plugin %s v%s already installed.", pluginID, version)
+			for _, depP := range p.JSONData.Dependencies.Plugins {
+				if err := doInstallPlugin(ctx, depP.ID, depP.Version, o, installing); err != nil {
+					return err
+				}
+			}
 			return nil
 		}
 	}
 
 	repository := repo.NewManager(repo.ManagerCfg{
-		SkipTLSVerify: o.insecure,
-		BaseURL:       o.repoURL,
-		Logger:        services.Logger,
+		SkipTLSVerify:      o.insecure,
+		BaseURL:            o.repoURL,
+		Logger:             services.Logger,
+		GrafanaComAPIToken: o.gcomToken,
 	})
 
-	compatOpts := repo.NewCompatOpts(services.GrafanaVersion, runtime.GOOS, runtime.GOARCH)
+	// FIXME: Re-enable grafanaVersion. This check was broken in 10.2 so disabling it for the moment.
+	// Expected to be re-enabled in 12.x.
+	compatOpts := repo.NewCompatOpts("", runtime.GOOS, runtime.GOARCH)
 
 	var archive *repo.PluginArchive
 	var err error
-	pluginZipURL := o.pluginURL
-	if pluginZipURL != "" {
-		if archive, err = repository.GetPluginArchiveByURL(ctx, pluginZipURL, compatOpts); err != nil {
+	if o.pluginURL != "" {
+		archive, err = repository.GetPluginArchiveByURL(ctx, o.pluginURL, compatOpts)
+		if err != nil {
 			return err
 		}
 	} else {
-		if archive, err = repository.GetPluginArchive(ctx, pluginID, version, compatOpts); err != nil {
+		ctx = repo.WithRequestOrigin(ctx, "cli")
+		archiveInfo, err := repository.GetPluginArchiveInfo(ctx, pluginID, version, compatOpts)
+		if err != nil {
+			return err
+		}
+
+		if p, ok := services.PluginVersionInstalled(pluginID, archiveInfo.Version, o.pluginDir); ok {
+			services.Logger.Successf("Plugin %s v%s already installed.", pluginID, archiveInfo.Version)
+			for _, depP := range p.JSONData.Dependencies.Plugins {
+				if err = doInstallPlugin(ctx, depP.ID, depP.Version, o, installing); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+
+		if archive, err = repository.GetPluginArchiveByURL(ctx, archiveInfo.URL, compatOpts); err != nil {
 			return err
 		}
 	}

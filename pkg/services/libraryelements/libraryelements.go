@@ -9,21 +9,23 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister, folderService folder.Service, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl) *LibraryElementService {
+func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister, folderService folder.Service, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, dashboardsService dashboards.DashboardService) *LibraryElementService {
 	l := &LibraryElementService{
-		Cfg:           cfg,
-		SQLStore:      sqlStore,
-		RouteRegister: routeRegister,
-		folderService: folderService,
-		log:           log.New("library-elements"),
-		features:      features,
-		AccessControl: ac,
+		Cfg:               cfg,
+		SQLStore:          sqlStore,
+		RouteRegister:     routeRegister,
+		folderService:     folderService,
+		dashboardsService: dashboardsService,
+		log:               log.New("library-elements"),
+		features:          features,
+		AccessControl:     ac,
 	}
 
 	l.registerAPIEndpoints()
@@ -40,17 +42,19 @@ type Service interface {
 	ConnectElementsToDashboard(c context.Context, signedInUser identity.Requester, elementUIDs []string, dashboardID int64) error
 	DisconnectElementsFromDashboard(c context.Context, dashboardID int64) error
 	DeleteLibraryElementsInFolder(c context.Context, signedInUser identity.Requester, folderUID string) error
+	GetAllElements(c context.Context, signedInUser identity.Requester, query model.SearchLibraryElementsQuery) (model.LibraryElementSearchResult, error)
 }
 
 // LibraryElementService is the service for the Library Element feature.
 type LibraryElementService struct {
-	Cfg           *setting.Cfg
-	SQLStore      db.DB
-	RouteRegister routing.RouteRegister
-	folderService folder.Service
-	log           log.Logger
-	features      featuremgmt.FeatureToggles
-	AccessControl accesscontrol.AccessControl
+	Cfg               *setting.Cfg
+	SQLStore          db.DB
+	RouteRegister     routing.RouteRegister
+	folderService     folder.Service
+	dashboardsService dashboards.DashboardService
+	log               log.Logger
+	features          featuremgmt.FeatureToggles
+	AccessControl     accesscontrol.AccessControl
 }
 
 var _ Service = (*LibraryElementService)(nil)
@@ -83,6 +87,11 @@ func (l *LibraryElementService) DisconnectElementsFromDashboard(c context.Contex
 // DeleteLibraryElementsInFolder deletes all elements for a specific folder.
 func (l *LibraryElementService) DeleteLibraryElementsInFolder(c context.Context, signedInUser identity.Requester, folderUID string) error {
 	return l.deleteLibraryElementsInFolderUID(c, signedInUser, folderUID)
+}
+
+// GetAll gets all library elements with support to query filters.
+func (l *LibraryElementService) GetAllElements(c context.Context, signedInUser identity.Requester, query model.SearchLibraryElementsQuery) (model.LibraryElementSearchResult, error) {
+	return l.getAllLibraryElements(c, signedInUser, query)
 }
 
 func (l *LibraryElementService) addUidToLibraryPanel(model []byte, newUid string) (json.RawMessage, error) {

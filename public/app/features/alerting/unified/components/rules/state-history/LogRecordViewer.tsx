@@ -1,22 +1,25 @@
 import { css } from '@emotion/css';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { groupBy, uniqueId } from 'lodash';
-import { memo, Fragment, useEffect } from 'react';
+import { Fragment, memo, useEffect } from 'react';
 
-import { dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
-import { Icon, TagList, useStyles2, Stack } from '@grafana/ui';
+import { GrafanaTheme2, dateTimeFormat } from '@grafana/data';
+import { Icon, Stack, TagList, useStyles2 } from '@grafana/ui';
 
 import { Label } from '../../Label';
 import { AlertStateTag } from '../AlertStateTag';
 
 import { LogRecord, omitLabels } from './common';
 
-interface LogRecordViewerProps {
+type LogRecordViewerProps = {
   records: LogRecord[];
   commonLabels: Array<[string, string]>;
+};
+
+type AdditionalLogRecordViewerProps = {
   onRecordsRendered?: (timestampRefs: Map<number, HTMLElement>) => void;
   onLabelClick?: (label: string) => void;
-}
+};
 
 function groupRecordsByTimestamp(records: LogRecord[]) {
   // groupBy has been replaced by the reduce to avoid back and forth conversion of timestamp from number to string
@@ -35,7 +38,12 @@ function groupRecordsByTimestamp(records: LogRecord[]) {
 }
 
 export const LogRecordViewerByTimestamp = memo(
-  ({ records, commonLabels, onLabelClick, onRecordsRendered }: LogRecordViewerProps) => {
+  ({
+    records,
+    commonLabels,
+    onLabelClick,
+    onRecordsRendered,
+  }: LogRecordViewerProps & AdditionalLogRecordViewerProps) => {
     const styles = useStyles2(getStyles);
 
     const groupedLines = groupRecordsByTimestamp(records);

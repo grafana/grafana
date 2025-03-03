@@ -26,3 +26,11 @@ func ValidateProvenanceRelaxed(from, to models.Provenance) error {
 	}
 	return nil
 }
+
+// ValidateProvenanceOfDependentResources returns a list of allowed provenance statuses for dependent resources
+// in the case when they need to be updated when the resource they depend on is changed.
+func ValidateProvenanceOfDependentResources(parentProvenance models.Provenance) func(childProvenance models.Provenance) bool {
+	return func(childProvenance models.Provenance) bool {
+		return parentProvenance == childProvenance || childProvenance == models.ProvenanceNone
+	}
+}

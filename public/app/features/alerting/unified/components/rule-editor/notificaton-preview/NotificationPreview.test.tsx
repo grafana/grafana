@@ -1,21 +1,22 @@
-import { render, screen, waitFor, within, userEvent } from 'test/test-utils';
+import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
+import { setAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
+import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import 'core-js/stable/structured-clone';
 import { MatcherOperator } from '../../../../../../plugins/datasource/alertmanager/types';
 import { Labels } from '../../../../../../types/unified-alerting-dto';
-import { mockApi, setupMswServer } from '../../../mockApi';
+import { getMockConfig, setupMswServer } from '../../../mockApi';
 import { grantUserPermissions, mockAlertQuery } from '../../../mocks';
 import { mockPreviewApiResponse } from '../../../mocks/grafanaRulerApi';
+import { Folder } from '../../../types/rule-form';
 import * as dataSource from '../../../utils/datasource';
 import {
   AlertManagerDataSource,
   GRAFANA_RULES_SOURCE_NAME,
   useGetAlertManagerDataSourcesByPermissionAndConfig,
 } from '../../../utils/datasource';
-import { Folder } from '../RuleFolderPicker';
 
 import { NotificationPreview } from './NotificationPreview';
 import NotificationPreviewByAlertManager from './NotificationPreviewByAlertManager';
@@ -37,7 +38,7 @@ const ui = {
   route: byTestId('matching-policy-route'),
   routeButton: byRole('button', { name: /Expand policy route/ }),
   routeMatchingInstances: byTestId('route-matching-instance'),
-  loadingIndicator: byText(/Loading/),
+  loadingIndicator: byText(/Loading routing preview/i),
   previewButton: byRole('button', { name: /preview routing/i }),
   grafanaAlertManagerLabel: byText(/alertmanager:grafana/i),
   otherAlertManagerLabel: byText(/alertmanager:other_am/i),
@@ -63,52 +64,33 @@ const grafanaAlertManagerDataSource: AlertManagerDataSource = {
   hasConfigurationAPI: true,
 };
 
+const mockConfig = getMockConfig((amConfigBuilder) =>
+  amConfigBuilder
+    .withRoute((routeBuilder) =>
+      routeBuilder
+        .withReceiver('email')
+        .addRoute((rb) => rb.withReceiver('slack').addMatcher('tomato', MatcherOperator.equal, 'red'))
+        .addRoute((rb) => rb.withReceiver('opsgenie').addMatcher('team', MatcherOperator.equal, 'operations'))
+    )
+    .addReceivers((b) => b.withName('email').addEmailConfig((eb) => eb.withTo('test@example.com')))
+    .addReceivers((b) => b.withName('slack'))
+    .addReceivers((b) => b.withName('opsgenie'))
+);
+
 function mockOneAlertManager() {
   getAlertManagerDataSourcesByPermissionAndConfigMock.mockReturnValue([grafanaAlertManagerDataSource]);
-  mockApi(server).getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, (amConfigBuilder) =>
-    amConfigBuilder
-      .withRoute((routeBuilder) =>
-        routeBuilder
-          .withReceiver('email')
-          .addRoute((rb) => rb.withReceiver('slack').addMatcher('tomato', MatcherOperator.equal, 'red'))
-          .addRoute((rb) => rb.withReceiver('opsgenie').addMatcher('team', MatcherOperator.equal, 'operations'))
-      )
-      .addReceivers((b) => b.withName('email').addEmailConfig((eb) => eb.withTo('test@example.com')))
-      .addReceivers((b) => b.withName('slack'))
-      .addReceivers((b) => b.withName('opsgenie'))
-  );
+
+  setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, mockConfig);
 }
 
 function mockTwoAlertManagers() {
   getAlertManagerDataSourcesByPermissionAndConfigMock.mockReturnValue([
-    { name: 'OTHER_AM', imgUrl: '', hasConfigurationAPI: true },
     grafanaAlertManagerDataSource,
+    { name: 'OTHER_AM', imgUrl: '', hasConfigurationAPI: true },
   ]);
 
-  mockApi(server).getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, (amConfigBuilder) =>
-    amConfigBuilder
-      .withRoute((routeBuilder) =>
-        routeBuilder
-          .withReceiver('email')
-          .addRoute((rb) => rb.withReceiver('slack').addMatcher('tomato', MatcherOperator.equal, 'red'))
-          .addRoute((rb) => rb.withReceiver('opsgenie').addMatcher('team', MatcherOperator.equal, 'operations'))
-      )
-      .addReceivers((b) => b.withName('email').addEmailConfig((eb) => eb.withTo('test@example.com')))
-      .addReceivers((b) => b.withName('slack'))
-      .addReceivers((b) => b.withName('opsgenie'))
-  );
-  mockApi(server).getAlertmanagerConfig('OTHER_AM', (amConfigBuilder) =>
-    amConfigBuilder
-      .withRoute((routeBuilder) =>
-        routeBuilder
-          .withReceiver('email')
-          .addRoute((rb) => rb.withReceiver('slack').addMatcher('tomato', MatcherOperator.equal, 'red'))
-          .addRoute((rb) => rb.withReceiver('opsgenie').addMatcher('team', MatcherOperator.equal, 'operations'))
-      )
-      .addReceivers((b) => b.withName('email').addEmailConfig((eb) => eb.withTo('test@example.com')))
-      .addReceivers((b) => b.withName('slack'))
-      .addReceivers((b) => b.withName('opsgenie'))
-  );
+  setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, mockConfig);
+  setAlertmanagerConfig('OTHER_AM', mockConfig);
 }
 
 function mockHasEditPermission(enabled: boolean) {
@@ -132,14 +114,24 @@ const folder: Folder = {
   title: 'title',
 };
 
-describe('NotificationPreview', () => {
+describe.each([
+  // k8s API enabled
+  true,
+  // k8s API disabled
+  false,
+])('NotificationPreview with alertingApiServer=%p', (apiServerEnabled) => {
+  apiServerEnabled ? testWithFeatureToggles(['alertingApiServer']) : testWithFeatureToggles([]);
+  jest.retryTimes(2);
+
   it('should render notification preview without alert manager label, when having only one alert manager configured to receive alerts', async () => {
     mockOneAlertManager();
     mockPreviewApiResponse(server, [{ labels: [{ tomato: 'red', avocate: 'green' }] }]);
 
-    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />);
+    const { user } = render(
+      <NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />
+    );
 
-    await userEvent.click(ui.previewButton.get());
+    await user.click(ui.previewButton.get());
     await waitFor(() => {
       expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
     });
@@ -161,23 +153,18 @@ describe('NotificationPreview', () => {
     mockTwoAlertManagers();
     mockPreviewApiResponse(server, [{ labels: [{ tomato: 'red', avocate: 'green' }] }]);
 
-    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />);
-    await waitFor(() => {
-      expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
-    });
+    const { user } = render(
+      <NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />
+    );
 
-    await userEvent.click(ui.previewButton.get());
-    await waitFor(() => {
-      expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
-    });
+    await user.click(await ui.previewButton.find());
 
     // we expect the alert manager label to be present as there is more than one alert manager configured to receive alerts
-    await waitFor(() => {
-      expect(ui.grafanaAlertManagerLabel.query()).toBeInTheDocument();
-    });
-    expect(ui.otherAlertManagerLabel.query()).toBeInTheDocument();
+    expect(await ui.grafanaAlertManagerLabel.find()).toBeInTheDocument();
+    expect(await ui.otherAlertManagerLabel.find()).toBeInTheDocument();
 
-    const matchingPoliciesElements = ui.route.queryAll();
+    const matchingPoliciesElements = await ui.route.findAll();
+
     expect(matchingPoliciesElements).toHaveLength(2);
     expect(matchingPoliciesElements[0]).toHaveTextContent(/tomato = red/);
     expect(matchingPoliciesElements[1]).toHaveTextContent(/tomato = red/);
@@ -188,13 +175,15 @@ describe('NotificationPreview', () => {
     mockPreviewApiResponse(server, [{ labels: [{ tomato: 'red', avocate: 'green' }] }]);
     mockHasEditPermission(true);
 
-    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />);
+    const { user } = render(
+      <NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />
+    );
     await waitFor(() => {
       expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
     });
 
-    await userEvent.click(ui.previewButton.get());
-    await userEvent.click(await ui.seeDetails.find());
+    await user.click(ui.previewButton.get());
+    await user.click(await ui.seeDetails.find());
     expect(ui.details.title.query()).toBeInTheDocument();
     //we expect seeing the default policy
     expect(screen.getByText(/default policy/i)).toBeInTheDocument();
@@ -210,13 +199,15 @@ describe('NotificationPreview', () => {
     mockPreviewApiResponse(server, [{ labels: [{ tomato: 'red', avocate: 'green' }] }]);
     mockHasEditPermission(false);
 
-    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />);
+    const { user } = render(
+      <NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />
+    );
     await waitFor(() => {
       expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
     });
 
-    await userEvent.click(ui.previewButton.get());
-    await userEvent.click(await ui.seeDetails.find());
+    await user.click(ui.previewButton.get());
+    await user.click(await ui.seeDetails.find());
     expect(ui.details.title.query()).toBeInTheDocument();
     //we expect seeing the default policy
     expect(screen.getByText(/default policy/i)).toBeInTheDocument();
@@ -235,7 +226,7 @@ describe('NotificationPreviewByAlertmanager', () => {
       { job: 'prometheus', severity: 'warning' },
     ];
 
-    mockApi(server).getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, (amConfigBuilder) =>
+    const mockConfig = getMockConfig((amConfigBuilder) =>
       amConfigBuilder
         .withRoute((routeBuilder) =>
           routeBuilder
@@ -247,10 +238,9 @@ describe('NotificationPreviewByAlertmanager', () => {
         .addReceivers((b) => b.withName('slack'))
         .addReceivers((b) => b.withName('opsgenie'))
     );
+    setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, mockConfig);
 
-    const user = userEvent.setup();
-
-    render(
+    const { user } = render(
       <NotificationPreviewByAlertManager
         alertManagerSource={grafanaAlertManagerDataSource}
         potentialInstances={potentialInstances}
@@ -286,7 +276,7 @@ describe('NotificationPreviewByAlertmanager', () => {
       { job: 'prometheus', severity: 'warning' },
     ];
 
-    mockApi(server).getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, (amConfigBuilder) =>
+    const mockConfig = getMockConfig((amConfigBuilder) =>
       amConfigBuilder
         .withRoute((routeBuilder) =>
           routeBuilder
@@ -301,10 +291,9 @@ describe('NotificationPreviewByAlertmanager', () => {
         .addReceivers((b) => b.withName('slack'))
         .addReceivers((b) => b.withName('opsgenie'))
     );
+    setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, mockConfig);
 
-    const user = userEvent.setup();
-
-    render(
+    const { user } = render(
       <NotificationPreviewByAlertManager
         alertManagerSource={grafanaAlertManagerDataSource}
         potentialInstances={potentialInstances}
@@ -340,7 +329,7 @@ describe('NotificationPreviewByAlertmanager', () => {
       { job: 'prometheus', severity: 'warning' },
     ];
 
-    mockApi(server).getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, (amConfigBuilder) =>
+    const mockConfig = getMockConfig((amConfigBuilder) =>
       amConfigBuilder
         .withRoute((routeBuilder) =>
           routeBuilder
@@ -356,9 +345,9 @@ describe('NotificationPreviewByAlertmanager', () => {
         .addReceivers((b) => b.withName('opsgenie'))
     );
 
-    const user = userEvent.setup();
+    setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, mockConfig);
 
-    render(
+    const { user } = render(
       <NotificationPreviewByAlertManager
         alertManagerSource={grafanaAlertManagerDataSource}
         potentialInstances={potentialInstances}
@@ -393,7 +382,7 @@ describe('NotificationPreviewByAlertmanager', () => {
     it('does not match regex in middle of the word as alertmanager will anchor when queried via API', async () => {
       const potentialInstances: Labels[] = [{ regexfield: 'foobarfoo' }];
 
-      mockApi(server).getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, (amConfigBuilder) =>
+      const mockConfig = getMockConfig((amConfigBuilder) =>
         amConfigBuilder
           .addReceivers((b) => b.withName('email'))
           .withRoute((routeBuilder) =>
@@ -402,6 +391,8 @@ describe('NotificationPreviewByAlertmanager', () => {
               .addRoute((rb) => rb.withReceiver('email').addMatcher('regexfield', MatcherOperator.regex, 'bar'))
           )
       );
+
+      setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, mockConfig);
 
       render(
         <NotificationPreviewByAlertManager
@@ -418,7 +409,7 @@ describe('NotificationPreviewByAlertmanager', () => {
     it('matches regex at the start of the word', async () => {
       const potentialInstances: Labels[] = [{ regexfield: 'baaaaaaah' }];
 
-      mockApi(server).getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, (amConfigBuilder) =>
+      const mockConfig = getMockConfig((amConfigBuilder) =>
         amConfigBuilder
           .addReceivers((b) => b.withName('email'))
           .withRoute((routeBuilder) =>
@@ -427,6 +418,7 @@ describe('NotificationPreviewByAlertmanager', () => {
               .addRoute((rb) => rb.withReceiver('email').addMatcher('regexfield', MatcherOperator.regex, 'ba.*h'))
           )
       );
+      setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, mockConfig);
 
       render(
         <NotificationPreviewByAlertManager
@@ -442,7 +434,7 @@ describe('NotificationPreviewByAlertmanager', () => {
     it('handles negated regex correctly', async () => {
       const potentialInstances: Labels[] = [{ regexfield: 'thing' }];
 
-      mockApi(server).getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, (amConfigBuilder) =>
+      const mockConfig = getMockConfig((amConfigBuilder) =>
         amConfigBuilder
           .addReceivers((b) => b.withName('email'))
           .withRoute((routeBuilder) =>
@@ -451,6 +443,7 @@ describe('NotificationPreviewByAlertmanager', () => {
               .addRoute((rb) => rb.withReceiver('email').addMatcher('regexfield', MatcherOperator.notRegex, 'thing'))
           )
       );
+      setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, mockConfig);
 
       render(
         <NotificationPreviewByAlertManager
@@ -463,5 +456,29 @@ describe('NotificationPreviewByAlertmanager', () => {
       expect(await screen.findByText(/default policy/i)).toBeInTheDocument();
       expect(screen.queryByText(/regexfield/i)).not.toBeInTheDocument();
     });
+  });
+  it('matches regex with flags', async () => {
+    const potentialInstances: Labels[] = [{ regexfield: 'baaaaaaah' }];
+
+    const mockConfig = getMockConfig((amConfigBuilder) =>
+      amConfigBuilder
+        .addReceivers((b) => b.withName('email'))
+        .withRoute((routeBuilder) =>
+          routeBuilder
+            .withReceiver('email')
+            .addRoute((rb) => rb.withReceiver('email').addMatcher('regexfield', MatcherOperator.regex, '(?i)BA.*h'))
+        )
+    );
+    setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, mockConfig);
+
+    render(
+      <NotificationPreviewByAlertManager
+        alertManagerSource={grafanaAlertManagerDataSource}
+        potentialInstances={potentialInstances}
+        onlyOneAM={true}
+      />
+    );
+
+    expect(await screen.findByText(/regexfield/i)).toBeInTheDocument();
   });
 });

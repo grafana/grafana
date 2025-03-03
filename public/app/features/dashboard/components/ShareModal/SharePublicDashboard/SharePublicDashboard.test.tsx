@@ -68,7 +68,6 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
-  config.featureToggles.publicDashboards = true;
   config.publicDashboardsEnabled = true;
 
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
@@ -136,7 +135,7 @@ const alertTests = () => {
     });
 
     await renderSharePublicDashboard({ dashboard });
-    expect(screen.queryByTestId(selectors.UnsupportedDataSourcesWarningAlert)).toBeInTheDocument();
+    expect(await screen.findByTestId(selectors.UnsupportedDataSourcesWarningAlert)).toBeInTheDocument();
   });
 };
 
@@ -146,13 +145,6 @@ describe('SharePublic', () => {
   });
   it('does not render share panel when public dashboards feature is disabled using config setting', async () => {
     config.publicDashboardsEnabled = false;
-    await renderSharePublicDashboard(undefined, false);
-
-    expect(screen.getByRole('tablist')).toHaveTextContent('Link');
-    expect(screen.getByRole('tablist')).not.toHaveTextContent('Public dashboard');
-  });
-  it('does not render share panel when public dashboards feature is disabled using feature toggle', async () => {
-    config.featureToggles.publicDashboards = false;
     await renderSharePublicDashboard(undefined, false);
 
     expect(screen.getByRole('tablist')).toHaveTextContent('Link');

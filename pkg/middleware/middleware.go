@@ -33,6 +33,7 @@ func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
 	t := web.NewTree()
 	t.Add("/api/datasources/uid/:uid/resources/*", nil)
 	t.Add("/api/datasources/:id/resources/*", nil)
+	t.Add("/api/plugins/:id/resources/*", nil)
 
 	return func(c *web.Context) {
 		c.Resp.Before(func(w web.ResponseWriter) { // if response has already been written, skip.

@@ -29,6 +29,7 @@ import { ExploreFieldLinkModel, getFieldLinksForExplore, getVariableUsageInfo } 
 
 import { SpanLinkDef, SpanLinkFunc, Trace, TraceSpan } from './components';
 import { SpanLinkType } from './components/types/links';
+import { TraceSpanReference } from './components/types/trace';
 
 /**
  * This is a factory for the link creator. It returns the function mainly so it can return undefined in which case
@@ -110,6 +111,7 @@ export function createSpanLinkFactory({
             content: <Icon name="link" title={link.title || 'Link'} />,
             field: link.origin,
             type: shouldCreatePyroscopeLink ? SpanLinkType.Profiles : SpanLinkType.Unknown,
+            target: link.target,
           };
         });
 
@@ -322,11 +324,12 @@ function legacyCreateSpanLinkFactory(
         }
 
         const link = createFocusSpanLink(reference.traceID, reference.spanID);
+        const title = getReferenceTitle(reference);
 
         links!.push({
           href: link.href,
-          title: reference.span ? reference.span.operationName : 'View linked span',
-          content: <Icon name="link" title="View linked span" />,
+          title,
+          content: <Icon name="link" title={title} />,
           onClick: link.onClick,
           field: link.origin,
           type: SpanLinkType.Traces,
@@ -337,11 +340,12 @@ function legacyCreateSpanLinkFactory(
     if (span.subsidiarilyReferencedBy && createFocusSpanLink) {
       for (const reference of span.subsidiarilyReferencedBy) {
         const link = createFocusSpanLink(reference.traceID, reference.spanID);
+        const title = getReferenceTitle(reference);
 
         links!.push({
           href: link.href,
-          title: reference.span ? reference.span.operationName : 'View linked span',
-          content: <Icon name="link" title="View linked span" />,
+          title,
+          content: <Icon name="link" title={title} />,
           onClick: link.onClick,
           field: link.origin,
           type: SpanLinkType.Traces,
@@ -365,6 +369,14 @@ function legacyCreateSpanLinkFactory(
   };
 }
 
+const getReferenceTitle = (reference: TraceSpanReference) => {
+  let title = reference.span ? reference.span.operationName : 'View linked span';
+  if (reference.refType === 'EXTERNAL') {
+    title = 'View linked span';
+  }
+  return title;
+};
+
 function getQueryForLoki(
   span: TraceSpan,
   options: TraceToLogsOptionsV2,
@@ -383,10 +395,12 @@ function getQueryForLoki(
 
   let expr = '{${__tags}}';
   if (filterByTraceID && span.traceID) {
-    expr += ' |="${__span.traceId}"';
+    expr +=
+      ' | label_format log_line_contains_trace_id=`{{ contains "${__span.traceId}" __line__  }}` | log_line_contains_trace_id="true" OR trace_id="${__span.traceId}"';
   }
   if (filterBySpanID && span.spanID) {
-    expr += ' |="${__span.spanId}"';
+    expr +=
+      ' | label_format log_line_contains_span_id=`{{ contains "${__span.spanId}" __line__  }}` | log_line_contains_span_id="true" OR span_id="${__span.spanId}"';
   }
 
   return {

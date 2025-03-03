@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
@@ -25,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 
-	am_config "github.com/prometheus/alertmanager/config"
 	"github.com/stretchr/testify/require"
 )
 
@@ -33,35 +33,33 @@ func TestRouteGetReceiver(t *testing.T) {
 	fakeReceiverSvc := fakes.NewFakeReceiverService()
 
 	t.Run("returns expected model", func(t *testing.T) {
-		expected := definitions.GettableApiReceiver{
-			Receiver: am_config.Receiver{
-				Name: "receiver1",
-			},
-			GettableGrafanaReceivers: definitions.GettableGrafanaReceivers{
-				GrafanaManagedReceivers: []*definitions.GettableGrafanaReceiver{
-					{
-						UID:  "uid1",
-						Name: "receiver1",
-						Type: "slack",
-					},
+		expected := &models.Receiver{
+			Name: "receiver1",
+			Integrations: []*models.Integration{
+				{
+					UID:    "uid1",
+					Name:   "receiver1",
+					Config: models.IntegrationConfig{Type: "slack"},
 				},
 			},
 		}
-		fakeReceiverSvc.GetReceiverFn = func(ctx context.Context, q models.GetReceiverQuery, u identity.Requester) (definitions.GettableApiReceiver, error) {
+		fakeReceiverSvc.GetReceiverFn = func(ctx context.Context, q models.GetReceiverQuery, u identity.Requester) (*models.Receiver, error) {
 			return expected, nil
 		}
 		handler := NewNotificationsApi(newNotificationSrv(fakeReceiverSvc))
 		rc := testReqCtx("GET")
 		resp := handler.handleRouteGetReceiver(&rc, "receiver1")
 		require.Equal(t, http.StatusOK, resp.Status())
-		json, err := json.Marshal(expected)
+		gettables, err := GettableApiReceiverFromReceiver(expected)
+		require.NoError(t, err)
+		json, err := json.Marshal(gettables)
 		require.NoError(t, err)
 		require.Equal(t, json, resp.Body())
 	})
 
 	t.Run("builds query from request context and url param", func(t *testing.T) {
-		fakeReceiverSvc.GetReceiverFn = func(ctx context.Context, q models.GetReceiverQuery, u identity.Requester) (definitions.GettableApiReceiver, error) {
-			return definitions.GettableApiReceiver{}, nil
+		fakeReceiverSvc.GetReceiverFn = func(ctx context.Context, q models.GetReceiverQuery, u identity.Requester) (*models.Receiver, error) {
+			return &models.Receiver{}, nil
 		}
 		handler := NewNotificationsApi(newNotificationSrv(fakeReceiverSvc))
 		rc := testReqCtx("GET")
@@ -80,8 +78,8 @@ func TestRouteGetReceiver(t *testing.T) {
 	})
 
 	t.Run("should pass along not found response", func(t *testing.T) {
-		fakeReceiverSvc.GetReceiverFn = func(ctx context.Context, q models.GetReceiverQuery, u identity.Requester) (definitions.GettableApiReceiver, error) {
-			return definitions.GettableApiReceiver{}, notifier.ErrReceiverNotFound.Errorf("")
+		fakeReceiverSvc.GetReceiverFn = func(ctx context.Context, q models.GetReceiverQuery, u identity.Requester) (*models.Receiver, error) {
+			return nil, legacy_storage.ErrReceiverNotFound.Errorf("")
 		}
 		handler := NewNotificationsApi(newNotificationSrv(fakeReceiverSvc))
 		rc := testReqCtx("GET")
@@ -90,8 +88,8 @@ func TestRouteGetReceiver(t *testing.T) {
 	})
 
 	t.Run("should pass along permission denied response", func(t *testing.T) {
-		fakeReceiverSvc.GetReceiverFn = func(ctx context.Context, q models.GetReceiverQuery, u identity.Requester) (definitions.GettableApiReceiver, error) {
-			return definitions.GettableApiReceiver{}, ac.ErrAuthorizationBase.Errorf("")
+		fakeReceiverSvc.GetReceiverFn = func(ctx context.Context, q models.GetReceiverQuery, u identity.Requester) (*models.Receiver, error) {
+			return nil, ac.ErrAuthorizationBase.Errorf("")
 		}
 		handler := NewNotificationsApi(newNotificationSrv(fakeReceiverSvc))
 		rc := testReqCtx("GET")
@@ -104,23 +102,19 @@ func TestRouteGetReceivers(t *testing.T) {
 	fakeReceiverSvc := fakes.NewFakeReceiverService()
 
 	t.Run("returns expected model", func(t *testing.T) {
-		expected := []definitions.GettableApiReceiver{
+		expected := []*models.Receiver{
 			{
-				Receiver: am_config.Receiver{
-					Name: "receiver1",
-				},
-				GettableGrafanaReceivers: definitions.GettableGrafanaReceivers{
-					GrafanaManagedReceivers: []*definitions.GettableGrafanaReceiver{
-						{
-							UID:  "uid1",
-							Name: "receiver1",
-							Type: "slack",
-						},
+				Name: "receiver1",
+				Integrations: []*models.Integration{
+					{
+						UID:    "uid1",
+						Name:   "receiver1",
+						Config: models.IntegrationConfig{Type: "slack"},
 					},
 				},
 			},
 		}
-		fakeReceiverSvc.GetReceiversFn = func(ctx context.Context, q models.GetReceiversQuery, u identity.Requester) ([]definitions.GettableApiReceiver, error) {
+		fakeReceiverSvc.ListReceiversFn = func(ctx context.Context, q models.ListReceiversQuery, u identity.Requester) ([]*models.Receiver, error) {
 			return expected, nil
 		}
 		handler := NewNotificationsApi(newNotificationSrv(fakeReceiverSvc))
@@ -128,14 +122,16 @@ func TestRouteGetReceivers(t *testing.T) {
 		rc.Context.Req.Form.Set("names", "receiver1")
 		resp := handler.handleRouteGetReceivers(&rc)
 		require.Equal(t, http.StatusOK, resp.Status())
-		json, err := json.Marshal(expected)
+		gettables, err := GettableApiReceiversFromReceivers(expected)
 		require.NoError(t, err)
-		require.Equal(t, json, resp.Body())
+		jsonBody, err := json.Marshal(gettables)
+		require.NoError(t, err)
+		require.JSONEq(t, string(jsonBody), string(resp.Body()))
 	})
 
 	t.Run("builds query from request context", func(t *testing.T) {
-		fakeReceiverSvc.GetReceiversFn = func(ctx context.Context, q models.GetReceiversQuery, u identity.Requester) ([]definitions.GettableApiReceiver, error) {
-			return []definitions.GettableApiReceiver{}, nil
+		fakeReceiverSvc.ListReceiversFn = func(ctx context.Context, q models.ListReceiversQuery, u identity.Requester) ([]*models.Receiver, error) {
+			return nil, nil
 		}
 		handler := NewNotificationsApi(newNotificationSrv(fakeReceiverSvc))
 		rc := testReqCtx("GET")
@@ -148,19 +144,18 @@ func TestRouteGetReceivers(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.Status())
 
 		call := fakeReceiverSvc.PopMethodCall()
-		require.Equal(t, "GetReceivers", call.Method)
-		expectedQ := models.GetReceiversQuery{
-			Names:   []string{"receiver1", "receiver2"},
-			Limit:   1,
-			Offset:  2,
-			Decrypt: true,
-			OrgID:   1,
+		require.Equal(t, "ListReceivers", call.Method)
+		expectedQ := models.ListReceiversQuery{
+			Names:  []string{"receiver1", "receiver2"},
+			Limit:  1,
+			Offset: 2,
+			OrgID:  1,
 		}
 		require.Equal(t, expectedQ, call.Args[1])
 	})
 
 	t.Run("should pass along permission denied response", func(t *testing.T) {
-		fakeReceiverSvc.GetReceiversFn = func(ctx context.Context, q models.GetReceiversQuery, u identity.Requester) ([]definitions.GettableApiReceiver, error) {
+		fakeReceiverSvc.ListReceiversFn = func(ctx context.Context, q models.ListReceiversQuery, u identity.Requester) ([]*models.Receiver, error) {
 			return nil, ac.ErrAuthorizationBase.Errorf("")
 		}
 		handler := NewNotificationsApi(newNotificationSrv(fakeReceiverSvc))
@@ -197,33 +192,9 @@ func TestRouteGetReceiversResponses(t *testing.T) {
 
 			require.Equal(t, 200, response.Status())
 		})
-		t.Run("decrypt true without alert.provisioning.secrets:read permissions returns 403", func(t *testing.T) {
-			recPermCheck := false
-			env := createTestEnv(t, testConfig)
-			env.ac = &recordingAccessControlFake{
-				Callback: func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
-					if strings.Contains(evaluator.String(), accesscontrol.ActionAlertingReceiversReadSecrets) {
-						recPermCheck = true
-					}
-					return false, nil
-				},
-			}
-
-			sut := createNotificationSrvSutFromEnv(t, &env)
-			rc := createTestRequestCtx()
-
-			rc.Context.Req.Form.Set("decrypt", "true")
-
-			response := sut.RouteGetReceivers(&rc)
-
-			require.True(t, recPermCheck)
-			require.Equal(t, 403, response.Status())
-		})
 
 		t.Run("json body content is as expected", func(t *testing.T) {
-			expectedDecryptedResponse := `[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b","name":"grafana-default-email","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureFields":{}}]},{"name":"multiple integrations","grafana_managed_receiver_configs":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","name":"multiple integrations","type":"prometheus-alertmanager","disableResolveMessage":true,"settings":{"basicAuthPassword":"testpass","basicAuthUser":"test","url":"http://localhost:9093"},"secureFields":{"basicAuthPassword":true}},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","name":"multiple integrations","type":"discord","disableResolveMessage":false,"settings":{"avatar_url":"some avatar","url":"some url","use_discord_username":true},"secureFields":{}}]},{"name":"pagerduty test","grafana_managed_receiver_configs":[{"uid":"b9bf06f8-bde2-4438-9d4a-bba0522dcd4d","name":"pagerduty test","type":"pagerduty","disableResolveMessage":false,"settings":{"client":"some client","integrationKey":"some key","severity":"criticalish"},"secureFields":{"integrationKey":true}}]},{"name":"slack test","grafana_managed_receiver_configs":[{"uid":"cbfd0976-8228-4126-b672-4419f30a9e50","name":"slack test","type":"slack","disableResolveMessage":true,"settings":{"text":"title body test","title":"title test","url":"some secure slack webhook"},"secureFields":{"url":true}}]}]`
-			expectedRedactedResponse := `[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b","name":"grafana-default-email","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureFields":{}}]},{"name":"multiple integrations","grafana_managed_receiver_configs":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","name":"multiple integrations","type":"prometheus-alertmanager","disableResolveMessage":true,"settings":{"basicAuthPassword":"[REDACTED]","basicAuthUser":"test","url":"http://localhost:9093"},"secureFields":{"basicAuthPassword":true}},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","name":"multiple integrations","type":"discord","disableResolveMessage":false,"settings":{"avatar_url":"some avatar","url":"some url","use_discord_username":true},"secureFields":{}}]},{"name":"pagerduty test","grafana_managed_receiver_configs":[{"uid":"b9bf06f8-bde2-4438-9d4a-bba0522dcd4d","name":"pagerduty test","type":"pagerduty","disableResolveMessage":false,"settings":{"client":"some client","integrationKey":"[REDACTED]","severity":"criticalish"},"secureFields":{"integrationKey":true}}]},{"name":"slack test","grafana_managed_receiver_configs":[{"uid":"cbfd0976-8228-4126-b672-4419f30a9e50","name":"slack test","type":"slack","disableResolveMessage":true,"settings":{"text":"title body test","title":"title test","url":"[REDACTED]"},"secureFields":{"url":true}}]}]`
-			expectedListResponse := `[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b","name":"grafana-default-email","type":"email","disableResolveMessage":false,"secureFields":null}]},{"name":"multiple integrations","grafana_managed_receiver_configs":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","name":"multiple integrations","type":"prometheus-alertmanager","disableResolveMessage":false,"secureFields":null},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","name":"multiple integrations","type":"discord","disableResolveMessage":false,"secureFields":null}]},{"name":"pagerduty test","grafana_managed_receiver_configs":[{"uid":"b9bf06f8-bde2-4438-9d4a-bba0522dcd4d","name":"pagerduty test","type":"pagerduty","disableResolveMessage":false,"secureFields":null}]},{"name":"slack test","grafana_managed_receiver_configs":[{"uid":"cbfd0976-8228-4126-b672-4419f30a9e50","name":"slack test","type":"slack","disableResolveMessage":false,"secureFields":null}]}]`
+			expectedListResponse := `[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b","name":"grafana-default-email","type":"email","disableResolveMessage":false,"secureFields":{}}]},{"name":"multiple integrations","grafana_managed_receiver_configs":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","name":"multiple integrations","type":"prometheus-alertmanager","disableResolveMessage":false,"secureFields":{}},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","name":"multiple integrations","type":"discord","disableResolveMessage":false,"secureFields":{}}]},{"name":"pagerduty test","grafana_managed_receiver_configs":[{"uid":"b9bf06f8-bde2-4438-9d4a-bba0522dcd4d","name":"pagerduty test","type":"pagerduty","disableResolveMessage":false,"secureFields":{}}]},{"name":"slack test","grafana_managed_receiver_configs":[{"uid":"cbfd0976-8228-4126-b672-4419f30a9e50","name":"slack test","type":"slack","disableResolveMessage":false,"secureFields":{}}]}]`
 			t.Run("limit offset", func(t *testing.T) {
 				env := createTestEnv(t, testContactPointConfig)
 				sut := createNotificationSrvSutFromEnv(t, &env)
@@ -233,7 +204,7 @@ func TestRouteGetReceiversResponses(t *testing.T) {
 				rc.Context.Req.Form.Set("decrypt", "false")
 
 				var expected []definitions.GettableApiReceiver
-				err := json.Unmarshal([]byte(expectedRedactedResponse), &expected)
+				err := json.Unmarshal([]byte(expectedListResponse), &expected)
 				require.NoError(t, err)
 				type testcase struct {
 					limit    int
@@ -246,7 +217,7 @@ func TestRouteGetReceiversResponses(t *testing.T) {
 					{limit: 4, offset: 0, expected: expected[:4]},
 					{limit: 1, offset: 1, expected: expected[1:2]},
 					{limit: 2, offset: 2, expected: expected[2:4]},
-					{limit: 2, offset: 99, expected: nil},
+					{limit: 2, offset: 99, expected: []definitions.GettableApiReceiver{}},
 					{limit: 0, offset: 0, expected: expected},
 					{limit: 0, offset: 1, expected: expected[1:]},
 				}
@@ -262,11 +233,11 @@ func TestRouteGetReceiversResponses(t *testing.T) {
 						err := json.Unmarshal(response.Body(), &configs)
 						require.NoError(t, err)
 
-						require.Equal(t, configs, tc.expected)
+						require.Equal(t, tc.expected, configs)
 					})
 				}
 			})
-			t.Run("decrypt false with read permissions is redacted", func(t *testing.T) {
+			t.Run("decrypt false with read permissions, does not have settings", func(t *testing.T) {
 				env := createTestEnv(t, testContactPointConfig)
 				sut := createNotificationSrvSutFromEnv(t, &env)
 				rc := createTestRequestCtx()
@@ -277,7 +248,7 @@ func TestRouteGetReceiversResponses(t *testing.T) {
 				response := sut.RouteGetReceivers(&rc)
 
 				require.Equal(t, 200, response.Status())
-				require.Equal(t, expectedRedactedResponse, string(response.Body())) // TODO: Should this endpoint ever return settings?
+				require.Equal(t, expectedListResponse, string(response.Body()))
 			})
 			t.Run("decrypt false with only list permissions, does not have settings", func(t *testing.T) {
 				env := createTestEnv(t, testContactPointConfig)
@@ -300,7 +271,7 @@ func TestRouteGetReceiversResponses(t *testing.T) {
 				require.Equal(t, 200, response.Status())
 				require.Equal(t, expectedListResponse, string(response.Body()))
 			})
-			t.Run("decrypt true with all permissions, contains decrypted settings", func(t *testing.T) {
+			t.Run("decrypt true with all permissions, does not have settings", func(t *testing.T) {
 				env := createTestEnv(t, testContactPointConfig)
 				env.ac = &recordingAccessControlFake{
 					Callback: func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
@@ -316,7 +287,7 @@ func TestRouteGetReceiversResponses(t *testing.T) {
 				response := sut.RouteGetReceivers(&rc)
 
 				require.Equal(t, 200, response.Status())
-				require.Equal(t, expectedDecryptedResponse, string(response.Body())) // TODO: Should this endpoint ever return settings?
+				require.Equal(t, expectedListResponse, string(response.Body()))
 			})
 		})
 	})
@@ -356,8 +327,8 @@ func TestRouteGetReceiversResponses(t *testing.T) {
 		})
 
 		t.Run("json body content is as expected", func(t *testing.T) {
-			expectedRedactedResponse := `{"name":"multiple integrations","grafana_managed_receiver_configs":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","name":"multiple integrations","type":"prometheus-alertmanager","disableResolveMessage":true,"settings":{"basicAuthPassword":"[REDACTED]","basicAuthUser":"test","url":"http://localhost:9093"},"secureFields":{"basicAuthPassword":true}},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","name":"multiple integrations","type":"discord","disableResolveMessage":false,"settings":{"avatar_url":"some avatar","url":"some url","use_discord_username":true},"secureFields":{}}]}`
-			expectedDecryptedResponse := `{"name":"multiple integrations","grafana_managed_receiver_configs":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","name":"multiple integrations","type":"prometheus-alertmanager","disableResolveMessage":true,"settings":{"basicAuthPassword":"testpass","basicAuthUser":"test","url":"http://localhost:9093"},"secureFields":{"basicAuthPassword":true}},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","name":"multiple integrations","type":"discord","disableResolveMessage":false,"settings":{"avatar_url":"some avatar","url":"some url","use_discord_username":true},"secureFields":{}}]}`
+			expectedRedactedResponse := `{"name":"multiple integrations","grafana_managed_receiver_configs":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","name":"multiple integrations","type":"prometheus-alertmanager","disableResolveMessage":true,"settings":{"basicAuthUser":"test","url":"http://localhost:9093"},"secureFields":{"basicAuthPassword":true}},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","name":"multiple integrations","type":"discord","disableResolveMessage":false,"settings":{"avatar_url":"some avatar","use_discord_username":true},"secureFields":{"url":true}}]}`
+			expectedDecryptedResponse := `{"name":"multiple integrations","grafana_managed_receiver_configs":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","name":"multiple integrations","type":"prometheus-alertmanager","disableResolveMessage":true,"settings":{"basicAuthPassword":"testpass","basicAuthUser":"test","url":"http://localhost:9093"},"secureFields":{"basicAuthPassword":true}},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","name":"multiple integrations","type":"discord","disableResolveMessage":false,"settings":{"avatar_url":"some avatar","url":"some url","use_discord_username":true},"secureFields":{"url":true}}]}`
 			t.Run("decrypt false", func(t *testing.T) {
 				env := createTestEnv(t, testContactPointConfig)
 				sut := createNotificationSrvSutFromEnv(t, &env)
@@ -400,9 +371,12 @@ func createNotificationSrvSutFromEnv(t *testing.T, env *testEnvironment) Notific
 		ac.NewReceiverAccess[*models.Receiver](env.ac, false),
 		legacy_storage.NewAlertmanagerConfigStore(env.configs),
 		env.prov,
+		env.store,
 		env.secrets,
 		env.xact,
 		env.log,
+		fakes.NewFakeReceiverPermissionsService(),
+		tracing.InitializeTracerForTest(),
 	)
 	return NotificationSrv{
 		logger:          env.log,

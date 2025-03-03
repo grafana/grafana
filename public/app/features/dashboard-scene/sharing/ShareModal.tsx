@@ -1,16 +1,16 @@
 import { ComponentProps } from 'react';
 
-import { config } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel, SceneObjectRef } from '@grafana/scenes';
+import { config, locationService } from '@grafana/runtime';
+import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
 import { isPublicDashboardsEnabled } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+import { AccessControlAction } from 'app/types';
 
 import { getTrackingSource } from '../../dashboard/components/ShareModal/utils';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDashboardSceneFor } from '../utils/utils';
+import { getDashboardSceneFor, isLibraryPanel } from '../utils/utils';
 
 import { ShareExportTab } from './ShareExportTab';
 import { ShareLibraryPanelTab } from './ShareLibraryPanelTab';
@@ -45,10 +45,10 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
       ...state,
     });
 
-    this.addActivationHandler(() => this.buildTabs());
+    this.addActivationHandler(() => this.buildTabs(state.activeTab));
   }
 
-  private buildTabs() {
+  private buildTabs(activeTab?: string) {
     const { panelRef } = this.state;
     const modalRef = this.getRef();
 
@@ -59,16 +59,19 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
       tabs.push(new ShareExportTab({ modalRef }));
     }
 
-    if (contextSrv.isSignedIn && config.snapshotEnabled && dashboard.canEditDashboard()) {
+    if (
+      contextSrv.isSignedIn &&
+      config.snapshotEnabled &&
+      contextSrv.hasPermission(AccessControlAction.SnapshotsCreate)
+    ) {
       tabs.push(new ShareSnapshotTab({ panelRef, dashboardRef: dashboard.getRef(), modalRef }));
     }
 
     if (panelRef) {
       tabs.push(new SharePanelEmbedTab({ panelRef }));
       const panel = panelRef.resolve();
-      const isLibraryPanel = panel.parent instanceof LibraryVizPanel;
       if (panel instanceof VizPanel) {
-        if (!isLibraryPanel) {
+        if (!isLibraryPanel(panel)) {
           tabs.push(new ShareLibraryPanelTab({ panelRef, modalRef }));
         }
       }
@@ -82,12 +85,18 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
       }
     }
 
-    this.setState({ tabs });
+    const at = tabs.find((t) => t.tabId === activeTab);
+
+    this.setState({ activeTab: at?.tabId ?? tabs[0].tabId, tabs });
   }
 
   onDismiss = () => {
-    const dashboard = getDashboardSceneFor(this);
-    dashboard.closeModal();
+    if (this.state.panelRef) {
+      const dashboard = getDashboardSceneFor(this);
+      dashboard.closeModal();
+    } else {
+      locationService.partial({ shareView: null });
+    }
   };
 
   onChangeTab: ComponentProps<typeof ModalTabsHeader>['onChangeTab'] = (tab) => {

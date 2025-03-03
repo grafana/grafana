@@ -2,13 +2,15 @@ import { css } from '@emotion/css';
 import { groupBy, size, upperFirst } from 'lodash';
 import { Fragment, ReactNode } from 'react';
 
-import { dateTime, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, dateTime } from '@grafana/data';
 import { Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { PrimaryText } from 'app/features/alerting/unified/components/common/TextVariants';
 import { ContactPointHeader } from 'app/features/alerting/unified/components/contact-points/ContactPointHeader';
+import { useDeleteContactPointModal } from 'app/features/alerting/unified/components/contact-points/components/Modals';
+import { useDeleteContactPoint } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
+import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
-import { GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
 
 import { INTEGRATION_ICONS } from '../../types/contact-points';
@@ -17,26 +19,18 @@ import { ReceiverMetadataBadge } from '../receivers/grafanaAppReceivers/Receiver
 import { ReceiverPluginMetadata } from '../receivers/grafanaAppReceivers/useReceiversMetadata';
 
 import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY, RECEIVER_STATUS_KEY } from './constants';
-import { getReceiverDescription, ReceiverConfigWithMetadata, RouteReference } from './utils';
+import { ContactPointWithMetadata, ReceiverConfigWithMetadata, getReceiverDescription } from './utils';
 
 interface ContactPointProps {
-  name: string;
-  disabled?: boolean;
-  provisioned?: boolean;
-  receivers: ReceiverConfigWithMetadata[];
-  policies?: RouteReference[];
-  onDelete: (name: string) => void;
+  contactPoint: ContactPointWithMetadata;
 }
 
-export const ContactPoint = ({
-  name,
-  disabled = false,
-  provisioned = false,
-  receivers,
-  policies = [],
-  onDelete,
-}: ContactPointProps) => {
+export const ContactPoint = ({ contactPoint }: ContactPointProps) => {
+  const { grafana_managed_receiver_configs: receivers } = contactPoint;
   const styles = useStyles2(getStyles);
+  const { selectedAlertmanager } = useAlertmanager();
+  const [deleteTrigger] = useDeleteContactPoint({ alertmanager: selectedAlertmanager! });
+  const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(deleteTrigger.execute);
 
   // TODO probably not the best way to figure out if we want to show either only the summary or full metadata for the receivers?
   const showFullMetadata = receivers.some((receiver) => Boolean(receiver[RECEIVER_META_KEY]));
@@ -45,12 +39,15 @@ export const ContactPoint = ({
     <div className={styles.contactPointWrapper} data-testid="contact-point">
       <Stack direction="column" gap={0}>
         <ContactPointHeader
-          name={name}
-          policies={policies}
-          provisioned={provisioned}
-          disabled={disabled}
-          onDelete={onDelete}
+          contactPoint={contactPoint}
+          onDelete={(contactPointToDelete) =>
+            showDeleteModal({
+              name: contactPointToDelete.id || contactPointToDelete.name,
+              resourceVersion: contactPointToDelete.metadata?.resourceVersion,
+            })
+          }
         />
+
         {showFullMetadata ? (
           <div>
             {receivers.map((receiver, index) => {
@@ -79,6 +76,7 @@ export const ContactPoint = ({
           </div>
         )}
       </Stack>
+      {DeleteModal}
     </div>
   );
 };
@@ -152,37 +150,61 @@ interface ContactPointReceiverMetadata {
 }
 
 type ContactPointReceiverSummaryProps = {
-  receivers: GrafanaManagedReceiverConfig[];
+  receivers: ReceiverConfigWithMetadata[];
+  limit?: number;
 };
 
 /**
  * This summary is used when we're dealing with non-Grafana managed alertmanager since they
  * don't have any metadata worth showing other than a summary of what types are configured for the contact point
  */
-export const ContactPointReceiverSummary = ({ receivers }: ContactPointReceiverSummaryProps) => {
+export const ContactPointReceiverSummary = ({ receivers, limit }: ContactPointReceiverSummaryProps) => {
+  // limit for how many integrations are rendered
+  const INTEGRATIONS_LIMIT = limit ?? Number.MAX_VALUE;
   const countByType = groupBy(receivers, (receiver) => receiver.type);
+
+  const numberOfUniqueIntegrations = size(countByType);
+  const integrationsShown = Object.entries(countByType).slice(0, INTEGRATIONS_LIMIT);
+  const numberOfIntegrationsNotShown = numberOfUniqueIntegrations - INTEGRATIONS_LIMIT;
 
   return (
     <Stack direction="column" gap={0}>
       <Stack direction="row" alignItems="center" gap={1}>
-        {Object.entries(countByType).map(([type, receivers], index) => {
+        {integrationsShown.length === 0 && (
+          <MetaText color="warning" icon="exclamation-triangle">
+            <Trans i18nKey="alerting.contact-points.no-integrations">No integrations configured</Trans>
+          </MetaText>
+        )}
+        {integrationsShown.map(([type, receivers], index) => {
           const iconName = INTEGRATION_ICONS[type];
           const receiverName = receiverTypeNames[type] ?? upperFirst(type);
           const isLastItem = size(countByType) - 1 === index;
+          // Pick the first integration of the grouped receivers, since they should all be the same type
+          // e.g. if we have multiple Oncall, they _should_ all have the same plugin metadata,
+          // so we can just use the first one for additional display purposes
+          const receiver = receivers[0];
 
           return (
             <Fragment key={type}>
               <Stack direction="row" alignItems="center" gap={0.5}>
+                {receiver[RECEIVER_PLUGIN_META_KEY]?.icon && (
+                  <img
+                    width="14px"
+                    src={receiver[RECEIVER_PLUGIN_META_KEY]?.icon}
+                    alt={receiver[RECEIVER_PLUGIN_META_KEY]?.title}
+                  />
+                )}
                 {iconName && <Icon name={iconName} />}
-                <Text variant="body">
+                <span>
                   {receiverName}
-                  {receivers.length > 1 && receivers.length}
-                </Text>
+                  {receivers.length > 1 && ` (${receivers.length})`}
+                </span>
               </Stack>
               {!isLastItem && '⋅'}
             </Fragment>
           );
         })}
+        {numberOfIntegrationsNotShown > 0 && <span>{`+${numberOfIntegrationsNotShown} more`}</span>}
       </Stack>
     </Stack>
   );
@@ -268,5 +290,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   metadataRow: css({
     borderBottomLeftRadius: `${theme.shape.radius.default}`,
     borderBottomRightRadius: `${theme.shape.radius.default}`,
+  }),
+  noIntegrationsContainer: css({
+    paddingTop: `${theme.spacing(1.5)}`,
+    paddingLeft: `${theme.spacing(1.5)}`,
   }),
 });

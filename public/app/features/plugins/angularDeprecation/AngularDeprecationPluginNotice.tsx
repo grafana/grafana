@@ -7,14 +7,12 @@ import { Alert } from '@grafana/ui';
 
 type Props = {
   className?: string;
-
   pluginId?: string;
   pluginType?: PluginType;
-
   angularSupportEnabled?: boolean;
   showPluginDetailsLink?: boolean;
-
   interactionElementId?: string;
+  children?: React.ReactNode;
 };
 
 function deprecationMessage(pluginType?: string, angularSupportEnabled?: boolean): string {
@@ -45,7 +43,15 @@ function deprecationMessage(pluginType?: string, angularSupportEnabled?: boolean
 // An Alert showing information about Angular deprecation notice.
 // If the plugin does not use Angular (!plugin.angularDetected), it returns null.
 export function AngularDeprecationPluginNotice(props: Props): React.ReactElement | null {
-  const { className, angularSupportEnabled, pluginId, pluginType, showPluginDetailsLink, interactionElementId } = props;
+  const {
+    className,
+    angularSupportEnabled,
+    pluginId,
+    pluginType,
+    showPluginDetailsLink,
+    interactionElementId,
+    children,
+  } = props;
   const [dismissed, setDismissed] = useState(false);
 
   const interactionAttributes: Record<string, string> = {};
@@ -88,6 +94,12 @@ export function AngularDeprecationPluginNotice(props: Props): React.ReactElement
           ) : null}
         </ul>
       </div>
+      {children && (
+        <>
+          <hr />
+          {children}
+        </>
+      )}
     </Alert>
   );
 }

@@ -6,9 +6,14 @@
       LDAP_DOMAIN: grafana.org
       LDAP_ADMIN_PASSWORD: grafana
       LDAP_SEED_INTERNAL_LDIF_PATH: /tmp/smt/
+      LDAP_TLS_CRT_FILENAME: ldap.crt
+      LDAP_TLS_KEY_FILENAME: ldap.key
+      LDAP_TLS_CA_CRT_FILENAME: ca.crt
+      LDAP_TLS_CIPHER_SUITE: SECURE256:+SECURE128:-VERS-TLS-ALL:+VERS-TLS1.2:-RSA:-DHE-DSS:-CAMELLIA-128-CBC:-CAMELLIA-256-CBC
     ports:
       - 389:389
       - 636:636
     restart: unless-stopped
     volumes:
       - ./docker/blocks/auth/openldap/prepopulate/:/tmp/smt/
+      - ./docker/blocks/auth/openldap/certs/:/container/service/slapd/assets/certs/

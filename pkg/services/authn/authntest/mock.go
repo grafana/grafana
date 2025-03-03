@@ -3,13 +3,16 @@ package authntest
 import (
 	"context"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/authn"
 )
 
-var _ authn.Service = new(MockService)
-var _ authn.IdentitySynchronizer = new(MockService)
+var (
+	_ authn.Service              = new(MockService)
+	_ authn.IdentitySynchronizer = new(MockService)
+)
 
 type MockService struct {
 	SyncIdentityFunc         func(ctx context.Context, identity *authn.Identity) error
@@ -21,6 +24,10 @@ func (m *MockService) Authenticate(ctx context.Context, r *authn.Request) (*auth
 }
 
 func (m *MockService) IsClientEnabled(name string) bool {
+	panic("unimplemented")
+}
+
+func (m *MockService) GetClientConfig(name string) (authn.SSOClientConfig, bool) {
 	panic("unimplemented")
 }
 
@@ -54,7 +61,7 @@ func (*MockService) Logout(_ context.Context, _ identity.Requester, _ *usertoken
 	panic("unimplemented")
 }
 
-func (m *MockService) ResolveIdentity(ctx context.Context, orgID int64, namespaceID identity.TypedID) (*authn.Identity, error) {
+func (m *MockService) ResolveIdentity(ctx context.Context, orgID int64, typedID string) (*authn.Identity, error) {
 	panic("unimplemented")
 }
 
@@ -65,10 +72,12 @@ func (m *MockService) SyncIdentity(ctx context.Context, identity *authn.Identity
 	return nil
 }
 
-var _ authn.HookClient = new(MockClient)
-var _ authn.LogoutClient = new(MockClient)
-var _ authn.ContextAwareClient = new(MockClient)
-var _ authn.IdentityResolverClient = new(MockClient)
+var (
+	_ authn.HookClient             = new(MockClient)
+	_ authn.LogoutClient           = new(MockClient)
+	_ authn.ContextAwareClient     = new(MockClient)
+	_ authn.IdentityResolverClient = new(MockClient)
+)
 
 type MockClient struct {
 	NameFunc            func() string
@@ -76,9 +85,9 @@ type MockClient struct {
 	TestFunc            func(ctx context.Context, r *authn.Request) bool
 	PriorityFunc        func() uint
 	HookFunc            func(ctx context.Context, identity *authn.Identity, r *authn.Request) error
-	LogoutFunc          func(ctx context.Context, user identity.Requester) (*authn.Redirect, bool)
-	IdentityTypeFunc    func() identity.IdentityType
-	ResolveIdentityFunc func(ctx context.Context, orgID int64, namespaceID identity.TypedID) (*authn.Identity, error)
+	LogoutFunc          func(ctx context.Context, user identity.Requester, sessionToken *usertoken.UserToken) (*authn.Redirect, bool)
+	IdentityTypeFunc    func() claims.IdentityType
+	ResolveIdentityFunc func(ctx context.Context, orgID int64, typ claims.IdentityType, id string) (*authn.Identity, error)
 }
 
 func (m MockClient) Name() string {
@@ -97,6 +106,10 @@ func (m MockClient) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 
 func (m MockClient) IsEnabled() bool {
 	return true
+}
+
+func (m MockClient) GetConfig() authn.SSOClientConfig {
+	return nil
 }
 
 func (m MockClient) Test(ctx context.Context, r *authn.Request) bool {
@@ -120,24 +133,24 @@ func (m MockClient) Hook(ctx context.Context, identity *authn.Identity, r *authn
 	return nil
 }
 
-func (m *MockClient) Logout(ctx context.Context, user identity.Requester) (*authn.Redirect, bool) {
+func (m *MockClient) Logout(ctx context.Context, user identity.Requester, sessionToken *usertoken.UserToken) (*authn.Redirect, bool) {
 	if m.LogoutFunc != nil {
-		return m.LogoutFunc(ctx, user)
+		return m.LogoutFunc(ctx, user, sessionToken)
 	}
 	return nil, false
 }
 
-func (m *MockClient) IdentityType() identity.IdentityType {
+func (m *MockClient) IdentityType() claims.IdentityType {
 	if m.IdentityTypeFunc != nil {
 		return m.IdentityTypeFunc()
 	}
-	return identity.TypeEmpty
+	return claims.TypeEmpty
 }
 
 // ResolveIdentity implements authn.IdentityResolverClient.
-func (m *MockClient) ResolveIdentity(ctx context.Context, orgID int64, namespaceID identity.TypedID) (*authn.Identity, error) {
+func (m *MockClient) ResolveIdentity(ctx context.Context, orgID int64, typ claims.IdentityType, id string) (*authn.Identity, error) {
 	if m.ResolveIdentityFunc != nil {
-		return m.ResolveIdentityFunc(ctx, orgID, namespaceID)
+		return m.ResolveIdentityFunc(ctx, orgID, typ, id)
 	}
 	return nil, nil
 }

@@ -23,7 +23,6 @@ type ResultConverter struct {
 func (c *ResultConverter) Convert(ctx context.Context,
 	datasourceType string,
 	frames data.Frames,
-	allowLongFrames bool,
 ) (string, mathexp.Results, error) {
 	if len(frames) == 0 {
 		return "no-data", mathexp.Results{Values: mathexp.Values{mathexp.NewNoData()}}, nil
@@ -80,7 +79,7 @@ func (c *ResultConverter) Convert(ctx context.Context,
 			continue
 		}
 
-		if schema.Type != data.TimeSeriesTypeWide && !allowLongFrames {
+		if schema.Type != data.TimeSeriesTypeWide {
 			return "", mathexp.Results{}, fmt.Errorf("%w but got type %s (input refid)", ErrSeriesMustBeWide, schema.Type)
 		}
 		filtered = append(filtered, frame)
@@ -299,7 +298,7 @@ func WideToMany(frame *data.Frame, fixSeries func(series mathexp.Series, valueFi
 // NOTE: applicable only to some datas ources (datasources.DS_GRAPHITE, datasources.DS_TESTDATA, etc.); a more general solution should be investigated
 // returns a function that patches the mathexp.Series with information from data.Field from which it was created if the all series need to be fixed. Otherwise, returns nil
 func checkIfSeriesNeedToBeFixed(frames []*data.Frame, datasourceType string) func(series mathexp.Series, valueField *data.Field) {
-	supportedDatasources := []string{datasources.DS_GRAPHITE, datasources.DS_TESTDATA, datasources.DS_DYNATRACE}
+	supportedDatasources := []string{datasources.DS_GRAPHITE, datasources.DS_TESTDATA, datasources.DS_DYNATRACE, datasources.DS_INFLUXDB}
 	checkdatasourceType := func(ds string) bool {
 		return datasourceType == ds
 	}

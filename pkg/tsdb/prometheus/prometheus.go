@@ -53,8 +53,8 @@ func (s *Service) ValidateAdmission(ctx context.Context, req *backend.AdmissionR
 func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
 	return s.lib.MutateAdmission(ctx, req)
 }
-func (s *Service) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	return s.lib.ConvertObject(ctx, req)
+func (s *Service) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	return s.lib.ConvertObjects(ctx, req)
 }
 
 func extendClientOpts(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options, plog log.Logger) error {

@@ -114,7 +114,7 @@ func ValidationFailed(msgID string, opts ...BaseOpt) Base {
 // msgID should be structured as component.errorBrief, for example
 //
 //	sqleng.connectionError
-//	plugin.downstreamError
+//	plugin.requestFailureError
 func Internal(msgID string, opts ...BaseOpt) Base {
 	return NewBase(StatusInternal, msgID, opts...)
 }
@@ -391,11 +391,12 @@ func (e Error) Status() metav1.Status {
 		for k, v := range public.Extra {
 			v, err := json.Marshal(v)
 			if err != nil {
-				s.Details.Causes = append(s.Details.Causes, metav1.StatusCause{
-					Field:   k,
-					Message: string(v),
-				})
+				continue
 			}
+			s.Details.Causes = append(s.Details.Causes, metav1.StatusCause{
+				Field:   k,
+				Message: string(v),
+			})
 		}
 	}
 	return s

@@ -1,6 +1,7 @@
 package sqltemplate
 
 import (
+	"bytes"
 	"errors"
 	"strconv"
 	"strings"
@@ -9,6 +10,7 @@ import (
 // Dialect-agnostic errors.
 var (
 	ErrEmptyIdent              = errors.New("empty identifier")
+	ErrInvalidIdentInput       = errors.New("identifier contains invalid characters")
 	ErrInvalidRowLockingClause = errors.New("invalid row-locking clause")
 )
 
@@ -40,7 +42,8 @@ type Dialect interface {
 
 	// Ident returns the given string quoted in a way that is suitable to be
 	// used as an identifier. Database names, schema names, table names, column
-	// names are all examples of identifiers.
+	// names are all examples of identifiers.  When the value includes a "."
+	// each part side of the separator will be escaped: (eg: `db`.`table`)
 	Ident(string) (string, error)
 
 	// ArgPlaceholder returns a safe argument suitable to be used in a SQL
@@ -59,6 +62,9 @@ type Dialect interface {
 	//		WHERE id = ?
 	//		{{ .SelectFor "Update NoWait" }}; -- will be uppercased
 	SelectFor(...string) (string, error)
+
+	// CurrentEpoch returns the current epoch value for the database in microseconds.
+	CurrentEpoch() string
 }
 
 // RowLockingClause represents a row-locking clause in a SELECT statement.
@@ -126,11 +132,34 @@ var rowLockingClauseAll = rowLockingClauseMap{
 // standardIdent provides standard SQL escaping of identifiers.
 type standardIdent struct{}
 
-func (standardIdent) Ident(s string) (string, error) {
+func escapeIdentity(s string, quote rune, clean func(string) string) (string, error) {
 	if s == "" {
 		return "", ErrEmptyIdent
 	}
-	return `"` + strings.ReplaceAll(s, `"`, `""`) + `"`, nil
+	var buffer bytes.Buffer
+	for i, part := range strings.Split(s, ".") {
+		// We may want to check that the identifier is simple alphanumeric
+		// var alphanumeric = regexp.MustCompile("^[a-zA-Z0-9_]*$")
+
+		if i > 1 {
+			return "", ErrInvalidIdentInput
+		}
+		if i > 0 {
+			_, _ = buffer.WriteRune('.')
+		}
+		_, _ = buffer.WriteRune(quote)
+		_, _ = buffer.WriteString(clean(part))
+		_, _ = buffer.WriteRune(quote)
+	}
+	return buffer.String(), nil
+}
+
+func (standardIdent) Ident(s string) (string, error) {
+	return escapeIdentity(s, '"', func(s string) string {
+		// not sure we should support escaping quotes in table/column names,
+		// but it is valid so we will support it for now
+		return strings.ReplaceAll(s, `"`, `""`)
+	})
 }
 
 type argPlaceholderFunc func(int) string

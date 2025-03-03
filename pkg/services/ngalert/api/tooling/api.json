@@ -163,6 +163,17 @@
    ],
    "type": "object"
   },
+  "AlertRuleEditorSettings": {
+   "properties": {
+    "simplified_notifications_section": {
+     "type": "boolean"
+    },
+    "simplified_query_and_expressions_section": {
+     "type": "boolean"
+    }
+   },
+   "type": "object"
+  },
   "AlertRuleExport": {
    "properties": {
     "annotations": {
@@ -282,6 +293,14 @@
     "interval": {
      "format": "int64",
      "type": "integer"
+    }
+   },
+   "type": "object"
+  },
+  "AlertRuleMetadata": {
+   "properties": {
+    "editor_settings": {
+     "$ref": "#/definitions/AlertRuleEditorSettings"
     }
    },
    "type": "object"
@@ -440,6 +459,9 @@
      "format": "double",
      "type": "number"
     },
+    "folderUid": {
+     "type": "string"
+    },
     "health": {
      "type": "string"
     },
@@ -479,10 +501,15 @@
     },
     "type": {
      "type": "string"
+    },
+    "uid": {
+     "type": "string"
     }
    },
    "required": [
+    "uid",
     "name",
+    "folderUid",
     "query",
     "health",
     "type",
@@ -707,6 +734,20 @@
    },
    "type": "array"
   },
+  "ConvertPrometheusResponse": {
+   "properties": {
+    "error": {
+     "type": "string"
+    },
+    "errorType": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "CounterResetHint": {
    "description": "or alternatively that we are dealing with a gauge histogram, where counter resets do not apply.",
    "format": "uint8",
@@ -739,7 +780,7 @@
      "type": "string"
     },
     "ErrorSource": {
-     "$ref": "#/definitions/ErrorSource"
+     "$ref": "#/definitions/Source"
     },
     "Frames": {
      "$ref": "#/definitions/Frames"
@@ -879,23 +920,23 @@
     "type": {
      "enum": [
       "alertmanager",
-      " dingding",
-      " discord",
-      " email",
-      " googlechat",
-      " kafka",
-      " line",
-      " opsgenie",
-      " pagerduty",
-      " pushover",
-      " sensugo",
-      " slack",
-      " teams",
-      " telegram",
-      " threema",
-      " victorops",
-      " webhook",
-      " wecom"
+      "dingding",
+      "discord",
+      "email",
+      "googlechat",
+      "kafka",
+      "line",
+      "opsgenie",
+      "pagerduty",
+      "pushover",
+      "sensugo",
+      "slack",
+      "teams",
+      "telegram",
+      "threema",
+      "victorops",
+      "webhook",
+      "wecom"
      ],
      "example": "webhook",
      "type": "string"
@@ -948,10 +989,6 @@
     }
    },
    "type": "object"
-  },
-  "ErrorSource": {
-   "description": "ErrorSource type defines the source of the error",
-   "type": "string"
   },
   "ErrorType": {
    "title": "ErrorType models the different API error types.",
@@ -1151,6 +1188,14 @@
     "CounterResetHint": {
      "$ref": "#/definitions/CounterResetHint"
     },
+    "CustomValues": {
+     "description": "Holds the custom (usually upper) bounds for bucket definitions, otherwise nil.\nThis slice is interned, to be treated as immutable and copied by reference.\nThese numbers should be strictly increasing. This field is only used when the\nschema is for custom buckets, and the ZeroThreshold, ZeroCount, NegativeSpans\nand NegativeBuckets fields are not used in that case.",
+     "items": {
+      "format": "double",
+      "type": "number"
+     },
+     "type": "array"
+    },
     "PositiveBuckets": {
      "description": "Observation counts in buckets. Each represents an absolute count and\nmust be zero or positive.",
      "items": {
@@ -1167,7 +1212,7 @@
      "type": "array"
     },
     "Schema": {
-     "description": "Currently valid schema numbers are -4 \u003c= n \u003c= 8.  They are all for\nbase-2 bucket schemas, where 1 is a bucket boundary in each case, and\nthen each power of two is divided into 2^n logarithmic buckets.  Or\nin other words, each bucket boundary is the previous boundary times\n2^(2^-n).",
+     "description": "Currently valid schema numbers are -4 \u003c= n \u003c= 8 for exponential buckets.\nThey are all for base-2 bucket schemas, where 1 is a bucket boundary in\neach case, and then each power of two is divided into 2^n logarithmic buckets.\nOr in other words, each bucket boundary is the previous boundary times\n2^(2^-n). Another valid schema number is -53 for custom buckets, defined by\nthe CustomValues field.",
      "format": "int32",
      "type": "integer"
     },
@@ -1314,14 +1359,6 @@
    },
    "title": "Frames is a slice of Frame pointers.",
    "type": "array"
-  },
-  "GenericPublicError": {
-   "properties": {
-    "body": {
-     "$ref": "#/definitions/PublicError"
-    }
-   },
-   "type": "object"
   },
   "GettableAlertmanagers": {
    "properties": {
@@ -1570,16 +1607,15 @@
      ],
      "type": "string"
     },
-    "id": {
-     "format": "int64",
-     "type": "integer"
-    },
     "intervalSeconds": {
      "format": "int64",
      "type": "integer"
     },
     "is_paused": {
      "type": "boolean"
+    },
+    "metadata": {
+     "$ref": "#/definitions/AlertRuleMetadata"
     },
     "namespace_uid": {
      "type": "string"
@@ -1594,10 +1630,6 @@
     },
     "notification_settings": {
      "$ref": "#/definitions/AlertRuleNotificationSettings"
-    },
-    "orgId": {
-     "format": "int64",
-     "type": "integer"
     },
     "provenance": {
      "$ref": "#/definitions/Provenance"
@@ -1617,6 +1649,9 @@
     "updated": {
      "format": "date-time",
      "type": "string"
+    },
+    "updated_by": {
+     "$ref": "#/definitions/UserInfo"
     },
     "version": {
      "format": "int64",
@@ -1668,10 +1703,23 @@
   },
   "GettableRuleGroupConfig": {
    "properties": {
+    "align_evaluation_time_on_interval": {
+     "type": "boolean"
+    },
+    "evaluation_delay": {
+     "type": "string"
+    },
     "interval": {
      "$ref": "#/definitions/Duration"
     },
+    "limit": {
+     "format": "int64",
+     "type": "integer"
+    },
     "name": {
+     "type": "string"
+    },
+    "query_offset": {
      "type": "string"
     },
     "rules": {
@@ -1688,6 +1736,12 @@
     }
    },
    "type": "object"
+  },
+  "GettableRuleVersions": {
+   "items": {
+    "$ref": "#/definitions/GettableExtendedRuleNode"
+   },
+   "type": "array"
   },
   "GettableStatus": {
    "properties": {
@@ -1906,7 +1960,7 @@
      "type": "array"
     }
    },
-   "title": "Headers represents the configuration for HTTP headers.",
+   "title": "Header represents the configuration for a single HTTP header.",
    "type": "object"
   },
   "Headers": {
@@ -2264,6 +2318,9 @@
     },
     "template": {
      "type": "string"
+    },
+    "version": {
+     "type": "string"
     }
    },
    "type": "object"
@@ -2271,6 +2328,9 @@
   "NotificationTemplateContent": {
    "properties": {
     "template": {
+     "type": "string"
+    },
+    "version": {
      "type": "string"
     }
    },
@@ -2788,6 +2848,9 @@
     "is_paused": {
      "type": "boolean"
     },
+    "metadata": {
+     "$ref": "#/definitions/AlertRuleMetadata"
+    },
     "no_data_state": {
      "enum": [
       "Alerting",
@@ -2826,15 +2889,34 @@
   },
   "PostableRuleGroupConfig": {
    "properties": {
+    "align_evaluation_time_on_interval": {
+     "type": "boolean"
+    },
+    "evaluation_delay": {
+     "type": "string"
+    },
     "interval": {
      "$ref": "#/definitions/Duration"
     },
+    "limit": {
+     "format": "int64",
+     "type": "integer"
+    },
     "name": {
+     "type": "string"
+    },
+    "query_offset": {
      "type": "string"
     },
     "rules": {
      "items": {
       "$ref": "#/definitions/PostableExtendedRuleNode"
+     },
+     "type": "array"
+    },
+    "source_tenants": {
+     "items": {
+      "type": "string"
      },
      "type": "array"
     }
@@ -2868,6 +2950,70 @@
       "type": "string"
      },
      "type": "object"
+    }
+   },
+   "type": "object"
+  },
+  "PrometheusNamespace": {
+   "properties": {
+    "Body": {
+     "additionalProperties": {
+      "items": {
+       "$ref": "#/definitions/PrometheusRuleGroup"
+      },
+      "type": "array"
+     },
+     "description": "in: body",
+     "type": "object"
+    }
+   },
+   "type": "object"
+  },
+  "PrometheusRule": {
+   "properties": {
+    "Alert": {
+     "type": "string"
+    },
+    "Annotations": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "Expr": {
+     "type": "string"
+    },
+    "For": {
+     "type": "string"
+    },
+    "KeepFiringFor": {
+     "type": "string"
+    },
+    "Labels": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "Record": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "PrometheusRuleGroup": {
+   "properties": {
+    "Interval": {
+     "$ref": "#/definitions/Duration"
+    },
+    "Name": {
+     "type": "string"
+    },
+    "Rules": {
+     "items": {
+      "$ref": "#/definitions/PrometheusRule"
+     },
+     "type": "array"
     }
    },
    "type": "object"
@@ -2954,7 +3100,8 @@
      "type": "string"
     },
     "for": {
-     "$ref": "#/definitions/Duration"
+     "format": "duration",
+     "type": "string"
     },
     "id": {
      "format": "int64",
@@ -3397,6 +3544,12 @@
   "Route": {
    "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
    "properties": {
+    "active_time_intervals": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
     "continue": {
      "type": "boolean"
     },
@@ -3514,6 +3667,9 @@
      "format": "double",
      "type": "number"
     },
+    "folderUid": {
+     "type": "string"
+    },
     "health": {
      "type": "string"
     },
@@ -3535,10 +3691,15 @@
     },
     "type": {
      "type": "string"
+    },
+    "uid": {
+     "type": "string"
     }
    },
    "required": [
+    "uid",
     "name",
+    "folderUid",
     "query",
     "health",
     "type"
@@ -3547,6 +3708,9 @@
   },
   "RuleDiscovery": {
    "properties": {
+    "groupNextToken": {
+     "type": "string"
+    },
     "groups": {
      "items": {
       "$ref": "#/definitions/RuleGroup"
@@ -3573,6 +3737,9 @@
      "type": "number"
     },
     "file": {
+     "type": "string"
+    },
+    "folderUid": {
      "type": "string"
     },
     "interval": {
@@ -3604,6 +3771,7 @@
    "required": [
     "name",
     "file",
+    "folderUid",
     "rules",
     "interval"
    ],
@@ -3611,10 +3779,23 @@
   },
   "RuleGroupConfigResponse": {
    "properties": {
+    "align_evaluation_time_on_interval": {
+     "type": "boolean"
+    },
+    "evaluation_delay": {
+     "type": "string"
+    },
     "interval": {
      "$ref": "#/definitions/Duration"
     },
+    "limit": {
+     "format": "int64",
+     "type": "integer"
+    },
     "name": {
+     "type": "string"
+    },
+    "query_offset": {
      "type": "string"
     },
     "rules": {
@@ -3693,6 +3874,10 @@
   "Sample": {
    "description": "Sample is a single sample belonging to a metric. It represents either a float\nsample or a histogram sample. If H is nil, it is a float sample. Otherwise,\nit is a histogram sample.",
    "properties": {
+    "DropName": {
+     "description": "DropName is used to indicate whether the __name__ label should be dropped\nas part of the query evaluation.",
+     "type": "boolean"
+    },
     "F": {
      "format": "double",
      "type": "number"
@@ -3902,6 +4087,10 @@
   },
   "SmtpNotEnabled": {
    "$ref": "#/definitions/ResponseDetails"
+  },
+  "Source": {
+   "title": "Source type defines the status source.",
+   "type": "string"
   },
   "Span": {
    "properties": {
@@ -4368,13 +4557,25 @@
    },
    "type": "object"
   },
+  "UserInfo": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "uid": {
+     "type": "string"
+    }
+   },
+   "title": "UserInfo represents user-related information, including a unique identifier and a name.",
+   "type": "object"
+  },
   "Userinfo": {
    "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a [URL]. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
    "type": "object"
   },
   "ValidationError": {
    "properties": {
-    "msg": {
+    "message": {
      "example": "error message",
      "type": "string"
     }
@@ -4855,7 +5056,6 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence",
     "type": "object"
@@ -5906,9 +6106,9 @@
       "description": " The mute timing was deleted successfully."
      },
      "409": {
-      "description": "GenericPublicError",
+      "description": "PublicError",
       "schema": {
-       "$ref": "#/definitions/GenericPublicError"
+       "$ref": "#/definitions/PublicError"
       }
      }
     },
@@ -5984,9 +6184,9 @@
       }
      },
      "409": {
-      "description": "GenericPublicError",
+      "description": "PublicError",
       "schema": {
-       "$ref": "#/definitions/GenericPublicError"
+       "$ref": "#/definitions/PublicError"
       }
      }
     },
@@ -6167,12 +6367,9 @@
       "schema": {
        "$ref": "#/definitions/NotificationTemplates"
       }
-     },
-     "404": {
-      "description": " Not found."
      }
     },
-    "summary": "Get all notification templates.",
+    "summary": "Get all notification template groups.",
     "tags": [
      "provisioning"
     ]
@@ -6183,19 +6380,31 @@
     "operationId": "RouteDeleteTemplate",
     "parameters": [
      {
-      "description": "Template Name",
+      "description": "Template group name",
       "in": "path",
       "name": "name",
       "required": true,
+      "type": "string"
+     },
+     {
+      "description": "Version of template to use for optimistic concurrency. Leave empty to disable validation",
+      "in": "query",
+      "name": "version",
       "type": "string"
      }
     ],
     "responses": {
      "204": {
       "description": " The template was deleted successfully."
+     },
+     "409": {
+      "description": "PublicError",
+      "schema": {
+       "$ref": "#/definitions/PublicError"
+      }
      }
     },
-    "summary": "Delete a template.",
+    "summary": "Delete a notification template group.",
     "tags": [
      "provisioning"
     ]
@@ -6204,7 +6413,7 @@
     "operationId": "RouteGetTemplate",
     "parameters": [
      {
-      "description": "Template Name",
+      "description": "Template group name",
       "in": "path",
       "name": "name",
       "required": true,
@@ -6219,10 +6428,13 @@
       }
      },
      "404": {
-      "description": " Not found."
+      "description": "PublicError",
+      "schema": {
+       "$ref": "#/definitions/PublicError"
+      }
      }
     },
-    "summary": "Get a notification template.",
+    "summary": "Get a notification template group.",
     "tags": [
      "provisioning"
     ]
@@ -6234,7 +6446,7 @@
     "operationId": "RoutePutTemplate",
     "parameters": [
      {
-      "description": "Template Name",
+      "description": "Template group name",
       "in": "path",
       "name": "name",
       "required": true,
@@ -6261,13 +6473,19 @@
       }
      },
      "400": {
-      "description": "ValidationError",
+      "description": "PublicError",
       "schema": {
-       "$ref": "#/definitions/ValidationError"
+       "$ref": "#/definitions/PublicError"
+      }
+     },
+     "409": {
+      "description": "PublicError",
+      "schema": {
+       "$ref": "#/definitions/PublicError"
       }
      }
     },
-    "summary": "Updates an existing notification template.",
+    "summary": "Updates an existing notification template group.",
     "tags": [
      "provisioning"
     ]

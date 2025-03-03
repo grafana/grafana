@@ -1,5 +1,5 @@
 import { ReactElement } from 'react';
-import { Validate } from 'react-hook-form';
+import { Validate, UseFormSetValue } from 'react-hook-form';
 
 import { IconName, SelectableValue } from '@grafana/data';
 import { Settings } from 'app/types';
@@ -21,8 +21,11 @@ export type SSOProviderSettingsBase = {
   authStyle?: string;
   authUrl?: string;
   autoLogin?: boolean;
+  clientAuthentication?: string;
   clientId: string;
   clientSecret: string;
+  managedIdentityClientId?: string;
+  federatedCredentialAudience?: string;
   emailAttributeName?: string;
   emailAttributePath?: string;
   emptyScopes?: boolean;
@@ -72,6 +75,7 @@ export type SSOProvider = {
     allowedGroups?: string;
     scopes?: string;
     orgMapping?: string;
+    serverDiscoveryUrl?: string;
   };
 };
 
@@ -83,6 +87,7 @@ export type SSOProviderDTO = Partial<SSOProviderSettingsBase> & {
   allowedGroups?: Array<SelectableValue<string>>;
   scopes?: Array<SelectableValue<string>>;
   orgMapping?: Array<SelectableValue<string>>;
+  serverDiscoveryUrl?: string;
 };
 
 export interface AuthConfigState {
@@ -123,8 +128,13 @@ export type FieldData = {
   placeholder?: string;
   defaultValue?: SelectableValue<string>;
   hidden?: boolean;
+  content?: (setValue: UseFormSetValue<SSOProviderDTO>) => ReactElement;
 };
 
 export type SSOSettingsField =
   | keyof SSOProvider['settings']
   | { name: keyof SSOProvider['settings']; dependsOn: keyof SSOProvider['settings']; hidden?: boolean };
+
+export interface ServerDiscoveryFormData {
+  url: string;
+}

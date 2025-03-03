@@ -38,11 +38,10 @@ export const changeToHistogramPanelMigrationHandler: PanelTypeChangedHandler = (
   return {};
 };
 
-function graphToHistogramOptions(angular: any): {
+function graphToHistogramOptions(graphOptions: GraphOptions): {
   fieldConfig: FieldConfigSource;
   options: Options;
 } {
-  const graphOptions: GraphOptions = angular;
   let histogramFieldConfig: HistogramFieldConfig = {};
   const options: Options = {
     legend: {

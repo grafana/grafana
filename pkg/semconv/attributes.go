@@ -4,6 +4,25 @@ package semconv
 
 import "go.opentelemetry.io/otel/attribute"
 
+// Describes Grafana service attributes.
+const (
+	// GrafanaServiceNameKey is the attribute Key conforming to the
+	// "grafana.service.name" semantic conventions. It represents the service
+	// name.
+	//
+	// Type: string
+	// RequirementLevel: Optional
+	// Stability: stable
+	// Examples: 'grafana-apiserver'
+	grafanaServiceNameKey = attribute.Key("grafana.service.name")
+)
+
+// GrafanaServiceName returns an attribute KeyValue conforming to the
+// "grafana.service.name" semantic conventions. It represents the service name.
+func GrafanaServiceName(val string) attribute.KeyValue {
+	return grafanaServiceNameKey.String(val)
+}
+
 // Describes Grafana datasource attributes.
 const (
 	// GrafanaDatasourceTypeKey is the attribute Key conforming to the
@@ -59,6 +78,26 @@ const (
 // conventions. It represents the number of queries in the request.
 func GrafanaDatasourceRequestQueryCount(val int) attribute.KeyValue {
 	return grafanaDatasourceRequestQueryCountKey.Int(val)
+}
+
+// Describes Kubernetes attributes.
+const (
+	// K8sDataplaneserviceNameKey is the attribute Key conforming to the
+	// "k8s.dataplaneservice.name" semantic conventions. It represents the name
+	// of the DataPlaneService.
+	//
+	// Type: string
+	// RequirementLevel: Optional
+	// Stability: stable
+	// Examples: 'v0alpha1.prometheus.grafana.app'
+	k8sDataplaneserviceNameKey = attribute.Key("k8s.dataplaneservice.name")
+)
+
+// K8sDataplaneserviceName returns an attribute KeyValue conforming to the
+// "k8s.dataplaneservice.name" semantic conventions. It represents the name of
+// the DataPlaneService.
+func K8sDataplaneserviceName(val string) attribute.KeyValue {
+	return k8sDataplaneserviceNameKey.String(val)
 }
 
 // Describes Grafana plugin attributes.

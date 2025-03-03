@@ -6,13 +6,11 @@ import { useRef } from 'react';
 import CSSTransition from 'react-transition-group/CSSTransition';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { KioskMode } from 'app/types';
 
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
-import { TOGGLE_BUTTON_ID } from './NavToolbar/NavToolbar';
-import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
 interface Props {}
 
@@ -20,7 +18,6 @@ export function AppChromeMenu({}: Props) {
   const theme = useTheme2();
   const { chrome } = useGrafana();
   const state = chrome.useState();
-  const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV;
 
   const ref = useRef(null);
   const backdropRef = useRef(null);
@@ -36,16 +33,18 @@ export function AppChromeMenu({}: Props) {
       isOpen: true,
       onClose,
       shouldCloseOnInteractOutside: (element) => {
-        // don't close when clicking on the menu toggle, let the toggle button handle that
-        // this prevents some nasty flickering when the menu is open and the toggle button is clicked
-        const isMenuToggle = document.getElementById(TOGGLE_BUTTON_ID)?.contains(element);
-        return !isMenuToggle;
+        // don't close when interacting with a select menu inside the mega menu
+        // e.g. for the org switcher
+        const isSelectMenu = document
+          .querySelector(`[data-testid="${selectors.components.Select.menu}"]`)
+          ?.contains(element);
+        return !isSelectMenu;
       },
     },
     ref
   );
   const { dialogProps } = useDialog({}, ref);
-  const styles = useStyles2(getStyles, searchBarHidden);
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.wrapper}>
@@ -57,9 +56,13 @@ export function AppChromeMenu({}: Props) {
           classNames={animationStyles.overlay}
           timeout={{ enter: animationSpeed, exit: 0 }}
         >
-          <FocusScope contain autoFocus restoreFocus>
-            <MegaMenu className={styles.menu} onClose={onClose} ref={ref} {...overlayProps} {...dialogProps} />
-          </FocusScope>
+          <>
+            {isOpen && (
+              <FocusScope contain autoFocus restoreFocus>
+                <MegaMenu className={styles.menu} onClose={onClose} ref={ref} {...overlayProps} {...dialogProps} />
+              </FocusScope>
+            )}
+          </>
         </CSSTransition>
         <CSSTransition
           nodeRef={backdropRef}
@@ -75,9 +78,7 @@ export function AppChromeMenu({}: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
-  const topPosition = searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2;
-
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     backdrop: css({
       backdropFilter: 'blur(1px)',
@@ -86,12 +87,8 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
       left: 0,
       position: 'fixed',
       right: 0,
-      top: searchBarHidden ? 0 : TOP_BAR_LEVEL_HEIGHT,
+      top: 0,
       zIndex: theme.zIndex.modalBackdrop,
-
-      [theme.breakpoints.up('md')]: {
-        top: topPosition,
-      },
     }),
     menu: css({
       display: 'flex',
@@ -102,15 +99,12 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
       // Needs to below navbar should we change the navbarFixed? add add a new level?
       zIndex: theme.zIndex.modal,
       position: 'fixed',
-      top: searchBarHidden ? 0 : TOP_BAR_LEVEL_HEIGHT,
+      top: 0,
       backgroundColor: theme.colors.background.primary,
-      boxSizing: 'content-box',
       flex: '1 1 0',
 
       [theme.breakpoints.up('md')]: {
         right: 'unset',
-        borderRight: `1px solid ${theme.colors.border.weak}`,
-        top: topPosition,
       },
     }),
     wrapper: css({
@@ -151,6 +145,7 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
   const overlayOpen = {
     width: '100%',
     [theme.breakpoints.up('md')]: {
+      borderRight: `1px solid ${theme.colors.border.weak}`,
       boxShadow: theme.shadows.z3,
       width: MENU_WIDTH,
     },

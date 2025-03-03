@@ -7,18 +7,25 @@ function checkFolderPermission(action: AccessControlAction, folderDTO?: FolderDT
 }
 
 function checkCanCreateFolders(folderDTO?: FolderDTO) {
-  if (folderDTO && !config.featureToggles.nestedFolders) {
+  // Can only create a folder if we have permissions and either we're at root or nestedFolders is enabled
+  if (folderDTO && folderDTO.uid !== 'general' && !config.featureToggles.nestedFolders) {
     return false;
   }
 
-  return config.featureToggles.accessActionSets
-    ? checkFolderPermission(AccessControlAction.FoldersCreate, folderDTO)
-    : checkFolderPermission(AccessControlAction.FoldersCreate) &&
-        checkFolderPermission(AccessControlAction.FoldersWrite, folderDTO);
+  if (!config.featureToggles.accessActionSets) {
+    if (!folderDTO || folderDTO.uid === 'general') {
+      return checkFolderPermission(AccessControlAction.FoldersCreate);
+    }
+    return (
+      checkFolderPermission(AccessControlAction.FoldersCreate) &&
+      checkFolderPermission(AccessControlAction.FoldersWrite, folderDTO)
+    );
+  }
+
+  return checkFolderPermission(AccessControlAction.FoldersCreate, folderDTO);
 }
 
 export function getFolderPermissions(folderDTO?: FolderDTO) {
-  // Can only create a folder if we have permissions and either we're at root or nestedFolders is enabled
   const canCreateDashboards = checkFolderPermission(AccessControlAction.DashboardsCreate, folderDTO);
   const canCreateFolders = checkCanCreateFolders(folderDTO);
   const canDeleteFolders = checkFolderPermission(AccessControlAction.FoldersDelete, folderDTO);

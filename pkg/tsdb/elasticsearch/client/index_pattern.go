@@ -18,11 +18,62 @@ const (
 	intervalYearly  = "yearly"
 )
 
+var datePatternRegex = regexp.MustCompile("(LT|LL?L?L?|l{1,4}|Mo|MM?M?M?|Do|DDDo|DD?D?D?|ddd?d?|do?|w[o|w]?|W[o|W]?|YYYYY|YYYY|YY|gg(ggg?)?|GG(GGG?)?|e|E|a|A|hh?|HH?|mm?|ss?|SS?S?|X|zz?|ZZ?|Q)")
+
+var datePatternReplacements = map[string]string{
+	"M":    "1",                       // stdNumMonth 1 2 ... 11 12
+	"MM":   "01",                      // stdZeroMonth 01 02 ... 11 12
+	"MMM":  "Jan",                     // stdMonth Jan Feb ... Nov Dec
+	"MMMM": "January",                 // stdLongMonth January February ... November December
+	"D":    "2",                       // stdDay 1 2 ... 30 30
+	"DD":   "02",                      // stdZeroDay 01 02 ... 30 31
+	"DDD":  "<stdDayOfYear>",          // Day of the year 1 2 ... 364 365
+	"DDDD": "<stdDayOfYearZero>",      // Day of the year 001 002 ... 364 365 @todo****
+	"d":    "<stdDayOfWeek>",          // Numeric representation of day of the week 0 1 ... 5 6
+	"dd":   "Mon",                     // ***Su Mo ... Fr Sa @todo
+	"ddd":  "Mon",                     // Sun Mon ... Fri Sat
+	"dddd": "Monday",                  // stdLongWeekDay Sunday Monday ... Friday Saturday
+	"e":    "<stdDayOfWeek>",          // Numeric representation of day of the week 0 1 ... 5 6 @todo
+	"E":    "<stdDayOfWeekISO>",       // ISO-8601 numeric representation of the day of the week (added in PHP 5.1.0) 1 2 ... 6 7 @todo
+	"w":    "<stdWeekOfYear>",         // 1 2 ... 52 53
+	"ww":   "<stdWeekOfYear>",         // ***01 02 ... 52 53 @todo
+	"W":    "<stdWeekOfYear>",         // 1 2 ... 52 53
+	"WW":   "<stdWeekOfYear>",         // ***01 02 ... 52 53 @todo
+	"YY":   "06",                      // stdYear 70 71 ... 29 30
+	"YYYY": "2006",                    // stdLongYear 1970 1971 ... 2029 2030
+	"gg":   "<stdIsoYearShort>",       // ISO-8601 year number 70 71 ... 29 30
+	"gggg": "<stdIsoYear>",            // ***1970 1971 ... 2029 2030
+	"GG":   "<stdIsoYearShort>",       // 70 71 ... 29 30
+	"GGGG": "<stdIsoYear>",            // ***1970 1971 ... 2029 2030
+	"Q":    "<stdQuarter>",            // 1, 2, 3, 4
+	"A":    "PM",                      // stdPM AM PM
+	"a":    "pm",                      // stdpm am pm
+	"H":    "<stdHourNoZero>",         // stdHour 0 1 ... 22 23
+	"HH":   "15",                      // 00 01 ... 22 23
+	"h":    "3",                       // stdHour12 1 2 ... 11 12
+	"hh":   "03",                      // stdZeroHour12 01 02 ... 11 12
+	"m":    "4",                       // stdZeroMinute 0 1 ... 58 59
+	"mm":   "04",                      // stdZeroMinute 00 01 ... 58 59
+	"s":    "5",                       // stdSecond 0 1 ... 58 59
+	"ss":   "05",                      // stdZeroSecond ***00 01 ... 58 59
+	"z":    "MST",                     // EST CST ... MST PST
+	"zz":   "MST",                     // EST CST ... MST PST
+	"Z":    "Z07:00",                  // stdNumColonTZ -07:00 -06:00 ... +06:00 +07:00
+	"ZZ":   "-0700",                   // stdNumTZ -0700 -0600 ... +0600 +0700
+	"X":    "<stdUnix>",               // Seconds since unix epoch 1360013296
+	"LT":   "3:04 PM",                 // 8:30 PM
+	"L":    "01/02/2006",              // 09/04/1986
+	"l":    "1/2/2006",                // 9/4/1986
+	"ll":   "Jan 2 2006",              // Sep 4 1986
+	"lll":  "Jan 2 2006 3:04 PM",      // Sep 4 1986 8:30 PM
+	"llll": "Mon, Jan 2 2006 3:04 PM", // Thu, Sep 4 1986 8:30 PM
+}
+
 type IndexPattern interface {
 	GetIndices(timeRange backend.TimeRange) ([]string, error)
 }
 
-var newIndexPattern = func(interval string, pattern string) (IndexPattern, error) {
+var NewIndexPattern = func(interval string, pattern string) (IndexPattern, error) {
 	if interval == noInterval {
 		return &staticIndexPattern{indexName: pattern}, nil
 	}
@@ -198,57 +249,6 @@ func (i *yearlyInterval) Generate(from, to time.Time) []time.Time {
 	}
 
 	return intervals
-}
-
-var datePatternRegex = regexp.MustCompile("(LT|LL?L?L?|l{1,4}|Mo|MM?M?M?|Do|DDDo|DD?D?D?|ddd?d?|do?|w[o|w]?|W[o|W]?|YYYYY|YYYY|YY|gg(ggg?)?|GG(GGG?)?|e|E|a|A|hh?|HH?|mm?|ss?|SS?S?|X|zz?|ZZ?|Q)")
-
-var datePatternReplacements = map[string]string{
-	"M":    "1",                       // stdNumMonth 1 2 ... 11 12
-	"MM":   "01",                      // stdZeroMonth 01 02 ... 11 12
-	"MMM":  "Jan",                     // stdMonth Jan Feb ... Nov Dec
-	"MMMM": "January",                 // stdLongMonth January February ... November December
-	"D":    "2",                       // stdDay 1 2 ... 30 30
-	"DD":   "02",                      // stdZeroDay 01 02 ... 30 31
-	"DDD":  "<stdDayOfYear>",          // Day of the year 1 2 ... 364 365
-	"DDDD": "<stdDayOfYearZero>",      // Day of the year 001 002 ... 364 365 @todo****
-	"d":    "<stdDayOfWeek>",          // Numeric representation of day of the week 0 1 ... 5 6
-	"dd":   "Mon",                     // ***Su Mo ... Fr Sa @todo
-	"ddd":  "Mon",                     // Sun Mon ... Fri Sat
-	"dddd": "Monday",                  // stdLongWeekDay Sunday Monday ... Friday Saturday
-	"e":    "<stdDayOfWeek>",          // Numeric representation of day of the week 0 1 ... 5 6 @todo
-	"E":    "<stdDayOfWeekISO>",       // ISO-8601 numeric representation of the day of the week (added in PHP 5.1.0) 1 2 ... 6 7 @todo
-	"w":    "<stdWeekOfYear>",         // 1 2 ... 52 53
-	"ww":   "<stdWeekOfYear>",         // ***01 02 ... 52 53 @todo
-	"W":    "<stdWeekOfYear>",         // 1 2 ... 52 53
-	"WW":   "<stdWeekOfYear>",         // ***01 02 ... 52 53 @todo
-	"YY":   "06",                      // stdYear 70 71 ... 29 30
-	"YYYY": "2006",                    // stdLongYear 1970 1971 ... 2029 2030
-	"gg":   "<stdIsoYearShort>",       // ISO-8601 year number 70 71 ... 29 30
-	"gggg": "<stdIsoYear>",            // ***1970 1971 ... 2029 2030
-	"GG":   "<stdIsoYearShort>",       // 70 71 ... 29 30
-	"GGGG": "<stdIsoYear>",            // ***1970 1971 ... 2029 2030
-	"Q":    "<stdQuarter>",            // 1, 2, 3, 4
-	"A":    "PM",                      // stdPM AM PM
-	"a":    "pm",                      // stdpm am pm
-	"H":    "<stdHourNoZero>",         // stdHour 0 1 ... 22 23
-	"HH":   "15",                      // 00 01 ... 22 23
-	"h":    "3",                       // stdHour12 1 2 ... 11 12
-	"hh":   "03",                      // stdZeroHour12 01 02 ... 11 12
-	"m":    "4",                       // stdZeroMinute 0 1 ... 58 59
-	"mm":   "04",                      // stdZeroMinute 00 01 ... 58 59
-	"s":    "5",                       // stdSecond 0 1 ... 58 59
-	"ss":   "05",                      // stdZeroSecond ***00 01 ... 58 59
-	"z":    "MST",                     // EST CST ... MST PST
-	"zz":   "MST",                     // EST CST ... MST PST
-	"Z":    "Z07:00",                  // stdNumColonTZ -07:00 -06:00 ... +06:00 +07:00
-	"ZZ":   "-0700",                   // stdNumTZ -0700 -0600 ... +0600 +0700
-	"X":    "<stdUnix>",               // Seconds since unix epoch 1360013296
-	"LT":   "3:04 PM",                 // 8:30 PM
-	"L":    "01/02/2006",              // 09/04/1986
-	"l":    "1/2/2006",                // 9/4/1986
-	"ll":   "Jan 2 2006",              // Sep 4 1986
-	"lll":  "Jan 2 2006 3:04 PM",      // Sep 4 1986 8:30 PM
-	"llll": "Mon, Jan 2 2006 3:04 PM", // Thu, Sep 4 1986 8:30 PM
 }
 
 func formatDate(t time.Time, pattern string) string {

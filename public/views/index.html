@@ -18,6 +18,10 @@
     <link rel="apple-touch-icon" sizes="180x180" href="[[.AppleTouchIcon]]" />
     <link rel="mask-icon" href="[[.Assets.ContentDeliveryURL]]public/img/grafana_mask_icon.svg" color="#F05A28" />
 
+    [[range $asset := .Assets.CSSFiles]]
+      <link rel="stylesheet" href="[[$asset.FilePath]]" />
+    [[end]]
+
     <!-- If theme is "system", we inject the stylesheets with javascript further down the page -->
     [[ if eq .ThemeType "light" ]]
     <link rel="stylesheet" href="[[.Assets.Light]]" />
@@ -30,6 +34,7 @@
     </script>
 
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="msapplication-TileColor" content="#2b5797" />
     <meta name="msapplication-config" content="public/img/browserconfig.xml" />
@@ -43,6 +48,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        margin: 0 32px;
       }
 
       .preloader__enter {
@@ -158,8 +164,35 @@
         font-size: 15px;
       }
 
+      .theme-light .preloader--done .preloader__text {
+        color: #52545c !important;
+      }
+
       .preloader--done .preloader__text--fail {
         display: block;
+      }
+
+      .preloader--done .preloader__text--fail a {
+        color: white;
+      }
+
+      .theme-light .preloader--done .preloader__text--fail a {
+        color: rgb(31, 98, 224);
+      }
+
+      .preloader--done code {
+        white-space: nowrap;
+        padding: 2px 5px;
+        margin: 0px 2px;
+        font-size: 0.8rem;
+        background-color: rgb(24, 27, 31);
+        color: rgb(204, 204, 220);
+        border: 1px solid rgba(204, 204, 220, 0.2);
+        border-radius: 4px;
+      }
+
+      .preloader__error-list li {
+        margin-bottom: 8px;
       }
 
       [ng\:cloak],
@@ -176,25 +209,21 @@
         </div>
       </div>
       <div class="preloader__text preloader__text--fail">
-        <p>
-          <strong>If you're seeing this Grafana has failed to load its application files</strong>
-          <br />
-          <br />
-        </p>
-        <p>
-          1. This could be caused by your reverse proxy settings.<br /><br />
-          2. If you host grafana under subpath make sure your grafana.ini root_url setting includes subpath. If not
-          using a reverse proxy make sure to set serve_from_sub_path to true.<br />
-          <br />
-          3. If you have a local dev build make sure you build frontend using: yarn start, or yarn build<br />
-          <br />
-          4. Sometimes restarting grafana-server can help<br />
-          <br />
-          5. Check if you are using a non-supported browser. For more information, refer to the list of
-          <a href="https://grafana.com/docs/grafana/latest/installation/requirements/#supported-web-browsers">
-            supported browsers</a
-          >.
-        </p>
+        <main>
+          <h1>If you're seeing this Grafana has failed to load its application files</h1>
+          <ol class="preloader__error-list">
+            <li>This could be caused by your reverse proxy settings.</li>
+            <li>If you host grafana under a subpath make sure your <code>grafana.ini</code> <code>root_url</code> setting
+              includes subpath. If not using a reverse proxy make sure to set <code>serve_from_sub_path</code> to true.</li>
+            <li>If you have a local dev build make sure you build frontend using: <code>yarn start</code>, or
+              <code>yarn build</code>.</li>
+            <li>Sometimes restarting <code>grafana-server</code> can help.</li>
+            <li>Check if you are using a non-supported browser. For more information, refer to the list of
+              <a href="https://grafana.com/docs/grafana/latest/installation/requirements/#supported-web-browsers">
+                supported browsers </a
+              >.</li>
+          </ol>
+        </main>
       </div>
       <script nonce="[[.Nonce]]">
         // Check to see if browser is not supported by Grafana
@@ -331,6 +360,7 @@
       nonce="[[$.Nonce]]"
       src="[[$asset.FilePath]]"
       type="text/javascript"
+      defer
     ></script>
     [[end]]
 

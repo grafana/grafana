@@ -4,10 +4,14 @@
 # Please refrain from including any processes that do not result in code changes in this workflow. Instead, they should
 # either be triggered in the release promotion process or in the release comms process (that is triggered by merging
 # this PR).
-name: Complete a Grafana release
+name: Grafana Release PR
 on:
   workflow_dispatch:
     inputs:
+      previous_version:
+        type: string
+        required: false
+        description: 'The release version (semver, git tag, branch or commit) to use for comparison'
       version:
         required: true
         type: string
@@ -15,7 +19,7 @@ on:
       target:
         required: true
         type: string
-        description: The base branch that these changes are being merged into
+        description: The release branch pattern (eg v9.5.x) that these changes are being merged into
       backport:
         required: false
         type: string
@@ -38,6 +42,7 @@ jobs:
     name: Create PR to main to update the changelog
     uses: ./.github/workflows/changelog.yml
     with:
+      previous_version: ${{inputs.previous_version}}
       version: ${{ inputs.version }}
       latest: ${{ inputs.latest }}
       dry_run: ${{ inputs.dry_run }}
@@ -56,12 +61,20 @@ jobs:
         with:
           app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
           private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+      - name: Get release branch
+        id: branch
+        uses: grafana/grafana-github-actions-go/latest-release-branch@main
+        with:
+          token: ${{ steps.generate_token.outputs.token }}
+          ownerRepo: 'grafana/grafana'
+          pattern: ${{ inputs.target }}
       - name: Checkout Grafana
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.target }}
+          ref: ${{ steps.branch.outputs.branch }}
           fetch-depth: 0
           fetch-tags: true
+          token: ${{ steps.generate_token.outputs.token }}
       - name: Checkout Grafana (main)
         uses: actions/checkout@v4
         with:
@@ -69,6 +82,11 @@ jobs:
           fetch-depth: '0'
           fetch-tags: 'false'
           path: .grafana-main
+          token: ${{ steps.generate_token.outputs.token }}
+      - name: Setup nodejs environment
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
       - name: Configure git user
         run: |
           git config --local user.name "github-actions[bot]"
@@ -115,7 +133,8 @@ jobs:
           rm -f CHANGELOG.part changelog_items.md
 
           git diff CHANGELOG.md
-
+      - name: "Prettify CHANGELOG.md"
+        run: npx prettier --write CHANGELOG.md
       - name: Commit CHANGELOG.md changes
         run: git add CHANGELOG.md && git commit --allow-empty -m "Update changelog" CHANGELOG.md
 
@@ -127,6 +146,7 @@ jobs:
       - name: Add package.json changes
         run: |
           git add package.json lerna.json yarn.lock packages public
+          test -e e2e/test-plugins && git add e2e/test-plugins
           git commit -m "Update version to ${{ inputs.version }}"
 
       - name: Git push
@@ -140,7 +160,7 @@ jobs:
             $( [ "x${{ inputs.latest }}" == "xtrue" ] && printf %s '-l "release/latest"') \
             -l "no-changelog" \
             --dry-run=${{ inputs.dry_run }} \
-            -B "${{ inputs.target }}" \
+            -B "${{ steps.branch.outputs.branch }}" \
             --title "Release: ${{ inputs.version }}" \
             --body "These code changes must be merged after a release is complete"
         env:
@@ -154,7 +174,7 @@ jobs:
             -l "product-approved" \
             -l "no-changelog" \
             --dry-run=${{ inputs.dry_run }} \
-            -B "${{ inputs.target }}" \
+            -B "${{ steps.branch.outputs.branch }}" \
             --title "Release: ${{ inputs.version }}" \
             --body "These code changes must be merged after a release is complete"
         env:

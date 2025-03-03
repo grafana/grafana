@@ -1,3 +1,4 @@
+import { Action } from '../../types/action';
 import { Field } from '../../types/dataFrame';
 import { DataLink } from '../../types/dataLink';
 import { FieldOverrideContext } from '../../types/fieldOverrides';
@@ -19,7 +20,7 @@ export interface NumberFieldConfigSettings {
 }
 
 export const numberOverrideProcessor = (
-  value: any,
+  value: unknown,
   context: FieldOverrideContext,
   settings?: NumberFieldConfigSettings
 ) => {
@@ -27,7 +28,7 @@ export const numberOverrideProcessor = (
     return undefined;
   }
 
-  return parseFloat(value);
+  return parseFloat(String(value));
 };
 
 export const displayNameOverrideProcessor = (
@@ -49,13 +50,24 @@ export interface SliderFieldConfigSettings {
   ariaLabelForHandle?: string;
 }
 
-export interface DataLinksFieldConfigSettings {}
+export interface DataLinksFieldConfigSettings {
+  showOneClick?: boolean;
+}
 
 export const dataLinksOverrideProcessor = (
   value: any,
   _context: FieldOverrideContext,
   _settings?: DataLinksFieldConfigSettings
 ): DataLink[] => {
+  return value;
+};
+
+export const actionsOverrideProcessor = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  value: any,
+  _context: FieldOverrideContext,
+  _settings?: DataLinksFieldConfigSettings
+): Action[] => {
   return value;
 };
 

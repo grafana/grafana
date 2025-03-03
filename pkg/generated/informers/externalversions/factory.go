@@ -10,8 +10,8 @@ import (
 	time "time"
 
 	versioned "github.com/grafana/grafana/pkg/generated/clientset/versioned"
-	alertingnotifications "github.com/grafana/grafana/pkg/generated/informers/externalversions/alerting_notifications"
 	internalinterfaces "github.com/grafana/grafana/pkg/generated/informers/externalversions/internalinterfaces"
+	provisioning "github.com/grafana/grafana/pkg/generated/informers/externalversions/provisioning"
 	service "github.com/grafana/grafana/pkg/generated/informers/externalversions/service"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -215,6 +215,7 @@ type SharedInformerFactory interface {
 
 	// Start initializes all requested informers. They are handled in goroutines
 	// which run until the stop channel gets closed.
+	// Warning: Start does not block. When run in a go-routine, it will race with a later WaitForCacheSync.
 	Start(stopCh <-chan struct{})
 
 	// Shutdown marks a factory as shutting down. At that point no new
@@ -240,12 +241,12 @@ type SharedInformerFactory interface {
 	// client.
 	InformerFor(obj runtime.Object, newFunc internalinterfaces.NewInformerFunc) cache.SharedIndexInformer
 
-	Notifications() alertingnotifications.Interface
+	Provisioning() provisioning.Interface
 	Service() service.Interface
 }
 
-func (f *sharedInformerFactory) Notifications() alertingnotifications.Interface {
-	return alertingnotifications.New(f, f.namespace, f.tweakListOptions)
+func (f *sharedInformerFactory) Provisioning() provisioning.Interface {
+	return provisioning.New(f, f.namespace, f.tweakListOptions)
 }
 
 func (f *sharedInformerFactory) Service() service.Interface {

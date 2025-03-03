@@ -3,7 +3,6 @@ package repo
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -15,8 +14,7 @@ import (
 )
 
 type Manager struct {
-	client  *Client
-	baseURL string
+	client *Client
 
 	log log.PrettyLogger
 }
@@ -28,23 +26,24 @@ func ProvideService(cfg *config.PluginManagementCfg) (*Manager, error) {
 	}
 
 	return NewManager(ManagerCfg{
-		SkipTLSVerify: false,
-		BaseURL:       baseURL,
-		Logger:        log.NewPrettyLogger("plugin.repository"),
+		SkipTLSVerify:      false,
+		BaseURL:            baseURL,
+		Logger:             log.NewPrettyLogger("plugin.repository"),
+		GrafanaComAPIToken: cfg.GrafanaComAPIToken,
 	}), nil
 }
 
 type ManagerCfg struct {
-	SkipTLSVerify bool
-	BaseURL       string
-	Logger        log.PrettyLogger
+	SkipTLSVerify      bool
+	BaseURL            string
+	GrafanaComAPIToken string
+	Logger             log.PrettyLogger
 }
 
 func NewManager(cfg ManagerCfg) *Manager {
 	return &Manager{
-		baseURL: cfg.BaseURL,
-		client:  NewClient(cfg.SkipTLSVerify, cfg.Logger),
-		log:     cfg.Logger,
+		client: NewClient(cfg.SkipTLSVerify, cfg.GrafanaComAPIToken, cfg.BaseURL, cfg.Logger),
+		log:    cfg.Logger,
 	}
 }
 
@@ -64,8 +63,8 @@ func (m *Manager) GetPluginArchiveByURL(ctx context.Context, pluginZipURL string
 }
 
 // GetPluginArchiveInfo returns the options for downloading the requested plugin (with optional `version`)
-func (m *Manager) GetPluginArchiveInfo(_ context.Context, pluginID, version string, compatOpts CompatOpts) (*PluginArchiveInfo, error) {
-	v, err := m.PluginVersion(pluginID, version, compatOpts)
+func (m *Manager) GetPluginArchiveInfo(ctx context.Context, pluginID, version string, compatOpts CompatOpts) (*PluginArchiveInfo, error) {
+	v, err := m.PluginVersion(ctx, pluginID, version, compatOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -78,18 +77,13 @@ func (m *Manager) GetPluginArchiveInfo(_ context.Context, pluginID, version stri
 }
 
 // PluginVersion will return plugin version based on the requested information
-func (m *Manager) PluginVersion(pluginID, version string, compatOpts CompatOpts) (VersionData, error) {
-	versions, err := m.grafanaCompatiblePluginVersions(pluginID, compatOpts)
+func (m *Manager) PluginVersion(ctx context.Context, pluginID, version string, compatOpts CompatOpts) (VersionData, error) {
+	versions, err := m.grafanaCompatiblePluginVersions(ctx, pluginID, compatOpts)
 	if err != nil {
 		return VersionData{}, err
 	}
 
-	sysCompatOpts, exists := compatOpts.System()
-	if !exists {
-		return VersionData{}, errors.New("no system compatibility requirements set")
-	}
-
-	compatibleVer, err := SelectSystemCompatibleVersion(m.log, versions, pluginID, version, sysCompatOpts)
+	compatibleVer, err := SelectSystemCompatibleVersion(m.log, versions, pluginID, version, compatOpts)
 	if err != nil {
 		return VersionData{}, err
 	}
@@ -105,19 +99,19 @@ func (m *Manager) PluginVersion(pluginID, version string, compatOpts CompatOpts)
 }
 
 func (m *Manager) downloadURL(pluginID, version string) string {
-	return fmt.Sprintf("%s/%s/versions/%s/download", m.baseURL, pluginID, version)
+	return fmt.Sprintf("%s/%s/versions/%s/download", m.client.grafanaComAPIURL, pluginID, version)
 }
 
 // grafanaCompatiblePluginVersions will get version info from /api/plugins/$pluginID/versions
-func (m *Manager) grafanaCompatiblePluginVersions(pluginID string, compatOpts CompatOpts) ([]Version, error) {
-	u, err := url.Parse(m.baseURL)
+func (m *Manager) grafanaCompatiblePluginVersions(ctx context.Context, pluginID string, compatOpts CompatOpts) ([]Version, error) {
+	u, err := url.Parse(m.client.grafanaComAPIURL)
 	if err != nil {
 		return nil, err
 	}
 
 	u.Path = path.Join(u.Path, pluginID, "versions")
 
-	body, err := m.client.SendReq(u, compatOpts)
+	body, err := m.client.SendReq(ctx, u, compatOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -136,4 +130,27 @@ func (m *Manager) grafanaCompatiblePluginVersions(pluginID string, compatOpts Co
 	}
 
 	return v.Versions, nil
+}
+
+func (m *Manager) PluginInfo(ctx context.Context, pluginID string) (*PluginInfo, error) {
+	u, err := url.Parse(m.client.grafanaComAPIURL)
+	if err != nil {
+		return nil, err
+	}
+
+	u.Path = path.Join(u.Path, pluginID)
+
+	body, err := m.client.SendReq(ctx, u, CompatOpts{})
+	if err != nil {
+		return nil, err
+	}
+
+	var v PluginInfo
+	err = json.Unmarshal(body, &v)
+	if err != nil {
+		m.log.Error("Failed to unmarshal plugin repo response", "error", err)
+		return nil, err
+	}
+
+	return &v, nil
 }

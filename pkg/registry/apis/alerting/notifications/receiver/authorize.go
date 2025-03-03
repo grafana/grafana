@@ -2,15 +2,27 @@ package receiver
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 )
 
-func Authorize(ctx context.Context, ac accesscontrol.AccessControl, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
-	if attr.GetResource() != resourceInfo.GroupResource().Resource {
+// AccessControlService provides access control for receivers.
+type AccessControlService interface {
+	AuthorizeReadSome(ctx context.Context, user identity.Requester) error
+	AuthorizeReadByUID(context.Context, identity.Requester, string) error
+	AuthorizeCreate(context.Context, identity.Requester) error
+	AuthorizeUpdateByUID(context.Context, identity.Requester, string) error
+	AuthorizeDeleteByUID(context.Context, identity.Requester, string) error
+}
+
+func Authorize(ctx context.Context, ac AccessControlService, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
+	if attr.GetResource() != ResourceInfo.GroupResource().Resource {
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 	user, err := identity.GetRequester(ctx)
@@ -18,36 +30,53 @@ func Authorize(ctx context.Context, ac accesscontrol.AccessControl, attr authori
 		return authorizer.DecisionDeny, "valid user is required", err
 	}
 
-	var action accesscontrol.Evaluator
+	uid := attr.GetName()
+
+	deny := func(err error) (authorizer.Decision, string, error) {
+		var utilErr errutil.Error
+		if errors.As(err, &utilErr) && utilErr.Reason.Status() == errutil.StatusForbidden {
+			if errors.Is(err, accesscontrol.ErrAuthorizationBase) {
+				return authorizer.DecisionDeny, fmt.Sprintf("required permissions: %s", utilErr.PublicPayload["permissions"]), nil
+			}
+			return authorizer.DecisionDeny, utilErr.PublicMessage, nil
+		}
+
+		return authorizer.DecisionDeny, "", err
+	}
+
 	switch attr.GetVerb() {
+	case "get":
+		if uid == "" {
+			return authorizer.DecisionDeny, "", nil
+		}
+		if err := ac.AuthorizeReadByUID(ctx, user, uid); err != nil {
+			return deny(err)
+		}
+	case "list":
+		return authorizer.DecisionAllow, "", nil // Always allow listing, receivers are filtered downstream.
+	case "create":
+		if err := ac.AuthorizeCreate(ctx, user); err != nil {
+			return deny(err)
+		}
 	case "patch":
 		fallthrough
-	case "create":
-		fallthrough // TODO: Add alert.notifications.receivers:create permission
 	case "update":
-		action = accesscontrol.EvalAny(
-			accesscontrol.EvalPermission(accesscontrol.ActionAlertingNotificationsWrite), // TODO: Add alert.notifications.receivers:write permission
-		)
-	case "deletecollection":
-		fallthrough
+		if uid == "" {
+			return deny(err)
+		}
+		if err := ac.AuthorizeUpdateByUID(ctx, user, uid); err != nil {
+			return deny(err)
+		}
 	case "delete":
-		action = accesscontrol.EvalAny(
-			accesscontrol.EvalPermission(accesscontrol.ActionAlertingNotificationsWrite), // TODO: Add alert.notifications.receivers:delete permission
-		)
+		if uid == "" {
+			return deny(err)
+		}
+		if err := ac.AuthorizeDeleteByUID(ctx, user, uid); err != nil {
+			return deny(err)
+		}
+	default:
+		return authorizer.DecisionNoOpinion, "", nil
 	}
 
-	eval := accesscontrol.EvalAny(
-		accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversRead),
-		accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversReadSecrets),
-		accesscontrol.EvalPermission(accesscontrol.ActionAlertingNotificationsRead),
-	)
-	if action != nil {
-		eval = accesscontrol.EvalAll(eval, action)
-	}
-
-	ok, err := ac.Evaluate(ctx, user, eval)
-	if ok {
-		return authorizer.DecisionAllow, "", nil
-	}
-	return authorizer.DecisionDeny, "", err
+	return authorizer.DecisionAllow, "", nil
 }

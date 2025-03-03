@@ -1,6 +1,6 @@
 import { ChangeEvent, useEffect, useState } from 'react';
 import * as React from 'react';
-import { identity, of, OperatorFunction } from 'rxjs';
+import { of, OperatorFunction } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import {
@@ -14,6 +14,7 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
   TransformerCategory,
+  FieldMatcherID,
 } from '@grafana/data';
 import {
   CalculateFieldMode,
@@ -80,10 +81,8 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
   }, [input, configuredOptions]);
 
   const getVariableNames = (): OperatorFunction<string[], string[]> => {
-    if (!cfg.featureToggles.transformationsVariableSupport) {
-      return identity;
-    }
     const templateSrv = getTemplateSrv();
+
     return (source) =>
       source.pipe(
         map((input) => {
@@ -171,6 +170,9 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
   };
 
   const mode = options.mode ?? CalculateFieldMode.BinaryOperation;
+  // For binary operation with type matching, disable alias input
+  const disableAlias =
+    mode === CalculateFieldMode.BinaryOperation && options.binary?.left.matcher?.id === FieldMatcherID.byType;
 
   return (
     <>
@@ -213,7 +215,7 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
       {mode === CalculateFieldMode.Index && (
         <IndexOptionsEditor options={options} onChange={props.onChange}></IndexOptionsEditor>
       )}
-      <InlineField labelWidth={LABEL_WIDTH} label="Alias">
+      <InlineField labelWidth={LABEL_WIDTH} label="Alias" disabled={disableAlias}>
         <Input
           className="width-18"
           value={options.alias ?? ''}

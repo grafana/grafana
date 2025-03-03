@@ -321,8 +321,12 @@ function getTooltipData(
   if (tooltipOptions.mode === 'multi') {
     return pie.arcs
       .filter((pa) => {
-        const field = pa.data.field;
-        return field && !field.custom?.hideFrom?.tooltip && !field.custom?.hideFrom?.viz;
+        if (tooltipOptions.hideZeros && pa.value === 0) {
+          return false;
+        }
+
+        const customConfig = pa.data.field.custom;
+        return !customConfig?.hideFrom?.tooltip && !customConfig?.hideFrom?.viz;
       })
       .map((pieArc) => {
         return {
@@ -423,28 +427,32 @@ function getSvgStyle(
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    `,
+    container: css({
+      width: '100%',
+      height: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }),
     svgArg: {
-      normal: css`
-        transition: all 200ms ease-in-out;
-      `,
-      highlighted: css`
-        transition: all 200ms ease-in-out;
-        transform: scale3d(1.03, 1.03, 1);
-      `,
-      deemphasized: css`
-        transition: all 200ms ease-in-out;
-        fill-opacity: 0.5;
-      `,
+      normal: css({
+        [theme.transitions.handleMotion('no-preference')]: {
+          transition: 'all 200ms ease-in-out',
+        },
+      }),
+      highlighted: css({
+        [theme.transitions.handleMotion('no-preference')]: {
+          transition: 'all 200ms ease-in-out',
+        },
+        transform: 'scale3d(1.03, 1.03, 1)',
+      }),
+      deemphasized: css({
+        [theme.transitions.handleMotion('no-preference')]: {
+          transition: 'all 200ms ease-in-out',
+        },
+        fillOpacity: 0.5,
+      }),
     },
-    tooltipPortal: css`
-      ${getTooltipContainerStyles(theme)}
-    `,
+    tooltipPortal: css(getTooltipContainerStyles(theme)),
   };
 };

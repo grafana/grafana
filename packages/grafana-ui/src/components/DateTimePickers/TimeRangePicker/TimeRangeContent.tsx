@@ -267,6 +267,12 @@ function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {
   if (isDateTime(value)) {
     return dateTimeFormat(value, { timeZone });
   }
+
+  if (value.endsWith('Z')) {
+    const dt = dateTimeParse(value, { timeZone: 'utc', format: 'YYYY-MM-DDTHH:mm:ss.SSSZ' });
+    return dateTimeFormat(dt, { timeZone });
+  }
+
   return value;
 }
 

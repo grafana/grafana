@@ -15,8 +15,10 @@
 import { isEqual as _isEqual } from 'lodash';
 
 // @ts-ignore
+import { TraceKeyValuePair } from '@grafana/data';
+
 import { getTraceSpanIdsAsTree } from '../selectors/trace';
-import { TraceKeyValuePair, TraceSpan, Trace, TraceResponse, TraceProcess } from '../types';
+import { TraceSpan, Trace, TraceResponse, TraceProcess } from '../types';
 // @ts-ignore
 import TreeNode from '../utils/TreeNode';
 import { getConfigValue } from '../utils/config/get-config';

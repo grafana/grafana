@@ -13,52 +13,58 @@ type requestHandler struct {
 	router *mux.Router
 }
 
-func getAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, builders []APIGroupBuilder) (http.Handler, error) {
+func GetCustomRoutesHandler(delegateHandler http.Handler, restConfig *restclient.Config, builders []APIGroupBuilder) (http.Handler, error) {
 	useful := false // only true if any routes exist anywhere
 	router := mux.NewRouter()
 
 	for _, builder := range builders {
-		routes := builder.GetAPIRoutes()
+		provider, ok := builder.(APIGroupRouteProvider)
+		if !ok || provider == nil {
+			continue
+		}
+
+		routes := provider.GetAPIRoutes()
 		if routes == nil {
 			continue
 		}
 
-		gv := builder.GetGroupVersion()
-		prefix := "/apis/" + gv.String()
+		for _, gv := range GetGroupVersions(builder) {
+			prefix := "/apis/" + gv.String()
 
-		// Root handlers
-		var sub *mux.Router
-		for _, route := range routes.Root {
-			if sub == nil {
-				sub = router.PathPrefix(prefix).Subrouter()
-				sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
+			// Root handlers
+			var sub *mux.Router
+			for _, route := range routes.Root {
+				if sub == nil {
+					sub = router.PathPrefix(prefix).Subrouter()
+					sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
+				}
+
+				useful = true
+				methods, err := methodsFromSpec(route.Path, route.Spec)
+				if err != nil {
+					return nil, err
+				}
+				sub.HandleFunc("/"+route.Path, route.Handler).
+					Methods(methods...)
 			}
 
-			useful = true
-			methods, err := methodsFromSpec(route.Path, route.Spec)
-			if err != nil {
-				return nil, err
-			}
-			sub.HandleFunc("/"+route.Path, route.Handler).
-				Methods(methods...)
-		}
+			// Namespace handlers
+			sub = nil
+			prefix += "/namespaces/{namespace}"
+			for _, route := range routes.Namespace {
+				if sub == nil {
+					sub = router.PathPrefix(prefix).Subrouter()
+					sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
+				}
 
-		// Namespace handlers
-		sub = nil
-		prefix += "/namespaces/{namespace}"
-		for _, route := range routes.Namespace {
-			if sub == nil {
-				sub = router.PathPrefix(prefix).Subrouter()
-				sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
+				useful = true
+				methods, err := methodsFromSpec(route.Path, route.Spec)
+				if err != nil {
+					return nil, err
+				}
+				sub.HandleFunc("/"+route.Path, route.Handler).
+					Methods(methods...)
 			}
-
-			useful = true
-			methods, err := methodsFromSpec(route.Path, route.Spec)
-			if err != nil {
-				return nil, err
-			}
-			sub.HandleFunc("/"+route.Path, route.Handler).
-				Methods(methods...)
 		}
 	}
 

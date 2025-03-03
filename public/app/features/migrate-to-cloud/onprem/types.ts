@@ -1,5 +1,7 @@
+import { LocalPlugin } from '../../plugins/admin/types';
 import { MigrateDataResponseItemDto } from '../api';
 
 export interface ResourceTableItem extends MigrateDataResponseItemDto {
-  showError: (resource: ResourceTableItem) => void;
+  showDetails: (resource: ResourceTableItem) => void;
+  plugin: LocalPlugin | undefined;
 }

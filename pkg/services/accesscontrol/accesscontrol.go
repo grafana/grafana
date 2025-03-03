@@ -25,6 +25,10 @@ type AccessControl interface {
 	// RegisterScopeAttributeResolver allows the caller to register a scope resolver for a
 	// specific scope prefix (ex: datasources:name:)
 	RegisterScopeAttributeResolver(prefix string, resolver ScopeAttributeResolver)
+	// WithoutResolvers copies AccessControl without any configured resolvers.
+	// This is useful when we don't want to reuse any pre-configured resolvers
+	// for a authorization call.
+	WithoutResolvers() AccessControl
 }
 
 type Service interface {
@@ -54,6 +58,8 @@ type Service interface {
 	DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error
 	// SyncUserRoles adds provided roles to user
 	SyncUserRoles(ctx context.Context, orgID int64, cmd SyncUserRolesCommand) error
+	// GetStaicRoles returns a map where key organization role and value is a static rbac role.
+	GetStaticRoles(ctx context.Context) map[string]*RoleDTO
 }
 
 //go:generate  mockery --name Store --structname MockStore --outpkg actest --filename store_mock.go --output ./actest/
@@ -83,8 +89,8 @@ type SearchOptions struct {
 	Action       string
 	ActionSets   []string
 	Scope        string
-	TypedID      identity.TypedID // ID of the identity (ex: user:3, service-account:4)
-	wildcards    Wildcards        // private field computed based on the Scope
+	UserID       int64
+	wildcards    Wildcards // private field computed based on the Scope
 	RolePrefixes []string
 }
 
@@ -101,20 +107,6 @@ func (s *SearchOptions) Wildcards() []string {
 
 	s.wildcards = WildcardsFromPrefix(ScopePrefix(s.Scope))
 	return s.wildcards
-}
-
-func (s *SearchOptions) ComputeUserID() (int64, error) {
-	id, err := s.TypedID.ParseInt()
-	if err != nil {
-		return 0, err
-	}
-
-	// Validate namespace type is user or service account
-	if s.TypedID.Type() != identity.TypeUser && s.TypedID.Type() != identity.TypeServiceAccount {
-		return 0, fmt.Errorf("invalid type: %s", s.TypedID.Type())
-	}
-
-	return id, nil
 }
 
 type SyncUserRolesCommand struct {
@@ -145,6 +137,12 @@ type DatasourcePermissionsService interface {
 
 type ServiceAccountPermissionsService interface {
 	PermissionsService
+}
+
+type ReceiverPermissionsService interface {
+	PermissionsService
+	SetDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, uid string)
+	CopyPermissions(ctx context.Context, orgID int64, user identity.Requester, oldUID, newUID string) (int, error)
 }
 
 type PermissionsService interface {

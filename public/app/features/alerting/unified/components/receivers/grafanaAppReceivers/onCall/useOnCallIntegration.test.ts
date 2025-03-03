@@ -1,5 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { getWrapper, renderHook, waitFor } from 'test/test-utils';
 
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { disablePlugin } from 'app/features/alerting/unified/mocks/server/configure';
@@ -15,6 +14,8 @@ import { ReceiverTypes } from './onCall';
 import { OnCallIntegrationSetting, OnCallIntegrationType, useOnCallIntegration } from './useOnCallIntegration';
 
 setupMswServer();
+
+const wrapper = () => getWrapper({ renderWithRouter: true });
 
 describe('useOnCallIntegration', () => {
   beforeEach(() => {
@@ -32,7 +33,7 @@ describe('useOnCallIntegration', () => {
 
   describe('When OnCall Alerting V2 integration enabled', () => {
     it('extendOnCallReceivers should add new settings to the oncall receiver', async () => {
-      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: TestProvider });
+      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: wrapper() });
 
       await waitFor(() => expect(result.current.isLoadingOnCallIntegration).toBe(false));
 
@@ -58,11 +59,11 @@ describe('useOnCallIntegration', () => {
         OnCallIntegrationType.ExistingIntegration
       );
       expect(receiverConfig.settings[OnCallIntegrationSetting.IntegrationName]).toBeUndefined();
-      expect(receiverConfig.settings['url']).toBe('https://oncall-endpoint.example.com');
+      expect(receiverConfig.settings.url).toBe('https://oncall-endpoint.example.com');
     });
 
     it('createOnCallIntegrations should provide integration name and url validators', async () => {
-      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: TestProvider });
+      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: wrapper() });
 
       await waitFor(() => expect(result.current.isLoadingOnCallIntegration).toBe(false));
 
@@ -83,7 +84,7 @@ describe('useOnCallIntegration', () => {
     });
 
     it('extendOnCallNotifierFeatures should add integration type and name options and swap url to a select option', async () => {
-      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: TestProvider });
+      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: wrapper() });
 
       await waitFor(() => expect(result.current.isLoadingOnCallIntegration).toBe(false));
 
@@ -120,7 +121,7 @@ describe('useOnCallIntegration', () => {
     });
 
     it('extendOnCalReceivers should not add new settings to the oncall receiver', async () => {
-      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: TestProvider });
+      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: wrapper() });
 
       await waitFor(() => expect(result.current.isLoadingOnCallIntegration).toBe(false));
 
@@ -147,7 +148,7 @@ describe('useOnCallIntegration', () => {
     });
 
     it('extendConCallNotifierFeatures should not extend notifier', async () => {
-      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: TestProvider });
+      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: wrapper() });
 
       await waitFor(() => expect(result.current.isLoadingOnCallIntegration).toBe(false));
 
@@ -172,7 +173,7 @@ describe('useOnCallIntegration', () => {
     });
 
     it('extendOnCalReceivers should not add new settings to the oncall receiver', async () => {
-      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: TestProvider });
+      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: wrapper() });
 
       await waitFor(() => expect(result.current.isLoadingOnCallIntegration).toBe(false));
 
@@ -199,7 +200,7 @@ describe('useOnCallIntegration', () => {
     });
 
     it('extendConCallNotifierFeatures should not extend notifier', async () => {
-      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: TestProvider });
+      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: wrapper() });
 
       await waitFor(() => expect(result.current.isLoadingOnCallIntegration).toBe(false));
 

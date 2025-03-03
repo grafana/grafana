@@ -1,7 +1,7 @@
 import { Matcher, MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
 
-import { labelsMatchMatchers, removeMuteTimingFromRoute, matchersToString } from './alertmanager';
+import { labelsMatchMatchers, matchersToString, removeTimeIntervalFromRoute } from './alertmanager';
 import { parseMatcher, parsePromQLStyleMatcherLooseSafe } from './matchers';
 
 describe('Alertmanager utils', () => {
@@ -92,6 +92,15 @@ describe('Alertmanager utils', () => {
       const matchers = parsePromQLStyleMatcherLooseSafe('foo!=bazz,bar=~ba.+');
       expect(labelsMatchMatchers(labels, matchers)).toBe(true);
     });
+    it('should match when using flags and different operators', () => {
+      const labels: Labels = {
+        foo: 'bar',
+        bar: 'bazz',
+        email: 'admin@grafana.com',
+      };
+      const matchers = parsePromQLStyleMatcherLooseSafe('foo!=bazz,bar=~(?i)Ba.+');
+      expect(labelsMatchMatchers(labels, matchers)).toBe(true);
+    });
   });
 
   describe('removeMuteTimingFromRoute', () => {
@@ -104,6 +113,7 @@ describe('Alertmanager utils', () => {
           receiver: 'slack',
           object_matchers: [['env', MatcherOperator.equal, 'prod']],
           mute_time_intervals: ['test2'],
+          active_time_intervals: ['test1'],
         },
         {
           receiver: 'pagerduty',
@@ -113,13 +123,15 @@ describe('Alertmanager utils', () => {
       ],
     };
 
-    it('should remove mute timings from routes', () => {
-      expect(removeMuteTimingFromRoute('test1', route)).toEqual({
+    it('should remove time interval from routes', () => {
+      expect(removeTimeIntervalFromRoute('test1', route)).toEqual({
         mute_time_intervals: ['test2'],
+        active_time_intervals: [],
         object_matchers: [['foo', '=', 'bar']],
         receiver: 'gmail',
         routes: [
           {
+            active_time_intervals: [],
             mute_time_intervals: ['test2'],
             object_matchers: [['env', '=', 'prod']],
             receiver: 'slack',
@@ -127,6 +139,7 @@ describe('Alertmanager utils', () => {
           },
           {
             mute_time_intervals: [],
+            active_time_intervals: [],
             object_matchers: [['env', '=', 'eu']],
             receiver: 'pagerduty',
             routes: undefined,

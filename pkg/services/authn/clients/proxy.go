@@ -12,8 +12,9 @@ import (
 	"strings"
 	"time"
 
+	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -119,13 +120,14 @@ func (c *Proxy) retrieveIDFromCache(ctx context.Context, cacheKey string, r *aut
 		return nil, err
 	}
 
-	uid, err := strconv.ParseInt(string(entry), 10, 64)
+	_, err = strconv.ParseInt(string(entry), 10, 64)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse user id from cache: %w - entry: %s", err, string(entry))
 	}
 
 	return &authn.Identity{
-		ID:    identity.NewTypedID(identity.TypeUser, uid),
+		ID:    string(entry),
+		Type:  claims.TypeUser,
 		OrgID: r.OrgID,
 		// FIXME: This does not match the actual auth module used, but should not have any impact
 		// Maybe caching the auth module used with the user ID would be a good idea
@@ -150,13 +152,13 @@ func (c *Proxy) Hook(ctx context.Context, id *authn.Identity, r *authn.Request) 
 		return nil
 	}
 
-	if !id.ID.IsType(identity.TypeUser) {
+	if !id.IsIdentityType(claims.TypeUser) {
 		return nil
 	}
 
-	internalId, err := id.ID.ParseInt()
+	internalId, err := id.GetInternalID()
 	if err != nil {
-		c.log.Warn("Failed to cache proxy user", "error", err, "userId", id.ID.ID(), "err", err)
+		c.log.Warn("Failed to cache proxy user", "error", err, "userId", id.GetID(), "err", err)
 		return nil
 	}
 

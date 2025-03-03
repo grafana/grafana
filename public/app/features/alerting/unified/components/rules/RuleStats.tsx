@@ -1,7 +1,7 @@
 import { isUndefined, omitBy, pick, sum } from 'lodash';
 import pluralize from 'pluralize';
-import { Fragment } from 'react';
 import * as React from 'react';
+import { Fragment, useDeferredValue, useMemo } from 'react';
 
 import { Badge, Stack } from '@grafana/ui';
 import {
@@ -27,8 +27,12 @@ const emptyStats: Required<AlertGroupTotals> = {
   nodata: 0,
 };
 
-export const RuleStats = ({ namespaces }: Props) => {
-  const stats = statsFromNamespaces(namespaces);
+// Stats calculation is an expensive operation
+// Make sure we repeat that as few times as possible
+export const RuleStats = React.memo(({ namespaces }: Props) => {
+  const deferredNamespaces = useDeferredValue(namespaces);
+
+  const stats = useMemo(() => statsFromNamespaces(deferredNamespaces), [deferredNamespaces]);
   const total = totalFromStats(stats);
 
   const statsComponents = getComponentsFromStats(stats);
@@ -49,7 +53,9 @@ export const RuleStats = ({ namespaces }: Props) => {
       )}
     </Stack>
   );
-};
+});
+
+RuleStats.displayName = 'RuleStats';
 
 interface RuleGroupStatsProps {
   group: CombinedRuleGroup;
@@ -62,7 +68,7 @@ function statsFromNamespaces(namespaces: CombinedRuleNamespace[]): AlertGroupTot
   namespaces.forEach(({ groups }) => {
     groups.forEach((group) => {
       const groupTotals = omitBy(group.totals, isUndefined);
-      for (let key in groupTotals) {
+      for (const key in groupTotals) {
         // @ts-ignore
         stats[key] += groupTotals[key];
       }
@@ -115,7 +121,7 @@ export function getComponentsFromStats(
   }
 
   if (stats.error) {
-    statsComponents.push(<Badge color="red" key="errors" text={`${stats.error} errors`} />);
+    statsComponents.push(<Badge color="red" key="errors" text={`${stats.error} ${pluralize('error', stats.error)}`} />);
   }
 
   if (stats.nodata) {

@@ -3,6 +3,7 @@ package webassets
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -14,76 +15,96 @@ func TestReadWebassets(t *testing.T) {
 
 	dto, err := json.MarshalIndent(assets, "", "  ")
 	require.NoError(t, err)
-	//fmt.Printf("%s\n", string(dto))
+	// fmt.Printf("%s\n", string(dto))
 
 	require.JSONEq(t, `{
-		"jsFiles": [
-		  {
-			"filePath": "public/build/runtime.20ed8c01880b812ed29f.js",
-			"integrity": "sha256-rcdxIHk6cWgu4jiFa1a+pWlileYD/R72GaS8ZACBUdw= sha384-I/VJZQkt+TuJTvu61ihdWPds7EHfLrW5CxeQ0x9gtSqoPg9Z17Uawz1yoYaTdxqQ sha512-4CPAbh4KdTmGxHoQw4pgpYmgAquupVfwfo6UBV2cGU3vGFnEwkhq320037ETwWs+n9xB/bAMOvrdabp1SA1+8g=="
-		  },
-		  {
-			"filePath": "public/build/3951.4e474348841d792ab1ba.js",
-			"integrity": "sha256-dHqXXTRA3osYhHr9rol8hOV0nC4VP0pr5tbMp5VD95Q= sha384-4QJaSTibnxdYeYsLnmXtd1+If6IkAmXlLR0uYHN5+N+fS0FegHRH7MIFaRGjiO1B sha512-vRLEeEGbxBCx0z+l/m14fSK49reqWGA9zQzsCrD+TQQBmP07YIoRPwopMMyxtKljbbRFV0bW2bUZ7ZvzOZYoIQ=="
-		  },
-		  {
-			"filePath": "public/build/3651.4e8f7603e9778e1e9b59.js",
-			"integrity": "sha256-+N7caL91pVANd7C/aquAneRTjBQenCwaEKqj+3qkjxc= sha384-GQR7GyHPEwwEVph9gGYWEWvMYxkITwcOjieehbPidXZrybuQyw9cpDkjnWo1tj/w sha512-zyPM+8AxyLuECEXjb9w6Z2Sy8zmJdkfTWQphcvAb8AU4ZdkCqLmyjmOs/QQlpfKDe0wdOLyR3V9QgTDDlxtVlQ=="
-		  },
-		  {
-			"filePath": "public/build/1272.8c79fc44bf7cd993c953.js",
-			"integrity": "sha256-d7MRVimV83v4YQ5rdURfTaaFtiedXP3EMLT06gvvBuQ= sha384-8tRpYHQ+sEkZ8ptiIbKAbKPpHTJVnmaWDN56vJoWWUCzV1Q2w034wcJNKDJDJdAs sha512-cIZWoJHusF8qODBOj2j4b18ewcLLMo/92YQSwYQjln2G5e3o1bSO476ox2I2iecJ/tnhQK5j01h9BzTt3dNTrA=="
-		  },
-		  {
-			"filePath": "public/build/6902.070074e8f5a989b8f4c3.js",
-			"integrity": "sha256-TMo/uTZueyEHtkBzlLZzhwYKWF0epE4qbouo5xcwZkU= sha384-xylZJMtJ7+EsUBBdQZvPh+BeHJ3BnfclqI2vx/8QC9jvfYe/lhRsWW9OMJsxE/Aq sha512-EOmf+KZQMFPoTWAROL8bBLFfHhgvDH8ONycq37JaV7lz+sQOTaWBN2ZD0F/mMdOD5zueTg/Y1RAUP6apoEcHNQ=="
-		  },
-		  {
-			"filePath": "public/build/app.0439db6f56ee4aa501b2.js",
-			"integrity": "sha256-q6muaKY7BuN2Ff+00aw69628MXatcFnLNzWRnAD98DI= sha384-gv6lAbkngOHR05bvyOR8dm/J3wIjQQWSjyxK7W8vt2rG9uxcjvvDQV7aI6YbUhfX sha512-o/0mSlJ/OoqrpGdOIWCE3ZCe8n+qqLbgNCERtx9G8FIzsv++CvIWSGbbILjOTGfnEfEQWcKMH0macVpVBSe1Og=="
-		  }
-		],
-		"dark": "public/build/grafana.dark.a28b24b45b2bbcc628cc.css",
-		"light": "public/build/grafana.light.3572f6d5f8b7daa8d8d0.css"
-	  }`, string(dto))
+	"jsFiles": [
+		{
+		"filePath": "public/build/runtime.js",
+		"integrity": "sha256-tM4AGASn3Cb8139+wp3w6rlo3ELFAuUW7K4Pifx226o= sha384-DfxxsYWb0+RxiXOr+wtCSzAAYGecffq/iHyn6CN9tHmaORv1sS+rsrnlnJo2jPQD sha512-qSxdqrx0mJLY1mdkbKrkCyqOoIEgFqzCoY9+uIuFRIVDPFbb2nJy0NtaKMQvDJnAzIrJFwzwW1e250T4WqQNiQ=="
+		},
+		{
+		"filePath": "public/build/default-packages_grafana-ui_src_components_Layout_Stack_Stack_tsx-packages_grafana-ui_src_com-2a3620.js",
+		"integrity": "sha256-+0bPuBGKFGglkXvW4oPiolrNveozRLZVLUrbCYsbVcM= sha384-EIayAgykdDWmyilAuXo4ad96v3tRqdWZp+BHdeDpSSsbAMeg+eoBBbk2Yh219kDg sha512-+jn7kmQ9Id8aTIe66TD+vM+W19cTIVexEfkxbxgqXdJyJ72qalN6ccWyP1ro1w/E1R/laZGNLz1LBc1I4u2Isw=="
+		},
+		{
+		"filePath": "public/build/app.js",
+		"integrity": "sha256-IOZKp3piC3vddDXP5jy5rIw0vb0KKEOg/k9EGrIxskk= sha384-CBNr5W0pJ23LQMnz5BZI1iVBIExOmF/wpqkEnBtYu9R/yYJIzjpv8KT0a3TBulOi sha512-ockzlzgosuZvLittZrSzh8lexEIZF9iKpy6J9Ii4es3e4D34FpWhHJhDZGpxLVraX4ypLofrDp2Yy0sdUbdi7w=="
+		}
+	],
+	"cssFiles": [
+		{
+		"filePath": "public/build/grafana.app.91aaa9d81398c147a57c.css",
+		"integrity": "sha256-77rfikk+dYkH82TOmcmleVoDOHZQdhzVX9gDLcgPbtQ= sha384-IOTlZ1IvTVq5ekKLoaE3/SoZ12K1eExOAnSw9BzkgQ3+RcyQpb1S5hO2w//IIkRB sha512-0Ct3uJBFQIkyxYTvMxseA1cphe2RivXQ2MCbiV0hEm5NzWPiY9sq2P4ay5dXz5v35c++4W47KaknoWlc83bQJQ=="
+		}
+	],
+	"dark": "public/build/grafana.dark.722d809dba5a31f57d49.css",
+	"light": "public/build/grafana.light.2fbd901d840329c18394.css",
+	"swagger": [
+		{
+		"filePath": "public/build/runtime.js",
+		"integrity": "sha256-tM4AGASn3Cb8139+wp3w6rlo3ELFAuUW7K4Pifx226o= sha384-DfxxsYWb0+RxiXOr+wtCSzAAYGecffq/iHyn6CN9tHmaORv1sS+rsrnlnJo2jPQD sha512-qSxdqrx0mJLY1mdkbKrkCyqOoIEgFqzCoY9+uIuFRIVDPFbb2nJy0NtaKMQvDJnAzIrJFwzwW1e250T4WqQNiQ=="
+		},
+		{
+		"filePath": "public/build/swagger.js",
+		"integrity": "sha256-wLlip7zRYODW/TPcI5JZPRdmWirc1KD+UcNF+8V9RBk= sha384-6VGD+LgCpjMZN/ORSjWcrWa9diUzQO3OfEhP0D2ZluSwP4IT+0kH7KEeD9NVbojd sha512-vZOCFzBZBhd34yGv8z7P4Gw4WLVR9HjpuK0y6Kcw+pCBk5Dv9qHBg3ZVs6s0tOnUmiMWwgL4Ne8f+zgiuJVPqg=="
+		}
+	],
+	"swaggerCssFiles": [
+		{
+		"filePath": "public/build/grafana.swagger.2733d417270d5dd49373.css",
+		"integrity": "sha256-GNcHNgIAT7S+J4X7seFjlvNPC1bRhM15d0cQBm3VFoQ= sha384-ywztCBf8uF0tTFjC1mLth33RI2WuFURN3dRy7Bv2PheGzbWJpwlgo9+mtT2Zm7mO sha512-e4c+VedZGqcwLqwfdqRWonggRPO0gjJ7Z0YbXK5z4bFTsUIc+x8ycIJG+eQaf8cuHlsakG4hkWNkRwLBazcFAg=="
+		}
+	]
+	}`, string(dto))
 
 	assets.SetContentDeliveryURL("https://grafana-assets.grafana.net/grafana/10.3.0-64123/")
 
 	dto, err = json.MarshalIndent(assets, "", "  ")
 	require.NoError(t, err)
-	//fmt.Printf("%s\n", string(dto))
+	fmt.Printf("%s\n", string(dto))
 
 	require.JSONEq(t, `{
-		"cdn": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/",
-		"jsFiles": [
-		  {
-			"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/runtime.20ed8c01880b812ed29f.js",
-			"integrity": "sha256-rcdxIHk6cWgu4jiFa1a+pWlileYD/R72GaS8ZACBUdw= sha384-I/VJZQkt+TuJTvu61ihdWPds7EHfLrW5CxeQ0x9gtSqoPg9Z17Uawz1yoYaTdxqQ sha512-4CPAbh4KdTmGxHoQw4pgpYmgAquupVfwfo6UBV2cGU3vGFnEwkhq320037ETwWs+n9xB/bAMOvrdabp1SA1+8g=="
-		  },
-		  {
-			"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/3951.4e474348841d792ab1ba.js",
-			"integrity": "sha256-dHqXXTRA3osYhHr9rol8hOV0nC4VP0pr5tbMp5VD95Q= sha384-4QJaSTibnxdYeYsLnmXtd1+If6IkAmXlLR0uYHN5+N+fS0FegHRH7MIFaRGjiO1B sha512-vRLEeEGbxBCx0z+l/m14fSK49reqWGA9zQzsCrD+TQQBmP07YIoRPwopMMyxtKljbbRFV0bW2bUZ7ZvzOZYoIQ=="
-		  },
-		  {
-			"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/3651.4e8f7603e9778e1e9b59.js",
-			"integrity": "sha256-+N7caL91pVANd7C/aquAneRTjBQenCwaEKqj+3qkjxc= sha384-GQR7GyHPEwwEVph9gGYWEWvMYxkITwcOjieehbPidXZrybuQyw9cpDkjnWo1tj/w sha512-zyPM+8AxyLuECEXjb9w6Z2Sy8zmJdkfTWQphcvAb8AU4ZdkCqLmyjmOs/QQlpfKDe0wdOLyR3V9QgTDDlxtVlQ=="
-		  },
-		  {
-			"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/1272.8c79fc44bf7cd993c953.js",
-			"integrity": "sha256-d7MRVimV83v4YQ5rdURfTaaFtiedXP3EMLT06gvvBuQ= sha384-8tRpYHQ+sEkZ8ptiIbKAbKPpHTJVnmaWDN56vJoWWUCzV1Q2w034wcJNKDJDJdAs sha512-cIZWoJHusF8qODBOj2j4b18ewcLLMo/92YQSwYQjln2G5e3o1bSO476ox2I2iecJ/tnhQK5j01h9BzTt3dNTrA=="
-		  },
-		  {
-			"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/6902.070074e8f5a989b8f4c3.js",
-			"integrity": "sha256-TMo/uTZueyEHtkBzlLZzhwYKWF0epE4qbouo5xcwZkU= sha384-xylZJMtJ7+EsUBBdQZvPh+BeHJ3BnfclqI2vx/8QC9jvfYe/lhRsWW9OMJsxE/Aq sha512-EOmf+KZQMFPoTWAROL8bBLFfHhgvDH8ONycq37JaV7lz+sQOTaWBN2ZD0F/mMdOD5zueTg/Y1RAUP6apoEcHNQ=="
-		  },
-		  {
-			"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/app.0439db6f56ee4aa501b2.js",
-			"integrity": "sha256-q6muaKY7BuN2Ff+00aw69628MXatcFnLNzWRnAD98DI= sha384-gv6lAbkngOHR05bvyOR8dm/J3wIjQQWSjyxK7W8vt2rG9uxcjvvDQV7aI6YbUhfX sha512-o/0mSlJ/OoqrpGdOIWCE3ZCe8n+qqLbgNCERtx9G8FIzsv++CvIWSGbbILjOTGfnEfEQWcKMH0macVpVBSe1Og=="
-		  }
-		],
-		"dark": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana.dark.a28b24b45b2bbcc628cc.css",
-		"light": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana.light.3572f6d5f8b7daa8d8d0.css"
-	  }`, string(dto))
+	"cdn": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/",
+	"jsFiles": [
+		{
+		"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/runtime.js",
+		"integrity": "sha256-tM4AGASn3Cb8139+wp3w6rlo3ELFAuUW7K4Pifx226o= sha384-DfxxsYWb0+RxiXOr+wtCSzAAYGecffq/iHyn6CN9tHmaORv1sS+rsrnlnJo2jPQD sha512-qSxdqrx0mJLY1mdkbKrkCyqOoIEgFqzCoY9+uIuFRIVDPFbb2nJy0NtaKMQvDJnAzIrJFwzwW1e250T4WqQNiQ=="
+		},
+		{
+		"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/default-packages_grafana-ui_src_components_Layout_Stack_Stack_tsx-packages_grafana-ui_src_com-2a3620.js",
+		"integrity": "sha256-+0bPuBGKFGglkXvW4oPiolrNveozRLZVLUrbCYsbVcM= sha384-EIayAgykdDWmyilAuXo4ad96v3tRqdWZp+BHdeDpSSsbAMeg+eoBBbk2Yh219kDg sha512-+jn7kmQ9Id8aTIe66TD+vM+W19cTIVexEfkxbxgqXdJyJ72qalN6ccWyP1ro1w/E1R/laZGNLz1LBc1I4u2Isw=="
+		},
+		{
+		"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/app.js",
+		"integrity": "sha256-IOZKp3piC3vddDXP5jy5rIw0vb0KKEOg/k9EGrIxskk= sha384-CBNr5W0pJ23LQMnz5BZI1iVBIExOmF/wpqkEnBtYu9R/yYJIzjpv8KT0a3TBulOi sha512-ockzlzgosuZvLittZrSzh8lexEIZF9iKpy6J9Ii4es3e4D34FpWhHJhDZGpxLVraX4ypLofrDp2Yy0sdUbdi7w=="
+		}
+	],
+	"cssFiles": [
+		{
+		"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana.app.91aaa9d81398c147a57c.css",
+		"integrity": "sha256-77rfikk+dYkH82TOmcmleVoDOHZQdhzVX9gDLcgPbtQ= sha384-IOTlZ1IvTVq5ekKLoaE3/SoZ12K1eExOAnSw9BzkgQ3+RcyQpb1S5hO2w//IIkRB sha512-0Ct3uJBFQIkyxYTvMxseA1cphe2RivXQ2MCbiV0hEm5NzWPiY9sq2P4ay5dXz5v35c++4W47KaknoWlc83bQJQ=="
+		}
+	],
+	"dark": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana.dark.722d809dba5a31f57d49.css",
+	"light": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana.light.2fbd901d840329c18394.css",
+	"swagger": [
+		{
+		"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/runtime.js",
+		"integrity": "sha256-tM4AGASn3Cb8139+wp3w6rlo3ELFAuUW7K4Pifx226o= sha384-DfxxsYWb0+RxiXOr+wtCSzAAYGecffq/iHyn6CN9tHmaORv1sS+rsrnlnJo2jPQD sha512-qSxdqrx0mJLY1mdkbKrkCyqOoIEgFqzCoY9+uIuFRIVDPFbb2nJy0NtaKMQvDJnAzIrJFwzwW1e250T4WqQNiQ=="
+		},
+		{
+		"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/swagger.js",
+		"integrity": "sha256-wLlip7zRYODW/TPcI5JZPRdmWirc1KD+UcNF+8V9RBk= sha384-6VGD+LgCpjMZN/ORSjWcrWa9diUzQO3OfEhP0D2ZluSwP4IT+0kH7KEeD9NVbojd sha512-vZOCFzBZBhd34yGv8z7P4Gw4WLVR9HjpuK0y6Kcw+pCBk5Dv9qHBg3ZVs6s0tOnUmiMWwgL4Ne8f+zgiuJVPqg=="
+		}
+	],
+	"swaggerCssFiles": [
+		{
+		"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana.swagger.2733d417270d5dd49373.css",
+		"integrity": "sha256-GNcHNgIAT7S+J4X7seFjlvNPC1bRhM15d0cQBm3VFoQ= sha384-ywztCBf8uF0tTFjC1mLth33RI2WuFURN3dRy7Bv2PheGzbWJpwlgo9+mtT2Zm7mO sha512-e4c+VedZGqcwLqwfdqRWonggRPO0gjJ7Z0YbXK5z4bFTsUIc+x8ycIJG+eQaf8cuHlsakG4hkWNkRwLBazcFAg=="
+		}
+	]
+	}`, string(dto))
 }
 
 func TestReadWebassetsFromCDN(t *testing.T) {

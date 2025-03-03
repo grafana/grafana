@@ -1,3 +1,5 @@
+import { first } from 'rxjs';
+
 import {
   arrayToDataFrame,
   DataQueryResponse,
@@ -6,6 +8,8 @@ import {
   LoadingState,
   standardTransformersRegistry,
 } from '@grafana/data';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { setPluginImportUtils } from '@grafana/runtime';
 import {
   SafeSerializableSceneObject,
   SceneDataNode,
@@ -17,12 +21,30 @@ import {
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
+import { MIXED_REQUEST_PREFIX } from '../mixed/MixedDataSource';
+
 import { DashboardDatasource } from './datasource';
 import { DashboardQuery } from './types';
 
+jest.mock('rxjs', () => {
+  const original = jest.requireActual('rxjs');
+  return {
+    ...original,
+    first: jest.fn(original.first),
+  };
+});
+
 standardTransformersRegistry.setInit(getStandardTransformers);
+setPluginImportUtils({
+  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
+  getPanelPluginFromCache: (id: string) => undefined,
+});
 
 describe('DashboardDatasource', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it("should look up the other panel and subscribe to it's data", async () => {
     const { observable } = setup({ refId: 'A', panelId: 1 });
 
@@ -64,9 +86,25 @@ describe('DashboardDatasource', () => {
 
     expect(sourceData.isActive).toBe(false);
   });
+
+  it('Should emit only the first value and complete if used within MixedDS', async () => {
+    const { observable } = setup({ refId: 'A', panelId: 1 }, `${MIXED_REQUEST_PREFIX}1`);
+
+    observable.subscribe({ next: () => {} });
+
+    expect(first).toHaveBeenCalled();
+  });
+
+  it('Should not get the first emission if requestId does not contain the MixedDS prefix', async () => {
+    const { observable } = setup({ refId: 'A', panelId: 1 });
+
+    observable.subscribe({ next: () => {} });
+
+    expect(first).not.toHaveBeenCalled();
+  });
 });
 
-function setup(query: DashboardQuery) {
+function setup(query: DashboardQuery, requestId?: string) {
   const sourceData = new SceneDataTransformer({
     $data: new SceneDataNode({
       data: {
@@ -95,7 +133,7 @@ function setup(query: DashboardQuery) {
   const observable = ds.query({
     timezone: 'utc',
     targets: [query],
-    requestId: '',
+    requestId: requestId ?? '',
     interval: '',
     intervalMs: 0,
     range: getDefaultTimeRange(),

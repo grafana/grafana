@@ -2,10 +2,13 @@ package authn
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
-	"github.com/grafana/authlib/authn"
 	"golang.org/x/oauth2"
+
+	"github.com/grafana/authlib/authn"
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models/usertoken"
@@ -20,10 +23,11 @@ var _ identity.Requester = (*Identity)(nil)
 
 type Identity struct {
 	// ID is the unique identifier for the entity in the Grafana database.
-	// If the entity is not found in the DB or this entity is non-persistent, this field will be empty.
-	ID identity.TypedID
+	ID string
 	// UID is a unique identifier stored for the entity in Grafana database. Not all entities support uid so it can be empty.
-	UID identity.TypedID
+	UID string
+	// Type is the IdentityType of entity.
+	Type claims.IdentityType
 	// OrgID is the active organization for the entity.
 	OrgID int64
 	// OrgName is the name of the active organization.
@@ -41,13 +45,13 @@ type Identity struct {
 	// IsGrafanaAdmin is true if the entity is a Grafana admin.
 	IsGrafanaAdmin *bool
 	// AuthenticatedBy is the name of the authentication client that was used to authenticate the current Identity.
-	// For example, "password", "apikey", "auth_ldap" or "auth_azuread".
+	// For example, "password", "apikey", "ldap" or "oauth_azuread".
 	AuthenticatedBy string
 	// AuthId is the unique identifier for the entity in the external system.
 	// Empty if the identity is provided by Grafana.
 	AuthID string
-	// AllowedKubernetesNamespace
-	AllowedKubernetesNamespace string
+	// Namespace
+	Namespace string
 	// IsDisabled is true if the entity is disabled.
 	IsDisabled bool
 	// HelpFlags1 is the help flags for the entity.
@@ -61,6 +65,8 @@ type Identity struct {
 	Groups []string
 	// OAuthToken is the OAuth token used to authenticate the entity.
 	OAuthToken *oauth2.Token
+	// SAMLSession is the SAML session information.
+	SAMLSession *login.SAMLSession
 	// SessionToken is the session token used to authenticate the entity.
 	SessionToken *usertoken.UserToken
 	// ClientParams are hints for the auth service on how to handle the identity.
@@ -69,27 +75,77 @@ type Identity struct {
 	// Permissions is the list of permissions the entity has.
 	Permissions map[int64]map[string][]string
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
-	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
-	IDToken       string
-	IDTokenClaims *authn.Claims[authn.IDTokenClaims]
+	IDToken string
+
+	IDTokenClaims     *authn.Claims[authn.IDTokenClaims]
+	AccessTokenClaims *authn.Claims[authn.AccessTokenClaims]
 }
 
-// GetRawIdentifier implements Requester.
-func (i *Identity) GetRawIdentifier() string {
-	return i.UID.ID()
+func (i *Identity) GetID() string {
+	return i.GetSubject()
 }
 
-// GetInternalID implements Requester.
 func (i *Identity) GetInternalID() (int64, error) {
-	return i.ID.UserID()
+	return identity.IntIdentifier(i.GetID())
 }
 
-// GetIdentityType implements Requester.
-func (i *Identity) GetIdentityType() identity.IdentityType {
-	return i.UID.Type()
+func (i *Identity) GetUID() string {
+	return claims.NewTypeID(i.Type, i.UID)
 }
 
-// GetExtra implements identity.Requester.
+func (i *Identity) GetRawIdentifier() string {
+	return i.UID
+}
+
+func (i *Identity) GetIdentifier() string {
+	return i.UID
+}
+
+func (i *Identity) GetIdentityType() claims.IdentityType {
+	return i.Type
+}
+
+func (i *Identity) IsIdentityType(expected ...claims.IdentityType) bool {
+	return claims.IsIdentityType(i.GetIdentityType(), expected...)
+}
+
+func (i *Identity) GetNamespace() string {
+	return i.Namespace
+}
+
+func (i *Identity) GetSubject() string {
+	return claims.NewTypeID(i.Type, i.ID)
+}
+
+func (i *Identity) GetAudience() []string {
+	if i.AccessTokenClaims != nil {
+		return i.AccessTokenClaims.Audience
+	}
+	return []string{}
+}
+
+func (i *Identity) GetEmailVerified() bool {
+	return i.EmailVerified
+}
+
+func (i *Identity) GetTokenPermissions() []string {
+	if i.AccessTokenClaims != nil {
+		return i.AccessTokenClaims.Rest.Permissions
+	}
+	return []string{}
+}
+
+func (i *Identity) GetTokenDelegatedPermissions() []string {
+	if i.AccessTokenClaims != nil {
+		return i.AccessTokenClaims.Rest.DelegatedPermissions
+	}
+	return []string{}
+}
+
+func (i *Identity) GetGroups() []string {
+	return []string{}
+}
+
 func (i *Identity) GetExtra() map[string][]string {
 	extra := map[string][]string{}
 	if i.IDToken != "" {
@@ -101,26 +157,14 @@ func (i *Identity) GetExtra() map[string][]string {
 	return extra
 }
 
-// GetGroups implements identity.Requester.
-func (i *Identity) GetGroups() []string {
-	return []string{} // teams?
-}
-
-// GetName implements identity.Requester.
 func (i *Identity) GetName() string {
-	return i.Name
-}
-
-func (i *Identity) GetID() identity.TypedID {
-	return i.ID
-}
-
-func (i *Identity) GetTypedID() (namespace identity.IdentityType, identifier string) {
-	return i.ID.Type(), i.ID.ID()
-}
-
-func (i *Identity) GetUID() string {
-	return i.UID.String()
+	if i.Name != "" {
+		return i.Name
+	}
+	if i.Login != "" {
+		return i.Login
+	}
+	return i.Email
 }
 
 func (i *Identity) GetAuthID() string {
@@ -132,46 +176,34 @@ func (i *Identity) GetAuthenticatedBy() string {
 }
 
 func (i *Identity) GetCacheKey() string {
-	namespace, id := i.GetTypedID()
+	id := i.ID
 	if !i.HasUniqueId() {
 		// Hack use the org role as id for identities that do not have a unique id
 		// e.g. anonymous and render key.
 		id = string(i.GetOrgRole())
 	}
 
-	return fmt.Sprintf("%d-%s-%s", i.GetOrgID(), namespace, id)
-}
-
-func (i *Identity) GetDisplayName() string {
-	return i.Name
+	return fmt.Sprintf("%d-%s-%s", i.GetOrgID(), i.Type, id)
 }
 
 func (i *Identity) GetEmail() string {
 	return i.Email
 }
 
-func (i *Identity) IsEmailVerified() bool {
-	return i.EmailVerified
-}
-
 func (i *Identity) GetIDToken() string {
 	return i.IDToken
-}
-
-func (i *Identity) GetIDClaims() *authn.Claims[authn.IDTokenClaims] {
-	return i.IDTokenClaims
 }
 
 func (i *Identity) GetIsGrafanaAdmin() bool {
 	return i.IsGrafanaAdmin != nil && *i.IsGrafanaAdmin
 }
 
-func (i *Identity) GetLogin() string {
+func (i *Identity) GetUsername() string {
 	return i.Login
 }
 
-func (i *Identity) GetAllowedKubernetesNamespace() string {
-	return i.AllowedKubernetesNamespace
+func (i *Identity) GetLogin() string {
+	return i.Login
 }
 
 func (i *Identity) GetOrgID() int64 {
@@ -232,10 +264,7 @@ func (i *Identity) HasRole(role org.RoleType) bool {
 }
 
 func (i *Identity) HasUniqueId() bool {
-	namespace, _ := i.GetTypedID()
-	return namespace == identity.TypeUser ||
-		namespace == identity.TypeServiceAccount ||
-		namespace == identity.TypeAPIKey
+	return i.IsIdentityType(claims.TypeUser, claims.TypeAPIKey, claims.TypeServiceAccount)
 }
 
 func (i *Identity) IsAuthenticatedBy(providers ...string) bool {
@@ -254,40 +283,44 @@ func (i *Identity) IsNil() bool {
 // SignedInUser returns a SignedInUser from the identity.
 func (i *Identity) SignedInUser() *user.SignedInUser {
 	u := &user.SignedInUser{
-		OrgID:           i.OrgID,
-		OrgName:         i.OrgName,
-		OrgRole:         i.GetOrgRole(),
-		Login:           i.Login,
-		Name:            i.Name,
-		Email:           i.Email,
-		AuthID:          i.AuthID,
-		AuthenticatedBy: i.AuthenticatedBy,
-		IsGrafanaAdmin:  i.GetIsGrafanaAdmin(),
-		IsAnonymous:     i.ID.IsType(identity.TypeAnonymous),
-		IsDisabled:      i.IsDisabled,
-		HelpFlags1:      i.HelpFlags1,
-		LastSeenAt:      i.LastSeenAt,
-		Teams:           i.Teams,
-		Permissions:     i.Permissions,
-		IDToken:         i.IDToken,
-		FallbackType:    i.ID.Type(),
+		OrgID:             i.OrgID,
+		OrgName:           i.OrgName,
+		OrgRole:           i.GetOrgRole(),
+		Login:             i.Login,
+		Name:              i.Name,
+		Email:             i.Email,
+		EmailVerified:     i.EmailVerified,
+		AuthID:            i.AuthID,
+		AuthenticatedBy:   i.AuthenticatedBy,
+		Namespace:         i.Namespace,
+		IsGrafanaAdmin:    i.GetIsGrafanaAdmin(),
+		IsAnonymous:       i.IsIdentityType(claims.TypeAnonymous),
+		IsDisabled:        i.IsDisabled,
+		HelpFlags1:        i.HelpFlags1,
+		LastSeenAt:        i.LastSeenAt,
+		Teams:             i.Teams,
+		Permissions:       i.Permissions,
+		IDToken:           i.IDToken,
+		IDTokenClaims:     i.IDTokenClaims,
+		AccessTokenClaims: i.AccessTokenClaims,
+		FallbackType:      i.Type,
 	}
 
-	if i.ID.IsType(identity.TypeAPIKey) {
-		id, _ := i.ID.ParseInt()
+	if i.IsIdentityType(claims.TypeAPIKey) {
+		id, _ := i.GetInternalID()
 		u.ApiKeyID = id
 	} else {
-		id, _ := i.ID.UserID()
+		id, _ := i.GetInternalID()
 		u.UserID = id
-		u.UserUID = i.UID.ID()
-		u.IsServiceAccount = i.ID.IsType(identity.TypeServiceAccount)
+		u.UserUID = i.UID
+		u.IsServiceAccount = i.IsIdentityType(claims.TypeServiceAccount)
 	}
 
 	return u
 }
 
 func (i *Identity) ExternalUserInfo() login.ExternalUserInfo {
-	id, _ := i.ID.UserID()
+	id, _ := strconv.ParseInt(i.ID, 10, 64)
 	return login.ExternalUserInfo{
 		OAuthToken:     i.OAuthToken,
 		AuthModule:     i.AuthenticatedBy,

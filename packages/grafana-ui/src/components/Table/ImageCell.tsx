@@ -29,10 +29,9 @@ export const ImageCell = (props: TableCellProps) => {
 
   return (
     <div {...cellProps} className={tableStyles.cellContainer}>
-      {/* If there are no links we simply render the image */}
-      {!hasLinks && img}
-      {/* Otherwise render data links with image */}
-      {hasLinks && (
+      {/* If there are data links/actions, we render them with image */}
+      {/* Otherwise we simply render the image */}
+      {hasLinks ? (
         <DataLinksContextMenu
           style={{ height: tableStyles.cellHeight - DATALINKS_HEIGHT_OFFSET, width: 'auto' }}
           links={() => getCellLinks(field, row) || []}
@@ -59,6 +58,8 @@ export const ImageCell = (props: TableCellProps) => {
             }
           }}
         </DataLinksContextMenu>
+      ) : (
+        img
       )}
     </div>
   );

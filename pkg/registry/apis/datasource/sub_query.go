@@ -2,16 +2,22 @@ package datasource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	query_headers "github.com/grafana/grafana/pkg/registry/apis/query"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/web"
+
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 type subQueryREST struct {
@@ -49,7 +55,18 @@ func (r *subQueryREST) NewConnectOptions() (runtime.Object, bool, string) {
 
 func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	pluginCtx, err := r.builder.getPluginContext(ctx, name)
+
 	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			return nil, k8serrors.NewNotFound(
+				schema.GroupResource{
+					Group:    r.builder.connectionResourceInfo.GroupResource().Group,
+					Resource: r.builder.connectionResourceInfo.GroupResource().Resource,
+				},
+				name,
+			)
+		}
+
 		return nil, err
 	}
 
@@ -73,9 +90,11 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 
 		ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 		ctx = contextualMiddlewares(ctx)
+
 		rsp, err := r.builder.client.QueryData(ctx, &backend.QueryDataRequest{
 			Queries:       queries,
 			PluginContext: pluginCtx,
+			Headers:       query_headers.ExtractKnownHeaders(req.Header),
 		})
 		if err != nil {
 			responder.Error(err)

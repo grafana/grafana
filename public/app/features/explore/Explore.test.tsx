@@ -12,7 +12,7 @@ import {
   store,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { usePluginLinkExtensions } from '@grafana/runtime';
+import { usePluginLinks } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
@@ -103,6 +103,11 @@ const dummyProps: Props = {
   setSupplementaryQueryEnabled: jest.fn(),
   correlationEditorDetails: undefined,
   correlationEditorHelperData: undefined,
+  exploreActiveDS: {
+    exploreToDS: [],
+    dsToExplore: [],
+  },
+  changeDatasource: jest.fn(),
 };
 
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
@@ -124,7 +129,7 @@ jest.mock('app/core/core', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  usePluginLinkExtensions: jest.fn(() => ({ extensions: [] })),
+  usePluginLinks: jest.fn(() => ({ links: [] })),
 }));
 
 // for the AutoSizer component to have a width
@@ -138,7 +143,7 @@ jest.mock('react-virtualized-auto-sizer', () => {
     });
 });
 
-const usePluginLinkExtensionsMock = jest.mocked(usePluginLinkExtensions);
+const usePluginLinksMock = jest.mocked(usePluginLinks);
 
 const setup = (overrideProps?: Partial<Props>) => {
   const store = configureStore({
@@ -180,8 +185,8 @@ describe('Explore', () => {
   });
 
   it('should render toolbar extension point if extensions is available', async () => {
-    usePluginLinkExtensionsMock.mockReturnValueOnce({
-      extensions: [
+    usePluginLinksMock.mockReturnValue({
+      links: [
         {
           id: '1',
           pluginId: 'grafana',

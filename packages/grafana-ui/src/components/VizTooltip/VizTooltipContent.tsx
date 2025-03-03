@@ -59,8 +59,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
-    gap: 4,
-    borderTop: `1px solid ${theme.colors.border.medium}`,
+    gap: 2,
+    borderTop: `1px solid ${theme.colors.border.weak}`,
     padding: theme.spacing(1),
   }),
 });

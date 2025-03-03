@@ -145,6 +145,7 @@ export {
   validateFieldConfig,
   applyRawFieldOverrides,
   useFieldOverrides,
+  getFieldDataContextClone,
 } from './field/fieldOverrides';
 export { getFieldDisplayValuesProxy } from './field/getFieldDisplayValuesProxy';
 export {
@@ -402,6 +403,7 @@ export { type DateTimeOptionsWhenParsing, dateTimeParse } from './datetime/parse
 export {
   intervalToAbbreviatedDurationString,
   parseDuration,
+  reverseParseDuration,
   addDurationToDate,
   durationToMilliseconds,
   isValidDate,
@@ -515,6 +517,7 @@ export {
   type UserVariableModel,
   type SystemVariable,
   type BaseVariableModel,
+  type SnapshotVariableModel,
 } from './types/templateVars';
 export { type Threshold, ThresholdsMode, type ThresholdsConfig } from './types/thresholds';
 export {
@@ -546,7 +549,10 @@ export {
   type PluginExtension,
   type PluginExtensionLink,
   type PluginExtensionComponent,
+  type PluginExtensionComponentMeta,
+  type ComponentTypeWithExtensionMeta,
   type PluginExtensionConfig,
+  type PluginExtensionFunction,
   type PluginExtensionLinkConfig,
   type PluginExtensionComponentConfig,
   type PluginExtensionEventHelpers,
@@ -554,6 +560,10 @@ export {
   type PluginExtensionDataSourceConfigContext,
   type PluginExtensionCommandPaletteContext,
   type PluginExtensionOpenModalOptions,
+  type PluginExtensionExposedComponentConfig,
+  type PluginExtensionAddedComponentConfig,
+  type PluginExtensionAddedLinkConfig,
+  type PluginExtensionAddedFunctionConfig,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,
@@ -567,6 +577,8 @@ export {
   type ScopeNodeSpec,
   type ScopeNode,
   scopeFilterOperatorMap,
+  reverseScopeFilterOperatorMap,
+  isEqualityOrMultiOperator,
 } from './types/scopes';
 export {
   PluginState,
@@ -575,11 +587,13 @@ export {
   PluginSignatureType,
   PluginErrorCode,
   PluginIncludeType,
+  PluginLoadingStrategy,
   GrafanaPlugin,
   type PluginError,
   type AngularMeta,
   type PluginMeta,
   type PluginDependencies,
+  type PluginExtensions,
   type PluginInclude,
   type PluginBuildInfo,
   type ScreenshotInfo,
@@ -757,6 +771,8 @@ export {
   type DataSourceWithQueryModificationSupport,
   hasToggleableQueryFiltersSupport,
   hasQueryModificationSupport,
+  LogSortOrderChangeEvent,
+  type LogSortOrderChangePayload,
 } from './types/logs';
 export {
   type AnnotationQuery,
@@ -795,6 +811,14 @@ export {
   VariableSuggestionsScope,
   OneClickMode,
 } from './types/dataLink';
+export {
+  type Action,
+  type ActionModel,
+  HttpRequestMethod,
+  defaultActionConfig,
+  contentTypeOptions,
+  httpMethodOptions,
+} from './types/action';
 export { DataFrameType } from './types/dataFrameTypes';
 export {
   FieldType,

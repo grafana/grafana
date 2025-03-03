@@ -5,7 +5,7 @@ import { DB, SQLQuery, SQLSelectableValue, ValidationResults } from '../types';
 import { DatasetSelectorProps } from './DatasetSelector';
 import { TableSelectorProps } from './TableSelector';
 
-const buildMockDB = (): DB => ({
+export const buildMockDB = (): DB => ({
   datasets: jest.fn(() => Promise.resolve(['dataset1', 'dataset2'])),
   tables: jest.fn((_ds: string | undefined) => Promise.resolve(['table1', 'table2'])),
   fields: jest.fn((_query: SQLQuery, _order?: boolean) => Promise.resolve<SQLSelectableValue[]>([])),
@@ -13,6 +13,7 @@ const buildMockDB = (): DB => ({
     Promise.resolve<ValidationResults>({ query: { refId: '123' }, error: '', isError: false, isValid: true })
   ),
   dsID: jest.fn(() => 1234),
+  functions: jest.fn(() => []),
   getEditorLanguageDefinition: jest.fn(() => ({ id: '4567' })),
   toRawSql: (_query: SQLQuery) => '',
 });

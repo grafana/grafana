@@ -19,12 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	ResourceStore_Read_FullMethodName   = "/resource.ResourceStore/Read"
-	ResourceStore_Create_FullMethodName = "/resource.ResourceStore/Create"
-	ResourceStore_Update_FullMethodName = "/resource.ResourceStore/Update"
-	ResourceStore_Delete_FullMethodName = "/resource.ResourceStore/Delete"
-	ResourceStore_List_FullMethodName   = "/resource.ResourceStore/List"
-	ResourceStore_Watch_FullMethodName  = "/resource.ResourceStore/Watch"
+	ResourceStore_Read_FullMethodName    = "/resource.ResourceStore/Read"
+	ResourceStore_Create_FullMethodName  = "/resource.ResourceStore/Create"
+	ResourceStore_Update_FullMethodName  = "/resource.ResourceStore/Update"
+	ResourceStore_Delete_FullMethodName  = "/resource.ResourceStore/Delete"
+	ResourceStore_Restore_FullMethodName = "/resource.ResourceStore/Restore"
+	ResourceStore_List_FullMethodName    = "/resource.ResourceStore/List"
+	ResourceStore_Watch_FullMethodName   = "/resource.ResourceStore/Watch"
 )
 
 // ResourceStoreClient is the client API for ResourceStore service.
@@ -40,6 +41,7 @@ type ResourceStoreClient interface {
 	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error)
 	Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	Restore(ctx context.Context, in *RestoreRequest, opts ...grpc.CallOption) (*RestoreResponse, error)
 	// The results *may* include values that should not be returned to the user
 	// This will perform best-effort filtering to increase performace.
 	// NOTE: storage.Interface is ultimatly responsible for the final filtering
@@ -92,6 +94,16 @@ func (c *resourceStoreClient) Delete(ctx context.Context, in *DeleteRequest, opt
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteResponse)
 	err := c.cc.Invoke(ctx, ResourceStore_Delete_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *resourceStoreClient) Restore(ctx context.Context, in *RestoreRequest, opts ...grpc.CallOption) (*RestoreResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RestoreResponse)
+	err := c.cc.Invoke(ctx, ResourceStore_Restore_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -154,6 +166,7 @@ type ResourceStoreServer interface {
 	Create(context.Context, *CreateRequest) (*CreateResponse, error)
 	Update(context.Context, *UpdateRequest) (*UpdateResponse, error)
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	Restore(context.Context, *RestoreRequest) (*RestoreResponse, error)
 	// The results *may* include values that should not be returned to the user
 	// This will perform best-effort filtering to increase performace.
 	// NOTE: storage.Interface is ultimatly responsible for the final filtering
@@ -179,6 +192,9 @@ func (UnimplementedResourceStoreServer) Update(context.Context, *UpdateRequest) 
 }
 func (UnimplementedResourceStoreServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedResourceStoreServer) Restore(context.Context, *RestoreRequest) (*RestoreResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Restore not implemented")
 }
 func (UnimplementedResourceStoreServer) List(context.Context, *ListRequest) (*ListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
@@ -270,6 +286,24 @@ func _ResourceStore_Delete_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ResourceStore_Restore_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RestoreRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceStoreServer).Restore(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceStore_Restore_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceStoreServer).Restore(ctx, req.(*RestoreRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ResourceStore_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListRequest)
 	if err := dec(in); err != nil {
@@ -333,6 +367,10 @@ var ResourceStore_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ResourceStore_Delete_Handler,
 		},
 		{
+			MethodName: "Restore",
+			Handler:    _ResourceStore_Restore_Handler,
+		},
+		{
 			MethodName: "List",
 			Handler:    _ResourceStore_List_Handler,
 		},
@@ -348,9 +386,137 @@ var ResourceStore_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	ResourceIndex_Read_FullMethodName    = "/resource.ResourceIndex/Read"
-	ResourceIndex_History_FullMethodName = "/resource.ResourceIndex/History"
-	ResourceIndex_Origin_FullMethodName  = "/resource.ResourceIndex/Origin"
+	BulkStore_BulkProcess_FullMethodName = "/resource.BulkStore/BulkProcess"
+)
+
+// BulkStoreClient is the client API for BulkStore service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type BulkStoreClient interface {
+	// Write multiple resources to the same Namespace/Group/Resource
+	// Events will not be sent until the stream is complete
+	// Only the *create* permissions is checked
+	BulkProcess(ctx context.Context, opts ...grpc.CallOption) (BulkStore_BulkProcessClient, error)
+}
+
+type bulkStoreClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewBulkStoreClient(cc grpc.ClientConnInterface) BulkStoreClient {
+	return &bulkStoreClient{cc}
+}
+
+func (c *bulkStoreClient) BulkProcess(ctx context.Context, opts ...grpc.CallOption) (BulkStore_BulkProcessClient, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &BulkStore_ServiceDesc.Streams[0], BulkStore_BulkProcess_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &bulkStoreBulkProcessClient{ClientStream: stream}
+	return x, nil
+}
+
+type BulkStore_BulkProcessClient interface {
+	Send(*BulkRequest) error
+	CloseAndRecv() (*BulkResponse, error)
+	grpc.ClientStream
+}
+
+type bulkStoreBulkProcessClient struct {
+	grpc.ClientStream
+}
+
+func (x *bulkStoreBulkProcessClient) Send(m *BulkRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *bulkStoreBulkProcessClient) CloseAndRecv() (*BulkResponse, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(BulkResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// BulkStoreServer is the server API for BulkStore service.
+// All implementations should embed UnimplementedBulkStoreServer
+// for forward compatibility
+type BulkStoreServer interface {
+	// Write multiple resources to the same Namespace/Group/Resource
+	// Events will not be sent until the stream is complete
+	// Only the *create* permissions is checked
+	BulkProcess(BulkStore_BulkProcessServer) error
+}
+
+// UnimplementedBulkStoreServer should be embedded to have forward compatible implementations.
+type UnimplementedBulkStoreServer struct {
+}
+
+func (UnimplementedBulkStoreServer) BulkProcess(BulkStore_BulkProcessServer) error {
+	return status.Errorf(codes.Unimplemented, "method BulkProcess not implemented")
+}
+
+// UnsafeBulkStoreServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to BulkStoreServer will
+// result in compilation errors.
+type UnsafeBulkStoreServer interface {
+	mustEmbedUnimplementedBulkStoreServer()
+}
+
+func RegisterBulkStoreServer(s grpc.ServiceRegistrar, srv BulkStoreServer) {
+	s.RegisterService(&BulkStore_ServiceDesc, srv)
+}
+
+func _BulkStore_BulkProcess_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(BulkStoreServer).BulkProcess(&bulkStoreBulkProcessServer{ServerStream: stream})
+}
+
+type BulkStore_BulkProcessServer interface {
+	SendAndClose(*BulkResponse) error
+	Recv() (*BulkRequest, error)
+	grpc.ServerStream
+}
+
+type bulkStoreBulkProcessServer struct {
+	grpc.ServerStream
+}
+
+func (x *bulkStoreBulkProcessServer) SendAndClose(m *BulkResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *bulkStoreBulkProcessServer) Recv() (*BulkRequest, error) {
+	m := new(BulkRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// BulkStore_ServiceDesc is the grpc.ServiceDesc for BulkStore service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var BulkStore_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "resource.BulkStore",
+	HandlerType: (*BulkStoreServer)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "BulkProcess",
+			Handler:       _BulkStore_BulkProcess_Handler,
+			ClientStreams: true,
+		},
+	},
+	Metadata: "resource.proto",
+}
+
+const (
+	ResourceIndex_Search_FullMethodName   = "/resource.ResourceIndex/Search"
+	ResourceIndex_GetStats_FullMethodName = "/resource.ResourceIndex/GetStats"
 )
 
 // ResourceIndexClient is the client API for ResourceIndex service.
@@ -360,11 +526,9 @@ const (
 // Unlike the ResourceStore, this service can be exposed to clients directly
 // It should be implemented with efficient indexes and does not need read-after-write semantics
 type ResourceIndexClient interface {
-	Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadResponse, error)
-	// Show resource history (and trash)
-	History(ctx context.Context, in *HistoryRequest, opts ...grpc.CallOption) (*HistoryResponse, error)
-	// Used for efficient provisioning
-	Origin(ctx context.Context, in *OriginRequest, opts ...grpc.CallOption) (*OriginResponse, error)
+	Search(ctx context.Context, in *ResourceSearchRequest, opts ...grpc.CallOption) (*ResourceSearchResponse, error)
+	// Get the resource stats
+	GetStats(ctx context.Context, in *ResourceStatsRequest, opts ...grpc.CallOption) (*ResourceStatsResponse, error)
 }
 
 type resourceIndexClient struct {
@@ -375,30 +539,20 @@ func NewResourceIndexClient(cc grpc.ClientConnInterface) ResourceIndexClient {
 	return &resourceIndexClient{cc}
 }
 
-func (c *resourceIndexClient) Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadResponse, error) {
+func (c *resourceIndexClient) Search(ctx context.Context, in *ResourceSearchRequest, opts ...grpc.CallOption) (*ResourceSearchResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ReadResponse)
-	err := c.cc.Invoke(ctx, ResourceIndex_Read_FullMethodName, in, out, cOpts...)
+	out := new(ResourceSearchResponse)
+	err := c.cc.Invoke(ctx, ResourceIndex_Search_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *resourceIndexClient) History(ctx context.Context, in *HistoryRequest, opts ...grpc.CallOption) (*HistoryResponse, error) {
+func (c *resourceIndexClient) GetStats(ctx context.Context, in *ResourceStatsRequest, opts ...grpc.CallOption) (*ResourceStatsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(HistoryResponse)
-	err := c.cc.Invoke(ctx, ResourceIndex_History_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *resourceIndexClient) Origin(ctx context.Context, in *OriginRequest, opts ...grpc.CallOption) (*OriginResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(OriginResponse)
-	err := c.cc.Invoke(ctx, ResourceIndex_Origin_FullMethodName, in, out, cOpts...)
+	out := new(ResourceStatsResponse)
+	err := c.cc.Invoke(ctx, ResourceIndex_GetStats_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -412,25 +566,20 @@ func (c *resourceIndexClient) Origin(ctx context.Context, in *OriginRequest, opt
 // Unlike the ResourceStore, this service can be exposed to clients directly
 // It should be implemented with efficient indexes and does not need read-after-write semantics
 type ResourceIndexServer interface {
-	Read(context.Context, *ReadRequest) (*ReadResponse, error)
-	// Show resource history (and trash)
-	History(context.Context, *HistoryRequest) (*HistoryResponse, error)
-	// Used for efficient provisioning
-	Origin(context.Context, *OriginRequest) (*OriginResponse, error)
+	Search(context.Context, *ResourceSearchRequest) (*ResourceSearchResponse, error)
+	// Get the resource stats
+	GetStats(context.Context, *ResourceStatsRequest) (*ResourceStatsResponse, error)
 }
 
 // UnimplementedResourceIndexServer should be embedded to have forward compatible implementations.
 type UnimplementedResourceIndexServer struct {
 }
 
-func (UnimplementedResourceIndexServer) Read(context.Context, *ReadRequest) (*ReadResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Read not implemented")
+func (UnimplementedResourceIndexServer) Search(context.Context, *ResourceSearchRequest) (*ResourceSearchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Search not implemented")
 }
-func (UnimplementedResourceIndexServer) History(context.Context, *HistoryRequest) (*HistoryResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method History not implemented")
-}
-func (UnimplementedResourceIndexServer) Origin(context.Context, *OriginRequest) (*OriginResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Origin not implemented")
+func (UnimplementedResourceIndexServer) GetStats(context.Context, *ResourceStatsRequest) (*ResourceStatsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetStats not implemented")
 }
 
 // UnsafeResourceIndexServer may be embedded to opt out of forward compatibility for this service.
@@ -444,56 +593,38 @@ func RegisterResourceIndexServer(s grpc.ServiceRegistrar, srv ResourceIndexServe
 	s.RegisterService(&ResourceIndex_ServiceDesc, srv)
 }
 
-func _ResourceIndex_Read_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ReadRequest)
+func _ResourceIndex_Search_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResourceSearchRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ResourceIndexServer).Read(ctx, in)
+		return srv.(ResourceIndexServer).Search(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ResourceIndex_Read_FullMethodName,
+		FullMethod: ResourceIndex_Search_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ResourceIndexServer).Read(ctx, req.(*ReadRequest))
+		return srv.(ResourceIndexServer).Search(ctx, req.(*ResourceSearchRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ResourceIndex_History_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(HistoryRequest)
+func _ResourceIndex_GetStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResourceStatsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ResourceIndexServer).History(ctx, in)
+		return srv.(ResourceIndexServer).GetStats(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ResourceIndex_History_FullMethodName,
+		FullMethod: ResourceIndex_GetStats_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ResourceIndexServer).History(ctx, req.(*HistoryRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ResourceIndex_Origin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(OriginRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ResourceIndexServer).Origin(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ResourceIndex_Origin_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ResourceIndexServer).Origin(ctx, req.(*OriginRequest))
+		return srv.(ResourceIndexServer).GetStats(ctx, req.(*ResourceStatsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -506,16 +637,282 @@ var ResourceIndex_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ResourceIndexServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Read",
-			Handler:    _ResourceIndex_Read_Handler,
+			MethodName: "Search",
+			Handler:    _ResourceIndex_Search_Handler,
 		},
 		{
-			MethodName: "History",
-			Handler:    _ResourceIndex_History_Handler,
+			MethodName: "GetStats",
+			Handler:    _ResourceIndex_GetStats_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "resource.proto",
+}
+
+const (
+	RepositoryIndex_CountRepositoryObjects_FullMethodName = "/resource.RepositoryIndex/CountRepositoryObjects"
+	RepositoryIndex_ListRepositoryObjects_FullMethodName  = "/resource.RepositoryIndex/ListRepositoryObjects"
+)
+
+// RepositoryIndexClient is the client API for RepositoryIndex service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Query repository info from the search index.
+// Results access control is based on access to the repository *not* the items
+type RepositoryIndexClient interface {
+	// Describe how many resources of each type exist within a repository
+	CountRepositoryObjects(ctx context.Context, in *CountRepositoryObjectsRequest, opts ...grpc.CallOption) (*CountRepositoryObjectsResponse, error)
+	// List the resources of a specific kind within a repository
+	ListRepositoryObjects(ctx context.Context, in *ListRepositoryObjectsRequest, opts ...grpc.CallOption) (*ListRepositoryObjectsResponse, error)
+}
+
+type repositoryIndexClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewRepositoryIndexClient(cc grpc.ClientConnInterface) RepositoryIndexClient {
+	return &repositoryIndexClient{cc}
+}
+
+func (c *repositoryIndexClient) CountRepositoryObjects(ctx context.Context, in *CountRepositoryObjectsRequest, opts ...grpc.CallOption) (*CountRepositoryObjectsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CountRepositoryObjectsResponse)
+	err := c.cc.Invoke(ctx, RepositoryIndex_CountRepositoryObjects_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *repositoryIndexClient) ListRepositoryObjects(ctx context.Context, in *ListRepositoryObjectsRequest, opts ...grpc.CallOption) (*ListRepositoryObjectsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListRepositoryObjectsResponse)
+	err := c.cc.Invoke(ctx, RepositoryIndex_ListRepositoryObjects_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// RepositoryIndexServer is the server API for RepositoryIndex service.
+// All implementations should embed UnimplementedRepositoryIndexServer
+// for forward compatibility
+//
+// Query repository info from the search index.
+// Results access control is based on access to the repository *not* the items
+type RepositoryIndexServer interface {
+	// Describe how many resources of each type exist within a repository
+	CountRepositoryObjects(context.Context, *CountRepositoryObjectsRequest) (*CountRepositoryObjectsResponse, error)
+	// List the resources of a specific kind within a repository
+	ListRepositoryObjects(context.Context, *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error)
+}
+
+// UnimplementedRepositoryIndexServer should be embedded to have forward compatible implementations.
+type UnimplementedRepositoryIndexServer struct {
+}
+
+func (UnimplementedRepositoryIndexServer) CountRepositoryObjects(context.Context, *CountRepositoryObjectsRequest) (*CountRepositoryObjectsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CountRepositoryObjects not implemented")
+}
+func (UnimplementedRepositoryIndexServer) ListRepositoryObjects(context.Context, *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListRepositoryObjects not implemented")
+}
+
+// UnsafeRepositoryIndexServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to RepositoryIndexServer will
+// result in compilation errors.
+type UnsafeRepositoryIndexServer interface {
+	mustEmbedUnimplementedRepositoryIndexServer()
+}
+
+func RegisterRepositoryIndexServer(s grpc.ServiceRegistrar, srv RepositoryIndexServer) {
+	s.RegisterService(&RepositoryIndex_ServiceDesc, srv)
+}
+
+func _RepositoryIndex_CountRepositoryObjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CountRepositoryObjectsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RepositoryIndexServer).CountRepositoryObjects(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RepositoryIndex_CountRepositoryObjects_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RepositoryIndexServer).CountRepositoryObjects(ctx, req.(*CountRepositoryObjectsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RepositoryIndex_ListRepositoryObjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRepositoryObjectsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RepositoryIndexServer).ListRepositoryObjects(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RepositoryIndex_ListRepositoryObjects_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RepositoryIndexServer).ListRepositoryObjects(ctx, req.(*ListRepositoryObjectsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// RepositoryIndex_ServiceDesc is the grpc.ServiceDesc for RepositoryIndex service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var RepositoryIndex_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "resource.RepositoryIndex",
+	HandlerType: (*RepositoryIndexServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CountRepositoryObjects",
+			Handler:    _RepositoryIndex_CountRepositoryObjects_Handler,
 		},
 		{
-			MethodName: "Origin",
-			Handler:    _ResourceIndex_Origin_Handler,
+			MethodName: "ListRepositoryObjects",
+			Handler:    _RepositoryIndex_ListRepositoryObjects_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "resource.proto",
+}
+
+const (
+	BlobStore_PutBlob_FullMethodName = "/resource.BlobStore/PutBlob"
+	BlobStore_GetBlob_FullMethodName = "/resource.BlobStore/GetBlob"
+)
+
+// BlobStoreClient is the client API for BlobStore service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type BlobStoreClient interface {
+	// Upload a blob that will be saved in a resource
+	PutBlob(ctx context.Context, in *PutBlobRequest, opts ...grpc.CallOption) (*PutBlobResponse, error)
+	// Get blob contents.  When possible, this will return a signed URL
+	// For large payloads, signed URLs are required to avoid protobuf message size limits
+	GetBlob(ctx context.Context, in *GetBlobRequest, opts ...grpc.CallOption) (*GetBlobResponse, error)
+}
+
+type blobStoreClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewBlobStoreClient(cc grpc.ClientConnInterface) BlobStoreClient {
+	return &blobStoreClient{cc}
+}
+
+func (c *blobStoreClient) PutBlob(ctx context.Context, in *PutBlobRequest, opts ...grpc.CallOption) (*PutBlobResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PutBlobResponse)
+	err := c.cc.Invoke(ctx, BlobStore_PutBlob_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *blobStoreClient) GetBlob(ctx context.Context, in *GetBlobRequest, opts ...grpc.CallOption) (*GetBlobResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetBlobResponse)
+	err := c.cc.Invoke(ctx, BlobStore_GetBlob_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// BlobStoreServer is the server API for BlobStore service.
+// All implementations should embed UnimplementedBlobStoreServer
+// for forward compatibility
+type BlobStoreServer interface {
+	// Upload a blob that will be saved in a resource
+	PutBlob(context.Context, *PutBlobRequest) (*PutBlobResponse, error)
+	// Get blob contents.  When possible, this will return a signed URL
+	// For large payloads, signed URLs are required to avoid protobuf message size limits
+	GetBlob(context.Context, *GetBlobRequest) (*GetBlobResponse, error)
+}
+
+// UnimplementedBlobStoreServer should be embedded to have forward compatible implementations.
+type UnimplementedBlobStoreServer struct {
+}
+
+func (UnimplementedBlobStoreServer) PutBlob(context.Context, *PutBlobRequest) (*PutBlobResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PutBlob not implemented")
+}
+func (UnimplementedBlobStoreServer) GetBlob(context.Context, *GetBlobRequest) (*GetBlobResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBlob not implemented")
+}
+
+// UnsafeBlobStoreServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to BlobStoreServer will
+// result in compilation errors.
+type UnsafeBlobStoreServer interface {
+	mustEmbedUnimplementedBlobStoreServer()
+}
+
+func RegisterBlobStoreServer(s grpc.ServiceRegistrar, srv BlobStoreServer) {
+	s.RegisterService(&BlobStore_ServiceDesc, srv)
+}
+
+func _BlobStore_PutBlob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PutBlobRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BlobStoreServer).PutBlob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BlobStore_PutBlob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BlobStoreServer).PutBlob(ctx, req.(*PutBlobRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BlobStore_GetBlob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetBlobRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BlobStoreServer).GetBlob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BlobStore_GetBlob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BlobStoreServer).GetBlob(ctx, req.(*GetBlobRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// BlobStore_ServiceDesc is the grpc.ServiceDesc for BlobStore service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var BlobStore_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "resource.BlobStore",
+	HandlerType: (*BlobStoreServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "PutBlob",
+			Handler:    _BlobStore_PutBlob_Handler,
+		},
+		{
+			MethodName: "GetBlob",
+			Handler:    _BlobStore_GetBlob_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

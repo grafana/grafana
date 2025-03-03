@@ -2,112 +2,104 @@ package server
 
 import (
 	"context"
-	"fmt"
-	"net/http"
+	"strings"
+	"sync"
 	"time"
 
+	"github.com/fullstorydev/grpchan/inprocgrpc"
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
-	httpmiddleware "github.com/openfga/openfga/pkg/middleware/http"
-	"github.com/openfga/openfga/pkg/server"
-	serverErrors "github.com/openfga/openfga/pkg/server/errors"
-	"github.com/openfga/openfga/pkg/storage"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/rs/cors"
-	"go.uber.org/zap/zapcore"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	healthv1pb "google.golang.org/grpc/health/grpc_health_v1"
-	"google.golang.org/grpc/status"
-
+	dashboardalpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/grpcserver"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/setting"
-
-	zlogger "github.com/grafana/grafana/pkg/services/authz/zanzana/logger"
 )
 
-func New(store storage.OpenFGADatastore, logger log.Logger) (*server.Server, error) {
-	// FIXME(kalleep): add support for more options, tracing etc
-	opts := []server.OpenFGAServiceV1Option{
-		server.WithDatastore(store),
-		server.WithLogger(zlogger.New(logger)),
-	}
+const cacheCleanInterval = 2 * time.Minute
 
-	// FIXME(kalleep): Interceptors
-	// We probably need to at least need to add store id interceptor also
-	// would be nice to inject our own requestid?
-	srv, err := server.NewServerWithOpts(opts...)
-	if err != nil {
-		return nil, err
-	}
+var _ authzv1.AuthzServiceServer = (*Server)(nil)
+var _ authzextv1.AuthzExtentionServiceServer = (*Server)(nil)
 
-	return srv, nil
+type OpenFGAServer interface {
+	openfgav1.OpenFGAServiceServer
+	IsReady(ctx context.Context) (bool, error)
 }
 
-// StartOpenFGAHttpSever starts HTTP server which allows to use fga cli.
-func StartOpenFGAHttpSever(cfg *setting.Cfg, srv grpcserver.Provider, logger log.Logger) error {
-	dialOpts := []grpc.DialOption{
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+type Server struct {
+	authzv1.UnimplementedAuthzServiceServer
+	authzextv1.UnimplementedAuthzExtentionServiceServer
+
+	openfga       OpenFGAServer
+	openfgaClient openfgav1.OpenFGAServiceClient
+
+	cfg      setting.ZanzanaServerSettings
+	stores   map[string]storeInfo
+	storesMU *sync.Mutex
+	cache    *localcache.CacheService
+
+	logger log.Logger
+	tracer tracing.Tracer
+}
+
+type storeInfo struct {
+	ID      string
+	ModelID string
+}
+
+func NewServer(cfg setting.ZanzanaServerSettings, openfga OpenFGAServer, logger log.Logger, tracer tracing.Tracer) (*Server, error) {
+	channel := &inprocgrpc.Channel{}
+	openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
+	openFGAClient := openfgav1.NewOpenFGAServiceClient(channel)
+
+	s := &Server{
+		openfga:       openfga,
+		openfgaClient: openFGAClient,
+		storesMU:      &sync.Mutex{},
+		stores:        make(map[string]storeInfo),
+		cfg:           cfg,
+		cache:         localcache.New(cfg.CheckQueryCacheTTL, cacheCleanInterval),
+		logger:        logger,
+		tracer:        tracer,
 	}
 
-	addr := srv.GetAddress()
-	// Wait until GRPC server is initialized
-	ticker := time.NewTicker(100 * time.Millisecond)
-	defer ticker.Stop()
-	maxRetries := 100
-	retries := 0
-	for addr == "" && retries < maxRetries {
-		<-ticker.C
-		addr = srv.GetAddress()
-		retries++
-	}
-	if addr == "" {
-		return fmt.Errorf("failed to start HTTP server: GRPC server unavailable")
+	return s, nil
+}
+
+func (s *Server) IsHealthy(ctx context.Context) (bool, error) {
+	// FIXME: get back to openfga.IsReady() when issue is fixed
+	// https://github.com/openfga/openfga/issues/2251
+	_, err := s.openfga.ListStores(ctx, &openfgav1.ListStoresRequest{
+		PageSize: wrapperspb.Int32(1),
+	})
+	return err == nil, nil
+}
+
+func (s *Server) getContextuals(subject string) (*openfgav1.ContextualTupleKeys, error) {
+	contextuals := make([]*openfgav1.TupleKey, 0)
+
+	if strings.HasPrefix(subject, common.TypeRenderService+":") {
+		contextuals = append(
+			contextuals,
+			&openfgav1.TupleKey{
+				User:     subject,
+				Relation: common.RelationSetView,
+				Object: common.NewGroupResourceIdent(
+					dashboardalpha1.DashboardResourceInfo.GroupResource().Group,
+					dashboardalpha1.DashboardResourceInfo.GroupResource().Resource,
+					"",
+				),
+			},
+		)
 	}
 
-	conn, err := grpc.NewClient(addr, dialOpts...)
-	if err != nil {
-		return fmt.Errorf("unable to dial GRPC: %w", err)
+	if len(contextuals) > 0 {
+		return &openfgav1.ContextualTupleKeys{TupleKeys: contextuals}, nil
 	}
 
-	muxOpts := []runtime.ServeMuxOption{
-		runtime.WithForwardResponseOption(httpmiddleware.HTTPResponseModifier),
-		runtime.WithErrorHandler(func(c context.Context,
-			sr *runtime.ServeMux, mm runtime.Marshaler, w http.ResponseWriter, r *http.Request, e error) {
-			intCode := serverErrors.ConvertToEncodedErrorCode(status.Convert(e))
-			httpmiddleware.CustomHTTPErrorHandler(c, w, r, serverErrors.NewEncodedError(intCode, e.Error()))
-		}),
-		runtime.WithStreamErrorHandler(func(ctx context.Context, e error) *status.Status {
-			intCode := serverErrors.ConvertToEncodedErrorCode(status.Convert(e))
-			encodedErr := serverErrors.NewEncodedError(intCode, e.Error())
-			return status.Convert(encodedErr)
-		}),
-		runtime.WithHealthzEndpoint(healthv1pb.NewHealthClient(conn)),
-		runtime.WithOutgoingHeaderMatcher(func(s string) (string, bool) { return s, true }),
-	}
-	mux := runtime.NewServeMux(muxOpts...)
-	if err := openfgav1.RegisterOpenFGAServiceHandler(context.TODO(), mux, conn); err != nil {
-		return fmt.Errorf("failed to register gateway handler: %w", err)
-	}
-
-	httpServer := &http.Server{
-		Addr: cfg.Zanzana.HttpAddr,
-		Handler: cors.New(cors.Options{
-			AllowedOrigins:   []string{"*"},
-			AllowCredentials: true,
-			AllowedHeaders:   []string{"*"},
-			AllowedMethods: []string{http.MethodGet, http.MethodPost,
-				http.MethodHead, http.MethodPatch, http.MethodDelete, http.MethodPut},
-		}).Handler(mux),
-		ReadHeaderTimeout: 30 * time.Second,
-	}
-	go func() {
-		err = httpServer.ListenAndServe()
-		if err != nil {
-			logger.Error("failed to start http server", zapcore.Field{Key: "err", Type: zapcore.ErrorType, Interface: err})
-		}
-	}()
-	logger.Info(fmt.Sprintf("OpenFGA HTTP server listening on '%s'...", httpServer.Addr))
-	return nil
+	return nil, nil
 }

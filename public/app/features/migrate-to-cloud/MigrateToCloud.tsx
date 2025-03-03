@@ -1,5 +1,5 @@
 import { config } from '@grafana/runtime';
-import { Alert } from '@grafana/ui';
+import { Alert, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { Trans, t } from '../../core/internationalization';
@@ -24,8 +24,23 @@ export default function MigrateToCloud() {
         }
       >
         <Trans i18nKey="migrate-to-cloud.public-preview.message">
-          Help us improve this feature by providing feedback and reporting any issues.
+          <TextLink
+            href="https://grafana.com/docs/grafana-cloud/account-management/migration-guide/cloud-migration-assistant/"
+            external
+          >
+            Visit our docs
+          </TextLink>{' '}
+          to learn more about this feature!
         </Trans>
+        {config.cloudMigrationIsTarget && (
+          <>
+            &nbsp;
+            <Trans i18nKey="migrate-to-cloud.public-preview.message-cloud">
+              Your self-managed instance of Grafana requires version 11.5+, or 11.2+ with the onPremToCloudMigrations
+              feature flag enabled.
+            </Trans>
+          </>
+        )}
       </Alert>
       {config.cloudMigrationIsTarget ? <CloudPage /> : <OnPremPage />}
     </Page>

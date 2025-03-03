@@ -14,6 +14,8 @@ var (
 
 	ErrUnknownActionTplt = "unknown action: {{.Public.Action}}, was not found in the list of valid actions"
 	ErrBaseUnknownAction = errutil.BadRequest("permreg.unknown-action").MustTemplate(ErrUnknownActionTplt, errutil.WithPublic(ErrUnknownActionTplt))
+
+	ErrBaseUnknownKind = errutil.BadRequest("permreg.unknown-kind").MustTemplate("unknown kind: {{.Public.Kind}}")
 )
 
 func ErrInvalidScope(scope string, action string, validScopePrefixes PrefixSet) error {
@@ -26,6 +28,10 @@ func ErrInvalidScope(scope string, action string, validScopePrefixes PrefixSet) 
 
 func ErrUnknownAction(action string) error {
 	return ErrBaseUnknownAction.Build(errutil.TemplateData{Public: map[string]any{"Action": action}})
+}
+
+func ErrUnknownKind(kind string) error {
+	return ErrBaseUnknownKind.Build(errutil.TemplateData{Public: map[string]any{"Kind": kind}})
 }
 
 func generateValidScopeFormats(acceptedScopePrefixes PrefixSet) []string {
@@ -48,7 +54,7 @@ func generateValidScopeFormats(acceptedScopePrefixes PrefixSet) []string {
 
 type PermissionRegistry interface {
 	RegisterPluginScope(scope string)
-	RegisterPermission(action, scope string)
+	RegisterPermission(action, scope string) error
 	IsPermissionValid(action, scope string) error
 	GetScopePrefixes(action string) (PrefixSet, bool)
 }
@@ -87,6 +93,7 @@ func newPermissionRegistry() *permissionRegistry {
 		"global.users":    "global.users:id:",
 		"roles":           "roles:uid:",
 		"services":        "services:",
+		"receivers":       "receivers:uid:",
 	}
 	return &permissionRegistry{
 		actionScopePrefixes: make(map[string]PrefixSet, 200),
@@ -101,42 +108,45 @@ func (pr *permissionRegistry) RegisterPluginScope(scope string) {
 	}
 
 	scopeParts := strings.Split(scope, ":")
+	kind := scopeParts[0]
+
 	// If the scope is already registered, return
-	if _, found := pr.kindScopePrefix[scopeParts[0]]; found {
+	if _, found := pr.kindScopePrefix[kind]; found {
 		return
 	}
 
 	// If the scope contains an attribute part, register the kind and attribute
 	if len(scopeParts) > 2 {
-		kind, attr := scopeParts[0], scopeParts[1]
+		attr := scopeParts[1]
 		pr.kindScopePrefix[kind] = kind + ":" + attr + ":"
 		pr.logger.Debug("registered scope prefix", "kind", kind, "scope_prefix", kind+":"+attr+":")
 		return
 	}
 
-	pr.logger.Debug("registered scope prefix", "kind", scopeParts[0], "scope_prefix", scopeParts[0]+":")
-	pr.kindScopePrefix[scopeParts[0]] = scopeParts[0] + ":"
+	pr.logger.Debug("registered scope prefix", "kind", kind, "scope_prefix", kind+":")
+	pr.kindScopePrefix[kind] = kind + ":"
 }
 
-func (pr *permissionRegistry) RegisterPermission(action, scope string) {
+func (pr *permissionRegistry) RegisterPermission(action, scope string) error {
 	if _, ok := pr.actionScopePrefixes[action]; !ok {
 		pr.actionScopePrefixes[action] = PrefixSet{}
 	}
 
 	if scope == "" {
 		// scopeless action
-		return
+		return nil
 	}
 
 	kind := strings.Split(scope, ":")[0]
 	scopePrefix, ok := pr.kindScopePrefix[kind]
 	if !ok {
-		pr.logger.Warn("unknown scope prefix", "scope", scope)
-		return
+		pr.logger.Error("unknown kind: please update `kindScopePrefix` with the correct scope prefix", "kind", kind)
+		return ErrUnknownKind(kind)
 	}
 
 	// Add a new entry in case the scope is not empty
 	pr.actionScopePrefixes[action][scopePrefix] = true
+	return nil
 }
 
 func (pr *permissionRegistry) IsPermissionValid(action, scope string) error {

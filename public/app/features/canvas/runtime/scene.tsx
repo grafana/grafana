@@ -97,6 +97,8 @@ export class Scene {
 
   moveableActionCallback?: (moved: boolean) => void;
 
+  actionConfirmationCallback?: () => void;
+
   readonly editModeEnabled = new BehaviorSubject<boolean>(false);
   subscription: Subscription;
 
@@ -281,9 +283,10 @@ export class Scene {
   };
 
   render() {
-    const isTooltipValid =
-      (this.tooltip?.element?.getLinks && this.tooltip?.element?.getLinks({}).length > 0) ||
-      this.tooltip?.element?.data?.field;
+    const hasDataLinks = this.tooltip?.element?.getLinks && this.tooltip.element.getLinks({}).length > 0;
+    const hasActions = this.tooltip?.element?.options.actions && this.tooltip.element.options.actions.length > 0;
+
+    const isTooltipValid = hasDataLinks || hasActions || this.tooltip?.element?.data?.field;
     const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid;
 
     const sceneDiv = (

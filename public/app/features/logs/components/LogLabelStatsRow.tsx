@@ -4,49 +4,49 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  logsStatsRow: css`
-    label: logs-stats-row;
-    margin: ${parseInt(theme.spacing(2), 10) / 1.75}px 0;
-  `,
-  logsStatsRowActive: css`
-    label: logs-stats-row--active;
-    color: ${theme.colors.primary.text};
-    position: relative;
-  `,
-  logsStatsRowLabel: css`
-    label: logs-stats-row__label;
-    display: flex;
-    margin-bottom: 1px;
-  `,
-  logsStatsRowValue: css`
-    label: logs-stats-row__value;
-    flex: 1;
-    text-overflow: ellipsis;
-    overflow: hidden;
-  `,
-  logsStatsRowCount: css`
-    label: logs-stats-row__count;
-    text-align: right;
-    margin-left: ${theme.spacing(0.75)};
-  `,
-  logsStatsRowPercent: css`
-    label: logs-stats-row__percent;
-    text-align: right;
-    margin-left: ${theme.spacing(0.75)};
-    width: ${theme.spacing(4.5)};
-  `,
-  logsStatsRowBar: css`
-    label: logs-stats-row__bar;
-    height: ${theme.spacing(0.5)};
-    overflow: hidden;
-    background: ${theme.colors.text.disabled};
-  `,
-  logsStatsRowInnerBar: css`
-    label: logs-stats-row__innerbar;
-    height: ${theme.spacing(0.5)};
-    overflow: hidden;
-    background: ${theme.colors.primary.main};
-  `,
+  logsStatsRow: css({
+    label: 'logs-stats-row',
+    margin: `${parseInt(theme.spacing(2), 10) / 1.75}px 0`,
+  }),
+  logsStatsRowActive: css({
+    label: 'logs-stats-row--active',
+    color: theme.colors.primary.text,
+    position: 'relative',
+  }),
+  logsStatsRowLabel: css({
+    label: 'logs-stats-row__label',
+    display: 'flex',
+    marginBottom: '1px',
+  }),
+  logsStatsRowValue: css({
+    label: 'logs-stats-row__value',
+    flex: 1,
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
+  }),
+  logsStatsRowCount: css({
+    label: 'logs-stats-row__count',
+    textAlign: 'right',
+    marginLeft: theme.spacing(0.75),
+  }),
+  logsStatsRowPercent: css({
+    label: 'logs-stats-row__percent',
+    textAlign: 'right',
+    marginLeft: theme.spacing(0.75),
+    width: theme.spacing(4.5),
+  }),
+  logsStatsRowBar: css({
+    label: 'logs-stats-row__bar',
+    height: theme.spacing(0.5),
+    overflow: 'hidden',
+    background: theme.colors.text.disabled,
+  }),
+  logsStatsRowInnerBar: css({
+    label: 'logs-stats-row__innerbar',
+    height: theme.spacing(0.5),
+    overflow: 'hidden',
+    background: theme.colors.primary.main,
+  }),
 });
 
 export interface Props {

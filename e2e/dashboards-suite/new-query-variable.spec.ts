@@ -1,3 +1,5 @@
+import { selectors } from '@grafana/e2e-selectors';
+
 import { e2e } from '../utils';
 
 const PAGE_UNDER_TEST = '-Y-tnEDWk/templating-nested-template-variables';
@@ -9,10 +11,12 @@ describe('Variables - Query - Add variable', () => {
   });
 
   it('query variable should be default and default fields should be correct', () => {
-    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
+    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=variables` });
     cy.contains(DASHBOARD_NAME).should('be.visible');
 
-    e2e.pages.Dashboard.Settings.Variables.List.newButton().should('be.visible').click();
+    cy.get(`[data-testid="${selectors.pages.Dashboard.Settings.Variables.List.newButton}"]`)
+      .should('be.visible')
+      .click();
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2()
       .should('be.visible')
@@ -73,10 +77,12 @@ describe('Variables - Query - Add variable', () => {
   });
 
   it('adding a single value query variable', () => {
-    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
+    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=variables` });
     cy.contains(DASHBOARD_NAME).should('be.visible');
 
-    e2e.pages.Dashboard.Settings.Variables.List.newButton().should('be.visible').click();
+    cy.get(`[data-testid="${selectors.pages.Dashboard.Settings.Variables.List.newButton}"]`)
+      .should('be.visible')
+      .click();
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2()
       .should('be.visible')
@@ -101,29 +107,27 @@ describe('Variables - Query - Add variable', () => {
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().scrollIntoView().should('be.visible').click();
 
-    e2e.pages.Dashboard.Settings.Actions.close().click();
+    e2e.components.NavToolbar.editDashboard.backToDashboardButton().click();
 
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('a label').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItem()
       .should('have.length', 4)
       .eq(3)
       .within(() => {
-        e2e.components.Variables.variableLinkWrapper().should('be.visible').click();
-        e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
-          .should('be.visible')
-          .within(() => {
-            e2e.components.Variables.variableOption().should('have.length', 1);
-          });
-
-        e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('C').should('be.visible');
+        cy.get('input').click();
       });
+
+    e2e.components.Select.option().should('have.length', 1);
+    e2e.components.Select.option().contains('C');
   });
 
   it('adding a multi value query variable', () => {
-    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
+    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=variables` });
     cy.contains(DASHBOARD_NAME).should('be.visible');
 
-    e2e.pages.Dashboard.Settings.Variables.List.newButton().should('be.visible').click();
+    cy.get(`[data-testid="${selectors.pages.Dashboard.Settings.Variables.List.newButton}"]`)
+      .should('be.visible')
+      .click();
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2()
       .should('be.visible')
@@ -161,22 +165,21 @@ describe('Variables - Query - Add variable', () => {
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().scrollIntoView().should('be.visible').click();
 
-    e2e.pages.Dashboard.Settings.Actions.close().click();
+    e2e.components.NavToolbar.editDashboard.backToDashboardButton().click();
 
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('a label').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItem()
       .should('have.length', 4)
       .eq(3)
       .within(() => {
-        e2e.components.Variables.variableLinkWrapper().should('be.visible').click();
-        e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
-          .should('be.visible')
-          .within(() => {
-            e2e.components.Variables.variableOption().should('have.length', 2);
-          });
-
-        e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
-        e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('C').should('be.visible');
+        cy.get('input').click();
       });
+
+    e2e.components.Select.option().should('have.length', 3);
+
+    e2e.components.Select.toggleAllOptions().should('have.text', 'Selected (1)');
+
+    e2e.components.Select.option().contains('All');
+    e2e.components.Select.option().contains('C');
   });
 });

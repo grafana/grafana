@@ -1,5 +1,8 @@
 //DOCS: https://prometheus.io/docs/alerting/latest/configuration/
 import { DataSourceJsonData, WithAccessControlMetadata } from '@grafana/data';
+import { IoK8SApimachineryPkgApisMetaV1ObjectMeta } from 'app/features/alerting/unified/openapi/receiversApi.gen';
+
+export const ROUTES_META_SYMBOL = Symbol('routes_metadata');
 
 export type AlertManagerCortexConfig = {
   template_files: Record<string, string>;
@@ -65,12 +68,15 @@ export type WebhookConfig = {
   max_alerts?: number;
 };
 
+type GrafanaManagedReceiverConfigSettings<T = any> = Record<string, T>;
 export type GrafanaManagedReceiverConfig = {
   uid?: string;
   disableResolveMessage?: boolean;
   secureFields?: Record<string, boolean>;
-  secureSettings?: Record<string, any>;
-  settings?: Record<string, any>; // sometimes settings are optional for security reasons (RBAC)
+  secureSettings?: GrafanaManagedReceiverConfigSettings;
+  /** If retrieved from k8s API, SecureSettings property name is different */
+  // SecureSettings?: GrafanaManagedReceiverConfigSettings<boolean>;
+  settings: GrafanaManagedReceiverConfigSettings;
   type: string;
   /**
    * Name of the _receiver_, which in most cases will be the
@@ -88,6 +94,10 @@ export type GrafanaManagedReceiverConfig = {
 
 export interface GrafanaManagedContactPoint {
   name: string;
+  /** If parsed from k8s API, we'll have an ID property */
+  id?: string;
+  metadata?: IoK8SApimachineryPkgApisMetaV1ObjectMeta;
+  provisioned?: boolean;
   grafana_managed_receiver_configs?: GrafanaManagedReceiverConfig[];
 }
 
@@ -119,9 +129,18 @@ export type Route = {
   group_interval?: string;
   repeat_interval?: string;
   routes?: Route[];
+  /** Times when the route should be muted. */
   mute_time_intervals?: string[];
+  /** Times when the route should be active. This is the opposite of `mute_time_intervals` */
+  active_time_intervals?: string[];
   /** only the root policy might have a provenance field defined */
   provenance?: string;
+  /** this is used to add additional metadata to the routes without interfering with original route definition (symbols aren't iterable)  */
+  [ROUTES_META_SYMBOL]?: {
+    provisioned?: boolean;
+    resourceVersion?: string;
+    name?: string;
+  };
 };
 
 export interface RouteWithID extends Route {

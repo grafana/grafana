@@ -2,7 +2,6 @@ import { css, cx } from '@emotion/css';
 import { useLayoutEffect } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
@@ -27,8 +26,7 @@ export const Page: PageType = ({
   className,
   info,
   layout = PageLayoutType.Standard,
-  scrollTop,
-  scrollRef,
+  onSetScrollRef,
   ...otherProps
 }) => {
   const styles = useStyles2(getStyles);
@@ -57,9 +55,7 @@ export const Page: PageType = ({
         <NativeScrollbar
           // This id is used by the image renderer to scroll through the dashboard
           divId="page-scrollbar"
-          autoHeightMin={'100%'}
-          scrollTop={scrollTop}
-          scrollRefCallback={scrollRef}
+          onSetScrollRef={onSetScrollRef}
         >
           <div className={styles.pageInner}>
             {pageHeaderNav && (
@@ -82,9 +78,7 @@ export const Page: PageType = ({
         <NativeScrollbar
           // This id is used by the image renderer to scroll through the dashboard
           divId="page-scrollbar"
-          autoHeightMin={'100%'}
-          scrollTop={scrollTop}
-          scrollRefCallback={scrollRef}
+          onSetScrollRef={onSetScrollRef}
         >
           <div className={styles.canvasContent}>{children}</div>
         </NativeScrollbar>
@@ -99,24 +93,13 @@ Page.Contents = PageContents;
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    wrapper: css(
-      config.featureToggles.bodyScrolling
-        ? {
-            label: 'page-wrapper',
-            display: 'flex',
-            flex: '1 1 0',
-            flexDirection: 'column',
-            position: 'relative',
-          }
-        : {
-            label: 'page-wrapper',
-            height: '100%',
-            display: 'flex',
-            flex: '1 1 0',
-            flexDirection: 'column',
-            minHeight: 0,
-          }
-    ),
+    wrapper: css({
+      label: 'page-wrapper',
+      display: 'flex',
+      flex: '1 1 0',
+      flexDirection: 'column',
+      position: 'relative',
+    }),
     pageContent: css({
       label: 'page-content',
       flexGrow: 1,

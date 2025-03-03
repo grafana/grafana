@@ -79,6 +79,11 @@ func (cmd *ConditionsCmd) Execute(ctx context.Context, t time.Time, vars mathexp
 	// matches contains the list of matches for all conditions
 	matches := make([]EvalMatch, 0)
 	for i, cond := range cmd.Conditions {
+		// Avoid operate subsequent conditions for LogicOr when it is already firing, see #87483
+		if isFiring && cond.Operator == ConditionOperatorLogicOr {
+			break
+		}
+
 		isCondFiring, isCondNoData, condMatches, err := cmd.executeCond(ctx, t, cond, vars)
 		if err != nil {
 			return mathexp.Results{}, err
@@ -221,7 +226,7 @@ func (cmd *ConditionsCmd) Type() string {
 }
 
 func compareWithOperator(b1, b2 bool, operator ConditionOperatorType) bool {
-	if operator == "or" {
+	if operator == ConditionOperatorOr || operator == ConditionOperatorLogicOr {
 		return b1 || b2
 	} else {
 		return b1 && b2
@@ -271,8 +276,9 @@ type ConditionEvalJSON struct {
 type ConditionOperatorType string
 
 const (
-	ConditionOperatorAnd ConditionOperatorType = "and"
-	ConditionOperatorOr  ConditionOperatorType = "or"
+	ConditionOperatorAnd     ConditionOperatorType = "and"
+	ConditionOperatorOr      ConditionOperatorType = "or"
+	ConditionOperatorLogicOr ConditionOperatorType = "logic-or"
 )
 
 type ConditionOperatorJSON struct {
@@ -297,8 +303,11 @@ func NewConditionCmd(refID string, ccj []ConditionJSON) (*ConditionsCmd, error) 
 	for i, cj := range ccj {
 		cond := condition{}
 
-		if i > 0 && cj.Operator.Type != "and" && cj.Operator.Type != "or" {
-			return nil, fmt.Errorf("condition %v operator must be `and` or `or`", i+1)
+		if i > 0 &&
+			cj.Operator.Type != ConditionOperatorAnd &&
+			cj.Operator.Type != ConditionOperatorOr &&
+			cj.Operator.Type != ConditionOperatorLogicOr {
+			return nil, fmt.Errorf("condition %v operator must be `and`, `or` or `logic-or`", i+1)
 		}
 		cond.Operator = cj.Operator.Type
 

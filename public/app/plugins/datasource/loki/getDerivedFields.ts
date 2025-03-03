@@ -30,10 +30,11 @@ export function getDerivedFields(dataFrame: DataFrame, derivedFieldConfigs: Deri
       if (derivedFieldsGrouped[field.name][0].matcherType === 'label' && labelFields) {
         const label = labelFields.values[i];
         if (label) {
-          // Find the key that matches both, the `matcherRegex` and the label key
-          const intersectingKey = Object.keys(label).find(
-            (key) => derivedFieldsGrouped[field.name][0].matcherRegex === key
-          );
+          // Find the key that matches the regex pattern in `matcherRegex`
+          const intersectingKey = Object.keys(label).find((key) => {
+            const regex = new RegExp(derivedFieldsGrouped[field.name][0].matcherRegex);
+            return regex.test(key);
+          });
 
           if (intersectingKey) {
             field.values.push(label[intersectingKey]);
@@ -95,6 +96,7 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
           datasourceUid: derivedFieldConfig.datasourceUid,
           datasourceName: dsSettings?.name ?? 'Data source not found',
         },
+        targetBlank: derivedFieldConfig.targetBlank,
       });
     } else if (derivedFieldConfig.url) {
       acc.push({
@@ -102,6 +104,7 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
         title: derivedFieldConfig.urlDisplayLabel || '',
         // This is hardcoded for Jaeger or Zipkin not way right now to specify datasource specific query object
         url: derivedFieldConfig.url,
+        targetBlank: derivedFieldConfig.targetBlank,
       });
     }
     return acc;

@@ -4,7 +4,7 @@ import { memo, SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
 import { CoreApp, LoadingState, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { EditorHeader, EditorRows, FlexItem } from '@grafana/experimental';
+import { EditorHeader, EditorRows, FlexItem } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Space } from '@grafana/ui';
 
@@ -94,6 +94,13 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
     setExplain(e.currentTarget.checked);
   };
 
+  const handleOpenQueryPatternsModal = useCallback(() => {
+    reportInteraction('grafana_prometheus_open_kickstart_clicked', {
+      app: app ?? '',
+    });
+    setQueryPatternsModalOpen(true);
+  }, [app]);
+
   return (
     <>
       <ConfirmModal
@@ -121,7 +128,7 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
           data-testid={selectors.components.QueryBuilder.queryPatterns}
           variant="secondary"
           size="sm"
-          onClick={() => setQueryPatternsModalOpen((prevValue) => !prevValue)}
+          onClick={handleOpenQueryPatternsModal}
         >
           Kick start your query
         </Button>

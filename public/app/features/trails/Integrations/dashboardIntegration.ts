@@ -1,7 +1,7 @@
-import { PanelMenuItem } from '@grafana/data';
+import { DataSourceApi, PanelMenuItem } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
+import { SceneTimeRangeState, VizPanel } from '@grafana/scenes';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/utils';
 
@@ -11,8 +11,8 @@ import { reportExploreMetrics } from '../interactions';
 
 import { DataTrailEmbedded, DataTrailEmbeddedState } from './DataTrailEmbedded';
 import { SceneDrawerAsScene } from './SceneDrawer';
-import { QueryMetric, getQueryMetrics } from './getQueryMetrics';
-import { createAdHocFilters, getQueryMetricLabel, getTimeRangeFromDashboard } from './utils';
+import { getQueryMetrics, QueryMetric } from './getQueryMetrics';
+import { createAdHocFilters, getQueryMetricLabel, getTimeRangeStateFromDashboard } from './utils';
 
 export async function addDataTrailPanelAction(dashboard: DashboardScene, panel: VizPanel, items: PanelMenuItem[]) {
   if (panel.state.pluginId !== 'timeseries') {
@@ -34,7 +34,13 @@ export async function addDataTrailPanelAction(dashboard: DashboardScene, panel: 
     return;
   }
 
-  const dataSourceApi = await getDataSourceSrv().get(datasource);
+  let dataSourceApi: DataSourceApi | undefined;
+
+  try {
+    dataSourceApi = await getDataSourceSrv().get(datasource);
+  } catch (e) {
+    return;
+  }
 
   if (dataSourceApi.interpolateVariablesInQueries == null) {
     return;
@@ -55,7 +61,7 @@ export async function addDataTrailPanelAction(dashboard: DashboardScene, panel: 
 
   if (subMenu.length > 0) {
     items.push({
-      text: 'Explore metrics',
+      text: 'Metrics drilldown',
       iconClassName: 'code-branch',
       subMenu: getUnique(subMenu),
     });
@@ -64,33 +70,35 @@ export async function addDataTrailPanelAction(dashboard: DashboardScene, panel: 
 
 function getUnique<T extends { text: string }>(items: T[]) {
   const uniqueMenuTexts = new Set<string>();
+
   function isUnique({ text }: { text: string }) {
     const before = uniqueMenuTexts.size;
     uniqueMenuTexts.add(text);
     const after = uniqueMenuTexts.size;
     return after > before;
   }
+
   return items.filter(isUnique);
 }
 
 function getEmbeddedTrailsState(
   { metric, labelFilters, query }: QueryMetric,
-  timeRange: SceneTimeRangeLike,
+  timeRangeState: SceneTimeRangeState,
   dataSourceUid: string | undefined
 ) {
   const state: DataTrailEmbeddedState = {
     metric,
     filters: createAdHocFilters(labelFilters),
     dataSourceUid,
-    timeRange,
+    timeRangeState,
   };
 
   return state;
 }
 
 function createCommonEmbeddedTrailStateProps(item: QueryMetric, dashboard: DashboardScene, ds: DataSourceRef) {
-  const timeRange = getTimeRangeFromDashboard(dashboard);
-  const trailState = getEmbeddedTrailsState(item, timeRange, ds.uid);
+  const timeRangeState = getTimeRangeStateFromDashboard(dashboard);
+  const trailState = getEmbeddedTrailsState(item, timeRangeState, ds.uid);
   const embeddedTrail: DataTrailEmbedded = new DataTrailEmbedded(trailState);
 
   embeddedTrail.trail.addActivationHandler(() => {
@@ -101,7 +109,7 @@ function createCommonEmbeddedTrailStateProps(item: QueryMetric, dashboard: Dashb
 
   const commonProps = {
     scene: embeddedTrail,
-    title: 'Explore metrics',
+    title: 'Metrics drilldown',
   };
 
   return commonProps;

@@ -183,6 +183,9 @@ export class Graph {
     const edges: Edge[] = [];
     inputNodes.forEach((input) => {
       outputNodes.forEach((output) => {
+        if (this.willCreateCycle(input, output)) {
+          throw Error(`cannot link ${input.name} to ${output.name} since it would create a cycle`);
+        }
         edges.push(this.createEdge().link(input, output));
       });
     });
@@ -217,11 +220,39 @@ export class Graph {
     return descendants;
   }
 
+  private willCreateCycle(input: Node, output: Node): boolean {
+    if (input === output) {
+      return true;
+    }
+
+    // Perform a DFS to check if the input node is reachable from the output node
+    const visited = new Set<Node>();
+    const stack = [output];
+
+    while (stack.length) {
+      const current = stack.pop()!;
+      if (current === input) {
+        return true;
+      }
+
+      visited.add(current);
+
+      for (const edge of current.outputEdges) {
+        const next = edge.outputNode;
+        if (next && !visited.has(next)) {
+          stack.push(next);
+        }
+      }
+    }
+
+    return false;
+  }
+
   createEdge(): Edge {
     return new Edge();
   }
 
-  getNode(name: string): Node {
+  getNode(name: string): Node | undefined {
     return this.nodes[name];
   }
 }

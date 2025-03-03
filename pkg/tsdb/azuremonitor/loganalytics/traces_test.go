@@ -14,6 +14,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/stretchr/testify/require"
@@ -25,6 +26,10 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 	ctx := context.Background()
 	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
+		if strings.Contains(r.URL.Path, "missing-op-id") {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
 		var correlationRes AzureCorrelationAPIResponse
 		if strings.Contains(r.URL.Path, "test-op-id") {
@@ -94,7 +99,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 	tests := []struct {
 		name                   string
 		queryModel             backend.DataQuery
-		azureLogAnalyticsQuery AzureLogAnalyticsQuery
+		azureLogAnalyticsQuery *AzureLogAnalyticsQuery
 		Err                    require.ErrorAssertionFunc
 	}{
 		{
@@ -113,7 +118,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
@@ -135,8 +140,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"},
 				TimeRange: timeRange,
@@ -150,8 +155,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true trace` +
 					`| where (operation_Id != '' and operation_Id == 'test-op-id') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'test-op-id')` +
@@ -163,8 +168,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 					"| where operation_Id == \"test-op-id\"",
@@ -189,7 +194,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
@@ -210,8 +215,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"},
 				TimeRange: timeRange,
@@ -225,8 +230,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true trace` +
 					`| where (operation_Id != '' and operation_Id == 'test-op-id') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'test-op-id')` +
@@ -238,8 +243,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 					"| where operation_Id == \"test-op-id\"",
@@ -263,7 +268,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
@@ -282,8 +287,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"},
 				TimeRange: timeRange,
@@ -297,8 +302,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces` +
 					`| where (operation_Id != '' and operation_Id == '${__data.fields.traceID}') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == '${__data.fields.traceID}')` +
@@ -310,8 +315,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 					"| where operation_Id == \"${__data.fields.traceID}\"",
@@ -336,7 +341,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
@@ -357,8 +362,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"},
 				TimeRange: timeRange,
@@ -372,8 +377,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces` +
 					`| where (operation_Id != '' and operation_Id == 'test-op-id') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'test-op-id')` +
@@ -385,8 +390,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 					"| where operation_Id == \"test-op-id\"",
@@ -412,7 +417,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
@@ -435,8 +440,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
 					`| where appId in ("test-app-id")` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"},
 				TimeRange: timeRange,
@@ -451,8 +456,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
 					`| where appId in ("test-app-id")` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces` +
 					`| where (operation_Id != '' and operation_Id == 'test-op-id') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'test-op-id')` +
@@ -465,8 +470,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
 					`| where appId in ("test-app-id")` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 					"| where operation_Id == \"test-op-id\"",
@@ -492,7 +497,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
@@ -515,8 +520,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
 					`| where appId !in ("test-app-id")` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"},
 				TimeRange: timeRange,
@@ -531,8 +536,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
 					`| where appId !in ("test-app-id")` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces` +
 					`| where (operation_Id != '' and operation_Id == 'test-op-id') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'test-op-id')` +
@@ -545,8 +550,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
 					`| where appId !in ("test-app-id")` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 					"| where operation_Id == \"test-op-id\"",
@@ -572,7 +577,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
@@ -595,8 +600,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
 					`| where appId !in ("test-app-id")| where clientId in ("test-client-id")` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"},
 				TimeRange: timeRange,
@@ -611,8 +616,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
 					`| where appId !in ("test-app-id")| where clientId in ("test-client-id")` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces` +
 					`| where (operation_Id != '' and operation_Id == 'test-op-id') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'test-op-id')` +
@@ -625,8 +630,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
 					`| where appId !in ("test-app-id")| where clientId in ("test-client-id")` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 					"| where operation_Id == \"test-op-id\"",
@@ -650,7 +655,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
@@ -669,8 +674,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"},
 				TimeRange: timeRange,
@@ -684,8 +689,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests` +
 					`| where (operation_Id != '' and operation_Id == '${__data.fields.traceID}') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == '${__data.fields.traceID}')` +
@@ -697,8 +702,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 					"| where operation_Id == \"${__data.fields.traceID}\"",
@@ -723,7 +728,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
@@ -744,8 +749,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"},
 				TimeRange: timeRange,
@@ -759,8 +764,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests` +
 					`| where (operation_Id != '' and operation_Id == 'test-op-id') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'test-op-id')` +
@@ -772,8 +777,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 					"| where operation_Id == \"test-op-id\"",
@@ -799,7 +804,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
@@ -841,7 +846,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
@@ -861,8 +866,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceName = cloud_RoleName| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"},
 				TimeRange: timeRange,
@@ -875,8 +880,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceName = cloud_RoleName| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').customEvents,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').dependencies,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').exceptions,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').pageViews,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').requests` +
 					`| where (operation_Id != '' and operation_Id == 'op-id-multi') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-multi')` +
@@ -887,8 +892,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceName = cloud_RoleName| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				TraceLogsExploreQuery: "union *,\n" +
 					"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,\n" +
@@ -919,7 +924,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
@@ -937,8 +942,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceName = cloud_RoleName| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2"},
 				TimeRange: timeRange,
@@ -951,8 +956,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceName = cloud_RoleName| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').customEvents,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').dependencies,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').exceptions,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').pageViews,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').requests` +
 					`| where (operation_Id != '' and operation_Id == '${__data.fields.traceID}') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == '${__data.fields.traceID}')` +
@@ -963,8 +968,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceName = cloud_RoleName| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				TraceLogsExploreQuery: "union *,\n" +
 					"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,\n" +
@@ -996,7 +1001,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
@@ -1016,8 +1021,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceName = cloud_RoleName| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2"},
 				TimeRange: timeRange,
@@ -1030,8 +1035,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceName = cloud_RoleName| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').customEvents,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').dependencies,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').exceptions,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').pageViews,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').requests` +
 					`| where (operation_Id != '' and operation_Id == 'op-id-multi') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-multi')` +
@@ -1042,8 +1047,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceName = cloud_RoleName| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				TraceLogsExploreQuery: "union *,\n" +
 					"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,\n" +
@@ -1075,7 +1080,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
@@ -1095,8 +1100,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceName = cloud_RoleName| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2"},
 				TimeRange: timeRange,
@@ -1109,8 +1114,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceName = cloud_RoleName| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').customEvents,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').dependencies,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').exceptions,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').pageViews,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').requests,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').availabilityResults,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').customEvents,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').dependencies,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').exceptions,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').pageViews,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').requests` +
 					`| where (operation_Id != '' and operation_Id == 'op-id-non-overlapping') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-non-overlapping')` +
@@ -1121,8 +1126,8 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 					`| extend serviceName = cloud_RoleName| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 					`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
 					`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
-					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+					`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
+					`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 					`| order by startTime asc`,
 				TraceLogsExploreQuery: "union *,\n" +
 					"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,\n" +
@@ -1146,13 +1151,34 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 			},
 			Err: require.NoError,
 		},
+		{
+			name: "trace query with missing operation ID",
+			queryModel: backend.DataQuery{
+				JSON: []byte(fmt.Sprintf(`{
+							"queryType": "Azure Traces",
+							"azureTraces": {
+								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
+								"resultFormat": "%s",
+								"traceTypes":	["trace"],
+								"operationId":	"missing-op-id"
+							}
+						}`, dataquery.ResultFormatTable)),
+				RefID:     "A",
+				TimeRange: timeRange,
+				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
+			},
+			azureLogAnalyticsQuery: nil,
+			Err: func(tt require.TestingT, err error, i ...interface{}) {
+				require.ErrorContains(tt, err, "requested trace not found by Application Insights indexing. Select the relevant Application Insights resource to search for the Operation ID directly")
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			query, err := buildAppInsightsQuery(ctx, tt.queryModel, dsInfo, appInsightsRegExp, backend.Logger)
+			query, err := buildAppInsightsQuery(ctx, tt.queryModel, dsInfo, appInsightsRegExp, log.NewNullLogger())
 			tt.Err(t, err)
-			if diff := cmp.Diff(&tt.azureLogAnalyticsQuery, query); diff != "" {
+			if diff := cmp.Diff(tt.azureLogAnalyticsQuery, query); diff != "" {
 				t.Errorf("Result mismatch (-want +got): \n%s", diff)
 			}
 		})

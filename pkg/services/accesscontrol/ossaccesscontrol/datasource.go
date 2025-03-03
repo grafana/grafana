@@ -10,7 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"go.opentelemetry.io/otel"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/accesscontrol/ossaccesscontrol")
 
 // DatasourceQueryActions contains permissions to read information
 // about a data source and submit arbitrary queries to it.
@@ -51,6 +54,9 @@ func (e DatasourcePermissionsService) SetBuiltInRolePermission(ctx context.Conte
 // if an OSS/unlicensed instance is upgraded to Enterprise/licensed.
 // https://github.com/grafana/identity-access-team/issues/672
 func (e DatasourcePermissionsService) SetPermissions(ctx context.Context, orgID int64, resourceID string, commands ...accesscontrol.SetResourcePermissionCommand) ([]accesscontrol.ResourcePermission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.SetPermissions")
+	defer span.End()
+
 	dbCommands := make([]resourcepermissions.SetResourcePermissionsCommand, 0, len(commands))
 	for _, cmd := range commands {
 		// Only set query permissions for built-in roles; do not set permissions for data sources with * as UID, as this would grant wildcard permissions
@@ -75,6 +81,9 @@ func (e DatasourcePermissionsService) SetPermissions(ctx context.Context, orgID 
 }
 
 func (e DatasourcePermissionsService) DeleteResourcePermissions(ctx context.Context, orgID int64, resourceID string) error {
+	ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.DeleteResourcePermissions")
+	defer span.End()
+
 	return e.store.DeleteResourcePermissions(ctx, orgID, &resourcepermissions.DeleteResourcePermissionsCmd{
 		Resource:          datasources.ScopeRoot,
 		ResourceAttribute: "uid",

@@ -9,7 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -228,6 +229,7 @@ func TestAPIEndpoint_DeleteOrgs(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
+				hs.orgDeletionService = &orgtest.FakeOrgDeletionService{}
 				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: &user.SignedInUser{OrgID: 1}}
 				hs.accesscontrolService = actest.FakeService{ExpectedPermissions: tt.permission}
 				hs.authnService = &authntest.FakeService{}
@@ -267,7 +269,8 @@ func TestAPIEndpoint_GetOrg(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			expectedIdentity := &authn.Identity{
-				ID:    identity.MustParseTypedID("user:1"),
+				ID:    "1",
+				Type:  claims.TypeUser,
 				OrgID: 1,
 				Permissions: map[int64]map[string][]string{
 					0: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions),

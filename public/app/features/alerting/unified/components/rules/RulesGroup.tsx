@@ -1,20 +1,19 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
-import { useEffect, useState } from 'react';
-import * as React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Badge, ConfirmModal, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { useDispatch } from 'app/types';
-import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier, RulesSource } from 'app/types/unified-alerting';
 
 import { LogMessages, logInfo } from '../../Analytics';
+import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
+import { useDeleteRuleGroup } from '../../hooks/ruleGroup/useDeleteRuleGroup';
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
-import { deleteRulesGroupAction } from '../../state/actions';
 import { useRulesAccess } from '../../utils/accessControlHooks';
-import { GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
 import { makeFolderLink, makeFolderSettingsLink } from '../../utils/misc';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
@@ -24,10 +23,10 @@ import { GrafanaRuleGroupExporter } from '../export/GrafanaRuleGroupExporter';
 import { decodeGrafanaNamespace } from '../expressions/util';
 
 import { ActionIcon } from './ActionIcon';
-import { EditCloudGroupModal } from './EditRuleGroupModal';
+import { EditRuleGroupModal } from './EditRuleGroupModal';
 import { ReorderCloudGroupModal } from './ReorderRuleGroupModal';
 import { RuleGroupStats } from './RuleStats';
-import { RulesTable } from './RulesTable';
+import { RulesTable, useIsRulesLoading } from './RulesTable';
 
 type ViewMode = 'grouped' | 'list';
 
@@ -38,9 +37,14 @@ interface Props {
   viewMode: ViewMode;
 }
 
+const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
+
 export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }: Props) => {
   const { rulesSource } = namespace;
-  const dispatch = useDispatch();
+  const rulesSourceName = getRulesSourceName(rulesSource);
+  const rulerRulesLoaded = useIsRulesLoading(rulesSource);
+
+  const [deleteRuleGroup] = useDeleteRuleGroup();
   const styles = useStyles2(getStyles);
 
   const [isEditingGroup, setIsEditingGroup] = useState(false);
@@ -55,14 +59,15 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
     setIsCollapsed(!expandAll);
   }, [expandAll]);
 
-  const { hasRuler, rulerRulesLoaded } = useHasRuler();
+  const { hasRuler, rulerConfig } = useHasRuler(namespace.rulesSource);
+  const { currentData: dsFeatures } = useDiscoverDsFeaturesQuery({ rulesSourceName });
+
   const rulerRule = group.rules[0]?.rulerRule;
   const folderUID = (rulerRule && isGrafanaRulerRule(rulerRule) && rulerRule.grafana_alert.namespace_uid) || undefined;
   const { folder } = useFolder(folderUID);
 
   // group "is deleting" if rules source has ruler, but this group has no rules that are in ruler
-  const isDeleting =
-    hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && !group.rules.find((rule) => !!rule.rulerRule);
+  const isDeleting = hasRuler && rulerRulesLoaded && !group.rules.find((rule) => !!rule.rulerRule);
   const isFederated = isFederatedRuleGroup(group);
 
   // check if group has provisioned items
@@ -74,8 +79,16 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   const isListView = viewMode === 'list';
   const isGroupView = viewMode === 'grouped';
 
-  const deleteGroup = () => {
-    dispatch(deleteRulesGroupAction(namespace, group));
+  const ruleGroupIdentifier = useMemo<RuleGroupIdentifier>(() => {
+    const namespaceName = namespace.uid ?? namespace.name;
+    const groupName = group.name;
+    const dataSourceName = getRulesSourceName(namespace.rulesSource);
+
+    return { namespaceName, groupName, dataSourceName };
+  }, [namespace, group.name]);
+
+  const deleteGroup = async () => {
+    await deleteRuleGroup.execute(ruleGroupIdentifier);
     setIsDeletingGroup(false);
   };
 
@@ -167,7 +180,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
         }
       }
     }
-  } else if (canEditRules(rulesSource.name) && hasRuler(rulesSource)) {
+  } else if (canEditRules(rulesSource.name) && hasRuler) {
     if (!isFederated) {
       actionIcons.push(
         <ActionIcon
@@ -227,16 +240,8 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           onToggle={setIsCollapsed}
           data-testid={selectors.components.AlertRules.groupToggle}
         />
-        <Icon name={isCollapsed ? 'folder' : 'folder-open'} />
-        {isCloudRulesSource(rulesSource) && (
-          <Tooltip content={rulesSource.name} placement="top">
-            <img
-              alt={rulesSource.meta.name}
-              className={styles.dataSourceIcon}
-              src={rulesSource.meta.info.logos.small}
-            />
-          </Tooltip>
-        )}
+        <FolderIcon isCollapsed={isCollapsed} />
+        <CloudSourceLogo rulesSource={rulesSource} />
         {
           // eslint-disable-next-line
           <div className={styles.groupName} onClick={() => setIsCollapsed(!isCollapsed)}>
@@ -273,21 +278,22 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           rules={group.rules}
         />
       )}
-      {isEditingGroup && (
-        <EditCloudGroupModal
-          namespace={namespace}
-          group={group}
+      {isEditingGroup && rulerConfig && (
+        <EditRuleGroupModal
+          ruleGroupIdentifier={ruleGroupIdentifier}
+          rulerConfig={rulerConfig}
+          folderTitle={decodeGrafanaNamespace(namespace).name}
           onClose={() => closeEditModal()}
           folderUrl={folder?.canEdit ? makeFolderSettingsLink(folder.uid) : undefined}
-          folderUid={folderUID}
         />
       )}
-      {isReorderingGroup && (
+      {isReorderingGroup && dsFeatures?.rulerConfig && (
         <ReorderCloudGroupModal
           group={group}
           folderUid={folderUID}
           namespace={namespace}
           onClose={() => setIsReorderingGroup(false)}
+          rulerConfig={dsFeatures.rulerConfig}
         />
       )}
       <ConfirmModal
@@ -321,6 +327,33 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
 });
 
 RulesGroup.displayName = 'RulesGroup';
+
+// It's a simple component but we render 80 of them on the list page it needs to be fast
+// The Tooltip component is expensive to render and the rulesSource doesn't change often
+// so memoization seems to bring a lot of benefit here
+const CloudSourceLogo = React.memo(({ rulesSource }: { rulesSource: RulesSource | string }) => {
+  const styles = useStyles2(getStyles);
+
+  if (isCloudRulesSource(rulesSource)) {
+    return (
+      <Tooltip content={rulesSource.name} placement="top">
+        <img alt={rulesSource.meta.name} className={styles.dataSourceIcon} src={rulesSource.meta.info.logos.small} />
+      </Tooltip>
+    );
+  }
+
+  return null;
+});
+
+CloudSourceLogo.displayName = 'CloudSourceLogo';
+
+// We render a lot of these on the list page, and the Icon component does quite a bit of work
+// to render its contents
+const FolderIcon = React.memo(({ isCollapsed }: { isCollapsed: boolean }) => {
+  return <Icon name={isCollapsed ? 'folder' : 'folder-open'} />;
+});
+
+FolderIcon.displayName = 'FolderIcon';
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {

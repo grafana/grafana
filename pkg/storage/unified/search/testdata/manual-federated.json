@@ -1,0 +1,96 @@
+{
+  "metadata": {},
+  "columnDefinitions": [
+    {
+      "name": "title",
+      "type": "string",
+      "format": "",
+      "description": "Display name for the resource",
+      "priority": 0
+    },
+    {
+      "name": "_id",
+      "type": "string",
+      "format": "",
+      "description": "Unique Identifier. {namespace}/{group}/{resource}/{name}",
+      "priority": 0
+    }
+  ],
+  "rows": [
+    {
+      "cells": [
+        "aaa (dash)",
+        "ns/dashboard.grafana.app/dashboards/aaa"
+      ],
+      "object": {
+        "kind": "dashboards",
+        "apiVersion": "dashboard.grafana.app",
+        "metadata": {
+          "name": "aaa",
+          "namespace": "ns",
+          "creationTimestamp": null
+        }
+      }
+    },
+    {
+      "cells": [
+        "bbb (dash)",
+        "ns/dashboard.grafana.app/dashboards/bbb"
+      ],
+      "object": {
+        "kind": "dashboards",
+        "apiVersion": "dashboard.grafana.app",
+        "metadata": {
+          "name": "bbb",
+          "namespace": "ns",
+          "creationTimestamp": null
+        }
+      }
+    },
+    {
+      "cells": [
+        "ccc (dash)",
+        "ns/dashboard.grafana.app/dashboards/ccc"
+      ],
+      "object": {
+        "kind": "dashboards",
+        "apiVersion": "dashboard.grafana.app",
+        "metadata": {
+          "name": "ccc",
+          "namespace": "ns",
+          "creationTimestamp": null
+        }
+      }
+    },
+    {
+      "cells": [
+        "yyy (folder)",
+        "ns/folder.grafana.app/folders/yyy"
+      ],
+      "object": {
+        "kind": "folders",
+        "apiVersion": "folder.grafana.app",
+        "metadata": {
+          "name": "yyy",
+          "namespace": "ns",
+          "creationTimestamp": null
+        }
+      }
+    },
+    {
+      "cells": [
+        "zzz (folder)",
+        "ns/folder.grafana.app/folders/zzz"
+      ],
+      "object": {
+        "kind": "folders",
+        "apiVersion": "folder.grafana.app",
+        "metadata": {
+          "name": "zzz",
+          "namespace": "ns",
+          "creationTimestamp": null
+        }
+      }
+    }
+  ]
+}

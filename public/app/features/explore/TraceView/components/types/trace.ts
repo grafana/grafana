@@ -12,25 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { TraceKeyValuePair, TraceLog } from '@grafana/data';
+
 /**
  * All timestamps are in microseconds
  */
 
-// TODO: Everett Tech Debt: Fix KeyValuePair types
-export type TraceKeyValuePair = {
-  key: string;
-  type?: string;
-  value: any;
-};
-
 export type TraceLink = {
   url: string;
   text: string;
-};
-
-export type TraceLog = {
-  timestamp: number;
-  fields: TraceKeyValuePair[];
 };
 
 export type TraceProcess = {
@@ -39,7 +29,7 @@ export type TraceProcess = {
 };
 
 export type TraceSpanReference = {
-  refType: 'CHILD_OF' | 'FOLLOWS_FROM';
+  refType: 'CHILD_OF' | 'FOLLOWS_FROM' | 'EXTERNAL';
   // eslint-disable-next-line no-use-before-define
   span?: TraceSpan | null | undefined;
   spanID: string;

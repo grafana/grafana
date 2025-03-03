@@ -16,14 +16,13 @@ vendor/
 /requests
 tsconfig.tsbuildinfo
 __debug_bin*
+*.cov
 
-# Yarn
-.yarn/
-!.yarn/patches
-!.yarn/releases
-!.yarn/plugins
-!.yarn/sdks
-!.yarn/versions
+# yarn
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
 .pnp.*
 
 # Enterprise emails
@@ -41,6 +40,8 @@ __debug_bin*
 /devenv/docker/blocks/saml-enterprise
 # This is the new place of the block, but I leave the previous here for a while
 /devenv/docker/blocks/auth/saml-enterprise
+/devenv/docker/blocks/auth/signer
+/devenv/docker/blocks/spanner_tests
 
 /tmp
 tools/phantomjs/phantomjs
@@ -87,6 +88,7 @@ example-apiserver/
 /devenv/docker/blocks/tempo/tempo-data/
 /devenv/docker/ha-test-unified-alerting/logs/webhook/dumps/
 /devenv/docker/ha-test-unified-alerting/logs/webhook/webhook-listener.log
+/devenv/docker/blocks/auth/openldap/certs/
 
 conf/custom.ini
 
@@ -103,13 +105,19 @@ profile.cov
 /pkg/cmd/grafana-cli/grafana-cli
 /pkg/cmd/grafana-server/grafana-server
 /pkg/cmd/grafana-server/debug
-/pkg/extensions/*
-/pkg/build/cmd/artifactspage.go
-/pkg/build/cmd/artifactspage.tmpl.html
-/pkg/server/wireexts_enterprise.go
+
+# Extensions
 /pkg/cmd/grafana-cli/runner/wireexts_enterprise.go
+/pkg/server/wireexts_enterprise.go
+/pkg/build/cmd/enterprise.go
+/pkg/extensions/*
+!/pkg/extensions/.keep
 !/pkg/extensions/main.go
+!/pkg/extensions/enterprise_imports.go
 /public/app/extensions
+!/public/app/extensions/.keep
+
+
 debug.test
 /examples/*/dist
 /packaging/**/*.rpm
@@ -139,6 +147,7 @@ pkg/services/quota/quotaimpl/storage/storage.json
 
 # Ignoring frontend packages specifics
 /packages/grafana-ui/.yarn/.cache
+/packages/grafana-ui/.storybook/static
 /packages/**/dist
 /packages/**/compiled
 /packages/**/.rpt2_cache
@@ -168,13 +177,13 @@ compilation-stats.json
 /e2e/benchmarks/**/results
 /e2e/build_results.zip
 /e2e/extensions
+!/e2e/extensions/.keep
 /e2e/extensions-suite
 /test-results/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
-
 # grafana server
 /scripts/grafana-server/server.log
 
@@ -219,3 +228,8 @@ public/app/plugins/**/dist/
 
 # Locally enabling the Go race detector until we can globally do so
 .go-race-enabled-locally
+
+# Mock service worker used for fake API responses in frontend development
+public/mockServiceWorker.js
+
+/e2e/test-plugins/*/dist

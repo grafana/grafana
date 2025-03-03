@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -175,7 +175,7 @@ func TestApplyUserHeader(t *testing.T) {
 		require.NoError(t, err)
 		req.Header.Set("X-Grafana-User", "admin")
 
-		ApplyUserHeader(false, req, &user.SignedInUser{Login: "admin", UserID: 1, FallbackType: identity.TypeUser})
+		ApplyUserHeader(false, req, &user.SignedInUser{Login: "admin", UserID: 1, FallbackType: claims.TypeUser})
 		require.NotContains(t, req.Header, "X-Grafana-User")
 	})
 
@@ -192,7 +192,7 @@ func TestApplyUserHeader(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "/", nil)
 		require.NoError(t, err)
 
-		ApplyUserHeader(true, req, &user.SignedInUser{IsAnonymous: true, FallbackType: identity.TypeAnonymous})
+		ApplyUserHeader(true, req, &user.SignedInUser{IsAnonymous: true, FallbackType: claims.TypeAnonymous})
 		require.NotContains(t, req.Header, "X-Grafana-User")
 	})
 
@@ -200,7 +200,7 @@ func TestApplyUserHeader(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "/", nil)
 		require.NoError(t, err)
 
-		ApplyUserHeader(true, req, &user.SignedInUser{Login: "admin", UserID: 1, FallbackType: identity.TypeUser})
+		ApplyUserHeader(true, req, &user.SignedInUser{Login: "admin", UserID: 1, FallbackType: claims.TypeUser})
 		require.Equal(t, "admin", req.Header.Get("X-Grafana-User"))
 	})
 }

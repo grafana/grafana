@@ -6,10 +6,12 @@ const { EsbuildPlugin } = require('esbuild-loader');
 const { resolveToEsbuildTarget } = require('esbuild-plugin-browserslist');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const path = require('path');
+const { EnvironmentPlugin } = require('webpack');
 const WebpackAssetsManifest = require('webpack-assets-manifest');
 const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 const { merge } = require('webpack-merge');
 
+const getEnvConfig = require('./env-util.js');
 const common = require('./webpack.common.js');
 const esbuildTargets = resolveToEsbuildTarget(browserslist(), { printUnknownTargets: false });
 
@@ -20,6 +22,8 @@ const esbuildOptions = {
   format: undefined,
   jsx: 'automatic',
 };
+
+const envConfig = getEnvConfig();
 
 module.exports = (env = {}) =>
   merge(common, {
@@ -43,7 +47,7 @@ module.exports = (env = {}) =>
         },
         require('./sass.rule.js')({
           sourceMap: false,
-          preserveUrl: false,
+          preserveUrl: true,
         }),
       ],
     },
@@ -87,5 +91,6 @@ module.exports = (env = {}) =>
           }
         });
       },
+      new EnvironmentPlugin(envConfig),
     ],
   });

@@ -102,7 +102,7 @@ export class ShareLink extends PureComponent<Props, State> {
 
     return (
       <>
-        <p className="share-modal-info-text">
+        <p>
           <Trans i18nKey="share-modal.link.info-text">
             Create a direct link to this dashboard or panel, customized with the options below.
           </Trans>

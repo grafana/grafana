@@ -1,11 +1,27 @@
-import { RulerDataSourceConfig } from 'app/types/unified-alerting';
+import { GrafanaRulesSourceSymbol, RulerDataSourceConfig, RulesSourceUid } from 'app/types/unified-alerting';
 
-import { AlertmanagerApiFeatures, PromApplication } from '../../../../types/unified-alerting-dto';
-import { withPerformanceLogging } from '../Analytics';
-import { getRulesDataSource } from '../utils/datasource';
+import {
+  AlertmanagerApiFeatures,
+  PromApplication,
+  RulesSourceApplication,
+} from '../../../../types/unified-alerting-dto';
+import { GRAFANA_RULES_SOURCE_NAME, getDataSourceUID, getRulesDataSourceByUID } from '../utils/datasource';
 
 import { alertingApi } from './alertingApi';
-import { discoverAlertmanagerFeatures, discoverFeatures } from './buildInfo';
+import { discoverAlertmanagerFeatures, discoverFeaturesByUid } from './buildInfo';
+
+export const GRAFANA_RULER_CONFIG: RulerDataSourceConfig = {
+  dataSourceName: 'grafana',
+  dataSourceUid: 'grafana',
+  apiVersion: 'legacy',
+};
+
+interface RulesSourceFeatures {
+  name: string;
+  uid: string;
+  application: RulesSourceApplication;
+  rulerConfig?: RulerDataSourceConfig;
+}
 
 export const featureDiscoveryApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
@@ -20,32 +36,47 @@ export const featureDiscoveryApi = alertingApi.injectEndpoints({
       },
     }),
 
-    discoverDsFeatures: build.query<{ rulerConfig?: RulerDataSourceConfig }, { rulesSourceName: string }>({
-      queryFn: async ({ rulesSourceName }) => {
-        const dsSettings = getRulesDataSource(rulesSourceName);
-        if (!dsSettings) {
-          return { error: new Error(`Missing data source configuration for ${rulesSourceName}`) };
+    discoverDsFeatures: build.query<RulesSourceFeatures, { rulesSourceName: string } | { uid: RulesSourceUid }>({
+      queryFn: async (rulesSourceIdentifier) => {
+        const dataSourceUID = getDataSourceUID(rulesSourceIdentifier);
+        if (!dataSourceUID) {
+          return { error: new Error(`Unable to find data source for ${rulesSourceIdentifier}`) };
         }
 
-        const discoverFeaturesWithLogging = withPerformanceLogging(
-          'unifiedalerting/featureDiscoveryApi/discoverDsFeatures',
-          discoverFeatures,
-          {
-            dataSourceName: rulesSourceName,
-            endpoint: 'unifiedalerting/featureDiscoveryApi/discoverDsFeatures',
-          }
-        );
+        if (dataSourceUID === GrafanaRulesSourceSymbol) {
+          return {
+            data: {
+              name: GRAFANA_RULES_SOURCE_NAME,
+              uid: GRAFANA_RULES_SOURCE_NAME,
+              application: 'grafana',
+              rulerConfig: GRAFANA_RULER_CONFIG,
+            } satisfies RulesSourceFeatures,
+          };
+        }
 
-        const dsFeatures = await discoverFeaturesWithLogging(dsSettings.name);
+        const dataSourceSettings = dataSourceUID ? getRulesDataSourceByUID(dataSourceUID) : undefined;
+        if (!dataSourceSettings) {
+          return { error: new Error(`Missing data source configuration for ${rulesSourceIdentifier}`) };
+        }
 
-        const rulerConfig: RulerDataSourceConfig | undefined = dsFeatures.features.rulerApiEnabled
-          ? {
-              dataSourceName: dsSettings.name,
-              apiVersion: dsFeatures.application === PromApplication.Cortex ? 'legacy' : 'config',
-            }
+        const features = await discoverFeaturesByUid(dataSourceSettings.uid);
+
+        const rulerConfig = features.features.rulerApiEnabled
+          ? ({
+              dataSourceName: dataSourceSettings.name,
+              dataSourceUid: dataSourceSettings.uid,
+              apiVersion: features.application === PromApplication.Cortex ? 'legacy' : 'config',
+            } satisfies RulerDataSourceConfig)
           : undefined;
 
-        return { data: { rulerConfig } };
+        return {
+          data: {
+            name: dataSourceSettings.name,
+            uid: dataSourceSettings.uid,
+            application: features.application,
+            rulerConfig,
+          } satisfies RulesSourceFeatures,
+        };
       },
     }),
   }),

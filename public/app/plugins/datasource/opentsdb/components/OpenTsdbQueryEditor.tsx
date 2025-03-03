@@ -154,12 +154,12 @@ export function OpenTsdbQueryEditor({
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    container: css`
-      display: flex;
-    `,
-    toggleButton: css`
-      margin-left: ${theme.spacing(0.5)};
-    `,
+    container: css({
+      display: 'flex',
+    }),
+    toggleButton: css({
+      marginLeft: theme.spacing(0.5),
+    }),
   };
 }
 

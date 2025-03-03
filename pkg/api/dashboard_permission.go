@@ -44,6 +44,10 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetDashboardPermissionList(c *contextmodel.ReqContext) response.Response {
+	ctx, span := tracer.Start(c.Req.Context(), "api.GetDashboardPermissionList")
+	defer span.End()
+	c.Req = c.Req.WithContext(ctx)
+
 	var dashID int64
 	var err error
 	dashUID := web.Params(c.Req)[":uid"]
@@ -117,6 +121,10 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *contextmodel.ReqContext) res
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) UpdateDashboardPermissions(c *contextmodel.ReqContext) response.Response {
+	ctx, span := tracer.Start(c.Req.Context(), "api.UpdateDashboardPermissions")
+	defer span.End()
+	c.Req = c.Req.WithContext(ctx)
+
 	var dashID int64
 	var err error
 	apiCmd := dtos.UpdateDashboardACLCommand{}
@@ -175,6 +183,9 @@ var dashboardPermissionMap = map[string]dashboardaccess.PermissionType{
 }
 
 func (hs *HTTPServer) getDashboardACL(ctx context.Context, user identity.Requester, dashboard *dashboards.Dashboard) ([]*dashboards.DashboardACLInfoDTO, error) {
+	ctx, span := tracer.Start(ctx, "api.getDashboardACL")
+	defer span.End()
+
 	permissions, err := hs.dashboardPermissionsService.GetPermissions(ctx, user, dashboard.UID)
 	if err != nil {
 		return nil, err
@@ -201,10 +212,10 @@ func (hs *HTTPServer) getDashboardACL(ctx context.Context, user identity.Request
 			FolderID:       dashboard.FolderID, // nolint:staticcheck
 			Created:        p.Created,
 			Updated:        p.Updated,
-			UserID:         p.UserId,
+			UserID:         p.UserID,
 			UserLogin:      p.UserLogin,
 			UserEmail:      p.UserEmail,
-			TeamID:         p.TeamId,
+			TeamID:         p.TeamID,
 			TeamEmail:      p.TeamEmail,
 			Team:           p.Team,
 			Role:           role,
@@ -253,6 +264,9 @@ func (hs *HTTPServer) filterHiddenACL(user identity.Requester, acl []*dashboards
 
 // updateDashboardAccessControl is used for api backward compatibility
 func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID int64, uid string, isFolder bool, items []*dashboards.DashboardACL, old []*dashboards.DashboardACLInfoDTO) error {
+	ctx, span := tracer.Start(ctx, "api.updateDashboardAccessControl")
+	defer span.End()
+
 	commands := []accesscontrol.SetResourcePermissionCommand{}
 	for _, item := range items {
 		permissions := item.Permission.String()
