@@ -19,32 +19,27 @@ interface ResultBag {
 }
 
 export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO): ResultBag {
-  const { dataSourceUID, error: dataSourceError } = useDataSourceUid(rulesSourceName);
-
   const {
     currentData: dsFeatures,
     isLoading,
-    error: discoveryError,
-  } = featureDiscoveryApi.endpoints.discoverDsFeatures.useQuery(
-    dataSourceUID
-      ? {
-          uid: dataSourceUID,
-        }
-      : skipToken
-  );
+    error,
+  } = featureDiscoveryApi.endpoints.discoverDsFeatures.useQuery({
+    rulesSourceName,
+  });
 
   const folderUID = rule && isGrafanaRulerRule(rule) ? rule.grafana_alert.namespace_uid : undefined;
 
   const rulePermission = getRulesPermissions(rulesSourceName);
   const { folder, loading } = useFolder(folderUID);
 
-  if (discoveryError || dataSourceError) {
+  // handle discovery and data source errors
+  if (error) {
     return {
       isEditable: false,
       isRemovable: false,
       loading: false,
       isRulerAvailable: false,
-      error: discoveryError ?? dataSourceError,
+      error,
     };
   }
 

@@ -13,6 +13,7 @@ import { setupDataSources } from '../testSetup/datasources';
 
 import { useFolder } from './useFolder';
 import { useIsRuleEditable } from './useIsRuleEditable';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 jest.mock('./useFolder');
 
@@ -56,7 +57,9 @@ describe('useIsRuleEditable', () => {
 
         const wrapper = getProviderWrapper();
 
-        const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
+        const { result } = renderHook(() => useIsRuleEditable(GRAFANA_RULES_SOURCE_NAME, mockRulerGrafanaRule()), {
+          wrapper,
+        });
 
         await waitFor(() => expect(result.current.loading).toBe(false));
         expect(result.current.isRemovable).toBe(true);

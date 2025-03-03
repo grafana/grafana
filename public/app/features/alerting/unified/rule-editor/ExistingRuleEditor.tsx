@@ -23,7 +23,7 @@ export function ExistingRuleEditor({ identifier, prefill }: ExistingRuleEditorPr
   const {
     loading: loadingAlertRule,
     result: ruleWithLocation,
-    error,
+    error: fetchRuleError,
   } = useRuleWithLocation({ ruleIdentifier: identifier });
 
   const ruleSourceName = ruleId.ruleIdentifierToRuleSourceName(identifier);
@@ -34,10 +34,10 @@ export function ExistingRuleEditor({ identifier, prefill }: ExistingRuleEditorPr
   } = useIsRuleEditable(ruleSourceName, ruleWithLocation?.rule);
 
   // error handling for fetching rule and rule RBAC
-  if (error || errorEditable) {
+  if (fetchRuleError || errorEditable) {
     return (
       <Alert severity="error" title="Failed to load rule">
-        {stringifyErrorLike(errorEditable ?? error)}
+        {stringifyErrorLike(errorEditable ?? fetchRuleError)}
       </Alert>
     );
   }
