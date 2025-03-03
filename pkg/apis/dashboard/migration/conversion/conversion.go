@@ -12,18 +12,6 @@ import (
 	dashboardV2 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
 )
 
-func ToInternalDashboardV0(scheme *runtime.Scheme, obj runtime.Object) (*dashboardV0.Dashboard, error) {
-	dash := &dashboardV0.Dashboard{}
-	if err := scheme.Convert(obj, dash, nil); err != nil {
-		return nil, err
-	}
-	return dash, nil
-}
-
-func FromDashboardV0(scheme *runtime.Scheme, dash *dashboardV0.Dashboard, obj runtime.Object) error {
-	return scheme.Convert(dash, obj, nil)
-}
-
 func RegisterConversions(s *runtime.Scheme) error {
 	if err := s.AddConversionFunc((*dashboardV0.Dashboard)(nil), (*dashboardV1.Dashboard)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_V0_to_V1(a.(*dashboardV0.Dashboard), b.(*dashboardV1.Dashboard), scope)
