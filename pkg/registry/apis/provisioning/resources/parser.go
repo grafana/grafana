@@ -129,6 +129,10 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 
 	if r.urls != nil {
 		parsed.URLs, err = r.urls.ResourceURLs(ctx, info)
+		if err != nil {
+			logger.Debug("failed to load resource URLs", "error", err)
+			return parsed, err
+		}
 	}
 
 	// Remove the internal dashboard UID,version and id if they exist
