@@ -7,7 +7,6 @@ import (
 	"io/fs"
 	"net/http"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -41,7 +40,7 @@ type FileInfo struct {
 	// The git hash for a given file
 	Hash string
 	// When was the file changed (if known)
-	Modified *metav1.Time
+	Modified int64
 }
 
 // An entry in the file tree, as returned by 'ReadFileTree'. Like FileInfo, but contains less information.
@@ -97,6 +96,14 @@ type Writer interface {
 type ReaderWriter interface {
 	Reader
 	Writer
+}
+
+// Hooks called after the repository has been created, updated or deleted
+type RepositoryWithURLs interface {
+	Repository
+
+	// Get resource URLs for a file inside a repository
+	ResourceURLs(ctx context.Context, file *FileInfo) (*provisioning.ResourceURLs, error)
 }
 
 // Hooks called after the repository has been created, updated or deleted

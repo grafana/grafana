@@ -40,8 +40,10 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceList":           schema_pkg_apis_provisioning_v0alpha1_ResourceList(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceListItem":       schema_pkg_apis_provisioning_v0alpha1_ResourceListItem(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceObjects":        schema_pkg_apis_provisioning_v0alpha1_ResourceObjects(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceRepositoryInfo": schema_pkg_apis_provisioning_v0alpha1_ResourceRepositoryInfo(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceStats":          schema_pkg_apis_provisioning_v0alpha1_ResourceStats(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceType":           schema_pkg_apis_provisioning_v0alpha1_ResourceType(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceURLs":           schema_pkg_apis_provisioning_v0alpha1_ResourceURLs(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceWrapper":        schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncJobOptions":         schema_pkg_apis_provisioning_v0alpha1_SyncJobOptions(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncOptions":            schema_pkg_apis_provisioning_v0alpha1_SyncOptions(ref),
@@ -1387,6 +1389,52 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceObjects(ref common.ReferenceC
 	}
 }
 
+func schema_pkg_apis_provisioning_v0alpha1_ResourceRepositoryInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The repository type\n\nPossible enum values:\n - `\"github\"`\n - `\"local\"`",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"github", "local"},
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The display name for this repository",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"namespace": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The namepsace this belongs to",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The name (identifier)",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"type", "title", "namespace", "name"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_provisioning_v0alpha1_ResourceStats(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -1484,6 +1532,53 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceType(ref common.ReferenceCall
 	}
 }
 
+func schema_pkg_apis_provisioning_v0alpha1_ResourceURLs(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"source": {
+						SchemaProps: spec.SchemaProps{
+							Description: "A URL pointing to the this file in the repository",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"repository": {
+						SchemaProps: spec.SchemaProps{
+							Description: "A URL pointing to the repository this lives in",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"pullRequest": {
+						SchemaProps: spec.SchemaProps{
+							Description: "A URL pointing to the repository this lives in",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"newPullRequest": {
+						SchemaProps: spec.SchemaProps{
+							Description: "A URL that will create a new pull requeset for this branch",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"compare": {
+						SchemaProps: spec.SchemaProps{
+							Description: "A URL pointing to the repository this lives in",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -1514,7 +1609,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref common.ReferenceC
 					},
 					"ref": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The commit hash (if exists)",
+							Description: "The request ref (or branch if exists)",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -1526,10 +1621,24 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref common.ReferenceC
 							Format:      "",
 						},
 					},
-					"timestamp": {
+					"repository": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Basic repository info",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceRepositoryInfo"),
+						},
+					},
+					"urls": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Typed links for this file (only supported by external systems, github etc)",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceURLs"),
+						},
+					},
+					"timestampMillis": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The modified time in the remote file system",
-							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
+							Type:        []string{"integer"},
+							Format:      "int64",
 						},
 					},
 					"resource": {
@@ -1560,11 +1669,11 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref common.ReferenceC
 						},
 					},
 				},
-				Required: []string{"resource"},
+				Required: []string{"repository", "resource"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceObjects", "k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceObjects", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceRepositoryInfo", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceURLs"},
 	}
 }
 

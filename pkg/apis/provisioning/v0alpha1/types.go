@@ -219,14 +219,20 @@ type ResourceWrapper struct {
 	// Path to the remote file
 	Path string `json:"path,omitempty"`
 
-	// The commit hash (if exists)
+	// The request ref (or branch if exists)
 	Ref string `json:"ref,omitempty"`
 
 	// The repo hash value
 	Hash string `json:"hash,omitempty"`
 
+	// Basic repository info
+	Repository ResourceRepositoryInfo `json:"repository"`
+
+	// Typed links for this file (only supported by external systems, github etc)
+	URLs *ResourceURLs `json:"urls,omitempty"`
+
 	// The modified time in the remote file system
-	Timestamp *metav1.Time `json:"timestamp,omitempty"`
+	TimestampMillis int64 `json:"timestampMillis,omitempty"`
 
 	// Different flavors of the same object
 	Resource ResourceObjects `json:"resource"`
@@ -262,6 +268,34 @@ type ResourceObjects struct {
 
 	// The value returned from a dryRun request
 	DryRun common.Unstructured `json:"dryRun,omitempty"`
+}
+
+type ResourceRepositoryInfo struct {
+	// The repository type
+	Type RepositoryType `json:"type"`
+
+	// The display name for this repository
+	Title string `json:"title"`
+
+	// The namepsace this belongs to
+	Namespace string `json:"namespace"`
+
+	// The name (identifier)
+	Name string `json:"name"`
+}
+
+type ResourceURLs struct {
+	// A URL pointing to the this file in the repository
+	Source string `json:"source,omitempty"`
+
+	// A URL pointing to the repository this lives in
+	Repository string `json:"repository,omitempty"`
+
+	// A URL that will create a new pull requeset for this branch
+	NewPullRequest string `json:"newPullRequest,omitempty"`
+
+	// A URL pointing to the repository this lives in
+	Compare string `json:"compare,omitempty"`
 }
 
 // Information we can get just from the file listing

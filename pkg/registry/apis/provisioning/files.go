@@ -206,9 +206,9 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 			return nil, fmt.Errorf("failed to create folder: %w", err)
 		}
 		return &provisioning.ResourceWrapper{
-			Path:      path,
-			Ref:       ref,
-			Timestamp: &metav1.Time{Time: time.Now()},
+			Path:            path,
+			Ref:             ref,
+			TimestampMillis: time.Now().UnixMilli(),
 			// TODO: should we return something here?
 			// TypeMeta:  metav1.TypeMeta{},
 			// Resource: provisioning.ResourceObjects{},

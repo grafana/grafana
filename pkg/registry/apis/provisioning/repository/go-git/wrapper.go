@@ -343,10 +343,8 @@ func (g *GoGitRepo) Read(ctx context.Context, path string, ref string) (*reposit
 		return nil, err
 	}
 	info := &repository.FileInfo{
-		Path: path,
-		Modified: &metav1.Time{
-			Time: stat.ModTime(),
-		},
+		Path:     path,
+		Modified: stat.ModTime().UnixMilli(),
 	}
 	if !stat.IsDir() {
 		f, err := g.tree.Filesystem.Open(path)

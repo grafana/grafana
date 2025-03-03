@@ -211,10 +211,8 @@ func (r *localRepository) Read(ctx context.Context, filePath string, ref string)
 	path := strings.TrimPrefix(filePath, r.path)
 	if info.IsDir() {
 		return &FileInfo{
-			Path: path,
-			Modified: &metav1.Time{
-				Time: info.ModTime(),
-			},
+			Path:     path,
+			Modified: info.ModTime().UnixMilli(),
 		}, nil
 	}
 
@@ -230,12 +228,10 @@ func (r *localRepository) Read(ctx context.Context, filePath string, ref string)
 	}
 
 	return &FileInfo{
-		Path: path,
-		Data: data,
-		Hash: hash,
-		Modified: &metav1.Time{
-			Time: info.ModTime(),
-		},
+		Path:     path,
+		Data:     data,
+		Hash:     hash,
+		Modified: info.ModTime().UnixMilli(),
 	}, nil
 }
 
