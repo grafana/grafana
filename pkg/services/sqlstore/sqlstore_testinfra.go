@@ -101,7 +101,7 @@ func NewTestStore(tb TestingTB, opts ...TestOption) *SQLStore {
 		opt(options)
 	}
 
-	features := featuremgmt.WithFeatures(options.FeatureFlags)
+	features := newFeatureToggles(options.FeatureFlags)
 	testDB, err := createTemporaryDatabase(tb)
 	if err != nil {
 		tb.Fatalf("failed to create a temporary database: %v", err)
