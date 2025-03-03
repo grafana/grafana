@@ -2272,6 +2272,8 @@ github.com/gorilla/websocket v1.5.0 h1:PPwGk2jz7EePpoHN/+ClbZu8SPxiqlu12wZP/3sWm
 github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/grafana/alerting v0.0.0-20250123201752-bff1b4e5cd49 h1:0bEol/HaAfDTi6olvfvvyCYQNQq4qKRbb5AtXKV95w0=
 github.com/grafana/alerting v0.0.0-20250123201752-bff1b4e5cd49/go.mod h1:U7Ta3K4T7jVgqGSYuPsfuPKHFiL2GbCZSHa3nHjmCos=
+github.com/grafana/alerting v0.0.0-20250228212043-eb5e46316a20 h1:H7uQeX8sw92phSAbHKM1ksSP/iFbdiswT19uqgQtLIw=
+github.com/grafana/alerting v0.0.0-20250228212043-eb5e46316a20/go.mod h1:U7Ta3K4T7jVgqGSYuPsfuPKHFiL2GbCZSHa3nHjmCos=
 github.com/grafana/authlib v0.0.0-20240515154731-fe4779055ef4 h1:Bfa397TXkM0X97MhbCC+fNSwVtg21c0Mg5STes1dRug=
 github.com/grafana/authlib v0.0.0-20240515154731-fe4779055ef4/go.mod h1:86rRD5P6u2JPWtNWTMOlqlU+YMv2fUvVz/DomA6L7w4=
 github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw=
