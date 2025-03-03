@@ -277,7 +277,7 @@ type ResourceRepositoryInfo struct {
 	// The display name for this repository
 	Title string `json:"title"`
 
-	// The namepsace this belongs to
+	// The namespace this belongs to
 	Namespace string `json:"namespace"`
 
 	// The name (identifier)
