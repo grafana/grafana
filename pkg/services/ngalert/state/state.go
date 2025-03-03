@@ -329,10 +329,10 @@ func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]float6
 }
 
 func resultNormal(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, reason string) {
-	switch state.State {
-	case eval.Normal:
+	switch {
+	case state.State == eval.Normal:
 		logger.Debug("Keeping state", "state", state.State)
-	case eval.Recovering:
+	case state.State == eval.Recovering:
 		// If the previous state is Recovering then check if the KeepFiringFor duration has been observed,
 		// and if so, transition to Normal.
 		if result.EvaluatedAt.Sub(state.StartsAt) >= rule.KeepFiringFor {
@@ -354,39 +354,37 @@ func resultNormal(state *State, rule *models.AlertRule, result eval.Result, logg
 			// as for it the alert is still firing.
 			state.EndsAt = nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
 		}
+	case state.State == eval.Alerting && rule.KeepFiringFor > 0:
+		// If the old state is Alerting and the rule has a KeepFiringFor duration then
+		// the state should be set to Recovering when it transitions to Normal.
+		//
+		// EndsAt must be set to a future time for the Alertmanager, the same as for Alerting states.
+		nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
+		logger.Debug("Changing state",
+			"previous_state",
+			state.State,
+			"next_state",
+			eval.Recovering,
+			"previous_ends_at",
+			state.EndsAt,
+			"next_ends_at",
+			nextEndsAt,
+		)
+		state.SetRecovering(reason, result.EvaluatedAt, nextEndsAt)
 	default:
-		if state.State == eval.Alerting && rule.KeepFiringFor > 0 {
-			// If the old state is Alerting and the rule has a KeepFiringFor duration then
-			// the state should be set to Recovering when it transitions to Normal.
-			//
-			// EndsAt must be set to a future time for the Alertmanager, the same as for Alerting states.
-			nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
-			logger.Debug("Changing state",
-				"previous_state",
-				state.State,
-				"next_state",
-				eval.Recovering,
-				"previous_ends_at",
-				state.EndsAt,
-				"next_ends_at",
-				nextEndsAt,
-			)
-			state.SetRecovering(reason, result.EvaluatedAt, nextEndsAt)
-		} else {
-			nextEndsAt := result.EvaluatedAt
-			logger.Debug("Changing state",
-				"previous_state",
-				state.State,
-				"next_state",
-				eval.Normal,
-				"previous_ends_at",
-				state.EndsAt,
-				"next_ends_at",
-				nextEndsAt,
-			)
-			// Normal states have the same start and end timestamps
-			state.SetNormal(reason, nextEndsAt, nextEndsAt)
-		}
+		nextEndsAt := result.EvaluatedAt
+		logger.Debug("Changing state",
+			"previous_state",
+			state.State,
+			"next_state",
+			eval.Normal,
+			"previous_ends_at",
+			state.EndsAt,
+			"next_ends_at",
+			nextEndsAt,
+		)
+		// Normal states have the same start and end timestamps
+		state.SetNormal(reason, nextEndsAt, nextEndsAt)
 	}
 }
 
