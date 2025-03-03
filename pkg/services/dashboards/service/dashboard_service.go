@@ -1961,7 +1961,7 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 		FolderUID:  obj.GetFolder(),
 		Version:    dashVersion,
 		Data:       simplejson.NewFromAny(spec),
-		APIVersion: strings.TrimPrefix(item.GetAPIVersion(), dashboard.GROUP+"/"), // ??? will always be v1!!!
+		APIVersion: strings.TrimPrefix(item.GetAPIVersion(), dashboard.GROUP+"/"),
 	}
 
 	out.Created = obj.GetCreationTimestamp().Time
