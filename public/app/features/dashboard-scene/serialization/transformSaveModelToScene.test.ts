@@ -1,3 +1,5 @@
+import { title } from 'process';
+
 import { LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { config } from '@grafana/runtime';
@@ -928,6 +930,36 @@ describe('transformSaveModelToScene', () => {
         { config: {}, name: 'Field 2', type: 'number' },
       ]);
     });
+  });
+});
+
+describe('When creating a snapshot dashboard scene', () => {
+  it('should initialize a dashboard scene with SnapshotVariables', () => {
+    const dashboard = {
+      ...defaultDashboard,
+      title: 'With custom quick ranges',
+      uid: 'test-uid',
+      timepicker: {
+        ...defaultTimePickerConfig,
+        quick_ranges: [
+          {
+            display: 'Last 6 hours',
+            from: 'now-6h',
+            to: 'now',
+          },
+          {
+            display: 'Last 3 days',
+            from: 'now-3d',
+            to: 'now',
+          },
+        ],
+      },
+    };
+
+    const oldModel = new DashboardModel(dashboard);
+    const scene = createDashboardSceneFromDashboardModel(oldModel, dashboard);
+
+    expect(scene.state.controls?.state.timePicker.state.quickRanges).toBe(dashboard.timepicker.quick_ranges);
   });
 });
 
