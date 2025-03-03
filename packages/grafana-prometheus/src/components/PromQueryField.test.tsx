@@ -31,7 +31,6 @@ const defaultProps = {
       getLabelKeys: () => [],
       metrics: [],
     },
-    getInitHints: () => [],
   } as unknown as PrometheusDatasource,
   query: {
     expr: '',
