@@ -83,6 +83,14 @@ jobs:
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
         uses: ./.github/actions/setup-enterprise
 
+      - name: Cache enterprise state
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+        uses: actions/upload-artifact@v4
+        with:
+          name: enterprise-state
+          path: pkg/
+          retention-days: 1
+
       - name: Verify CUE generation
         run: CODEGEN_VERIFY=1 make gen-cue
 
@@ -160,7 +168,14 @@ jobs:
         with:
           go-version: '1.23.5'
           cache: true
-          
+
+      - name: Restore enterprise state
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+        uses: actions/download-artifact@v4
+        with:
+          name: enterprise-state
+          path: pkg/
+
       - name: Download unit coverage
         continue-on-error: true
         id: download-unit
