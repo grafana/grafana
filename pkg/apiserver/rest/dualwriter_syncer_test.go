@@ -181,12 +181,12 @@ func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 	// mode 1
 	for _, tt := range tests {
 		t.Run("Mode-1-"+tt.name, func(t *testing.T) {
-			l := (LegacyStorage)(nil)
+			l := (Storage)(nil)
 			s := (Storage)(nil)
 			lm := &mock.Mock{}
 			um := &mock.Mock{}
 
-			ls := legacyStoreMock{lm, l}
+			ls := storageMock{lm, l}
 			us := storageMock{um, s}
 
 			if tt.setupLegacyFn != nil {
@@ -221,12 +221,12 @@ func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 	// mode 2
 	for _, tt := range tests {
 		t.Run("Mode-2-"+tt.name, func(t *testing.T) {
-			l := (LegacyStorage)(nil)
+			l := (Storage)(nil)
 			s := (Storage)(nil)
 			lm := &mock.Mock{}
 			um := &mock.Mock{}
 
-			ls := legacyStoreMock{lm, l}
+			ls := storageMock{lm, l}
 			us := storageMock{um, s}
 
 			if tt.setupLegacyFn != nil {

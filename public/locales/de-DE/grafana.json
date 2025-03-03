@@ -209,6 +209,8 @@
       "alerting": "",
       "alerting-change-description": "",
       "annotations": "",
+      "compare": "",
+      "compare-with-latest": "",
       "compareVersions": "",
       "comparing-versions": "",
       "condition": "",
@@ -228,17 +230,22 @@
       "provisioning": "",
       "provisioning-change-description": "",
       "queryAndAlertCondition": "",
-      "reset": "",
       "restore": "",
+      "restore-manually": "",
       "restore-modal": {
         "body": "",
+        "confirm": "",
+        "error": "",
         "summary": "",
         "title": ""
       },
+      "restore-version": "",
       "rule_group": "",
       "unknown": "",
       "unknown-change-description": "",
-      "user-id": ""
+      "user-id": "",
+      "warning-restore-manually": "",
+      "warning-restore-manually-title": ""
     },
     "annotations": {
       "description": "",
@@ -295,6 +302,9 @@
       "export-all": "",
       "loading": "",
       "search-by-matchers": "",
+      "titles": {
+        "notification-templates": ""
+      },
       "view": ""
     },
     "contact-points": {
@@ -311,6 +321,10 @@
       "delivery-duration": "",
       "empty-state": {
         "title": ""
+      },
+      "key-value-map": {
+        "add": "",
+        "confirm-add": ""
       },
       "last-delivery-attempt": "",
       "last-delivery-failed": "",
@@ -403,6 +417,20 @@
       "preview-routing": "",
       "title": "",
       "uninitialized": ""
+    },
+    "notification-templates": {
+      "duplicate": {
+        "subTitle": "",
+        "title": ""
+      },
+      "edit": {
+        "subTitle": "",
+        "title": ""
+      },
+      "new": {
+        "subTitle": "",
+        "title": ""
+      }
     },
     "policies": {
       "default-policy": {
@@ -528,6 +556,19 @@
       },
       "pause": {
         "label": ""
+      },
+      "threshold": {
+        "recovery": {
+          "stop-alerting-above": "",
+          "stop-alerting-bellow": "",
+          "stop-alerting-equal": "",
+          "stop-alerting-inside-range": "",
+          "stop-alerting-less": "",
+          "stop-alerting-more": "",
+          "stop-alerting-not-equal": "",
+          "stop-alerting-outside-range": "",
+          "title": ""
+        }
       }
     },
     "rule-groups": {
@@ -579,6 +620,7 @@
       }
     },
     "rule-viewer": {
+      "error-loading": "",
       "prometheus-consistency-check": {
         "alert-message": "",
         "alert-title": ""
@@ -810,6 +852,7 @@
     "collapse": "",
     "edit": "",
     "help": "",
+    "loading": "",
     "locale": {
       "default": "Standard"
     },
@@ -1011,10 +1054,24 @@
         },
         "modal": {
           "title": ""
-        }
+        },
+        "repeat": {
+          "title": "",
+          "variable": {
+            "title": ""
+          }
+        },
+        "title": ""
       }
     },
     "edit-pane": {
+      "elements": {
+        "dashboard": "",
+        "objects": "",
+        "panels": "",
+        "rows": "",
+        "tabs": ""
+      },
       "objects": {
         "multi-select": {
           "selection-number": ""
@@ -1042,6 +1099,11 @@
           "selection-number": ""
         }
       }
+    },
+    "editpane": {
+      "add": "",
+      "configure": "",
+      "outline": ""
     },
     "empty": {
       "add-library-panel-body": "Visualisierungen hinzufügen, die mit anderen Dashboards geteilt werden.",
@@ -1114,6 +1176,15 @@
       "title": "",
       "title-option": ""
     },
+    "outline": {
+      "tree": {
+        "item": {
+          "collapse": "",
+          "empty": "",
+          "expand": ""
+        }
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "",
@@ -1124,6 +1195,12 @@
       "description": "",
       "item-options": {
         "hide-no-data": "",
+        "repeat": {
+          "variable": {
+            "description": "",
+            "title": ""
+          }
+        },
         "title": ""
       },
       "name": "",
@@ -1180,6 +1257,7 @@
     "toolbar": {
       "add": "Hinzufügen",
       "add-panel": "",
+      "add-panel-description": "",
       "add-panel-lib": "",
       "add-row": "",
       "add-tab": "",
@@ -1205,6 +1283,7 @@
         "label": "",
         "tooltip": ""
       },
+      "libray-panel-description": "",
       "mark-favorite": "Als Favorit markieren",
       "more-save-options": "",
       "open-original": "Original-Dashboard öffnen",
@@ -1213,6 +1292,7 @@
       "playlist-stop": "Wiedergabeliste stoppen",
       "public-dashboard": "",
       "refresh": "Dashboard aktualisieren",
+      "row-description": "",
       "save": "Dashboard speichern",
       "save-dashboard": {
         "label": "",
@@ -1232,6 +1312,7 @@
       "share-button": "Teilen",
       "show-hidden-elements": "",
       "switch-old-dashboard": "",
+      "tabs-description": "",
       "unlink-library-panel": "",
       "unmark-favorite": "Markierung als Favorit entfernen"
     },
@@ -1642,6 +1723,10 @@
     "incomplete-request-error": "",
     "send-custom-feedback": ""
   },
+  "get-enterprise": {
+    "requires-license": "",
+    "title": ""
+  },
   "grafana-ui": {
     "action-editor": {
       "button": {
@@ -1661,9 +1746,18 @@
         "one-click-description": ""
       }
     },
+    "alert": {
+      "close-button": ""
+    },
     "auto-save-field": {
       "saved": "",
       "saving": ""
+    },
+    "card": {
+      "option": ""
+    },
+    "cascader": {
+      "clear-button": ""
     },
     "color-picker-popover": {
       "palette-tab": "",
@@ -1672,8 +1766,15 @@
     "confirm-button": {
       "cancel": ""
     },
+    "confirm-content": {
+      "placeholder": ""
+    },
     "data-link-editor": {
-      "info": ""
+      "info": "",
+      "new-tab-label": "",
+      "title-label": "",
+      "title-placeholder": "",
+      "url-label": ""
     },
     "data-link-editor-modal": {
       "cancel": "",
@@ -1693,35 +1794,86 @@
       "tooltip-remove": "",
       "url-not-provided": ""
     },
+    "data-source-basic-auth-settings": {
+      "user-label": "",
+      "user-placeholder": ""
+    },
+    "data-source-http-proxy-settings": {
+      "oauth-identity-label": "",
+      "oauth-identity-tooltip": "",
+      "skip-tls-verify-label": "",
+      "ts-client-auth-label": "",
+      "with-ca-cert-label": "",
+      "with-ca-cert-tooltip": ""
+    },
     "data-source-http-settings": {
       "access-help": "",
       "access-help-details": "",
+      "access-label": "",
+      "access-options-browser": "",
+      "access-options-proxy": "",
       "allowed-cookies": "",
+      "allowed-cookies-tooltip": "",
       "auth": "",
+      "azure-auth-label": "",
+      "azure-auth-tooltip": "",
       "basic-auth": "",
+      "basic-auth-label": "",
       "browser-mode-description": "",
       "browser-mode-title": "",
+      "default-url-access-select": "",
       "default-url-tooltip": "",
       "direct-url-tooltip": "",
       "heading": "",
       "proxy-url-tooltip": "",
       "server-mode-description": "",
-      "server-mode-title": ""
+      "server-mode-title": "",
+      "timeout-form-label": "",
+      "timeout-label": "",
+      "timeout-tooltip": "",
+      "url-label": "",
+      "with-credential-label": "",
+      "with-credential-tooltip": ""
     },
     "data-source-settings": {
       "alerting-settings-heading": "",
+      "alerting-settings-label": "",
+      "alerting-settings-tooltip": "",
       "cert-key-reset": "",
       "custom-headers-add": "",
+      "custom-headers-header": "",
+      "custom-headers-header-placeholder": "",
+      "custom-headers-header-remove": "",
+      "custom-headers-header-value": "",
       "custom-headers-title": "",
       "secure-socks-heading": "",
-      "tls-heading": ""
+      "secure-socks-label": "",
+      "secure-socks-tooltip": "",
+      "tls-certification-label": "",
+      "tls-certification-placeholder": "",
+      "tls-client-certification-label": "",
+      "tls-client-key-label": "",
+      "tls-client-key-placeholder": "",
+      "tls-heading": "",
+      "tls-server-name-label": "",
+      "tls-tooltip": ""
     },
     "date-time-picker": {
       "apply": "",
-      "cancel": ""
+      "calendar-icon-label": "",
+      "cancel": "",
+      "next-label": "",
+      "previous-label": "",
+      "select-placeholder": ""
     },
     "drawer": {
       "close": "Schließen"
+    },
+    "feature-badge": {
+      "experimental": "",
+      "new": "",
+      "preview": "",
+      "private-preview": ""
     },
     "field-link-list": {
       "external-links-heading": ""
@@ -1736,6 +1888,10 @@
     "modal": {
       "close-tooltip": "Schließen"
     },
+    "named-colors-palette": {
+      "text-color-swatch": "",
+      "transparent-swatch": ""
+    },
     "secret-form-field": {
       "reset": ""
     },
@@ -1748,6 +1904,9 @@
       "default-create-label": "",
       "no-options-label": "Keine Optionen gefunden",
       "placeholder": "Auswählen"
+    },
+    "series-color-picker-popover": {
+      "y-axis-usage": ""
     },
     "spinner": {
       "aria-label": ""
@@ -1767,6 +1926,9 @@
     },
     "user-icon": {
       "active-text": ""
+    },
+    "value-pill": {
+      "remove-button": ""
     },
     "viz-legend": {
       "right-axis-indicator": ""
@@ -2045,6 +2207,7 @@
       "render-image-error-description": ""
     }
   },
+  "lock-icon": "",
   "login": {
     "divider": {
       "connecting-text": ""
@@ -2100,6 +2263,14 @@
       "links": "",
       "log-line": "",
       "no-details": ""
+    },
+    "log-line-menu": {
+      "copy-link": "",
+      "copy-log": "",
+      "icon-label": "",
+      "pin-to-outline": "",
+      "show-context": "",
+      "unpin-from-outline": ""
     },
     "log-row-message": {
       "ellipsis": "",
@@ -2728,7 +2899,6 @@
       "close": "Menü schließen",
       "dock": "Menü andocken",
       "list-label": "Navigation",
-      "new": "",
       "open": "",
       "undock": "Menü abdocken"
     },
@@ -2839,6 +3009,7 @@
   },
   "plugins": {
     "catalog": {
+      "no-updates-available": "",
       "update-all": {
         "all-plugins-updated": "",
         "available-header": "",
@@ -2897,6 +3068,12 @@
     },
     "empty-state": {
       "message": ""
+    },
+    "filter": {
+      "disabled": "",
+      "sort": "",
+      "sort-list": "",
+      "state": ""
     },
     "plugin-help": {
       "error": "",
@@ -3597,6 +3774,16 @@
       "title": ""
     }
   },
+  "theme-preview": {
+    "breadcrumbs": {
+      "dashboards": "",
+      "home": ""
+    },
+    "panel": {
+      "form-label": "",
+      "title": ""
+    }
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "Kürzlich verwendete absolute Bereiche",
@@ -3653,10 +3840,13 @@
       "example": "",
       "example-details": "",
       "example-title": "Zeitbereiche-Beispiel",
+      "from-label": "",
       "from-to": "",
       "more-info": "",
       "specify": "Zeitbereich festlegen <1></1>",
-      "supported-formats": ""
+      "submit-button-label": "",
+      "supported-formats": "",
+      "to-label": ""
     },
     "zone": {
       "select-aria-label": "Zeitzonen-Auswähler",
