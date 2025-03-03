@@ -20,6 +20,7 @@ import {
   PluginLoadingStrategy,
   PluginDependencies,
   PluginExtensions,
+  TimeOption,
 } from '@grafana/data';
 
 export interface AzureSettings {
@@ -203,6 +204,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   reportingStaticContext?: Record<string, string>;
   exploreDefaultTimeOffset = '1h';
   exploreHideLogsDownload: boolean | undefined;
+  quickRanges?: TimeOption[];
 
   /**
    * Language used in Grafana's UI. This is after the user's preference (or deteceted locale) is resolved to one of

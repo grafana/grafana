@@ -273,7 +273,8 @@ type FrontendSettingsDTO struct {
 	CloudMigrationFeedbackURL    string `json:"cloudMigrationFeedbackURL"`
 	CloudMigrationPollIntervalMs int    `json:"cloudMigrationPollIntervalMs"`
 
-	DateFormats setting.DateFormats `json:"dateFormats,omitempty"`
+	DateFormats setting.DateFormats  `json:"dateFormats,omitempty"`
+	QuickRanges []setting.QuickRange `json:"quickRanges,omitempty"`
 
 	LoginError string `json:"loginError,omitempty"`
 
