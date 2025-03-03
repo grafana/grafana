@@ -9,7 +9,7 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { renderTitle } from '../../edit-pane/shared';
+import { EditPaneHeader } from '../../edit-pane/EditPaneHeader';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { DashboardLayoutSelector } from '../layouts-shared/DashboardLayoutSelector';
@@ -24,13 +24,10 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
     return new OptionsPaneCategoryDescriptor({
       title: t('dashboard.rows-layout.row-options.title', 'Row'),
       id: 'row-options',
-      isOpenDefault: true,
-      alwaysExpanded: true,
-      renderTitle: () =>
-        renderTitle({
-          title: t('dashboard.rows-layout.row-options.title', 'Row'),
-          onDelete: model.onDelete,
-        }),
+      isOpenable: false,
+      renderTitle: () => (
+        <EditPaneHeader title={t('dashboard.rows-layout.row-options.title', 'Row')} onDelete={() => model.onDelete()} />
+      ),
     })
       .addItem(
         new OptionsPaneItemDescriptor({
@@ -41,9 +38,7 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.layout.common.layout', 'Layout'),
-          render: function renderTitle() {
-            return <DashboardLayoutSelector layoutManager={layout} />;
-          },
+          render: () => <DashboardLayoutSelector layoutManager={layout} />,
         })
       )
       .addItem(
@@ -61,12 +56,6 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
   }, [layout, model]);
 
   return [rowOptions];
-}
-
-export function renderActions(model: RowItem) {
-  const categories = getEditOptions(model);
-
-  return categories.map((cat) => cat.render());
 }
 
 function RowTitleInput({ row }: { row: RowItem }) {

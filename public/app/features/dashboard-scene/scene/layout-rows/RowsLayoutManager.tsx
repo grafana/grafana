@@ -129,29 +129,43 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   }
 
   public moveRowUp(row: RowItem) {
-    const rows = this.state.rows;
-    const index = rows.indexOf(row);
+    const rows = [...this.state.rows];
+    const originalIndex = rows.indexOf(row);
 
-    if (index === 0) {
+    if (originalIndex === 0) {
       return;
     }
 
-    rows.splice(index, 1);
-    rows.splice(index - 1, 0, row);
+    let moveToIndex = originalIndex - 1;
+
+    // Be sure we don't add a row between an original row and one of its clones
+    while (rows[moveToIndex] && isClonedKey(rows[moveToIndex].state.key!)) {
+      moveToIndex = moveToIndex - 1;
+    }
+
+    rows.splice(originalIndex, 1);
+    rows.splice(moveToIndex, 0, row);
     this.setState({ rows });
   }
 
   public moveRowDown(row: RowItem) {
-    const rows = this.state.rows;
-    let index = rows.indexOf(row);
-    rows.splice(index, 1);
+    const rows = [...this.state.rows];
+    const originalIndex = rows.indexOf(row);
 
-    // Be sure we don't add a row between an original row and one of its clones
-    while (rows[index + 1] && isClonedKey(rows[index + 1].state.key!)) {
-      index = index + 1;
+    if (originalIndex === rows.length - 1) {
+      return;
     }
 
-    rows.splice(index, 0, row);
+    let moveToIndex = originalIndex + 1;
+
+    // Be sure we don't add a row between an original row and one of its clones
+    while (rows[moveToIndex] && isClonedKey(rows[moveToIndex].state.key!)) {
+      moveToIndex = moveToIndex + 1;
+    }
+
+    rows.splice(moveToIndex + 1, 0, row);
+    rows.splice(originalIndex, 1);
+
     this.setState({ rows });
   }
 

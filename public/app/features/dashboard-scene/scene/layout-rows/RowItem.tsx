@@ -1,10 +1,7 @@
-import { ReactNode } from 'react';
-
 import { SceneObjectState, SceneObjectBase, sceneGraph, VariableDependencyConfig, SceneObject } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
-import { renderTitle } from '../../edit-pane/shared';
 import { getDefaultVizPanel } from '../../utils/utils';
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { BulkActionElement } from '../types/BulkActionElement';
@@ -44,18 +41,6 @@ export class RowItem
       title: state?.title ?? t('dashboard.rows-layout.row.new', 'New row'),
       layout: state?.layout ?? ResponsiveGridLayoutManager.createEmpty(),
     });
-
-    this.addActivationHandler(() => this._activationHandler());
-  }
-
-  private _activationHandler() {
-    this._subs.add(
-      this._getParentLayout().subscribeToState((newState, prevState) => {
-        if (newState.rows !== prevState.rows) {
-          this.forceRender();
-        }
-      })
-    );
   }
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
@@ -74,17 +59,9 @@ export class RowItem
     return getEditOptions(this);
   }
 
-  // public renderActions(): ReactNode {
-  //   return renderActions(this);
-  // }
-
-  public renderTitle: () => ReactNode = () => {
-    return renderTitle({ title: `Row`, onDelete: this.onDelete });
-  };
-
-  public onDelete = () => {
+  public onDelete() {
     this._getParentLayout().removeRow(this);
-  };
+  }
 
   public createMultiSelectedElement(items: SceneObject[]): RowItems {
     return new RowItems(items.filter((item) => item instanceof RowItem));
@@ -102,13 +79,13 @@ export class RowItem
     this._getParentLayout().addRowBelow(this);
   }
 
-  public onMoveUp = () => {
+  public onMoveUp() {
     this._getParentLayout().moveRowUp(this);
-  };
+  }
 
-  public onMoveDown = () => {
+  public onMoveDown() {
     this._getParentLayout().moveRowDown(this);
-  };
+  }
 
   public isFirstRow(): boolean {
     return this._getParentLayout().isFirstRow(this);

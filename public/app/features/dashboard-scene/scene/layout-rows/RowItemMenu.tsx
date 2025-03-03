@@ -12,7 +12,6 @@ interface RowItemMenuProps {
 
 export function RowItemMenu({ model }: RowItemMenuProps) {
   const styles = useStyles2(getStyles);
-  const {} = model.useState();
 
   return (
     <ToolbarButtonRow className={styles.container}>
