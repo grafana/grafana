@@ -4,6 +4,7 @@
     "module": "commonjs"
   },
   "extends": "../../tsconfig.json",
+  "include": ["./**/*.ts", "./**/*.mts"],
   "ts-node": {
     "transpileOnly": true,
     "swc": true,
