@@ -21,6 +21,7 @@ env:
   EDITION: 'oss'
 
 jobs:
+  # This job determines if we need to generate coverage based on which files changed
   check-coverage:
     name: Check Coverage Requirements
     runs-on: ubuntu-latest
@@ -79,10 +80,13 @@ jobs:
       - name: Get runner name
         run: echo ${{ runner.name }}
 
+      # Enterprise setup is needed for both testing and coverage generation
       - name: Setup Enterprise (PR only)
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
         uses: ./.github/actions/setup-enterprise
 
+      # Cache enterprise state exactly as it was during test execution
+      # This ensures coverage reporting can access the same files that were present during testing
       - name: Cache enterprise state
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
         uses: actions/upload-artifact@v4
@@ -97,6 +101,7 @@ jobs:
       - name: Verify Jsonnet generation
         run: CODEGEN_VERIFY=1 make gen-jsonnet
 
+      # Coverage is only generated if check-coverage determined it was needed
       - name: Run backend unit tests
         uses: ./.github/actions/run-backend-tests
         with:
@@ -153,8 +158,10 @@ jobs:
           path: integration.cov
           retention-days: 1
 
+  # This job combines and processes coverage data from both test jobs
   report-coverage:
     name: Report Coverage
+    # Depends on both test jobs for their coverage artifacts and check-coverage for generation decision
     needs: [check-coverage, test-unit, test-integration]
     if: needs.check-coverage.outputs.generate == 'true'
     runs-on: ubuntu-latest
@@ -169,13 +176,15 @@ jobs:
           go-version: '1.23.5'
           cache: true
 
+      # Must restore enterprise state before processing coverage files since they contain
+      # references to enterprise code that existed during test execution
       - name: Restore enterprise state
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
         uses: actions/download-artifact@v4
         with:
           name: enterprise-state
           path: pkg/
-
+          
       - name: Download unit coverage
         continue-on-error: true
         id: download-unit
