@@ -5,6 +5,7 @@ import { useTable, Column, TableOptions, Cell } from 'react-table';
 import { FixedSizeList } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 import { Observable } from 'rxjs';
+import { cx } from '@emotion/css';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
@@ -131,15 +132,20 @@ export const SearchResultsTable = React.memo(
         const row = rows[rowIndex];
         prepareRow(row);
 
+        let itemIsSelected = false;
+        if (selection) {
+          const item = response.view.get(rowIndex);
+          itemIsSelected = selection(item.kind, item.uid);
+        }
         const url = response.view.fields.url?.values[rowIndex];
-        let className = styles.rowContainer;
+        let className = cx(styles.row, styles.bodyRow);
         if (rowIndex === highlightIndex.y) {
-          className += ' ' + styles.selectedRow;
+          className = cx(className, styles.selectedRow);
         }
         const { key, ...rowProps } = row.getRowProps({ style });
 
         return (
-          <div key={key} {...rowProps} className={className}>
+          <div key={key} {...rowProps} className={className} data-selected={itemIsSelected}>
             {row.cells.map((cell: Cell, index: number) => {
               return (
                 <TableCell
@@ -180,11 +186,11 @@ export const SearchResultsTable = React.memo(
           });
 
           return (
-            <div key={key} {...headerGroupProps} className={styles.headerRow}>
+            <div key={key} {...headerGroupProps} className={cx(styles.row, styles.headerRow)}>
               {headerGroup.headers.map((column) => {
                 const { key, ...headerProps } = column.getHeaderProps();
                 return (
-                  <div key={key} {...headerProps} role="columnheader" className={styles.headerCell}>
+                  <div key={key} {...headerProps} role="columnheader" className={styles.cell}>
                     {column.render('Header')}
                   </div>
                 );
@@ -225,8 +231,6 @@ export const SearchResultsTable = React.memo(
 SearchResultsTable.displayName = 'SearchResultsTable';
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
-
   return {
     noData: css`
       display: flex;
@@ -235,37 +239,104 @@ const getStyles = (theme: GrafanaTheme2) => {
       justify-content: center;
       height: 100%;
     `,
-    headerCell: css`
-      align-items: center;
-      display: flex;
-      overflo: hidden;
-      padding: ${theme.spacing(1)};
-    `,
-    headerRow: css`
-      background-color: ${theme.colors.background.secondary};
-      display: flex;
-      gap: ${theme.spacing(1)};
-      height: ${ROW_HEIGHT}px;
-    `,
-    selectedRow: css`
-      background-color: ${rowHoverBg};
-      box-shadow: inset 3px 0px ${theme.colors.primary.border};
-    `,
-    rowContainer: css`
-      display: flex;
-      gap: ${theme.spacing(1)};
-      height: ${ROW_HEIGHT}px;
-      label: row;
-      &:hover {
-        background-color: ${rowHoverBg};
-      }
+    row: css({
+      gap: theme.spacing(1),
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      margin: `0 ${theme.spacing(0.5)}`,
+    }),
 
-      &:not(:hover) div[role='cell'] {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-    `,
+    divider: css({
+      borderTop: `1px solid ${theme.colors.border.medium}`,
+      width: '100%',
+      margin: 0,
+      opacity: 0.5,
+    }),
+
+    headerRow: css({
+      backgroundColor: theme.colors.background.secondary,
+      height: ROW_HEIGHT,
+      position: 'sticky',
+      top: 0,
+      zIndex: 1,
+      borderBottom: `2px solid ${theme.colors.border.weak}`,
+      fontWeight: theme.typography.fontWeightMedium,
+      margin: 0,
+      borderRadius: `${theme.shape.radius.default} ${theme.shape.radius.default} 0 0`,
+      backdropFilter: 'blur(8px)',
+
+      // Enhanced shadow for better depth
+      boxShadow: `0 4px 8px ${theme.colors.emphasize(theme.colors.background.primary, 0.03)}`,
+    }),
+
+    bodyRow: css({
+      height: ROW_HEIGHT,
+      margin: `${theme.spacing(0.5)} 0`,
+      position: 'relative',
+
+      '&[data-selected="true"]': {
+        backgroundColor: theme.colors.primary.transparent,
+        color: theme.colors.text.primary,
+        fontWeight: theme.typography.fontWeightMedium,
+
+        '&:hover': {
+          backgroundColor: theme.colors.emphasize(theme.colors.primary.transparent, 0.1),
+        },
+      },
+
+      '&:hover': {
+        backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.05),
+        boxShadow: `
+          0 4px 12px ${theme.colors.emphasize(theme.colors.background.primary, 0.1)},
+          0 0 0 1px ${theme.colors.border.weak}
+        `,
+
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          borderRadius: 'inherit',
+          boxShadow: `0 0 12px ${theme.colors.primary.transparent}`,
+          opacity: 0.5,
+          pointerEvents: 'none',
+        },
+      },
+    }),
+
+    cell: css({
+      padding: theme.spacing(1, 1),
+      overflow: 'hidden',
+      display: 'flex',
+      alignItems: 'center',
+      fontSize: theme.typography.body.fontSize,
+      color: theme.colors.text.secondary,
+
+      '[role="columnheader"] &': {
+        color: theme.colors.text.primary,
+        fontWeight: theme.typography.fontWeightMedium,
+        letterSpacing: '0.02em',
+        textTransform: 'uppercase',
+        fontSize: '12px',
+      },
+    }),
+
+    link: css({
+      color: theme.colors.text.primary,
+      textDecoration: 'none',
+
+      '&:hover': {
+        color: theme.colors.primary.text,
+        textDecoration: 'none',
+        textShadow: `0 0 8px ${theme.colors.primary.transparent}`,
+      },
+    }),
+
+    selectedRow: css({
+      backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.03),
+      boxShadow: `inset 3px 0px ${theme.colors.primary.border}`,
+    }),
   };
 };
 
