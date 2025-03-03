@@ -304,6 +304,8 @@ func newPostgresConnString(dbname string) (driver, connString string) {
 }
 
 func newMySQLConnString(dbname string) (driver, connString string) {
+	// The parseTime=true parameter is required for MySQL to parse time.Time values correctly.
+	// It converts the timezone of the time.Time to the configured timezone of the connection.
 	return "mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?collation=utf8mb4_unicode_ci&sql_mode='ANSI_QUOTES'&parseTime=true",
 		env("MYSQL_USER", "root"),
 		env("MYSQL_PASSWORD", "rootpass"),
