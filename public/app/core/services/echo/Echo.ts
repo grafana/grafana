@@ -95,11 +95,8 @@ export class Echo implements EchoSrv {
  * Foundational types and functions for the new tracking event process
  */
 
-// @file: core/echo.ts
-type EventFunction<P extends object> = (props?: P) => void;
-type EventFunctionFactory<P extends object> = (eventName: string) => EventFunction<P>;
-
-export const createEventFactory = <P extends object>(product: string, featureName: string): EventFunctionFactory<P> => {
-  //@ts-expect-error
-  return (eventName: string) => (props?: P) => reportInteraction(`${product}_${featureName}_${eventName}`, props);
+export const createEventFactory = (product: string, featureName: string) => {
+  return <P extends object | undefined = undefined>(eventName: string) =>
+    (props: P extends undefined ? void : P) =>
+      reportInteraction(`${product}_${featureName}_${eventName}`, props ?? undefined);
 };

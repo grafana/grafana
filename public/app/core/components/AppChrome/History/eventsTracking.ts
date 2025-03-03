@@ -34,7 +34,6 @@ const createUnifiedHistoryEvent = createEventFactory('grafana', 'unified_history
  * Event triggered when a user clicks on an entry of the `HistoryDrawer`
  * @owner grafana-frontend-platform
  */
-//@ts-expect-error
 export const logClickUnifiedHistoryEntryEvent = createUnifiedHistoryEvent<UnifiedHistoryEntryClicked>('entry_clicked');
 
 /**
@@ -43,14 +42,12 @@ export const logClickUnifiedHistoryEntryEvent = createUnifiedHistoryEvent<Unifie
  * @owner grafana-frontend-platform
  */
 export const logDuplicateUnifiedHistoryEntryEvent =
-  //@ts-expect-error
   createUnifiedHistoryEvent<UnifiedHistoryEntryDuplicated>('duplicated_entry_rendered');
 
 /** We keep track of users open and closing the drawer
  * @owner grafana-frontend-platform
  */
 export const logUnifiedHistoryDrawerInteractionEvent =
-  //@ts-expect-error
   createUnifiedHistoryEvent<UnifiedHistoryDrawerInteraction>('drawer_interaction');
 
 /**We keep track of users clicking on the `Show more` button
