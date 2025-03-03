@@ -1078,11 +1078,6 @@
         }
       },
       "open": "Open options pane",
-      "panels": {
-        "multi-select": {
-          "selection-number": "No. of panels selected: {{length}}"
-        }
-      },
       "row": {
         "header": {
           "hide": "Hide",
@@ -1170,6 +1165,16 @@
       "request-time": "Total request time",
       "rows": "Total number rows",
       "table-title": "Stats"
+    },
+    "layout": {
+      "common": {
+        "copy": "Copy",
+        "copy-or-duplicate": "Copy or Duplicate",
+        "delete": "Delete",
+        "duplicate": "Duplicate",
+        "layout": "Layout",
+        "panels-title": "{{length}} Panels Selected"
+      }
     },
     "options": {
       "description": "Description",
@@ -1325,7 +1330,9 @@
     "viz-panel": {
       "options": {
         "description": "Description",
-        "title": "Panel options",
+        "open-edit": "Open Panel Edit",
+        "plugin-type-image": "Image of plugin type",
+        "title": "Panel",
         "title-option": "Title",
         "transparent-background": "Transparent background"
       }

@@ -1,11 +1,10 @@
-package rest
+package dualwrite
 
 import (
 	"context"
 	"errors"
 	"testing"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -13,6 +12,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
 func TestMode3_Create(t *testing.T) {
@@ -61,8 +62,8 @@ func TestMode3_Create(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (Storage)(nil)
-			s := (Storage)(nil)
+			l := (rest.Storage)(nil)
+			s := (rest.Storage)(nil)
 
 			ls := storageMock{&mock.Mock{}, l}
 			us := storageMock{&mock.Mock{}, s}
@@ -74,7 +75,8 @@ func TestMode3_Create(t *testing.T) {
 				tt.setupStorageFn(us.Mock, tt.input)
 			}
 
-			dw := NewDualWriter(Mode3, ls, us, p, kind)
+			dw, err := NewDualWriter(kind, rest.Mode3, ls, us)
+			require.NoError(t, err)
 
 			obj, err := dw.Create(context.Background(), tt.input, createFn, &metav1.CreateOptions{})
 
@@ -128,8 +130,8 @@ func TestMode3_Get(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (Storage)(nil)
-			s := (Storage)(nil)
+			l := (rest.Storage)(nil)
+			s := (rest.Storage)(nil)
 
 			ls := storageMock{&mock.Mock{}, l}
 			us := storageMock{&mock.Mock{}, s}
@@ -141,8 +143,8 @@ func TestMode3_Get(t *testing.T) {
 				tt.setupStorageFn(us.Mock, name)
 			}
 
-			p := prometheus.NewRegistry()
-			dw := NewDualWriter(Mode3, ls, us, p, kind)
+			dw, err := NewDualWriter(kind, rest.Mode3, ls, us)
+			require.NoError(t, err)
 
 			obj, err := dw.Get(context.Background(), name, &metav1.GetOptions{})
 
@@ -153,58 +155,6 @@ func TestMode3_Get(t *testing.T) {
 
 			require.Equal(t, obj, exampleObj)
 			require.NotEqual(t, obj, anotherObj)
-		})
-	}
-}
-
-func TestMode1_GetFromLegacyStorage(t *testing.T) {
-	ctxCanceled, cancel := context.WithCancel(context.TODO())
-	cancel()
-
-	type testCase struct {
-		setupLegacyFn func(m *mock.Mock, name string)
-		ctx           *context.Context
-		name          string
-	}
-	tests :=
-		[]testCase{
-			{
-				name: "should succeed when getting an object from the LegacyStorage",
-				setupLegacyFn: func(m *mock.Mock, name string) {
-					m.On("Get", mock.Anything, name, mock.Anything).Return(exampleObj, nil)
-				},
-			},
-			{
-				name: "should succeed when getting an object from the LegacyStorage even if parent context is canceled",
-				ctx:  &ctxCanceled,
-				setupLegacyFn: func(m *mock.Mock, name string) {
-					m.On("Get", mock.Anything, name, mock.Anything).Return(exampleObj, nil)
-				},
-			},
-		}
-
-	name := "foo"
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			l := (Storage)(nil)
-			s := (Storage)(nil)
-
-			ls := storageMock{&mock.Mock{}, l}
-			us := storageMock{&mock.Mock{}, s}
-
-			if tt.setupLegacyFn != nil {
-				tt.setupLegacyFn(ls.Mock, name)
-			}
-
-			ctx := context.TODO()
-			if tt.ctx != nil {
-				ctx = *tt.ctx
-			}
-
-			dw := NewDualWriter(Mode3, ls, us, p, kind)
-			err := dw.(*DualWriterMode3).getFromLegacyStorage(ctx, exampleObj, name, &metav1.GetOptions{})
-			require.NoError(t, err)
 		})
 	}
 }
@@ -234,8 +184,8 @@ func TestMode3_List(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (Storage)(nil)
-			s := (Storage)(nil)
+			l := (rest.Storage)(nil)
+			s := (rest.Storage)(nil)
 
 			ls := storageMock{&mock.Mock{}, l}
 			us := storageMock{&mock.Mock{}, s}
@@ -244,7 +194,8 @@ func TestMode3_List(t *testing.T) {
 				tt.setupStorageFn(us.Mock, &metainternalversion.ListOptions{TypeMeta: metav1.TypeMeta{Kind: "foo"}})
 			}
 
-			dw := NewDualWriter(Mode3, ls, us, p, kind)
+			dw, err := NewDualWriter(kind, rest.Mode3, ls, us)
+			require.NoError(t, err)
 
 			res, err := dw.List(context.Background(), &metainternalversion.ListOptions{TypeMeta: metav1.TypeMeta{Kind: "foo"}})
 
@@ -311,8 +262,8 @@ func TestMode3_Delete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (Storage)(nil)
-			s := (Storage)(nil)
+			l := (rest.Storage)(nil)
+			s := (rest.Storage)(nil)
 
 			ls := storageMock{&mock.Mock{}, l}
 			us := storageMock{&mock.Mock{}, s}
@@ -324,7 +275,8 @@ func TestMode3_Delete(t *testing.T) {
 				tt.setupStorageFn(us.Mock, name)
 			}
 
-			dw := NewDualWriter(Mode3, ls, us, p, kind)
+			dw, err := NewDualWriter(kind, rest.Mode3, ls, us)
+			require.NoError(t, err)
 
 			obj, _, err := dw.Delete(context.Background(), name, func(context.Context, runtime.Object) error { return nil }, &metav1.DeleteOptions{})
 
@@ -380,8 +332,8 @@ func TestMode3_DeleteCollection(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (Storage)(nil)
-			s := (Storage)(nil)
+			l := (rest.Storage)(nil)
+			s := (rest.Storage)(nil)
 
 			ls := storageMock{&mock.Mock{}, l}
 			us := storageMock{&mock.Mock{}, s}
@@ -393,7 +345,8 @@ func TestMode3_DeleteCollection(t *testing.T) {
 				tt.setupStorageFn(us.Mock)
 			}
 
-			dw := NewDualWriter(Mode3, ls, us, p, kind)
+			dw, err := NewDualWriter(kind, rest.Mode3, ls, us)
+			require.NoError(t, err)
 
 			obj, err := dw.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: name}}, &metainternalversion.ListOptions{})
 
@@ -449,8 +402,8 @@ func TestMode3_Update(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (Storage)(nil)
-			s := (Storage)(nil)
+			l := (rest.Storage)(nil)
+			s := (rest.Storage)(nil)
 
 			ls := storageMock{&mock.Mock{}, l}
 			us := storageMock{&mock.Mock{}, s}
@@ -462,7 +415,8 @@ func TestMode3_Update(t *testing.T) {
 				tt.setupStorageFn(us.Mock, name)
 			}
 
-			dw := NewDualWriter(Mode3, ls, us, p, kind)
+			dw, err := NewDualWriter(kind, rest.Mode3, ls, us)
+			require.NoError(t, err)
 
 			obj, _, err := dw.Update(context.Background(), name, updatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
 
