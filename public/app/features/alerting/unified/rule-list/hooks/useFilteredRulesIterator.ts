@@ -73,7 +73,7 @@ export function useFilteredRulesIteratorProvider() {
       return from(generator).pipe(map((group) => [ds, group] as const));
     });
 
-    // if we have no promtheus data sources, use an empty async iterable
+    // if we have no prometheus data sources, use an empty async iterable
     const source = sourceIterables.at(0) ?? empty();
     const otherIterables = sourceIterables.slice(1);
 
