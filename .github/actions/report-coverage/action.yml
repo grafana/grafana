@@ -8,6 +8,9 @@ inputs:
   integration-cov-path:
     description: 'Path to integration test coverage file'
     required: true
+  codecov-token:
+    description: 'Token for CodeCov'
+    required: true
 
 runs:
   using: "composite"
@@ -54,4 +57,4 @@ runs:
         slug: grafana/grafana
         # This URL doesn't use the Google auth, but is much more locked down. As such, it requires OIDC or a CodeCov-provided token to do anything.
         url: https://codecov-webhook.grafana-dev.net
-        token: ${{ secrets.CODECOV_TOKEN }}
+        token: ${{ inputs.codecov-token }}
