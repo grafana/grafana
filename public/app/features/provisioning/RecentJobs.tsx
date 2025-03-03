@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
 
-import { intervalToAbbreviatedDurationString } from '@grafana/data';
-import { Spinner, Alert, Badge, InteractiveTable, Card, Box, Stack, Icon, Text, JSONFormatter } from '@grafana/ui';
+import { intervalToAbbreviatedDurationString, TraceKeyValuePair } from '@grafana/data';
+import { Spinner, Alert, Badge, InteractiveTable, Card, Box, Stack, Icon, Text } from '@grafana/ui';
+
+import KeyValuesTable from '../explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
 
 import { Repository, JobResourceSummary, Job, SyncStatus } from './api';
 import { useRepositoryJobs } from './hooks';
@@ -141,6 +143,23 @@ function ExpandedRow({ row }: ExpandedRowProps) {
     return null;
   }
 
+  // the action is already showin
+  const data = useMemo(() => {
+    const v: TraceKeyValuePair[] = [];
+    const action = row.spec?.action;
+    if (!action) {
+      return v;
+    }
+    const def = row.spec?.[action];
+    if (!def) {
+      return v;
+    }
+    for (const [key, value] of Object.entries(def)) {
+      v.push({ key, value });
+    }
+    return v;
+  }, [row.spec]);
+
   return (
     <Box padding={2}>
       <Stack direction="column" gap={2}>
@@ -149,7 +168,7 @@ function ExpandedRow({ row }: ExpandedRowProps) {
             <Text variant="bodySmall" color="secondary">
               Job Specification
             </Text>
-            <JSONFormatter json={row.spec ?? ''} open={3} config={{}} />
+            <KeyValuesTable data={data} />
           </Stack>
         )}
         {hasErrors && (
