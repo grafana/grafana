@@ -125,8 +125,8 @@ func NewTestStore(tb TestingTB, opts ...TestOption) *SQLStore {
 	engine.DatabaseTZ = time.UTC
 	engine.TZLocation = time.UTC
 
-	initTestDBOpt := InitTestDBOpt{EnsureDefaultOrgAndUser: !options.NoDefaultUserOrg} // TODO: Simplify this
-	store, err := newSQLStore(cfg, engine, features, options.Migrator, options.Bus, options.Tracer, initTestDBOpt)
+	store, err := newStore(cfg, engine, features, options.Migrator,
+		options.Bus, options.Tracer, options.NoDefaultUserOrg)
 	if err != nil {
 		tb.Fatalf("failed to create a new SQLStore: %v", err)
 		panic("unreachable")
