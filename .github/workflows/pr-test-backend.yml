@@ -21,8 +21,43 @@ env:
   EDITION: 'oss'
 
 jobs:
-  test-backend:
-    name: Test Backend
+  check-coverage:
+    name: Check Coverage Requirements
+    runs-on: ubuntu-latest
+    outputs:
+      generate: ${{ steps.check-coverage.outputs.generate }}
+    steps:
+      - name: Check if coverage should be generated
+        id: check-coverage
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Event: ${{ github.event_name }}"
+          echo "Ref: ${{ github.ref }}"
+          
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "PR changed files:"
+            files=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files --jq '.[].filename')
+            echo "$files"
+            if echo "$files" | grep -E "(pkg/|go\.)"; then
+              echo "Coverage will be generated: true (PR changes)"
+              echo "generate=true" >> $GITHUB_OUTPUT
+            else
+              echo "Coverage will be generated: false"
+              echo "generate=false" >> $GITHUB_OUTPUT
+            fi
+          elif [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]] && \
+               [[ "${{ github.event.head_commit.modified }}" =~ (pkg/|go\.|\.github/workflows/pr-test-backend\.yml) ]]; then
+            echo "Coverage will be generated: true (push to main)"
+            echo "generate=true" >> $GITHUB_OUTPUT
+          else
+            echo "Coverage will be generated: false"
+            echo "generate=false" >> $GITHUB_OUTPUT
+          fi
+
+  test-unit:
+    name: Test Backend Unit
+    needs: check-coverage
     runs-on: ubuntu-latest
     continue-on-error: true
     
@@ -54,52 +89,115 @@ jobs:
       - name: Verify Jsonnet generation
         run: CODEGEN_VERIFY=1 make gen-jsonnet
 
-      - name: Check if coverage should be generated
-        id: check-coverage
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          echo "Event: ${{ github.event_name }}"
-          echo "Ref: ${{ github.ref }}"
-          
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "PR changed files:"
-            files=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files --jq '.[].filename')
-            echo "$files"
-            if echo "$files" | grep -E "(pkg/|go\.)"; then
-              echo "Coverage will be generated: true (PR changes)"
-              echo "generate=true" >> $GITHUB_OUTPUT
-            else
-              echo "Coverage will be generated: false"
-              echo "generate=false" >> $GITHUB_OUTPUT
-            fi
-          elif [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]] && \
-               [[ "${{ github.event.head_commit.modified }}" =~ (pkg/|go\.|\.github/workflows/pr-test-backend\.yml) ]]; then
-            echo "Coverage will be generated: true (push to main)"
-            echo "generate=true" >> $GITHUB_OUTPUT
-          else
-            echo "Coverage will be generated: false"
-            echo "generate=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Run backend tests
+      - name: Run backend unit tests
         uses: ./.github/actions/run-backend-tests
         with:
-          coverage-opts: ${{ steps.check-coverage.outputs.generate == 'true' && '-coverprofile=unit.cov -coverpkg=github.com/grafana/grafana/...' || '' }}
+          coverage-opts: ${{ needs.check-coverage.outputs.generate == 'true' && '-coverprofile=unit.cov -coverpkg=github.com/grafana/grafana/...' || '' }}
           test-command: 'make gen-go test-go-unit'
+
+      - name: Upload unit coverage
+        if: needs.check-coverage.outputs.generate == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-cov
+          path: unit.cov
+          retention-days: 1
+
+  test-integration:
+    name: Test Backend Integration
+    needs: check-coverage
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.5'
+          cache: true
+          
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential shared-mime-info make
+
+      - name: Get runner name
+        run: echo ${{ runner.name }}
+
+      - name: Setup Enterprise (PR only)
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+        uses: ./.github/actions/setup-enterprise
 
       - name: Run backend integration tests
         uses: ./.github/actions/run-backend-tests
         with:
-          coverage-opts: ${{ steps.check-coverage.outputs.generate == 'true' && '-coverprofile=integration.cov -coverpkg=github.com/grafana/grafana/...' || '' }}
+          coverage-opts: ${{ needs.check-coverage.outputs.generate == 'true' && '-coverprofile=integration.cov -coverpkg=github.com/grafana/grafana/...' || '' }}
           test-command: 'make gen-go test-go-integration'
 
+      - name: Upload integration coverage
+        if: needs.check-coverage.outputs.generate == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-cov
+          path: integration.cov
+          retention-days: 1
+
+  report-coverage:
+    name: Report Coverage
+    needs: [check-coverage, test-unit, test-integration]
+    if: needs.check-coverage.outputs.generate == 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Download coverage files
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: unit-cov
+          path: .
+          
+      - name: Download integration coverage
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: integration-cov
+          path: .
+
+      - name: Check coverage files exist
+        id: check-files
+        run: |
+          if [ -f "unit.cov" ] && [ -f "integration.cov" ]; then
+            echo "Both coverage files exist"
+            echo "complete=true" >> $GITHUB_OUTPUT
+          else
+            echo "Some coverage files are missing"
+            echo "complete=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Generate Coverage Report
-        if: steps.check-coverage.outputs.generate == 'true'
+        if: steps.check-files.outputs.complete == 'true'
         uses: ./.github/actions/report-coverage
         with:
           unit-cov-path: unit.cov
           integration-cov-path: integration.cov
+
+      - name: Report Partial Coverage
+        if: steps.check-files.outputs.complete == 'false'
+        run: |
+          echo "⚠️ Coverage report is incomplete due to test failures" >> $GITHUB_STEP_SUMMARY
+          if [ -f "unit.cov" ]; then
+            echo "✅ Unit test coverage available" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Unit test coverage missing" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ -f "integration.cov" ]; then
+            echo "✅ Integration test coverage available" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Integration test coverage missing" >> $GITHUB_STEP_SUMMARY
+          fi
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
