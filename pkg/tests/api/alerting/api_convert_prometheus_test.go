@@ -135,14 +135,11 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 		ds := apiClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
 
 		t.Run("create rule groups and get them back", func(t *testing.T) {
-			_, status, body := apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, nil)
-			requireStatusCode(t, http.StatusAccepted, status, body)
-			_, status, body = apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup2, nil)
-			requireStatusCode(t, http.StatusAccepted, status, body)
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, nil)
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup2, nil)
 
 			// create a third group in a different namespace
-			_, status, body = apiClient.ConvertPrometheusPostRuleGroup(t, namespace2, ds.Body.Datasource.UID, promGroup3, nil)
-			requireStatusCode(t, http.StatusAccepted, status, body)
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace2, ds.Body.Datasource.UID, promGroup3, nil)
 
 			// And a non-provisioned rule in another namespace
 			namespace3UID := util.GenerateShortUID()
@@ -150,18 +147,18 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 			createRule(t, apiClient, namespace3UID)
 
 			// Now get the first group
-			group1 := apiClient.ConvertPrometheusGetRuleGroupRules(t, namespace1, promGroup1.Name)
+			group1 := apiClient.ConvertPrometheusGetRuleGroupRules(t, namespace1, promGroup1.Name, nil)
 			require.Equal(t, promGroup1, group1)
 
 			// Get namespace1
-			ns1 := apiClient.ConvertPrometheusGetNamespaceRules(t, namespace1)
+			ns1 := apiClient.ConvertPrometheusGetNamespaceRules(t, namespace1, nil)
 			expectedNs1 := map[string][]apimodels.PrometheusRuleGroup{
 				namespace1: {promGroup1, promGroup2},
 			}
 			require.Equal(t, expectedNs1, ns1)
 
 			// Get all namespaces
-			namespaces := apiClient.ConvertPrometheusGetAllRules(t)
+			namespaces := apiClient.ConvertPrometheusGetAllRules(t, nil)
 			expectedNamespaces := map[string][]apimodels.PrometheusRuleGroup{
 				namespace1: {promGroup1, promGroup2},
 				namespace2: {promGroup3},
@@ -170,22 +167,21 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 		})
 
 		t.Run("without permissions to create folders cannot create rule groups either", func(t *testing.T) {
-			_, status, raw := viewerClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, nil)
+			_, status, raw := viewerClient.RawConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, nil)
 			requireStatusCode(t, http.StatusForbidden, status, raw)
 		})
 
 		t.Run("delete one rule group", func(t *testing.T) {
-			_, status, body := apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, nil)
-			requireStatusCode(t, http.StatusAccepted, status, body)
-			_, status, body = apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup2, nil)
-			requireStatusCode(t, http.StatusAccepted, status, body)
-			_, status, body = apiClient.ConvertPrometheusPostRuleGroup(t, namespace2, ds.Body.Datasource.UID, promGroup3, nil)
-			requireStatusCode(t, http.StatusAccepted, status, body)
+			// Create three groups
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, nil)
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup2, nil)
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace2, ds.Body.Datasource.UID, promGroup3, nil)
 
-			apiClient.ConvertPrometheusDeleteRuleGroup(t, namespace1, promGroup1.Name)
+			// delete the first one
+			apiClient.ConvertPrometheusDeleteRuleGroup(t, namespace1, promGroup1.Name, nil)
 
 			// Check that the promGroup2 and promGroup3 are still there
-			namespaces := apiClient.ConvertPrometheusGetAllRules(t)
+			namespaces := apiClient.ConvertPrometheusGetAllRules(t, nil)
 			expectedNamespaces := map[string][]apimodels.PrometheusRuleGroup{
 				namespace1: {promGroup2},
 				namespace2: {promGroup3},
@@ -193,10 +189,10 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 			require.Equal(t, expectedNamespaces, namespaces)
 
 			// Delete the second namespace
-			apiClient.ConvertPrometheusDeleteNamespace(t, namespace2)
+			apiClient.ConvertPrometheusDeleteNamespace(t, namespace2, nil)
 
 			// Check that only the first namespace is left
-			namespaces = apiClient.ConvertPrometheusGetAllRules(t)
+			namespaces = apiClient.ConvertPrometheusGetAllRules(t, nil)
 			expectedNamespaces = map[string][]apimodels.PrometheusRuleGroup{
 				namespace1: {promGroup2},
 			}
@@ -268,11 +264,10 @@ func TestIntegrationConvertPrometheusEndpoints_UpdateRule(t *testing.T) {
 
 		t.Run("update a rule", func(t *testing.T) {
 			// Create the rule group
-			_, status, body := apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup, nil)
-			requireStatusCode(t, http.StatusAccepted, status, body)
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup, nil)
 
 			// Now get the group
-			group1 := apiClient.ConvertPrometheusGetRuleGroupRules(t, namespace1, promGroup.Name)
+			group1 := apiClient.ConvertPrometheusGetRuleGroupRules(t, namespace1, promGroup.Name, nil)
 			require.Equal(t, promGroup, group1)
 
 			// Update the rule group interval
@@ -283,11 +278,10 @@ func TestIntegrationConvertPrometheusEndpoints_UpdateRule(t *testing.T) {
 			promGroup.Rules[0].Labels["another-label"] = "something"
 			promGroup.Rules[0].Annotations["another-annotation"] = "also-something"
 			// Update the group
-			_, status, body = apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup, nil)
-			requireStatusCode(t, http.StatusAccepted, status, body)
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup, nil)
 
 			// Now get the group again and check that the rule group has been updated
-			group1 = apiClient.ConvertPrometheusGetRuleGroupRules(t, namespace1, promGroup.Name)
+			group1 = apiClient.ConvertPrometheusGetRuleGroupRules(t, namespace1, promGroup.Name, nil)
 			require.Equal(t, promGroup, group1)
 		})
 	}
@@ -374,7 +368,7 @@ func TestIntegrationConvertPrometheusEndpoints_Conflict(t *testing.T) {
 			require.Equalf(t, http.StatusOK, status, response)
 
 			// Should fail to post the group
-			_, status, body := apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, nil)
+			_, status, body := apiClient.RawConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, nil)
 			requireStatusCode(t, http.StatusConflict, status, body)
 		})
 	}
@@ -410,6 +404,7 @@ func TestIntegrationConvertPrometheusEndpoints_CreatePausedRules(t *testing.T) {
 			Login:          "admin",
 		})
 		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+		apiClient.prometheusConversionUseLokiPaths = enableLokiPaths
 
 		ds := apiClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
 
@@ -488,6 +483,409 @@ func TestIntegrationConvertPrometheusEndpoints_CreatePausedRules(t *testing.T) {
 					}
 				})
 			}
+		})
+	}
+
+	t.Run("with the mimirtool paths", func(t *testing.T) {
+		runTest(t, false)
+	})
+
+	t.Run("with the cortextool Loki paths", func(t *testing.T) {
+		runTest(t, true)
+	})
+}
+
+func TestIntegrationConvertPrometheusEndpoints_FolderUIDHeader(t *testing.T) {
+	runTest := func(t *testing.T, enableLokiPaths bool) {
+		testinfra.SQLiteIntegrationTest(t)
+
+		folderUIDHeader := "X-Grafana-Alerting-Folder-UID"
+
+		// Setup Grafana and its Database
+		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+			DisableLegacyAlerting: true,
+			EnableUnifiedAlerting: true,
+			DisableAnonymous:      true,
+			AppModeProduction:     true,
+			EnableFeatureToggles:  []string{"alertingConversionAPI"},
+		})
+
+		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+
+		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleAdmin),
+			Password:       "password",
+			Login:          "admin",
+		})
+		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+		apiClient.prometheusConversionUseLokiPaths = enableLokiPaths
+
+		ds := apiClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
+
+		// Create a parent folder
+		parentFolderUID := util.GenerateShortUID()
+		parentFolderTitle := "parent-folder"
+		apiClient.CreateFolder(t, parentFolderUID, parentFolderTitle)
+
+		// Create a child folder inside the parent folder
+		childFolderUID := util.GenerateShortUID()
+		childFolderTitle := "child-folder"
+		apiClient.CreateFolder(t, childFolderUID, childFolderTitle, parentFolderUID)
+
+		// Create another folder in root
+		otherFolderUID := util.GenerateShortUID()
+		otherFolderTitle := "other-folder"
+		apiClient.CreateFolder(t, otherFolderUID, otherFolderTitle)
+
+		t.Run("create and delete rule groups with folder UID header", func(t *testing.T) {
+			// Post the namespace to parentFolderUID, it should create a new folder with the namespace name,
+			// and put the rule group in it.
+			headers := map[string]string{
+				folderUIDHeader: parentFolderUID,
+			}
+			apiClient.ConvertPrometheusPostRuleGroup(t, childFolderTitle, ds.Body.Datasource.UID, promGroup1, headers)
+
+			// Check that it's not visible when we get all namespaces from the root.
+			namespaces := apiClient.ConvertPrometheusGetAllRules(t, nil)
+			require.Empty(t, namespaces)
+
+			// Post the group2 to the root, it should create a new folder with the namespace name.
+			apiClient.ConvertPrometheusPostRuleGroup(t, otherFolderTitle, ds.Body.Datasource.UID, promGroup2, nil)
+
+			// Now we should have:
+			// - parentFolderUID/child-folder/test-group-1
+			// - other-folder/test-group-2
+
+			// Verify the rule group was created in the child folder
+			//
+			// First try to get the group in the root folder, it should not be found
+			_, status, resp := apiClient.RawConvertPrometheusGetRuleGroupRules(t, childFolderTitle, promGroup1.Name, nil)
+			require.Equal(t, http.StatusNotFound, status, resp)
+			// Now try to get the group in the child folder
+			group1 := apiClient.ConvertPrometheusGetRuleGroupRules(t, childFolderTitle, promGroup1.Name, headers)
+			require.Equal(t, promGroup1, group1)
+
+			// Verify the rule group was created in the other folder
+			group2 := apiClient.ConvertPrometheusGetRuleGroupRules(t, otherFolderTitle, promGroup2.Name, nil)
+			require.Equal(t, promGroup2, group2)
+		})
+
+		t.Run("empty folder UID header defaults to root", func(t *testing.T) {
+			// Create a folder at root level
+			rootFolderUID := util.GenerateShortUID()
+			rootFolderTitle := "root-folder"
+			apiClient.CreateFolder(t, rootFolderUID, rootFolderTitle)
+
+			// Use empty folder UID header which should default to root
+			headers := map[string]string{
+				folderUIDHeader: "",
+			}
+
+			apiClient.ConvertPrometheusPostRuleGroup(t, rootFolderTitle, ds.Body.Datasource.UID, promGroup3, headers)
+
+			// Verify the rule group was created
+			group := apiClient.ConvertPrometheusGetRuleGroupRules(t, rootFolderTitle, promGroup3.Name, headers)
+			require.Equal(t, promGroup3, group)
+		})
+	}
+
+	t.Run("with the mimirtool paths", func(t *testing.T) {
+		runTest(t, false)
+	})
+
+	t.Run("with the cortextool Loki paths", func(t *testing.T) {
+		runTest(t, true)
+	})
+}
+
+func TestIntegrationConvertPrometheusEndpoints_Delete(t *testing.T) {
+	runTest := func(t *testing.T, enableLokiPaths bool) {
+		testinfra.SQLiteIntegrationTest(t)
+
+		// Setup Grafana and its Database
+		dir, gpath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+			DisableLegacyAlerting: true,
+			EnableUnifiedAlerting: true,
+			DisableAnonymous:      true,
+			AppModeProduction:     true,
+			EnableFeatureToggles:  []string{"alertingConversionAPI"},
+		})
+
+		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)
+
+		// Create users with different permissions
+		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleAdmin),
+			Password:       "password",
+			Login:          "admin",
+		})
+		adminClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+		adminClient.prometheusConversionUseLokiPaths = enableLokiPaths
+
+		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleEditor),
+			Password:       "password",
+			Login:          "editor",
+		})
+		editorClient := newAlertingApiClient(grafanaListedAddr, "editor", "password")
+		editorClient.prometheusConversionUseLokiPaths = enableLokiPaths
+
+		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleViewer),
+			Password:       "password",
+			Login:          "viewer",
+		})
+		viewerClient := newAlertingApiClient(grafanaListedAddr, "viewer", "password")
+		viewerClient.prometheusConversionUseLokiPaths = enableLokiPaths
+
+		// Create a user with no access
+		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleNone),
+			Password:       "password",
+			Login:          "no-role-user",
+		})
+		noRoleClient := newAlertingApiClient(grafanaListedAddr, "no-role-user", "password")
+		noRoleClient.prometheusConversionUseLokiPaths = enableLokiPaths
+
+		ds := adminClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
+
+		t.Run("delete non-existent namespace returns 404", func(t *testing.T) {
+			nonExistentNamespace := "non-existent-namespace-" + util.GenerateShortUID()
+			_, status, raw := adminClient.RawConvertPrometheusDeleteNamespace(t, nonExistentNamespace, nil)
+			requireStatusCode(t, http.StatusNotFound, status, raw)
+		})
+
+		t.Run("delete non-existent rule group returns not found", func(t *testing.T) {
+			nonExistentNamespace := "non-existent-namespace-" + util.GenerateShortUID()
+			nonExistentGroup := "non-existent-group-" + util.GenerateShortUID()
+			_, status, raw := adminClient.RawConvertPrometheusDeleteRuleGroup(t, nonExistentNamespace, nonExistentGroup, nil)
+			requireStatusCode(t, http.StatusNotFound, status, raw)
+		})
+
+		t.Run("delete rule group from existing namespace that has no rule groups", func(t *testing.T) {
+			// Create a namespace but don't add any rule groups to it
+			emptyNamespace := "empty-namespace-" + util.GenerateShortUID()
+			emptyNamespaceUID := util.GenerateShortUID()
+			adminClient.CreateFolder(t, emptyNamespaceUID, emptyNamespace)
+
+			// Try to delete a non-existent rule group from that namespace
+			nonExistentGroup := "non-existent-group-" + util.GenerateShortUID()
+			_, status, raw := adminClient.RawConvertPrometheusDeleteRuleGroup(t, emptyNamespace, nonExistentGroup, nil)
+			requireStatusCode(t, http.StatusNotFound, status, raw)
+		})
+
+		t.Run("delete rule group then verify it's gone", func(t *testing.T) {
+			// Create namespace and rule group
+			namespace := "test-namespace-delete-" + util.GenerateShortUID()
+			namespaceUID := util.GenerateShortUID()
+			adminClient.CreateFolder(t, namespaceUID, namespace)
+
+			// Create rule group
+			adminClient.ConvertPrometheusPostRuleGroup(t, namespace, ds.Body.Datasource.UID, promGroup1, nil)
+
+			// Verify the rule group exists
+			group := adminClient.ConvertPrometheusGetRuleGroupRules(t, namespace, promGroup1.Name, nil)
+			require.Equal(t, promGroup1.Name, group.Name)
+
+			// Delete the rule group
+			adminClient.ConvertPrometheusDeleteRuleGroup(t, namespace, promGroup1.Name, nil)
+
+			// Verify the rule group is gone
+			_, status, _ := adminClient.RawConvertPrometheusGetRuleGroupRules(t, namespace, promGroup1.Name, nil)
+			require.Equal(t, http.StatusNotFound, status)
+		})
+
+		t.Run("delete namespace then verify it's empty", func(t *testing.T) {
+			// Create namespace with two rule groups
+			namespace := "test-namespace-delete-all-" + util.GenerateShortUID()
+			namespaceUID := util.GenerateShortUID()
+			adminClient.CreateFolder(t, namespaceUID, namespace)
+
+			// Create rule groups
+			adminClient.ConvertPrometheusPostRuleGroup(t, namespace, ds.Body.Datasource.UID, promGroup1, nil)
+			adminClient.ConvertPrometheusPostRuleGroup(t, namespace, ds.Body.Datasource.UID, promGroup2, nil)
+
+			// Verify the namespace has rule groups
+			groups := adminClient.ConvertPrometheusGetNamespaceRules(t, namespace, nil)
+			require.ElementsMatch(t, groups[namespace], []apimodels.PrometheusRuleGroup{promGroup1, promGroup2})
+
+			// Delete the namespace
+			adminClient.ConvertPrometheusDeleteNamespace(t, namespace, nil)
+
+			// Verify the namespace is empty
+			namespaces := adminClient.ConvertPrometheusGetAllRules(t, nil)
+			_, exists := namespaces[namespace]
+			require.False(t, exists)
+		})
+
+		t.Run("delete specific rule group leaves other groups intact", func(t *testing.T) {
+			// Create namespace with two rule groups
+			namespace := "test-namespace-delete-one-" + util.GenerateShortUID()
+			namespaceUID := util.GenerateShortUID()
+			adminClient.CreateFolder(t, namespaceUID, namespace)
+
+			// Create rule groups
+			adminClient.ConvertPrometheusPostRuleGroup(t, namespace, ds.Body.Datasource.UID, promGroup1, nil)
+			adminClient.ConvertPrometheusPostRuleGroup(t, namespace, ds.Body.Datasource.UID, promGroup2, nil)
+
+			// Delete one rule group
+			adminClient.ConvertPrometheusDeleteRuleGroup(t, namespace, promGroup1.Name, nil)
+
+			// Verify the other rule group still exists
+			groups := adminClient.ConvertPrometheusGetNamespaceRules(t, namespace, nil)
+			require.ElementsMatch(t, groups[namespace], []apimodels.PrometheusRuleGroup{promGroup2})
+		})
+
+		t.Run("viewer cannot delete rule groups", func(t *testing.T) {
+			// Create namespace and rule group as admin
+			namespace := "test-namespace-viewer-" + util.GenerateShortUID()
+			namespaceUID := util.GenerateShortUID()
+			adminClient.CreateFolder(t, namespaceUID, namespace)
+
+			adminClient.ConvertPrometheusPostRuleGroup(t, namespace, ds.Body.Datasource.UID, promGroup1, nil)
+
+			// Try to delete as viewer - this should return 403 Forbidden
+			_, status, body := viewerClient.RawConvertPrometheusDeleteRuleGroup(t, namespace, promGroup1.Name, nil)
+			requireStatusCode(t, http.StatusForbidden, status, body)
+
+			// Verify the rule group still exists
+			group := adminClient.ConvertPrometheusGetRuleGroupRules(t, namespace, promGroup1.Name, nil)
+			require.Equal(t, promGroup1.Name, group.Name)
+		})
+
+		t.Run("viewer cannot delete namespaces", func(t *testing.T) {
+			// Create namespace and rule group as admin
+			namespace := "test-namespace-viewer-ns-" + util.GenerateShortUID()
+			namespaceUID := util.GenerateShortUID()
+			adminClient.CreateFolder(t, namespaceUID, namespace)
+
+			adminClient.ConvertPrometheusPostRuleGroup(t, namespace, ds.Body.Datasource.UID, promGroup1, nil)
+
+			// Try to delete as viewer - this should return 403 Forbidden
+			_, status, body := viewerClient.RawConvertPrometheusDeleteNamespace(t, namespace, nil)
+			requireStatusCode(t, http.StatusForbidden, status, body)
+
+			// Verify the namespace still exists
+			namespaces := adminClient.ConvertPrometheusGetAllRules(t, nil)
+			_, exists := namespaces[namespace]
+			require.True(t, exists)
+		})
+
+		t.Run("deleting rule group with nested folder structure using header", func(t *testing.T) {
+			// Create parent folder
+			parentFolder := "parent-folder-" + util.GenerateShortUID()
+			parentFolderUID := util.GenerateShortUID()
+			adminClient.CreateFolder(t, parentFolderUID, parentFolder)
+
+			// Create child folder inside parent
+			childFolder := "child-folder-" + util.GenerateShortUID()
+			childFolderUID := util.GenerateShortUID()
+			adminClient.CreateFolder(t, childFolderUID, childFolder, parentFolderUID)
+
+			// Create rule group in child folder
+			headers := map[string]string{
+				"X-Grafana-Alerting-Folder-UID": parentFolderUID,
+			}
+			adminClient.ConvertPrometheusPostRuleGroup(t, childFolder, ds.Body.Datasource.UID, promGroup1, headers)
+
+			// Verify the rule group exists
+			group := adminClient.ConvertPrometheusGetRuleGroupRules(t, childFolder, promGroup1.Name, headers)
+			require.Equal(t, promGroup1.Name, group.Name)
+
+			// Delete the rule group
+			adminClient.ConvertPrometheusDeleteRuleGroup(t, childFolder, promGroup1.Name, headers)
+
+			// Verify the rule group is gone
+			_, status, _ := adminClient.RawConvertPrometheusGetRuleGroupRules(t, childFolder, promGroup1.Name, headers)
+			require.Equal(t, http.StatusNotFound, status)
+		})
+
+		t.Run("deleting namespace with nested folder structure using header", func(t *testing.T) {
+			// Create parent folder
+			parentFolder := "parent-folder-ns-" + util.GenerateShortUID()
+			parentFolderUID := util.GenerateShortUID()
+			adminClient.CreateFolder(t, parentFolderUID, parentFolder)
+
+			// Create child folder inside parent
+			childFolder := "child-folder-ns-" + util.GenerateShortUID()
+			childFolderUID := util.GenerateShortUID()
+			adminClient.CreateFolder(t, childFolderUID, childFolder, parentFolderUID)
+
+			// Create rule groups in child folder
+			headers := map[string]string{
+				"X-Grafana-Alerting-Folder-UID": parentFolderUID,
+			}
+			adminClient.ConvertPrometheusPostRuleGroup(t, childFolder, ds.Body.Datasource.UID, promGroup1, headers)
+			adminClient.ConvertPrometheusPostRuleGroup(t, childFolder, ds.Body.Datasource.UID, promGroup2, headers)
+
+			// And a rule group in the parent folder
+			adminClient.ConvertPrometheusPostRuleGroup(t, parentFolder, ds.Body.Datasource.UID, promGroup3, nil)
+
+			// Verify both namespaces have rule groups
+			groups := adminClient.ConvertPrometheusGetNamespaceRules(t, childFolder, headers)
+			require.ElementsMatch(t, groups[childFolder], []apimodels.PrometheusRuleGroup{promGroup1, promGroup2})
+			require.Empty(t, groups[parentFolder])
+
+			parentGroups := adminClient.ConvertPrometheusGetNamespaceRules(t, parentFolder, nil)
+			require.Empty(t, parentGroups[childFolder])
+			require.ElementsMatch(t, parentGroups[parentFolder], []apimodels.PrometheusRuleGroup{promGroup3})
+
+			// Delete the child namespace
+			adminClient.ConvertPrometheusDeleteNamespace(t, childFolder, headers)
+
+			// Verify the namespace is empty
+			namespaces := adminClient.ConvertPrometheusGetAllRules(t, headers)
+			_, exists := namespaces[childFolder]
+			require.False(t, exists)
+
+			// But the parent folder still has its rule group
+			parentGroups = adminClient.ConvertPrometheusGetNamespaceRules(t, parentFolder, nil)
+			require.ElementsMatch(t, parentGroups[parentFolder], []apimodels.PrometheusRuleGroup{promGroup3})
+		})
+
+		t.Run("editor can delete rule group they created", func(t *testing.T) {
+			// Create namespace as admin
+			namespace := "test-namespace-editor-" + util.GenerateShortUID()
+			namespaceUID := util.GenerateShortUID()
+			adminClient.CreateFolder(t, namespaceUID, namespace)
+
+			// Create rule group as editor
+			editorClient.ConvertPrometheusPostRuleGroup(t, namespace, ds.Body.Datasource.UID, promGroup1, nil)
+
+			// Verify the rule group exists
+			group := editorClient.ConvertPrometheusGetRuleGroupRules(t, namespace, promGroup1.Name, nil)
+			require.Equal(t, promGroup1.Name, group.Name)
+
+			// Delete as editor
+			editorClient.ConvertPrometheusDeleteRuleGroup(t, namespace, promGroup1.Name, nil)
+
+			// Verify the rule group is gone
+			_, status, _ := editorClient.RawConvertPrometheusGetRuleGroupRules(t, namespace, promGroup1.Name, nil)
+			require.Equal(t, http.StatusNotFound, status)
+		})
+
+		t.Run("user with no role cannot delete rule groups", func(t *testing.T) {
+			// Create namespace and rule group as admin
+			namespace := "test-namespace-no-role-" + util.GenerateShortUID()
+			namespaceUID := util.GenerateShortUID()
+			adminClient.CreateFolder(t, namespaceUID, namespace)
+
+			adminClient.ConvertPrometheusPostRuleGroup(t, namespace, ds.Body.Datasource.UID, promGroup1, nil)
+
+			_, status, body := noRoleClient.RawConvertPrometheusDeleteRuleGroup(t, namespace, promGroup1.Name, nil)
+			requireStatusCode(t, http.StatusForbidden, status, body)
+		})
+
+		t.Run("user with no role cannot delete namespaces", func(t *testing.T) {
+			// Create namespace and rule group as admin
+			namespace := "test-namespace-no-role-ns-" + util.GenerateShortUID()
+			namespaceUID := util.GenerateShortUID()
+			adminClient.CreateFolder(t, namespaceUID, namespace)
+
+			adminClient.ConvertPrometheusPostRuleGroup(t, namespace, ds.Body.Datasource.UID, promGroup1, nil)
+
+			_, status, body := noRoleClient.RawConvertPrometheusDeleteNamespace(t, namespace, nil)
+			requireStatusCode(t, http.StatusForbidden, status, body)
 		})
 	}
 

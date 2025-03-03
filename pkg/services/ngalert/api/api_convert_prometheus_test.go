@@ -397,8 +397,8 @@ func TestRouteConvertPrometheusGetNamespace(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Len(t, respNamespaces, 1)
-		require.Contains(t, respNamespaces, fldr.Fullpath)
-		require.ElementsMatch(t, respNamespaces[fldr.Fullpath], []apimodels.PrometheusRuleGroup{promGroup1, promGroup2})
+		require.Contains(t, respNamespaces, fldr.Title)
+		require.ElementsMatch(t, respNamespaces[fldr.Title], []apimodels.PrometheusRuleGroup{promGroup1, promGroup2})
 	})
 }
 
@@ -442,17 +442,53 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 		},
 	}
 
-	t.Run("with no rules should return empty response", func(t *testing.T) {
-		srv, _, _, _ := createConvertPrometheusSrv(t)
-		rc := createRequestCtx()
+	assertEmptyResponse := func(t *testing.T, srv *ConvertPrometheusSrv, reqCtx *contextmodel.ReqContext) {
+		t.Helper()
 
-		response := srv.RouteConvertPrometheusGetRules(rc)
+		response := srv.RouteConvertPrometheusGetRules(reqCtx)
 		require.Equal(t, http.StatusOK, response.Status())
 
 		var respNamespaces map[string][]apimodels.PrometheusRuleGroup
 		err := yaml.Unmarshal(response.Body(), &respNamespaces)
 		require.NoError(t, err)
 		require.Empty(t, respNamespaces)
+	}
+
+	// testForEmptyResponses tests that RouteConvertPrometheusGetRules returns an empty response
+	// when there are no rules in the folder or the folder does not exist.
+	testForEmptyResponses := func(t *testing.T, withCustomFolderHeader bool) {
+		rc := createRequestCtx()
+		unknownFolderUID := "some unknown folder"
+		rootFolderUID := ""
+		if withCustomFolderHeader {
+			rootFolderUID = unknownFolderUID
+			rc.Context.Req.Header.Set(folderUIDHeader, unknownFolderUID)
+		}
+
+		t.Run("for non-existent folder should return empty response", func(t *testing.T) {
+			srv, _, _, _ := createConvertPrometheusSrv(t)
+			assertEmptyResponse(t, srv, rc)
+		})
+
+		t.Run("for existing folder with no children should return empty response", func(t *testing.T) {
+			srv, _, ruleStore, folderService := createConvertPrometheusSrv(t)
+
+			fldr := randFolder()
+			fldr.UID = unknownFolderUID
+			fldr.ParentUID = rootFolderUID
+			folderService.ExpectedFolders = []*folder.Folder{fldr}
+			ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
+
+			assertEmptyResponse(t, srv, rc)
+		})
+	}
+
+	t.Run("without custom root folder", func(t *testing.T) {
+		testForEmptyResponses(t, false)
+	})
+
+	t.Run("with custom root folder", func(t *testing.T) {
+		testForEmptyResponses(t, true)
 	})
 
 	t.Run("with rules should return 200 with rules", func(t *testing.T) {
@@ -489,8 +525,8 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Len(t, respNamespaces, 1)
-		require.Contains(t, respNamespaces, fldr.Fullpath)
-		require.ElementsMatch(t, respNamespaces[fldr.Fullpath], []apimodels.PrometheusRuleGroup{promGroup1, promGroup2})
+		require.Contains(t, respNamespaces, fldr.Title)
+		require.ElementsMatch(t, respNamespaces[fldr.Title], []apimodels.PrometheusRuleGroup{promGroup1, promGroup2})
 	})
 }
 
@@ -498,6 +534,20 @@ func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {
 	t.Run("for non-existent folder should return 404", func(t *testing.T) {
 		srv, _, _, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
+
+		response := srv.RouteConvertPrometheusDeleteNamespace(rc, "non-existent")
+		require.Equal(t, http.StatusNotFound, response.Status())
+	})
+
+	t.Run("for existing folder with no groups should return 404", func(t *testing.T) {
+		srv, _, ruleStore, folderService := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+
+		fldr := randFolder()
+		fldr.ParentUID = ""
+		folderService.ExpectedFolder = fldr
+		folderService.ExpectedFolders = []*folder.Folder{fldr}
+		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
 
 		response := srv.RouteConvertPrometheusDeleteNamespace(rc, "non-existent")
 		require.Equal(t, http.StatusNotFound, response.Status())
@@ -593,6 +643,20 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 		rc := createRequestCtx()
 
 		response := srv.RouteConvertPrometheusDeleteRuleGroup(rc, "non-existent", "test-group")
+		require.Equal(t, http.StatusNotFound, response.Status())
+	})
+
+	t.Run("for existing folder with no group should return 404", func(t *testing.T) {
+		srv, _, ruleStore, folderService := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+
+		fldr := randFolder()
+		fldr.ParentUID = ""
+		folderService.ExpectedFolder = fldr
+		folderService.ExpectedFolders = []*folder.Folder{fldr}
+		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
+
+		response := srv.RouteConvertPrometheusDeleteRuleGroup(rc, fldr.Title, "test-group")
 		require.Equal(t, http.StatusNotFound, response.Status())
 	})
 
@@ -757,4 +821,40 @@ func createRequestCtx() *contextmodel.ReqContext {
 		},
 		SignedInUser: &user.SignedInUser{OrgID: 1},
 	}
+}
+
+func TestGetWorkingFolderUID(t *testing.T) {
+	t.Run("should return root folder UID when header is not present", func(t *testing.T) {
+		rc := createRequestCtx()
+		rc.Req.Header.Del(folderUIDHeader)
+
+		folderUID := getWorkingFolderUID(rc)
+		require.Equal(t, folder.RootFolderUID, folderUID)
+	})
+
+	t.Run("should return specified folder UID when header is present", func(t *testing.T) {
+		rc := createRequestCtx()
+		specifiedFolderUID := "specified-folder-uid"
+		rc.Req.Header.Set(folderUIDHeader, specifiedFolderUID)
+
+		folderUID := getWorkingFolderUID(rc)
+		require.Equal(t, specifiedFolderUID, folderUID)
+	})
+
+	t.Run("should return root folder UID when header is empty", func(t *testing.T) {
+		rc := createRequestCtx()
+		rc.Req.Header.Set(folderUIDHeader, "")
+
+		folderUID := getWorkingFolderUID(rc)
+		require.Equal(t, folder.RootFolderUID, folderUID)
+	})
+
+	t.Run("should trim whitespace from header value", func(t *testing.T) {
+		rc := createRequestCtx()
+		specifiedFolderUID := "specified-folder-uid"
+		rc.Req.Header.Set(folderUIDHeader, "  "+specifiedFolderUID+"  ")
+
+		folderUID := getWorkingFolderUID(rc)
+		require.Equal(t, specifiedFolderUID, folderUID)
+	})
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -27,7 +28,14 @@ import (
 )
 
 const (
-	datasourceUIDHeader        = "X-Grafana-Alerting-Datasource-UID"
+	// datasourceUIDHeader is the name of the header that specifies the UID of the datasource to be used for the rules.
+	datasourceUIDHeader = "X-Grafana-Alerting-Datasource-UID"
+
+	// If the folderUIDHeader is present, namespaces and rule groups will be created in the specified folder.
+	// If not, the root folder will be used as the default.
+	folderUIDHeader = "X-Grafana-Alerting-Folder-UID"
+
+	// These headers control the paused state of newly created rules. By default, rules are not paused.
 	recordingRulesPausedHeader = "X-Grafana-Alerting-Recording-Rules-Paused"
 	alertRulesPausedHeader     = "X-Grafana-Alerting-Alert-Rules-Paused"
 )
@@ -58,6 +66,32 @@ func errInvalidHeaderValue(header string) error {
 // Rule groups not imported from Prometheus are excluded because their original rule definitions are unavailable.
 // When a rule group is converted from Prometheus to Grafana, the original definition is preserved alongside
 // the Grafana rule and used for reading requests here.
+//
+// Folder Structure Handling:
+// mimirtool does not support nested folder structures, while Grafana allows folder nesting.
+// To keep compatibility, this service only returns direct child folders of the working folder
+// as namespaces, and rule groups and rules that are directly in these child folders.
+//
+// For example, given this folder structure in Grafana:
+//
+//	grafana/
+//	├── production/
+//	│   ├── service1/
+//	│   │   └── alerts/
+//	│   └── service2/
+//	└── testing/
+//	    └── service3/
+//
+// If the working folder is "grafana":
+//   - Only namespaces "production" and "testing" are returned
+//   - Only rule groups directly within these folders are included
+//
+// If the working folder is "production":
+//   - Only namespaces "service1" and "service2" are returned
+//   - Only rule groups directly within these folders are included
+//
+// The "working folder" is specified by the X-Grafana-Alerting-Folder-UID header, which can be set to any folder UID,
+// and defaults to the root folder if not provided.
 type ConvertPrometheusSrv struct {
 	cfg              *setting.UnifiedAlertingSettings
 	logger           log.Logger
@@ -82,8 +116,27 @@ func NewConvertPrometheusSrv(cfg *setting.UnifiedAlertingSettings, logger log.Lo
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRules(c *contextmodel.ReqContext) response.Response {
 	logger := srv.logger.FromContext(c.Req.Context())
 
+	workingFolderUID := getWorkingFolderUID(c)
+	logger = logger.New("working_folder_uid", workingFolderUID)
+
+	folders, err := srv.ruleStore.GetNamespaceChildren(c.Req.Context(), workingFolderUID, c.SignedInUser.GetOrgID(), c.SignedInUser)
+	if len(folders) == 0 || errors.Is(err, dashboards.ErrFolderNotFound) {
+		// If there is no such folder or no children, return empty response
+		// because mimirtool expects 200 OK response in this case.
+		return response.YAML(http.StatusOK, map[string][]apimodels.PrometheusRuleGroup{})
+	}
+	if err != nil {
+		logger.Error("Failed to get folders", "error", err)
+		return errorToResponse(err)
+	}
+	folderUIDs := make([]string, 0, len(folders))
+	for _, f := range folders {
+		folderUIDs = append(folderUIDs, f.UID)
+	}
+
 	filterOpts := &provisioning.FilterOptions{
 		ImportedPrometheusRule: util.Pointer(true),
+		NamespaceUIDs:          folderUIDs,
 	}
 	groups, err := srv.alertRuleService.GetAlertGroupsWithFolderFullpath(c.Req.Context(), c.SignedInUser, filterOpts)
 	if err != nil {
@@ -105,8 +158,11 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRules(c *contextmodel.
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteNamespace(c *contextmodel.ReqContext, namespaceTitle string) response.Response {
 	logger := srv.logger.FromContext(c.Req.Context())
 
-	logger.Debug("Looking up folder in the root by title", "folder_title", namespaceTitle)
-	namespace, err := srv.ruleStore.GetNamespaceInRootByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.GetOrgID(), c.SignedInUser)
+	workingFolderUID := getWorkingFolderUID(c)
+	logger = logger.New("working_folder_uid", workingFolderUID)
+
+	logger.Debug("Looking up folder by title", "folder_title", namespaceTitle)
+	namespace, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.GetOrgID(), c.SignedInUser, workingFolderUID)
 	if err != nil {
 		return namespaceErrorResponse(err)
 	}
@@ -117,6 +173,9 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteNamespace(c *contex
 		ImportedPrometheusRule: util.Pointer(true),
 	}
 	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, models.ProvenanceConvertedPrometheus, filterOpts)
+	if errors.Is(err, models.ErrAlertRuleGroupNotFound) {
+		return response.Empty(http.StatusNotFound)
+	}
 	if err != nil {
 		logger.Error("Failed to delete rule groups", "folder_uid", namespace.UID, "error", err)
 		return errorToResponse(err)
@@ -129,14 +188,20 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteNamespace(c *contex
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteRuleGroup(c *contextmodel.ReqContext, namespaceTitle string, group string) response.Response {
 	logger := srv.logger.FromContext(c.Req.Context())
 
-	logger.Debug("Looking up folder in the root by title", "folder_title", namespaceTitle)
-	folder, err := srv.ruleStore.GetNamespaceInRootByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.GetOrgID(), c.SignedInUser)
+	workingFolderUID := getWorkingFolderUID(c)
+	logger = logger.New("working_folder_uid", workingFolderUID)
+
+	logger.Debug("Looking up folder by title", "folder_title", namespaceTitle)
+	folder, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.GetOrgID(), c.SignedInUser, workingFolderUID)
 	if err != nil {
 		return namespaceErrorResponse(err)
 	}
 	logger.Info("Deleting Prometheus-imported rule group", "folder_uid", folder.UID, "folder_title", namespaceTitle, "group", group)
 
 	err = srv.alertRuleService.DeleteRuleGroup(c.Req.Context(), c.SignedInUser, folder.UID, group, models.ProvenanceConvertedPrometheus)
+	if errors.Is(err, models.ErrAlertRuleGroupNotFound) {
+		return response.Empty(http.StatusNotFound)
+	}
 	if err != nil {
 		logger.Error("Failed to delete rule group", "folder_uid", folder.UID, "group", group, "error", err)
 		return errorToResponse(err)
@@ -150,8 +215,11 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteRuleGroup(c *contex
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetNamespace(c *contextmodel.ReqContext, namespaceTitle string) response.Response {
 	logger := srv.logger.FromContext(c.Req.Context())
 
-	logger.Debug("Looking up folder in the root by title", "folder_title", namespaceTitle)
-	namespace, err := srv.ruleStore.GetNamespaceInRootByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.GetOrgID(), c.SignedInUser)
+	workingFolderUID := getWorkingFolderUID(c)
+	logger = logger.New("working_folder_uid", workingFolderUID)
+
+	logger.Debug("Looking up folder by title", "folder_title", namespaceTitle)
+	namespace, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.GetOrgID(), c.SignedInUser, workingFolderUID)
 	if err != nil {
 		logger.Error("Failed to get folder", "error", err)
 		return namespaceErrorResponse(err)
@@ -181,11 +249,17 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetNamespace(c *contextmo
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRuleGroup(c *contextmodel.ReqContext, namespaceTitle string, group string) response.Response {
 	logger := srv.logger.FromContext(c.Req.Context())
 
-	logger.Debug("Looking up folder in the root by title", "folder_title", namespaceTitle)
-	namespace, err := srv.ruleStore.GetNamespaceInRootByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.GetOrgID(), c.SignedInUser)
+	workingFolderUID := getWorkingFolderUID(c)
+	logger = logger.New("working_folder_uid", workingFolderUID)
+
+	logger.Debug("Looking up folder by title", "folder_title", namespaceTitle)
+	namespace, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.GetOrgID(), c.SignedInUser, workingFolderUID)
 	if err != nil {
 		logger.Error("Failed to get folder", "error", err)
 		return namespaceErrorResponse(err)
+	}
+	if namespace == nil {
+		return response.Error(http.StatusNotFound, "Folder not found", nil)
 	}
 
 	filterOpts := &provisioning.FilterOptions{
@@ -223,11 +297,13 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRuleGroup(c *contextmo
 // it will not be replaced and an error will be returned.
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextmodel.ReqContext, namespaceTitle string, promGroup apimodels.PrometheusRuleGroup) response.Response {
 	logger := srv.logger.FromContext(c.Req.Context())
-	logger = logger.New("folder_title", namespaceTitle, "group", promGroup.Name)
+
+	workingFolderUID := getWorkingFolderUID(c)
+	logger = logger.New("folder_title", namespaceTitle, "group", promGroup.Name, "working_folder_uid", workingFolderUID)
 
 	logger.Info("Converting Prometheus rule group", "rules", len(promGroup.Rules))
 
-	ns, errResp := srv.getOrCreateNamespace(c, namespaceTitle, logger)
+	ns, errResp := srv.getOrCreateNamespace(c, namespaceTitle, logger, workingFolderUID)
 	if errResp != nil {
 		return errResp
 	}
@@ -257,18 +333,19 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextm
 	return successfulResponse()
 }
 
-func (srv *ConvertPrometheusSrv) getOrCreateNamespace(c *contextmodel.ReqContext, title string, logger log.Logger) (*folder.Folder, response.Response) {
+func (srv *ConvertPrometheusSrv) getOrCreateNamespace(c *contextmodel.ReqContext, title string, logger log.Logger, workingFolderUID string) (*folder.Folder, response.Response) {
 	logger.Debug("Getting or creating a new folder")
 
-	ns, err := srv.ruleStore.GetOrCreateNamespaceInRootByTitle(
+	ns, err := srv.ruleStore.GetOrCreateNamespaceByTitle(
 		c.Req.Context(),
 		title,
 		c.SignedInUser.GetOrgID(),
 		c.SignedInUser,
+		workingFolderUID,
 	)
 	if err != nil {
 		logger.Error("Failed to get or create a new folder", "error", err)
-		return nil, toNamespaceErrorResponse(err)
+		return nil, namespaceErrorResponse(err)
 	}
 
 	logger.Debug("Using folder for the converted rules", "folder_uid", ns.UID)
@@ -351,11 +428,17 @@ func grafanaNamespacesToPrometheus(groups []models.AlertRuleGroupWithFolderFullp
 	result := map[string][]apimodels.PrometheusRuleGroup{}
 
 	for _, group := range groups {
+		// Since the folder can be nested but mimirtool does not support nested paths,
+		// we need to use only the last folder in the full path.
+		// For example, if the current working folder is "general" and the full path is "grafana/some folder/general/production",
+		// we should use the "production" folder.
+		folder := filepath.Base(group.FolderFullpath)
+
 		promGroup, err := grafanaRuleGroupToPrometheus(group.Title, group.Rules)
 		if err != nil {
 			return nil, err
 		}
-		result[group.FolderFullpath] = append(result[group.FolderFullpath], promGroup)
+		result[folder] = append(result[folder], promGroup)
 	}
 
 	return result, nil
@@ -388,18 +471,26 @@ func grafanaRuleGroupToPrometheus(group string, rules []models.AlertRule) (apimo
 	return promGroup, nil
 }
 
-func namespaceErrorResponse(err error) response.Response {
-	if errors.Is(err, dashboards.ErrFolderAccessDenied) {
-		// If there is no such folder, the error is ErrFolderAccessDenied.
-		// We should return 404 in this case, otherwise mimirtool does not work correctly.
-		return response.Empty(http.StatusNotFound)
-	}
-
-	return toNamespaceErrorResponse(err)
-}
-
 func successfulResponse() response.Response {
 	return response.JSON(http.StatusAccepted, apimodels.ConvertPrometheusResponse{
 		Status: "success",
 	})
+}
+
+// getWorkingFolderUID returns the value of the folderUIDHeader
+// if present. Otherwise, it returns the UID of the root folder.
+func getWorkingFolderUID(c *contextmodel.ReqContext) string {
+	folderUID := strings.TrimSpace(c.Req.Header.Get(folderUIDHeader))
+	if folderUID != "" {
+		return folderUID
+	}
+	return folder.RootFolderUID
+}
+
+func namespaceErrorResponse(err error) response.Response {
+	if errors.Is(err, dashboards.ErrFolderNotFound) {
+		return response.Empty(http.StatusNotFound)
+	}
+
+	return toNamespaceErrorResponse(err)
 }

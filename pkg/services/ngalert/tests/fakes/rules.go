@@ -268,38 +268,58 @@ func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64
 	return nil, fmt.Errorf("not found")
 }
 
-func (f *RuleStore) GetOrCreateNamespaceInRootByTitle(ctx context.Context, title string, orgID int64, user identity.Requester) (*folder.Folder, error) {
+func (f *RuleStore) GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.Folder, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
 	for _, folder := range f.Folders[orgID] {
-		if folder.Title == title {
+		if folder.Title == title && folder.ParentUID == parentUID {
 			return folder, nil
 		}
 	}
 
 	newFolder := &folder.Folder{
-		ID:       rand.Int63(), // nolint:staticcheck
-		UID:      util.GenerateShortUID(),
-		Title:    title,
-		Fullpath: "fullpath_" + title,
+		ID:        rand.Int63(), // nolint:staticcheck
+		UID:       util.GenerateShortUID(),
+		Title:     title,
+		ParentUID: parentUID,
+		Fullpath:  "fullpath_" + title,
 	}
 
 	f.Folders[orgID] = append(f.Folders[orgID], newFolder)
 	return newFolder, nil
 }
 
-func (f *RuleStore) GetNamespaceInRootByTitle(ctx context.Context, title string, orgID int64, user identity.Requester) (*folder.Folder, error) {
+func (f *RuleStore) GetNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.Folder, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
 	for _, folder := range f.Folders[orgID] {
-		if folder.Title == title && folder.ParentUID == "" {
+		if folder.Title == title && folder.ParentUID == parentUID {
 			return folder, nil
 		}
 	}
 
 	return nil, dashboards.ErrFolderNotFound
+}
+
+func (f *RuleStore) GetNamespaceChildren(ctx context.Context, uid string, orgID int64, user identity.Requester) ([]*folder.Folder, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	result := []*folder.Folder{}
+
+	for _, folder := range f.Folders[orgID] {
+		if folder.ParentUID == uid {
+			result = append(result, folder)
+		}
+	}
+
+	if len(result) == 0 {
+		return nil, dashboards.ErrFolderNotFound
+	}
+
+	return result, nil
 }
 
 func (f *RuleStore) UpdateAlertRules(_ context.Context, _ *models.UserUID, q []models.UpdateRule) error {

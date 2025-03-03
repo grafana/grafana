@@ -151,13 +151,11 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodDelete + "/api/convert/api/prom/rules/{NamespaceTitle}/{Group}",
 		http.MethodDelete + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}",
 		http.MethodDelete + "/api/convert/api/prom/rules/{NamespaceTitle}":
-		eval = ac.EvalAny(
-			ac.EvalAll(
-				ac.EvalPermission(ac.ActionAlertingRuleRead),
-				ac.EvalPermission(dashboards.ActionFoldersRead),
-				ac.EvalPermission(ac.ActionAlertingRuleDelete),
-				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
-			),
+		eval = ac.EvalAll(
+			ac.EvalPermission(ac.ActionAlertingRuleRead),
+			ac.EvalPermission(dashboards.ActionFoldersRead),
+			ac.EvalPermission(ac.ActionAlertingRuleDelete),
+			ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
 		)
 
 	// Alert Instances and Silences
