@@ -274,7 +274,7 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 
 	for _, row := range secureValueRows {
 		// Check whether the user has permission to access this specific SecureValue in the namespace.
-		if !hasPermissionFor(row.Namespace, row.Name) {
+		if !hasPermissionFor(row.Name, "") {
 			continue
 		}
 
