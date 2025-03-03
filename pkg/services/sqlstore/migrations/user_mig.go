@@ -158,7 +158,7 @@ func addUserMigrations(mg *Migrator) {
 	// Modifies the user table to add a new column is_provisioned to indicate if the user is provisioned
 	// by SCIM or not.
 	mg.AddMigration("Add is_provisioned column to user", NewAddColumnMigration(userV2, &Column{
-		Name: "is_provisioned", Type: DB_Bool, Nullable: true, Default: "0",
+		Name: "is_provisioned", Type: DB_Bool, Nullable: false, Default: "0",
 	}))
 
 	// Service accounts login were not unique per org. this migration is part of making it unique per org
