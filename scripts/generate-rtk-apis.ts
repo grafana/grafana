@@ -48,6 +48,21 @@ const config: ConfigFile = {
       flattenArg: false,
       tag: true,
     },
+    '../public/app/features/announcement-banner/api/endpoints.gen.ts': {
+      schemaFile: '../data/openapi/banners.grafana.app-v0alpha1.json',
+      apiFile: '../public/app/features/announcement-banner/api/baseAPI.ts',
+      apiImport: 'baseAPI',
+      argSuffix: 'Arg',
+      responseSuffix: 'Response',
+      hooks: true,
+      tag: true,
+      filterEndpoints: [
+        'listAnnouncementBanner',
+        'createAnnouncementBanner',
+        'replaceAnnouncementBanner',
+        'deleteAnnouncementBanner',
+      ],
+    },
   },
 };
 
