@@ -43,4 +43,14 @@ runs:
         echo '# Coverage' >> $GITHUB_STEP_SUMMARY
         echo '```' >> $GITHUB_STEP_SUMMARY
         grep 'total:' backend-funcs.log | tr '\t' ' ' >> $GITHUB_STEP_SUMMARY
-        echo '```' >> $GITHUB_STEP_SUMMARY 
+        echo '```' >> $GITHUB_STEP_SUMMARY
+
+    - name: Report coverage to CodeCov
+      uses: codecov/codecov-action@v5
+      with:
+        files: backend.cov
+        flags: unified-backend
+        name: backend
+        slug: grafana/grafana
+        url: codecov.grafana-dev.net
+        use_oidc: true
