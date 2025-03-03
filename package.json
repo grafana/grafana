@@ -54,7 +54,7 @@
     "packages:build": "nx run-many -t build --projects='tag:scope:package'",
     "packages:clean": "rimraf ./npm-artifacts && nx run-many -t clean --projects='tag:scope:package' --maxParallel=100",
     "packages:i18n-extract": "nx run-many -t i18n-extract --projects='tag:scope:package'",
-    "packages:prepare": "nx release version --no-git-commit --no-git-tag --no-stage-changes --group grafanaPackages",
+    "packages:prepare": "nx release version --group grafanaPackages",
     "packages:pack": "mkdir -p ./npm-artifacts && nx run-many -t pack --projects='tag:scope:package'",
     "packages:typecheck": "nx run-many -t typecheck --projects='tag:scope:package'",
     "packages:test:ci": "nx run-many -t test:ci --projects='tag:scope:package'",
