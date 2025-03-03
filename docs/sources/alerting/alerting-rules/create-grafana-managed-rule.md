@@ -222,7 +222,8 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
    The pending period is the period in which an alert rule can be in breach of the condition until it fires.
 
-   Once a condition is met, the alert goes into the **Pending** state. If the condition remains active for the duration specified, the alert transitions to the **Firing** state, else it reverts to the **Normal** state.
+   Once a condition is met, the alert goes into the **Pending** state.
+   If the condition remains active for the duration specified, the alert transitions to the **Firing** state, else it reverts to the **Normal** state.
 
 1. Turn on pause alert notifications, if required.
 
