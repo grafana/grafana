@@ -21,6 +21,7 @@ import { GrafanaContext } from './core/context/GrafanaContext';
 import { GrafanaRouteWrapper } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
 import { ThemeProvider } from './core/utils/ConfigProvider';
+import { initAnnouncementBanners } from './features/announcement-banner';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import { ExtensionRegistriesProvider } from './features/plugins/extensions/ExtensionRegistriesContext';
 import { pluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
@@ -50,6 +51,8 @@ export function addBodyRenderHook(fn: ComponentType) {
 export function addPageBanner(fn: ComponentType) {
   pageBanners.push(fn);
 }
+
+initAnnouncementBanners();
 
 export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
   private iconCacheID = `grafana-icon-cache-${config.buildInfo.commit}`;

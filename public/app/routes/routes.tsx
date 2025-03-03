@@ -519,6 +519,13 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "NotificationsPage"*/ 'app/features/notifications/NotificationsPage')
       ),
     },
+    {
+      path: '/admin/banner-settings',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "BannerSettingsPage" */ 'app/features/announcement-banner/BannerSettingsPage')
+      ),
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.ActionBannersWrite]),
+    },
     config.featureToggles.exploreMetrics && {
       path: '/explore/metrics/*',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
