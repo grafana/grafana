@@ -1,11 +1,8 @@
-import { skipToken } from '@reduxjs/toolkit/query';
-
 import { contextSrv } from 'app/core/services/context_srv';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { getRulesPermissions } from '../utils/access-control';
-import { getDatasourceAPIUid } from '../utils/datasource';
 import { isGrafanaRulerRule } from '../utils/rules';
 
 import { useFolder } from './useFolder';
