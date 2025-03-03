@@ -1,5 +1,5 @@
-//go:build enterprise
-// +build enterprise
+//go:build enterprise || pro
+// +build enterprise pro
 
 package extensions
 
