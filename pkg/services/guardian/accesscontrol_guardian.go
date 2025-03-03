@@ -221,6 +221,10 @@ func (a *accessControlDashboardGuardian) CanEdit() (bool, error) {
 		return false, ErrGuardianDashboardNotFound.Errorf("failed to check edit permissions for dashboard")
 	}
 
+	if a.cfg.ViewersCanEdit {
+		return a.CanView()
+	}
+
 	return a.evaluate(
 		accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(a.dashboard.UID)),
 	)
@@ -229,6 +233,10 @@ func (a *accessControlDashboardGuardian) CanEdit() (bool, error) {
 func (a *accessControlFolderGuardian) CanEdit() (bool, error) {
 	if a.folder == nil {
 		return false, ErrGuardianFolderNotFound.Errorf("failed to check edit permissions for folder")
+	}
+
+	if a.cfg.ViewersCanEdit {
+		return a.CanView()
 	}
 
 	return a.evaluate(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(a.folder.UID)))
