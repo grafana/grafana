@@ -1244,15 +1244,13 @@
     },
     "tabs-layout": {
       "description": "Tabs layout",
+      "menu": {
+        "move-tab": "Move tab"
+      },
       "multi-select": {
         "title": "{{length}} tabs selected"
       },
       "name": "Tabs",
-      "row": {
-        "menu": {
-          "move-tab": "Move tab"
-        }
-      },
       "tab": {
         "menu": {
           "add": "Add tab",

@@ -68,9 +68,9 @@ export function TabItemMenu({ model }: Props) {
         )}
       >
         <ToolbarButton
-          aria-label={t('dashboard.tabs-layout.row.menu.move-tab', 'Move tab')}
-          title={t('dashboard.tabs-layout.row.menu.move-tab', 'Move tab')}
-          tooltip={t('dashboard.tabs-layout.row.menu.move-tab', 'Move tab')}
+          aria-label={t('dashboard.tabs-layout.menu.move-tab', 'Move tab')}
+          title={t('dashboard.tabs-layout.menu.move-tab', 'Move tab')}
+          tooltip={t('dashboard.tabs-layout.menu.move-tab', 'Move tab')}
           icon="arrows-h"
           iconSize="md"
           variant="default"

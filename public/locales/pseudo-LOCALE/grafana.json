@@ -1244,15 +1244,13 @@
     },
     "tabs-layout": {
       "description": "Ŧäþş ľäyőūŧ",
+      "menu": {
+        "move-tab": "Mővę ŧäþ"
+      },
       "multi-select": {
         "title": "{{length}} ŧäþş şęľęčŧęđ"
       },
       "name": "Ŧäþş",
-      "row": {
-        "menu": {
-          "move-tab": "Mővę ŧäþ"
-        }
-      },
       "tab": {
         "menu": {
           "add": "Åđđ ŧäþ",
