@@ -783,6 +783,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/issue-opened.yml @grafana/grafana-community-support
 /.github/workflows/metrics-collector.yml @torkelo
 /.github/workflows/milestone.yml @tolzhabayev
+/.github/workflows/pr-backend-code-checks.yml @grafana/grafana-backend-group
 /.github/workflows/pr-checks.yml @tolzhabayev
 /.github/workflows/pr-codeql-analysis-go.yml @DanCech
 /.github/workflows/pr-codeql-analysis-javascript.yml @DanCech
