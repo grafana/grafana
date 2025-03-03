@@ -98,17 +98,17 @@ func (b *bleveBackend) GetIndex(ctx context.Context, key resource.NamespacedReso
 func (b *bleveBackend) BuildIndex(ctx context.Context,
 	key resource.NamespacedResource,
 
-// When the size is known, it will be passed along here
-// Depending on the size, the backend may choose different options (eg: memory vs disk)
+	// When the size is known, it will be passed along here
+	// Depending on the size, the backend may choose different options (eg: memory vs disk)
 	size int64,
 
-// The last known resource version can be used to know that we can skip calling the builder
+	// The last known resource version can be used to know that we can skip calling the builder
 	resourceVersion int64,
 
-// the non-standard searchable fields
+	// the non-standard searchable fields
 	fields resource.SearchableDocumentFields,
 
-// The builder will write all documents before returning
+	// The builder will write all documents before returning
 	builder func(index resource.ResourceIndex) (int64, error),
 ) (resource.ResourceIndex, error) {
 	_, span := b.tracer.Start(ctx, tracingPrexfixBleve+"BuildIndex")
