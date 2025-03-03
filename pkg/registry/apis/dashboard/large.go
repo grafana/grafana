@@ -29,7 +29,7 @@ func NewDashboardLargeObjectSupport(scheme *runtime.Scheme) *apistore.BasicLarge
 			}
 			old := dash.Spec.Object
 			spec := commonV0.Unstructured{Object: make(map[string]any)}
-			dash.Spec = dashboard.DashboardSpec{Unstructured: spec}
+			dash.Spec = spec
 			dash.SetManagedFields(nil) // this could be bigger than the object!
 
 			keep := []string{"title", "description", "tags", "schemaVersion"}
