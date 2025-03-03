@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/setting"
 	"xorm.io/xorm"
 )
@@ -30,10 +31,11 @@ type TestingTB interface {
 
 type testOptions struct {
 	FeatureFlags     map[string]bool
-	Migrator         registry.DatabaseMigrator
+	MigratorFactory  func(featuremgmt.FeatureToggles) registry.DatabaseMigrator
 	Tracer           tracing.Tracer
 	Bus              bus.Bus
 	NoDefaultUserOrg bool
+	Cfg              *setting.Cfg
 }
 
 type TestOption func(*testOptions)
@@ -63,10 +65,27 @@ func WithFeatureFlag(flag string, val bool) TestOption {
 	}
 }
 
+// WithOSSMigrations sets the migrator to the OSS migrations.
+// This effectively works _after_ all other options are passed, including WithMigrator.
+func WithOSSMigrations() TestOption {
+	return func(o *testOptions) {
+		o.MigratorFactory = func(ft featuremgmt.FeatureToggles) registry.DatabaseMigrator {
+			return migrations.ProvideOSSMigrations(ft) // the return type isn't exactly registry.DatabaseMigrator, hence the wrapper.
+		}
+	}
+}
+
 func WithMigrator(migrator registry.DatabaseMigrator) TestOption {
 	return func(o *testOptions) {
-		o.Migrator = migrator
+		o.MigratorFactory = func(_ featuremgmt.FeatureToggles) registry.DatabaseMigrator {
+			return migrator
+		}
 	}
+}
+
+// WithoutMigrator explicitly opts out of migrations.
+func WithoutMigrator() TestOption {
+	return WithMigrator(nil)
 }
 
 func WithTracer(tracer tracing.Tracer, bus bus.Bus) TestOption {
@@ -82,10 +101,19 @@ func WithoutDefaultOrgAndUser() TestOption {
 	}
 }
 
+// WithCfg configures a *setting.Cfg to base the configuration upon.
+// Note that if this is set, we will modify the configuration object's [database] section.
+func WithCfg(cfg *setting.Cfg) TestOption {
+	return func(o *testOptions) {
+		o.Cfg = cfg
+	}
+}
+
 // NewTestStore creates a new SQLStore with a test database. It is useful in parallel tests.
 // All cleanup is scheduled via the passed TestingTB; the caller does not need to do anything about it.
 // Temporary, clean databases are created for each test, and are destroyed when the test finishes.
 // When using subtests, create a new store for each subtest instead of sharing one across the entire test.
+// By default, OSS migrations are run. Enterprise migrations need to be opted into manually. Migrations can also be opted out of entirely.
 //
 // The opts are called in order. That means that a destructive option should be added last if you want it to be truly destructive.
 func NewTestStore(tb TestingTB, opts ...TestOption) *SQLStore {
@@ -97,6 +125,7 @@ func NewTestStore(tb TestingTB, opts ...TestOption) *SQLStore {
 		Tracer:       tracer,
 		Bus:          bus.ProvideBus(tracer),
 	}
+	WithOSSMigrations()(options) // Assign some default migrations
 	for _, opt := range opts {
 		opt(options)
 	}
@@ -108,7 +137,7 @@ func NewTestStore(tb TestingTB, opts ...TestOption) *SQLStore {
 		panic("unreachable")
 	}
 
-	cfg, err := newTestCfg(features, testDB)
+	cfg, err := newTestCfg(options.Cfg, features, testDB)
 	if err != nil {
 		tb.Fatalf("failed to create a test cfg: %v", err)
 		panic("unreachable")
@@ -125,7 +154,7 @@ func NewTestStore(tb TestingTB, opts ...TestOption) *SQLStore {
 	engine.DatabaseTZ = time.UTC
 	engine.TZLocation = time.UTC
 
-	store, err := newStore(cfg, engine, features, options.Migrator,
+	store, err := newStore(cfg, engine, features, options.MigratorFactory(features),
 		options.Bus, options.Tracer, options.NoDefaultUserOrg)
 	if err != nil {
 		tb.Fatalf("failed to create a new SQLStore: %v", err)
@@ -158,10 +187,13 @@ func newFeatureToggles(toggles map[string]bool) featuremgmt.FeatureToggles {
 }
 
 func newTestCfg(
+	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	testDB *testDB,
 ) (*setting.Cfg, error) {
-	cfg := setting.NewCfg()
+	if cfg == nil {
+		cfg = setting.NewCfg()
+	}
 	cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 
 	sec, err := cfg.Raw.NewSection("database")
