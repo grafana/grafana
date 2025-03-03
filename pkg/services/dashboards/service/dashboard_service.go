@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/dashboard"
+	dashboardOG "github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -958,7 +959,7 @@ func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, que
 	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		dashs, err := dr.searchDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
 			OrgId:           query.OrgID,
-			ProvisionedRepo: dashboard.PluginIDRepoName,
+			ProvisionedRepo: dashboardOG.PluginIDRepoName,
 			ProvisionedPath: query.PluginID,
 		})
 		if err != nil {
@@ -1559,7 +1560,7 @@ func (dr *DashboardServiceImpl) saveProvisionedDashboardThroughK8s(ctx context.C
 		delete(annotations, utils.AnnoKeyRepoHash)
 		delete(annotations, utils.AnnoKeyRepoTimestamp)
 	} else {
-		annotations[utils.AnnoKeyRepoName] = dashboard.ProvisionedFileNameWithPrefix(provisioning.Name)
+		annotations[utils.AnnoKeyRepoName] = dashboardOG.ProvisionedFileNameWithPrefix(provisioning.Name)
 		annotations[utils.AnnoKeyRepoPath] = provisioning.ExternalID
 		annotations[utils.AnnoKeyRepoHash] = provisioning.CheckSum
 		annotations[utils.AnnoKeyRepoTimestamp] = time.Unix(provisioning.Updated, 0).UTC().Format(time.RFC3339)
@@ -1580,7 +1581,7 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 		return nil, err
 	}
 
-	dashboard.SetPluginIDMeta(obj, cmd.PluginID)
+	dashboardOG.SetPluginIDMeta(obj, cmd.PluginID)
 
 	out, err := dr.createOrUpdateDash(ctx, obj, orgID)
 	if err != nil {
@@ -1787,13 +1788,13 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	switch query.Type {
 	case "":
 		// When no type specified, search for dashboards
-		request.Options.Key, err = resource.AsResourceKey(namespace, dashboard.DASHBOARD_RESOURCE)
+		request.Options.Key, err = resource.AsResourceKey(namespace, dashboardv0alpha1.DASHBOARD_RESOURCE)
 		// Currently a search query is across folders and dashboards
 		if err == nil {
 			federate, err = resource.AsResourceKey(namespace, folderv0alpha1.RESOURCE)
 		}
 	case searchstore.TypeDashboard, searchstore.TypeAnnotation:
-		request.Options.Key, err = resource.AsResourceKey(namespace, dashboard.DASHBOARD_RESOURCE)
+		request.Options.Key, err = resource.AsResourceKey(namespace, dashboardv0alpha1.DASHBOARD_RESOURCE)
 	case searchstore.TypeFolder, searchstore.TypeAlertFolder:
 		request.Options.Key, err = resource.AsResourceKey(namespace, folderv0alpha1.RESOURCE)
 	default:
@@ -1843,7 +1844,7 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 	if len(query.ProvisionedReposNotIn) > 0 {
 		repos := make([]string, len(query.ProvisionedReposNotIn))
 		for i, v := range query.ProvisionedReposNotIn {
-			repos[i] = dashboard.ProvisionedFileNameWithPrefix(v)
+			repos[i] = dashboardOG.ProvisionedFileNameWithPrefix(v)
 		}
 		query.ProvisionedReposNotIn = repos
 	}
@@ -1875,7 +1876,7 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 				}
 
 				// ensure the repo is set due to file provisioning, otherwise skip it
-				fileRepo, found := dashboard.GetProvisionedFileNameFromMeta(meta.GetRepositoryName())
+				fileRepo, found := dashboardOG.GetProvisionedFileNameFromMeta(meta.GetRepositoryName())
 				if !found {
 					return nil
 				}
@@ -1961,7 +1962,7 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 		FolderUID:  obj.GetFolder(),
 		Version:    dashVersion,
 		Data:       simplejson.NewFromAny(spec),
-		APIVersion: strings.TrimPrefix(item.GetAPIVersion(), dashboard.GROUP+"/"),
+		APIVersion: strings.TrimPrefix(item.GetAPIVersion(), dashboardv0alpha1.GROUP+"/"),
 	}
 
 	out.Created = obj.GetCreationTimestamp().Time
@@ -1978,7 +1979,7 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 		out.Deleted = obj.GetDeletionTimestamp().Time
 	}
 
-	out.PluginID = dashboard.GetPluginIDFromMeta(obj)
+	out.PluginID = dashboardOG.GetPluginIDFromMeta(obj)
 
 	creator, err := dr.k8sclient.GetUserFromMeta(ctx, obj.GetCreatedBy())
 	if err != nil {

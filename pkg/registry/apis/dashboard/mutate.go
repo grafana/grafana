@@ -7,7 +7,6 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboardV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	dashboardV2 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
@@ -28,11 +27,6 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 	}
 
 	switch v := obj.(type) {
-	case *dashboard.Dashboard:
-		if id, ok := v.Spec.Object["id"].(float64); ok {
-			delete(v.Spec.Object, "id")
-			internalID = int64(id)
-		}
 	case *dashboardV0.Dashboard:
 		if id, ok := v.Spec.Object["id"].(float64); ok {
 			delete(v.Spec.Object, "id")

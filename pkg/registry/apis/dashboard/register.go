@@ -21,7 +21,6 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboardinternal "github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/apis/dashboard/migration/conversion"
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	dashboardv1alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
@@ -118,9 +117,6 @@ func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 
 func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	b.scheme = scheme
-	if err := dashboardinternal.AddToScheme(scheme); err != nil {
-		return err
-	}
 	if err := dashboardv0alpha1.AddToScheme(scheme); err != nil {
 		return err
 	}
@@ -176,8 +172,6 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 }
 
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	internalDashResourceInfo := dashboardinternal.DashboardResourceInfo
-
 	storageOpts := apistore.StorageOptions{
 		RequireDeprecatedInternalID: true,
 	}
@@ -188,13 +182,13 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		largeObjects = NewDashboardLargeObjectSupport(opts.Scheme)
 		storageOpts.LargeObjectSupport = largeObjects
 	}
-	opts.StorageOptions(internalDashResourceInfo.GroupResource(), storageOpts)
+	opts.StorageOptions(dashboardv0alpha1.DashboardResourceInfo.GroupResource(), storageOpts)
 
 	// v0alpha1
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		dashboardv0alpha1.DashboardResourceInfo,
 		dashboardv0alpha1.LibraryPanelResourceInfo,
-		func(obj runtime.Object, access *dashboardinternal.DashboardAccess) (v runtime.Object, err error) {
+		func(obj runtime.Object, access *dashboardv0alpha1.DashboardAccess) (v runtime.Object, err error) {
 			dto := &dashboardv0alpha1.DashboardWithAccessInfo{}
 			dash, ok := obj.(*dashboardv0alpha1.Dashboard)
 			if ok {
@@ -212,7 +206,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		dashboardv1alpha1.DashboardResourceInfo,
 		dashboardv1alpha1.LibraryPanelResourceInfo,
-		func(obj runtime.Object, access *dashboardinternal.DashboardAccess) (v runtime.Object, err error) {
+		func(obj runtime.Object, access *dashboardv0alpha1.DashboardAccess) (v runtime.Object, err error) {
 			dto := &dashboardv1alpha1.DashboardWithAccessInfo{}
 			dash, ok := obj.(*dashboardv1alpha1.Dashboard)
 			if ok {
@@ -230,7 +224,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		dashboardv2alpha1.DashboardResourceInfo,
 		dashboardv2alpha1.LibraryPanelResourceInfo,
-		func(obj runtime.Object, access *dashboardinternal.DashboardAccess) (v runtime.Object, err error) {
+		func(obj runtime.Object, access *dashboardv0alpha1.DashboardAccess) (v runtime.Object, err error) {
 			dto := &dashboardv2alpha1.DashboardWithAccessInfo{}
 			dash, ok := obj.(*dashboardv2alpha1.Dashboard)
 			if ok {
@@ -319,7 +313,7 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	for _, gv := range b.GetGroupVersions() {
 		version := gv.Version
 		// Hide cluster-scoped resources
-		root := path.Join("/apis/", dashboardinternal.GROUP, version)
+		root := path.Join("/apis/", dashboardv0alpha1.GROUP, version)
 		delete(oas.Paths.Paths, path.Join(root, "dashboards"))
 		delete(oas.Paths.Paths, path.Join(root, "watch", "dashboards"))
 

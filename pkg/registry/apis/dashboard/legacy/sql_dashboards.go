@@ -18,7 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
+	dashboardOG "github.com/grafana/grafana/pkg/apis/dashboard"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -319,7 +320,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 			ts := time.Unix(origin_ts.Int64, 0)
 
 			repo := &utils.ResourceRepositoryInfo{
-				Name:      dashboard.ProvisionedFileNameWithPrefix(origin_name.String),
+				Name:      dashboardOG.ProvisionedFileNameWithPrefix(origin_name.String),
 				Hash:      origin_hash.String,
 				Timestamp: &ts,
 			}
@@ -338,7 +339,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 			meta.SetRepositoryInfo(repo)
 		} else if plugin_id.String != "" {
 			meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-				Name: dashboard.PluginIDRepoName,
+				Name: dashboardOG.PluginIDRepoName,
 				Path: plugin_id.String,
 			})
 		}
@@ -435,7 +436,7 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	out, err := a.dashStore.SaveDashboard(ctx, dashboards.SaveDashboardCommand{
 		OrgID:      orgId,
 		Message:    meta.GetMessage(),
-		PluginID:   dashboard.GetPluginIDFromMeta(meta),
+		PluginID:   dashboardOG.GetPluginIDFromMeta(meta),
 		Dashboard:  simplejson.NewFromAny(dash.Spec.UnstructuredContent()),
 		FolderUID:  meta.GetFolder(),
 		Overwrite:  true, // already passed the revisionVersion checks!

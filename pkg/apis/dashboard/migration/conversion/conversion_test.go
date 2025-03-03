@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboardV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	dashboardV2 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
@@ -18,7 +17,6 @@ import (
 
 func TestConversionMatrixExist(t *testing.T) {
 	versions := []v1.Object{
-		&dashboard.Dashboard{},
 		&dashboardV0.Dashboard{},
 		&dashboardV1.Dashboard{},
 		&dashboardV2.Dashboard{},
@@ -52,8 +50,6 @@ func TestConvertDashboardVersionsToInternal(t *testing.T) {
 	require.NoError(t, err)
 	err = dashboardV2.AddToScheme(scheme)
 	require.NoError(t, err)
-	err = dashboard.AddToScheme(scheme)
-	require.NoError(t, err)
 
 	// all dashboard versions in this test have the same info inside
 	// so, the internal version should be the same when going back and forth
@@ -65,7 +61,7 @@ func TestConvertDashboardVersionsToInternal(t *testing.T) {
 	labels := map[string]string{"starred-by": "you"}
 	rv := "1"
 	body := map[string]interface{}{"title": title, "description": "A new dashboard"}
-	expectedDashbaord := dashboard.Dashboard{
+	expectedDashbaord := dashboardV0.Dashboard{
 		ObjectMeta: v1.ObjectMeta{
 			Name:              name,
 			Namespace:         namespace,
@@ -90,7 +86,7 @@ func TestConvertDashboardVersionsToInternal(t *testing.T) {
 		},
 	}
 
-	dash, err := ToInternalDashboard(scheme, dashV0)
+	dash, err := ToInternalDashboardV0(scheme, dashV0)
 	require.NoError(t, err)
 	require.Equal(t, expectedDashbaord, *dash)
 
@@ -105,7 +101,7 @@ func TestConvertDashboardVersionsToInternal(t *testing.T) {
 		},
 		Spec: common.Unstructured{Object: body},
 	}
-	dash, err = ToInternalDashboard(scheme, dashV1)
+	dash, err = ToInternalDashboardV0(scheme, dashV1)
 	require.NoError(t, err)
 	require.Equal(t, expectedDashbaord, *dash)
 
@@ -120,7 +116,7 @@ func TestConvertDashboardVersionsToInternal(t *testing.T) {
 		},
 		Spec: common.Unstructured{Object: body},
 	}
-	dash, err = ToInternalDashboard(scheme, dashV2)
+	dash, err = ToInternalDashboardV0(scheme, dashV2)
 	require.NoError(t, err)
 	require.Equal(t, expectedDashbaord, *dash)
 }
