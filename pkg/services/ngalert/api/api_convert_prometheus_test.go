@@ -531,15 +531,15 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 }
 
 func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {
-	t.Run("for non-existent folder should return 202", func(t *testing.T) {
+	t.Run("for non-existent folder should return 404", func(t *testing.T) {
 		srv, _, _, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
 
 		response := srv.RouteConvertPrometheusDeleteNamespace(rc, "non-existent")
-		require.Equal(t, http.StatusAccepted, response.Status())
+		require.Equal(t, http.StatusNotFound, response.Status())
 	})
 
-	t.Run("for existing folder with no groups should return 202", func(t *testing.T) {
+	t.Run("for existing folder with no groups should return 404", func(t *testing.T) {
 		srv, _, ruleStore, folderService := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
 
@@ -550,7 +550,7 @@ func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {
 		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
 
 		response := srv.RouteConvertPrometheusDeleteNamespace(rc, "non-existent")
-		require.Equal(t, http.StatusAccepted, response.Status())
+		require.Equal(t, http.StatusNotFound, response.Status())
 	})
 
 	t.Run("valid request should delete rules", func(t *testing.T) {
@@ -638,16 +638,15 @@ func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {
 }
 
 func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
-	t.Run("for non-existent folder should return 202", func(t *testing.T) {
-		// Mimir returns 202 for non-existent folders and groups in this endpoint
+	t.Run("for non-existent folder should return 404", func(t *testing.T) {
 		srv, _, _, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
 
 		response := srv.RouteConvertPrometheusDeleteRuleGroup(rc, "non-existent", "test-group")
-		require.Equal(t, http.StatusAccepted, response.Status())
+		require.Equal(t, http.StatusNotFound, response.Status())
 	})
 
-	t.Run("for existing folder with no group should return 202", func(t *testing.T) {
+	t.Run("for existing folder with no group should return 404", func(t *testing.T) {
 		srv, _, ruleStore, folderService := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
 
@@ -658,7 +657,7 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
 
 		response := srv.RouteConvertPrometheusDeleteRuleGroup(rc, fldr.Title, "test-group")
-		require.Equal(t, http.StatusAccepted, response.Status())
+		require.Equal(t, http.StatusNotFound, response.Status())
 	})
 
 	const groupName = "test-group"

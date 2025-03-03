@@ -649,17 +649,17 @@ func TestIntegrationConvertPrometheusEndpoints_Delete(t *testing.T) {
 
 		ds := adminClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
 
-		t.Run("delete non-existent namespace returns success", func(t *testing.T) {
+		t.Run("delete non-existent namespace returns 404", func(t *testing.T) {
 			nonExistentNamespace := "non-existent-namespace-" + util.GenerateShortUID()
 			_, status, raw := adminClient.RawConvertPrometheusDeleteNamespace(t, nonExistentNamespace, nil)
-			requireStatusCode(t, http.StatusAccepted, status, raw)
+			requireStatusCode(t, http.StatusNotFound, status, raw)
 		})
 
-		t.Run("delete non-existent rule group returns success", func(t *testing.T) {
+		t.Run("delete non-existent rule group returns not found", func(t *testing.T) {
 			nonExistentNamespace := "non-existent-namespace-" + util.GenerateShortUID()
 			nonExistentGroup := "non-existent-group-" + util.GenerateShortUID()
 			_, status, raw := adminClient.RawConvertPrometheusDeleteRuleGroup(t, nonExistentNamespace, nonExistentGroup, nil)
-			requireStatusCode(t, http.StatusAccepted, status, raw)
+			requireStatusCode(t, http.StatusNotFound, status, raw)
 		})
 
 		t.Run("delete rule group from existing namespace that has no rule groups", func(t *testing.T) {
@@ -671,7 +671,7 @@ func TestIntegrationConvertPrometheusEndpoints_Delete(t *testing.T) {
 			// Try to delete a non-existent rule group from that namespace
 			nonExistentGroup := "non-existent-group-" + util.GenerateShortUID()
 			_, status, raw := adminClient.RawConvertPrometheusDeleteRuleGroup(t, emptyNamespace, nonExistentGroup, nil)
-			requireStatusCode(t, http.StatusAccepted, status, raw)
+			requireStatusCode(t, http.StatusNotFound, status, raw)
 		})
 
 		t.Run("delete rule group then verify it's gone", func(t *testing.T) {
