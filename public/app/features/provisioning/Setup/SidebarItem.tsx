@@ -1,6 +1,7 @@
-import { IconButton, Text, Stack, Card } from '@grafana/ui';
 import { css } from '@emotion/css';
+
 import { GrafanaTheme2 } from '@grafana/data';
+import { IconButton, Text, Stack, Card } from '@grafana/ui';
 
 export interface Props {
   step: string;
@@ -16,8 +17,12 @@ export const SidebarItem = ({ step, index, currentStep, onStepClick, styles }: P
   const isPending = index > currentStep;
 
   const getStepStatus = () => {
-    if (isCompleted) return { icon: 'check-circle' as const, color: 'success', label: 'Completed step' };
-    if (isCurrent) return { icon: 'circle' as const, color: 'primary', label: 'Current step' };
+    if (isCompleted) {
+      return { icon: 'check-circle' as const, color: 'success', label: 'Completed step' };
+    }
+    if (isCurrent) {
+      return { icon: 'circle' as const, color: 'primary', label: 'Current step' };
+    }
     return { icon: 'circle' as const, color: 'secondary', label: 'Pending step' };
   };
 
