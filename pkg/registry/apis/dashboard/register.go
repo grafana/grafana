@@ -21,6 +21,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/apis/dashboard/migration/conversion"
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	dashboardv1alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
@@ -188,7 +189,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		dashboardv0alpha1.DashboardResourceInfo,
 		dashboardv0alpha1.LibraryPanelResourceInfo,
-		func(obj runtime.Object, access *dashboardv0alpha1.DashboardAccess) (v runtime.Object, err error) {
+		func(obj runtime.Object, access *dashboard.DashboardAccess) (v runtime.Object, err error) {
 			dto := &dashboardv0alpha1.DashboardWithAccessInfo{}
 			dash, ok := obj.(*dashboardv0alpha1.Dashboard)
 			if ok {
@@ -206,7 +207,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		dashboardv1alpha1.DashboardResourceInfo,
 		dashboardv1alpha1.LibraryPanelResourceInfo,
-		func(obj runtime.Object, access *dashboardv0alpha1.DashboardAccess) (v runtime.Object, err error) {
+		func(obj runtime.Object, access *dashboard.DashboardAccess) (v runtime.Object, err error) {
 			dto := &dashboardv1alpha1.DashboardWithAccessInfo{}
 			dash, ok := obj.(*dashboardv1alpha1.Dashboard)
 			if ok {
@@ -224,7 +225,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		dashboardv2alpha1.DashboardResourceInfo,
 		dashboardv2alpha1.LibraryPanelResourceInfo,
-		func(obj runtime.Object, access *dashboardv0alpha1.DashboardAccess) (v runtime.Object, err error) {
+		func(obj runtime.Object, access *dashboard.DashboardAccess) (v runtime.Object, err error) {
 			dto := &dashboardv2alpha1.DashboardWithAccessInfo{}
 			dash, ok := obj.(*dashboardv2alpha1.Dashboard)
 			if ok {

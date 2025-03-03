@@ -13,8 +13,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
-	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -25,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-type dtoBuilder = func(dashboard runtime.Object, access *dashboardv0alpha1.DashboardAccess) (runtime.Object, error)
+type dtoBuilder = func(dashboard runtime.Object, access *dashboard.DashboardAccess) (runtime.Object, error)
 
 // The DTO returns everything the UI needs in a single request
 type DTOConnector struct {
@@ -155,14 +154,14 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 			return
 		}
 
-		access := &dashboardv0alpha1.DashboardAccess{}
+		access := &dashboard.DashboardAccess{}
 		access.CanEdit, _ = guardian.CanEdit()
 		access.CanSave, _ = guardian.CanSave()
 		access.CanAdmin, _ = guardian.CanAdmin()
 		access.CanDelete, _ = guardian.CanDelete()
 		access.CanStar = user.IsIdentityType(claims.TypeUser)
 
-		access.AnnotationsPermissions = &dashboardv0alpha1.AnnotationPermission{}
+		access.AnnotationsPermissions = &dashboard.AnnotationPermission{}
 		r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
 		r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Organization, accesscontrol.ScopeAnnotationsTypeOrganization)
 
@@ -181,7 +180,7 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 	}), nil
 }
 
-func (r *DTOConnector) getAnnotationPermissionsByScope(ctx context.Context, user identity.Requester, actions *dashboardv0alpha1.AnnotationActions, scope string) {
+func (r *DTOConnector) getAnnotationPermissionsByScope(ctx context.Context, user identity.Requester, actions *dashboard.AnnotationActions, scope string) {
 	var err error
 	logger := logging.FromContext(ctx).With("logger", "dto-connector")
 
