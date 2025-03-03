@@ -7,7 +7,7 @@ import { requiredFeatureToggles } from '../Setup/types';
 import { PROVISIONING_URL } from '../constants';
 
 export function getProvisioningRoutes(): RouteDescriptor[] {
-  if (requiredFeatureToggles.every((toggle) => config.featureToggles[toggle])) {
+  if (!requiredFeatureToggles.every((toggle) => config.featureToggles[toggle])) {
     return [
       {
         path: PROVISIONING_URL,
