@@ -3791,7 +3791,7 @@
             "default": ""
           },
           "namespace": {
-            "description": "The namepsace this belongs to",
+            "description": "The namespace this belongs to",
             "type": "string",
             "default": ""
           },
@@ -3870,15 +3870,11 @@
         "type": "object",
         "properties": {
           "compare": {
-            "description": "A URL pointing to the repository this lives in",
+            "description": "Compare this version to the target branch",
             "type": "string"
           },
           "newPullRequest": {
             "description": "A URL that will create a new pull requeset for this branch",
-            "type": "string"
-          },
-          "pullRequest": {
-            "description": "A URL pointing to the repository this lives in",
             "type": "string"
           },
           "repository": {
@@ -3946,10 +3942,13 @@
               }
             ]
           },
-          "timestampMillis": {
+          "timestamp": {
             "description": "The modified time in the remote file system",
-            "type": "integer",
-            "format": "int64"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Time"
+              }
+            ]
           },
           "urls": {
             "description": "Typed links for this file (only supported by external systems, github etc)",
