@@ -19,7 +19,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.Dashboard":               schema_pkg_apis_dashboard_v2alpha1_Dashboard(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardAccess":         schema_pkg_apis_dashboard_v2alpha1_DashboardAccess(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardList":           schema_pkg_apis_dashboard_v2alpha1_DashboardList(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardSpec":           schema_pkg_apis_dashboard_v2alpha1_DashboardSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardVersionInfo":    schema_pkg_apis_dashboard_v2alpha1_DashboardVersionInfo(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardVersionList":    schema_pkg_apis_dashboard_v2alpha1_DashboardVersionList(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardWithAccessInfo": schema_pkg_apis_dashboard_v2alpha1_DashboardWithAccessInfo(ref),
@@ -122,8 +121,7 @@ func schema_pkg_apis_dashboard_v2alpha1_Dashboard(ref common.ReferenceCallback) 
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The dashboard body (unstructured for now)",
-							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardSpec"),
+							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
 						},
 					},
 				},
@@ -131,7 +129,7 @@ func schema_pkg_apis_dashboard_v2alpha1_Dashboard(ref common.ReferenceCallback) 
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -249,41 +247,6 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardList(ref common.ReferenceCallba
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.Dashboard", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
-	}
-}
-
-func schema_pkg_apis_dashboard_v2alpha1_DashboardSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"title": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"Object": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Object is a JSON compatible map with string, float, int, bool, []interface{}, or map[string]interface{} children.",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"object"},
-										Format: "",
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"title", "Object"},
-			},
-		},
 	}
 }
 
@@ -415,8 +378,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardWithAccessInfo(ref common.Refer
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The dashboard body (unstructured for now)",
-							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardSpec"),
+							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
 						},
 					},
 					"access": {
@@ -430,7 +392,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardWithAccessInfo(ref common.Refer
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardAccess", "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured", "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardAccess", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 

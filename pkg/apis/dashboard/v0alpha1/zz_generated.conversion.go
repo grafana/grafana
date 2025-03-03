@@ -12,7 +12,6 @@ import (
 	unsafe "unsafe"
 
 	datav0alpha1 "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
-	commonv0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -160,16 +159,6 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddConversionFunc((*dashboard.DashboardSpec)(nil), (*commonv0alpha1.Unstructured)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_dashboard_DashboardSpec_To_v0alpha1_Unstructured(a.(*dashboard.DashboardSpec), b.(*commonv0alpha1.Unstructured), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*commonv0alpha1.Unstructured)(nil), (*dashboard.DashboardSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v0alpha1_Unstructured_To_dashboard_DashboardSpec(a.(*commonv0alpha1.Unstructured), b.(*dashboard.DashboardSpec), scope)
-	}); err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -229,9 +218,7 @@ func Convert_dashboard_AnnotationPermission_To_v0alpha1_AnnotationPermission(in 
 
 func autoConvert_v0alpha1_Dashboard_To_dashboard_Dashboard(in *Dashboard, out *dashboard.Dashboard, s conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
-	if err := Convert_v0alpha1_Unstructured_To_dashboard_DashboardSpec(&in.Spec, &out.Spec, s); err != nil {
-		return err
-	}
+	out.Spec = in.Spec
 	return nil
 }
 
@@ -242,9 +229,7 @@ func Convert_v0alpha1_Dashboard_To_dashboard_Dashboard(in *Dashboard, out *dashb
 
 func autoConvert_dashboard_Dashboard_To_v0alpha1_Dashboard(in *dashboard.Dashboard, out *Dashboard, s conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
-	if err := Convert_dashboard_DashboardSpec_To_v0alpha1_Unstructured(&in.Spec, &out.Spec, s); err != nil {
-		return err
-	}
+	out.Spec = in.Spec
 	return nil
 }
 
@@ -289,17 +274,7 @@ func Convert_dashboard_DashboardAccess_To_v0alpha1_DashboardAccess(in *dashboard
 
 func autoConvert_v0alpha1_DashboardList_To_dashboard_DashboardList(in *DashboardList, out *dashboard.DashboardList, s conversion.Scope) error {
 	out.ListMeta = in.ListMeta
-	if in.Items != nil {
-		in, out := &in.Items, &out.Items
-		*out = make([]dashboard.Dashboard, len(*in))
-		for i := range *in {
-			if err := Convert_v0alpha1_Dashboard_To_dashboard_Dashboard(&(*in)[i], &(*out)[i], s); err != nil {
-				return err
-			}
-		}
-	} else {
-		out.Items = nil
-	}
+	out.Items = *(*[]dashboard.Dashboard)(unsafe.Pointer(&in.Items))
 	return nil
 }
 
@@ -310,17 +285,7 @@ func Convert_v0alpha1_DashboardList_To_dashboard_DashboardList(in *DashboardList
 
 func autoConvert_dashboard_DashboardList_To_v0alpha1_DashboardList(in *dashboard.DashboardList, out *DashboardList, s conversion.Scope) error {
 	out.ListMeta = in.ListMeta
-	if in.Items != nil {
-		in, out := &in.Items, &out.Items
-		*out = make([]Dashboard, len(*in))
-		for i := range *in {
-			if err := Convert_dashboard_Dashboard_To_v0alpha1_Dashboard(&(*in)[i], &(*out)[i], s); err != nil {
-				return err
-			}
-		}
-	} else {
-		out.Items = nil
-	}
+	out.Items = *(*[]Dashboard)(unsafe.Pointer(&in.Items))
 	return nil
 }
 

@@ -74,7 +74,7 @@ func TestConvertDashboardVersionsToInternal(t *testing.T) {
 			Labels:            labels,
 			ResourceVersion:   rv,
 		},
-		Spec: dashboard.DashboardSpec{Title: title, Unstructured: common.Unstructured{Object: body}},
+		Spec: common.Unstructured{Object: body},
 	}
 	dashV0 := &dashboardV0.Dashboard{
 		ObjectMeta: v1.ObjectMeta{
@@ -103,10 +103,7 @@ func TestConvertDashboardVersionsToInternal(t *testing.T) {
 			Labels:            labels,
 			ResourceVersion:   rv,
 		},
-		Spec: dashboardV1.DashboardSpec{
-			Title:        title,
-			Unstructured: common.Unstructured{Object: body},
-		},
+		Spec: common.Unstructured{Object: body},
 	}
 	dash, err = ToInternalDashboard(scheme, dashV1)
 	require.NoError(t, err)
@@ -121,10 +118,7 @@ func TestConvertDashboardVersionsToInternal(t *testing.T) {
 			Labels:            labels,
 			ResourceVersion:   rv,
 		},
-		Spec: dashboardV2.DashboardSpec{
-			Title:        title,
-			Unstructured: common.Unstructured{Object: body},
-		},
+		Spec: common.Unstructured{Object: body},
 	}
 	dash, err = ToInternalDashboard(scheme, dashV2)
 	require.NoError(t, err)
