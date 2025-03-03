@@ -39,12 +39,38 @@ var ResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 					}, nil
 				}
 			}
-			return nil, fmt.Errorf("expected dashboard")
+			return nil, fmt.Errorf("expected resource")
 		},
 	},
 )
 
 var (
+	SchemeBuilder      runtime.SchemeBuilder
+	localSchemeBuilder = &SchemeBuilder
+	AddToScheme        = localSchemeBuilder.AddToScheme
 	// SchemeGroupVersion is group version used to register these objects
 	SchemeGroupVersion = schema.GroupVersion{Group: GROUP, Version: VERSION}
 )
+
+func init() {
+	localSchemeBuilder.Register(addKnownTypes, addDefaultingFuncs)
+}
+
+// Adds the list of known types to the given scheme.
+func addKnownTypes(scheme *runtime.Scheme) error {
+	scheme.AddKnownTypes(SchemeGroupVersion,
+		&metav1.PartialObjectMetadata{},
+		&metav1.PartialObjectMetadataList{},
+		&metav1.Table{},
+		&SearchResults{},
+		&SortableFields{},
+		&Resource{},
+		&ResourceList{},
+	)
+	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
+	return nil
+}
+
+func addDefaultingFuncs(scheme *runtime.Scheme) error {
+	return RegisterDefaults(scheme)
+}

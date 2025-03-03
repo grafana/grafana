@@ -1,0 +1,6 @@
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/search/v0alpha1,FacetResult,Terms
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/search/v0alpha1,ResourceHit,Tags
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/search/v0alpha1,SearchResults,Hits
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/search/v0alpha1,SortableFields,Fields
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/search/v0alpha1,SortBy,Descending
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/search/v0alpha1,SortableField,Field
