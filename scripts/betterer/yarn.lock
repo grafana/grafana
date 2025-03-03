@@ -1,0 +1,2 @@
+# This file is here to stop yarn complaining about unknown workspaces.
+# It should not contain any dependency information.

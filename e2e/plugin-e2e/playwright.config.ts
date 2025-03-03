@@ -160,7 +160,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'jaeger',
-      testDir: path.join(testDirRoot, '/jaeger'),
+      testDir: 'e2e/test-plugins/jaeger',
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
@@ -169,7 +169,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'grafana-postgresql-datasource',
-      testDir: path.join(testDirRoot, '/grafana-postgresql-datasource'),
+      testDir: 'e2e/test-plugins/grafana-postgresql-datasource',
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
@@ -178,7 +178,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'zipkin',
-      testDir: path.join(testDirRoot, '/zipkin'),
+      testDir: 'e2e/test-plugins/zipkin',
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
