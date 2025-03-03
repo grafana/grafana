@@ -83,9 +83,7 @@ export default class GraphiteQuery {
 
         // Spaces, quotes, and commas are used when rendering the AST back into a string.
         // We are removing these for less false positives of query changes.
-        const sanitizeQuery = (o: string): string => {
-          return o.replace(/\s|'|"|,/g, '');
-        };
+        const sanitizeQuery = (o: string): string => o.replace(/\s|'|"|,/g, '');
         const oldSanitized = sanitizeQuery(oldQuery);
         const newSanitized = sanitizeQuery(newQuery);
         if (oldSanitized && newSanitized && oldSanitized !== newSanitized) {
