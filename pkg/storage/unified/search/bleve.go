@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
+	"github.com/blevesearch/bleve/v2/analysis/analyzer/simple"
 	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/blevesearch/bleve/v2/search"
 	"github.com/blevesearch/bleve/v2/search/query"
@@ -97,17 +98,17 @@ func (b *bleveBackend) GetIndex(ctx context.Context, key resource.NamespacedReso
 func (b *bleveBackend) BuildIndex(ctx context.Context,
 	key resource.NamespacedResource,
 
-	// When the size is known, it will be passed along here
-	// Depending on the size, the backend may choose different options (eg: memory vs disk)
+// When the size is known, it will be passed along here
+// Depending on the size, the backend may choose different options (eg: memory vs disk)
 	size int64,
 
-	// The last known resource version can be used to know that we can skip calling the builder
+// The last known resource version can be used to know that we can skip calling the builder
 	resourceVersion int64,
 
-	// the non-standard searchable fields
+// the non-standard searchable fields
 	fields resource.SearchableDocumentFields,
 
-	// The builder will write all documents before returning
+// The builder will write all documents before returning
 	builder func(index resource.ResourceIndex) (int64, error),
 ) (resource.ResourceIndex, error) {
 	_, span := b.tracer.Start(ctx, tracingPrexfixBleve+"BuildIndex")
@@ -117,7 +118,10 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	var index bleve.Index
 
 	build := true
-	mapper := getBleveMappings(fields)
+	mapper, err := getBleveMappings(fields)
+	if err != nil {
+		return nil, err
+	}
 
 	if size > b.opts.FileThreshold {
 		resourceDir := filepath.Join(b.opts.Root, key.Namespace,
@@ -454,9 +458,6 @@ func (b *bleveIndex) Search(
 	response.QueryCost = float64(res.Cost)
 	response.MaxScore = res.MaxScore
 
-	fmt.Println("Total Hits: ", response.TotalHits)
-	fmt.Println("Query Cost: ", response.QueryCost)
-
 	response.Results, err = b.hitsToTable(ctx, searchrequest.Fields, res.Hits, req.Explain)
 	if err != nil {
 		return nil, err
@@ -564,7 +565,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 		Fields:  fields,
 		Size:    int(req.Limit),
 		From:    int(req.Offset),
-		Explain: true,
+		Explain: req.Explain,
 		Facets:  facets,
 	}
 
@@ -594,13 +595,9 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 	if req.Query != "" && req.Query != "*" {
 		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
 		// mimic the behavior of the sql search
-		query := strings.ToLower(req.Query)
-		if !strings.Contains(query, "*") {
-			//query = "*" + query + "*"
-			//query = "*" + query
-		}
-		fmt.Println("Query: ", query)
-		queries = append(queries, bleve.NewMatchQuery(query))
+		query := bleve.NewMatchQuery(strings.ToLower(req.Query))
+		query.Analyzer = simple.Name
+		queries = append(queries, query)
 	}
 
 	switch len(queries) {

@@ -370,6 +370,8 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.log.Debug("search result hits and cost", "total_hits", result.TotalHits, "query_cost", result.QueryCost)
+
 	parsedResults, err := dashboardsearch.ParseResults(result, searchRequest.Offset)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
