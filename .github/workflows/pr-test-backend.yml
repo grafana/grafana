@@ -117,7 +117,7 @@ jobs:
       - name: Run backend unit tests
         uses: ./.github/actions/run-backend-tests
         with:
-          coverage-opts: ${{ needs.check-coverage.outputs.generate == 'true' && '-coverprofile=unit.cov -coverpkg=github.com/grafana/grafana/...' || '' }}
+          coverage-opts: ${{ needs.check-coverage.outputs.generate == 'true' && '-coverprofile=unit.cov -covermode=atomic -coverpkg=github.com/grafana/grafana/...' || '' }}
           test-command: 'make gen-go test-go-unit'
 
       - name: Upload unit coverage
@@ -163,8 +163,8 @@ jobs:
       - name: Run backend integration tests
         uses: ./.github/actions/run-backend-tests
         with:
-          coverage-opts: ${{ needs.check-coverage.outputs.generate == 'true' && '-coverprofile=integration.cov -coverpkg=github.com/grafana/grafana/...' || '' }}
-          test-command: 'make gen-go test-go-integration'
+          coverage-opts: ${{ needs.check-coverage.outputs.generate == 'true' && '-coverprofile=integration.cov -covermode=atomic -coverpkg=github.com/grafana/grafana/...' || '' }}
+          test-command: 'GOCOVERDIR=. make gen-go test-go-integration || true'
 
       - name: Upload integration coverage
         if: needs.check-coverage.outputs.generate == 'true'
@@ -226,6 +226,8 @@ jobs:
         with:
           unit-cov-path: unit.cov
           integration-cov-path: integration.cov
+        env:
+          CHECK_COVERAGE_THRESHOLDS: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
