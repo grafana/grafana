@@ -122,6 +122,10 @@ export interface Options {
    */
   inlineEditing: boolean;
   /**
+   * Enable multiplayer
+   */
+  multiplayer: boolean;
+  /**
    * Enable pan and zoom
    */
   panZoom: boolean;
@@ -152,6 +156,7 @@ export interface Options {
 export const defaultOptions: Partial<Options> = {
   infinitePan: true,
   inlineEditing: true,
+  multiplayer: false,
   panZoom: true,
   showAdvancedTypes: true,
 };
