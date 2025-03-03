@@ -30,5 +30,5 @@ func init() {
 		panic("importing testing libraries in runtime code is not allowed")
 	}
 
-	goleak.IgnoreTopFunction("go.opencensus.io/stats/view.(*worker).start")
+	goleak.IgnoreAnyFunction("go.opencensus.io/stats/view.(*worker).start")
 }
