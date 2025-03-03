@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"math/rand"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -226,6 +227,97 @@ func TestAlertRuleService(t *testing.T) {
 
 		// check that the metadata is still there
 		require.Equal(t, ruleMetadata, readGroup.Rules[0].Metadata)
+	})
+
+	t.Run("updating a group with editor settings should override its prometheus rule definition", func(t *testing.T) {
+		namespaceUID := "my-namespace"
+		groupTitle := "test-group-123"
+
+		// create the rule group via the rule store, to persist the editor settings
+		rule := createTestRule(util.GenerateShortUID(), groupTitle, orgID, namespaceUID)
+		ruleMetadata := models.AlertRuleMetadata{
+			EditorSettings: models.EditorSettings{
+				SimplifiedQueryAndExpressionsSection: true,
+			},
+			PrometheusStyleRule: &models.PrometheusStyleRule{
+				OriginalRuleDefinition: "old",
+			},
+		}
+		rule.Metadata = ruleMetadata
+		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.AlertRule{rule})
+		require.NoError(t, err)
+		require.Len(t, r, 1)
+
+		// Set the UID for the rule to update it
+		rule.UID = r[0].UID
+		// clear the editor settings in the metadata to check that the existing setting is not overridden
+		rule.Metadata = models.AlertRuleMetadata{
+			PrometheusStyleRule: &models.PrometheusStyleRule{
+				OriginalRuleDefinition: "new",
+			},
+		}
+
+		// Now update the rule group with the rule to update its metadata
+		group := models.AlertRuleGroup{
+			Title:     groupTitle,
+			Interval:  60,
+			FolderUID: namespaceUID,
+			Rules:     []models.AlertRule{rule},
+		}
+
+		err = ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		readGroup, err := ruleService.GetRuleGroup(context.Background(), u, namespaceUID, groupTitle)
+		require.NoError(t, err)
+		require.NotEmpty(t, readGroup.Rules)
+		require.Len(t, readGroup.Rules, 1)
+
+		// check that the editor settings are still there
+		require.True(t, readGroup.Rules[0].Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection)
+		// check the new prometheus rule definition
+		require.Equal(t, "new", readGroup.Rules[0].Metadata.PrometheusStyleRule.OriginalRuleDefinition)
+	})
+
+	t.Run("updating a group should override its prometheus rule definition", func(t *testing.T) {
+		namespaceUID := "my-namespace"
+		groupTitle := "test-group-123"
+
+		// create the rule group via the rule store, to persist the editor settings
+		rule := createTestRule(util.GenerateShortUID(), groupTitle, orgID, namespaceUID)
+		ruleMetadata := models.AlertRuleMetadata{
+			PrometheusStyleRule: &models.PrometheusStyleRule{
+				OriginalRuleDefinition: "old",
+			},
+		}
+		rule.Metadata = ruleMetadata
+		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.AlertRule{rule})
+		require.NoError(t, err)
+		require.Len(t, r, 1)
+
+		// Set the UID for the rule to update it
+		rule.UID = r[0].UID
+		// make the metadata empty
+		rule.Metadata = models.AlertRuleMetadata{}
+
+		// Now update the rule group with the rule to update its metadata
+		group := models.AlertRuleGroup{
+			Title:     groupTitle,
+			Interval:  60,
+			FolderUID: namespaceUID,
+			Rules:     []models.AlertRule{rule},
+		}
+
+		err = ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		readGroup, err := ruleService.GetRuleGroup(context.Background(), u, namespaceUID, groupTitle)
+		require.NoError(t, err)
+		require.NotEmpty(t, readGroup.Rules)
+		require.Len(t, readGroup.Rules, 1)
+
+		// check that the prometheus rule definition is empty
+		require.Nil(t, readGroup.Rules[0].Metadata.PrometheusStyleRule)
 	})
 
 	t.Run("updating a rule should not override its editor settings", func(t *testing.T) {
@@ -1507,6 +1599,40 @@ func TestReplaceGroup(t *testing.T) {
 			require.Len(t, updates, 1)
 		})
 	})
+
+	t.Run("alert rule metadata should be updated correctly", func(t *testing.T) {
+		service, _, _, _ := initServiceWithData(t)
+
+		rule := dummyRule("test#3", orgID)
+		// the rule must have a UID to be updated, otherwise it will be created as new
+		// and the previous version will be deleted
+		rule.UID = util.GenerateShortUID()
+		rule.Metadata = models.AlertRuleMetadata{
+			EditorSettings: models.EditorSettings{
+				SimplifiedQueryAndExpressionsSection: true,
+			},
+			PrometheusStyleRule: &models.PrometheusStyleRule{
+				OriginalRuleDefinition: "old",
+			},
+		}
+		group := models.AlertRuleGroup{
+			Title:     rule.RuleGroup,
+			Interval:  rule.IntervalSeconds,
+			FolderUID: rule.NamespaceUID,
+			Rules:     []models.AlertRule{rule},
+		}
+
+		err := service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceNone)
+		require.NoError(t, err)
+
+		rule.Metadata.PrometheusStyleRule.OriginalRuleDefinition = "new"
+		err = service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceNone)
+		require.NoError(t, err)
+
+		rule, _, err = service.GetAlertRule(context.Background(), u, rule.UID)
+		require.NoError(t, err)
+		require.Equal(t, "new", rule.Metadata.PrometheusStyleRule.OriginalRuleDefinition)
+	})
 }
 
 func TestDeleteRuleGroup(t *testing.T) {
@@ -1577,7 +1703,7 @@ func TestDeleteRuleGroup(t *testing.T) {
 				assert.Equal(t, u, user)
 				assert.Equal(t, groupKey, change.GroupKey)
 				assert.Contains(t, change.AffectedGroups, groupKey)
-				assert.EqualValues(t, rules, change.AffectedGroups[groupKey])
+				assert.ElementsMatch(t, rules, change.AffectedGroups[groupKey])
 				assert.Empty(t, change.Update)
 				assert.Empty(t, change.New)
 				assert.Len(t, change.Delete, len(rules))
@@ -1594,6 +1720,228 @@ func TestDeleteRuleGroup(t *testing.T) {
 			deletes := getDeleteQueries(ruleStore)
 			require.Len(t, deletes, 1)
 		})
+	})
+}
+
+func TestDeleteRuleGroups(t *testing.T) {
+	orgID1 := rand.Int63()
+	orgID2 := rand.Int63()
+	u := &user.SignedInUser{OrgID: orgID1}
+
+	// Create groups across different orgs and namespaces
+	groupKey1 := models.AlertRuleGroupKey{
+		OrgID:        orgID1,
+		NamespaceUID: "namespace1",
+		RuleGroup:    "group1",
+	}
+	groupKey2 := models.AlertRuleGroupKey{
+		OrgID:        orgID1,
+		NamespaceUID: "namespace2",
+		RuleGroup:    "group2",
+	}
+	groupKey3 := models.AlertRuleGroupKey{
+		OrgID:        orgID1,
+		NamespaceUID: "namespace3",
+		RuleGroup:    "group3",
+	}
+	groupKey4 := models.AlertRuleGroupKey{
+		OrgID:        orgID2, // Different org
+		NamespaceUID: "namespace1",
+		RuleGroup:    "group1",
+	}
+
+	gen := models.RuleGen
+	// Create rules for each group
+	rules1 := gen.With(gen.WithGroupKey(groupKey1)).GenerateManyRef(2)
+	rules2 := gen.With(gen.WithGroupKey(groupKey2)).GenerateManyRef(3)
+	rules3 := gen.With(gen.WithGroupKey(groupKey3)).GenerateManyRef(2)
+	rules4 := gen.With(gen.WithGroupKey(groupKey4)).GenerateManyRef(2)
+
+	org1Rules := slices.Concat(rules1, rules2, rules3)
+	org2Rules := rules4
+
+	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
+		service, ruleStore, provenanceStore, ac := initService(t)
+		ruleStore.Rules = map[int64][]*models.AlertRule{
+			orgID1: org1Rules,
+			orgID2: org2Rules,
+		}
+		// Set provenance for all rules
+		for _, rules := range []([]*models.AlertRule){org1Rules, org2Rules} {
+			for _, rule := range rules {
+				err := provenanceStore.SetProvenance(context.Background(), rule, rule.OrgID, models.ProvenanceAPI)
+				require.NoError(t, err)
+			}
+		}
+		return service, ruleStore, provenanceStore, ac
+	}
+
+	getUIDs := func(rules []*models.AlertRule) []string {
+		uids := make([]string, 0, len(rules))
+		for _, rule := range rules {
+			uids = append(uids, rule.UID)
+		}
+		return uids
+	}
+
+	t.Run("when deleting specific groups", func(t *testing.T) {
+		filterOpts := &FilterOptions{
+			NamespaceUIDs: []string{"namespace1"},
+			RuleGroups:    []string{"group1"},
+		}
+
+		t.Run("when user can write all rules", func(t *testing.T) {
+			service, ruleStore, _, ac := initServiceWithData(t)
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceAPI, filterOpts)
+			require.NoError(t, err)
+
+			require.Len(t, ac.Calls, 1)
+			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
+
+			// Verify only rules from group1 in org1 were deleted
+			deletes := getDeletedRules(t, ruleStore)
+			require.Len(t, deletes, 1)
+			require.ElementsMatch(t, getUIDs(rules1), deletes[0].uids)
+		})
+
+		t.Run("when user cannot write all rules", func(t *testing.T) {
+			t.Run("should not delete if not authorized", func(t *testing.T) {
+				service, ruleStore, _, ac := initServiceWithData(t)
+				ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+					return false, nil
+				}
+				expectedErr := errors.New("test error")
+				ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+					return expectedErr
+				}
+
+				err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceAPI, filterOpts)
+				require.ErrorIs(t, err, expectedErr)
+
+				require.Len(t, ac.Calls, 2)
+				assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
+				assert.Equal(t, "AuthorizeRuleGroupWrite", ac.Calls[1].Method)
+
+				deletes := getDeletedRules(t, ruleStore)
+				require.Empty(t, deletes)
+			})
+
+			t.Run("should delete group1 when authorized", func(t *testing.T) {
+				service, ruleStore, _, ac := initServiceWithData(t)
+				ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+					return false, nil
+				}
+				ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+					assert.Equal(t, u, user)
+					assert.Equal(t, groupKey1, change.GroupKey)
+					assert.ElementsMatch(t, rules1, change.AffectedGroups[groupKey1])
+					assert.Empty(t, change.Update)
+					assert.Empty(t, change.New)
+					assert.Len(t, change.Delete, len(rules1))
+					return nil
+				}
+
+				err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceAPI, filterOpts)
+				require.NoError(t, err)
+
+				require.Len(t, ac.Calls, 2)
+				assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
+				assert.Equal(t, "AuthorizeRuleGroupWrite", ac.Calls[1].Method)
+
+				deletes := getDeletedRules(t, ruleStore)
+				require.Len(t, deletes, 1)
+				require.ElementsMatch(t, getUIDs(rules1), deletes[0].uids)
+			})
+		})
+	})
+
+	t.Run("when deleting multiple groups from multiple namespaces", func(t *testing.T) {
+		filterOpts := &FilterOptions{
+			NamespaceUIDs: []string{"namespace1", "namespace2"},
+			RuleGroups:    []string{"group1", "group2"},
+		}
+
+		t.Run("should delete all matching groups from correct org", func(t *testing.T) {
+			service, ruleStore, _, ac := initServiceWithData(t)
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceAPI, filterOpts)
+			require.NoError(t, err)
+
+			deletes := getDeletedRules(t, ruleStore)
+			require.Len(t, deletes, 2)
+			require.ElementsMatch(
+				t,
+				slices.Concat(getUIDs(rules1), getUIDs(rules2)),
+				slices.Concat(deletes[0].uids, deletes[1].uids),
+			)
+		})
+	})
+
+	t.Run("when filtering by imported Prometheus rules", func(t *testing.T) {
+		filterOpts := &FilterOptions{
+			ImportedPrometheusRule: util.Pointer(true),
+			NamespaceUIDs:          []string{"namespace1"},
+		}
+
+		t.Run("when the group is not imported", func(t *testing.T) {
+			filterOpts.RuleGroups = []string{groupKey1.RuleGroup}
+			service, _, _, ac := initServiceWithData(t)
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceAPI, filterOpts)
+			require.ErrorIs(t, err, models.ErrAlertRuleGroupNotFound)
+		})
+
+		t.Run("when the group is imported", func(t *testing.T) {
+			importedGroup := models.AlertRuleGroupKey{
+				OrgID:        orgID1,
+				NamespaceUID: "namespace1",
+				RuleGroup:    "newgroup",
+			}
+			importedRules := gen.With(
+				gen.WithGroupKey(importedGroup),
+				gen.WithPrometheusOriginalRuleDefinition("something"),
+			).GenerateManyRef(2)
+			filterOpts.RuleGroups = []string{importedGroup.RuleGroup}
+			service, ruleStore, _, ac := initServiceWithData(t)
+			ruleStore.Rules[orgID1] = append(ruleStore.Rules[orgID1], importedRules...)
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceAPI, filterOpts)
+			require.NoError(t, err)
+			deletes := getDeletedRules(t, ruleStore)
+			require.Len(t, deletes, 1)
+			require.ElementsMatch(t, getUIDs(importedRules), deletes[0].uids)
+		})
+	})
+
+	t.Run("with no matching rule groups", func(t *testing.T) {
+		filterOpts := &FilterOptions{
+			NamespaceUIDs: []string{"non-existent"},
+			RuleGroups:    []string{"non-existent"},
+		}
+
+		service, ruleStore, _, ac := initServiceWithData(t)
+		ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+			return true, nil
+		}
+
+		err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceAPI, filterOpts)
+		require.ErrorIs(t, err, models.ErrAlertRuleGroupNotFound)
+
+		deletes := getDeletedRules(t, ruleStore)
+		require.Empty(t, deletes)
 	})
 }
 
@@ -1694,6 +2042,31 @@ func getDeleteQueries(ruleStore *fakes.RuleStore) []fakes.GenericRecordedQuery {
 		result = append(result, g.(fakes.GenericRecordedQuery))
 	}
 	return result
+}
+
+type deleteRuleOperation struct {
+	orgID int64
+	uids  []string
+}
+
+func getDeletedRules(t *testing.T, ruleStore *fakes.RuleStore) []deleteRuleOperation {
+	t.Helper()
+
+	queries := getDeleteQueries(ruleStore)
+	operations := make([]deleteRuleOperation, 0, len(queries))
+	for _, q := range queries {
+		orgID, ok := q.Params[0].(int64)
+		require.True(t, ok, "orgID parameter should be int64")
+
+		uids, ok := q.Params[1].([]string)
+		require.True(t, ok, "uids parameter should be []string")
+
+		operations = append(operations, deleteRuleOperation{
+			orgID: orgID,
+			uids:  uids,
+		})
+	}
+	return operations
 }
 
 func createAlertRuleService(t *testing.T, folderService folder.Service) AlertRuleService {
