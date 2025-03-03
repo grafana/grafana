@@ -104,9 +104,6 @@ func (o *KubeAggregatorOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.Co
 	}
 	genericConfig.MergedResourceConfig = mergedResourceConfig
 
-	aggregatorConfig.ExtraConfig.ProxyClientCertFile = o.ProxyClientCertFile
-	aggregatorConfig.ExtraConfig.ProxyClientKeyFile = o.ProxyClientKeyFile
-
 	genericConfig.PostStartHooks = map[string]genericapiserver.PostStartHookConfigEntry{}
 
 	// These hooks use v1 informers, which are not available in the grafana aggregator.
