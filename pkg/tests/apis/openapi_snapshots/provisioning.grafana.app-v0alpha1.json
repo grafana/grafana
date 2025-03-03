@@ -3583,25 +3583,12 @@
         "description": "Summary shows a view of the configuration that is sanitized and is OK for logged in users to see",
         "type": "object",
         "required": [
-          "legacyStorage",
-          "generateDashboardPreviews",
-          "githubWebhooks",
           "items"
         ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
-          },
-          "generateDashboardPreviews": {
-            "description": "GenerateDashboardPreviews is available to render dashboard previews",
-            "type": "boolean",
-            "default": false
-          },
-          "githubWebhooks": {
-            "description": "GithubWebhooks is available to sync changes from a repository as soon as they are pushed or react to pull requests",
-            "type": "boolean",
-            "default": false
           },
           "items": {
             "type": "array",
@@ -3620,8 +3607,7 @@
           },
           "legacyStorage": {
             "description": "The backend is using legacy storage FIXME: Not sure where this should be exposed... but we need it somewhere The UI should force the onboarding workflow when this is true",
-            "type": "boolean",
-            "default": false
+            "type": "boolean"
           }
         }
       },
@@ -3790,6 +3776,41 @@
           }
         }
       },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceRepositoryInfo": {
+        "type": "object",
+        "required": [
+          "type",
+          "title",
+          "namespace",
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "description": "The name (identifier)",
+            "type": "string",
+            "default": ""
+          },
+          "namespace": {
+            "description": "The namepsace this belongs to",
+            "type": "string",
+            "default": ""
+          },
+          "title": {
+            "description": "The display name for this repository",
+            "type": "string",
+            "default": ""
+          },
+          "type": {
+            "description": "The repository type\n\nPossible enum values:\n - `\"github\"`\n - `\"local\"`",
+            "type": "string",
+            "default": "",
+            "enum": [
+              "github",
+              "local"
+            ]
+          }
+        }
+      },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceStats": {
         "description": "Information we can get just from the file listing",
         "type": "object",
@@ -3845,10 +3866,36 @@
           }
         }
       },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceURLs": {
+        "type": "object",
+        "properties": {
+          "compare": {
+            "description": "A URL pointing to the repository this lives in",
+            "type": "string"
+          },
+          "newPullRequest": {
+            "description": "A URL that will create a new pull requeset for this branch",
+            "type": "string"
+          },
+          "pullRequest": {
+            "description": "A URL pointing to the repository this lives in",
+            "type": "string"
+          },
+          "repository": {
+            "description": "A URL pointing to the repository this lives in",
+            "type": "string"
+          },
+          "source": {
+            "description": "A URL pointing to the this file in the repository",
+            "type": "string"
+          }
+        }
+      },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceWrapper": {
         "description": "This is a container type for any resource type",
         "type": "object",
         "required": [
+          "repository",
           "resource"
         ],
         "properties": {
@@ -3878,8 +3925,17 @@
             "type": "string"
           },
           "ref": {
-            "description": "The commit hash (if exists)",
+            "description": "The request ref (or branch if exists)",
             "type": "string"
+          },
+          "repository": {
+            "description": "Basic repository info",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceRepositoryInfo"
+              }
+            ]
           },
           "resource": {
             "description": "Different flavors of the same object",
@@ -3890,11 +3946,16 @@
               }
             ]
           },
-          "timestamp": {
+          "timestampMillis": {
             "description": "The modified time in the remote file system",
+            "type": "integer",
+            "format": "int64"
+          },
+          "urls": {
+            "description": "Typed links for this file (only supported by external systems, github etc)",
             "allOf": [
               {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Time"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceURLs"
               }
             ]
           }

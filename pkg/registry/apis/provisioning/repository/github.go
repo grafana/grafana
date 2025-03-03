@@ -731,7 +731,7 @@ func (r *githubRepository) ResourceURLs(ctx context.Context, file *FileInfo) (*p
 		urls.Compare = fmt.Sprintf("%s/compare/%s...%s", cfg.URL, cfg.Branch, ref)
 
 		// Create a new pull request
-		urls.NewPullRequest = fmt.Sprintf("%s?expand=1", urls.Compare)
+		urls.NewPullRequest = fmt.Sprintf("%s?quick_pull=1&labels=grafana", urls.Compare)
 	}
 
 	return urls, nil
