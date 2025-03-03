@@ -94,9 +94,11 @@ export class Echo implements EchoSrv {
 /** Hackathon 12 - Track Attack
  * Foundational types and functions for the new tracking event process
  */
-
+export type TrackingEventProps = {
+  [key: string]: boolean | string | number | undefined;
+};
 export const createEventFactory = (product: string, featureName: string) => {
-  return <P extends object | undefined = undefined>(eventName: string) =>
+  return <P extends TrackingEventProps | undefined = undefined>(eventName: string) =>
     (props: P extends undefined ? void : P) =>
       reportInteraction(`${product}_${featureName}_${eventName}`, props ?? undefined);
 };

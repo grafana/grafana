@@ -1,21 +1,21 @@
-import { createEventFactory } from 'app/core/services/echo/Echo';
+import { createEventFactory, TrackingEventProps } from 'app/core/services/echo/Echo';
 
 //Currently just 'timeRange' is supported
 //in short term, we could add 'templateVariables' for example
-type subEntryTypes = 'timeRange';
+type SubEntryTypes = 'timeRange';
 
 //Whether the user opens or closes the `HistoryDrawer`
 type UnifiedHistoryDrawerActions = 'open' | 'close';
 
-interface UnifiedHistoryEntryClicked {
+interface UnifiedHistoryEntryClicked extends TrackingEventProps {
   //We will also work with the current URL but we will get this from Rudderstack data
   //URL to return to
   entryURL: string;
   //In the case we want to go back to a specific query param, currently just a specific time range
-  subEntry?: subEntryTypes;
+  subEntry?: SubEntryTypes;
 }
 
-interface UnifiedHistoryEntryDuplicated {
+interface UnifiedHistoryEntryDuplicated extends TrackingEventProps {
   // Common name of the history entries
   entryName: string;
   // URL of the last entry
@@ -24,7 +24,7 @@ interface UnifiedHistoryEntryDuplicated {
   newEntryURL: string;
 }
 
-interface UnifiedHistoryDrawerInteraction {
+interface UnifiedHistoryDrawerInteraction extends TrackingEventProps {
   type: UnifiedHistoryDrawerActions;
 }
 
