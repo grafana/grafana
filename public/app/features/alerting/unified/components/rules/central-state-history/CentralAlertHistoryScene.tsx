@@ -71,7 +71,7 @@ export interface AlertHistorySceneProps {
   propsFromPanel?: PanelProps<AlertHistoryOptions>;
 }
 
-export const useGetCentralAlertHistoryScene = ({ propsFromPanel }: AlertHistorySceneProps) => {
+export const useGetCentralAlertHistoryScene = (propsFromPanel?: PanelProps<AlertHistoryOptions>) => {
   //track the loading of the central alert state history
   useEffect(() => {
     logInfo(LogMessages.loadedCentralAlertStateHistory);
@@ -111,24 +111,36 @@ export const useGetCentralAlertHistoryScene = ({ propsFromPanel }: AlertHistoryS
       hide: VariableHide.dontHide,
       query: `All : ${StateFilterValues.all}, From Firing : ${StateFilterValues.firing},From Normal : ${StateFilterValues.normal},From Pending : ${StateFilterValues.pending}`,
     });
-    const optionalControls = fromPanel
-      ? []
-      : [
-          new SceneReactObject({
-            component: LabelFilter,
-          }),
-          new SceneReactObject({
-            component: FilterInfo,
-          }),
-          new VariableValueSelectors({}),
-          new ClearFilterButtonScenesObject({}),
-          new SceneControlsSpacer(),
-          new SceneTimePicker({}),
-          new SceneRefreshPicker({}),
-        ];
+    // const optionalControls = fromPanel
+    //   ? []
+    //   : [
+    //     new SceneReactObject({
+    //       component: LabelFilter,
+    //     }),
+    //     new SceneReactObject({
+    //       component: FilterInfo,
+    //     }),
+    //     new VariableValueSelectors({}),
+    //     new ClearFilterButtonScenesObject({}),
+    //     new SceneControlsSpacer(),
+    //     new SceneTimePicker({}),
+    //     new SceneRefreshPicker({}),
+    //   ];
 
     return new EmbeddedScene({
-      controls: optionalControls,
+      controls: [
+        new SceneReactObject({
+          component: LabelFilter,
+        }),
+        new SceneReactObject({
+          component: FilterInfo,
+        }),
+        new VariableValueSelectors({}),
+        new ClearFilterButtonScenesObject({}),
+        new SceneControlsSpacer(),
+        new SceneTimePicker({}),
+        new SceneRefreshPicker({}),
+      ],
       // use default time range as from 1 hour ago to now, as the limit of the history api is 5000 events,
       // and using a wider time range might lead to showing gaps in the events list and the chart.
       $timeRange: new SceneTimeRange({
@@ -157,8 +169,8 @@ export const useGetCentralAlertHistoryScene = ({ propsFromPanel }: AlertHistoryS
 };
 
 // CentralAlertHistoryScene is the main component that renders the CentralAlertHistoryScene using url sync.
-export const CentralAlertHistoryScene = ({ propsFromPanel }: AlertHistorySceneProps) => {
-  const scene = useGetCentralAlertHistoryScene({ propsFromPanel });
+export const CentralAlertHistoryScene = () => {
+  const scene = useGetCentralAlertHistoryScene();
   // we need to call this to sync the url with the scene state
   const isUrlSyncInitialized = useUrlSync(scene);
 
@@ -171,7 +183,7 @@ export const CentralAlertHistoryScene = ({ propsFromPanel }: AlertHistoryScenePr
 
 // This component is used to render the CentralAlertHistoryScene without url sync. In particular, it is used in the alertHistory built in panel.
 export const CentralAlertHistorySceneWithNoUrlSync = ({ propsFromPanel }: AlertHistorySceneProps) => {
-  const scene = useGetCentralAlertHistoryScene({ propsFromPanel });
+  const scene = useGetCentralAlertHistoryScene(propsFromPanel);
 
   return <scene.Component model={scene} />;
 };
