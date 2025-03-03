@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { intervalToAbbreviatedDurationString, TraceKeyValuePair } from '@grafana/data';
-import { Spinner, Alert, Badge, InteractiveTable, Card, Box, Stack, Icon, Text, JSONFormatter } from '@grafana/ui';
+import { Spinner, Alert, Badge, InteractiveTable, Card, Box, Stack, Icon, Text } from '@grafana/ui';
 
 import KeyValuesTable from '../explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
 

@@ -199,8 +199,12 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 			},
 		},
 	}, progress)
-	if err != nil {
-		stopReadingUnifiedStorage(ctx, w.storageStatus)
+	if err != nil { // this will have an error when too many errors exist
+		e2 := stopReadingUnifiedStorage(ctx, w.storageStatus)
+		if e2 != nil {
+			logger := logging.FromContext(ctx)
+			logger.Warn("error trying to revert dual write settings after an error", "err", err)
+		}
 	}
 	return err
 }

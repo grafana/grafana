@@ -16,7 +16,7 @@ import (
 )
 
 // called when an error exists
-func stopReadingUnifiedStorage(ctx context.Context, dual dualwrite.Service) {
+func stopReadingUnifiedStorage(ctx context.Context, dual dualwrite.Service) error {
 	kinds := []schema.GroupResource{{
 		Group:    folders.GROUP,
 		Resource: folders.RESOURCE,
@@ -32,10 +32,10 @@ func stopReadingUnifiedStorage(ctx context.Context, dual dualwrite.Service) {
 		status.Migrating = 0
 		_, err := dual.Update(ctx, status)
 		if err != nil {
-			logger := logging.FromContext(ctx)
-			logger.Warn("error trying to update dual write settings after an error", "err", err)
+			return err
 		}
 	}
+	return nil
 }
 
 func (j *migrationJob) wipeUnifiedAndSetMigratedFlag(ctx context.Context, dual dualwrite.Service) error {
