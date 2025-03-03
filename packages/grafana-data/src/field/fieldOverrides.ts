@@ -176,21 +176,35 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       }
 
       const newMapping = field.config.mappings?.map((mapping) => {
-        const interpolatedMapping = Object.fromEntries(
-          Object.entries(mapping.options).map(([mapOptKey, mapOptVal]) => {
-            if (mapOptVal.text !== undefined) {
-              const newMapVal = {
-                ...mapOptVal,
-                text: options.replaceVariables(mapOptVal.text, field.state?.scopedVars),
-              };
-              return [mapOptKey, newMapVal];
-            } else {
-              return [mapOptKey, mapOptVal];
-            }
-          })
-        );
+        if (mapping.type === 'regex') {
+          const pattern = options.replaceVariables(mapping.options.pattern, field.state?.scopedVars);
+          let text: string | undefined = undefined;
+          if (mapping.options.result.text !== undefined) {
+            text = options.replaceVariables(mapping.options.result.text, field.state?.scopedVars);
+          }
+          return {
+            ...mapping,
+            options: { ...mapping.options, pattern: pattern, result: { ...mapping.options.result, text: text } },
+          } as ValueMapping;
+        } else if (mapping.type === 'value') {
+          const interpolatedMapping = Object.fromEntries(
+            Object.entries(mapping.options).map(([mapOptKey, mapOptVal]) => {
+              if (mapOptVal.text !== undefined) {
+                const newMapVal = {
+                  ...mapOptVal,
+                  text: options.replaceVariables(mapOptVal.text, field.state?.scopedVars),
+                };
+                return [mapOptKey, newMapVal];
+              } else {
+                return [mapOptKey, mapOptVal];
+              }
+            })
+          );
 
-        return { ...mapping, options: interpolatedMapping } as ValueMapping;
+          return { ...mapping, options: interpolatedMapping } as ValueMapping;
+        } else {
+          return mapping;
+        }
       });
 
       field.config.mappings = newMapping;
