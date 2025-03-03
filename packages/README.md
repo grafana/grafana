@@ -6,7 +6,7 @@ This document contains information about Grafana frontend package versioning and
 
 We use [Nx](https://nx.dev/recipes/nx-release/get-started-with-nx-release) for package versioning.
 
-All packages defined within the [nx.json `fixed` release group](../nx.json) are versioned according to the current Grafana version:
+All packages defined within the [nx.json `grafanaPackages` release group](../nx.json) are versioned according to the current Grafana version:
 
 - Grafana v6.3.0-alpha1 -> @grafana/\* packages @ 6.3.0-alpha.1
 - Grafana v6.2.5 -> @grafana/\* packages @ 6.2.5
@@ -26,7 +26,7 @@ Alpha and beta releases are published under the `next` tag on npm.
 
 ### Automatic prereleases
 
-Every commit to main that has changes within the `packages` directory is a subject of npm packages release. _ALL_ packages must be released under version from package.json file with the drone build number added to it:
+Every commit to main that has changes within the `packages` directory is subject to an npm release. _ALL_ packages must be released under version from package.json file with the drone build number added to it:
 
 ```
 <package.json version>-<DRONE_BUILD_NUMBER>
