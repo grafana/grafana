@@ -1514,7 +1514,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
-			desc:      "normal -> alerting -> normal (pending) when KeepFiringFor is set but is not exceeded",
+			desc:      "normal -> alerting -> normal (recovering) when KeepFiringFor is set but is not exceeded",
 			alertRule: baseRuleWith(m.WithKeepFiringForNTimes(2)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
@@ -1542,7 +1542,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
-			desc:      "normal -> alerting -> normal (pending) -> normal (pending) -> normal (resolved) when KeepFiringFor is set and has passed",
+			desc:      "normal -> alerting -> normal (recovering) -> normal (recovering) -> normal (resolved) when KeepFiringFor is set and has passed",
 			alertRule: baseRuleWith(m.WithKeepFiringForNTimes(2)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
@@ -1577,7 +1577,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
-			desc:      "normal -> alerting -> recovering -> alerting -> alerting -> recovering when KeepFiringFor is set",
+			desc:      "normal -> alerting -> normal(recovering) -> alerting -> alerting -> recovering when KeepFiringFor is set",
 			alertRule: baseRuleWith(m.WithKeepFiringForNTimes(3)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
