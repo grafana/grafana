@@ -2,6 +2,7 @@ package apiregistry
 
 import (
 	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications"
+	"github.com/grafana/grafana/pkg/registry/apis/banners"
 	dashboardinternal "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboardsnapshot"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
@@ -28,6 +29,7 @@ func ProvideRegistryServiceSink(
 	_ *notifications.NotificationsAPIBuilder,
 	_ *userstorage.UserStorageAPIBuilder,
 	_ *provisioning.APIBuilder,
+	_ *banners.BannersAPIBuilder,
 ) *Service {
 	return &Service{}
 }
