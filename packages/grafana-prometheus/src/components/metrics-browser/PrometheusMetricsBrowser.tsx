@@ -15,6 +15,7 @@ import {
   DEFAULT_SERIES_LIMIT,
   EMPTY_SELECTOR,
   FacettableValue,
+  LAST_USED_LABELS_KEY,
   METRIC_LABEL,
   SelectableLabel,
 } from './types';
@@ -77,7 +78,7 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
         valueSearchTerm: '',
       };
     });
-    this.props.deleteLastUsedLabels();
+    localStorage.removeItem(LAST_USED_LABELS_KEY);
     // Get metrics
     this.fetchValues(METRIC_LABEL, EMPTY_SELECTOR);
   };
@@ -150,9 +151,9 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
   }
 
   componentDidMount() {
-    const { languageProvider, lastUsedLabels } = this.props;
+    const { languageProvider } = this.props;
     if (languageProvider) {
-      const selectedLabels: string[] = lastUsedLabels;
+      const selectedLabels: string[] = JSON.parse(localStorage.getItem(LAST_USED_LABELS_KEY) ?? `[]`) ?? [];
       languageProvider.start(this.props.timeRange).then(() => {
         let rawLabels: string[] = languageProvider.getLabelKeys();
         // Get metrics
@@ -181,7 +182,7 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
       return;
     }
     const selectedLabels = this.state.labels.filter((label) => label.selected).map((label) => label.name);
-    this.props.storeLastUsedLabels(selectedLabels);
+    localStorage.setItem(LAST_USED_LABELS_KEY, JSON.stringify(selectedLabels));
     if (label.selected) {
       // Refetch values for newly selected label...
       if (!label.values) {

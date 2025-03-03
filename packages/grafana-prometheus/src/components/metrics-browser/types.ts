@@ -23,9 +23,6 @@ export interface BrowserProps {
   theme: GrafanaTheme2;
   autoSelect?: number;
   hide?: () => void;
-  lastUsedLabels: string[];
-  storeLastUsedLabels: (labels: string[]) => void;
-  deleteLastUsedLabels: () => void;
   timeRange?: TimeRange;
 }
 
@@ -45,3 +42,5 @@ export const REMOVE_SERIES_LIMIT = 'none';
 export const EMPTY_SELECTOR = '{}';
 export const METRIC_LABEL = '__name__';
 export const LIST_ITEM_SIZE = 25;
+export const LAST_USED_LABELS_KEY = 'grafana.datasources.prometheus.browser.labels';
+
