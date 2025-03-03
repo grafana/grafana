@@ -10,7 +10,7 @@ import { CancelablePromise } from './cancelable-promise';
 export function usePromQueryFieldEffects(
   languageProvider: PromQlLanguageProvider,
   range: TimeRange | undefined,
-  series: DataFrame[],
+  series: DataFrame[] | undefined,
   refreshMetrics: (languageProviderInitRef: MutableRefObject<CancelablePromise<any> | null>) => Promise<void>,
   refreshHint: () => void
 ) {

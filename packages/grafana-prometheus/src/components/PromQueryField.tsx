@@ -2,13 +2,7 @@
 import { css, cx } from '@emotion/css';
 import { MutableRefObject, ReactNode, useCallback, useReducer } from 'react';
 
-import {
-  isDataFrame,
-  LocalStorageValueProvider,
-  QueryEditorProps,
-  QueryHint,
-  toLegacyResponseData,
-} from '@grafana/data';
+import { isDataFrame, QueryEditorProps, QueryHint, toLegacyResponseData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { clearButtonStyles, Icon, useTheme2 } from '@grafana/ui';
@@ -22,8 +16,6 @@ import { CancelablePromise, isCancelablePromiseRejection, makePromiseCancelable 
 import { MonacoQueryFieldWrapper } from './monaco-query-field/MonacoQueryFieldWrapper';
 import { useMetricsState } from './useMetricsState';
 import { usePromQueryFieldEffects } from './usePromQueryFieldEffects';
-
-const LAST_USED_LABELS_KEY = 'grafana.datasources.prometheus.browser.labels';
 
 interface PromQueryFieldProps extends QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions> {
   ExtraFieldElement?: ReactNode;
@@ -193,78 +185,69 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
   };
 
   // Use our custom effects hook
-  usePromQueryFieldEffects(languageProvider, range, data?.series ?? [], refreshMetrics, refreshHint);
+  usePromQueryFieldEffects(languageProvider, range, data?.series, refreshMetrics, refreshHint);
 
   const { chooserText, buttonDisabled } = useMetricsState(datasource, languageProvider, state.syntaxLoaded);
 
   return (
-    <LocalStorageValueProvider<string[]> storageKey={LAST_USED_LABELS_KEY} defaultValue={[]}>
-      {(lastUsedLabels, onLastUsedLabelsSave, onLastUsedLabelsDelete) => {
-        return (
-          <>
-            <div
-              className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1"
-              data-testid={props['data-testid']}
-            >
-              <button
-                className="gf-form-label query-keyword pointer"
-                onClick={onClickChooserButton}
-                disabled={buttonDisabled}
-                type="button"
-                data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.openButton}
-              >
-                {chooserText}
-                <Icon name={state.labelBrowserVisible ? 'angle-down' : 'angle-right'} />
-              </button>
+    <>
+      <div
+        className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1"
+        data-testid={props['data-testid']}
+      >
+        <button
+          className="gf-form-label query-keyword pointer"
+          onClick={onClickChooserButton}
+          disabled={buttonDisabled}
+          type="button"
+          data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.openButton}
+        >
+          {chooserText}
+          <Icon name={state.labelBrowserVisible ? 'angle-down' : 'angle-right'} />
+        </button>
 
-              <div className="flex-grow-1 min-width-15">
-                <MonacoQueryFieldWrapper
-                  languageProvider={languageProvider}
-                  history={history}
-                  onChange={onChangeQuery}
-                  onRunQuery={onRunQuery}
-                  initialValue={query.expr ?? ''}
-                  placeholder="Enter a PromQL query…"
-                  datasource={datasource}
-                />
-              </div>
-            </div>
-            {state.labelBrowserVisible && (
-              <div className="gf-form">
-                <PrometheusMetricsBrowser
-                  languageProvider={languageProvider}
-                  onChange={onChangeLabelBrowser}
-                  lastUsedLabels={lastUsedLabels || []}
-                  storeLastUsedLabels={onLastUsedLabelsSave}
-                  deleteLastUsedLabels={onLastUsedLabelsDelete}
-                  timeRange={range}
-                />
-              </div>
-            )}
-            {ExtraFieldElement}
-            {state.hint ? (
-              <div
-                className={css({
-                  flexBasis: '100%',
-                })}
+        <div className="flex-grow-1 min-width-15">
+          <MonacoQueryFieldWrapper
+            languageProvider={languageProvider}
+            history={history}
+            onChange={onChangeQuery}
+            onRunQuery={onRunQuery}
+            initialValue={query.expr ?? ''}
+            placeholder="Enter a PromQL query…"
+            datasource={datasource}
+          />
+        </div>
+      </div>
+      {state.labelBrowserVisible && (
+        <div className="gf-form">
+          <PrometheusMetricsBrowser
+            languageProvider={languageProvider}
+            onChange={onChangeLabelBrowser}
+            timeRange={range}
+          />
+        </div>
+      )}
+      {ExtraFieldElement}
+      {state.hint ? (
+        <div
+          className={css({
+            flexBasis: '100%',
+          })}
+        >
+          <div className="text-warning">
+            {state.hint.label}{' '}
+            {state.hint.fix ? (
+              <button
+                type="button"
+                className={cx(clearButtonStyles(theme), 'text-link', 'muted')}
+                onClick={onClickHintFix}
               >
-                <div className="text-warning">
-                  {state.hint.label}{' '}
-                  {state.hint.fix ? (
-                    <button
-                      type="button"
-                      className={cx(clearButtonStyles(theme), 'text-link', 'muted')}
-                      onClick={onClickHintFix}
-                    >
-                      {state.hint.fix.label}
-                    </button>
-                  ) : null}
-                </div>
-              </div>
+                {state.hint.fix.label}
+              </button>
             ) : null}
-          </>
-        );
-      }}
-    </LocalStorageValueProvider>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 };
