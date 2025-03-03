@@ -16,6 +16,7 @@ import {
 } from '@grafana/ui';
 
 import { getWorkflowOptions } from '../ConfigForm';
+import { ConfigFormGithubCollpase } from '../ConfigFormGithubCollapse';
 import { TokenPermissionsInfo } from '../TokenPermissionsInfo';
 import { useCreateRepositoryTestMutation } from '../api';
 import { useCreateOrUpdateRepository } from '../hooks';
@@ -178,8 +179,19 @@ export function RepositoryStep({ onStatusChange }: Props) {
           />
         </Field>
 
-        <ControlledCollapse label="Advanced settings" isOpen={true}>
-          <Field label={'Enable sync'}>
+        {type === 'github' && (
+          <ConfigFormGithubCollpase
+            previews={
+              <Switch
+                {...register('repository.generateDashboardPreviews')}
+                id={'repository.generateDashboardPreviews'}
+              />
+            }
+          />
+        )}
+
+        <ControlledCollapse label="Advanced settings" isOpen={false}>
+          <Field label={'Enable sync'} description="The repository will periodically pull changes">
             <Switch {...register('repository.sync.enabled')} />
           </Field>
           <Field label={'Sync interval (seconds)'}>

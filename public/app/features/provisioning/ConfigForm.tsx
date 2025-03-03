@@ -8,8 +8,8 @@ import {
   Button,
   Combobox,
   ComboboxOption,
+  ControlledCollapse,
   Field,
-  FieldSet,
   Input,
   MultiCombobox,
   RadioButtonGroup,
@@ -19,6 +19,7 @@ import {
 } from '@grafana/ui';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
+import { ConfigFormGithubCollpase } from './ConfigFormGithubCollapse';
 import { TokenPermissionsInfo } from './TokenPermissionsInfo';
 import { Repository, RepositorySpec } from './api';
 import { useCreateOrUpdateRepository } from './hooks';
@@ -139,8 +140,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
         <Input {...register('title', { required: 'This field is required.' })} placeholder={'My config'} />
       </Field>
       {type === 'github' && (
-        <FieldSet label="GitHub">
-          <Field label={'Token'} required error={errors?.token?.message} invalid={!!errors.token}>
+        <>
+          <Field label={'Github token'} required error={errors?.token?.message} invalid={!!errors.token}>
             <Controller
               name={'token'}
               control={control}
@@ -183,20 +184,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
           <Field label={'Branch'}>
             <Input {...register('branch')} placeholder={'main'} />
           </Field>
-          <Field
-            label={'Attach dashboard previews to pull requests'}
-            description={
-              <span>
-                Render before/after images and link them to the pull request.
-                <br />
-                NOTE! these will be public URLs!!!"
-              </span>
-            }
-          >
-            <Switch {...register('generateDashboardPreviews')} id={'generateDashboardPreviews'} />
-          </Field>
-          {/* The lint option is intentionally not presented here, as it's an experimental feature. */}
-        </FieldSet>
+        </>
       )}
 
       {type === 'local' && (
@@ -229,7 +217,13 @@ export function ConfigForm({ data }: ConfigFormProps) {
         />
       </Field>
 
-      <FieldSet label="Sync Settings">
+      {type === 'github' && (
+        <ConfigFormGithubCollpase
+          previews={<Switch {...register('generateDashboardPreviews')} id={'generateDashboardPreviews'} />}
+        />
+      )}
+
+      <ControlledCollapse label="Sync Settings" isOpen={false}>
         <Field label={'Enabled'} description={'Once sync is enabled, the target cannot be changed.'}>
           <Switch {...register('sync.enabled')} id={'sync.enabled'} />
         </Field>
@@ -253,7 +247,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
         <Field label={'Interval (seconds)'}>
           <Input {...register('sync.intervalSeconds', { valueAsNumber: true })} type={'number'} placeholder={'60'} />
         </Field>
-      </FieldSet>
+      </ControlledCollapse>
+
       <Stack gap={2}>
         <Button type={'submit'} disabled={request.isLoading}>
           {request.isLoading ? 'Saving...' : 'Save'}

@@ -1,4 +1,5 @@
 import { config } from '@grafana/runtime';
+
 import { requiredFeatureToggles } from './types';
 
 /**
@@ -15,7 +16,7 @@ export const checkRequiredFeatures = (): boolean => {
  * @returns true if the app URL is configured for external access
  */
 export const checkPublicAccess = (): boolean => {
-  return Boolean(config.appUrl && config.appUrl !== 'http://localhost:3000/');
+  return Boolean(config.appUrl && config.appUrl.indexOf('://localhost') < 0);
 };
 
 /**

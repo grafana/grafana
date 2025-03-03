@@ -5608,11 +5608,17 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "19"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "20"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "21"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "22"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "23"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "24"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "25"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "26"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "22"]
+    ],
+    "public/app/features/provisioning/ConfigFormGithubCollapse.tsx:5381": [
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"]
     ],
     "public/app/features/provisioning/DeleteRepositoryButton.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
@@ -5822,7 +5828,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "14"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "15"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "16"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "17"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "17"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "18"]
     ],
     "public/app/features/provisioning/Wizard/Stepper.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
