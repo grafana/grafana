@@ -73,7 +73,8 @@ jobs:
         with:
           name: enterprise-state
           path: pkg/
-          retention-days: 1
+          # Artifact will be deleted after the workflow completes
+          retention-days: 0
 
   test-unit:
     name: Test Backend Unit
@@ -126,7 +127,8 @@ jobs:
         with:
           name: unit-cov
           path: unit.cov
-          retention-days: 1
+          # Artifact will be deleted after the workflow completes
+          retention-days: 0
 
   test-integration:
     name: Test Backend Integration
@@ -172,7 +174,8 @@ jobs:
         with:
           name: integration-cov
           path: integration.cov
-          retention-days: 1
+          # Artifact will be deleted after the workflow completes
+          retention-days: 0
 
   # This job combines and processes coverage data from both test jobs
   report-coverage:
