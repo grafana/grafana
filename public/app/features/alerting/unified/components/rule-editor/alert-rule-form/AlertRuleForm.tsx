@@ -22,6 +22,7 @@ import {
   isGrafanaRulerRulePaused,
   isRecordingRuleByType,
 } from 'app/features/alerting/unified/utils/rules';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 import { RuleGroupIdentifier, RuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
 import { PostableRuleGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
@@ -45,6 +46,10 @@ import {
   formValuesFromPrefill,
   translateRouteParamToRuleType,
 } from '../../../rule-editor/formDefaults';
+import {
+  areQueriesTransformableToSimpleCondition,
+  isExpressionQueryInAlert,
+} from '../../../rule-editor/formProcessing';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import {
   MANUAL_ROUTING_KEY,
@@ -155,13 +160,20 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     if (!existing) {
       // when creating a new rule, we save the manual routing setting , and editorSettings.simplifiedQueryEditor to the local storage
       storeInLocalStorageValues(values);
+      // save the rule to the rule group
       await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, evaluateEvery);
-      grafanaTypeRule &&
+      // track the new Grafana-managed rule creation in the analytics
+      if (grafanaTypeRule) {
+        const dataQueries = values.queries.filter((query) => !isExpressionQuery(query.model));
+        const expressionQueries = values.queries.filter((query) => isExpressionQueryInAlert(query));
         trackNewGrafanaAlertRuleFormSavedSuccess({
           simplifiedQueryEditor: values.editorSettings?.simplifiedQueryEditor ?? false,
           simplifiedNotificationEditor: values.editorSettings?.simplifiedNotificationEditor ?? false,
-        }); // new Grafana-managed rule
+          canBeTransformedToSimpleQuery: areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries),
+        });
+      }
     } else {
+      // when updating an existing rule
       const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
       await updateRuleInRuleGroup.execute(
         ruleGroupIdentifier,

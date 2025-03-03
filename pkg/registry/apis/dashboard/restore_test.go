@@ -17,7 +17,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
-	"k8s.io/apiserver/pkg/registry/generic"
 )
 
 type mockResourceClient struct {
@@ -58,7 +57,6 @@ func TestRestore(t *testing.T) {
 	r := &restoreREST{
 		unified: mockClient,
 		gr:      gr,
-		opts:    generic.RESTOptions{},
 	}
 
 	t.Run("no namespace in context", func(t *testing.T) {

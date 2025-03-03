@@ -33,6 +33,7 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/component-base/metrics"
 	"k8s.io/component-base/metrics/legacyregistry"
 	"k8s.io/klog/v2"
 	v1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
@@ -57,7 +58,8 @@ import (
 // making sure we only register metrics once into legacy registry
 var registerIntoLegacyRegistryOnce sync.Once
 
-func readCABundlePEM(path string, devMode bool) ([]byte, error) {
+//nolint:unused
+func _readCABundlePEM(path string, devMode bool) ([]byte, error) {
 	if devMode {
 		return nil, nil
 	}
@@ -128,13 +130,23 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 		},
 		ExtraConfig: aggregatorapiserver.ExtraConfig{
 			DisableRemoteAvailableConditionController: true,
-			ProxyClientCertFile:                       commandOptions.KubeAggregatorOptions.ProxyClientCertFile,
-			ProxyClientKeyFile:                        commandOptions.KubeAggregatorOptions.ProxyClientKeyFile,
 			// NOTE: while ProxyTransport can be skipped in the configuration, it allows honoring
 			// DISABLE_HTTP2, HTTPS_PROXY and NO_PROXY env vars as needed
 			ProxyTransport:  createProxyTransport(),
 			ServiceResolver: serviceResolver,
 		},
+	}
+
+	if commandOptions.KubeAggregatorOptions.LegacyClientCertAuth {
+		// NOTE: the availability controller below is a bit different and uses the cert/key pair regardless
+		// of the legacy bool, this is because we are still using that for discovery requests
+		aggregatorConfig.ExtraConfig.ProxyClientCertFile = commandOptions.KubeAggregatorOptions.ProxyClientCertFile
+		aggregatorConfig.ExtraConfig.ProxyClientKeyFile = commandOptions.KubeAggregatorOptions.ProxyClientKeyFile
+	}
+
+	customExtraConfig := &CustomExtraConfig{
+		DiscoveryOnlyProxyClientCertFile: commandOptions.KubeAggregatorOptions.ProxyClientCertFile,
+		DiscoveryOnlyProxyClientKeyFile:  commandOptions.KubeAggregatorOptions.ProxyClientKeyFile,
 	}
 
 	if err := commandOptions.KubeAggregatorOptions.ApplyTo(aggregatorConfig, commandOptions.RecommendedOptions.Etcd); err != nil {
@@ -149,13 +161,9 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 
 	// Exit early, if no remote services file is configured
 	if commandOptions.KubeAggregatorOptions.RemoteServicesFile == "" {
-		return NewConfig(aggregatorConfig, sharedInformerFactory, []builder.APIGroupBuilder{serviceAPIBuilder}, nil), nil
+		return NewConfig(aggregatorConfig, customExtraConfig, sharedInformerFactory, []builder.APIGroupBuilder{serviceAPIBuilder}, nil), nil
 	}
 
-	_, err = readCABundlePEM(commandOptions.KubeAggregatorOptions.APIServiceCABundleFile, commandOptions.ExtraOptions.DevMode)
-	if err != nil {
-		return nil, err
-	}
 	remoteServices, err := ReadRemoteServices(commandOptions.KubeAggregatorOptions.RemoteServicesFile)
 	if err != nil {
 		return nil, err
@@ -173,9 +181,11 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 		serviceClientSet: serviceClient,
 	}
 
-	return NewConfig(aggregatorConfig, sharedInformerFactory, []builder.APIGroupBuilder{serviceAPIBuilder}, remoteServicesConfig), nil
+	return NewConfig(aggregatorConfig, customExtraConfig, sharedInformerFactory, []builder.APIGroupBuilder{serviceAPIBuilder}, remoteServicesConfig), nil
 }
 
+// CreateAggregatorServer creates an aggregated server to layer into the existing apiserver
+// TODO: passing options temporarily as that allows us to pass in cert/key for client into AvailableController but skip it in the aggregator lib
 func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.DelegationTarget, reg prometheus.Registerer) (*aggregatorapiserver.APIAggregator, error) {
 	aggregatorConfig := config.KubeAggregatorConfig
 	sharedInformerFactory := config.Informers
@@ -254,8 +264,8 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 	proxyCurrentCertKeyContentFunc := func() ([]byte, []byte) {
 		return nil, nil
 	}
-	if len(config.KubeAggregatorConfig.ExtraConfig.ProxyClientCertFile) > 0 && len(config.KubeAggregatorConfig.ExtraConfig.ProxyClientKeyFile) > 0 {
-		aggregatorProxyCerts, err := dynamiccertificates.NewDynamicServingContentFromFiles("aggregator-proxy-cert", config.KubeAggregatorConfig.ExtraConfig.ProxyClientCertFile, config.KubeAggregatorConfig.ExtraConfig.ProxyClientKeyFile)
+	if len(config.CustomExtraConfig.DiscoveryOnlyProxyClientCertFile) > 0 && len(config.CustomExtraConfig.DiscoveryOnlyProxyClientKeyFile) > 0 {
+		aggregatorProxyCerts, err := dynamiccertificates.NewDynamicServingContentFromFiles("aggregator-proxy-cert", config.CustomExtraConfig.DiscoveryOnlyProxyClientCertFile, config.CustomExtraConfig.DiscoveryOnlyProxyClientKeyFile)
 		if err != nil {
 			return nil, err
 		}
@@ -264,11 +274,11 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 		}
 	}
 
-	metrics := newAvailabilityMetrics()
-
+	registry := legacyregistry.DefaultGatherer.(metrics.KubeRegistry)
+	availibilityMetrics := newAvailabilityMetrics()
 	// create shared (remote and local) availability metrics
 	// TODO: decouple from legacyregistry
-	registerIntoLegacyRegistryOnce.Do(func() { err = metrics.Register(legacyregistry.Register, legacyregistry.CustomRegister) })
+	registerIntoLegacyRegistryOnce.Do(func() { err = availibilityMetrics.Register(registry.Register, registry.CustomRegister) })
 	if err != nil {
 		return nil, err
 	}
@@ -280,7 +290,7 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 		nil,
 		proxyCurrentCertKeyContentFunc,
 		completedConfig.ExtraConfig.ServiceResolver,
-		metrics,
+		availibilityMetrics,
 	)
 	if err != nil {
 		return nil, err

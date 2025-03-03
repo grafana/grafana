@@ -60,7 +60,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Role: ac.RoleDTO{
 			Name:        "fixed:datasources:explorer",
 			DisplayName: "Explorer",
-			Description: "Enable the Explore feature. Data source permissions still apply; you can only query data sources for which you have query permissions.",
+			Description: "Enable the Explore and Drilldown features. Data source permissions still apply; you can only query data sources for which you have query permissions.",
 			Group:       "Data sources",
 			Permissions: []ac.Permission{
 				{
@@ -69,10 +69,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			},
 		},
 		Grants: []string{string(org.RoleEditor)},
-	}
-
-	if hs.Cfg.ViewersCanEdit {
-		datasourcesExplorerRole.Grants = append(datasourcesExplorerRole.Grants, string(org.RoleViewer))
 	}
 
 	datasourcesReaderRole := ac.RoleRegistration{

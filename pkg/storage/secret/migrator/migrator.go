@@ -108,6 +108,7 @@ func initSecretStore(mg *migrator.Migrator) string {
 	tables = append(tables, migrator.Table{
 		Name: TableNameEncryptedValue,
 		Columns: []*migrator.Column{
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},
 			{Name: "uid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true}, // Fixed size of a UUID.
 			{Name: "encrypted_data", Type: migrator.DB_Blob, Nullable: false},
 			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},

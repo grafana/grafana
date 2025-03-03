@@ -3,7 +3,7 @@
 # to maintain formatting of multiline commands in vscode, add the following to settings.json:
 # "docker.languageserver.formatter.ignoreMultilineInstructions": true
 
-ARG BASE_IMAGE=alpine:3.20
+ARG BASE_IMAGE=alpine:3.21
 ARG JS_IMAGE=node:22-alpine
 ARG JS_PLATFORM=linux/amd64
 ARG GO_IMAGE=golang:1.23.5-alpine
@@ -125,6 +125,7 @@ FROM ${JS_SRC} AS js-src
 FROM ${BASE_IMAGE}
 
 LABEL maintainer="Grafana Labs <hello@grafana.com>"
+LABEL org.opencontainers.image.source="https://github.com/grafana/grafana"
 
 ARG GF_UID="472"
 ARG GF_GID="0"

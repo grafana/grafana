@@ -5,9 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications"
 	dashboardinternal "github.com/grafana/grafana/pkg/registry/apis/dashboard"
-	dashboardv0alpha1 "github.com/grafana/grafana/pkg/registry/apis/dashboard/v0alpha1"
-	dashboardv1alpha1 "github.com/grafana/grafana/pkg/registry/apis/dashboard/v1alpha1"
-	dashboardv2alpha1 "github.com/grafana/grafana/pkg/registry/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboardsnapshot"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
@@ -15,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
-	"github.com/grafana/grafana/pkg/registry/apis/scope"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/service"
@@ -36,9 +32,6 @@ var WireSet = wire.NewSet(
 
 	// Each must be added here *and* in the ServiceSink above
 	dashboardinternal.RegisterAPIService,
-	dashboardv0alpha1.RegisterAPIService,
-	dashboardv1alpha1.RegisterAPIService,
-	dashboardv2alpha1.RegisterAPIService,
 	dashboardsnapshot.RegisterAPIService,
 	featuretoggle.RegisterAPIService,
 	datasource.RegisterAPIService,
@@ -47,7 +40,6 @@ var WireSet = wire.NewSet(
 	provisioning.RegisterAPIService,
 	service.RegisterAPIService,
 	query.RegisterAPIService,
-	scope.RegisterAPIService,
 	notifications.RegisterAPIService,
 	userstorage.RegisterAPIService,
 	secret.RegisterAPIService,

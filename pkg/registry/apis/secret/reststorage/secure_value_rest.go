@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -34,13 +35,13 @@ var (
 
 // SecureValueRest is an implementation of CRUDL operations on a `securevalue` backed by a persistence layer `store`.
 type SecureValueRest struct {
-	storage        contracts.SecureValueStorage
+	storage        contracts.SecureValueMetadataStorage
 	resource       utils.ResourceInfo
 	tableConverter rest.TableConvertor
 }
 
 // NewSecureValueRest is a returns a constructed `*SecureValueRest`.
-func NewSecureValueRest(storage contracts.SecureValueStorage, resource utils.ResourceInfo) *SecureValueRest {
+func NewSecureValueRest(storage contracts.SecureValueMetadataStorage, resource utils.ResourceInfo) *SecureValueRest {
 	return &SecureValueRest{storage, resource, resource.TableConverter()}
 }
 
@@ -190,7 +191,7 @@ func (s *SecureValueRest) Delete(ctx context.Context, name string, deleteValidat
 }
 
 // ValidateSecureValue does basic spec validation of a securevalue.
-func ValidateSecureValue(sv, oldSv *secretv0alpha1.SecureValue, operation admission.Operation) field.ErrorList {
+func ValidateSecureValue(sv, oldSv *secretv0alpha1.SecureValue, operation admission.Operation, decryptersAllowList []string) field.ErrorList {
 	errs := make(field.ErrorList, 0)
 
 	// Operation-specific field validation.
@@ -211,6 +212,16 @@ func ValidateSecureValue(sv, oldSv *secretv0alpha1.SecureValue, operation admiss
 
 	// If populated, `Decrypters` must match "{group}/{name OR *}" and must be unique.
 	for i, decrypter := range sv.Spec.Decrypters {
+		// Allow List: decrypters must match exactly and be in the allowed list to be able to decrypt.
+		if len(decryptersAllowList) > 0 && !slices.Contains(decryptersAllowList, decrypter) {
+			errs = append(
+				errs,
+				field.Invalid(field.NewPath("spec", "decrypters", "["+strconv.Itoa(i)+"]"), decrypter, fmt.Sprintf("allowed values: %v", decryptersAllowList)),
+			)
+
+			return errs
+		}
+
 		group, name, found := strings.Cut(decrypter, "/")
 		if !found {
 			errs = append(

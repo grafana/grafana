@@ -295,6 +295,9 @@
       "export-all": "Export all",
       "loading": "Loading...",
       "search-by-matchers": "Search by matchers",
+      "titles": {
+        "notification-templates": "Notification Templates"
+      },
       "view": "View"
     },
     "contact-points": {
@@ -403,6 +406,20 @@
       "preview-routing": "Preview routing",
       "title": "Alert instance routing preview",
       "uninitialized": "When you have your folder selected and your query and labels are configured, click \"Preview routing\" to see the results here."
+    },
+    "notification-templates": {
+      "duplicate": {
+        "subTitle": "Duplicate a group of notification templates",
+        "title": "Duplicate notification template group"
+      },
+      "edit": {
+        "subTitle": "Edit a group of notification templates",
+        "title": "Edit notification template group"
+      },
+      "new": {
+        "subTitle": "Create a new group of notification templates",
+        "title": "New notification template group"
+      }
     },
     "policies": {
       "default-policy": {
@@ -528,6 +545,19 @@
       },
       "pause": {
         "label": "Pause evaluation"
+      },
+      "threshold": {
+        "recovery": {
+          "stop-alerting-above": "Stop alerting when above",
+          "stop-alerting-bellow": "Stop alerting when below",
+          "stop-alerting-equal": "Stop alerting when equal to",
+          "stop-alerting-inside-range": "Stop alerting when inside range",
+          "stop-alerting-less": "Stop alerting when less than",
+          "stop-alerting-more": "Stop alerting when more than",
+          "stop-alerting-not-equal": "Stop alerting when not equal to",
+          "stop-alerting-outside-range": "Stop alerting when outside range",
+          "title": "Custom recovery threshold"
+        }
       }
     },
     "rule-groups": {
@@ -579,6 +609,7 @@
       }
     },
     "rule-viewer": {
+      "error-loading": "Something went wrong loading the rule",
       "prometheus-consistency-check": {
         "alert-message": "Alert rule has been updated. Changes may take up to a minute to appear on the Alert rules list view.",
         "alert-title": "Update in progress"
@@ -810,6 +841,7 @@
     "collapse": "Collapse",
     "edit": "Edit",
     "help": "Help",
+    "loading": "Loading...",
     "locale": {
       "default": "Default"
     },
@@ -1043,6 +1075,11 @@
         }
       }
     },
+    "editpane": {
+      "add": "Add",
+      "configure": "Configure",
+      "outline": "Outline"
+    },
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
       "add-library-panel-button": "Add library panel",
@@ -1180,7 +1217,8 @@
     "toolbar": {
       "add": "Add",
       "add-panel": "Panel",
-      "add-panel-lib": "Import",
+      "add-panel-description": "A container for visualizations and other content",
+      "add-panel-lib": "Import library panel",
       "add-row": "Row",
       "add-tab": "Tab",
       "alert-rules": "Alert rules",
@@ -1205,6 +1243,7 @@
         "label": "Exit edit",
         "tooltip": "Exits edit mode and discards unsaved changes"
       },
+      "libray-panel-description": "Libray panels allow you share and reuse panels between dashboards",
       "mark-favorite": "Mark as favorite",
       "more-save-options": "More save options",
       "open-original": "Open original dashboard",
@@ -1213,6 +1252,7 @@
       "playlist-stop": "Stop playlist",
       "public-dashboard": "Public",
       "refresh": "Refresh dashboard",
+      "row-description": "A group of panels with an optional header",
       "save": "Save dashboard",
       "save-dashboard": {
         "label": "Save dashboard",
@@ -1232,6 +1272,7 @@
       "share-button": "Share",
       "show-hidden-elements": "Show hidden",
       "switch-old-dashboard": "Switch to old dashboard page",
+      "tabs-description": "Break up your dashboard into different horizontal tabs",
       "unlink-library-panel": "Unlink library panel",
       "unmark-favorite": "Unmark as favorite"
     },
@@ -1337,6 +1378,12 @@
       "time-zone-label": "Time zone",
       "week-start-label": "Week start"
     },
+    "time-regions": {
+      "advanced-description-cron": "Cron syntax",
+      "advanced-description-rest": " to define a recurrence schedule and duration",
+      "advanced-description-use": "Use ",
+      "advanced-label": "Advanced"
+    },
     "variables": {
       "title": "Variables"
     },
@@ -1419,6 +1466,11 @@
   },
   "explore": {
     "add-to-dashboard": "Add to dashboard",
+    "drilldownInfo": {
+      "action": "Go to Grafana Drilldown",
+      "description": "Looking for the Grafana Explore apps? They are now called the Grafana Drilldown apps and can be found under <1>Menu > Drilldown</1>",
+      "title": "Explore Metrics, Logs, Traces and Profiles have moved!"
+    },
     "logs": {
       "logs-volume": {
         "add-filters": "Add more labels to your query to narrow down your search.",
@@ -1631,6 +1683,10 @@
     "incomplete-request-error": "Sorry, I was unable to complete your request. Please try again.",
     "send-custom-feedback": "Send"
   },
+  "get-enterprise": {
+    "requires-license": "Requires a Grafana Enterprise license",
+    "title": "Enterprise"
+  },
   "grafana-ui": {
     "action-editor": {
       "button": {
@@ -1650,9 +1706,18 @@
         "one-click-description": "Only one link {{ action }} can have one click enabled at a time"
       }
     },
+    "alert": {
+      "close-button": "Close alert"
+    },
     "auto-save-field": {
       "saved": "Saved!",
       "saving": "Saving <1></1>"
+    },
+    "card": {
+      "option": "option"
+    },
+    "cascader": {
+      "clear-button": "Clear selection"
     },
     "color-picker-popover": {
       "palette-tab": "Colors",
@@ -1661,8 +1726,15 @@
     "confirm-button": {
       "cancel": "Cancel"
     },
+    "confirm-content": {
+      "placeholder": "Type \"{{confirmPromptText}}\" to confirm"
+    },
     "data-link-editor": {
-      "info": "With data links you can reference data variables like series name, labels and values. Type CMD+Space, CTRL+Space, or $ to open variable suggestions."
+      "info": "With data links you can reference data variables like series name, labels and values. Type CMD+Space, CTRL+Space, or $ to open variable suggestions.",
+      "new-tab-label": "Open in new tab",
+      "title-label": "Title",
+      "title-placeholder": "Show details",
+      "url-label": "URL"
     },
     "data-link-editor-modal": {
       "cancel": "Cancel",
@@ -1682,35 +1754,86 @@
       "tooltip-remove": "Remove",
       "url-not-provided": "Data link url not provided"
     },
+    "data-source-basic-auth-settings": {
+      "user-label": "User",
+      "user-placeholder": "user"
+    },
+    "data-source-http-proxy-settings": {
+      "oauth-identity-label": "Forward OAuth Identity",
+      "oauth-identity-tooltip": "Forward the user's upstream OAuth identity to the data source (Their access token gets passed along).",
+      "skip-tls-verify-label": "Skip TLS Verify",
+      "ts-client-auth-label": "TLS Client Auth",
+      "with-ca-cert-label": "With CA Cert",
+      "with-ca-cert-tooltip": "Needed for verifying self-signed TLS Certs"
+    },
     "data-source-http-settings": {
       "access-help": "Help <1></1>",
       "access-help-details": "Access mode controls how requests to the data source will be handled.<1> <1>Server</1></1> should be the preferred way if nothing else is stated.",
+      "access-label": "Access",
+      "access-options-browser": "Browser",
+      "access-options-proxy": "Server (default)",
       "allowed-cookies": "Allowed cookies",
+      "allowed-cookies-tooltip": "Grafana proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source.",
       "auth": "Auth",
+      "azure-auth-label": "Azure Authentication",
+      "azure-auth-tooltip": "Use Azure authentication for Azure endpoint.",
       "basic-auth": "Basic Auth Details",
+      "basic-auth-label": "Basic auth",
       "browser-mode-description": "All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.",
       "browser-mode-title": "<0>Browser access mode:</0>",
+      "default-url-access-select": "Access",
       "default-url-tooltip": "Specify a complete HTTP URL (for example http://your_server:8080)",
       "direct-url-tooltip": "Your access method is <1>Browser</1>, this means the URL needs to be accessible from the browser.",
       "heading": "HTTP",
       "proxy-url-tooltip": "Your access method is <1>Server</1>, this means the URL needs to be accessible from the grafana backend/server.",
       "server-mode-description": "All requests will be made from the browser to Grafana backend/server which in turn will forward the requests to the data source and by that circumvent possible Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the grafana backend/server if you select this access mode.",
-      "server-mode-title": "<0>Server access mode (Default):</0>"
+      "server-mode-title": "<0>Server access mode (Default):</0>",
+      "timeout-form-label": "Timeout",
+      "timeout-label": "Timeout in seconds",
+      "timeout-tooltip": "HTTP request timeout in seconds",
+      "url-label": "URL",
+      "with-credential-label": "With Credentials",
+      "with-credential-tooltip": "Whether credentials such as cookies or auth headers should be sent with cross-site requests."
     },
     "data-source-settings": {
       "alerting-settings-heading": "Alerting",
+      "alerting-settings-label": "Manage alert rules in Alerting UI",
+      "alerting-settings-tooltip": "Manage alert rules for this data source. To manage other alerting resources, add an Alertmanager data source.",
       "cert-key-reset": "Reset",
       "custom-headers-add": "Add header",
+      "custom-headers-header": "Header",
+      "custom-headers-header-placeholder": "Header Value",
+      "custom-headers-header-remove": "Remove header",
+      "custom-headers-header-value": "Value",
       "custom-headers-title": "Custom HTTP Headers",
       "secure-socks-heading": "Secure Socks Proxy",
-      "tls-heading": "TLS/SSL Auth Details"
+      "secure-socks-label": "Enabled",
+      "secure-socks-tooltip": "Connect to this datasource via the secure socks proxy.",
+      "tls-certification-label": "CA Cert",
+      "tls-certification-placeholder": "Begins with {{certificateBeginsWith}}",
+      "tls-client-certification-label": "Client Cert",
+      "tls-client-key-label": "Client Key",
+      "tls-client-key-placeholder": "Begins with {{privateKeyBeginsWith}}",
+      "tls-heading": "TLS/SSL Auth Details",
+      "tls-server-name-label": "ServerName",
+      "tls-tooltip": "TLS/SSL Certs are encrypted and stored in the Grafana database."
     },
     "date-time-picker": {
       "apply": "Apply",
-      "cancel": "Cancel"
+      "calendar-icon-label": "Time picker",
+      "cancel": "Cancel",
+      "next-label": "Next month",
+      "previous-label": "Previous month",
+      "select-placeholder": "Select date/time"
     },
     "drawer": {
       "close": "Close"
+    },
+    "feature-badge": {
+      "experimental": "Experimental",
+      "new": "New!",
+      "preview": "Preview",
+      "private-preview": "Private preview"
     },
     "field-link-list": {
       "external-links-heading": "External links"
@@ -1725,6 +1848,10 @@
     "modal": {
       "close-tooltip": "Close"
     },
+    "named-colors-palette": {
+      "text-color-swatch": "Text color",
+      "transparent-swatch": "Transparent"
+    },
     "secret-form-field": {
       "reset": "Reset"
     },
@@ -1737,6 +1864,9 @@
       "default-create-label": "Hit enter to add",
       "no-options-label": "No options found",
       "placeholder": "Choose"
+    },
+    "series-color-picker-popover": {
+      "y-axis-usage": "Use right y-axis"
     },
     "spinner": {
       "aria-label": "Loading"
@@ -1756,6 +1886,9 @@
     },
     "user-icon": {
       "active-text": "Active last 15m"
+    },
+    "value-pill": {
+      "remove-button": "Remove {{children}}"
     },
     "viz-legend": {
       "right-axis-indicator": "(right y-axis)"
@@ -2034,6 +2167,7 @@
       "render-image-error-description": "An error occurred when generating the image"
     }
   },
+  "lock-icon": "lock icon",
   "login": {
     "divider": {
       "connecting-text": "or"
@@ -2499,6 +2633,9 @@
     "detect": {
       "title": "Detect"
     },
+    "drilldown": {
+      "title": "Drilldown"
+    },
     "explore": {
       "title": "Explore"
     },
@@ -2536,6 +2673,8 @@
     "history-wrapper": {
       "collapse": "Collapse",
       "expand": "Expand",
+      "icon-selected": "Selected Entry",
+      "icon-unselected": "Normal Entry",
       "show-more": "Show more",
       "today": "Today",
       "yesterday": "Yesterday"
@@ -2822,10 +2961,11 @@
   },
   "plugins": {
     "catalog": {
+      "no-updates-available": "No updates available",
       "update-all": {
         "all-plugins-updated": "All plugins updated!",
         "available-header": "Available",
-        "button": "Update all",
+        "button": "Update all ({{length}})",
         "cloud-update-message": "* It may take a few minutes for the plugins to be available for usage.",
         "error": "Error updating plugin:",
         "error-status-text": "failed - see error messages",
@@ -2880,6 +3020,12 @@
     },
     "empty-state": {
       "message": "No plugins found"
+    },
+    "filter": {
+      "disabled": "This filter has been disabled because the Grafana server cannot access grafana.com",
+      "sort": "Sort",
+      "sort-list": "Sort Plugins List",
+      "state": "State"
     },
     "plugin-help": {
       "error": "An error occurred when loading help.",
@@ -3580,6 +3726,16 @@
       "title": "You haven't created any teams yet"
     }
   },
+  "theme-preview": {
+    "breadcrumbs": {
+      "dashboards": "Dashboards",
+      "home": "Home"
+    },
+    "panel": {
+      "form-label": "Form label",
+      "title": "Panel"
+    }
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "Recently used absolute ranges",
@@ -3636,10 +3792,13 @@
       "example": "Example: to select a time range from 10 minutes ago to now",
       "example-details": "From: now-10m To: now",
       "example-title": "Example time ranges",
+      "from-label": "From",
       "from-to": "{{timeOptionFrom}} to {{timeOptionTo}}",
       "more-info": "For more information see <2>docs <1></1></2>.",
       "specify": "Specify time range <1></1>",
-      "supported-formats": "Supported formats: <1>now-[digit]s/m/h/d/w</1>"
+      "submit-button-label": "TimePicker submit button",
+      "supported-formats": "Supported formats: <1>now-[digit]s/m/h/d/w</1>",
+      "to-label": "To"
     },
     "zone": {
       "select-aria-label": "Time zone picker",

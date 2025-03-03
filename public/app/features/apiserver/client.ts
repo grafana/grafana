@@ -114,8 +114,10 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
     return getBackendSrv().put<Resource<T, S, K>>(`${this.url}/${obj.metadata.name}`, obj);
   }
 
-  public async delete(name: string): Promise<MetaStatus> {
-    return getBackendSrv().delete<MetaStatus>(`${this.url}/${name}`);
+  public async delete(name: string, showSuccessAlert: boolean): Promise<MetaStatus> {
+    return getBackendSrv().delete<MetaStatus>(`${this.url}/${name}`, undefined, {
+      showSuccessAlert,
+    });
   }
 
   private parseListOptionsSelector = parseListOptionsSelector;

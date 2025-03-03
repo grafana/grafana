@@ -16,6 +16,7 @@ vendor/
 /requests
 tsconfig.tsbuildinfo
 __debug_bin*
+*.cov
 
 # yarn
 .yarn/cache
@@ -112,6 +113,7 @@ profile.cov
 /pkg/extensions/*
 !/pkg/extensions/.keep
 !/pkg/extensions/main.go
+!/pkg/extensions/enterprise_imports.go
 /public/app/extensions
 !/public/app/extensions/.keep
 

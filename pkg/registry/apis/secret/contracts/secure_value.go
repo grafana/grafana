@@ -13,8 +13,8 @@ var (
 	ErrSecureValueNotFound = errors.New("secure value not found")
 )
 
-// SecureValueStorage is the interface for wiring and dependency injection.
-type SecureValueStorage interface {
+// SecureValueMetadataStorage is the interface for wiring and dependency injection.
+type SecureValueMetadataStorage interface {
 	Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error)
 	Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error)
 	Update(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error)
