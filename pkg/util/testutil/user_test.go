@@ -3,8 +3,9 @@ package testutil
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestSignedInUser(t *testing.T) {
