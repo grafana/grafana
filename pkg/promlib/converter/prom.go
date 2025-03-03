@@ -864,7 +864,8 @@ func appendValueFromString(iter *sdkjsoniter.Iterator, field *data.Field) error 
 		return err
 	}
 
-	// Convert to float64 without allocating a new string
+	// #nosec G103
+	// Convert string to float64 without allocation
 	v, err := strconv.ParseFloat(*(*string)(unsafe.Pointer(&buf)), 64)
 	if err != nil {
 		return err
