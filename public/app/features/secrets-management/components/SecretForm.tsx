@@ -2,7 +2,7 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { Button, Field, Input, MultiSelect, RadioButtonGroup, Stack } from '@grafana/ui';
 
-import { MOCKED_SECRET_AUDIENCES } from '../constants';
+import { ALLOWED_SECRET_DECRYPTERS } from '../constants';
 
 import { SecretInput } from './SecretInput';
 
@@ -32,7 +32,7 @@ export function SecretForm({
   disableNameField = false,
 }: BaseSecretFormProps) {
   const audiences = [
-    ...MOCKED_SECRET_AUDIENCES.map((audience) => ({ label: audience, value: audience })),
+    ...ALLOWED_SECRET_DECRYPTERS.map((audience) => ({ label: audience, value: audience })),
     ...(initialValues?.audiences ?? []),
   ];
 
@@ -102,7 +102,9 @@ export function SecretForm({
         <Controller
           control={control}
           name="audiences"
-          render={({ field: { ref, ...field } }) => <MultiSelect allowCustomValue options={audiences} {...field} />}
+          render={({ field: { ref, ...field } }) => (
+            <MultiSelect placeholder="Choose decrypter(s)" options={audiences} {...field} />
+          )}
         />
       </Field>
       <Stack gap={1} justifyContent="flex-end">
