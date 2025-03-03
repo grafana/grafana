@@ -4,8 +4,6 @@ import (
 	"embed"
 	"testing"
 	"time"
-
-	"go.uber.org/goleak"
 )
 
 //go:embed data/*
@@ -29,6 +27,4 @@ func init() {
 	if !testing.Testing() {
 		panic("importing testing libraries in runtime code is not allowed")
 	}
-
-	goleak.IgnoreAnyFunction("go.opencensus.io/stats/view.(*worker).start")
 }
