@@ -1,6 +1,6 @@
 import { Alert, Icon, Stack } from '@grafana/ui';
 import { DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
-import { useGetRepositoryFilesWithPathQuery, useGetRepositoryQuery } from 'app/features/provisioning/api';
+import { useGetRepositoryFilesWithPathQuery } from 'app/features/provisioning/api';
 import { usePullRequestParam } from 'app/features/provisioning/hooks';
 import { DashboardRoutes } from 'app/types';
 
