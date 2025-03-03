@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
@@ -438,13 +437,21 @@ func InitTestDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseMigra
 // Testsuite users need not worry about this deprecation for now.
 func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.Cfg) {
 	t.Helper()
-	features := getFeaturesForTesting(opts...)
-	cfg := getCfgForTesting(opts...)
 
-	store, err := initTestDB(t, cfg, features, migrations.ProvideOSSMigrations(features), opts...)
-	if err != nil {
-		t.Fatalf("failed to initialize sql store: %s", err)
+	var newOpts []TestOption
+	for _, opt := range opts {
+		if opt.Cfg != nil {
+			newOpts = append(newOpts, WithCfg(opt.Cfg))
+		}
+		if !opt.EnsureDefaultOrgAndUser {
+			newOpts = append(newOpts, WithoutDefaultOrgAndUser())
+		}
+		if len(opt.FeatureFlags) > 0 {
+			newOpts = append(newOpts, WithFeatureFlags(opt.FeatureFlags...))
+		}
 	}
+	newOpts = append(newOpts, WithFeatureFlags(featuremgmt.FlagPanelTitleSearch))
+	store := NewTestStore(t, newOpts...)
 	return store, store.cfg
 }
 

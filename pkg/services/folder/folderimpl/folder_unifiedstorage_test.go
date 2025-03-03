@@ -885,7 +885,8 @@ func TestDeleteFoldersFromApiServer(t *testing.T) {
 		CanSaveValue: true,
 		CanViewValue: true,
 	})
-	db, cfg := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 
 	alertingStore := ngstore.DBstore{
 		SQLStore:      db,

@@ -35,7 +35,8 @@ func TestIntegrationCreate(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db, cfg := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	folderStore := ProvideStore(db)
 
 	orgID := CreateOrg(t, db, cfg)
@@ -155,7 +156,8 @@ func TestIntegrationDelete(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db, cfg := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	folderStore := ProvideStore(db)
 
 	orgID := CreateOrg(t, db, cfg)
@@ -202,7 +204,8 @@ func TestIntegrationUpdate(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db, cfg := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	folderStore := ProvideStore(db)
 
 	orgID := CreateOrg(t, db, cfg)
@@ -377,7 +380,8 @@ func TestIntegrationGet(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db, cfg := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	folderStore := ProvideStore(db)
 
 	orgID := CreateOrg(t, db, cfg)
@@ -512,7 +516,8 @@ func TestIntegrationGetParents(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db, cfg := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	folderStore := ProvideStore(db)
 
 	orgID := CreateOrg(t, db, cfg)
@@ -580,7 +585,8 @@ func TestIntegrationGetChildren(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db, cfg := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	folderStore := ProvideStore(db)
 
 	orgID := CreateOrg(t, db, cfg)
@@ -822,7 +828,8 @@ func TestIntegrationGetHeight(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db, cfg := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	folderStore := ProvideStore(db)
 
 	orgID := CreateOrg(t, db, cfg)
@@ -855,7 +862,8 @@ func TestIntegrationGetFolders(t *testing.T) {
 	}
 
 	foldersNum := 10
-	db, cfg := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	folderStore := ProvideStore(db)
 
 	orgID := CreateOrg(t, db, cfg)
