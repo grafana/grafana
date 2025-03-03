@@ -90,11 +90,3 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
     loading: isLoading,
   };
 }
-
-function useDataSourceUid(rulesSourceName: string): { dataSourceUID?: string; error?: unknown } {
-  try {
-    return { dataSourceUID: getDatasourceAPIUid(rulesSourceName) };
-  } catch (error) {
-    return { error };
-  }
-}
