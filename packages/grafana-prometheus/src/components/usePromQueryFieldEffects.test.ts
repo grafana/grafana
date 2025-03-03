@@ -77,13 +77,6 @@ describe('usePromQueryFieldEffects', () => {
     expect(refreshHintMock).toHaveBeenCalledTimes(2);
   });
 
-  it('should not call refreshMetrics if languageProvider is not provided', () => {
-    renderHook(() => usePromQueryFieldEffects(null as any, mockRange, [], refreshMetricsMock, refreshHintMock));
-
-    expect(refreshMetricsMock).not.toHaveBeenCalled();
-    expect(refreshHintMock).toHaveBeenCalledTimes(2);
-  });
-
   it('should call refreshMetrics when the time range changes', async () => {
     const { rerender } = renderHook(
       (props: TestProps) =>

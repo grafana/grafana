@@ -37,7 +37,7 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
   } = props;
 
   const theme = useTheme2();
-  
+
   const [syntaxLoaded, setSyntaxLoaded] = useState(false);
   const [hint, setHint] = useState<QueryHint | null>(null);
   const [labelBrowserVisible, setLabelBrowserVisible] = useState(false);
