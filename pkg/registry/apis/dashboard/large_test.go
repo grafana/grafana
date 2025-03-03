@@ -54,7 +54,7 @@ func TestLargeDashboardSupport(t *testing.T) {
 	small, err := json.MarshalIndent(&dash.Spec, "", "  ")
 	require.NoError(t, err)
 	require.JSONEq(t, `{
-		"schemaVersion": 41,
+		"schemaVersion": 33,
 		"title": "Panel tests - All panels",
 		"tags": ["gdev","panel-tests","all-panels"]
 	}`, string(small))

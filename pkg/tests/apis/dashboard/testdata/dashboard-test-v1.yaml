@@ -3,4 +3,4 @@ kind: Dashboard
 metadata:
   name: test-v1
 spec:
-  title: Test dashboard. Created at v1
+  title: Test dashboard. Created at v1 XXX
