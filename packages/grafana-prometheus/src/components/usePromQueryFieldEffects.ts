@@ -11,11 +11,11 @@ export function usePromQueryFieldEffects(
   languageProvider: PromQlLanguageProvider,
   range: TimeRange | undefined,
   series: DataFrame[] | undefined,
-  refreshMetrics: (languageProviderInitRef: MutableRefObject<CancelablePromise<any> | null>) => Promise<void>,
+  refreshMetrics: (languageProviderInitRef: MutableRefObject<CancelablePromise<unknown> | null>) => Promise<void>,
   refreshHint: () => void
 ) {
   const lastRangeRef = useRef<{ from: DateTime; to: DateTime } | null>(null);
-  const languageProviderInitRef = useRef<CancelablePromise<any> | null>(null);
+  const languageProviderInitRef = useRef<CancelablePromise<unknown> | null>(null);
 
   // Effect for initial load
   useEffect(() => {
