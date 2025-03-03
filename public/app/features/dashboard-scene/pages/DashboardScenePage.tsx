@@ -35,17 +35,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   useEffect(() => {
     if (route.routeName === DashboardRoutes.Normal && type === 'snapshot') {
       stateManager.loadSnapshot(slug!);
-    }
-
-    return () => {
-      if (route.routeName === DashboardRoutes.Normal && type === 'snapshot') {
-        stateManager.clearState();
-      }
-    };
-  }, [route.routeName, slug, stateManager, type]);
-
-  useEffect(() => {
-    if (type !== 'snapshot') {
+    } else {
       stateManager.loadDashboard({
         type,
         slug,
@@ -58,7 +48,9 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     return () => {
       stateManager.clearState();
     };
-    // removing slug from dependencies
+
+    // removing slug from dependencies to prevent unmount when data links reference
+    //  the same dashboard with no slug in url
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateManager, uid, route.routeName, queryParams.folderUid, routeReloadCounter, type]);
 
