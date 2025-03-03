@@ -305,7 +305,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     timeRange,
     styles,
   });
- 
+
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
   return (
     <div data-testid="span-detail-component">

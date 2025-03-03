@@ -4,15 +4,18 @@ import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
 import { SpanLinkType } from '../../types/links';
 import { TraceSpan } from '../../types/trace';
 
-import { getSpanDetailLinkButtons, getProfileLinkButtonsContext, getProfileLinkPath, ProfilesButtonContext } from './SpanDetailLinkButtons';
+import {
+  getSpanDetailLinkButtons,
+  getProfileLinkButtonsContext,
+  getProfileLinkPath,
+  ProfilesButtonContext,
+} from './SpanDetailLinkButtons';
 
 const span = {
   process: {
     serviceName: 'test-service',
   },
-  tags: [
-    { key: 'pyroscope.profile.id', value: 'test-profile' },
-  ],
+  tags: [{ key: 'pyroscope.profile.id', value: 'test-profile' }],
 } as TraceSpan;
 
 const createSpanLink = jest.fn();
@@ -45,9 +48,7 @@ describe('getSpanDetailLinkButtons', () => {
   });
 
   it('should create log link button when logs link exists', () => {
-    createSpanLink.mockReturnValue([
-      { type: SpanLinkType.Logs, href: '/logs', title: 'Logs' },
-    ]);
+    createSpanLink.mockReturnValue([{ type: SpanLinkType.Logs, href: '/logs', title: 'Logs' }]);
 
     const result = getSpanDetailLinkButtons({
       span,
@@ -63,9 +64,7 @@ describe('getSpanDetailLinkButtons', () => {
   });
 
   it('should create profile link button when profiles link exists', () => {
-    createSpanLink.mockReturnValue([
-      { type: SpanLinkType.Profiles, href: '/profiles', title: RelatedProfilesTitle },
-    ]);
+    createSpanLink.mockReturnValue([{ type: SpanLinkType.Profiles, href: '/profiles', title: RelatedProfilesTitle }]);
 
     const result = getSpanDetailLinkButtons({
       span,
@@ -89,9 +88,7 @@ describe('getSpanDetailLinkButtons', () => {
   });
 
   it('should create session link button when session link exists', () => {
-    createSpanLink.mockReturnValue([
-      { type: SpanLinkType.Session, href: '/session', title: 'Session' },
-    ]);
+    createSpanLink.mockReturnValue([{ type: SpanLinkType.Session, href: '/session', title: 'Session' }]);
 
     const result = getSpanDetailLinkButtons({
       span,
@@ -123,12 +120,14 @@ describe('getProfileLinkButtonsContext', () => {
       spanSelector: 'test-profile',
       explorationType: 'flame-graph',
       timeRange: timeRange.raw,
-      targets: [{
-        datasource: {
-          type: 'grafana-pyroscope-datasource',
-          uid: 'test-uid',
+      targets: [
+        {
+          datasource: {
+            type: 'grafana-pyroscope-datasource',
+            uid: 'test-uid',
+          },
         },
-      }],
+      ],
     });
   });
 
@@ -141,12 +140,14 @@ describe('getProfileLinkButtonsContext', () => {
       spanSelector: 'test-profile',
       explorationType: 'flame-graph',
       timeRange: timeRange.raw,
-      targets: [{
-        datasource: {
-          type: 'grafana-pyroscope-datasource',
-          uid: undefined,
+      targets: [
+        {
+          datasource: {
+            type: 'grafana-pyroscope-datasource',
+            uid: undefined,
+          },
         },
-      }],
+      ],
     });
   });
 
@@ -183,12 +184,14 @@ describe('getProfileLinkPath', () => {
       from: 1000,
       to: 2000,
     },
-    targets: [{
-      datasource: {
-        type: 'grafana-pyroscope-datasource',
-        uid: 'test-uid',
+    targets: [
+      {
+        datasource: {
+          type: 'grafana-pyroscope-datasource',
+          uid: 'test-uid',
+        },
       },
-    }],
+    ],
   } as unknown as ProfilesButtonContext;
 
   it('should create correct URL path with all parameters', () => {
@@ -196,37 +199,39 @@ describe('getProfileLinkPath', () => {
 
     expect(path).toBe(
       '/a/grafana-pyroscope-app/explore?' +
-      'var-dataSource=test-uid' +
-      '&var-serviceName=test-service' +
-      '&var-profileMetricId=test-type' +
-      '&from=1000' +
-      '&to=2000' +
-      '&explorationType=flame-graph' +
-      '&spanSelector=test-profile'
+        'var-dataSource=test-uid' +
+        '&var-serviceName=test-service' +
+        '&var-profileMetricId=test-type' +
+        '&from=1000' +
+        '&to=2000' +
+        '&explorationType=flame-graph' +
+        '&spanSelector=test-profile'
     );
   });
 
   it('should handle missing datasource uid', () => {
     const contextWithoutUid = {
       ...context,
-      targets: [{
-        datasource: {
-          type: 'grafana-pyroscope-datasource',
-          uid: undefined,
+      targets: [
+        {
+          datasource: {
+            type: 'grafana-pyroscope-datasource',
+            uid: undefined,
+          },
         },
-      }],
+      ],
     };
 
     const path = getProfileLinkPath(contextWithoutUid, 'grafana-pyroscope-app');
 
     expect(path).toBe(
       '/a/grafana-pyroscope-app/explore?' +
-      'var-serviceName=test-service' +
-      '&var-profileMetricId=test-type' +
-      '&from=1000' +
-      '&to=2000' +
-      '&explorationType=flame-graph' +
-      '&spanSelector=test-profile'
+        'var-serviceName=test-service' +
+        '&var-profileMetricId=test-type' +
+        '&from=1000' +
+        '&to=2000' +
+        '&explorationType=flame-graph' +
+        '&spanSelector=test-profile'
     );
   });
 
@@ -240,12 +245,12 @@ describe('getProfileLinkPath', () => {
 
     expect(path).toBe(
       '/a/grafana-pyroscope-app/explore?' +
-      'var-serviceName=test-service' +
-      '&var-profileMetricId=test-type' +
-      '&from=1000' +
-      '&to=2000' +
-      '&explorationType=flame-graph' +
-      '&spanSelector=test-profile'
+        'var-serviceName=test-service' +
+        '&var-profileMetricId=test-type' +
+        '&from=1000' +
+        '&to=2000' +
+        '&explorationType=flame-graph' +
+        '&spanSelector=test-profile'
     );
   });
-}); 
+});

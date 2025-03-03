@@ -1,12 +1,6 @@
 import * as React from 'react';
 
-import {
-  IconName,
-  PluginExtensionLink,
-  PluginExtensionPoints,
-  RawTimeRange,
-  TimeRange,
-} from '@grafana/data';
+import { IconName, PluginExtensionLink, PluginExtensionPoints, RawTimeRange, TimeRange } from '@grafana/data';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, locationService, reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { ButtonGroup, ButtonSelect, DataLinkButton } from '@grafana/ui';
@@ -23,12 +17,12 @@ export type ProfilesButtonContext = {
   spanSelector: string;
   explorationType: string;
   timeRange: RawTimeRange;
-  targets: Array<{ datasource: { type: string; uid: string | undefined; }; }>;
+  targets: Array<{ datasource: { type: string; uid: string | undefined } }>;
 };
 
 export type Props = {
   span: TraceSpan;
-  traceToProfilesOptions?: TraceToProfilesOptions;  
+  traceToProfilesOptions?: TraceToProfilesOptions;
   datasourceType: string;
   timeRange: TimeRange;
   createSpanLink?: SpanLinkFunc;
@@ -39,14 +33,7 @@ export type Props = {
 };
 
 export const getSpanDetailLinkButtons = (props: Props) => {
-  const {
-    span,
-    createSpanLink,
-    traceToProfilesOptions,
-    timeRange,
-    datasourceType,
-    styles,
-  } = props;
+  const { span, createSpanLink, traceToProfilesOptions, timeRange, datasourceType, styles } = props;
 
   let logLinkButton: JSX.Element | null = null;
   let profileLinkButton: JSX.Element | null = null;
@@ -83,7 +70,8 @@ export const getSpanDetailLinkButtons = (props: Props) => {
   }
 
   let profileLinkButtons = profileLinkButton;
-  if (profileLinkButton) { // ensure we have a profile link
+  if (profileLinkButton) {
+    // ensure we have a profile link
     const profilesDrilldownPluginId = 'grafana-pyroscope-app';
     const context = getProfileLinkButtonsContext(span, traceToProfilesOptions, timeRange);
 
@@ -98,20 +86,25 @@ export const getSpanDetailLinkButtons = (props: Props) => {
       if (link) {
         profileLinkButtons = createProfileLinkButtons(profileLinkButton, styles, link);
       }
-    } else { // fallback to building a url to open in Grafana Profiles Drilldown
+    } else {
+      // fallback to building a url to open in Grafana Profiles Drilldown
       const drilldownProfilesAppExists = config.apps[profilesDrilldownPluginId];
 
       if (drilldownProfilesAppExists) {
         const path = getProfileLinkPath(context, profilesDrilldownPluginId);
-        profileLinkButtons = createProfileLinkButtons(profileLinkButton, styles, undefined, path);    
+        profileLinkButtons = createProfileLinkButtons(profileLinkButton, styles, undefined, path);
       }
     }
   }
 
   return { profileLinkButtons, logLinkButton, sessionLinkButton };
-}
+};
 
-export const getProfileLinkButtonsContext = (span: TraceSpan, traceToProfilesOptions: TraceToProfilesOptions | undefined, timeRange: TimeRange) => {
+export const getProfileLinkButtonsContext = (
+  span: TraceSpan,
+  traceToProfilesOptions: TraceToProfilesOptions | undefined,
+  timeRange: TimeRange
+) => {
   const spanSelector = span.tags.filter((tag) => tag.key === pyroscopeProfileIdTagKey);
   const context: ProfilesButtonContext = {
     serviceName: span.process.serviceName ?? '',
@@ -129,10 +122,13 @@ export const getProfileLinkButtonsContext = (span: TraceSpan, traceToProfilesOpt
     ],
   };
   return context;
-}
+};
 
 export const getProfileLinkPath = (context: ProfilesButtonContext, profilesDrilldownPluginId: string) => {
-  const datasourceParam = context.targets.length > 0 && context.targets[0].datasource?.uid ? `var-dataSource=${context.targets[0].datasource.uid}` : '';
+  const datasourceParam =
+    context.targets.length > 0 && context.targets[0].datasource?.uid
+      ? `var-dataSource=${context.targets[0].datasource.uid}`
+      : '';
   const serviceNameParam = `&var-serviceName=${context.serviceName}`;
   const profileTypeParam = `&var-profileMetricId=${context.profileTypeId}`;
   const explorationTypeParam = `&explorationType=${context.explorationType}`;
@@ -145,7 +141,7 @@ export const getProfileLinkPath = (context: ProfilesButtonContext, profilesDrill
   ).toString();
   const path = `${base}${params}`;
   return path;
-}
+};
 
 const createLinkButton = (
   link: SpanLinkDef,
@@ -187,7 +183,7 @@ const createLinkButton = (
 
 const createProfileLinkButtons = (
   profileLinkButton: JSX.Element,
-  styles: { profilesDrilldownSelect: string; profilesForThisSpanButton: string; } | undefined,
+  styles: { profilesDrilldownSelect: string; profilesForThisSpanButton: string } | undefined,
   link?: PluginExtensionLink,
   path?: string
 ) => {
@@ -214,4 +210,4 @@ const createProfileLinkButtons = (
       />
     </ButtonGroup>
   );
-}
+};
