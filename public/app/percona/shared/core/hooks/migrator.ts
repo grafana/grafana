@@ -6,9 +6,11 @@ import { appEvents } from 'app/core/core';
 import { migrateAll } from 'app/features/api-keys/state/actions';
 import { useAppDispatch } from 'app/store/store';
 import { useSelector } from 'app/types';
+import { config } from '@grafana/runtime';
 
 import { snoozeApiKeyMigrationSummary } from '../reducers/user/user';
 import { getPerconaUser } from '../selectors';
+import { isPmmAdmin } from 'app/percona/shared/helpers/permissions';
 
 export const useMigrator = () => {
   const migrationResult = useSelector((state) => state.apiKeys.migrationResult);
@@ -18,7 +20,7 @@ export const useMigrator = () => {
   const migrationSummaryVisible = !snoozedApiKeysMigration && migrationResult && migrationResult.failed > 0;
 
   useEffect(() => {
-    if (!location.search.includes('force-apikey-migration=true')) {
+    if (!location.search.includes('force-apikey-migration=true') || !isPmmAdmin(config.bootData.user)) {
       return;
     }
 
