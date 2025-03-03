@@ -169,7 +169,8 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		guardian.New = origNewGuardian
 	})
 
-	db, cfg := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	cfg.AppURL = folderApiServerMock.URL
 
 	restCfgProvider := rcp{
