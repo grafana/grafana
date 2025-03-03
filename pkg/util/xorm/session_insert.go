@@ -352,6 +352,7 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 		for _, col := range colNames {
 			if col == table.AutoIncrement {
 				found = true
+				break
 			}
 		}
 		if !found {

@@ -21,7 +21,7 @@ func init() {
 }
 
 func NewSpannerDialect() Dialect {
-	d := SpannerDialect{d: core.QueryDialect("spanner")}
+	d := SpannerDialect{d: core.QueryDialect(Spanner)}
 	d.BaseDialect.dialect = &d
 	d.BaseDialect.driverName = Spanner
 	return &d

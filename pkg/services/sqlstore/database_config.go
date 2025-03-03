@@ -203,8 +203,10 @@ func (dbCfg *DatabaseConfig) buildConnectionString(cfg *setting.Cfg, features fe
 		}
 
 		cnnstr += buildExtraConnectionString('&', dbCfg.UrlQueryParams)
-	default:
+	case migrator.Spanner:
 		cnnstr = dbCfg.Name
+	default:
+		return fmt.Errorf("unknown database type: %s", dbCfg.Type)
 	}
 
 	dbCfg.ConnectionString = cnnstr
