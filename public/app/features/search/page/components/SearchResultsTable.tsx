@@ -258,10 +258,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'sticky',
       top: 0,
       zIndex: 1,
-      borderBottom: `2px solid ${theme.colors.border.weak}`,
-      fontWeight: theme.typography.fontWeightMedium,
+      border: `1px solid ${theme.colors.border.strong}`,
+      fontWeight: theme.typography.fontWeightLight,
       margin: 0,
-      borderRadius: `${theme.shape.radius.default} ${theme.shape.radius.default} 0 0`,
+      borderRadius: `${theme.shape.radius.default}`,
       backdropFilter: 'blur(8px)',
 
       // Enhanced shadow for better depth
