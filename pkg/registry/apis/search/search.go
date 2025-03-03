@@ -213,7 +213,7 @@ const rootFolder = "general"
 
 // nolint:gocyclo
 func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
-	ctx, span := s.tracer.Start(r.Context(), "dashboard.search")
+	ctx, span := s.tracer.Start(r.Context(), "search.search")
 	defer span.End()
 
 	user, err := identity.GetRequester(ctx)
@@ -268,18 +268,19 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), dashboard.DASHBOARD_RESOURCE)
 		// Currently a search query is across folders and dashboards
 		if err == nil {
-			federate, err = asResourceKey(user.GetNamespace(), folderv0alpha1.RESOURCE)
+			federate, err = asResourceKey(user.GetNamespace(), "dashboards")
 		}
 	case 1:
-		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), types[0])
+		searchRequest.Options.Key, err = s.typeToResourceKey(user.GetNamespace(), types[0])
 	case 2:
-		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), types[0])
+		searchRequest.Options.Key, err = s.typeToResourceKey(user.GetNamespace(), types[0])
 		if err == nil {
-			federate, err = asResourceKey(user.GetNamespace(), types[1])
+			federate, err = s.typeToResourceKey(user.GetNamespace(), types[1])
 		}
 	default:
 		err = apierrors.NewBadRequest("too many type requests")
 	}
+	s.log.Warn("foo", "err", err)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
@@ -387,6 +388,13 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.write(w, parsedResults)
+}
+
+func (s *SearchHandler) typeToResourceKey(namespace string, typ string) (*resource.ResourceKey, error) {
+	if idx := strings.Index(typ, "."); idx > 0 {
+		return &resource.ResourceKey{Namespace: namespace, Group: typ[idx+1:], Resource: typ[:idx]}, nil
+	}
+	return asResourceKey(namespace, typ)
 }
 
 func (s *SearchHandler) write(w http.ResponseWriter, obj any) {
