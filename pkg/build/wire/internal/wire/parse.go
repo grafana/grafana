@@ -26,6 +26,7 @@ import (
 	"strconv"
 	"strings"
 
+	"golang.org/x/sync/errgroup"
 	"golang.org/x/tools/go/ast/astutil"
 	"golang.org/x/tools/go/packages"
 	"golang.org/x/tools/go/types/typeutil"
@@ -361,24 +362,50 @@ func load(ctx context.Context, wd string, env []string, tags string, patterns []
 	if len(tags) > 0 {
 		cfg.BuildFlags[0] += " " + tags
 	}
+
 	escaped := make([]string, len(patterns))
 	for i := range patterns {
 		escaped[i] = "pattern=" + patterns[i]
 	}
-	pkgs, err := packages.Load(cfg, escaped...)
-	if err != nil {
+
+	g := errgroup.Group{}
+	g.SetLimit(len(escaped))
+
+	pkgsBatch := make([][]*packages.Package, len(escaped))
+	for i, p := range escaped {
+		g.Go(func() error {
+			pkgs, err := packages.Load(cfg, p)
+			if err != nil {
+				return err
+			}
+
+			pkgsBatch[i] = pkgs
+			return nil
+		})
+	}
+
+	if err := g.Wait(); err != nil {
 		return nil, []error{err}
 	}
+
+	pkgsFlat := make([]*packages.Package, 0, len(escaped))
+	for _, p := range pkgsBatch {
+		pkgsFlat = append(pkgsFlat, p...)
+	}
+
 	var errs []error
-	for _, p := range pkgs {
+
+	for _, p := range pkgsFlat {
 		for _, e := range p.Errors {
 			errs = append(errs, e)
 		}
 	}
+
 	if len(errs) > 0 {
 		return nil, errs
 	}
-	return pkgs, nil
+
+	return pkgsFlat, nil
 }
 
 // Info holds the result of Load.

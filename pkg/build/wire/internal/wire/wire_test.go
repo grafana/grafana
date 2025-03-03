@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"go/build"
 	"go/types"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -31,34 +30,50 @@ import (
 	"unicode/utf8"
 
 	"github.com/google/go-cmp/cmp"
+	"golang.org/x/sync/errgroup"
 )
 
 var record = flag.Bool("record", false, "whether to run tests against cloud resources and record the interactions")
 
 func TestWire(t *testing.T) {
 	const testRoot = "testdata"
-	testdataEnts, err := ioutil.ReadDir(testRoot) // ReadDir sorts by name.
+	testdataEnts, err := os.ReadDir(testRoot) // ReadDir sorts by name.
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	// The marker function package source is needed to have the test cases
 	// type check. loadTestCase places this file at the well-known import path.
-	wireGo, err := ioutil.ReadFile(filepath.Join("..", "..", "wire.go"))
+	wireGo, err := os.ReadFile(filepath.Join("..", "..", "wire.go"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	tests := make([]*testCase, 0, len(testdataEnts))
-	for _, ent := range testdataEnts {
-		name := ent.Name()
-		if !ent.IsDir() || strings.HasPrefix(name, ".") || strings.HasPrefix(name, "_") {
-			continue
-		}
-		test, err := loadTestCase(filepath.Join(testRoot, name), wireGo)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-		tests = append(tests, test)
+
+	tests := make([]*testCase, len(testdataEnts))
+
+	g := errgroup.Group{}
+	g.SetLimit(len(testdataEnts))
+
+	for i, ent := range testdataEnts {
+		g.Go(func() error {
+			name := ent.Name()
+			if !ent.IsDir() || strings.HasPrefix(name, ".") || strings.HasPrefix(name, "_") {
+				return nil
+			}
+
+			test, err := loadTestCase(filepath.Join(testRoot, name), wireGo)
+			if err != nil {
+				return err
+			}
+
+			tests[i] = test
+
+			return nil
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		t.Error(err)
 	}
 
 	var goToolPath string
@@ -68,27 +83,35 @@ func TestWire(t *testing.T) {
 			t.Fatal("go toolchain not available:", err)
 		}
 	}
+
 	ctx := context.Background()
+
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
 			// Materialize a temporary GOPATH directory.
-			gopath, err := ioutil.TempDir("", "wire_test")
+			gopath, err := os.MkdirTemp("", "wire_test")
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer os.RemoveAll(gopath)
+
+			t.Cleanup(func() {
+				_ = os.RemoveAll(gopath)
+			})
+
 			gopath, err = filepath.EvalSymlinks(gopath)
 			if err != nil {
 				t.Fatal(err)
 			}
+
 			if err := test.materialize(gopath); err != nil {
 				t.Fatal(err)
 			}
+
 			wd := filepath.Join(gopath, "src", "example.com")
 			gens, errs := Generate(ctx, wd, append(os.Environ(), "GOPATH="+gopath), []string{test.pkg}, &GenerateOptions{Header: test.header})
+
 			var gen GenerateResult
 			if len(gens) > 1 {
 				t.Fatalf("got %d generated files, want 0 or 1", len(gens))
@@ -113,7 +136,7 @@ func TestWire(t *testing.T) {
 				}
 				if *record {
 					wireErrsFile := filepath.Join(testRoot, test.name, "want", "wire_errs.txt")
-					if err := ioutil.WriteFile(wireErrsFile, []byte(strings.Join(gotErrStrings, "\n\n")), 0666); err != nil {
+					if err := os.WriteFile(wireErrsFile, []byte(strings.Join(gotErrStrings, "\n\n")), 0666); err != nil {
 						t.Fatalf("failed to write wire_errs.txt file: %v", err)
 					}
 				} else {
@@ -147,7 +170,7 @@ func TestWire(t *testing.T) {
 					t.Fatalf("go build check failed: %v", err)
 				}
 				testdataWireGenPath := filepath.Join(testRoot, test.name, "want", "wire_gen.go")
-				if err := ioutil.WriteFile(testdataWireGenPath, gen.Content, 0666); err != nil {
+				if err := os.WriteFile(testdataWireGenPath, gen.Content, 0666); err != nil {
 					t.Fatalf("failed to record wire_gen.go to testdata: %v", err)
 				}
 			} else {
@@ -465,26 +488,26 @@ type testCase struct {
 //					missing if wire_errs.txt is present
 func loadTestCase(root string, wireGoSrc []byte) (*testCase, error) {
 	name := filepath.Base(root)
-	pkg, err := ioutil.ReadFile(filepath.Join(root, "pkg"))
+	pkg, err := os.ReadFile(filepath.Join(root, "pkg"))
 	if err != nil {
 		return nil, fmt.Errorf("load test case %s: %v", name, err)
 	}
-	header, _ := ioutil.ReadFile(filepath.Join(root, "header"))
+	header, _ := os.ReadFile(filepath.Join(root, "header"))
 	var wantProgramOutput []byte
 	var wantWireOutput []byte
-	wireErrb, err := ioutil.ReadFile(filepath.Join(root, "want", "wire_errs.txt"))
+	wireErrb, err := os.ReadFile(filepath.Join(root, "want", "wire_errs.txt"))
 	wantWireError := err == nil
 	var wantWireErrorStrings []string
 	if wantWireError {
 		wantWireErrorStrings = strings.Split(string(wireErrb), "\n\n")
 	} else {
 		if !*record {
-			wantWireOutput, err = ioutil.ReadFile(filepath.Join(root, "want", "wire_gen.go"))
+			wantWireOutput, err = os.ReadFile(filepath.Join(root, "want", "wire_gen.go"))
 			if err != nil {
 				return nil, fmt.Errorf("load test case %s: %v, if this is a new testcase, run with -record to generate the wire_gen.go file", name, err)
 			}
 		}
-		wantProgramOutput, err = ioutil.ReadFile(filepath.Join(root, "want", "program_out.txt"))
+		wantProgramOutput, err = os.ReadFile(filepath.Join(root, "want", "program_out.txt"))
 		if err != nil {
 			return nil, fmt.Errorf("load test case %s: %v", name, err)
 		}
@@ -508,7 +531,7 @@ func loadTestCase(root string, wireGoSrc []byte) (*testCase, error) {
 		if !info.Mode().IsRegular() || filepath.Ext(src) != ".go" {
 			return nil
 		}
-		data, err := ioutil.ReadFile(src)
+		data, err := os.ReadFile(src)
 		if err != nil {
 			return err
 		}
@@ -533,14 +556,24 @@ func loadTestCase(root string, wireGoSrc []byte) (*testCase, error) {
 // materialize creates a new GOPATH at the given directory, which may or
 // may not exist.
 func (test *testCase) materialize(gopath string) error {
+	g := errgroup.Group{}
 	for name, content := range test.goFiles {
-		dst := filepath.Join(gopath, "src", filepath.FromSlash(name))
-		if err := os.MkdirAll(filepath.Dir(dst), 0777); err != nil {
-			return fmt.Errorf("materialize GOPATH: %v", err)
-		}
-		if err := ioutil.WriteFile(dst, content, 0666); err != nil {
-			return fmt.Errorf("materialize GOPATH: %v", err)
-		}
+		g.Go(func() error {
+			dst := filepath.Join(gopath, "src", filepath.FromSlash(name))
+			if err := os.MkdirAll(filepath.Dir(dst), 0777); err != nil {
+				return fmt.Errorf("materialize GOPATH: %v", err)
+			}
+
+			if err := os.WriteFile(dst, content, 0666); err != nil {
+				return fmt.Errorf("materialize GOPATH: %v", err)
+			}
+
+			return nil
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return err
 	}
 
 	// Add go.mod files to example.com and github.com/google/wire.
@@ -549,10 +582,10 @@ func (test *testCase) materialize(gopath string) error {
 	depLoc := filepath.Join(gopath, "src", filepath.FromSlash(depPath))
 	example := fmt.Sprintf("module %s\n\nrequire %s v0.1.0\nreplace %s => %s\n", importPath, depPath, depPath, depLoc)
 	gomod := filepath.Join(gopath, "src", filepath.FromSlash(importPath), "go.mod")
-	if err := ioutil.WriteFile(gomod, []byte(example), 0666); err != nil {
+	if err := os.WriteFile(gomod, []byte(example), 0666); err != nil {
 		return fmt.Errorf("generate go.mod for %s: %v", gomod, err)
 	}
-	if err := ioutil.WriteFile(filepath.Join(depLoc, "go.mod"), []byte("module "+depPath+"\n"), 0666); err != nil {
+	if err := os.WriteFile(filepath.Join(depLoc, "go.mod"), []byte("module "+depPath+"\n"), 0666); err != nil {
 		return fmt.Errorf("generate go.mod for %s: %v", depPath, err)
 	}
 	return nil

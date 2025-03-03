@@ -31,6 +31,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"unicode"
 	"unicode/utf8"
 
@@ -84,40 +85,53 @@ func Generate(ctx context.Context, wd string, env []string, patterns []string, o
 	if opts == nil {
 		opts = &GenerateOptions{}
 	}
+
 	pkgs, errs := load(ctx, wd, env, opts.Tags, patterns)
 	if len(errs) > 0 {
 		return nil, errs
 	}
+
 	generated := make([]GenerateResult, len(pkgs))
+
+	var wg sync.WaitGroup
+	wg.Add(len(pkgs))
+
 	for i, pkg := range pkgs {
-		generated[i].PkgPath = pkg.PkgPath
-		outDir, err := detectOutputDir(pkg.GoFiles)
-		if err != nil {
-			generated[i].Errs = append(generated[i].Errs, err)
-			continue
-		}
-		generated[i].OutputPath = filepath.Join(outDir, opts.PrefixOutputFile+"wire_gen.go")
-		g := newGen(pkg)
-		injectorFiles, errs := generateInjectors(g, pkg)
-		if len(errs) > 0 {
-			generated[i].Errs = errs
-			continue
-		}
-		copyNonInjectorDecls(g, injectorFiles, pkg.TypesInfo)
-		goSrc := g.frame(opts.Tags)
-		if len(opts.Header) > 0 {
-			goSrc = append(opts.Header, goSrc...)
-		}
-		fmtSrc, err := format.Source(goSrc)
-		if err != nil {
-			// This is likely a bug from a poorly generated source file.
-			// Add an error but also the unformatted source.
-			generated[i].Errs = append(generated[i].Errs, err)
-		} else {
-			goSrc = fmtSrc
-		}
-		generated[i].Content = goSrc
+		go func() {
+			defer wg.Done()
+
+			generated[i].PkgPath = pkg.PkgPath
+			outDir, err := detectOutputDir(pkg.GoFiles)
+			if err != nil {
+				generated[i].Errs = append(generated[i].Errs, err)
+				return
+			}
+			generated[i].OutputPath = filepath.Join(outDir, opts.PrefixOutputFile+"wire_gen.go")
+			g := newGen(pkg)
+			injectorFiles, errs := generateInjectors(g, pkg)
+			if len(errs) > 0 {
+				generated[i].Errs = errs
+				return
+			}
+			copyNonInjectorDecls(g, injectorFiles, pkg.TypesInfo)
+			goSrc := g.frame(opts.Tags)
+			if len(opts.Header) > 0 {
+				goSrc = append(opts.Header, goSrc...)
+			}
+			fmtSrc, err := format.Source(goSrc)
+			if err != nil {
+				// This is likely a bug from a poorly generated source file.
+				// Add an error but also the unformatted source.
+				generated[i].Errs = append(generated[i].Errs, err)
+			} else {
+				goSrc = fmtSrc
+			}
+			generated[i].Content = goSrc
+		}()
 	}
+
+	wg.Wait()
+
 	return generated, nil
 }
 
