@@ -193,6 +193,10 @@ export interface AzureLogsQuery {
    */
   intersectTime?: boolean;
   /**
+   * Denotes if logs query editor is in builder mode
+   */
+  mode?: LogsEditorMode;
+  /**
    * KQL query to be executed.
    */
   query?: string;
@@ -282,6 +286,11 @@ export enum ResultFormat {
   Table = 'table',
   TimeSeries = 'time_series',
   Trace = 'trace',
+}
+
+export enum LogsEditorMode {
+  Builder = 'builder',
+  Raw = 'raw',
 }
 
 export interface AzureResourceGraphQuery {
