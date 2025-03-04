@@ -33,7 +33,6 @@ export interface BrowserState {
   error: string;
   validationStatus: string;
   valueSearchTerm: string;
-  seriesLimit?: string;
 }
 
 export const DEFAULT_SERIES_LIMIT = '40000';

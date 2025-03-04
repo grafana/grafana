@@ -34,10 +34,6 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
     this.setState({ labelSearchTerm: event.target.value });
   };
 
-  onChangeSeriesLimit = (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ seriesLimit: event.target.value.trim() });
-  };
-
   onChangeValueSearch = (event: ChangeEvent<HTMLInputElement>) => {
     this.setState({ valueSearchTerm: event.target.value });
   };
@@ -241,7 +237,8 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
       this.updateLabelState(lastFacetted, { loading: true }, `Facetting labels for ${selector}`);
     }
     try {
-      const possibleLabels = await languageProvider.fetchSeriesLabels(selector, true, this.state.seriesLimit);
+      // FIXME use series limit from useMetricsBrowser
+      const possibleLabels = await languageProvider.fetchSeriesLabels(selector, true, DEFAULT_SERIES_LIMIT);
       // If selector changed, clear loading state and discard result by returning early
       if (selector !== buildSelector(this.state.labels)) {
         if (lastFacetted) {
@@ -304,8 +301,6 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
         <Stack gap={3}>
           <MetricSelector
             labels={labels}
-            seriesLimit={this.state.seriesLimit ?? DEFAULT_SERIES_LIMIT}
-            onChangeSeriesLimit={this.onChangeSeriesLimit}
             onClickMetric={this.onClickMetric}
             styles={styles}
           />

@@ -1,21 +1,21 @@
-import { ChangeEvent, useState } from 'react';
+import { useState } from 'react';
 import { FixedSizeList } from 'react-window';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { BrowserLabel as PromLabel, Input, Label } from '@grafana/ui';
 
+import { useMetricsBrowser } from './MetricsBrowserContext';
 import { LIST_ITEM_SIZE, METRIC_LABEL, SelectableLabel } from './types';
 
 interface MetricSelectorProps {
   labels: SelectableLabel[];
-  seriesLimit: string;
-  onChangeSeriesLimit: (event: ChangeEvent<HTMLInputElement>) => void;
   onClickMetric: (name: string, value: string | undefined) => void;
   styles: Record<string, string>;
 }
 
-export function MetricSelector({ labels, seriesLimit, onChangeSeriesLimit, onClickMetric, styles }: MetricSelectorProps) {
+export function MetricSelector({ labels, onClickMetric, styles }: MetricSelectorProps) {
   const [metricSearchTerm, setMetricSearchTerm] = useState('');
+  const { seriesLimit, setSeriesLimit } = useMetricsBrowser();
 
   // Filter metrics
   let metrics = labels.find((label) => label.name === METRIC_LABEL);
@@ -47,7 +47,7 @@ export function MetricSelector({ labels, seriesLimit, onChangeSeriesLimit, onCli
         </Label>
         <div>
           <Input
-            onChange={onChangeSeriesLimit}
+            onChange={(e) => setSeriesLimit(e.currentTarget.value.trim())}
             aria-label="Limit results from series endpoint"
             value={seriesLimit}
             data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.seriesLimit}
