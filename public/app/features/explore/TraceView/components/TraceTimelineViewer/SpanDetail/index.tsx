@@ -17,6 +17,7 @@ import { SpanStatusCode } from '@opentelemetry/api';
 import cx from 'classnames';
 
 import {
+  CoreApp,
   DataFrame,
   dateTimeFormat,
   GrafanaTheme2,
@@ -166,6 +167,7 @@ export type SpanDetailProps = {
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
   setRedrawListView: (redraw: {}) => void;
   timeRange: TimeRange;
+  app: CoreApp;
 };
 
 export default function SpanDetail(props: SpanDetailProps) {
@@ -192,6 +194,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     traceToProfilesOptions,
     setRedrawListView,
     timeRange,
+    app,
   } = props;
   const {
     isTagsOpen,
@@ -294,6 +297,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     datasourceType,
     traceToProfilesOptions,
     timeRange,
+    app,
   });
 
   const focusSpanLink = createFocusSpanLink(traceID, spanID);

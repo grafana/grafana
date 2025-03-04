@@ -16,7 +16,7 @@ import { css } from '@emotion/css';
 import classNames from 'classnames';
 import { PureComponent } from 'react';
 
-import { GrafanaTheme2, LinkModel, TimeRange, TraceKeyValuePair, TraceLog } from '@grafana/data';
+import { CoreApp, GrafanaTheme2, LinkModel, TimeRange, TraceKeyValuePair, TraceLog } from '@grafana/data';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { TimeZone } from '@grafana/schema';
 import { Button, clearButtonStyles, stylesFactory, withTheme2 } from '@grafana/ui';
@@ -104,6 +104,7 @@ export type SpanDetailRowProps = {
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
   setRedrawListView: (redraw: {}) => void;
   timeRange: TimeRange;
+  app: CoreApp;
 };
 
 export class UnthemedSpanDetailRow extends PureComponent<SpanDetailRowProps> {
@@ -148,6 +149,7 @@ export class UnthemedSpanDetailRow extends PureComponent<SpanDetailRowProps> {
       setTraceFlameGraphs,
       setRedrawListView,
       timeRange,
+      app,
     } = this.props;
     const styles = getStyles(theme);
     return (
@@ -196,6 +198,7 @@ export class UnthemedSpanDetailRow extends PureComponent<SpanDetailRowProps> {
               setTraceFlameGraphs={setTraceFlameGraphs}
               setRedrawListView={setRedrawListView}
               timeRange={timeRange}
+              app={app}
             />
           </div>
         </TimelineRow.Cell>

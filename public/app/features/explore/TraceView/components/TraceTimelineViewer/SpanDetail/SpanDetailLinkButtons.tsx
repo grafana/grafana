@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { IconName, PluginExtensionPoints, RawTimeRange, TimeRange } from '@grafana/data';
+import { CoreApp, IconName, PluginExtensionPoints, RawTimeRange, TimeRange } from '@grafana/data';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, locationService, reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { Button, DataLinkButton } from '@grafana/ui';
@@ -26,10 +26,11 @@ export type Props = {
   datasourceType: string;
   timeRange: TimeRange;
   createSpanLink?: SpanLinkFunc;
+  app: CoreApp;
 };
 
 export const getSpanDetailLinkButtons = (props: Props) => {
-  const { span, createSpanLink, traceToProfilesOptions, timeRange, datasourceType } = props;
+  const { span, createSpanLink, traceToProfilesOptions, timeRange, datasourceType, app } = props;
 
   let logLinkButton: JSX.Element | null = null;
   let profileLinkButton: JSX.Element | null = null;
@@ -72,7 +73,7 @@ export const getSpanDetailLinkButtons = (props: Props) => {
 
     // if in explore, use the plugin extension point to get the link
     // note: plugin extension point links are not currently supported in panel plugins
-    if (window.location.pathname.startsWith('/explore')) {
+    if (app === CoreApp.Explore) {
       const extensionPointId = PluginExtensionPoints.TraceViewDetails;
       const { links } = usePluginLinks({ extensionPointId, context, limitPerPlugin: 1 });
       const link = links && links.length > 0 ? links.find((link) => link.pluginId === profilesDrilldownPluginId) : null;
