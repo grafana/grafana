@@ -285,13 +285,14 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       $data: new DashboardDataLayerSet({ annotationLayers, alertStatesLayer }),
       controls: new DashboardControls({
         variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
-        timePicker: new SceneTimePicker({}),
+        timePicker: new SceneTimePicker({
+          quickRanges: oldModel.timepicker.quick_ranges,
+        }),
         refreshPicker: new SceneRefreshPicker({
           refresh: oldModel.refresh,
           intervals: oldModel.timepicker.refresh_intervals,
           withText: true,
         }),
-        hideTimeControls: oldModel.timepicker.hidden,
       }),
     },
     serializerVersion

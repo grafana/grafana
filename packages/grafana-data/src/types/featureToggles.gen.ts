@@ -36,14 +36,12 @@ export interface FeatureToggles {
   autoMigrateStatPanel?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
-  vizActions?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   grpcServer?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
-  accessControlOnCall?: boolean;
   nestedFolders?: boolean;
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
@@ -173,7 +171,6 @@ export interface FeatureToggles {
   newDashboardSharingComponent?: boolean;
   alertingListViewV2?: boolean;
   dashboardRestore?: boolean;
-  datasourceProxyDisableRBAC?: boolean;
   alertingDisableSendAlertsExternal?: boolean;
   preserveDashboardStateWhenNavigating?: boolean;
   alertingCentralAlertHistory?: boolean;
@@ -255,4 +252,6 @@ export interface FeatureToggles {
   alertingJiraIntegration?: boolean;
   alertingRuleVersionHistoryRestore?: boolean;
   newShareReportDrawer?: boolean;
+  rendererDisableAppPluginsPreload?: boolean;
+  assetSriChecks?: boolean;
 }
