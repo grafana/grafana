@@ -620,7 +620,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /scripts/import_many_dashboards.sh @torkelo
 /scripts/mixin-check.sh @bergquist
 /scripts/openapi3/ @grafana/grafana-operator-experience-squad
-/scripts/prepare-packagejson.js @grafana/frontend-ops
+/scripts/prepare-npm-package.js @grafana/frontend-ops
 /scripts/protobuf-check.sh @grafana/plugins-platform-backend
 /scripts/stripnulls.sh @grafana/grafana-as-code
 /scripts/tag_release.sh @grafana/grafana-developer-enablement-squad

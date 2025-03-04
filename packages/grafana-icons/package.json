@@ -15,9 +15,9 @@
   "main": "src/index.ts",
   "types": "src/index.ts",
   "publishConfig": {
-    "main": "dist/index.js",
-    "module": "dist/index.js",
-    "types": "dist/index.d.ts",
+    "main": "./dist/index.js",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.mts",
     "access": "public"
   },
   "files": [

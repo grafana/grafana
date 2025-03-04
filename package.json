@@ -83,6 +83,7 @@
     "@grafana/plugin-e2e": "1.17.1",
     "@grafana/tsconfig": "^2.0.0",
     "@manypkg/get-packages": "^2.2.0",
+    "@npmcli/package-json": "^5.2.0",
     "@playwright/test": "1.50.1",
     "@pmmmwh/react-refresh-webpack-plugin": "0.5.15",
     "@react-types/button": "3.10.2",
