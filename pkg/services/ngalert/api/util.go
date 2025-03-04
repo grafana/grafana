@@ -206,8 +206,9 @@ func messageExtractor(resp *response.NormalResponse) (any, error) {
 // ErrorResp creates a response with a visible error
 func ErrResp(status int, err error, msg string, args ...any) *response.NormalResponse {
 	if msg != "" {
-		formattedMsg := fmt.Sprintf(msg, args...)
-		err = fmt.Errorf("%s: %w", formattedMsg, err)
+		msg += ": %w"
+		args = append(args, err)
+		err = fmt.Errorf(msg, args...)
 	}
 	return response.Error(status, err.Error(), err)
 }
