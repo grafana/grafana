@@ -26,6 +26,12 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: PROVISIONING_URL + '/setup',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "SetupPage"*/ 'app/features/provisioning/Setup/SetupPage')
+      ),
+    },
+    {
       path: PROVISIONING_URL + '/migrate',
       component: SafeDynamicImport(
         () =>

@@ -54,7 +54,7 @@ export function getDefaultValues(repository?: RepositorySpec): RepositoryFormDat
       url: '',
       branch: 'main',
       generateDashboardPreviews: true,
-      workflows: ['write', 'branch'],
+      workflows: ['branch', 'write'],
       sync: {
         enabled: true,
         target: 'instance',
