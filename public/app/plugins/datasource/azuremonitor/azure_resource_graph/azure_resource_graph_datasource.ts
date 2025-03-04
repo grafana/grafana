@@ -4,6 +4,7 @@ import _, { startsWith } from 'lodash';
 import { ScopedVars } from '@grafana/data';
 import { getTemplateSrv, DataSourceWithBackend, TemplateSrv, VariableInterpolation } from '@grafana/runtime';
 
+import { resourceTypes } from '../azureMetadata';
 import {
   AzureMonitorQuery,
   AzureMonitorDataSourceJsonData,
@@ -203,6 +204,29 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
         });
       }
     );
+    return (await Promise.all(promises)).flat();
+  }
+
+  // Retrieve metric namespaces relevant to a subscription/resource group/resource
+  async getMetricNamespaces(resourceUri: string) {
+    const promises = this.replaceTemplateVariables({ resourceUri }).map(async ({ resourceUri }) => {
+      const namespacesFilter = resourceTypes.map((type) => `"${type}"`).join(',');
+      const query = `
+        resources
+        | where id hasprefix "${resourceUri}"
+        | where type in (${namespacesFilter})
+        | project type
+        | order by tolower(type) asc`;
+
+      const namespaces = await this.pagedResourceGraphRequest<RawAzureResourceItem>(query);
+
+      return namespaces.map((r) => {
+        return {
+          text: r.type,
+          value: r.type,
+        };
+      });
+    });
     return (await Promise.all(promises)).flat();
   }
 }
