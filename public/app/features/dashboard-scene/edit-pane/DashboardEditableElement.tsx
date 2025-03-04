@@ -25,7 +25,7 @@ export class DashboardEditableElement implements EditableDashboardElement {
     const { body } = dashboard.useState();
 
     const dashboardOptions = useMemo(() => {
-      return new OptionsPaneCategoryDescriptor({
+      const editPaneHeaderOptions = new OptionsPaneCategoryDescriptor({
         title: t('dashboard.options.title', 'Dashboard options'),
         id: 'dashboard-options',
         isOpenable: false,
@@ -48,6 +48,14 @@ export class DashboardEditableElement implements EditableDashboardElement {
             render: () => <DashboardLayoutSelector layoutManager={body} />,
           })
         );
+
+      if (body.getOptions) {
+        for (const option of body.getOptions()) {
+          editPaneHeaderOptions.addItem(option);
+        }
+      }
+
+      return editPaneHeaderOptions;
     }, [body, dashboard]);
 
     return [dashboardOptions];

@@ -1084,8 +1084,7 @@
           "title": "Row header"
         },
         "multi-select": {
-          "options-header": "Multi-selected Row options",
-          "selection-number": "No. of rows selected: {{length}}"
+          "title": "{{length}} rows selected"
         }
       }
     },
@@ -1167,7 +1166,7 @@
         "delete": "Delete",
         "duplicate": "Duplicate",
         "layout": "Layout",
-        "panels-title": "{{length}} Panels Selected"
+        "panels-title": "{{length}} panels selected"
       }
     },
     "options": {
@@ -1219,6 +1218,15 @@
       "row": {
         "collapse": "Collapse row",
         "expand": "Expand row",
+        "menu": {
+          "add": "Add row",
+          "add-panel": "Panel",
+          "add-row-above": "Row above",
+          "add-row-below": "Row below",
+          "move-down": "Move row down",
+          "move-row": "Move row",
+          "move-up": "Move row up"
+        },
         "new": "New row",
         "repeat": {
           "learn-more": "Learn more",
@@ -1227,18 +1235,14 @@
       },
       "row-options": {
         "height": {
-          "expand": "Expand",
-          "hide-row-header": "Hide row header",
-          "min": "Min",
-          "title": "Height"
+          "hide-row-header": "Hide row header"
         },
         "repeat": {
-          "title": "Repeat options",
           "variable": {
-            "title": "Variable"
+            "title": "Repeat for"
           }
         },
-        "title": "Row options",
+        "title": "Row",
         "title-option": "Title"
       }
     },

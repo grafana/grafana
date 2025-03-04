@@ -41,17 +41,17 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     // Try to add new panels to the selected row
     const selectedRows = dashboardSceneGraph.getAllSelectedObjects(this).filter((obj) => obj instanceof RowItem);
     if (selectedRows.length > 0) {
-      return selectedRows.forEach((row) => row.getLayout().addPanel(vizPanel));
+      return selectedRows.forEach((row) => row.onAddPanel(vizPanel));
     }
 
     // If we don't have selected row add it to the first row
     if (this.state.rows.length > 0) {
-      return this.state.rows[0].getLayout().addPanel(vizPanel);
+      return this.state.rows[0].onAddPanel(vizPanel);
     }
 
     // Otherwise fallback to adding a new row and a panel
     this.addNewRow();
-    this.state.rows[this.state.rows.length - 1].getLayout().addPanel(vizPanel);
+    this.state.rows[this.state.rows.length - 1].onAddPanel(vizPanel);
   }
 
   public getVizPanels(): VizPanel[] {
@@ -103,9 +103,79 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     });
   }
 
+  public addRowAbove(row: RowItem) {
+    const rows = this.state.rows;
+    const index = rows.indexOf(row);
+    rows.splice(index, 0, new RowItem());
+    this.setState({ rows });
+  }
+
+  public addRowBelow(row: RowItem) {
+    const rows = this.state.rows;
+    let index = rows.indexOf(row);
+
+    // Be sure we don't add a row between an original row and one of its clones
+    while (rows[index + 1] && isClonedKey(rows[index + 1].state.key!)) {
+      index = index + 1;
+    }
+
+    rows.splice(index + 1, 0, new RowItem());
+    this.setState({ rows });
+  }
+
   public removeRow(row: RowItem) {
     const rows = this.state.rows.filter((r) => r !== row);
     this.setState({ rows: rows.length === 0 ? [new RowItem()] : rows });
+  }
+
+  public moveRowUp(row: RowItem) {
+    const rows = [...this.state.rows];
+    const originalIndex = rows.indexOf(row);
+
+    if (originalIndex === 0) {
+      return;
+    }
+
+    let moveToIndex = originalIndex - 1;
+
+    // Be sure we don't add a row between an original row and one of its clones
+    while (rows[moveToIndex] && isClonedKey(rows[moveToIndex].state.key!)) {
+      moveToIndex = moveToIndex - 1;
+    }
+
+    rows.splice(originalIndex, 1);
+    rows.splice(moveToIndex, 0, row);
+    this.setState({ rows });
+  }
+
+  public moveRowDown(row: RowItem) {
+    const rows = [...this.state.rows];
+    const originalIndex = rows.indexOf(row);
+
+    if (originalIndex === rows.length - 1) {
+      return;
+    }
+
+    let moveToIndex = originalIndex + 1;
+
+    // Be sure we don't add a row between an original row and one of its clones
+    while (rows[moveToIndex] && isClonedKey(rows[moveToIndex].state.key!)) {
+      moveToIndex = moveToIndex + 1;
+    }
+
+    rows.splice(moveToIndex + 1, 0, row);
+    rows.splice(originalIndex, 1);
+
+    this.setState({ rows });
+  }
+
+  public isFirstRow(row: RowItem): boolean {
+    return this.state.rows[0] === row;
+  }
+
+  public isLastRow(row: RowItem): boolean {
+    const filteredRow = this.state.rows.filter((r) => !isClonedKey(r.state.key!));
+    return filteredRow[filteredRow.length - 1] === row;
   }
 
   public static createEmpty(): RowsLayoutManager {

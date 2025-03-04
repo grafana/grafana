@@ -1084,8 +1084,7 @@
           "title": "Ŗőŵ ĥęäđęř"
         },
         "multi-select": {
-          "options-header": "Mūľŧį-şęľęčŧęđ Ŗőŵ őpŧįőŉş",
-          "selection-number": "Ńő. őƒ řőŵş şęľęčŧęđ: {{length}}"
+          "title": "{{length}} řőŵş şęľęčŧęđ"
         }
       }
     },
@@ -1167,7 +1166,7 @@
         "delete": "Đęľęŧę",
         "duplicate": "Đūpľįčäŧę",
         "layout": "Ŀäyőūŧ",
-        "panels-title": "{{length}} Päŉęľş Ŝęľęčŧęđ"
+        "panels-title": "{{length}} päŉęľş şęľęčŧęđ"
       }
     },
     "options": {
@@ -1219,6 +1218,15 @@
       "row": {
         "collapse": "Cőľľäpşę řőŵ",
         "expand": "Ēχpäŉđ řőŵ",
+        "menu": {
+          "add": "Åđđ řőŵ",
+          "add-panel": "Päŉęľ",
+          "add-row-above": "Ŗőŵ äþővę",
+          "add-row-below": "Ŗőŵ þęľőŵ",
+          "move-down": "Mővę řőŵ đőŵŉ",
+          "move-row": "Mővę řőŵ",
+          "move-up": "Mővę řőŵ ūp"
+        },
         "new": "Ńęŵ řőŵ",
         "repeat": {
           "learn-more": "Ŀęäřŉ mőřę",
@@ -1227,18 +1235,14 @@
       },
       "row-options": {
         "height": {
-          "expand": "Ēχpäŉđ",
-          "hide-row-header": "Ħįđę řőŵ ĥęäđęř",
-          "min": "Mįŉ",
-          "title": "Ħęįģĥŧ"
+          "hide-row-header": "Ħįđę řőŵ ĥęäđęř"
         },
         "repeat": {
-          "title": "Ŗępęäŧ őpŧįőŉş",
           "variable": {
-            "title": "Väřįäþľę"
+            "title": "Ŗępęäŧ ƒőř"
           }
         },
-        "title": "Ŗőŵ őpŧįőŉş",
+        "title": "Ŗőŵ",
         "title-option": "Ŧįŧľę"
       }
     },
