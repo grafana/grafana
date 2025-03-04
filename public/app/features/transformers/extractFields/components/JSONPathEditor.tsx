@@ -94,7 +94,7 @@ const getTooltips = () => {
   return {
     field: (
       <div>
-        A valid path of an json object.
+        A valid path of an json object. Paths that do not exist in some rows will return an undefined value.
         <div>
           <strong>JSON Value:</strong>
         </div>
