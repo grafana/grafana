@@ -66,7 +66,7 @@ jobs:
 
       # Upload the coverage report as an artifact
       - name: Upload coverage report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: table-coverage-report
           path: |
