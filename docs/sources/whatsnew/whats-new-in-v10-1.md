@@ -211,7 +211,7 @@ Currently, you can add one or more of the following filters:
 
 To only show the spans you've matched, you can enable the **Show matches only** toggle.
 
-Learn more about span filtering in our [Tempo data source documentation]({{< relref "../datasources/tempo/#span-filters" >}}).
+Learn more about span filtering in our [Tempo data source documentation]({{< relref "../datasources/tempo/#span-filters-options" >}}).
 
 {{< figure src="/media/docs/tempo/screenshot-grafana-tempo-span-filters-v10-1.png" max-width="750px" caption="Traces span filtering" >}}
 
