@@ -17,7 +17,9 @@ export function ConfigFormGithubCollpase({ previews }: ConfigFormGithubCollpaseP
       <h3>Realtime feedback</h3>
       {checkPublicAccess() ? (
         <div>
-          <Alert title={'Webhook will be created'} severity={'info'} />
+          <Alert title={'Webhook will be created'} severity={'info'}>
+            Changes in git will be quickly pulled into grafana. Pull requests can be processed.
+          </Alert>
         </div>
       ) : (
         <Alert
@@ -26,7 +28,8 @@ export function ConfigFormGithubCollpase({ previews }: ConfigFormGithubCollpaseP
           buttonContent={<span>Instructions</span>}
           onRemove={() => navigate(`${PROVISIONING_URL}/setup`)}
         >
-          GitHub webhooks require running grafana with a public URL.
+          Changes in git will eventually be pulled depending on the synchronization interval. Pull requests will not be
+          proccessed
         </Alert>
       )}
 
