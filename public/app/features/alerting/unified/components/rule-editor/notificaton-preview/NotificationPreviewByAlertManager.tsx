@@ -40,7 +40,14 @@ function NotificationPreviewByAlertManager({
   }
 
   if (loading) {
-    return <LoadingPlaceholder text="Loading routing preview..." />;
+    return (
+      <LoadingPlaceholder
+        text={t(
+          'alerting.notification-preview-by-alert-manager.text-loading-routing-preview',
+          'Loading routing preview...'
+        )}
+      />
+    );
   }
 
   const matchingPoliciesFound = matchingMap.size > 0;

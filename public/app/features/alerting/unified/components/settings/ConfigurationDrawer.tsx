@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
@@ -43,14 +44,14 @@ export function useEditConfigurationDrawer() {
         tabs={
           <TabsBar>
             <Tab
-              label="JSON Model"
+              label={t('alerting.use-edit-configuration-drawer.drawer.label-json-model', 'JSON Model')}
               key="configuration"
               icon="arrow"
               active={activeTab === 'configuration'}
               onChangeTab={() => setActiveTab('configuration')}
             />
             <Tab
-              label="Versions"
+              label={t('alerting.use-edit-configuration-drawer.drawer.label-versions', 'Versions')}
               key="versions"
               icon="history"
               active={activeTab === 'versions'}

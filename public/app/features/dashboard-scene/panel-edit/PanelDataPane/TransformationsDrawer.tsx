@@ -2,6 +2,7 @@ import { FormEvent, useMemo, useState } from 'react';
 
 import { DataFrame, SelectableValue, standardTransformersRegistry } from '@grafana/data';
 import { IconButton } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { TransformationPickerNg } from 'app/features/dashboard/components/TransformationsEditor/TransformationPickerNg';
 import {
   FilterCategory,
@@ -65,7 +66,7 @@ export function TransformationsDrawer(props: TransformationsDrawerProps) {
         onClick={() => {
           setDrawerState({ ...drawerState, ...{ search: '' } });
         }}
-        tooltip="Clear search"
+        tooltip={t('dashboard-scene.transformations-drawer.search-box-suffix.tooltip-clear-search', 'Clear search')}
       />
     </>
   );

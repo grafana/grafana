@@ -5,6 +5,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, CodeEditor, Dropdown, Menu, Stack, Toggletip, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { EditorColumnHeader } from '../contact-points/templates/EditorColumnHeader';
@@ -84,19 +85,22 @@ export function PayloadEditor({
     <>
       <div className={cx(styles.wrapper, className)}>
         <EditorColumnHeader
-          label="Payload"
+          label={t('alerting.payload-editor.label-payload', 'Payload')}
           actions={
             <Stack direction="row" alignItems="center" gap={0.5}>
               <Dropdown
                 overlay={
                   <Menu>
                     <Menu.Item
-                      label="Use existing alert instances"
+                      label={t(
+                        'alerting.payload-editor.label-use-existing-alert-instances',
+                        'Use existing alert instances'
+                      )}
                       disabled={errorInPayloadJson}
                       onClick={onOpenAlertSelectorModal}
                     />
                     <Menu.Item
-                      label="Add custom alert instance"
+                      label={t('alerting.payload-editor.label-add-custom-alert-instance', 'Add custom alert instance')}
                       disabled={errorInPayloadJson}
                       onClick={onOpenEditAlertModal}
                     />
@@ -106,12 +110,12 @@ export function PayloadEditor({
                 }
               >
                 <Button variant="secondary" size="sm" icon="angle-down">
-                  Edit payload
+                  <Trans i18nKey="alerting.payload-editor.edit-payload">Edit payload</Trans>
                 </Button>
               </Dropdown>
               <Toggletip content={<AlertTemplateDataTable />} placement="top" fitContent>
                 <Button variant="secondary" fill="outline" size="sm" icon="question-circle">
-                  Reference
+                  <Trans i18nKey="alerting.payload-editor.reference">Reference</Trans>
                 </Button>
               </Toggletip>
             </Stack>

@@ -5,6 +5,7 @@ import { useAsync } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { FetchError } from '@grafana/runtime';
 import { Alert, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { DashboardModel } from '../../state/DashboardModel';
@@ -36,11 +37,22 @@ function DashboardValidation({ dashboard }: DashboardValidationProps) {
   let alert: React.ReactNode;
 
   if (loading) {
-    alert = <Alert severity="info" title="Checking dashboard validity" />;
+    alert = (
+      <Alert
+        severity="info"
+        title={t('dashboard.dashboard-validation.title-checking-dashboard-validity', 'Checking dashboard validity')}
+      />
+    );
   } else if (value) {
     if (!value.isValid) {
       alert = (
-        <Alert severity="warning" title="Dashboard failed schema validation">
+        <Alert
+          severity="warning"
+          title={t(
+            'dashboard.dashboard-validation.title-dashboard-failed-schema-validation',
+            'Dashboard failed schema validation'
+          )}
+        >
           <p>
             Validation is provided for development purposes and should be safe to ignore. If you are a Grafana
             developer, consider checking and updating the dashboard schema
@@ -52,7 +64,13 @@ function DashboardValidation({ dashboard }: DashboardValidationProps) {
   } else {
     const errorMessage = error?.message ?? 'Unknown error';
     alert = (
-      <Alert severity="info" title="Error checking dashboard validity">
+      <Alert
+        severity="info"
+        title={t(
+          'dashboard.dashboard-validation.title-error-checking-dashboard-validity',
+          'Error checking dashboard validity'
+        )}
+      >
         <p className={styles.error}>{errorMessage}</p>
       </Alert>
     );

@@ -278,7 +278,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
       </Button>
       {existing ? (
         <Button fill="outline" variant="destructive" type="button" onClick={() => setShowDeleteModal(true)} size="sm">
-          Delete
+          <Trans i18nKey="alerting.alert-rule-form.action-buttons.delete">Delete</Trans>
         </Button>
       ) : null}
       {existing && isCortexLokiOrRecordingRule(watch) && (
@@ -289,7 +289,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
           disabled={isSubmitting}
           size="sm"
         >
-          Edit YAML
+          <Trans i18nKey="alerting.alert-rule-form.action-buttons.edit-yaml">Edit YAML</Trans>
         </Button>
       )}
     </Stack>
@@ -347,7 +347,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
       {showDeleteModal ? (
         <ConfirmModal
           isOpen={true}
-          title="Delete rule"
+          title={t('alerting.alert-rule-form.title-delete-rule', 'Delete rule')}
           body="Deleting this rule will permanently remove it. Are you sure you want to delete this rule?"
           confirmText="Yes, delete"
           icon="exclamation-triangle"

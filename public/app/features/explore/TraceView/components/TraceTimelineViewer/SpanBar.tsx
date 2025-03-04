@@ -21,6 +21,7 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Tooltip, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { autoColor } from '../Theme';
 import { Popover } from '../common/Popover';
@@ -216,7 +217,11 @@ function SpanBar({
             placement="top"
             content={
               <div>
-                A segment on the <em>critical path</em> of the overall trace / request / workflow.
+                A segment on the{' '}
+                <em>
+                  <Trans i18nKey="explore.span-bar.critical-path">critical path</Trans>
+                </em>{' '}
+                of the overall trace / request / workflow.
               </div>
             }
           >

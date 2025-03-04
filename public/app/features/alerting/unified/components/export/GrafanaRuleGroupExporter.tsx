@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { LoadingPlaceholder } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 
@@ -55,7 +56,7 @@ function GrafanaRuleGroupExportPreview({
   });
 
   if (isFetching) {
-    return <LoadingPlaceholder text="Loading...." />;
+    return <LoadingPlaceholder text={t('alerting.grafana-rule-group-export-preview.text-loading', 'Loading....')} />;
   }
 
   return (

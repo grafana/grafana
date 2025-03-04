@@ -2,6 +2,7 @@ import { forwardRef, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom-v5-compat';
 
 import { Button, ConfirmModal } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import * as ruleId from '../../utils/rule-id';
@@ -39,11 +40,15 @@ export function RedirectToCloneRule({
   return (
     <ConfirmModal
       isOpen={stage === 'confirm'}
-      title="Copy provisioned alert rule"
+      title={t('alerting.redirect-to-clone-rule.title-copy-provisioned-alert-rule', 'Copy provisioned alert rule')}
       body={
         <div>
           <p>
-            The new rule will <strong>not</strong> be marked as a provisioned rule.
+            The new rule will{' '}
+            <strong>
+              <Trans i18nKey="alerting.redirect-to-clone-rule.not">not</Trans>
+            </strong>{' '}
+            be marked as a provisioned rule.
           </p>
           <p>
             You will need to set a new evaluation group for the copied rule because the original one has been
@@ -72,7 +77,7 @@ export const CloneRuleButton = forwardRef<HTMLButtonElement, CloneRuleButtonProp
     return (
       <>
         <Button
-          title="Copy"
+          title={t('alerting.clone-rule-button.title-copy', 'Copy')}
           className={className}
           size="sm"
           key="clone"

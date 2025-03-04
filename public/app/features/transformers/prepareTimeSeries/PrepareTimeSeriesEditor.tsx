@@ -10,6 +10,7 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -78,7 +79,7 @@ export function PrepareTimeSeriesEditor(props: TransformerUIProps<PrepareTimeSer
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="Format" labelWidth={12}>
+        <InlineField label={t('transformers.prepare-time-series-editor.label-format', 'Format')} labelWidth={12}>
           <Select
             width={35}
             options={formats}
@@ -101,7 +102,7 @@ export function PrepareTimeSeriesEditor(props: TransformerUIProps<PrepareTimeSer
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label="Info" labelWidth={12}>
+        <InlineField label={t('transformers.prepare-time-series-editor.label-info', 'Info')} labelWidth={12}>
           <div className={styles.info}>{(formats.find((v) => v.value === options.format) || formats[0]).info}</div>
         </InlineField>
       </InlineFieldRow>

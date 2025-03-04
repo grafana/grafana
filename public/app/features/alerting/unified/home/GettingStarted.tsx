@@ -4,6 +4,7 @@ import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack, Text, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 export default function GettingStarted() {
   const theme = useTheme2();
@@ -13,12 +14,18 @@ export default function GettingStarted() {
     <div className={styles.grid}>
       <ContentBox>
         <Stack direction="column" gap={1}>
-          <Text element="h3">How it works</Text>
+          <Text element="h3">
+            <Trans i18nKey="alerting.getting-started.how-it-works">How it works</Trans>
+          </Text>
           <ul className={styles.list}>
             <li>
               Grafana alerting periodically queries data sources and evaluates the condition defined in the alert rule
             </li>
-            <li>If the condition is breached, an alert instance fires</li>
+            <li>
+              <Trans i18nKey="alerting.getting-started.condition-breached-alert-instance-fires">
+                If the condition is breached, an alert instance fires
+              </Trans>
+            </li>
             <li>Firing instances are routed to notification policies based on matching labels</li>
             <li>Notifications are sent out to the contact points specified in the notification policy</li>
           </ul>
@@ -35,18 +42,27 @@ export default function GettingStarted() {
       </ContentBox>
       <ContentBox>
         <Stack direction="column" gap={1}>
-          <Text element="h3">Get started</Text>
+          <Text element="h3">
+            <Trans i18nKey="alerting.getting-started.get-started">Get started</Trans>
+          </Text>
           <ul className={styles.list}>
             <li>
-              <Text weight="bold">Create an alert rule</Text> to query a data source and evaluate the condition defined
-              in the alert rule
+              <Text weight="bold">
+                <Trans i18nKey="alerting.getting-started.create-an-alert-rule">Create an alert rule</Trans>
+              </Text>{' '}
+              to query a data source and evaluate the condition defined in the alert rule
             </li>
             <li>
-              <Text weight="bold">Route alert notifications</Text> either directly to a contact point or through
-              notification policies for more flexibility
+              <Text weight="bold">
+                <Trans i18nKey="alerting.getting-started.route-alert-notifications">Route alert notifications</Trans>
+              </Text>{' '}
+              either directly to a contact point or through notification policies for more flexibility
             </li>
             <li>
-              <Text weight="bold">Monitor</Text> your alert rules using dashboards and visualizations
+              <Text weight="bold">
+                <Trans i18nKey="alerting.getting-started.monitor">Monitor</Trans>
+              </Text>{' '}
+              your alert rules using dashboards and visualizations
             </li>
           </ul>
           <p>
@@ -57,7 +73,9 @@ export default function GettingStarted() {
               inline={true}
               external
             >
-              tutorial to get started with Grafana Alerting
+              <Trans i18nKey="alerting.getting-started.tutorial-started-grafana-alerting">
+                tutorial to get started with Grafana Alerting
+              </Trans>
             </TextLink>
           </p>
         </Stack>
@@ -102,22 +120,28 @@ export function WelcomeHeader({ className }: { className?: string }) {
     <Stack gap={2} direction="column">
       <ContentBox className={cx(styles.ctaContainer, className)}>
         <WelcomeCTABox
-          title="Alert rules"
+          title={t('alerting.welcome-header.title-alert-rules', 'Alert rules')}
           description="Define the condition that must be met before an alert rule fires"
           href="/alerting/list"
           hrefText="Manage alert rules"
         />
         <div className={styles.separator} />
         <WelcomeCTABox
-          title="Contact points"
-          description="Configure who receives notifications and how they are sent"
+          title={t('alerting.welcome-header.title-contact-points', 'Contact points')}
+          description={t(
+            'alerting.welcome-header.description-configure-receives-notifications',
+            'Configure who receives notifications and how they are sent'
+          )}
           href="/alerting/notifications"
           hrefText="Manage contact points"
         />
         <div className={styles.separator} />
         <WelcomeCTABox
-          title="Notification policies"
-          description="Configure how firing alert instances are routed to contact points"
+          title={t('alerting.welcome-header.title-notification-policies', 'Notification policies')}
+          description={t(
+            'alerting.welcome-header.description-configure-firing-alert-instances-routed-contact',
+            'Configure how firing alert instances are routed to contact points'
+          )}
           href="/alerting/routes"
           hrefText="Manage notification policies"
         />

@@ -4,6 +4,7 @@ import { useCallback, useMemo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { Button, ClipboardButton, Stack, CodeEditor, Box } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
@@ -42,12 +43,15 @@ export function SaveProvisionedDashboardForm({ dashboard, drawer, changeInfo }: 
               target="_blank"
               rel="noreferrer"
             >
-              documentation
+              <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.documentation">documentation</Trans>
             </a>{' '}
             for more information about provisioning.
           </i>
           <br /> <br />
-          <strong>File path: </strong> {dashboard.state.meta.provisionedExternalId}
+          <strong>
+            <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.file-path">File path: </Trans>
+          </strong>{' '}
+          {dashboard.state.meta.provisionedExternalId}
         </div>
 
         <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />
@@ -70,13 +74,17 @@ export function SaveProvisionedDashboardForm({ dashboard, drawer, changeInfo }: 
         <Box paddingTop={2}>
           <Stack gap={2}>
             <Button variant="secondary" onClick={drawer.onClose} fill="outline">
-              Cancel
+              <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>
             </Button>
             <ClipboardButton icon="copy" getText={() => dashboardJSON}>
-              Copy JSON to clipboard
+              <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.copy-json-to-clipboard">
+                Copy JSON to clipboard
+              </Trans>
             </ClipboardButton>
             <Button type="submit" onClick={saveToFile}>
-              Save JSON to file
+              <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.save-json-to-file">
+                Save JSON to file
+              </Trans>
             </Button>
           </Stack>
         </Box>

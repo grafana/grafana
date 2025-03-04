@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, LinkButton, useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { contextSrv } from '../../../../core/core';
 import { AccessControlAction } from '../../../../types';
@@ -36,8 +37,16 @@ export function ConnectionsRedirectNotice() {
           Data sources have a new home! You can discover new data sources or manage existing ones in the Connections
           page, accessible from the main menu.
         </p>
-        <LinkButton aria-label="Link to Connections" icon="arrow-right" href={ROUTES.DataSources} fill="text">
-          Go to connections
+        <LinkButton
+          aria-label={t(
+            'connections.connections-redirect-notice.aria-label-link-to-connections',
+            'Link to Connections'
+          )}
+          icon="arrow-right"
+          href={ROUTES.DataSources}
+          fill="text"
+        >
+          <Trans i18nKey="connections.connections-redirect-notice.go-to-connections">Go to connections</Trans>
         </LinkButton>
       </div>
     </Alert>

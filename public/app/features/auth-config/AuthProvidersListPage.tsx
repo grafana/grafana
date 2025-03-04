@@ -6,6 +6,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { Grid, TextLink, ToolbarButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { config } from 'app/core/config';
+import { Trans } from 'app/core/internationalization';
 import { StoreState } from 'app/types';
 
 import AuthDrawer from './AuthDrawer';
@@ -87,7 +88,7 @@ export const AuthConfigPageUnconnected = ({
             external={true}
             href="https://grafana.com/docs/grafana/next/setup-grafana/configure-security/configure-authentication"
           >
-            documentation
+            <Trans i18nKey="auth-config.auth-config-page-unconnected.documentation">documentation</Trans>
           </TextLink>
           .
         </>
@@ -95,7 +96,7 @@ export const AuthConfigPageUnconnected = ({
       actions={
         config.buildInfo.edition !== GrafanaEdition.OpenSource && (
           <ToolbarButton icon="cog" variant="canvas" onClick={() => setShowDrawer(true)}>
-            Auth settings
+            <Trans i18nKey="auth-config.auth-config-page-unconnected.auth-settings">Auth settings</Trans>
           </ToolbarButton>
         )
       }
