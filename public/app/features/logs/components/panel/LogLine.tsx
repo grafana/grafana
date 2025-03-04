@@ -5,6 +5,7 @@ import tinycolor from 'tinycolor2';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { LogMessageAnsi } from '../LogMessageAnsi';
 
 import { LogLineMenu } from './LogLineMenu';
 import { useLogIsPinned } from './LogListContext';
@@ -75,16 +76,35 @@ const Log = ({ displayedFields, log, showTime, styles }: LogProps) => {
       {showTime && <span className={`${styles.timestamp} level-${log.logLevel} field`}>{log.timestamp}</span>}
       <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel}</span>
       {displayedFields.length > 0 ? (
-        displayedFields.map((field) => (
-          <span className="field" title={field} key={field}>
-            {getDisplayedFieldValue(field, log)}
-          </span>
-        ))
+        displayedFields.map((field) =>
+          field === LOG_LINE_BODY_FIELD_NAME ? (
+            <LogLineBody log={log} />
+          ) : (
+            <span className="field" title={field} key={field}>
+              {getDisplayedFieldValue(field, log)}
+            </span>
+          )
+        )
       ) : (
-        <span className="field">{log.body}</span>
+        <LogLineBody log={log} />
       )}
     </>
   );
+};
+
+const LogLineBody = ({ log }: { log: LogListModel }) => {
+  if (log.hasAnsi) {
+    const needsHighlighter =
+      log.searchWords && log.searchWords.length > 0 && log.searchWords[0] && log.searchWords[0].length > 0;
+    const highlight = needsHighlighter ? { searchWords: log.searchWords ?? [], highlightClassName: '' } : undefined;
+    return (
+      <span className="field">
+        <LogMessageAnsi value={log.body} highlight={highlight} />
+      </span>
+    );
+  }
+
+  return <span className="field log-syntax-highlight" dangerouslySetInnerHTML={{ __html: log.highlightedBody }} />;
 };
 
 export function getDisplayedFieldValue(fieldName: string, log: LogListModel): string {
@@ -138,6 +158,30 @@ export const getStyles = (theme: GrafanaTheme2) => {
           position: 'absolute',
           top: -3,
           width: '100%',
+        },
+      },
+      '& .log-syntax-highlight': {
+        '.token.log-token-timestamp': {
+          color: theme.colors.text.disabled,
+        },
+        '.token.log-token-string': {
+          color: theme.colors.text.primary,
+        },
+        '.token.log-token-number': {
+          color: theme.colors.success.text,
+        },
+        '.token.log-token-size': {
+          color: theme.colors.success.text,
+        },
+        '.token.log-token-key': {
+          color: theme.colors.text.secondary,
+        },
+        '.token.log-token-json-key': {
+          color: theme.colors.text.secondary,
+        },
+        '.token.log-token-label': {
+          color: theme.colors.text.maxContrast,
+          fontWeight: theme.typography.fontWeightMedium,
         },
       },
     }),
