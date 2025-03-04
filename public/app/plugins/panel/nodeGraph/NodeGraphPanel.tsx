@@ -20,7 +20,6 @@ export const NodeGraphPanel = ({ width, height, data, options }: PanelProps<Node
       </div>
     );
   }
-
   const memoizedGetNodeGraphDataFrames = memoizeOne(getNodeGraphDataFrames);
   return (
     <div style={{ width, height }}>
@@ -28,7 +27,7 @@ export const NodeGraphPanel = ({ width, height, data, options }: PanelProps<Node
         dataFrames={memoizedGetNodeGraphDataFrames(data.series, options)}
         getLinks={getLinks}
         panelId={panelId}
-        zoomMode={options.zoomMode}
+        options={options}
       />
     </div>
   );
