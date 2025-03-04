@@ -341,6 +341,10 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		return nil, dashboards.ErrDashboardTitleEmpty
 	}
 
+	if len(dash.Title) > 5000 {
+		return nil, dashboards.ErrDashboardTitleTooLong
+	}
+
 	if len(dto.Message) > 500 {
 		return nil, dashboards.ErrDashboardMessageTooLong
 	}
@@ -1787,13 +1791,13 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	switch query.Type {
 	case "":
 		// When no type specified, search for dashboards
-		request.Options.Key, err = resource.AsResourceKey(namespace, dashboard.DASHBOARD_RESOURCE)
+		request.Options.Key, err = resource.AsResourceKey(namespace, dashboardv0alpha1.DASHBOARD_RESOURCE)
 		// Currently a search query is across folders and dashboards
 		if err == nil {
 			federate, err = resource.AsResourceKey(namespace, folderv0alpha1.RESOURCE)
 		}
 	case searchstore.TypeDashboard, searchstore.TypeAnnotation:
-		request.Options.Key, err = resource.AsResourceKey(namespace, dashboard.DASHBOARD_RESOURCE)
+		request.Options.Key, err = resource.AsResourceKey(namespace, dashboardv0alpha1.DASHBOARD_RESOURCE)
 	case searchstore.TypeFolder, searchstore.TypeAlertFolder:
 		request.Options.Key, err = resource.AsResourceKey(namespace, folderv0alpha1.RESOURCE)
 	default:
@@ -1954,13 +1958,14 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 	}
 
 	out := dashboards.Dashboard{
-		OrgID:     orgID,
-		ID:        obj.GetDeprecatedInternalID(), // nolint:staticcheck
-		UID:       uid,
-		Slug:      obj.GetSlug(),
-		FolderUID: obj.GetFolder(),
-		Version:   dashVersion,
-		Data:      simplejson.NewFromAny(spec),
+		OrgID:      orgID,
+		ID:         obj.GetDeprecatedInternalID(), // nolint:staticcheck
+		UID:        uid,
+		Slug:       obj.GetSlug(),
+		FolderUID:  obj.GetFolder(),
+		Version:    dashVersion,
+		Data:       simplejson.NewFromAny(spec),
+		APIVersion: strings.TrimPrefix(item.GetAPIVersion(), dashboardv0alpha1.GROUP+"/"),
 	}
 
 	out.Created = obj.GetCreationTimestamp().Time
