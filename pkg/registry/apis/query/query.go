@@ -258,7 +258,7 @@ func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests
 			if theErr, ok := r.(error); ok {
 				err = theErr
 			} else if theErrString, ok := r.(string); ok {
-				err = fmt.Errorf(theErrString)
+				err = errors.New(theErrString)
 			} else {
 				err = fmt.Errorf("unexpected error - %s", b.userFacingDefaultError)
 			}

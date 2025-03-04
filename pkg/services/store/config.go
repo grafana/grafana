@@ -132,5 +132,5 @@ func newStorage(cfg RootStorageConfig, localWorkCache string) (storageRuntime, e
 		return newDiskStorage(RootStorageMeta{}, cfg), nil
 	}
 
-	return nil, fmt.Errorf("unsupported store: " + cfg.Type)
+	return nil, fmt.Errorf("unsupported store: %s", cfg.Type)
 }
