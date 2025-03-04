@@ -2,18 +2,9 @@ name: 'Run Backend Tests'
 description: 'Runs Grafana backend test suites'
 
 inputs:
-  coverage-opts:
-    description: 'Coverage options to pass to the test command (empty for no coverage)'
-    required: false
-    default: ''
   test-command:
     description: 'The test command to run'
-    required: false
-    default: 'make gen-go test-go-unit'
-  go-flags:
-    description: 'Optional flags to pass to Go commands'
-    required: false
-    default: ''
+    required: true
 
 runs:
   using: "composite"
@@ -24,15 +15,4 @@ runs:
 
     - name: Run tests
       shell: bash
-      env:
-        GOFLAGS: ${{ inputs.go-flags }}
-      run: |
-        # Extract the test command without gen-go
-        TEST_CMD="${{ inputs.test-command }}"
-        TEST_CMD="${TEST_CMD/make gen-go /make }"
-        
-        if [ -n "${{ inputs.coverage-opts }}" ]; then
-          COVER_OPTS="${{ inputs.coverage-opts }}" ${TEST_CMD}
-        else
-          ${TEST_CMD}
-        fi
+      run: ${{ inputs.test-command }}
