@@ -110,6 +110,8 @@ jobs:
     name: Unit Tests
     needs: [check-coverage, setup, setup-enterprise]
     runs-on: ubuntu-latest
+    env:
+      EDITION: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && 'enterprise' || 'oss' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -152,6 +154,8 @@ jobs:
     name: Integration Tests
     needs: [check-coverage, setup, setup-enterprise]
     runs-on: ubuntu-latest
+    env:
+      EDITION: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && 'enterprise' || 'oss' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
