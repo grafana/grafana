@@ -42,7 +42,7 @@ type SecretAPIBuilder struct {
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
 	decryptStorage             contracts.DecryptStorage
 	accessClient               claims.AccessClient
-	decryptersAllowList        []string
+	decryptersAllowList        map[string]struct{}
 	isDevMode                  bool // REMOVE ME
 }
 
@@ -52,7 +52,7 @@ func NewSecretAPIBuilder(
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	decryptStorage contracts.DecryptStorage,
 	accessClient claims.AccessClient,
-	decryptersAllowList []string,
+	decryptersAllowList map[string]struct{},
 	isDevMode bool, // REMOVE ME
 ) *SecretAPIBuilder {
 	return &SecretAPIBuilder{tracer, secureValueMetadataStorage, keeperMetadataStorage, decryptStorage, accessClient, decryptersAllowList, isDevMode}
