@@ -43,6 +43,8 @@ When enabled, Grafana exposes a number of metrics, including:
 - Grafana active alerts
 - Grafana performance
 
+For a description of the internal metrics Grafana collects, refer to `/pkg/infra/metrics/metrics.go` in the [Grafana GitHub repository](https://github.com/grafana/grafana/) on the branch that corresponds to your installed version of Grafana.
+
 ### Pull metrics from Grafana into Prometheus
 
 These instructions assume you have already added Prometheus as a data source in Grafana.
