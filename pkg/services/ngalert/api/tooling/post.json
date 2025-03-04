@@ -2221,6 +2221,23 @@
    },
    "type": "object"
   },
+  "NamespaceListResponse": {
+   "properties": {
+    "groupNextToken": {
+     "type": "string"
+    },
+    "groups": {
+     "items": {
+      "$ref": "#/definitions/RuleGroupSummary"
+     },
+     "type": "array"
+    }
+   },
+   "required": [
+    "groups"
+   ],
+   "type": "object"
+  },
   "NotFound": {
    "type": "object"
   },
@@ -3811,6 +3828,25 @@
      "type": "array"
     }
    },
+   "type": "object"
+  },
+  "RuleGroupSummary": {
+   "properties": {
+    "file": {
+     "type": "string"
+    },
+    "folderUid": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "name",
+    "file",
+    "folderUid"
+   ],
    "type": "object"
   },
   "RuleResponse": {
@@ -7092,6 +7128,44 @@
      },
      "404": {
       "description": " Not found."
+     }
+    },
+    "tags": [
+     "ruler"
+    ]
+   }
+  },
+  "/ruler/grafana/api/v1/rule-groups": {
+   "get": {
+    "description": "List rule groups",
+    "operationId": "RouteGetGrafanaRuleGroups",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "group_next_token",
+      "type": "string"
+     },
+     {
+      "in": "query",
+      "name": "group_limit",
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "200": {
+      "description": "NamespaceListResponse",
+      "schema": {
+       "$ref": "#/definitions/NamespaceListResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "tags": [
