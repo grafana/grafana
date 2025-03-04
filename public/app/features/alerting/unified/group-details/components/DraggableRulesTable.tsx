@@ -12,6 +12,7 @@ import { forwardRef, useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, Icon, Stack, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { SwapOperation, swapItems } from '../../reducers/ruler/ruleGroups';
@@ -60,9 +61,12 @@ export function DraggableRulesTable({ rules, groupInterval, onSwap }: DraggableR
   return (
     <div>
       <ListItem
-        ruleName="Rule name"
-        pendingPeriod="Pending period"
-        evalsToStartAlerting="Evaluations to start alerting"
+        ruleName={t('alerting.draggable-rules-table.rule-name', 'Rule name')}
+        pendingPeriod={t('alerting.draggable-rules-table.pending-period', 'Pending period')}
+        evalsToStartAlerting={t(
+          'alerting.draggable-rules-table.evals-to-start-alerting',
+          'Evaluations to start alerting'
+        )}
         className={styles.listHeader}
       />
       <DragDropContext onDragEnd={onDragEnd}>
@@ -127,7 +131,11 @@ const DraggableListItem = ({
       dragHandle={<Icon name="draggabledots" />}
       ruleName={ruleName}
       pendingPeriod={pendingPeriod}
-      evalsToStartAlerting={numberEvaluationsToStartAlerting ?? <Badge text="Recording" color="purple" />}
+      evalsToStartAlerting={
+        numberEvaluationsToStartAlerting ?? (
+          <Badge text={t('alerting.draggable-rules-table.recording', 'Recording')} color="purple" />
+        )
+      }
       data-testid="reorder-alert-rule"
       // className={cx(styles.listItem, isClone && 'isClone', isDragging && 'isDragging')}
       ref={provided.innerRef}

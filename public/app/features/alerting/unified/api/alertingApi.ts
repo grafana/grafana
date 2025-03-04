@@ -1,5 +1,5 @@
 import { BaseQueryFn, createApi, defaultSerializeQueryArgs } from '@reduxjs/toolkit/query/react';
-import { omit } from 'lodash';
+import { isBoolean, omit } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
 import { AppEvents } from '@grafana/data';
@@ -64,8 +64,8 @@ export const backendSrvBaseQuery =
       const modifiedRequestOptions: BackendSrvRequest = {
         ...requestOptions,
         ...(body && { data: body }),
-        showErrorAlert,
-        showSuccessAlert,
+        ...(isBoolean(showSuccessAlert) && { showSuccessAlert }),
+        ...(isBoolean(showErrorAlert) && { showErrorAlert }),
         ...(successMessage && { showSuccessAlert: false }),
         ...((errorMessage || hideErrorMessage) && { showErrorAlert: false }),
       };
