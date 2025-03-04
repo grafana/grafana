@@ -4,10 +4,7 @@ import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
 import { SpanLinkType } from '../../types/links';
 import { TraceSpan } from '../../types/trace';
 
-import {
-  getSpanDetailLinkButtons,
-  getProfileLinkButtonsContext,
-} from './SpanDetailLinkButtons';
+import { getSpanDetailLinkButtons, getProfileLinkButtonsContext } from './SpanDetailLinkButtons';
 
 const span = {
   process: {
@@ -18,12 +15,8 @@ const span = {
 
 const createSpanLink = jest.fn();
 const timeRange = {
-  from: 0,
-  to: 1000,
-  raw: {
-    from: 0,
-    to: 1000,
-  },
+  from: new Date(0),
+  to: new Date(1000),
 } as unknown as TimeRange;
 
 describe('getSpanDetailLinkButtons', () => {
@@ -113,7 +106,10 @@ describe('getProfileLinkButtonsContext', () => {
       profileTypeId: 'test-type',
       spanSelector: 'test-profile',
       explorationType: 'flame-graph',
-      timeRange: timeRange.raw,
+      timeRange: {
+        from: new Date(0).toISOString(),
+        to: new Date(1000).toISOString(),
+      },
       targets: [
         {
           datasource: {
@@ -133,7 +129,10 @@ describe('getProfileLinkButtonsContext', () => {
       profileTypeId: '',
       spanSelector: 'test-profile',
       explorationType: 'flame-graph',
-      timeRange: timeRange.raw,
+      timeRange: {
+        from: new Date(0).toISOString(),
+        to: new Date(1000).toISOString(),
+      },
       targets: [
         {
           datasource: {
