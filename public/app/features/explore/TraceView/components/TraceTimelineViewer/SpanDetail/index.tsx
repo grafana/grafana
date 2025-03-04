@@ -130,15 +130,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexWrap: 'wrap',
       gap: '10px',
     }),
-    profilesDrilldownSelect: css({
-      height: theme.spacing(3),
-      borderTopLeftRadius: 0,
-      borderBottomLeftRadius: 0,
-    }),
-    profilesForThisSpanButton: css({
-      borderTopRightRadius: 0,
-      borderBottomRightRadius: 0,
-    }),
   };
 };
 
@@ -303,7 +294,6 @@ export default function SpanDetail(props: SpanDetailProps) {
     datasourceType,
     traceToProfilesOptions,
     timeRange,
-    styles,
   });
 
   const focusSpanLink = createFocusSpanLink(traceID, spanID);

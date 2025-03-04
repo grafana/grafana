@@ -7,8 +7,6 @@ import { TraceSpan } from '../../types/trace';
 import {
   getSpanDetailLinkButtons,
   getProfileLinkButtonsContext,
-  getProfileLinkPath,
-  ProfilesButtonContext,
 } from './SpanDetailLinkButtons';
 
 const span = {
@@ -76,10 +74,6 @@ describe('getSpanDetailLinkButtons', () => {
         customQuery: false,
       },
       timeRange,
-      styles: {
-        profilesDrilldownSelect: 'test-select',
-        profilesForThisSpanButton: 'test-button',
-      },
     });
 
     expect(result.logLinkButton).toBeNull();
@@ -171,86 +165,5 @@ describe('getProfileLinkButtonsContext', () => {
     const context = getProfileLinkButtonsContext(spanWithoutProfileId, traceToProfilesOptions, timeRange);
 
     expect(context.spanSelector).toBe('');
-  });
-});
-
-describe('getProfileLinkPath', () => {
-  const context = {
-    serviceName: 'test-service',
-    profileTypeId: 'test-type',
-    spanSelector: 'test-profile',
-    explorationType: 'flame-graph',
-    timeRange: {
-      from: 1000,
-      to: 2000,
-    },
-    targets: [
-      {
-        datasource: {
-          type: 'grafana-pyroscope-datasource',
-          uid: 'test-uid',
-        },
-      },
-    ],
-  } as unknown as ProfilesButtonContext;
-
-  it('should create correct URL path with all parameters', () => {
-    const path = getProfileLinkPath(context as ProfilesButtonContext, 'grafana-pyroscope-app');
-
-    expect(path).toBe(
-      '/a/grafana-pyroscope-app/explore?' +
-        'var-dataSource=test-uid' +
-        '&var-serviceName=test-service' +
-        '&var-profileMetricId=test-type' +
-        '&from=1000' +
-        '&to=2000' +
-        '&explorationType=flame-graph' +
-        '&spanSelector=test-profile'
-    );
-  });
-
-  it('should handle missing datasource uid', () => {
-    const contextWithoutUid = {
-      ...context,
-      targets: [
-        {
-          datasource: {
-            type: 'grafana-pyroscope-datasource',
-            uid: undefined,
-          },
-        },
-      ],
-    };
-
-    const path = getProfileLinkPath(contextWithoutUid, 'grafana-pyroscope-app');
-
-    expect(path).toBe(
-      '/a/grafana-pyroscope-app/explore?' +
-        'var-serviceName=test-service' +
-        '&var-profileMetricId=test-type' +
-        '&from=1000' +
-        '&to=2000' +
-        '&explorationType=flame-graph' +
-        '&spanSelector=test-profile'
-    );
-  });
-
-  it('should handle empty targets array', () => {
-    const contextWithoutTargets = {
-      ...context,
-      targets: [],
-    };
-
-    const path = getProfileLinkPath(contextWithoutTargets, 'grafana-pyroscope-app');
-
-    expect(path).toBe(
-      '/a/grafana-pyroscope-app/explore?' +
-        'var-serviceName=test-service' +
-        '&var-profileMetricId=test-type' +
-        '&from=1000' +
-        '&to=2000' +
-        '&explorationType=flame-graph' +
-        '&spanSelector=test-profile'
-    );
   });
 });
