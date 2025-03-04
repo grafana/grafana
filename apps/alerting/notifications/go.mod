@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/alerting/notifications
 
-go 1.23.5
+go 1.23.7
 
 replace github.com/grafana/grafana => ../../..
 
