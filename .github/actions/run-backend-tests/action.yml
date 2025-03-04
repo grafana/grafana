@@ -12,13 +12,11 @@ inputs:
     default: 'make gen-go test-go-unit'
 
 runs:
-  using: "composite"
-  steps:
-    - name: Run tests
-      shell: bash
-      run: |
-        if [ -n "${{ inputs.coverage-opts }}" ]; then
-          COVER_OPTS="${{ inputs.coverage-opts }}" ${{ inputs.test-command }}
-        else
-          ${{ inputs.test-command }}
-        fi
+  using: "shell"
+  shell: bash
+  run: |
+    if [ -n "${{ inputs.coverage-opts }}" ]; then
+      COVER_OPTS="${{ inputs.coverage-opts }}" ${{ inputs.test-command }}
+    else
+      ${{ inputs.test-command }}
+    fi
