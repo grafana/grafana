@@ -28,7 +28,6 @@ export interface BrowserProps {
 
 export interface BrowserState {
   labels: SelectableLabel[];
-  labelSearchTerm: string;
   status: string;
   error: string;
   validationStatus: string;

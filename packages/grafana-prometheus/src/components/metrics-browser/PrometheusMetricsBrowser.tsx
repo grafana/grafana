@@ -23,15 +23,11 @@ import {
 export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, BrowserState> {
   state: BrowserState = {
     labels: [],
-    labelSearchTerm: '',
+    // labelSearchTerm: '',
     status: 'Ready',
     error: '',
     validationStatus: '',
     valueSearchTerm: '',
-  };
-
-  onChangeLabelSearch = (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ labelSearchTerm: event.target.value });
   };
 
   onChangeValueSearch = (event: ChangeEvent<HTMLInputElement>) => {
@@ -74,7 +70,7 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
     this.fetchValues(METRIC_LABEL, EMPTY_SELECTOR);
   };
 
-  onClickLabel = (name: string, value: string | undefined, event: MouseEvent<HTMLElement>) => {
+  onClickLabel = (name: string, value: string | undefined) => {
     const label = this.state.labels.find((l) => l.name === name);
     if (!label) {
       return;
@@ -87,8 +83,6 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
       const values = label.values.map((value) => ({ ...value, selected: false }));
       nextValue = { ...nextValue, facets: 0, values };
     }
-    // Resetting search to prevent empty results
-    this.setState({ labelSearchTerm: '' });
     this.updateLabelState(name, nextValue, '', () => this.doFacettingForLabel(name));
   };
 
@@ -98,7 +92,8 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
       return;
     }
     // Resetting search to prevent empty results
-    this.setState({ labelSearchTerm: '' });
+    // FIXME reset this in context
+    // this.setState({ labelSearchTerm: '' });
     // Toggling value for selected label, leaving other values intact
     const values = label.values.map((v) => ({ ...v, selected: v.name === value ? !v.selected : v.selected }));
     this.updateLabelState(name, { values }, '', () => this.doFacetting(name));
@@ -269,7 +264,7 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
 
   render() {
     const { theme } = this.props;
-    const { labels, labelSearchTerm, status, error, validationStatus, valueSearchTerm } = this.state;
+    const { labels, status, error, validationStatus, valueSearchTerm } = this.state;
     const styles = getStyles(theme);
     if (labels.length === 0) {
       return (
@@ -279,12 +274,7 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
       );
     }
 
-    // Filter labels
     let nonMetricLabels = labels.filter((label) => !label.hidden && label.name !== METRIC_LABEL);
-    if (labelSearchTerm) {
-      nonMetricLabels = nonMetricLabels.filter((label) => label.selected || label.name.includes(labelSearchTerm));
-    }
-
     // Filter non-metric label values
     let selectedLabels = nonMetricLabels.filter((label) => label.selected && label.values);
     if (valueSearchTerm) {
@@ -299,19 +289,9 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
     return (
       <div className={styles.wrapper}>
         <Stack gap={3}>
-          <MetricSelector
-            labels={labels}
-            onClickMetric={this.onClickMetric}
-            styles={styles}
-          />
+          <MetricSelector labels={labels} onClickMetric={this.onClickMetric} styles={styles} />
           <div>
-            <LabelSelector
-              nonMetricLabels={nonMetricLabels}
-              labelSearchTerm={labelSearchTerm}
-              onChangeLabelSearch={this.onChangeLabelSearch}
-              onClickLabel={this.onClickLabel}
-              styles={styles}
-            />
+            <LabelSelector labels={labels} onClickLabel={this.onClickLabel} styles={styles} />
 
             <ValueSelector
               selectedLabels={selectedLabels}
