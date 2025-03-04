@@ -21,7 +21,7 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
   const rowOptions = useMemo(() => {
     const dashboard = getDashboardSceneFor(model);
 
-    return new OptionsPaneCategoryDescriptor({
+    const editPaneHeaderOptions = new OptionsPaneCategoryDescriptor({
       title: t('dashboard.rows-layout.row-options.title', 'Row'),
       id: 'row-options',
       isOpenable: false,
@@ -40,7 +40,15 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
           title: t('dashboard.layout.common.layout', 'Layout'),
           render: () => <DashboardLayoutSelector layoutManager={layout} />,
         })
-      )
+      );
+
+    if (layout.getOptions) {
+      for (const option of layout.getOptions()) {
+        editPaneHeaderOptions.addItem(option);
+      }
+    }
+
+    editPaneHeaderOptions
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.rows-layout.row-options.repeat.variable.title', 'Repeat for'),
@@ -53,6 +61,8 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
           render: () => <RowHeaderSwitch row={model} />,
         })
       );
+
+    return editPaneHeaderOptions;
   }, [layout, model]);
 
   return [rowOptions];
