@@ -9,4 +9,5 @@
  * and be subject to the standard policies
  */
 
-export default {};
+// This is a dummy export so typescript doesn't error importing an "empty module"
+export const unstable = {};
