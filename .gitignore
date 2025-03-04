@@ -7,6 +7,7 @@ awsconfig
 /.awcache
 /dist
 /public/build
+/public/build_tmp
 /emails/dist
 /reports
 /e2e/tmp
@@ -179,11 +180,12 @@ compilation-stats.json
 /e2e/extensions
 !/e2e/extensions/.keep
 /e2e/extensions-suite
-/test-results/
-/playwright-report/
-/blob-report/
-/playwright/.cache/
-/playwright/.auth/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+playwright/.auth/
+
 # grafana server
 /scripts/grafana-server/server.log
 
@@ -233,3 +235,6 @@ public/app/plugins/**/dist/
 public/mockServiceWorker.js
 
 /e2e/test-plugins/*/dist
+
+# vite
+stats.html

@@ -1,0 +1,5 @@
+{
+  "name": "grafana-e2e-playwright-tests",
+  "description": "This package.json exists to override the 'type': 'module' setting in root package.json",
+  "type": "commonjs"
+}

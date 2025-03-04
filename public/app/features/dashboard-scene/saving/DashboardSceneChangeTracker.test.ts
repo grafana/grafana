@@ -1,6 +1,5 @@
 import { SceneObjectStateChangedEvent } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
-import { CorsWorker } from 'app/core/utils/CorsWorker';
 import * as createDetectChangesWorker from 'app/features/dashboard-scene/saving/createDetectChangesWorker';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -25,7 +24,7 @@ describe('DashboardSceneChangeTracker', () => {
       () =>
         ({
           terminate,
-        }) as unknown as CorsWorker
+        }) as unknown as Worker
     );
     const changeTracker = new DashboardSceneChangeTracker({
       subscribeToEvent: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
@@ -44,7 +43,7 @@ describe('DashboardSceneChangeTracker', () => {
     jest.spyOn(createDetectChangesWorker, 'createWorker').mockImplementation(() => {
       return {
         postMessage,
-      } as unknown as CorsWorker;
+      } as unknown as Worker;
     });
     jest.spyOn(DashboardSceneChangeTracker, 'isUpdatingPersistedState').mockImplementation(() => {
       return true;

@@ -2,10 +2,10 @@ const fs = require('fs');
 const path = require('path');
 
 const benchmarkPlugin = require('./benchmark');
-const extendConfig = require('./extendConfig');
-const readProvisions = require('./readProvisions');
-const smtpTester = require('./smtpTester');
-const typescriptPreprocessor = require('./typescriptPreprocessor');
+const extendConfig = require('./extendConfig.cjs');
+const readProvisions = require('./readProvisions.cjs');
+const smtpTester = require('./smtpTester.cjs');
+const typescriptPreprocessor = require('./typescriptPreprocessor.cjs');
 
 module.exports = (on, config) => {
   if (config.env['BENCHMARK_PLUGIN_ENABLED'] === true) {

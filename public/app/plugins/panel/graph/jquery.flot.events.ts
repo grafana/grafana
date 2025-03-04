@@ -1,10 +1,11 @@
-import $ from 'jquery';
+import 'jquery';
 import { partition, each } from 'lodash';
-//@ts-ignore
-import Drop from 'tether-drop';
 
 import { CreatePlotOverlay } from '@grafana/data';
 import { getLegacyAngularInjector } from '@grafana/runtime';
+
+// @ts-ignore
+import Drop from '../../../../vendor/tether-drop';
 
 const createAnnotationToolip: CreatePlotOverlay = (element, event, plot) => {
   const injector = getLegacyAngularInjector();
@@ -26,6 +27,7 @@ const createAnnotationToolip: CreatePlotOverlay = (element, event, plot) => {
       tmpScope.$digest();
       tmpScope.$destroy();
 
+      // @ts-ignore
       const drop = new Drop({
         target: element[0],
         content: content,
@@ -86,7 +88,7 @@ const createEditPopover: CreatePlotOverlay = (element, event, plot) => {
 
         $compile(content)(scope);
         scope.$digest();
-
+        // @ts-ignore
         drop = new Drop({
           target: markerElementToAttachTo[0],
           content: content,

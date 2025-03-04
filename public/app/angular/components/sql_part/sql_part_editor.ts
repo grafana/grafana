@@ -1,4 +1,4 @@
-import $ from 'jquery';
+import 'jquery';
 import { debounce, each, indexOf, map, partial, escape, unescape } from 'lodash';
 
 import coreModule from 'app/angular/core_module';

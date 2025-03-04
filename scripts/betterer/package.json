@@ -1,0 +1,5 @@
+{
+  "name": "betterer-tests",
+  "description": "This package.json exists to override the 'type': 'module' setting in root package.json so betterer can run.",
+  "type": "commonjs"
+}

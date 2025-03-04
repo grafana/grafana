@@ -7,11 +7,11 @@ import i18next from 'i18next';
 import failOnConsole from 'jest-fail-on-console';
 import { initReactI18next } from 'react-i18next';
 
-import getEnvConfig from '../../scripts/webpack/env-util';
+import getEnvConfig from '../../scripts/webpack/env-util.cjs';
 
 import { matchers } from './matchers';
 
-const config = getEnvConfig() as Record<string, string | boolean>;
+const config = getEnvConfig() as Record<`frontend_dev_${string}`, unknown>;
 
 if (config.frontend_dev_fail_tests_on_console || process.env.CI) {
   failOnConsole({
@@ -33,6 +33,9 @@ i18next.use(initReactI18next).init({
 // The mock is needed because JSDOM does not support workers and
 // the factory uses import.meta.url so we can't use it in CommonJS modules.
 jest.mock('app/features/dashboard-scene/saving/createDetectChangesWorker.ts');
+
+// mock extension internationalization as it uses import.meta.glob which we can't use in CommonJS modules.
+jest.mock('app/core/internationalization/extensions.ts');
 
 // our tests are heavy in CI due to parallelisation and monaco and kusto
 // so we increase the default timeout to 2secs to avoid flakiness

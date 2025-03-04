@@ -1,16 +1,32 @@
 {
   "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
     "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    // Standard vite config but disabled because of typecheck errors
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+    // "noFallthroughCasesInSwitch": true,
+
     "baseUrl": "public/",
     "outDir": "public/dist",
     "rootDirs": ["public/"],
     "allowJs": true,
-    "strict": true,
-    "resolveJsonModule": true,
     "useUnknownInCatchVariables": true,
     "incremental": true,
-    "isolatedModules": true,
-    "moduleResolution": "bundler",
     "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
     "paths": {
       "@grafana/schema/dist/esm/*": ["../packages/grafana-schema/src/*"]

@@ -1,5 +1,10 @@
-import { ResourceKey } from 'i18next';
 import { uniq } from 'lodash';
+
+// we mock this in jest as import.meta.glob breaks things, so we don't even attempt to load enterprise translations...
+import { localeExtensionImports, type LocaleFileLoader } from './extensions';
+
+// TODO: this is just to satisfy extensions which import this type from this file.
+export type { LocaleFileLoader };
 
 export const ENGLISH_US = 'en-US';
 export const FRENCH_FRANCE = 'fr-FR';
@@ -11,7 +16,8 @@ export const PSEUDO_LOCALE = 'pseudo';
 
 export const DEFAULT_LANGUAGE = ENGLISH_US;
 
-export type LocaleFileLoader = () => Promise<ResourceKey>;
+const importLanguageFile = (languageCode: string) =>
+  import(`../../../locales/${languageCode}/grafana.json`).then((data) => data.default);
 
 export interface LanguageDefinition<Namespace extends string = string> {
   /** IETF language tag for the language e.g. en-US */
@@ -29,7 +35,7 @@ export const LANGUAGES: LanguageDefinition[] = [
     code: ENGLISH_US,
     name: 'English',
     loader: {
-      grafana: () => import('../../../locales/en-US/grafana.json'),
+      grafana: () => importLanguageFile('en-US'),
     },
   },
 
@@ -37,7 +43,7 @@ export const LANGUAGES: LanguageDefinition[] = [
     code: FRENCH_FRANCE,
     name: 'Français',
     loader: {
-      grafana: () => import('../../../locales/fr-FR/grafana.json'),
+      grafana: () => importLanguageFile('fr-FR'),
     },
   },
 
@@ -45,7 +51,7 @@ export const LANGUAGES: LanguageDefinition[] = [
     code: SPANISH_SPAIN,
     name: 'Español',
     loader: {
-      grafana: () => import('../../../locales/es-ES/grafana.json'),
+      grafana: () => importLanguageFile('es-ES'),
     },
   },
 
@@ -53,7 +59,7 @@ export const LANGUAGES: LanguageDefinition[] = [
     code: GERMAN_GERMANY,
     name: 'Deutsch',
     loader: {
-      grafana: () => import('../../../locales/de-DE/grafana.json'),
+      grafana: () => importLanguageFile('de-DE'),
     },
   },
 
@@ -61,7 +67,7 @@ export const LANGUAGES: LanguageDefinition[] = [
     code: CHINESE_SIMPLIFIED,
     name: '中文（简体）',
     loader: {
-      grafana: () => import('../../../locales/zh-Hans/grafana.json'),
+      grafana: () => importLanguageFile('zh-Hans'),
     },
   },
 
@@ -69,7 +75,7 @@ export const LANGUAGES: LanguageDefinition[] = [
     code: BRAZILIAN_PORTUGUESE,
     name: 'Português Brasileiro',
     loader: {
-      grafana: () => import('../../../locales/pt-BR/grafana.json'),
+      grafana: () => importLanguageFile('pt-BR'),
     },
   },
 ] satisfies Array<LanguageDefinition<'grafana'>>;
@@ -79,7 +85,7 @@ if (process.env.NODE_ENV === 'development') {
     code: PSEUDO_LOCALE,
     name: 'Pseudo-locale',
     loader: {
-      grafana: () => import('../../../locales/pseudo-LOCALE/grafana.json'),
+      grafana: () => importLanguageFile('pseudo-LOCALE'),
     },
   });
 }
@@ -87,13 +93,11 @@ if (process.env.NODE_ENV === 'development') {
 // Optionally load enterprise locale extensions, if they are present.
 // It is important that this happens before NAMESPACES is defined so it has the correct value
 //
-// require.context doesn't work in jest, so we don't even attempt to load enterprise translations...
 if (process.env.NODE_ENV !== 'test') {
-  const extensionRequireContext = require.context('../../', true, /app\/extensions\/locales\/localeExtensions/);
-  if (extensionRequireContext.keys().includes('app/extensions/locales/localeExtensions')) {
-    const { LOCALE_EXTENSIONS, ENTERPRISE_I18N_NAMESPACE } = extensionRequireContext(
-      'app/extensions/locales/localeExtensions'
-    );
+  const localeExtensionExports = Object.values(localeExtensionImports);
+
+  if (localeExtensionExports.length > 0) {
+    const { LOCALE_EXTENSIONS, ENTERPRISE_I18N_NAMESPACE } = localeExtensionExports[0];
 
     for (const language of LANGUAGES) {
       const localeLoader = LOCALE_EXTENSIONS[language.code];
