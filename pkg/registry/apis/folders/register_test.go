@@ -27,7 +27,9 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 		name        string
 	}
 
+	initialMaxDepth := folderValidationRules.maxDepth
 	folderValidationRules.maxDepth = 2
+	defer func() { folderValidationRules.maxDepth = initialMaxDepth }()
 	deepFolder := &v0alpha1.Folder{
 		Spec: v0alpha1.Spec{
 			Title: "foo",
