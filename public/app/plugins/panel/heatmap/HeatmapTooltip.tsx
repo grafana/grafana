@@ -56,6 +56,7 @@ export const HeatmapTooltip = (props: HeatmapTooltipProps) => {
         rowIndex={props.dataIdxs[2]}
         header={'Exemplar'}
         padding={8}
+        maxHeight={props.maxHeight}
       />
     );
   }
