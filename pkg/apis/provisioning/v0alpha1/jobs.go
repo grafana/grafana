@@ -30,10 +30,10 @@ const (
 	JobActionPullRequest JobAction = "pr"
 
 	// Sync the remote branch with the grafana instance
-	JobActionSync JobAction = "sync"
+	JobActionSync JobAction = "pull"
 
 	// Export from grafana into the remote repository
-	JobActionExport JobAction = "export"
+	JobActionExport JobAction = "push"
 
 	// Migration task -- this will migrate an full instance from SQL > Git
 	JobActionMigrate JobAction = "migrate"
