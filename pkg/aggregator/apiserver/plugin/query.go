@@ -17,8 +17,9 @@ import (
 	"github.com/grafana/grafana/pkg/aggregator/apiserver/util"
 )
 
-func (h *PluginHandler) QueryDataHandler() http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
+func (h *PluginHandler) QueryDataHandler(b aggregationv0alpha1.Backend) http.Handler {
+	pluginID := b.PluginID
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		span := tracing.SpanFromContext(ctx)
 		span.AddEvent("QueryDataHandler")
@@ -30,7 +31,7 @@ func (h *PluginHandler) QueryDataHandler() http.HandlerFunc {
 		}
 
 		dsUID := req.PathValue("uid")
-		dsType := h.dataplaneService.Spec.PluginID
+		dsType := pluginID
 
 		queries, dsRef, err := data.ToDataSourceQueries(dqr)
 		if err != nil {
@@ -85,5 +86,5 @@ func (h *PluginHandler) QueryDataHandler() http.HandlerFunc {
 		responder.Object(statusCode,
 			&aggregationv0alpha1.QueryDataResponse{QueryDataResponse: *rsp},
 		)
-	}
+	})
 }

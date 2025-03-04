@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
+	"k8s.io/component-base/tracing"
 
 	"github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
 	v0alpha1helper "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1/helper"
@@ -63,6 +64,7 @@ type GrafanaAggregator struct {
 	handledGroupVersions  map[string]sets.Set[string]
 	PluginClient          plugin.PluginClient
 	PluginContextProvider plugin.PluginContextProvider
+	tracerProvider        tracing.TracerProvider
 }
 
 // Complete fills in any fields not set that are required to have valid data. It's mutating the receiver.
@@ -157,6 +159,7 @@ func (s *GrafanaAggregator) AddDataPlaneService(dataplaneService *v0alpha1.DataP
 		localDelegate:         s.delegateHandler,
 		client:                s.PluginClient,
 		pluginContextProvider: s.PluginContextProvider,
+		tracerProvider:        s.tracerProvider,
 	}
 	proxyHandler.updateDataPlaneService(dataplaneService)
 	s.proxyHandlers[dataplaneService.Name] = proxyHandler
