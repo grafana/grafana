@@ -11,8 +11,8 @@ import { PrometheusDatasource } from '../datasource';
 import { getInitHints } from '../query_hints';
 import { PromOptions, PromQuery } from '../types';
 
-import { PrometheusMetricsBrowser } from './PrometheusMetricsBrowser';
 import { CancelablePromise, isCancelablePromiseRejection, makePromiseCancelable } from './cancelable-promise';
+import { PrometheusMetricsBrowser } from './metrics-browser/PrometheusMetricsBrowser';
 import { MonacoQueryFieldWrapper } from './monaco-query-field/MonacoQueryFieldWrapper';
 import { useMetricsState } from './useMetricsState';
 import { usePromQueryFieldEffects } from './usePromQueryFieldEffects';
