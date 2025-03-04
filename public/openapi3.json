@@ -3669,7 +3669,7 @@
           "Policies": {
             "description": "Policies contains all policy identifiers included in the certificate.\nIn Go 1.22, encoding/gob cannot handle and ignores this field.",
             "items": {
-              "$ref": "#/components/schemas/OID"
+              "type": "string"
             },
             "type": "array"
           },
@@ -7431,10 +7431,6 @@
           }
         },
         "title": "OAuth2 is the oauth2 client configuration.",
-        "type": "object"
-      },
-      "OID": {
-        "title": "An OID represents an ASN.1 OBJECT IDENTIFIER.",
         "type": "object"
       },
       "ObjectIdentifier": {
