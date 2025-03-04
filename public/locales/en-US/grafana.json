@@ -308,6 +308,7 @@
       "view": "View"
     },
     "contact-points": {
+      "contact-point": "Contact point",
       "create": "Create contact point",
       "custom-template-value": "Custom template value",
       "delete-reasons": {
@@ -322,6 +323,7 @@
       "empty-state": {
         "title": "You don't have any contact points yet"
       },
+      "failed-loading": "Failed to load contact points",
       "key-value-map": {
         "add": "Add",
         "confirm-add": "Confirm to add"
@@ -331,10 +333,13 @@
       "no-contact-points-found": "No contact points found",
       "no-delivery-attempts": "No delivery attempts",
       "no-integrations": "No integrations configured",
+      "on-call-unreachable": "Grafana OnCall plugin has been enabled in your Grafana instances but it is not reachable. Please check the plugin configuration",
+      "on-call-unreachable-title": "Loading OnCall integration failed",
       "only-firing": "Delivering <1>only firing</1> notifications",
       "receiver-summary": {
         "jira": "Creates a \"{{issueType}}\" issue in the \"{{project}}\" project"
       },
+      "refresh": "Refresh contact points",
       "telegram": {
         "parse-mode-warning-body": "If you use a <1>parse_mode</1> option other than <3>None</3>, truncation may result in an invalid message, causing the notification to fail. For longer messages, we recommend using an alternative contact method.",
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
@@ -342,10 +347,8 @@
       "used-by_one": "Used by {{ count }} notification policy",
       "used-by_other": "Used by {{ count }} notification policy",
       "used-by-rules_one": "Used by {{ count }} alert rule",
-      "used-by-rules_other": "Used by {{ count }} alert rule"
-    },
-    "contactPointFilter": {
-      "label": "Contact point"
+      "used-by-rules_other": "Used by {{ count }} alert rule",
+      "view-all": "View all contact points"
     },
     "copy-to-clipboard": "Copy \"{{label}}\" to clipboard",
     "dag": {
@@ -414,7 +417,9 @@
       "alertmanager": "Alertmanager:",
       "error": "Could not load routing preview for {{alertmanager}}",
       "initialized": "Based on the labels added, alert instances are routed to the following notification policies. Expand each notification policy below to view more details.",
+      "loading": "Loading routing preview...",
       "preview-routing": "Preview routing",
+      "timing-options": "Muting, grouping and timings (optional)",
       "title": "Alert instance routing preview",
       "uninitialized": "When you have your folder selected and your query and labels are configured, click \"Preview routing\" to see the results here."
     },
