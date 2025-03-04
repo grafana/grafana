@@ -154,21 +154,3 @@ export function getLayout(sceneState: DashboardLayoutManager): DashboardV2Spec['
   }
   return registryItem.serializer.serialize(sceneState);
 }
-
-export function schemaV2SetElementIdentifierForVizPanel(panelId: number, scene: DashboardScene): void {
-  const elementKey = 'element-panel-' + panelId;
-  const mapping = scene.getElementPanelMapping();
-  mapping.set(elementKey, panelId);
-}
-
-export function schemaV2RemoveElementIdentifierForVizPanel(vizPanel: VizPanel, scene: DashboardScene): void {
-  // This function is only for V2 dashboards
-  if (config.featureToggles.useV2DashboardsAPI) {
-    const elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(vizPanel);
-    console.log('removeElementIdentifierForVizPanel', elementKey);
-    const mapping = scene.getElementPanelMapping();
-    // remove the mapping for the element key
-    mapping.delete(elementKey);
-    console.log('mapping after removing', mapping);
-  }
-}
