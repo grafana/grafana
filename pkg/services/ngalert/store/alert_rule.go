@@ -92,10 +92,9 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 
 		_, err = sess.Insert(versions)
 		if err != nil {
-			logger.Error("Failed to insert latest version of deleted alert rules. The recovery will not be possible", "error", err)
-		} else {
-			logger.Debug("Inserted alert rule versions for recovery", "count", len(versions))
+			return fmt.Errorf("failed to persist deleted rule for recovery: %w", err)
 		}
+		logger.Debug("Inserted alert rule versions for recovery", "count", len(versions))
 		return nil
 	})
 }
