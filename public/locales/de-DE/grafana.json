@@ -1078,11 +1078,6 @@
         }
       },
       "open": "",
-      "panels": {
-        "multi-select": {
-          "selection-number": ""
-        }
-      },
       "row": {
         "header": {
           "hide": "",
@@ -1170,6 +1165,16 @@
       "request-time": "Gesamte Anfragezeit",
       "rows": "Gesamtanzahl an Zeilen",
       "table-title": "Statistiken"
+    },
+    "layout": {
+      "common": {
+        "copy": "",
+        "copy-or-duplicate": "",
+        "delete": "",
+        "duplicate": "",
+        "layout": "",
+        "panels-title": ""
+      }
     },
     "options": {
       "description": "",
@@ -1325,6 +1330,8 @@
     "viz-panel": {
       "options": {
         "description": "",
+        "open-edit": "",
+        "plugin-type-image": "",
         "title": "",
         "title-option": "",
         "transparent-background": ""
