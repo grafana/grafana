@@ -818,6 +818,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/changelog.yml @zserge
 /.github/workflows/actions/changelog @zserge
 /.github/workflows/frontend-unit-tests.yml @grafana/grafana-frontend-platform
+/.github/workflows/frontend-lint.yml @grafana/grafana-frontend-platform
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot
