@@ -199,7 +199,7 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
 
           return {
             text: r.name,
-            value: r.id,
+            value: r.name,
           };
         });
       }
