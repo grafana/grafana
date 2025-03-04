@@ -1,5 +1,5 @@
 import { SceneCSSGridLayout } from '@grafana/scenes';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { DashboardV2Spec, ResponsiveGridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
 import { ResponsiveGridItem } from '../../scene/layout-responsive-grid/ResponsiveGridItem';
 import { ResponsiveGridLayoutManager } from '../../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
@@ -25,7 +25,7 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
           // For serialization we should retrieve the original element key
           const elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(child.state?.body);
 
-          return {
+          const layoutItem: ResponsiveGridLayoutItemKind = {
             kind: 'ResponsiveGridLayoutItem',
             spec: {
               element: {
@@ -34,6 +34,15 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
               },
             },
           };
+
+          if (child.state.variableName) {
+            layoutItem.spec.repeat = {
+              mode: 'variable',
+              value: child.state.variableName,
+            };
+          }
+
+          return layoutItem;
         }),
       },
     };
@@ -55,6 +64,7 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
       return new ResponsiveGridItem({
         key: getGridItemKeyForPanelId(panel.spec.id),
         body: buildVizPanel(panel),
+        variableName: item.spec.repeat?.value,
       });
     });
 

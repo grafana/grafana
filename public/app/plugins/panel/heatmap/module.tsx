@@ -1,4 +1,4 @@
-import { FieldConfigProperty, FieldType, identityOverrideProcessor, PanelPlugin } from '@grafana/data';
+import { DataFrame, FieldConfigProperty, FieldType, identityOverrideProcessor, PanelPlugin } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   AxisPlacement,
@@ -442,7 +442,9 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       settings: {
         integer: true,
       },
-      showIf: (options) => options.tooltip?.mode === TooltipDisplayMode.Multi,
+      showIf: (options: Options, data: DataFrame[] | undefined, annotations: DataFrame[] | undefined) =>
+        options.tooltip?.mode === TooltipDisplayMode.Multi ||
+        annotations?.some((df) => df.meta?.custom?.resultType === 'exemplar'),
     });
 
     category = ['Legend'];
@@ -459,6 +461,8 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       name: 'Color',
       defaultValue: defaultOptions.exemplars.color,
       category,
+      showIf: (options: Options, data: DataFrame[] | undefined, annotations: DataFrame[] | undefined) =>
+        annotations?.some((df) => df.meta?.custom?.resultType === 'exemplar'),
     });
   })
   .setSuggestionsSupplier(new HeatmapSuggestionsSupplier())

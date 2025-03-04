@@ -965,7 +965,7 @@ func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReade
 			q.log.Debug("No resource checker found", "resource", resource)
 			return false
 		}
-		allowed := q.checkers[resource](ns, name, folder)
+		allowed := q.checkers[resource](name, folder)
 		if !allowed {
 			q.log.Debug("Denying access", "ns", ns, "name", name, "folder", folder)
 		}
