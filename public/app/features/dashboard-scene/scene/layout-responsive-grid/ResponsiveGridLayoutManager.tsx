@@ -2,10 +2,6 @@ import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectSt
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import {
-  schemaV2RemoveElementIdentifierForVizPanel,
-  schemaV2SetElementIdentifierForVizPanel,
-} from '../../serialization/layoutSerializers/utils';
 import { joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import {

@@ -15,10 +15,6 @@ import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
 
-import {
-  schemaV2RemoveElementIdentifierForVizPanel,
-  schemaV2SetElementIdentifierForVizPanel,
-} from '../../serialization/layoutSerializers/utils';
 import { isClonedKey, joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import {

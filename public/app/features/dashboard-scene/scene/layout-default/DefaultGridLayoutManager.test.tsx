@@ -1,7 +1,6 @@
 import { SceneGridItemLike, SceneGridLayout, SceneGridRow, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
-import { ElementPanelMappingService } from '../../serialization/ElementPanelMappingService';
-import { findVizPanelByKey, getPanelIdForVizPanel } from '../../utils/utils';
+import { findVizPanelByKey } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 
 import { DashboardGridItem } from './DashboardGridItem';
@@ -44,19 +43,6 @@ describe('DefaultGridLayoutManager', () => {
 
       expect(panel).toBeDefined();
       expect(gridItem.state.y).toBe(0);
-    });
-
-    it('should add a new entry to ElementPannelMappingService', () => {
-      const { manager, elementPanelMapping } = setup();
-      const vizPanel = new VizPanel({
-        title: 'Panel Title',
-        pluginId: 'timeseries',
-        $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
-      });
-
-      manager.addPanel(vizPanel);
-      const panelId = getPanelIdForVizPanel(vizPanel);
-      expect(elementPanelMapping.hasPanelId(panelId)).toBe(true);
     });
   });
 
@@ -167,25 +153,6 @@ describe('DefaultGridLayoutManager', () => {
       const gridRow = grid.state.children[2] as SceneGridRow;
       expect(gridRow.state.children.length).toBe(1);
     });
-
-    it.skip('should remove the new entry to ElementPannelMappingService', () => {
-      const { manager, elementPanelMapping } = setup();
-      const vizPanel = new VizPanel({
-        title: 'Panel Title',
-        pluginId: 'timeseries',
-        $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
-      });
-
-      manager.addPanel(vizPanel);
-      // add panel to the lookup table
-      const panelId = getPanelIdForVizPanel(vizPanel);
-      expect(elementPanelMapping.hasPanelId(panelId)).toBe(true);
-      const panel = findVizPanelByKey(manager, `panel-${panelId}`)!;
-
-      // verify the the entry was removed
-      manager.removePanel(panel);
-      expect(elementPanelMapping.hasPanelId(panelId)).toBe(false);
-    });
   });
 
   describe('duplicatePanel', () => {
@@ -267,7 +234,6 @@ interface TestOptions {
 }
 
 function setup(options?: TestOptions) {
-  const elementMappingService = ElementPanelMappingService.getInstance();
   const gridItems = options?.gridItems ?? [
     new DashboardGridItem({
       key: 'griditem-1',
@@ -312,7 +278,7 @@ function setup(options?: TestOptions) {
   const grid = new SceneGridLayout({ children: gridItems });
   const manager = new DefaultGridLayoutManager({ grid: grid });
 
-  new DashboardScene({ body: manager, elementPanelMapping: elementMappingService });
+  new DashboardScene({ body: manager });
 
-  return { manager, grid, elementPanelMapping: elementMappingService };
+  return { manager, grid };
 }
