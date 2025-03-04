@@ -7,19 +7,12 @@ import { AlertHistoryOptions } from './types';
 
 const alertHistory = new PanelPlugin<AlertHistoryOptions>(AlertHistoryPanel).setPanelOptions((builder) => {
   builder
-    .addBooleanSwitch({
-      path: 'hideEventsGraph',
-      name: 'Hide events graph',
-      description: 'Hide the graph displaying the events',
-      defaultValue: false,
-      category: ['Options'],
-    })
-    .addBooleanSwitch({
-      path: 'hideEventsList',
-      name: 'Hide events list',
-      description: 'Hide the table displaying the list of events',
-      defaultValue: false,
-      category: ['Options'],
+    .addTextInput({
+      path: 'filterByLabels',
+      name: 'Filter by labels',
+      description: 'Filter by labels',
+      defaultValue: '',
+      category: ['Filter'],
     })
     .addCustomEditor({
       path: 'filterFrom',

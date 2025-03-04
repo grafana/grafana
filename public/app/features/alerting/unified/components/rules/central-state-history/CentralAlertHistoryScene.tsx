@@ -71,7 +71,12 @@ export interface AlertHistorySceneProps {
   propsFromPanel?: PanelProps<AlertHistoryOptions>;
 }
 
-export const useGetCentralAlertHistoryScene = (propsFromPanel?: PanelProps<AlertHistoryOptions>) => {
+/**
+ * This hook is used to get the CentralAlertHistoryScene.
+ * It creates the scene with the necessary controls and components depening if it is used in a panel or not.
+ * */
+
+export const useGetCentralAlertHistoryScene = (panelProps?: PanelProps<AlertHistoryOptions> | undefined) => {
   //track the loading of the central alert state history
   useEffect(() => {
     logInfo(LogMessages.loadedCentralAlertStateHistory);
@@ -79,16 +84,13 @@ export const useGetCentralAlertHistoryScene = (propsFromPanel?: PanelProps<Alert
 
   useRegisterHistoryRuntimeDataSource(); // register the runtime datasource for the history api.
 
+  const scene = useGetScene(panelProps);
+  return scene;
+};
+
+function useGetScene(panelProps?: PanelProps<AlertHistoryOptions> | undefined) {
+  const fromPanel = panelProps !== undefined;
   const scene = useMemo(() => {
-    const fromPanel = Boolean(propsFromPanel);
-
-    // create the variables for the filters
-    // textbox variable for filtering by labels
-    const filterTo = propsFromPanel?.options?.filterTo ?? StateFilterValues.all;
-    const filterFrom = propsFromPanel?.options?.filterFrom ?? StateFilterValues.all;
-    const hideEventsGraph = propsFromPanel?.options?.hideEventsGraph;
-    const hideEventsList = propsFromPanel?.options?.hideEventsList;
-
     const labelsFilterVariable = new TextBoxVariable({
       name: LABELS_FILTER,
       label: 'Labels: ',
@@ -97,7 +99,7 @@ export const useGetCentralAlertHistoryScene = (propsFromPanel?: PanelProps<Alert
     //custom variable for filtering by the current state
     const transitionsToFilterVariable = new CustomVariable({
       name: STATE_FILTER_TO,
-      value: filterTo,
+      value: StateFilterValues.all,
       label: 'End state:',
       hide: VariableHide.dontHide,
       query: `All : ${StateFilterValues.all}, To Firing : ${StateFilterValues.firing},To Normal : ${StateFilterValues.normal},To Pending : ${StateFilterValues.pending}`,
@@ -106,26 +108,11 @@ export const useGetCentralAlertHistoryScene = (propsFromPanel?: PanelProps<Alert
     //custom variable for filtering by the previous state
     const transitionsFromFilterVariable = new CustomVariable({
       name: STATE_FILTER_FROM,
-      value: filterFrom,
+      value: StateFilterValues.all,
       label: 'Start state:',
       hide: VariableHide.dontHide,
       query: `All : ${StateFilterValues.all}, From Firing : ${StateFilterValues.firing},From Normal : ${StateFilterValues.normal},From Pending : ${StateFilterValues.pending}`,
     });
-    // const optionalControls = fromPanel
-    //   ? []
-    //   : [
-    //     new SceneReactObject({
-    //       component: LabelFilter,
-    //     }),
-    //     new SceneReactObject({
-    //       component: FilterInfo,
-    //     }),
-    //     new VariableValueSelectors({}),
-    //     new ClearFilterButtonScenesObject({}),
-    //     new SceneControlsSpacer(),
-    //     new SceneTimePicker({}),
-    //     new SceneRefreshPicker({}),
-    //   ];
 
     return new EmbeddedScene({
       controls: [
@@ -153,8 +140,8 @@ export const useGetCentralAlertHistoryScene = (propsFromPanel?: PanelProps<Alert
       body: new SceneFlexLayout({
         direction: 'column',
         children: [
-          ...(hideEventsGraph ? [] : [getEventsScenesFlexItem()]),
-          ...(hideEventsList
+          ...(false ? [] : [getEventsScenesFlexItem()]), // todo: hide events graph
+          ...(false // todo hide events list
             ? []
             : [
                 new SceneFlexItem({
@@ -164,9 +151,56 @@ export const useGetCentralAlertHistoryScene = (propsFromPanel?: PanelProps<Alert
         ],
       }),
     });
-  }, [propsFromPanel]);
-  return scene;
-};
+  }, []);
+
+  const sceneFromPanel = useMemo(() => {
+    const labelsFilterVariable = new TextBoxVariable({
+      name: LABELS_FILTER,
+      label: 'Labels: ',
+    });
+
+    //custom variable for filtering by the current state
+    const transitionsToFilterVariable = new CustomVariable({
+      name: STATE_FILTER_TO,
+      value: StateFilterValues.all,
+      label: 'End state:',
+      hide: VariableHide.dontHide,
+      query: `All : ${StateFilterValues.all}, To Firing : ${StateFilterValues.firing},To Normal : ${StateFilterValues.normal},To Pending : ${StateFilterValues.pending}`,
+    });
+
+    //custom variable for filtering by the previous state
+    const transitionsFromFilterVariable = new CustomVariable({
+      name: STATE_FILTER_FROM,
+      value: StateFilterValues.all,
+      label: 'Start state:',
+      hide: VariableHide.dontHide,
+      query: `All : ${StateFilterValues.all}, From Firing : ${StateFilterValues.firing},From Normal : ${StateFilterValues.normal},From Pending : ${StateFilterValues.pending}`,
+    });
+
+    return new EmbeddedScene({
+      controls: [new SceneControlsSpacer(), new SceneTimePicker({}), new SceneRefreshPicker({})],
+      // use default time range as from 1 hour ago to now, as the limit of the history api is 5000 events,
+      // and using a wider time range might lead to showing gaps in the events list and the chart.
+      $timeRange: new SceneTimeRange({
+        from: 'now-1h',
+        to: 'now',
+      }),
+      $variables: new SceneVariableSet({
+        variables: [labelsFilterVariable, transitionsFromFilterVariable, transitionsToFilterVariable],
+      }),
+      body: new SceneFlexLayout({
+        direction: 'column',
+        children: [
+          getEventsScenesFlexItem(),
+          new SceneFlexItem({
+            body: new HistoryEventsListObject({}),
+          }),
+        ],
+      }),
+    });
+  }, []);
+  return fromPanel ? sceneFromPanel : scene;
+}
 
 // CentralAlertHistoryScene is the main component that renders the CentralAlertHistoryScene using url sync.
 export const CentralAlertHistoryScene = () => {
@@ -181,9 +215,29 @@ export const CentralAlertHistoryScene = () => {
   return <scene.Component model={scene} />;
 };
 
-// This component is used to render the CentralAlertHistoryScene without url sync. In particular, it is used in the alertHistory built in panel.
-export const CentralAlertHistorySceneWithNoUrlSync = ({ propsFromPanel }: AlertHistorySceneProps) => {
+/**
+ * This component is used to render the CentralAlertHistoryScene when it is used in a panel.
+ * It receives the props from the panel and sets the filter variables to the values from the panel options.
+ * We cannot url sync the scene when it is used in a panel, because one dashobard can have multiple panels with different options.
+ * */
+export const CentralAlertHistorySceneForPanel = ({ propsFromPanel }: AlertHistorySceneProps) => {
+  const options: AlertHistoryOptions | undefined = propsFromPanel?.options;
   const scene = useGetCentralAlertHistoryScene(propsFromPanel);
+  useEffect(() => {
+    const stateToFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_TO, scene);
+    const stateFromFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_FROM, scene);
+
+    if (stateToFilterVariable instanceof CustomVariable) {
+      stateToFilterVariable.changeValueTo(options?.filterTo ?? StateFilterValues.all);
+    }
+    if (stateFromFilterVariable instanceof CustomVariable) {
+      stateFromFilterVariable.changeValueTo(options?.filterFrom ?? StateFilterValues.all);
+    }
+    const labelsFiltersVariable = sceneGraph.lookupVariable(LABELS_FILTER, scene);
+    if (labelsFiltersVariable instanceof TextBoxVariable) {
+      labelsFiltersVariable.setValue(options?.filterByLabels ?? '');
+    }
+  }, [options, scene]);
 
   return <scene.Component model={scene} />;
 };
