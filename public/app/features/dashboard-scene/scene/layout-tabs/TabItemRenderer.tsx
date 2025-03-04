@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useLocation } from 'react-router';
 
-import { GrafanaTheme2, locationUtil } from '@grafana/data';
+import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { Checkbox, clearButtonStyles, useElementSelection, useStyles2 } from '@grafana/ui';
 // eslint-disable-next-line no-restricted-imports
@@ -18,7 +18,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const myIndex = tabs.findIndex((tab) => tab === model);
   const isActive = myIndex === currentTabIndex;
   const location = useLocation();
-  const href = locationUtil.getUrlForPartial(location, { tab: myIndex });
+  const href = textUtil.sanitize(locationUtil.getUrlForPartial(location, { tab: myIndex }));
   const styles = useStyles2(getStyles);
   const clearStyles = useStyles2(clearButtonStyles);
 
