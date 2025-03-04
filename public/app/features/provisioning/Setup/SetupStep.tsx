@@ -1,6 +1,8 @@
 import { Container, Text } from '@grafana/ui';
-import { Step } from './types';
+
 import { CodeBlock } from '../components/CodeBlock';
+
+import { Step } from './types';
 
 export interface Props {
   step: Step;

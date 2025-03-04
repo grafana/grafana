@@ -9,11 +9,34 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+// called when an error exists
+func stopReadingUnifiedStorage(ctx context.Context, dual dualwrite.Service) error {
+	kinds := []schema.GroupResource{{
+		Group:    folders.GROUP,
+		Resource: folders.RESOURCE,
+	}, {
+		Group:    dashboard.GROUP,
+		Resource: dashboard.DASHBOARD_RESOURCE,
+	}}
+
+	for _, gr := range kinds {
+		status, _ := dual.Status(ctx, gr)
+		status.ReadUnified = false
+		status.Migrated = 0
+		status.Migrating = 0
+		_, err := dual.Update(ctx, status)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 func (j *migrationJob) wipeUnifiedAndSetMigratedFlag(ctx context.Context, dual dualwrite.Service) error {
 	kinds := []schema.GroupResource{{
