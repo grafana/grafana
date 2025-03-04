@@ -457,9 +457,9 @@ func grafanaRuleGroupToPrometheus(group string, rules []models.AlertRule) (apimo
 	}
 
 	for i, rule := range rules {
-		promDefinition := rule.PrometheusRuleDefinition()
-		if promDefinition == "" {
-			return apimodels.PrometheusRuleGroup{}, fmt.Errorf("failed to get the Prometheus definition of the rule with UID %s", rule.UID)
+		promDefinition, err := rule.PrometheusRuleDefinition()
+		if err != nil {
+			return apimodels.PrometheusRuleGroup{}, fmt.Errorf("failed to get the Prometheus definition of the rule with UID %s: %w", rule.UID, err)
 		}
 		var r apimodels.PrometheusRule
 		if err := yaml.Unmarshal([]byte(promDefinition), &r); err != nil {

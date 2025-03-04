@@ -215,11 +215,7 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 			continue
 		}
 		if q.ImportedPrometheusRule != nil {
-			hasOriginalRuleDefinition := r.PrometheusRuleDefinition() != ""
-			if *q.ImportedPrometheusRule && !hasOriginalRuleDefinition {
-				continue
-			}
-			if !*q.ImportedPrometheusRule && hasOriginalRuleDefinition {
+			if *q.ImportedPrometheusRule != r.ImportedFromPrometheus() {
 				continue
 			}
 		}
