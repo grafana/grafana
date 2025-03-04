@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 var (
@@ -41,6 +42,12 @@ func errorToResponse(err error) response.Response {
 	}
 	if errors.Is(err, errFolderAccess) {
 		return toNamespaceErrorResponse(err)
+	}
+	if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
+		return ErrResp(http.StatusForbidden, err, "")
+	}
+	if errors.Is(err, models.ErrQuotaReached) {
+		return ErrResp(http.StatusForbidden, err, "")
 	}
 	return ErrResp(http.StatusInternalServerError, err, "")
 }
