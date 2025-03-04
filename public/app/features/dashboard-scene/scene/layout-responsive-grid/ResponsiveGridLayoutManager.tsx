@@ -67,10 +67,6 @@ export class ResponsiveGridLayoutManager
     vizPanel.setState({ key: getVizPanelKeyForPanelId(panelId) });
     vizPanel.clearParent();
 
-    // set panel id in the elementPanel mapping
-    const scene = getDashboardSceneFor(this);
-    schemaV2SetElementIdentifierForVizPanel(panelId, scene);
-
     this.state.layout.setState({
       children: [new ResponsiveGridItem({ body: vizPanel }), ...this.state.layout.state.children],
     });
@@ -79,9 +75,6 @@ export class ResponsiveGridLayoutManager
   public removePanel(panel: VizPanel) {
     const element = panel.parent;
     this.state.layout.setState({ children: this.state.layout.state.children.filter((child) => child !== element) });
-
-    const scene = getDashboardSceneFor(panel);
-    schemaV2RemoveElementIdentifierForVizPanel(panel, scene);
   }
 
   public duplicatePanel(panel: VizPanel) {

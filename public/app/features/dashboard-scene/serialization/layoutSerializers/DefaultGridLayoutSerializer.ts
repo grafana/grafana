@@ -151,11 +151,6 @@ function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, yOverride?: n
   // For serialization we should retrieve the original element key
   let elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(gridItem.state.body);
 
-  if (!elementKey) {
-    // assign a random key based on panel id
-    elementKey = 'random-element-panel-' + getPanelIdForVizPanel(gridItem.state.body);
-  }
-
   elementGridItem = {
     kind: 'GridLayoutItem',
     spec: {

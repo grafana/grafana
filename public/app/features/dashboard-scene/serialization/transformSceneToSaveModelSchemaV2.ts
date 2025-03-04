@@ -45,7 +45,13 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
+import {
+  getLibraryPanelBehavior,
+  getPanelIdForVizPanel,
+  getQueryRunnerFor,
+  getVizPanelKeyForPanelId,
+  isLibraryPanel,
+} from '../utils/utils';
 
 import { getLayout } from './layoutSerializers/utils';
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
@@ -97,7 +103,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF variables
 
     // elements
-    elements: getElements(sceneDash, scene),
+    elements: getElements(scene),
     // EOF elements
 
     // annotations
@@ -140,8 +146,8 @@ function getLiveNow(state: DashboardSceneState) {
   return Boolean(liveNow);
 }
 
-function getElements(state: DashboardSceneState, scene: DashboardScene) {
-  const panels = state.body.getVizPanels() ?? [];
+function getElements(scene: DashboardScene) {
+  const panels = scene.state.body.getVizPanels() ?? [];
 
   const panelsArray = panels.map((vizPanel: VizPanel) => {
     if (isLibraryPanel(vizPanel)) {
@@ -342,9 +348,6 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
 function createElements(panels: Element[], scene: DashboardScene): Record<string, Element> {
   return panels.reduce<Record<string, Element>>((elements, panel) => {
     let elementKey = scene.getElementIdentifierForPanel(panel.spec.id);
-    if (!elementKey) {
-      elementKey = `random-element-panel-${panel.spec.id}`;
-    }
     elements[elementKey!] = panel;
     return elements;
   }, {});

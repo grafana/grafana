@@ -15,6 +15,7 @@ import { DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
 import { getRawDashboardChanges, getRawDashboardV2Changes } from '../saving/getDashboardChanges';
 import { DashboardChangeInfo } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
+import { getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
@@ -76,12 +77,17 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
 
   getElementIdForPanel(panelId: number) {
     // Find element ID by looking for matching panel ID
+    let elementIdentifier;
     for (const [elementId, id] of this.elementPanelMap.entries()) {
       if (id === panelId) {
-        return elementId;
+        elementIdentifier = elementId;
       }
     }
-    return undefined;
+    // if element identifier is not found, return defaultr 'panel-id'
+    if (!elementIdentifier) {
+      elementIdentifier = getVizPanelKeyForPanelId(panelId);
+    }
+    return elementIdentifier;
   }
 
   getSaveModel(s: DashboardScene) {
@@ -192,12 +198,16 @@ export class V2DashboardSerializer
 
   getElementIdForPanel(panelId: number) {
     // Find element ID by looking for matching panel ID
+    let elementIdentifier;
     for (const [elementId, id] of this.elementPanelMap.entries()) {
       if (id === panelId) {
-        return elementId;
+        elementIdentifier = elementId;
       }
     }
-    return undefined;
+    if (!elementIdentifier) {
+      elementIdentifier = getVizPanelKeyForPanelId(panelId);
+    }
+    return elementIdentifier;
   }
 
   getSaveModel(s: DashboardScene) {
