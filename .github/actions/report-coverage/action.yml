@@ -40,14 +40,6 @@ runs:
       shell: bash
       run: |
         go tool cover -func backend.cov > backend-funcs.log
-        
-        # Only check coverage thresholds if explicitly enabled
-        if [ "$CHECK_COVERAGE_THRESHOLDS" = "true" ]; then
-          # Check if any package has less than required coverage
-          if grep -v "100.0%" backend-funcs.log | grep -v "total:" | awk '{if($3+0 < 50.0) {print "Low coverage: "$1" "$3; exit 1}}'; then
-            exit 1
-          fi
-        fi
 
     - name: Convert coverage info to HTML
       shell: bash

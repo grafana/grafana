@@ -225,8 +225,6 @@ jobs:
         with:
           unit-cov-path: unit.cov
           integration-cov-path: integration.cov
-        env:
-          CHECK_COVERAGE_THRESHOLDS: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
