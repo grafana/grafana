@@ -49,7 +49,7 @@ export const getSpanDetailLinkButtons = (props: Props) => {
         SpanLinkType.Profiles,
         'Profiles for this span',
         'link',
-        datasourceType,
+        datasourceType
       );
     }
     const sessionLink = links?.filter((link) => link.type === SpanLinkType.Session);

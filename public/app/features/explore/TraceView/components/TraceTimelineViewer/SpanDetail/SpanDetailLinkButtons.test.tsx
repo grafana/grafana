@@ -4,10 +4,7 @@ import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
 import { SpanLinkType } from '../../types/links';
 import { TraceSpan } from '../../types/trace';
 
-import {
-  getSpanDetailLinkButtons,
-  getProfileLinkButtonsContext,
-} from './SpanDetailLinkButtons';
+import { getSpanDetailLinkButtons, getProfileLinkButtonsContext } from './SpanDetailLinkButtons';
 
 const span = {
   process: {
