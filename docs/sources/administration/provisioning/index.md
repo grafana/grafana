@@ -615,13 +615,14 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `webhook`
 
-| Name        | Secure setting |
-| ----------- | -------------- |
-| url         |                |
-| http_method |                |
-| username    |                |
-| password    | yes            |
-| tls_config  |                |
+| Name          | Secure setting |
+| ------------- | -------------- |
+| `url`         |                |
+| `http_method` |                |
+| `username`    |                |
+| `password`    | yes            |
+| `tls_config`  |                |
+| `hmac_config` |                |
 
 ##### TLS config
 
@@ -631,6 +632,14 @@ The following sections detail the supported settings and secure settings for eac
 | clientCertificate  | yes            |
 | clientKey          | yes            |
 | caCertificate      | yes            |
+
+##### HMAC signature configuration
+
+| Name              | Secure setting |
+| ----------------- | -------------- |
+| `secret`          | yes            |
+| `header`          |                |
+| `timestampHeader` |                |
 
 #### Alert notification `googlechat`
 
