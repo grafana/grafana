@@ -1,15 +1,51 @@
 {
-  "tasksRunnerOptions": {
-    "default": {
-      "runner": "nx/tasks-runners/default",
-      "options": {
-        "cacheableOperations": ["build", "generate"]
-      }
-    }
-  },
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "targetDefaults": {
     "build": {
-      "outputs": ["{projectRoot}/dist"]
+      "outputs": ["{projectRoot}/dist"],
+      "cache": true
+    },
+    "pack": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn pack --out \"../../npm-artifacts/%s-%v.tgz\"",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "generate": {
+      "cache": true
+    }
+  },
+  "release": {
+    "projectsRelationship": "fixed",
+    "groups": {
+      "grafanaPackages": {
+        "projects": [
+          "@grafana/data",
+          "@grafana/e2e-selectors",
+          "@grafana/flamegraph",
+          "@grafana/prometheus",
+          "@grafana/runtime",
+          "@grafana/schema",
+          "@grafana/ui"
+        ]
+      },
+      "privatePackages": {
+        "projects": ["@grafana/sql", "@grafana/o11y-ds-frontend"]
+      },
+      "plugins": {
+        "projects": ["@grafana-plugins/*"]
+      }
+    },
+    "version": {
+      "generatorOptions": {
+        "skipLockFileUpdate": true
+      },
+      "git": {
+        "commit": false,
+        "stageChanges": false,
+        "tag": false
+      }
     }
   },
   "defaultBase": "main"
