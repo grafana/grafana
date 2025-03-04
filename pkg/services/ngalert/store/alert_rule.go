@@ -40,6 +40,9 @@ var (
 
 // DeleteAlertRulesByUID is a handler for deleting an alert rule.
 func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *ngmodels.UserUID, ruleUID ...string) error {
+	if len(ruleUID) == 0 {
+		return nil
+	}
 	logger := st.Logger.New("org_id", orgID, "rule_uids", ruleUID)
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		rows, err := sess.Table(alertRule{}).Where("org_id = ?", orgID).In("uid", ruleUID).Delete(alertRule{})
@@ -69,18 +72,21 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 		}
 		logger.Debug("Deleted alert rule state", "count", rows)
 
-		versions, err := st.getLatestVersionOfRulesByUID(ctx, orgID, ruleUID)
-		if err != nil {
-			logger.Error("Failed to get latest version of deleted alert rules. The recovery will not be possible", "error", err)
-		}
-		for idx := range versions {
-			version := &versions[idx]
-			version.ID = 0
-			version.RuleUID = ""
-			version.Created = TimeNow()
-			version.CreatedBy = nil
-			if user != nil {
-				version.CreatedBy = util.Pointer(string(*user))
+		var versions []alertRuleVersion
+		if st.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertRuleRestore) {
+			versions, err = st.getLatestVersionOfRulesByUID(ctx, orgID, ruleUID)
+			if err != nil {
+				logger.Error("Failed to get latest version of deleted alert rules. The recovery will not be possible", "error", err)
+			}
+			for idx := range versions {
+				version := &versions[idx]
+				version.ID = 0
+				version.RuleUID = ""
+				version.Created = TimeNow()
+				version.CreatedBy = nil
+				if user != nil {
+					version.CreatedBy = util.Pointer(string(*user))
+				}
 			}
 		}
 
@@ -90,11 +96,13 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 		}
 		logger.Debug("Deleted alert rule versions", "count", rows)
 
-		_, err = sess.Insert(versions)
-		if err != nil {
-			return fmt.Errorf("failed to persist deleted rule for recovery: %w", err)
+		if len(versions) > 0 {
+			_, err = sess.Insert(versions)
+			if err != nil {
+				return fmt.Errorf("failed to persist deleted rule for recovery: %w", err)
+			}
+			logger.Debug("Inserted alert rule versions for recovery", "count", len(versions))
 		}
-		logger.Debug("Inserted alert rule versions for recovery", "count", len(versions))
 		return nil
 	})
 }

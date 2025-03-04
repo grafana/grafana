@@ -686,7 +686,6 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 	b := &fakeBus{}
 	logger := log.New("test-dbstore")
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
-
 	rule := createRule(t, store, nil)
 
 	t.Run("should not be able to delete folder without permissions to delete rules", func(t *testing.T) {
@@ -791,7 +790,10 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		// Create a new store to pass the custom bus to check the signal
 		b := &fakeBus{}
 		logger := log.New("test-dbstore")
+
 		store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
+		store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
+		
 		result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, gen.GenerateMany(3))
 		uids := make([]string, 0, len(result))
 		for _, rule := range result {
@@ -1960,11 +1962,12 @@ func createTestStore(
 	bus bus.Bus,
 ) *DBstore {
 	return &DBstore{
-		SQLStore:      sqlStore,
-		FolderService: folderService,
-		Logger:        logger,
-		Cfg:           cfg,
-		Bus:           bus,
+		SQLStore:       sqlStore,
+		FolderService:  folderService,
+		Logger:         logger,
+		Cfg:            cfg,
+		Bus:            bus,
+		FeatureToggles: featuremgmt.WithFeatures(),
 	}
 }
 
