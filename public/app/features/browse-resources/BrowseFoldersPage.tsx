@@ -72,6 +72,7 @@ const FoldersPage: React.FC = () => {
     try {
       
       // const response = await fetch('/api/folders');
+      // TODO: since we fetch more than just folders ( alerts, dashboards, etc ) we should remove kind
       const response = await searcher.fetchResults({ kind: ['folders'] });
 
       // TODO: fetch and populate the tags in a separate call - see above
