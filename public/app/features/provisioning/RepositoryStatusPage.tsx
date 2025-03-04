@@ -91,12 +91,12 @@ export default function RepositoryStatusPage() {
             )}
             <SyncRepository repository={data} />
             {settings.data?.legacyStorage ? (
-              <Button variant="secondary" icon="upload" onClick={() => setShowMigrateModal(true)}>
+              <Button variant="secondary" icon="cloud-upload" onClick={() => setShowMigrateModal(true)}>
                 Migrate
               </Button>
             ) : (
-              <Button variant="secondary" icon="upload" onClick={() => setShowExportModal(true)}>
-                Export
+              <Button variant="secondary" icon="cloud-upload" onClick={() => setShowExportModal(true)}>
+                Push
               </Button>
             )}
             <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`}>
