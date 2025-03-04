@@ -1,21 +1,29 @@
 import { createContext, PropsWithChildren, useContext, useState } from 'react';
 
+import PromQlLanguageProvider from '../../language_provider';
+
 import { DEFAULT_SERIES_LIMIT } from './types';
 
 interface MetricsBrowserContextType {
   // Series limit state
   seriesLimit: string;
   setSeriesLimit: (limit: string) => void;
+  languageProvider: PromQlLanguageProvider;
 }
 
 const MetricsBrowserContext = createContext<MetricsBrowserContextType | undefined>(undefined);
 
-export function MetricsBrowserProvider({ children }: PropsWithChildren) {
+type MetricsBrowserProviderProps = {
+  languageProvider: PromQlLanguageProvider;
+};
+
+export function MetricsBrowserProvider({ children, languageProvider }: PropsWithChildren<MetricsBrowserProviderProps>) {
   const [seriesLimit, setSeriesLimit] = useState(DEFAULT_SERIES_LIMIT);
 
   const value = {
     seriesLimit,
     setSeriesLimit,
+    languageProvider,
   };
 
   return <MetricsBrowserContext.Provider value={value}>{children}</MetricsBrowserContext.Provider>;

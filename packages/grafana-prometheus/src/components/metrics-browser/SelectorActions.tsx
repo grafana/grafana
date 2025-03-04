@@ -1,33 +1,52 @@
 import { cx } from '@emotion/css';
+import { useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Label, Stack } from '@grafana/ui';
 
+import { useMetricsBrowser } from './MetricsBrowserContext';
+import { buildSelector } from './selectorBuilder';
+import { EMPTY_SELECTOR, SelectableLabel } from './types';
+
 interface SelectorActionsProps {
-  selector: string;
-  validationStatus: string;
+  labels: SelectableLabel[];
+  validationStatusFromParent: string;
+  errorFromParent: string;
   status: string;
-  error: string;
-  empty: boolean;
   onClickRunQuery: () => void;
   onClickRunRateQuery: () => void;
-  onClickValidate: () => void;
   onClickClear: () => void;
   styles: Record<string, string>;
 }
 
 export function SelectorActions({
-  selector,
-  validationStatus,
+  labels,
+  validationStatusFromParent,
+  errorFromParent,
   status,
-  error,
-  empty,
   onClickRunQuery,
   onClickRunRateQuery,
-  onClickValidate,
   onClickClear,
   styles,
 }: SelectorActionsProps) {
+  const [err, setErr] = useState(errorFromParent);
+  const [validationStatus, setValidationStatus] = useState(validationStatusFromParent);
+  const { languageProvider } = useMetricsBrowser();
+  const validateSelector = async (selector: string) => {
+    setValidationStatus(`Validating selector ${selector}`);
+    setErr('');
+    const streams = await languageProvider.fetchSeries(selector);
+    setValidationStatus(`Selector is valid (${streams.length} series found)`);
+  };
+
+  const onClickValidate = () => {
+    const selector = buildSelector(labels);
+    validateSelector(selector);
+  };
+
+  const selector = buildSelector(labels);
+  const empty = selector === EMPTY_SELECTOR;
+
   return (
     <div className={styles.section}>
       <Label>4. Resulting selector</Label>
@@ -70,8 +89,8 @@ export function SelectorActions({
         >
           Clear
         </Button>
-        <div className={cx(styles.status, (status || error) && styles.statusShowing)}>
-          <span className={error ? styles.error : ''}>{error || status}</span>
+        <div className={cx(styles.status, (status || err) && styles.statusShowing)}>
+          <span className={err ? styles.error : ''}>{err || status}</span>
         </div>
       </Stack>
     </div>

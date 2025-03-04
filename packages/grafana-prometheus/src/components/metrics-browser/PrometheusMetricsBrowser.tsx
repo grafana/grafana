@@ -110,11 +110,6 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
     this.updateLabelState(name, { selected, values }, '', () => this.doFacetting(name));
   };
 
-  onClickValidate = () => {
-    const selector = buildSelector(this.state.labels);
-    this.validateSelector(selector);
-  };
-
   updateLabelState(name: string, updatedFields: Partial<SelectableLabel>, status = '', cb?: () => void) {
     this.setState((state) => {
       const labels: SelectableLabel[] = state.labels.map((label) => {
@@ -250,13 +245,6 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
     }
   }
 
-  async validateSelector(selector: string) {
-    const { languageProvider } = this.props;
-    this.setState({ validationStatus: `Validating selector ${selector}`, error: '' });
-    const streams = await languageProvider.fetchSeries(selector);
-    this.setState({ validationStatus: `Selector is valid (${streams.length} series found)` });
-  }
-
   render() {
     const { theme } = this.props;
     const { labels, status, error, validationStatus } = this.state;
@@ -268,9 +256,6 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
         </div>
       );
     }
-
-    const selector = buildSelector(this.state.labels);
-    const empty = selector === EMPTY_SELECTOR;
 
     return (
       <div className={styles.wrapper}>
@@ -289,14 +274,12 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
         </Stack>
 
         <SelectorActions
-          selector={selector}
-          validationStatus={validationStatus}
+          labels={labels}
+          validationStatusFromParent={validationStatus}
           status={status}
-          error={error}
-          empty={empty}
+          errorFromParent={error}
           onClickRunQuery={this.onClickRunQuery}
           onClickRunRateQuery={this.onClickRunRateQuery}
-          onClickValidate={this.onClickValidate}
           onClickClear={this.onClickClear}
           styles={styles}
         />
