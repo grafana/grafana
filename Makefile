@@ -2,7 +2,7 @@
 ##
 ## For more information, refer to https://suva.sh/posts/well-documented-makefiles/
 
-WIRE_TAGS ?= "oss"
+WIRE_TAGS = "oss"
 
 -include local/Makefile
 include .bingo/Variables.mk
