@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -22,23 +23,21 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationDashboardFolderStore(t *testing.T) {
-	var sqlStore db.DB
+	var sqlStore *sqlstore.SQLStore
 	var cfg *setting.Cfg
 	var dashboardStore dashboards.Store
 
-	setup := func() {
+	setup := func(t *testing.T) {
 		sqlStore, cfg = db.InitTestDBWithCfg(t)
 		var err error
 		dashboardStore, err = database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 	}
 	t.Run("Given dashboard and folder with the same title", func(t *testing.T) {
-		setup()
+		setup(t)
 		var orgId int64 = 1
 		title := "Very Unique Name"
-		var sqlStore db.DB
 		var folder1, folder2 *dashboards.Dashboard
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
 		folderStore := ProvideDashboardFolderStore(sqlStore)
 		folder2 = insertTestFolder(t, dashboardStore, "TEST", orgId, "", "prod")
 		_ = insertTestDashboard(t, dashboardStore, title, orgId, folder2.ID, folder2.UID, "prod")
@@ -59,17 +58,16 @@ func TestIntegrationDashboardFolderStore(t *testing.T) {
 	})
 
 	t.Run("GetFolderByUID", func(t *testing.T) {
-		setup()
+		setup(t)
 		var orgId int64 = 1
-		sqlStore := db.InitTestDB(t)
 		folderStore := ProvideDashboardFolderStore(sqlStore)
 		folder := insertTestFolder(t, dashboardStore, "TEST", orgId, "", "prod")
 		dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.ID, folder.UID, "prod")
 
 		t.Run("should return folder by UID", func(t *testing.T) {
 			d, err := folderStore.GetFolderByUID(context.Background(), orgId, folder.UID)
-			require.Equal(t, folder.UID, d.UID)
 			require.NoError(t, err)
+			require.Equal(t, folder.UID, d.UID)
 		})
 		t.Run("should not find dashboard", func(t *testing.T) {
 			d, err := folderStore.GetFolderByUID(context.Background(), orgId, dash.UID)
@@ -84,9 +82,8 @@ func TestIntegrationDashboardFolderStore(t *testing.T) {
 	})
 
 	t.Run("GetFolderByID", func(t *testing.T) {
-		setup()
+		setup(t)
 		var orgId int64 = 1
-		sqlStore := db.InitTestDB(t)
 		folderStore := ProvideDashboardFolderStore(sqlStore)
 		folder := insertTestFolder(t, dashboardStore, "TEST", orgId, "", "prod")
 		dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.ID, folder.UID, "prod")
