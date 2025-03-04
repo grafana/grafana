@@ -400,18 +400,19 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 			b.repositoryLister = repoInformer.Lister()
 
-			b.jobs.Register(export.NewExportWorker(
+			exportWorder := export.NewExportWorker(
 				b.client,
 				b.storageStatus,
 				b.secrets,
 				b.clonedir,
-			))
+			)
 			syncWorker := sync.NewSyncWorker(
 				c.ProvisioningV0alpha1(),
 				b.parsers,
 				b.resourceLister,
 				b.storageStatus,
 			)
+			b.jobs.Register(exportWorder)
 			b.jobs.Register(syncWorker)
 			b.jobs.Register(migrate.NewMigrationWorker(
 				b.client,
@@ -420,6 +421,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.storageStatus,
 				b.unified,
 				b.secrets,
+				exportWorder,
 				syncWorker,
 				b.clonedir,
 			))
