@@ -116,9 +116,8 @@ jobs:
 
       # Coverage is only generated if check-coverage determined it was needed
       - name: Run backend unit tests
-        uses: ./.github/actions/run-backend-tests
-        with:
-          test-command: ${{ needs.check-coverage.outputs.generate == 'true' && 'COVER_OPTS="-coverprofile=unit.cov -covermode=atomic -coverpkg=github.com/grafana/grafana/..." make test-go-unit' || 'make test-go-unit' }}
+        shell: bash
+        run: ${{ needs.check-coverage.outputs.generate == 'true' && 'COVER_OPTS="-coverprofile=unit.cov -covermode=atomic -coverpkg=github.com/grafana/grafana/..." make gen-go test-go-unit' || 'make gen-go test-go-unit' }}
 
       - name: Upload unit coverage
         if: needs.check-coverage.outputs.generate == 'true'
@@ -162,9 +161,8 @@ jobs:
           path: pkg/
 
       - name: Run backend integration tests
-        uses: ./.github/actions/run-backend-tests
-        with:
-          test-command: ${{ needs.check-coverage.outputs.generate == 'true' && 'COVER_OPTS="-coverprofile=integration.cov -covermode=atomic -coverpkg=github.com/grafana/grafana/..." make test-go-integration' || 'make test-go-integration' }}
+        shell: bash
+        run: ${{ needs.check-coverage.outputs.generate == 'true' && 'COVER_OPTS="-coverprofile=integration.cov -covermode=atomic -coverpkg=github.com/grafana/grafana/..." make gen-go test-go-integration' || 'make gen-go test-go-integration' }}
 
       - name: Upload integration coverage
         if: needs.check-coverage.outputs.generate == 'true'

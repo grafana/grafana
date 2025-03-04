@@ -9,10 +9,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Generate Go files
-      shell: bash
-      run: make gen-go
-
     - name: Run tests
       shell: bash
       run: ${{ inputs.test-command }}
