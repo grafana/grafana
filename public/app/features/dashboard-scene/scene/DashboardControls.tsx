@@ -109,12 +109,13 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
       .getVariables(this)
       ?.state.variables.some((v) => v.state.hide !== VariableHide.hideVariable);
     const hasAnnotations = sceneGraph.getDataLayers(this).some((d) => d.state.isEnabled && !d.state.isHidden);
-    const hasLinks = getDashboardSceneFor(this).state.links?.length > 0;
+    const compState = getDashboardSceneFor(this).state;
+    const hasLinks = compState.links?.length > 0;
     const hideLinks = this.state.hideLinksControls || !hasLinks;
     const hideVariables = this.state.hideVariableControls || (!hasAnnotations && !hasVariables);
     const hideTimePicker = this.state.hideTimeControls;
 
-    return !(hideVariables && hideLinks && hideTimePicker);
+    return !(!compState.editPanel && hideVariables && hideLinks && hideTimePicker);
   }
 }
 
