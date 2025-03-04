@@ -24,7 +24,6 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
   state: BrowserState = {
     labels: [],
     labelSearchTerm: '',
-    metricSearchTerm: '',
     status: 'Ready',
     error: '',
     validationStatus: '',
@@ -33,10 +32,6 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
 
   onChangeLabelSearch = (event: ChangeEvent<HTMLInputElement>) => {
     this.setState({ labelSearchTerm: event.target.value });
-  };
-
-  onChangeMetricSearch = (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ metricSearchTerm: event.target.value });
   };
 
   onChangeSeriesLimit = (event: ChangeEvent<HTMLInputElement>) => {
@@ -113,14 +108,12 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
     this.updateLabelState(name, { values }, '', () => this.doFacetting(name));
   };
 
-  onClickMetric = (name: string, value: string | undefined, event: MouseEvent<HTMLElement>) => {
+  onClickMetric = (name: string, value: string | undefined) => {
     // Finding special metric label
     const label = this.state.labels.find((l) => l.name === name);
     if (!label || !label.values) {
       return;
     }
-    // Resetting search to prevent empty results
-    this.setState({ metricSearchTerm: '' });
     // Toggling value for selected label, leaving other values intact
     const values = label.values.map((v) => ({
       ...v,
@@ -279,7 +272,7 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
 
   render() {
     const { theme } = this.props;
-    const { labels, labelSearchTerm, metricSearchTerm, status, error, validationStatus, valueSearchTerm } = this.state;
+    const { labels, labelSearchTerm, status, error, validationStatus, valueSearchTerm } = this.state;
     const styles = getStyles(theme);
     if (labels.length === 0) {
       return (
@@ -287,15 +280,6 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
           <LoadingPlaceholder text="Loading labels..." />
         </div>
       );
-    }
-
-    // Filter metrics
-    let metrics = labels.find((label) => label.name === METRIC_LABEL);
-    if (metrics && metricSearchTerm) {
-      metrics = {
-        ...metrics,
-        values: metrics.values?.filter((value) => value.selected || value.name.includes(metricSearchTerm)),
-      };
     }
 
     // Filter labels
@@ -319,10 +303,8 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
       <div className={styles.wrapper}>
         <Stack gap={3}>
           <MetricSelector
-            metrics={metrics}
-            metricSearchTerm={metricSearchTerm}
+            labels={labels}
             seriesLimit={this.state.seriesLimit ?? DEFAULT_SERIES_LIMIT}
-            onChangeMetricSearch={this.onChangeMetricSearch}
             onChangeSeriesLimit={this.onChangeSeriesLimit}
             onClickMetric={this.onClickMetric}
             styles={styles}

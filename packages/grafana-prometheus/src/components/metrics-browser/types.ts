@@ -29,7 +29,6 @@ export interface BrowserProps {
 export interface BrowserState {
   labels: SelectableLabel[];
   labelSearchTerm: string;
-  metricSearchTerm: string;
   status: string;
   error: string;
   validationStatus: string;

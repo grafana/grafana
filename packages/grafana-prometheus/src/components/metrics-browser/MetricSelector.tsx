@@ -1,30 +1,31 @@
-import { ChangeEvent, MouseEvent } from 'react';
+import { ChangeEvent, useState } from 'react';
 import { FixedSizeList } from 'react-window';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { BrowserLabel as PromLabel, Input, Label } from '@grafana/ui';
 
-import { LIST_ITEM_SIZE, SelectableLabel } from './types';
+import { LIST_ITEM_SIZE, METRIC_LABEL, SelectableLabel } from './types';
 
 interface MetricSelectorProps {
-  metrics: SelectableLabel | undefined;
-  metricSearchTerm: string;
+  labels: SelectableLabel[];
   seriesLimit: string;
-  onChangeMetricSearch: (event: ChangeEvent<HTMLInputElement>) => void;
   onChangeSeriesLimit: (event: ChangeEvent<HTMLInputElement>) => void;
-  onClickMetric: (name: string, value: string | undefined, event: MouseEvent<HTMLElement>) => void;
+  onClickMetric: (name: string, value: string | undefined) => void;
   styles: Record<string, string>;
 }
 
-export function MetricSelector({
-  metrics,
-  metricSearchTerm,
-  seriesLimit,
-  onChangeMetricSearch,
-  onChangeSeriesLimit,
-  onClickMetric,
-  styles,
-}: MetricSelectorProps) {
+export function MetricSelector({ labels, seriesLimit, onChangeSeriesLimit, onClickMetric, styles }: MetricSelectorProps) {
+  const [metricSearchTerm, setMetricSearchTerm] = useState('');
+
+  // Filter metrics
+  let metrics = labels.find((label) => label.name === METRIC_LABEL);
+  if (metrics && metricSearchTerm) {
+    metrics = {
+      ...metrics,
+      values: metrics.values?.filter((value) => value.selected || value.name.includes(metricSearchTerm)),
+    };
+  }
+
   const metricCount = metrics?.values?.length || 0;
 
   return (
@@ -35,7 +36,7 @@ export function MetricSelector({
         </Label>
         <div>
           <Input
-            onChange={onChangeMetricSearch}
+            onChange={(e) => setMetricSearchTerm(e.currentTarget.value)}
             aria-label="Filter expression for metric"
             value={metricSearchTerm}
             data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.selectMetric}
@@ -77,7 +78,11 @@ export function MetricSelector({
                     value={value?.name}
                     title={value.details}
                     active={value?.selected}
-                    onClick={onClickMetric}
+                    onClick={(name: string, value: string | undefined) => {
+                      // Resetting search to prevent empty results
+                      setMetricSearchTerm('');
+                      onClickMetric(name, value);
+                    }}
                     searchTerm={metricSearchTerm}
                   />
                 </div>
