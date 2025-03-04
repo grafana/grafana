@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { Trans } from 'app/core/internationalization';
 
 function getStyles(theme: GrafanaTheme2) {
   return css({
@@ -16,7 +17,9 @@ export default function FeatureTogglePage() {
   return (
     <Page className={styles}>
       <Page.Contents>
-        <h1>Explore is disabled</h1>
+        <h1>
+          <Trans i18nKey="explore.feature-toggle-page.explore-is-disabled">Explore is disabled</Trans>
+        </h1>
         To enable Explore, enable it in the Grafana config:
         <div>
           <pre>

@@ -3,6 +3,7 @@ import { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Stack, TextLink, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { PromApplication, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { WithReturnButton } from '../../components/WithReturnButton';
@@ -24,7 +25,7 @@ const Namespace = ({ children, name, href, application }: NamespaceProps) => {
           <DataSourceIcon application={application} />
           {href ? (
             <WithReturnButton
-              title="Alert rules"
+              title={t('alerting.namespace.title-alert-rules', 'Alert rules')}
               component={
                 <TextLink href={href} inline={false}>
                   {name}

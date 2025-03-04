@@ -28,7 +28,7 @@ import {
 } from '@grafana/scenes';
 import { DataQuery, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { Alert, Button, Field, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { BreakdownLabelSelector } from '../BreakdownLabelSelector';
 import { DataTrail } from '../DataTrail';
@@ -374,14 +374,14 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
 
             {value !== ALL_VARIABLE_VALUE && (
               <>
-                <Field label="Search" className={styles.searchField}>
+                <Field label={t('trails.label-breakdown-scene.label-search', 'Search')} className={styles.searchField}>
                   <search.Component model={search} />
                 </Field>
                 <sortBy.Component model={sortBy} />
               </>
             )}
             {body instanceof LayoutSwitcher && (
-              <Field label="View">
+              <Field label={t('trails.label-breakdown-scene.label-view', 'View')}>
                 <body.Selector model={body} />
               </Field>
             )}
@@ -585,7 +585,7 @@ function buildNormalLayout(
           children: [
             new SceneFlexItem({
               body: new SceneReactObject({
-                reactNode: <LoadingPlaceholder text="Loading..." />,
+                reactNode: <LoadingPlaceholder text={t('trails.build-normal-layout.text-loading', 'Loading...')} />,
               }),
             }),
           ],

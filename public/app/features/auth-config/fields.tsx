@@ -4,6 +4,7 @@ import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { TextLink } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { Trans } from 'app/core/internationalization';
 
 import { ServerDiscoveryField } from './components/ServerDiscoveryField';
 import { FieldData, SSOProvider, SSOSettingsField } from './types';
@@ -389,7 +390,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
           The user information endpoint of your OAuth2 provider. Information returned by this endpoint must be
           compatible with{' '}
           <TextLink href={'https://connect2id.com/products/server/docs/api/userinfo'} external variant={'bodySmall'}>
-            OpenID UserInfo
+            <Trans i18nKey="auth-config.field-map.open-id-user-info">OpenID UserInfo</Trans>
           </TextLink>
           .
         </>
@@ -520,7 +521,9 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         <>
           If enabled, Grafana will use{' '}
           <TextLink external variant={'bodySmall'} href={'https://datatracker.ietf.org/doc/html/rfc7636'}>
-            Proof Key for Code Exchange (PKCE)
+            <Trans i18nKey="auth-config.field-map.proof-key-for-code-exchange-pkce">
+              Proof Key for Code Exchange (PKCE)
+            </Trans>
           </TextLink>{' '}
           with the OAuth2 Authorization Code Grant.
         </>

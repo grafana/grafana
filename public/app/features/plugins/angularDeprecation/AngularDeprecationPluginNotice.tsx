@@ -4,6 +4,7 @@ import * as React from 'react';
 import { PluginType } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 type Props = {
   className?: string;
@@ -63,7 +64,12 @@ export function AngularDeprecationPluginNotice(props: Props): React.ReactElement
   }
 
   return dismissed ? null : (
-    <Alert severity="warning" title="Angular plugin" className={className} onRemove={() => setDismissed(true)}>
+    <Alert
+      severity="warning"
+      title={t('plugins.angular-deprecation-plugin-notice.title-angular-plugin', 'Angular plugin')}
+      className={className}
+      onRemove={() => setDismissed(true)}
+    >
       <p>{deprecationMessage(pluginType, angularSupportEnabled)}</p>
       <div className="markdown-html">
         <ul>
@@ -77,7 +83,9 @@ export function AngularDeprecationPluginNotice(props: Props): React.ReactElement
                 reportInteraction('angular_deprecation_docs_clicked', interactionAttributes);
               }}
             >
-              Read our deprecation notice and migration advice.
+              <Trans i18nKey="plugins.angular-deprecation-plugin-notice.deprecation-notice-migration-advice">
+                Read our deprecation notice and migration advice.
+              </Trans>
             </a>
           </li>
           {showPluginDetailsLink && pluginId ? (
@@ -88,7 +96,9 @@ export function AngularDeprecationPluginNotice(props: Props): React.ReactElement
                 target="_blank"
                 rel="noreferrer"
               >
-                View plugin details
+                <Trans i18nKey="plugins.angular-deprecation-plugin-notice.view-plugin-details">
+                  View plugin details
+                </Trans>
               </a>
             </li>
           ) : null}

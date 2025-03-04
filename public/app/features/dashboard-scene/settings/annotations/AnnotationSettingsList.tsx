@@ -44,8 +44,12 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
           <table role="grid" className="filter-table filter-table--hover">
             <thead>
               <tr>
-                <th>Query name</th>
-                <th>Data source</th>
+                <th>
+                  <Trans i18nKey="dashboard-scene.annotation-settings-list.query-name">Query name</Trans>
+                </th>
+                <th>
+                  <Trans i18nKey="dashboard-scene.annotation-settings-list.data-source">Data source</Trans>
+                </th>
                 <th colSpan={3}></th>
               </tr>
             </thead>
@@ -70,7 +74,11 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
                   </td>
                   <td role="gridcell" style={{ width: '1%' }}>
                     {idx !== 0 && (
-                      <IconButton name="arrow-up" onClick={() => onMove(idx, MoveDirection.UP)} tooltip="Move up" />
+                      <IconButton
+                        name="arrow-up"
+                        onClick={() => onMove(idx, MoveDirection.UP)}
+                        tooltip={t('dashboard-scene.annotation-settings-list.tooltip-move-up', 'Move up')}
+                      />
                     )}
                   </td>
                   <td role="gridcell" style={{ width: '1%' }}>
@@ -78,7 +86,7 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
                       <IconButton
                         name="arrow-down"
                         onClick={() => onMove(idx, MoveDirection.DOWN)}
-                        tooltip="Move down"
+                        tooltip={t('dashboard-scene.annotation-settings-list.tooltip-move-down', 'Move down')}
                       />
                     ) : null}
                   </td>
@@ -136,7 +144,7 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
           data-testid={selectors.pages.Dashboard.Settings.Annotations.List.addAnnotationCTAV2}
           onClick={onNew}
         >
-          New query
+          <Trans i18nKey="dashboard-scene.annotation-settings-list.new-query">New query</Trans>
         </ListNewButton>
       )}
     </Stack>

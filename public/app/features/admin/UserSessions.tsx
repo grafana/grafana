@@ -114,7 +114,7 @@ class BaseUserSessions extends PureComponent<Props, State> {
             )}
             <ConfirmModal
               isOpen={showLogoutModal}
-              title="Force logout from all devices"
+              title={t('admin.base-user-sessions.title-force-logout-from-all-devices', 'Force logout from all devices')}
               body="Are you sure you want to force logout from all devices?"
               confirmText="Force logout"
               onConfirm={this.onAllSessionsRevoke}

@@ -227,7 +227,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
           <ToolbarButton
             key="content-outline"
             variant="canvas"
-            tooltip="Content outline"
+            tooltip={t('explore.explore-toolbar.tooltip-content-outline', 'Content outline')}
             icon="list-ui-alt"
             iconOnly={splitted}
             onClick={onContentOutlineToogle}
@@ -235,7 +235,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             aria-controls={isContentOutlineOpen ? 'content-outline-container' : undefined}
             className={styles.toolbarButton}
           >
-            Outline
+            <Trans i18nKey="explore.explore-toolbar.outline">Outline</Trans>
           </ToolbarButton>,
           <DataSourcePicker
             key={`${exploreId}-ds-picker`}

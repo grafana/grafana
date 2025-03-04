@@ -19,6 +19,7 @@ import { DataQuery } from '@grafana/schema';
 import { Button, HorizontalGroup, InlineFormLabel, Modal, ScrollContainer, stylesFactory } from '@grafana/ui';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
+import { Trans, t } from 'app/core/internationalization';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { addQuery, queryIsEmpty } from 'app/core/utils/query';
 import { DataSourceModal } from 'app/features/datasources/components/picker/DataSourceModal';
@@ -303,7 +304,7 @@ export class QueryGroup extends PureComponent<Props, State> {
             variant="secondary"
             data-testid={selectors.components.QueryTab.addQuery}
           >
-            Add query
+            <Trans i18nKey="query.query-group.add-query">Add query</Trans>
           </Button>
         )}
         {config.expressionsEnabled && this.isExpressionsSupported(dsSettings) && (
@@ -339,7 +340,11 @@ export class QueryGroup extends PureComponent<Props, State> {
               <div className={styles.queriesWrapper}>{this.renderQueries(dsSettings)}</div>
               {this.renderAddQueryRow(dsSettings, styles)}
               {isHelpOpen && (
-                <Modal title="Data source help" isOpen={true} onDismiss={this.onCloseHelp}>
+                <Modal
+                  title={t('query.query-group.title-data-source-help', 'Data source help')}
+                  isOpen={true}
+                  onDismiss={this.onCloseHelp}
+                >
                   <PluginHelp pluginId={dsSettings.meta.id} />
                 </Modal>
               )}
@@ -409,7 +414,7 @@ export function QueryGroupTopSection({
       <div data-testid={selectors.components.QueryTab.queryGroupTopSection}>
         <div className={styles.dataSourceRow}>
           <InlineFormLabel htmlFor="data-source-picker" width={'auto'}>
-            Data source
+            <Trans i18nKey="query.query-group-top-section.data-source">Data source</Trans>
           </InlineFormLabel>
           <div className={styles.dataSourceRowItem}>
             <DataSourcePickerWithPrompt
@@ -426,7 +431,10 @@ export function QueryGroupTopSection({
                 <Button
                   variant="secondary"
                   icon="question-circle"
-                  title="Open data source help"
+                  title={t(
+                    'query.query-group-top-section.query-tab-help-button-title-open-data-source-help',
+                    'Open data source help'
+                  )}
                   onClick={() => setIsHelpOpen(true)}
                   data-testid="query-tab-help-button"
                 />
@@ -448,7 +456,7 @@ export function QueryGroupTopSection({
                     onClick={onOpenQueryInspector}
                     aria-label={selectors.components.QueryTab.queryInspectorButton}
                   >
-                    Query inspector
+                    <Trans i18nKey="query.query-group-top-section.query-inspector">Query inspector</Trans>
                   </Button>
                 </div>
               )}
@@ -466,7 +474,11 @@ export function QueryGroupTopSection({
         )}
       </div>
       {isHelpOpen && (
-        <Modal title="Data source help" isOpen={true} onDismiss={() => setIsHelpOpen(false)}>
+        <Modal
+          title={t('query.query-group-top-section.title-data-source-help', 'Data source help')}
+          isOpen={true}
+          onDismiss={() => setIsHelpOpen(false)}
+        >
           <PluginHelp pluginId={dsSettings.meta.id} />
         </Modal>
       )}

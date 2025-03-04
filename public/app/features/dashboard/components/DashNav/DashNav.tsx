@@ -216,7 +216,7 @@ export const DashNav = memo<Props>((props) => {
       buttons.push(
         <Badge
           color="blue"
-          text="Public"
+          text={t('dashboard.dash-nav.render-left-actions.text-public', 'Public')}
           key="public-dashboard-button-badge"
           className={publicBadgeStyle}
           data-testid={selectors.publicDashboardTag}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { LoadingPlaceholder } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 
@@ -23,7 +24,7 @@ const GrafanaReceiversExportPreview = ({ decrypt, exportFormat, onClose }: Grafa
   const downloadFileName = `contact-points-${new Date().getTime()}`;
 
   if (isFetching) {
-    return <LoadingPlaceholder text="Loading...." />;
+    return <LoadingPlaceholder text={t('alerting.grafana-receivers-export-preview.text-loading', 'Loading....')} />;
   }
 
   return (

@@ -1,5 +1,6 @@
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
+import { Trans } from 'app/core/internationalization';
 
 export default function FeatureTogglePage() {
   const navModel = useNavModel('profile-settings');
@@ -7,7 +8,9 @@ export default function FeatureTogglePage() {
   return (
     <Page navModel={navModel}>
       <Page.Contents>
-        <h1>Profile is not enabled.</h1>
+        <h1>
+          <Trans i18nKey="profile.feature-toggle-page.profile-is-not-enabled">Profile is not enabled.</Trans>
+        </h1>
         Enable profile in the Grafana config file.
         <div>
           <pre>

@@ -93,7 +93,7 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHys
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="Input" labelWidth={labelWidth} htmlFor={id}>
+        <InlineField label={t('expressions.threshold.label-input', 'Input')} labelWidth={labelWidth} htmlFor={id}>
           <Select inputId={id} onChange={onRefIdChange} options={refIds} value={query.expression} width={20} />
         </InlineField>
       </InlineFieldRow>

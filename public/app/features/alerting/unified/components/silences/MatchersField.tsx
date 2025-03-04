@@ -4,6 +4,7 @@ import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Divider, Field, IconButton, Input, Select, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
 
@@ -37,12 +38,15 @@ const MatchersField = ({ className, required, ruleUid }: Props) => {
 
   return (
     <div className={className}>
-      <Field label="Refine affected alerts" required={required}>
+      <Field
+        label={t('alerting.matchers-field.label-refine-affected-alerts', 'Refine affected alerts')}
+        required={required}
+      >
         <div>
           <div className={cx(styles.matchers, styles.indent)}>
             {alertRule && (
               <div>
-                <Field label="Alert rule" disabled>
+                <Field label={t('alerting.matchers-field.label-alert-rule', 'Alert rule')} disabled>
                   <Input id="alert-rule-name" defaultValue={alertRule.grafana_alert.title} disabled />
                 </Field>
                 <Divider />
@@ -52,7 +56,7 @@ const MatchersField = ({ className, required, ruleUid }: Props) => {
               return (
                 <div className={styles.row} key={`${matcher.id}`} data-testid="matcher">
                   <Field
-                    label="Label"
+                    label={t('alerting.matchers-field.label-label', 'Label')}
                     invalid={!!errors?.matchers?.[index]?.name}
                     error={errors?.matchers?.[index]?.name?.message}
                   >
@@ -61,11 +65,11 @@ const MatchersField = ({ className, required, ruleUid }: Props) => {
                         required: { value: required, message: 'Required.' },
                       })}
                       defaultValue={matcher.name}
-                      placeholder="label"
+                      placeholder={t('alerting.matchers-field.placeholder-label', 'label')}
                       id={`matcher-${index}-label`}
                     />
                   </Field>
-                  <Field label="Operator">
+                  <Field label={t('alerting.matchers-field.label-operator', 'Operator')}>
                     <Controller
                       control={control}
                       render={({ field: { onChange, ref, ...field } }) => (
@@ -74,7 +78,7 @@ const MatchersField = ({ className, required, ruleUid }: Props) => {
                           onChange={(value) => onChange(value.value)}
                           className={styles.matcherOptions}
                           options={matcherFieldOptions}
-                          aria-label="operator"
+                          aria-label={t('alerting.matchers-field.aria-label-operator', 'operator')}
                           id={`matcher-${index}-operator`}
                         />
                       )}
@@ -84,7 +88,7 @@ const MatchersField = ({ className, required, ruleUid }: Props) => {
                     />
                   </Field>
                   <Field
-                    label="Value"
+                    label={t('alerting.matchers-field.label-value', 'Value')}
                     invalid={!!errors?.matchers?.[index]?.value}
                     error={errors?.matchers?.[index]?.value?.message}
                   >
@@ -93,18 +97,18 @@ const MatchersField = ({ className, required, ruleUid }: Props) => {
                         required: { value: required, message: 'Required.' },
                       })}
                       defaultValue={matcher.value}
-                      placeholder="value"
+                      placeholder={t('alerting.matchers-field.placeholder-value', 'value')}
                       id={`matcher-${index}-value`}
                     />
                   </Field>
                   {(matchers.length > 1 || !required) && (
                     <IconButton
-                      aria-label="Remove matcher"
+                      aria-label={t('alerting.matchers-field.aria-label-remove-matcher', 'Remove matcher')}
                       className={styles.removeButton}
                       name="trash-alt"
                       onClick={() => remove(index)}
                     >
-                      Remove
+                      <Trans i18nKey="alerting.matchers-field.remove">Remove</Trans>
                     </IconButton>
                   )}
                 </div>
@@ -113,7 +117,10 @@ const MatchersField = ({ className, required, ruleUid }: Props) => {
           </div>
           <Button
             className={styles.indent}
-            tooltip="Refine which alert instances are silenced by selecting label matchers"
+            tooltip={t(
+              'alerting.matchers-field.tooltip-refine-which-alert-instances-silenced-selecting',
+              'Refine which alert instances are silenced by selecting label matchers'
+            )}
             type="button"
             icon="plus"
             variant="secondary"
@@ -122,7 +129,7 @@ const MatchersField = ({ className, required, ruleUid }: Props) => {
               append(newMatcher);
             }}
           >
-            Add matcher
+            <Trans i18nKey="alerting.matchers-field.add-matcher">Add matcher</Trans>
           </Button>
         </div>
       </Field>

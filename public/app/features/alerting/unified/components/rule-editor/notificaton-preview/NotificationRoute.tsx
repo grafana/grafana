@@ -6,6 +6,7 @@ import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, TagList, getTagColorIndexFromName, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { Receiver } from '../../../../../../plugins/datasource/alertmanager/types';
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
@@ -50,7 +51,7 @@ function NotificationRouteHeader({
       <CollapseToggle
         isCollapsed={!expandRoute}
         onToggle={(isCollapsed) => onExpandRouteClick(!isCollapsed)}
-        aria-label="Expand policy route"
+        aria-label={t('alerting.notification-route-header.aria-label-expand-policy-route', 'Expand policy route')}
       />
 
       <Stack flexGrow={1} gap={1}>
@@ -72,13 +73,16 @@ function NotificationRouteHeader({
           </MetaText>
           <Stack gap={1} direction="row" alignItems="center">
             <div>
-              <span className={styles.textMuted}>@ Delivered to</span> {receiver.name}
+              <span className={styles.textMuted}>
+                <Trans i18nKey="alerting.notification-route-header.delivered-to">@ Delivered to</Trans>
+              </span>{' '}
+              {receiver.name}
             </div>
 
             <div className={styles.verticalBar} />
 
             <Button type="button" onClick={onClickDetails} variant="secondary" fill="outline" size="sm">
-              See details
+              <Trans i18nKey="alerting.notification-route-header.see-details">See details</Trans>
             </Button>
           </Stack>
         </Stack>
@@ -153,7 +157,9 @@ export function NotificationRoute({
                           getColorIndex={(_, index) => matchingLabels[index].colorIndex}
                         />
                       ) : (
-                        <div className={cx(styles.textMuted, styles.textItalic)}>No matching labels</div>
+                        <div className={cx(styles.textMuted, styles.textItalic)}>
+                          <Trans i18nKey="alerting.notification-route.no-matching-labels">No matching labels</Trans>
+                        </div>
                       )}
                       <div className={styles.labelSeparator} />
                       <TagList
@@ -163,7 +169,9 @@ export function NotificationRoute({
                       />
                     </>
                   ) : (
-                    <div className={styles.textMuted}>No labels</div>
+                    <div className={styles.textMuted}>
+                      <Trans i18nKey="alerting.notification-route.no-labels">No labels</Trans>
+                    </div>
                   )}
                 </div>
               );

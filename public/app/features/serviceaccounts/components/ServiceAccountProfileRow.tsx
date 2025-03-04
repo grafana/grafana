@@ -4,6 +4,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { ConfirmButton, Input, Label, LegacyInputStatus, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 interface Props {
   label: string;
@@ -90,7 +91,7 @@ export const ServiceAccountProfileRow = ({ label, value, inputType, disabled, on
             onCancel={onCancelClick}
             disabled={disabled}
           >
-            Edit
+            <Trans i18nKey="serviceaccounts.service-account-profile-row.edit">Edit</Trans>
           </ConfirmButton>
         )}
       </td>

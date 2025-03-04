@@ -63,10 +63,10 @@ export function FileExportPreview({ format, textDefinition, downloadFileName, on
           <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
         </Button>
         <ClipboardButton icon="copy" getText={() => textDefinition}>
-          Copy code
+          <Trans i18nKey="alerting.file-export-preview.copy-code">Copy code</Trans>
         </ClipboardButton>
         <Button icon="download-alt" onClick={onDownload}>
-          Download
+          <Trans i18nKey="alerting.file-export-preview.download">Download</Trans>
         </Button>
       </div>
     </div>
@@ -104,7 +104,9 @@ function FileExportInlineDocumentation({ exportProvider }: { exportProvider: Exp
             href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/"
             external
           >
-            Read more in the docs.
+            <Trans i18nKey="alerting.file-export-inline-documentation.export-inline-doc.read-more-in-the-docs">
+              Read more in the docs.
+            </Trans>
           </TextLink>
         </>
       ),
@@ -118,7 +120,9 @@ function FileExportInlineDocumentation({ exportProvider }: { exportProvider: Exp
             href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/http-api-provisioning/"
             external
           >
-            Read more in the docs.
+            <Trans i18nKey="alerting.file-export-inline-documentation.export-inline-doc.read-more-in-the-docs">
+              Read more in the docs.
+            </Trans>
           </TextLink>
         </>
       ),
@@ -132,7 +136,9 @@ function FileExportInlineDocumentation({ exportProvider }: { exportProvider: Exp
             href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/terraform-provisioning/"
             external
           >
-            Read more in the docs.
+            <Trans i18nKey="alerting.file-export-inline-documentation.export-inline-doc.read-more-in-the-docs">
+              Read more in the docs.
+            </Trans>
           </TextLink>
         </>
       ),

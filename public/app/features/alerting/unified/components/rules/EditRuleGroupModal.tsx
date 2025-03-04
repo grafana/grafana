@@ -349,7 +349,7 @@ export function EditRuleGroupModalForm(props: ModalFormProps): React.ReactElemen
               {isGrafanaManagedGroup && props.folderUrl && (
                 <LinkButton
                   href={props.folderUrl}
-                  title="Go to folder"
+                  title={t('alerting.edit-rule-group-modal-form.title-go-to-folder', 'Go to folder')}
                   variant="secondary"
                   icon="folder-open"
                   target="_blank"
@@ -363,7 +363,7 @@ export function EditRuleGroupModalForm(props: ModalFormProps): React.ReactElemen
                 htmlFor="groupName"
                 description="A group evaluates all its rules over the same evaluation interval."
               >
-                Evaluation group
+                <Trans i18nKey="alerting.edit-rule-group-modal-form.evaluation-group">Evaluation group</Trans>
               </Label>
             }
             invalid={!!errors.groupName}
@@ -384,7 +384,9 @@ export function EditRuleGroupModalForm(props: ModalFormProps): React.ReactElemen
                 htmlFor="groupInterval"
                 description="How often is the rule evaluated. Applies to every rule within the group."
               >
-                <Stack gap={0.5}>Evaluation interval</Stack>
+                <Stack gap={0.5}>
+                  <Trans i18nKey="alerting.edit-rule-group-modal-form.evaluation-interval">Evaluation interval</Trans>
+                </Stack>
               </Label>
             }
             invalid={Boolean(errors.groupInterval) ? true : undefined}
@@ -408,10 +410,20 @@ export function EditRuleGroupModalForm(props: ModalFormProps): React.ReactElemen
             <EvaluationIntervalLimitExceeded />
           )}
 
-          {!hasSomeNoRecordingRules && <div>This group does not contain alert rules.</div>}
+          {!hasSomeNoRecordingRules && (
+            <div>
+              <Trans i18nKey="alerting.edit-rule-group-modal-form.group-contain-alert-rules">
+                This group does not contain alert rules.
+              </Trans>
+            </div>
+          )}
           {hasSomeNoRecordingRules && (
             <>
-              <div>List of rules that belong to this group</div>
+              <div>
+                <Trans i18nKey="alerting.edit-rule-group-modal-form.rules-belong-group">
+                  List of rules that belong to this group
+                </Trans>
+              </div>
               <div className={styles.evalRequiredLabel}>
                 #Eval column represents the number of evaluations needed before alert starts firing.
               </div>

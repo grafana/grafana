@@ -37,10 +37,15 @@ export const SaveDashboardErrorProxy = ({
       {error.data && error.data.status === 'version-mismatch' && (
         <ConfirmModal
           isOpen={true}
-          title="Conflict"
+          title={t('dashboard.save-dashboard-error-proxy.title-conflict', 'Conflict')}
           body={
             <div>
-              Someone else has updated this dashboard <br /> <small>Would you still like to save this dashboard?</small>
+              Someone else has updated this dashboard <br />{' '}
+              <small>
+                <Trans i18nKey="dashboard.save-dashboard-error-proxy.would-still-dashboard">
+                  Would you still like to save this dashboard?
+                </Trans>
+              </small>
             </div>
           }
           confirmText="Save and overwrite"
@@ -74,11 +79,15 @@ export const SaveDashboardErrorProxy = ({
           ) : (
             <ConfirmModal
               isOpen={true}
-              title="Conflict"
+              title={t('dashboard.save-dashboard-error-proxy.title-conflict', 'Conflict')}
               body={
                 <div>
                   A dashboard with the same name in selected folder already exists. <br />
-                  <small>Would you still like to save this dashboard?</small>
+                  <small>
+                    <Trans i18nKey="dashboard.save-dashboard-error-proxy.would-still-dashboard">
+                      Would you still like to save this dashboard?
+                    </Trans>
+                  </small>
                 </div>
               }
               confirmText="Save and overwrite"
@@ -109,17 +118,27 @@ const ConfirmPluginDashboardSaveModal = ({ onDismiss, dashboard }: SaveDashboard
   const styles = useStyles2(getConfirmPluginDashboardSaveModalStyles);
 
   return (
-    <Modal className={styles.modal} title="Plugin dashboard" icon="copy" isOpen={true} onDismiss={onDismiss}>
+    <Modal
+      className={styles.modal}
+      title={t('dashboard.confirm-plugin-dashboard-save-modal.title-plugin-dashboard', 'Plugin dashboard')}
+      icon="copy"
+      isOpen={true}
+      onDismiss={onDismiss}
+    >
       <div className={styles.modalText}>
         Your changes will be lost when you update the plugin.
         <br />
         <small>
-          Use <strong>Save As</strong> to create custom version.
+          Use{' '}
+          <strong>
+            <Trans i18nKey="dashboard.confirm-plugin-dashboard-save-modal.save-as">Save As</Trans>
+          </strong>{' '}
+          to create custom version.
         </small>
       </div>
       <Modal.ButtonRow>
         <Button variant="secondary" onClick={onDismiss} fill="outline">
-          Cancel
+          <Trans i18nKey="dashboard.confirm-plugin-dashboard-save-modal.cancel">Cancel</Trans>
         </Button>
         <SaveDashboardAsButton onClick={onDismiss} dashboard={dashboard} onSaveSuccess={onDismiss} />
         <Button
@@ -129,7 +148,7 @@ const ConfirmPluginDashboardSaveModal = ({ onDismiss, dashboard }: SaveDashboard
             onDismiss();
           }}
         >
-          Overwrite
+          <Trans i18nKey="dashboard.confirm-plugin-dashboard-save-modal.overwrite">Overwrite</Trans>
         </Button>
       </Modal.ButtonRow>
     </Modal>

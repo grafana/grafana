@@ -144,7 +144,7 @@ export const LdapDrawerComponent = ({
         >
           <Input
             id="port"
-            placeholder="389"
+            placeholder={t('admin.ldap-drawer.port-placeholder', '389')}
             type="number"
             {...register(`${serverConfig}.port`, { valueAsNumber: true })}
           />
@@ -158,7 +158,7 @@ export const LdapDrawerComponent = ({
         >
           <Input
             id="timeout"
-            placeholder="10"
+            placeholder={t('admin.ldap-drawer.timeout-placeholder', '10')}
             type="number"
             {...register(`${serverConfig}.timeout`, { valueAsNumber: true })}
           />

@@ -2,6 +2,7 @@ import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { Button, ClipboardButton } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { Invitee } from 'app/types';
 
 import { revokeInvite } from './state/actions';
@@ -27,7 +28,7 @@ class InviteeRow extends PureComponent<Props> {
         <td>{invitee.name}</td>
         <td className="text-right">
           <ClipboardButton icon="copy" variant="secondary" size="sm" getText={() => invitee.url}>
-            Copy Invite
+            <Trans i18nKey="invites.invitee-row.copy-invite">Copy Invite</Trans>
           </ClipboardButton>
           &nbsp;
         </td>
@@ -37,7 +38,7 @@ class InviteeRow extends PureComponent<Props> {
             size="sm"
             icon="times"
             onClick={() => revokeInvite(invitee.code)}
-            aria-label="Revoke Invite"
+            aria-label={t('invites.invitee-row.aria-label-revoke-invite', 'Revoke Invite')}
           />
         </td>
       </tr>

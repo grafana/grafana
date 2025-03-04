@@ -4,7 +4,7 @@ import { useDebounce, useDeepCompareEffect } from 'react-use';
 
 import { GrafanaTheme2, dateTime } from '@grafana/data';
 import { Alert, Badge, Icon, LoadingPlaceholder, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { MatcherFieldValue } from 'app/features/alerting/unified/types/silence-form';
 import { matcherFieldToMatcher } from 'app/features/alerting/unified/utils/alertmanager';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
@@ -66,7 +66,10 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
 
   if (isError) {
     return (
-      <Alert title="Preview not available" severity="error">
+      <Alert
+        title={t('alerting.silenced-instances-preview.title-preview-not-available', 'Preview not available')}
+        severity="error"
+      >
         Error occurred when generating preview of affected alerts. Are your matchers valid?
       </Alert>
     );
@@ -103,9 +106,22 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
           <Badge className={styles.badge} color="blue" text={tableItemAlerts.length} />
         ) : null}
       </h4>
-      {!hasValidMatchers && <span>Add a valid matcher to see affected alerts</span>}
+      {!hasValidMatchers && (
+        <span>
+          <Trans i18nKey="alerting.silenced-instances-preview.valid-matcher-affected-alerts">
+            Add a valid matcher to see affected alerts
+          </Trans>
+        </span>
+      )}
 
-      {isFetching && <LoadingPlaceholder text="Loading affected alert rule instances..." />}
+      {isFetching && (
+        <LoadingPlaceholder
+          text={t(
+            'alerting.silenced-instances-preview.text-loading-affected-alert-rule-instances',
+            'Loading affected alert rule instances...'
+          )}
+        />
+      )}
       {!isFetching && !isError && hasValidMatchers && (
         <div className={styles.table}>
           {tableItemAlerts.length > 0 ? (
@@ -116,7 +132,11 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
               pagination={{ itemsPerPage: 10 }}
             />
           ) : (
-            <span>No firing alert instances found</span>
+            <span>
+              <Trans i18nKey="alerting.silenced-instances-preview.no-firing-alert-instances-found">
+                No firing alert instances found
+              </Trans>
+            </span>
           )}
         </div>
       )}

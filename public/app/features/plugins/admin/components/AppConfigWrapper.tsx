@@ -6,6 +6,7 @@ import { PureComponent } from 'react';
 import { PluginMeta, AppPlugin, deprecationWarning } from '@grafana/data';
 import { AngularComponent, getAngularLoader, getBackendSrv } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 interface Props {
   app: AppPlugin;
@@ -74,17 +75,17 @@ export class AppConfigCtrlWrapper extends PureComponent<Props, State> {
           <div className="gf-form">
             {!model.enabled && (
               <Button variant="primary" onClick={this.enable} className={withRightMargin}>
-                Enable
+                <Trans i18nKey="plugins.app-config-ctrl-wrapper.enable">Enable</Trans>
               </Button>
             )}
             {model.enabled && (
               <Button variant="primary" onClick={this.update} className={withRightMargin}>
-                Update
+                <Trans i18nKey="plugins.app-config-ctrl-wrapper.update">Update</Trans>
               </Button>
             )}
             {model.enabled && (
               <Button variant="destructive" onClick={this.disable} className={withRightMargin}>
-                Disable
+                <Trans i18nKey="plugins.app-config-ctrl-wrapper.disable">Disable</Trans>
               </Button>
             )}
           </div>

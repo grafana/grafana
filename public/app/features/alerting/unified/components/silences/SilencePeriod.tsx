@@ -3,6 +3,7 @@ import { useController, useFormContext } from 'react-hook-form';
 
 import { dateTime } from '@grafana/data';
 import { Field, TimeRangeInput } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { SilenceFormFields } from '../../types/silence-form';
 
@@ -46,7 +47,7 @@ export const SilencePeriod = () => {
   return (
     <Field
       className={styles.timeRange}
-      label="Silence start and end"
+      label={t('alerting.silence-period.label-silence-start-and-end', 'Silence start and end')}
       error={invalid ? 'To is before or the same as from' : ''}
       invalid={invalid}
     >

@@ -21,6 +21,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Icon, PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
 import { getButtonStyles } from '@grafana/ui/src/components/Button';
+import { Trans } from 'app/core/internationalization';
 
 import { Trace } from '../../types';
 
@@ -146,7 +147,9 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
         if (spanFilterMatches.size === 0) {
           metadata = (
             <>
-              <span>0 matches</span>
+              <span>
+                <Trans i18nKey="explore.get-matches-metadata.matches">0 matches</Trans>
+              </span>
               {getTooltip(
                 'There are 0 span matches for the filters selected. Please try removing some of the selected filters.'
               )}

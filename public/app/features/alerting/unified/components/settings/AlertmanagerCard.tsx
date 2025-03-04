@@ -1,6 +1,7 @@
 import { capitalize } from 'lodash';
 
 import { Badge, Button, Card, Stack, Text, TextLink } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { ConnectionStatus } from '../../hooks/useExternalAmSelector';
 import { ProvisioningBadge } from '../Provisioning';
@@ -46,7 +47,7 @@ export function AlertmanagerCard({
         <Stack alignItems="center" gap={1}>
           {href ? (
             <WithReturnButton
-              title="Alerting settings"
+              title={t('alerting.alertmanager-card.title-alerting-settings', 'Alerting settings')}
               component={
                 <TextLink href={href} inline={false}>
                   {name}
@@ -74,13 +75,40 @@ export function AlertmanagerCard({
           {showStatus ? (
             <>
               {!receiving ? (
-                <Text variant="bodySmall">Not receiving Grafana managed alerts</Text>
+                <Text variant="bodySmall">
+                  <Trans i18nKey="alerting.alertmanager-card.not-receiving-grafana-managed-alerts">
+                    Not receiving Grafana managed alerts
+                  </Trans>
+                </Text>
               ) : (
                 <>
-                  {status === 'pending' && <Badge text="Activation in progress" color="orange" />}
-                  {status === 'active' && <Badge text="Receiving Grafana-managed alerts" color="green" />}
-                  {status === 'dropped' && <Badge text="Failed to adopt Alertmanager" color="red" />}
-                  {status === 'inconclusive' && <Badge text="Inconclusive" color="orange" />}
+                  {status === 'pending' && (
+                    <Badge
+                      text={t('alerting.alertmanager-card.text-activation-in-progress', 'Activation in progress')}
+                      color="orange"
+                    />
+                  )}
+                  {status === 'active' && (
+                    <Badge
+                      text={t(
+                        'alerting.alertmanager-card.text-receiving-grafanamanaged-alerts',
+                        'Receiving Grafana-managed alerts'
+                      )}
+                      color="green"
+                    />
+                  )}
+                  {status === 'dropped' && (
+                    <Badge
+                      text={t(
+                        'alerting.alertmanager-card.text-failed-to-adopt-alertmanager',
+                        'Failed to adopt Alertmanager'
+                      )}
+                      color="red"
+                    />
+                  )}
+                  {status === 'inconclusive' && (
+                    <Badge text={t('alerting.alertmanager-card.text-inconclusive', 'Inconclusive')} color="orange" />
+                  )}
                 </>
               )}
             </>
@@ -99,11 +127,11 @@ export function AlertmanagerCard({
             <>
               {receiving ? (
                 <Button icon="times" variant="destructive" fill="outline" onClick={onDisable}>
-                  Disable
+                  <Trans i18nKey="alerting.alertmanager-card.disable">Disable</Trans>
                 </Button>
               ) : (
                 <Button icon="check" variant="secondary" fill="outline" onClick={onEnable}>
-                  Enable
+                  <Trans i18nKey="alerting.alertmanager-card.enable">Enable</Trans>
                 </Button>
               )}
             </>
