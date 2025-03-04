@@ -269,7 +269,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.HARedisClusterModeEnabled = ua.Key("ha_redis_cluster_mode_enabled").MustBool(false)
 	uaCfg.HARedisAddr = ua.Key("ha_redis_address").MustString("")
 	uaCfg.HARedisPeerName = ua.Key("ha_redis_peer_name").MustString("")
-	uaCfg.HARedisPrefix = ua.Key("ha_redis_prefix").MustString("")
+	uaCfg.HARedisPrefix = ua.Key("ha_redis_prefix").MustString("alerting")
 	uaCfg.HARedisUsername = ua.Key("ha_redis_username").MustString("")
 	uaCfg.HARedisPassword = ua.Key("ha_redis_password").MustString("")
 	uaCfg.HARedisDB = ua.Key("ha_redis_db").MustInt(0)
