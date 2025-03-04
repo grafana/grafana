@@ -7,9 +7,23 @@ import (
 // CanUpdateProvenanceInRuleGroup checks if a provenance can be updated for a rule group and its alerts.
 // ReplaceRuleGroup function intends to replace an entire rule group: inserting, updating, and removing rules.
 func CanUpdateProvenanceInRuleGroup(storedProvenance, provenance models.Provenance) bool {
-	return storedProvenance == provenance ||
-		storedProvenance == models.ProvenanceNone ||
-		(storedProvenance == models.ProvenanceAPI && provenance == models.ProvenanceNone)
+	// Same provenance is always allowed
+	if storedProvenance == provenance {
+		return true
+	}
+
+	// Can always update stored ProvenanceNone
+	if storedProvenance == models.ProvenanceNone {
+		return true
+	}
+
+	// Can reset to ProvenanceNone from specific provenances
+	if provenance == models.ProvenanceNone {
+		return storedProvenance == models.ProvenanceAPI ||
+			storedProvenance == models.ProvenanceConvertedPrometheus
+	}
+
+	return false
 }
 
 type ProvenanceStatusTransitionValidator = func(from, to models.Provenance) error
