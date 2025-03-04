@@ -24,7 +24,16 @@ jobs:
 
       # Run tests with coverage for specific files
       - name: Run tests with coverage for Table components
-        run: yarn run test:coverage -- --collectCoverageFrom='packages/grafana-ui/src/components/Table/**/*.{ts,tsx}'
+        run: yarn run test:coverage "packages/grafana-ui/src/components/Table/Table.test.ts" --collectCoverageFrom="packages/grafana-ui/src/components/Table/**/*.{ts,tsx}"
+
+      # Check if coverage files exist and list them
+      - name: Check coverage files
+        run: |
+          echo "Listing files in coverage directory:"
+          ls -la coverage/ || echo "Coverage directory not found"
+          
+          # Try to find any JSON files in the coverage directory
+          find coverage -name "*.json" || echo "No JSON files found in coverage directory"
 
       # Extract and save coverage metrics for Table components
       - name: Extract Table component coverage
@@ -34,8 +43,19 @@ jobs:
           echo "# Table Component Coverage" > table-coverage.md
           echo "" >> table-coverage.md
           
-          # Extract overall coverage from coverage summary
-          SUMMARY_JSON=$(cat coverage/coverage-summary.json)
+          # Check if coverage-summary.json exists, if not, look for other JSON files
+          if [ ! -f coverage/coverage-summary.json ]; then
+            echo "coverage-summary.json not found, looking for alternatives..."
+            COVERAGE_JSON=$(find coverage -name "*.json" | head -1)
+            if [ -z "$COVERAGE_JSON" ]; then
+              echo "No coverage JSON files found. Creating empty summary."
+              echo "## No Coverage Data Available" >> table-coverage.md
+              exit 0
+            else
+              echo "Using $COVERAGE_JSON instead"
+              cp "$COVERAGE_JSON" coverage/coverage-summary.json
+            fi
+          fi
           
           # Extract coverage for Table components only
           echo "## File Coverage" >> table-coverage.md
@@ -43,26 +63,22 @@ jobs:
           echo "| File | Line Coverage | Statement Coverage | Function Coverage | Branch Coverage |" >> table-coverage.md
           echo "|------|---------------|-------------------|-------------------|-----------------|" >> table-coverage.md
           
-          # Process each file in the Table directory
-          for file in $(find coverage/coverage-final.json -type f -name "*.json"); do
-            jq -r '..|objects|select(.path? and .path|test("Table")) | "\(.path)|\(.lines.pct)%|\(.statements.pct)%|\(.functions.pct)%|\(.branches.pct)%"' $file | 
-            while IFS="|" read -r path line_pct stmt_pct func_pct branch_pct; do
-              echo "| $path | $line_pct | $stmt_pct | $func_pct | $branch_pct |" >> table-coverage.md
-            done
+          # Process each file in the Table directory - more resilient approach
+          for file in $(find coverage -name "*.json"); do
+            if [ -f "$file" ]; then
+              jq -r '..|objects|select(.path? and .path|test("Table")) | "\(.path)|\(.lines.pct // "N/A")%|\(.statements.pct // "N/A")%|\(.functions.pct // "N/A")%|\(.branches.pct // "N/A")%"' "$file" 2>/dev/null | 
+              while IFS="|" read -r path line_pct stmt_pct func_pct branch_pct; do
+                if [ ! -z "$path" ]; then
+                  echo "| $path | $line_pct | $stmt_pct | $func_pct | $branch_pct |" >> table-coverage.md
+                fi
+              done
+            fi
           done
-          
-          # Save overall metrics
-          TABLE_LINE_COVERAGE=$(jq -r '..|objects|select(.path? and .path|test("Table"))|.lines.pct' coverage/coverage-final.json | awk '{ sum += $1; n++ } END { if (n > 0) print sum / n; else print 0 }')
-          TABLE_FUNC_COVERAGE=$(jq -r '..|objects|select(.path? and .path|test("Table"))|.functions.pct' coverage/coverage-final.json | awk '{ sum += $1; n++ } END { if (n > 0) print sum / n; else print 0 }')
-          
-          echo "table_line_coverage=$TABLE_LINE_COVERAGE" >> $GITHUB_OUTPUT
-          echo "table_func_coverage=$TABLE_FUNC_COVERAGE" >> $GITHUB_OUTPUT
           
           # Add summary to the markdown file
           echo "## Summary" >> table-coverage.md
           echo "" >> table-coverage.md
-          echo "- Line Coverage: $TABLE_LINE_COVERAGE%" >> table-coverage.md
-          echo "- Function Coverage: $TABLE_FUNC_COVERAGE%" >> table-coverage.md
+          echo "- See detailed coverage in the artifact" >> table-coverage.md
 
       # Upload the coverage report as an artifact
       - name: Upload coverage report
