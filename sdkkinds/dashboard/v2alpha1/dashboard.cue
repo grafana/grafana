@@ -4,6 +4,14 @@ import (
 	"github.com/grafana/grafana/sdkkinds/dashboard/common"
 )
 
+Dashboard: {
+	schema: {
+		spec:   Spec
+		status: common.DashboardStatus
+	}
+}
+
+// Dashboard specification.
 Spec: {
 	// Title of dashboard.
 	annotations: [...AnnotationQueryKind]

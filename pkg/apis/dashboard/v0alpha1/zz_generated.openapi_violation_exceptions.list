@@ -4,12 +4,7 @@ API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/dashbo
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1,LibraryPanelStatus,Warnings
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1,SearchResults,Hits
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1,SortableFields,Fields
-<<<<<<< HEAD
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1,DashboardStatus,ConversionStatus
-||||||| parent of 778069ffaba (Generate Dashboard kinds with `grafana-app-sdk`)
-=======
 API rule violation: names_match,github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1,Unstructured,Object
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1,Dashboard,DashboardStatus
->>>>>>> 778069ffaba (Generate Dashboard kinds with `grafana-app-sdk`)
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1,SortBy,Descending
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1,SortableField,Field

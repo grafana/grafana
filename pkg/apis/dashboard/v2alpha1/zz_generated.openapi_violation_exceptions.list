@@ -31,10 +31,6 @@ API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/dashbo
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1,DashboardTimeSettingsSpec,QuickRanges
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1,DashboardV2alpha1FieldConfigSourceOverrides,Properties
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1,LibraryPanelStatus,Warnings
-<<<<<<< HEAD
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1,DashboardStatus,ConversionStatus
-||||||| parent of 778069ffaba (Generate Dashboard kinds with `grafana-app-sdk`)
-=======
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1,Dashboard,DashboardStatus
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1,DashboardGridLayoutItemKindOrGridLayoutRowKind,GridLayoutItemKind
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1,DashboardGridLayoutItemKindOrGridLayoutRowKind,GridLayoutRowKind
@@ -68,4 +64,3 @@ API rule violation: names_match,github.com/grafana/grafana/pkg/apis/dashboard/v2
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1,DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap,RegexMap
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1,DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap,SpecialValueMap
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1,DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap,ValueMap
->>>>>>> 778069ffaba (Generate Dashboard kinds with `grafana-app-sdk`)

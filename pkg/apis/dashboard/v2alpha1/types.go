@@ -7,71 +7,7 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
-<<<<<<< HEAD
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type Dashboard struct {
-	metav1.TypeMeta `json:",inline"`
-	// Standard object's metadata
-	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-	// +optional
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	// The dashboard body (unstructured for now)
-	Spec common.Unstructured `json:"spec"`
-
-	// Optional dashboard status
-	Status *DashboardStatus `json:"status,omitempty"`
-}
-
-type DashboardStatus struct {
-	ConversionStatus *ConversionStatus `json:"conversion,omitempty"`
-}
-
-type ConversionStatus struct {
-	Failed        bool   `json:"failed,omitempty"`
-	StoredVersion string `json:"storedVersion,omitempty"`
-	Error         string `json:"error,omitempty"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type DashboardList struct {
-	metav1.TypeMeta `json:",inline"`
-	// +optional
-	metav1.ListMeta `json:"metadata,omitempty"`
-
-	Items []Dashboard `json:"items,omitempty"`
-}
-
-||||||| parent of 778069ffaba (Generate Dashboard kinds with `grafana-app-sdk`)
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type Dashboard struct {
-	metav1.TypeMeta `json:",inline"`
-	// Standard object's metadata
-	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-	// +optional
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	// The dashboard body (unstructured for now)
-	Spec DashboardSpec `json:"spec"`
-}
-
-type DashboardSpec struct {
-	Title               string `json:"title"`
-	common.Unstructured `json:",inline"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type DashboardList struct {
-	metav1.TypeMeta `json:",inline"`
-	// +optional
-	metav1.ListMeta `json:"metadata,omitempty"`
-
-	Items []Dashboard `json:"items,omitempty"`
-}
-
-=======
 // +k8s:deepcopy-gen=true
->>>>>>> 778069ffaba (Generate Dashboard kinds with `grafana-app-sdk`)
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DashboardVersionList struct {
 	metav1.TypeMeta `json:",inline"`

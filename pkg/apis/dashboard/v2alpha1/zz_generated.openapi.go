@@ -14,38 +14,6 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-<<<<<<< HEAD
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.AnnotationActions":       schema_pkg_apis_dashboard_v2alpha1_AnnotationActions(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.AnnotationPermission":    schema_pkg_apis_dashboard_v2alpha1_AnnotationPermission(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.ConversionStatus":        schema_pkg_apis_dashboard_v2alpha1_ConversionStatus(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.Dashboard":               schema_pkg_apis_dashboard_v2alpha1_Dashboard(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardAccess":         schema_pkg_apis_dashboard_v2alpha1_DashboardAccess(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardList":           schema_pkg_apis_dashboard_v2alpha1_DashboardList(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardStatus":         schema_pkg_apis_dashboard_v2alpha1_DashboardStatus(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardVersionInfo":    schema_pkg_apis_dashboard_v2alpha1_DashboardVersionInfo(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardVersionList":    schema_pkg_apis_dashboard_v2alpha1_DashboardVersionList(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardWithAccessInfo": schema_pkg_apis_dashboard_v2alpha1_DashboardWithAccessInfo(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.LibraryPanel":            schema_pkg_apis_dashboard_v2alpha1_LibraryPanel(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.LibraryPanelList":        schema_pkg_apis_dashboard_v2alpha1_LibraryPanelList(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.LibraryPanelSpec":        schema_pkg_apis_dashboard_v2alpha1_LibraryPanelSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.LibraryPanelStatus":      schema_pkg_apis_dashboard_v2alpha1_LibraryPanelStatus(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.VersionsQueryOptions":    schema_pkg_apis_dashboard_v2alpha1_VersionsQueryOptions(ref),
-||||||| parent of 778069ffaba (Generate Dashboard kinds with `grafana-app-sdk`)
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.AnnotationActions":       schema_pkg_apis_dashboard_v2alpha1_AnnotationActions(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.AnnotationPermission":    schema_pkg_apis_dashboard_v2alpha1_AnnotationPermission(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.Dashboard":               schema_pkg_apis_dashboard_v2alpha1_Dashboard(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardAccess":         schema_pkg_apis_dashboard_v2alpha1_DashboardAccess(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardList":           schema_pkg_apis_dashboard_v2alpha1_DashboardList(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardSpec":           schema_pkg_apis_dashboard_v2alpha1_DashboardSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardVersionInfo":    schema_pkg_apis_dashboard_v2alpha1_DashboardVersionInfo(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardVersionList":    schema_pkg_apis_dashboard_v2alpha1_DashboardVersionList(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardWithAccessInfo": schema_pkg_apis_dashboard_v2alpha1_DashboardWithAccessInfo(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.LibraryPanel":            schema_pkg_apis_dashboard_v2alpha1_LibraryPanel(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.LibraryPanelList":        schema_pkg_apis_dashboard_v2alpha1_LibraryPanelList(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.LibraryPanelSpec":        schema_pkg_apis_dashboard_v2alpha1_LibraryPanelSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.LibraryPanelStatus":      schema_pkg_apis_dashboard_v2alpha1_LibraryPanelStatus(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.VersionsQueryOptions":    schema_pkg_apis_dashboard_v2alpha1_VersionsQueryOptions(ref),
-=======
 		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.AnnotationActions":                                                                 schema_pkg_apis_dashboard_v2alpha1_AnnotationActions(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.AnnotationPermission":                                                              schema_pkg_apis_dashboard_v2alpha1_AnnotationPermission(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.Dashboard":                                                                         schema_pkg_apis_dashboard_v2alpha1_Dashboard(ref),
@@ -58,6 +26,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardAnnotationQuerySpec":                                                      schema_pkg_apis_dashboard_v2alpha1_DashboardAnnotationQuerySpec(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardConstantVariableKind":                                                     schema_pkg_apis_dashboard_v2alpha1_DashboardConstantVariableKind(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardConstantVariableSpec":                                                     schema_pkg_apis_dashboard_v2alpha1_DashboardConstantVariableSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardConversionStatus":                                                         schema_pkg_apis_dashboard_v2alpha1_DashboardConversionStatus(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardCustomVariableKind":                                                       schema_pkg_apis_dashboard_v2alpha1_DashboardCustomVariableKind(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardCustomVariableSpec":                                                       schema_pkg_apis_dashboard_v2alpha1_DashboardCustomVariableSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardDashboardLink":                                                            schema_pkg_apis_dashboard_v2alpha1_DashboardDashboardLink(ref),
@@ -146,13 +115,11 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardVizConfigKind":                                 schema_pkg_apis_dashboard_v2alpha1_DashboardVizConfigKind(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardVizConfigSpec":                                 schema_pkg_apis_dashboard_v2alpha1_DashboardVizConfigSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardWithAccessInfo":                                schema_pkg_apis_dashboard_v2alpha1_DashboardWithAccessInfo(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardstatusOperatorState":                           schema_pkg_apis_dashboard_v2alpha1_DashboardstatusOperatorState(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.LibraryPanel":                                           schema_pkg_apis_dashboard_v2alpha1_LibraryPanel(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.LibraryPanelList":                                       schema_pkg_apis_dashboard_v2alpha1_LibraryPanelList(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.LibraryPanelSpec":                                       schema_pkg_apis_dashboard_v2alpha1_LibraryPanelSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.LibraryPanelStatus":                                     schema_pkg_apis_dashboard_v2alpha1_LibraryPanelStatus(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.VersionsQueryOptions":                                   schema_pkg_apis_dashboard_v2alpha1_VersionsQueryOptions(ref),
->>>>>>> 778069ffaba (Generate Dashboard kinds with `grafana-app-sdk`)
 	}
 }
 
@@ -217,36 +184,6 @@ func schema_pkg_apis_dashboard_v2alpha1_AnnotationPermission(ref common.Referenc
 	}
 }
 
-func schema_pkg_apis_dashboard_v2alpha1_ConversionStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"failed": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
-					"storedVersion": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"error": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
 func schema_pkg_apis_dashboard_v2alpha1_Dashboard(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -275,20 +212,6 @@ func schema_pkg_apis_dashboard_v2alpha1_Dashboard(ref common.ReferenceCallback) 
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-<<<<<<< HEAD
-							Description: "The dashboard body (unstructured for now)",
-							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
-						},
-					},
-					"status": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Optional dashboard status",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardStatus"),
-||||||| parent of 778069ffaba (Generate Dashboard kinds with `grafana-app-sdk`)
-							Description: "The dashboard body (unstructured for now)",
-							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardSpec"),
-=======
 							Default: map[string]interface{}{},
 							Ref:     ref("github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardSpec"),
 						},
@@ -297,7 +220,6 @@ func schema_pkg_apis_dashboard_v2alpha1_Dashboard(ref common.ReferenceCallback) 
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
 							Ref:     ref("github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardStatus"),
->>>>>>> 778069ffaba (Generate Dashboard kinds with `grafana-app-sdk`)
 						},
 					},
 				},
@@ -305,13 +227,7 @@ func schema_pkg_apis_dashboard_v2alpha1_Dashboard(ref common.ReferenceCallback) 
 			},
 		},
 		Dependencies: []string{
-<<<<<<< HEAD
-			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured", "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
-||||||| parent of 778069ffaba (Generate Dashboard kinds with `grafana-app-sdk`)
-			"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
-=======
 			"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardSpec", "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
->>>>>>> 778069ffaba (Generate Dashboard kinds with `grafana-app-sdk`)
 	}
 }
 
@@ -804,6 +720,41 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardConstantVariableSpec(ref common
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardVariableOption"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2alpha1_DashboardConversionStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ConversionStatus is the status of the conversion of the dashboard.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"failed": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"storedVersion": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"error": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"failed", "storedVersion", "error"},
+			},
+		},
 	}
 }
 
@@ -2318,11 +2269,6 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardList(ref common.ReferenceCallba
 	}
 }
 
-<<<<<<< HEAD
-func schema_pkg_apis_dashboard_v2alpha1_DashboardStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
-||||||| parent of 778069ffaba (Generate Dashboard kinds with `grafana-app-sdk`)
-func schema_pkg_apis_dashboard_v2alpha1_DashboardSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-=======
 func schema_pkg_apis_dashboard_v2alpha1_DashboardMatcherConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -3387,17 +3333,11 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardRowsLayoutSpec(ref common.Refer
 }
 
 func schema_pkg_apis_dashboard_v2alpha1_DashboardSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
->>>>>>> 778069ffaba (Generate Dashboard kinds with `grafana-app-sdk`)
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-<<<<<<< HEAD
-					"conversion": {
-||||||| parent of 778069ffaba (Generate Dashboard kinds with `grafana-app-sdk`)
-					"title": {
-=======
 					"annotations": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Title of dashboard.",
@@ -3510,30 +3450,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardSpec(ref common.ReferenceCallba
 						},
 					},
 					"title": {
->>>>>>> 778069ffaba (Generate Dashboard kinds with `grafana-app-sdk`)
 						SchemaProps: spec.SchemaProps{
-<<<<<<< HEAD
-							Ref: ref("github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.ConversionStatus"),
-||||||| parent of 778069ffaba (Generate Dashboard kinds with `grafana-app-sdk`)
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"Object": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Object is a JSON compatible map with string, float, int, bool, []interface{}, or map[string]interface{} children.",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"object"},
-										Format: "",
-									},
-								},
-							},
-=======
 							Description: "Title of dashboard.",
 							Default:     "",
 							Type:        []string{"string"},
@@ -3597,47 +3514,16 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardStatus(ref common.ReferenceCall
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"operatorStates": {
+					"conversion": {
 						SchemaProps: spec.SchemaProps{
-							Description: "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardstatusOperatorState"),
-									},
-								},
-							},
-						},
-					},
-					"additionalFields": {
-						SchemaProps: spec.SchemaProps{
-							Description: "additionalFields is reserved for future use",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"object"},
-										Format: "",
-									},
-								},
-							},
->>>>>>> 778069ffaba (Generate Dashboard kinds with `grafana-app-sdk`)
+							Ref: ref("github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardConversionStatus"),
 						},
 					},
 				},
 			},
 		},
-<<<<<<< HEAD
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.ConversionStatus"},
-||||||| parent of 778069ffaba (Generate Dashboard kinds with `grafana-app-sdk`)
-=======
-		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardstatusOperatorState"},
+			"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardConversionStatus"},
 	}
 }
 
@@ -4404,7 +4290,6 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardVariableOption(ref common.Refer
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardStringOrArrayOfString"},
->>>>>>> 778069ffaba (Generate Dashboard kinds with `grafana-app-sdk`)
 	}
 }
 
@@ -4606,20 +4491,6 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardWithAccessInfo(ref common.Refer
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-<<<<<<< HEAD
-							Description: "The dashboard body (unstructured for now)",
-							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
-						},
-					},
-					"status": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Optional dashboard status",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardStatus"),
-||||||| parent of 778069ffaba (Generate Dashboard kinds with `grafana-app-sdk`)
-							Description: "The dashboard body (unstructured for now)",
-							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardSpec"),
-=======
 							Default: map[string]interface{}{},
 							Ref:     ref("github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardSpec"),
 						},
@@ -4628,7 +4499,6 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardWithAccessInfo(ref common.Refer
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
 							Ref:     ref("github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardStatus"),
->>>>>>> 778069ffaba (Generate Dashboard kinds with `grafana-app-sdk`)
 						},
 					},
 					"access": {
@@ -4642,64 +4512,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardWithAccessInfo(ref common.Refer
 			},
 		},
 		Dependencies: []string{
-<<<<<<< HEAD
-			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured", "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardAccess", "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
-||||||| parent of 778069ffaba (Generate Dashboard kinds with `grafana-app-sdk`)
-			"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardAccess", "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
-=======
 			"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardAccess", "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardSpec", "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
-	}
-}
-
-func schema_pkg_apis_dashboard_v2alpha1_DashboardstatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"lastEvaluation": {
-						SchemaProps: spec.SchemaProps{
-							Description: "lastEvaluation is the ResourceVersion last evaluated",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"state": {
-						SchemaProps: spec.SchemaProps{
-							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"descriptiveState": {
-						SchemaProps: spec.SchemaProps{
-							Description: "descriptiveState is an optional more descriptive state field which has no requirements on format",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"details": {
-						SchemaProps: spec.SchemaProps{
-							Description: "details contains any extra information that is operator-specific",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"object"},
-										Format: "",
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"lastEvaluation", "state"},
-			},
-		},
->>>>>>> 778069ffaba (Generate Dashboard kinds with `grafana-app-sdk`)
 	}
 }
 
