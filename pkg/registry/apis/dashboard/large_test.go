@@ -5,12 +5,12 @@ import (
 	"os"
 	"testing"
 
-	dashboardinternal "github.com/grafana/grafana/pkg/apis/dashboard"
-	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 )
 
 func TestLargeDashboardSupport(t *testing.T) {
@@ -41,9 +41,6 @@ func TestLargeDashboardSupport(t *testing.T) {
 	err = dashboardv0alpha1.AddToScheme(scheme)
 	require.NoError(t, err)
 
-	err = dashboardinternal.AddToScheme(scheme)
-	require.NoError(t, err)
-
 	largeObject := NewDashboardLargeObjectSupport(scheme)
 
 	// Convert the dashboard to a small value
@@ -53,7 +50,7 @@ func TestLargeDashboardSupport(t *testing.T) {
 	small, err := json.MarshalIndent(&dash.Spec, "", "  ")
 	require.NoError(t, err)
 	require.JSONEq(t, `{
-		"schemaVersion": 41,
+		"schemaVersion": 33,
 		"title": "Panel tests - All panels",
 		"tags": ["gdev","panel-tests","all-panels"]
 	}`, string(small))

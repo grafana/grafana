@@ -26,6 +26,7 @@ type DashboardMeta struct {
 	Version    int       `json:"version"`
 	HasACL     bool      `json:"hasAcl" xorm:"has_acl"`
 	IsFolder   bool      `json:"isFolder"`
+	APIVersion string    `json:"apiVersion,omitempty"` // v0alpha1, v1, v2beta1 etc -- the version things were *saved* at
 	// Deprecated: use FolderUID instead
 	FolderId               int64                              `json:"folderId"`
 	FolderUid              string                             `json:"folderUid"`

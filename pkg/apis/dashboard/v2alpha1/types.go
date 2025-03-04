@@ -16,12 +16,20 @@ type Dashboard struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// The dashboard body (unstructured for now)
-	Spec DashboardSpec `json:"spec"`
+	Spec common.Unstructured `json:"spec"`
+
+	// Optional dashboard status
+	Status *DashboardStatus `json:"status,omitempty"`
 }
 
-type DashboardSpec struct {
-	Title               string `json:"title"`
-	common.Unstructured `json:",inline"`
+type DashboardStatus struct {
+	ConversionStatus *ConversionStatus `json:"conversion,omitempty"`
+}
+
+type ConversionStatus struct {
+	Failed        bool   `json:"failed,omitempty"`
+	StoredVersion string `json:"storedVersion,omitempty"`
+	Error         string `json:"error,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

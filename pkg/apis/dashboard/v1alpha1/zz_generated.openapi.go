@@ -16,10 +16,11 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1.AnnotationActions":       schema_pkg_apis_dashboard_v1alpha1_AnnotationActions(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1.AnnotationPermission":    schema_pkg_apis_dashboard_v1alpha1_AnnotationPermission(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1.ConversionStatus":        schema_pkg_apis_dashboard_v1alpha1_ConversionStatus(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1.Dashboard":               schema_pkg_apis_dashboard_v1alpha1_Dashboard(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1.DashboardAccess":         schema_pkg_apis_dashboard_v1alpha1_DashboardAccess(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1.DashboardList":           schema_pkg_apis_dashboard_v1alpha1_DashboardList(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1.DashboardSpec":           schema_pkg_apis_dashboard_v1alpha1_DashboardSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1.DashboardStatus":         schema_pkg_apis_dashboard_v1alpha1_DashboardStatus(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1.DashboardVersionInfo":    schema_pkg_apis_dashboard_v1alpha1_DashboardVersionInfo(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1.DashboardVersionList":    schema_pkg_apis_dashboard_v1alpha1_DashboardVersionList(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1.DashboardWithAccessInfo": schema_pkg_apis_dashboard_v1alpha1_DashboardWithAccessInfo(ref),
@@ -92,6 +93,36 @@ func schema_pkg_apis_dashboard_v1alpha1_AnnotationPermission(ref common.Referenc
 	}
 }
 
+func schema_pkg_apis_dashboard_v1alpha1_ConversionStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"failed": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"storedVersion": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"error": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_dashboard_v1alpha1_Dashboard(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -122,8 +153,13 @@ func schema_pkg_apis_dashboard_v1alpha1_Dashboard(ref common.ReferenceCallback) 
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The dashboard body (unstructured for now)",
-							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1.DashboardSpec"),
+							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optional dashboard status",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1.DashboardStatus"),
 						},
 					},
 				},
@@ -131,7 +167,7 @@ func schema_pkg_apis_dashboard_v1alpha1_Dashboard(ref common.ReferenceCallback) 
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1.DashboardSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured", "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1.DashboardStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -252,38 +288,22 @@ func schema_pkg_apis_dashboard_v1alpha1_DashboardList(ref common.ReferenceCallba
 	}
 }
 
-func schema_pkg_apis_dashboard_v1alpha1_DashboardSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboard_v1alpha1_DashboardStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"title": {
+					"conversion": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"Object": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Object is a JSON compatible map with string, float, int, bool, []interface{}, or map[string]interface{} children.",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"object"},
-										Format: "",
-									},
-								},
-							},
+							Ref: ref("github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1.ConversionStatus"),
 						},
 					},
 				},
-				Required: []string{"title", "Object"},
 			},
 		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1.ConversionStatus"},
 	}
 }
 
@@ -415,8 +435,13 @@ func schema_pkg_apis_dashboard_v1alpha1_DashboardWithAccessInfo(ref common.Refer
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The dashboard body (unstructured for now)",
-							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1.DashboardSpec"),
+							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optional dashboard status",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1.DashboardStatus"),
 						},
 					},
 					"access": {
@@ -430,7 +455,7 @@ func schema_pkg_apis_dashboard_v1alpha1_DashboardWithAccessInfo(ref common.Refer
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1.DashboardAccess", "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1.DashboardSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured", "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1.DashboardAccess", "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1.DashboardStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 

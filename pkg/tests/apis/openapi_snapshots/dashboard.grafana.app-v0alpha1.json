@@ -1058,22 +1058,6 @@
             "type": "string",
             "uniqueItems": true
           }
-        },
-        {
-          "name": "path",
-          "in": "query",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "version",
-          "in": "query",
-          "schema": {
-            "type": "integer",
-            "uniqueItems": true
-          }
         }
       ]
     },
@@ -1652,6 +1636,20 @@
           }
         }
       },
+      "com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.ConversionStatus": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "failed": {
+            "type": "boolean"
+          },
+          "storedVersion": {
+            "type": "string"
+          }
+        }
+      },
       "com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard": {
         "type": "object",
         "required": [
@@ -1680,6 +1678,14 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
+              }
+            ]
+          },
+          "status": {
+            "description": "Optional dashboard status",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.DashboardStatus"
               }
             ]
           }
@@ -1776,6 +1782,14 @@
           }
         ]
       },
+      "com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.DashboardStatus": {
+        "type": "object",
+        "properties": {
+          "conversion": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.ConversionStatus"
+          }
+        }
+      },
       "com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.DashboardWithAccessInfo": {
         "description": "This is like the legacy DTO where access and metadata are all returned in a single call",
         "type": "object",
@@ -1814,6 +1828,14 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
+              }
+            ]
+          },
+          "status": {
+            "description": "Optional dashboard status",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.DashboardStatus"
               }
             ]
           }

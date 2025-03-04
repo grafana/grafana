@@ -6,18 +6,19 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/selection"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/dashboard"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	unisearch "github.com/grafana/grafana/pkg/storage/unified/search"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/selection"
 )
 
 func TestDashboardSearchClient_Search(t *testing.T) {

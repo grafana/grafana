@@ -3,8 +3,9 @@ package migrations
 import (
 	"fmt"
 
-	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"xorm.io/xorm"
+
+	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 func addDashboardMigration(mg *Migrator) {
@@ -256,6 +257,10 @@ func addDashboardMigration(mg *Migrator) {
 	}))
 
 	mg.AddMigration("Add missing dashboard_uid and org_id to dashboard_tag", &FillDashbordUIDAndOrgIDMigration{})
+
+	mg.AddMigration("Add apiVersion for dashboard", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "api_version", Type: DB_Varchar, Length: 16, Nullable: true,
+	}))
 }
 
 type FillDashbordUIDAndOrgIDMigration struct {

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -17,7 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
+	dashboardOG "github.com/grafana/grafana/pkg/apis/dashboard"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -255,6 +257,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 	var createdBy sql.NullString
 	var createdByID sql.NullInt64
 	var message sql.NullString
+	var apiVersion sql.NullString
 
 	var plugin_id sql.NullString
 	var origin_name sql.NullString
@@ -269,8 +272,11 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		&origin_name, &origin_path, &origin_hash, &origin_ts,
 		&created, &createdBy, &createdByID,
 		&updated, &updatedBy, &updatedByID,
-		&version, &message, &data,
+		&version, &message, &data, &apiVersion,
 	)
+	if apiVersion.String == "" {
+		apiVersion.String = "v0alpha1" // default value
+	}
 
 	row.token = &continueToken{orgId: orgId, id: dashboard_id}
 	// when listing from the history table, we want to use the version as the ID to continue from
@@ -281,6 +287,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		row.RV = version
 		dash.ResourceVersion = fmt.Sprintf("%d", row.RV)
 		dash.Namespace = a.namespacer(orgId)
+		dash.APIVersion = fmt.Sprintf("%s/%s", dashboard.GROUP, apiVersion.String)
 		dash.UID = gapiutil.CalculateClusterWideUID(dash)
 		dash.SetCreationTimestamp(metav1.NewTime(created))
 		meta, err := utils.MetaAccessor(dash)
@@ -313,7 +320,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 			ts := time.Unix(origin_ts.Int64, 0)
 
 			repo := &utils.ResourceRepositoryInfo{
-				Name:      dashboard.ProvisionedFileNameWithPrefix(origin_name.String),
+				Name:      dashboardOG.ProvisionedFileNameWithPrefix(origin_name.String),
 				Hash:      origin_hash.String,
 				Timestamp: &ts,
 			}
@@ -332,7 +339,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 			meta.SetRepositoryInfo(repo)
 		} else if plugin_id.String != "" {
 			meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-				Name: dashboard.PluginIDRepoName,
+				Name: dashboardOG.PluginIDRepoName,
 				Path: plugin_id.String,
 			})
 		}
@@ -421,18 +428,20 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		}
 	}
 
+	apiVersion := strings.TrimPrefix(dash.APIVersion, dashboard.GROUP+"/")
 	meta, err := utils.MetaAccessor(dash)
 	if err != nil {
 		return nil, false, err
 	}
 	out, err := a.dashStore.SaveDashboard(ctx, dashboards.SaveDashboardCommand{
-		OrgID:     orgId,
-		Message:   meta.GetMessage(),
-		PluginID:  dashboard.GetPluginIDFromMeta(meta),
-		Dashboard: simplejson.NewFromAny(dash.Spec.UnstructuredContent()),
-		FolderUID: meta.GetFolder(),
-		Overwrite: true, // already passed the revisionVersion checks!
-		UserID:    userID,
+		OrgID:      orgId,
+		Message:    meta.GetMessage(),
+		PluginID:   dashboardOG.GetPluginIDFromMeta(meta),
+		Dashboard:  simplejson.NewFromAny(dash.Spec.UnstructuredContent()),
+		FolderUID:  meta.GetFolder(),
+		Overwrite:  true, // already passed the revisionVersion checks!
+		UserID:     userID,
+		APIVersion: apiVersion,
 	})
 	if err != nil {
 		return nil, false, err
