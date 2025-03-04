@@ -32,6 +32,14 @@ export function getAppRoutes(): RouteDescriptor[] {
     // In order to make it possible we need to register them first due to how `<Switch>` is evaluating routes. (This will be unnecessary once/when we upgrade to React Router v6 and start using `<Routes>` instead.)
     ...getAppPluginRoutes(),
     {
+      path: '/folder-app',
+      pageClass: 'page-folders',
+      routeName: DashboardRoutes.Folders,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "FoldersPage" */ 'app/features/browse-dashboards/BrowseFoldersPage')
+      ),
+    },
+    {
       path: '/',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Home,

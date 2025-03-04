@@ -109,6 +109,7 @@ export enum DashboardRoutes {
   Public = 'public-dashboard',
   Embedded = 'embedded-dashboard',
   Report = 'report-dashboard',
+  Folders = 'folder-app',
 }
 
 export enum DashboardInitPhase {
