@@ -50,8 +50,6 @@ type DB interface {
 type Session = sqlstore.DBSession
 type InitTestDBOpt = sqlstore.InitTestDBOpt
 
-var SetupTestDB = sqlstore.SetupTestDB
-var CleanupTestDB = sqlstore.CleanupTestDB
 var ProvideService = sqlstore.ProvideService
 
 func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) *sqlstore.SQLStore {
@@ -60,6 +58,7 @@ func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) *sqlstore.SQLStore {
 }
 
 func InitTestDBWithCfg(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*sqlstore.SQLStore, *setting.Cfg) {
+	//nolint:staticcheck // SA1019 The function is used by testsuite only.
 	return sqlstore.InitTestDB(t, opts...)
 }
 

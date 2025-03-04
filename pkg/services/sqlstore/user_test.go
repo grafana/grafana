@@ -14,7 +14,7 @@ func TestIntegrationGetOrCreateOrg(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
-	ss, _ := InitTestDB(t)
+	ss := NewTestStore(t)
 
 	err := ss.WithDbSession(context.Background(), func(sess *DBSession) error {
 		// Create the org only:

@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
@@ -61,7 +60,7 @@ func ProvideService(cfg *setting.Cfg,
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
 	xorm.DefaultPostgresSchema = ""
-	s, err := newSQLStore(cfg, nil, features, migrations, bus, tracer)
+	s, err := newStore(cfg, nil, features, migrations, bus, tracer, false)
 	if err != nil {
 		return nil, err
 	}
@@ -87,24 +86,20 @@ func ProvideServiceForTests(t sqlutil.ITestDB, cfg *setting.Cfg, features featur
 func NewSQLStoreWithoutSideEffects(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
-	return newSQLStore(cfg, nil, features, nil, bus, tracer)
+	return newStore(cfg, nil, features, nil, bus, tracer, true)
 }
 
-func newSQLStore(cfg *setting.Cfg, engine *xorm.Engine, features featuremgmt.FeatureToggles,
-	migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer, opts ...InitTestDBOpt) (*SQLStore, error) {
+func newStore(cfg *setting.Cfg, engine *xorm.Engine, features featuremgmt.FeatureToggles,
+	migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer,
+	skipEnsureDefaultOrgAndUser bool) (*SQLStore, error) {
 	ss := &SQLStore{
 		cfg:                         cfg,
 		log:                         log.New("sqlstore"),
-		skipEnsureDefaultOrgAndUser: false,
+		skipEnsureDefaultOrgAndUser: skipEnsureDefaultOrgAndUser,
 		migrations:                  migrations,
 		bus:                         bus,
 		tracer:                      tracer,
 		features:                    features,
-	}
-	for _, opt := range opts {
-		if !opt.EnsureDefaultOrgAndUser {
-			ss.skipEnsureDefaultOrgAndUser = true
-		}
 	}
 
 	if err := ss.initEngine(engine); err != nil {
@@ -422,6 +417,9 @@ type InitTestDBOpt struct {
 }
 
 // InitTestDBWithMigration initializes the test DB given custom migrations.
+//
+// Deprecated: Use NewTestStore if possible. If not, contact #wg-north-star-of-testing about why you can't.
+// Testsuite users need not worry about this deprecation for now.
 func InitTestDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
 	features := getFeaturesForTesting(opts...)
@@ -434,18 +432,31 @@ func InitTestDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseMigra
 }
 
 // InitTestDB initializes the test DB.
+//
+// Deprecated: Use NewTestStore if possible. If not, contact #wg-north-star-of-testing about why you can't.
+// Testsuite users need not worry about this deprecation for now.
 func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.Cfg) {
 	t.Helper()
-	features := getFeaturesForTesting(opts...)
-	cfg := getCfgForTesting(opts...)
 
-	store, err := initTestDB(t, cfg, features, migrations.ProvideOSSMigrations(features), opts...)
-	if err != nil {
-		t.Fatalf("failed to initialize sql store: %s", err)
+	var newOpts []TestOption
+	for _, opt := range opts {
+		if opt.Cfg != nil {
+			newOpts = append(newOpts, WithCfg(opt.Cfg))
+		}
+		if !opt.EnsureDefaultOrgAndUser {
+			newOpts = append(newOpts, WithoutDefaultOrgAndUser())
+		}
+		if len(opt.FeatureFlags) > 0 {
+			newOpts = append(newOpts, WithFeatureFlags(opt.FeatureFlags...))
+		}
 	}
+	newOpts = append(newOpts, WithFeatureFlags(featuremgmt.FlagPanelTitleSearch))
+	store := NewTestStore(t, newOpts...)
 	return store, store.cfg
 }
 
+// Deprecated: Use NewTestStore if possible. If not, contact #wg-north-star-of-testing about why you can't.
+// Testsuite users need not worry about this deprecation for now.
 func SetupTestDB() {
 	testSQLStoreMutex.Lock()
 	defer testSQLStoreMutex.Unlock()
@@ -456,6 +467,8 @@ func SetupTestDB() {
 	testSQLStoreSetup = true
 }
 
+// Deprecated: Use NewTestStore if possible. If not, contact #wg-north-star-of-testing about why you can't.
+// Testsuite users need not worry about this deprecation for now.
 func CleanupTestDB() {
 	testSQLStoreMutex.Lock()
 	defer testSQLStoreMutex.Unlock()
@@ -568,29 +581,6 @@ func TestMain(m *testing.M) {
 
 		testSQLStoreCleanup = append(testSQLStoreCleanup, testDB.Cleanup)
 
-		// useful if you already have a database that you want to use for tests.
-		// cannot just set it on testSQLStore as it overrides the config in Init
-		if _, present := os.LookupEnv("SKIP_MIGRATIONS"); present {
-			if _, err := sec.NewKey("skip_migrations", "true"); err != nil {
-				return nil, err
-			}
-		}
-
-		if testCfg.Raw.HasSection("database") {
-			testSec, err := testCfg.Raw.GetSection("database")
-			if err == nil {
-				// copy from testCfg to the Cfg keys that do not exist
-				for _, k := range testSec.Keys() {
-					if sec.HasKey(k.Name()) {
-						continue
-					}
-					if _, err := sec.NewKey(k.Name(), k.Value()); err != nil {
-						return nil, err
-					}
-				}
-			}
-		}
-
 		// need to get engine to clean db before we init
 		engine, err := xorm.NewEngine(dbType, sec.Key("connection_string").String())
 		if err != nil {
@@ -600,9 +590,17 @@ func TestMain(m *testing.M) {
 		engine.DatabaseTZ = time.UTC
 		engine.TZLocation = time.UTC
 
+		skipEnsureDefaultOrgAndUser := false
+		for _, opt := range opts {
+			if !opt.EnsureDefaultOrgAndUser {
+				skipEnsureDefaultOrgAndUser = true
+				break
+			}
+		}
+
 		tracer := tracing.InitializeTracerForTest()
 		bus := bus.ProvideBus(tracer)
-		testSQLStore, err = newSQLStore(cfg, engine, features, migration, bus, tracer, opts...)
+		testSQLStore, err = newStore(cfg, engine, features, migration, bus, tracer, skipEnsureDefaultOrgAndUser)
 		if err != nil {
 			return nil, err
 		}

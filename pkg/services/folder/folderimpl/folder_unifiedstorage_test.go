@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -168,7 +169,8 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		guardian.New = origNewGuardian
 	})
 
-	db, cfg := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	cfg.AppURL = folderApiServerMock.URL
 
 	restCfgProvider := rcp{
@@ -883,7 +885,8 @@ func TestDeleteFoldersFromApiServer(t *testing.T) {
 		CanSaveValue: true,
 		CanViewValue: true,
 	})
-	db, cfg := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 
 	alertingStore := ngstore.DBstore{
 		SQLStore:      db,

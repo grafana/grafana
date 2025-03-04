@@ -4,12 +4,14 @@ import (
 	"os"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 func Run(m *testing.M) {
-	db.SetupTestDB()
+	//nolint:staticcheck // SA1019 The function is used by testsuite only.
+	sqlstore.SetupTestDB()
 	code := m.Run()
-	db.CleanupTestDB()
+	//nolint:staticcheck // SA1019 The function is used by testsuite only.
+	sqlstore.CleanupTestDB()
 	os.Exit(code)
 }
