@@ -358,6 +358,18 @@ export const getNumberEvaluationsToStartAlerting = (forDuration: string, current
   }
 };
 
+export function getEvaluationsToStartAlerting(pendingPeriodMs: number, groupIntervalMs: number) {
+  if (pendingPeriodMs === 0) {
+    return 1; // No pending period, the rule will fire immediately
+  }
+  if (groupIntervalMs === 0) {
+    return 0; // Invalid case. Group interval is never 0. The default interval will be used.
+  }
+
+  const evaluationsBeforeCeil = pendingPeriodMs / groupIntervalMs;
+  return evaluationsBeforeCeil < 1 ? 0 : Math.ceil(pendingPeriodMs / groupIntervalMs) + 1;
+}
+
 /*
  * Extracts a rule group identifier from a CombinedRule
  */

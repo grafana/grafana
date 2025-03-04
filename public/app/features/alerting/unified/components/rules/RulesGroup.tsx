@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Badge, ConfirmModal, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier, RulesSource } from 'app/types/unified-alerting';
 
 import { LogMessages, logInfo } from '../../Analytics';
@@ -15,7 +16,8 @@ import { useHasRuler } from '../../hooks/useHasRuler';
 import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
 import { makeFolderLink, makeFolderSettingsLink } from '../../utils/misc';
-import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
+import { groups } from '../../utils/navigation';
+import { isFederatedRuleGroup, isGrafanaRulerRule, isPluginProvidedRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
 import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
@@ -53,8 +55,6 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   const [isExporting, setIsExporting] = useState<'group' | 'folder' | undefined>(undefined);
   const [isCollapsed, setIsCollapsed] = useState(!expandAll);
 
-  const { canEditRules } = useRulesAccess();
-
   useEffect(() => {
     setIsCollapsed(!expandAll);
   }, [expandAll]);
@@ -66,6 +66,8 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   const folderUID = (rulerRule && isGrafanaRulerRule(rulerRule) && rulerRule.grafana_alert.namespace_uid) || undefined;
   const { folder } = useFolder(folderUID);
 
+  const { canEditRules } = useRulesAccess();
+
   // group "is deleting" if rules source has ruler, but this group has no rules that are in ruler
   const isDeleting = hasRuler && rulerRulesLoaded && !group.rules.find((rule) => !!rule.rulerRule);
   const isFederated = isFederatedRuleGroup(group);
@@ -74,6 +76,11 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   const isProvisioned = group.rules.some((rule) => {
     return isGrafanaRulerRule(rule.rulerRule) && rule.rulerRule.grafana_alert.provenance;
   });
+  const isPluginProvided = group.rules.some((rule) => {
+    return isPluginProvidedRule(rule.rulerRule ?? rule.promRule);
+  });
+
+  const canEditGroup = hasRuler && !isProvisioned && !isFederated && !isPluginProvided && canEditRules(rulesSourceName);
 
   // check what view mode we are in
   const isListView = viewMode === 'list';
@@ -105,36 +112,36 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   } else if (rulesSource === GRAFANA_RULES_SOURCE_NAME) {
     if (folderUID) {
       const baseUrl = makeFolderLink(folderUID);
-      if (folder?.canSave) {
-        if (isGroupView && !isProvisioned) {
+      if (isGroupView) {
+        actionIcons.push(
+          <ActionIcon
+            aria-label={t('alerting.rule-group-action.details', 'rule group details')}
+            key="rule-group-details"
+            icon="info-circle"
+            tooltip={t('alerting.rule-group-action.details', 'rule group details')}
+            to={groups.detailsPageLink('grafana', folderUID, group.name)}
+          />
+        );
+        if (folder?.canSave && canEditGroup) {
           actionIcons.push(
             <ActionIcon
-              aria-label="edit rule group"
-              data-testid="edit-group"
-              key="edit"
+              aria-label={t('alerting.rule-group-action.edit', 'edit rule group')}
+              key="rule-group-edit"
               icon="pen"
-              tooltip="edit rule group"
-              onClick={() => setIsEditingGroup(true)}
-            />
-          );
-          actionIcons.push(
-            <ActionIcon
-              data-testid="reorder-group"
-              key="reorder"
-              icon="exchange-alt"
-              tooltip="reorder rules"
-              className={styles.rotate90}
-              onClick={() => setIsReorderingGroup(true)}
+              tooltip={t('alerting.rule-group-action.edit', 'edit rule group')}
+              to={groups.editPageLink('grafana', folderUID, group.name)}
             />
           );
         }
+      }
+      if (folder?.canSave) {
         if (isListView) {
           actionIcons.push(
             <ActionIcon
-              aria-label="go to folder"
+              aria-label={t('alerting.rule-group-action.go-to-folder', 'go to folder')}
               key="goto"
               icon="folder-open"
-              tooltip="go to folder"
+              tooltip={t('alerting.rule-group-action.go-to-folder', 'go to folder')}
               to={baseUrl}
               target="__blank"
             />
@@ -143,10 +150,10 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           if (folder?.canAdmin) {
             actionIcons.push(
               <ActionIcon
-                aria-label="manage permissions"
+                aria-label={t('alerting.rule-group-action.manage-permissions', 'manage permissions')}
                 key="manage-perms"
                 icon="lock"
-                tooltip="manage permissions"
+                tooltip={t('alerting.rule-group-action.manage-permissions', 'manage permissions')}
                 to={baseUrl + '/permissions'}
                 target="__blank"
               />
@@ -158,62 +165,38 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
         if (isListView) {
           actionIcons.push(
             <ActionIcon
-              aria-label="export rule folder"
+              aria-label={t('alerting.rule-group-action.export-rules-folder', 'Export rules folder')}
               data-testid="export-folder"
               key="export-folder"
               icon="download-alt"
-              tooltip="Export rules folder"
+              tooltip={t('alerting.rule-group-action.export-rules-folder', 'Export rules folder')}
               onClick={() => setIsExporting('folder')}
-            />
-          );
-        } else if (isGroupView) {
-          actionIcons.push(
-            <ActionIcon
-              aria-label="export rule group"
-              data-testid="export-group"
-              key="export-group"
-              icon="download-alt"
-              tooltip="Export rule group"
-              onClick={() => setIsExporting('group')}
             />
           );
         }
       }
     }
-  } else if (canEditRules(rulesSource.name) && hasRuler) {
-    if (!isFederated) {
+  } else {
+    actionIcons.push(
+      <ActionIcon
+        aria-label={t('alerting.rule-group-action.details', 'rule group details')}
+        key="rule-group-details"
+        icon="info-circle"
+        tooltip={t('alerting.rule-group-action.details', 'rule group details')}
+        to={groups.detailsPageLink(rulesSource.uid, namespace.name, group.name)}
+      />
+    );
+    if (canEditGroup) {
       actionIcons.push(
         <ActionIcon
-          aria-label="edit rule group"
-          data-testid="edit-group"
-          key="edit"
+          aria-label={t('alerting.rule-group-action.edit', 'edit rule group')}
+          key="rule-group-edit"
           icon="pen"
-          tooltip="edit rule group"
-          onClick={() => setIsEditingGroup(true)}
-        />
-      );
-      actionIcons.push(
-        <ActionIcon
-          data-testid="reorder-group"
-          key="reorder"
-          icon="exchange-alt"
-          tooltip="reorder rules"
-          className={styles.rotate90}
-          onClick={() => setIsReorderingGroup(true)}
+          tooltip={t('alerting.rule-group-action.edit', 'edit rule group')}
+          to={groups.editPageLink(rulesSource.uid, namespace.name, group.name)}
         />
       );
     }
-
-    actionIcons.push(
-      <ActionIcon
-        aria-label="delete rule group"
-        data-testid="delete-group"
-        key="delete-group"
-        icon="trash-alt"
-        tooltip="delete rule group"
-        onClick={() => setIsDeletingGroup(true)}
-      />
-    );
   }
 
   // ungrouped rules are rules that are in the "default" group name
