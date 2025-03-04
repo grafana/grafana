@@ -21,38 +21,14 @@ env:
   EDITION: 'oss'
 
 jobs:
-  test-backend:
-    name: Test Backend
+  check-coverage:
+    name: Check Coverage Requirements
     runs-on: ubuntu-latest
-    continue-on-error: true
-    
+    outputs:
+      generate: ${{ steps.check-coverage.outputs.generate }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.23.5'
-          cache: true
-          
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential shared-mime-info make
-
-      - name: Get runner name
-        run: echo ${{ runner.name }}
-
-      - name: Setup Enterprise (PR only)
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
-        uses: ./.github/actions/setup-enterprise
-
-      - name: Verify CUE generation
-        run: CODEGEN_VERIFY=1 make gen-cue
-
-      - name: Verify Jsonnet generation
-        run: CODEGEN_VERIFY=1 make gen-jsonnet
 
       - name: Check if coverage should be generated
         id: check-coverage
@@ -82,20 +58,158 @@ jobs:
             echo "generate=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Run backend tests
+  setup-enterprise:
+    name: Setup Enterprise
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Enterprise
+        uses: ./.github/actions/setup-enterprise
+
+      - name: Package Enterprise Code
+        shell: bash
+        run: |
+          cd ..
+          tar -czf $GITHUB_WORKSPACE/enterprise.tar.gz grafana-enterprise/
+
+      - name: Upload Enterprise Code
+        uses: actions/upload-artifact@v4
+        with:
+          name: enterprise-code
+          path: enterprise.tar.gz
+          retention-days: 1
+
+  setup:
+    name: Setup Environment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.5'
+          cache: true
+          
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential shared-mime-info make
+
+      - name: Verify CUE generation
+        run: CODEGEN_VERIFY=1 make gen-cue
+
+      - name: Verify Jsonnet generation
+        run: CODEGEN_VERIFY=1 make gen-jsonnet
+
+  unit-tests:
+    name: Unit Tests
+    needs: [check-coverage, setup, setup-enterprise]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.5'
+          cache: true
+
+      - name: Download Enterprise Code
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+        uses: actions/download-artifact@v4
+        with:
+          name: enterprise-code
+          path: ..
+
+      - name: Extract Enterprise Code
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+        shell: bash
+        run: |
+          cd ..
+          tar -xzf enterprise.tar.gz
+
+      - name: Run unit tests
         uses: ./.github/actions/run-backend-tests
         with:
-          coverage-opts: ${{ steps.check-coverage.outputs.generate == 'true' && '-coverprofile=unit.cov -coverpkg=github.com/grafana/grafana/...' || '' }}
+          coverage-opts: ${{ needs.check-coverage.outputs.generate == 'true' && '-coverprofile=unit.cov -coverpkg=github.com/grafana/grafana/...' || '' }}
           test-command: 'make gen-go test-go-unit'
 
-      - name: Run backend integration tests
+      - name: Upload unit coverage
+        if: needs.check-coverage.outputs.generate == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-coverage
+          path: unit.cov
+          retention-days: 30
+
+  integration-tests:
+    name: Integration Tests
+    needs: [check-coverage, setup, setup-enterprise]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.5'
+          cache: true
+
+      - name: Download Enterprise Code
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+        uses: actions/download-artifact@v4
+        with:
+          name: enterprise-code
+          path: ..
+
+      - name: Extract Enterprise Code
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+        shell: bash
+        run: |
+          cd ..
+          tar -xzf enterprise.tar.gz
+
+      - name: Run integration tests
         uses: ./.github/actions/run-backend-tests
         with:
-          coverage-opts: ${{ steps.check-coverage.outputs.generate == 'true' && '-coverprofile=integration.cov -coverpkg=github.com/grafana/grafana/...' || '' }}
+          coverage-opts: ${{ needs.check-coverage.outputs.generate == 'true' && '-coverprofile=integration.cov -coverpkg=github.com/grafana/grafana/...' || '' }}
           test-command: 'make gen-go test-go-integration'
 
+      - name: Upload integration coverage
+        if: needs.check-coverage.outputs.generate == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-coverage
+          path: integration.cov
+          retention-days: 30
+
+  report-coverage:
+    name: Generate Coverage Report
+    needs: [check-coverage, unit-tests, integration-tests]
+    if: needs.check-coverage.outputs.generate == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download unit coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: unit-coverage
+
+      - name: Download integration coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: integration-coverage
+
       - name: Generate Coverage Report
-        if: steps.check-coverage.outputs.generate == 'true'
         uses: ./.github/actions/report-coverage
         with:
           unit-cov-path: unit.cov

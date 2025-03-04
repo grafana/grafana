@@ -15,12 +15,31 @@ runs:
     - name: Join coverage outputs
       shell: bash
       run: |
-        cp ${{ inputs.unit-cov-path }} backend.cov
-        tail -n+2 ${{ inputs.integration-cov-path }} >> backend.cov
+        touch backend.cov
+        
+        # Handle unit coverage
+        if [ -n "${{ inputs.unit-cov-path }}" ] && [ -f "${{ inputs.unit-cov-path }}" ]; then
+          cp ${{ inputs.unit-cov-path }} backend.cov
+        fi
+        
+        # Handle integration coverage
+        if [ -n "${{ inputs.integration-cov-path }}" ] && [ -f "${{ inputs.integration-cov-path }}" ]; then
+          if [ -s backend.cov ]; then
+            tail -n+2 ${{ inputs.integration-cov-path }} >> backend.cov
+          else
+            cp ${{ inputs.integration-cov-path }} backend.cov
+          fi
+        fi
+        
+        # Ensure valid coverage file even if empty
+        if [ ! -s backend.cov ]; then
+          echo "mode: set" > backend.cov
+        fi
 
     - name: Convert coverage info to per-func stats
       shell: bash
-      run: go tool cover -func backend.cov > backend-funcs.log
+      run: |
+        go tool cover -func backend.cov > backend-funcs.log
 
     - name: Convert coverage info to HTML
       shell: bash
@@ -41,6 +60,8 @@ runs:
       shell: bash
       run: |
         echo '# Coverage' >> $GITHUB_STEP_SUMMARY
-        echo '```' >> $GITHUB_STEP_SUMMARY
-        grep 'total:' backend-funcs.log | tr '\t' ' ' >> $GITHUB_STEP_SUMMARY
-        echo '```' >> $GITHUB_STEP_SUMMARY 
+        if grep -q "total:" backend-funcs.log; then
+          grep 'total:' backend-funcs.log | tr '\t' ' ' >> $GITHUB_STEP_SUMMARY
+        else
+          echo "No coverage data available" >> $GITHUB_STEP_SUMMARY
+        fi
