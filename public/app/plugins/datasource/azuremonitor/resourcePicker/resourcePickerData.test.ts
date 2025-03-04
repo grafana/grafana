@@ -171,7 +171,9 @@ describe('AzureMonitor resourcePickerData', () => {
       const firstCall = postResource.mock.calls[0];
       const [path, postBody] = firstCall;
       expect(path).toEqual('resourcegraph/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01');
-      expect(postBody.query).toContain("type == 'microsoft.resources/subscriptions/resourcegroups'");
+      expect(postBody.query).toContain(
+        'extend resourceGroupURI = strcat("/subscriptions/", subscriptionId, "/resourcegroups/", resourceGroup)'
+      );
       expect(postBody.query).toContain("where subscriptionId == '123'");
     });
 

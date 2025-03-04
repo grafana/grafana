@@ -209,6 +209,8 @@
       "alerting": "Alerting",
       "alerting-change-description": "This update was made by the alerting system due to other changes. For example, when renaming a contact point that is used for simplified routing, this will update affected rules",
       "annotations": "Annotations",
+      "compare": "Compare",
+      "compare-with-latest": "Compare with latest version",
       "compareVersions": "Compare versions",
       "comparing-versions": "Comparing versions",
       "condition": "Alert condition",
@@ -228,17 +230,22 @@
       "provisioning": "Provisioning",
       "provisioning-change-description": "Version update was made via provisioning",
       "queryAndAlertCondition": "Query and alert condition",
-      "reset": "Reset to version {{version}}",
       "restore": "Restore",
+      "restore-manually": "Your alert rule could not be restored. This may be due to changes to other entities such as contact points, data sources etc. Please manually restore the rule version",
       "restore-modal": {
         "body": "Are you sure you want to restore the alert rule definition to this version? All unsaved changes will be lost.",
+        "confirm": "Yes, restore configuration",
+        "error": "Could not restore alert rule version ",
         "summary": "Summary of changes to be applied:",
-        "title": "Restore Version"
+        "title": "Restore version"
       },
+      "restore-version": "Restore to version {{version}}",
       "rule_group": "Rule group",
       "unknown": "Unknown",
       "unknown-change-description": "This update was made prior to the implementation of alert rule version history. The user who made the change is not tracked, but future changes will include the user",
-      "user-id": "User ID {{uid}}"
+      "user-id": "User ID {{uid}}",
+      "warning-restore-manually": "You are manually restoring an old version of this alert rule. Please review the changes carefully before saving the rule definition.",
+      "warning-restore-manually-title": "Restoring rule manually"
     },
     "annotations": {
       "description": "Add more context to your alert notifications.",
@@ -1071,11 +1078,6 @@
         }
       },
       "open": "Open options pane",
-      "panels": {
-        "multi-select": {
-          "selection-number": "No. of panels selected: {{length}}"
-        }
-      },
       "row": {
         "header": {
           "hide": "Hide",
@@ -1084,12 +1086,6 @@
         "multi-select": {
           "options-header": "Multi-selected Row options",
           "selection-number": "No. of rows selected: {{length}}"
-        }
-      },
-      "tab": {
-        "multi-select": {
-          "options-header": "Multi-selected Tab options",
-          "selection-number": "No. of tabs selected: "
         }
       }
     },
@@ -1163,6 +1159,16 @@
       "request-time": "Total request time",
       "rows": "Total number rows",
       "table-title": "Stats"
+    },
+    "layout": {
+      "common": {
+        "copy": "Copy",
+        "copy-or-duplicate": "Copy or Duplicate",
+        "delete": "Delete",
+        "duplicate": "Duplicate",
+        "layout": "Layout",
+        "panels-title": "{{length}} Panels Selected"
+      }
     },
     "options": {
       "description": "Description",
@@ -1238,12 +1244,27 @@
     },
     "tabs-layout": {
       "description": "Tabs layout",
+      "menu": {
+        "move-tab": "Move tab"
+      },
+      "multi-select": {
+        "title": "{{length}} tabs selected"
+      },
       "name": "Tabs",
       "tab": {
+        "menu": {
+          "add": "Add tab",
+          "add-panel": "Panel",
+          "add-tab-above": "Tab before",
+          "add-tab-after": "Tab after",
+          "add-tab-before": "Tab before",
+          "move-left": "Move tab left",
+          "move-right": "Move tab right"
+        },
         "new": "New tab"
       },
       "tab-options": {
-        "title": "Tab options",
+        "title": "Tab",
         "title-option": "Title"
       }
     },
@@ -1318,7 +1339,9 @@
     "viz-panel": {
       "options": {
         "description": "Description",
-        "title": "Panel options",
+        "open-edit": "Open Panel Edit",
+        "plugin-type-image": "Image of plugin type",
+        "title": "Panel",
         "title-option": "Title",
         "transparent-background": "Transparent background"
       }
@@ -2257,6 +2280,14 @@
       "log-line": "Log line",
       "no-details": "No details available"
     },
+    "log-line-menu": {
+      "copy-link": "Copy link to log line",
+      "copy-log": "Copy log line",
+      "icon-label": "Log menu",
+      "pin-to-outline": "Pin log",
+      "show-context": "Show context",
+      "unpin-from-outline": "Unpin log"
+    },
     "log-row-message": {
       "ellipsis": "… ",
       "more": "more",
@@ -3021,7 +3052,7 @@
     },
     "details": {
       "connections-tab": {
-        "description": "The data source connections below are all {{pluginName}}. You can find all of your data source connections of all types in <4><0>Connections</0> - <3>Data sources</3>.</4>"
+        "description": "You currently have the following data sources configured for {{pluginName}}, click a tile to view the configuration details. You can find all of your data source connections in <4><0>Connections</0> - <3>Data sources</3>.</4>"
       },
       "labels": {
         "contactGrafanaLabs": "Contact Grafana Labs",

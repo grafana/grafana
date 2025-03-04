@@ -6457,6 +6457,19 @@
         ],
         "summary": "Get all users within the current organization.",
         "operationId": "getOrgUsersForCurrentOrg",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "query",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/getOrgUsersForCurrentOrgResponse"
@@ -14516,6 +14529,9 @@
       "properties": {
         "annotationsPermissions": {
           "$ref": "#/definitions/AnnotationPermission"
+        },
+        "apiVersion": {
+          "type": "string"
         },
         "canAdmin": {
           "type": "boolean"
@@ -22771,6 +22787,7 @@
       }
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "type": "object",
