@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/google/uuid"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
@@ -103,6 +104,7 @@ func (g *AlertRuleGenerator) Generate() AlertRule {
 
 	rule := AlertRule{
 		ID:                   0,
+		GUID:                 uuid.NewString(),
 		OrgID:                rand.Int63n(1500) + 1, // Prevent OrgID=0 as this does not pass alert rule validation.
 		Title:                fmt.Sprintf("title-%s", util.GenerateShortUID()),
 		Condition:            "A",
@@ -581,6 +583,12 @@ func (a *AlertRuleMutators) WithVersion(version int64) AlertRuleMutator {
 func (a *AlertRuleMutators) WithMetadata(meta AlertRuleMetadata) AlertRuleMutator {
 	return func(r *AlertRule) {
 		r.Metadata = meta
+	}
+}
+
+func (a AlertRuleMutators) WithGUID(guid string) AlertRuleMutator {
+	return func(r *AlertRule) {
+		r.GUID = guid
 	}
 }
 

@@ -31,8 +31,9 @@ type pollingNotifier struct {
 	pollingInterval time.Duration
 	watchBufferSize int
 
-	log    log.Logger
-	tracer trace.Tracer
+	log            log.Logger
+	tracer         trace.Tracer
+	storageMetrics *resource.StorageMetrics
 
 	bulkLock      *bulkLock
 	listLatestRVs func(ctx context.Context) (groupResourceRV, error)
@@ -46,8 +47,9 @@ type pollingNotifierConfig struct {
 	pollingInterval time.Duration
 	watchBufferSize int
 
-	log    log.Logger
-	tracer trace.Tracer
+	log            log.Logger
+	tracer         trace.Tracer
+	storageMetrics *resource.StorageMetrics
 
 	bulkLock      *bulkLock
 	listLatestRVs func(ctx context.Context) (groupResourceRV, error)
@@ -101,6 +103,7 @@ func newPollingNotifier(cfg *pollingNotifierConfig) (*pollingNotifier, error) {
 		listLatestRVs:   cfg.listLatestRVs,
 		historyPoll:     cfg.historyPoll,
 		done:            cfg.done,
+		storageMetrics:  cfg.storageMetrics,
 	}, nil
 }
 
@@ -172,7 +175,9 @@ func (p *pollingNotifier) poll(ctx context.Context, grp string, res string, sinc
 	if err != nil {
 		return 0, fmt.Errorf("poll history: %w", err)
 	}
-	resource.NewStorageMetrics().PollerLatency.Observe(time.Since(start).Seconds())
+	if p.storageMetrics != nil {
+		p.storageMetrics.PollerLatency.Observe(time.Since(start).Seconds())
+	}
 
 	var nextRV int64
 	for _, rec := range records {

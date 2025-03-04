@@ -142,6 +142,14 @@ exports[`better eslint`] = {
     "packages/grafana-data/src/transformations/standardTransformersRegistry.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "packages/grafana-data/src/transformations/transformDataFrame.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
+    ],
     "packages/grafana-data/src/transformations/transformers/nulls/nullInsertThreshold.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]

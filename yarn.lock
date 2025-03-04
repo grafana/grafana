@@ -2389,9 +2389,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/react@npm:0.27.3":
-  version: 0.27.3
-  resolution: "@floating-ui/react@npm:0.27.3"
+"@floating-ui/react@npm:0.27.5":
+  version: 0.27.5
+  resolution: "@floating-ui/react@npm:0.27.5"
   dependencies:
     "@floating-ui/react-dom": "npm:^2.1.2"
     "@floating-ui/utils": "npm:^0.2.9"
@@ -2399,7 +2399,7 @@ __metadata:
   peerDependencies:
     react: ">=17.0.0"
     react-dom: ">=17.0.0"
-  checksum: 10/91eef58241b2225420fa73dfc501934463310489e08f2a0681b320e0c639c9ee59044ab66645f2901b74a88328208ff4cc4afabe93917a7a28f9d18037965cb6
+  checksum: 10/7728dc43b85e40dc01e5aae19da3e3f88ccfcbecb331a1c978a95e0b5c4e95f9ca6927bd216ae556e0a0e2839524fbf317fd0df93946b3cd0510ddb266746c9a
   languageName: node
   linkType: hard
 
@@ -2434,15 +2434,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@formatjs/ecma402-abstract@npm:2.3.2":
-  version: 2.3.2
-  resolution: "@formatjs/ecma402-abstract@npm:2.3.2"
+"@formatjs/ecma402-abstract@npm:2.3.3":
+  version: 2.3.3
+  resolution: "@formatjs/ecma402-abstract@npm:2.3.3"
   dependencies:
     "@formatjs/fast-memoize": "npm:2.2.6"
-    "@formatjs/intl-localematcher": "npm:0.5.10"
+    "@formatjs/intl-localematcher": "npm:0.6.0"
     decimal.js: "npm:10"
     tslib: "npm:2"
-  checksum: 10/db31d3d9b36033ea11ec905638ac0c1d2282f5bf53c9c06ee1d0ffd924f4bf64030702c92b56261756c4998dfa6235462689d8eda82d5913f2d7cf636a9416ae
+  checksum: 10/c73a704d5cba3b929a9a303a04b4e8a708bb2dea000ee41808c55b22941a70da01b065697cbc5a25898b2007405abd71f414ab8c327fe953f63ae4120c2cc98d
   languageName: node
   linkType: hard
 
@@ -2486,13 +2486,13 @@ __metadata:
   linkType: hard
 
 "@formatjs/intl-durationformat@npm:^0.7.0":
-  version: 0.7.2
-  resolution: "@formatjs/intl-durationformat@npm:0.7.2"
+  version: 0.7.3
+  resolution: "@formatjs/intl-durationformat@npm:0.7.3"
   dependencies:
-    "@formatjs/ecma402-abstract": "npm:2.3.2"
-    "@formatjs/intl-localematcher": "npm:0.5.10"
+    "@formatjs/ecma402-abstract": "npm:2.3.3"
+    "@formatjs/intl-localematcher": "npm:0.6.0"
     tslib: "npm:2"
-  checksum: 10/863784f3ac51779516fa29c87705af6d4f1b32191a2a48172d2ce16a99e385887a5641703a222ca2b1a0d334e1ab2587be5ef65f48c5ae8a16ba55138356a232
+  checksum: 10/781c4f1574e01d2155ca90593b0605de883937ade3d5057a6adf19e21379fd80fb5985cf7115d348f572fb25b281add8d851fb9011fea770e9b1ea1cf5e9b5a1
   languageName: node
   linkType: hard
 
@@ -2505,12 +2505,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@formatjs/intl-localematcher@npm:0.5.10":
-  version: 0.5.10
-  resolution: "@formatjs/intl-localematcher@npm:0.5.10"
+"@formatjs/intl-localematcher@npm:0.6.0":
+  version: 0.6.0
+  resolution: "@formatjs/intl-localematcher@npm:0.6.0"
   dependencies:
     tslib: "npm:2"
-  checksum: 10/119e36974607d5d3586570db93358c1f316c0736b83acc81dce88468435a9519a9e58a5abe6ed3078ffe40d6b4ad4613c6371e2a39cd570c9b6f561372ffb14d
+  checksum: 10/d8fd984c14121949d0ba60732a096aed6dccb2ab93770c4bffaea1170c85f5639d2a71fe6e2c68ab62bf6f3583a9c4b1fcd11bd5fb8837bfb2582228c33398c1
   languageName: node
   linkType: hard
 
@@ -3110,7 +3110,7 @@ __metadata:
     rollup-plugin-dts: "npm:^6.1.1"
     rollup-plugin-esbuild: "npm:6.2.0"
     rollup-plugin-node-externals: "npm:^8.0.0"
-    semver: "npm:7.7.0"
+    semver: "npm:^7.7.0"
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
   languageName: unknown
@@ -3436,7 +3436,7 @@ __metadata:
   resolution: "@grafana/prometheus@workspace:packages/grafana-prometheus"
   dependencies:
     "@emotion/css": "npm:11.13.5"
-    "@floating-ui/react": "npm:0.27.3"
+    "@floating-ui/react": "npm:0.27.5"
     "@grafana/data": "npm:11.6.0-pre"
     "@grafana/e2e-selectors": "npm:11.6.0-pre"
     "@grafana/plugin-ui": "npm:0.10.1"
@@ -3805,7 +3805,7 @@ __metadata:
     "@emotion/react": "npm:11.14.0"
     "@emotion/serialize": "npm:1.3.3"
     "@faker-js/faker": "npm:^9.0.0"
-    "@floating-ui/react": "npm:0.27.3"
+    "@floating-ui/react": "npm:0.27.5"
     "@grafana/data": "npm:11.6.0-pre"
     "@grafana/e2e-selectors": "npm:11.6.0-pre"
     "@grafana/faro-web-sdk": "npm:^1.13.2"
@@ -5441,6 +5441,21 @@ __metadata:
     proc-log: "npm:^4.0.0"
     semver: "npm:^7.5.3"
   checksum: 10/c3d2218877bfc005bca3b7a11f53825bf16a68811b8e8ed0c9b219cceb8e8e646d70efab8c5d6decbd8007f286076468b3f456dab4d41d648aff73a5f3a6fce2
+  languageName: node
+  linkType: hard
+
+"@npmcli/package-json@npm:^5.2.0":
+  version: 5.2.1
+  resolution: "@npmcli/package-json@npm:5.2.1"
+  dependencies:
+    "@npmcli/git": "npm:^5.0.0"
+    glob: "npm:^10.2.2"
+    hosted-git-info: "npm:^7.0.0"
+    json-parse-even-better-errors: "npm:^3.0.0"
+    normalize-package-data: "npm:^6.0.0"
+    proc-log: "npm:^4.0.0"
+    semver: "npm:^7.5.3"
+  checksum: 10/304a819b93f79a6e0e56cb371961a66d2db72142e310d545ecbbbe4d917025a30601aa8e63a5f0cc28f0fe281c116bdaf79b334619b105a1d027a2b769ecd137
   languageName: node
   linkType: hard
 
@@ -18102,7 +18117,7 @@ __metadata:
     "@emotion/eslint-plugin": "npm:11.12.0"
     "@emotion/react": "npm:11.14.0"
     "@fingerprintjs/fingerprintjs": "npm:^3.4.2"
-    "@floating-ui/react": "npm:0.27.3"
+    "@floating-ui/react": "npm:0.27.5"
     "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/aws-sdk": "npm:0.6.0"
@@ -18143,6 +18158,7 @@ __metadata:
     "@manypkg/get-packages": "npm:^2.2.0"
     "@msagl/core": "npm:^1.1.19"
     "@msagl/parser": "npm:^1.1.19"
+    "@npmcli/package-json": "npm:^5.2.0"
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
     "@opentelemetry/semantic-conventions": "npm:1.28.0"
@@ -28358,6 +28374,15 @@ __metadata:
   bin:
     semver: bin/semver.js
   checksum: 10/1ef3a85bd02a760c6ef76a45b8c1ce18226de40831e02a00bad78485390b98b6ccaa31046245fc63bba4a47a6a592b6c7eedc65cc47126e60489f9cc1ce3ed7e
+  languageName: node
+  linkType: hard
+
+"semver@npm:^7.7.0":
+  version: 7.7.1
+  resolution: "semver@npm:7.7.1"
+  bin:
+    semver: bin/semver.js
+  checksum: 10/4cfa1eb91ef3751e20fc52e47a935a0118d56d6f15a837ab814da0c150778ba2ca4f1a4d9068b33070ea4273629e615066664c2cfcd7c272caf7a8a0f6518b2c
   languageName: node
   linkType: hard
 

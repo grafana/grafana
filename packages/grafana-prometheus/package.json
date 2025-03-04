@@ -22,9 +22,9 @@
     "./LICENSE_AGPL"
   ],
   "publishConfig": {
-    "main": "dist/index.js",
-    "module": "dist/esm/index.js",
-    "types": "dist/index.d.ts",
+    "main": "./dist/cjs/index.cjs",
+    "module": "./dist/esm/index.mjs",
+    "types": "./dist/cjs/index.d.cts",
     "access": "public"
   },
   "scripts": {
@@ -32,12 +32,12 @@
     "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
+    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json"
   },
   "dependencies": {
     "@emotion/css": "11.13.5",
-    "@floating-ui/react": "0.27.3",
+    "@floating-ui/react": "0.27.5",
     "@grafana/data": "11.6.0-pre",
     "@grafana/e2e-selectors": "11.6.0-pre",
     "@grafana/plugin-ui": "0.10.1",
