@@ -1782,6 +1782,13 @@ var (
 			Owner:        grafanaFrontendOpsWG,
 			FrontendOnly: true,
 		},
+		{
+			Name:        "alertRuleRestore",
+			Description: "Enables the alert rule restore feature",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaAlertingSquad,
+			Expression:  "true", // enabled by default
+		},
 	}
 )
 

@@ -236,3 +236,4 @@ alertingRuleVersionHistoryRestore,GA,@grafana/alerting-squad,false,false,true
 newShareReportDrawer,experimental,@grafana/sharing-squad,false,false,false
 rendererDisableAppPluginsPreload,experimental,@grafana/sharing-squad,false,false,true
 assetSriChecks,experimental,@grafana/frontend-ops,false,false,true
+alertRuleRestore,preview,@grafana/alerting-squad,false,false,false
