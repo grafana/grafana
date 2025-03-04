@@ -2,9 +2,13 @@ package metadata
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	claims "github.com/grafana/authlib/types"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	"k8s.io/apimachinery/pkg/labels"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -309,4 +313,48 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 	return &secretv0alpha1.SecureValueList{
 		Items: secureValues,
 	}, nil
+}
+
+func (s *secureValueMetadataStorage) DecryptersFor(ctx context.Context, namespace xkube.Namespace, names []string) (map[string][]string, error) {
+	type rawDecryptersDB struct {
+		Name       string  `xorm:"name"`
+		Decrypters *string `xorm:"decrypters"`
+	}
+
+	rawDecrypters := make([]*rawDecryptersDB, 0)
+
+	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		err := sess.Table(migrator.TableNameSecureValue).In("name", names).Where("namespace = ?", namespace).Select("name, decrypters").Find(&rawDecrypters)
+		if err != nil {
+			return fmt.Errorf("find rows: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("db failure: %w", err)
+	}
+
+	// If the number of rows does not match the number of names, return an error.
+	// This is to ensure that the caller has provided all correct names.
+	if len(rawDecrypters) != len(names) {
+		return nil, contracts.ErrSecureValueNotFound
+	}
+
+	decrypters := make(map[string][]string, 0)
+
+	for _, rawDecrypter := range rawDecrypters {
+		if rawDecrypter.Decrypters == nil {
+			decrypters[rawDecrypter.Name] = nil
+			continue
+		}
+
+		parsedDecrypters := make([]string, 0)
+		if err := json.Unmarshal([]byte(*rawDecrypter.Decrypters), &parsedDecrypters); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal decrypter: %w", err)
+		}
+		decrypters[rawDecrypter.Name] = parsedDecrypters
+	}
+
+	return decrypters, nil
 }
