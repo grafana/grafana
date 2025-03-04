@@ -1,106 +1,47 @@
 import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
-import { Property } from 'csstype';
-import React, { useMemo, useState, useLayoutEffect, useCallback, useRef, useEffect } from 'react';
-import DataGrid, { RenderRowProps, Row, SortColumn, SortDirection, RenderCellProps } from 'react-data-grid';
+import { useMemo, useState, useLayoutEffect, useCallback, useRef, useEffect } from 'react';
+import DataGrid, { SortColumn } from 'react-data-grid';
 import { useMeasure } from 'react-use';
 
-import {
-  DataFrame,
-  Field,
-  fieldReducers,
-  FieldType,
-  formattedValueToString,
-  GrafanaTheme2,
-  ReducerID,
-  getDefaultTimeRange,
-} from '@grafana/data';
-import { TableCellHeight } from '@grafana/schema';
+import { fieldReducers, formattedValueToString, GrafanaTheme2, ReducerID } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../../themes';
 import { Trans } from '../../../utils/i18n';
-import { getScrollbarWidth } from '../../../utils/scrollbar';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { MenuItem } from '../../Menu/MenuItem';
 import { Pagination } from '../../Pagination/Pagination';
 import { ScrollContainer } from '../../ScrollContainer/ScrollContainer';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
 
-import { HeaderCell } from './Cells/HeaderCell';
-import { RowExpander } from './Cells/RowExpander';
-import { TableCellNG } from './Cells/TableCellNG';
+import { TABLE } from './constants';
+import { TableNGProps, FilterType, TableRow, TableSummaryRow, ColumnTypes } from './types';
 import {
-  TableNGProps,
-  FilterType,
-  TableRow,
-  TableColumn,
-  TableSummaryRow,
-  Comparator,
-  FrameToRowsConverter,
-  ColumnTypes,
-} from './types';
-import { getRowHeight, shouldTextOverflow, getFooterItemNG, getTextAlign } from './utils';
-
-const DEFAULT_CELL_PADDING = 6;
-const COLUMN_MIN_WIDTH = 150;
-const EXPANDER_WIDTH = 50;
-const SMALL_PAGINATION_LIMIT = 750;
-const MAX_CELL_HEIGHT = 48;
-const SCROLL_BAR_WIDTH = getScrollbarWidth();
-
-/**
- * getIsNestedTable is a helper function that takes a DataFrame and returns a
- * boolean value based on the presence of nested frames
- */
-const getIsNestedTable = (dataFrame: DataFrame): boolean =>
-  dataFrame.fields.some(({ type }) => type === FieldType.nestedFrames);
+  frameToRecords,
+  getComparator,
+  getDefaultRowHeight,
+  getFooterItemNG,
+  getIsNestedTable,
+  getRowHeight,
+  mapFrameToDataGrid,
+  myRowRenderer,
+} from './utils';
 
 export function TableNG(props: TableNGProps) {
   const {
-    height,
-    width,
-    timeRange,
     cellHeight,
-    noHeader,
+    enablePagination,
+    enableVirtualization = true,
     fieldConfig,
     footerOptions,
+    height,
+    noHeader,
     onColumnResize,
-    enablePagination,
-    getActions,
+    width,
   } = props;
 
-  const textWrap = fieldConfig?.defaults?.custom?.cellOptions.wrapText ?? false;
-  const cellInspect = fieldConfig?.defaults?.custom?.inspect ?? false;
-  const filterable = fieldConfig?.defaults?.custom?.filterable ?? false;
-
-  const theme = useTheme2();
-  const styles = useStyles2(getStyles, textWrap);
-
-  const isFooterVisible = Boolean(footerOptions?.show && footerOptions.reducer.length);
-  const isCountRowsSet = Boolean(
-    footerOptions?.countRows &&
-      footerOptions.reducer &&
-      footerOptions.reducer.length &&
-      footerOptions.reducer[0] === ReducerID.count
-  );
-
-  // TODO: this is a hack to force the column width to update when the fieldConfig changes
+  /* ------------------------------- Local state ------------------------------ */
   const [revId, setRevId] = useState(0);
-  const columnWidth = useMemo(() => {
-    setRevId(revId + 1);
-    return fieldConfig?.defaults?.custom?.width || 'auto';
-  }, [fieldConfig]); // eslint-disable-line react-hooks/exhaustive-deps
-  const columnMinWidth = fieldConfig?.defaults?.custom?.minWidth || COLUMN_MIN_WIDTH;
-
-  const prevProps = useRef(props);
-  useEffect(() => {
-    // TODO: there is a usecase when adding a new column to the table doesn't update the table
-    if (prevProps.current.data.fields.length !== props.data.fields.length) {
-      setRevId(revId + 1);
-    }
-    prevProps.current = props;
-  }, [props.data]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const [contextMenuProps, setContextMenuProps] = useState<{
     rowIdx?: number;
     value: string;
@@ -112,17 +53,75 @@ export function TableNG(props: TableNGProps) {
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
   const [filter, setFilter] = useState<FilterType>({});
   const [page, setPage] = useState(0);
-
-  const crossFilterOrder = useRef<string[]>([]);
-  const crossFilterRows = useRef<Record<string, TableRow[]>>({});
-
-  const headerCellRefs = useRef<Record<string, HTMLDivElement>>({});
-  const [, setReadyForRowHeightCalc] = useState(false);
-
-  const [paginationWrapperRef, { height: paginationHeight }] = useMeasure<HTMLDivElement>();
-
   // This state will trigger re-render for recalculating row heights
   const [, setResizeTrigger] = useState(0);
+  const [, setReadyForRowHeightCalc] = useState(false);
+  const [sortColumns, setSortColumns] = useState<readonly SortColumn[]>([]);
+  const [expandedRows, setExpandedRows] = useState<number[]>([]);
+  const [isNestedTable, setIsNestedTable] = useState(false);
+
+  /* ------------------------------- Local refs ------------------------------- */
+  const crossFilterOrder = useRef<string[]>([]);
+  const crossFilterRows = useRef<Record<string, TableRow[]>>({});
+  const headerCellRefs = useRef<Record<string, HTMLDivElement>>({});
+  // TODO: This ref persists sortColumns between renders. setSortColumns is still used to trigger re-render
+  const sortColumnsRef = useRef(sortColumns);
+  const prevProps = useRef(props);
+  const calcsRef = useRef<string[]>([]);
+  const [paginationWrapperRef, { height: paginationHeight }] = useMeasure<HTMLDivElement>();
+
+  const textWrap = fieldConfig?.defaults?.custom?.cellOptions.wrapText ?? false;
+
+  const theme = useTheme2();
+  const styles = useStyles2(getStyles, textWrap);
+
+  const isFooterVisible = Boolean(footerOptions?.show && footerOptions.reducer?.length);
+  const isCountRowsSet = Boolean(
+    footerOptions?.countRows &&
+      footerOptions.reducer &&
+      footerOptions.reducer.length &&
+      footerOptions.reducer[0] === ReducerID.count
+  );
+
+  /* --------------------------------- Effects -------------------------------- */
+  useEffect(() => {
+    // TODO: there is a use case when adding a new column to the table doesn't update the table
+    if (
+      prevProps.current.data.fields.length !== props.data.fields.length ||
+      prevProps.current.fieldConfig?.overrides !== fieldConfig?.overrides ||
+      prevProps.current.fieldConfig?.defaults !== fieldConfig?.defaults
+    ) {
+      setRevId(revId + 1);
+    }
+    prevProps.current = props;
+  }, [props, revId, fieldConfig?.overrides, fieldConfig?.defaults]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useLayoutEffect(() => {
+    if (!isContextMenuOpen) {
+      return;
+    }
+
+    function onClick(event: MouseEvent) {
+      setIsContextMenuOpen(false);
+    }
+
+    addEventListener('click', onClick);
+
+    return () => {
+      removeEventListener('click', onClick);
+    };
+  }, [isContextMenuOpen]);
+
+  useEffect(() => {
+    const hasNestedFrames = getIsNestedTable(props.data);
+    setIsNestedTable(hasNestedFrames);
+  }, [props.data]);
+
+  // TODO: this is a hack to force the column width to update when the fieldConfig changes
+  const columnWidth = useMemo(() => {
+    setRevId(revId + 1);
+    return fieldConfig?.defaults?.custom?.width || 'auto';
+  }, [fieldConfig]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Create off-screen canvas for measuring rows for virtualized rendering
   // This line is like this because Jest doesn't have OffscreenCanvas mocked
@@ -141,282 +140,12 @@ export function TableNG(props: TableNGProps) {
     osContext.font = `${theme.typography.fontSize}px ${theme.typography.body.fontFamily}`;
   }
 
-  useLayoutEffect(() => {
-    if (!isContextMenuOpen) {
-      return;
-    }
-
-    function onClick(event: MouseEvent) {
-      setIsContextMenuOpen(false);
-    }
-
-    addEventListener('click', onClick);
-
-    return () => {
-      removeEventListener('click', onClick);
-    };
-  }, [isContextMenuOpen]);
-
-  const [sortColumns, setSortColumns] = useState<readonly SortColumn[]>([]);
-  // TODO: this ref using to persist sortColumns between renders;
-  // setSortColumns is still used to trigger re-render
-  const sortColumnsRef = useRef(sortColumns);
-  const [expandedRows, setExpandedRows] = useState<number[]>([]);
-  const [isNestedTable, setIsNestedTable] = useState(false);
-
-  function getDefaultRowHeight(): number {
-    const bodyFontSize = theme.typography.fontSize;
-    const lineHeight = theme.typography.body.lineHeight;
-
-    switch (cellHeight) {
-      case TableCellHeight.Sm:
-        return 36;
-      case TableCellHeight.Md:
-        return 42;
-      case TableCellHeight.Lg:
-        return MAX_CELL_HEIGHT;
-    }
-
-    return DEFAULT_CELL_PADDING * 2 + bodyFontSize * lineHeight;
-  }
-  const defaultRowHeight = getDefaultRowHeight();
+  const defaultRowHeight = getDefaultRowHeight(theme, cellHeight);
   const defaultLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
   const panelPaddingHeight = theme.components.panel.padding * theme.spacing.gridSize * 2;
 
-  const handleSort = (columnKey: string, direction: SortDirection, isMultiSort: boolean) => {
-    let currentSortColumn: SortColumn | undefined;
-
-    const updatedSortColumns = sortColumnsRef.current.filter((column) => {
-      const isCurrentColumn = column.columnKey === columnKey;
-      if (isCurrentColumn) {
-        currentSortColumn = column;
-      }
-      return !isCurrentColumn;
-    });
-
-    // sorted column exists and is descending -> remove it to reset sorting
-    if (currentSortColumn && currentSortColumn.direction === 'DESC') {
-      setSortColumns(updatedSortColumns);
-      sortColumnsRef.current = updatedSortColumns;
-    } else {
-      // new sort column or changed direction
-      if (isMultiSort) {
-        setSortColumns([...updatedSortColumns, { columnKey, direction }]);
-        sortColumnsRef.current = [...updatedSortColumns, { columnKey, direction }];
-      } else {
-        setSortColumns([{ columnKey, direction }]);
-        sortColumnsRef.current = [{ columnKey, direction }];
-      }
-    }
-  };
-
-  const frameToRecords = useCallback((frame: DataFrame): TableRow[] => {
-    const fnBody = `
-      const rows = Array(frame.length);
-      const values = frame.fields.map(f => f.values);
-      let rowCount = 0;
-      for (let i = 0; i < frame.length; i++) {
-        rows[rowCount] = {
-          __depth: 0,
-          __index: i,
-          ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(field.name)}: values[${fieldIdx}][i]`).join(',')}
-        };
-        rowCount += 1;
-        if (rows[rowCount-1]['Nested frames']){
-          const childFrame = rows[rowCount-1]['Nested frames'];
-          rows[rowCount] = {__depth: 1, __index: i, data: childFrame[0]}
-          rowCount += 1;
-        }
-      }
-      return rows;
-    `;
-
-    // Creates a function that converts a DataFrame into an array of TableRows
-    // Uses new Function() for performance as it's faster than creating rows using loops
-    const convert = new Function('frame', fnBody) as unknown as FrameToRowsConverter;
-    return convert(frame);
-  }, []);
-
-  const calcsRef = useRef<string[]>([]);
-
-  // Maps a DataFrame into TableColumns for react-data-grid
-  const mapFrameToDataGrid = (main: DataFrame, calcsRef: React.MutableRefObject<string[]>) => {
-    const columns: TableColumn[] = [];
-
-    const hasNestedFrames = getIsNestedTable(main);
-
-    // If nested frames, add expansion control column
-    if (hasNestedFrames) {
-      const expanderField: Field = {
-        name: '',
-        type: FieldType.other,
-        config: {},
-        values: [],
-      };
-      columns.push({
-        key: 'expanded',
-        name: '',
-        field: expanderField,
-        cellClass: styles.cell,
-        colSpan(args) {
-          return args.type === 'ROW' && Number(args.row.__depth) === 1 ? main.fields.length : 1;
-        },
-        renderCell: ({ row }) => {
-          // TODO add TableRow type extension to include row depth and optional data
-          if (Number(row.__depth) === 0) {
-            const rowIdx = Number(row.__index);
-            return (
-              <RowExpander
-                height={defaultRowHeight}
-                onCellExpand={() => {
-                  if (!expandedRows.includes(rowIdx)) {
-                    setExpandedRows([...expandedRows, rowIdx]);
-                  } else {
-                    const currentExpandedRows = expandedRows;
-                    const indexToRemove = currentExpandedRows.indexOf(rowIdx);
-                    if (indexToRemove > -1) {
-                      currentExpandedRows.splice(indexToRemove, 1);
-                      setExpandedRows(currentExpandedRows);
-                    }
-                  }
-                  setResizeTrigger((prev) => prev + 1);
-                }}
-                isExpanded={expandedRows.includes(rowIdx)}
-              />
-            );
-          }
-          // If it's a child, render entire DataGrid at first column position
-          let expandedColumns: TableColumn[] = [];
-          let expandedRecords: TableRow[] = [];
-
-          // Type guard to check if data exists as it's optional
-          if (row.data) {
-            expandedColumns = mapFrameToDataGrid(row.data, calcsRef);
-            expandedRecords = frameToRecords(row.data);
-          }
-
-          // TODO add renderHeaderCell HeaderCell's here and handle all features
-          return (
-            <DataGrid<TableRow, TableSummaryRow>
-              rows={expandedRecords}
-              columns={expandedColumns}
-              rowHeight={defaultRowHeight}
-              style={{ height: '100%', overflow: 'visible', marginLeft: EXPANDER_WIDTH }}
-              headerRowHeight={row.data?.meta?.custom?.noHeader ? 0 : undefined}
-            />
-          );
-        },
-        width: EXPANDER_WIDTH,
-        minWidth: EXPANDER_WIDTH,
-      });
-    }
-
-    main.fields.map((field, fieldIndex) => {
-      if (field.type === FieldType.nestedFrames) {
-        // Don't render nestedFrames type field
-        return;
-      }
-      const key = field.name;
-
-      // get column width from overrides
-      const override = fieldConfig?.overrides?.find(
-        (o) => o.matcher.id === 'byName' && o.matcher.options === field.name
-      );
-      const width = override?.properties?.find((p) => p.id === 'width')?.value || field.config?.custom?.width;
-
-      const justifyColumnContent = getTextAlign(field);
-      const footerStyles = getFooterStyles(justifyColumnContent);
-
-      // Add a column for each field
-      columns.push({
-        key,
-        name: field.name,
-        field,
-        cellClass: styles.cell,
-        renderCell: (props: RenderCellProps<TableRow, TableSummaryRow>) => {
-          const { row, rowIdx } = props;
-          const value = row[key];
-          // Cell level rendering here
-          return (
-            <TableCellNG
-              frame={main}
-              key={key}
-              value={value}
-              field={field}
-              theme={theme}
-              timeRange={timeRange ?? getDefaultTimeRange()}
-              height={defaultRowHeight}
-              justifyContent={justifyColumnContent}
-              rowIdx={rowIdx}
-              shouldTextOverflow={() =>
-                shouldTextOverflow(
-                  key,
-                  row,
-                  columnTypes,
-                  headerCellRefs,
-                  osContext,
-                  defaultLineHeight,
-                  defaultRowHeight,
-                  DEFAULT_CELL_PADDING,
-                  textWrap,
-                  cellInspect
-                )
-              }
-              setIsInspecting={setIsInspecting}
-              setContextMenuProps={setContextMenuProps}
-              cellInspect={cellInspect}
-              getActions={getActions}
-            />
-          );
-        },
-        renderSummaryCell: () => {
-          if (isCountRowsSet && fieldIndex === 0) {
-            return (
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Count</span>
-                <span>{calcsRef.current[fieldIndex]}</span>
-              </div>
-            );
-          }
-          return <div className={footerStyles.footerCell}>{calcsRef.current[fieldIndex]}</div>;
-        },
-        renderHeaderCell: ({ column, sortDirection }) => (
-          <HeaderCell
-            column={column}
-            rows={rows}
-            field={field}
-            onSort={handleSort}
-            direction={sortDirection}
-            justifyContent={justifyColumnContent}
-            filter={filter}
-            setFilter={setFilter}
-            filterable={filterable}
-            onColumnResize={onColumnResize}
-            headerCellRefs={headerCellRefs}
-            crossFilterOrder={crossFilterOrder}
-            crossFilterRows={crossFilterRows}
-          />
-        ),
-        width: width ?? columnWidth,
-        minWidth: field.config?.custom?.minWidth ?? columnMinWidth,
-      });
-    });
-
-    return columns;
-  };
-
-  function myRowRenderer(key: React.Key, props: RenderRowProps<TableRow, TableSummaryRow>): React.ReactNode {
-    // Let's render row level things here!
-    // i.e. we can look at row styles and such here
-    const { row } = props;
-    // Don't render non expanded child rows
-    if (Number(row.__depth) === 1 && !expandedRows.includes(Number(row.__index))) {
-      return null;
-    }
-    return <Row key={key} {...props} />;
-  }
-
-  const rows = useMemo(() => frameToRecords(props.data), [frameToRecords, props.data]);
+  /* ------------------------------ Rows & Columns ----------------------------- */
+  const rows = useMemo(() => frameToRecords(props.data), [frameToRecords, props.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Create a map of column key to column type
   const columnTypes = useMemo(() => {
@@ -505,14 +234,14 @@ export function TableNG(props: TableNGProps) {
   // TODO consolidate calculations into pagination wrapper component and only use when needed
   const numRows = sortedRows.length;
   // calculate number of rowsPerPage based on height stack
-  let headerCellHeight = MAX_CELL_HEIGHT;
+  let headerCellHeight = TABLE.MAX_CELL_HEIGHT;
   if (noHeader) {
     headerCellHeight = 0;
   } else if (!noHeader && Object.keys(headerCellRefs.current).length > 0) {
     headerCellHeight = headerCellRefs.current[Object.keys(headerCellRefs.current)[0]].getBoundingClientRect().height;
   }
   let rowsPerPage = Math.floor(
-    (height - headerCellHeight - SCROLL_BAR_WIDTH - paginationHeight - panelPaddingHeight) / defaultRowHeight
+    (height - headerCellHeight - TABLE.SCROLL_BAR_WIDTH - paginationHeight - panelPaddingHeight) / defaultRowHeight
   );
   // if footer calcs are on, remove one row per page
   if (isFooterVisible) {
@@ -533,7 +262,7 @@ export function TableNG(props: TableNGProps) {
   if (displayedEnd > numRows) {
     displayedEnd = numRows;
   }
-  const smallPagination = width < SMALL_PAGINATION_LIMIT;
+  const smallPagination = width < TABLE.PAGINATION_LIMIT;
 
   const paginatedRows = useMemo(() => {
     const pageOffset = page * rowsPerPage;
@@ -549,22 +278,62 @@ export function TableNG(props: TableNGProps) {
         return index === 0 ? `${sortedRows.length}` : '';
       }
       if (index === 0) {
-        const footerCalcReducer = footerOptions?.reducer[0];
+        const footerCalcReducer = footerOptions?.reducer?.[0];
         return footerCalcReducer ? fieldReducers.get(footerCalcReducer).name : '';
       }
       return getFooterItemNG(sortedRows, field, footerOptions);
     });
   }, [sortedRows, props.data.fields, footerOptions, isCountRowsSet]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const onCellExpand = (rowIdx: number) => {
+    if (!expandedRows.includes(rowIdx)) {
+      setExpandedRows([...expandedRows, rowIdx]);
+    } else {
+      const currentExpandedRows = expandedRows;
+      const indexToRemove = currentExpandedRows.indexOf(rowIdx);
+      if (indexToRemove > -1) {
+        currentExpandedRows.splice(indexToRemove, 1);
+        setExpandedRows(currentExpandedRows);
+      }
+    }
+    setResizeTrigger((prev) => prev + 1);
+  };
+
   const columns = useMemo(
-    () => mapFrameToDataGrid(props.data, calcsRef),
+    () =>
+      mapFrameToDataGrid({
+        frame: props.data,
+        calcsRef,
+        options: {
+          columnTypes,
+          columnWidth,
+          crossFilterOrder,
+          crossFilterRows,
+          defaultLineHeight,
+          defaultRowHeight,
+          expandedRows,
+          filter,
+          headerCellRefs,
+          isCountRowsSet,
+          osContext,
+          rows,
+          setContextMenuProps,
+          setFilter,
+          setIsInspecting,
+          setSortColumns,
+          sortColumnsRef,
+          styles,
+          textWrap,
+          theme,
+          ...props,
+        },
+        handlers: {
+          onCellExpand,
+          onColumnResize: onColumnResize!,
+        },
+      }),
     [props.data, calcsRef, filter, expandedRows, expandedRows.length, footerOptions] // eslint-disable-line react-hooks/exhaustive-deps
   );
-
-  useEffect(() => {
-    const hasNestedFrames = getIsNestedTable(props.data);
-    setIsNestedTable(hasNestedFrames);
-  }, [props.data]);
 
   // This effect needed to set header cells refs before row height calculation
   useLayoutEffect(() => {
@@ -601,18 +370,19 @@ export function TableNG(props: TableNGProps) {
         osContext,
         defaultLineHeight,
         defaultRowHeight,
-        DEFAULT_CELL_PADDING
+        TABLE.CELL_PADDING
       );
     },
     [expandedRows, defaultRowHeight, columnTypes, headerCellRefs, osContext, defaultLineHeight]
   );
 
-  // Return the data grid
   return (
     <>
       <ScrollContainer>
         <DataGrid<TableRow, TableSummaryRow>
           className={styles.dataGrid}
+          // Default to true, overridden to false for testing
+          enableVirtualization={enableVirtualization}
           key={`DataGrid${revId}`}
           rows={enablePagination ? paginatedRows : sortedRows}
           columns={columns}
@@ -624,7 +394,7 @@ export function TableNG(props: TableNGProps) {
           rowHeight={textWrap || isNestedTable ? calculateRowHeight : defaultRowHeight}
           // TODO: This doesn't follow current table behavior
           style={{ width, height: height - (enablePagination ? paginationHeight : 0) }}
-          renderers={{ renderRow: myRowRenderer }}
+          renderers={{ renderRow: (key, props) => myRowRenderer(key, props, expandedRows) }}
           onCellContextMenu={({ row, column }, event) => {
             event.preventGridDefault();
             // Do not show the default context menu
@@ -659,6 +429,7 @@ export function TableNG(props: TableNGProps) {
       {enablePagination && (
         <div className={styles.paginationContainer} ref={paginationWrapperRef}>
           <Pagination
+            className="table-ng-pagination"
             currentPage={page + 1}
             numberOfPages={numberOfPages}
             showSmallVersion={smallPagination}
@@ -697,34 +468,6 @@ export function TableNG(props: TableNGProps) {
       )}
     </>
   );
-}
-
-const compare = new Intl.Collator('en', { sensitivity: 'base' }).compare;
-
-function getComparator(sortColumnType: FieldType): Comparator {
-  switch (sortColumnType) {
-    case FieldType.time:
-    case FieldType.number:
-    case FieldType.boolean:
-      return (a, b) => {
-        // Handle undefined/null values
-        if (a === b) {
-          return 0;
-        }
-        if (a == null) {
-          return -1;
-        }
-        if (b == null) {
-          return 1;
-        }
-        // Safe to do numeric comparison now
-        return Number(a) - Number(b);
-      };
-    case FieldType.string:
-    case FieldType.enum:
-    default:
-      return (a, b) => compare(String(a ?? ''), String(b ?? ''));
-  }
 }
 
 const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
@@ -794,12 +537,5 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     display: 'flex',
     justifyContent: 'flex-end',
     padding: theme.spacing(0, 1, 0, 2),
-  }),
-});
-
-const getFooterStyles = (justifyContent: Property.JustifyContent) => ({
-  footerCell: css({
-    display: 'flex',
-    justifyContent: justifyContent || 'space-between',
   }),
 });
