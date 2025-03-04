@@ -1317,9 +1317,9 @@ steps:
   - make swagger-clean && make openapi3-gen
   - for f in public/api-merged.json public/openapi3.json; do git add $f; done
   - if [ -z "$(git diff --name-only --cached)" ]; then echo "Everything seems up to
-    date!"; else echo "Please ensure the branch is up-to-date, then regenerate the
-    specification by running make swagger-clean && make openapi3-gen" && return 1;
-    fi
+    date!"; else git diff --cached && echo "Please ensure the branch is up-to-date,
+    then regenerate the specification by running make swagger-clean && make openapi3-gen"
+    && return 1; fi
   depends_on:
   - clone-enterprise
   image: golang:1.23.7-alpine
@@ -4856,6 +4856,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 9cf69dbb253959c51977b8dd6ad6221e28f67c372f0c0413f4a59842827c9c23
+hmac: d438da3270c4e17ad67140907335154b0d0ca4a9347a5655e12ab3ab770c5fd7
 
 ...
