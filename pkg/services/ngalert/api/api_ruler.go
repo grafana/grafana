@@ -338,140 +338,41 @@ func (srv RulerSrv) RouteGetRuleByUID(c *contextmodel.ReqContext, ruleUID string
 
 // RouteGetAllRules returns all alert rules that the user has access to
 func (srv RulerSrv) RouteGetAllRules(c *contextmodel.ReqContext) response.Response {
-	totalStart := time.Now()
-	defer func() {
-		totalTime := time.Since(totalStart)
-		srv.log.Info("RouteGetAllRules total execution time", "duration_ms", totalTime.Milliseconds())
-	}()
-
-	ctx := c.Req.Context()
-	orgID := c.SignedInUser.GetOrgID()
-
-	// Get pagination parameters
+	// Get the query parameters
 	limit := c.QueryInt64("limit")
 	if limit <= 0 {
 		limit = 100 // Default limit
 	}
-
-	// Get cursor for pagination
 	cursor := c.Query("cursor")
 
-	// Measure namespace retrieval time
-	namespaceStart := time.Now()
+	// Create the query
+	q := &ngmodels.ListAlertRulesQuery{
+		OrgID:  c.SignedInUser.GetOrgID(),
+		Limit:  limit,
+		Cursor: cursor,
+	}
 
-	// Get namespaces visible to the user
-	// This is a potentially expensive operation, so we could consider caching this result
-	// in a short-lived cache (e.g., 30 seconds) if this becomes a bottleneck
-	namespaceMap, err := srv.store.GetUserVisibleNamespaces(ctx, orgID, c.SignedInUser)
+	// Get the rules
+	ruleList, nextCursor, err := srv.store.ListAlertRulesWithPagination(c.Req.Context(), q)
 	if err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get namespaces visible to the user", err)
+		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rules")
 	}
 
-	namespaceTime := time.Since(namespaceStart)
-	srv.log.Info("Namespace retrieval time", "duration_ms", namespaceTime.Milliseconds(), "namespace_count", len(namespaceMap))
-
-	if len(namespaceMap) == 0 {
-		srv.log.Debug("User has no access to any namespaces")
-		return response.JSON(http.StatusOK, apimodels.GettableRuleList{
-			Rules: []apimodels.GettableExtendedRuleNode{},
-			Limit: int(limit),
-		})
+	// Create a simple response with the lightweight rules
+	// Note: Provenance information is now included directly in each rule
+	type LightweightRuleResponse struct {
+		Rules      []*ngmodels.LightweightAlertRule `json:"rules"`
+		Limit      int                              `json:"limit,omitempty"`
+		NextCursor string                           `json:"nextCursor,omitempty"`
 	}
 
-	// Extract namespace UIDs
-	namespaceUIDs := make([]string, 0, len(namespaceMap))
-	for k := range namespaceMap {
-		namespaceUIDs = append(namespaceUIDs, k)
-	}
-
-	// Prepare query with cursor-based pagination
-	query := ngmodels.ListAlertRulesQuery{
-		OrgID:         orgID,
-		NamespaceUIDs: namespaceUIDs,
-		Limit:         limit,
-		Cursor:        cursor,
-	}
-
-	// Measure rule retrieval time
-	ruleStart := time.Now()
-
-	// Get rules with pagination
-	rules, err := srv.store.ListAlertRulesWithPagination(ctx, &query)
-	if err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get alert rules", err)
-	}
-
-	ruleTime := time.Since(ruleStart)
-	srv.log.Info("Rule retrieval time", "duration_ms", ruleTime.Milliseconds(), "rule_count", len(rules))
-
-	// Measure provenance retrieval time
-	provenanceStart := time.Now()
-
-	// Get provenances for all rules in a single batch
-	// This is more efficient than getting them one by one
-	provenanceRecords, err := srv.provenanceStore.GetProvenances(ctx, orgID, (&ngmodels.AlertRule{}).ResourceType())
-	if err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get rule provenances", err)
-	}
-
-	provenanceTime := time.Since(provenanceStart)
-	srv.log.Info("Provenance retrieval time", "duration_ms", provenanceTime.Milliseconds(), "provenance_count", len(provenanceRecords))
-
-	// Measure rule processing time
-	processingStart := time.Now()
-
-	// Pre-allocate the slice to avoid reallocations
-	accessibleRules := make([]apimodels.GettableExtendedRuleNode, 0, len(rules))
-
-	// Prepare user info resolver function once
-	userInfoFn := srv.resolveUserIdToNameFn(ctx)
-
-	// Track if we have a next cursor
-	var nextCursor string
-
-	// Filter rules based on user access
-	for _, rule := range rules {
-		// Check if user has access to the rule
-		if err := srv.authz.AuthorizeAccessInFolder(ctx, c.SignedInUser, rule); err != nil {
-			continue
-		}
-
-		// Get provenance for this rule
-		var provenance ngmodels.Provenance
-		if prov, exists := provenanceRecords[rule.ResourceID()]; exists {
-			provenance = prov
-		} else {
-			provenance = ngmodels.ProvenanceNone
-		}
-
-		// Check if this rule has a next cursor (will be on the last rule)
-		if rule.Annotations != nil {
-			if cursor, exists := rule.Annotations["_nextCursor"]; exists {
-				nextCursor = cursor
-				// Remove the cursor from annotations before sending to client
-				delete(rule.Annotations, "_nextCursor")
-			}
-		}
-
-		// Convert rule to GettableExtendedRuleNode
-		accessibleRules = append(accessibleRules, toGettableExtendedRuleNode(
-			*rule,
-			map[string]ngmodels.Provenance{rule.ResourceID(): provenance},
-			userInfoFn,
-		))
-	}
-
-	processingTime := time.Since(processingStart)
-	srv.log.Info("Rule processing time", "duration_ms", processingTime.Milliseconds(), "accessible_rules", len(accessibleRules))
-
-	// Prepare response
-	result := apimodels.GettableRuleList{
-		Rules:      accessibleRules,
+	resp := LightweightRuleResponse{
+		Rules:      ruleList,
 		Limit:      int(limit),
 		NextCursor: nextCursor,
 	}
 
-	return response.JSON(http.StatusOK, result)
+	return response.JSON(http.StatusOK, resp)
 }
 
 func (srv RulerSrv) RouteGetRuleVersionsByUID(c *contextmodel.ReqContext, ruleUID string) response.Response {
@@ -930,4 +831,50 @@ func (srv RulerSrv) resolveUserIdToNameFn(ctx context.Context) userIDToUserInfoF
 		cache[*id] = result
 		return result
 	}
+}
+
+// toLightweightGettableExtendedRuleNode converts a LightweightAlertRule to a GettableExtendedRuleNode
+func toLightweightGettableExtendedRuleNode(r ngmodels.LightweightAlertRule, provenanceRecords map[string]ngmodels.Provenance, userIdToName userIDToUserInfoFn) apimodels.GettableExtendedRuleNode {
+	provenance := ngmodels.ProvenanceNone
+	if p, ok := provenanceRecords[r.UID]; ok {
+		provenance = p
+	}
+
+	// Create the base rule
+	rule := apimodels.GettableExtendedRuleNode{
+		ApiRuleNode: &apimodels.ApiRuleNode{
+			// Initialize empty maps
+			Labels:      make(map[string]string),
+			Annotations: make(map[string]string),
+		},
+		GrafanaManagedAlert: &apimodels.GettableGrafanaRule{
+			UID:             r.UID,
+			Title:           r.Title,
+			Condition:       r.Condition,
+			Updated:         r.Updated,
+			IntervalSeconds: r.IntervalSeconds,
+			Version:         r.Version,
+			NamespaceUID:    r.NamespaceUID,
+			RuleGroup:       r.RuleGroup,
+			NoDataState:     apimodels.NoDataState(r.NoDataState),
+			ExecErrState:    apimodels.ExecutionErrorState(r.ExecErrState),
+			Provenance:      apimodels.Provenance(provenance),
+			IsPaused:        r.IsPaused,
+		},
+	}
+
+	// Copy labels and annotations if they exist
+	if r.Labels != nil {
+		for k, v := range r.Labels {
+			rule.ApiRuleNode.Labels[k] = v
+		}
+	}
+
+	if r.Annotations != nil {
+		for k, v := range r.Annotations {
+			rule.ApiRuleNode.Annotations[k] = v
+		}
+	}
+
+	return rule
 }

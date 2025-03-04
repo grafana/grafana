@@ -1171,10 +1171,22 @@ func getINSubQueryArgs[T any](inputSlice []T) ([]any, []string) {
 
 // ListAlertRulesWithPagination returns alert rules with pagination support.
 // The function returns the rules and a next cursor for pagination.
-func (st DBstore) ListAlertRulesWithPagination(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (result ngmodels.RulesGroup, err error) {
+func (st DBstore) ListAlertRulesWithPagination(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (result ngmodels.LightweightRulesGroup, nextCursor string, err error) {
+	result = make([]*ngmodels.LightweightAlertRule, 0)
+	nextCursor = ""
+
 	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		// Build the main query for fetching data
 		q := sess.Table("alert_rule")
+
+		// Select only necessary columns, excluding large JSON fields
+		q = q.Cols(
+			"alert_rule.id", "alert_rule.org_id", "alert_rule.title", "alert_rule.condition",
+			"alert_rule.updated", "alert_rule.interval_seconds", "alert_rule.version",
+			"alert_rule.uid", "alert_rule.namespace_uid", "alert_rule.rule_group",
+			"alert_rule.no_data_state", "alert_rule.exec_err_state", "alert_rule.is_paused",
+			"alert_rule.rule_group_idx", "alert_rule.annotations", "alert_rule.labels",
+		)
 
 		// Apply basic filters
 		if query.OrgID >= 0 {
@@ -1260,10 +1272,29 @@ func (st DBstore) ListAlertRulesWithPagination(ctx context.Context, query *ngmod
 		// Measure main query execution time
 		mainQueryStart := time.Now()
 
-		// Fetch the rules
-		alertRules := make([]*ngmodels.AlertRule, 0)
-		rule := new(alertRule)
-		rows, err := q.Rows(rule)
+		// Define the struct for mapping
+		type ruleRow struct {
+			ID              int64                        `xorm:"id"`
+			OrgID           int64                        `xorm:"org_id"`
+			Title           string                       `xorm:"title"`
+			Condition       string                       `xorm:"condition"`
+			Updated         time.Time                    `xorm:"updated"`
+			IntervalSeconds int64                        `xorm:"interval_seconds"`
+			Version         int64                        `xorm:"version"`
+			UID             string                       `xorm:"uid"`
+			NamespaceUID    string                       `xorm:"namespace_uid"`
+			RuleGroup       string                       `xorm:"rule_group"`
+			NoDataState     ngmodels.NoDataState         `xorm:"no_data_state"`
+			ExecErrState    ngmodels.ExecutionErrorState `xorm:"exec_err_state"`
+			IsPaused        bool                         `xorm:"is_paused"`
+			RuleGroupIdx    int                          `xorm:"rule_group_idx"`
+			AnnotationsRaw  string                       `xorm:"annotations"`
+			LabelsRaw       string                       `xorm:"labels"`
+		}
+
+		// Fetch all rules in one go
+		var rules []ruleRow
+		err := q.Find(&rules)
 		if err != nil {
 			return err
 		}
@@ -1274,94 +1305,136 @@ func (st DBstore) ListAlertRulesWithPagination(ctx context.Context, query *ngmod
 		// Measure data processing time
 		processingStart := time.Now()
 
-		defer func() {
-			_ = rows.Close()
-		}()
-
-		// Deserialize each rule separately in case any of them contain invalid JSON.
+		// Process the results
 		hasMore := false
-		for rows.Next() {
-			// If we've reached our limit, just mark that there are more results and stop
-			if query.Limit > 0 && int64(len(alertRules)) >= query.Limit {
-				hasMore = true
-				break
-			}
+		if query.Limit > 0 && int64(len(rules)) > query.Limit {
+			hasMore = true
+			rules = rules[:query.Limit]
+		}
 
-			rule := new(alertRule)
-			err = rows.Scan(rule)
-			if err != nil {
-				st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "ListAlertRulesWithPagination", "error", err)
-				continue
-			}
-			converted, err := alertRuleToModelsAlertRule(*rule, st.Logger)
-			if err != nil {
-				st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "ListAlertRulesWithPagination", "error", err)
-				continue
-			}
+		// Convert to lightweight rules
+		ruleUIDs := make([]string, 0, len(rules))
+		uidToRuleMap := make(map[string]*ngmodels.LightweightAlertRule, len(rules))
 
-			// MySQL (and potentially other databases) can use case-insensitive comparison.
-			// This code makes sure we return groups that only exactly match the filter.
+		for _, rule := range rules {
+			// Filter by rule group if needed
+			// MySQL (and potentially other databases) can use case-insensitive comparison
+			// so we need to filter again to ensure exact match
 			if groupsMap != nil {
-				if _, ok := groupsMap[converted.RuleGroup]; !ok {
+				if _, ok := groupsMap[rule.RuleGroup]; !ok {
 					continue
 				}
 			}
 
-			alertRules = append(alertRules, &converted)
-		}
-
-		// Set cursor information on the last rule if we have more results
-		if len(alertRules) > 0 && hasMore {
-			// If we fetched more than the limit, remove the extra item but mark that there are more
-			if query.Limit > 0 && int64(len(alertRules)) > query.Limit {
-				hasMore = true
-				alertRules = alertRules[:query.Limit]
+			// Create a lightweight rule
+			lightweightRule := &ngmodels.LightweightAlertRule{
+				ID:              rule.ID,
+				OrgID:           rule.OrgID,
+				Title:           rule.Title,
+				Condition:       rule.Condition,
+				Updated:         rule.Updated,
+				IntervalSeconds: rule.IntervalSeconds,
+				Version:         rule.Version,
+				UID:             rule.UID,
+				NamespaceUID:    rule.NamespaceUID,
+				RuleGroup:       rule.RuleGroup,
+				NoDataState:     rule.NoDataState,
+				ExecErrState:    rule.ExecErrState,
+				IsPaused:        rule.IsPaused,
+				RuleGroupIndex:  rule.RuleGroupIdx,
+				// Initialize empty maps for annotations and labels
+				Annotations: make(map[string]string),
+				Labels:      make(map[string]string),
+				// Default provenance to none, will be updated later
+				Provenance: ngmodels.ProvenanceNone,
 			}
 
-			// Set next cursor on the last item
-			if hasMore {
-				lastRule := alertRules[len(alertRules)-1]
-
-				// Get the folder title for the last rule
-				var folderTitle string
-				has, err := sess.Table("folder").
-					Where("uid = ? AND org_id = ?", lastRule.NamespaceUID, lastRule.OrgID).
-					Cols("title").
-					Get(&folderTitle)
-
-				if err != nil || !has {
-					st.Logger.Error("Failed to get folder title for cursor", "error", err)
-					folderTitle = ""
+			// Parse annotations JSON
+			if rule.AnnotationsRaw != "" {
+				if err := json.Unmarshal([]byte(rule.AnnotationsRaw), &lightweightRule.Annotations); err != nil {
+					st.Logger.Error("Failed to unmarshal annotations", "rule_id", rule.ID, "error", err)
 				}
+			}
 
-				// Create and encode the cursor
-				cursor := cursorData{
-					ID:          lastRule.ID,
-					FolderTitle: folderTitle,
-					RuleGroup:   lastRule.RuleGroup,
+			// Parse labels JSON
+			if rule.LabelsRaw != "" {
+				if err := json.Unmarshal([]byte(rule.LabelsRaw), &lightweightRule.Labels); err != nil {
+					st.Logger.Error("Failed to unmarshal labels", "rule_id", rule.ID, "error", err)
 				}
+			}
 
-				cursorStr, err := encodeCursor(cursor)
-				if err != nil {
-					st.Logger.Error("Failed to encode cursor", "error", err)
-				} else {
-					// Store the cursor in the rule's annotations
-					if lastRule.Annotations == nil {
-						lastRule.Annotations = make(map[string]string)
+			result = append(result, lightweightRule)
+			ruleUIDs = append(ruleUIDs, rule.UID)
+			uidToRuleMap[rule.UID] = lightweightRule
+		}
+
+		// Now fetch provenance data for just the rules we're returning
+		if len(ruleUIDs) > 0 {
+			// Fetch provenance data for these rules
+			type provenanceRow struct {
+				RecordKey  string              `xorm:"record_key"`
+				Provenance ngmodels.Provenance `xorm:"provenance"`
+			}
+
+			var provenanceData []provenanceRow
+
+			// Build the query for provenance data
+			args, in := getINSubQueryArgs(ruleUIDs)
+			provenanceQuery := sess.Table("provenance_type").
+				Where("record_type = ? AND org_id = ?", "alertRule", query.OrgID).
+				Where(fmt.Sprintf("record_key IN (%s)", strings.Join(in, ",")), args...)
+
+			err := provenanceQuery.Find(&provenanceData)
+			if err != nil {
+				st.Logger.Error("Failed to fetch provenance data", "error", err)
+			} else {
+				// Update the rules with provenance data
+				for _, p := range provenanceData {
+					if rule, ok := uidToRuleMap[p.RecordKey]; ok {
+						rule.Provenance = p.Provenance
 					}
-					lastRule.Annotations["_nextCursor"] = cursorStr
 				}
 			}
 		}
 
-		result = alertRules
+		// Set cursor information if we have more results
+		if len(result) > 0 && hasMore {
+			// Generate next cursor
+			lastRule := result[len(result)-1]
+
+			// Get the folder title for the last rule
+			var folderTitle string
+			has, err := sess.Table("folder").
+				Where("uid = ? AND org_id = ?", lastRule.NamespaceUID, lastRule.OrgID).
+				Cols("title").
+				Get(&folderTitle)
+
+			if err != nil || !has {
+				st.Logger.Error("Failed to get folder title for cursor", "error", err)
+				folderTitle = ""
+			}
+
+			// Create and encode the cursor
+			cursor := cursorData{
+				ID:          lastRule.ID,
+				FolderTitle: folderTitle,
+				RuleGroup:   lastRule.RuleGroup,
+			}
+
+			cursorStr, err := encodeCursor(cursor)
+			if err != nil {
+				st.Logger.Error("Failed to encode cursor", "error", err)
+			} else {
+				nextCursor = cursorStr
+			}
+		}
 
 		processingTime := time.Since(processingStart)
 		st.Logger.Info("Data processing time", "duration_ms", processingTime.Milliseconds())
 
 		return nil
 	})
-	return result, err
+	return result, nextCursor, err
 }
 
 // cursorData represents the data encoded in a pagination cursor
