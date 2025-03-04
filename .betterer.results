@@ -1269,10 +1269,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "\'@grafana/ui/src/components/Forms/RadioButtonGroup/RadioButtonGroup\' import is restricted from being used by a pattern. Import from the public export instead.", "3"],
       [0, 0, 0, "\'@grafana/ui/src/components/JSONFormatter/JSONFormatter\' import is restricted from being used by a pattern. Import from the public export instead.", "4"],
       [0, 0, 0, "\'@grafana/ui/src/themes\' import is restricted from being used by a pattern. Import from the public export instead.", "5"],
-      [0, 0, 0, "\'@grafana/ui/src/utils/i18n\' import is restricted from being used by a pattern. Import from the public export instead.", "6"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "6"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "7"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "8"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "9"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "8"]
     ],
     "public/app/features/actions/ActionEditorModalContent.tsx:5381": [
       [0, 0, 0, "\'@grafana/ui/src/components/Button\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
