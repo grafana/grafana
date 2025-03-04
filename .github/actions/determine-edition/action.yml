@@ -1,6 +1,5 @@
 name: 'Determine Edition'
-description: 'Determines whether to use OSS or Enterprise edition'
-
+description: 'Determines whether to use OSS or Enterprise edition and sets environment variables'
 outputs:
   edition:
     description: 'The edition to use (oss or enterprise)'
@@ -8,7 +7,6 @@ outputs:
   use_enterprise:
     description: 'Whether to use enterprise features'
     value: ${{ steps.set-edition.outputs.use_enterprise }}
-    
 runs:
   using: "composite"
   steps:
@@ -20,8 +18,18 @@ runs:
           echo "edition=enterprise" >> $GITHUB_OUTPUT
           echo "use_enterprise=true" >> $GITHUB_OUTPUT
           echo "Using enterprise edition"
+          
+          # Set environment variables for all subsequent steps
+          echo "EDITION=enterprise" >> $GITHUB_ENV
+          echo "WIRE_TAGS=enterprise" >> $GITHUB_ENV
+          echo "GO_TAGS=enterprise" >> $GITHUB_ENV
         else
           echo "edition=oss" >> $GITHUB_OUTPUT
           echo "use_enterprise=false" >> $GITHUB_OUTPUT
           echo "Using OSS edition"
+          
+          # Set environment variables for all subsequent steps
+          echo "EDITION=oss" >> $GITHUB_ENV
+          echo "WIRE_TAGS=oss" >> $GITHUB_ENV
+          echo "GO_TAGS=oss" >> $GITHUB_ENV
         fi
