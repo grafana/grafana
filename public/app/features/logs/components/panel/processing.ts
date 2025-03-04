@@ -46,7 +46,7 @@ interface PreProcessLogOptions {
   timeZone: string;
 }
 const preProcessLog = (log: LogRowModel, { escape, getFieldLinks, timeZone }: PreProcessLogOptions): LogListModel => {
-  let body = log.entry;
+  let body = log.raw;
   const timestamp = dateTimeFormat(log.timeEpochMs, {
     timeZone,
     defaultWithMS: true,
