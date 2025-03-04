@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { CSSProperties } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { ActionModel, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes';
@@ -15,6 +15,10 @@ export interface DataLinksContextMenuProps {
   children: (props: DataLinksContextMenuApi) => JSX.Element;
   links: () => LinkModel[];
   style?: CSSProperties;
+  /**
+   * @deprecated Will be removed in a future version
+   */
+  actions?: ActionModel[];
 }
 
 export interface DataLinksContextMenuApi {
