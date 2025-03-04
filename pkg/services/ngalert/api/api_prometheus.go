@@ -357,14 +357,14 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		}
 
 		if nextToken != "" && !foundToken {
-			if !tokenGreaterThanOrEqual(getRuleGroupNextToken(rg.Folder, rg.GroupKey.RuleGroup), nextToken) {
+			if !TokenGreaterThanOrEqual(GetRuleGroupNextToken(rg.Folder, rg.GroupKey.RuleGroup), nextToken) {
 				continue
 			}
 			foundToken = true
 		}
 
 		if maxGroups > -1 && len(ruleResponse.Data.RuleGroups) == int(maxGroups) {
-			newToken = getRuleGroupNextToken(rg.Folder, rg.GroupKey.RuleGroup)
+			newToken = GetRuleGroupNextToken(rg.Folder, rg.GroupKey.RuleGroup)
 			break
 		}
 
@@ -395,12 +395,12 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 	return ruleResponse
 }
 
-func getRuleGroupNextToken(namespace, group string) string {
+func GetRuleGroupNextToken(namespace, group string) string {
 	return base64.URLEncoding.EncodeToString([]byte(namespace + "/" + group))
 }
 
 // Returns true if tokenA >= tokenB
-func tokenGreaterThanOrEqual(tokenA string, tokenB string) bool {
+func TokenGreaterThanOrEqual(tokenA string, tokenB string) bool {
 	decodedTokenA, _ := base64.URLEncoding.DecodeString(tokenA)
 	decodedTokenB, _ := base64.URLEncoding.DecodeString(tokenB)
 

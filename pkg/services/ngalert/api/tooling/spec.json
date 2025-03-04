@@ -1800,6 +1800,44 @@
         }
       }
     },
+    "/ruler/grafana/api/v1/rule-groups": {
+      "get": {
+        "description": "List rule groups",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "ruler"
+        ],
+        "operationId": "RouteGetGrafanaRuleGroups",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "group_next_token",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "group_limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "NamespaceListResponse",
+            "schema": {
+              "$ref": "#/definitions/NamespaceListResponse"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          }
+        }
+      }
+    },
     "/ruler/grafana/api/v1/rule/{RuleUID}": {
       "get": {
         "description": "Get rule by UID",
@@ -6409,6 +6447,23 @@
         }
       }
     },
+    "NamespaceListResponse": {
+      "type": "object",
+      "required": [
+        "groups"
+      ],
+      "properties": {
+        "groupNextToken": {
+          "type": "string"
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RuleGroupSummary"
+          }
+        }
+      }
+    },
     "NotFound": {
       "type": "object"
     },
@@ -7998,6 +8053,25 @@
           "items": {
             "type": "string"
           }
+        }
+      }
+    },
+    "RuleGroupSummary": {
+      "type": "object",
+      "required": [
+        "name",
+        "file",
+        "folderUid"
+      ],
+      "properties": {
+        "file": {
+          "type": "string"
+        },
+        "folderUid": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
         }
       }
     },
