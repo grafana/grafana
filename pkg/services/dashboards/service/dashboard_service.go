@@ -237,7 +237,8 @@ func (dr *DashboardServiceImpl) GetProvisionedDashboardData(ctx context.Context,
 			func(orgID int64) {
 				g.Go(func() error {
 					res, err := dr.searchProvisionedDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
-						ProvisionedRepo: name,
+						ManagedBy:       utils.ManagerKindClassicFP, // nolint:staticcheck
+						ManagerIdentity: name,
 						OrgId:           orgID,
 					})
 					if err != nil {
@@ -568,8 +569,8 @@ func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.
 			ctx, _ := identity.WithServiceIdentity(ctx, org.ID)
 			// find all dashboards in the org that have a file repo set that is not in the given readers list
 			foundDashs, err := dr.searchProvisionedDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
-				ProvisionedReposNotIn: cmd.ReaderNames,
-				OrgId:                 org.ID,
+				ManagerIdentityNotIn: cmd.ReaderNames,
+				OrgId:                org.ID,
 			})
 			if err != nil {
 				return err
@@ -962,8 +963,8 @@ func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, que
 	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		dashs, err := dr.searchDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
 			OrgId:           query.OrgID,
-			ProvisionedRepo: dashboard.PluginIDRepoName,
-			ProvisionedPath: query.PluginID,
+			ManagedBy:       utils.ManagerKindPlugin,
+			ManagerIdentity: query.PluginID,
 		})
 		if err != nil {
 			return nil, err
@@ -1553,22 +1554,22 @@ func (dr *DashboardServiceImpl) saveProvisionedDashboardThroughK8s(ctx context.C
 		return nil, err
 	}
 
-	annotations := obj.GetAnnotations()
-	if annotations == nil {
-		annotations = map[string]string{}
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return nil, err
 	}
-	if unprovision {
-		delete(annotations, utils.AnnoKeyRepoName)
-		delete(annotations, utils.AnnoKeyRepoPath)
-		delete(annotations, utils.AnnoKeyRepoHash)
-		delete(annotations, utils.AnnoKeyRepoTimestamp)
-	} else {
-		annotations[utils.AnnoKeyRepoName] = dashboard.ProvisionedFileNameWithPrefix(provisioning.Name)
-		annotations[utils.AnnoKeyRepoPath] = provisioning.ExternalID
-		annotations[utils.AnnoKeyRepoHash] = provisioning.CheckSum
-		annotations[utils.AnnoKeyRepoTimestamp] = time.Unix(provisioning.Updated, 0).UTC().Format(time.RFC3339)
+
+	m := utils.ManagerProperties{}
+	s := utils.SourceProperties{}
+	if !unprovision {
+		m.Kind = utils.ManagerKindClassicFP // nolint:staticcheck
+		m.Identity = provisioning.Name
+		s.Path = provisioning.ExternalID
+		s.Checksum = provisioning.CheckSum
+		s.TimestampMillis = time.Unix(provisioning.Updated, 0).UnixMilli()
 	}
-	obj.SetAnnotations(annotations)
+	meta.SetManagerProperties(m)
+	meta.SetSourceProperties(s)
 
 	out, err := dr.createOrUpdateDash(ctx, obj, cmd.OrgID)
 	if err != nil {
@@ -1723,30 +1724,35 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		})
 	}
 
-	if query.ProvisionedRepo != "" {
-		req := []*resource.Requirement{{
-			Key:      resource.SEARCH_FIELD_REPOSITORY_NAME,
-			Operator: string(selection.In),
-			Values:   []string{query.ProvisionedRepo},
-		}}
-		request.Options.Fields = append(request.Options.Fields, req...)
+	if query.ManagedBy != "" {
+		request.Options.Fields = append(request.Options.Fields, &resource.Requirement{
+			Key:      resource.SEARCH_FIELD_MANAGER_KIND,
+			Operator: string(selection.Equals),
+			Values:   []string{string(query.ManagedBy)},
+		})
 	}
 
-	if len(query.ProvisionedReposNotIn) > 0 {
-		req := []*resource.Requirement{{
-			Key:      resource.SEARCH_FIELD_REPOSITORY_NAME,
-			Operator: string(selection.NotIn),
-			Values:   query.ProvisionedReposNotIn,
-		}}
-		request.Options.Fields = append(request.Options.Fields, req...)
-	}
-	if query.ProvisionedPath != "" {
-		req := []*resource.Requirement{{
-			Key:      resource.SEARCH_FIELD_REPOSITORY_PATH,
+	if query.ManagerIdentity != "" {
+		request.Options.Fields = append(request.Options.Fields, &resource.Requirement{
+			Key:      resource.SEARCH_FIELD_MANAGER_ID,
 			Operator: string(selection.In),
-			Values:   []string{query.ProvisionedPath},
-		}}
-		request.Options.Fields = append(request.Options.Fields, req...)
+			Values:   []string{query.ManagerIdentity},
+		})
+	}
+
+	if len(query.ManagerIdentityNotIn) > 0 {
+		request.Options.Fields = append(request.Options.Fields, &resource.Requirement{
+			Key:      resource.SEARCH_FIELD_MANAGER_ID,
+			Operator: string(selection.NotIn),
+			Values:   query.ManagerIdentityNotIn,
+		})
+	}
+	if query.SourcePath != "" {
+		request.Options.Fields = append(request.Options.Fields, &resource.Requirement{
+			Key:      resource.SEARCH_FIELD_SOURCE_PATH,
+			Operator: string(selection.In),
+			Values:   []string{query.SourcePath},
+		})
 	}
 
 	if query.Title != "" {
@@ -1840,18 +1846,6 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 
 	ctx, _ = identity.WithServiceIdentity(ctx, query.OrgId)
 
-	if query.ProvisionedRepo != "" {
-		query.ProvisionedRepo = dashboard.ProvisionedFileNameWithPrefix(query.ProvisionedRepo)
-	}
-
-	if len(query.ProvisionedReposNotIn) > 0 {
-		repos := make([]string, len(query.ProvisionedReposNotIn))
-		for i, v := range query.ProvisionedReposNotIn {
-			repos[i] = dashboard.ProvisionedFileNameWithPrefix(v)
-		}
-		query.ProvisionedReposNotIn = repos
-	}
-
 	query.Type = searchstore.TypeDashboard
 
 	searchResults, err := dr.searchDashboardsThroughK8sRaw(ctx, query)
@@ -1878,26 +1872,27 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 					return err
 				}
 
-				// ensure the repo is set due to file provisioning, otherwise skip it
-				fileRepo, found := dashboard.GetProvisionedFileNameFromMeta(meta.GetRepositoryName())
-				if !found {
+				m, ok := meta.GetManagerProperties()
+				if !ok || m.Kind != utils.ManagerKindClassicFP { // nolint:staticcheck
+					return nil
+				}
+
+				source, ok := meta.GetSourceProperties()
+				if ok {
 					return nil
 				}
 
 				provisioning := &dashboardProvisioningWithUID{
+					DashboardProvisioning: dashboards.DashboardProvisioning{
+						Name:        m.Identity,
+						ExternalID:  source.Path,
+						CheckSum:    source.Checksum,
+						DashboardID: meta.GetDeprecatedInternalID(), // nolint:staticcheck
+					},
 					DashboardUID: hit.Name,
 				}
-				provisioning.Name = fileRepo
-				provisioning.ExternalID = meta.GetRepositoryPath()
-				provisioning.CheckSum = meta.GetRepositoryHash()
-				provisioning.DashboardID = meta.GetDeprecatedInternalID() // nolint:staticcheck
-
-				updated, err := meta.GetRepositoryTimestamp()
-				if err != nil {
-					return err
-				}
-				if updated != nil {
-					provisioning.Updated = updated.Unix()
+				if source.TimestampMillis > 0 {
+					provisioning.Updated = time.UnixMilli(source.TimestampMillis).Unix()
 				}
 
 				mu.Lock()

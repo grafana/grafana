@@ -68,7 +68,9 @@ func runDashboardTest(t *testing.T, helper *apis.K8sTestHelper, gvr schema.Group
 
 		wrap, err := utils.MetaAccessor(obj)
 		require.NoError(t, err)
-		require.Empty(t, wrap.GetRepositoryName()) // no SQL repo stub
+
+		m, _ := wrap.GetManagerProperties()
+		require.Empty(t, m.Identity) // no SQL repo stub
 		require.Equal(t, helper.Org1.Admin.Identity.GetUID(), wrap.GetCreatedBy())
 
 		// Commented out because the dynamic client does not like lists as sub-resource

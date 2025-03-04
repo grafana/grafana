@@ -134,13 +134,9 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 			OrgID: info.OrgID,
 			ID:    obj.GetDeprecatedInternalID(), // nolint:staticcheck
 		}
-		repo, err := obj.GetRepositoryInfo()
-		if err != nil {
-			responder.Error(err)
-			return
-		}
-		if repo != nil && repo.Name == dashboard.PluginIDRepoName {
-			dto.PluginID = repo.Path
+		manager, ok := obj.GetManagerProperties()
+		if ok && manager.Kind == utils.ManagerKindPlugin {
+			dto.PluginID = manager.Identity
 		}
 
 		guardian, err := guardian.NewByDashboard(ctx, dto, info.OrgID, user)
