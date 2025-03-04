@@ -58,31 +58,6 @@ jobs:
             echo "generate=false" >> $GITHUB_OUTPUT
           fi
 
-  setup-enterprise:
-    name: Setup Enterprise
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Enterprise
-        uses: ./.github/actions/setup-enterprise
-
-      - name: Package Enterprise Code
-        shell: bash
-        run: |
-          cd ..
-          tar -czf $GITHUB_WORKSPACE/enterprise.tar.gz grafana-enterprise/
-
-      - name: Upload Enterprise Code
-        uses: actions/upload-artifact@v4
-        with:
-          name: enterprise-code
-          path: enterprise.tar.gz
-          # We don't need to keep the enterprise code around for more than the duration of the workflow
-          retention-days: 0
-
   setup:
     name: Setup Environment
     runs-on: ubuntu-latest
@@ -109,7 +84,7 @@ jobs:
 
   unit-tests:
     name: Unit Tests
-    needs: [check-coverage, setup, setup-enterprise]
+    needs: [check-coverage, setup]
     runs-on: ubuntu-latest
     env:
       EDITION: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && 'enterprise' || 'oss' }}
@@ -124,21 +99,9 @@ jobs:
           go-version: '1.23.5'
           cache: true
 
-      - name: Download Enterprise Code
+      - name: Setup Enterprise
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
-        uses: actions/download-artifact@v4
-        with:
-          name: enterprise-code
-          path: ..
-
-      - name: Extract Enterprise Code
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
-        shell: bash
-        run: |
-          cd ..
-          tar -xzf enterprise.tar.gz
-          # Move the enterprise code to the expected location within the main repo
-          cp -r grafana-enterprise/* grafana/
+        uses: ./.github/actions/setup-enterprise
 
       - name: Run unit tests
         uses: ./.github/actions/run-backend-tests
@@ -156,7 +119,7 @@ jobs:
 
   integration-tests:
     name: Integration Tests
-    needs: [check-coverage, setup, setup-enterprise]
+    needs: [check-coverage, setup]
     runs-on: ubuntu-latest
     env:
       EDITION: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && 'enterprise' || 'oss' }}
@@ -171,21 +134,9 @@ jobs:
           go-version: '1.23.5'
           cache: true
 
-      - name: Download Enterprise Code
+      - name: Setup Enterprise
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
-        uses: actions/download-artifact@v4
-        with:
-          name: enterprise-code
-          path: ..
-
-      - name: Extract Enterprise Code
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
-        shell: bash
-        run: |
-          cd ..
-          tar -xzf enterprise.tar.gz
-          # Move the enterprise code to the expected location within the main repo
-          cp -r grafana-enterprise/* grafana/
+        uses: ./.github/actions/setup-enterprise
 
       - name: Run integration tests
         uses: ./.github/actions/run-backend-tests
