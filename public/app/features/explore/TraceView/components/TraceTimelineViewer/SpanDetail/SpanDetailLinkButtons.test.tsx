@@ -37,7 +37,7 @@ describe('getSpanDetailLinkButtons', () => {
       datasourceType: 'test',
       traceToProfilesOptions: undefined,
       timeRange,
-      app: CoreApp.Explore
+      app: CoreApp.Explore,
     });
 
     expect(result.logLinkButton).toBeNull();
@@ -54,7 +54,7 @@ describe('getSpanDetailLinkButtons', () => {
       datasourceType: 'test',
       traceToProfilesOptions: undefined,
       timeRange,
-      app: CoreApp.Explore
+      app: CoreApp.Explore,
     });
 
     expect(result.logLinkButton).toBeDefined();
@@ -75,7 +75,7 @@ describe('getSpanDetailLinkButtons', () => {
         customQuery: false,
       },
       timeRange,
-      app: CoreApp.Explore
+      app: CoreApp.Explore,
     });
 
     expect(result.logLinkButton).toBeNull();
@@ -104,11 +104,13 @@ describe('getSpanDetailLinkButtons', () => {
     createSpanLink.mockReturnValue([{ type: SpanLinkType.Profiles, href: '/profiles', title: RelatedProfilesTitle }]);
     (usePluginLinks as jest.Mock).mockReturnValue({
       isLoading: false,
-      links: [{
-        pluginId: 'grafana-pyroscope-app',
-        title: 'Open in Profiles Drilldown',
-        onClick: jest.fn(),
-      }]
+      links: [
+        {
+          pluginId: 'grafana-pyroscope-app',
+          title: 'Open in Profiles Drilldown',
+          onClick: jest.fn(),
+        },
+      ],
     });
 
     const result = getSpanDetailLinkButtons({
@@ -121,7 +123,7 @@ describe('getSpanDetailLinkButtons', () => {
         customQuery: false,
       },
       timeRange,
-      app: CoreApp.Explore
+      app: CoreApp.Explore,
     });
 
     expect(result.profileLinkButtons).toBeDefined();
@@ -133,11 +135,13 @@ describe('getSpanDetailLinkButtons', () => {
     createSpanLink.mockReturnValue([{ type: SpanLinkType.Profiles, href: '/profiles', title: RelatedProfilesTitle }]);
     (usePluginLinks as jest.Mock).mockReturnValue({
       isLoading: false,
-      links: [{
-        pluginId: 'grafana-pyroscope-app',
-        title: 'Open in Profiles Drilldown',
-        onClick: jest.fn(),
-      }]
+      links: [
+        {
+          pluginId: 'grafana-pyroscope-app',
+          title: 'Open in Profiles Drilldown',
+          onClick: jest.fn(),
+        },
+      ],
     });
 
     const result = getSpanDetailLinkButtons({
@@ -150,7 +154,7 @@ describe('getSpanDetailLinkButtons', () => {
         customQuery: false,
       },
       timeRange,
-      app: CoreApp.Dashboard
+      app: CoreApp.Dashboard,
     });
 
     expect(result.profileLinkButtons).toBeDefined();
