@@ -265,8 +265,7 @@
         "ns/dashboard.grafana.app/dashboards/aaa",
         "aaa (dash)",
         [
-          "aa",
-          "bb"
+          "aa"
         ],
         "xxx",
         null,
@@ -274,8 +273,7 @@
         null,
         null,
         [
-          "timeseries",
-          "table"
+          "timeseries"
         ],
         25,
         null,
