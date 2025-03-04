@@ -405,19 +405,20 @@
     {
       "metadata": {
         "name": "alertingRuleVersionHistoryRestore",
-        "resourceVersion": "1738831836776",
+        "resourceVersion": "1740740039764",
         "creationTimestamp": "2025-01-16T14:08:12Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-02-06 08:50:36.776739 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-02-28 10:53:59.764894 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables the alert rule version history restore feature",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
         "frontend": true,
         "hideFromAdminPage": true,
-        "hideFromDocs": true
+        "hideFromDocs": true,
+        "expression": "true"
       }
     },
     {
