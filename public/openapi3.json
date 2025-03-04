@@ -11443,6 +11443,15 @@
             "description": "Name of the associated template definition for this result.",
             "type": "string"
           },
+          "scope": {
+            "description": "Scope that was successfully used to interpolate the template. If the root scope \".\" fails, more specific\nscopes will be tried, such as \".Alerts', or \".Alert\".",
+            "enum": [
+              ".",
+              ".Alerts",
+              ".Alert"
+            ],
+            "type": "string"
+          },
           "text": {
             "description": "Interpolated value of the template.",
             "type": "string"
@@ -12638,6 +12647,7 @@
         "type": "object"
       },
       "alertGroups": {
+        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -12965,6 +12975,7 @@
         "type": "object"
       },
       "gettableSilences": {
+        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
