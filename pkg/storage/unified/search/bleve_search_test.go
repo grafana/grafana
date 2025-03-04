@@ -24,6 +24,28 @@ func TestCanSearchByTitle(t *testing.T) {
 		Resource:  "dashboards",
 	}
 
+	t.Run("title with numbers will match document", func(t *testing.T) {
+		index := newTestDashboardsIndex(t)
+		err := index.Write(&resource.IndexableDocument{
+			RV:   1,
+			Name: "name1",
+			Key: &resource.ResourceKey{
+				Name:      "aaa",
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+			},
+			Title: "A100",
+		})
+		require.NoError(t, err)
+
+		// search for prefix of title with mix of chars and numbers
+		query := newQuery("A10")
+		res, err := index.Search(context.Background(), nil, query, nil)
+		require.NoError(t, err)
+		require.Equal(t, res.TotalHits, int64(1))
+	})
+
 	t.Run("title search will match document", func(t *testing.T) {
 		index := newTestDashboardsIndex(t)
 		err := index.Write(&resource.IndexableDocument{

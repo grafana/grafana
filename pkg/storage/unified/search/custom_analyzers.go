@@ -2,7 +2,6 @@ package search
 
 import (
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/custom"
-	"github.com/blevesearch/bleve/v2/analysis/token/camelcase"
 	"github.com/blevesearch/bleve/v2/analysis/token/edgengram"
 	"github.com/blevesearch/bleve/v2/analysis/token/lowercase"
 	"github.com/blevesearch/bleve/v2/analysis/token/unique"
@@ -36,7 +35,7 @@ func registerTitleAnalyzer(mapper *mapping.IndexMappingImpl) error {
 	ngramAnalyzer := map[string]interface{}{
 		"type":          custom.Name,
 		"tokenizer":     whitespace.Name,
-		"token_filters": []string{"edge_ngram_filter", lowercase.Name, unique.Name, camelcase.Name},
+		"token_filters": []string{"edge_ngram_filter", lowercase.Name, unique.Name},
 		//"char_filters":  //TODO IF NEEDED
 	}
 
