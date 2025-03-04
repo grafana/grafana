@@ -137,12 +137,12 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		UID:          &name,
 		OrgID:        info.OrgID,
 	})
-	if err != nil || dto == nil {
-		if err == nil {
-			err = dashboards.ErrFolderNotFound
-		}
-
+	if err != nil {
 		statusErr := apierrors.ToFolderStatusError(err)
+		return nil, &statusErr
+	}
+	if dto == nil {
+		statusErr := apierrors.ToFolderStatusError(dashboards.ErrFolderNotFound)
 		return nil, &statusErr
 	}
 
