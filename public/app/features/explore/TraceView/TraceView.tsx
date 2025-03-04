@@ -241,6 +241,7 @@ export function TraceView(props: Props) {
             redrawListView={redrawListView}
             setRedrawListView={setRedrawListView}
             timeRange={props.timeRange}
+            app={exploreId ? CoreApp.Explore : CoreApp.Unknown}
           />
         </>
       ) : (

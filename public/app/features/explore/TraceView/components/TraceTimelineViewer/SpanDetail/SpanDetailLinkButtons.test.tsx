@@ -1,10 +1,16 @@
-import { TimeRange } from '@grafana/data';
+import { CoreApp, TimeRange } from '@grafana/data';
+import { usePluginLinks } from '@grafana/runtime';
 import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
 
 import { SpanLinkType } from '../../types/links';
 import { TraceSpan } from '../../types/trace';
 
 import { getSpanDetailLinkButtons, getProfileLinkButtonsContext } from './SpanDetailLinkButtons';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  usePluginLinks: jest.fn().mockReturnValue({ isLoading: false, links: [] }),
+}));
 
 const span = {
   process: {
@@ -31,6 +37,7 @@ describe('getSpanDetailLinkButtons', () => {
       datasourceType: 'test',
       traceToProfilesOptions: undefined,
       timeRange,
+      app: CoreApp.Explore
     });
 
     expect(result.logLinkButton).toBeNull();
@@ -47,6 +54,7 @@ describe('getSpanDetailLinkButtons', () => {
       datasourceType: 'test',
       traceToProfilesOptions: undefined,
       timeRange,
+      app: CoreApp.Explore
     });
 
     expect(result.logLinkButton).toBeDefined();
@@ -67,6 +75,7 @@ describe('getSpanDetailLinkButtons', () => {
         customQuery: false,
       },
       timeRange,
+      app: CoreApp.Explore
     });
 
     expect(result.logLinkButton).toBeNull();
@@ -83,11 +92,70 @@ describe('getSpanDetailLinkButtons', () => {
       datasourceType: 'test',
       traceToProfilesOptions: undefined,
       timeRange,
+      app: CoreApp.Explore,
     });
 
     expect(result.logLinkButton).toBeNull();
     expect(result.profileLinkButtons).toBeNull();
     expect(result.sessionLinkButton).toBeDefined();
+  });
+
+  it('should create profile drilldown button when plugin link exists', () => {
+    createSpanLink.mockReturnValue([{ type: SpanLinkType.Profiles, href: '/profiles', title: RelatedProfilesTitle }]);
+    (usePluginLinks as jest.Mock).mockReturnValue({
+      isLoading: false,
+      links: [{
+        pluginId: 'grafana-pyroscope-app',
+        title: 'Open in Profiles Drilldown',
+        onClick: jest.fn(),
+      }]
+    });
+
+    const result = getSpanDetailLinkButtons({
+      span,
+      createSpanLink,
+      datasourceType: 'test',
+      traceToProfilesOptions: {
+        datasourceUid: 'test-uid',
+        profileTypeId: 'test-type',
+        customQuery: false,
+      },
+      timeRange,
+      app: CoreApp.Explore
+    });
+
+    expect(result.profileLinkButtons).toBeDefined();
+    // Should render both the original profile link and the drilldown button
+    expect(result.profileLinkButtons?.props.children).toHaveLength(2);
+  });
+
+  it('should not create profile drilldown button when not in Explore', () => {
+    createSpanLink.mockReturnValue([{ type: SpanLinkType.Profiles, href: '/profiles', title: RelatedProfilesTitle }]);
+    (usePluginLinks as jest.Mock).mockReturnValue({
+      isLoading: false,
+      links: [{
+        pluginId: 'grafana-pyroscope-app',
+        title: 'Open in Profiles Drilldown',
+        onClick: jest.fn(),
+      }]
+    });
+
+    const result = getSpanDetailLinkButtons({
+      span,
+      createSpanLink,
+      datasourceType: 'test',
+      traceToProfilesOptions: {
+        datasourceUid: 'test-uid',
+        profileTypeId: 'test-type',
+        customQuery: false,
+      },
+      timeRange,
+      app: CoreApp.Dashboard
+    });
+
+    expect(result.profileLinkButtons).toBeDefined();
+    // Should only render the original profile link
+    expect(result.profileLinkButtons?.props.children).toBeFalsy();
   });
 });
 

@@ -18,7 +18,7 @@ import memoizeOne from 'memoize-one';
 import * as React from 'react';
 import { RefObject } from 'react';
 
-import { GrafanaTheme2, LinkModel, TimeRange, TraceKeyValuePair, TraceLog } from '@grafana/data';
+import { CoreApp, GrafanaTheme2, LinkModel, TimeRange, TraceKeyValuePair, TraceLog } from '@grafana/data';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
@@ -110,6 +110,7 @@ type TVirtualizedTraceViewOwnProps = {
   redrawListView: {};
   setRedrawListView: (redraw: {}) => void;
   timeRange: TimeRange;
+  app: CoreApp;
 };
 
 export type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TTraceTimeline;
@@ -559,6 +560,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       setTraceFlameGraphs,
       setRedrawListView,
       timeRange,
+      app,
     } = this.props;
     const detailState = detailStates.get(spanID);
     if (!trace || !detailState) {
@@ -601,6 +603,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           setTraceFlameGraphs={setTraceFlameGraphs}
           setRedrawListView={setRedrawListView}
           timeRange={timeRange}
+          app={app}
         />
       </div>
     );
