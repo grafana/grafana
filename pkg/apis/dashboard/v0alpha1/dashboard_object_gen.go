@@ -18,8 +18,11 @@ import (
 type Dashboard struct {
 	metav1.TypeMeta   `json:",inline" yaml:",inline"`
 	metav1.ObjectMeta `json:"metadata" yaml:"metadata"`
-	Spec              DashboardSpec   `json:"spec" yaml:"spec"`
-	DashboardStatus   DashboardStatus `json:"status" yaml:"status"`
+
+	// Spec is the spec of the Dashboard
+	Spec DashboardSpec `json:"spec" yaml:"spec"`
+
+	Status DashboardStatus `json:"status" yaml:"status"`
 }
 
 func (o *Dashboard) GetSpec() any {
@@ -37,14 +40,14 @@ func (o *Dashboard) SetSpec(spec any) error {
 
 func (o *Dashboard) GetSubresources() map[string]any {
 	return map[string]any{
-		"status": o.DashboardStatus,
+		"status": o.Status,
 	}
 }
 
 func (o *Dashboard) GetSubresource(name string) (any, bool) {
 	switch name {
 	case "status":
-		return o.DashboardStatus, true
+		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -57,7 +60,7 @@ func (o *Dashboard) SetSubresource(name string, value any) error {
 		if !ok {
 			return fmt.Errorf("cannot set status type %#v, not of type DashboardStatus", value)
 		}
-		o.DashboardStatus = cast
+		o.Status = cast
 		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
