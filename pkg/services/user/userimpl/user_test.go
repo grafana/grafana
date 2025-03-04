@@ -57,6 +57,7 @@ func TestUserService(t *testing.T) {
 		require.Equal(t, "login", u.Login)
 		require.Equal(t, "name", u.Name)
 		require.Equal(t, "email", u.Email)
+		require.False(t, u.IsProvisioned)
 	})
 
 	t.Run("delete user store returns error", func(t *testing.T) {
