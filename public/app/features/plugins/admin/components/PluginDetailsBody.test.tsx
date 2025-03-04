@@ -25,12 +25,6 @@ describe('PluginDetailsBody', () => {
       },
     },
     {
-      name: 'secrets manager type plugin',
-      plugin: {
-        type: PluginType.secretsmanager,
-      },
-    },
-    {
       name: 'enterprise plugin type without enterprise license',
       plugin: {
         isEnterprise: true,
