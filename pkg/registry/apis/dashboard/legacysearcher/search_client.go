@@ -7,10 +7,14 @@ import (
 	"strconv"
 	"strings"
 
+	"google.golang.org/grpc"
+	"k8s.io/apimachinery/pkg/selection"
+
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/dashboard"
+	dashboardOG "github.com/grafana/grafana/pkg/apis/dashboard"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -18,8 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	unisearch "github.com/grafana/grafana/pkg/storage/unified/search"
-	"google.golang.org/grpc"
-	"k8s.io/apimachinery/pkg/selection"
 )
 
 type DashboardSearchClient struct {
@@ -188,7 +190,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 		case resource.SEARCH_FIELD_REPOSITORY_NAME:
 			if field.Operator == string(selection.NotIn) {
 				for _, val := range vals {
-					name, _ := dashboard.GetProvisionedFileNameFromMeta(val)
+					name, _ := dashboardOG.GetProvisionedFileNameFromMeta(val)
 					query.ProvisionedReposNotIn = append(query.ProvisionedReposNotIn, name)
 				}
 				continue
@@ -199,7 +201,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 				return nil, fmt.Errorf("only one repo name is supported")
 			}
 
-			query.ProvisionedRepo, _ = dashboard.GetProvisionedFileNameFromMeta(vals[0])
+			query.ProvisionedRepo, _ = dashboardOG.GetProvisionedFileNameFromMeta(vals[0])
 		}
 	}
 	searchFields := resource.StandardSearchFields()
@@ -221,7 +223,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	// legacy sql query, since legacy search does not support this
 	if query.ProvisionedRepo != "" || len(query.ProvisionedReposNotIn) > 0 {
 		var dashes []*dashboards.Dashboard
-		if query.ProvisionedRepo == dashboard.PluginIDRepoName {
+		if query.ProvisionedRepo == dashboardOG.PluginIDRepoName {
 			dashes, err = c.dashboardStore.GetDashboardsByPluginID(ctx, &dashboards.GetDashboardsByPluginIDQuery{
 				PluginID: query.ProvisionedPath,
 				OrgID:    user.GetOrgID(),
