@@ -106,13 +106,11 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
         return
       }
 
-      if (query.expr !== payload?.query) {
-        onChange({
-          ...query,
-          expr: payload?.query,
-        });
-        onRunQuery();
-      }
+      onChange({
+        ...query,
+        expr: payload?.query,
+      });
+      onRunQuery();
     };
 
     window.addEventListener('message', handleEvent, false);
