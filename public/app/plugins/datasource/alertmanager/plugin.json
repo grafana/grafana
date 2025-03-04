@@ -7,39 +7,47 @@
     {
       "method": "POST",
       "path": "alertmanager/api/v2/silences",
-      "reqRole": "Editor"
+      "reqRole": "Editor",
+      "reqAction": "alert.silences:create"
     },
     {
       "method": "DELETE",
       "path": "alertmanager/api/v2/silence",
-      "reqRole": "Editor"
+      "reqRole": "Editor",
+      "reqAction": "alert.silences:write"
     },
     {
       "method": "GET",
       "path": "alertmanager/api/v2/silences",
-      "reqRole": "Viewer"
+      "reqRole": "Viewer",
+      "reqAction": "alert.silences:read"
     },
     {
       "method": "POST",
-      "reqRole": "Editor"
+      "reqRole": "Editor",
+      "reqAction": "alert.silences:create"
     },
     {
       "method": "PUT",
-      "reqRole": "Editor"
+      "reqRole": "Editor",
+      "reqAction": "alert.silences:write"
     },
     {
       "method": "DELETE",
-      "reqRole": "Editor"
+      "reqRole": "Editor",
+      "reqAction": "alert.silences:write"
     },
     {
       "method": "GET",
       "path": "alertmanager/api/v2/alerts",
-      "reqRole": "Viewer"
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances:read"
     },
     {
       "method": "GET",
       "path": "api/v1/alerts",
-      "reqRole": "Admin"
+      "reqRole": "Admin",
+      "reqAction": "alert.instances:read"
     }
   ],
   "info": {
