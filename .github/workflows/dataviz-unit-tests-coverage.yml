@@ -1,0 +1,76 @@
+name: Test Coverage for Table Components
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - 'packages/grafana-ui/src/components/Table/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'yarn'
+          cache-dependency-path: 'yarn.lock'
+
+      # Install dependencies
+      - name: Install dependencies
+        run: yarn install --immutable --check-cache
+
+      # Run tests with coverage for specific files
+      - name: Run tests with coverage for Table components
+        run: yarn run test:coverage -- --collectCoverageFrom='packages/grafana-ui/src/components/Table/**/*.{ts,tsx}'
+
+      # Extract and save coverage metrics for Table components
+      - name: Extract Table component coverage
+        id: extract-coverage
+        run: |
+          # Create a summary file
+          echo "# Table Component Coverage" > table-coverage.md
+          echo "" >> table-coverage.md
+          
+          # Extract overall coverage from coverage summary
+          SUMMARY_JSON=$(cat coverage/coverage-summary.json)
+          
+          # Extract coverage for Table components only
+          echo "## File Coverage" >> table-coverage.md
+          echo "" >> table-coverage.md
+          echo "| File | Line Coverage | Statement Coverage | Function Coverage | Branch Coverage |" >> table-coverage.md
+          echo "|------|---------------|-------------------|-------------------|-----------------|" >> table-coverage.md
+          
+          # Process each file in the Table directory
+          for file in $(find coverage/coverage-final.json -type f -name "*.json"); do
+            jq -r '..|objects|select(.path? and .path|test("Table")) | "\(.path)|\(.lines.pct)%|\(.statements.pct)%|\(.functions.pct)%|\(.branches.pct)%"' $file | 
+            while IFS="|" read -r path line_pct stmt_pct func_pct branch_pct; do
+              echo "| $path | $line_pct | $stmt_pct | $func_pct | $branch_pct |" >> table-coverage.md
+            done
+          done
+          
+          # Save overall metrics
+          TABLE_LINE_COVERAGE=$(jq -r '..|objects|select(.path? and .path|test("Table"))|.lines.pct' coverage/coverage-final.json | awk '{ sum += $1; n++ } END { if (n > 0) print sum / n; else print 0 }')
+          TABLE_FUNC_COVERAGE=$(jq -r '..|objects|select(.path? and .path|test("Table"))|.functions.pct' coverage/coverage-final.json | awk '{ sum += $1; n++ } END { if (n > 0) print sum / n; else print 0 }')
+          
+          echo "table_line_coverage=$TABLE_LINE_COVERAGE" >> $GITHUB_OUTPUT
+          echo "table_func_coverage=$TABLE_FUNC_COVERAGE" >> $GITHUB_OUTPUT
+          
+          # Add summary to the markdown file
+          echo "## Summary" >> table-coverage.md
+          echo "" >> table-coverage.md
+          echo "- Line Coverage: $TABLE_LINE_COVERAGE%" >> table-coverage.md
+          echo "- Function Coverage: $TABLE_FUNC_COVERAGE%" >> table-coverage.md
+
+      # Upload the coverage report as an artifact
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: table-coverage-report
+          path: |
+            coverage/
+            table-coverage.md
