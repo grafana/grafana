@@ -902,6 +902,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		_, err = store.InsertAlertRules(context.Background(), &usr, []models.AlertRule{rules[0]})
 		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
 	})
+
 	t.Run("fail insert rules with the same title in a folder", func(t *testing.T) {
 		cp := models.CopyRule(&rules[0])
 		cp.UID = cp.UID + "-new"
@@ -915,12 +916,19 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		require.ErrorContains(t, err, rules[0].Title)
 		require.ErrorContains(t, err, rules[0].NamespaceUID)
 	})
+
 	t.Run("should not let insert rules with the same UID", func(t *testing.T) {
 		cp := models.CopyRule(&rules[0])
 		cp.Title = "unique-test-title"
+		cp.NamespaceUID = "unique-namespace-uid"
 		_, err = store.InsertAlertRules(context.Background(), &usr, []models.AlertRule{*cp})
 		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
-		require.ErrorContains(t, err, "rule UID under the same organisation should be unique")
+		require.ErrorIs(t, err, models.ErrAlertRuleUIDUniqueConstraintViolation)
+		require.ErrorContains(t, err, cp.UID)
+		require.ErrorContains(t, err, cp.Title)
+		require.ErrorContains(t, err, rules[0].Title)
+		require.ErrorContains(t, err, cp.NamespaceUID)
+		require.ErrorContains(t, err, rules[0].NamespaceUID)
 	})
 
 	t.Run("should emit event when rules are inserted", func(t *testing.T) {
