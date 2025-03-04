@@ -36,7 +36,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       pageClass: 'page-folders',
       routeName: FolderRoutes.Browse,
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "FoldersPage" */ '../features/browse-dashboards/BrowseFoldersPage')
+        () => import(/* webpackChunkName: "FoldersPage" */ '../features/browse-resources/BrowseFoldersPage')
       ),
     },
     {
@@ -77,6 +77,14 @@ export function getAppRoutes(): RouteDescriptor[] {
       routeName: DashboardRoutes.Normal,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPageProxy')
+      ),
+    },
+    {
+      path: '/folder-app',
+      pageClass: 'page-folders',
+      routeName: FolderRoutes.Browse,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "FoldersPage" */ 'app/features/browse-resources/BrowseFoldersPage')
       ),
     },
     {
