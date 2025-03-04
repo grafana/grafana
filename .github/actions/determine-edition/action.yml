@@ -1,0 +1,27 @@
+name: 'Determine Edition'
+description: 'Determines whether to use OSS or Enterprise edition'
+
+outputs:
+  edition:
+    description: 'The edition to use (oss or enterprise)'
+    value: ${{ steps.set-edition.outputs.edition }}
+  use_enterprise:
+    description: 'Whether to use enterprise features'
+    value: ${{ steps.set-edition.outputs.use_enterprise }}
+    
+runs:
+  using: "composite"
+  steps:
+    - name: Set edition based on repository type
+      id: set-edition
+      shell: bash
+      run: |
+        if [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.pull_request.head.repo.fork }}" == "false" ]]; then
+          echo "edition=enterprise" >> $GITHUB_OUTPUT
+          echo "use_enterprise=true" >> $GITHUB_OUTPUT
+          echo "Using enterprise edition"
+        else
+          echo "edition=oss" >> $GITHUB_OUTPUT
+          echo "use_enterprise=false" >> $GITHUB_OUTPUT
+          echo "Using OSS edition"
+        fi

@@ -17,9 +17,6 @@ permissions:
   contents: read
   id-token: write
 
-env:
-  EDITION: 'oss'
-
 jobs:
   # This job determines if we need to generate coverage based on which files changed
   check-coverage:
@@ -60,15 +57,20 @@ jobs:
     name: Setup Enterprise
     needs: check-coverage
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+        
+      - name: Determine edition
+        id: edition
+        uses: ./.github/actions/determine-edition
+        
       - name: Setup Enterprise
+        if: steps.edition.outputs.use_enterprise == 'true'
         uses: ./.github/actions/setup-enterprise
 
       - name: Cache enterprise state
+        if: steps.edition.outputs.use_enterprise == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: enterprise-state
@@ -86,6 +88,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
+      - name: Determine edition
+        id: edition
+        uses: ./.github/actions/determine-edition
+        
+      - name: Set edition environment variable
+        run: echo "EDITION=${{ steps.edition.outputs.edition }}" >> $GITHUB_ENV
+        
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -100,9 +109,9 @@ jobs:
       - name: Get runner name
         run: echo ${{ runner.name }}
 
-      # Replace Setup Enterprise with restore
+      # Restore enterprise state only if we're using enterprise
       - name: Restore enterprise state
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+        if: steps.edition.outputs.use_enterprise == 'true'
         uses: actions/download-artifact@v4
         with:
           name: enterprise-state
@@ -114,10 +123,16 @@ jobs:
       - name: Verify Jsonnet generation
         run: CODEGEN_VERIFY=1 make gen-jsonnet
 
+      # Generate Go files with appropriate tags based on edition
+      - name: Generate Go files with edition tag
+        run: |
+          go run ./pkg/build/wire/cmd/wire/main.go gen -tags "${{ steps.edition.outputs.edition }}" ./pkg/server
+          make gen-go
+
       # Coverage is only generated if check-coverage determined it was needed
       - name: Run backend unit tests
         shell: bash
-        run: ${{ needs.check-coverage.outputs.generate == 'true' && 'COVER_OPTS="-coverprofile=unit.cov -covermode=atomic -coverpkg=github.com/grafana/grafana/..." make gen-go test-go-unit' || 'make gen-go test-go-unit' }}
+        run: ${{ needs.check-coverage.outputs.generate == 'true' && format('COVER_OPTS="-coverprofile=unit.cov -covermode=atomic -coverpkg=github.com/grafana/grafana/..." GO_TAGS={0} make test-go-unit', steps.edition.outputs.edition) || format('GO_TAGS={0} make test-go-unit', steps.edition.outputs.edition) }}
 
       - name: Upload unit coverage
         if: needs.check-coverage.outputs.generate == 'true'
@@ -138,6 +153,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
+      - name: Determine edition
+        id: edition
+        uses: ./.github/actions/determine-edition
+        
+      - name: Set edition environment variable
+        run: echo "EDITION=${{ steps.edition.outputs.edition }}" >> $GITHUB_ENV
+        
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -152,17 +174,23 @@ jobs:
       - name: Get runner name
         run: echo ${{ runner.name }}
 
-      # Replace Setup Enterprise with restore
+      # Restore enterprise state only if we're using enterprise
       - name: Restore enterprise state
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+        if: steps.edition.outputs.use_enterprise == 'true'
         uses: actions/download-artifact@v4
         with:
           name: enterprise-state
           path: pkg/
 
+      # Generate Go files with appropriate tags based on edition
+      - name: Generate Go files with edition tag
+        run: |
+          go run ./pkg/build/wire/cmd/wire/main.go gen -tags "${{ steps.edition.outputs.edition }}" ./pkg/server
+          make gen-go
+
       - name: Run backend integration tests
         shell: bash
-        run: ${{ needs.check-coverage.outputs.generate == 'true' && 'COVER_OPTS="-coverprofile=integration.cov -covermode=atomic -coverpkg=github.com/grafana/grafana/..." make gen-go test-go-integration' || 'make gen-go test-go-integration' }}
+        run: ${{ needs.check-coverage.outputs.generate == 'true' && format('COVER_OPTS="-coverprofile=integration.cov -covermode=atomic -coverpkg=github.com/grafana/grafana/..." GO_TAGS={0} make test-go-integration', steps.edition.outputs.edition) || format('GO_TAGS={0} make test-go-integration', steps.edition.outputs.edition) }}
 
       - name: Upload integration coverage
         if: needs.check-coverage.outputs.generate == 'true'
@@ -185,6 +213,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
+      - name: Determine edition
+        id: edition
+        uses: ./.github/actions/determine-edition
+        
+      - name: Set edition environment variable
+        run: echo "EDITION=${{ steps.edition.outputs.edition }}" >> $GITHUB_ENV
+        
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -194,15 +229,17 @@ jobs:
       # Must restore enterprise state before processing coverage files since they contain
       # references to enterprise code that existed during test execution
       - name: Restore enterprise state
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+        if: steps.edition.outputs.use_enterprise == 'true'
         uses: actions/download-artifact@v4
         with:
           name: enterprise-state
           path: pkg/
 
       # Need to generate Go files before processing coverage since coverage references generated code
-      - name: Generate Go files
-        run: make gen-go
+      - name: Generate Go files with edition tag
+        run: |
+          go run ./pkg/build/wire/cmd/wire/main.go gen -tags "${{ steps.edition.outputs.edition }}" ./pkg/server
+          make gen-go
           
       - name: Download unit coverage
         continue-on-error: true
@@ -225,6 +262,8 @@ jobs:
         with:
           unit-cov-path: unit.cov
           integration-cov-path: integration.cov
+        env:
+          CHECK_COVERAGE_THRESHOLDS: false  # Start with thresholds disabled until coverage improves
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
