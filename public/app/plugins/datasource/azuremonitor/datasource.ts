@@ -168,7 +168,13 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     return this.azureResourceGraphDatasource.getResourceGroups(this.templateSrv.replace(subscriptionId));
   }
 
-  getMetricNamespaces(subscriptionId: string, resourceGroup?: string, resourceUri?: string, custom?: boolean) {
+  getMetricNamespaces(
+    subscriptionId: string,
+    resourceGroup?: string,
+    resourceUri?: string,
+    custom?: boolean,
+    variableQuery?: boolean
+  ) {
     let url = `/subscriptions/${subscriptionId}`;
     if (resourceGroup) {
       url += `/resourceGroups/${resourceGroup}`;
@@ -176,6 +182,10 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     if (resourceUri) {
       url = resourceUri;
     }
+    if (variableQuery) {
+      return this.azureResourceGraphDatasource.getMetricNamespaces(url);
+    }
+
     return this.azureMonitorDatasource.getMetricNamespaces(
       { resourceUri: url },
       // If custom namespaces are being queried we do not issue the query against the global region

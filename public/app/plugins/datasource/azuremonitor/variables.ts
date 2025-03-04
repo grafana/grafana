@@ -9,6 +9,7 @@ import {
 } from '@grafana/data';
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
+import { resourceTypes } from './azureMetadata';
 import UrlBuilder from './azure_monitor/url_builder';
 import VariableEditor from './components/VariableEditor/VariableEditor';
 import DataSource from './datasource';
@@ -53,10 +54,22 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
             return { data: [] };
           case AzureQueryType.NamespacesQuery:
             if (queryObj.subscription && this.hasValue(queryObj.subscription)) {
-              const rgs = await this.datasource.getMetricNamespaces(queryObj.subscription, queryObj.resourceGroup);
-              return {
-                data: rgs?.length ? [toDataFrame(rgs)] : [],
-              };
+              if (queryObj.resourceGroup) {
+                const rgs = await this.datasource.getMetricNamespaces(
+                  queryObj.subscription,
+                  queryObj.resourceGroup,
+                  undefined,
+                  false,
+                  true
+                );
+                return {
+                  data: rgs?.length ? [toDataFrame(rgs)] : [],
+                };
+              } else {
+                return {
+                  data: resourceTypes.map((resourceType) => toDataFrame([{ text: resourceType, value: resourceType }])),
+                };
+              }
             }
             return { data: [] };
           case AzureQueryType.ResourceNamesQuery:
