@@ -10,7 +10,7 @@ import UrlBuilder from '../../azure_monitor/url_builder';
 import DataSource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import { migrateQuery } from '../../grafanaTemplateVariableFns';
-import { AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../types';
+import { AzureLogsVariable, AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../types';
 import useLastError from '../../utils/useLastError';
 import ArgQueryEditor from '../ArgQueryEditor';
 import LogsQueryEditor from '../LogsQueryEditor';
@@ -159,7 +159,7 @@ const VariableEditor = (props: Props) => {
   useEffect(() => {
     if (subscription && resourceGroup) {
       datasource.getMetricNamespaces(subscription, resourceGroup).then((rgs) => {
-        setNamespaces(rgs.map((s) => ({ label: s.text, value: s.value })));
+        setNamespaces(rgs.map((s: AzureLogsVariable) => ({ label: s.text, value: s.value })));
       });
     }
   }, [datasource, subscription, resourceGroup]);
@@ -196,7 +196,7 @@ const VariableEditor = (props: Props) => {
         resourceName: resource,
       });
       datasource.getMetricNamespaces(subscription, resourceGroup, resourceUri, true).then((rgs) => {
-        setCustomNamespaces(rgs.map((s) => ({ label: s.text, value: s.value })));
+        setCustomNamespaces(rgs.map((s: AzureLogsVariable) => ({ label: s.text, value: s.value })));
       });
     }
   }, [datasource, subscription, resourceGroup, namespace, resource]);

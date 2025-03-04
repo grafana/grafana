@@ -135,8 +135,8 @@ describe('AzureMonitorUrlBuilder', () => {
         {
           resourceUri: '/subscriptions/sub/resource-uri/resource',
         },
-        true,
-        templateSrv
+        templateSrv,
+        true
       );
       expect(url).toBe(
         '/subscriptions/sub/resource-uri/resource/providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview&region=global'
@@ -148,14 +148,14 @@ describe('AzureMonitorUrlBuilder', () => {
         '',
         '2017-05-01-preview',
         {
-          resourceUri: '/subscriptions/sub/resource-uri/resource',
+          resourceUri: '/subscriptions/sub/resource/resource-uri',
         },
-        false,
         templateSrv,
+        false,
         'testregion'
       );
       expect(url).toBe(
-        '/subscriptions/sub/resource-uri/resource/providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview&region=testregion'
+        '/subscriptions/sub/resource/resource-uri/providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview&region=testregion'
       );
     });
 
@@ -166,8 +166,8 @@ describe('AzureMonitorUrlBuilder', () => {
         {
           resourceUri: '/subscriptions/sub/resource-uri/resource',
         },
-        true,
         templateSrv,
+        true,
         'testregion'
       );
       expect(url).toBe(
@@ -236,12 +236,11 @@ describe('AzureMonitorUrlBuilder', () => {
             metricNamespace: 'Microsoft.NetApp/netAppAccounts/capacityPools/volumes',
             resourceName: 'rn1/rn2/rn3',
           },
-          true,
-          templateSrv
+          templateSrv,
+          true
         );
         expect(url).toBe(
-          '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.NetApp/netAppAccounts/rn1/capacityPools/rn2/volumes/rn3/' +
-            'providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview&region=global'
+          '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.NetApp/netAppAccounts/rn1/capacityPools/rn2/volumes/rn3/providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview&region=global'
         );
       });
     });
@@ -257,12 +256,11 @@ describe('AzureMonitorUrlBuilder', () => {
             metricNamespace: 'Microsoft.Sql/servers/databases',
             resourceName: 'rn1/rn2',
           },
-          true,
-          templateSrv
+          templateSrv,
+          true
         );
         expect(url).toBe(
-          '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn1/databases/rn2/' +
-            'providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview&region=global'
+          '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn1/databases/rn2/providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview&region=global'
         );
       });
 
@@ -276,12 +274,11 @@ describe('AzureMonitorUrlBuilder', () => {
             metricNamespace: 'Microsoft.Sql/servers/databases',
             resourceName: 'rn1/rn2',
           },
-          false,
-          templateSrv
+          templateSrv,
+          false
         );
         expect(url).toBe(
-          '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn1/databases/rn2/' +
-            'providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview'
+          '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn1/databases/rn2/providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview'
         );
       });
     });
@@ -297,12 +294,11 @@ describe('AzureMonitorUrlBuilder', () => {
             metricNamespace: 'Microsoft.Sql/servers',
             resourceName: 'rn',
           },
-          true,
-          templateSrv
+          templateSrv,
+          true
         );
         expect(url).toBe(
-          '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn/' +
-            'providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview&region=global'
+          '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn/providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview&region=global'
         );
       });
     });

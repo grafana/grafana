@@ -1,9 +1,12 @@
-import { find, startsWith } from 'lodash';
+import { startsWith } from 'lodash';
+import { lastValueFrom } from 'rxjs';
 
 import { AzureCredentials } from '@grafana/azure-sdk';
-import { ScopedVars } from '@grafana/data';
+import { DataQueryRequest, getDefaultTimeRange, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv, TemplateSrv, VariableInterpolation } from '@grafana/runtime';
 
+import { resourceTypes } from '../azureMetadata/resourceTypes';
+import AzureResourceGraphDatasource from '../azure_resource_graph/azure_resource_graph_datasource';
 import { getCredentials } from '../credentials';
 import TimegrainConverter from '../time_grain_converter';
 import {
@@ -54,9 +57,11 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
   resourcePath: string;
   declare resourceGroup: string;
   declare resourceName: string;
+  azureResourceGraphDatasource: AzureResourceGraphDatasource;
 
   constructor(
     instanceSettings: AzureMonitorDataSourceInstanceSettings,
+    azureResourceGraphDatasource: AzureResourceGraphDatasource,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
@@ -66,6 +71,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
     this.basicLogsEnabled = instanceSettings.jsonData.basicLogsEnabled;
 
     this.resourcePath = routeNames.azureMonitor;
+    this.azureResourceGraphDatasource = azureResourceGraphDatasource;
   }
 
   isConfigured(): boolean {
@@ -238,47 +244,117 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
     return (await Promise.all(promises)).flat();
   }
 
+  async runAzureResourceGraphQuery(subscriptionId: string, resourceGroup?: string) {
+    const query = `
+      Resources
+      | where subscriptionId == '${subscriptionId}'
+      | where resourceGroup == '${resourceGroup}'
+      | distinct type
+    `;
+
+    const requestPayload: DataQueryRequest<AzureMonitorQuery> = {
+      requestId: `azure-resource-graph-query-${Date.now()}`,
+      app: 'grafana',
+      interval: '',
+      intervalMs: 5000,
+      range: getDefaultTimeRange(),
+      scopedVars: {},
+      timezone: 'browser',
+      startTime: Date.now() - 3600000,
+      targets: [
+        {
+          refId: 'A',
+          queryType: AzureQueryType.AzureResourceGraph,
+          subscriptions: [subscriptionId],
+          azureResourceGraph: {
+            resultFormat: 'table',
+            query: query,
+          },
+        },
+      ],
+    };
+
+    return this.azureResourceGraphDatasource.query(requestPayload);
+  }
+
   // Note globalRegion should be false when querying custom metric namespaces
-  getMetricNamespaces(query: GetMetricNamespacesQuery, globalRegion: boolean, region?: string, custom?: boolean) {
+  async getMetricNamespaces(
+    query: GetMetricNamespacesQuery,
+    globalRegion?: boolean,
+    region?: string,
+    custom?: boolean
+  ) {
+    let resourceUri: string;
+    let subscriptionId: string | undefined;
+    let resourceGroup: string | undefined;
+
+    // Extract resourceUri or build it dynamically
+    if ('resourceUri' in query && query.resourceUri) {
+      resourceUri = query.resourceUri;
+    } else {
+      resourceUri = UrlBuilder.buildAzureMonitorGetMetricNamespacesUrl(
+        this.resourcePath,
+        this.apiVersion,
+        query,
+        this.templateSrv,
+        globalRegion,
+        region
+      );
+    }
+
+    // Extract subscription and resource group
+    const resourceUriParts = resourceUri.split('/');
+    const subscriptionIndex = resourceUriParts.indexOf('subscriptions');
+    if (subscriptionIndex !== -1 && subscriptionIndex + 1 < resourceUriParts.length) {
+      subscriptionId = resourceUriParts[subscriptionIndex + 1];
+    }
+    const resourceGroupIndex = resourceUriParts.indexOf('resourceGroups');
+    if (resourceGroupIndex !== -1 && resourceGroupIndex + 1 < resourceUriParts.length) {
+      resourceGroup = resourceUriParts[resourceGroupIndex + 1];
+    }
+
+    if (resourceGroup && subscriptionId) {
+      try {
+        const observableQuery = await this.runAzureResourceGraphQuery(subscriptionId, resourceGroup);
+        const resourcesWithMetrics = await lastValueFrom(observableQuery);
+        const allowedResourceTypes = new Set(resourceTypes.map((t) => t.toLowerCase()));
+
+        // Filter resources to include only those in resourceTypes
+        const filteredResources = resourcesWithMetrics.data[0].fields[0].values.filter((type: string) =>
+          allowedResourceTypes.has(type.toLowerCase())
+        );
+
+        return filteredResources;
+      } catch (error) {
+        console.error(`Failed to run ARG query: ${error}`);
+        return [];
+      }
+    }
+
+    // Default behavior if no resource group is provided
     const url = UrlBuilder.buildAzureMonitorGetMetricNamespacesUrl(
       this.resourcePath,
       this.apiPreviewVersion,
-      // Only use the first query, as the metric namespaces should be the same for all queries
       this.replaceSingleTemplateVariables(query),
-      globalRegion,
       this.templateSrv,
+      globalRegion,
       region
     );
+
     return this.getResource(url)
       .then((result: AzureAPIResponse<MetricNamespace>) => {
         if (custom) {
           result.value = result.value.filter((namespace) => namespace.classification === 'Custom');
         }
+
         return ResponseParser.parseResponseValues(
           result,
           'properties.metricNamespaceName',
           'properties.metricNamespaceName'
         );
       })
-      .then((result) => {
-        if (url.toLowerCase().includes('microsoft.storage/storageaccounts')) {
-          const storageNamespaces = [
-            'microsoft.storage/storageaccounts',
-            'microsoft.storage/storageaccounts/blobservices',
-            'microsoft.storage/storageaccounts/fileservices',
-            'microsoft.storage/storageaccounts/tableservices',
-            'microsoft.storage/storageaccounts/queueservices',
-          ];
-          for (const namespace of storageNamespaces) {
-            if (!find(result, ['value', namespace.toLowerCase()])) {
-              result.push({ value: namespace, text: namespace });
-            }
-          }
-        }
-        return result;
-      })
-      .catch((reason) => {
-        console.error(`Failed to get metric namespaces: ${reason}`);
+      .catch((error) => {
+        console.error(`Failed to get metric namespaces: ${error}`);
         return [];
       });
   }

@@ -46,9 +46,9 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
-    this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings);
-    this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
     this.azureResourceGraphDatasource = new AzureResourceGraphDatasource(instanceSettings);
+    this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings, this.azureResourceGraphDatasource);
+    this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
     this.resourcePickerData = new ResourcePickerData(instanceSettings, this.azureMonitorDatasource);
 
     this.pseudoDatasource = {
