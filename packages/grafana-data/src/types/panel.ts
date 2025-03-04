@@ -89,7 +89,7 @@ export interface PanelProps<T = any> {
   options: T;
 
   /**  * When set, it disregards the <options.tooltip> in favor of a fully customizable one.*/
-  customTooltip?: React.ReactNode;
+  getCustomTooltip?: (props: any) => React.ReactNode;
 
   /** Indicates whether or not panel should be rendered transparent */
   transparent: boolean;

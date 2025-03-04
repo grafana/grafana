@@ -30,7 +30,7 @@ export const TimeSeriesPanel = ({
   fieldConfig,
   onChangeTimeRange,
   replaceVariables,
-  customTooltip,
+  getCustomTooltip,
 }: TimeSeriesPanelProps) => {
   const {
     sync,
@@ -124,10 +124,21 @@ export const TimeSeriesPanel = ({
                     dismiss();
                   };
 
-                  return customTooltip ? (
-                    customTooltip
+                  return getCustomTooltip ? (
+                    getCustomTooltip({
+                      series: alignedFrame,
+                      dataIdxs,
+                      seriesIdx,
+                      mode: viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode,
+                      sortOrder: options.tooltip.sort,
+                      isPinned,
+                      annotate: enableAnnotationCreation ? annotate : undefined,
+                      maxHeight: options.tooltip.maxHeight,
+                      replaceVariables,
+                      dataLinks,
+                      hideZeros: options.tooltip.hideZeros,
+                    })
                   ) : (
-                    // not sure it header time here works for annotations, since it's taken from nearest datapoint index
                     <TimeSeriesTooltip
                       series={alignedFrame}
                       dataIdxs={dataIdxs}
