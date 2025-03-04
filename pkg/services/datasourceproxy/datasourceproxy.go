@@ -3,6 +3,7 @@ package datasourceproxy
 import (
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/jwttoken"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -27,7 +28,8 @@ import (
 func ProvideService(dataSourceCache datasources.CacheService, datasourceReqValidator validations.DataSourceRequestValidator,
 	pluginStore pluginstore.Store, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
 	oauthTokenService *oauthtoken.Service, dsService datasources.DataSourceService,
-	tracer tracing.Tracer, secretsService secrets.Service, features featuremgmt.FeatureToggles) *DataSourceProxyService {
+	tracer tracing.Tracer, secretsService secrets.Service, features featuremgmt.FeatureToggles,
+	jwtTokenService jwttoken.JWTTokenService) *DataSourceProxyService {
 	return &DataSourceProxyService{
 		DataSourceCache:            dataSourceCache,
 		DataSourceRequestValidator: datasourceReqValidator,
@@ -35,6 +37,7 @@ func ProvideService(dataSourceCache datasources.CacheService, datasourceReqValid
 		Cfg:                        cfg,
 		HTTPClientProvider:         httpClientProvider,
 		OAuthTokenService:          oauthTokenService,
+		JWTTokenService:            jwtTokenService,
 		DataSourcesService:         dsService,
 		tracer:                     tracer,
 		secretsService:             secretsService,
@@ -49,6 +52,7 @@ type DataSourceProxyService struct {
 	Cfg                        *setting.Cfg
 	HTTPClientProvider         httpclient.Provider
 	OAuthTokenService          *oauthtoken.Service
+	JWTTokenService            jwttoken.JWTTokenService
 	DataSourcesService         datasources.DataSourceService
 	tracer                     tracing.Tracer
 	secretsService             secrets.Service
@@ -123,7 +127,7 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqConte
 
 	proxyPath := getProxyPath(c)
 	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin.Routes, c, proxyPath, p.Cfg, p.HTTPClientProvider,
-		p.OAuthTokenService, p.DataSourcesService, p.tracer, p.features)
+		p.OAuthTokenService, p.DataSourcesService, p.tracer, p.features, p.JWTTokenService)
 	if err != nil {
 		var urlValidationError datasource.URLValidationError
 		if errors.As(err, &urlValidationError) {
