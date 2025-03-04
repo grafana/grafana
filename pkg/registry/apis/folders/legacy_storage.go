@@ -2,7 +2,6 @@ package folders
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -139,9 +138,10 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		OrgID:        info.OrgID,
 	})
 	if err != nil || dto == nil {
-		if errors.Is(err, dashboards.ErrFolderNotFound) || err == nil {
-			err = resourceInfo.NewNotFound(name)
+		if err == nil {
+			err = dashboards.ErrFolderNotFound
 		}
+
 		statusErr := apierrors.ToFolderStatusError(err)
 		return nil, &statusErr
 	}
