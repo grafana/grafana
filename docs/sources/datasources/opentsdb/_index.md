@@ -62,7 +62,7 @@ To configure basic settings for the data source, complete the following steps:
 | **Default**         | Default data source that will be be pre-selected for new panels.                         |
 | **URL**             | The HTTP protocol, IP, and port of your OpenTSDB server (default port is usually 4242).  |
 | **Allowed cookies** | Listing of cookies to forward to the data source.                                        |
-| **Version**         | The OpenTSDB version.                                                                    |
+| **Version**         | The OpenTSDB version (supported versions are: 2.4, 2.3, 2.2 and versions less than 2.1). |
 | **Resolution**      | Metrics from OpenTSDB may have data points with either second or millisecond resolution. |
 | **Lookup limit**    | Default is 1000.                                                                         |
 
@@ -98,9 +98,13 @@ can be used to query OpenTSDB. Fill Policy is also introduced in OpenTSDB 2.2.
 While using OpenTSDB 2.2 data source, make sure you use either Filters or Tags as they are mutually exclusive. If used together, might give you weird results.
 {{% /admonition %}}
 
+{{% admonition type="note" %}}
+When using OpenTSDB 2.4 with alerting, queries are executed with the parameter `arrays=true`. This causes OpenTSDB to return data points as an array of arrays instead of a map of key-value pairs. Grafana then converts this data into the appropriate data frame format.
+{{% /admonition %}}
+
 ### Auto complete suggestions
 
-As soon as you start typing metric names, tag names and tag values , you should see highlighted auto complete suggestions for them.
+As you begin typing metric names, tag names, or tag values, highlighted autocomplete suggestions will appear.
 The autocomplete only works if the OpenTSDB suggest API is enabled.
 
 ## Templating queries

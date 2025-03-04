@@ -194,17 +194,34 @@ export const generateColumns = (
                   if (!info && p === 'general') {
                     info = { kind: 'folder', url: '/dashboards', name: 'Dashboards' };
                   }
-                  return info ? (
-                    <a key={p} href={info.url} className={styles.locationItem}>
-                      <Icon name={getIconForKind(info.kind)} />
 
-                      <Text variant="body" truncate>
-                        {info.name}
-                      </Text>
-                    </a>
-                  ) : (
-                    <span key={p}>{p}</span>
-                  );
+                  if (info) {
+                    const content = (
+                      <>
+                        <Icon name={getIconForKind(info.kind)} />
+
+                        <Text variant="body" truncate>
+                          {info.name}
+                        </Text>
+                      </>
+                    );
+
+                    if (info.url) {
+                      return (
+                        <a key={p} href={info.url} className={styles.locationItem}>
+                          {content}
+                        </a>
+                      );
+                    }
+
+                    return (
+                      <div key={p} className={styles.locationItem}>
+                        {content}
+                      </div>
+                    );
+                  }
+
+                  return <span key={p}>{p}</span>;
                 })}
               </div>
             )}

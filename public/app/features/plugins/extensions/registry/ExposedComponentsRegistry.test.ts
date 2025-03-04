@@ -52,6 +52,7 @@ describe('ExposedComponentsRegistry', () => {
     extensions: {
       addedLinks: [],
       addedComponents: [],
+      addedFunctions: [],
       exposedComponents: [],
       extensionPoints: [],
     },

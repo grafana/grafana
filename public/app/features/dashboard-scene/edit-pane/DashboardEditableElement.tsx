@@ -6,14 +6,17 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { useLayoutCategory } from '../scene/layouts-shared/DashboardLayoutSelector';
-import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { DashboardLayoutSelector } from '../scene/layouts-shared/DashboardLayoutSelector';
+import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
 export class DashboardEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
-  public readonly typeName = 'Dashboard';
 
   public constructor(private dashboard: DashboardScene) {}
+
+  public getEditableElementInfo(): EditableDashboardElementInfo {
+    return { typeId: 'dashboard', icon: 'apps', name: t('dashboard.edit-pane.elements.dashboard', 'Dashboard') };
+  }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
     const dashboard = this.dashboard;
@@ -25,29 +28,29 @@ export class DashboardEditableElement implements EditableDashboardElement {
       return new OptionsPaneCategoryDescriptor({
         title: t('dashboard.options.title', 'Dashboard options'),
         id: 'dashboard-options',
-        isOpenDefault: true,
+        isOpenable: false,
       })
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.options.title-option', 'Title'),
-            render: function renderTitle() {
-              return <DashboardTitleInput dashboard={dashboard} />;
-            },
+            render: () => <DashboardTitleInput dashboard={dashboard} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.options.description', 'Description'),
-            render: function renderTitle() {
-              return <DashboardDescriptionInput dashboard={dashboard} />;
-            },
+            render: () => <DashboardDescriptionInput dashboard={dashboard} />,
+          })
+        )
+        .addItem(
+          new OptionsPaneItemDescriptor({
+            title: t('dashboard.layout.common.layout', 'Layout'),
+            render: () => <DashboardLayoutSelector layoutManager={body} />,
           })
         );
-    }, [dashboard]);
+    }, [body, dashboard]);
 
-    const layoutCategory = useLayoutCategory(body);
-
-    return [dashboardOptions, layoutCategory];
+    return [dashboardOptions];
   }
 }
 

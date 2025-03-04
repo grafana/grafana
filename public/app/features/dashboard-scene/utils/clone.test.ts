@@ -30,6 +30,8 @@ describe('clone', () => {
       expect(getOriginalKey('panel-clone-1')).toBe('panel');
       expect(getOriginalKey('row-clone-1/panel-clone-2')).toBe('panel');
       expect(getOriginalKey('tab-clone-0/row-clone-1/panel-clone-2')).toBe('panel');
+      expect(getOriginalKey('panel-2-clone-3')).toBe('panel-2');
+      expect(getOriginalKey('panel-2')).toBe('panel-2');
     });
   });
 
@@ -47,6 +49,20 @@ describe('clone', () => {
       expect(isClonedKey('panel')).toBe(false);
       expect(isClonedKey('tab-clone-1/row-clone-2/panel')).toBe(false);
       expect(isClonedKey('row-clone-1/panel')).toBe(false);
+    });
+
+    it('should properly handle indexes containing 0', () => {
+      expect(isClonedKey('tab-clone-0/row-clone-1/panel-clone-0')).toBe(false);
+      expect(isClonedKey('row-clone-0/panel-clone-0')).toBe(false);
+      expect(isClonedKey('panel-clone-0')).toBe(false);
+
+      expect(isClonedKey('tab-clone-0/row-clone-1/panel-clone-101')).toBe(true);
+      expect(isClonedKey('row-clone-0/panel-clone-101')).toBe(true);
+      expect(isClonedKey('panel-clone-1010')).toBe(true);
+
+      expect(isClonedKey('tab-clone-0/row-clone-1/panel-clone-10')).toBe(true);
+      expect(isClonedKey('row-clone-0/panel-clone-100')).toBe(true);
+      expect(isClonedKey('panel-clone-1000')).toBe(true);
     });
   });
 

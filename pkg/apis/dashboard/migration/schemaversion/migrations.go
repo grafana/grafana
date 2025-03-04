@@ -4,14 +4,14 @@ import "strconv"
 
 type SchemaVersionMigrationFunc func(map[string]interface{}) error
 
-const (
-	MINIUM_VERSION = 38
-	LATEST_VERSION = 40
-)
+const LATEST_VERSION = 41
 
 var Migrations = map[int]SchemaVersionMigrationFunc{
+	37: V37,
+	38: V38,
 	39: V39,
 	40: V40,
+	41: V41,
 }
 
 func GetSchemaVersion(dash map[string]interface{}) int {

@@ -23,40 +23,32 @@ type LocalRepositoryConfig struct {
 	Path string `json:"path,omitempty"`
 }
 
-type S3RepositoryConfig struct {
-	Region string `json:"region,omitempty"`
-	Bucket string `json:"bucket,omitempty"`
+// Workflow used for changes in the repository.
+// +enum
+type Workflow string
 
-	// TODO: Add ACL?
-	// TODO: Encryption??
-	// TODO: How do we define access? Secrets?
-}
+const (
+	// WriteWorkflow allows a user to write directly to the repository
+	WriteWorkflow Workflow = "write"
+	// BranchWorkflow creates a branch for changes
+	BranchWorkflow Workflow = "branch"
+)
 
 type GitHubRepositoryConfig struct {
-	// The owner of the repository (e.g. example in `example/test` or `https://github.com/example/test`).
-	Owner string `json:"owner,omitempty"`
-	// The name of the repository (e.g. test in `example/test` or `https://github.com/example/test`).
-	Repository string `json:"repository,omitempty"`
+	// The repository URL (e.g. `https://github.com/example/test`).
+	URL string `json:"url,omitempty"`
+
 	// The branch to use in the repository.
-	// By default, this is the main branch.
-	Branch string `json:"branch,omitempty"`
-	// Token for accessing the repository.
-	// TODO: this should be part of secrets and a simple reference.
+	Branch string `json:"branch"`
+	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
 	Token string `json:"token,omitempty"`
-	// TODO: Do we want an SSH url instead maybe?
-	// TODO: On-prem GitHub Enterprise support?
+	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
+	// +listType=atomic
+	EncryptedToken []byte `json:"encryptedToken,omitempty"`
 
-	// Whether we should commit to change branches and use a Pull Request flow to achieve this.
-	// By default, this is false (i.e. we will commit straight to the main branch).
-	BranchWorkflow bool `json:"branchWorkflow,omitempty"`
-
-	// Whether we should show dashboard previews in the pull requests caused by the BranchWorkflow option.
+	// Whether we should show dashboard previews for pull requests.
 	// By default, this is false (i.e. we will not create previews).
-	// This option is a no-op if BranchWorkflow is `false` or default.
 	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
-
-	// PullRequestLinter enables the dashboard linter for this repository in Pull Requests
-	PullRequestLinter bool `json:"pullRequestLinter,omitempty"`
 }
 
 // RepositoryType defines the types of Repository
@@ -66,56 +58,68 @@ type RepositoryType string
 // RepositoryType values
 const (
 	LocalRepositoryType  RepositoryType = "local"
-	S3RepositoryType     RepositoryType = "s3"
 	GitHubRepositoryType RepositoryType = "github"
 )
 
 type RepositorySpec struct {
-	// Describe the feature toggle
+	// The repository display name (shown in the UI)
 	Title string `json:"title"`
 
-	// Describe the feature toggle
+	// Repository description
 	Description string `json:"description,omitempty"`
 
-	// The folder that is backed by the repository.
-	// The value is a reference to the Kubernetes metadata name of the folder in the same namespace.
-	Folder string `json:"folder,omitempty"`
+	// UI driven Workflow that allow changes to the contends of the repository.
+	// The order is relevant for defining the precedence of the workflows.
+	// When empty, the repository does not support any edits (eg, readonly)
+	Workflows []Workflow `json:"workflows"`
 
-	// Should we prefer emitting YAML for this repository, e.g. upon export?
-	// Editing existing dashboards will continue to emit the file format used in the repository. (TODO: implement this)
-	// If you delete and then recreate a dashboard, it will switch to the preferred format.
-	PreferYAML bool `json:"preferYaml,omitempty"`
-
-	// Edit options within the repository
-	Editing EditingOptions `json:"editing"`
+	// Sync settings -- how values are pulled from the repository into grafana
+	Sync SyncOptions `json:"sync"`
 
 	// The repository type.  When selected oneOf the values below should be non-nil
 	Type RepositoryType `json:"type"`
 
-	// Linting enables linting for this repository
-	Linting bool `json:"linting,omitempty"`
-
 	// The repository on the local file system.
-	// Mutually exclusive with s3 and github.
+	// Mutually exclusive with local | github.
 	Local *LocalRepositoryConfig `json:"local,omitempty"`
 
-	// The repository in an S3 bucket.
-	// Mutually exclusive with local and github.
-	S3 *S3RepositoryConfig `json:"s3,omitempty"`
-
 	// The repository on GitHub.
-	// Mutually exclusive with local and s3.
+	// Mutually exclusive with local | github.
 	// TODO: github or just 'git'??
 	GitHub *GitHubRepositoryConfig `json:"github,omitempty"`
 }
 
-type EditingOptions struct {
-	// End users can create new files in the remote file system
-	Create bool `json:"create"`
-	// End users can update existing files in the remote file system
-	Update bool `json:"update"`
-	// End users can delete existing files in the remote file system
-	Delete bool `json:"delete"`
+// SyncTargetType defines where we want all values to resolve
+// +enum
+type SyncTargetType string
+
+// RepositoryType values
+const (
+	// Resources are saved in the global context
+	// Only one repository may specify the `instance` target
+	// When this exists, the UI will promote writing to the instance repo
+	// rather than the grafana database (where possible)
+	SyncTargetTypeInstance SyncTargetType = "instance"
+
+	// Resources will be saved into a folder managed by this repository
+	// The folder k8s name will be the same as the repository k8s name
+	// It will contain a copy of everything from the remote
+	SyncTargetTypeFolder SyncTargetType = "folder"
+)
+
+type SyncOptions struct {
+	// Enabled must be saved as true before any sync job will run
+	Enabled bool `json:"enabled"`
+
+	// Where values should be saved
+	Target SyncTargetType `json:"target"`
+
+	// Shared folder target
+	// The value is a reference to the Kubernetes metadata name of the folder in the same namespace
+	// Folder string `json:"folder,omitempty"`
+
+	// When non-zero, the sync will run periodically
+	IntervalSeconds int64 `json:"intervalSeconds,omitempty"`
 }
 
 // The status of a Repository.
@@ -131,6 +135,10 @@ type RepositoryStatus struct {
 	// Sync information with the last sync information
 	Sync SyncStatus `json:"sync"`
 
+	// The object count when sync last ran
+	// +listType=atomic
+	Stats []ResourceCount `json:"stats,omitempty"`
+
 	// Webhook Information (if applicable)
 	Webhook *WebhookStatus `json:"webhook"`
 }
@@ -143,6 +151,7 @@ type HealthStatus struct {
 	Checked int64 `json:"checked,omitempty"`
 
 	// Summary messages (will be shown to users)
+	// +listType=atomic
 	Message []string `json:"message,omitempty"`
 }
 
@@ -163,16 +172,21 @@ type SyncStatus struct {
 	Scheduled int64 `json:"scheduled,omitempty"`
 
 	// Summary messages (will be shown to users)
-	Message []string `json:"message,omitempty"`
+	// +listType=atomic
+	Message []string `json:"message"`
 
-	// The repository hash when the last sync ran
-	Hash string `json:"hash,omitempty"`
+	// The repository ref when the last successful sync ran
+	LastRef string `json:"lastRef,omitempty"`
+
+	// Incremental synchronization for versioned repositories
+	Incremental bool `json:"incremental,omitempty"`
 }
 
 type WebhookStatus struct {
 	ID               int64    `json:"id,omitempty"`
 	URL              string   `json:"url,omitempty"`
 	Secret           string   `json:"secret,omitempty"`
+	EncryptedSecret  []byte   `json:"encryptedSecret,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
 }
 
@@ -181,14 +195,8 @@ type RepositoryList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
+	// +listType=atomic
 	Items []Repository `json:"items,omitempty"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type HelloWorld struct {
-	metav1.TypeMeta `json:",inline"`
-
-	Whom string `json:"whom,omitempty"`
 }
 
 // The kubernetes action required when loading a given resource
@@ -223,9 +231,11 @@ type ResourceWrapper struct {
 	Resource ResourceObjects `json:"resource"`
 
 	// Lint results
+	// +listType=atomic
 	Lint []LintIssue `json:"lint,omitempty"`
 
 	// If errors exist, show them here
+	// +listType=atomic
 	Errors []string `json:"errors,omitempty"`
 }
 
@@ -282,9 +292,8 @@ type FileList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	// should be named "items", but avoid subresource error for now:
-	// kubernetes/kubernetes#126809
-	Items []FileItem `json:"files,omitempty"`
+	// +listType=atomic
+	Items []FileItem `json:"items,omitempty"`
 }
 
 type FileItem struct {
@@ -293,6 +302,45 @@ type FileItem struct {
 	Hash     string `json:"hash,omitempty"`
 	Modified int64  `json:"modified,omitempty"`
 	Author   string `json:"author,omitempty"`
+}
+
+// Information we can get just from the file listing
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type ResourceList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	// +listType=atomic
+	Items []ResourceListItem `json:"items,omitempty"`
+}
+
+type ResourceListItem struct {
+	Path     string `json:"path"`
+	Group    string `json:"group"`
+	Resource string `json:"resource"`
+	Name     string `json:"name"` // the k8s identifier
+	Hash     string `json:"hash"`
+	Time     int64  `json:"time,omitempty"`
+
+	Title  string `json:"title,omitempty"`
+	Folder string `json:"folder,omitempty"`
+}
+
+// Information we can get just from the file listing
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type ResourceStats struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	// +listType=atomic
+	Items []ResourceCount `json:"items,omitempty"`
+}
+
+type ResourceCount struct {
+	Repository string `json:"repository,omitempty"`
+	Group      string `json:"group"`
+	Resource   string `json:"resource"`
+	Count      int64  `json:"count"`
 }
 
 // HistoryList is a list of versions of a resource
@@ -319,8 +367,7 @@ type HistoryList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	// should be named "items", but avoid subresource error for now:
-	// kubernetes/kubernetes#126809
+	// +listType=atomic
 	Items []HistoryItem `json:"items,omitempty"`
 }
 
@@ -331,8 +378,9 @@ type Author struct {
 }
 
 type HistoryItem struct {
-	Ref       string   `json:"ref"`
-	Message   string   `json:"message"`
+	Ref     string `json:"ref"`
+	Message string `json:"message"`
+	// +listType=atomic
 	Authors   []Author `json:"authors"`
 	CreatedAt int64    `json:"createdAt"`
 }

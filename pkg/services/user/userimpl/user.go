@@ -134,6 +134,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		Updated:          timeNow(),
 		LastSeenAt:       timeNow().AddDate(-10, 0, 0),
 		IsServiceAccount: cmd.IsServiceAccount,
+		IsProvisioned:    cmd.IsProvisioned,
 	}
 
 	salt, err := util.GetRandomString(10)
@@ -164,7 +165,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 	}
 
 	// create org user link
-	if !cmd.SkipOrgSetup {
+	if !cmd.SkipOrgSetup && !usr.IsProvisioned {
 		orgUser := org.OrgUser{
 			OrgID:   orgID,
 			UserID:  usr.ID,

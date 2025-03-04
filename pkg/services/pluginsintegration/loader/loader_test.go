@@ -105,6 +105,7 @@ func TestLoader_Load(t *testing.T) {
 						Extensions: plugins.Extensions{
 							AddedLinks:        []plugins.AddedLink{},
 							AddedComponents:   []plugins.AddedComponent{},
+							AddedFunctions:    []plugins.AddedFunction{},
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -200,8 +201,10 @@ func TestLoader_Load(t *testing.T) {
 							},
 						},
 						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
+							AddedLinks:      []plugins.AddedLink{},
+							AddedComponents: []plugins.AddedComponent{},
+							AddedFunctions:  []plugins.AddedFunction{},
+
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -248,8 +251,10 @@ func TestLoader_Load(t *testing.T) {
 							},
 						},
 						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
+							AddedLinks:      []plugins.AddedLink{},
+							AddedComponents: []plugins.AddedComponent{},
+							AddedFunctions:  []plugins.AddedFunction{},
+
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -309,8 +314,10 @@ func TestLoader_Load(t *testing.T) {
 							},
 						},
 						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
+							AddedLinks:      []plugins.AddedLink{},
+							AddedComponents: []plugins.AddedComponent{},
+							AddedFunctions:  []plugins.AddedFunction{},
+
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -423,8 +430,10 @@ func TestLoader_Load(t *testing.T) {
 							},
 						},
 						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
+							AddedLinks:      []plugins.AddedLink{},
+							AddedComponents: []plugins.AddedComponent{},
+							AddedFunctions:  []plugins.AddedFunction{},
+
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -504,8 +513,10 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 						},
 					},
 					Extensions: plugins.Extensions{
-						AddedLinks:        []plugins.AddedLink{},
-						AddedComponents:   []plugins.AddedComponent{},
+						AddedLinks:      []plugins.AddedLink{},
+						AddedComponents: []plugins.AddedComponent{},
+						AddedFunctions:  []plugins.AddedFunction{},
+
 						ExposedComponents: []plugins.ExposedComponent{},
 						ExtensionPoints:   []plugins.ExtensionPoint{},
 					},
@@ -615,8 +626,10 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 					},
 				},
 				Extensions: plugins.Extensions{
-					AddedLinks:        []plugins.AddedLink{},
-					AddedComponents:   []plugins.AddedComponent{},
+					AddedLinks:      []plugins.AddedLink{},
+					AddedComponents: []plugins.AddedComponent{},
+					AddedFunctions:  []plugins.AddedFunction{},
+
 					ExposedComponents: []plugins.ExposedComponent{},
 					ExtensionPoints:   []plugins.ExtensionPoint{},
 				},
@@ -696,8 +709,10 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 								},
 							},
 							Extensions: plugins.Extensions{
-								AddedLinks:        []plugins.AddedLink{},
-								AddedComponents:   []plugins.AddedComponent{},
+								AddedLinks:      []plugins.AddedLink{},
+								AddedComponents: []plugins.AddedComponent{},
+								AddedFunctions:  []plugins.AddedFunction{},
+
 								ExposedComponents: []plugins.ExposedComponent{},
 								ExtensionPoints:   []plugins.ExtensionPoint{},
 							},
@@ -801,8 +816,10 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 							},
 						},
 						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
+							AddedLinks:      []plugins.AddedLink{},
+							AddedComponents: []plugins.AddedComponent{},
+							AddedFunctions:  []plugins.AddedFunction{},
+
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -883,8 +900,10 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 						ExposedComponents: []string{},
 					}},
 					Extensions: plugins.Extensions{
-						AddedLinks:        []plugins.AddedLink{},
-						AddedComponents:   []plugins.AddedComponent{},
+						AddedLinks:      []plugins.AddedLink{},
+						AddedComponents: []plugins.AddedComponent{},
+						AddedFunctions:  []plugins.AddedFunction{},
+
 						ExposedComponents: []plugins.ExposedComponent{},
 						ExtensionPoints:   []plugins.ExtensionPoint{},
 					},
@@ -964,8 +983,10 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 						},
 					},
 					Extensions: plugins.Extensions{
-						AddedLinks:        []plugins.AddedLink{},
-						AddedComponents:   []plugins.AddedComponent{},
+						AddedLinks:      []plugins.AddedLink{},
+						AddedComponents: []plugins.AddedComponent{},
+						AddedFunctions:  []plugins.AddedFunction{},
+
 						ExposedComponents: []plugins.ExposedComponent{},
 						ExtensionPoints:   []plugins.ExtensionPoint{},
 					},
@@ -1060,8 +1081,10 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 						{Name: "Nginx Datasource", Type: "datasource", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-datasource"},
 					},
 					Extensions: plugins.Extensions{
-						AddedLinks:        []plugins.AddedLink{},
-						AddedComponents:   []plugins.AddedComponent{},
+						AddedLinks:      []plugins.AddedLink{},
+						AddedComponents: []plugins.AddedComponent{},
+						AddedFunctions:  []plugins.AddedFunction{},
+
 						ExposedComponents: []plugins.ExposedComponent{},
 						ExtensionPoints:   []plugins.ExtensionPoint{},
 					},
@@ -1272,8 +1295,10 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 				},
 			},
 			Extensions: plugins.Extensions{
-				AddedLinks:        []plugins.AddedLink{},
-				AddedComponents:   []plugins.AddedComponent{},
+				AddedLinks:      []plugins.AddedLink{},
+				AddedComponents: []plugins.AddedComponent{},
+				AddedFunctions:  []plugins.AddedFunction{},
+
 				ExposedComponents: []plugins.ExposedComponent{},
 				ExtensionPoints:   []plugins.ExtensionPoint{},
 			},
@@ -1314,8 +1339,10 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 				},
 			},
 			Extensions: plugins.Extensions{
-				AddedLinks:        []plugins.AddedLink{},
-				AddedComponents:   []plugins.AddedComponent{},
+				AddedLinks:      []plugins.AddedLink{},
+				AddedComponents: []plugins.AddedComponent{},
+				AddedFunctions:  []plugins.AddedFunction{},
+
 				ExposedComponents: []plugins.ExposedComponent{},
 				ExtensionPoints:   []plugins.ExtensionPoint{},
 			},
@@ -1463,8 +1490,10 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 					},
 				},
 				Extensions: plugins.Extensions{
-					AddedLinks:        []plugins.AddedLink{},
-					AddedComponents:   []plugins.AddedComponent{},
+					AddedLinks:      []plugins.AddedLink{},
+					AddedComponents: []plugins.AddedComponent{},
+					AddedFunctions:  []plugins.AddedFunction{},
+
 					ExposedComponents: []plugins.ExposedComponent{},
 					ExtensionPoints:   []plugins.ExtensionPoint{},
 				},
@@ -1512,8 +1541,10 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 					},
 				},
 				Extensions: plugins.Extensions{
-					AddedLinks:        []plugins.AddedLink{},
-					AddedComponents:   []plugins.AddedComponent{},
+					AddedLinks:      []plugins.AddedLink{},
+					AddedComponents: []plugins.AddedComponent{},
+					AddedFunctions:  []plugins.AddedFunction{},
+
 					ExposedComponents: []plugins.ExposedComponent{},
 					ExtensionPoints:   []plugins.ExtensionPoint{},
 				},

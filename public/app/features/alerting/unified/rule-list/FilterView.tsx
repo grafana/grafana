@@ -1,4 +1,5 @@
-import { take, tap, withAbort } from 'ix/asynciterable/operators';
+import { empty } from 'ix/asynciterable';
+import { catchError, take, tap, withAbort } from 'ix/asynciterable/operators';
 import { useEffect, useRef, useState, useTransition } from 'react';
 
 import { Card, EmptyState, Stack, Text } from '@grafana/ui';
@@ -75,7 +76,12 @@ function FilterViewResults({ filterState }: FilterViewProps) {
 
   /* This function will fetch a page of results from the iterable */
   const [{ execute: loadResultPage }, state] = useAsync(async () => {
-    for await (const rule of rulesIterator.current.pipe(take(FRONTENT_PAGE_SIZE))) {
+    for await (const rule of rulesIterator.current.pipe(
+      // grab <FRONTENT_PAGE_SIZE> from the rules iterable
+      take(FRONTENT_PAGE_SIZE),
+      // if an error occurs trying to fetch a page, return an empty iterable so the front-end isn't caught in an infinite loop
+      catchError(() => empty())
+    )) {
       startTransition(() => {
         // Rule key could be computed on the fly, but we do it here to avoid recalculating it with each render
         // It's a not trivial computation because it involves hashing the rule

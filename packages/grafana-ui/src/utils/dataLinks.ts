@@ -1,4 +1,4 @@
-import { ActionModel, LinkModel } from '@grafana/data';
+import { LinkModel } from '@grafana/data';
 
 import { MenuItemProps } from '../components/Menu/MenuItem';
 
@@ -15,17 +15,6 @@ export const linkModelToContextMenuItems: (links: () => LinkModel[]) => MenuItem
       target: link.target,
       icon: `${link.target === '_blank' ? 'external-link-alt' : 'link'}`,
       onClick: link.onClick,
-    };
-  });
-};
-
-export const actionModelToContextMenuItems: (actions: ActionModel[]) => MenuItemProps[] = (actions) => {
-  return actions.map((action) => {
-    return {
-      label: action.title,
-      ariaLabel: action.title,
-      icon: 'record-audio',
-      onClick: action.onClick,
     };
   });
 };

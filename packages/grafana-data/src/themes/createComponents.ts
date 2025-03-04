@@ -80,10 +80,10 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
     input,
     panel,
     dropdown: {
-      background: input.background,
+      background: colors.background.elevated,
     },
     tooltip: {
-      background: colors.background.secondary,
+      background: colors.background.elevated,
       text: colors.text.primary,
     },
     dashboard: {

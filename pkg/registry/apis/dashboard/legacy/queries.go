@@ -41,10 +41,16 @@ type sqlQuery struct {
 }
 
 func (r sqlQuery) Validate() error {
+	if r.Query.Order == "ASC" && r.Query.LastID > 0 {
+		return fmt.Errorf("ascending order does not support paging by last id")
+	}
 	return nil // TODO
 }
 
 func newQueryReq(sql *legacysql.LegacyDatabaseHelper, query *DashboardQuery) sqlQuery {
+	if query.Order == "" {
+		query.Order = "DESC" // use version as RV
+	}
 	return sqlQuery{
 		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
 		Query:       query,

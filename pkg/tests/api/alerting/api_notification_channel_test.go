@@ -2525,7 +2525,7 @@ var expNonEmailNotifications = map[string][]string{
 		  "attachments": [
 			{
 			  "title": "Integration Test [FIRING:1] SlackAlert1 (default)",
-			  "title_link": "http://localhost:3000/alerting/grafana/UID_SlackAlert1/view",
+			  "title_link": "http://localhost:3000/alerting/grafana/UID_SlackAlert1/view?orgId=1",
 			  "text": "Integration Test ",
 			  "fallback": "Integration Test [FIRING:1] SlackAlert1 (default)",
 			  "footer": "Grafana v",
@@ -2545,7 +2545,7 @@ var expNonEmailNotifications = map[string][]string{
 		  "attachments": [
 			{
 			  "title": "[FIRING:1] SlackAlert2 (default)",
-			  "title_link": "http://localhost:3000/alerting/grafana/UID_SlackAlert2/view",
+			  "title_link": "http://localhost:3000/alerting/grafana/UID_SlackAlert2/view?orgId=1",
 			  "text": "**Firing**\n\nValue: A=1\nLabels:\n - alertname = SlackAlert2\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_SlackAlert2/view?orgId=1\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=__alert_rule_uid__%%3DUID_SlackAlert2&orgId=1\n",
 			  "fallback": "[FIRING:1] SlackAlert2 (default)",
 			  "footer": "Grafana v",

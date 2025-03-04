@@ -369,6 +369,10 @@ type TestTemplatesResult struct {
 
 	// Interpolated value of the template.
 	Text string `json:"text"`
+
+	// Scope that was successfully used to interpolate the template. If the root scope "." fails, more specific
+	// scopes will be tried, such as ".Alerts', or ".Alert".
+	Scope TemplateScope `json:"scope"`
 }
 
 type TestTemplatesErrorResult struct {
@@ -388,6 +392,15 @@ type TemplateErrorKind string
 const (
 	InvalidTemplate TemplateErrorKind = "invalid_template"
 	ExecutionError  TemplateErrorKind = "execution_error"
+)
+
+// swagger:enum TemplateScope
+type TemplateScope string
+
+const (
+	RootScope   TemplateScope = "."
+	AlertsScope TemplateScope = ".Alerts"
+	AlertScope  TemplateScope = ".Alert"
 )
 
 // swagger:parameters RouteCreateSilence RouteCreateGrafanaSilence

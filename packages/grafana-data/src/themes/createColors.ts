@@ -34,6 +34,11 @@ export interface ThemeColorsBase<TColor> {
     primary: string;
     /** Cards and elements that need to stand out on the primary background */
     secondary: string;
+    /**
+     * For popovers and menu backgrounds. This is the same color as primary in most light themes but in dark
+     * themes it has a brighter shade to help give it contrast against the primary background.
+     **/
+    elevated: string;
   };
 
   border: {
@@ -143,6 +148,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     canvas: palette.gray05,
     primary: palette.gray10,
     secondary: palette.gray15,
+    elevated: palette.gray15,
   };
 
   action = {
@@ -225,6 +231,7 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     canvas: palette.gray90,
     primary: palette.white,
     secondary: palette.gray100,
+    elevated: palette.white,
   };
 
   action = {

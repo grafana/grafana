@@ -88,3 +88,7 @@ func ToFolderStatusError(err error) k8sErrors.StatusError {
 		},
 	}
 }
+
+func IsForbidden(err error) bool {
+	return k8sErrors.IsForbidden(err) || errors.Is(err, dashboards.ErrFolderAccessDenied)
+}

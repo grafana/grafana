@@ -54,7 +54,7 @@ export const SelectMenu = ({
       style={{ maxHeight }}
       aria-label="Select options menu"
     >
-      <ScrollContainer ref={innerRef} maxHeight="inherit" overflowX="hidden" showScrollIndicators>
+      <ScrollContainer ref={innerRef} maxHeight="inherit" overflowX="hidden" showScrollIndicators padding={0.5}>
         {toggleAllOptions && (
           <ToggleAllOption
             state={toggleAllOptions.state}

@@ -385,7 +385,12 @@ func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 	if params.Accept != "" {
 		req.Header.Set("Accept", params.Accept)
 	}
-	rsp, err := http.DefaultClient.Do(req)
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	rsp, err := client.Do(req)
 	require.NoError(c.t, err)
 
 	r := K8sResponse[T]{

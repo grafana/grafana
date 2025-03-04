@@ -27,6 +27,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
       whiteSpace: 'nowrap',
       cursor: 'pointer',
       borderLeft: '2px solid transparent',
+      borderRadius: theme.shape.radius.default,
 
       '&:hover': {
         background: theme.colors.action.hover,

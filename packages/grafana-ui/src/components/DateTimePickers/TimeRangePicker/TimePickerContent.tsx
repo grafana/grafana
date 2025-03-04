@@ -277,7 +277,7 @@ const getStyles = (
   isFullscreen?: boolean
 ) => ({
   container: css({
-    background: theme.colors.background.primary,
+    background: theme.colors.background.elevated,
     boxShadow: theme.shadows.z3,
     width: `${isFullscreen ? '546px' : '262px'}`,
     borderRadius: theme.shape.radius.default,

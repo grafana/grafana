@@ -7,6 +7,7 @@ type CheckTypeStep struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	StepID      string `json:"stepID"`
+	Resolution  string `json:"resolution"`
 }
 
 // NewCheckTypeStep creates a new CheckTypeStep object.

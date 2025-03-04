@@ -105,7 +105,6 @@ describe('PluginDetailsPanel', () => {
   it('should render report abuse section for non-core plugins', () => {
     render(<PluginDetailsPanel plugin={mockPlugin} pluginExtentionsInfo={mockInfo} />);
     expect(screen.getByText('Report a concern')).toBeInTheDocument();
-    expect(screen.getByText('Contact Grafana Labs')).toBeInTheDocument();
   });
 
   it('should not render report abuse section for core plugins', () => {
@@ -117,6 +116,6 @@ describe('PluginDetailsPanel', () => {
   it('should respect custom width prop', () => {
     render(<PluginDetailsPanel plugin={mockPlugin} pluginExtentionsInfo={mockInfo} width="300px" />);
     const panel = screen.getByTestId('plugin-details-panel');
-    expect(panel).toHaveStyle({ maxWidth: '300px' });
+    expect(panel).toHaveStyle({ width: '300px' });
   });
 });

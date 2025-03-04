@@ -15,10 +15,21 @@ export const handyTestingSchema: DashboardV2Spec = {
     from: 'now-1h',
     hideTimepicker: false,
     nowDelay: '1m',
-    quickRanges: [],
     timezone: 'UTC',
     to: 'now',
     weekStart: 'monday',
+    quickRanges: [
+      {
+        display: 'Last 6 hours',
+        from: 'now-6h',
+        to: 'now',
+      },
+      {
+        display: 'Last 3 days',
+        from: 'now-3d',
+        to: 'now',
+      },
+    ],
   },
   annotations: [
     {

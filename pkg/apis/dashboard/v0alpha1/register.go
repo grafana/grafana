@@ -14,8 +14,11 @@ import (
 const (
 	GROUP      = "dashboard.grafana.app"
 	VERSION    = "v0alpha1"
-	RESOURCE   = "dashboards"
 	APIVERSION = GROUP + "/" + VERSION
+
+	// Resource constants
+	DASHBOARD_RESOURCE     = "dashboards"
+	LIBRARY_PANEL_RESOURCE = "librarypanels"
 )
 
 var DashboardResourceInfo = utils.NewResourceInfo(GROUP, VERSION,

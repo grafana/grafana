@@ -2,7 +2,7 @@ import { Factory } from 'fishery';
 import { uniqueId } from 'lodash';
 
 import { DataSourceInstanceSettings, PluginType } from '@grafana/data';
-import { config, setDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { FolderDTO } from 'app/types';
 import {
   PromAlertingRuleDTO,
@@ -15,7 +15,7 @@ import {
   RulerRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { MockDataSourceSrv } from '../../mocks';
+import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType } from '../../utils/datasource';
 import { namespaces } from '../mimirRulerApi';
 
@@ -101,7 +101,7 @@ class DataSourceFactory extends Factory<DataSourceInstanceSettings> {
 const dataSourceFactory = DataSourceFactory.define(({ sequence, params, afterBuild }) => {
   afterBuild((dataSource) => {
     config.datasources[dataSource.name] = dataSource;
-    setDataSourceSrv(new MockDataSourceSrv(config.datasources));
+    setupDataSources(...Object.values(config.datasources));
   });
 
   const uid = params.uid ?? `mock-ds-${sequence}`;

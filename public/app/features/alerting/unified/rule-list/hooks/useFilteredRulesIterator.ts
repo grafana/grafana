@@ -1,4 +1,4 @@
-import { AsyncIterableX, from } from 'ix/asynciterable/index';
+import { AsyncIterableX, empty, from } from 'ix/asynciterable';
 import { merge } from 'ix/asynciterable/merge';
 import { filter, flatMap, map } from 'ix/asynciterable/operators';
 import { compact } from 'lodash';
@@ -68,11 +68,16 @@ export function useFilteredRulesIteratorProvider() {
       map(([group, rule]) => mapGrafanaRuleToRuleWithOrigin(group, rule))
     );
 
-    const [source, ...iterables] = ruleSourcesToFetchFrom.map((ds) => {
-      return from(prometheusGroupsGenerator(ds, groupLimit)).pipe(map((group) => [ds, group] as const));
+    const sourceIterables = ruleSourcesToFetchFrom.map((ds) => {
+      const generator = prometheusGroupsGenerator(ds, groupLimit);
+      return from(generator).pipe(map((group) => [ds, group] as const));
     });
 
-    const dataSourcesIterator = merge(source, ...iterables).pipe(
+    // if we have no prometheus data sources, use an empty async iterable
+    const source = sourceIterables.at(0) ?? empty();
+    const otherIterables = sourceIterables.slice(1);
+
+    const dataSourcesIterator = merge(source, ...otherIterables).pipe(
       filter(([_, group]) => groupFilter(group, normalizedFilterState)),
       flatMap(([rulesSource, group]) => group.rules.map((rule) => [rulesSource, group, rule] as const)),
       filter(([_, __, rule]) => ruleFilter(rule, filterState)),

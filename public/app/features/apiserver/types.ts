@@ -90,7 +90,7 @@ type GrafanaClientAnnotations = {
 
 // Labels
 type GrafanaLabels = {
-  [DeprecatedInternalId]?: number;
+  [DeprecatedInternalId]?: string;
 };
 
 export interface Resource<T = object, S = object, K = string> extends TypeMeta<K> {
@@ -209,7 +209,7 @@ export interface ResourceClient<T = object, S = object, K = string> {
   subresource<S>(name: string, path: string): Promise<S>;
   list(opts?: ListOptions): Promise<ResourceList<T, S, K>>;
   update(obj: ResourceForCreate<T, K>): Promise<Resource<T, S, K>>;
-  delete(name: string): Promise<MetaStatus>;
+  delete(name: string, showSuccessAlert?: boolean): Promise<MetaStatus>;
 }
 
 export interface K8sAPIGroup {

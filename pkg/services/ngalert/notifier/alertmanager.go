@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	alertingHttp "github.com/grafana/alerting/http"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/notify/stages"
 	"github.com/grafana/alerting/receivers"
@@ -408,9 +409,7 @@ func (am *alertmanager) buildReceiverIntegrations(receiver *alertingNotify.APIRe
 		tmpl,
 		img,
 		LoggerFactory,
-		func(n receivers.Metadata) (receivers.WebhookSender, error) {
-			return s, nil
-		},
+		alertingHttp.DefaultClientConfiguration,
 		func(n receivers.Metadata) (receivers.EmailSender, error) {
 			return s, nil
 		},

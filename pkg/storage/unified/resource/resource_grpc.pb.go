@@ -386,6 +386,135 @@ var ResourceStore_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
+	BulkStore_BulkProcess_FullMethodName = "/resource.BulkStore/BulkProcess"
+)
+
+// BulkStoreClient is the client API for BulkStore service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type BulkStoreClient interface {
+	// Write multiple resources to the same Namespace/Group/Resource
+	// Events will not be sent until the stream is complete
+	// Only the *create* permissions is checked
+	BulkProcess(ctx context.Context, opts ...grpc.CallOption) (BulkStore_BulkProcessClient, error)
+}
+
+type bulkStoreClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewBulkStoreClient(cc grpc.ClientConnInterface) BulkStoreClient {
+	return &bulkStoreClient{cc}
+}
+
+func (c *bulkStoreClient) BulkProcess(ctx context.Context, opts ...grpc.CallOption) (BulkStore_BulkProcessClient, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &BulkStore_ServiceDesc.Streams[0], BulkStore_BulkProcess_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &bulkStoreBulkProcessClient{ClientStream: stream}
+	return x, nil
+}
+
+type BulkStore_BulkProcessClient interface {
+	Send(*BulkRequest) error
+	CloseAndRecv() (*BulkResponse, error)
+	grpc.ClientStream
+}
+
+type bulkStoreBulkProcessClient struct {
+	grpc.ClientStream
+}
+
+func (x *bulkStoreBulkProcessClient) Send(m *BulkRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *bulkStoreBulkProcessClient) CloseAndRecv() (*BulkResponse, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(BulkResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// BulkStoreServer is the server API for BulkStore service.
+// All implementations should embed UnimplementedBulkStoreServer
+// for forward compatibility
+type BulkStoreServer interface {
+	// Write multiple resources to the same Namespace/Group/Resource
+	// Events will not be sent until the stream is complete
+	// Only the *create* permissions is checked
+	BulkProcess(BulkStore_BulkProcessServer) error
+}
+
+// UnimplementedBulkStoreServer should be embedded to have forward compatible implementations.
+type UnimplementedBulkStoreServer struct {
+}
+
+func (UnimplementedBulkStoreServer) BulkProcess(BulkStore_BulkProcessServer) error {
+	return status.Errorf(codes.Unimplemented, "method BulkProcess not implemented")
+}
+
+// UnsafeBulkStoreServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to BulkStoreServer will
+// result in compilation errors.
+type UnsafeBulkStoreServer interface {
+	mustEmbedUnimplementedBulkStoreServer()
+}
+
+func RegisterBulkStoreServer(s grpc.ServiceRegistrar, srv BulkStoreServer) {
+	s.RegisterService(&BulkStore_ServiceDesc, srv)
+}
+
+func _BulkStore_BulkProcess_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(BulkStoreServer).BulkProcess(&bulkStoreBulkProcessServer{ServerStream: stream})
+}
+
+type BulkStore_BulkProcessServer interface {
+	SendAndClose(*BulkResponse) error
+	Recv() (*BulkRequest, error)
+	grpc.ServerStream
+}
+
+type bulkStoreBulkProcessServer struct {
+	grpc.ServerStream
+}
+
+func (x *bulkStoreBulkProcessServer) SendAndClose(m *BulkResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *bulkStoreBulkProcessServer) Recv() (*BulkRequest, error) {
+	m := new(BulkRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// BulkStore_ServiceDesc is the grpc.ServiceDesc for BulkStore service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var BulkStore_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "resource.BulkStore",
+	HandlerType: (*BulkStoreServer)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "BulkProcess",
+			Handler:       _BulkStore_BulkProcess_Handler,
+			ClientStreams: true,
+		},
+	},
+	Metadata: "resource.proto",
+}
+
+const (
 	ResourceIndex_Search_FullMethodName   = "/resource.ResourceIndex/Search"
 	ResourceIndex_GetStats_FullMethodName = "/resource.ResourceIndex/GetStats"
 )

@@ -3,6 +3,7 @@ package utils_test
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -194,6 +195,7 @@ func TestMetaAccessor(t *testing.T) {
 		res.Object = map[string]any{
 			"spec": map[string]any{
 				"hello": "world",
+				"title": "Title",
 			},
 			"status": map[string]any{
 				"sloth": "🦥",
@@ -218,6 +220,7 @@ func TestMetaAccessor(t *testing.T) {
 		rv, err := meta.GetResourceVersionInt64()
 		require.NoError(t, err)
 		require.Equal(t, int64(12345), rv)
+		require.Equal(t, "Title", meta.FindTitle(""))
 
 		// Make sure access to spec works for Unstructured
 		spec, err = meta.GetSpec()
@@ -430,6 +433,135 @@ func TestMetaAccessor(t *testing.T) {
 		spec, err := meta.GetSpec()
 		require.Equal(t, obj2.Spec, spec)
 		require.NoError(t, err)
+	})
+
+	t.Run("ManagerProperties", func(t *testing.T) {
+		tests := []struct {
+			name           string
+			setProperties  *utils.ManagerProperties
+			wantProperties utils.ManagerProperties
+			wantOK         bool
+		}{
+			{
+				name: "get default values",
+				wantProperties: utils.ManagerProperties{
+					Identity:    "",
+					Kind:        utils.ManagerKindUnknown,
+					AllowsEdits: true,
+					Suspended:   false,
+				},
+				wantOK: false,
+			},
+			{
+				name: "set and get valid values",
+				setProperties: &utils.ManagerProperties{
+					Identity:    "identity",
+					Kind:        utils.ManagerKindTerraform,
+					AllowsEdits: false,
+					Suspended:   false,
+				},
+				wantProperties: utils.ManagerProperties{
+					Identity:    "identity",
+					Kind:        utils.ManagerKindTerraform,
+					AllowsEdits: false,
+					Suspended:   false,
+				},
+				wantOK: true,
+			},
+			{
+				name: "set empty identity returns default values",
+				setProperties: &utils.ManagerProperties{
+					Identity:    "",
+					Kind:        utils.ManagerKindRepo,
+					AllowsEdits: false,
+					Suspended:   false,
+				},
+				wantProperties: utils.ManagerProperties{
+					Identity:    "",
+					Kind:        utils.ManagerKindUnknown,
+					AllowsEdits: true,
+					Suspended:   false,
+				},
+				wantOK: false,
+			},
+			{
+				name: "invalid kind falls back to generic kind",
+				setProperties: &utils.ManagerProperties{
+					Identity:    "identity",
+					Kind:        utils.ManagerKind("invalid"),
+					AllowsEdits: false,
+					Suspended:   true,
+				},
+				wantProperties: utils.ManagerProperties{
+					Identity:    "identity",
+					Kind:        utils.ManagerKindUnknown,
+					AllowsEdits: false,
+					Suspended:   true,
+				},
+				wantOK: true,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				res := &TestResource2{}
+				meta, err := utils.MetaAccessor(res)
+				require.NoError(t, err)
+
+				if tt.setProperties != nil {
+					meta.SetManagerProperties(*tt.setProperties)
+				}
+
+				mp, ok := meta.GetManagerProperties()
+				require.Equal(t, tt.wantOK, ok)
+				require.Equal(t, tt.wantProperties, mp)
+			})
+		}
+	})
+
+	t.Run("SourceProperties", func(t *testing.T) {
+		tests := []struct {
+			name           string
+			setProperties  *utils.SourceProperties
+			wantProperties utils.SourceProperties
+			wantOK         bool
+		}{
+			{
+				name:           "get default values",
+				wantProperties: utils.SourceProperties{},
+				wantOK:         false,
+			},
+			{
+				name: "set and get valid values",
+				setProperties: &utils.SourceProperties{
+					Path:      "path",
+					Checksum:  "hash",
+					Timestamp: time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC),
+				},
+				wantProperties: utils.SourceProperties{
+					Path:      "path",
+					Checksum:  "hash",
+					Timestamp: time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC),
+				},
+				wantOK: true,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				res := &TestResource2{}
+				meta, err := utils.MetaAccessor(res)
+				require.NoError(t, err)
+
+				if tt.setProperties != nil {
+					meta.SetSourceProperties(*tt.setProperties)
+				}
+
+				sp, ok := meta.GetSourceProperties()
+				require.Equal(t, tt.wantProperties, sp)
+				require.Equal(t, tt.wantOK, ok)
+			})
+		}
 	})
 }
 

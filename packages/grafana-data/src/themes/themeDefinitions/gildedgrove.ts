@@ -40,6 +40,7 @@ const gildedGroveTheme: NewThemeOptions = {
       canvas: '#111614',
       primary: '#1d2220',
       secondary: '#27312E',
+      elevated: '#27312E',
     },
     action: {
       hover: 'rgba(200, 200, 180, 0.16)',

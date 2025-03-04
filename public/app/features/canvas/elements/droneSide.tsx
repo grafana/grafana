@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, OneClickMode } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { ScalarDimensionConfig } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions';
@@ -93,7 +93,6 @@ export const droneSideItem: CanvasElementItem = {
       left: options?.placement?.left,
       rotation: options?.placement?.rotation ?? 0,
     },
-    oneClickMode: options?.oneClickMode ?? OneClickMode.Off,
     links: options?.links ?? [],
   }),
 

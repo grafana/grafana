@@ -96,7 +96,7 @@ export const VersionList = ({ pluginId, versions = [], installedVersion, disable
 
               {/* Last updated */}
               <td className={isInstalledVersion ? styles.currentVersion : ''}>
-                {dateTimeFormatTimeAgo(version.createdAt)}
+                {dateTimeFormatTimeAgo(version.updatedAt || version.createdAt)}
               </td>
               {/* Dependency */}
               <td className={isInstalledVersion ? styles.currentVersion : ''}>{version.grafanaDependency || 'N/A'}</td>

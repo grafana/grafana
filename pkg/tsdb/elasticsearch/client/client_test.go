@@ -182,6 +182,32 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 		require.Contains(t, bodyString, "metrics-2018.05.15")
 		require.Contains(t, bodyString, "metrics-2018.05.17")
 	})
+
+	t.Run("Should return DownstreamError when decoding response fails", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+			rw.Header().Set("Content-Type", "application/x-ndjson")
+			_, err := rw.Write([]byte(`{"invalid`))
+			require.NoError(t, err)
+			rw.WriteHeader(200)
+		}))
+
+		ds := &DatasourceInfo{
+			URL:        ts.URL,
+			Database:   "[metrics-]YYYY.MM.DD",
+			HTTPClient: ts.Client(),
+		}
+
+		c, err := NewClient(context.Background(), ds, log.NewNullLogger())
+		require.NoError(t, err)
+
+		t.Cleanup(func() {
+			ts.Close()
+		})
+
+		_, err = c.ExecuteMultisearch(&MultiSearchRequest{})
+		require.Error(t, err)
+		require.True(t, backend.IsDownstreamError(err))
+	})
 }
 
 func TestClient_Index(t *testing.T) {
@@ -408,6 +434,46 @@ func TestStreamMultiSearchResponse_InvalidHitElement(t *testing.T) {
 	if err.Error() != expected {
 		t.Errorf("unexpected error message: expected %v, got %v", expected, err)
 	}
+}
+
+func TestStreamMultiSearchResponse_ErrorHandling(t *testing.T) {
+	t.Run("Given invalid elasticsearch responses", func(t *testing.T) {
+		t.Run("When response is invalid JSON", func(t *testing.T) {
+			msr := &MultiSearchResponse{}
+			err := StreamMultiSearchResponse(strings.NewReader(`abc`), msr)
+
+			require.Error(t, err)
+			require.True(t, backend.IsDownstreamError(err))
+		})
+	})
+
+	t.Run("Given a client with invalid response", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+			rw.Header().Set("Content-Type", "application/x-ndjson")
+			_, err := rw.Write([]byte(`{"invalid`))
+			require.NoError(t, err)
+			rw.WriteHeader(200)
+		}))
+
+		ds := &DatasourceInfo{
+			URL:        ts.URL,
+			Database:   "[metrics-]YYYY.MM.DD",
+			HTTPClient: ts.Client(),
+		}
+
+		c, err := NewClient(context.Background(), ds, log.NewNullLogger())
+		require.NoError(t, err)
+
+		t.Cleanup(func() {
+			ts.Close()
+		})
+
+		t.Run("When executing multi search with invalid response", func(t *testing.T) {
+			_, err = c.ExecuteMultisearch(&MultiSearchRequest{})
+			require.Error(t, err)
+			require.True(t, backend.IsDownstreamError(err))
+		})
+	})
 }
 
 func createMultisearchForTest(t *testing.T, c Client, timeRange backend.TimeRange) (*MultiSearchRequest, error) {

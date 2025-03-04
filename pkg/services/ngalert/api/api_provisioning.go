@@ -75,9 +75,10 @@ type AlertRuleService interface {
 	GetRuleGroup(ctx context.Context, user identity.Requester, folder, group string) (alerting_models.AlertRuleGroup, error)
 	ReplaceRuleGroup(ctx context.Context, user identity.Requester, group alerting_models.AlertRuleGroup, provenance alerting_models.Provenance) error
 	DeleteRuleGroup(ctx context.Context, user identity.Requester, folder, group string, provenance alerting_models.Provenance) error
+	DeleteRuleGroups(ctx context.Context, user identity.Requester, provenance alerting_models.Provenance, opts *provisioning.FilterOptions) error
 	GetAlertRuleWithFolderFullpath(ctx context.Context, u identity.Requester, ruleUID string) (provisioning.AlertRuleWithFolderFullpath, error)
 	GetAlertRuleGroupWithFolderFullpath(ctx context.Context, u identity.Requester, folder, group string) (alerting_models.AlertRuleGroupWithFolderFullpath, error)
-	GetAlertGroupsWithFolderFullpath(ctx context.Context, u identity.Requester, folderUIDs []string) ([]alerting_models.AlertRuleGroupWithFolderFullpath, error)
+	GetAlertGroupsWithFolderFullpath(ctx context.Context, u identity.Requester, opts *provisioning.FilterOptions) ([]alerting_models.AlertRuleGroupWithFolderFullpath, error)
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTree(c *contextmodel.ReqContext) response.Response {
@@ -452,7 +453,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRulesExport(c *contextmodel.ReqContext)
 		return srv.RouteGetAlertRuleGroupExport(c, folderUIDs[0], group)
 	}
 
-	groupsWithFullpath, err := srv.alertRules.GetAlertGroupsWithFolderFullpath(c.Req.Context(), c.SignedInUser, folderUIDs)
+	groupsWithFullpath, err := srv.alertRules.GetAlertGroupsWithFolderFullpath(c.Req.Context(), c.SignedInUser, &provisioning.FilterOptions{NamespaceUIDs: folderUIDs})
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get alert rules", err)
 	}

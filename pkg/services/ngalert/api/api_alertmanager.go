@@ -353,8 +353,9 @@ func newTestTemplateResult(res *notifier.TestTemplatesResults) apimodels.TestTem
 	apiRes := apimodels.TestTemplatesResults{}
 	for _, r := range res.Results {
 		apiRes.Results = append(apiRes.Results, apimodels.TestTemplatesResult{
-			Name: r.Name,
-			Text: r.Text,
+			Name:  r.Name,
+			Text:  r.Text,
+			Scope: apimodels.TemplateScope(r.Scope),
 		})
 	}
 	for _, e := range res.Errors {

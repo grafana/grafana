@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -57,6 +58,7 @@ func (b *backend) PutResourceBlob(ctx context.Context, req *resource.PutBlobRequ
 	err = b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		_, err := dbutil.Exec(ctx, tx, sqlResourceBlobInsert, sqlResourceBlobInsertRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
+			Now:         time.Now(),
 			Info:        info,
 			Key:         req.Resource,
 			ContentType: req.ContentType,
@@ -82,6 +84,12 @@ func (b *backend) PutResourceBlob(ctx context.Context, req *resource.PutBlobRequ
 func (b *backend) GetResourceBlob(ctx context.Context, key *resource.ResourceKey, info *utils.BlobInfo, mustProxy bool) (*resource.GetBlobResponse, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"GetResourceBlob")
 	defer span.End()
+
+	if info == nil {
+		return &resource.GetBlobResponse{
+			Error: resource.NewBadRequestError("missing blob info"),
+		}, nil
+	}
 
 	rsp := &resource.GetBlobResponse{}
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {

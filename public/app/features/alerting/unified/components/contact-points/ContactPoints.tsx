@@ -12,7 +12,6 @@ import {
   TabContent,
   TabsBar,
   Text,
-  withErrorBoundary,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
@@ -25,6 +24,7 @@ import { usePagination } from '../../hooks/usePagination';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from '../GrafanaAlertmanagerDeliveryWarning';
 
@@ -270,4 +270,4 @@ function ContactPointsPage() {
   );
 }
 
-export default withErrorBoundary(ContactPointsPage, { style: 'page' });
+export default withPageErrorBoundary(ContactPointsPage);

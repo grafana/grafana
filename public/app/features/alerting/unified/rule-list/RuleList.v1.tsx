@@ -4,7 +4,7 @@ import { useAsyncFn, useInterval } from 'react-use';
 
 import { urlUtil } from '@grafana/data';
 import { logInfo } from '@grafana/runtime';
-import { Button, LinkButton, Stack, withErrorBoundary } from '@grafana/ui';
+import { Button, LinkButton, Stack } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { Trans } from 'app/core/internationalization';
 import { useDispatch } from 'app/types';
@@ -155,7 +155,7 @@ const RuleListV1 = () => {
   );
 };
 
-export default withErrorBoundary(RuleListV1, { style: 'page' });
+export default RuleListV1;
 
 export function CreateAlertButton() {
   const [createRuleSupported, createRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);

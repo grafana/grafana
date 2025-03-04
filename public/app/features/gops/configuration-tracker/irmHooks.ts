@@ -235,7 +235,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
       },
       {
         title: 'Respond',
-        description: 'Configure OnCall and Incident',
+        description: getIsIrmPluginPresent() ? 'Configure IRM' : 'Configure OnCall and Incident',
         steps: getIsIrmPluginPresent()
           ? [
               {
@@ -261,7 +261,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
                 button: {
                   type: 'openLink',
                   urlLink: {
-                    url: `/a/${getIrmIfPresentOrIncidentPluginId()}/integrations/grate.slack`,
+                    url: `/a/${getIrmIfPresentOrIncidentPluginId()}/integrations/apps/grate.irm.slack`,
                   },
                   label: 'Connect',
                   urlLinkOnDone: {

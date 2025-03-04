@@ -30,15 +30,6 @@ func GetCoreKinds() ([]CoreKind, error) {
 	_, caller, _, _ := runtime.Caller(0)
 	root := filepath.Join(caller, "../../../..")
 
-	accesspolicyCue, err := loadCueFile(ctx, filepath.Join(root, "./kinds/accesspolicy/access_policy_kind.cue"))
-	if err != nil {
-		return nil, err
-	}
-	kinds = append(kinds, CoreKind{
-		Name:    "accesspolicy",
-		CueFile: accesspolicyCue,
-	})
-
 	dashboardCue, err := loadCueFile(ctx, filepath.Join(root, "./kinds/dashboard/dashboard_kind.cue"))
 	if err != nil {
 		return nil, err
@@ -73,24 +64,6 @@ func GetCoreKinds() ([]CoreKind, error) {
 	kinds = append(kinds, CoreKind{
 		Name:    "publicdashboard",
 		CueFile: publicdashboardCue,
-	})
-
-	roleCue, err := loadCueFile(ctx, filepath.Join(root, "./kinds/role/role_kind.cue"))
-	if err != nil {
-		return nil, err
-	}
-	kinds = append(kinds, CoreKind{
-		Name:    "role",
-		CueFile: roleCue,
-	})
-
-	rolebindingCue, err := loadCueFile(ctx, filepath.Join(root, "./kinds/rolebinding/role_binding_kind.cue"))
-	if err != nil {
-		return nil, err
-	}
-	kinds = append(kinds, CoreKind{
-		Name:    "rolebinding",
-		CueFile: rolebindingCue,
 	})
 
 	return kinds, nil

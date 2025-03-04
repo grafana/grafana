@@ -15,7 +15,7 @@ import (
 
 func TestGetCheck(t *testing.T) {
 	obj := &advisorv0alpha1.Check{}
-	obj.SetLabels(map[string]string{typeLabel: "testType"})
+	obj.SetLabels(map[string]string{checks.TypeLabel: "testType"})
 
 	checkMap := map[string]checks.Check{
 		"testType": &mockCheck{},
@@ -37,7 +37,7 @@ func TestGetCheck_MissingLabel(t *testing.T) {
 
 func TestGetCheck_UnknownType(t *testing.T) {
 	obj := &advisorv0alpha1.Check{}
-	obj.SetLabels(map[string]string{typeLabel: "unknownType"})
+	obj.SetLabels(map[string]string{checks.TypeLabel: "unknownType"})
 
 	checkMap := map[string]checks.Check{
 		"testType": &mockCheck{},
@@ -56,7 +56,7 @@ func TestSetStatusAnnotation(t *testing.T) {
 
 	err := setStatusAnnotation(ctx, client, obj, "processed")
 	assert.NoError(t, err)
-	assert.Equal(t, "processed", obj.GetAnnotations()[statusAnnotation])
+	assert.Equal(t, "processed", obj.GetAnnotations()[checks.StatusAnnotation])
 }
 
 func TestProcessCheck(t *testing.T) {
@@ -75,7 +75,7 @@ func TestProcessCheck(t *testing.T) {
 
 	err = processCheck(ctx, client, obj, check)
 	assert.NoError(t, err)
-	assert.Equal(t, "processed", obj.GetAnnotations()[statusAnnotation])
+	assert.Equal(t, "processed", obj.GetAnnotations()[checks.StatusAnnotation])
 }
 
 func TestProcessMultipleCheckItems(t *testing.T) {
@@ -102,15 +102,15 @@ func TestProcessMultipleCheckItems(t *testing.T) {
 
 	err = processCheck(ctx, client, obj, check)
 	assert.NoError(t, err)
-	assert.Equal(t, "processed", obj.GetAnnotations()[statusAnnotation])
+	assert.Equal(t, "processed", obj.GetAnnotations()[checks.StatusAnnotation])
 	r := client.lastValue.(advisorv0alpha1.CheckV0alpha1StatusReport)
 	assert.Equal(t, r.Count, int64(100))
-	assert.Len(t, r.Errors, 50)
+	assert.Len(t, r.Failures, 50)
 }
 
 func TestProcessCheck_AlreadyProcessed(t *testing.T) {
 	obj := &advisorv0alpha1.Check{}
-	obj.SetAnnotations(map[string]string{statusAnnotation: "processed"})
+	obj.SetAnnotations(map[string]string{checks.StatusAnnotation: "processed"})
 	client := &mockClient{}
 	ctx := context.TODO()
 	check := &mockCheck{}
@@ -137,7 +137,7 @@ func TestProcessCheck_RunError(t *testing.T) {
 
 	err = processCheck(ctx, client, obj, check)
 	assert.Error(t, err)
-	assert.Equal(t, "error", obj.GetAnnotations()[statusAnnotation])
+	assert.Equal(t, "error", obj.GetAnnotations()[checks.StatusAnnotation])
 }
 
 type mockClient struct {
@@ -173,12 +173,12 @@ type mockStep struct {
 	err error
 }
 
-func (m *mockStep) Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec, items any) (*advisorv0alpha1.CheckReportError, error) {
+func (m *mockStep) Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec, items any) (*advisorv0alpha1.CheckReportFailure, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
 	if _, ok := items.(error); ok {
-		return &advisorv0alpha1.CheckReportError{}, nil
+		return &advisorv0alpha1.CheckReportFailure{}, nil
 	}
 	return nil, nil
 }
@@ -188,6 +188,10 @@ func (m *mockStep) Title() string {
 }
 
 func (m *mockStep) Description() string {
+	return "mock"
+}
+
+func (m *mockStep) Resolution() string {
 	return "mock"
 }
 

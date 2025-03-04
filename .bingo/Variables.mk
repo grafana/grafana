@@ -5,6 +5,10 @@ GOPATH ?= $(shell go env GOPATH)
 GOBIN  ?= $(firstword $(subst :, ,${GOPATH}))/bin
 GO     ?= $(shell which go)
 
+# Add this near the top of the file, after the initial variable definitions
+ifndef VARIABLES_MK
+VARIABLES_MK := 1
+
 # Below generated variables ensure that every time a tool under each variable is invoked, the correct version
 # will be used; reinstalling only if needed.
 # For example for bra variable:
@@ -65,3 +69,4 @@ $(SWAGGER): $(BINGO_DIR)/swagger.mod
 	@echo "(re)installing $(GOBIN)/swagger-v0.30.6-0.20240310114303-db51e79a0e37"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=swagger.mod -o=$(GOBIN)/swagger-v0.30.6-0.20240310114303-db51e79a0e37 "github.com/go-swagger/go-swagger/cmd/swagger"
 
+endif

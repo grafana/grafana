@@ -6,8 +6,6 @@ import { mockDataSourceRequest } from './utils';
 
 test.beforeEach(mockDataSourceRequest);
 
-test.use({ featureToggles: { sqlQuerybuilderFunctionParameters: true } });
-
 test('visual query builder should handle macros', async ({ explorePage, page }) => {
   await explorePage.getByGrafanaSelector(selectors.components.SQLQueryEditor.headerTableSelector).click();
   await page.getByText(normalTableName, { exact: true }).click();

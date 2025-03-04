@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 func TestAuthzLimitedClient_Check(t *testing.T) {
@@ -27,6 +28,7 @@ func TestAuthzLimitedClient_Check(t *testing.T) {
 		req := authlib.CheckRequest{
 			Group:    test.group,
 			Resource: test.resource,
+			Verb:     utils.VerbGet,
 		}
 		resp, err := client.Check(context.Background(), nil, req)
 		assert.NoError(t, err)
@@ -52,12 +54,13 @@ func TestAuthzLimitedClient_Compile(t *testing.T) {
 		req := authlib.ListRequest{
 			Group:    test.group,
 			Resource: test.resource,
+			Verb:     utils.VerbGet,
 		}
 		checker, err := client.Compile(context.Background(), nil, req)
 		assert.NoError(t, err)
 		assert.NotNil(t, checker)
 
-		result := checker("namespace", "name", "folder")
+		result := checker("name", "folder")
 		assert.Equal(t, test.expected, result)
 	}
 }

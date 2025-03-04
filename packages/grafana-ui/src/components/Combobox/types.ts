@@ -4,4 +4,5 @@ export type ComboboxOption<T extends string | number = string> = {
   label?: string;
   value: T;
   description?: string;
+  group?: string;
 };

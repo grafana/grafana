@@ -1,0 +1,106 @@
+name: Test Backend
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  EDITION: 'oss'
+
+jobs:
+  test-backend:
+    name: Test Backend
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.5'
+          cache: true
+          
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential shared-mime-info make
+
+      - name: Get runner name
+        run: echo ${{ runner.name }}
+
+      - name: Setup Enterprise (PR only)
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+        uses: ./.github/actions/setup-enterprise
+
+      - name: Verify CUE generation
+        run: CODEGEN_VERIFY=1 make gen-cue
+
+      - name: Verify Jsonnet generation
+        run: CODEGEN_VERIFY=1 make gen-jsonnet
+
+      - name: Check if coverage should be generated
+        id: check-coverage
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Event: ${{ github.event_name }}"
+          echo "Ref: ${{ github.ref }}"
+          
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "PR changed files:"
+            files=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files --jq '.[].filename')
+            echo "$files"
+            if echo "$files" | grep -E "(pkg/|go\.)"; then
+              echo "Coverage will be generated: true (PR changes)"
+              echo "generate=true" >> $GITHUB_OUTPUT
+            else
+              echo "Coverage will be generated: false"
+              echo "generate=false" >> $GITHUB_OUTPUT
+            fi
+          elif [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]] && \
+               [[ "${{ github.event.head_commit.modified }}" =~ (pkg/|go\.|\.github/workflows/pr-test-backend\.yml) ]]; then
+            echo "Coverage will be generated: true (push to main)"
+            echo "generate=true" >> $GITHUB_OUTPUT
+          else
+            echo "Coverage will be generated: false"
+            echo "generate=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run backend tests
+        uses: ./.github/actions/run-backend-tests
+        with:
+          coverage-opts: ${{ steps.check-coverage.outputs.generate == 'true' && '-coverprofile=unit.cov -coverpkg=github.com/grafana/grafana/...' || '' }}
+          test-command: 'make gen-go test-go-unit'
+
+      - name: Run backend integration tests
+        uses: ./.github/actions/run-backend-tests
+        with:
+          coverage-opts: ${{ steps.check-coverage.outputs.generate == 'true' && '-coverprofile=integration.cov -coverpkg=github.com/grafana/grafana/...' || '' }}
+          test-command: 'make gen-go test-go-integration'
+
+      - name: Generate Coverage Report
+        if: steps.check-coverage.outputs.generate == 'true'
+        uses: ./.github/actions/report-coverage
+        with:
+          unit-cov-path: unit.cov
+          integration-cov-path: integration.cov
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true

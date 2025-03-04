@@ -59,7 +59,14 @@ export const plugin = new PanelPlugin<Options>(CanvasPanel)
         },
       },
       [FieldConfigProperty.Links]: {
-        hideFromDefaults: true,
+        settings: {
+          showOneClick: false,
+        },
+      },
+      [FieldConfigProperty.Actions]: {
+        settings: {
+          showOneClick: false,
+        },
       },
     },
   })

@@ -1,5 +1,5 @@
 import { cx, css } from '@emotion/css';
-import { cloneElement } from 'react';
+import { cloneElement, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -23,7 +23,7 @@ export interface Props extends Omit<FieldProps, 'css' | 'horizontal' | 'descript
   /** Make field's background transparent */
   transparent?: boolean;
   /** Error message to display */
-  error?: string | null;
+  error?: ReactNode;
   htmlFor?: string;
   /** Make tooltip interactive */
   interactive?: boolean;

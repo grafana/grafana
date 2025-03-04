@@ -1,7 +1,7 @@
-import { withErrorBoundary } from '@grafana/ui';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 
 import { CloudReceiverForm } from './form/CloudReceiverForm';
@@ -24,4 +24,4 @@ function NewReceiverViewPage() {
   );
 }
 
-export default withErrorBoundary(NewReceiverViewPage, { style: 'page' });
+export default withPageErrorBoundary(NewReceiverViewPage);

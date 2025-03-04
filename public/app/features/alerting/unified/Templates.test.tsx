@@ -5,7 +5,7 @@ import { Props } from 'react-virtualized-auto-sizer';
 import { render, screen, waitFor, within } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 
-import { CodeEditorProps } from '@grafana/ui/src/components/Monaco/types';
+import { CodeEditor } from '@grafana/ui';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
@@ -13,6 +13,8 @@ import { AccessControlAction } from 'app/types';
 
 import Templates from './Templates';
 import { grantUserPermissions } from './mocks';
+
+type CodeEditorProps = React.ComponentProps<typeof CodeEditor>;
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,

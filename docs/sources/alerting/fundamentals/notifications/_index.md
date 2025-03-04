@@ -126,7 +126,7 @@ Grafana Alerting provides advanced notification capabilities that you’ll find 
 
 For instance, you can customize notifications with shared [templates](ref:templates) that provide actionable alert information and can be reused for multiple notifications.
 
-Additionally, you can use [silences](ref:silences) and [mute timings](ref:mute-timings) to pause notifications for a given time window or at regular intervals, respectively.
+Additionally, you can use [silences](ref:silences) and [mute timings](ref:mute-timings) to pause or suppress notifications without interrupting alert evaluation.
 
 ## Architecture
 
