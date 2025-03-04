@@ -66,7 +66,7 @@ describe('AzureMonitor resourcePickerData', () => {
       });
     });
 
-    it('makes multiple requests when arg returns a skipToken and passes the right skipToken to each subsequent call', async () => {
+    it('makes multiple requests for subscriptions when arg returns a skipToken and passes the right skipToken to each subsequent call', async () => {
       const response1 = {
         ...createMockARGSubscriptionResponse(),
         $skipToken: 'skipfirst100',
@@ -78,6 +78,48 @@ describe('AzureMonitor resourcePickerData', () => {
 
       expect(postResource).toHaveBeenCalledTimes(2);
       const secondCall = postResource.mock.calls[1];
+      const [_, postBody] = secondCall;
+      expect(postBody.options.$skipToken).toEqual('skipfirst100');
+    });
+
+    it('makes multiple requests for resource groups when arg returns a skipToken and passes the right skipToken to each subsequent call', async () => {
+      const subscriptionResponse = createMockARGSubscriptionResponse();
+      const resourceGroupResponse1 = {
+        ...createMockARGResourceGroupsResponse(),
+        $skipToken: 'skipfirst100',
+      };
+      const resourceGroupResponse2 = createMockARGResourceGroupsResponse();
+      const { resourcePickerData, postResource } = createResourcePickerData([
+        subscriptionResponse,
+        resourceGroupResponse1,
+        resourceGroupResponse2,
+      ]);
+
+      await resourcePickerData.getResourceGroupsBySubscriptionId('1', 'metrics');
+
+      expect(postResource).toHaveBeenCalledTimes(3);
+      const secondCall = postResource.mock.calls[2];
+      const [_, postBody] = secondCall;
+      expect(postBody.options.$skipToken).toEqual('skipfirst100');
+    });
+
+    it('makes multiple requests for resources when arg returns a skipToken and passes the right skipToken to each subsequent call', async () => {
+      const subscriptionResponse = createMockARGSubscriptionResponse();
+      const resourcesResponse1 = {
+        ...createARGResourcesResponse(),
+        $skipToken: 'skipfirst100',
+      };
+      const resourcesResponse2 = createARGResourcesResponse();
+      const { resourcePickerData, postResource } = createResourcePickerData([
+        subscriptionResponse,
+        resourcesResponse1,
+        resourcesResponse2,
+      ]);
+
+      await resourcePickerData.getResourcesForResourceGroup('resourceGroupURI', 'metrics');
+
+      expect(postResource).toHaveBeenCalledTimes(3);
+      const secondCall = postResource.mock.calls[2];
       const [_, postBody] = secondCall;
       expect(postBody.options.$skipToken).toEqual('skipfirst100');
     });
@@ -129,7 +171,9 @@ describe('AzureMonitor resourcePickerData', () => {
       const firstCall = postResource.mock.calls[0];
       const [path, postBody] = firstCall;
       expect(path).toEqual('resourcegraph/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01');
-      expect(postBody.query).toContain("type == 'microsoft.resources/subscriptions/resourcegroups'");
+      expect(postBody.query).toContain(
+        'extend resourceGroupURI = strcat("/subscriptions/", subscriptionId, "/resourcegroups/", resourceGroup)'
+      );
       expect(postBody.query).toContain("where subscriptionId == '123'");
     });
 

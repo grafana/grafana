@@ -187,18 +187,23 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     type: ResourcePickerQueryType
   ): Promise<ResourceRowGroup> {
     // We can use subscription ID for the filtering here as they're unique
+    // The logic of this query is:
+    // Retrieve _all_ resources a user/app registration/identity has access to
+    // Filter by the namespaces that support metrics
+    // Filter to resources contained within the subscription
+    // Conduct a left-outer join on the resourcecontainers table to allow us to get the case-sensitive resource group name
+    // Return the count of resources in a group, the URI, and name of the group in ascending order
     const query = `
-    resources
-     | join kind=inner (
-       ResourceContainers
-       | where type == 'microsoft.resources/subscriptions/resourcegroups'
-       | project resourceGroupURI=id, resourceGroupName=name, resourceGroup, subscriptionId
-     ) on resourceGroup, subscriptionId
-
-     ${await this.filterByType(type)}
-     | where subscriptionId == '${subscriptionId}'
-     | summarize count() by resourceGroupName, resourceGroupURI
-     | order by resourceGroupURI asc`;
+    resources 
+    ${await this.filterByType(type)}
+    | where subscriptionId == '${subscriptionId}'
+    | extend resourceGroupURI = strcat("/subscriptions/", subscriptionId, "/resourcegroups/", resourceGroup) 
+    | join kind=leftouter (resourcecontainers  
+        | where type =~ 'microsoft.resources/subscriptions/resourcegroups'  
+        | project resourceGroupName=name, resourceGroupURI=tolower(id)) on resourceGroupURI 
+    | project resourceGroupName=iff(resourceGroupName != "", resourceGroupName, resourceGroup), resourceGroupURI
+    | summarize count() by resourceGroupName, resourceGroupURI
+    | order by tolower(resourceGroupName) asc `;
 
     let resourceGroups: RawAzureResourceGroupItem[] = [];
     let allFetched = false;
@@ -240,13 +245,30 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     // We use resource group URI for the filtering here because resource group names are not unique across subscriptions
     // We also add a slash at the end of the resource group URI to ensure we do not pull resources from a resource group
     // that has a similar naming prefix e.g. resourceGroup1 and resourceGroup10
-    const { data: response } = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(`
-      resources
-      | where id hasprefix "${resourceGroupUri}/"
-      ${await this.filterByType(type)}
-    `);
+    const query = `
+    resources 
+    | where id hasprefix "${resourceGroupUri}/"
+    ${await this.filterByType(type)}
+    | order by tolower(name) asc`;
 
-    return response.map((item) => {
+    let resources: RawAzureResourceItem[] = [];
+    let allFetched = false;
+    let $skipToken = undefined;
+    while (!allFetched) {
+      // The response may include several pages
+      let options: Partial<AzureResourceGraphOptions> = {};
+      if ($skipToken) {
+        options = {
+          $skipToken,
+        };
+      }
+      const resourceResponse = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(query, 1, options);
+      resources = resources.concat(resourceResponse.data);
+      $skipToken = resourceResponse.$skipToken;
+      allFetched = !$skipToken;
+    }
+
+    return resources.map((item) => {
       const parsedUri = parseResourceURI(item.id);
       if (!parsedUri || !parsedUri.resourceName) {
         throw new Error('unable to fetch resource details');
