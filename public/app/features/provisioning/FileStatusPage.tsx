@@ -4,20 +4,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { urlUtil } from '@grafana/data';
-import {
-  Alert,
-  CodeEditor,
-  EmptyState,
-  LinkButton,
-  Button,
-  Spinner,
-  Stack,
-  Tab,
-  TabContent,
-  TabsBar,
-  Text,
-  TextLink,
-} from '@grafana/ui';
+import { Alert, CodeEditor, LinkButton, Button, Stack, Tab, TabContent, TabsBar, DeleteButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
@@ -26,6 +13,7 @@ import {
   useGetRepositoryStatusQuery,
   ResourceWrapper,
   useReplaceRepositoryFilesWithPathMutation,
+  useDeleteRepositoryFilesWithPathMutation,
 } from './api';
 import { PROVISIONING_URL } from './constants';
 
@@ -36,28 +24,27 @@ export default function FileStatusPage() {
   const tab = (queryParams['tab'] as TabSelection) ?? TabSelection.File;
   const name = params['name'] ?? '';
   const path = params['*'] ?? '';
-  const query = useGetRepositoryStatusQuery({ name });
+  const repo = useGetRepositoryStatusQuery({ name });
   const file = useGetRepositoryFilesWithPathQuery({ name, path, ref });
 
-  //@ts-expect-error TODO add error types
-  const notFound = query.isError && query.error?.status === 404;
+  console.log({ repo, file });
+
   return (
     <Page
       navId="provisioning"
       pageNav={{
         text: `File: ${path} ${ref ? `(@${ref})` : ''}`,
-        subTitle: query.data?.spec?.title ?? 'Repository',
+        subTitle: repo.data?.spec?.title ?? 'Repository',
       }}
     >
-      <Page.Contents isLoading={false}>
-        {notFound ? (
-          <EmptyState message={`Repository not found`} variant="not-found">
-            <Text element={'p'}>Make sure the repository config exists in the configuration file.</Text>
-            <TextLink href={PROVISIONING_URL}>Back to repositories</TextLink>
-          </EmptyState>
-        ) : (
-          <div>{file.data ? <ResourceView wrap={file.data} repo={name} repoRef={ref} tab={tab} /> : <Spinner />}</div>
-        )}
+      <Page.Contents isLoading={file.isLoading || repo.isLoading}>
+        <>
+          {repo.error && <Alert title={`Error loading repository`}>{(repo.error as any).message}</Alert>}
+
+          {file.error && <Alert title="Error loading file">{(file.error as any).message}</Alert>}
+
+          {file.isSuccess && file.data && <ResourceView wrap={file.data} repo={name} repoRef={ref} tab={tab} />}
+        </>
       </Page.Contents>
     </Page>
   );
@@ -82,6 +69,7 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
   const location = useLocation();
   const [queryParams] = useQueryParams();
   const [replaceFile, replaceFileStatus] = useReplaceRepositoryFilesWithPathMutation();
+  const [deleteFile, deleteFileStatus] = useDeleteRepositoryFilesWithPathMutation();
 
   const [jsonView, setJsonView] = useState('');
 
@@ -164,6 +152,7 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
           </div>
           <Stack direction={'row'}>
             <Button
+              variant="primary"
               disabled={replaceFileStatus.isLoading}
               onClick={() => {
                 replaceFile({
@@ -176,6 +165,17 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
             >
               {replaceFileStatus.isLoading ? 'Saving' : 'Save'}
             </Button>
+            <DeleteButton
+              size="md"
+              disabled={deleteFileStatus.isLoading}
+              onConfirm={() => {
+                deleteFile({
+                  name: repo,
+                  path: wrap.path!,
+                  message: 'removed from repo test UI',
+                });
+              }}
+            />
           </Stack>
           {replaceFileStatus.isError && (
             <Alert title="Error saving file">
