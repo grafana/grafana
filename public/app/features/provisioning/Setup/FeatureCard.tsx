@@ -1,4 +1,4 @@
-import { Button, Icon, IconName, Text, Card, Stack } from '@grafana/ui';
+import { Button, Icon, IconName, Text, Card, Stack, LinkButton } from '@grafana/ui';
 
 import { Feature } from './types';
 
@@ -37,9 +37,9 @@ export const FeatureCard = ({ feature, onSetup, showSetupButton = true }: Props)
               </Button>
             )}
             {feature.docsLink && (
-              <Button variant="secondary" onClick={() => window.open(feature.docsLink, '_blank')}>
-                Read Docs
-              </Button>
+              <LinkButton fill="text" href={feature.docsLink} icon="external-link-alt">
+                Learn more
+              </LinkButton>
             )}
           </Stack>
         </Card.Actions>

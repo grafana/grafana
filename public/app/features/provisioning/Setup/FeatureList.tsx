@@ -129,9 +129,6 @@ export const FeatureList = () => {
 
   return (
     <Stack direction="column" gap={4}>
-      <Text element="h1" variant="h2" textAlignment="center">
-        All Features
-      </Text>
       <Stack direction="row" gap={2} justifyContent="center">
         {requiredFeatures.map((feature, index) => (
           <FeatureCard
