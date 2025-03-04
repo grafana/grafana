@@ -1078,11 +1078,6 @@
         }
       },
       "open": "Øpęŉ őpŧįőŉş päŉę",
-      "panels": {
-        "multi-select": {
-          "selection-number": "Ńő. őƒ päŉęľş şęľęčŧęđ: {{length}}"
-        }
-      },
       "row": {
         "header": {
           "hide": "Ħįđę",
@@ -1170,6 +1165,16 @@
       "request-time": "Ŧőŧäľ řęqūęşŧ ŧįmę",
       "rows": "Ŧőŧäľ ŉūmþęř řőŵş",
       "table-title": "Ŝŧäŧş"
+    },
+    "layout": {
+      "common": {
+        "copy": "Cőpy",
+        "copy-or-duplicate": "Cőpy őř Đūpľįčäŧę",
+        "delete": "Đęľęŧę",
+        "duplicate": "Đūpľįčäŧę",
+        "layout": "Ŀäyőūŧ",
+        "panels-title": "{{length}} Päŉęľş Ŝęľęčŧęđ"
+      }
     },
     "options": {
       "description": "Đęşčřįpŧįőŉ",
@@ -1325,7 +1330,9 @@
     "viz-panel": {
       "options": {
         "description": "Đęşčřįpŧįőŉ",
-        "title": "Päŉęľ őpŧįőŉş",
+        "open-edit": "Øpęŉ Päŉęľ Ēđįŧ",
+        "plugin-type-image": "Ĩmäģę őƒ pľūģįŉ ŧypę",
+        "title": "Päŉęľ",
         "title-option": "Ŧįŧľę",
         "transparent-background": "Ŧřäŉşpäřęŉŧ þäčĸģřőūŉđ"
       }
