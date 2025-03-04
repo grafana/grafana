@@ -100,6 +100,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
       refresh_intervals: refreshPicker?.state.intervals,
       hidden: controlsState?.hideTimeControls,
       nowDelay: timeRange.UNSAFE_nowDelay,
+      quick_ranges: controlsState?.timePicker.state.quickRanges,
     },
     defaultTimePickerConfig
   );
