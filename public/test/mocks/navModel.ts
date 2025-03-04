@@ -7,6 +7,12 @@ export const mockNavModel: NavIndex = {
     icon: 'home-alt',
     url: '/',
   },
+  folders: {
+    id: 'folders',
+    text: 'Folders',
+    icon: 'folder',
+    url: '/folder-app',
+  },
   dashboards: {
     id: 'dashboards',
     text: 'Dashboards',
