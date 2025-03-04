@@ -1,32 +1,36 @@
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { FixedSizeList } from 'react-window';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { BrowserLabel as PromLabel, Input, Label } from '@grafana/ui';
 
 import { useMetricsBrowser } from './MetricsBrowserContext';
-import { LIST_ITEM_SIZE, METRIC_LABEL, SelectableLabel } from './types';
+import { LIST_ITEM_SIZE } from './types';
 
 interface MetricSelectorProps {
-  labels: SelectableLabel[];
   onClickMetric: (name: string, value: string | undefined) => void;
   styles: Record<string, string>;
 }
 
-export function MetricSelector({ labels, onClickMetric, styles }: MetricSelectorProps) {
+export function MetricSelector({ onClickMetric, styles }: MetricSelectorProps) {
   const [metricSearchTerm, setMetricSearchTerm] = useState('');
-  const { seriesLimit, setSeriesLimit } = useMetricsBrowser();
+  const { metrics, selectedMetric, seriesLimit, setSeriesLimit, languageProvider } = useMetricsBrowser();
 
-  // Filter metrics
-  let metrics = labels.find((label) => label.name === METRIC_LABEL);
-  if (metrics && metricSearchTerm) {
-    metrics = {
-      ...metrics,
-      values: metrics.values?.filter((value) => value.selected || value.name.includes(metricSearchTerm)),
-    };
-  }
+  const filteredMetrics = useMemo(
+    () => metrics.filter((m) => m === selectedMetric || m.includes(metricSearchTerm)),
+    [metricSearchTerm, metrics, selectedMetric]
+  );
 
-  const metricCount = metrics?.values?.length || 0;
+  const getDetails = useCallback(
+    (metricName: string) => {
+      const meta = languageProvider.metricsMetadata;
+      if (meta && meta[metricName]) {
+        return `(${meta.type}) ${meta.help}`;
+      }
+      return undefined;
+    },
+    [languageProvider.metricsMetadata]
+  );
 
   return (
     <div>
@@ -59,25 +63,22 @@ export function MetricSelector({ labels, onClickMetric, styles }: MetricSelector
           data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.metricList}
         >
           <FixedSizeList
-            height={Math.min(450, metricCount * LIST_ITEM_SIZE)}
-            itemCount={metricCount}
+            height={Math.min(450, filteredMetrics.length * LIST_ITEM_SIZE)}
+            itemCount={filteredMetrics.length}
             itemSize={LIST_ITEM_SIZE}
-            itemKey={(i) => metrics!.values![i].name}
+            itemKey={(i) => filteredMetrics[i]}
             width={300}
             className={styles.valueList}
           >
             {({ index, style }) => {
-              const value = metrics?.values?.[index];
-              if (!value) {
-                return null;
-              }
+              const metric = filteredMetrics[index];
               return (
                 <div style={style}>
                   <PromLabel
-                    name={metrics!.name}
-                    value={value?.name}
-                    title={value.details}
-                    active={value?.selected}
+                    name={metric}
+                    value={metric}
+                    title={getDetails(metric)}
+                    active={selectedMetric === metric}
                     onClick={(name: string, value: string | undefined) => {
                       // Resetting search to prevent empty results
                       setMetricSearchTerm('');

@@ -247,7 +247,7 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
     return (
       <div className={styles.wrapper}>
         <Stack gap={3}>
-          <MetricSelector labels={labels} onClickMetric={this.onClickMetric} styles={styles} />
+          <MetricSelector onClickMetric={this.onClickMetric} styles={styles} />
           <div>
             <LabelSelector labels={labels} onClickLabel={this.onClickLabel} styles={styles} />
 
@@ -260,11 +260,7 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
           </div>
         </Stack>
 
-        <SelectorActions
-          labels={labels}
-          onClickClear={this.onClickClear}
-          styles={styles}
-        />
+        <SelectorActions labels={labels} onClickClear={this.onClickClear} styles={styles} />
       </div>
     );
   }
