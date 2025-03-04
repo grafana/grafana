@@ -42,7 +42,7 @@ export class K8sDashboardV2API
       const dashboard = await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto');
 
       if (!isDashboardV2Resource(dashboard)) {
-        throw new DashboardVersionError(true, 'Dashboard is V1 format');
+        throw new DashboardVersionError(false, 'Dashboard is V1 format');
       }
 
       // TODO: For dev purposes only, the conversion should and will happen in the API. This is just to stub v2 api responses.

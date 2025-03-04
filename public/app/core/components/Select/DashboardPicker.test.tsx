@@ -104,7 +104,6 @@ describe('DashboardPicker', () => {
     ['v2', mockDashboardV2],
   ])('Dashboard %s', (format, dashboard) => {
     beforeEach(() => {
-      config.featureToggles.useV2DashboardsAPI = format === 'v2';
       getDashboardDTO.mockResolvedValue(dashboard);
     });
 

@@ -658,12 +658,7 @@ const managers: {
 export function getDashboardScenePageStateManager(): UnifiedDashboardScenePageStateManager;
 export function getDashboardScenePageStateManager(v: 'v1'): DashboardScenePageStateManager;
 export function getDashboardScenePageStateManager(v: 'v2'): DashboardScenePageStateManagerV2;
-/**
- * Get a manager for the given version. By default, it returns the unified manager that would handle both v1 and v2.
- * V1 would be used by default if no version is provided.
- * @param v - 'v1' | 'v2'
- * @returns a manager for the given version
- */
+
 export function getDashboardScenePageStateManager(v?: 'v1' | 'v2') {
   if (v === 'v1') {
     if (!managers.v1) {
