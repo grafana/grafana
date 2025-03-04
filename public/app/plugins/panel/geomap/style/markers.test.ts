@@ -1,10 +1,10 @@
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
 
-import { getWebGLStyle } from './markers'; // Replace with actual file path
+import { getWebGLStyle } from './markers';
 
 // Mock dependencies
 jest.mock('app/features/dimensions', () => ({
-  getPublicOrAbsoluteUrl: jest.fn(), // Explicitly mock as a Jest function
+  getPublicOrAbsoluteUrl: jest.fn(),
 }));
 
 describe('getWebGLStyle', () => {
