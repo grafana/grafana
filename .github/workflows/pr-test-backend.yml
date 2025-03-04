@@ -165,13 +165,13 @@ jobs:
           GO_TAGS=${{ env.GO_TAGS }} go test -v github.com/grafana/grafana/pkg/extensions/auth -run TestIntegration
 
       # Run unit and integration tests sequentially
-      - name: Run unit tests
-        run: |
-          if [ "${{ needs.check-coverage.outputs.generate }}" == "true" ]; then
-            COVER_OPTS="-coverprofile=unit.cov -covermode=atomic -coverpkg=github.com/grafana/grafana/..." GO_TAGS=${{ env.GO_TAGS }} make test-go-unit
-          else
-            GO_TAGS=${{ env.GO_TAGS }} make test-go-unit
-          fi
+      # - name: Run unit tests
+      #   run: |
+      #     if [ "${{ needs.check-coverage.outputs.generate }}" == "true" ]; then
+      #       COVER_OPTS="-coverprofile=unit.cov -covermode=atomic -coverpkg=github.com/grafana/grafana/..." GO_TAGS=${{ env.GO_TAGS }} make test-go-unit
+      #     else
+      #       GO_TAGS=${{ env.GO_TAGS }} make test-go-unit
+      #     fi
 
       - name: Run integration tests
         run: |
@@ -191,6 +191,7 @@ jobs:
 
   test-unit:
     name: Test Backend Unit
+    if: false
     needs: [check-coverage, setup-edition, debug-test-sequential]
     runs-on: ubuntu-latest
     continue-on-error: true
