@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
-	"github.com/blevesearch/bleve/v2/analysis/analyzer/simple"
 	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/blevesearch/bleve/v2/search"
 	"github.com/blevesearch/bleve/v2/search/query"
@@ -596,7 +595,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
 		// mimic the behavior of the sql search
 		query := bleve.NewMatchQuery(strings.ToLower(req.Query))
-		query.Analyzer = simple.Name
+		//query.Analyzer = simple.Name
 		queries = append(queries, query)
 	}
 
@@ -852,6 +851,12 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 					v = match.Fields[resource.SEARCH_FIELD_PREFIX+fieldName]
 				}
 				if v != nil {
+					// some fields like title have multiple mappings. This means match.Fields["title"] could be a slice.
+					if slice, ok := v.([]interface{}); ok {
+						if len(slice) > 0 {
+							v = slice[0]
+						}
+					}
 					// Encode the value to protobuf
 					row.Cells[i], err = encoders[i](v)
 				}
