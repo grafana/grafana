@@ -278,6 +278,11 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
         url: '',
         internal: {
           query: { query: '${__value.raw}', queryType: 'traceql' },
+          panelsState: {
+            trace: {
+              spanId: '${__data.fields["span_id"]}',
+            },
+          },
           datasourceUid: options.datasourceUid,
           datasourceName: dsSettings?.name ?? 'Data source not found',
         },
