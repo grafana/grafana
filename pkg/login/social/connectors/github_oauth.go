@@ -181,7 +181,7 @@ func (s *SocialGithub) FetchPrivateEmail(ctx context.Context, client *http.Clien
 
 	info := s.GetOAuthInfo()
 
-	response, err := s.httpGet(ctx, client, fmt.Sprintf(info.ApiUrl+"/emails"))
+	response, err := s.httpGet(ctx, client, info.ApiUrl+"/emails")
 	if err != nil {
 		return "", fmt.Errorf("Error getting email address: %s", err)
 	}
@@ -206,7 +206,7 @@ func (s *SocialGithub) FetchPrivateEmail(ctx context.Context, client *http.Clien
 func (s *SocialGithub) FetchTeamMemberships(ctx context.Context, client *http.Client) ([]GithubTeam, error) {
 	info := s.GetOAuthInfo()
 
-	url := fmt.Sprintf(info.ApiUrl + "/teams?per_page=100")
+	url := info.ApiUrl + "/teams?per_page=100"
 	hasMore := true
 	teams := make([]GithubTeam, 0)
 
@@ -339,7 +339,7 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 		userInfo.Name = data.Name
 	}
 
-	organizationsUrl := fmt.Sprintf(info.ApiUrl + "/orgs?per_page=100")
+	organizationsUrl := info.ApiUrl + "/orgs?per_page=100"
 
 	if !s.IsTeamMember(ctx, client) {
 		return nil, ErrMissingTeamMembership.Errorf("User is not a member of any of the allowed teams: %v", s.teamIds)

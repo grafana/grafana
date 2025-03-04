@@ -99,9 +99,9 @@ func runListConflictUsers() func(context *cli.Context) error {
 			logger.Info(color.GreenString("No Conflicting users found.\n\n"))
 			return nil
 		}
-		logger.Infof("\n\nShowing conflicts\n\n")
-		logger.Infof(r.ToStringPresentation())
-		logger.Infof("\n")
+		logger.Info("\n\nShowing conflicts\n\n")
+		logger.Info(r.ToStringPresentation())
+		logger.Info("\n")
 		if len(r.DiscardedBlocks) != 0 {
 			r.logDiscardedUsers()
 		}
@@ -458,7 +458,7 @@ func (r *ConflictResolver) showChanges() {
 		b.WriteString("\n\n")
 	}
 	logger.Info("\n\nChanges that will take place\n\n")
-	logger.Infof(b.String())
+	logger.Info(b.String())
 }
 
 // Formatter make it possible for us to write to terminal and to a file

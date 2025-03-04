@@ -47,7 +47,7 @@ func executeQuery(ctx context.Context, logger log.Logger, query queryModel, runn
 					text += " Try using the aggregateWindow() function in your query to reduce the number of points returned."
 				}
 
-				dr.Error = fmt.Errorf(text)
+				dr.Error = errors.New(text)
 			}
 		}
 	}

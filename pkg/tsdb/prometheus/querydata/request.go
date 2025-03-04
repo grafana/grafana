@@ -2,6 +2,7 @@ package querydata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -188,7 +189,7 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 	// This is only for health check fall back scenario
 	if res.StatusCode != 200 && q.RefId == "__healthcheck__" {
 		return backend.DataResponse{
-			Error: fmt.Errorf(res.Status),
+			Error: errors.New(res.Status),
 		}
 	}
 

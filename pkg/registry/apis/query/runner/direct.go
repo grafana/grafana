@@ -111,7 +111,7 @@ func (d *directRegistry) GetDatasourceGroupVersion(pluginId string) (schema.Grou
 	var err error
 	gv, ok := d.apis[pluginId]
 	if !ok {
-		err = fmt.Errorf("no API found for id: " + pluginId)
+		err = fmt.Errorf("no API found for id: %s", pluginId)
 	}
 	return gv, err
 }
