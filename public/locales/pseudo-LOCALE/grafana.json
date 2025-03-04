@@ -1087,12 +1087,6 @@
           "options-header": "Mūľŧį-şęľęčŧęđ Ŗőŵ őpŧįőŉş",
           "selection-number": "Ńő. őƒ řőŵş şęľęčŧęđ: {{length}}"
         }
-      },
-      "tab": {
-        "multi-select": {
-          "options-header": "Mūľŧį-şęľęčŧęđ Ŧäþ őpŧįőŉş",
-          "selection-number": "Ńő. őƒ ŧäþş şęľęčŧęđ: "
-        }
       }
     },
     "editpane": {
@@ -1250,12 +1244,27 @@
     },
     "tabs-layout": {
       "description": "Ŧäþş ľäyőūŧ",
+      "menu": {
+        "move-tab": "Mővę ŧäþ"
+      },
+      "multi-select": {
+        "title": "{{length}} ŧäþş şęľęčŧęđ"
+      },
       "name": "Ŧäþş",
       "tab": {
+        "menu": {
+          "add": "Åđđ ŧäþ",
+          "add-panel": "Päŉęľ",
+          "add-tab-above": "Ŧäþ þęƒőřę",
+          "add-tab-after": "Ŧäþ äƒŧęř",
+          "add-tab-before": "Ŧäþ þęƒőřę",
+          "move-left": "Mővę ŧäþ ľęƒŧ",
+          "move-right": "Mővę ŧäþ řįģĥŧ"
+        },
         "new": "Ńęŵ ŧäþ"
       },
       "tab-options": {
-        "title": "Ŧäþ őpŧįőŉş",
+        "title": "Ŧäþ",
         "title-option": "Ŧįŧľę"
       }
     },
