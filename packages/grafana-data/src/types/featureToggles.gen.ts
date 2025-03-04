@@ -228,7 +228,6 @@ export interface FeatureToggles {
   alertingUIOptimizeReducer?: boolean;
   azureMonitorEnableUserAuth?: boolean;
   alertingNotificationsStepMode?: boolean;
-  useV2DashboardsAPI?: boolean;
   feedbackButton?: boolean;
   unifiedStorageSearchUI?: boolean;
   elasticsearchCrossClusterSearch?: boolean;
