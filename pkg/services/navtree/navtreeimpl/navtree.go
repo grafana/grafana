@@ -100,6 +100,15 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		})
 	}
 
+	treeRoot.AddSection(&navtree.NavLink{
+		Text:       "Folders",
+		Id:         "folders",
+		SubTitle:   "Manage and organize your folders",
+		Icon:       "folder",
+		Url:        s.cfg.AppSubURL + "/folder-app",
+		SortWeight: navtree.WeightFolders,
+	})
+
 	if c.IsPublicDashboardView() || hasAccess(ac.EvalAny(
 		ac.EvalPermission(dashboards.ActionFoldersRead), ac.EvalPermission(dashboards.ActionFoldersCreate),
 		ac.EvalPermission(dashboards.ActionDashboardsRead), ac.EvalPermission(dashboards.ActionDashboardsCreate)),
