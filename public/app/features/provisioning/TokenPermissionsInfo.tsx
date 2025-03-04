@@ -11,7 +11,7 @@ export function TokenPermissionsInfo() {
       </div>
 
       <p>Select the appropriate owner and repository. Then expand Repository permissions, granting</p>
-      <table>
+      <table style={{ fontSize: '2em' }}>
         <tr>
           <td>Content</td>
           <td>Read and write</td>
@@ -21,13 +21,12 @@ export function TokenPermissionsInfo() {
           <td>Read only</td>
         </tr>
         <tr>
-          <td>Pull requests&nbsp;</td>
+          <td>Pull requests&nbsp;&nbsp;</td>
           <td>Read and write</td>
         </tr>
         <tr>
           <td>Webhooks</td>
           <td>Read and write &nbsp;&nbsp;</td>
-          <td>If this instance has a public URL, and should be notified of changes</td>
         </tr>
       </table>
     </ControlledCollapse>

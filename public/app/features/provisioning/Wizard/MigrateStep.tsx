@@ -66,7 +66,10 @@ export function MigrateStep({ onStatusChange }: MigrateStepProps) {
         </Alert>
 
         <FieldSet>
-          <Field label="Identifier" description="Include the current identifier in exported metadata">
+          <Field
+            label="Identifier (final name still TBD)"
+            description="Include the current identifier in exported metadata"
+          >
             <Switch {...register('migrate.identifier')} />
           </Field>
 

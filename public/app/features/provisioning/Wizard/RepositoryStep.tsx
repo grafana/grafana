@@ -16,6 +16,7 @@ import {
 } from '@grafana/ui';
 
 import { getWorkflowOptions } from '../ConfigForm';
+import { ConfigFormGithubCollpase } from '../ConfigFormGithubCollapse';
 import { TokenPermissionsInfo } from '../TokenPermissionsInfo';
 import { useCreateRepositoryTestMutation } from '../api';
 import { useCreateOrUpdateRepository } from '../hooks';
@@ -80,12 +81,14 @@ export function RepositoryStep({ onStatusChange }: Props) {
     }
   }, [saveRequest.isSuccess, saveRequest.isError, saveRequest.data, setValue, onStatusChange]);
 
+  const isGithub = type === 'github';
+
   return (
     <FieldSet label="2. Configure repository">
       <Stack direction="column">
         <RequestErrorAlert request={errorRequest} title="Repository verification failed" />
 
-        {type === 'github' && (
+        {isGithub && (
           <>
             <TokenPermissionsInfo />
             <Field
@@ -137,10 +140,6 @@ export function RepositoryStep({ onStatusChange }: Props) {
             <Field label={'Branch'} error={errors.repository?.branch?.message} invalid={!!errors.repository?.branch}>
               <Input {...register('repository.branch')} placeholder={'main'} />
             </Field>
-
-            <Field label={'Show dashboard previews'}>
-              <Switch {...register('repository.generateDashboardPreviews')} />
-            </Field>
           </>
         )}
 
@@ -178,8 +177,19 @@ export function RepositoryStep({ onStatusChange }: Props) {
           />
         </Field>
 
-        <ControlledCollapse label="Advanced settings" isOpen={true}>
-          <Field label={'Enable sync'}>
+        {isGithub && (
+          <ConfigFormGithubCollpase
+            previews={
+              <Switch
+                {...register('repository.generateDashboardPreviews')}
+                id={'repository.generateDashboardPreviews'}
+              />
+            }
+          />
+        )}
+
+        <ControlledCollapse label="Advanced settings" isOpen={false}>
+          <Field label={'Enable sync'} description="The repository will periodically pull changes">
             <Switch {...register('repository.sync.enabled')} />
           </Field>
           <Field label={'Sync interval (seconds)'}>

@@ -38,7 +38,7 @@ export function ProvisioningWizard() {
       repository: getDefaultValues(),
       migrate: {
         history: true,
-        identifier: false,
+        identifier: true, // Keep the same URLs
       },
     },
   });
