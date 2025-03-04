@@ -10,6 +10,7 @@ import {
   StyleConfigFields,
   StyleConfigState,
   SymbolAlign,
+  ColorValue,
 } from './types';
 
 /** Indicate if the style wants to show text values */
@@ -92,7 +93,7 @@ export function getDisplacement(symbolAlign: SymbolAlign, radius: number) {
   return displacement;
 }
 
-export function getRGBValues(colorString: string) {
+export function getRGBValues(colorString: string): ColorValue | null {
   // Check if it's a hex color
   if (colorString.startsWith('#')) {
     return getRGBFromHex(colorString);
@@ -110,7 +111,7 @@ export function getRGBValues(colorString: string) {
   return null;
 }
 
-function getRGBFromHex(hexColor: string) {
+function getRGBFromHex(hexColor: string): ColorValue {
   // Remove the '#' character
   hexColor = hexColor.slice(1);
 
@@ -122,16 +123,27 @@ function getRGBFromHex(hexColor: string) {
   return { r, g, b };
 }
 
-function getRGBFromRGBString(rgbString: string) {
-  // Use regex to extract the numbers
-  const matches = rgbString.match(/\d+/g);
+function getRGBFromRGBString(rgbString: string): ColorValue | null {
+  // Use regex to extract the numbers, supporting both rgb(r,g,b) and rgba(r,g,b,a) formats
+  const matches = rgbString.match(/\d+\.?\d*/g);
 
-  if (matches && matches.length === 3) {
-    return {
-      r: parseInt(matches[0], 10),
-      g: parseInt(matches[1], 10),
-      b: parseInt(matches[2], 10),
-    };
+  if (matches) {
+    if (matches.length === 3) {
+      return {
+        r: parseInt(matches[0], 10),
+        g: parseInt(matches[1], 10),
+        b: parseInt(matches[2], 10),
+      };
+    } else if (matches.length === 4) {
+      return {
+        r: parseInt(matches[0], 10),
+        g: parseInt(matches[1], 10),
+        b: parseInt(matches[2], 10),
+        a: parseFloat(matches[3]), // Using parseFloat for alpha as it can be decimal (0-1)
+      };
+    } else {
+      console.warn(`Unsupported color format: ${rgbString}`);
+    }
   } else {
     console.warn(`Unsupported color format: ${rgbString}`);
   }

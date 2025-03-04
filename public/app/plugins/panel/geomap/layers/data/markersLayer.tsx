@@ -144,7 +144,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             feature.setProperties({ blue: colorValues?.b ?? 255 });
             feature.setProperties({ size: (values.size ?? 1) * 2 });
             feature.setProperties({ rotation: ((values.rotation ?? 0) * Math.PI) / 180 });
-            feature.setProperties({ opacity: values.opacity });
+            feature.setProperties({ opacity: (values.opacity ?? 1) * (colorValues?.a ?? 1) });
             feature.setProperties({ offsetX: displacement[0] });
             feature.setProperties({ offsetY: displacement[1] });
 
