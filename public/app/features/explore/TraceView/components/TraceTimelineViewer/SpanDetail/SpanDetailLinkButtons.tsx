@@ -1,9 +1,9 @@
 import * as React from 'react';
 
-import { IconName, PluginExtensionLink, PluginExtensionPoints, RawTimeRange, TimeRange } from '@grafana/data';
+import { IconName, PluginExtensionPoints, RawTimeRange, TimeRange } from '@grafana/data';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, locationService, reportInteraction, usePluginLinks } from '@grafana/runtime';
-import { Button, ButtonSelect, DataLinkButton } from '@grafana/ui';
+import { Button, DataLinkButton } from '@grafana/ui';
 import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
@@ -108,14 +108,6 @@ export const getSpanDetailLinkButtons = (props: Props) => {
           </>
         );
       }
-    } else {
-      // fallback to building a url to open in Grafana Profiles Drilldown
-      const drilldownProfilesAppExists = config.apps[profilesDrilldownPluginId];
-
-      if (drilldownProfilesAppExists) {
-        const path = getProfileLinkPath(context, profilesDrilldownPluginId);
-        profileLinkButtons = createProfileLinkButtons(profileLinkButton, undefined, path);
-      }
     }
   }
 
@@ -144,25 +136,6 @@ export const getProfileLinkButtonsContext = (
     ],
   };
   return context;
-};
-
-export const getProfileLinkPath = (context: ProfilesButtonContext, profilesDrilldownPluginId: string) => {
-  const datasourceParam =
-    context.targets.length > 0 && context.targets[0].datasource?.uid
-      ? `var-dataSource=${context.targets[0].datasource.uid}`
-      : '';
-  const serviceNameParam = `&var-serviceName=${context.serviceName}`;
-  const profileTypeParam = `&var-profileMetricId=${context.profileTypeId}`;
-  const explorationTypeParam = `&explorationType=${context.explorationType}`;
-  const timeRangeParam = `&from=${context.timeRange.from}&to=${context.timeRange.to}`;
-  const spanSelectorParam = `&spanSelector=${context.spanSelector}`;
-
-  const base = `/a/${profilesDrilldownPluginId}/explore?`;
-  const params = new URLSearchParams(
-    `${datasourceParam}${serviceNameParam}${profileTypeParam}${timeRangeParam}${explorationTypeParam}${spanSelectorParam}`
-  ).toString();
-  const path = `${base}${params}`;
-  return path;
 };
 
 const createLinkButton = (
@@ -200,34 +173,5 @@ const createLinkButton = (
       }}
       buttonProps={{ icon, className }}
     />
-  );
-};
-
-const createProfileLinkButtons = (
-  profileLinkButton: JSX.Element,
-  link?: PluginExtensionLink,
-  path?: string
-) => {
-  const label = 'Open in Grafana Profiles Drilldown';
-  return (
-    <>
-      {profileLinkButton}
-      <ButtonSelect
-        variant="primary"
-        narrow
-        options={[{ label, value: label }]}
-        onChange={(e) => {
-          if (e.value === label) {
-            reportInteraction('grafana_traces_open_in_profiles_drilldown_clicked');
-
-            if (link && link.onClick) {
-              link.onClick();
-            } else if (path) {
-              window.open(path, '_blank', 'noopener,noreferrer');
-            }
-          }
-        }}
-      />
-    </>
   );
 };
