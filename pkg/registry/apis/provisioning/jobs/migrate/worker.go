@@ -12,6 +12,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
@@ -44,6 +45,9 @@ type MigrationWorker struct {
 	// Decrypt secret from config object
 	secrets secrets.Service
 
+	// Delegate the export to the export worker
+	exportWorker *export.ExportWorker
+
 	// Delegate the import to sync worker
 	syncWorker *sync.SyncWorker
 }
@@ -54,6 +58,7 @@ func NewMigrationWorker(clients *resources.ClientFactory,
 	storageStatus dualwrite.Service,
 	batch resource.BulkStoreClient,
 	secrets secrets.Service,
+	exportWorker *export.ExportWorker,
 	syncWorker *sync.SyncWorker,
 	clonedir string,
 ) *MigrationWorker {
@@ -65,6 +70,7 @@ func NewMigrationWorker(clients *resources.ClientFactory,
 		legacyMigrator,
 		batch,
 		secrets,
+		exportWorker,
 		syncWorker,
 	}
 }
@@ -78,10 +84,6 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	options := job.Spec.Migrate
 	if options == nil {
 		return errors.New("missing migrate settings")
-	}
-
-	if !dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, w.storageStatus) {
-		return errors.New("already reading from unified storage")
 	}
 
 	var (
@@ -120,7 +122,7 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		return fmt.Errorf("unable to read current tree: %w", err)
 	}
 
-	if true { // configurable?
+	if true { // configurable?  can we skip if the repo is currently empty?
 		for _, v := range tree {
 			if v.Blob && !resources.ShouldIgnorePath(v.Path) {
 				err = rw.Delete(ctx, v.Path, "", "initial cleanup")
@@ -154,17 +156,31 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		}
 	}
 
-	// Load and write all folders
-	progress.SetMessage("exporting folders")
-	err = worker.loadFolders(ctx)
-	if err != nil {
-		return err
-	}
+	if dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, w.storageStatus) {
+		progress.SetMessage("exporting folders")
+		err = worker.loadFolders(ctx)
+		if err != nil {
+			return err
+		}
 
-	progress.SetMessage("exporting resources")
-	err = worker.loadResources(ctx)
-	if err != nil {
-		return err
+		progress.SetMessage("exporting resources")
+		err = worker.loadResources(ctx)
+		if err != nil {
+			return err
+		}
+	} else {
+		// Already using unified storage
+		worker.legacy = nil
+		err = w.exportWorker.Process(ctx, rw, provisioning.Job{
+			Spec: provisioning.JobSpec{
+				Export: &provisioning.ExportJobOptions{
+					Identifier: options.Identifier,
+				},
+			},
+		}, progress)
+		if err != nil {
+			return err
+		}
 	}
 
 	if buffered != nil {
@@ -183,9 +199,11 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	}
 
 	// Clear unified and allow writing
-	err = worker.wipeUnifiedAndSetMigratedFlag(ctx, w.storageStatus)
-	if err != nil {
-		return fmt.Errorf("unable to reset unified storage %w", err)
+	if worker.legacy != nil {
+		err = worker.wipeUnifiedAndSetMigratedFlag(ctx, w.storageStatus)
+		if err != nil {
+			return fmt.Errorf("unable to reset unified storage %w", err)
+		}
 	}
 
 	// enable sync (won't be saved)
@@ -199,7 +217,7 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 			},
 		},
 	}, progress)
-	if err != nil { // this will have an error when too many errors exist
+	if err != nil && worker.legacy != nil { // this will have an error when too many errors exist
 		e2 := stopReadingUnifiedStorage(ctx, w.storageStatus)
 		if e2 != nil {
 			logger := logging.FromContext(ctx)
