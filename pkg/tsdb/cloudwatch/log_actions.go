@@ -207,7 +207,7 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 		QueryString: aws.String(modifiedQueryString),
 	}
 
-	if logsQuery.LogGroups != nil && len(logsQuery.LogGroups) > 0 && features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying) {
+	if len(logsQuery.LogGroups) > 0 && features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying) {
 		var logGroupIdentifiers []string
 		for _, lg := range logsQuery.LogGroups {
 			arn := lg.Arn
