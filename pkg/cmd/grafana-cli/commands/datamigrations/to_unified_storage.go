@@ -11,7 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 
 	authlib "github.com/grafana/authlib/types"
@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified"
@@ -63,7 +64,7 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 	migrator := legacy.NewDashboardAccess(
 		legacysql.NewDatabaseProvider(sqlStore),
 		authlib.OrgNamespaceFormatter,
-		nil, provisioning, false,
+		nil, provisioning, false, sort.ProvideService(),
 	)
 
 	yes, err := promptYesNo(fmt.Sprintf("Count legacy resources for namespace: %s?", opts.Namespace))
@@ -187,21 +188,22 @@ func promptYesNo(prompt string) (bool, error) {
 }
 
 func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient, error) {
-	return unified.ProvideUnifiedStorageClient(cfg,
-		featuremgmt.WithFeatures(), // none??
-		sqlStore,
-		tracing.NewNoopTracerService(),
-		prometheus.NewPedanticRegistry(),
-		authlib.FixedAccessClient(true), // always true!
-		nil,                             // document supplier
-	)
+	return unified.ProvideUnifiedStorageClient(&unified.Options{
+		Cfg:      cfg,
+		Features: featuremgmt.WithFeatures(), // none??
+		DB:       sqlStore,
+		Tracer:   tracing.NewNoopTracerService(),
+		Reg:      prometheus.NewPedanticRegistry(),
+		Authzc:   authlib.FixedAccessClient(true), // always true!
+		Docs:     nil,                             // document supplier
+	}, nil)
 }
 
-func newParquetClient(file *os.File) (resource.BatchStoreClient, error) {
+func newParquetClient(file *os.File) (resource.BulkStoreClient, error) {
 	writer, err := parquet.NewParquetWriter(file)
 	if err != nil {
 		return nil, err
 	}
-	client := parquet.NewBatchResourceWriterClient(writer)
+	client := parquet.NewBulkResourceWriterClient(writer)
 	return client, nil
 }

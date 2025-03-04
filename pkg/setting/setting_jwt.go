@@ -32,6 +32,7 @@ type AuthJWTSettings struct {
 	GroupsAttributePath     string
 	EmailAttributePath      string
 	UsernameAttributePath   string
+	TlsSkipVerify           bool
 }
 
 type ExtJWTSettings struct {
@@ -74,6 +75,8 @@ func (cfg *Cfg) readAuthJWTSettings() {
 	jwtSettings.GroupsAttributePath = valueAsString(authJWT, "groups_attribute_path", "")
 	jwtSettings.EmailAttributePath = valueAsString(authJWT, "email_attribute_path", "")
 	jwtSettings.UsernameAttributePath = valueAsString(authJWT, "username_attribute_path", "")
-	jwtSettings.OrgMapping = util.SplitString(valueAsString(authJWT, "org_mapping", ""))
+	jwtSettings.TlsSkipVerify = authJWT.Key("tls_skip_verify_insecure").MustBool(false)
+  jwtSettings.OrgMapping = util.SplitString(valueAsString(authJWT, "org_mapping", ""))
+
 	cfg.JWTAuth = jwtSettings
 }

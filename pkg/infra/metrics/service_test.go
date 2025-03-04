@@ -131,6 +131,30 @@ func TestMultiRegistry_Gather(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, expectedMF, mf)
 	})
+
+	t.Run("denied metrics are not included", func(t *testing.T) {
+		one.GatherFunc = func() ([]*dto.MetricFamily, error) {
+			return []*dto.MetricFamily{
+				{Name: strptr("grafana_apiserver_request_slo_duration_seconds_bucket")},
+			}, nil
+		}
+
+		two.GatherFunc = func() ([]*dto.MetricFamily, error) {
+			return []*dto.MetricFamily{
+				{Name: strptr("b")},
+				{Name: strptr("a")},
+			}, nil
+		}
+
+		expectedMF := []*dto.MetricFamily{
+			{Name: strptr("a")},
+			{Name: strptr("b")},
+		}
+
+		mf, err := g.Gather()
+		require.NoError(t, err)
+		require.Equal(t, expectedMF, mf)
+	})
 }
 
 type mockGatherer struct {

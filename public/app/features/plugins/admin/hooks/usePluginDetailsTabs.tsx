@@ -155,6 +155,7 @@ export const usePluginDetailsTabs = (
   const navModel: NavModelItem = {
     text: plugin?.name ?? '',
     img: plugin?.info.logos.small,
+    url: pathname,
     children: [
       {
         text: PluginTabLabels.OVERVIEW,

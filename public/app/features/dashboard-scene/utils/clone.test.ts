@@ -30,6 +30,8 @@ describe('clone', () => {
       expect(getOriginalKey('panel-clone-1')).toBe('panel');
       expect(getOriginalKey('row-clone-1/panel-clone-2')).toBe('panel');
       expect(getOriginalKey('tab-clone-0/row-clone-1/panel-clone-2')).toBe('panel');
+      expect(getOriginalKey('panel-2-clone-3')).toBe('panel-2');
+      expect(getOriginalKey('panel-2')).toBe('panel-2');
     });
   });
 

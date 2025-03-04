@@ -403,6 +403,7 @@ export { type DateTimeOptionsWhenParsing, dateTimeParse } from './datetime/parse
 export {
   intervalToAbbreviatedDurationString,
   parseDuration,
+  reverseParseDuration,
   addDurationToDate,
   durationToMilliseconds,
   isValidDate,
@@ -548,6 +549,8 @@ export {
   type PluginExtension,
   type PluginExtensionLink,
   type PluginExtensionComponent,
+  type PluginExtensionComponentMeta,
+  type ComponentTypeWithExtensionMeta,
   type PluginExtensionConfig,
   type PluginExtensionFunction,
   type PluginExtensionLinkConfig,
@@ -574,6 +577,8 @@ export {
   type ScopeNodeSpec,
   type ScopeNode,
   scopeFilterOperatorMap,
+  reverseScopeFilterOperatorMap,
+  isEqualityOrMultiOperator,
 } from './types/scopes';
 export {
   PluginState,

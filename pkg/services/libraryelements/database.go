@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -468,7 +468,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		if err := folderFilter.writeFolderFilterSQL(false, &builder); err != nil {
 			return err
 		}
-		if query.SortDirection == search.SortAlphaDesc.Name {
+		if query.SortDirection == sort.SortAlphaDesc.Name {
 			builder.Write(" ORDER BY 1 DESC")
 		} else {
 			builder.Write(" ORDER BY 1 ASC")

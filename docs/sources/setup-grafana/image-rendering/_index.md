@@ -221,10 +221,14 @@ HTTPS protocol is supported in the image renderer v3.11.0 and later.
 
 Change the protocol of the server, it can be `http` or `https`. Default is `http`.
 
+```bash
+HTTP_PROTOCOL=https
+```
+
 ```json
 {
   "service": {
-    "protocol": "http"
+    "protocol": "https"
   }
 }
 ```
@@ -232,6 +236,11 @@ Change the protocol of the server, it can be `http` or `https`. Default is `http
 #### HTTPS certificate and key file
 
 Path to the image renderer certificate and key file used to start an HTTPS server.
+
+```bash
+HTTP_CERT_FILE=./path/to/cert
+HTTP_CERT_KEY=./path/to/key
+```
 
 ```json
 {
@@ -245,6 +254,10 @@ Path to the image renderer certificate and key file used to start an HTTPS serve
 #### HTTPS min TLS version
 
 Minimum TLS version allowed. Accepted values are: `TLSv1.2`, `TLSv1.3`. Default is `TLSv1.2`.
+
+```bash
+HTTP_MIN_TLS_VERSION=TLSv1.2
+```
 
 ```json
 {

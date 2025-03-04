@@ -32,9 +32,15 @@ export type PluginExtensionLink = PluginExtensionBase & {
   category?: string;
 };
 
+export type PluginExtensionComponentMeta = Omit<PluginExtensionComponent, 'component'>;
+
 export type PluginExtensionComponent<Props = {}> = PluginExtensionBase & {
   type: PluginExtensionTypes.component;
   component: React.ComponentType<Props>;
+};
+
+export type ComponentTypeWithExtensionMeta<Props = {}> = React.ComponentType<Props> & {
+  meta: PluginExtensionComponentMeta;
 };
 
 export type PluginExtensionFunction<Signature = () => void> = PluginExtensionBase & {
@@ -193,7 +199,10 @@ export type PluginExtensionPanelContext = {
   data?: PanelData;
 };
 
-export type PluginExtensionDataSourceConfigContext<JsonData extends DataSourceJsonData = DataSourceJsonData> = {
+export type PluginExtensionDataSourceConfigContext<
+  JsonData extends DataSourceJsonData = DataSourceJsonData,
+  SecureJsonData = {},
+> = {
   // The current datasource settings
   dataSource: DataSourceSettings<JsonData>;
 
@@ -209,6 +218,7 @@ export type PluginExtensionDataSourceConfigContext<JsonData extends DataSourceJs
   // Can be used to update the `jsonData` field on the datasource
   // (Only updates the form, it still needs to be saved by the user)
   setJsonData: (jsonData: JsonData) => void;
+  setSecureJsonData: (secureJsonData: SecureJsonData) => void;
 };
 
 export type PluginExtensionCommandPaletteContext = {};
