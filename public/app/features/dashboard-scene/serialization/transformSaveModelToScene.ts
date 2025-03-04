@@ -36,7 +36,6 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
-import { DashboardScopesFacade } from '../scene/DashboardScopesFacade';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
@@ -241,10 +240,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
     preserveDashboardSceneStateInLocalStorage,
     addPanelsOnLoadBehavior,
-    new DashboardScopesFacade({
-      reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
-      uid,
-    }),
     new DashboardReloadBehavior({
       reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
       uid,

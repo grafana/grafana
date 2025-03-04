@@ -14,7 +14,7 @@ import { PanelSearchLayout } from './PanelSearchLayout';
 import { DashboardAngularDeprecationBanner } from './angular/DashboardAngularDeprecationBanner';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, overlay, editview, editPanel, viewPanelScene, panelSearch, panelsPerRow, isEditing } =
+  const { controls, overlay, editview, editPanel, viewPanelScene, panelSearch, panelsPerRow, isEditing, scopesBridge } =
     model.useState();
   const { type } = useParams();
   const location = useLocation();
@@ -41,6 +41,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   if (editview) {
     return (
       <>
+        {scopesBridge && <scopesBridge.Component model={scopesBridge} />}
         <editview.Component model={editview} />
         {overlay && <overlay.Component model={overlay} />}
       </>
@@ -62,6 +63,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
 
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
+      {scopesBridge && <scopesBridge.Component model={scopesBridge} />}
       {editPanel && <editPanel.Component model={editPanel} />}
       {!editPanel && (
         <DashboardEditPaneSplitter
