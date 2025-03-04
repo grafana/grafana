@@ -1,7 +1,8 @@
+import { isNumber } from 'lodash';
 import { systemDateFormats } from '../datetime/formats';
 import { createTheme } from '../themes/createTheme';
 import { FieldConfig, FieldType } from '../types/dataFrame';
-import { DisplayProcessor, DisplayValue } from '../types/displayValue';
+import { DecimalCount, DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { ThresholdsMode } from '../types/thresholds';
 import { MappingType, ValueMapping } from '../types/valueMapping';
 
@@ -26,6 +27,37 @@ function assertSame(input: unknown, processors: DisplayProcessor[], match: Displ
     }
   });
 }
+
+describe('Apply custom display function', () => {
+  const customDisplayFn = (value: unknown, decimals?: DecimalCount): DisplayValue => {
+    if (isNumber(value)) {
+      const newValue = value * 10;
+      return {
+        text: `${newValue}`,
+        numeric: newValue,
+      };
+    }
+
+    return {
+      text: `${value}`,
+      numeric: NaN,
+    };
+  };
+
+  const processor = getDisplayProcessor({
+    field: {
+      display: customDisplayFn,
+    },
+    theme: createTheme(),
+  });
+
+  it('Apply custom display function when it exists', () => {
+    expect(processor(3)).toEqual({
+      text: '30',
+      numeric: 30,
+    });
+  });
+});
 
 describe('Process simple display values', () => {
   // Don't test float values here since the decimal formatting changes
