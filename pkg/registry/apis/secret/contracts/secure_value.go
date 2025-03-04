@@ -20,4 +20,11 @@ type SecureValueMetadataStorage interface {
 	Update(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error)
 	Delete(ctx context.Context, namespace xkube.Namespace, name string) error
 	List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error)
+
+	SecureValueMetadataDecrypterInfo
+}
+
+// SecureValueMetadataDecrypterInfo returns a list of decrypters for a number of SecureValues.
+type SecureValueMetadataDecrypterInfo interface {
+	DecryptersFor(ctx context.Context, namespace xkube.Namespace, names []string) (map[string][]string, error)
 }
