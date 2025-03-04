@@ -143,8 +143,7 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
   }
 
   async getResourceGroups(subscriptionId: string): Promise<Array<{ text: string; value: string }>> {
-    const query = `
-    resources 
+    const query = `resources 
     | where subscriptionId == '${subscriptionId}'
     | extend resourceGroupURI = strcat("/subscriptions/", subscriptionId, "/resourcegroups/", resourceGroup) 
     | join kind=leftouter (resourcecontainers  
@@ -182,8 +181,7 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
           filters.push(`location == '${region}'`);
         }
 
-        const query = `
-        resources
+        const query = `resources
         | where id hasprefix "${prefix}"
         ${filters.length > 0 ? `| where ${filters.join(' and ')}` : ''}
         | order by tolower(name) asc`;
