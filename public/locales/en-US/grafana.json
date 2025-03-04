@@ -1087,12 +1087,6 @@
           "options-header": "Multi-selected Row options",
           "selection-number": "No. of rows selected: {{length}}"
         }
-      },
-      "tab": {
-        "multi-select": {
-          "options-header": "Multi-selected Tab options",
-          "selection-number": "No. of tabs selected: "
-        }
       }
     },
     "editpane": {
@@ -1250,12 +1244,27 @@
     },
     "tabs-layout": {
       "description": "Tabs layout",
+      "menu": {
+        "move-tab": "Move tab"
+      },
+      "multi-select": {
+        "title": "{{length}} tabs selected"
+      },
       "name": "Tabs",
       "tab": {
+        "menu": {
+          "add": "Add tab",
+          "add-panel": "Panel",
+          "add-tab-above": "Tab before",
+          "add-tab-after": "Tab after",
+          "add-tab-before": "Tab before",
+          "move-left": "Move tab left",
+          "move-right": "Move tab right"
+        },
         "new": "New tab"
       },
       "tab-options": {
-        "title": "Tab options",
+        "title": "Tab",
         "title-option": "Title"
       }
     },
