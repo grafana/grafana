@@ -145,6 +145,7 @@ export interface FeatureToggles {
   newFolderPicker?: boolean;
   jitterAlertRulesWithinGroups?: boolean;
   onPremToCloudMigrations?: boolean;
+  secretsManagementAppPlatform?: boolean;
   alertingSaveStatePeriodic?: boolean;
   alertingSaveStateCompressed?: boolean;
   scopeApi?: boolean;
