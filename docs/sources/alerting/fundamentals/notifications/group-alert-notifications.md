@@ -55,7 +55,7 @@ Alert instances are grouped together if they have the same exact label values fo
 For example, given the `Group by` option set to the `team` label:
 
 - `alertname:foo, team=frontend`, and `alertname:bar, team=frontend` are in one group.
-- `alertname:foo, team=backend`, and `alertname:qux, team=backend` are in another group.
+- `alertname:foo, team=frontend`, and `alertname:qux, team=backend` are in another group.
 
 ### Group by alert rule or labels
 
