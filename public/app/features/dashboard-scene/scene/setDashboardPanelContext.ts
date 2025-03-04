@@ -14,6 +14,12 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   const dashboard = getDashboardSceneFor(vizPanel);
   context.app = dashboard.state.isEditing ? CoreApp.PanelEditor : CoreApp.Dashboard;
 
+  const _onEnterEditMode = dashboard.onEnterEditMode;
+  dashboard.onEnterEditMode = () => {
+    _onEnterEditMode();
+    context.app = dashboard.state.isEditing ? CoreApp.PanelEditor : CoreApp.Dashboard;
+  };
+
   context.canAddAnnotations = () => {
     const dashboard = getDashboardSceneFor(vizPanel);
     const builtInLayer = getBuiltInAnnotationsLayer(dashboard);
