@@ -7,27 +7,40 @@ import { createEventFactory as cef, TrackingEventProps } from '../../../services
  *  - it can track multiple namespaces in the same file
  */
 
-//Whether the user opens or closes the `HistoryDrawer`
-type UnifiedHistoryDrawerActions = 'open' | 'close';
-
-interface UnifiedHistoryEntryDuplicated extends TrackingEventProps {
-  // Common name of the history entries
-  entryName: string;
-  // URL of the last entry
-  lastEntryURL: string;
-  // URL of the new entry
-  newEntryURL: string;
-}
-
-interface UnifiedHistoryDrawerInteraction extends TrackingEventProps {
-  type: UnifiedHistoryDrawerActions;
-}
-
 const createFeatureA = cef('grafana', 'feature_a');
 const createFeatureB = cef('grafana', 'feature_b');
 
-/** Foo description */
+type JustOneMember = 'foo';
+type UnifiedHistoryDrawerActions = 'open' | 'close';
+
+interface UnifiedHistoryDrawerInteraction extends TrackingEventProps {
+  justOneMember: JustOneMember;
+  aliasdUnionOfStrings: UnifiedHistoryDrawerActions;
+  directUnionOfStrings: 'foo' | 'bar';
+}
+
+/**
+ * Handle clicks on feature A
+ *
+ * @owner Frontend platform
+ * */
 export const logFoo = createFeatureA<UnifiedHistoryDrawerInteraction>('click_A');
 
-/** Bar description */
+type StringThatHasBeenAliased = string;
+
+interface UnifiedHistoryEntryDuplicated extends TrackingEventProps {
+  // URL of the last entry
+  lastEntryURL: string;
+  // URL of the new entry
+  usesStringAlias: StringThatHasBeenAliased;
+}
+
+/** Handle clicks on feature B */
 export const logBar = createFeatureB<UnifiedHistoryEntryDuplicated>('click_B');
+
+/**
+ * Handle clicks on feature B2
+ * */
+export const logBaz = createFeatureB<{
+  inlineProp: string;
+}>('click_B2');

@@ -1,4 +1,4 @@
-import { Project, Node, type SourceFile } from 'ts-morph';
+import { Project, Node, type SourceFile, SyntaxKind, type JSDoc, type Type } from 'ts-morph';
 import path from 'path';
 
 /**
@@ -20,6 +20,9 @@ import path from 'path';
  *     export const unifiedHistoryEntryClicked = createUnifiedHistoryEvent<UnifiedHistoryEntryClicked>('entry_clicked');
  *
  * This defines an event called grafana_unified_history_entry_clicked.
+ * It should be able to handle imports with either absolute or relative paths.
+ * It should also be able to handle aliased imports.
+ * It should be able to handle multiple namespaces (from multiple calls to createEventFactory) in the same file.
  */
 
 // User-supplied path where `createEventFactory` is defined (relative to project root)
@@ -74,6 +77,8 @@ interface EventNamespace {
 }
 
 for (const file of files) {
+  if (!file.getFilePath().includes('copy.ts')) continue;
+
   console.log('---');
   const createEventFactoryImportedName = getEventFactoryFunctionName(file);
   if (!createEventFactoryImportedName) continue;
@@ -145,6 +150,119 @@ for (const file of files) {
 
     const eventName = arg.getLiteralText();
 
-    console.log(`EVENT: ${eventNamespace.prefixRepo}_${eventNamespace.prefixFeature}_${eventName}`);
+    // console.log(`\nEVENT: ${eventNamespace.prefixRepo}_${eventNamespace.prefixFeature}_${eventName}`);
+
+    let parent: Node | undefined = variableDecl.getParent();
+    while (parent && !Node.isVariableStatement(parent)) {
+      parent = parent.getParent();
+    }
+
+    if (!parent) throw new Error(`Parent not found for ${variableDecl.getText()}`);
+
+    const docs = parent.getJsDocs();
+
+    // TODO: get default owner from the CODEOWNERS file
+    const { description, owner } = getMetadataFromJSDocs(docs);
+
+    if (!description) {
+      throw new Error(`Description not found for ${variableDecl.getText()}`);
+    }
+
+    const fullEventName = `${eventNamespace.prefixRepo}_${eventNamespace.prefixFeature}_${eventName}`;
+    const event = {
+      name: fullEventName,
+      description,
+      owner,
+    };
+
+    console.log('\nEvent: fullEventName');
+    console.log('  Description: ', description);
+    console.log('  Owner: ', owner);
+
+    // Get the function type and its first argument type
+    const typeAnnotation = variableDecl.getType();
+    const callSignatures = typeAnnotation.getCallSignatures();
+    if (callSignatures.length === 0) {
+      const typeAsText = typeAnnotation.getText();
+      throw new Error(`Expected type to be a function, got ${typeAsText}`);
+    }
+
+    const functionType = callSignatures[0];
+    const parameters = functionType.getParameters();
+    if (parameters.length !== 1) {
+      throw new Error('Expected function to have one parameter');
+    }
+
+    const parameter = parameters[0];
+
+    const parameterType = parameter.getTypeAtLocation(parameter.getDeclarations()[0]);
+
+    if (!parameterType.isObject()) {
+      throw new Error(`Expected parameter type to be an object, got ${parameterType.getText()}`);
+    }
+
+    const properties = parameterType.getProperties();
+    console.log('  Properties:');
+    for (const property of properties) {
+      const propertyType = property.getTypeAtLocation(property.getDeclarations()[0]);
+      const resolvedType = resolveType(propertyType);
+
+      console.log(`    ${property.getName()}: ${resolvedType}`);
+    }
   }
+}
+
+// Function to fully resolve types (aliases, unions, literals)
+function resolveType(type: Type): string {
+  // Step 1: If the type is an alias (e.g., `Action`), resolve its declaration
+  const aliasSymbol = type.getAliasSymbol();
+  if (aliasSymbol) {
+    const aliasType = type.getSymbol()?.getDeclarations()?.[0]?.getType();
+    if (aliasType) {
+      return resolveType(aliasType);
+    }
+  }
+
+  // Step 2: If it's a union type, resolve each member recursively
+  if (type.isUnion()) {
+    return type
+      .getUnionTypes()
+      .map((t) => resolveType(t))
+      .join(' | ');
+  }
+
+  // Step 3: If it's a string literal type, return its literal value
+  if (type.isStringLiteral()) {
+    return `"${type.getLiteralValue()}"`;
+  }
+
+  return type.getText(); // Default to the type's text representation
+}
+
+interface JSDocMetadata {
+  description?: string;
+  owner?: string;
+}
+
+function getMetadataFromJSDocs(docs: JSDoc[]): JSDocMetadata {
+  let description: string | undefined;
+  let owner: string | undefined;
+
+  if (docs.length > 1) {
+    throw new Error('Expected only one JSDoc comment (not sure why/how you can have multiple)');
+  }
+
+  for (const doc of docs) {
+    const desc = doc.getDescription().trim();
+    if (desc) description = desc;
+
+    const tags = doc.getTags();
+    for (const tag of tags) {
+      if (tag.getTagName() === 'owner') {
+        owner = tag.getCommentText()?.trim();
+      }
+    }
+  }
+
+  return { description, owner };
 }
