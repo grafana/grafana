@@ -237,15 +237,21 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 			}
 			permSelector.WriteRune(')')
 
-			switch f.features.IsEnabledGlobally(featuremgmt.FlagNestedFolders) {
-			case true:
-				if len(permSelectorArgs) > 0 {
+			if len(permSelectorArgs) == 0 {
+				// empty permissions, return no dashboards
+				builder.WriteString("(dashboard.folder_id IN (SELECT d.id FROM dashboard as d WHERE 1 = 0) AND NOT dashboard.is_folder)")
+			} else {
+				// TODO tests:
+				// nestedfolders disabled
+				// nestedfolders enabled and recursiveQueriesAreSupported true
+				// nestedfolders enabled and recursiveQueriesAreSupported false
+				switch f.features.IsEnabledGlobally(featuremgmt.FlagNestedFolders) {
+				case true:
 					switch f.recursiveQueriesAreSupported {
 					case true:
-						builder.WriteString("(dashboard.folder_id IN (SELECT d.id FROM dashboard as d ")
 						recQueryName := fmt.Sprintf("RecQry%d", len(f.recQueries))
 						f.addRecQry(recQueryName, permSelector.String(), permSelectorArgs, orgID)
-						builder.WriteString(fmt.Sprintf("WHERE d.org_id = ? AND d.uid IN (SELECT uid FROM %s)", recQueryName))
+						builder.WriteString(fmt.Sprintf("(dashboard.folder_id IN (SELECT d.id FROM dashboard as d WHERE d.org_id = ? AND d.uid IN (SELECT uid FROM %s)", recQueryName))
 						args = append(args, orgID)
 					default:
 						nestedFoldersSelectors, nestedFoldersArgs := f.nestedFoldersSelectors(permSelector.String(), permSelectorArgs, "dashboard", "folder_id", "d.id", orgID)
@@ -253,22 +259,14 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 						builder.WriteString(nestedFoldersSelectors)
 						args = append(args, nestedFoldersArgs...)
 					}
-				} else {
-					builder.WriteString("(dashboard.folder_id IN (SELECT d.id FROM dashboard as d ")
-					builder.WriteString("WHERE 1 = 0")
-				}
-			default:
-				builder.WriteString("(dashboard.folder_id IN (SELECT d.id FROM dashboard as d ")
-				if len(permSelectorArgs) > 0 {
-					builder.WriteString("WHERE d.org_id = ? AND d.uid IN ")
+				default:
+					builder.WriteString("(dashboard.folder_id IN (SELECT d.id FROM dashboard as d WHERE d.org_id = ? AND d.uid IN ")
 					args = append(args, orgID)
 					builder.WriteString(permSelector.String())
 					args = append(args, permSelectorArgs...)
-				} else {
-					builder.WriteString("WHERE 1 = 0")
 				}
+				builder.WriteString(") AND NOT dashboard.is_folder)")
 			}
-			builder.WriteString(") AND NOT dashboard.is_folder)")
 
 			// Include all the dashboards under the root if the user has the required permissions on the root (used to be the General folder)
 			if hasAccessToRoot(f.dashboardAction, f.user) {
