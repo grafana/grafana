@@ -15,6 +15,7 @@ import { DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
 import { getRawDashboardChanges, getRawDashboardV2Changes } from '../saving/getDashboardChanges';
 import { DashboardChangeInfo } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
+import { getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
@@ -25,6 +26,7 @@ export interface DashboardSceneSerializerLike<T, M> {
    */
   initialSaveModel?: T;
   metadata?: M;
+  initializeMapping(saveModel: T): void;
   getSaveModel: (s: DashboardScene) => T;
   getSaveAsModel: (s: DashboardScene, options: SaveDashboardAsOptions) => T;
   getDashboardChangesFromScene: (
@@ -38,6 +40,9 @@ export interface DashboardSceneSerializerLike<T, M> {
   onSaveComplete(saveModel: T, result: SaveDashboardResponseDTO): void;
   getTrackingInformation: (s: DashboardScene) => DashboardTrackingInfo | undefined;
   getSnapshotUrl: () => string | undefined;
+  getPanelIdForElement: (elementId: string) => number | undefined;
+  getElementIdForPanel: (panelId: number) => string | undefined;
+  getElementPanelMapping: () => Map<string, number>;
 }
 
 interface DashboardTrackingInfo {
@@ -52,6 +57,38 @@ interface DashboardTrackingInfo {
 export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashboard, DashboardMeta> {
   initialSaveModel?: Dashboard;
   metadata?: DashboardMeta;
+  protected elementPanelMap = new Map<string, number>();
+
+  initializeMapping(saveModel: Dashboard) {
+    this.elementPanelMap.clear();
+
+    // element keys are panel-id
+    // FIXME: Should generate "fake-ids"
+    console.log('lookup table', this.elementPanelMap);
+  }
+
+  getElementPanelMapping() {
+    return this.elementPanelMap;
+  }
+
+  getPanelIdForElement(elementId: string) {
+    return this.elementPanelMap.get(elementId);
+  }
+
+  getElementIdForPanel(panelId: number) {
+    // Find element ID by looking for matching panel ID
+    let elementIdentifier;
+    for (const [elementId, id] of this.elementPanelMap.entries()) {
+      if (id === panelId) {
+        elementIdentifier = elementId;
+      }
+    }
+    // if element identifier is not found, return defaultr 'panel-id'
+    if (!elementIdentifier) {
+      elementIdentifier = getVizPanelKeyForPanelId(panelId);
+    }
+    return elementIdentifier;
+  }
 
   getSaveModel(s: DashboardScene) {
     return transformSceneToSaveModel(s);
@@ -131,6 +168,47 @@ export class V2DashboardSerializer
 {
   initialSaveModel?: DashboardV2Spec;
   metadata?: DashboardWithAccessInfo<DashboardV2Spec>['metadata'];
+  protected elementPanelMap = new Map<string, number>();
+
+  getElementPanelMapping() {
+    return this.elementPanelMap;
+  }
+
+  initializeMapping(saveModel: DashboardV2Spec) {
+    this.elementPanelMap.clear();
+
+    const elementKeys = Object.keys(saveModel.elements);
+    elementKeys.forEach((key) => {
+      const elementPanel = saveModel.elements[key];
+      if (elementPanel.kind === 'Panel') {
+        // check panel id exists and is unique
+        if (this.getElementIdForPanel(elementPanel.spec.id)) {
+          console.error('Panel id is not unique');
+        }
+        this.elementPanelMap.set(key, elementPanel.spec.id);
+      }
+    });
+
+    console.log('lookup table', this.elementPanelMap);
+  }
+
+  getPanelIdForElement(elementId: string) {
+    return this.elementPanelMap.get(elementId);
+  }
+
+  getElementIdForPanel(panelId: number) {
+    // Find element ID by looking for matching panel ID
+    let elementIdentifier;
+    for (const [elementId, id] of this.elementPanelMap.entries()) {
+      if (id === panelId) {
+        elementIdentifier = elementId;
+      }
+    }
+    if (!elementIdentifier) {
+      elementIdentifier = getVizPanelKeyForPanelId(panelId);
+    }
+    return elementIdentifier;
+  }
 
   getSaveModel(s: DashboardScene) {
     return transformSceneToSaveModelSchemaV2(s);

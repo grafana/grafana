@@ -14,6 +14,7 @@ import { DashboardV2Spec, PanelKind, PanelQueryKind } from '@grafana/schema/dist
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBehaviour';
+import { DashboardScene } from '../../scene/DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
@@ -21,6 +22,7 @@ import { PanelTimeRange } from '../../scene/PanelTimeRange';
 import { AngularDeprecation } from '../../scene/angular/AngularDeprecation';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
+import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';
 
@@ -151,4 +153,22 @@ export function getLayout(sceneState: DashboardLayoutManager): DashboardV2Spec['
     throw new Error(`Layout serializer not found for kind: ${sceneState.descriptor.kind}`);
   }
   return registryItem.serializer.serialize(sceneState);
+}
+
+export function schemaV2SetElementIdentifierForVizPanel(panelId: number, scene: DashboardScene): void {
+  const elementKey = 'element-panel-' + panelId;
+  const mapping = scene.getElementPanelMapping();
+  mapping.set(elementKey, panelId);
+}
+
+export function schemaV2RemoveElementIdentifierForVizPanel(vizPanel: VizPanel, scene: DashboardScene): void {
+  // This function is only for V2 dashboards
+  if (config.featureToggles.useV2DashboardsAPI) {
+    const elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(vizPanel);
+    console.log('removeElementIdentifierForVizPanel', elementKey);
+    const mapping = scene.getElementPanelMapping();
+    // remove the mapping for the element key
+    mapping.delete(elementKey);
+    console.log('mapping after removing', mapping);
+  }
 }

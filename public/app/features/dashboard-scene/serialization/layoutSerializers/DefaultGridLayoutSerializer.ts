@@ -33,7 +33,13 @@ import { RowActions } from '../../scene/layout-default/row-actions/RowActions';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { DashboardLayoutManager, LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
 import { isClonedKey } from '../../utils/clone';
-import { calculateGridItemDimensions, getVizPanelKeyForPanelId, isLibraryPanel } from '../../utils/utils';
+import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import {
+  calculateGridItemDimensions,
+  getPanelIdForVizPanel,
+  getVizPanelKeyForPanelId,
+  isLibraryPanel,
+} from '../../utils/utils';
 import { GRID_ROW_HEIGHT } from '../const';
 
 import { buildVizPanel } from './utils';
@@ -142,8 +148,9 @@ function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, yOverride?: n
   width = gridItem_.state.width ?? 0;
   const repeatVar = gridItem_.state.variableName;
 
-  // FIXME: which name should we use for the element reference, key or something else ?
-  const elementName = gridItem_.state.body.state.key ?? 'DefaultName';
+  // For serialization we should retrieve the original element key
+  let elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(gridItem.state.body);
+
   elementGridItem = {
     kind: 'GridLayoutItem',
     spec: {
@@ -153,7 +160,7 @@ function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, yOverride?: n
       height: height,
       element: {
         kind: 'ElementReference',
-        name: elementName,
+        name: elementKey,
       },
     },
   };

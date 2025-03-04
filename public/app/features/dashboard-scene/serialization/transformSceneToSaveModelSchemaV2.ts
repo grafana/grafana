@@ -103,7 +103,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF variables
 
     // elements
-    elements: getElements(sceneDash),
+    elements: getElements(scene),
     // EOF elements
 
     // annotations
@@ -146,8 +146,8 @@ function getLiveNow(state: DashboardSceneState) {
   return Boolean(liveNow);
 }
 
-function getElements(state: DashboardSceneState) {
-  const panels = state.body.getVizPanels() ?? [];
+function getElements(scene: DashboardScene) {
+  const panels = scene.state.body.getVizPanels() ?? [];
 
   const panelsArray = panels.map((vizPanel: VizPanel) => {
     if (isLibraryPanel(vizPanel)) {
@@ -228,7 +228,7 @@ function getElements(state: DashboardSceneState) {
       return elementSpec;
     }
   });
-  return createElements(panelsArray);
+  return createElements(panelsArray, scene);
 }
 
 function getPanelLinks(panel: VizPanel): DataLink[] {
@@ -345,9 +345,10 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
   return queryOptions;
 }
 
-function createElements(panels: Element[]): Record<string, Element> {
+function createElements(panels: Element[], scene: DashboardScene): Record<string, Element> {
   return panels.reduce<Record<string, Element>>((elements, panel) => {
-    elements[getVizPanelKeyForPanelId(panel.spec.id)] = panel;
+    let elementKey = scene.getElementIdentifierForPanel(panel.spec.id);
+    elements[elementKey!] = panel;
     return elements;
   }, {});
 }
