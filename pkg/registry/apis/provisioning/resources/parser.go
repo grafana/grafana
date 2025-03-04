@@ -82,6 +82,9 @@ type ParsedResource struct {
 	// The results from dry run
 	DryRunResponse *unstructured.Unstructured
 
+	// When the value has been saved in the grafana database
+	Apply *unstructured.Unstructured
+
 	// If we got some Errors
 	Errors []error
 }
@@ -237,7 +240,9 @@ func (f *ParsedResource) AsResourceWrapper() *provisioning.ResourceWrapper {
 	if f.Existing != nil {
 		res.Existing = v0alpha1.Unstructured{Object: f.Existing.Object}
 	}
-	if f.DryRunResponse != nil {
+	if f.Apply != nil {
+		res.Apply = v0alpha1.Unstructured{Object: f.Apply.Object}
+	} else if f.DryRunResponse != nil {
 		res.DryRun = v0alpha1.Unstructured{Object: f.DryRunResponse.Object}
 	}
 	wrap := &provisioning.ResourceWrapper{
