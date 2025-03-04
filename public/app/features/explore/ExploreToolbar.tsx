@@ -237,7 +237,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             hideTextValue={showSmallDataSourcePicker}
             width={showSmallDataSourcePicker ? 8 : undefined}
           />,
-          isSingleTopNav && <ShortLinkButtonMenu key="share" />,
+          !queryBuilderOnly && isSingleTopNav && <ShortLinkButtonMenu key="share" />,
         ].filter(Boolean)}
         forceShowLeftItems
       >

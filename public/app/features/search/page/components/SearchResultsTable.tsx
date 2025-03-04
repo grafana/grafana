@@ -258,7 +258,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'sticky',
       top: 0,
       zIndex: 1,
-      border: `1px solid ${theme.colors.border.strong}`,
+      border: `1px solid ${theme.colors.border.medium}`,
       fontWeight: theme.typography.fontWeightLight,
       margin: 0,
       borderRadius: `${theme.shape.radius.default}`,
@@ -311,7 +311,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       fontSize: theme.typography.body.fontSize,
-      color: theme.colors.text.secondary,
+      color: theme.colors.text.primary,
 
       '[role="columnheader"] &': {
         color: theme.colors.text.primary,
