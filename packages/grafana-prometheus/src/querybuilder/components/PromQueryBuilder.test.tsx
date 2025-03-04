@@ -8,7 +8,6 @@ import {
   LoadingState,
   MutableDataFrame,
   PanelData,
-  QueryHint,
   TimeRange,
 } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
@@ -16,6 +15,7 @@ import { TemplateSrv } from '@grafana/runtime';
 import { PrometheusDatasource } from '../../datasource';
 import PromQlLanguageProvider from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
+import * as queryHints from '../../query_hints';
 import { PromApplication, PromOptions } from '../../types';
 import { getLabelSelects } from '../testUtils';
 import { PromVisualQuery } from '../types';
@@ -229,12 +229,7 @@ describe('PromQueryBuilder', () => {
 
   it('renders hint if initial hint provided', async () => {
     const { datasource } = createDatasource();
-    datasource.getInitHints = (): QueryHint[] => [
-      {
-        label: 'Initial hint',
-        type: 'warning',
-      },
-    ];
+    jest.spyOn(queryHints, 'getInitHints').mockReturnValue([{ label: 'Initial hint', type: 'warning' }]);
     const props = createProps(datasource);
     render(
       <PromQueryBuilder
@@ -251,7 +246,7 @@ describe('PromQueryBuilder', () => {
 
   it('renders no hint if no initial hint provided', async () => {
     const { datasource } = createDatasource();
-    datasource.getInitHints = (): QueryHint[] => [];
+    jest.spyOn(queryHints, 'getInitHints').mockReturnValue([]);
     const props = createProps(datasource);
     render(
       <PromQueryBuilder
