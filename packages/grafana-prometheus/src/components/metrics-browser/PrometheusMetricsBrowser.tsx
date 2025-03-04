@@ -1,5 +1,5 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PrometheusMetricsBrowser.tsx
-import { ChangeEvent, Component, MouseEvent } from 'react';
+import { Component } from 'react';
 
 import { LoadingPlaceholder, Stack, withTheme2 } from '@grafana/ui';
 
@@ -23,15 +23,9 @@ import {
 export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, BrowserState> {
   state: BrowserState = {
     labels: [],
-    // labelSearchTerm: '',
     status: 'Ready',
     error: '',
     validationStatus: '',
-    valueSearchTerm: '',
-  };
-
-  onChangeValueSearch = (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ valueSearchTerm: event.target.value });
   };
 
   onClickRunQuery = () => {
@@ -57,12 +51,13 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
       }));
       return {
         labels,
-        labelSearchTerm: '',
-        metricSearchTerm: '',
+        // FIXME Clear them in context
+        // labelSearchTerm: '',
+        // metricSearchTerm: '',
+        // valueSearchTerm: '',
         status: '',
         error: '',
         validationStatus: '',
-        valueSearchTerm: '',
       };
     });
     localStorage.removeItem(LAST_USED_LABELS_KEY);
@@ -86,7 +81,7 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
     this.updateLabelState(name, nextValue, '', () => this.doFacettingForLabel(name));
   };
 
-  onClickValue = (name: string, value: string | undefined, event: MouseEvent<HTMLElement>) => {
+  onClickValue = (name: string, value: string | undefined) => {
     const label = this.state.labels.find((l) => l.name === name);
     if (!label || !label.values) {
       return;
@@ -264,7 +259,7 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
 
   render() {
     const { theme } = this.props;
-    const { labels, status, error, validationStatus, valueSearchTerm } = this.state;
+    const { labels, status, error, validationStatus } = this.state;
     const styles = getStyles(theme);
     if (labels.length === 0) {
       return (
@@ -274,15 +269,6 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
       );
     }
 
-    let nonMetricLabels = labels.filter((label) => !label.hidden && label.name !== METRIC_LABEL);
-    // Filter non-metric label values
-    let selectedLabels = nonMetricLabels.filter((label) => label.selected && label.values);
-    if (valueSearchTerm) {
-      selectedLabels = selectedLabels.map((label) => ({
-        ...label,
-        values: label.values?.filter((value) => value.selected || value.name.includes(valueSearchTerm)),
-      }));
-    }
     const selector = buildSelector(this.state.labels);
     const empty = selector === EMPTY_SELECTOR;
 
@@ -294,9 +280,7 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
             <LabelSelector labels={labels} onClickLabel={this.onClickLabel} styles={styles} />
 
             <ValueSelector
-              selectedLabels={selectedLabels}
-              valueSearchTerm={valueSearchTerm}
-              onChangeValueSearch={this.onChangeValueSearch}
+              labels={labels}
               onClickValue={this.onClickValue}
               onClickLabel={this.onClickLabel}
               styles={styles}

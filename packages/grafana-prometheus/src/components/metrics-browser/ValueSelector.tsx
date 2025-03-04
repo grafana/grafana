@@ -1,28 +1,31 @@
-import { ChangeEvent, MouseEvent } from 'react';
+import { MouseEvent, useState } from 'react';
 import { FixedSizeList } from 'react-window';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Input, Label, BrowserLabel as PromLabel } from '@grafana/ui';
 
-import { SelectableLabel, LIST_ITEM_SIZE } from './types';
+import { SelectableLabel, LIST_ITEM_SIZE, METRIC_LABEL } from './types';
 
 interface ValueSelectorProps {
-  selectedLabels: SelectableLabel[];
-  valueSearchTerm: string;
-  onChangeValueSearch: (event: ChangeEvent<HTMLInputElement>) => void;
-  onClickValue: (name: string, value: string | undefined, event: MouseEvent<HTMLElement>) => void;
+  labels: SelectableLabel[];
+  onClickValue: (name: string, value: string | undefined) => void;
   onClickLabel: (name: string, value: string | undefined, event: MouseEvent<HTMLElement>) => void;
   styles: Record<string, string>;
 }
 
-export function ValueSelector({
-  selectedLabels,
-  valueSearchTerm,
-  onChangeValueSearch,
-  onClickValue,
-  onClickLabel,
-  styles,
-}: ValueSelectorProps) {
+export function ValueSelector({ labels, onClickValue, onClickLabel, styles }: ValueSelectorProps) {
+  const [valueSearchTerm, setValueSearchTerm] = useState('');
+
+  let nonMetricLabels = labels.filter((label) => !label.hidden && label.name !== METRIC_LABEL);
+  // Filter non-metric label values
+  let selectedLabels = nonMetricLabels.filter((label) => label.selected && label.values);
+  if (valueSearchTerm) {
+    selectedLabels = selectedLabels.map((label) => ({
+      ...label,
+      values: label.values?.filter((value) => value.selected || value.name.includes(valueSearchTerm)),
+    }));
+  }
+
   return (
     <div className={styles.section}>
       <Label description="Use the search field to find values across selected labels.">
@@ -30,7 +33,7 @@ export function ValueSelector({
       </Label>
       <div>
         <Input
-          onChange={onChangeValueSearch}
+          onChange={(e) => setValueSearchTerm(e.currentTarget.value)}
           aria-label="Filter expression for label values"
           value={valueSearchTerm}
           data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.labelValuesFilter}
