@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"mime"
 	"os"
@@ -288,8 +289,8 @@ func (client *Client) Delete(ctx context.Context, bucket *storage.BucketHandle, 
 // ListLocalFiles lists files in a local filesystem.
 func ListLocalFiles(dir string) ([]File, error) {
 	var files []File
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if !info.IsDir() {
+	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if !d.IsDir() {
 			files = append(files, File{
 				FullPath: path,
 				// Strip the dir name from the filepath
