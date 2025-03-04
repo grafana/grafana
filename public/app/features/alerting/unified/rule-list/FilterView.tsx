@@ -133,7 +133,14 @@ function FilterViewResults({ filterState }: FilterViewProps) {
             case 'datasource':
               return <DataSourceRuleLoader key={key} rule={rule} groupIdentifier={groupIdentifier} />;
             default:
-              return <UnknownRuleListItem key={key} rule={rule} groupIdentifier={groupIdentifier} />;
+              return (
+                <UnknownRuleListItem
+                  key={key}
+                  ruleName="Unknown rule"
+                  groupIdentifier={groupIdentifier}
+                  ruleDefinition={rule}
+                />
+              );
           }
         })}
         {loading && (

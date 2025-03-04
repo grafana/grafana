@@ -13,7 +13,7 @@ import * as analytics from '../../Analytics';
 import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { mockExportApi, mockFolderApi, setupMswServer } from '../../mockApi';
-import { grantUserPermissions, mockCombinedRule, mockDataSource, mockFolder, mockGrafanaRulerRule } from '../../mocks';
+import { grantUserPermissions, mockCombinedRule, mockFolder, mockGrafanaRulerRule } from '../../mocks';
 import { mimirDataSource } from '../../mocks/server/configure';
 
 import { RulesGroup } from './RulesGroup';
@@ -72,6 +72,7 @@ const ui = {
 };
 
 const server = setupMswServer();
+const mimirDs = mimirDataSource();
 
 afterEach(() => {
   server.resetHandlers();
@@ -167,7 +168,7 @@ describe('Rules group tests', () => {
 
     const namespace: CombinedRuleNamespace = {
       name: 'TestNamespace',
-      rulesSource: mockDataSource(),
+      rulesSource: mimirDs.dataSource,
       groups: [group],
     };
 

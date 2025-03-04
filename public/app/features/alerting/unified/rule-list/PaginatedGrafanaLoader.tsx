@@ -5,7 +5,7 @@ import { Icon, Stack, Text } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
 import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { GrafanaRuleLoader } from './GrafanaRuleLoader';
+import { GrafanaGroupLoader } from './GrafanaGroupLoader';
 import { DataSourceSection } from './components/DataSourceSection';
 import { LazyPagination } from './components/LazyPagination';
 import { ListGroup } from './components/ListGroup';
@@ -83,26 +83,25 @@ interface GrafanaRuleGroupListItemProps {
   namespaceName: string;
 }
 export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGroupListItemProps) {
-  const groupIdentifier: GrafanaRuleGroupIdentifier = {
-    groupName: group.name,
-    namespace: {
-      uid: group.folderUid,
-    },
-    groupOrigin: 'grafana',
-  };
+  const groupIdentifier: GrafanaRuleGroupIdentifier = useMemo(
+    () => ({
+      groupName: group.name,
+      namespace: {
+        uid: group.folderUid,
+      },
+      groupOrigin: 'grafana',
+    }),
+    [group.name, group.folderUid]
+  );
 
   return (
-    <ListGroup key={group.name} name={group.name} isOpen={false} actions={<RuleGroupActionsMenu />}>
-      {group.rules.map((rule) => {
-        return (
-          <GrafanaRuleLoader
-            key={rule.uid}
-            rule={rule}
-            namespaceName={namespaceName}
-            groupIdentifier={groupIdentifier}
-          />
-        );
-      })}
+    <ListGroup
+      key={group.name}
+      name={group.name}
+      isOpen={false}
+      actions={<RuleGroupActionsMenu groupIdentifier={groupIdentifier} />}
+    >
+      <GrafanaGroupLoader groupIdentifier={groupIdentifier} namespaceName={namespaceName} />
     </ListGroup>
   );
 }

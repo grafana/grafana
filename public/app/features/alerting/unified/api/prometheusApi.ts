@@ -25,7 +25,8 @@ interface PromRulesOptions {
   groupNextToken?: string;
 }
 
-type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource'> & {
+type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'namespace'> & {
+  folderUid?: string;
   dashboardUid?: string;
   panelId?: number;
 };
@@ -40,9 +41,12 @@ export const prometheusApi = alertingApi.injectEndpoints({
         return {
           url: `api/prometheus/${ruleSource.uid}/api/v1/rules`,
           params: {
-            'file[]': namespace,
-            'group[]': groupName,
-            'rule[]': ruleName,
+            file: namespace, // Mimir
+            'file[]': namespace, // Prometheus
+            rule_group: groupName, // Mimir
+            'rule_group[]': groupName, // Prometheus
+            rule_name: ruleName, // Mimir
+            'rule_name[]': ruleName, // Prometheus
             exclude_alerts: excludeAlerts?.toString(),
             group_limit: groupLimit?.toFixed(0),
             group_next_token: groupNextToken,
@@ -54,12 +58,12 @@ export const prometheusApi = alertingApi.injectEndpoints({
       },
     }),
     getGrafanaGroups: build.query<PromRulesResponse<GrafanaPromRuleGroupDTO>, GrafanaPromRulesOptions>({
-      query: ({ namespace, groupName, ruleName, groupLimit, excludeAlerts, groupNextToken }) => ({
+      query: ({ folderUid, groupName, ruleName, groupLimit, excludeAlerts, groupNextToken }) => ({
         url: `api/prometheus/grafana/api/v1/rules`,
         params: {
-          'file[]': namespace,
-          'group[]': groupName,
-          'rule[]': ruleName,
+          folder_uid: folderUid,
+          rule_group: groupName,
+          rule_name: ruleName,
           exclude_alerts: excludeAlerts?.toString(),
           group_limit: groupLimit?.toFixed(0),
           group_next_token: groupNextToken,
