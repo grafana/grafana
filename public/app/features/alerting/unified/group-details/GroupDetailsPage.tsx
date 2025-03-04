@@ -19,7 +19,7 @@ import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/formDefaults';
 import { useRulesAccess } from '../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { stringifyErrorLike } from '../utils/misc';
-import { groups } from '../utils/navigation';
+import { createListFilterLink, groups } from '../utils/navigation';
 import { getEvaluationsToStartAlerting, getRuleName, isAlertingRulerRule, isGrafanaAlertingRule } from '../utils/rules';
 import { formatPrometheusDuration, safeParsePrometheusDuration } from '../utils/time';
 
@@ -75,10 +75,17 @@ function GroupDetailsPage() {
     : (rulerGroup?.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL);
 
   const namespaceName = folder?.title ?? namespaceId;
+  const namespaceUrl = createListFilterLink([['namespace', namespaceName]]);
 
   return (
     <AlertingPageWrapper
-      pageNav={{ text: groupName }}
+      pageNav={{
+        text: groupName,
+        parentItem: {
+          text: namespaceName,
+          url: namespaceUrl,
+        },
+      }}
       title={groupName}
       info={[
         { label: t('alerting.group-details.namespace', 'Namespace'), value: namespaceName },
