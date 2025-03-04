@@ -11,7 +11,9 @@ describe('toUrlParams', () => {
       isNull: null,
       isUndefined: undefined,
     });
-    expect(url).toBe('server=backend-01&hasSpace=has%20space&many=1&many=2&many=3&true&number=20&isNull=&isUndefined=');
+    expect(url).toBe(
+      'server=backend-01&hasSpace=has%20space&many=1&many=2&many=3&true=true&number=20&isNull=&isUndefined='
+    );
   });
   it('should encode the same way as angularjs', () => {
     const url = urlUtil.toUrlParams({
@@ -25,7 +27,7 @@ describe('toUrlParams', () => {
       bool1: true,
       bool2: false,
     });
-    expect(url).toBe('bool1&bool2=false');
+    expect(url).toBe('bool1=true&bool2=false');
   });
   it("should encode the following special characters [!'()*]", () => {
     const url = urlUtil.toUrlParams({
@@ -45,7 +47,7 @@ describe('toUrlParams', () => {
       oneMore: false,
     });
     expect(params).toBe(
-      'server=backend-01&hasSpace=has%20space&many=1&many=2&many=3&true&number=20&isNull=&isUndefined=&oneMore=false'
+      'server=backend-01&hasSpace=has%20space&many=1&many=2&many=3&true=true&number=20&isNull=&isUndefined=&oneMore=false'
     );
   });
 
@@ -61,7 +63,7 @@ describe('toUrlParams', () => {
       bool1: true,
       bool2: false,
     });
-    expect(url).toBe('bool1&bool2=false');
+    expect(url).toBe('bool1=true&bool2=false');
   });
 });
 
@@ -112,7 +114,7 @@ describe('getUrlSearchParams', () => {
     pathname: '/path/b',
     port: '9877',
     protocol: 'http:',
-    search: '?var1=a&var2=b&var2=c&var2=d&var3=a&var3=d&z',
+    search: '?var1=a&var2=b&var2=c&var2=d&var3=a&var3=d&z&z2=true',
   };
 
   let expectedParams = {
@@ -120,6 +122,7 @@ describe('getUrlSearchParams', () => {
     var2: ['b', 'c', 'd'],
     var3: ['a', 'd'],
     z: true,
+    z2: true,
   };
 
   it('should take into account multi-value and boolean parameters', () => {
