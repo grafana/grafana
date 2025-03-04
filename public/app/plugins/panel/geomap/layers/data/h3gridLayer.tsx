@@ -105,7 +105,7 @@ export const h3gridLayer: MapLayerRegistryItem<H3GridConfig> = {
   name: 'H3 Grid',
   description: 'Display data in an h3 layer grid',
   isBaseMap: false,
-  showLocation: true,
+  showLocation: false,
   hideOpacity: true,
   state: PluginState.alpha,
 
@@ -160,7 +160,7 @@ export const h3gridLayer: MapLayerRegistryItem<H3GridConfig> = {
           values.size = dims.size.get(idx);
         }
         if (dims.text) {
-          values.text = dims.text.get(idx);
+          values.text = dims.text.get(idx);          
         }
         if (dims.rotation) {
           values.rotation = dims.rotation.get(idx);
@@ -237,14 +237,13 @@ export const h3gridLayer: MapLayerRegistryItem<H3GridConfig> = {
 
           if (frame) {
             const indexField = findField(frame, config.idField);
-            const valueField = findField(frame, config.valueField);
-
+            
             if (indexField) {
               idToIdx.clear();
               indexField.values.forEach((v, i) => idToIdx.set(v, i));
             }
 
-            if (indexField && valueField) {
+            if (indexField) {
               source.clear();
 
               indexField.values.forEach((h3_index) => {
@@ -259,8 +258,7 @@ export const h3gridLayer: MapLayerRegistryItem<H3GridConfig> = {
                 }
                 const h3Feature = new Feature({
                   geometry: fixedExtentPoly426.transform('EPSG:4326', 'EPSG:3857'),
-                  id: h3_index,
-                  value: valueField.values[idx],
+                  id: h3_index,                  
                 });
                 source.addFeature(h3Feature);
               })
@@ -277,12 +275,8 @@ export const h3gridLayer: MapLayerRegistryItem<H3GridConfig> = {
         builder
           .addFieldNamePicker({
             path: 'config.idField',
-            name: 'H3 cell ID field',
-          })
-          .addFieldNamePicker({
-            path: 'config.valueField',
-            name: 'Value field',
-          })
+            name: 'H3 index field',
+          })          
           ///TODO: remove size and symbol properties
           .addCustomEditor({
             id: 'config.style',
@@ -297,17 +291,17 @@ export const h3gridLayer: MapLayerRegistryItem<H3GridConfig> = {
             defaultValue: defaultOptions.style,
           })
           .addBooleanSwitch({
+            path: 'config.updateVariablesOnMove',
+            name: 'Update variables on move',
+            description: 'Updates global variables $h3cellsInView and $h3Resolution',
+            defaultValue: false,
+          })
+          .addBooleanSwitch({
             path: 'config.showLegend',
             name: 'Show legend',
             description: 'Show map legend',
             defaultValue: defaultOptions.updateVariablesOnMove,
-          })
-          .addBooleanSwitch({
-            path: 'config.updateVariablesOnMove',
-            name: 'Update variables on move',
-            description: 'Updates global variables $h3cellsInView and $h3Resolution when the map moves to be used in queries',
-            defaultValue: false,
-          })
+          })          
           ;
 
       },
