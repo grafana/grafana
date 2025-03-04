@@ -54,7 +54,7 @@ export const FitMapViewEditor = ({ labelWidth, value, onChange, context }: Props
   const allLayersEditorFragment = (
     <InlineFieldRow>
       <InlineField label="Layer" labelWidth={labelWidth} grow={true}>
-        <Select options={layers} onChange={onSelectLayer} placeholder={layers[0]?.label} />
+        <Select options={layers} onChange={onSelectLayer} placeholder={layers[0]?.label} value={value.layer} />
       </InlineField>
     </InlineFieldRow>
   );
