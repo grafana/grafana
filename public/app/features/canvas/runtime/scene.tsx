@@ -68,6 +68,7 @@ export class Scene {
   connections: Connections;
   currentLayer?: FrameState;
   isEditingEnabled?: boolean;
+  multiplayer?: boolean;
   shouldShowAdvancedTypes?: boolean;
   shouldPanZoom?: boolean;
   shouldInfinitePan?: boolean;
@@ -112,9 +113,10 @@ export class Scene {
     panZoom: boolean,
     infinitePan: boolean,
     public onSave: (cfg: CanvasFrameOptions) => void,
-    panel: CanvasPanel
+    panel: CanvasPanel,
+    multiplayer: boolean
   ) {
-    this.root = this.load(cfg, enableEditing, showAdvancedTypes, panZoom, infinitePan);
+    this.root = this.load(cfg, enableEditing, showAdvancedTypes, panZoom, infinitePan, multiplayer);
 
     this.subscription = this.editModeEnabled.subscribe((open) => {
       if (!this.moveable || !this.isEditingEnabled) {
@@ -152,7 +154,8 @@ export class Scene {
     enableEditing: boolean,
     showAdvancedTypes: boolean,
     panZoom: boolean,
-    infinitePan: boolean
+    infinitePan: boolean,
+    multiplayer: boolean
   ) {
     this.root = new RootElement(
       cfg ?? {
@@ -167,6 +170,7 @@ export class Scene {
     this.shouldShowAdvancedTypes = showAdvancedTypes;
     this.shouldPanZoom = panZoom;
     this.shouldInfinitePan = infinitePan;
+    this.multiplayer = multiplayer;
 
     setTimeout(() => {
       if (this.div) {
@@ -293,7 +297,7 @@ export class Scene {
       <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
         {this.connections.render()}
         {this.root.render()}
-        {this.isEditingEnabled && (
+        {(this.isEditingEnabled || this.multiplayer) && (
           <Portal>
             <CanvasContextMenu
               scene={this}
