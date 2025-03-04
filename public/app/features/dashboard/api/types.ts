@@ -28,3 +28,23 @@ export interface DashboardWithAccessInfo<T> extends Resource<T, 'DashboardWithAc
     annotationsPermissions?: AnnotationsPermissions;
   }; // TODO...
 }
+
+export interface DashboardVersionError extends Error {
+  status: number;
+  data: {
+    isV2: boolean;
+    message: string;
+  };
+}
+
+export class DashboardVersionError extends Error {
+  constructor(isV2: boolean, message = 'Dashboard version mismatch') {
+    super(message);
+    this.name = 'DashboardVersionError';
+    this.status = 404;
+    this.data = {
+      isV2,
+      message,
+    };
+  }
+}

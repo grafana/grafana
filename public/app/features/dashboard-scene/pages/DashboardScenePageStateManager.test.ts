@@ -165,7 +165,7 @@ describe('DashboardScenePageStateManager v1', () => {
 
         expect(loader.state.dashboard).toBeUndefined();
         expect(loader.state.loadError).toEqual({
-          message: 'v2 dashboard spec is not supported. Enable useV2DashboardsAPI feature toggle',
+          message: 'You are trying to load a v2 dashboard spec as v1. Use DashboardScenePageStateManagerV2 instead.',
           messageId: undefined,
           status: undefined,
         });

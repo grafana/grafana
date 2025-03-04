@@ -7,6 +7,8 @@ import DashboardScenePage from 'app/features/dashboard-scene/pages/DashboardScen
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { DashboardRoutes } from 'app/types';
 
+import { isDashboardV2Resource } from '../api/utils';
+
 import DashboardPage, { DashboardPageParams } from './DashboardPage';
 import { DashboardPageError } from './DashboardPageError';
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from './types';
@@ -23,18 +25,12 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
   const forceOld = props.queryParams.scenes === false;
   const params = useParams<DashboardPageParams>();
   const location = useLocation();
-
-  // Force scenes if v2 api and scenes are enabled
-  if (config.featureToggles.useV2DashboardsAPI && config.featureToggles.dashboardScene && !forceOld) {
-    console.log('DashboardPageProxy: forcing scenes because of v2 api');
-    return <DashboardScenePage {...props} />;
-  }
+  const stateManager = getDashboardScenePageStateManager();
 
   if (forceScenes || (config.featureToggles.dashboardScene && !forceOld)) {
     return <DashboardScenePage {...props} />;
   }
 
-  const stateManager = getDashboardScenePageStateManager();
   const isScenesSupportedRoute = Boolean(
     props.route.routeName === DashboardRoutes.Home || (props.route.routeName === DashboardRoutes.Normal && params.uid)
   );
@@ -63,7 +59,17 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
     return null;
   }
 
-  if (dashboard?.value?.dashboard?.uid !== params.uid && dashboard.value?.meta?.isNew !== true) {
+  const uid =
+    dashboard.value && isDashboardV2Resource(dashboard.value)
+      ? dashboard.value.metadata.name
+      : dashboard.value?.meta.uid;
+  const canEdit =
+    dashboard.value && isDashboardV2Resource(dashboard.value)
+      ? dashboard.value?.access.canEdit
+      : dashboard.value?.meta?.canEdit || dashboard.value?.meta?.canMakeEditable;
+  const isNew = !uid;
+
+  if (uid !== params.uid && !isNew) {
     return null;
   }
 
@@ -71,11 +77,7 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
     return <DashboardPage {...props} params={params} location={location} />;
   }
 
-  if (
-    dashboard.value &&
-    !(dashboard.value.meta?.canEdit || dashboard.value.meta?.canMakeEditable) &&
-    isScenesSupportedRoute
-  ) {
+  if (!canEdit && isScenesSupportedRoute && !forceOld) {
     return <DashboardScenePage {...props} />;
   } else {
     return <DashboardPage {...props} params={params} location={location} />;

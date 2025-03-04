@@ -82,7 +82,7 @@ describe('v2 dashboard API', () => {
       updatedBy: '',
     });
 
-    const api = new K8sDashboardV2API(false);
+    const api = new K8sDashboardV2API();
     // because the API can currently return both DashboardDTO and DashboardWithAccessInfo<DashboardV2Spec> based on the
     // parameter convertToV1, we need to cast the result to DashboardWithAccessInfo<DashboardV2Spec> to be able to
     // access
@@ -96,7 +96,7 @@ describe('v2 dashboard API', () => {
   it('throws an error if folder is not found', async () => {
     jest.spyOn(backendSrv, 'getFolderByUid').mockRejectedValue({ message: 'folder not found', status: 'not-found' });
 
-    const api = new K8sDashboardV2API(false);
+    const api = new K8sDashboardV2API();
     await expect(api.getDashboardDTO('test')).rejects.toThrow('Failed to load folder');
   });
 });
@@ -123,7 +123,7 @@ describe('v2 dashboard API - Save', () => {
   };
 
   it('should create new dashboard', async () => {
-    const api = new K8sDashboardV2API(false);
+    const api = new K8sDashboardV2API();
     const result = await api.saveDashboard({
       ...defaultSaveCommand,
       dashboard: {
@@ -143,7 +143,7 @@ describe('v2 dashboard API - Save', () => {
   });
 
   it('should update existing dashboard', async () => {
-    const api = new K8sDashboardV2API(false);
+    const api = new K8sDashboardV2API();
 
     const result = await api.saveDashboard({
       ...defaultSaveCommand,
@@ -160,7 +160,7 @@ describe('v2 dashboard API - Save', () => {
   });
 
   it('should update existing dashboard that is store in a folder', async () => {
-    const api = new K8sDashboardV2API(false);
+    const api = new K8sDashboardV2API();
     await api.saveDashboard({
       dashboard: {
         ...defaultSaveCommand.dashboard,
