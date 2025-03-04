@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
+	"github.com/blevesearch/bleve/v2/analysis/analyzer/simple"
 	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/blevesearch/bleve/v2/search"
 	"github.com/blevesearch/bleve/v2/search/query"
@@ -595,7 +596,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
 		// mimic the behavior of the sql search
 		query := bleve.NewMatchQuery(strings.ToLower(req.Query))
-		//query.Analyzer = simple.Name
+		query.Analyzer = simple.Name
 		queries = append(queries, query)
 	}
 
