@@ -3,7 +3,7 @@ import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 
 import { API_ROOT, GCOM_API_ROOT, INSTANCE_API_ROOT } from './constants';
-import { isLocalPluginVisibleByConfig, isRemotePluginVisibleByConfig } from './helpers';
+import { dependantPlugins, isLocalPluginVisibleByConfig, isRemotePluginVisibleByConfig } from './helpers';
 import {
   LocalPlugin,
   RemotePlugin,
@@ -29,6 +29,7 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
 
   return {
     grafanaDependency: dependencies?.grafanaDependency ?? dependencies?.grafanaVersion ?? '',
+    dependantPlugins: dependantPlugins(id),
     pluginDependencies: dependencies?.plugins || [],
     links: local?.info.links || remote?.json?.info.links || [],
     readme: localReadme || remote?.readme,
