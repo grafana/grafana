@@ -43,6 +43,10 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 	titleWordMapping.Store = true
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE, titleWordMapping)
 
+	// for filtering/sorting by title full phrase
+	titlePhraseMapping := bleve.NewKeywordFieldMapping()
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE_PHRASE, titlePhraseMapping)
+
 	descriptionMapping := &mapping.FieldMapping{
 		Name:               resource.SEARCH_FIELD_DESCRIPTION,
 		Type:               "text",
