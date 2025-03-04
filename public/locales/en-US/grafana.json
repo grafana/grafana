@@ -3052,7 +3052,7 @@
     },
     "details": {
       "connections-tab": {
-        "description": "The data source connections below are all {{pluginName}}. You can find all of your data source connections of all types in <4><0>Connections</0> - <3>Data sources</3>.</4>"
+        "description": "You currently have the following data sources configured for {{pluginName}}, click a tile to view the configuration details. You can find all of your data source connections in <4><0>Connections</0> - <3>Data sources</3>.</4>"
       },
       "labels": {
         "contactGrafanaLabs": "Contact Grafana Labs",
