@@ -137,6 +137,8 @@ jobs:
         run: |
           cd ..
           tar -xzf enterprise.tar.gz
+          # Move the enterprise code to the expected location within the main repo
+          cp -r grafana-enterprise/* grafana/
 
       - name: Run unit tests
         uses: ./.github/actions/run-backend-tests
@@ -182,6 +184,8 @@ jobs:
         run: |
           cd ..
           tar -xzf enterprise.tar.gz
+          # Move the enterprise code to the expected location within the main repo
+          cp -r grafana-enterprise/* grafana/
 
       - name: Run integration tests
         uses: ./.github/actions/run-backend-tests
