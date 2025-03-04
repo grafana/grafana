@@ -4,6 +4,7 @@ import { DataSourceApi, QueryEditorProps, SelectableValue } from '@grafana/data'
 import { InlineField, Select } from '@grafana/ui';
 
 import { ClassicConditions } from './components/ClassicConditions';
+import LabelRewrite from './components/LabelRewrite';
 import { Math } from './components/Math';
 import { Reduce } from './components/Reduce';
 import { Resample } from './components/Resample';
@@ -29,6 +30,7 @@ function useExpressionsCache() {
       case ExpressionQueryType.resample:
       case ExpressionQueryType.threshold:
       case ExpressionQueryType.sql:
+      case ExpressionQueryType.labelRewrite:
         return expressionCache.current[queryType];
       case ExpressionQueryType.classic:
         return undefined;
@@ -96,6 +98,9 @@ export function ExpressionQueryEditor(props: Props) {
 
       case ExpressionQueryType.sql:
         return <SqlExpr onChange={onChange} query={query} refIds={refIds} />;
+
+      case ExpressionQueryType.labelRewrite:
+        return <LabelRewrite refIds={refIds} expression={query} onChange={onChange} />;
     }
   };
 

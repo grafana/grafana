@@ -15,6 +15,7 @@ export enum ExpressionQueryType {
   classic = 'classic_conditions',
   threshold = 'threshold',
   sql = 'sql',
+  labelRewrite = 'label_rewrite',
 }
 
 export const getExpressionLabel = (type: ExpressionQueryType) => {
@@ -31,6 +32,8 @@ export const getExpressionLabel = (type: ExpressionQueryType) => {
       return 'Threshold';
     case ExpressionQueryType.sql:
       return 'SQL';
+    case ExpressionQueryType.labelRewrite:
+      return 'Rewrite Labels';
   }
 };
 
@@ -67,6 +70,11 @@ export const expressionTypes: Array<SelectableValue<ExpressionQueryType>> = [
     value: ExpressionQueryType.sql,
     label: 'SQL',
     description: 'Transform data using SQL. Supports Aggregate/Analytics functions from DuckDB',
+  },
+  {
+    value: ExpressionQueryType.labelRewrite,
+    label: 'Label Rewrite',
+    description: 'Add, remove and replace labels in the series',
   },
 ].filter((expr) => {
   if (expr.value === ExpressionQueryType.sql) {
@@ -149,6 +157,7 @@ export interface ExpressionQuery extends DataQuery {
   upsampler?: string;
   conditions?: ClassicCondition[];
   settings?: ExpressionQuerySettings;
+  labelRewrite?: LabelRewriteSettings;
 }
 
 export interface ThresholdExpressionQuery extends ExpressionQuery {
@@ -194,3 +203,20 @@ export type ReducerType =
   | 'percent_diff'
   | 'percent_diff_abs'
   | 'count_non_null';
+
+export interface LabelRewriteSettings {
+  add?: Record<string, LabelAdd>;
+  remove?: string[];
+  replace?: Record<string, LabelReplace>;
+}
+
+export interface LabelAdd {
+  constant: string | null;
+  template: string | null;
+}
+
+export interface LabelReplace {
+  constant: string | null;
+  regex: string | null;
+  replace: string | null;
+}

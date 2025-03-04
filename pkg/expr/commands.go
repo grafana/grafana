@@ -343,6 +343,8 @@ const (
 	TypeThreshold
 	// TypeSQL is the CMDType for running SQL expressions
 	TypeSQL
+	// TypeLabelRewrite is the CMDType for label rewriting expressions.
+	TypeLabelRewrite
 )
 
 func (gt CommandType) String() string {
@@ -359,6 +361,8 @@ func (gt CommandType) String() string {
 		return "threshold"
 	case TypeSQL:
 		return "sql"
+	case TypeLabelRewrite:
+		return "label_rewrite"
 	default:
 		return "unknown"
 	}
@@ -379,6 +383,8 @@ func ParseCommandType(s string) (CommandType, error) {
 		return TypeThreshold, nil
 	case "sql":
 		return TypeSQL, nil
+	case "label_rewrite":
+		return TypeLabelRewrite, nil
 	default:
 		return TypeUnknown, fmt.Errorf("'%v' is not a recognized expression type", s)
 	}

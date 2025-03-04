@@ -27,6 +27,7 @@ import {
 } from 'app/features/expressions/types';
 import { AlertQuery, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
+import LabelRewrite from '../../../../expressions/components/LabelRewrite';
 import { usePagination } from '../../hooks/usePagination';
 import { RuleFormValues } from '../../types/rule-form';
 import { isGrafanaRecordingRuleByType } from '../../utils/rules';
@@ -133,7 +134,8 @@ export const Expression: FC<ExpressionProps> = ({
 
         case ExpressionQueryType.sql:
           return <SqlExpr onChange={onChangeQuery} query={query} refIds={availableRefIds} />;
-
+        case ExpressionQueryType.labelRewrite:
+          return <LabelRewrite refIds={availableRefIds} expression={query} onChange={onChangeQuery} />;
         default:
           return <>Expression not supported: {query.type}</>;
       }
