@@ -151,6 +151,49 @@ describe('Combobox', () => {
     expect(screen.getByRole('option', { name: 'Default' })).toHaveAttribute('aria-selected', 'true');
   });
 
+  describe('groups', () => {
+    it('renders group headers', async () => {
+      const options = [
+        { label: 'Option 1', value: '1', group: 'Group 1' },
+        { label: 'Option 2', value: '2', group: 'Group 1' },
+        { label: 'Option 3', value: '3', group: 'Group 2' },
+        { label: 'Option 4', value: '4', group: 'Group 2' },
+      ];
+
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      expect(screen.getByText('Group 1')).toBeInTheDocument();
+      expect(screen.getByText('Group 2')).toBeInTheDocument();
+    });
+
+    it('sorts options within groups', async () => {
+      const options = [
+        { label: 'Option 1', value: '1', group: 'Group 1' },
+        { label: 'Option 2', value: '2', group: 'Group 2' },
+        { label: 'Option 3', value: '3', group: 'Group 1' },
+        { label: 'Option 4', value: '4', group: 'Group 2' },
+        { label: 'Option 5', value: '5', group: 'Group 2' },
+        { label: 'Option 6', value: '6', group: 'Group 1' },
+      ];
+
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      const allHeaders = await screen.findAllByRole('presentation');
+      expect(allHeaders).toHaveLength(2);
+
+      const listbox = await screen.findByRole('listbox');
+      expect(listbox).toHaveTextContent(
+        ['Group 1', 'Option 1', 'Option 3', 'Option 6', 'Group 2', 'Option 2', 'Option 4', 'Option 5'].join('')
+      );
+    });
+  });
+
   describe('size support', () => {
     it('should require minWidth to be set with auto width', () => {
       // @ts-expect-error
