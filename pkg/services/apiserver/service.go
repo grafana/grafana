@@ -335,6 +335,7 @@ func (s *service) start(ctx context.Context) error {
 	transport := &roundTripperFunc{ready: make(chan struct{})}
 	serverConfig.LoopbackClientConfig.Transport = transport
 	serverConfig.LoopbackClientConfig.TLSClientConfig = clientrest.TLSClientConfig{}
+	serverConfig.MaxRequestBodyBytes = 10 * 1024 * 1024 // 10MB
 
 	var optsregister apistore.StorageOptionsRegister
 
