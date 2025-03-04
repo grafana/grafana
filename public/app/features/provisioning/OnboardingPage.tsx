@@ -5,20 +5,11 @@ import { EmptyState, LinkButton, Alert, Stack, Text, Button } from '@grafana/ui'
 import { Page } from 'app/core/components/Page/Page';
 
 import { useGetFrontendSettingsQuery } from './api';
-import { NEW_URL, MIGRATE_URL } from './constants';
+import { CONNECT_URL } from './constants';
 
 export default function OnboardingPage({ legacyStorage }: { legacyStorage?: boolean }) {
   const settingsQuery = useGetFrontendSettingsQuery();
   const navigate = useNavigate();
-
-  const onClick = async () => {
-    if (legacyStorage) {
-      await settingsQuery.refetch();
-      navigate(MIGRATE_URL);
-    } else {
-      navigate(NEW_URL);
-    }
-  };
 
   return (
     <Page
@@ -37,7 +28,14 @@ export default function OnboardingPage({ legacyStorage }: { legacyStorage?: bool
           message="Set up your provisioning connection!"
           image={<SVG src="public/img/provisioning-empty.svg" width={300} />}
           button={
-            <Button size="lg" icon="plus" onClick={onClick}>
+            <Button
+              size="lg"
+              icon="plus"
+              onClick={async () => {
+                await settingsQuery.refetch();
+                navigate(CONNECT_URL);
+              }}
+            >
               Connect Grafana to repository
             </Button>
           }

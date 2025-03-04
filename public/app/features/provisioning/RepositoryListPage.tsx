@@ -23,7 +23,7 @@ import OnboardingPage from './OnboardingPage';
 import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
 import { Repository, ResourceCount, useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from './api';
-import { NEW_URL, PROVISIONING_URL } from './constants';
+import { PROVISIONING_URL, CONNECT_URL } from './constants';
 import { useRepositoryList } from './hooks';
 
 const appEvents = getAppEvents();
@@ -89,7 +89,7 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
         variant="call-to-action"
         message="You haven't created any repository configs yet"
         button={
-          <LinkButton icon="plus" href={NEW_URL} size="lg">
+          <LinkButton icon="plus" href={CONNECT_URL} size="lg">
             Create repository config
           </LinkButton>
         }
@@ -103,7 +103,7 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
     <Stack direction={'column'} gap={3}>
       <Stack gap={2}>
         <FilterInput placeholder="Search" value={query} onChange={setQuery} />
-        <LinkButton href={NEW_URL} variant="primary" icon={'plus'}>
+        <LinkButton href={CONNECT_URL} variant="primary" icon={'plus'}>
           Add repository config
         </LinkButton>
       </Stack>

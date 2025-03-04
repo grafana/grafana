@@ -14,18 +14,13 @@ import { MigrateStep } from './MigrateStep';
 import { RepositoryStep } from './RepositoryStep';
 import { Stepper, Step } from './Stepper';
 import { WizardFormData, WizardStep } from './types';
+import { PROVISIONING_URL } from '../constants';
 
 const steps: Array<Step<WizardStep>> = [
   { id: 'connection', name: 'Repository connection' },
   { id: 'repository', name: 'Repository configuration' },
   { id: 'migrate', name: 'Migrate dashboards' },
 ];
-
-const nextButtonText = {
-  connection: 'Next',
-  repository: 'Next',
-  migrate: 'Finish',
-} as const;
 
 export function ProvisioningWizard() {
   const [activeStep, setActiveStep] = useState<WizardStep>('connection');
@@ -45,9 +40,19 @@ export function ProvisioningWizard() {
 
   const styles = useStyles2(getStyles);
 
+  // Filter out migrate step if using legacy storage
+  const availableSteps = settingsQuery.data?.legacyStorage ? steps : steps.filter((step) => step.id !== 'migrate');
+
+  // Calculate button text based on current step position
+  const getNextButtonText = (currentStep: WizardStep) => {
+    const stepIndex = availableSteps.findIndex((s) => s.id === currentStep);
+    return stepIndex === availableSteps.length - 1 ? 'Finish' : 'Next';
+  };
+
   const handleNext = async () => {
-    const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
-    if (currentStepIndex < steps.length - 1) {
+    const currentStepIndex = availableSteps.findIndex((s) => s.id === activeStep);
+    const isLastStep = currentStepIndex === availableSteps.length - 1;
+    if (currentStepIndex < availableSteps.length - 1) {
       if (activeStep === 'connection') {
         // Validate repository form data before proceeding
         const isValid = await methods.trigger('repository');
@@ -56,21 +61,23 @@ export function ProvisioningWizard() {
         }
       }
 
-      if (activeStep === 'migrate') {
+      // If we're on the last step, mark it as completed
+      const isLastStep = currentStepIndex === availableSteps.length - 1;
+      if (isLastStep) {
         setCompletedSteps((prev) => [...prev, activeStep]);
       }
-      setActiveStep(steps[currentStepIndex + 1].id);
+      setActiveStep(availableSteps[currentStepIndex + 1].id);
       setStepSuccess(false);
-    } else if (activeStep === 'migrate') {
+    } else if (isLastStep) {
       settingsQuery.refetch();
-      navigate('/dashboards');
+      navigate(PROVISIONING_URL);
     }
   };
 
   const handleBack = () => {
-    const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
+    const currentStepIndex = availableSteps.findIndex((s) => s.id === activeStep);
     if (currentStepIndex > 0) {
-      setActiveStep(steps[currentStepIndex - 1].id);
+      setActiveStep(availableSteps[currentStepIndex - 1].id);
       setStepSuccess(true);
       // Remove the last completed step when going back
       setCompletedSteps((prev) => prev.slice(0, -1));
@@ -88,7 +95,7 @@ export function ProvisioningWizard() {
     <FormProvider {...methods}>
       <form className={styles.form}>
         <Stepper
-          steps={steps}
+          steps={availableSteps}
           activeStep={activeStep}
           visitedSteps={completedSteps}
           validationResults={{
@@ -101,7 +108,9 @@ export function ProvisioningWizard() {
         <div className={styles.content}>
           {activeStep === 'connection' && <ConnectionStep />}
           {activeStep === 'repository' && <RepositoryStep onStatusChange={handleStatusChange} />}
-          {activeStep === 'migrate' && <MigrateStep onStatusChange={handleStatusChange} />}
+          {activeStep === 'migrate' && settingsQuery.data?.legacyStorage && (
+            <MigrateStep onStatusChange={handleStatusChange} />
+          )}
         </div>
 
         <Stack gap={2} justifyContent="flex-end">
@@ -114,7 +123,7 @@ export function ProvisioningWizard() {
             onClick={handleNext}
             disabled={(activeStep === 'repository' && !stepSuccess) || (activeStep === 'migrate' && !stepSuccess)}
           >
-            {nextButtonText[activeStep]}
+            {getNextButtonText(activeStep)}
           </Button>
         </Stack>
       </form>
