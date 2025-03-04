@@ -218,7 +218,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
         return { ...hit, location: 'sharedwithme', folder: 'sharedwithme' };
       }
 
-      return hit;
+      return { ...hit, location: locationInfo[hit.folder].name, folder: 'sharedwithme' };
     });
     const totalHits = rsp.totalHits - (rsp.hits.length - hits.length);
     return { ...rsp, hits, totalHits };
