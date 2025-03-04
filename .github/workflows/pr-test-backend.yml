@@ -73,13 +73,13 @@ jobs:
         shell: bash
         run: |
           cd ..
-          tar -czf enterprise.tar.gz grafana-enterprise/
+          tar -czf $GITHUB_WORKSPACE/enterprise.tar.gz grafana-enterprise/
 
       - name: Upload Enterprise Code
         uses: actions/upload-artifact@v4
         with:
           name: enterprise-code
-          path: ../enterprise.tar.gz
+          path: enterprise.tar.gz
           retention-days: 1
 
   setup:
