@@ -13,8 +13,6 @@ interface SelectorActionsProps {
   validationStatusFromParent: string;
   errorFromParent: string;
   status: string;
-  onClickRunQuery: () => void;
-  onClickRunRateQuery: () => void;
   onClickClear: () => void;
   styles: Record<string, string>;
 }
@@ -24,14 +22,13 @@ export function SelectorActions({
   validationStatusFromParent,
   errorFromParent,
   status,
-  onClickRunQuery,
-  onClickRunRateQuery,
   onClickClear,
   styles,
 }: SelectorActionsProps) {
   const [err, setErr] = useState(errorFromParent);
   const [validationStatus, setValidationStatus] = useState(validationStatusFromParent);
-  const { languageProvider } = useMetricsBrowser();
+  const { languageProvider, onChange } = useMetricsBrowser();
+
   const validateSelector = async (selector: string) => {
     setValidationStatus(`Validating selector ${selector}`);
     setErr('');
@@ -42,6 +39,17 @@ export function SelectorActions({
   const onClickValidate = () => {
     const selector = buildSelector(labels);
     validateSelector(selector);
+  };
+
+  const onClickRunQuery = () => {
+    const selector = buildSelector(labels);
+    onChange(selector);
+  };
+
+  const onClickRunRateQuery = () => {
+    const selector = buildSelector(labels);
+    const query = `rate(${selector}[$__rate_interval])`;
+    onChange(query);
   };
 
   const selector = buildSelector(labels);

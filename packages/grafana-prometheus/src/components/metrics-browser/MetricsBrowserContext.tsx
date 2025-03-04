@@ -9,21 +9,28 @@ interface MetricsBrowserContextType {
   seriesLimit: string;
   setSeriesLimit: (limit: string) => void;
   languageProvider: PromQlLanguageProvider;
+  onChange: (selector: string) => void;
 }
 
 const MetricsBrowserContext = createContext<MetricsBrowserContextType | undefined>(undefined);
 
 type MetricsBrowserProviderProps = {
   languageProvider: PromQlLanguageProvider;
+  onChange: (selector: string) => void;
 };
 
-export function MetricsBrowserProvider({ children, languageProvider }: PropsWithChildren<MetricsBrowserProviderProps>) {
+export function MetricsBrowserProvider({
+  children,
+  languageProvider,
+  onChange,
+}: PropsWithChildren<MetricsBrowserProviderProps>) {
   const [seriesLimit, setSeriesLimit] = useState(DEFAULT_SERIES_LIMIT);
 
   const value = {
     seriesLimit,
     setSeriesLimit,
     languageProvider,
+    onChange,
   };
 
   return <MetricsBrowserContext.Provider value={value}>{children}</MetricsBrowserContext.Provider>;

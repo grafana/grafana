@@ -28,17 +28,6 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
     validationStatus: '',
   };
 
-  onClickRunQuery = () => {
-    const selector = buildSelector(this.state.labels);
-    this.props.onChange(selector);
-  };
-
-  onClickRunRateQuery = () => {
-    const selector = buildSelector(this.state.labels);
-    const query = `rate(${selector}[$__rate_interval])`;
-    this.props.onChange(query);
-  };
-
   onClickClear = () => {
     this.setState((state) => {
       const labels: SelectableLabel[] = state.labels.map((label) => ({
@@ -278,8 +267,6 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
           validationStatusFromParent={validationStatus}
           status={status}
           errorFromParent={error}
-          onClickRunQuery={this.onClickRunQuery}
-          onClickRunRateQuery={this.onClickRunRateQuery}
           onClickClear={this.onClickClear}
           styles={styles}
         />

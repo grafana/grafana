@@ -172,7 +172,7 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
       </div>
       {labelBrowserVisible && (
         <div className="gf-form">
-          <MetricsBrowserProvider languageProvider={languageProvider}>
+          <MetricsBrowserProvider languageProvider={languageProvider} onChange={onChangeLabelBrowser}>
             <PrometheusMetricsBrowser
               languageProvider={languageProvider}
               onChange={onChangeLabelBrowser}
