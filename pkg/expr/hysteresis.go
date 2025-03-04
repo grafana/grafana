@@ -38,7 +38,7 @@ func (h *HysteresisCommand) Execute(ctx context.Context, now time.Time, vars mat
 	if results.IsNoData() {
 		return mathexp.Results{Values: mathexp.Values{mathexp.NewNoData()}}, nil
 	}
-	if h.LoadedDimensions == nil || len(h.LoadedDimensions) == 0 {
+	if len(h.LoadedDimensions) == 0 {
 		return h.LoadingThresholdFunc.Execute(ctx, now, vars, tracer)
 	}
 	var loadedVals, unloadedVals mathexp.Values

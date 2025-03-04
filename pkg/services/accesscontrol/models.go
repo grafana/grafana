@@ -304,7 +304,7 @@ func (cmd *SaveExternalServiceRoleCommand) Validate() error {
 	cmd.ExternalServiceID = slugify.Slugify(cmd.ExternalServiceID)
 
 	// Check and deduplicate permissions
-	if cmd.Permissions == nil || len(cmd.Permissions) == 0 {
+	if len(cmd.Permissions) == 0 {
 		return errors.New("no permissions provided")
 	}
 	dedupMap := map[Permission]bool{}
