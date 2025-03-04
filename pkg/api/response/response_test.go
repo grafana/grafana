@@ -1,13 +1,16 @@
 package response
 
 import (
+	"bytes"
 	"errors"
 	"net/http"
 	"testing"
 
+	"github.com/launchdarkly/go-jsonstream/v3/jwriter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
 
@@ -169,5 +172,18 @@ func TestRespond(t *testing.T) {
 			require.Equal(t, tc.status, resp.status)
 			require.Equal(t, tc.expected, resp.body.Bytes())
 		})
+	}
+}
+
+func BenchmarkJsonEncoder(b *testing.B) {
+	qdr := backend.QueryDataResponse{}
+	r := StreamingResponse{
+		queryResponse: &qdr,
+	}
+	bb := make([]byte, 1024)
+	ioWriter := bytes.NewBuffer(bb)
+	w := jwriter.NewStreamingWriter(ioWriter, 1024)
+	for i := 0; i < b.N; i++ {
+		r.WriteToJSONWriter(&w)
 	}
 }

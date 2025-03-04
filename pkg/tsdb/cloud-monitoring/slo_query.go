@@ -8,7 +8,13 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
+
+func (timeSeriesFilter *cloudMonitoringSLO) getFrameGenerator(ctx context.Context, req *backend.QueryDataRequest,
+	s *Service, dsInfo datasourceInfo, logger log.Logger) backend.FrameGenerator {
+	return func() (data.Frames, error) { return data.Frames{}, nil }
+}
 
 func (sloQ *cloudMonitoringSLO) run(ctx context.Context, req *backend.QueryDataRequest,
 	s *Service, dsInfo datasourceInfo, logger log.Logger) (*backend.DataResponse, any, string, error) {

@@ -17,6 +17,11 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
+func (promQLQ *cloudMonitoringProm) getFrameGenerator(ctx context.Context, req *backend.QueryDataRequest,
+	s *Service, dsInfo datasourceInfo, logger log.Logger) backend.FrameGenerator {
+	return func() (data.Frames, error) { return data.Frames{}, nil }
+}
+
 func (promQLQ *cloudMonitoringProm) run(ctx context.Context, req *backend.QueryDataRequest,
 	s *Service, dsInfo datasourceInfo, logger log.Logger) (*backend.DataResponse, any, string, error) {
 	dr := &backend.DataResponse{}
