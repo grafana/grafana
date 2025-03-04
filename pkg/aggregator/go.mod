@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/aggregator
 
-go 1.23.1
+go 1.23.7
 
 require (
 	github.com/emicklei/go-restful/v3 v3.11.0
