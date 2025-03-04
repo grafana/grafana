@@ -111,6 +111,10 @@ export enum DashboardRoutes {
   Report = 'report-dashboard',
 }
 
+export enum FolderRoutes {
+  Browse = 'folders/browse',
+}
+
 export enum DashboardInitPhase {
   NotStarted = 'Not started',
   Fetching = 'Fetching',
