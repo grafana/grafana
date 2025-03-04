@@ -312,7 +312,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 			ctx := createTestContext(t)
 			token := createUnseenToken(t, ctx)
 
-			token, err := ctx.tokenService.LookupToken(context.Background(), token.UnhashedToken)
+			_, err := ctx.tokenService.LookupToken(context.Background(), token.UnhashedToken)
 			require.Nil(t, err)
 		})
 
