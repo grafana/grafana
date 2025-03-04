@@ -11,23 +11,8 @@ import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '
 import { DashboardScene } from './DashboardScene';
 
 export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelContext) {
-  let isEditable = false;
-
-  // @ts-ignore
-  let parent = vizPanel._parent;
-
-  while (parent != null) {
-    // @ts-ignore
-    if (parent._state?.isEditing) {
-      isEditable = true;
-      break;
-    }
-
-    // @ts-ignore
-    parent = parent._parent;
-  }
-
-  context.app = isEditable ? CoreApp.PanelEditor : CoreApp.Dashboard;
+  const dashboard = getDashboardSceneFor(vizPanel);
+  context.app = dashboard.state.isEditing ? CoreApp.PanelEditor : CoreApp.Dashboard;
 
   context.canAddAnnotations = () => {
     const dashboard = getDashboardSceneFor(vizPanel);
