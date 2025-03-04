@@ -76,6 +76,7 @@ export const getSpanDetailLinkButtons = (props: Props) => {
       const extensionPointId = PluginExtensionPoints.TraceViewDetails;
       const { links } = usePluginLinks({ extensionPointId, context, limitPerPlugin: 1 });
       const link = links && links.length > 0 ? links.find((link) => link.pluginId === profilesDrilldownPluginId) : null;
+      const label = 'Open in Profiles Drilldown';
 
       // if we have a plugin link, add a button to open in Grafana Profiles Drilldown
       if (link) {
@@ -97,7 +98,7 @@ export const getSpanDetailLinkButtons = (props: Props) => {
               }
             }}
           >
-            Open in Profiles Drilldown
+            {label}
           </Button>
         );
 
@@ -125,7 +126,10 @@ export const getProfileLinkButtonsContext = (
     profileTypeId: traceToProfilesOptions?.profileTypeId ?? '',
     spanSelector: spanSelector.length === 1 && spanSelector[0].value ? spanSelector[0].value : '',
     explorationType: 'flame-graph',
-    timeRange: timeRange.raw,
+    timeRange: {
+      from: timeRange.from.toISOString(),
+      to: timeRange.to.toISOString(),
+    },
     targets: [
       {
         datasource: {
