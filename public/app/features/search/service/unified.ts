@@ -55,8 +55,8 @@ const folderViewSort = 'name_sort';
 export class UnifiedSearcher implements GrafanaSearcher {
   locationInfo: Promise<Record<string, LocationInfo>>;
 
-  constructor(private fallbackSearcher: GrafanaSearcher) {
-    this.locationInfo = loadLocationInfo();
+  constructor(private fallbackSearcher: GrafanaSearcher, private uri = searchURI) {
+    this.locationInfo = loadLocationInfo(uri);
   }
 
   async search(query: SearchQuery): Promise<QueryResponse> {
@@ -85,7 +85,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
 
   async tags(query: SearchQuery): Promise<TermCount[]> {
     const qry = query.query ?? '*';
-    let uri = `${searchURI}?facet=tags&query=${qry}&limit=1`;
+    let uri = `${this.uri}?facet=tags&query=${qry}&limit=1`;
     const resp = await getBackendSrv().get<SearchAPIResponse>(uri);
     return resp.facets?.tags?.terms || [];
   }
@@ -107,9 +107,14 @@ export class UnifiedSearcher implements GrafanaSearcher {
     return Promise.resolve(opts);
   }
 
+  async fetchResults(query: SearchQuery): Promise<SearchAPIResponse & { uri: string }> {
+    const uri = await newRequest(query, this.uri);
+    const response = await this.fetchResponse(uri);
+    return { ...response, uri };
+  }
+
   async doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
-    const uri = await this.newRequest(query);
-    const rsp = await this.fetchResponse(uri);
+    const rsp = await this.fetchResults(query);
 
     const first = toDashboardResults(rsp, query.sort ?? '');
     if (first.name === loadingFrameName) {
@@ -137,7 +142,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
         if (offset >= meta.count) {
           return;
         }
-        const nextPageUrl = `${uri}&offset=${offset}`;
+        const nextPageUrl = `${rsp.uri}&offset=${offset}`;
         const resp = await this.fetchResponse(nextPageUrl);
         const frame = toDashboardResults(resp, query.sort ?? '');
         if (!frame) {
@@ -195,7 +200,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
       return rsp;
     }
     // sync the location info ( folders )
-    this.locationInfo = loadLocationInfo();
+    this.locationInfo = loadLocationInfo(uri);
     // recheck for missing folders
     const hasMissing = await this.isFolderCacheStale(rsp.hits);
     if (!hasMissing) {
@@ -224,45 +229,6 @@ export class UnifiedSearcher implements GrafanaSearcher {
     return hits.some((hit) => {
       return hit.folder !== undefined && locationInfo[hit.folder] === undefined;
     });
-  }
-
-  private async newRequest(query: SearchQuery): Promise<string> {
-    query = await replaceCurrentFolderQuery(query);
-
-    let uri = searchURI;
-    uri += `?query=${encodeURIComponent(query.query ?? '*')}`;
-    uri += `&limit=${query.limit ?? pageSize}`;
-
-    if (!isEmpty(query.location)) {
-      uri += `&folder=${query.location}`;
-    }
-
-    if (query.kind) {
-      // filter resource types
-      uri += '&' + query.kind.map((kind) => `type=${kind}`).join('&');
-    }
-
-    if (query.tags?.length) {
-      uri += '&' + query.tags.map((tag) => `tag=${encodeURIComponent(tag)}`).join('&');
-    }
-
-    if (query.sort) {
-      const sort = query.sort.replace('_sort', '').replace('name', 'title');
-      uri += `&sort=${sort}`;
-      const sortField = sort.startsWith('-') ? sort.substring(1) : sort;
-
-      uri += `&field=${sortField}`; // we want to the sort field to be included in the response
-    }
-
-    if (query.name?.length) {
-      uri += '&' + query.name.map((name) => `name=${encodeURIComponent(name)}`).join('&');
-    }
-
-    if (query.uid?.length) {
-      // legacy support for filtering by dashboard uid
-      uri += '&' + query.uid.map((name) => `name=${encodeURIComponent(name)}`).join('&');
-    }
-    return uri;
   }
 
   getFolderViewSort(): string {
@@ -349,8 +315,8 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
   return frame;
 }
 
-async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
-  const uri = `${searchURI}?type=folders`;
+async function loadLocationInfo(uri: string): Promise<Record<string, LocationInfo>> {
+  uri = `${uri}?type=folders`;
   const rsp = getBackendSrv()
     .get<SearchAPIResponse>(uri)
     .then((rsp) => {
@@ -384,4 +350,43 @@ function toURL(resource: string, name: string, title: string): string {
   }
   const slug = kbn.slugifyForUrl(title);
   return `/d/${name}/${slug}`;
+}
+
+
+export async function newRequest(query: SearchQuery, uri: string = searchURI): Promise<string> {
+  query = await replaceCurrentFolderQuery(query);
+
+  uri += `?query=${encodeURIComponent(query.query ?? '*')}`;
+  uri += `&limit=${query.limit ?? pageSize}`;
+
+  if (!isEmpty(query.location)) {
+    uri += `&folder=${query.location}`;
+  }
+
+  if (query.kind) {
+    // filter resource types
+    uri += '&' + query.kind.map((kind) => `type=${kind}`).join('&');
+  }
+
+  if (query.tags?.length) {
+    uri += '&' + query.tags.map((tag) => `tag=${encodeURIComponent(tag)}`).join('&');
+  }
+
+  if (query.sort) {
+    const sort = query.sort.replace('_sort', '').replace('name', 'title');
+    uri += `&sort=${sort}`;
+    const sortField = sort.startsWith('-') ? sort.substring(1) : sort;
+
+    uri += `&field=${sortField}`; // we want to the sort field to be included in the response
+  }
+
+  if (query.name?.length) {
+    uri += '&' + query.name.map((name) => `name=${encodeURIComponent(name)}`).join('&');
+  }
+
+  if (query.uid?.length) {
+    // legacy support for filtering by dashboard uid
+    uri += '&' + query.uid.map((name) => `name=${encodeURIComponent(name)}`).join('&');
+  }
+  return uri;
 }

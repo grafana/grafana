@@ -14,22 +14,16 @@ import {
 } from '@grafana/ui';
 
 import { Page } from 'app/core/components/Page/Page';
+import { SearchHit, UnifiedSearcher } from '../search/service/unified';
+import { GrafanaSearcher } from '../search/service/types';
+import { getAPINamespace } from 'app/api/utils';
 
-interface Folder {
-  id: number;
-  uid: string;
-  title: string;
-  url: string;
-  type: ResourceType;
-  tags: Array<string>;
-  owner: string;
-  location?: string;
-  canSave: boolean;
-  canAdmin: boolean;
-  hasSubfolders?: boolean;
+interface Folder extends SearchHit {
   isExpanded?: boolean;
+  owner?: string;
   level?: number;
   parentId?: number;
+  hasSubfolders?: boolean;
 }
 
 type ResourceType = 'dashboard' | 'folder' | 'alert' | 'playlist' | 'slo';
@@ -49,6 +43,10 @@ const groupByOptions: Array<SelectableValue<GroupByOption>> = [
   { label: 'Type', value: 'type' },
 ];
 
+const searchURI = `/apis/search.grafana.app/v0alpha1/namespaces/${getAPINamespace()}/search`;
+
+const searcher = new UnifiedSearcher({} as GrafanaSearcher, searchURI);
+
 const FoldersPage: React.FC = () => {
   const [folders, setFolders] = useState<Array<Folder>>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -58,39 +56,40 @@ const FoldersPage: React.FC = () => {
   const [selectedTag, setSelectedTag] = useState<SelectableValue<string>>();
   const [selectedOwner, setSelectedOwner] = useState<SelectableValue<string>>();
   const [groupBy, setGroupBy] = useState<SelectableValue<GroupByOption>>(groupByOptions[0]);
-  const [availableTags, setAvailableTags] = useState<Array<SelectableValue<string>>>([]);
-  const [availableOwners, setAvailableOwners] = useState<Array<SelectableValue<string>>>([]);
+  // const [availableTags, setAvailableTags] = useState<Array<SelectableValue<string>>>([]);
+  // const [availableOwners, setAvailableOwners] = useState<Array<SelectableValue<string>>>([]);
   
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
+    // TODO: fetch tags
+    // fetchTags();
     fetchFolders();
   }, []);
 
   const fetchFolders = async () => {
     setIsLoading(true);
     try {
-      // Replace with actual Grafana API endpoint
-      const response = await fetch('/api/folders');
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
       
-      // Extract unique tags and owners for filters
-      const tags = new Set<string>();
-      const owners = new Set<string>();
-      data.forEach((folder: Folder) => {
-        folder.tags = folder.tags || [];  // Initialize tags if undefined
-        folder.tags?.forEach((tag) => tags.add(tag));
-        if (folder.owner) {
-          owners.add(folder.owner);
-        }
-      });
+      // const response = await fetch('/api/folders');
+      const response = await searcher.fetchResults({ kind: ['folders'] });
 
-      setAvailableTags(Array.from(tags).map((tag) => ({ label: tag, value: tag })));
-      setAvailableOwners(Array.from(owners).map((owner) => ({ label: owner, value: owner })));
-      setFolders(data);
+      // TODO: fetch and populate the tags in a separate call - see above
+      // const tags = await searcher.tags({ kind: [selected kinds], query: [search input], tags: [selected tags] });
+      // Extract unique tags and owners for filters
+      // const tags = new Set<string>();
+      // const owners = new Set<string>();
+      // response.forEach((folder: Folder) => {
+      //   folder.tags = folder.tags || [];  // Initialize tags if undefined
+      //   folder.tags?.forEach((tag) => tags.add(tag));
+      //   if (folder.owner) {
+      //     owners.add(folder.owner);
+      //   }
+      // });
+
+      // setAvailableTags(Array.from(tags).map((tag) => ({ label: tag, value: tag })));
+      // setAvailableOwners(Array.from(owners).map((owner) => ({ label: owner, value: owner })));
+      setFolders(response.hits);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -98,13 +97,14 @@ const FoldersPage: React.FC = () => {
     }
   };
 
-  const filterFolders = (folders: Array<Folder>) => {
+  const filterFolders = (folders: Array<SearchHit>) => {
     return folders.filter((folder) => {
       const matchesSearch = folder.title.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesType = !selectedType?.value || folder.type === selectedType.value;
+      // const matchesType = !selectedType?.value || folder.type === selectedType.value;
       const matchesTag = !selectedTag?.value || folder.tags.includes(selectedTag.value);
-      const matchesOwner = !selectedOwner?.value || folder.owner === selectedOwner.value;
-      return matchesSearch && matchesType && matchesTag && matchesOwner;
+      // const matchesOwner = !selectedOwner?.value || folder.owner === selectedOwner.value;
+      // return matchesSearch && matchesType && matchesTag && matchesOwner;
+      return matchesSearch  && matchesTag;
     });
   };
 
@@ -113,7 +113,7 @@ const FoldersPage: React.FC = () => {
       const groups: Record<string, Array<Folder>> = {};
       typeOptions.forEach((type) => {
         if (type.value) {
-          groups[type.value] = folders.filter((f) => f.type === type.value);
+          groups[type.value] = folders.filter((f) => f.resource === type.value);
         }
       });
       return groups;
@@ -127,7 +127,7 @@ const FoldersPage: React.FC = () => {
 
   const handleExpand = (folder: Folder) => {
     setFolders((prevFolders) =>
-      prevFolders.map((f) => (f.id === folder.id ? { ...f, isExpanded: !f.isExpanded } : f))
+      prevFolders.map((f) => (f.name === folder.name ? { ...f, isExpanded: !f.isExpanded } : f))
     );
   };
 
@@ -151,7 +151,7 @@ const FoldersPage: React.FC = () => {
           {
             id: 'type',
             header: 'Type',
-            cell: ({ row: { original } }) => original.type,
+            cell: ({ row: { original } }) => original.resource,
           },
           {
             id: 'owner',
@@ -179,7 +179,7 @@ const FoldersPage: React.FC = () => {
           {
             id: 'type',
             header: 'Type',
-            cell: ({ row: { original } }) => original.type,
+            cell: ({ row: { original } }) => original.resource,
           },
           {
             id: 'tags',
@@ -201,7 +201,7 @@ const FoldersPage: React.FC = () => {
         <InteractiveTable
           data={groupFolders}
           columns={columns}
-          getRowId={(row) => row.uid}
+          getRowId={(row) => row.name}
         />
       </div>
     );
@@ -233,14 +233,16 @@ const FoldersPage: React.FC = () => {
             <Select
               value={selectedTag}
               onChange={setSelectedTag}
-              options={availableTags}
+              // options={availableTags}  // TODO
+              opotions={[]}
               placeholder="Filter by Tag"
               width={20}
             />
             <Select
               value={selectedOwner}
               onChange={setSelectedOwner}
-              options={availableOwners}
+              options={[]}
+              // options={availableOwners} // TODO - maybe
               placeholder="Filter by Owner"
               width={20}
             />
