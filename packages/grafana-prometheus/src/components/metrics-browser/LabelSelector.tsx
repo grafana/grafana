@@ -14,12 +14,11 @@ interface LabelSelectorProps {
 export function LabelSelector({ onClickLabel, styles, labels }: LabelSelectorProps) {
   const [labelSearchTerm, setLabelSearchTerm] = useState('');
 
-  // Filter labels
   let nonMetricLabels = labels.filter((label) => !label.hidden && label.name !== METRIC_LABEL);
   if (labelSearchTerm) {
     nonMetricLabels = nonMetricLabels.filter((label) => label.selected || label.name.includes(labelSearchTerm));
   }
-
+    return null;
   return (
     <div className={styles.section}>
       <Label description="Once label values are selected, only possible label combinations are shown.">

@@ -47,7 +47,7 @@ export function SelectorActions({
 
   const selector = buildSelector(labels);
   const empty = selector === EMPTY_SELECTOR;
-
+  return null;
   return (
     <div className={styles.section}>
       <Label>4. Resulting selector</Label>

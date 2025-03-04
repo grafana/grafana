@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FixedSizeList } from 'react-window';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -14,23 +14,11 @@ interface MetricSelectorProps {
 
 export function MetricSelector({ onClickMetric, styles }: MetricSelectorProps) {
   const [metricSearchTerm, setMetricSearchTerm] = useState('');
-  const { metrics, selectedMetric, seriesLimit, setSeriesLimit, languageProvider } = useMetricsBrowser();
+  const { metrics, selectedMetric, seriesLimit, setSeriesLimit, onMetricClick } = useMetricsBrowser();
 
-  const filteredMetrics = useMemo(
-    () => metrics.filter((m) => m === selectedMetric || m.includes(metricSearchTerm)),
-    [metricSearchTerm, metrics, selectedMetric]
-  );
-
-  const getDetails = useCallback(
-    (metricName: string) => {
-      const meta = languageProvider.metricsMetadata;
-      if (meta && meta[metricName]) {
-        return `(${meta.type}) ${meta.help}`;
-      }
-      return undefined;
-    },
-    [languageProvider.metricsMetadata]
-  );
+  const filteredMetrics = useMemo(() => {
+    return metrics.filter((m) => m.name === selectedMetric || m.name.includes(metricSearchTerm));
+  }, [metrics, selectedMetric, metricSearchTerm]);
 
   return (
     <div>
@@ -66,7 +54,7 @@ export function MetricSelector({ onClickMetric, styles }: MetricSelectorProps) {
             height={Math.min(450, filteredMetrics.length * LIST_ITEM_SIZE)}
             itemCount={filteredMetrics.length}
             itemSize={LIST_ITEM_SIZE}
-            itemKey={(i) => filteredMetrics[i]}
+            itemKey={(i) => filteredMetrics[i].name}
             width={300}
             className={styles.valueList}
           >
@@ -75,13 +63,14 @@ export function MetricSelector({ onClickMetric, styles }: MetricSelectorProps) {
               return (
                 <div style={style}>
                   <PromLabel
-                    name={metric}
-                    value={metric}
-                    title={getDetails(metric)}
-                    active={selectedMetric === metric}
+                    name={metric.name}
+                    value={metric.name}
+                    title={metric.details}
+                    active={metric.name === selectedMetric}
                     onClick={(name: string, value: string | undefined) => {
                       // Resetting search to prevent empty results
                       setMetricSearchTerm('');
+                      onMetricClick(name);
                       onClickMetric(name, value);
                     }}
                     searchTerm={metricSearchTerm}

@@ -1,27 +1,30 @@
-import { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useState } from 'react';
 
 import { TimeRange } from '@grafana/data';
 
 import PromQlLanguageProvider from '../../language_provider';
 
-import { DEFAULT_SERIES_LIMIT, METRIC_LABEL } from './types';
+import { DEFAULT_SERIES_LIMIT, LAST_USED_LABELS_KEY, Metric, METRIC_LABEL } from './types';
 
 interface MetricsBrowserContextType {
-  seriesLimit: string;
-  setSeriesLimit: (limit: string) => void;
   err: string;
   setErr: (err: string) => void;
   status: string;
   setStatus: (status: string) => void;
+
+  seriesLimit: string;
+  setSeriesLimit: (limit: string) => void;
+
   languageProvider: PromQlLanguageProvider;
   onChange: (selector: string) => void;
 
-  metrics: string[];
-  selectedMetric: string;
+  metrics: Metric[];
   labelKeys: string[];
-  selectedLabelKeys: string[];
   labelValues: Record<string, string[]>;
-  selectedLabelValues: string[];
+  selectedMetric: string;
+  onMetricClick: (name: string) => void;
+  onLabelKeyClick: (name: string) => void;
+  onLabelValueClick: (name: string) => void;
 }
 
 const MetricsBrowserContext = createContext<MetricsBrowserContextType | undefined>(undefined);
@@ -32,54 +35,109 @@ type MetricsBrowserProviderProps = {
   timeRange?: TimeRange;
 };
 
+const withoutMetricLabel = (ml: string) => ml !== METRIC_LABEL;
+
 export function MetricsBrowserProvider({
   children,
   languageProvider,
   onChange,
+  // FIXME time range changes should reflect on metrics and labels
   timeRange,
 }: PropsWithChildren<MetricsBrowserProviderProps>) {
-  const [labelKeys, setLabelKeys] = useState<string[]>(['__name__']);
-  const [labelValues, setLabelValues] = useState<Record<string, string[]>>({});
+  const [seriesLimit, setSeriesLimit] = useState(DEFAULT_SERIES_LIMIT);
+  const [err, setErr] = useState('');
+  const [status, setStatus] = useState('Ready');
 
+  const [metrics, setMetrics] = useState<Metric[]>([]);
   const [selectedMetric, setSelectedMetric] = useState('');
+  const [labelKeys, setLabelKeys] = useState<string[]>([]);
   const [selectedLabelKeys, setSelectedLabelKeys] = useState<string[]>([]);
+  const [labelValues, setLabelValues] = useState<Record<string, string[]>>({});
   const [selectedLabelValues, setSelectedLabelValues] = useState<string[]>([]);
 
-  const metrics = useMemo(() => labelValues[METRIC_LABEL], [labelValues]);
-
-  const [seriesLimit, setSeriesLimit] = useState(DEFAULT_SERIES_LIMIT);
-  const [status, setStatus] = useState('Ready');
-  const [err, setErr] = useState('');
-
   useEffect(() => {
-    async function init() {
-      setLabelKeys([...languageProvider.labelKeys]);
-      setLabelValues({ [METRIC_LABEL]: [...languageProvider.metrics] });
+    const meta = languageProvider.metricsMetadata;
 
-      setSelectedMetric('');
-      setSelectedLabelKeys([]);
-      setSelectedLabelValues([]);
-    }
+    setMetrics(
+      languageProvider.metrics.map((m) => ({
+        name: m,
+        details: meta && meta[m] ? `(${meta.type}) ${meta.help}` : undefined,
+      }))
+    );
+    setLabelKeys([...languageProvider.labelKeys.filter(withoutMetricLabel)]);
+    const selectedLabelsFromStorage: string[] = JSON.parse(localStorage.getItem(LAST_USED_LABELS_KEY) ?? `[]`) ?? [];
+    setSelectedLabelKeys(selectedLabelsFromStorage);
 
-    init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const value = {
-    seriesLimit,
-    setSeriesLimit,
-    status,
-    setStatus,
+  // Fetch labels
+  useEffect(() => {
+    if (selectedMetric !== '') {
+      languageProvider.fetchSeriesLabelsMatch(selectedMetric).then((fetchedLabelKeys) => {
+        setLabelKeys(Object.keys(fetchedLabelKeys).filter(withoutMetricLabel));
+      });
+    } else {
+      setLabelKeys([...languageProvider.labelKeys.filter(withoutMetricLabel)]);
+    }
+  }, [languageProvider, selectedMetric]);
+
+  // Fetch label values
+  useEffect(() => {
+    console.log('Fetch label values for: ', selectedLabelKeys);
+  }, [selectedLabelKeys]);
+
+  const onMetricClick = useCallback(
+    (metricName: string) => setSelectedMetric(selectedMetric !== metricName ? metricName : ''),
+    [selectedMetric]
+  );
+
+  const onLabelKeyClick = useCallback(
+    (labelKey: string) => {
+      const newSelectedLabelKeys = [...selectedLabelKeys];
+      const lkIdx = newSelectedLabelKeys.indexOf(labelKey);
+      if (lkIdx === -1) {
+        newSelectedLabelKeys.push(labelKey);
+      } else {
+        newSelectedLabelKeys.splice(lkIdx, 1);
+      }
+      setSelectedLabelKeys(newSelectedLabelKeys);
+    },
+    [selectedLabelKeys]
+  );
+
+  const onLabelValueClick = useCallback(
+    (labelValue: string) => {
+      const newSelectedLabelValues = [...selectedLabelValues];
+      const lvIdx = newSelectedLabelValues.indexOf(labelValue);
+      if (lvIdx === -1) {
+        newSelectedLabelValues.push(labelValue);
+      } else {
+        newSelectedLabelValues.splice(lvIdx, 1);
+      }
+      setSelectedLabelValues(newSelectedLabelValues);
+    },
+    [selectedLabelValues]
+  );
+
+  const value: MetricsBrowserContextType = {
     err,
     setErr,
+    status,
+    setStatus,
+
+    seriesLimit,
+    setSeriesLimit,
     languageProvider,
     onChange,
+
     metrics,
     labelKeys,
-    selectedLabelKeys,
     labelValues,
-    selectedLabelValues,
     selectedMetric,
+    onMetricClick,
+    onLabelKeyClick,
+    onLabelValueClick,
   };
 
   return <MetricsBrowserContext.Provider value={value}>{children}</MetricsBrowserContext.Provider>;

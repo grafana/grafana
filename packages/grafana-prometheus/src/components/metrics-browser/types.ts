@@ -17,6 +17,11 @@ export interface SelectableLabel {
   facets?: number;
 }
 
+export interface Metric {
+  name: string;
+  details?: string;
+}
+
 export interface BrowserProps {
   languageProvider: PromQlLanguageProvider;
   onChange: (selector: string) => void;

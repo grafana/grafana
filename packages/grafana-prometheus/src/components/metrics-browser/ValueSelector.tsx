@@ -25,7 +25,7 @@ export function ValueSelector({ labels, onClickValue, onClickLabel, styles }: Va
       values: label.values?.filter((value) => value.selected || value.name.includes(valueSearchTerm)),
     }));
   }
-
+    return null;
   return (
     <div className={styles.section}>
       <Label description="Use the search field to find values across selected labels.">
