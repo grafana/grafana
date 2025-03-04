@@ -10,15 +10,29 @@ inputs:
     description: 'The test command to run'
     required: false
     default: 'make gen-go test-go-unit'
+  go-flags:
+    description: 'Optional flags to pass to Go commands'
+    required: false
+    default: ''
 
 runs:
   using: "composite"
   steps:
+    - name: Generate Go files
+      shell: bash
+      run: make gen-go
+
     - name: Run tests
       shell: bash
+      env:
+        GOFLAGS: ${{ inputs.go-flags }}
       run: |
+        # Extract the test command without gen-go
+        TEST_CMD="${{ inputs.test-command }}"
+        TEST_CMD="${TEST_CMD/make gen-go /make }"
+        
         if [ -n "${{ inputs.coverage-opts }}" ]; then
-          COVER_OPTS="${{ inputs.coverage-opts }}" ${{ inputs.test-command }}
+          COVER_OPTS="${{ inputs.coverage-opts }}" ${TEST_CMD}
         else
-          ${{ inputs.test-command }}
+          ${TEST_CMD}
         fi
