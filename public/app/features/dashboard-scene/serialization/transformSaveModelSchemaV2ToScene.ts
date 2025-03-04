@@ -67,6 +67,7 @@ import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardScopesFacade } from '../scene/DashboardScopesFacade';
+import { LayoutOrchestrator } from '../scene/layout-manager/LayoutOrchestrator';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { getIntervalsFromQueryString } from '../utils/utils';
@@ -154,8 +155,6 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     .get(dashboard.layout.kind)
     .serializer.deserialize(dashboard.layout, dashboard.elements, dashboard.preload);
 
-  //createLayoutManager(dashboard);
-
   const dashboardScene = new DashboardScene({
     description: dashboard.description,
     editable: dashboard.editable,
@@ -168,7 +167,10 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     title: dashboard.title,
     uid: metadata.name,
     version: parseInt(metadata.resourceVersion, 10),
-    body: layoutManager,
+    body: new LayoutOrchestrator({
+      manager: layoutManager,
+    }),
+
     $timeRange: new SceneTimeRange({
       from: dashboard.timeSettings.from,
       to: dashboard.timeSettings.to,

@@ -6,6 +6,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { LayoutOrchestrator } from '../scene/layout-manager/LayoutOrchestrator';
 import { DashboardLayoutSelector } from '../scene/layouts-shared/DashboardLayoutSelector';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
@@ -22,7 +23,11 @@ export class DashboardEditableElement implements EditableDashboardElement {
     const dashboard = this.dashboard;
 
     // When layout changes we need to update options list
-    const { body } = dashboard.useState();
+    const { body: layoutOrchestrator } = dashboard.useState();
+
+    if (!(layoutOrchestrator instanceof LayoutOrchestrator)) {
+      return [];
+    }
 
     const dashboardOptions = useMemo(() => {
       return new OptionsPaneCategoryDescriptor({
@@ -45,10 +50,10 @@ export class DashboardEditableElement implements EditableDashboardElement {
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.layout.common.layout', 'Layout'),
-            render: () => <DashboardLayoutSelector layoutManager={body} />,
+            render: () => <DashboardLayoutSelector layoutManager={layoutOrchestrator} />,
           })
         );
-    }, [body, dashboard]);
+    }, [layoutOrchestrator, dashboard]);
 
     return [dashboardOptions];
   }

@@ -1,10 +1,11 @@
-import { SceneCSSGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
 import { findVizPanelByKey } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
 import { ResponsiveGridLayoutManager } from './ResponsiveGridLayoutManager';
+import { SceneCSSGridLayout } from './SceneCSSGridLayout';
 
 describe('ResponsiveGridLayoutManager', () => {
   it('Should clone the layout', () => {
