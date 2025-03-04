@@ -1,9 +1,11 @@
 import React from 'react';
 
+import { config } from '@grafana/runtime';
 import { locationService } from '@grafana/runtime/src/services/LocationService';
 import { useStyles2 } from '@grafana/ui';
 import { AlertLocalStorage } from 'app/percona/shared/components/Elements/AlertLocalStorage/AlertLocalStorage';
 import { getPerconaServer, getPerconaSettings } from 'app/percona/shared/core/selectors';
+import { isPmmAdmin } from 'app/percona/shared/helpers/permissions';
 import { useSelector } from 'app/types';
 
 import { Messages } from './CheckInfoAlert.messages';
@@ -15,7 +17,7 @@ export const ChecksInfoAlert = () => {
   const styles = useStyles2(getStyles);
   const { serverId, serverTelemetryId } = useSelector(getPerconaServer);
 
-  if (isConnectedToPortal) {
+  if (isConnectedToPortal || !isPmmAdmin(config.bootData.user)) {
     return null;
   }
 

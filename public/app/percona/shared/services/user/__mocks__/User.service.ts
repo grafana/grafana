@@ -6,3 +6,8 @@ UserService.getUsersList = () =>
   Promise.resolve({
     users: [],
   });
+
+UserService.setSnoozedVersion = () =>
+  Promise.resolve({
+    user_id: 1,
+  });

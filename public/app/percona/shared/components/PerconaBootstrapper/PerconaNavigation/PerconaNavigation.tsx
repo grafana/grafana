@@ -1,12 +1,14 @@
 import { cloneDeep } from 'lodash';
 import { FC, useEffect, useState } from 'react';
 
+import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import { initialState } from 'app/core/reducers/navBarTree';
 import { updateNavIndex } from 'app/core/reducers/navModel';
 import { fetchFolders } from 'app/features/manage-dashboards/state/actions';
 import { updateNavTree } from 'app/percona/shared/core/reducers/navigation';
 import { fetchActiveServiceTypesAction } from 'app/percona/shared/core/reducers/services';
+import { isPmmAdmin, isViewer } from 'app/percona/shared/helpers/permissions';
 import { useAppDispatch } from 'app/store/store';
 import { FolderDTO, useSelector } from 'app/types';
 
@@ -51,7 +53,7 @@ const PerconaNavigation: FC = () => {
   const [folders, setFolders] = useState<FolderDTO[]>([]);
   const { result } = useSelector(getPerconaSettings);
   const { alertingEnabled, advisorEnabled, backupEnabled } = result || {};
-  const { isPlatformUser, isAuthorized } = useSelector(getPerconaUser);
+  const { isPlatformUser } = useSelector(getPerconaUser);
   const categorizedAdvisors = useSelector(getCategorizedAdvisors);
   const isLoggedIn = !!contextSrv.user.isSignedIn;
   const dispatch = useAppDispatch();
@@ -112,7 +114,7 @@ const PerconaNavigation: FC = () => {
       dispatch(updateNavIndex(help));
     }
 
-    if (isAuthorized) {
+    if (isPmmAdmin(config.bootData.user)) {
       if (result?.enableAccessControl) {
         const cfg = cloneDeep(initialState).find((i) => i.id === 'cfg');
 
@@ -126,23 +128,23 @@ const PerconaNavigation: FC = () => {
 
       buildInventoryAndSettings(updatedNavTree, result, updateAvailable);
 
-      const iaMenuItem = alertingEnabled
-        ? buildIntegratedAlertingMenuItem(updatedNavTree)
-        : removeAlertingMenuItem(updatedNavTree);
-
-      if (iaMenuItem) {
-        dispatch(updateNavIndex(iaMenuItem));
-      }
-
-      if (advisorEnabled) {
-        updatedNavTree.push(advisorsPage);
-      }
-
       if (backupEnabled) {
         updatedNavTree.push(PMM_BACKUP_PAGE);
       }
     } else {
       dispatch(updateNavIndex(PMM_ACCESS_ROLES_PAGE));
+    }
+
+    const iaMenuItem = alertingEnabled
+      ? buildIntegratedAlertingMenuItem(updatedNavTree)
+      : removeAlertingMenuItem(updatedNavTree);
+
+    if (advisorEnabled && !isViewer(config.bootData.user)) {
+      updatedNavTree.push(advisorsPage);
+    }
+
+    if (iaMenuItem) {
+      dispatch(updateNavIndex(iaMenuItem));
     }
 
     addFolderLinks(updatedNavTree, folders);
@@ -151,7 +153,7 @@ const PerconaNavigation: FC = () => {
 
     dispatch(updateNavTree(filterByServices(updatedNavTree, activeTypes)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [result, folders, activeTypes, isAuthorized, isPlatformUser, advisorsPage, updateAvailable]);
+  }, [result, folders, activeTypes, isPlatformUser, advisorsPage, updateAvailable]);
 
   return null;
 };

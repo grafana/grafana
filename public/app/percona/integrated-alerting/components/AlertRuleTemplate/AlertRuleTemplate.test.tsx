@@ -3,10 +3,10 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { wrapWithGrafanaContextMock } from 'app/percona/shared/helpers/testUtils';
 import { configureStore } from 'app/store/configureStore';
-import { StoreState } from 'app/types';
+import { OrgRole, StoreState } from 'app/types';
 
 import { AlertRuleTemplate } from './AlertRuleTemplate';
 import { AlertRuleTemplateService } from './AlertRuleTemplate.service';
@@ -23,6 +23,10 @@ jest.mock('app/percona/shared/helpers/logger', () => {
 });
 
 describe('AlertRuleTemplate', () => {
+  beforeEach(() => {
+    config.bootData.user.orgRole = OrgRole.Admin;
+  });
+
   afterEach(() => {
     jest.clearAllMocks();
   });
@@ -103,5 +107,53 @@ describe('AlertRuleTemplate', () => {
     expect(screen.queryByTestId('table-thead')).not.toBeInTheDocument();
     expect(screen.queryByTestId('table-tbody')).not.toBeInTheDocument();
     expect(screen.getByTestId('table-no-data')).toBeInTheDocument();
+  });
+
+  it('should be accessible to editor', async () => {
+    config.bootData.user.isGrafanaAdmin = false;
+    config.bootData.user.orgRole = OrgRole.Editor;
+
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: false },
+            settings: { loading: false, result: { isConnectedToPortal: true, alertingEnabled: true } },
+          },
+        } as StoreState)}
+      >
+        {wrapWithGrafanaContextMock(
+          <Router history={locationService.getHistory()}>
+            <AlertRuleTemplate />
+          </Router>
+        )}
+      </Provider>
+    );
+
+    expect(screen.queryByTestId('unauthorized')).not.toBeInTheDocument();
+  });
+
+  it("shouldn't be accessible to viewer", () => {
+    config.bootData.user.isGrafanaAdmin = false;
+    config.bootData.user.orgRole = OrgRole.Viewer;
+
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: false },
+            settings: { loading: false, result: { isConnectedToPortal: true, alertingEnabled: true } },
+          },
+        } as StoreState)}
+      >
+        {wrapWithGrafanaContextMock(
+          <Router history={locationService.getHistory()}>
+            <AlertRuleTemplate />
+          </Router>
+        )}
+      </Provider>
+    );
+
+    expect(screen.queryByTestId('unauthorized')).toBeInTheDocument();
   });
 });

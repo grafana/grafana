@@ -81,8 +81,47 @@ export interface SSHPayload {
   ssh_key: string;
 }
 
+export interface ReadonlySettingsResponse {
+  settings: ReadonlySettingsPayload;
+}
+
 export interface SettingsAPIResponse {
   settings: SettingsPayload;
+}
+
+export interface ReadonlySettingsPayload {
+  updates_enabled: boolean;
+  telemetry_enabled: boolean;
+  advisor_enabled: boolean;
+  alerting_enabled: boolean;
+  pmm_public_address: string;
+  backup_management_enabled: boolean;
+  azurediscover_enabled: boolean;
+  enable_access_control: boolean;
+}
+
+export interface SettingsPayload
+  extends AlertManagerPayload,
+    AdvancedPayload,
+    MetricsResolutionsPayload,
+    EmailPayload,
+    SlackPayload,
+    SSHPayload {
+  aws_partitions: {
+    values: string[];
+  };
+  platform_email: string;
+  updates_enabled: boolean;
+  telemetry_enabled: boolean;
+  advisor_enabled: boolean;
+  alerting_enabled: boolean;
+  backup_management_enabled: boolean;
+  azurediscover_enabled: boolean;
+  advisor_run_intervals: AdvisorRunIntervalsPayload;
+  connected_to_platform: boolean;
+  telemetry_summaries: string[];
+  default_role_id: number;
+  enable_access_control: boolean;
 }
 
 export interface SettingsPayload
@@ -117,27 +156,30 @@ export type SettingsAPIChangePayload =
   | SlackPayload
   | SSHPayload;
 
-export interface Settings {
+export interface ReadonlySettings {
   advisorEnabled: boolean;
-  backupEnabled: boolean;
   alertingEnabled: boolean;
-  updatesEnabled: boolean;
+  azureDiscoverEnabled?: boolean;
+  backupEnabled: boolean;
+  enableAccessControl: boolean;
+  publicAddress?: string;
   telemetryEnabled: boolean;
+  updatesEnabled: boolean;
+}
+
+export interface Settings extends ReadonlySettings {
+  advisorRunIntervals: AdvisorRunIntervalsSettings;
   metricsResolutions: MetricsResolutions;
   dataRetention: string;
   sshKey: string;
   awsPartitions: string[];
   alertManagerUrl: string;
   alertManagerRules: string;
-  azureDiscoverEnabled?: boolean;
   platformEmail?: string;
-  publicAddress?: string;
   alertingSettings: AlertingSettings;
-  advisorRunIntervals: AdvisorRunIntervalsSettings;
   isConnectedToPortal?: boolean;
   telemetrySummaries: string[];
   defaultRoleId: number;
-  enableAccessControl: boolean;
 }
 
 export interface MetricsResolutions {

@@ -1,6 +1,7 @@
 import { NavModelItem } from '@grafana/data';
 import { config } from 'app/core/config';
 import { Settings } from 'app/percona/settings/Settings.types';
+import { isViewer } from 'app/percona/shared/helpers/permissions';
 import { CategorizedAdvisor } from 'app/percona/shared/services/advisors/Advisors.types';
 import { ServiceType } from 'app/percona/shared/services/services/Services.types';
 import { FolderDTO } from 'app/types';
@@ -16,13 +17,14 @@ import {
   PMM_NAV_OS,
   PMM_ACCESS_ROLES_PAGE,
   PMM_ADD_INSTANCE_PAGE,
-  PMM_ALERTING_PERCONA_ALERTS,
   WEIGHTS,
   PMM_ACCESS_ROLE_CREATE_PAGE,
   PMM_ADD_INSTANCE_CREATE_PAGE,
   getPmmSettingsPage,
   PMM_INVENTORY_PAGE,
   PMM_UPDATES_LINK,
+  PMM_ALERTING_FIRED_ALERTS,
+  PMM_ALERTING_PERCONA_ALERTS,
 } from './PerconaNavigation.constants';
 
 export const buildIntegratedAlertingMenuItem = (mainLinks: NavModelItem[]): NavModelItem | undefined => {
@@ -32,7 +34,12 @@ export const buildIntegratedAlertingMenuItem = (mainLinks: NavModelItem[]): NavM
     alertingItem.url = `${config.appSubUrl}/alerting/alerts`;
   }
 
-  alertingItem?.children?.unshift(...PMM_ALERTING_PERCONA_ALERTS);
+  if (isViewer(config.bootData.user)) {
+    alertingItem?.children?.unshift(PMM_ALERTING_FIRED_ALERTS);
+  } else {
+    alertingItem?.children?.unshift(...PMM_ALERTING_PERCONA_ALERTS);
+  }
+
   return alertingItem;
 };
 

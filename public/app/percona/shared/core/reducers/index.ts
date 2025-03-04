@@ -2,6 +2,7 @@
 import { combineReducers, createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { CancelToken } from 'axios';
 
+import { config } from '@grafana/runtime';
 import { createAsyncSlice, withAppEvents, withSerializedError } from 'app/features/alerting/unified/utils/redux';
 import { AlertRuleTemplateService } from 'app/percona/integrated-alerting/components/AlertRuleTemplate/AlertRuleTemplate.service';
 import { TemplatesList } from 'app/percona/integrated-alerting/components/AlertRuleTemplate/AlertRuleTemplate.types';
@@ -11,6 +12,7 @@ import { PlatformService } from 'app/percona/settings/components/Platform/Platfo
 import { api } from 'app/percona/shared/helpers/api';
 import { uiEventsReducer } from 'app/percona/ui-events/reducer';
 
+import { isPmmAdmin } from '../../helpers/permissions';
 import { ServerInfo } from '../types';
 
 import advisorsReducers from './advisors/advisors';
@@ -70,7 +72,10 @@ export const fetchSettingsAction = createAsyncThunk(
   ): Promise<Settings> =>
     withSerializedError(
       (async () => {
-        const settings = await SettingsService.getSettings(undefined, true);
+        const settings = isPmmAdmin(config.bootData.user)
+          ? await SettingsService.getSettings(undefined, true)
+          : await SettingsService.getReadonlySettings(undefined, true);
+
         const modifiedSettings: Settings = {
           ...settings,
           alertingSettings: {

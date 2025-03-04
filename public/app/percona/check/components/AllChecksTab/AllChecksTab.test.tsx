@@ -3,8 +3,8 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 
-import { NavIndex } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { NavIndex, OrgRole } from '@grafana/data';
+import { config, locationService } from '@grafana/runtime';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { logger } from 'app/percona/shared/helpers/logger';
 import { wrapWithGrafanaContextMock } from 'app/percona/shared/helpers/testUtils';
@@ -29,7 +29,12 @@ jest.mock('app/percona/check/Check.service');
 jest.mock('app/percona/shared/services/advisors/Advisors.service.ts');
 
 describe('AllChecksTab::', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    config.bootData.user.isGrafanaAdmin = true;
+    config.bootData.user.orgRole = OrgRole.Admin;
+  });
 
   it('should render a table in category', async () => {
     render(<AllChecksTabTesting />);
@@ -184,6 +189,35 @@ describe('AllChecksTab::', () => {
     await waitFor(() => {
       expect(runChecksSpy).toBeCalledTimes(1);
     });
+  });
+
+  it("editors shouldn't be able to run advisor checks", async () => {
+    config.bootData.user.isGrafanaAdmin = false;
+    config.bootData.user.orgRole = OrgRole.Editor;
+
+    render(<AllChecksTabTesting />);
+
+    const runChecksButton = screen.queryByRole('button', { name: Messages.runDbChecks });
+
+    expect(runChecksButton).toBeNull();
+  });
+
+  it('editors should be able to run checks', () => {
+    config.bootData.user.isGrafanaAdmin = false;
+    config.bootData.user.orgRole = OrgRole.Editor;
+
+    render(<AllChecksTabTesting />);
+
+    expect(screen.queryByTestId('db-check-panel-actions')).not.toBeInTheDocument();
+  });
+
+  it("viewers shouldn't be able to to access advisors", async () => {
+    config.bootData.user.isGrafanaAdmin = false;
+    config.bootData.user.orgRole = OrgRole.Editor;
+
+    render(<AllChecksTabTesting />);
+
+    expect(screen.queryByText('Insufficient access permissions.'));
   });
 });
 

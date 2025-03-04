@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useMemo, useState } from 'react';
 
-import { AppEvents, UrlQueryMap } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { AppEvents, OrgRole, UrlQueryMap } from '@grafana/data';
+import { config, locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
@@ -17,6 +17,7 @@ import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaN
 import { fetchAdvisors } from 'app/percona/shared/core/reducers/advisors/advisors';
 import { getAdvisors, getCategorizedAdvisors, getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { logger } from 'app/percona/shared/helpers/logger';
+import { isPmmAdmin } from 'app/percona/shared/helpers/permissions';
 import { Advisor } from 'app/percona/shared/services/advisors/Advisors.types';
 import { dispatch } from 'app/store/store';
 import { useSelector } from 'app/types';
@@ -160,20 +161,24 @@ export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> 
           },
         ],
       },
-      {
-        Header: Messages.table.columns.actions,
-        accessor: 'name',
-        id: 'actions',
-        // eslint-disable-next-line react/display-name
-        Cell: ({ row }) => (
-          <CheckActions
-            check={row.original}
-            onChangeCheck={changeCheck}
-            onIntervalChangeClick={handleIntervalChangeClick}
-            onIndividualRunCheckClick={runIndividualCheck}
-          />
-        ),
-      },
+      ...(isPmmAdmin(config.bootData.user)
+        ? [
+            {
+              Header: Messages.table.columns.actions,
+              accessor: 'name',
+              id: 'actions',
+              // eslint-disable-next-line react/display-name
+              Cell: ({ row }) => (
+                <CheckActions
+                  check={row.original}
+                  onChangeCheck={changeCheck}
+                  onIntervalChangeClick={handleIntervalChangeClick}
+                  onIndividualRunCheckClick={runIndividualCheck}
+                />
+              ),
+            } as ExtendedColumn<CheckDetails>,
+          ]
+        : []),
     ],
     [changeCheck, handleIntervalChangeClick]
   );
@@ -192,23 +197,26 @@ export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> 
           messagedataTestId="db-check-panel-settings-link"
           featureName={mainChecksMessages.advisors}
           featureSelector={featureSelector}
+          allowedRoles={[OrgRole.Admin, OrgRole.Editor]}
         >
           <ChecksInfoAlert />
           <div className={styles.wrapper}>
             <div className={styles.header}>
               <h1>{Messages.availableHeader}</h1>
-              <div className={styles.actionButtons} data-testid="db-check-panel-actions">
-                <LoaderButton
-                  type="button"
-                  variant="secondary"
-                  size="md"
-                  loading={runChecksPending}
-                  onClick={handleRunChecksClick}
-                  className={styles.runChecksButton}
-                >
-                  {Messages.runDbChecks}
-                </LoaderButton>
-              </div>
+              {isPmmAdmin(config.bootData.user) && (
+                <div className={styles.actionButtons} data-testid="db-check-panel-actions">
+                  <LoaderButton
+                    type="button"
+                    variant="secondary"
+                    size="md"
+                    loading={runChecksPending}
+                    onClick={handleRunChecksClick}
+                    className={styles.runChecksButton}
+                  >
+                    {Messages.runDbChecks}
+                  </LoaderButton>
+                </div>
+              )}
             </div>
             {advisors &&
               Object.keys(advisors).map((summary) => (

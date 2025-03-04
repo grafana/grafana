@@ -1,6 +1,7 @@
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { Cell, Column, Row } from 'react-table';
 
+import { OrgRole } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -86,6 +87,7 @@ export const FailedChecksTab: FC = () => {
           messagedataTestId="db-check-panel-settings-link"
           featureName={mainChecksMessages.advisors}
           featureSelector={featureSelector}
+          allowedRoles={[OrgRole.Admin, OrgRole.Editor]}
         >
           <ChecksInfoAlert />
           <AlertsReloadContext.Provider value={{ fetchAlerts }}>

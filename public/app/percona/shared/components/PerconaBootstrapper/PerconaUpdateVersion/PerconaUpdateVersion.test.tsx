@@ -15,6 +15,8 @@ import PerconaUpdateVersion from './PerconaUpdateVersion';
 const checkUpdatesChangeLogsSpy = jest.spyOn(GrafanaUpdates, 'checkUpdatesChangeLogs');
 const setSnoozedVersionSpy = jest.spyOn(User, 'setSnoozedVersion');
 
+jest.mock('app/percona/shared/services/user/User.service');
+
 describe('PerconaUpdateVersion', () => {
   const setup = (state: Partial<StoreState['percona']>, updatesEnabled = true) =>
     render(

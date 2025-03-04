@@ -1,8 +1,9 @@
 import React, { FC } from 'react';
 
+import { config } from '@grafana/runtime';
 import { useStyles } from '@grafana/ui';
 import { getPerconaUser } from 'app/percona/shared/core/selectors';
-import { useSelector } from 'app/types';
+import { OrgRole, useSelector } from 'app/types';
 
 import { PermissionLoader } from '../PermissionLoader';
 
@@ -15,12 +16,15 @@ export const FeatureLoader: FC<FeatureLoaderProps> = ({
   featureName = '',
   featureSelector = () => true,
   messagedataTestId = 'settings-link',
+  allowedRoles = [OrgRole.Admin],
   children,
 }) => {
-  const { isAuthorized } = useSelector(getPerconaUser);
+  const { isAuthorized: isAdmin } = useSelector(getPerconaUser);
   const styles = useStyles(getStyles);
+  const { user } = config.bootData;
+  const isAuthorized = isAdmin || (user.orgRole !== '' && allowedRoles.includes(user.orgRole));
 
-  if (isAuthorized === false) {
+  if (!isAuthorized) {
     return (
       <div data-testid="unauthorized" className={styles.unauthorized}>
         {Messages.unauthorized}

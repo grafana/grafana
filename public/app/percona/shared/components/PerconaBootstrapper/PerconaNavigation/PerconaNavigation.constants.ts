@@ -48,19 +48,23 @@ export const PMM_ALERTING_CREATE_ALERT_TEMPLATE: NavModelItem = {
   isCreateAction: true,
 };
 
+export const PMM_ALERTING_FIRED_ALERTS: NavModelItem = {
+  id: 'integrated-alerting-alerts',
+  text: 'Fired alerts',
+  icon: 'info-circle',
+  url: `${config.appSubUrl}/alerting/alerts`,
+};
+
+export const PMM_ALERTING_RULE_TEMPLATES: NavModelItem = {
+  id: 'integrated-alerting-templates',
+  text: 'Alert rule templates',
+  icon: 'brackets-curly',
+  url: `${config.appSubUrl}/alerting/alert-rule-templates`,
+};
+
 export const PMM_ALERTING_PERCONA_ALERTS: NavModelItem[] = [
-  {
-    id: 'integrated-alerting-alerts',
-    text: 'Fired alerts',
-    icon: 'info-circle',
-    url: `${config.appSubUrl}/alerting/alerts`,
-  },
-  {
-    id: 'integrated-alerting-templates',
-    text: 'Alert rule templates',
-    icon: 'brackets-curly',
-    url: `${config.appSubUrl}/alerting/alert-rule-templates`,
-  },
+  PMM_ALERTING_FIRED_ALERTS,
+  PMM_ALERTING_RULE_TEMPLATES,
   PMM_ALERTING_CREATE_ALERT_TEMPLATE,
 ];
 
