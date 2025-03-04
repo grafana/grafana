@@ -13,6 +13,7 @@ import { alertRuleApi } from '../api/alertRuleApi';
 import { RulesSourceFeatures, featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { DynamicTable, DynamicTableColumnProps } from '../components/DynamicTable';
+import { GrafanaRuleGroupExporter } from '../components/export/GrafanaRuleGroupExporter';
 import { useFolder } from '../hooks/useFolder';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/formDefaults';
 import { useRulesAccess } from '../utils/accessControlHooks';
@@ -21,7 +22,6 @@ import { stringifyErrorLike } from '../utils/misc';
 import { groups } from '../utils/navigation';
 import { getEvaluationsToStartAlerting, isAlertingRulerRule, isGrafanaAlertingRule } from '../utils/rules';
 import { formatPrometheusDuration, safeParsePrometheusDuration } from '../utils/time';
-import { GrafanaRuleGroupExporter } from '../components/export/GrafanaRuleGroupExporter';
 
 type GroupPageRouteParams = {
   sourceId?: string;

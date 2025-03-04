@@ -352,6 +352,12 @@
       "missing-reference": "Ēχpřęşşįőŉ \"{{source}}\" ƒäįľęđ ŧő řūŉ þęčäūşę \"{{target}}\" įş mįşşįŉģ őř äľşő ƒäįľęđ.",
       "self-reference": "Ÿőū čäŉ'ŧ ľįŉĸ äŉ ęχpřęşşįőŉ ŧő įŧşęľƒ"
     },
+    "draggable-rules-table": {
+      "evals-to-start-alerting": "Ēväľūäŧįőŉş ŧő şŧäřŧ äľęřŧįŉģ",
+      "pending-period": "Pęŉđįŉģ pęřįőđ",
+      "recording": "Ŗęčőřđįŉģ",
+      "rule-name": "Ŗūľę ŉämę"
+    },
     "export": {
       "subtitle": {
         "formats": "Ŝęľęčŧ ŧĥę ƒőřmäŧ äŉđ đőŵŉľőäđ ŧĥę ƒįľę őř čőpy ŧĥę čőŉŧęŉŧş ŧő čľįpþőäřđ",

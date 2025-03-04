@@ -352,6 +352,12 @@
       "missing-reference": "Expression \"{{source}}\" failed to run because \"{{target}}\" is missing or also failed.",
       "self-reference": "You can't link an expression to itself"
     },
+    "draggable-rules-table": {
+      "evals-to-start-alerting": "Evaluations to start alerting",
+      "pending-period": "Pending period",
+      "recording": "Recording",
+      "rule-name": "Rule name"
+    },
     "export": {
       "subtitle": {
         "formats": "Select the format and download the file or copy the contents to clipboard",

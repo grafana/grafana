@@ -14,6 +14,7 @@ import { useDispatch } from 'app/types';
 import { GrafanaRulesSourceSymbol, RuleGroupIdentifierV2, RulerDataSourceConfig } from 'app/types/unified-alerting';
 import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
+import { logError } from '../Analytics';
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
@@ -31,7 +32,6 @@ import { stringifyErrorLike } from '../utils/misc';
 import { alertListPageLink, createListFilterLink, groups } from '../utils/navigation';
 
 import { DraggableRulesTable } from './components/DraggableRulesTable';
-import { logError } from '../Analytics';
 
 type GroupEditPageRouteParams = {
   sourceId?: string;
