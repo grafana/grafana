@@ -4,16 +4,18 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
-	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 )
 
+// Service is the interface for secret keeper services.
 type Service interface {
-	GetKeepers() (map[keepertypes.KeeperType]keepertypes.Keeper, error)
+	GetKeepers() (map[contracts.KeeperType]contracts.Keeper, error)
 }
 
+// OSSKeeperService is the OSS implementation of the Service interface.
 type OSSKeeperService struct {
 	tracer            tracing.Tracer
 	encryptionManager *manager.EncryptionManager
@@ -28,13 +30,13 @@ func ProvideService(tracer tracing.Tracer, encryptionManager *manager.Encryption
 	}, nil
 }
 
-func (ks OSSKeeperService) GetKeepers() (map[keepertypes.KeeperType]keepertypes.Keeper, error) {
+func (ks OSSKeeperService) GetKeepers() (map[contracts.KeeperType]contracts.Keeper, error) {
 	sqlKeeper, err := sqlkeeper.NewSQLKeeper(ks.tracer, ks.encryptionManager, ks.store)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create sql keeper: %w", err)
 	}
 
-	return map[keepertypes.KeeperType]keepertypes.Keeper{
-		keepertypes.SQLKeeperType: sqlKeeper,
+	return map[contracts.KeeperType]contracts.Keeper{
+		contracts.SQLKeeperType: sqlKeeper,
 	}, nil
 }

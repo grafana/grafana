@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	encryptionmanager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
-	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -172,14 +171,14 @@ func Test_SecretMgmt_GetKeeperConfig(t *testing.T) {
 	t.Run("get default sql keeper config", func(t *testing.T) {
 		keeperType, keeperConfig, err := getKeeperConfig(ctx, s.db, "default", "kp-default-sql")
 		require.NoError(t, err)
-		require.Equal(t, keepertypes.SQLKeeperType, keeperType)
+		require.Equal(t, contracts.SQLKeeperType, keeperType)
 		require.Nil(t, keeperConfig)
 	})
 
 	t.Run("get test keeper config", func(t *testing.T) {
 		keeperType, keeperConfig, err := getKeeperConfig(ctx, s.db, "default", "kp-test")
 		require.NoError(t, err)
-		require.Equal(t, keepertypes.SQLKeeperType, keeperType)
+		require.Equal(t, contracts.SQLKeeperType, keeperType)
 		require.NotNil(t, keeperConfig)
 	})
 }
