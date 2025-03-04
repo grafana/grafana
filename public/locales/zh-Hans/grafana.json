@@ -1069,11 +1069,6 @@
         }
       },
       "open": "",
-      "panels": {
-        "multi-select": {
-          "selection-number": ""
-        }
-      },
       "row": {
         "header": {
           "hide": "",
@@ -1161,6 +1156,16 @@
       "request-time": "总请求时间",
       "rows": "总行数",
       "table-title": "统计信息"
+    },
+    "layout": {
+      "common": {
+        "copy": "",
+        "copy-or-duplicate": "",
+        "delete": "",
+        "duplicate": "",
+        "layout": "",
+        "panels-title": ""
+      }
     },
     "options": {
       "description": "",
@@ -1316,6 +1321,8 @@
     "viz-panel": {
       "options": {
         "description": "",
+        "open-edit": "",
+        "plugin-type-image": "",
         "title": "",
         "title-option": "",
         "transparent-background": ""
