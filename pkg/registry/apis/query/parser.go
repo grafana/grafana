@@ -38,7 +38,7 @@ func parseQueryRequest(raw v0alpha1.GenericQueryRequest) (parsedQueryRequest, er
 
 	for _, original := range raw.Queries {
 		if refIds[original.RefID] {
-			return parsed, fmt.Errorf("invalid query, duplicate refId: " + original.RefID)
+			return parsed, fmt.Errorf("invalid query, duplicate refId: %s", original.RefID)
 		}
 
 		refIds[original.RefID] = true
