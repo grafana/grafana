@@ -2221,6 +2221,23 @@
    },
    "type": "object"
   },
+  "NamespaceListResponse": {
+   "properties": {
+    "groupNextToken": {
+     "type": "string"
+    },
+    "groups": {
+     "items": {
+      "$ref": "#/definitions/RuleGroupSummary"
+     },
+     "type": "array"
+    }
+   },
+   "required": [
+    "groups"
+   ],
+   "type": "object"
+  },
   "NotFound": {
    "type": "object"
   },
@@ -3813,6 +3830,25 @@
    },
    "type": "object"
   },
+  "RuleGroupSummary": {
+   "properties": {
+    "file": {
+     "type": "string"
+    },
+    "folderUid": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "name",
+    "file",
+    "folderUid"
+   ],
+   "type": "object"
+  },
   "RuleResponse": {
    "properties": {
     "data": {
@@ -4770,6 +4806,7 @@
    "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup",
     "type": "object"
@@ -4931,7 +4968,6 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert",
     "type": "object"

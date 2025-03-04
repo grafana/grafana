@@ -32,6 +32,18 @@ import (
 //       403: ForbiddenError
 //       404: description: Not found.
 
+// swagger:route Get /ruler/grafana/api/v1/rule-groups ruler RouteGetGrafanaRuleGroups
+//
+// List rule groups
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       200: NamespaceListResponse
+//       403: ForbiddenError
+//
+
 // swagger:route Get /ruler/grafana/api/v1/rules ruler RouteGetGrafanaRulesConfig
 //
 // List rule groups
@@ -240,6 +252,30 @@ type PathGetRuleByUIDParams struct {
 // swagger:model
 type RuleGroupConfigResponse struct {
 	GettableRuleGroupConfig
+}
+
+// swagger:parameters RouteGetGrafanaRuleGroups
+type NamespaceListParams struct {
+	// in: query
+	NextToken string `json:"group_next_token,omitempty"`
+	// in: query
+	PageSize int `json:"group_limit,omitempty"`
+}
+
+// swagger:model
+type NamespaceListResponse struct {
+	// required: true
+	RuleGroups []RuleGroupSummary `json:"groups"`
+	NextToken  string             `json:"groupNextToken,omitempty"`
+}
+
+type RuleGroupSummary struct {
+	// required: true
+	Name string `json:"name"`
+	// required: true
+	File string `json:"file"`
+	// required: true
+	FolderUID string `json:"folderUid"`
 }
 
 // swagger:model
