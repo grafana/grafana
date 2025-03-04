@@ -67,7 +67,6 @@ export default function RepositoryListPage() {
             Configured repositories will not work while running legacy storage.
           </Alert>
         )}
-        <RepositoryListPageContent items={items} />
         <ConfirmModal
           isOpen={showDeleteModal}
           title="Delete all configured repositories"
@@ -76,6 +75,7 @@ export default function RepositoryListPage() {
           onConfirm={onConfirmDelete}
           onDismiss={() => setShowDeleteModal(false)}
         />
+        <RepositoryListPageContent items={items} />
       </Page.Contents>
     </Page>
   );
