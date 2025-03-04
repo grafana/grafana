@@ -80,7 +80,8 @@ jobs:
         with:
           name: enterprise-code
           path: enterprise.tar.gz
-          retention-days: 1
+          # We don't need to keep the enterprise code around for more than the duration of the workflow
+          retention-days: 0
 
   setup:
     name: Setup Environment
@@ -112,6 +113,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       EDITION: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && 'enterprise' || 'oss' }}
+      WIRE_TAGS: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && 'enterprise' || 'oss' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -156,6 +158,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       EDITION: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && 'enterprise' || 'oss' }}
+      WIRE_TAGS: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && 'enterprise' || 'oss' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
