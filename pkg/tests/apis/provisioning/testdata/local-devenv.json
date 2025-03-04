@@ -9,8 +9,8 @@
         "description": "Load /devenv/dev-dashboards (from root of repository)",
         "workflows": ["write"],
         "sync": {
-            "enabled": true,
-            "target": "mirror",
+            "enabled": false,
+            "target": "folder",
             "intervalSeconds": 60
         },
         "type": "local",

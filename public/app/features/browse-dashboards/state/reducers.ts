@@ -83,12 +83,15 @@ export function setItemSelectionState(
 
   // SearchView doesn't use DashboardViewItemKind (yet), so we pick just the specific properties
   // we're interested in
-  action: PayloadAction<{ item: Pick<DashboardViewItem, 'kind' | 'uid' | 'parentUID'>; isSelected: boolean }>
+  action: PayloadAction<{
+    item: Pick<DashboardViewItem, 'kind' | 'uid' | 'parentUID' | 'repository'>;
+    isSelected: boolean;
+  }>
 ) {
   const { item, isSelected } = action.payload;
 
   // UI shouldn't allow it, but also prevent sharedwithme from being selected
-  if (isSharedWithMe(item.uid)) {
+  if (isSharedWithMe(item.uid) || Boolean(item.repository)) {
     return;
   }
 
@@ -170,7 +173,7 @@ export function setAllSelection(
 
       for (const child of collection.items) {
         // Don't traverse into the sharedwithme folder
-        if (isSharedWithMe(child.uid)) {
+        if (isSharedWithMe(child.uid) || Boolean(child.repository)) {
           continue;
         }
 

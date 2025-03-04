@@ -6,16 +6,18 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Alert, Icon, Input, LoadingBar, useStyles2 } from '@grafana/ui';
+import { Alert, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
+import { RepositoryView } from 'app/features/provisioning/api';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { QueryResponse } from 'app/features/search/service/types';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 import { PermissionLevelString } from 'app/types';
 
+import { FolderRepo } from './FolderRepo';
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
 import { ROOT_FOLDER_ITEM, useFoldersQuery } from './useFoldersQuery';
@@ -38,7 +40,7 @@ export interface NestedFolderPickerProps {
   permission?: 'view' | 'edit';
 
   /* Callback for when the user selects a folder */
-  onChange?: (folderUID: string | undefined, folderName: string | undefined) => void;
+  onChange?: (folderUID: string | undefined, folderName: string | undefined, repository?: RepositoryView) => void;
 
   /* Whether the picker should be clearable */
   clearable?: boolean;
@@ -166,7 +168,12 @@ export function NestedFolderPicker({
   const handleFolderSelect = useCallback(
     (item: DashboardViewItem) => {
       if (onChange) {
-        onChange(item.uid, item.title);
+        if (item?.repository) {
+          // Do not pass undefined repo so the tests do not break
+          onChange(item.uid, item.title, item.repository);
+        } else {
+          onChange(item.uid, item.title);
+        }
       }
       setOverlayOpen(false);
     },
@@ -261,9 +268,18 @@ export function NestedFolderPicker({
     visible: overlayOpen,
   });
 
-  let label = selectedFolder.data?.title;
+  let label: React.ReactNode = selectedFolder.data?.title;
   if (value === '') {
     label = 'Dashboards';
+  }
+  const repo = selectedFolder.data?.repository;
+  if (repo && label && !overlayOpen) {
+    label = (
+      <Stack alignItems={'center'}>
+        <Text truncate>{label}</Text>
+        <FolderRepo repo={repo} />
+      </Stack>
+    );
   }
 
   if (!overlayOpen) {
@@ -293,7 +309,11 @@ export function NestedFolderPicker({
         ref={refs.setReference}
         autoFocus
         prefix={label ? <Icon name="folder" /> : null}
-        placeholder={label ?? t('browse-dashboards.folder-picker.search-placeholder', 'Search folders')}
+        placeholder={
+          typeof label === 'string' && label
+            ? label
+            : t('browse-dashboards.folder-picker.search-placeholder', 'Search folders')
+        }
         value={search}
         invalid={invalid}
         className={styles.search}

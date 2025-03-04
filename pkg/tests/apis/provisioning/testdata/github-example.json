@@ -15,10 +15,10 @@
             "token": "github_pat_dummy"
         },
         "sync": {
-            "enabled": false,
-            "target": "",
+            "enabled": true,
+            "target": "folder",
             "intervalSeconds": 60
         },
-        "workflows": ["push"]
+        "workflows": ["branch", "write"]
     }
 }

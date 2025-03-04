@@ -102,8 +102,8 @@ const (
 	SyncTargetTypeInstance SyncTargetType = "instance"
 
 	// Resources will be saved into a folder managed by this repository
-	// The folder k8s name will be the same as the repository k8s name
 	// It will contain a copy of everything from the remote
+	// The folder k8s name will be the same as the repository k8s name
 	SyncTargetTypeFolder SyncTargetType = "folder"
 )
 
@@ -150,7 +150,8 @@ type HealthStatus struct {
 	// When the health was checked last time
 	Checked int64 `json:"checked,omitempty"`
 
-	// Summary messages (will be shown to users)
+	// Summary messages (can be shown to users)
+	// Will only be populated when not healthy
 	// +listType=atomic
 	Message []string `json:"message,omitempty"`
 }
@@ -230,32 +231,9 @@ type ResourceWrapper struct {
 	// Different flavors of the same object
 	Resource ResourceObjects `json:"resource"`
 
-	// Lint results
-	// +listType=atomic
-	Lint []LintIssue `json:"lint,omitempty"`
-
 	// If errors exist, show them here
 	// +listType=atomic
 	Errors []string `json:"errors,omitempty"`
-}
-
-// The kubernetes action required when loading a given resource
-// +enum
-type LintSeverity string
-
-// ResourceAction values
-const (
-	LintSeverityExclude LintSeverity = "exclude"
-	LintSeverityQuiet   LintSeverity = "quiet"
-	LintSeverityWarning LintSeverity = "warning"
-	LintSeverityError   LintSeverity = "error"
-	LintSeverityFixed   LintSeverity = "fixed"
-)
-
-type LintIssue struct {
-	Severity LintSeverity `json:"severity"`
-	Rule     string       `json:"rule"`
-	Message  string       `json:"message"`
 }
 
 type ResourceType struct {
