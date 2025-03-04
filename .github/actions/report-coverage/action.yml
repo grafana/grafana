@@ -1,0 +1,46 @@
+name: 'Report Coverage'
+description: 'Processes and uploads coverage reports from Go tests'
+
+inputs:
+  unit-cov-path:
+    description: 'Path to unit test coverage file'
+    required: true
+  integration-cov-path:
+    description: 'Path to integration test coverage file'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Join coverage outputs
+      shell: bash
+      run: |
+        cp ${{ inputs.unit-cov-path }} backend.cov
+        tail -n+2 ${{ inputs.integration-cov-path }} >> backend.cov
+
+    - name: Convert coverage info to per-func stats
+      shell: bash
+      run: go tool cover -func backend.cov > backend-funcs.log
+
+    - name: Convert coverage info to HTML
+      shell: bash
+      run: go tool cover -html backend.cov -o backend.html
+
+    - name: Upload coverage file
+      uses: actions/upload-artifact@v4
+      with:
+        name: backend-cov
+        path: |
+          backend.cov
+          backend-funcs.log
+          backend.html
+        retention-days: 30
+        compression-level: 9
+
+    - name: Set summary to total coverage
+      shell: bash
+      run: |
+        echo '# Coverage' >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        grep 'total:' backend-funcs.log | tr '\t' ' ' >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY 
