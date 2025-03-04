@@ -5,9 +5,12 @@ import PromQlLanguageProvider from '../../language_provider';
 import { DEFAULT_SERIES_LIMIT } from './types';
 
 interface MetricsBrowserContextType {
-  // Series limit state
   seriesLimit: string;
   setSeriesLimit: (limit: string) => void;
+  err: string;
+  setErr: (err: string) => void;
+  status: string;
+  setStatus: (status: string) => void;
   languageProvider: PromQlLanguageProvider;
   onChange: (selector: string) => void;
 }
@@ -25,10 +28,16 @@ export function MetricsBrowserProvider({
   onChange,
 }: PropsWithChildren<MetricsBrowserProviderProps>) {
   const [seriesLimit, setSeriesLimit] = useState(DEFAULT_SERIES_LIMIT);
+  const [status, setStatus] = useState('Ready');
+  const [err, setErr] = useState('');
 
   const value = {
     seriesLimit,
     setSeriesLimit,
+    status,
+    setStatus,
+    err,
+    setErr,
     languageProvider,
     onChange,
   };

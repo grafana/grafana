@@ -10,24 +10,17 @@ import { EMPTY_SELECTOR, SelectableLabel } from './types';
 
 interface SelectorActionsProps {
   labels: SelectableLabel[];
-  validationStatusFromParent: string;
-  errorFromParent: string;
-  status: string;
   onClickClear: () => void;
   styles: Record<string, string>;
 }
 
 export function SelectorActions({
   labels,
-  validationStatusFromParent,
-  errorFromParent,
-  status,
   onClickClear,
   styles,
 }: SelectorActionsProps) {
-  const [err, setErr] = useState(errorFromParent);
-  const [validationStatus, setValidationStatus] = useState(validationStatusFromParent);
-  const { languageProvider, onChange } = useMetricsBrowser();
+  const [validationStatus, setValidationStatus] = useState('');
+  const { languageProvider, onChange, status, err, setErr } = useMetricsBrowser();
 
   const validateSelector = async (selector: string) => {
     setValidationStatus(`Validating selector ${selector}`);

@@ -25,7 +25,6 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
     labels: [],
     status: 'Ready',
     error: '',
-    validationStatus: '',
   };
 
   onClickClear = () => {
@@ -46,7 +45,6 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
         // valueSearchTerm: '',
         status: '',
         error: '',
-        validationStatus: '',
       };
     });
     localStorage.removeItem(LAST_USED_LABELS_KEY);
@@ -236,7 +234,7 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
 
   render() {
     const { theme } = this.props;
-    const { labels, status, error, validationStatus } = this.state;
+    const { labels } = this.state;
     const styles = getStyles(theme);
     if (labels.length === 0) {
       return (
@@ -264,9 +262,6 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
 
         <SelectorActions
           labels={labels}
-          validationStatusFromParent={validationStatus}
-          status={status}
-          errorFromParent={error}
           onClickClear={this.onClickClear}
           styles={styles}
         />

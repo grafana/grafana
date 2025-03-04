@@ -30,7 +30,6 @@ export interface BrowserState {
   labels: SelectableLabel[];
   status: string;
   error: string;
-  validationStatus: string;
 }
 
 export const DEFAULT_SERIES_LIMIT = '40000';
