@@ -67,6 +67,7 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
                 <CodeEditor
                   value={dashboardJson.value}
                   language="json"
+                  showLineNumbers={true}
                   showMiniMap={false}
                   height={height}
                   width={width}

@@ -2,14 +2,22 @@ import saveAs from 'file-saver';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
+import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
+import {
+  DashboardKind,
+  DashboardV2Spec,
+  ImportableResources,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { Button, ClipboardButton, CodeEditor, Field, Modal, Stack, Switch } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
-import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal';
+import { getDashboardExporter, DashboardExporterLike } from 'app/features/dashboard/components/DashExportModal';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { DashboardJson } from 'app/features/manage-dashboards/types';
 
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
+import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -25,7 +33,8 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
   public tabId = shareDashboardType.export;
   static Component = ShareExportTabRenderer;
 
-  private _exporter = new DashboardExporter();
+  private _exporter: DashboardExporterLike<DashboardModel | DashboardV2Spec, DashboardJson | ImportableResources> =
+    getDashboardExporter();
 
   constructor(state: Omit<ShareExportTabState, 'panelRef'>) {
     super({
@@ -57,17 +66,30 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
 
   public getExportableDashboardJson = async () => {
     const { isSharingExternally } = this.state;
-    const saveModel = transformSceneToSaveModel(getDashboardSceneFor(this));
 
+    // TODO: once we deprecate the old arch, DashboardExporter.makeExportable
+    // can just take dashboardScene as a prop and handle all this logic
+    // then we would just call here this._exporter.makeExportable(getDashboardSceneFor(this))
+
+    if (config.featureToggles.useV2DashboardsAPI) {
+      const saveModelV2 = transformSceneToSaveModelSchemaV2(getDashboardSceneFor(this));
+      const dashboard: DashboardKind = {
+        kind: 'Dashboard',
+        spec: saveModelV2,
+      };
+      return isSharingExternally ? this._exporter.makeExportable(saveModelV2) : dashboard;
+    }
+
+    const saveModelV1 = transformSceneToSaveModel(getDashboardSceneFor(this));
     const exportable = isSharingExternally
       ? await this._exporter.makeExportable(
-          new DashboardModel(saveModel, undefined, {
+          new DashboardModel(saveModelV1, undefined, {
             getVariablesFromState: () => {
               return getVariablesCompatibility(window.__grafanaSceneContext);
             },
           })
         )
-      : saveModel;
+      : saveModelV1;
 
     return exportable;
   };
@@ -150,6 +172,7 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
                 return (
                   <CodeEditor
                     value={dashboardJson.value ?? ''}
+                    showLineNumbers={true}
                     language="json"
                     showMiniMap={false}
                     height="500px"
