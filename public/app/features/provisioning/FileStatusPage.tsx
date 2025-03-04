@@ -10,7 +10,6 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import {
   useGetRepositoryFilesWithPathQuery,
-  useGetRepositoryStatusQuery,
   ResourceWrapper,
   useReplaceRepositoryFilesWithPathMutation,
   useDeleteRepositoryFilesWithPathMutation,
@@ -24,23 +23,17 @@ export default function FileStatusPage() {
   const tab = (queryParams['tab'] as TabSelection) ?? TabSelection.File;
   const name = params['name'] ?? '';
   const path = params['*'] ?? '';
-  const repo = useGetRepositoryStatusQuery({ name });
   const file = useGetRepositoryFilesWithPathQuery({ name, path, ref });
-
-  console.log({ repo, file });
 
   return (
     <Page
       navId="provisioning"
       pageNav={{
         text: `File: ${path} ${ref ? `(@${ref})` : ''}`,
-        subTitle: repo.data?.spec?.title ?? 'Repository',
       }}
     >
-      <Page.Contents isLoading={file.isLoading || repo.isLoading}>
+      <Page.Contents isLoading={file.isLoading}>
         <>
-          {repo.error && <Alert title={`Error loading repository`}>{(repo.error as any).message}</Alert>}
-
           {file.error && <Alert title="Error loading file">{(file.error as any).message}</Alert>}
 
           {file.isSuccess && file.data && <ResourceView wrap={file.data} repo={name} repoRef={ref} tab={tab} />}
@@ -134,7 +127,7 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
       </TabsBar>
       <TabContent>
         <div>
-          <div style={{ height: 800 }}>
+          <div style={{ height: 700, marginBottom: 10 }}>
             <AutoSizer disableWidth>
               {({ height }) => (
                 <CodeEditor
@@ -150,7 +143,7 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
               )}
             </AutoSizer>
           </div>
-          <Stack direction={'row'}>
+          <Stack direction={'row'} alignItems="flex-end" justifyContent="end" gap={1}>
             <Button
               variant="primary"
               disabled={replaceFileStatus.isLoading}
