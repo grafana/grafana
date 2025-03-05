@@ -34,9 +34,8 @@ weight: 8
 
 This topic includes techniques you can use to manage your Grafana dashboards, including:
 
-- [Creating and managing dashboard folders](#create-and-manage-dashboard-folders)
+- [Browsing](#browse-dashboards) and [creating](#create-a-dashboard-folder) dashboard folders
 - [Exporting and importing dashboards](#export-and-import-dashboards)
-- [Organizing dashboards](#organize-a-dashboard)
 - [Troubleshooting dashboards](#troubleshoot-dashboards)
 
 For more information about creating dashboards, refer to [Add and organize panels](../add-organize-panels).
