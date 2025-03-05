@@ -14,7 +14,12 @@ For more information on the differences between Grafana-managed and data source-
 
 ## Grafana-managed endpoints
 
-Note that the JSON format from most of the following endpoints is not fully compatible with [provisioning via configuration JSON files](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/file-provisioning/).
+{{< admonition type="note" >}}
+In the Alerting provisioning HTTP API, the endpoints use a JSON format that differs from the format returned by the `export` endpoints.
+
+The `export` endpoints allows you to export alerting resources in a format suitable for [provisioning via JSON files](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/file-provisioning/). However, this format cannot be used to update resources via the HTTP API.
+
+{{< /admonition >}}
 
 ### Alert rules
 
@@ -568,13 +573,7 @@ Status: Not Found
 GET /api/v1/provisioning/alert-rules/:uid/export
 ```
 
-#### Produces
-
-- application/json
-- application/yaml
-- application/terraform+hcl
-- text/yaml
-- text/hcl
+{{< docs/shared lookup="alerts/alerting-provisioning-export-produces.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 #### Parameters
 
@@ -649,13 +648,7 @@ Status: Not Found
 GET /api/v1/provisioning/folder/:folderUid/rule-groups/:group/export
 ```
 
-#### Produces
-
-- application/json
-- application/yaml
-- application/terraform+hcl
-- text/yaml
-- text/hcl
+{{< docs/shared lookup="alerts/alerting-provisioning-export-produces.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 #### Parameters
 
@@ -717,13 +710,7 @@ Status: OK
 GET /api/v1/provisioning/alert-rules/export
 ```
 
-#### Produces
-
-- application/json
-- application/yaml
-- application/terraform+hcl
-- text/yaml
-- text/hcl
+{{< docs/shared lookup="alerts/alerting-provisioning-export-produces.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 #### Parameters
 
@@ -789,13 +776,7 @@ Status: OK
 GET /api/v1/provisioning/contact-points/export
 ```
 
-#### Produces
-
-- application/json
-- application/yaml
-- application/terraform+hcl
-- text/yaml
-- text/hcl
+{{< docs/shared lookup="alerts/alerting-provisioning-export-produces.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 #### Parameters
 
@@ -894,13 +875,7 @@ Status: OK
 GET /api/v1/provisioning/mute-timings/export
 ```
 
-#### Produces
-
-- application/json
-- application/yaml
-- application/terraform+hcl
-- text/yaml
-- text/hcl
+{{< docs/shared lookup="alerts/alerting-provisioning-export-produces.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 #### Parameters
 
@@ -940,13 +915,7 @@ Status: Forbidden
 GET /api/v1/provisioning/mute-timings/:name/export
 ```
 
-#### Produces
-
-- application/json
-- application/yaml
-- application/terraform+hcl
-- text/yaml
-- text/hcl
+{{< docs/shared lookup="alerts/alerting-provisioning-export-produces.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 #### Parameters
 
@@ -1009,13 +978,7 @@ Status: OK
 GET /api/v1/provisioning/policies/export
 ```
 
-#### Produces
-
-- application/json
-- application/yaml
-- application/terraform+hcl
-- text/yaml
-- text/hcl
+{{< docs/shared lookup="alerts/alerting-provisioning-export-produces.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 #### Parameters
 
