@@ -40,7 +40,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     } else {
       stateManager.loadDashboard({
         uid: (route.routeName === DashboardRoutes.Provisioning ? path : uid) ?? '',
-        slug: slug,
+        type,
+        slug,
         route: route.routeName as DashboardRoutes,
         urlFolderUid: queryParams.folderUid,
       });
@@ -78,7 +79,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
   return (
     <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true} createBrowserHistorySteps={true}>
-      <DashboardPreviewBanner queryParams={queryParams} route={route.routeName} path={path} />
+      <DashboardPreviewBanner queryParams={queryParams} route={route.routeName} slug={slug} path={path} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
     </UrlSyncContextProvider>

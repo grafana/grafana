@@ -1,16 +1,19 @@
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents, locationService } from '@grafana/runtime';
-import { Alert, Button, Field, Input, RadioButtonGroup, Stack, TextArea, TextLink } from '@grafana/ui';
+import { Alert, Button, Field, Input, RadioButtonGroup, Stack, TextArea } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { AnnoKeyRepoName } from 'app/features/apiserver/types';
+import { useUrlParams } from 'app/core/navigation/hooks';
+import { AnnoKeyManagerIdentity, ManagerKind } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { RepositoryView } from 'app/features/provisioning/api';
-import { useCreateOrUpdateRepositoryFile, usePullRequestParam } from 'app/features/provisioning/hooks';
+import { PROVISIONING_URL } from 'app/features/provisioning/constants';
+import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks';
 import { WorkflowOption } from 'app/features/provisioning/types';
-import { createPRLink, validateBranchName } from 'app/features/provisioning/utils/git';
+import { validateBranchName } from 'app/features/provisioning/utils/git';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { SaveDashboardDrawer } from '../SaveDashboardDrawer';
@@ -41,9 +44,10 @@ export interface Props {
 }
 
 export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Props) {
-  const { saveProvisioned } = drawer.useState();
   const { meta, title: defaultTitle, description: defaultDescription } = dashboard.useState();
-  const prURL = usePullRequestParam();
+  const navigate = useNavigate();
+  const [params] = useUrlParams();
+  const loadedFromRef = params.get('ref') ?? undefined;
 
   const {
     values: defaultValues,
@@ -51,7 +55,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
     isGitHub,
     repositoryConfig,
   } = useDefaultValues({ meta, defaultTitle, defaultDescription });
-  const [action, request] = useCreateOrUpdateRepositoryFile(saveProvisioned || isNew ? undefined : defaultValues.path);
+  const [action, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
   const {
     register,
     handleSubmit,
@@ -61,29 +65,44 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
     setValue,
   } = useForm<FormData>({ defaultValues });
 
-  const [title, ref, workflow, comment] = watch(['title', 'ref', 'workflow', 'comment']);
+  const [ref, workflow, path] = watch(['ref', 'workflow', 'path']);
   const { isDirty } = dashboard.state;
-  const href = createPRLink(repositoryConfig, title, ref, comment);
 
   useEffect(() => {
     const appEvents = getAppEvents();
     if (request.isSuccess) {
       dashboard.setState({ isDirty: false });
-      const prLink = workflow === WorkflowOption.Direct ? undefined : href;
-      dashboard.closeModal();
-      locationService.partial({
-        viewPanel: null,
-        editPanel: null,
-        isPreview: true,
-        prLink,
-      });
+      if (isNew) {
+        dashboard.setManager(ManagerKind.Repo, defaultValues.repo);
+      }
+      if (workflow === 'branch' && ref !== '' && path !== '') {
+        // Redirect to the provisioning preview pages
+        navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}`);
+      } else {
+        dashboard.closeModal();
+        locationService.partial({
+          viewPanel: null,
+          editPanel: null,
+        });
+      }
     } else if (request.isError) {
       appEvents.publish({
         type: AppEvents.alertError.name,
         payload: ['Error saving dashboard', request.error],
       });
     }
-  }, [request.isSuccess, request.isError, request.error, dashboard, workflow, href]);
+  }, [
+    request.isSuccess,
+    request.isError,
+    request.error,
+    dashboard,
+    workflow,
+    isNew,
+    defaultValues.repo,
+    ref,
+    path,
+    navigate,
+  ]);
 
   useEffect(() => {
     setValue('workflow', getDefaultWorkflow(repositoryConfig));
@@ -101,17 +120,22 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
       description: description,
     });
 
-    if (workflow === WorkflowOption.Direct) {
-      ref = undefined;
+    if (workflow === 'write') {
+      ref = loadedFromRef; // the original ref from URL or undefined
     }
+
+    // Quick hack to send the current UID without changing the whole shape
+    (saveModel as any)['uid'] = meta.uid;
 
     action({ ref, name: repo, path, message: comment, body: saveModel });
   };
 
+  const workflows = getWorkflowOptions(repositoryConfig, loadedFromRef);
+
   return (
     <form onSubmit={handleSubmit(doSave)}>
       <Stack direction="column" gap={2}>
-        {repositoryConfig?.readOnly && (
+        {!repositoryConfig?.workflows.length && (
           <Alert title="This repository is read only">
             If you have direct access to the target, copy the JSON and paste it there.
           </Alert>
@@ -143,7 +167,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
                         }
                         dashboard.setState({
                           meta: {
-                            k8s: name ? { annotations: { [AnnoKeyRepoName]: name } } : undefined,
+                            k8s: name ? { annotations: { [AnnoKeyManagerIdentity]: name } } : undefined,
                             folderUid: uid,
                           },
                         });
@@ -181,11 +205,11 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
                 control={control}
                 name={'workflow'}
                 render={({ field: { ref, ...field } }) => {
-                  return <RadioButtonGroup {...field} options={getWorkflowOptions(repositoryConfig?.github?.branch)} />;
+                  return <RadioButtonGroup {...field} options={workflows} />;
                 }}
               />
             </Field>
-            {workflow === WorkflowOption.PullRequest && (
+            {workflow === 'branch' && (
               <Field
                 label="Branch"
                 description="Branch name in GitHub"
@@ -197,17 +221,8 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
             )}
           </>
         )}
-
-        {prURL && (
-          <Alert severity="info" title="Pull request created">
-            A pull request has been created with changes to this dashboard:{' '}
-            <TextLink href={prURL} external>
-              {prURL}
-            </TextLink>
-          </Alert>
-        )}
         <Stack gap={2}>
-          <Button variant="primary" type="submit" disabled={(request.isLoading || !isDirty) && !saveProvisioned}>
+          <Button variant="primary" type="submit" disabled={request.isLoading || !isDirty}>
             {request.isLoading ? 'Saving...' : 'Save'}
           </Button>
           <Button variant="secondary" onClick={drawer.onClose} fill="outline">
@@ -218,6 +233,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
     </form>
   );
 }
+
 const BranchValidationError = () => {
   return (
     <>
@@ -231,6 +247,7 @@ const BranchValidationError = () => {
     </>
   );
 };
+
 async function validateDashboardName(title: string, formValues: FormData) {
   if (title === formValues.folder.title?.trim()) {
     return 'Dashboard name cannot be the same as folder name';

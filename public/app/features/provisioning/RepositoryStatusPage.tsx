@@ -6,7 +6,6 @@ import { SelectableValue, urlUtil } from '@grafana/data';
 import {
   Alert,
   Button,
-  Card,
   CellProps,
   Column,
   ConfirmModal,
@@ -14,7 +13,6 @@ import {
   FilterInput,
   InteractiveTable,
   LinkButton,
-  Space,
   Spinner,
   Stack,
   Tab,
@@ -22,47 +20,47 @@ import {
   TabsBar,
   Text,
   TextLink,
+  Modal,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { isNotFoundError } from '../alerting/unified/api/util';
 
-import { ConfigForm } from './ConfigForm';
 import { ExportToRepository } from './ExportToRepository';
+import { MigrateToRepository } from './MigrateToRepository';
+import { RepositoryOverview } from './RepositoryOverview';
+import { RepositoryResources } from './RepositoryResources';
 import { StatusBadge } from './StatusBadge';
+import { SyncRepository } from './SyncRepository';
 import {
-  useListJobQuery,
   useGetRepositoryFilesQuery,
   Repository,
-  ResourceListItem,
-  useGetRepositoryResourcesQuery,
   useListRepositoryQuery,
   useDeleteRepositoryFilesWithPathMutation,
+  useGetFrontendSettingsQuery,
 } from './api';
 import { FileDetails } from './api/types';
 import { PROVISIONING_URL } from './constants';
+import { getRemoteURL } from './utils/git';
 
 enum TabSelection {
+  Overview = 'overview',
   Resources = 'resources',
   Files = 'files',
-  Jobs = 'jobs',
-  Export = 'export',
-  Config = 'config',
-  Health = 'health',
 }
 
 const tabInfo: SelectableValue<TabSelection> = [
+  { value: TabSelection.Overview, label: 'Overview', title: 'Repository overview' },
   { value: TabSelection.Resources, label: 'Resources', title: 'Resources saved in grafana database' },
   { value: TabSelection.Files, label: 'Files', title: 'The raw file list from the repository' },
-  { value: TabSelection.Jobs, label: 'Recent events' },
-  { value: TabSelection.Export, label: 'Export' },
-  { value: TabSelection.Config, label: 'Configuration' },
-  { value: TabSelection.Health, label: 'Repository health' },
 ];
 
 export default function RepositoryStatusPage() {
   const { name = '' } = useParams();
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [showMigrateModal, setShowMigrateModal] = useState(false);
+
   const query = useListRepositoryQuery({
     fieldSelector: `metadata.name=${name}`,
     watch: true,
@@ -70,7 +68,9 @@ export default function RepositoryStatusPage() {
   const data = query.data?.items?.[0];
   const location = useLocation();
   const [queryParams] = useQueryParams();
-  const tab = queryParams['tab'] ?? TabSelection.Resources;
+  const settings = useGetFrontendSettingsQuery();
+  const tab = queryParams['tab'] ?? TabSelection.Overview;
+  const remoteURL = data ? getRemoteURL(data) : undefined;
 
   const notFound = query.isError && isNotFoundError(query.error);
   return (
@@ -78,10 +78,40 @@ export default function RepositoryStatusPage() {
       navId="provisioning"
       pageNav={{
         text: data?.spec?.title ?? 'Repository Status',
-        subTitle: 'Check the status of configured repository.',
+        subTitle: data?.spec?.description,
       }}
+      actions={
+        data && (
+          <Stack>
+            <StatusBadge enabled={Boolean(data.spec?.sync?.enabled)} state={data.status?.sync?.state} name={name} />
+            {remoteURL && (
+              <Button variant="secondary" icon="github" onClick={() => window.open(remoteURL, '_blank')}>
+                Source Code
+              </Button>
+            )}
+            <SyncRepository repository={data} />
+            {settings.data?.legacyStorage ? (
+              <Button variant="secondary" icon="cloud-upload" onClick={() => setShowMigrateModal(true)}>
+                Migrate
+              </Button>
+            ) : (
+              <Button variant="secondary" icon="cloud-upload" onClick={() => setShowExportModal(true)}>
+                Push
+              </Button>
+            )}
+            <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`}>
+              Settings
+            </LinkButton>
+          </Stack>
+        )
+      }
     >
       <Page.Contents isLoading={query.isLoading}>
+        {settings.data?.legacyStorage && (
+          <Alert title="Legacy Storage" severity="error">
+            Instance is not yet running unified storage -- requires migration wizard
+          </Alert>
+        )}
         {notFound ? (
           <EmptyState message={`Repository not found`} variant="not-found">
             <Text element={'p'}>Make sure the repository config exists in the configuration file.</Text>
@@ -103,17 +133,21 @@ export default function RepositoryStatusPage() {
                   ))}
                 </TabsBar>
                 <TabContent>
-                  {tab === TabSelection.Resources && <ResourcesView repo={data} />}
+                  {tab === TabSelection.Overview && <RepositoryOverview repo={data} />}
+                  {tab === TabSelection.Resources && <RepositoryResources repo={data} />}
                   {tab === TabSelection.Files && <FilesView repo={data} />}
-                  {tab === TabSelection.Jobs && <JobsView repo={data} />}
-                  {tab === TabSelection.Export && <ExportToRepository repo={data} />}
-                  {tab === TabSelection.Health && <RepositoryHealth repo={data} />}
-                  {tab === TabSelection.Config && (
-                    <div style={{ marginTop: '30px', marginLeft: '16px' }}>
-                      <ConfigForm data={data} />
-                    </div>
-                  )}
                 </TabContent>
+
+                {showExportModal && (
+                  <Modal isOpen={true} title="Export to Repository" onDismiss={() => setShowExportModal(false)}>
+                    <ExportToRepository repo={data} />
+                  </Modal>
+                )}
+                {showMigrateModal && (
+                  <Modal isOpen={true} title="Migrate to Repository" onDismiss={() => setShowMigrateModal(false)}>
+                    <MigrateToRepository repo={data} />
+                  </Modal>
+                )}
               </>
             ) : (
               <div>not found</div>
@@ -217,243 +251,6 @@ function FilesView({ repo }: RepoProps) {
         <FilterInput placeholder="Search" autoFocus={true} value={searchQuery} onChange={setSearchQuery} />
       </Stack>
       <InteractiveTable columns={columns} data={data} pageSize={25} getRowId={(f: FileDetails) => String(f.path)} />
-    </Stack>
-  );
-}
-
-type ResourceCell<T extends keyof ResourceListItem = keyof ResourceListItem> = CellProps<
-  ResourceListItem,
-  ResourceListItem[T]
->;
-
-function ResourcesView({ repo }: RepoProps) {
-  const name = repo.metadata?.name ?? '';
-  const query = useGetRepositoryResourcesQuery({ name });
-  const [searchQuery, setSearchQuery] = useState('');
-  const data = [...(query.data?.items ?? [])].filter((Resource) =>
-    Resource.path.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  const columns: Array<Column<ResourceListItem>> = useMemo(
-    () => [
-      {
-        id: 'title',
-        header: 'Title',
-        sortType: 'string',
-        cell: ({ row: { original } }: ResourceCell<'title'>) => {
-          const { resource, name, title } = original;
-          if (resource === 'dashboards') {
-            return <a href={`/d/${name}`}>{title}</a>;
-          }
-          if (resource === 'folders') {
-            return <a href={`/dashboards/f/${name}`}>{title}</a>;
-          }
-          return <span>{title}</span>;
-        },
-      },
-      {
-        id: 'path',
-        header: 'Path',
-        sortType: 'string',
-        cell: ({ row: { original } }: ResourceCell<'path'>) => {
-          const { resource, name, path } = original;
-          if (resource === 'dashboards') {
-            return <a href={`/d/${name}`}>{path}</a>;
-          }
-          return <span>{path}</span>;
-        },
-      },
-      {
-        id: 'hash',
-        header: 'Hash',
-        sortType: 'string',
-        cell: ({ row: { original } }: ResourceCell<'hash'>) => {
-          const { hash } = original;
-          return <span title={hash}>{hash.substring(0, 7)}</span>;
-        },
-      },
-      {
-        id: 'folder',
-        header: 'Folder',
-        sortType: 'string',
-        cell: ({ row: { original } }: ResourceCell<'title'>) => {
-          const { folder } = original;
-          if (folder?.length) {
-            return <a href={`/dashboards/f/${folder}`}>{folder}</a>;
-          }
-          return <span></span>;
-        },
-      },
-    ],
-    []
-  );
-
-  if (query.isLoading) {
-    return (
-      <Stack justifyContent={'center'} alignItems={'center'}>
-        <Spinner />
-      </Stack>
-    );
-  }
-
-  return (
-    <Stack grow={1} direction={'column'} gap={2}>
-      <Stack gap={2}>
-        <FilterInput placeholder="Search" autoFocus={true} value={searchQuery} onChange={setSearchQuery} />
-      </Stack>
-      <InteractiveTable
-        columns={columns}
-        data={data}
-        pageSize={25}
-        getRowId={(r: ResourceListItem) => String(r.path)}
-      />
-    </Stack>
-  );
-}
-
-function JobsView({ repo }: RepoProps) {
-  const name = repo.metadata?.name;
-  const query = useListJobQuery({ labelSelector: `repository=${name}` });
-  const items = query?.data?.items ?? [];
-
-  if (query.isLoading) {
-    return <Spinner />;
-  }
-  if (query.isError) {
-    return (
-      <Alert title="error loading jobs">
-        <pre>{JSON.stringify(query.error)}</pre>
-      </Alert>
-    );
-  }
-  if (!items?.length) {
-    return (
-      <div>
-        No recent events...
-        <br />
-        Note: history is not maintained after system restart
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      {items.map((item) => {
-        return (
-          <Card key={item.metadata?.resourceVersion}>
-            <Card.Heading>
-              {item.spec?.action} / {item.status?.state}
-            </Card.Heading>
-            <Card.Description>
-              <span>{JSON.stringify(item.spec)}</span>
-              <span>{JSON.stringify(item.status)}</span>
-            </Card.Description>
-          </Card>
-        );
-      })}
-    </div>
-  );
-}
-
-function formatTimestamp(timestamp?: number) {
-  if (!timestamp) {
-    return 'N/A';
-  }
-  return new Date(timestamp).toLocaleString();
-}
-
-function getRemoteURL(repo: Repository) {
-  if (repo.spec?.type === 'github') {
-    const spec = repo.spec.github;
-    let url = `https://github.com/${spec?.owner}/${spec?.repository}/`;
-    if (spec?.branch) {
-      url += `tree/${spec.branch}`;
-    }
-    return url;
-  }
-  return undefined;
-}
-
-function getWebhookURL(repo: Repository) {
-  const { status, spec } = repo;
-  if (spec?.type === 'github' && status?.webhook?.url) {
-    const { github } = spec;
-    return `https://github.com/${github?.owner}/${github?.repository}/settings/hooks/${status.webhook?.id}`;
-  }
-  return undefined;
-}
-
-export function RepositoryHealth({ repo }: { repo: Repository }) {
-  const name = repo.metadata?.name ?? '';
-  const status = repo.status;
-  const remoteURL = getRemoteURL(repo);
-  const webhookURL = getWebhookURL(repo);
-
-  return (
-    <Stack gap={2} direction="column" alignItems="flex-start">
-      <Space />
-      <Text element={'h2'}>Health Status</Text>
-      {status?.health?.healthy ? (
-        <Alert title="Repository is healthy" severity="success" style={{ width: '100%' }}>
-          No errors found
-        </Alert>
-      ) : (
-        <Alert title="Repository is unhealthy" severity="warning" style={{ width: '100%' }}>
-          {status?.health?.message && status.health.message.length > 0 && (
-            <>
-              <Text>Details:</Text>
-              <ul>
-                {status.health.message.map((message) => (
-                  <li key={message}>{message}</li>
-                ))}
-              </ul>
-            </>
-          )}
-        </Alert>
-      )}
-
-      {remoteURL && (
-        <Text>
-          <TextLink external href={remoteURL}>
-            {remoteURL}
-          </TextLink>
-        </Text>
-      )}
-
-      {webhookURL && (
-        <Text>
-          <TextLink external href={webhookURL}>
-            Webhook
-          </TextLink>
-        </Text>
-      )}
-
-      <Text element={'h2'}>Sync Status</Text>
-      <StatusBadge enabled={Boolean(repo.spec?.sync?.enabled)} state={status?.sync?.state} name={name} />
-      <ul style={{ listStyle: 'none' }}>
-        <li>
-          Job ID: <b>{status?.sync.job ?? 'N/A'}</b>
-        </li>
-        <li>
-          Last Ref: <b>{status?.sync.hash ?? 'N/A'}</b>
-        </li>
-        <li>
-          Started: <b>{formatTimestamp(status?.sync.started)}</b>
-        </li>
-        <li>
-          Finished: <b>{formatTimestamp(status?.sync.finished)}</b>
-        </li>
-      </ul>
-
-      {status?.sync?.message && status.sync.message.length > 0 && (
-        <>
-          <Text>Messages:</Text>
-          <ul style={{ listStyle: 'none' }}>
-            {status.sync.message.map((message) => (
-              <li key={message}>{message}</li>
-            ))}
-          </ul>
-        </>
-      )}
     </Stack>
   );
 }

@@ -1,10 +1,11 @@
 import { locationService } from '@grafana/runtime';
 import { Badge, BadgeColor, IconName } from '@grafana/ui';
 
+import { SyncStatus } from './api';
 import { PROVISIONING_URL } from './constants';
 
 interface StatusBadgeProps {
-  state?: string;
+  state?: SyncStatus['state'] | '';
   name: string;
   enabled: boolean;
 }
@@ -21,7 +22,7 @@ export function StatusBadge({ enabled, state, name }: StatusBadgeProps) {
   switch (state) {
     case 'success':
       icon = 'check';
-      text = 'In sync';
+      text = 'Up-to-date';
       color = 'green';
       break;
     case null:
@@ -35,7 +36,7 @@ export function StatusBadge({ enabled, state, name }: StatusBadgeProps) {
     case 'working':
     case 'pending':
       color = 'orange';
-      text = 'Syncing';
+      text = 'Pulling';
       icon = 'spinner';
       break;
     case 'error':
@@ -49,7 +50,7 @@ export function StatusBadge({ enabled, state, name }: StatusBadgeProps) {
 
   if (!enabled) {
     color = 'red';
-    text = 'Sync disabled';
+    text = 'Automatic pulling disabled';
     icon = 'info-circle';
   }
   return (
@@ -60,7 +61,7 @@ export function StatusBadge({ enabled, state, name }: StatusBadgeProps) {
       style={{ cursor: 'pointer' }}
       tooltip={tooltip}
       onClick={() => {
-        locationService.push(`${PROVISIONING_URL}/${name}/?tab=health`);
+        locationService.push(`${PROVISIONING_URL}/${name}/?tab=overview`);
       }}
     />
   );

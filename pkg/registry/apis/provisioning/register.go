@@ -2,8 +2,10 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -23,14 +25,22 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	clientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/pullrequest"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -40,32 +50,44 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/blob"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 const repoControllerWorkers = 1
 
-var _ builder.APIGroupBuilder = (*APIBuilder)(nil)
+var (
+	_ builder.APIGroupBuilder               = (*APIBuilder)(nil)
+	_ builder.APIGroupMutation              = (*APIBuilder)(nil)
+	_ builder.APIGroupValidation            = (*APIBuilder)(nil)
+	_ builder.APIGroupRouteProvider         = (*APIBuilder)(nil)
+	_ builder.APIGroupPostStartHookProvider = (*APIBuilder)(nil)
+	_ builder.OpenAPIPostProcessor          = (*APIBuilder)(nil)
+)
 
 type APIBuilder struct {
 	urlProvider      func(namespace string) string
 	webhookSecretKey string
+	isPublic         bool
 
 	features          featuremgmt.FeatureToggles
 	getter            rest.Getter
 	localFileResolver *repository.LocalFolderResolver
 	render            rendering.Service
-	blobstore         blob.PublicBlobStore
 	client            *resources.ClientFactory
 	parsers           *resources.ParserFactory
-	ghFactory         github.ClientFactory
-	identities        auth.BackgroundIdentityService
+	ghFactory         *github.Factory
+	clonedir          string // where repo clones are managed
 	jobs              jobs.JobQueue
 	tester            *RepositoryTester
 	resourceLister    resources.ResourceLister
 	repositoryLister  listers.RepositoryLister
+	legacyMigrator    legacy.LegacyMigrator
+	storageStatus     dualwrite.Service
+	unified           resource.ResourceClient
+	secrets           secrets.Service
 }
 
 // NewAPIBuilder creates an API builder.
@@ -75,30 +97,39 @@ func NewAPIBuilder(
 	local *repository.LocalFolderResolver,
 	urlProvider func(namespace string) string,
 	webhookSecretKey string,
-	identities auth.BackgroundIdentityService,
 	features featuremgmt.FeatureToggles,
 	render rendering.Service,
-	index resource.RepositoryIndexClient,
-	blobstore blob.PublicBlobStore,
+	unified resource.ResourceClient,
+	clonedir string, // where repo clones are managed
 	configProvider apiserver.RestConfigProvider,
-	ghFactory github.ClientFactory,
+	ghFactory *github.Factory,
+	legacyMigrator legacy.LegacyMigrator,
+	storageStatus dualwrite.Service,
+	secrets secrets.Service,
 ) *APIBuilder {
-	clientFactory := resources.NewFactory(identities)
+	clientFactory := resources.NewFactory(configProvider)
+
+	// HACK: Assume is only public if it is HTTPS
+	isPublic := strings.HasPrefix(urlProvider(""), "https://")
+
 	return &APIBuilder{
 		urlProvider:       urlProvider,
 		localFileResolver: local,
 		webhookSecretKey:  webhookSecretKey,
+		isPublic:          isPublic,
 		features:          features,
 		ghFactory:         ghFactory,
-		identities:        identities,
 		client:            clientFactory,
 		parsers: &resources.ParserFactory{
 			Client: clientFactory,
 		},
 		render:         render,
-		resourceLister: resources.NewResourceLister(index),
-		blobstore:      blobstore,
-		jobs:           jobs.NewJobQueue(50), // in memory for now
+		clonedir:       clonedir,
+		resourceLister: resources.NewResourceLister(unified),
+		legacyMigrator: legacyMigrator,
+		storageStatus:  storageStatus,
+		unified:        unified,
+		secrets:        secrets,
 	}
 }
 
@@ -110,21 +141,18 @@ func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	reg prometheus.Registerer,
-	identities auth.BackgroundIdentityService,
 	render rendering.Service,
 	client resource.ResourceClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
-	ghFactory github.ClientFactory,
+	ghFactory *github.Factory,
+	legacyMigrator legacy.LegacyMigrator,
+	storageStatus dualwrite.Service,
+	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
+	secretsSvc grafanasecrets.Service,
 ) (*APIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) &&
 		!features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil, nil // skip registration unless opting into experimental apis OR the feature specifically
-	}
-
-	// TODO: use wire to initialize this storage
-	store, err := blob.ProvidePublicBlobStore(cfg)
-	if err != nil {
-		return nil, err
 	}
 
 	folderResolver := &repository.LocalFolderResolver{
@@ -135,7 +163,12 @@ func RegisterAPIService(
 		return cfg.AppURL
 	}
 
-	builder := NewAPIBuilder(folderResolver, urlProvider, cfg.SecretKey, identities, features, render, client, store, configProvider, ghFactory)
+	builder := NewAPIBuilder(folderResolver, urlProvider, cfg.SecretKey, features,
+		render, client,
+		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
+		configProvider, ghFactory,
+		legacyMigrator, storageStatus,
+		secrets.NewSingleTenant(secretsSvc))
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
@@ -182,16 +215,20 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	}
 	b.getter = repositoryStorage
 
+	// FIXME: Make job queue store the jobs somewhere persistent.
+	jobStore := jobs.NewJobStore(50, b) // in memory, for now...
+	b.jobs = jobStore
+
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 
 	storage := map[string]rest.Storage{}
-	storage[provisioning.JobResourceInfo.StoragePath()] = b.jobs
+	storage[provisioning.JobResourceInfo.StoragePath()] = jobStore
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
-		getter: b,
-		client: b.identities,
-		jobs:   b.jobs,
+		getter:          b,
+		jobs:            b.jobs,
+		webhooksEnabled: b.isPublic,
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = &testConnector{
 		getter: b,
@@ -215,98 +252,16 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		repoGetter: b,
 		jobs:       b.jobs,
 	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("migrate")] = &migrateConnector{
+		repoGetter: b,
+		jobs:       b.jobs,
+		dual:       b.storageStatus,
+	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("render")] = &renderConnector{
+		blob: b.unified,
+	}
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
 	return nil
-}
-
-func (b *APIBuilder) GetRepository(ctx context.Context, name string) (repository.Repository, error) {
-	obj, err := b.getter.Get(ctx, name, &metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-	return b.asRepository(ctx, obj)
-}
-
-func timeSince(when int64) time.Duration {
-	return time.Duration(time.Now().UnixMilli()-when) * time.Millisecond
-}
-
-func (b *APIBuilder) GetHealthyRepository(ctx context.Context, name string) (repository.Repository, error) {
-	repo, err := b.GetRepository(ctx, name)
-	if err != nil {
-		return nil, err
-	}
-	status := repo.Config().Status.Health
-	if !status.Healthy {
-		if timeSince(status.Checked) > time.Second*25 {
-			id, err := b.identities.WorkerIdentity(ctx, repo.Config().Namespace)
-			if err != nil {
-				return nil, err // The status
-			}
-			ctx := identity.WithRequester(ctx, id)
-
-			// Check health again
-			s, err := b.tester.TestRepository(ctx, repo)
-			if err != nil {
-				return nil, err // The status
-			}
-
-			// Write and return the repo with current status
-			cfg, _ := b.tester.UpdateHealthStatus(ctx, repo.Config(), s)
-			if cfg != nil {
-				status = cfg.Status.Health
-				if cfg.Status.Health.Healthy {
-					status = cfg.Status.Health
-					repo, err = b.AsRepository(ctx, cfg)
-					if err != nil {
-						return nil, err
-					}
-				}
-			}
-		}
-		if !status.Healthy {
-			return nil, &apierrors.StatusError{ErrStatus: metav1.Status{
-				Code:    http.StatusFailedDependency,
-				Message: "The repository configuration is not healthy",
-			}}
-		}
-	}
-	return repo, err
-}
-
-func (b *APIBuilder) asRepository(ctx context.Context, obj runtime.Object) (repository.Repository, error) {
-	if obj == nil {
-		return nil, fmt.Errorf("missing repository object")
-	}
-	r, ok := obj.(*provisioning.Repository)
-	if !ok {
-		return nil, fmt.Errorf("expected repository configuration")
-	}
-	return b.AsRepository(ctx, r)
-}
-
-func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
-	switch r.Spec.Type {
-	case provisioning.LocalRepositoryType:
-		return repository.NewLocal(r, b.localFileResolver), nil
-	case provisioning.GitHubRepositoryType:
-		gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
-		webhookURL := fmt.Sprintf(
-			"%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
-			b.urlProvider(r.GetNamespace()),
-			gvr.Group,
-			gvr.Version,
-			r.GetNamespace(),
-			gvr.Resource,
-			r.GetName(),
-		)
-		secretsSvc := secrets.NewService(b.webhookSecretKey)
-		return repository.NewGitHub(ctx, r, b.ghFactory, secretsSvc, webhookURL), nil
-	case provisioning.S3RepositoryType:
-		return repository.NewS3(r), nil
-	default:
-		return repository.NewUnknown(r), nil
-	}
 }
 
 func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
@@ -324,8 +279,8 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 	// This is called on every update, so be careful to only add the finalizer for create
 	if len(r.Finalizers) == 0 && a.GetOperation() == admission.Create {
 		r.Finalizers = []string{
-			finalizer_REMOVE_ORPHAN_RESOURCE,
-			finalizer_CLEANUP_FINALIZER,
+			controller.RemoveOrphanResourcesFinalizer,
+			controller.CleanFinalizer,
 		}
 	}
 
@@ -338,9 +293,18 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 			return fmt.Errorf("github configuration is required")
 		}
 
-		if r.Spec.GitHub.Branch == "" {
-			r.Spec.GitHub.Branch = "main"
+		// Trim trailing slash or .git
+		if len(r.Spec.GitHub.URL) > 5 {
+			r.Spec.GitHub.URL = strings.TrimRight(strings.TrimRight(r.Spec.GitHub.URL, "/"), ".git")
 		}
+	}
+
+	if r.Spec.Workflows == nil {
+		r.Spec.Workflows = []provisioning.Workflow{}
+	}
+
+	if err := b.encryptSecrets(ctx, r); err != nil {
+		return fmt.Errorf("failed to encrypt secrets: %w", err)
 	}
 
 	return nil
@@ -357,7 +321,7 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		return err
 	}
 
-	list := ValidateRepository(repo)
+	list := repository.ValidateRepository(repo)
 	cfg := repo.Config()
 
 	if a.GetOperation() == admission.Update {
@@ -417,11 +381,15 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			if err != nil {
 				return err
 			}
-			sharedInformerFactory := informers.NewSharedInformerFactory(
-				c,
-				ResyncInterval, // Health and reconciliation interval check interval
-			)
 
+			// When starting with an empty instance -- swith to "mode 4+"
+			err = b.tryRunningOnlyUnifiedStorage()
+			if err != nil {
+				return err
+			}
+
+			// Informer with resync interval used for health check and reconciliation
+			sharedInformerFactory := informers.NewSharedInformerFactory(c, 10*time.Second)
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
 			go repoInformer.Informer().Run(postStartHookCtx.Context.Done())
 
@@ -432,26 +400,51 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 			b.repositoryLister = repoInformer.Lister()
 
-			b.jobs.Register(jobs.NewJobWorker(
-				b,
-				b.parsers,
+			exportWorker := export.NewExportWorker(
+				b.client,
+				b.storageStatus,
+				b.secrets,
+				b.clonedir,
+			)
+			syncWorker := sync.NewSyncWorker(
 				c.ProvisioningV0alpha1(),
-				b.identities,
-				b.render,
+				b.parsers,
 				b.resourceLister,
-				b.blobstore,
-				b.urlProvider,
+				b.storageStatus,
+			)
+			b.jobs.Register(exportWorker)
+			b.jobs.Register(syncWorker)
+			b.jobs.Register(migrate.NewMigrationWorker(
+				b.client,
+				b.legacyMigrator,
+				b.parsers,
+				b.storageStatus,
+				b.unified,
+				b.secrets,
+				exportWorker,
+				syncWorker,
+				b.clonedir,
 			))
 
-			repoController, err := NewRepositoryController(
+			// Pull request worker
+			renderer := pullrequest.NewScreenshotRenderer(b.render, b.unified, b.isPublic, b.urlProvider)
+			previewer := pullrequest.NewPreviewer(renderer, b.urlProvider)
+			pullRequestWorker, err := pullrequest.NewPullRequestWorker(b.parsers, previewer)
+			if err != nil {
+				return fmt.Errorf("create pull request worker: %w", err)
+			}
+			b.jobs.Register(pullRequestWorker)
+
+			repoController, err := controller.NewRepositoryController(
 				c.ProvisioningV0alpha1(),
 				repoInformer,
 				b, // repoGetter
 				b.resourceLister,
 				b.parsers,
-				b.identities,
-				b.tester,
+				&repository.Tester{},
 				b.jobs,
+				b.secrets,
+				b.storageStatus,
 			)
 			if err != nil {
 				return err
@@ -483,6 +476,7 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 		sub.Post.Description = "Check if the configuration is valid"
 		sub.Post.RequestBody = &spec3.RequestBody{
 			RequestBodyProps: spec3.RequestBodyProps{
+				Required: false,
 				Content: map[string]*spec3.MediaType{
 					"application/json": {
 						MediaTypeProps: spec3.MediaTypeProps{
@@ -662,7 +656,7 @@ spec:
 						MediaTypeProps: spec3.MediaTypeProps{
 							Schema: &optionsSchema,
 							Example: &provisioning.SyncJobOptions{
-								Complete: true,
+								Incremental: false,
 							},
 						},
 					},
@@ -682,11 +676,51 @@ spec:
 						MediaTypeProps: spec3.MediaTypeProps{
 							Schema: &optionsSchema,
 							Example: &provisioning.ExportJobOptions{
-								Folder:  "grafan-folder-ref",
+								Folder: "grafan-folder-ref",
+								Branch: "target-branch",
+								Prefix: "prefix/in/repo/tree",
+							},
+						},
+					},
+				},
+			},
+		}
+	}
+
+	sub = oas.Paths.Paths[repoprefix+"/migrate"]
+	if sub != nil {
+		optionsSchema := defs[defsBase+"MigrateJobOptions"].Schema
+		sub.Post.Description = "Export from grafana into the remote repository"
+		sub.Post.RequestBody = &spec3.RequestBody{
+			RequestBodyProps: spec3.RequestBodyProps{
+				Content: map[string]*spec3.MediaType{
+					"application/json": {
+						MediaTypeProps: spec3.MediaTypeProps{
+							Schema: &optionsSchema,
+							Example: &provisioning.MigrateJobOptions{
 								History: true,
-								Branch:  "target-branch",
 								Prefix:  "prefix/in/repo/tree",
 							},
+						},
+					},
+				},
+			},
+		}
+	}
+
+	delete(oas.Paths.Paths, repoprefix+"/render")
+	sub = oas.Paths.Paths[repoprefix+"/render/{path}"]
+	if sub != nil {
+		sub.Get.Description = "get a rendered preview image"
+		sub.Get.Responses = &spec3.Responses{
+			ResponsesProps: spec3.ResponsesProps{
+				StatusCodeResponses: map[int]*spec3.Response{
+					200: {
+						ResponseProps: spec3.ResponseProps{
+							Content: map[string]*spec3.MediaType{
+								"image/png": {},
+							},
+							Description: "OK",
 						},
 					},
 				},
@@ -736,4 +770,175 @@ spec:
 	oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"] = schema
 
 	return oas, nil
+}
+
+func (b *APIBuilder) encryptSecrets(ctx context.Context, repo *provisioning.Repository) error {
+	var err error
+	if repo.Spec.GitHub != nil &&
+		repo.Spec.GitHub.Token != "" {
+		repo.Spec.GitHub.EncryptedToken, err = b.secrets.Encrypt(ctx, []byte(repo.Spec.GitHub.Token))
+		if err != nil {
+			return err
+		}
+		repo.Spec.GitHub.Token = ""
+	}
+
+	if repo.Status.Webhook != nil &&
+		repo.Status.Webhook.Secret != "" {
+		repo.Status.Webhook.EncryptedSecret, err = b.secrets.Encrypt(ctx, []byte(repo.Status.Webhook.Secret))
+		if err != nil {
+			return err
+		}
+		repo.Status.Webhook.Secret = ""
+	}
+	return nil
+}
+
+// FIXME: This logic does not belong in provisioning! (but required for now)
+// When starting an empty instance, we shift so that we never reference legacy storage
+// This should run somewhere else at startup by default (dual writer? dashboards?)
+func (b *APIBuilder) tryRunningOnlyUnifiedStorage() error {
+	ctx := context.Background()
+
+	if !b.storageStatus.ShouldManage(dashboard.DashboardResourceInfo.GroupResource()) {
+		return nil // not enabled
+	}
+
+	if !dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus) {
+		return nil
+	}
+
+	// Count how many things exist
+	rsp, err := b.legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
+		Namespace: "default", // FIXME! this works for single org, but need to check multi-org
+		Resources: []schema.GroupResource{{
+			Group: dashboard.GROUP, Resource: dashboard.DASHBOARD_RESOURCE,
+		}, {
+			Group: folders.GROUP, Resource: folders.RESOURCE,
+		}},
+		OnlyCount: true,
+	})
+	if err != nil {
+		return fmt.Errorf("error getting legacy count %w", err)
+	}
+	for _, stats := range rsp.Summary {
+		if stats.Count > 0 {
+			return nil // something exists we can not just switch
+		}
+	}
+
+	logger := logging.DefaultLogger.With("logger", "provisioning startup")
+	mode5 := func(gr schema.GroupResource) error {
+		status, _ := b.storageStatus.Status(ctx, gr)
+		if !status.ReadUnified {
+			status.ReadUnified = true
+			status.WriteLegacy = false
+			status.WriteUnified = true
+			status.Runtime = false
+			status.Migrated = time.Now().UnixMilli()
+			_, err = b.storageStatus.Update(ctx, status)
+			logger.Info("set unified storage access", "group", gr.Group, "resource", gr.Resource)
+			return err
+		}
+		return nil // already reading unified
+	}
+
+	if err = mode5(dashboard.DashboardResourceInfo.GroupResource()); err != nil {
+		return err
+	}
+	if err = mode5(folders.FolderResourceInfo.GroupResource()); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Helpers for fetching valid Repository objects
+
+func (b *APIBuilder) GetRepository(ctx context.Context, name string) (repository.Repository, error) {
+	obj, err := b.getter.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return b.asRepository(ctx, obj)
+}
+
+func timeSince(when int64) time.Duration {
+	return time.Duration(time.Now().UnixMilli()-when) * time.Millisecond
+}
+
+func (b *APIBuilder) GetHealthyRepository(ctx context.Context, name string) (repository.Repository, error) {
+	repo, err := b.GetRepository(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	status := repo.Config().Status.Health
+	if !status.Healthy {
+		if timeSince(status.Checked) > time.Second*25 {
+			ctx, _, err = identity.WithProvisioningIdentitiy(ctx, repo.Config().Namespace)
+			if err != nil {
+				return nil, err // The status
+			}
+
+			// Check health again
+			s, err := repository.TestRepository(ctx, repo)
+			if err != nil {
+				return nil, err // The status
+			}
+
+			// Write and return the repo with current status
+			cfg, _ := b.tester.UpdateHealthStatus(ctx, repo.Config(), s)
+			if cfg != nil {
+				status = cfg.Status.Health
+				if cfg.Status.Health.Healthy {
+					status = cfg.Status.Health
+					repo, err = b.AsRepository(ctx, cfg)
+					if err != nil {
+						return nil, err
+					}
+				}
+			}
+		}
+		if !status.Healthy {
+			return nil, &apierrors.StatusError{ErrStatus: metav1.Status{
+				Code:    http.StatusFailedDependency,
+				Message: "The repository configuration is not healthy",
+			}}
+		}
+	}
+	return repo, err
+}
+
+func (b *APIBuilder) asRepository(ctx context.Context, obj runtime.Object) (repository.Repository, error) {
+	if obj == nil {
+		return nil, fmt.Errorf("missing repository object")
+	}
+	r, ok := obj.(*provisioning.Repository)
+	if !ok {
+		return nil, fmt.Errorf("expected repository configuration")
+	}
+	return b.AsRepository(ctx, r)
+}
+
+func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
+	switch r.Spec.Type {
+	case provisioning.LocalRepositoryType:
+		return repository.NewLocal(r, b.localFileResolver), nil
+	case provisioning.GitHubRepositoryType:
+		gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
+		var webhookURL string
+		if b.isPublic {
+			webhookURL = fmt.Sprintf(
+				"%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
+				b.urlProvider(r.GetNamespace()),
+				gvr.Group,
+				gvr.Version,
+				r.GetNamespace(),
+				gvr.Resource,
+				r.GetName(),
+			)
+		}
+		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL)
+	default:
+		return nil, errors.New("unknown repository type")
+	}
 }

@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	grafanasort "github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -20,18 +20,15 @@ import (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/search")
 
-func ProvideService(cfg *setting.Cfg, sqlstore db.DB, starService star.Service, dashboardService dashboards.DashboardService, folderService folder.Service, features featuremgmt.FeatureToggles) *SearchService {
+func ProvideService(cfg *setting.Cfg, sqlstore db.DB, starService star.Service, dashboardService dashboards.DashboardService, folderService folder.Service, features featuremgmt.FeatureToggles, sortService grafanasort.Service) *SearchService {
 	s := &SearchService{
-		Cfg: cfg,
-		sortOptions: map[string]model.SortOption{
-			SortAlphaAsc.Name:  SortAlphaAsc,
-			SortAlphaDesc.Name: SortAlphaDesc,
-		},
+		Cfg:              cfg,
 		sqlstore:         sqlstore,
 		starService:      starService,
 		folderService:    folderService,
 		features:         features,
 		dashboardService: dashboardService,
+		sortService:      sortService,
 	}
 	return s
 }
@@ -62,7 +59,7 @@ type Service interface {
 
 type SearchService struct {
 	Cfg              *setting.Cfg
-	sortOptions      map[string]model.SortOption
+	sortService      grafanasort.Service
 	sqlstore         db.DB
 	starService      star.Service
 	dashboardService dashboards.DashboardService
@@ -110,22 +107,8 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.
 		IsDeleted:     query.IsDeleted,
 	}
 
-	if sortOpt, exists := s.sortOptions[query.Sort]; exists {
+	if sortOpt, exists := s.sortService.GetSortOption(query.Sort); exists {
 		dashboardQuery.Sort = sortOpt
-	}
-
-	// if folders are stored in unified storage, we need to use the folder service to query for folders
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) && (query.Type == searchstore.TypeFolder || query.Type == searchstore.TypeAlertFolder) {
-		hits, err := s.folderService.SearchFolders(ctx, folder.SearchFoldersQuery{
-			OrgID:        query.OrgId,
-			UIDs:         query.FolderUIDs,
-			IDs:          query.FolderIds,
-			Title:        query.Title,
-			Limit:        query.Limit,
-			SignedInUser: query.SignedInUser,
-		})
-
-		return sortedHits(hits), err
 	}
 
 	hits, err := s.dashboardService.SearchDashboards(ctx, &dashboardQuery)
@@ -168,4 +151,12 @@ func sortedHits(unsorted model.HitList) model.HitList {
 	}
 
 	return hits
+}
+
+func (s *SearchService) RegisterSortOption(option model.SortOption) {
+	s.sortService.RegisterSortOption(option)
+}
+
+func (s *SearchService) SortOptions() []model.SortOption {
+	return s.sortService.SortOptions()
 }

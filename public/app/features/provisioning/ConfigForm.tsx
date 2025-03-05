@@ -5,47 +5,61 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import {
-  Field,
-  Combobox,
-  SecretInput,
-  Input,
   Button,
-  Switch,
-  TextLink,
+  Combobox,
+  ComboboxOption,
   ControlledCollapse,
+  Field,
+  Input,
+  MultiCombobox,
   RadioButtonGroup,
+  SecretInput,
   Stack,
+  Switch,
 } from '@grafana/ui';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
+import { ConfigFormGithubCollpase } from './ConfigFormGithubCollapse';
+import { TokenPermissionsInfo } from './TokenPermissionsInfo';
 import { Repository, RepositorySpec } from './api';
 import { useCreateOrUpdateRepository } from './hooks';
-import { RepositoryFormData } from './types';
+import { RepositoryFormData, WorkflowOption } from './types';
 import { dataToSpec, specToData } from './utils/data';
 
-const typeOptions = ['GitHub', 'Local', 'S3'].map((label) => ({ label, value: label.toLowerCase() }));
+const typeOptions = ['GitHub', 'Local'].map((label) => ({ label, value: label.toLowerCase() }));
 const targetOptions = [
   { value: 'instance', label: 'Entire instance' },
   { value: 'folder', label: 'Managed folder' },
 ];
 
+export function getWorkflowOptions(type?: 'github' | 'local'): Array<ComboboxOption<WorkflowOption>> {
+  const opts: Array<ComboboxOption<WorkflowOption>> = [
+    { label: 'Branch', value: 'branch', description: 'Create a branch (and pull request) for changes' },
+    { label: 'Write', value: 'write', description: 'Allow writing updates to the remote repository' },
+  ];
+  if (type === 'github') {
+    return opts;
+  }
+  return opts.filter((opt) => opt.value === 'write'); // only write
+}
+
 const appEvents = getAppEvents();
 
-function getDefaultValues(repository?: RepositorySpec): RepositoryFormData {
+export function getDefaultValues(repository?: RepositorySpec): RepositoryFormData {
   if (!repository) {
     return {
       type: 'github',
       title: '',
       token: '',
-      owner: '',
-      repository: '',
-      branch: '',
-      branchWorkflow: true,
+      url: '',
+      branch: 'main',
+      generateDashboardPreviews: true,
+      workflows: ['branch', 'write'],
       sync: {
-        enabled: false,
+        enabled: true,
         target: 'instance',
+        intervalSeconds: 60,
       },
-      readOnly: false,
     };
   }
   return specToData(repository);
@@ -86,8 +100,13 @@ export function ConfigForm({ data }: ConfigFormProps) {
     }
   }, [request.isSuccess, reset, getValues, navigate]);
 
-  const onSubmit = (data: RepositoryFormData) => {
-    const spec = dataToSpec(data);
+  const onSubmit = (form: RepositoryFormData) => {
+    const spec = dataToSpec(form);
+    if (spec.github) {
+      spec.github.token = form.token || data?.spec?.github?.token;
+      // If we're still keeping this as GitHub, persist the old token. If we set a new one, it'll be re-encrypted into here.
+      spec.github.encryptedToken = data?.spec?.github?.encryptedToken;
+    }
     submitData(spec);
   };
 
@@ -122,26 +141,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
       </Field>
       {type === 'github' && (
         <>
-          <ControlledCollapse collapsible label="Access Token Permissions" isOpen>
-            <p>
-              To create a new Access Token, navigate to{' '}
-              <TextLink external href="https://github.com/settings/tokens">
-                Personal Access Tokens
-              </TextLink>{' '}
-              and create a click &quot;Generate new token.&quot;
-            </p>
-
-            <p>Ensure that your token has the following permissions:</p>
-
-            <b>For all repositories:</b>
-            <pre>public_repo, repo:status, repo_deployment, read:packages, read:user, user:email</pre>
-
-            <b>For GitHub projects:</b>
-            <pre>read:org, read:project</pre>
-
-            <b>An extra setting is required for private repositories:</b>
-            <pre>repo (Full control of private repositories)</pre>
-          </ControlledCollapse>
           <Field label={'GitHub token'} required error={errors?.token?.message} invalid={!!errors.token}>
             <Controller
               name={'token'}
@@ -163,22 +162,28 @@ export function ConfigForm({ data }: ConfigFormProps) {
               }}
             />
           </Field>
-          <Field label={'Repository owner'} error={errors?.owner?.message} invalid={!!errors?.owner}>
-            <Input {...register('owner', { required: 'This field is required.' })} placeholder={'test'} />
+          <TokenPermissionsInfo />
+          <Field
+            label={'Repository URL'}
+            error={errors?.url?.message}
+            invalid={!!errors?.url}
+            description={'Enter the GitHub repository URL'}
+            required
+          >
+            <Input
+              {...register('url', {
+                required: 'This field is required.',
+                pattern: {
+                  value: /^(?:https:\/\/github\.com\/)?[^/]+\/[^/]+$/,
+                  message: 'Please enter a valid GitHub repository URL',
+                },
+              })}
+              placeholder={'https://github.com/username/repo-name'}
+            />
           </Field>
-          <Field label={'Repository name'} error={errors?.repository?.message} invalid={!!errors?.repository}>
-            <Input {...register('repository', { required: 'This field is required.' })} placeholder={'example'} />
-          </Field>
-          <Field label={'Branch'} error={errors?.branch?.message} invalid={!!errors?.branch}>
+          <Field label={'Branch'}>
             <Input {...register('branch')} placeholder={'main'} />
           </Field>
-          <Field label={'Enable branch workflow'}>
-            <Switch {...register('branchWorkflow')} id={'branchWorkflow'} />
-          </Field>
-          <Field label={'Show dashboard previews'}>
-            <Switch {...register('generateDashboardPreviews')} id={'generateDashboardPreviews'} />
-          </Field>
-          {/* The lint option is intentionally not presented here, as it's an experimental feature. */}
         </>
       )}
 
@@ -188,39 +193,62 @@ export function ConfigForm({ data }: ConfigFormProps) {
         </Field>
       )}
 
-      {type === 's3' && (
-        <>
-          <Field label={'S3 bucket'} error={errors?.bucket?.message} invalid={!!errors?.bucket}>
-            <Input {...register('bucket', { required: 'This field is required.' })} placeholder={'bucket-name'} />
-          </Field>
-          <Field label={'S3 region'} error={errors?.region?.message} invalid={!!errors?.region}>
-            <Input {...register('region', { required: 'This field is required.' })} placeholder={'us-west-2'} />
-          </Field>
-        </>
-      )}
-      <Field label={'Sync target'} required error={errors?.sync?.target?.message} invalid={!!errors?.sync?.target}>
+      <Field
+        label={'Workflows'}
+        required
+        error={errors?.workflows?.message}
+        invalid={!!errors?.workflows}
+        description="no workflows makes the repository read only"
+      >
         <Controller
-          name={'sync.target'}
+          name={'workflows'}
           control={control}
           rules={{ required: 'This field is required.' }}
-          render={({ field: { ref, onChange, ...field } }) => {
-            return (
-              <RadioButtonGroup
-                options={targetOptions}
-                onChange={onChange}
-                disabled={Boolean(data?.status?.sync.state)}
-                {...field}
-              />
-            );
-          }}
+          render={({ field: { ref, onChange, ...field } }) => (
+            <MultiCombobox
+              options={getWorkflowOptions(type)}
+              placeholder={'Readonly repository'}
+              onChange={(val) => {
+                onChange(val.map((v) => v.value));
+              }}
+              {...field}
+            />
+          )}
         />
       </Field>
-      <Field label={'Sync enabled'}>
-        <Switch {...register('sync.enabled')} id={'sync.enabled'} />
-      </Field>
-      <Field label={'Read Only'} description={'Disable writing to this repository'}>
-        <Switch {...register('readOnly')} id={'readOnly'} />
-      </Field>
+
+      {type === 'github' && (
+        <ConfigFormGithubCollpase
+          previews={<Switch {...register('generateDashboardPreviews')} id={'generateDashboardPreviews'} />}
+        />
+      )}
+
+      <ControlledCollapse label="Automatic pulling" isOpen={false}>
+        <Field label={'Enabled'} description={'Once automatic pulling is enabled, the target cannot be changed.'}>
+          <Switch {...register('sync.enabled')} id={'sync.enabled'} />
+        </Field>
+        <Field label={'Target'} required error={errors?.sync?.target?.message} invalid={!!errors?.sync?.target}>
+          <Controller
+            name={'sync.target'}
+            control={control}
+            rules={{ required: 'This field is required.' }}
+            render={({ field: { ref, onChange, ...field } }) => {
+              return (
+                <RadioButtonGroup
+                  options={targetOptions}
+                  onChange={onChange}
+                  disabled={Boolean(data?.status?.sync.state)}
+                  {...field}
+                />
+              );
+            }}
+          />
+        </Field>
+        <Field label={'Interval (seconds)'}>
+          <Input {...register('sync.intervalSeconds', { valueAsNumber: true })} type={'number'} placeholder={'60'} />
+        </Field>
+      </ControlledCollapse>
+
       <Stack gap={2}>
         <Button type={'submit'} disabled={request.isLoading}>
           {request.isLoading ? 'Saving...' : 'Save'}

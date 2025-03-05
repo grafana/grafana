@@ -5,9 +5,7 @@ import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { Button, ConfirmModal } from '@grafana/ui';
 
-import { Loader } from '../plugins/admin/components/Loader';
-
-import { Repository, useCreateRepositorySyncMutation, useListRepositoryQuery } from './api';
+import { Repository, useCreateRepositorySyncMutation } from './api';
 import { PROVISIONING_URL } from './constants';
 
 interface Props {
@@ -15,7 +13,6 @@ interface Props {
 }
 
 export function SyncRepository({ repository }: Props) {
-  const query = useListRepositoryQuery({});
   const [syncResource, syncQuery] = useCreateRepositorySyncMutation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
@@ -26,53 +23,41 @@ export function SyncRepository({ repository }: Props) {
     if (syncQuery.isSuccess) {
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
-        payload: ['Sync started'],
+        payload: ['Pull started'],
       });
     } else if (syncQuery.isError) {
       appEvents.publish({
         type: AppEvents.alertError.name,
-        payload: ['Error importing resources', syncQuery.error],
+        payload: ['Error pulling resources', syncQuery.error],
       });
     }
-  }, [syncQuery.error, syncQuery.isError, syncQuery.isSuccess, navigate]);
+  }, [syncQuery.error, syncQuery.isError, syncQuery.isSuccess]);
 
   const onClick = () => {
     if (!name) {
       return;
     }
-    syncResource({ name, body: { complete: true } });
+    syncResource({ name, body: { incremental: false } }); // will queue a full resync job
     setIsModalOpen(false);
   };
-
-  if (query.isLoading) {
-    return <Loader />;
-  }
 
   const isHealthy = Boolean(repository.status?.health.healthy);
 
   return (
     <>
       <Button
+        icon="cloud-download"
         variant={'secondary'}
-        tooltip={isHealthy ? undefined : 'Unable to sync an unhealthy repository'}
+        tooltip={isHealthy ? undefined : 'Unable to pull an unhealthy repository'}
         disabled={syncQuery.isLoading || !name || !isHealthy}
-        onClick={() => setIsModalOpen(true)}
+        onClick={onClick}
       >
-        Sync
+        Pull
       </Button>
-      {repository.spec?.sync.enabled ? (
+      {!repository.spec?.sync.enabled && (
         <ConfirmModal
           isOpen={isModalOpen}
-          title={'Synchronize resources from repository'}
-          body={`This will trigger a job that will import everything from the repository into grafana. Proceed?`}
-          confirmText={syncQuery.isLoading ? 'Importing...' : 'Import'}
-          onConfirm={onClick}
-          onDismiss={() => setIsModalOpen(false)}
-        />
-      ) : (
-        <ConfirmModal
-          isOpen={isModalOpen}
-          title={'Sync is not enabled'}
+          title={'Pull is not enabled'}
           body={`Edit the configuration`}
           confirmText={'Edit'}
           onConfirm={() => navigate(`${PROVISIONING_URL}/${name}/edit`)}

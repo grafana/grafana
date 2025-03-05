@@ -84,6 +84,9 @@ func TestParseWebhooks(t *testing.T) {
 			Job: &provisioning.JobSpec{ // we want to always push a sync job
 				Repository: "unit-test-repo",
 				Action:     provisioning.JobActionSync,
+				Sync: &provisioning.SyncJobOptions{
+					Incremental: true,
+				},
 			},
 		}},
 		{"push", "nested", provisioning.WebhookResponse{
@@ -91,6 +94,9 @@ func TestParseWebhooks(t *testing.T) {
 			Job: &provisioning.JobSpec{
 				Repository: "unit-test-repo",
 				Action:     provisioning.JobActionSync,
+				Sync: &provisioning.SyncJobOptions{
+					Incremental: true,
+				},
 			},
 		}},
 		{"issue_comment", "created", provisioning.WebhookResponse{
@@ -104,16 +110,27 @@ func TestParseWebhooks(t *testing.T) {
 				Name: "unit-test-repo",
 			},
 			Spec: provisioning.RepositorySpec{
+				Sync: provisioning.SyncOptions{
+					Enabled: true, // required to accept sync job
+				},
 				GitHub: &provisioning.GitHubRepositoryConfig{
-					Repository: "git-ui-sync-demo",
-					Owner:      "grafana",
-					Branch:     "main",
+					URL:    "https://github.com/grafana/git-ui-sync-demo",
+					Branch: "main",
 
 					GenerateDashboardPreviews: true,
 				},
 			},
 		},
 	}
+	var err error
+	gh.owner, gh.repo, err = parseOwnerRepo(gh.config.Spec.GitHub.URL)
+	require.NoError(t, err)
+
+	// Support parsing from a ".git" extension
+	owner, repo, err := parseOwnerRepo(gh.config.Spec.GitHub.URL + ".git")
+	require.NoError(t, err)
+	require.Equal(t, gh.owner, owner)
+	require.Equal(t, gh.repo, repo)
 
 	for _, tt := range tests {
 		name := fmt.Sprintf("webhook-%s-%s.json", tt.messageType, tt.name)

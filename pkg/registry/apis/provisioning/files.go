@@ -58,6 +58,11 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		return nil, err
 	}
 
+	reader, ok := repo.(repository.Reader)
+	if !ok {
+		return nil, apierrors.NewBadRequest("repository does not support read")
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		ref := query.Get("ref")
@@ -82,7 +87,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 				return
 			}
 
-			rsp, err := repo.ReadTree(ctx, ref)
+			rsp, err := reader.ReadTree(ctx, ref)
 			if err != nil {
 				responder.Error(err)
 				return
@@ -118,7 +123,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		code := http.StatusOK
 		switch r.Method {
 		case http.MethodGet:
-			code, obj, err = s.doRead(ctx, repo, filePath, ref)
+			code, obj, err = s.doRead(ctx, reader, filePath, ref)
 		case http.MethodPost:
 			obj, err = s.doWrite(ctx, false, repo, filePath, ref, message, r)
 		case http.MethodPut:
@@ -149,10 +154,13 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 	}), nil
 }
 
-func (s *filesConnector) doRead(ctx context.Context, repo repository.Repository, path string, ref string) (int, *provisioning.ResourceWrapper, error) {
+func (s *filesConnector) doRead(ctx context.Context, repo repository.Reader, path string, ref string) (int, *provisioning.ResourceWrapper, error) {
 	info, err := repo.Read(ctx, path, ref)
 	if err != nil {
 		return 0, nil, err
+	}
+	if strings.HasPrefix(info.Path, "/") {
+		return 0, nil, fmt.Errorf("repository path must be relative to the root")
 	}
 
 	parser, err := s.parsers.GetParser(ctx, repo)
@@ -183,14 +191,18 @@ func (s *filesConnector) doRead(ctx context.Context, repo repository.Repository,
 }
 
 func (s *filesConnector) doWrite(ctx context.Context, update bool, repo repository.Repository, path string, ref string, message string, req *http.Request) (*provisioning.ResourceWrapper, error) {
-	if repo.Config().Spec.ReadOnly {
-		return nil, apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(),
-			"this repository is read only", nil)
+	if err := repository.IsWriteAllowed(repo.Config(), ref); err != nil {
+		return nil, err
+	}
+
+	writer, ok := repo.(repository.ReaderWriter)
+	if !ok {
+		return nil, apierrors.NewBadRequest("repository does not support read-writing")
 	}
 
 	defer func() { _ = req.Body.Close() }()
 	if strings.HasSuffix(path, "/") {
-		if err := repo.Create(ctx, path, ref, nil, message); err != nil {
+		if err := writer.Create(ctx, path, ref, nil, message); err != nil {
 			return nil, fmt.Errorf("failed to create folder: %w", err)
 		}
 		return &provisioning.ResourceWrapper{
@@ -214,7 +226,7 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 		Ref:  ref,
 	}
 
-	parser, err := s.parsers.GetParser(ctx, repo)
+	parser, err := s.parsers.GetParser(ctx, writer)
 	if err != nil {
 		return nil, err
 	}
@@ -232,15 +244,20 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 		return nil, apierrors.NewBadRequest("The payload does not map to a known resource")
 	}
 
+	// Do not write if any errors exist
+	if len(parsed.Errors) > 0 {
+		return parsed.AsResourceWrapper(), err
+	}
+
 	data, err = parsed.ToSaveBytes()
 	if err != nil {
 		return nil, err
 	}
 
 	if update {
-		err = repo.Update(ctx, path, ref, data, message)
+		err = writer.Update(ctx, path, ref, data, message)
 	} else {
-		err = repo.Create(ctx, path, ref, data, message)
+		err = writer.Create(ctx, path, ref, data, message)
 	}
 	if err != nil {
 		return nil, err
@@ -268,12 +285,16 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 }
 
 func (s *filesConnector) doDelete(ctx context.Context, repo repository.Repository, path string, ref string, message string) (*provisioning.ResourceWrapper, error) {
-	if repo.Config().Spec.ReadOnly {
-		return nil, apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(),
-			"this repository is read only", nil)
+	if err := repository.IsWriteAllowed(repo.Config(), ref); err != nil {
+		return nil, err
 	}
 
-	err := repo.Delete(ctx, path, ref, message)
+	writer, ok := repo.(repository.Writer)
+	if !ok {
+		return nil, apierrors.NewBadRequest("repository does not support writing")
+	}
+
+	err := writer.Delete(ctx, path, ref, message)
 	if err != nil {
 		return nil, err
 	}

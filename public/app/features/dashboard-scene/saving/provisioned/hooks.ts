@@ -1,5 +1,8 @@
-import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
-import { useFolderRepository } from 'app/features/provisioning/hooks';
+import { Chance } from 'chance';
+
+import { dateTime } from '@grafana/data';
+import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { useGetResourceRepository } from 'app/features/provisioning/hooks';
 import { DashboardMeta } from 'app/types';
 
 import { getDefaultWorkflow } from './defaults';
@@ -10,7 +13,7 @@ interface UseDefaultValuesParams {
   defaultDescription?: string;
 }
 
-function generatePath(timestamp: number, pathFromAnnotation?: string, slug?: string) {
+function generatePath(timestamp: string, pathFromAnnotation?: string, slug?: string) {
   if (pathFromAnnotation) {
     const hashIndex = pathFromAnnotation.indexOf('#');
     return hashIndex > 0 ? pathFromAnnotation.substring(0, hashIndex) : pathFromAnnotation;
@@ -21,20 +24,23 @@ function generatePath(timestamp: number, pathFromAnnotation?: string, slug?: str
 }
 
 export function useDefaultValues({ meta, defaultTitle, defaultDescription }: UseDefaultValuesParams) {
-  // ???? why is this getting the repository from the folder, not the file???
-  // Should we only get it from the folder when new?
-  const folderRepository = useFolderRepository(meta.folderUid);
-  const timestamp = Date.now();
   const annotations = meta.k8s?.annotations;
-  const annoPath = annotations?.[AnnoKeyRepoPath];
-  const repositoryConfig = folderRepository?.spec;
-  const repositoryName = folderRepository?.metadata?.name ?? '';
+  const managerKind = annotations?.[AnnoKeyManagerKind];
+  const managerIdentity = annotations?.[AnnoKeyManagerIdentity];
+  const sourcePath = annotations?.[AnnoKeySourcePath];
+  // Get config by resource name or folder UID for new resources
+  const repositoryConfig =
+    managerKind === 'repo' ? useGetResourceRepository({ name: managerIdentity, folderUid: meta.folderUid }) : undefined;
+  const repository = repositoryConfig?.spec;
+
+  const random = Chance(1);
+  const timestamp = `${dateTime().format('YYYY-MM-DD')}-${random.string({ length: 5, alpha: true })}`;
 
   return {
     values: {
       ref: `dashboard/${timestamp}`,
-      path: generatePath(timestamp, annoPath, meta.slug),
-      repo: annotations?.[AnnoKeyRepoName] ?? repositoryName,
+      path: generatePath(timestamp, sourcePath, meta.slug),
+      repo: managerIdentity || repositoryConfig?.metadata?.name || '',
       comment: '',
       folder: {
         uid: meta.folderUid,
@@ -42,10 +48,10 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
       },
       title: defaultTitle,
       description: defaultDescription ?? '',
-      workflow: getDefaultWorkflow(repositoryConfig),
+      workflow: getDefaultWorkflow(repository),
     },
-    isNew: !annoPath,
-    repositoryConfig,
-    isGitHub: repositoryConfig?.type === 'github',
+    isNew: !managerIdentity,
+    repositoryConfig: repository,
+    isGitHub: repository?.type === 'github',
   };
 }

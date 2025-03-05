@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { Card, EmptyState, Spinner, Stack, Text, TextLink } from '@grafana/ui';
+import { Card, EmptyState, Spinner, Stack, Text, TextLink, UserIcon } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { isNotFoundError } from '../alerting/unified/api/util';
@@ -8,6 +8,7 @@ import { isNotFoundError } from '../alerting/unified/api/util';
 import { useGetRepositoryHistoryWithPathQuery, useGetRepositoryStatusQuery } from './api';
 import { HistoryListResponse } from './api/types';
 import { PROVISIONING_URL } from './constants';
+import { formatTimestamp } from './utils/time';
 
 export default function FileHistoryPage() {
   const params = useParams();
@@ -53,22 +54,30 @@ function HistoryView({ history, path, repo }: Props) {
 
   return (
     <Stack direction={'column'}>
-      <h5>History</h5>
       {history.items.map((item) => (
         <Card href={`${PROVISIONING_URL}/${repo}/file/${path}?ref=${item.ref}`} key={item.ref}>
           <Card.Heading>{item.message}</Card.Heading>
           <Card.Meta>
-            <Stack gap={1}>
-              <span key={item.ref}>Authors:</span>
-              <Stack>
-                {item.authors.map((a) => (
-                  <span key={a.username}>
-                    <a href={`https://github.com/${a.username}`}>{a.name}</a>
-                  </span>
-                ))}
-              </Stack>
-            </Stack>
+            <span>{formatTimestamp(item.createdAt)}</span>
           </Card.Meta>
+          <Card.Description>
+            <Stack>
+              {item.authors.map((a) => (
+                <span key={a.username} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  {a.avatarURL && (
+                    <UserIcon
+                      userView={{
+                        user: { name: a.name, avatarUrl: a.avatarURL },
+                        lastActiveAt: new Date().toISOString(),
+                      }}
+                      showTooltip={false}
+                    />
+                  )}
+                  <a href={`https://github.com/${a.username}`}>{a.name}</a>
+                </span>
+              ))}
+            </Stack>
+          </Card.Description>
         </Card>
       ))}
     </Stack>

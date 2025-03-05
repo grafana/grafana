@@ -15,8 +15,9 @@ export function DeleteRepositoryButton({ name }: { name: string }) {
     if (request.isSuccess) {
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
-        payload: ['Repository settings deleted'],
+        payload: ['Repository settings queued for deletion'],
       });
+      setShowModal(false);
     }
   }, [request.isSuccess]);
 
@@ -29,6 +30,7 @@ export function DeleteRepositoryButton({ name }: { name: string }) {
       <IconButton
         name="trash-alt"
         tooltip="Delete this repository"
+        disabled={request.isLoading}
         onClick={() => {
           setShowModal(true);
         }}

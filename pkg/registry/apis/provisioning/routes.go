@@ -12,6 +12,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -24,8 +25,8 @@ func (b *APIBuilder) GetAPIRoutes() *builder.APIRoutes {
 				Spec: &spec3.PathProps{
 					Get: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
-							OperationId: "getResourceStats", // used for RTK client
-							Tags:        []string{"Provisioning"},
+							OperationId: "getResourceStats",                     // used for RTK client
+							Tags:        []string{"Provisioning", "Repository"}, //includes stats for repositores and provisiong in general
 							Description: "Get resource stats for this namespace",
 							Parameters: []*spec3.Parameter{
 								{
@@ -71,7 +72,9 @@ func (b *APIBuilder) GetAPIRoutes() *builder.APIRoutes {
 					Get: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
 							OperationId: "getFrontendSettings", // used for RTK client
-							Tags:        []string{"Provisioning"},
+							//includes stats for repositores and provisiong in general
+							// This must include "Repository" so that the RTK client will invalidate when things are deleted
+							Tags:        []string{"Provisioning", "Repository"},
 							Description: "Get the frontend settings for this namespace",
 							Parameters: []*spec3.Parameter{
 								{
@@ -146,14 +149,15 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	settings := provisioning.RepositoryViewList{
-		Items: make([]provisioning.RepositoryView, len(all)),
+		Items:         make([]provisioning.RepositoryView, len(all)),
+		LegacyStorage: dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus),
 	}
 	for i, val := range all {
 		settings.Items[i] = provisioning.RepositoryView{
 			Name:     val.ObjectMeta.Name,
 			Title:    val.Spec.Title,
 			Type:     val.Spec.Type,
-			ReadOnly: val.Spec.ReadOnly,
+			ReadOnly: len(val.Spec.Workflows) == 0,
 			Target:   val.Spec.Sync.Target,
 		}
 	}

@@ -1,5 +1,7 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 
+import { AppEvents } from '@grafana/data';
+import { getAppEvents } from '@grafana/runtime';
 import {
   Card,
   EmptySearchResult,
@@ -11,25 +13,69 @@ import {
   Stack,
   TextLink,
   Text,
+  Alert,
+  ConfirmModal,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
-import { SetupWarnings } from './SetupWarnings';
+import OnboardingPage from './OnboardingPage';
 import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
-import { Repository, ResourceCount } from './api';
+import { Repository, ResourceCount, useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from './api';
 import { NEW_URL, PROVISIONING_URL } from './constants';
 import { useRepositoryList } from './hooks';
 
+const appEvents = getAppEvents();
+
 export default function RepositoryListPage() {
   const [items, isLoading] = useRepositoryList({ watch: true });
+  const settings = useGetFrontendSettingsQuery();
+  const [deleteAll, deleteAllResult] = useDeletecollectionRepositoryMutation();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  useEffect(() => {
+    if (deleteAllResult.isSuccess) {
+      appEvents.publish({
+        type: AppEvents.alertSuccess.name,
+        payload: ['All configured repositories deleted'],
+      });
+    }
+  }, [deleteAllResult.isSuccess]);
+
+  if (!items?.length && !isLoading) {
+    return <OnboardingPage legacyStorage={settings.data?.legacyStorage} />;
+  }
+
+  const onConfirmDelete = () => {
+    deleteAll({ deleteOptions: {} });
+    setShowDeleteModal(false);
+  };
 
   return (
     <Page navId="provisioning" subTitle="View and manage your configured repositories">
       <Page.Contents isLoading={isLoading}>
-        <SetupWarnings />
+        {settings.data?.legacyStorage && (
+          <Alert
+            title="Legacy storage detected"
+            severity="error"
+            buttonContent={<>Remove all configured repositories</>}
+            onRemove={() => {
+              setShowDeleteModal(true);
+            }}
+          >
+            Configured repositories will not work while running legacy storage.
+          </Alert>
+        )}
         <RepositoryListPageContent items={items} />
+        <ConfirmModal
+          isOpen={showDeleteModal}
+          title="Delete all configured repositories"
+          body="Are you sure you want to delete all configured repositories? This action cannot be undone."
+          confirmText="Delete repositories"
+          onConfirm={onConfirmDelete}
+          onDismiss={() => setShowDeleteModal(false)}
+        />
       </Page.Contents>
     </Page>
   );
@@ -72,10 +118,10 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
               case 'github':
                 icon = 'github';
                 const spec = item.spec.github;
-                const url = `https://github.com/${spec?.owner}/${spec?.repository}/`;
+                const url = item.spec.github?.url ?? '';
                 let branch = url;
                 if (spec?.branch) {
-                  branch += `tree/` + spec?.branch;
+                  branch += `/tree/` + spec?.branch;
                 }
                 meta.push(
                   <TextLink key={'link'} external style={{ color: 'inherit' }} href={branch}>
@@ -84,7 +130,7 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                 );
 
                 if (item.status?.webhook?.id) {
-                  const hook = url + `settings/hooks/${item.status?.webhook?.id}`;
+                  const hook = url + `/settings/hooks/${item.status?.webhook?.id}`;
                   meta.push(
                     <TextLink key={'webhook'} style={{ color: 'inherit' }} href={hook}>
                       Webhook <Icon name={'check'} />
@@ -131,13 +177,13 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                 </Card.Description>
                 <Card.Meta>{meta}</Card.Meta>
                 <Card.Actions>
-                  <LinkButton href={`${PROVISIONING_URL}/${name}`} variant="secondary">
-                    Manage
-                  </LinkButton>
-                  <LinkButton href={`${PROVISIONING_URL}/${name}/edit`} variant="secondary">
-                    Edit
+                  <LinkButton icon="eye" href={`${PROVISIONING_URL}/${name}`} variant="secondary">
+                    View
                   </LinkButton>
                   <SyncRepository repository={item} />
+                  <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`}>
+                    Settings
+                  </LinkButton>
                 </Card.Actions>
                 <Card.SecondaryActions>
                   <DeleteRepositoryButton name={name} />

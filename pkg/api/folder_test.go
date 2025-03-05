@@ -15,7 +15,6 @@ import (
 	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -528,10 +527,6 @@ func (m mockClientConfigProvider) GetDirectRestConfig(c *contextmodel.ReqContext
 	}
 }
 
-func (m mockClientConfigProvider) GetRestConfigForBackgroundWorker(requester func() identity.Requester) *clientrest.Config {
-	return nil
-}
-
 func (m mockClientConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {}
 
 // for now, test only the general folder
@@ -630,7 +625,7 @@ func TestGetFolderLegacyAndUnifiedStorage(t *testing.T) {
 
 				featuresArr := []any{featuremgmt.FlagNestedFolders}
 				if tc.unifiedStorageEnabled {
-					featuresArr = append(featuresArr, featuremgmt.FlagKubernetesFoldersServiceV2)
+					featuresArr = append(featuresArr, featuremgmt.FlagKubernetesClientDashboardsFolders)
 				}
 
 				server := SetupAPITestServer(t, func(hs *HTTPServer) {

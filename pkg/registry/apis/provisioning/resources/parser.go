@@ -6,11 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"path"
 
 	"gopkg.in/yaml.v3"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -19,8 +17,8 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
@@ -30,7 +28,7 @@ type ParserFactory struct {
 	Client *ClientFactory
 }
 
-func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Repository) (*Parser, error) {
+func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Reader) (*Parser, error) {
 	config := repo.Config()
 	client, kinds, err := f.Client.New(config.Namespace) // As system user
 	if err != nil {
@@ -41,30 +39,6 @@ func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Repositor
 		repo:   config,
 		client: client,
 		kinds:  kinds,
-	}
-	// TODO: Figure out how we want to determine this in practice.
-	linting, ok := os.LookupEnv("GRAFANA_LINTING")
-	if ok && linting == "true" {
-		linterFactory := lint.NewDashboardLinterFactory()
-		cfg, err := repo.Read(ctx, linterFactory.ConfigPath(), "")
-
-		logger := logging.FromContext(ctx)
-		var linter lint.Linter
-		switch {
-		case err == nil:
-			logger.Info("linter config found", "config", string(cfg.Data))
-			linter, err = linterFactory.NewFromConfig(cfg.Data)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create linter: %w", err)
-			}
-		case apierrors.IsNotFound(err):
-			logger.Info("no linter config found, using default")
-			linter = linterFactory.New()
-		default:
-			return nil, fmt.Errorf("failed to read linter config: %w", err)
-		}
-
-		parser.linter = linter
 	}
 
 	return parser, nil
@@ -77,7 +51,6 @@ type Parser struct {
 	// client helper (for this namespace?)
 	client *DynamicClient
 	kinds  KindsLookup
-	linter lint.Linter
 }
 
 type ParsedResource struct {
@@ -109,9 +82,6 @@ type ParsedResource struct {
 	// The results from dry run
 	DryRunResponse *unstructured.Unstructured
 
-	// Optional lint issues
-	Lint []provisioning.LintIssue
-
 	// If we got some Errors
 	Errors []error
 }
@@ -126,7 +96,7 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 		Info: info,
 	}
 
-	if ShouldIgnorePath(info.Path) {
+	if ShouldIgnorePath(info.Path) && info.Path != "" {
 		return parsed, ErrUnableToReadResourceBytes
 	}
 
@@ -138,6 +108,13 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 			logger.Debug("also failed to get GVK from fallback loader?", "error", err)
 			return parsed, err
 		}
+	}
+
+	// Remove the internal UID,version and id if they exist
+	if parsed.GVK.Group == dashboard.GROUP && parsed.GVK.Kind == "Dashboard" {
+		unstructured.RemoveNestedField(parsed.Obj.Object, "spec", "uid")
+		unstructured.RemoveNestedField(parsed.Obj.Object, "spec", "version")
+		unstructured.RemoveNestedField(parsed.Obj.Object, "spec", "id") // now managed as a label
 	}
 
 	parsed.Meta, err = utils.MetaAccessor(parsed.Obj)
@@ -153,16 +130,25 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 	}
 
 	obj.SetNamespace(cfg.GetNamespace())
-	parsed.Meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-		Name:      cfg.Name,
-		Path:      info.Path, // joinPathWithRef(info.Path, info.Ref),
-		Hash:      info.Hash,
-		Timestamp: nil, // ???&info.Modified.Time,
+	parsed.Meta.SetManagerProperties(utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: cfg.Name,
+	})
+	parsed.Meta.SetSourceProperties(utils.SourceProperties{
+		Path:     info.Path, // joinPathWithRef(info.Path, info.Ref),
+		Checksum: info.Hash,
 	})
 
-	objName, folderName := NamesFromHashedRepoPath(cfg.Name, info.Path)
-	obj.SetName(objName)
-	parsed.Meta.SetFolder(folderName)
+	// Calculate name+folder from the file path
+	if info.Path != "" {
+		objName, folderName := NamesFromHashedRepoPath(cfg.Name, info.Path)
+		parsed.Meta.SetFolder(folderName)
+		if obj.GetName() == "" {
+			obj.SetName(objName) // use the name saved in config
+		}
+	}
+	obj.SetUID("")             // clear identifiers
+	obj.SetResourceVersion("") // clear identifiers
 
 	// We can not do anything more if no kind is defined
 	if parsed.GVK == nil {
@@ -178,20 +164,6 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 	parsed.Client = r.client.Resource(gvr)
 	if !validate {
 		return parsed, nil
-	}
-
-	if r.linter != nil { // lint
-		raw := info.Data
-		if parsed.Classic == provisioning.ClassicDashboard {
-			raw, err = json.MarshalIndent(parsed.Obj, "", "  ") // indent so it is not all on one line
-			if err != nil {
-				return parsed, err
-			}
-		}
-		parsed.Lint, err = r.linter.Lint(ctx, raw)
-		if err != nil {
-			parsed.Errors = append(parsed.Errors, err)
-		}
 	}
 
 	if parsed.Client == nil {
@@ -276,7 +248,6 @@ func (f *ParsedResource) AsResourceWrapper() *provisioning.ResourceWrapper {
 		Hash:      info.Hash,
 		Timestamp: info.Modified,
 		Resource:  res,
-		Lint:      f.Lint,
 	}
 	for _, err := range f.Errors {
 		wrap.Errors = append(wrap.Errors, err.Error())

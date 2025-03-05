@@ -77,7 +77,11 @@ func (r *LocalFolderResolver) LocalPath(p string) (string, error) {
 	return "", &InvalidLocalFolderError{originalPath, "the path matches no permitted prefix"}
 }
 
-var _ Repository = (*localRepository)(nil)
+var (
+	_ Repository = (*localRepository)(nil)
+	_ Writer     = (*localRepository)(nil)
+	_ Reader     = (*localRepository)(nil)
+)
 
 type localRepository struct {
 	config   *provisioning.Repository
@@ -94,6 +98,9 @@ func NewLocal(config *provisioning.Repository, resolver *LocalFolderResolver) *l
 	}
 	if config.Spec.Local != nil {
 		r.path, _ = resolver.LocalPath(config.Spec.Local.Path)
+		if r.path != "" && !strings.HasSuffix(r.path, "/") {
+			r.path += "/"
+		}
 	}
 	return r
 }
@@ -201,7 +208,7 @@ func (r *localRepository) Read(ctx context.Context, filePath string, ref string)
 		return nil, fmt.Errorf("stat file: %w", err)
 	}
 
-	path := strings.TrimPrefix(filePath, safepath.Clean(r.path))
+	path := strings.TrimPrefix(filePath, r.path)
 	if info.IsDir() {
 		return &FileInfo{
 			Path: path,
@@ -347,21 +354,25 @@ func (r *localRepository) Update(ctx context.Context, path string, ref string, d
 	return os.WriteFile(path, data, 0600)
 }
 
-func (r *localRepository) Write(ctx context.Context, path, ref string, data []byte, comment string) error {
+func (r *localRepository) Write(ctx context.Context, fpath, ref string, data []byte, comment string) error {
 	if err := r.validateRequest(ref); err != nil {
 		return err
 	}
 
-	path, err := safepath.Join(r.path, path)
+	fpath, err := safepath.Join(r.path, fpath)
 	if err != nil {
 		return fmt.Errorf("join path: %w", err)
 	}
 
-	if strings.HasSuffix(path, "/") {
-		return os.MkdirAll(path, 0600)
+	if strings.HasSuffix(fpath, "/") {
+		return os.MkdirAll(fpath, 0700)
 	}
 
-	return os.WriteFile(path, data, 0600)
+	if err := os.MkdirAll(path.Dir(fpath), 0700); err != nil {
+		return apierrors.NewInternalError(fmt.Errorf("failed to create path: %w", err))
+	}
+
+	return os.WriteFile(fpath, data, 0600)
 }
 
 func (r *localRepository) Delete(ctx context.Context, path string, ref string, comment string) error {
@@ -375,24 +386,4 @@ func (r *localRepository) Delete(ctx context.Context, path string, ref string, c
 	}
 
 	return os.Remove(path)
-}
-
-func (r *localRepository) History(ctx context.Context, path string, ref string) ([]provisioning.HistoryItem, error) {
-	return nil, &apierrors.StatusError{
-		ErrStatus: metav1.Status{
-			Message: "history is not yet implemented",
-			Code:    http.StatusNotImplemented,
-		},
-	}
-}
-
-// Webhook implements Repository.
-func (r *localRepository) Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error) {
-	return &provisioning.WebhookResponse{
-		Code: http.StatusAccepted,
-		Job: &provisioning.JobSpec{
-			Repository: r.Config().GetName(),
-			Action:     provisioning.JobActionSync, // sync the latest changes
-		},
-	}, nil
 }

@@ -6,15 +6,13 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
     type: data.type,
     sync: data.sync,
     title: data.title || '',
-    readOnly: data.readOnly,
+    workflows: data.workflows,
   };
   switch (data.type) {
     case 'github':
       spec.github = {
-        branchWorkflow: data.branchWorkflow,
         generateDashboardPreviews: data.generateDashboardPreviews,
-        owner: data.owner,
-        repository: data.repository,
+        url: data.url || '',
         branch: data.branch,
         token: data.token,
       };
@@ -22,12 +20,6 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
     case 'local':
       spec.local = {
         path: data.path,
-      };
-      break;
-    case 's3':
-      spec.s3 = {
-        bucket: data.bucket,
-        region: data.region,
       };
       break;
   }
@@ -38,10 +30,9 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
 export const specToData = (spec: RepositorySpec): RepositoryFormData => {
   return {
     ...spec,
-    owner: spec?.github?.owner || '',
-    repository: spec?.github?.repository || '',
     ...spec.github,
     ...spec.local,
-    ...spec.s3,
+    branch: spec.github?.branch || '',
+    url: spec.github?.url || '',
   };
 };

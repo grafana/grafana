@@ -6,11 +6,13 @@ import (
 	"net/http"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 type historySubresource struct {
@@ -58,6 +60,12 @@ func (h *historySubresource) Connect(ctx context.Context, name string, opts runt
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		versioned, ok := repo.(repository.Versioned)
+		if !ok {
+			responder.Error(errors.NewBadRequest("this repository does not support history"))
+			return
+		}
+
 		query := r.URL.Query()
 		ref := query.Get("ref")
 
@@ -71,7 +79,7 @@ func (h *historySubresource) Connect(ctx context.Context, name string, opts runt
 		logger := logger.With("ref", ref, "path", filePath)
 		ctx := logging.Context(r.Context(), logger)
 
-		commits, err := repo.History(ctx, filePath, ref)
+		commits, err := versioned.History(ctx, filePath, ref)
 		if err != nil {
 			logger.Debug("failed to get history", "error", err)
 			responder.Error(err)

@@ -201,15 +201,16 @@ func __dangerouslyInjectHTML(s string) template.HTML {
 
 func (ns *NotificationService) SendEmailCommandHandlerSync(ctx context.Context, cmd *SendEmailCommandSync) error {
 	message, err := ns.buildEmailMessage(&SendEmailCommand{
-		Data:          cmd.Data,
-		Info:          cmd.Info,
-		Template:      cmd.Template,
-		To:            cmd.To,
-		SingleEmail:   cmd.SingleEmail,
-		EmbeddedFiles: cmd.EmbeddedFiles,
-		AttachedFiles: cmd.AttachedFiles,
-		Subject:       cmd.Subject,
-		ReplyTo:       cmd.ReplyTo,
+		Data:             cmd.Data,
+		Info:             cmd.Info,
+		Template:         cmd.Template,
+		To:               cmd.To,
+		SingleEmail:      cmd.SingleEmail,
+		EmbeddedFiles:    cmd.EmbeddedFiles,
+		EmbeddedContents: cmd.EmbeddedContents,
+		AttachedFiles:    cmd.AttachedFiles,
+		Subject:          cmd.Subject,
+		ReplyTo:          cmd.ReplyTo,
 	})
 	if err != nil {
 		return err

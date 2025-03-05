@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -13,15 +14,15 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 // This only works for github right now
 type webhookConnector struct {
-	client auth.BackgroundIdentityService
-	getter RepoGetter
-	jobs   jobs.JobQueue
+	getter          RepoGetter
+	jobs            jobs.JobQueue
+	webhooksEnabled bool
 }
 
 func (*webhookConnector) New() runtime.Object {
@@ -51,13 +52,13 @@ func (*webhookConnector) NewConnectOptions() (runtime.Object, bool, string) {
 
 func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	namespace := request.NamespaceValue(ctx)
-	id, err := s.client.WorkerIdentity(ctx, namespace)
+	ctx, _, err := identity.WithProvisioningIdentitiy(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get the repository with the worker identity (since the request user is likely anonymous)
-	repo, err := s.getter.GetHealthyRepository(identity.WithRequester(ctx, id), name)
+	repo, err := s.getter.GetHealthyRepository(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -65,8 +66,18 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := logging.FromContext(r.Context()).With("logger", "webhook-connector", "repo", name)
 		ctx := logging.Context(r.Context(), logger)
+		if !s.webhooksEnabled {
+			responder.Error(errors.NewBadRequest("webhooks are not enabled"))
+			return
+		}
 
-		rsp, err := repo.Webhook(ctx, r)
+		hooks, ok := repo.(repository.Hooks)
+		if !ok {
+			responder.Error(errors.NewBadRequest("the repository does not support webhooks"))
+			return
+		}
+
+		rsp, err := hooks.Webhook(ctx, r)
 		if err != nil {
 			responder.Error(err)
 			return

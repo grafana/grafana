@@ -301,6 +301,10 @@ Path to the certificate file (if `protocol` is set to `https` or `h2`).
 
 Path to the certificate key file (if `protocol` is set to `https` or `h2`).
 
+#### `cert_pass`
+
+Optional. Password to decrypt encrypted certificates.
+
 #### `certs_watch_interval`
 
 Controls whether `cert_key` and `cert_file` are periodically watched for changes.
@@ -696,6 +700,10 @@ An existing user's account is unable to login for five minutes if all login atte
 Configure how many login attempts a user can have within a five minute window before their account is locked.
 Default is `5`.
 
+#### `disable_ip_address_login_protection`
+
+Set to `true` to disable [brute force login protection by IP address](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout). Default is `true`. Anyone from the IP address will be unable to login for 5 minutes if all login attempts are spent within a 5 minute window.
+
 #### `cookie_secure`
 
 Set to `true` if you host Grafana behind HTTPS. Default is `false`.
@@ -942,9 +950,17 @@ If you manage users externally you can replace the user invite button for organi
 
 #### `viewers_can_edit`
 
+{{< admonition type="note" >}}
+This option is deprecated - assign your viewers as editors, if you are using RBAC assign the data sources explorer role to your users.
+{{< /admonition >}}
+
 Viewers can access and use [Explore]({{< relref "../../explore" >}}) and perform temporary edits on panels in dashboards they have access to. They cannot save their changes. Default is `false`.
 
 #### `editors_can_admin`
+
+{{< admonition type="note" >}}
+This option is deprecated - assign your editors as admins, if you are using RBAC assign the team creator role to your users.
+{{< /admonition >}}
 
 Editors can administrate dashboards, folders and teams they create.
 Default is `false`.
@@ -1507,6 +1523,16 @@ Options are `debug`, `info`, `warn`, `error`, and `critical`. Default is `info`.
 Optional settings to set different levels for specific loggers.
 For example: `filters = sqlstore:debug`
 
+You can use multiple filters with a comma-seperated list:
+For example: `filters = sqlstore:debug,plugins:info`
+
+The equivalent for a `docker-compose.yaml` looks like this:
+
+```
+GF_LOG_FILTERS: sqlstore:debug,plugins:info
+GF_LOG_LEVEL: error
+```
+
 #### `user_facing_default_error`
 
 Use this configuration option to set the default error message shown to users. This message is displayed instead of sensitive backend errors, which should be obfuscated. The default message is `Please inspect the Grafana server log for details.`.
@@ -1813,7 +1839,7 @@ The timeout string is a possibly signed sequence of decimal numbers, followed by
 
 #### `max_attempts`
 
-Sets a maximum number of times Grafana attempts to evaluate an alert rule before giving up on that evaluation. The default value is `1`.
+Sets a maximum number of times Grafana attempts to evaluate an alert rule before giving up on that evaluation. The default value is `3`.
 
 #### `min_interval`
 

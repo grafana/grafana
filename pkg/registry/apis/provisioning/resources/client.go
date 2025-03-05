@@ -8,16 +8,17 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 )
 
 var ErrNoNamespace = errors.New("no namespace was given")
 
 type ClientFactory struct {
-	identities auth.BackgroundIdentityService
-	clients    map[string]namespacedClients
-	clientsMu  sync.Mutex
+	configProvider apiserver.RestConfigProvider
+	clients        map[string]namespacedClients
+	clientsMu      sync.Mutex
 }
 
 type namespacedClients struct {
@@ -25,10 +26,10 @@ type namespacedClients struct {
 	kinds  KindsLookup
 }
 
-func NewFactory(identities auth.BackgroundIdentityService) *ClientFactory {
+func NewFactory(configProvider apiserver.RestConfigProvider) *ClientFactory {
 	return &ClientFactory{
-		identities: identities,
-		clients:    make(map[string]namespacedClients),
+		configProvider: configProvider,
+		clients:        make(map[string]namespacedClients),
 	}
 }
 
@@ -49,12 +50,14 @@ func (c *ClientFactory) New(ns string) (*DynamicClient, KindsLookup, error) {
 		return nsClients.client, nsClients.kinds, nil
 	}
 
-	// TODO: Do we ever want to use another context? Document findings.
-	config, err := c.identities.RestConfigForNamespace(context.Background(), ns)
+	ctx, _, err := identity.WithProvisioningIdentitiy(context.Background(), ns)
 	if err != nil {
 		return nil, nil, err
 	}
-
+	config, err := c.configProvider.GetRestConfig(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
 	client, err := dynamic.NewForConfig(config)
 	if err != nil {
 		return nil, nil, err

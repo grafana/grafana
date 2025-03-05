@@ -1,10 +1,9 @@
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneObjectRef } from '@grafana/scenes';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { useUrlParams } from 'app/core/navigation/hooks';
-import { AnnoKeyRepoName } from 'app/features/apiserver/types';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 
-import { useFolderRepository } from '../../provisioning/hooks';
+import { useGetResourceRepository } from '../../provisioning/hooks';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { SaveDashboardAsForm } from './SaveDashboardAsForm';
@@ -20,7 +19,6 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   saveRefresh?: boolean;
   saveAsCopy?: boolean;
   onSaveSuccess?: () => void;
-  saveProvisioned?: boolean;
 }
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {
@@ -47,22 +45,21 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
   };
 
   static Component = ({ model }: SceneComponentProps<SaveDashboardDrawer>) => {
-    const { saveProvisioned, showDiff, saveAsCopy, saveTimeRange, saveVariables, saveRefresh } = model.useState();
+    const { showDiff, saveAsCopy, saveTimeRange, saveVariables, saveRefresh } = model.useState();
 
     const changeInfo = model.state.dashboardRef
       .resolve()
       .getDashboardChanges(saveTimeRange, saveVariables, saveRefresh);
-
     const { changedSaveModel, initialSaveModel, diffs, diffCount, hasFolderChanges } = changeInfo;
     const changesCount = diffCount + (hasFolderChanges ? 1 : 0);
     const dashboard = model.state.dashboardRef.resolve();
     const { meta } = dashboard.useState();
     const { provisioned: isProvisioned, folderTitle } = meta;
     const [params] = useUrlParams();
-    const folderUid = params.get('folderUid');
-    const folderRepository = useFolderRepository(folderUid ?? undefined);
-    // Provisioned dashboards have k8s metadata annotations
-    const isProvisionedNG = saveProvisioned || meta.k8s?.annotations?.[AnnoKeyRepoName] || Boolean(folderRepository);
+    const folderUid = params.get('folderUid') || undefined;
+
+    const folderRepository = useGetResourceRepository({ folderUid });
+    const isProvisionedNG = dashboard.isManaged() || Boolean(folderRepository);
 
     const tabs = (
       <TabsBar>

@@ -6,50 +6,72 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"os"
+	"net/url"
 	"regexp"
 	"slices"
 	"strings"
 
-	"github.com/google/go-github/v66/github"
+	"github.com/google/go-github/v69/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/google/uuid"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	pgh "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
 
 var subscribedEvents = []string{"push", "pull_request"}
 
-type SecretsService interface {
-	Encrypt(ctx context.Context, data string) (string, error)
-}
-
 // Make sure all public functions of this struct call the (*githubRepository).logger function, to ensure the GH repo details are included.
 type githubRepository struct {
 	config     *provisioning.Repository
-	gh         pgh.Client
-	secrets    SecretsService
+	gh         pgh.Client // assumes github.com base URL
+	secrets    secrets.Service
 	webhookURL string
+
+	owner string
+	repo  string
 }
 
-var _ Repository = (*githubRepository)(nil)
+var (
+	_ Repository = (*githubRepository)(nil)
+	_ Hooks      = (*githubRepository)(nil)
+	_ Versioned  = (*githubRepository)(nil)
+	_ Writer     = (*githubRepository)(nil)
+	_ Reader     = (*githubRepository)(nil)
+)
 
 func NewGitHub(
 	ctx context.Context,
 	config *provisioning.Repository,
-	factory pgh.ClientFactory,
-	secrets SecretsService,
+	factory *pgh.Factory,
+	secrets secrets.Service,
 	webhookURL string,
-) *githubRepository {
+) (*githubRepository, error) {
+	owner, repo, err := parseOwnerRepo(config.Spec.GitHub.URL)
+	if err != nil {
+		return nil, err
+	}
+	token := config.Spec.GitHub.Token
+	if token == "" {
+		decrypted, err := secrets.Decrypt(ctx, config.Spec.GitHub.EncryptedToken)
+		if err != nil {
+			return nil, err
+		}
+		token = string(decrypted)
+	}
 	return &githubRepository{
 		config:     config,
-		gh:         factory.New(ctx, config.Spec.GitHub.Token),
+		gh:         factory.New(ctx, token), // TODO, baseURL from config
 		secrets:    secrets,
 		webhookURL: webhookURL,
-	}
+		owner:      owner,
+		repo:       repo,
+	}, nil
 }
 
 func (r *githubRepository) Config() *provisioning.Repository {
@@ -63,11 +85,15 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 		list = append(list, field.Required(field.NewPath("spec", "github"), "a github config is required"))
 		return list
 	}
-	if gh.Owner == "" {
-		list = append(list, field.Required(field.NewPath("spec", "github", "owner"), "a github repo owner is required"))
-	}
-	if gh.Repository == "" {
-		list = append(list, field.Required(field.NewPath("spec", "github", "repository"), "a github repo name is required"))
+	if gh.URL == "" {
+		list = append(list, field.Required(field.NewPath("spec", "github", "url"), "a github url is required"))
+	} else {
+		_, _, err := parseOwnerRepo(gh.URL)
+		if err != nil {
+			list = append(list, field.Invalid(field.NewPath("spec", "github", "url"), gh.URL, err.Error()))
+		} else if !strings.HasPrefix(gh.URL, "https://github.com/") {
+			list = append(list, field.Invalid(field.NewPath("spec", "github", "url"), gh.URL, "URL must start with https://github.com/"))
+		}
 	}
 	if gh.Branch == "" {
 		list = append(list, field.Required(field.NewPath("spec", "github", "branch"), "a github branch is required"))
@@ -75,36 +101,60 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 	if !isValidGitBranchName(gh.Branch) {
 		list = append(list, field.Invalid(field.NewPath("spec", "github", "branch"), gh.Branch, "invalid branch name"))
 	}
-	if gh.Token == "" {
+	// TODO: Use two fields for token
+	if gh.Token == "" && len(gh.EncryptedToken) == 0 {
 		list = append(list, field.Required(field.NewPath("spec", "github", "token"), "a github access token is required"))
-	}
-	if gh.GenerateDashboardPreviews && !gh.BranchWorkflow {
-		list = append(list, field.Forbidden(field.NewPath("spec", "github", "token"), "to generate dashboard previews, you must activate the branch workflow"))
 	}
 
 	return list
 }
 
+func parseOwnerRepo(giturl string) (owner string, repo string, err error) {
+	parsed, e := url.Parse(strings.TrimSuffix(giturl, ".git"))
+	if e != nil {
+		err = e
+		return
+	}
+	parts := strings.Split(parsed.Path, "/")
+	if len(parts) < 3 {
+		err = fmt.Errorf("unable to parse repo+owner from url")
+		return
+	}
+	return parts[1], parts[2], nil
+}
+
+func fromError(err error, code int) *provisioning.TestResults {
+	statusErr, ok := err.(apierrors.APIStatus)
+	if ok {
+		s := statusErr.Status()
+		return &provisioning.TestResults{
+			Code:    int(s.Code),
+			Success: false,
+			Errors:  []string{s.Message},
+		}
+	}
+	return &provisioning.TestResults{
+		Code:    code,
+		Success: false,
+		Errors:  []string{err.Error()},
+	}
+}
+
 // Test implements provisioning.Repository.
 func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
 	if err := r.gh.IsAuthenticated(ctx); err != nil {
-		// TODO: should we return a more specific error or error code?
-		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
-			Success: false,
-			Errors:  []string{err.Error()},
-		}, nil
+		return fromError(err, http.StatusUnauthorized), nil
+	}
+
+	owner, repo, err := parseOwnerRepo(r.config.Spec.GitHub.URL)
+	if err != nil {
+		return fromError(err, http.StatusBadRequest), nil
 	}
 
 	// FIXME: check token permissions
-
-	ok, err := r.gh.RepoExists(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository)
+	ok, err := r.gh.RepoExists(ctx, owner, repo)
 	if err != nil {
-		return &provisioning.TestResults{
-			Code:    http.StatusInternalServerError,
-			Success: false,
-			Errors:  []string{err.Error()},
-		}, nil
+		return fromError(err, http.StatusBadRequest), nil
 	}
 
 	if !ok {
@@ -115,13 +165,9 @@ func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults,
 		}, nil
 	}
 
-	ok, err = r.gh.BranchExists(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, r.config.Spec.GitHub.Branch)
+	ok, err = r.gh.BranchExists(ctx, r.owner, r.repo, r.config.Spec.GitHub.Branch)
 	if err != nil {
-		return &provisioning.TestResults{
-			Code:    http.StatusInternalServerError,
-			Success: false,
-			Errors:  []string{err.Error()},
-		}, nil
+		return fromError(err, http.StatusBadRequest), nil
 	}
 
 	if !ok {
@@ -143,10 +189,8 @@ func (r *githubRepository) Read(ctx context.Context, filePath, ref string) (*Fil
 	if ref == "" {
 		ref = r.config.Spec.GitHub.Branch
 	}
-	owner := r.config.Spec.GitHub.Owner
-	repo := r.config.Spec.GitHub.Repository
 
-	content, dirContent, err := r.gh.GetContents(ctx, owner, repo, filePath, ref)
+	content, dirContent, err := r.gh.GetContents(ctx, r.owner, r.repo, filePath, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
 			return nil, &apierrors.StatusError{
@@ -182,11 +226,10 @@ func (r *githubRepository) ReadTree(ctx context.Context, ref string) ([]FileTree
 	if ref == "" {
 		ref = r.config.Spec.GitHub.Branch
 	}
-	owner := r.config.Spec.GitHub.Owner
-	repo := r.config.Spec.GitHub.Repository
+
 	ctx, logger := r.logger(ctx, ref)
 
-	tree, truncated, err := r.gh.GetTree(ctx, owner, repo, ref, true)
+	tree, truncated, err := r.gh.GetTree(ctx, r.owner, r.repo, ref, true)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
 			return nil, &apierrors.StatusError{
@@ -224,9 +267,6 @@ func (r *githubRepository) Create(ctx context.Context, path, ref string, data []
 		return fmt.Errorf("create branch on create: %w", err)
 	}
 
-	owner := r.config.Spec.GitHub.Owner
-	repo := r.config.Spec.GitHub.Repository
-
 	// Create .keep file if it is a directory
 	if strings.HasSuffix(path, "/") {
 		if data != nil {
@@ -237,7 +277,7 @@ func (r *githubRepository) Create(ctx context.Context, path, ref string, data []
 		data = []byte{}
 	}
 
-	err := r.gh.CreateFile(ctx, owner, repo, path, ref, comment, data)
+	err := r.gh.CreateFile(ctx, r.owner, r.repo, path, ref, comment, data)
 	if errors.Is(err, pgh.ErrResourceAlreadyExists) {
 		return &apierrors.StatusError{
 			ErrStatus: metav1.Status{
@@ -259,10 +299,7 @@ func (r *githubRepository) Update(ctx context.Context, path, ref string, data []
 		return fmt.Errorf("create branch on update: %w", err)
 	}
 
-	owner := r.config.Spec.GitHub.Owner
-	repo := r.config.Spec.GitHub.Repository
-
-	file, _, err := r.gh.GetContents(ctx, owner, repo, path, ref)
+	file, _, err := r.gh.GetContents(ctx, r.owner, r.repo, path, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
 			return &apierrors.StatusError{
@@ -279,13 +316,18 @@ func (r *githubRepository) Update(ctx context.Context, path, ref string, data []
 		return apierrors.NewBadRequest("cannot update a directory")
 	}
 
-	if err := r.gh.UpdateFile(ctx, owner, repo, path, ref, comment, file.GetSHA(), data); err != nil {
+	if err := r.gh.UpdateFile(ctx, r.owner, r.repo, path, ref, comment, file.GetSHA(), data); err != nil {
 		return fmt.Errorf("update file: %w", err)
 	}
 	return nil
 }
 
 func (r *githubRepository) Write(ctx context.Context, path string, ref string, data []byte, message string) error {
+	if ref == "" {
+		ref = r.config.Spec.GitHub.Branch
+	}
+	ctx, _ = r.logger(ctx, ref)
+
 	return writeWithReadThenCreateOrUpdate(ctx, r, path, ref, data, message)
 }
 
@@ -303,10 +345,7 @@ func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string
 }
 
 func (r *githubRepository) deleteRecursively(ctx context.Context, path, ref, comment string) error {
-	owner := r.config.Spec.GitHub.Owner
-	repo := r.config.Spec.GitHub.Repository
-
-	file, contents, err := r.gh.GetContents(ctx, owner, repo, path, ref)
+	file, contents, err := r.gh.GetContents(ctx, r.owner, r.repo, path, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
 			return &apierrors.StatusError{
@@ -320,7 +359,7 @@ func (r *githubRepository) deleteRecursively(ctx context.Context, path, ref, com
 	}
 
 	if file != nil && !file.IsDirectory() {
-		return r.gh.DeleteFile(ctx, owner, repo, path, ref, comment, file.GetSHA())
+		return r.gh.DeleteFile(ctx, r.owner, r.repo, path, ref, comment, file.GetSHA())
 	}
 
 	for _, c := range contents {
@@ -331,7 +370,7 @@ func (r *githubRepository) deleteRecursively(ctx context.Context, path, ref, com
 			continue
 		}
 
-		if err := r.gh.DeleteFile(ctx, owner, repo, c.GetPath(), ref, comment, c.GetSHA()); err != nil {
+		if err := r.gh.DeleteFile(ctx, r.owner, r.repo, c.GetPath(), ref, comment, c.GetSHA()); err != nil {
 			return fmt.Errorf("delete file: %w", err)
 		}
 	}
@@ -345,7 +384,7 @@ func (r *githubRepository) History(ctx context.Context, path, ref string) ([]pro
 	}
 	ctx, _ = r.logger(ctx, ref)
 
-	commits, err := r.gh.Commits(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, path, ref)
+	commits, err := r.gh.Commits(ctx, r.owner, r.repo, path, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
 			return nil, &apierrors.StatusError{
@@ -382,7 +421,7 @@ func (r *githubRepository) History(ctx context.Context, path, ref string) ([]pro
 			Ref:       commit.Ref,
 			Message:   commit.Message,
 			Authors:   authors,
-			CreatedAt: commit.CreatedAt.UnixNano(),
+			CreatedAt: commit.CreatedAt.UnixMilli(),
 		})
 	}
 
@@ -426,7 +465,7 @@ func (r *githubRepository) ensureBranchExists(ctx context.Context, branchName st
 		}
 	}
 
-	ok, err := r.gh.BranchExists(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, branchName)
+	ok, err := r.gh.BranchExists(ctx, r.owner, r.repo, branchName)
 	if err != nil {
 		return fmt.Errorf("check branch exists: %w", err)
 	}
@@ -437,11 +476,8 @@ func (r *githubRepository) ensureBranchExists(ctx context.Context, branchName st
 		return nil
 	}
 
-	owner := r.config.Spec.GitHub.Owner
-	repo := r.config.Spec.GitHub.Repository
-
 	srcBranch := r.config.Spec.GitHub.Branch
-	if err := r.gh.CreateBranch(ctx, owner, repo, srcBranch, branchName); err != nil {
+	if err := r.gh.CreateBranch(ctx, r.owner, r.repo, srcBranch, branchName); err != nil {
 		if errors.Is(err, pgh.ErrResourceAlreadyExists) {
 			return &apierrors.StatusError{
 				ErrStatus: metav1.Status{
@@ -463,7 +499,12 @@ func (r *githubRepository) Webhook(ctx context.Context, req *http.Request) (*pro
 		return nil, fmt.Errorf("unexpected webhook request")
 	}
 
-	payload, err := github.ValidatePayload(req, []byte(r.config.Status.Webhook.Secret))
+	secret, err := r.secrets.Decrypt(ctx, r.config.Status.Webhook.EncryptedSecret)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt secret: %w", err)
+	}
+
+	payload, err := github.ValidatePayload(req, secret)
 	if err != nil {
 		return nil, apierrors.NewUnauthorized("invalid signature")
 	}
@@ -500,7 +541,7 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 	if event.GetRepo() == nil {
 		return nil, fmt.Errorf("missing repository in push event")
 	}
-	if event.GetRepo().GetFullName() != fmt.Sprintf("%s/%s", r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository) {
+	if event.GetRepo().GetFullName() != fmt.Sprintf("%s/%s", r.owner, r.repo) {
 		return nil, fmt.Errorf("repository mismatch")
 	}
 
@@ -521,7 +562,7 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 			Repository: r.Config().GetName(),
 			Action:     provisioning.JobActionSync,
 			Sync: &provisioning.SyncJobOptions{
-				Complete: false,
+				Incremental: true,
 			},
 		},
 	}, nil
@@ -536,14 +577,7 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 		return nil, fmt.Errorf("missing github config")
 	}
 
-	if !r.shouldLintPullRequest() && !cfg.GenerateDashboardPreviews {
-		return &provisioning.WebhookResponse{
-			Code:    http.StatusOK, // Nothing needed
-			Message: "no action required on pull request event",
-		}, nil
-	}
-
-	if event.GetRepo().GetFullName() != fmt.Sprintf("%s/%s", cfg.Owner, cfg.Repository) {
+	if event.GetRepo().GetFullName() != fmt.Sprintf("%s/%s", r.owner, r.repo) {
 		return nil, fmt.Errorf("repository mismatch")
 	}
 	pr := event.GetPullRequest()
@@ -585,7 +619,7 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 
 func (r *githubRepository) LatestRef(ctx context.Context) (string, error) {
 	ctx, _ = r.logger(ctx, "")
-	branch, err := r.gh.GetBranch(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, r.Config().Spec.GitHub.Branch)
+	branch, err := r.gh.GetBranch(ctx, r.owner, r.repo, r.Config().Spec.GitHub.Branch)
 	if err != nil {
 		return "", fmt.Errorf("get branch: %w", err)
 	}
@@ -593,7 +627,7 @@ func (r *githubRepository) LatestRef(ctx context.Context) (string, error) {
 	return branch.Sha, nil
 }
 
-func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) ([]FileChange, error) {
+func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error) {
 	if ref == "" {
 		var err error
 		ref, err = r.LatestRef(ctx)
@@ -603,31 +637,29 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 	}
 	ctx, logger := r.logger(ctx, ref)
 
-	owner := r.config.Spec.GitHub.Owner
-	repo := r.config.Spec.GitHub.Repository
-	files, err := r.gh.CompareCommits(ctx, owner, repo, base, ref)
+	files, err := r.gh.CompareCommits(ctx, r.owner, r.repo, base, ref)
 	if err != nil {
 		return nil, fmt.Errorf("compare commits: %w", err)
 	}
 
-	changes := make([]FileChange, 0)
+	changes := make([]VersionedFileChange, 0)
 	for _, f := range files {
 		// reference: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
 		switch f.GetStatus() {
 		case "added", "copied":
-			changes = append(changes, FileChange{
+			changes = append(changes, VersionedFileChange{
 				Path:   f.GetFilename(),
 				Ref:    ref,
 				Action: FileActionCreated,
 			})
 		case "modified", "changed":
-			changes = append(changes, FileChange{
+			changes = append(changes, VersionedFileChange{
 				Path:   f.GetFilename(),
 				Ref:    ref,
 				Action: FileActionUpdated,
 			})
 		case "renamed":
-			changes = append(changes, FileChange{
+			changes = append(changes, VersionedFileChange{
 				Path:         f.GetFilename(),
 				PreviousPath: f.GetPreviousFilename(),
 				Ref:          ref,
@@ -635,7 +667,7 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 				Action:       FileActionRenamed,
 			})
 		case "removed":
-			changes = append(changes, FileChange{
+			changes = append(changes, VersionedFileChange{
 				Ref:    base,
 				Path:   f.GetFilename(),
 				Action: FileActionDeleted,
@@ -650,22 +682,16 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 	return changes, nil
 }
 
-func (r *githubRepository) shouldLintPullRequest() bool {
-	// TODO: Figure out how we want to determine this in practice.
-	val, ok := os.LookupEnv("GRAFANA_LINTING")
-	return ok && val == "true"
-}
-
 // ClearAllPullRequestFileComments clears all comments on a pull request
 func (r *githubRepository) ClearAllPullRequestFileComments(ctx context.Context, prNumber int) error {
 	ctx, _ = r.logger(ctx, "")
-	return r.gh.ClearAllPullRequestFileComments(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, prNumber)
+	return r.gh.ClearAllPullRequestFileComments(ctx, r.owner, r.repo, prNumber)
 }
 
 // CommentPullRequest adds a comment to a pull request.
 func (r *githubRepository) CommentPullRequest(ctx context.Context, prNumber int, comment string) error {
 	ctx, _ = r.logger(ctx, "")
-	return r.gh.CreatePullRequestComment(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, prNumber, comment)
+	return r.gh.CreatePullRequestComment(ctx, r.owner, r.repo, prNumber, comment)
 }
 
 // CommentPullRequestFile lints a file and comments the issues found.
@@ -680,27 +706,30 @@ func (r *githubRepository) CommentPullRequestFile(ctx context.Context, prNumber 
 
 	// FIXME: comment with Grafana Logo
 	// FIXME: comment author should be written by Grafana and not the user
-	return r.gh.CreatePullRequestFileComment(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, prNumber, fileComment)
+	return r.gh.CreatePullRequestFileComment(ctx, r.owner, r.repo, prNumber, fileComment)
 }
 
 func (r *githubRepository) createWebhook(ctx context.Context) (pgh.WebhookConfig, error) {
-	secret, err := r.secrets.Encrypt(ctx, r.config.Spec.GitHub.Token)
+	secret, err := uuid.NewRandom()
 	if err != nil {
-		return pgh.WebhookConfig{}, fmt.Errorf("encrypt webhook secret: %w", err)
+		return pgh.WebhookConfig{}, fmt.Errorf("could not generate secret: %w", err)
 	}
 
 	cfg := pgh.WebhookConfig{
 		URL:         r.webhookURL,
-		Secret:      secret,
+		Secret:      secret.String(),
 		ContentType: "json",
 		Events:      subscribedEvents,
 		Active:      true,
 	}
 
-	hook, err := r.gh.CreateWebhook(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, cfg)
+	hook, err := r.gh.CreateWebhook(ctx, r.owner, r.repo, cfg)
 	if err != nil {
 		return pgh.WebhookConfig{}, err
 	}
+
+	// HACK: GitHub does not return the secret, so we need to update it manually
+	hook.Secret = cfg.Secret
 
 	logging.FromContext(ctx).Info("webhook created", "url", cfg.URL, "id", hook.ID)
 	return hook, nil
@@ -709,7 +738,7 @@ func (r *githubRepository) createWebhook(ctx context.Context) (pgh.WebhookConfig
 // updateWebhook checks if the webhook needs to be updated and updates it if necessary.
 // if the webhook does not exist, it will create it.
 func (r *githubRepository) updateWebhook(ctx context.Context) (pgh.WebhookConfig, bool, error) {
-	if r.config.Status.Webhook == nil {
+	if r.config.Status.Webhook == nil || r.config.Status.Webhook.ID == 0 {
 		hook, err := r.createWebhook(ctx)
 		if err != nil {
 			return pgh.WebhookConfig{}, false, err
@@ -717,10 +746,7 @@ func (r *githubRepository) updateWebhook(ctx context.Context) (pgh.WebhookConfig
 		return hook, true, nil
 	}
 
-	owner := r.config.Spec.GitHub.Owner
-	repoName := r.config.Spec.GitHub.Repository
-
-	hook, err := r.gh.GetWebhook(ctx, owner, repoName, r.config.Status.Webhook.ID)
+	hook, err := r.gh.GetWebhook(ctx, r.owner, r.repo, r.config.Status.Webhook.ID)
 	switch {
 	case errors.Is(err, pgh.ErrResourceNotFound):
 		hook, err := r.createWebhook(ctx)
@@ -732,18 +758,9 @@ func (r *githubRepository) updateWebhook(ctx context.Context) (pgh.WebhookConfig
 		return pgh.WebhookConfig{}, false, fmt.Errorf("get webhook: %w", err)
 	}
 
+	hook.Secret = r.config.Status.Webhook.Secret // we always random gen this, so don't use it for mustUpdate below.
+
 	var mustUpdate bool
-
-	secret, err := r.secrets.Encrypt(ctx, r.config.Spec.GitHub.Token)
-	if err != nil {
-		return pgh.WebhookConfig{}, false, fmt.Errorf("encrypt webhook secret: %w", err)
-	}
-
-	// Compare with status secret as we cannot get the screen from the webhook
-	if secret != r.config.Status.Webhook.Secret {
-		mustUpdate = true
-		hook.Secret = r.config.Status.Webhook.Secret
-	}
 
 	if hook.URL != r.config.Status.Webhook.URL {
 		mustUpdate = true
@@ -759,12 +776,16 @@ func (r *githubRepository) updateWebhook(ctx context.Context) (pgh.WebhookConfig
 		return hook, false, nil
 	}
 
-	if err := r.gh.EditWebhook(ctx, owner, repoName, hook); err != nil {
+	// Something has changed in the webhook. Let's rotate the secret as well, so as to ensure we end up with a 100% correct webhook.
+	secret, err := uuid.NewRandom()
+	if err != nil {
+		return pgh.WebhookConfig{}, false, fmt.Errorf("could not generate secret: %w", err)
+	}
+	hook.Secret = secret.String()
+
+	if err := r.gh.EditWebhook(ctx, r.owner, r.repo, hook); err != nil {
 		return pgh.WebhookConfig{}, false, fmt.Errorf("edit webhook: %w", err)
 	}
-
-	// HACK: GitHub does not return the secret, so we need to update it manually
-	hook.Secret = secret
 
 	return hook, true, nil
 }
@@ -774,11 +795,9 @@ func (r *githubRepository) deleteWebhook(ctx context.Context) error {
 		return fmt.Errorf("webhook not found")
 	}
 
-	owner := r.config.Spec.GitHub.Owner
-	name := r.config.Spec.GitHub.Repository
 	id := r.config.Status.Webhook.ID
 
-	if err := r.gh.DeleteWebhook(ctx, owner, name, id); err != nil {
+	if err := r.gh.DeleteWebhook(ctx, r.owner, r.repo, id); err != nil {
 		return fmt.Errorf("delete webhook: %w", err)
 	}
 
@@ -787,12 +806,15 @@ func (r *githubRepository) deleteWebhook(ctx context.Context) error {
 }
 
 func (r *githubRepository) OnCreate(ctx context.Context) (*provisioning.WebhookStatus, error) {
+	if len(r.webhookURL) == 0 {
+		return nil, nil
+	}
+
 	ctx, _ = r.logger(ctx, "")
 	hook, err := r.createWebhook(ctx)
 	if err != nil {
 		return nil, err
 	}
-
 	return &provisioning.WebhookStatus{
 		ID:               hook.ID,
 		URL:              hook.URL,
@@ -802,6 +824,9 @@ func (r *githubRepository) OnCreate(ctx context.Context) (*provisioning.WebhookS
 }
 
 func (r *githubRepository) OnUpdate(ctx context.Context) (*provisioning.WebhookStatus, error) {
+	if len(r.webhookURL) == 0 {
+		return nil, nil
+	}
 	ctx, _ = r.logger(ctx, "")
 	hook, _, err := r.updateWebhook(ctx)
 	if err != nil {
@@ -817,6 +842,9 @@ func (r *githubRepository) OnUpdate(ctx context.Context) (*provisioning.WebhookS
 }
 
 func (r *githubRepository) OnDelete(ctx context.Context) error {
+	if len(r.webhookURL) == 0 {
+		return nil
+	}
 	ctx, _ = r.logger(ctx, "")
 	return r.deleteWebhook(ctx)
 }
@@ -833,9 +861,7 @@ func (r *githubRepository) logger(ctx context.Context, ref string) (context.Cont
 	if ref == "" {
 		ref = r.config.Spec.GitHub.Branch
 	}
-	owner := r.config.Spec.GitHub.Owner
-	repo := r.config.Spec.GitHub.Repository
-	logger = logger.With(slog.Group("github_repository", "owner", owner, "name", repo, "ref", ref))
+	logger = logger.With(slog.Group("github_repository", "owner", r.owner, "name", r.repo, "ref", ref))
 	ctx = logging.Context(ctx, logger)
 	// We want to ensure we don't add multiple github_repository keys. With doesn't deduplicate the keys...
 	ctx = context.WithValue(ctx, containsGhKey, true)

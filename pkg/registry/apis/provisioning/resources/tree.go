@@ -2,14 +2,16 @@ package resources
 
 import (
 	"context"
+	"fmt"
 	"path"
 	"sort"
 	"strings"
 
-	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 // FolderTree contains the entire set of folders (at a given snapshot in time) of the Grafana instance.
@@ -97,33 +99,22 @@ func NewEmptyFolderTree() *FolderTree {
 	}
 }
 
-func NewFolderTreeFromUnstructure(ctx context.Context, rawFolders []unstructured.Unstructured) *FolderTree {
-	tree := make(map[string]string, len(rawFolders))
-	folders := make(map[string]Folder, len(rawFolders))
-
-	for _, rf := range rawFolders {
-		name := rf.GetName()
-		// TODO: Can I use MetaAccessor here?
-		parent := rf.GetAnnotations()[apiutils.AnnoKeyFolder]
-		tree[name] = parent
-
-		id := Folder{
-			Title: name,
-			ID:    name,
-			// TODO: should not this be be the annotation itself?
-			Path: "", // We'll set this later in the DirPath function :)
-		}
-		if title, ok, _ := unstructured.NestedString(rf.Object, "spec", "title"); ok {
-			// If the title doesn't exist (it should), we'll just use the K8s name.
-			id.Title = title
-		}
-		folders[name] = id
+func (t *FolderTree) AddUnstructured(item *unstructured.Unstructured, skipRepo string) error {
+	meta, err := utils.MetaAccessor(item)
+	if err != nil {
+		return fmt.Errorf("extract meta accessor: %w", err)
 	}
-
-	return &FolderTree{
-		tree:    tree,
-		folders: folders,
+	manager, _ := meta.GetManagerProperties()
+	if manager.Identity == skipRepo {
+		return nil // skip it... already in tree?
 	}
+	folder := Folder{
+		Title: meta.FindTitle(item.GetName()),
+		ID:    item.GetName(),
+	}
+	t.tree[folder.ID] = meta.GetFolder()
+	t.folders[folder.ID] = folder
+	return nil
 }
 
 func NewFolderTreeFromResourceList(resources *provisioning.ResourceList) *FolderTree {

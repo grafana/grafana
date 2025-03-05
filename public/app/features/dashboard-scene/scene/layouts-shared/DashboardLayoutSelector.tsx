@@ -1,10 +1,13 @@
 import { useMemo } from 'react';
 
 import { Select } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { DashboardLayoutManager, isLayoutParent, LayoutRegistryItem } from '../types';
+import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { isLayoutParent } from '../types/LayoutParent';
+import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { layoutRegistry } from './layoutRegistry';
 import { findParentLayout } from './utils';
@@ -16,7 +19,7 @@ export interface Props {
 export function DashboardLayoutSelector({ layoutManager }: Props) {
   const options = useMemo(() => {
     const parentLayout = findParentLayout(layoutManager);
-    const parentLayoutId = parentLayout?.getDescriptor().id;
+    const parentLayoutId = parentLayout?.descriptor.id;
 
     return layoutRegistry
       .list()
@@ -27,7 +30,7 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
       }));
   }, [layoutManager]);
 
-  const currentLayoutId = layoutManager.getDescriptor().id;
+  const currentLayoutId = layoutManager.descriptor.id;
   const currentOption = options.find((option) => option.value.id === currentLayoutId);
 
   return (
@@ -53,10 +56,8 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
 
     layoutCategory.addItem(
       new OptionsPaneItemDescriptor({
-        title: 'Type',
-        render: function renderTitle() {
-          return <DashboardLayoutSelector layoutManager={layoutManager} />;
-        },
+        title: t('dashboard.layout.common.layout', 'Layout'),
+        render: () => <DashboardLayoutSelector layoutManager={layoutManager} />,
       })
     );
 

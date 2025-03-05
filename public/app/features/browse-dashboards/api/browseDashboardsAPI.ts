@@ -75,7 +75,10 @@ export const browseDashboardsAPI = createApi({
   baseQuery: createBaseQuery({ baseURL: '/api' }),
   endpoints: (builder) => ({
     listFolders: builder.query<FolderListItemDTO[], ListFolderQueryArgs>({
-      providesTags: (result) => result?.map((folder) => ({ type: 'getFolder', id: folder.uid })) ?? [],
+      providesTags: (result) =>
+        result && result.length > 0
+          ? result.map((folder) => ({ type: 'getFolder', id: folder.uid }))
+          : [{ type: 'getFolder', id: 'EMPTY_RESULT' }],
       query: ({ parentUid, limit, page, permission }) => ({
         url: '/folders',
         params: { parentUid, limit, page, permission },
@@ -92,6 +95,7 @@ export const browseDashboardsAPI = createApi({
 
     // create a new folder
     newFolder: builder.mutation<FolderDTO, { title: string; parentUid?: string }>({
+      invalidatesTags: ['getFolder'],
       query: ({ title, parentUid }) => ({
         method: 'POST',
         url: '/folders',
@@ -281,6 +285,7 @@ export const browseDashboardsAPI = createApi({
 
     // delete *multiple* items (folders and dashboards). used in the delete modal.
     deleteItems: builder.mutation<void, DeleteItemsArgs>({
+      invalidatesTags: ['getFolder'],
       queryFn: async ({ selectedItems }, _api, _extraOptions, baseQuery) => {
         const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
         const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
@@ -300,17 +305,32 @@ export const browseDashboardsAPI = createApi({
         // Delete all the dashboards sequentially
         // TODO error handling here
         for (const dashboardUID of selectedDashboards) {
-          const response = getDashboardAPI().deleteDashboard(dashboardUID, false);
+          const response = await getDashboardAPI().deleteDashboard(dashboardUID, true);
 
-          // @ts-expect-error
-          const name = response?.data?.title;
+          // handling success alerts for these feature toggles
+          // for legacy response, the success alert will be triggered by showSuccessAlert function in public/app/core/services/backend_srv.ts
+          if (config.featureToggles.dashboardRestore) {
+            const name = response?.title;
 
-          if (name) {
+            if (name) {
+              const payload =
+                config.featureToggles.useV2DashboardsAPI || config.featureToggles.kubernetesDashboards
+                  ? ['Dashboard moved to Recently deleted']
+                  : [
+                      t('browse-dashboards.soft-delete.success', 'Dashboard {{name}} moved to Recently deleted', {
+                        name,
+                      }),
+                    ];
+
+              appEvents.publish({
+                type: AppEvents.alertSuccess.name,
+                payload,
+              });
+            }
+          } else if (config.featureToggles.useV2DashboardsAPI || config.featureToggles.kubernetesDashboards) {
             appEvents.publish({
               type: AppEvents.alertSuccess.name,
-              payload: [
-                t('browse-dashboards.soft-delete.success', 'Dashboard {{name}} moved to Recently deleted', { name }),
-              ],
+              payload: ['Dashboard deleted'],
             });
           }
         }
@@ -431,6 +451,7 @@ export const {
   useDeleteItemsMutation,
   useGetAffectedItemsQuery,
   useGetFolderQuery,
+  useLazyGetFolderQuery,
   useMoveFolderMutation,
   useMoveItemsMutation,
   useNewFolderMutation,
@@ -442,7 +463,7 @@ export const {
 
 export { skipToken } from '@reduxjs/toolkit/query/react';
 
-type FolderDataType = FolderListItemDTO | NestedFolderDTO | FolderDTO;
+export type FolderDataType = FolderListItemDTO | NestedFolderDTO | FolderDTO;
 
 // Overloaded function signatures to handle different input types
 export async function addRepositoryData(data: FolderListItemDTO[]): Promise<FolderListItemDTO[]>;
@@ -465,7 +486,12 @@ export async function addRepositoryData(
   }
 
   const addRepositoryToItem = (item: FolderDataType) => {
-    const repository = settings.items.find((repo) => repo.name === item.uid);
+    const repository = settings.items.find((repo) => {
+      if (typeof item.repository === 'string') {
+        return repo.name === item.repository;
+      }
+      return repo.name === item.uid;
+    });
     return repository ? { ...item, repository } : item;
   };
 

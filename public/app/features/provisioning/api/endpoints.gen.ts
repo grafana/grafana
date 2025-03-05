@@ -67,6 +67,30 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Repository'],
       }),
+      deletecollectionRepository: build.mutation<DeletecollectionRepositoryResponse, DeletecollectionRepositoryArg>({
+        query: (queryArg) => ({
+          url: `/repositories`,
+          method: 'DELETE',
+          body: queryArg.deleteOptions,
+          params: {
+            pretty: queryArg.pretty,
+            continue: queryArg['continue'],
+            dryRun: queryArg.dryRun,
+            fieldSelector: queryArg.fieldSelector,
+            gracePeriodSeconds: queryArg.gracePeriodSeconds,
+            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            labelSelector: queryArg.labelSelector,
+            limit: queryArg.limit,
+            orphanDependents: queryArg.orphanDependents,
+            propagationPolicy: queryArg.propagationPolicy,
+            resourceVersion: queryArg.resourceVersion,
+            resourceVersionMatch: queryArg.resourceVersionMatch,
+            sendInitialEvents: queryArg.sendInitialEvents,
+            timeoutSeconds: queryArg.timeoutSeconds,
+          },
+        }),
+        invalidatesTags: ['Repository'],
+      }),
       getRepository: build.query<GetRepositoryResponse, GetRepositoryArg>({
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}`,
@@ -190,6 +214,14 @@ const injectedRtkApi = api
         }),
         providesTags: ['Repository'],
       }),
+      createRepositoryMigrate: build.mutation<CreateRepositoryMigrateResponse, CreateRepositoryMigrateArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/migrate`, method: 'POST', body: queryArg.body }),
+        invalidatesTags: ['Repository'],
+      }),
+      getRepositoryRenderWithPath: build.query<GetRepositoryRenderWithPathResponse, GetRepositoryRenderWithPathArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/render/${queryArg.path}` }),
+        providesTags: ['Repository'],
+      }),
       getRepositoryResources: build.query<GetRepositoryResourcesResponse, GetRepositoryResourcesArg>({
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/resources` }),
         providesTags: ['Repository'],
@@ -235,11 +267,11 @@ const injectedRtkApi = api
       }),
       getFrontendSettings: build.query<GetFrontendSettingsResponse, GetFrontendSettingsArg>({
         query: () => ({ url: `/settings` }),
-        providesTags: ['Provisioning'],
+        providesTags: ['Provisioning', 'Repository'],
       }),
       getResourceStats: build.query<GetResourceStatsResponse, GetResourceStatsArg>({
         query: () => ({ url: `/stats` }),
-        providesTags: ['Provisioning'],
+        providesTags: ['Provisioning', 'Repository'],
       }),
     }),
     overrideExisting: false,
@@ -357,6 +389,58 @@ export type CreateRepositoryArg = {
   fieldValidation?: string;
   repository: Repository;
 };
+export type DeletecollectionRepositoryResponse = /** status 200 OK */ Status;
+export type DeletecollectionRepositoryArg = {
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
+    
+    This field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications. */
+  continue?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** A selector to restrict the list of returned objects by their fields. Defaults to everything. */
+  fieldSelector?: string;
+  /** The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately. */
+  gracePeriodSeconds?: number;
+  /** if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it */
+  ignoreStoreReadErrorWithClusterBreakingPotential?: boolean;
+  /** A selector to restrict the list of returned objects by their labels. Defaults to everything. */
+  labelSelector?: string;
+  /** limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.
+    
+    The server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned. */
+  limit?: number;
+  /** Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the "orphan" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both. */
+  orphanDependents?: boolean;
+  /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
+  propagationPolicy?: string;
+  /** resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
+    
+    Defaults to unset */
+  resourceVersion?: string;
+  /** resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
+    
+    Defaults to unset */
+  resourceVersionMatch?: string;
+  /** `sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic "Bookmark" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `"k8s.io/initial-events-end": "true"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.
+    
+    When `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan
+      is interpreted as "data at least as new as the provided `resourceVersion`"
+      and the bookmark event is send when the state is synced
+      to a `resourceVersion` at least as fresh as the one provided by the ListOptions.
+      If `resourceVersion` is unset, this is interpreted as "consistent read" and the
+      bookmark event is send when the state is synced at least to the moment
+      when request started being processed.
+    - `resourceVersionMatch` set to any other value or unset
+      Invalid error is returned.
+    
+    Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
+  sendInitialEvents?: boolean;
+  /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
+  timeoutSeconds?: number;
+  deleteOptions: DeleteOptions;
+};
 export type GetRepositoryResponse = /** status 200 OK */ Repository;
 export type GetRepositoryArg = {
   /** name of the Repository */
@@ -405,11 +489,9 @@ export type CreateRepositoryExportArg = {
     branch?: string;
     /** The source folder (or empty) to export */
     folder?: string;
-    /** Preserve history (if possible) */
-    history?: boolean;
     /** Include the identifier in the exported metadata */
     identifier: boolean;
-    /** Target file prefix */
+    /** Prefix in target file system */
     prefix?: string;
   };
 };
@@ -491,6 +573,26 @@ export type GetRepositoryHistoryWithPathArg = {
   /** branch or commit hash */
   ref?: string;
 };
+export type CreateRepositoryMigrateResponse = /** status 200 OK */ Job;
+export type CreateRepositoryMigrateArg = {
+  /** name of the Job */
+  name: string;
+  body: {
+    /** Preserve history (if possible) */
+    history?: boolean;
+    /** Include the identifier in the exported metadata */
+    identifier: boolean;
+    /** Target file prefix */
+    prefix?: string;
+  };
+};
+export type GetRepositoryRenderWithPathResponse = unknown;
+export type GetRepositoryRenderWithPathArg = {
+  /** name of the Repository */
+  name: string;
+  /** path to the resource */
+  path: string;
+};
 export type GetRepositoryResourcesResponse = /** status 200 OK */ ResourceList;
 export type GetRepositoryResourcesArg = {
   /** name of the ResourceList */
@@ -522,8 +624,8 @@ export type CreateRepositorySyncArg = {
   /** name of the Job */
   name: string;
   body: {
-    /** Complete forces the sync to overwrite */
-    complete?: boolean;
+    /** Incremental synchronization for versioned repositories */
+    incremental: boolean;
   };
 };
 export type CreateRepositoryTestResponse = /** status 200 OK */ TestResults;
@@ -641,6 +743,12 @@ export type ExportJobOptions = {
   branch?: string;
   /** The source folder (or empty) to export */
   folder?: string;
+  /** Include the identifier in the exported metadata */
+  identifier: boolean;
+  /** Prefix in target file system */
+  prefix?: string;
+};
+export type MigrateJobOptions = {
   /** Preserve history (if possible) */
   history?: boolean;
   /** Include the identifier in the exported metadata */
@@ -658,17 +766,20 @@ export type PullRequestJobOptions = {
   url?: string;
 };
 export type SyncJobOptions = {
-  /** Complete forces the sync to overwrite */
-  complete?: boolean;
+  /** Incremental synchronization for versioned repositories */
+  incremental: boolean;
 };
 export type JobSpec = {
   /** Possible enum values:
      - `"export"` Export from grafana into the remote repository
+     - `"migrate"` Migration task -- this will migrate an full instance from SQL > Git
      - `"pr"` Update a pull request -- send preview images, links etc
      - `"sync"` Sync the remote branch with the grafana instance */
-  action: 'export' | 'pr' | 'sync';
+  action: 'export' | 'migrate' | 'pr' | 'sync';
   /** Required when the action is `export` */
   export?: ExportJobOptions;
+  /** Required when the action is `migrate` */
+  migrate?: MigrateJobOptions;
   /** Pull request options */
   pr?: PullRequestJobOptions;
   /** The the repository reference (for now also in labels) */
@@ -687,6 +798,7 @@ export type JobResourceSummary = {
   /** No action required (useful for sync) */
   noop?: number;
   resource?: string;
+  total?: number;
   update?: number;
   write?: number;
 };
@@ -734,25 +846,19 @@ export type JobList = {
   metadata?: ListMeta;
 };
 export type GitHubRepositoryConfig = {
-  /** The branch to use in the repository. By default, this is the main branch. */
-  branch?: string;
-  /** Whether we should commit to change branches and use a Pull Request flow to achieve this. By default, this is false (i.e. we will commit straight to the main branch). */
-  branchWorkflow?: boolean;
-  /** Whether we should show dashboard previews in the pull requests caused by the BranchWorkflow option. By default, this is false (i.e. we will not create previews). This option is a no-op if BranchWorkflow is `false` or default. */
+  /** The branch to use in the repository. */
+  branch: string;
+  /** Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. */
+  encryptedToken?: string;
+  /** Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews). */
   generateDashboardPreviews?: boolean;
-  /** The owner of the repository (e.g. example in `example/test` or `https://github.com/example/test`). */
-  owner?: string;
-  /** The name of the repository (e.g. test in `example/test` or `https://github.com/example/test`). */
-  repository?: string;
-  /** Token for accessing the repository. */
+  /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
   token?: string;
+  /** The repository URL (e.g. `https://github.com/example/test`). */
+  url?: string;
 };
 export type LocalRepositoryConfig = {
   path?: string;
-};
-export type S3RepositoryConfig = {
-  bucket?: string;
-  region?: string;
 };
 export type SyncOptions = {
   /** Enabled must be saved as true before any sync job will run */
@@ -762,21 +868,17 @@ export type SyncOptions = {
   /** Where values should be saved
     
     Possible enum values:
-     - `"folder"` Resources will be saved into a folder managed by this repository The folder k8s name will be the same as the repository k8s name It will contain a copy of everything from the remote
+     - `"folder"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name
      - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
   target: 'folder' | 'instance';
 };
 export type RepositorySpec = {
   /** Repository description */
   description?: string;
-  /** The repository on GitHub. Mutually exclusive with local | s3 | github. */
+  /** The repository on GitHub. Mutually exclusive with local | github. */
   github?: GitHubRepositoryConfig;
-  /** The repository on the local file system. Mutually exclusive with local | s3 | github. */
+  /** The repository on the local file system. Mutually exclusive with local | github. */
   local?: LocalRepositoryConfig;
-  /** ReadOnly  repository does not allow any write commands */
-  readOnly: boolean;
-  /** The repository in an S3 bucket. Mutually exclusive with local | s3 | github. */
-  s3?: S3RepositoryConfig;
   /** Sync settings -- how values are pulled from the repository into grafana */
   sync: SyncOptions;
   /** The repository display name (shown in the UI) */
@@ -785,16 +887,17 @@ export type RepositorySpec = {
     
     Possible enum values:
      - `"github"`
-     - `"local"`
-     - `"s3"` */
-  type: 'github' | 'local' | 's3';
+     - `"local"` */
+  type: 'github' | 'local';
+  /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
+  workflows: ('branch' | 'write')[];
 };
 export type HealthStatus = {
   /** When the health was checked last time */
   checked?: number;
   /** When not healthy, requests will not be executed */
   healthy: boolean;
-  /** Summary messages (will be shown to users) */
+  /** Summary messages (can be shown to users) Will only be populated when not healthy */
   message?: string[];
 };
 export type ResourceCount = {
@@ -806,12 +909,14 @@ export type ResourceCount = {
 export type SyncStatus = {
   /** When the sync job finished */
   finished?: number;
-  /** The repository hash when the last sync ran */
-  hash?: string;
+  /** Incremental synchronization for versioned repositories */
+  incremental?: boolean;
   /** The ID for the job that ran this sync */
   job?: string;
+  /** The repository ref when the last successful sync ran */
+  lastRef?: string;
   /** Summary messages (will be shown to users) */
-  message?: string[];
+  message: string[];
   /** When the next sync check is scheduled */
   scheduled?: number;
   /** When the sync job started */
@@ -826,6 +931,7 @@ export type SyncStatus = {
   state: 'error' | 'pending' | 'success' | 'working';
 };
 export type WebhookStatus = {
+  encryptedSecret?: string;
   id?: number;
   secret?: string;
   subscribedEvents?: string[];
@@ -928,17 +1034,6 @@ export type DeleteOptions = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
 };
-export type LintIssue = {
-  message: string;
-  rule: string;
-  /** Possible enum values:
-     - `"error"`
-     - `"exclude"`
-     - `"fixed"`
-     - `"quiet"`
-     - `"warning"` */
-  severity: 'error' | 'exclude' | 'fixed' | 'quiet' | 'warning';
-};
 export type Unstructured = {
   [key: string]: any;
 };
@@ -982,8 +1077,6 @@ export type ResourceWrapper = {
   hash?: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
-  /** Lint results */
-  lint?: LintIssue[];
   /** Path to the remote file */
   path?: string;
   /** The commit hash (if exists) */
@@ -1046,7 +1139,7 @@ export type RepositoryView = {
   /** When syncing, where values are saved
     
     Possible enum values:
-     - `"folder"` Resources will be saved into a folder managed by this repository The folder k8s name will be the same as the repository k8s name It will contain a copy of everything from the remote
+     - `"folder"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name
      - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
   target: 'folder' | 'instance';
   /** Repository display */
@@ -1055,9 +1148,8 @@ export type RepositoryView = {
     
     Possible enum values:
      - `"github"`
-     - `"local"`
-     - `"s3"` */
-  type: 'github' | 'local' | 's3';
+     - `"local"` */
+  type: 'github' | 'local';
 };
 export type RepositoryViewList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1065,6 +1157,8 @@ export type RepositoryViewList = {
   items: RepositoryView[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
+  /** The backend is using legacy storage FIXME: Not sure where this should be exposed... but we need it somewhere The UI should force the onboarding workflow when this is true */
+  legacyStorage?: boolean;
 };
 export type ResourceStats = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1079,6 +1173,7 @@ export const {
   useGetJobQuery,
   useListRepositoryQuery,
   useCreateRepositoryMutation,
+  useDeletecollectionRepositoryMutation,
   useGetRepositoryQuery,
   useReplaceRepositoryMutation,
   useDeleteRepositoryMutation,
@@ -1090,6 +1185,8 @@ export const {
   useDeleteRepositoryFilesWithPathMutation,
   useGetRepositoryHistoryQuery,
   useGetRepositoryHistoryWithPathQuery,
+  useCreateRepositoryMigrateMutation,
+  useGetRepositoryRenderWithPathQuery,
   useGetRepositoryResourcesQuery,
   useGetRepositoryStatusQuery,
   useReplaceRepositoryStatusMutation,
