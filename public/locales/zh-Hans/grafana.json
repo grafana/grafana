@@ -1078,12 +1078,6 @@
           "options-header": "",
           "selection-number": ""
         }
-      },
-      "tab": {
-        "multi-select": {
-          "options-header": "",
-          "selection-number": ""
-        }
       }
     },
     "editpane": {
@@ -1241,8 +1235,23 @@
     },
     "tabs-layout": {
       "description": "",
+      "menu": {
+        "move-tab": ""
+      },
+      "multi-select": {
+        "title": ""
+      },
       "name": "",
       "tab": {
+        "menu": {
+          "add": "",
+          "add-panel": "",
+          "add-tab-above": "",
+          "add-tab-after": "",
+          "add-tab-before": "",
+          "move-left": "",
+          "move-right": ""
+        },
         "new": ""
       },
       "tab-options": {
