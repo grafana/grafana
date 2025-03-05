@@ -22,14 +22,31 @@ env:
   WIRE_TAGS: 'oss'
 
 jobs:
-  check-coverage:
-    name: Check Coverage Requirements
+  backend-tests:
+    name: Backend Tests
     runs-on: ubuntu-latest
-    outputs:
-      generate: ${{ steps.check-coverage.outputs.generate }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+          
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential shared-mime-info
+
+      - name: Verify code generation
+        run: |
+          CODEGEN_VERIFY=1 make gen-cue
+          CODEGEN_VERIFY=1 make gen-jsonnet
+
+      - name: Generate Go code
+        run: make gen-go
 
       - name: Check if coverage should be generated
         id: check-coverage
@@ -59,77 +76,45 @@ jobs:
             echo "generate=false" >> $GITHUB_OUTPUT
           fi
 
-  backend-tests:
-    name: Backend Tests
-    needs: [check-coverage]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: true
-          
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential shared-mime-info
-
-      - name: Verify code generation
-        run: |
-          CODEGEN_VERIFY=1 make gen-cue
-          CODEGEN_VERIFY=1 make gen-jsonnet
-
-      - name: Generate Go code
-        run: make gen-go
-
       - name: Run unit tests
-        shell: bash
         run: |
-          if [ "${{ needs.check-coverage.outputs.generate }}" == "true" ]; then
+          if [ "${{ steps.check-coverage.outputs.generate }}" == "true" ]; then
             COVER_OPTS="-coverprofile=unit.cov -coverpkg=github.com/grafana/grafana/..." make test-go-unit
           else
             make test-go-unit
           fi
 
-      - name: Upload unit coverage
-        if: needs.check-coverage.outputs.generate == 'true'
+      - name: Process coverage output
+        if: steps.check-coverage.outputs.generate == 'true'
+        run: |
+          # Ensure valid coverage file even if empty
+          if [ ! -s unit.cov ]; then
+            echo "mode: set" > unit.cov
+          fi
+          
+          # Convert to different formats
+          go tool cover -func unit.cov > unit-funcs.log
+          go tool cover -html unit.cov -o unit.html
+          
+          # Add coverage summary to GitHub step summary
+          echo '# Coverage' >> $GITHUB_STEP_SUMMARY
+          if grep -q "total:" unit-funcs.log; then
+            grep 'total:' unit-funcs.log | tr '\t' ' ' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No coverage data available" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload coverage reports
+        if: steps.check-coverage.outputs.generate == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: unit-coverage
-          path: unit.cov
-          retention-days: 1
-
-  report-coverage:
-    name: Generate Coverage Report
-    needs: [check-coverage, backend-tests]
-    if: needs.check-coverage.outputs.generate == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: true
-
-      - name: Generate Go code
-        run: make gen-go
-
-      - name: Download unit coverage
-        uses: actions/download-artifact@v4
-        with:
-          name: unit-coverage
-
-      - name: Generate Coverage Report
-        uses: ./.github/actions/report-coverage
-        with:
-          unit-cov-path: unit.cov
+          name: backend-coverage
+          path: |
+            unit.cov
+            unit-funcs.log
+            unit.html
+          retention-days: 30
+          compression-level: 9
       
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
