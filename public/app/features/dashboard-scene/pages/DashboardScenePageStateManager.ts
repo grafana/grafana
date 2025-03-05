@@ -639,7 +639,6 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
       if (error instanceof DashboardVersionError && error.data?.isV2) {
         return await this.v2Manager.loadSnapshotScene(slug);
       }
-    } finally {
       throw new Error('Snapshot not found');
     }
   }
