@@ -23,7 +23,6 @@ Label-Based Access Control (LBAC) allows fine-grained access control to data sou
 ### Feature availability
 
 LBAC for data sources is currently generally available for `Loki` and in **experimental** for `Prometheus`. Support for additional data sources may be added in future updates.
-The following table shows the current availability of data source permissions for different data sources:
 
 | Data source | [Grafana Cloud](/docs/grafana-cloud) | [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) |
 | ----------- | ------------------------------------ | ----------------------------------------------------------------------------- |
