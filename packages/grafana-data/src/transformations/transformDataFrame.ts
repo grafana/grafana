@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash';
 import { MonoTypeOperatorFunction, Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
@@ -29,7 +30,7 @@ const getOperator =
 
     const interpolated = isScenes
       ? options
-      : deepIterate(options, (v) => {
+      : deepIterate(cloneDeep(options), (v) => {
           if (typeof v === 'string') {
             return ctx.interpolate(v);
           }
