@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -486,7 +487,7 @@ func TestRouteGetRuleHistoryByUID(t *testing.T) {
 		}
 
 		ruleStore.PutRule(context.Background(), rule)
-		ruleStore.History[rule.GetKey()] = append(ruleStore.History[rule.GetKey()], history...)
+		ruleStore.History[rule.GUID] = append(ruleStore.History[rule.GUID], history...)
 
 		perms := createPermissionsForRules([]*models.AlertRule{rule}, orgID)
 		req := createRequestContextWithPerms(orgID, perms, nil)
@@ -516,8 +517,9 @@ func TestRouteGetRuleHistoryByUID(t *testing.T) {
 			OrgID: orgID,
 			UID:   "test",
 		}
-		history := gen.With(gen.WithKey(ruleKey)).GenerateManyRef(3)
-		ruleStore.History[ruleKey] = append(ruleStore.History[ruleKey], history...) // even if history is full of records
+		guid := uuid.NewString()
+		history := gen.With(gen.WithGUID(guid), gen.WithKey(ruleKey)).GenerateManyRef(3)
+		ruleStore.History[guid] = append(ruleStore.History[guid], history...) // even if history is full of records
 
 		perms := createPermissionsForRules(history, orgID)
 		req := createRequestContextWithPerms(orgID, perms, nil)
@@ -533,9 +535,10 @@ func TestRouteGetRuleHistoryByUID(t *testing.T) {
 			OrgID: orgID,
 			UID:   "test",
 		}
-		rule := gen.With(gen.WithKey(ruleKey)).GenerateRef()
+		guid := uuid.NewString()
+		rule := gen.With(gen.WithKey(ruleKey), gen.WithGUID(guid)).GenerateRef()
 		ruleStore.PutRule(context.Background(), rule)
-		ruleStore.History[ruleKey] = nil
+		ruleStore.History[guid] = nil
 
 		perms := createPermissionsForRules([]*models.AlertRule{rule}, orgID)
 		req := createRequestContextWithPerms(orgID, perms, nil)
@@ -556,10 +559,11 @@ func TestRouteGetRuleHistoryByUID(t *testing.T) {
 			OrgID: orgID,
 			UID:   "test",
 		}
-		rule := gen.With(gen.WithKey(ruleKey), gen.WithNamespaceUID(anotherFolder.UID)).GenerateRef()
+		guid := uuid.NewString()
+		rule := gen.With(gen.WithGUID(guid), gen.WithKey(ruleKey), gen.WithNamespaceUID(anotherFolder.UID)).GenerateRef()
 		ruleStore.PutRule(context.Background(), rule)
-		history := gen.With(gen.WithKey(ruleKey)).GenerateManyRef(3)
-		ruleStore.History[ruleKey] = history
+		history := gen.With(gen.WithGUID(guid), gen.WithKey(ruleKey)).GenerateManyRef(3)
+		ruleStore.History[guid] = history
 
 		perms := createPermissionsForRules(history, orgID) // grant permissions to all records in history but not the rule itself
 		req := createRequestContextWithPerms(orgID, perms, nil)

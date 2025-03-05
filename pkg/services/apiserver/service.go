@@ -81,6 +81,8 @@ var (
 	ready      = make(chan struct{})
 )
 
+const MaxRequestBodyBytes = 16 * 1024 * 1024 // 16MB - determined by the size of `mediumtext` on mysql, which is used to save dashboard data
+
 func init() {
 	// we need to add the options to empty v1
 	metav1.AddToGroupVersion(Scheme, schema.GroupVersion{Group: "", Version: "v1"})
@@ -281,18 +283,21 @@ func (s *service) start(ctx context.Context) error {
 	groupVersions := make([]schema.GroupVersion, 0, len(builders))
 
 	// Install schemas
-	initialSize := len(kubeaggregator.APIVersionPriorities)
 	for i, b := range builders {
 		gvs := builder.GetGroupVersions(b)
 		groupVersions = append(groupVersions, gvs...)
+		if len(gvs) == 0 {
+			return fmt.Errorf("no group versions found for builder %T", b)
+		}
 		if err := b.InstallSchema(Scheme); err != nil {
 			return err
 		}
+		pvs := Scheme.PrioritizedVersionsForGroup(gvs[0].Group)
 
-		for _, gv := range gvs {
+		for j, gv := range pvs {
 			if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
 				// set the priority for the group+version
-				kubeaggregator.APIVersionPriorities[gv] = kubeaggregator.Priority{Group: 15000, Version: int32(i + initialSize)}
+				kubeaggregator.APIVersionPriorities[gv] = kubeaggregator.Priority{Group: int32(15000 + i), Version: int32(len(pvs) - j)}
 			}
 
 			if a, ok := b.(builder.APIGroupAuthorizer); ok {
@@ -335,6 +340,7 @@ func (s *service) start(ctx context.Context) error {
 	transport := &roundTripperFunc{ready: make(chan struct{})}
 	serverConfig.LoopbackClientConfig.Transport = transport
 	serverConfig.LoopbackClientConfig.TLSClientConfig = clientrest.TLSClientConfig{}
+	serverConfig.MaxRequestBodyBytes = MaxRequestBodyBytes
 
 	var optsregister apistore.StorageOptionsRegister
 
