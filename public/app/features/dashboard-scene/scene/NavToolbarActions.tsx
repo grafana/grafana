@@ -40,6 +40,7 @@ import { isLibraryPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
+import ManagedDashboardNavBarBadge from './ManagedDashboardNavBarBadge';
 
 interface Props {
   dashboard: DashboardScene;
@@ -135,17 +136,7 @@ export function ToolbarActions({ dashboard }: Props) {
       group: 'icon-actions',
       condition: true,
       render: () => {
-        // Tooltip with extra info would be nice
-        let text = 'Provisioned';
-        switch (dashboard.state.meta.k8s?.annotations?.[AnnoKeyManagerKind]) {
-          case ManagerKind.Terraform:
-            text = 'Terraform';
-          case ManagerKind.Kubectl:
-            text = 'Kubectl';
-          case ManagerKind.Plugin:
-            text = `Plugin: ${dashboard.state.meta.k8s?.annotations?.[AnnoKeyManagerIdentity]}`;
-        }
-        return <Badge color="darkgrey" icon="exchange-alt" text={text} key="provisioned-dashboard-button-badge" />;
+        return <ManagedDashboardNavBarBadge dashboard={dashboard} />;
       },
     });
   }

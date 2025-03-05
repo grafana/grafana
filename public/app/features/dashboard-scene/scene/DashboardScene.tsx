@@ -743,12 +743,16 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return this._serializer.getDashboardChangesFromScene(this, { saveTimeRange, saveVariables, saveRefresh });
   }
 
+  getManagerKind(): ManagerKind | undefined {
+    return this.state.meta.k8s?.annotations?.[AnnoKeyManagerKind];
+  }
+
   isManaged() {
-    return Boolean(this.state.meta.k8s?.annotations?.[AnnoKeyManagerKind]);
+    return Boolean(this.getManagerKind());
   }
 
   isManagedRepository() {
-    return Boolean(this.state.meta.k8s?.annotations?.[AnnoKeyManagerKind] === ManagerKind.Repo);
+    return Boolean(this.getManagerKind() === ManagerKind.Repo);
   }
 
   getPath() {
