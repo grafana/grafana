@@ -62,7 +62,7 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
   initializeMapping(saveModel: Dashboard | undefined) {
     this.elementPanelMap.clear();
 
-    if (!saveModel) {
+    if (!saveModel || !saveModel.panels) {
       return;
     }
     saveModel.panels?.forEach((panel) => {
@@ -180,8 +180,12 @@ export class V2DashboardSerializer
     return this.elementPanelMap;
   }
 
-  initializeMapping(saveModel: DashboardV2Spec) {
+  initializeMapping(saveModel: DashboardV2Spec | undefined) {
     this.elementPanelMap.clear();
+
+    if (!saveModel || !saveModel.elements) {
+      return;
+    }
 
     const elementKeys = Object.keys(saveModel.elements);
     elementKeys.forEach((key) => {
