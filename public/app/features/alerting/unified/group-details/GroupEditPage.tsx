@@ -6,7 +6,17 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { Alert, Button, ConfirmModal, Field, Input, Stack, useStyles2, withErrorBoundary } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  ConfirmModal,
+  Field,
+  Input,
+  LinkButton,
+  Stack,
+  useStyles2,
+  withErrorBoundary,
+} from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { Trans, t } from 'app/core/internationalization';
@@ -300,6 +310,13 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
         <Button type="submit" disabled={isSubmitting} icon={isSubmitting ? 'spinner' : undefined}>
           <Trans i18nKey="alerting.group-edit.form.save">Save</Trans>
         </Button>
+        <LinkButton
+          variant="secondary"
+          disabled={isSubmitting}
+          href={groups.detailsPageLinkFromGroupIdentifier(groupIdentifier)}
+        >
+          <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
+        </LinkButton>
         {groupIdentifier.groupOrigin === 'datasource' && (
           <>
             <Button variant="destructive" onClick={() => setConfirmDeleteOpened(true)}>
