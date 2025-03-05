@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -22,6 +23,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -149,6 +151,32 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.NotNil(t, remaining)
+	})
+
+	t.Run("with no access to the datasource should return 403", func(t *testing.T) {
+		acFake := &acfakes.FakeRuleService{}
+		srv, _, _, _ := createConvertPrometheusSrv(t, withFakeAccessControlRuleService(acFake))
+
+		acFake.AuthorizeRuleChangesFunc = func(context.Context, identity.Requester, *store.GroupDelta) error {
+			return datasources.ErrDataSourceAccessDenied
+		}
+
+		rc := createRequestCtx()
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "folder", simpleGroup)
+		require.Equal(t, http.StatusForbidden, response.Status())
+		require.Contains(t, string(response.Body()), "data source access denied")
+	})
+
+	t.Run("when alert rule quota limit exceeded", func(t *testing.T) {
+		quotas := &provisioning.MockQuotaChecker{}
+		quotas.EXPECT().LimitExceeded()
+
+		srv, _, _, _ := createConvertPrometheusSrv(t, withQuotaChecker(quotas))
+
+		rc := createRequestCtx()
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "folder", simpleGroup)
+		require.Equal(t, http.StatusForbidden, response.Status())
+		require.Contains(t, string(response.Body()), "quota has been exceeded")
 	})
 
 	t.Run("with valid pause header values should return 202", func(t *testing.T) {
@@ -749,7 +777,9 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 }
 
 type convertPrometheusSrvOptions struct {
-	provenanceStore provisioning.ProvisioningStore
+	provenanceStore              provisioning.ProvisioningStore
+	fakeAccessControlRuleService *acfakes.FakeRuleService
+	quotaChecker                 *provisioning.MockQuotaChecker
 }
 
 type convertPrometheusSrvOptionsFunc func(*convertPrometheusSrvOptions)
@@ -760,11 +790,29 @@ func withProvenanceStore(store provisioning.ProvisioningStore) convertPrometheus
 	}
 }
 
+func withFakeAccessControlRuleService(service *acfakes.FakeRuleService) convertPrometheusSrvOptionsFunc {
+	return func(opts *convertPrometheusSrvOptions) {
+		opts.fakeAccessControlRuleService = service
+	}
+}
+
+func withQuotaChecker(checker *provisioning.MockQuotaChecker) convertPrometheusSrvOptionsFunc {
+	return func(opts *convertPrometheusSrvOptions) {
+		opts.quotaChecker = checker
+	}
+}
+
 func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOptionsFunc) (*ConvertPrometheusSrv, datasources.CacheService, *fakes.RuleStore, *foldertest.FakeService) {
 	t.Helper()
 
+	// By default the quota checker will allow the operation
+	quotas := &provisioning.MockQuotaChecker{}
+	quotas.EXPECT().LimitOK()
+
 	options := convertPrometheusSrvOptions{
-		provenanceStore: fakes.NewFakeProvisioningStore(),
+		provenanceStore:              fakes.NewFakeProvisioningStore(),
+		fakeAccessControlRuleService: &acfakes.FakeRuleService{},
+		quotaChecker:                 quotas,
 	}
 
 	for _, opt := range opts {
@@ -782,23 +830,20 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 	}
 	dsCache.DataSources = append(dsCache.DataSources, ds)
 
-	quotas := &provisioning.MockQuotaChecker{}
-	quotas.EXPECT().LimitOK()
-
 	folderService := foldertest.NewFakeService()
 
 	alertRuleService := provisioning.NewAlertRuleService(
 		ruleStore,
 		options.provenanceStore,
 		folderService,
-		quotas,
+		options.quotaChecker,
 		&provisioning.NopTransactionManager{},
 		60,
 		10,
 		100,
 		log.New("test"),
 		&provisioning.NotificationSettingsValidatorProviderFake{},
-		&acfakes.FakeRuleService{},
+		options.fakeAccessControlRuleService,
 	)
 
 	cfg := &setting.UnifiedAlertingSettings{
