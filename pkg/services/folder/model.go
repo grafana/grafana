@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -56,10 +57,10 @@ type Folder struct {
 	Fullpath     string `xorm:"fullpath"`
 	FullpathUIDs string `xorm:"fullpath_uids"`
 
-	// When the folder belongs to a repository
+	// The folder is managed by an external process
 	// NOTE: this is only populated when folders are managed by unified storage
 	// This is not ever used by xorm, but the translation functions flow through this type
-	Repository string `json:"repository,omitempty"`
+	ManagedBy utils.ManagerKind `json:"managedBy,omitempty"`
 }
 
 var GeneralFolder = Folder{ID: 0, Title: "General"}

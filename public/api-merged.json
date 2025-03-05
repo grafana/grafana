@@ -15514,6 +15514,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "managedBy": {
+          "$ref": "#/definitions/ManagerKind"
+        },
         "orgId": {
           "type": "integer",
           "format": "int64"
@@ -15528,10 +15531,6 @@
           "items": {
             "$ref": "#/definitions/Folder"
           }
-        },
-        "repository": {
-          "description": "When the folder belongs to a repository\nNOTE: this is only populated when folders are managed by unified storage",
-          "type": "string"
         },
         "title": {
           "type": "string"
@@ -15562,11 +15561,10 @@
           "type": "integer",
           "format": "int64"
         },
-        "parentUid": {
-          "type": "string"
+        "managedBy": {
+          "$ref": "#/definitions/ManagerKind"
         },
-        "repository": {
-          "description": "When the folder belongs to a repository\nNOTE: this is only populated when folders are managed by unified storage",
+        "parentUid": {
           "type": "string"
         },
         "title": {
@@ -17046,6 +17044,11 @@
           "type": "string"
         }
       }
+    },
+    "ManagerKind": {
+      "description": "It can be a user or a tool or a generic API client.\n+enum",
+      "type": "string",
+      "title": "ManagerKind is the type of manager, which is responsible for managing the resource."
     },
     "MassDeleteAnnotationsCmd": {
       "type": "object",

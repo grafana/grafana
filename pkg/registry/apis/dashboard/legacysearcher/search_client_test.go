@@ -373,12 +373,12 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 				Key: dashboardKey,
 				Fields: []*resource.Requirement{
 					{
-						Key:      resource.SEARCH_FIELD_REPOSITORY_PATH,
+						Key:      resource.SEARCH_FIELD_MANAGER_ID,
 						Operator: "in",
 						Values:   []string{"slo"},
 					},
 					{
-						Key:      resource.SEARCH_FIELD_REPOSITORY_NAME,
+						Key:      resource.SEARCH_FIELD_MANAGER_KIND,
 						Operator: "in",
 						Values:   []string{"plugin"},
 					},
@@ -402,9 +402,14 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 				Key: dashboardKey,
 				Fields: []*resource.Requirement{
 					{
-						Key:      resource.SEARCH_FIELD_REPOSITORY_NAME,
+						Key:      resource.SEARCH_FIELD_MANAGER_KIND,
+						Operator: "=",
+						Values:   []string{string(utils.ManagerKindClassicFP)}, // nolint:staticcheck
+					},
+					{
+						Key:      resource.SEARCH_FIELD_MANAGER_ID,
 						Operator: "in",
-						Values:   []string{"file:test"}, // file prefix should be removed before going to legacy
+						Values:   []string{"test"},
 					},
 				},
 			},
@@ -426,9 +431,14 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 				Key: dashboardKey,
 				Fields: []*resource.Requirement{
 					{
-						Key:      resource.SEARCH_FIELD_REPOSITORY_NAME,
+						Key:      resource.SEARCH_FIELD_MANAGER_KIND,
+						Operator: "=",
+						Values:   []string{string(utils.ManagerKindClassicFP)}, // nolint:staticcheck
+					},
+					{
+						Key:      resource.SEARCH_FIELD_MANAGER_ID,
 						Operator: string(selection.NotIn),
-						Values:   []string{"file:test", "file:test2"}, // file prefix should be removed before going to legacy
+						Values:   []string{"test", "test2"},
 					},
 				},
 			},

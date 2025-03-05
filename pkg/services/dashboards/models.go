@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
@@ -438,9 +439,10 @@ type FindPersistedDashboardsQuery struct {
 	Sort       model.SortOption
 	IsDeleted  bool
 
-	ProvisionedRepo       string
-	ProvisionedPath       string
-	ProvisionedReposNotIn []string
+	ManagedBy            utils.ManagerKind
+	ManagerIdentity      string
+	SourcePath           string
+	ManagerIdentityNotIn []string
 
 	Filters []any
 
