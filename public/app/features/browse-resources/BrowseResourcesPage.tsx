@@ -1,210 +1,220 @@
 import { css } from '@emotion/css';
-import { memo, useEffect, useMemo } from 'react';
-import { useLocation, useParams } from 'react-router-dom-v5-compat';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import React, { useState, useEffect } from 'react';
+import {
+  EmptyState,
+  LoadingPlaceholder,
+  InteractiveTable,
+  Column,
+  Select,
+  // Icon,
+  Stack,
+  useStyles2,
+  FilterInput,
+} from '@grafana/ui';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
-import { LinkButton, FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { getConfig } from 'app/core/config';
-import { Trans } from 'app/core/internationalization';
-import { useDispatch } from 'app/types';
+import { SearchHit, UnifiedSearcher } from '../search/service/unified';
+import { GrafanaSearcher } from '../search/service/types';
+import { getAPINamespace } from 'app/api/utils';
+import { useNavModel } from 'app/core/hooks/useNavModel';
 
-import { contextSrv } from '../../core/services/context_srv';
-import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
-import { useSearchStateManager } from '../search/state/SearchStateManager';
-import { getSearchPlaceholder } from '../search/tempI18nPhrases';
+interface Resource extends SearchHit {
+  isExpanded?: boolean;
+  owner?: string;
+  level?: number;
+  parentId?: number;
+  hasSubfolders?: boolean;
+}
 
-import { skipToken, useGetFolderQuery, useSaveFolderMutation } from '../browse-dashboards/api/browseDashboardsAPI';
-import { BrowseActions } from '../browse-dashboards/components/BrowseActions/BrowseActions';
-import { BrowseFilters } from '../browse-dashboards/components/BrowseFilters';
-import { BrowseView } from '../browse-dashboards/components/BrowseView';
-import CreateNewButton from '../browse-dashboards/components/CreateNewButton';
-import { FolderActionsButton } from '../browse-dashboards/components/FolderActionsButton';
-import { SearchView } from '../browse-dashboards/components/SearchView';
-import { getFolderPermissions } from '../browse-dashboards/permissions';
-import { setAllSelection, useHasSelection } from '../browse-dashboards/state';
+type ResourceType = 'dashboard' | 'folder' | 'alert' | 'playlist' | 'slo';
 
-// New Browse/Manage/Search Dashboards views for nested folders
-const BrowseResourcesPage = memo(() => {
-  const { uid: folderUID } = useParams();
-  const dispatch = useDispatch();
+const typeOptions: Array<SelectableValue<ResourceType>> = [
+  { label: 'All', value: undefined },
+  { label: 'Dashboard', value: 'dashboard' },
+  { label: 'Folder', value: 'folder' },
+  { label: 'Alert', value: 'alert' },
+  { label: 'Playlist', value: 'playlist' },
+  { label: 'SLO', value: 'slo' },
+];
 
+const searchURI = `/apis/search.grafana.app/v0alpha1/namespaces/${getAPINamespace()}/search`;
+
+const searcher = new UnifiedSearcher({} as GrafanaSearcher, searchURI);
+
+const FoldersPage: React.FC = () => {
+  const [resources, setResources] = useState<Array<Resource>>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTypes, setSelectedTypes] = useState<Array<SelectableValue<ResourceType>>>([]);
+  const [selectedTag, setSelectedTag] = useState<SelectableValue<string>>();
+
+  const [availableTags, setAvailableTags] = useState<Array<SelectableValue<string>>>([]);
+  // const [availableOwners, setAvailableOwners] = useState<Array<SelectableValue<string>>>([]);
+  
   const styles = useStyles2(getStyles);
-  const [searchState, stateManager] = useSearchStateManager();
-  const isSearching = stateManager.hasSearchFilters();
-  const location = useLocation();
-  const search = useMemo(() => new URLSearchParams(location.search), [location.search]);
+
+  const navModel = useNavModel('finder');
 
   useEffect(() => {
-    stateManager.initStateFromUrl(folderUID);
-
-    // Clear selected state when folderUID changes
-    dispatch(
-      setAllSelection({
-        isSelected: false,
-        folderUID: undefined,
-      })
-    );
-  }, [dispatch, folderUID, stateManager]);
-
-  // Trigger search when "starred" query param changes
-  useEffect(() => {
-    stateManager.onSetStarred(search.has('starred'));
-  }, [search, stateManager]);
-
-  useEffect(() => {
-    // Clear the search results when we leave SearchView to prevent old results flashing
-    // when starting a new search
-    if (!isSearching && searchState.result) {
-      stateManager.setState({ result: undefined, includePanels: undefined });
-    }
-    if (isSearching && searchState.result?.totalRows === 0) {
-      reportInteraction('grafana_empty_state_shown', { source: 'browse_dashboards' });
-    }
-  }, [isSearching, searchState.result, stateManager]);
-
-  const { data: folderDTO } = useGetFolderQuery(folderUID ?? skipToken);
-  const [saveFolder] = useSaveFolderMutation();
-  const navModel = useMemo(() => {
-    if (!folderDTO) {
-      return undefined;
-    }
-    const model = buildNavModel(folderDTO);
-
-    // Set the "Dashboards" tab to active
-    const dashboardsTabID = getDashboardsTabID(folderDTO.uid);
-    const dashboardsTab = model.children?.find((child) => child.id === dashboardsTabID);
-    if (dashboardsTab) {
-      dashboardsTab.active = true;
-    }
-    return model;
-  }, [folderDTO]);
-
-  const hasSelection = useHasSelection();
-
-  // Fetch the root (aka general) folder if we're not in a specific folder
-  const { data: rootFolderDTO } = useGetFolderQuery(folderDTO ? skipToken : 'general');
-  const folder = folderDTO ?? rootFolderDTO;
-
-  const { canEditFolders, canEditDashboards, canCreateDashboards, canCreateFolders } = getFolderPermissions(folder);
-  const hasAdminRights = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
-
-  const showEditTitle = canEditFolders && folderUID;
-  const canSelect = canEditFolders || canEditDashboards;
-  const onEditTitle = async (newValue: string) => {
-    if (folderDTO) {
-      const result = await saveFolder({
-        ...folderDTO,
-        title: newValue,
-      });
-      if ('error' in result) {
-        reportInteraction('grafana_browse_dashboards_page_edit_folder_name', {
-          status: 'failed_with_error',
-        });
-        throw result.error;
-      } else {
-        reportInteraction('grafana_browse_dashboards_page_edit_folder_name', { status: 'success' });
+    const loadData = async () => {
+      setIsLoading(true);
+      const kinds = selectedTypes.map((t) => t.value!.toString());
+      try {
+        const results = await Promise.all([
+          searcher.fetchResults({ kind: kinds}),
+          searcher.tags({ kind: kinds })
+        ]);
+        setResources(results[0].hits);
+        setAvailableTags(results[1]);
+      } catch (e: any) {
+        setError(e.message);
+      } finally {
+        setIsLoading(false);
       }
-    } else {
-      reportInteraction('grafana_browse_dashboards_page_edit_folder_name', { status: 'failed_no_folderDTO' });
-    }
+    };
+    void loadData();
+  }, [selectedTypes, selectedTag]);
+
+  const filterResources = (resources: SearchHit[]) => {
+    // TODO: Implement filtering
+    return resources;
   };
 
-  const handleButtonClickToRecentlyDeleted = () => {
-    reportInteraction('grafana_browse_dashboards_page_button_to_recently_deleted', {
-      origin: window.location.pathname === getConfig().appSubUrl + '/dashboards' ? 'Dashboards' : 'Folder view',
-    });
+  // TODO: Implement folder expand/collapse
+  // const handleExpand = (folder: Folder) => {
+  //   setFolders((prevFolders) =>
+  //     prevFolders.map((f) => (f.name === folder.name ? { ...f, isExpanded: !f.isExpanded } : f))
+  //   );
+  // };
+
+  const renderTable = (resources: SearchHit[]) => {
+    const columns: Array<Column<Resource>> = 
+      [
+          {
+            id: 'name',
+            header: 'Name',
+            cell: ({ row: { original } }) => (
+              <div style={{ marginLeft: original.level ? original.level * 20 : 0 }}>
+                {original.title}
+              </div>
+            ),
+          },
+          {
+            id: 'type',
+            header: 'Type',
+            cell: ({ row: { original } }) => original.resource,
+          },
+          {
+            id: 'location',
+            header: 'Location',
+            cell: ({ row: { original } }) => original.location || '-',
+          },
+          {
+            id: 'tags',
+            header: 'Tags',
+            cell: ({ row: { original } }) => original.tags?.join(', ') || '-',
+          },
+        ];
+        // TODO if we want to drill down into the folders
+       
+          // {
+          //   id: 'name',
+          //   header: 'Name',
+          //   cell: ({ row: { original } }) => (
+          //     <div style={{ marginLeft: original.level ? original.level * 20 : 0 }}>
+          //       {original.hasSubfolders && (
+          //         <Icon
+          //           name={original.isExpanded ? 'angle-down' : 'angle-right'}
+          //           onClick={() => handleExpand(original)}
+          //           className={styles.expandIcon}
+          //         />
+          //       )}
+          //       {original.title}
+          //     </div>
+          //   ),
+          // }
+
+    return (
+        <InteractiveTable
+          data={resources}
+          columns={columns}
+          getRowId={(row) => row.name}
+        />
+    );
   };
+
+  const filteredResources = filterResources(resources);
+
   return (
     <Page
-      navId="dashboards/browse"
-      pageNav={navModel}
-      onEditTitle={showEditTitle ? onEditTitle : undefined}
-      actions={
-        <>
-          {config.featureToggles.dashboardRestore && hasAdminRights && (
-            <LinkButton
-              variant="secondary"
-              href={getConfig().appSubUrl + '/dashboard/recently-deleted'}
-              onClick={handleButtonClickToRecentlyDeleted}
-            >
-              <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">Recently deleted</Trans>
-            </LinkButton>
-          )}
-          {folderDTO && <FolderActionsButton folder={folderDTO} />}
-          {(canCreateDashboards || canCreateFolders) && (
-            <CreateNewButton
-              parentFolder={folderDTO}
-              canCreateDashboard={canCreateDashboards}
-              canCreateFolder={canCreateFolders}
-            />
-          )}
-        </>
-      }
+      navId="finder"
+      navModel={navModel}
     >
-      <Page.Contents className={styles.pageContents}>
-        <div>
-          <FilterInput
-            placeholder={getSearchPlaceholder(searchState.includePanels)}
-            value={searchState.query}
-            escapeRegex={false}
-            onChange={(e) => stateManager.onQueryChange(e)}
-          />
+      <Page.Contents>
+        <div className={styles.filtersRow}>
+          <Stack direction="row" gap={2}>
+            <FilterInput
+                value={searchTerm}
+                onChange={setSearchTerm}
+                placeholder="Search resources"
+              />
+          </Stack>
+          <Stack direction="row" gap={2}>
+            <Select
+              value={selectedTypes}
+              onChange={(v) => setSelectedTypes(v as Array<SelectableValue<ResourceType>>)}
+              options={typeOptions}
+              placeholder="Filter by Type"
+              width={20}
+              isMulti={true}
+            />
+            <Select
+              value={selectedTag}
+              onChange={setSelectedTag}
+              options={availableTags}
+              opotions={[]}
+              placeholder="Filter by Tag"
+              width={20}
+            />
+          </Stack>
         </div>
 
-        {hasSelection ? (
-          <BrowseActions />
-        ) : (
-          <div className={styles.filters}>
-            <BrowseFilters />
-          </div>
+        {isLoading && <LoadingPlaceholder text="Loading folders..." />}
+        
+        {error && (
+          <EmptyState message={error} variant={'call-to-action'} />
         )}
 
-        <div className={styles.subView}>
-          <AutoSizer>
-            {({ width, height }) =>
-              isSearching ? (
-                <SearchView
-                  canSelect={canSelect}
-                  width={width}
-                  height={height}
-                  searchState={searchState}
-                  searchStateManager={stateManager}
-                />
-              ) : (
-                <BrowseView canSelect={canSelect} width={width} height={height} folderUID={folderUID} />
-              )
-            }
-          </AutoSizer>
-        </div>
+        {!isLoading && !error && renderTable(filteredResources)}
       </Page.Contents>
     </Page>
   );
-});
+};
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  pageContents: css({
+  filtersRow: css({
     display: 'flex',
     flexDirection: 'column',
-    gap: theme.spacing(1),
-    height: '100%',
+    gap: `6px`
   }),
-
-  // AutoSizer needs an element to measure the full height available
-  subView: css({
-    height: '100%',
+  groupBySelect: css({
+    marginLeft: 'auto',
   }),
-
-  filters: css({
-    display: 'none',
-
-    [theme.breakpoints.up('md')]: {
-      display: 'block',
-    },
+  groupSection: css({
+    marginBottom: theme.spacing(3),
+  }),
+  groupHeader: css({
+    padding: theme.spacing(1),
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.shape.borderRadius(1),
+    marginBottom: theme.spacing(1),
+  }),
+  expandIcon: css({
+    cursor: 'pointer',
+    marginRight: theme.spacing(1),
   }),
 });
 
-BrowseResourcesPage.displayName = 'BrowseDashboardsPage';
-export default BrowseResourcesPage;
+export default FoldersPage;
