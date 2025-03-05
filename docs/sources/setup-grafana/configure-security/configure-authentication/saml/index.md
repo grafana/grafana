@@ -101,7 +101,7 @@ If you are directly supplying the certificate and key, also note that Grafana su
 
 > **Note:** You can only use one form of each configuration option. Using multiple forms, such as both `certificate` and `certificate_path`, results in an error.
 
-You should always work with your company's security team on setting up certificates and private keys. If you need to generate them yourself (i.e. in the short term, for testing purposes, etc.), we give you the example below of generating your own certificate and private key, including the step of ensuring that the key is generated with the [PKCS#8](https://en.wikipedia.org/wiki/PKCS_8) format.
+You should always work with your company's security team on setting up certificates and private keys. If you need to generate them yourself (such as in the short term, for testing purposes, etc.), follow the example below to generate your certificate and private key, including the step of ensuring that the key is generated with the [PKCS#8](https://en.wikipedia.org/wiki/PKCS_8) format.
 
 ---
 
