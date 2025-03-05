@@ -2,7 +2,7 @@ import { set, get } from 'lodash';
 
 import { CustomVariableModel } from '@grafana/data';
 
-import createMockDatasource, { Context, createContext } from '../__mocks__/datasource';
+import { Context, createContext } from '../__mocks__/datasource';
 import { createMockInstanceSetttings } from '../__mocks__/instanceSettings';
 import createMockQuery from '../__mocks__/query';
 import { createTemplateVariables } from '../__mocks__/utils';
