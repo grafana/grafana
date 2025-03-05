@@ -19,6 +19,8 @@ permissions:
 
 env:
   GO_VERSION: '1.23.5'
+  EDITION: 'oss'
+  WIRE_TAGS: 'oss'
 
 jobs:
   check-coverage:
@@ -93,25 +95,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup common environment
-        id: common-env
-        uses: ./.github/actions/setup-common-backend-testing-env
-
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: true
 
-      - name: Setup Enterprise
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
-        uses: ./.github/actions/setup-enterprise
-
       - name: Run ${{ matrix.test-type }} tests
         shell: bash
-        env:
-          EDITION: ${{ steps.common-env.outputs.edition }}
-          WIRE_TAGS: ${{ steps.common-env.outputs.wire_tags }}
         run: |
           if [ "${{ needs.check-coverage.outputs.generate }}" == "true" ]; then
             COVER_OPTS="-coverprofile=${{ matrix.test-type }}.cov -coverpkg=github.com/grafana/grafana/..." make gen-go test-go-${{ matrix.test-type }}
@@ -136,19 +127,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup common environment
-        id: common-env
-        uses: ./.github/actions/setup-common-backend-testing-env
-
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: true
-
-      - name: Setup Enterprise
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
-        uses: ./.github/actions/setup-enterprise
 
       - name: Download unit coverage
         uses: actions/download-artifact@v4
@@ -159,12 +142,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: integration-coverage
-
-      - name: Generate Go files
-        env:
-          EDITION: ${{ steps.common-env.outputs.edition }}
-          WIRE_TAGS: ${{ steps.common-env.outputs.wire_tags }}
-        run: make gen-go
 
       - name: Generate Coverage Report
         uses: ./.github/actions/report-coverage
