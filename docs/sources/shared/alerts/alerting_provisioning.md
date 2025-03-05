@@ -378,16 +378,23 @@ Content-Type: application/json
 
 ### Edit resources in the Grafana UI
 
-By default, you cannot edit API-provisioned alerting resources in Grafana. To enable editing these resources in the Grafana UI, add the `X-Disable-Provenance` header to the following requests in the API:
+By default, you cannot edit API-provisioned alerting resources in Grafana.
+
+To enable editing these resources in the Grafana UI, add the **`X-Disable-Provenance: true`** header to the following API requests:
 
 - `POST /api/v1/provisioning/alert-rules`
-- `PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}` (calling this endpoint will change provenance for all alert rules within the alert group)
+- `PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}`
+
+  _(Changes provenance for all alert rules in the alert group)_
+
 - `POST /api/v1/provisioning/contact-points`
 - `POST /api/v1/provisioning/mute-timings`
-- `PUT /api/v1/provisioning/policies`
 - `PUT /api/v1/provisioning/templates/{name}`
+- `PUT /api/v1/provisioning/policies`
 
-To reset the notification policy tree to the default and unlock it for editing in the Grafana UI, use the `DELETE /api/v1/provisioning/policies` endpoint.
+To reset the notification policy tree to the default and unlock it for editing in the Grafana UI, use:
+
+- `DELETE /api/v1/provisioning/policies`
 
 ## Data source-managed resources
 
