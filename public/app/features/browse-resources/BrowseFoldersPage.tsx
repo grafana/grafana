@@ -17,6 +17,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { SearchHit, UnifiedSearcher } from '../search/service/unified';
 import { GrafanaSearcher } from '../search/service/types';
 import { getAPINamespace } from 'app/api/utils';
+import { useNavModel } from 'app/core/hooks/useNavModel';
 
 interface Resource extends SearchHit {
   isExpanded?: boolean;
@@ -46,14 +47,15 @@ const FoldersPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedType, setSelectedType] = useState<SelectableValue<ResourceType>>();
+  const [selectedTypes, setSelectedTypes] = useState<Array<SelectableValue<ResourceType>>>([]);
   const [selectedTag, setSelectedTag] = useState<SelectableValue<string>>();
-  const [selectedOwner, setSelectedOwner] = useState<SelectableValue<string>>();
 
   // const [availableTags, setAvailableTags] = useState<Array<SelectableValue<string>>>([]);
   // const [availableOwners, setAvailableOwners] = useState<Array<SelectableValue<string>>>([]);
   
   const styles = useStyles2(getStyles);
+
+  const navModel = useNavModel('finder');
 
   useEffect(() => {
     const kinds = ['folders', 'dashboards'];
@@ -75,7 +77,7 @@ const FoldersPage: React.FC = () => {
       }
     };
     void loadData();
-  }, []);
+  }, [selectedTypes, selectedTag]);
 
   const filterResources = (resources: SearchHit[]) => {
     // TODO: Implement filtering
@@ -148,10 +150,11 @@ const FoldersPage: React.FC = () => {
   const filteredResources = filterResources(resources);
 
   return (
-    <Page>
+    <Page
+      navId="finder"
+      navModel={navModel}
+    >
       <Page.Contents>
-        <h1>Finder</h1>
-        <h4>Search and Browse Resources</h4>
         <div className={styles.filtersRow}>
           <Stack direction="row" gap={2}>
             <FilterInput
@@ -161,11 +164,12 @@ const FoldersPage: React.FC = () => {
               width={30}
             />
             <Select
-              value={selectedType}
-              onChange={setSelectedType}
+              value={selectedTypes}
+              onChange={(v) => setSelectedTypes(v as Array<SelectableValue<ResourceType>>)}
               options={typeOptions}
               placeholder="Filter by Type"
               width={20}
+              isMulti={true}
             />
             <Select
               value={selectedTag}
@@ -173,14 +177,6 @@ const FoldersPage: React.FC = () => {
               // options={availableTags}  // TODO
               opotions={[]}
               placeholder="Filter by Tag"
-              width={20}
-            />
-            <Select
-              value={selectedOwner}
-              onChange={setSelectedOwner}
-              options={[]}
-              // options={availableOwners} // TODO - maybe
-              placeholder="Filter by Owner"
               width={20}
             />
           </Stack>
