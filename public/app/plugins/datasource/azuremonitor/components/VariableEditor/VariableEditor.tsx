@@ -158,8 +158,8 @@ const VariableEditor = (props: Props) => {
   // When resource group is set, retrieve metric namespaces (aka resource types for a custom metric and custom metric namespace query)
   useEffect(() => {
     if (subscription && resourceGroup) {
-      datasource.getMetricNamespaces(subscription, resourceGroup).then((rgs) => {
-        setNamespaces(rgs.map((s: AzureLogsVariable) => ({ label: s.text, value: s.value })));
+      datasource.getMetricNamespaces(subscription, resourceGroup, undefined, false, true).then((rgs) => {
+        setNamespaces(rgs.map((s) => ({ label: s.text, value: s.value })));
       });
     }
   }, [datasource, subscription, resourceGroup]);

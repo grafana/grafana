@@ -29,7 +29,7 @@ export default class ResponseParser {
     for (let i = 0; i < result.value.length; i++) {
       if (!find(list, ['value', get(result.value[i], valueFieldName)])) {
         const value = get(result.value[i], valueFieldName);
-        const text = get(result.value[i], textFieldName, value)?.toLowerCase();
+        const text = get(result.value[i], textFieldName, value);
 
         list.push({
           text: text,

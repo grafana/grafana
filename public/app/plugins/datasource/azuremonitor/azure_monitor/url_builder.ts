@@ -51,7 +51,7 @@ export default class UrlBuilder {
     apiVersion: string,
     query: GetMetricNamespacesQuery,
     templateSrv: TemplateSrv,
-    globalRegion?: boolean,
+    globalRegion: boolean,
     region?: string
   ) {
     let resourceUri: string;
