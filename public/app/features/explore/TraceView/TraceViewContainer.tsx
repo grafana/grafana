@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { DataFrame, SplitOpen } from '@grafana/data';
+import { DataFrame, SplitOpen, TimeRange } from '@grafana/data';
 import { PanelChrome } from '@grafana/ui';
 import { StoreState, useSelector } from 'app/types';
 
@@ -12,12 +12,13 @@ interface Props {
   splitOpenFn: SplitOpen;
   exploreId: string;
   scrollElement?: Element;
+  timeRange: TimeRange;
 }
 
 export function TraceViewContainer(props: Props) {
   // At this point we only show single trace
   const frame = props.dataFrames[0];
-  const { dataFrames, splitOpenFn, exploreId, scrollElement } = props;
+  const { dataFrames, splitOpenFn, exploreId, scrollElement, timeRange } = props;
   const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
   const datasource = useSelector(
     (state: StoreState) => state.explore.panes[props.exploreId]?.datasourceInstance ?? undefined
@@ -36,6 +37,7 @@ export function TraceViewContainer(props: Props) {
         scrollElement={scrollElement}
         traceProp={traceProp}
         datasource={datasource}
+        timeRange={timeRange}
       />
     </PanelChrome>
   );
