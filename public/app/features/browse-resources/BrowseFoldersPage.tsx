@@ -58,9 +58,9 @@ const FoldersPage: React.FC = () => {
   const navModel = useNavModel('finder');
 
   useEffect(() => {
-    const kinds = ['folders', 'dashboards'];
     const loadData = async () => {
       setIsLoading(true);
+      const kinds = selectedTypes.map((t) => t.value!.toString());
       try {
         const results = await Promise.all([
           searcher.fetchResults({ kind: kinds}),
