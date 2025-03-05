@@ -412,7 +412,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.resourceLister,
 				b.storageStatus,
 			)
-			b.jobs.Register(exportWorder)
+			b.jobs.Register(exportWorker)
 			b.jobs.Register(syncWorker)
 			b.jobs.Register(migrate.NewMigrationWorker(
 				b.client,
@@ -421,7 +421,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.storageStatus,
 				b.unified,
 				b.secrets,
-				exportWorder,
+				exportWorker,
 				syncWorker,
 				b.clonedir,
 			))
