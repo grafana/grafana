@@ -178,7 +178,7 @@ function useGetScene(panelProps?: PanelProps<AlertHistoryOptions> | undefined) {
     });
 
     return new EmbeddedScene({
-      controls: [new SceneControlsSpacer(), new SceneTimePicker({}), new SceneRefreshPicker({})],
+      controls: [],
       // use default time range as from 1 hour ago to now, as the limit of the history api is 5000 events,
       // and using a wider time range might lead to showing gaps in the events list and the chart.
       $timeRange: new SceneTimeRange({
@@ -218,10 +218,14 @@ export const CentralAlertHistoryScene = () => {
 /**
  * This component is used to render the CentralAlertHistoryScene when it is used in a panel.
  * It receives the props from the panel and sets the filter variables to the values from the panel options.
- * We cannot url sync the scene when it is used in a panel, because one dashobard can have multiple panels with different options.
+ * We cannot url sync the scene for variables when it is used in a panel, because one dashobard can have multiple panels with different options.
+ * We use url sync only for the time range. For doing this we use the useUrlSync hook with the scene, and skip the url sync for the variables.
  * */
 export const CentralAlertHistorySceneForPanel = ({ propsFromPanel }: AlertHistorySceneProps) => {
   const options: AlertHistoryOptions | undefined = propsFromPanel?.options;
+  // We need the scene to be memoized, otherwise, it causes full unmounts and remounts on ever re-render (flickering).
+  // For this reason, we use a useeffect to set the filter variables to the values from the panel options,
+  // instead of creating a new scene object any time options change.
   const scene = useGetCentralAlertHistoryScene(propsFromPanel);
   useEffect(() => {
     const stateToFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_TO, scene);
@@ -229,15 +233,25 @@ export const CentralAlertHistorySceneForPanel = ({ propsFromPanel }: AlertHistor
 
     if (stateToFilterVariable instanceof CustomVariable) {
       stateToFilterVariable.changeValueTo(options?.filterTo ?? StateFilterValues.all);
+      stateToFilterVariable.setState({ skipUrlSync: true }); // skip url sync for the variables
     }
     if (stateFromFilterVariable instanceof CustomVariable) {
       stateFromFilterVariable.changeValueTo(options?.filterFrom ?? StateFilterValues.all);
+      stateFromFilterVariable.setState({ skipUrlSync: true }); // skip url sync for the variables
     }
     const labelsFiltersVariable = sceneGraph.lookupVariable(LABELS_FILTER, scene);
     if (labelsFiltersVariable instanceof TextBoxVariable) {
       labelsFiltersVariable.setValue(options?.filterByLabels ?? '');
+      labelsFiltersVariable.setState({ skipUrlSync: true }); // skip url sync for the variables
     }
   }, [options, scene]);
+
+  // we need to call this to sync the url with the scene state
+  const isUrlSyncInitialized = useUrlSync(scene);
+
+  if (!isUrlSyncInitialized) {
+    return null;
+  }
 
   return <scene.Component model={scene} />;
 };
