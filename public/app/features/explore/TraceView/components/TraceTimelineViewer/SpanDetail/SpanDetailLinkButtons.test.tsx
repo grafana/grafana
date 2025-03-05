@@ -182,14 +182,9 @@ describe('getProfileLinkButtonsContext', () => {
         from: new Date(0).toISOString(),
         to: new Date(1000).toISOString(),
       },
-      targets: [
-        {
-          datasource: {
-            type: 'grafana-pyroscope-datasource',
-            uid: 'test-uid',
-          },
-        },
-      ],
+      datasource: {
+        uid: 'test-uid',
+      },
     });
   });
 
@@ -205,14 +200,9 @@ describe('getProfileLinkButtonsContext', () => {
         from: new Date(0).toISOString(),
         to: new Date(1000).toISOString(),
       },
-      targets: [
-        {
-          datasource: {
-            type: 'grafana-pyroscope-datasource',
-            uid: undefined,
-          },
-        },
-      ],
+      datasource: {
+        uid: undefined,
+      },
     });
   });
 
