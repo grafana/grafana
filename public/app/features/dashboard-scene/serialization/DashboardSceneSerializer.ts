@@ -26,7 +26,7 @@ export interface DashboardSceneSerializerLike<T, M> {
    */
   initialSaveModel?: T;
   metadata?: M;
-  initializeMapping(saveModel: T): void;
+  initializeMapping(saveModel: T | undefined): void;
   getSaveModel: (s: DashboardScene) => T;
   getSaveAsModel: (s: DashboardScene, options: SaveDashboardAsOptions) => T;
   getDashboardChangesFromScene: (
@@ -59,12 +59,22 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
   metadata?: DashboardMeta;
   protected elementPanelMap = new Map<string, number>();
 
-  initializeMapping(saveModel: Dashboard) {
+  initializeMapping(saveModel: Dashboard | undefined) {
     this.elementPanelMap.clear();
 
-    // element keys are panel-id
-    // FIXME: Should generate "fake-ids"
-    console.log('lookup table', this.elementPanelMap);
+    if (!saveModel) {
+      return;
+    }
+    saveModel.panels?.forEach((panel) => {
+      if (panel.id) {
+        const elementKey = getVizPanelKeyForPanelId(panel.id);
+        // check panel id exists and is unique
+        if (this.getElementIdForPanel(panel.id)) {
+          console.error('Panel id is not unique');
+        }
+        this.elementPanelMap.set(elementKey, panel.id);
+      }
+    });
   }
 
   getElementPanelMapping() {
@@ -188,8 +198,6 @@ export class V2DashboardSerializer
         this.elementPanelMap.set(key, elementPanel.spec.id);
       }
     });
-
-    console.log('lookup table', this.elementPanelMap);
   }
 
   getPanelIdForElement(elementId: string) {
