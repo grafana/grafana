@@ -9,7 +9,6 @@ func (in *Dashboard) DeepCopyInto(out *Dashboard) {
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
 	in.Spec.DeepCopyInto(&out.Spec)
-	return
 }
 
 func (in *Dashboard) DeepCopy() *Dashboard {
@@ -32,7 +31,6 @@ func (in *DashboardList) DeepCopyInto(out *DashboardList) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	return
 }
 
 func (in *DashboardList) DeepCopy() *DashboardList {
