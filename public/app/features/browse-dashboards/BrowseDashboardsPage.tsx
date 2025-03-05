@@ -5,7 +5,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { LinkButton, FilterInput, useStyles2, Text, Stack } from '@grafana/ui';
+import { LinkButton, FilterInput, useStyles2, Text, Stack, Alert, Icon } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
 import { Trans } from 'app/core/internationalization';
@@ -127,6 +127,7 @@ const BrowseDashboardsPage = memo(() => {
     );
   };
 
+  const prLink = search.get('prLink');
   return (
     <Page
       navId="dashboards/browse"
@@ -156,6 +157,19 @@ const BrowseDashboardsPage = memo(() => {
       }
     >
       <Page.Contents className={styles.pageContents}>
+        {prLink && (
+          <Alert
+            severity={'success'}
+            title={'This folder is loaded from a a branch in GitHub.'}
+            buttonContent={
+              <Stack alignItems="center">
+                <span>Open pull request in GitHub</span>
+                <Icon name="external-link-alt" />
+              </Stack>
+            }
+            onRemove={() => window.open(prLink)}
+          />
+        )}
         <div>
           <FilterInput
             placeholder={getSearchPlaceholder(searchState.includePanels)}

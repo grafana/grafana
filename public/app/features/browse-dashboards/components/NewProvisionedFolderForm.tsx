@@ -3,10 +3,14 @@ import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
+import { getAppEvents, locationService } from '@grafana/runtime';
 import { Alert, Button, Field, Input, RadioButtonGroup, Stack, TextArea } from '@grafana/ui';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
-import { useCreateRepositoryFilesWithPathMutation, useGetRepositoryQuery } from 'app/features/provisioning/api';
+import {
+  RepositorySpec,
+  useCreateRepositoryFilesWithPathMutation,
+  useGetRepositoryQuery,
+} from 'app/features/provisioning/api';
 import { usePullRequestParam } from 'app/features/provisioning/hooks';
 import { WorkflowOption } from 'app/features/provisioning/types';
 import { validateBranchName } from 'app/features/provisioning/utils/git';
@@ -62,7 +66,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
     setValue,
   } = useForm<FormData>({ defaultValues: { ...initialFormValues, workflow: getDefaultWorkflow(repositoryConfig) } });
 
-  const [workflow] = watch(['workflow']);
+  const [workflow, ref] = watch(['workflow', 'ref']);
 
   useEffect(() => {
     setValue('workflow', getDefaultWorkflow(repositoryConfig));
@@ -72,13 +76,14 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
     const appEvents = getAppEvents();
     if (request.isSuccess) {
       onSubmit();
+      locationService.partial({ prLink: getPRLink(repositoryConfig, ref) });
     } else if (request.isError) {
       appEvents.publish({
         type: AppEvents.alertError.name,
         payload: ['Error creating folder', request.error],
       });
     }
-  }, [request.isSuccess, request.isError, request.error, onSubmit]);
+  }, [request.isSuccess, request.isError, request.error, onSubmit, ref]);
 
   const validateFolderName = async (folderName: string) => {
     try {
@@ -212,3 +217,11 @@ const BranchValidationError = () => {
     </>
   );
 };
+
+function getPRLink(spec?: RepositorySpec, ref?: string) {
+  const githubSpec = spec?.type === 'github' ? spec.github : undefined;
+  if (!githubSpec || !spec?.workflows.includes('branch')) {
+    return '';
+  }
+  return `${githubSpec.url}/compare/${githubSpec.branch}...${ref}?quick_pull=1&labels=grafana`;
+}
