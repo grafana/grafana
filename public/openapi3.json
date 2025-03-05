@@ -5570,7 +5570,7 @@
             "type": "integer"
           },
           "managedBy": {
-            "$ref": "#/definitions/ManagerKind"
+            "$ref": "#/components/schemas/ManagerKind"
           },
           "orgId": {
             "format": "int64",
@@ -5617,7 +5617,7 @@
             "type": "integer"
           },
           "managedBy": {
-            "$ref": "#/definitions/ManagerKind"
+            "$ref": "#/components/schemas/ManagerKind"
           },
           "parentUid": {
             "type": "string"
@@ -7103,8 +7103,8 @@
       },
       "ManagerKind": {
         "description": "It can be a user or a tool or a generic API client.\n+enum",
-        "type": "string",
-        "title": "ManagerKind is the type of manager, which is responsible for managing the resource."
+        "title": "ManagerKind is the type of manager, which is responsible for managing the resource.",
+        "type": "string"
       },
       "MassDeleteAnnotationsCmd": {
         "properties": {
