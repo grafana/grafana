@@ -56,4 +56,8 @@ FROM dashboard;`
 	// change column type of dashboard_version.data
 	mg.AddMigration("alter dashboard_version.data to mediumtext v1", NewRawSQLMigration("").
 		Mysql("ALTER TABLE dashboard_version MODIFY data MEDIUMTEXT;"))
+
+	mg.AddMigration("Add apiVersion for dashboard_version", NewAddColumnMigration(dashboardVersionV1, &Column{
+		Name: "api_version", Type: DB_Varchar, Length: 16, Nullable: true,
+	}))
 }

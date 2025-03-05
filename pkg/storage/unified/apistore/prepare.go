@@ -9,11 +9,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	authtypes "github.com/grafana/authlib/types"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/klog/v2"
+
+	authtypes "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -73,12 +74,6 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	obj.SetResourceVersion("")
 	obj.SetSelfLink("")
 
-	// Read+write will verify that repository format is accurate
-	repo, err := obj.GetRepositoryInfo()
-	if err != nil {
-		return nil, err
-	}
-	obj.SetRepositoryInfo(repo)
 	obj.SetUpdatedBy("")
 	obj.SetUpdatedTimestamp(nil)
 	obj.SetCreatedBy(info.GetUID())
@@ -136,12 +131,6 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		obj.SetDeprecatedInternalID(previousInternalID) // nolint:staticcheck
 	}
 
-	// Read+write will verify that origin format is accurate
-	repo, err := obj.GetRepositoryInfo()
-	if err != nil {
-		return nil, err
-	}
-	obj.SetRepositoryInfo(repo)
 	obj.SetUpdatedBy(info.GetUID())
 	obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
 
