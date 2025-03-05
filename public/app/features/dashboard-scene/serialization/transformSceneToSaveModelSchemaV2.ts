@@ -263,13 +263,14 @@ function getVizPanelQueries(vizPanel: VizPanel, initialPanel?: PanelKind): Panel
     vizPanelQueries.forEach((query, i) => {
       const initialQueryUID = initialPanel?.spec.data.spec.queries[i].spec.datasource?.uid;
       const initialQuery = initialPanel?.spec.data.spec.queries[i].spec.query;
-      const updateQueryAndDS = isNewDash || initialQueryUID;
+      const isNewPanel = !initialPanel;
+      const updateQueryAndDS = isNewDash || isNewPanel || initialQueryUID;
 
       const dataQuery: DataQueryKind = {
         /* If the datasource wasn't provided when dashboard was created and we are not creating a new dashboard, 
         then we revert to the original query and datasource */
         kind: updateQueryAndDS ? getDataQueryKind(query) : initialQuery!.kind,
-        spec: updateQueryAndDS || isNewDash ? omit(query, 'datasource', 'refId', 'hide') : initialQuery!.spec,
+        spec: updateQueryAndDS ? omit(query, 'datasource', 'refId', 'hide') : initialQuery!.spec,
       };
 
       const querySpec: PanelQuerySpec = {
