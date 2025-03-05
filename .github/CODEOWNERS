@@ -756,6 +756,7 @@ embed.go @grafana/grafana-as-code
 /.github/renovate.json5 @grafana/frontend-ops
 /.github/actions/report-coverage @grafana/grafana-backend-group
 /.github/actions/setup-enterprise @grafana/grafana-backend-group
+/.github/actions/setup-common-backend-testing-env @grafana/grafana-backend-group
 /.github/workflows/add-to-whats-new.yml @grafana/docs-tooling
 /.github/workflows/auto-triager/ @grafana/plugins-platform-frontend
 /.github/workflows/alerting-swagger-gen.yml @grafana/alerting-backend
