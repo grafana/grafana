@@ -163,9 +163,18 @@ jobs:
     needs: [check-coverage, unit-tests, integration-tests]
     if: needs.check-coverage.outputs.generate == 'true'
     runs-on: ubuntu-latest
+    env:
+      EDITION: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && 'enterprise' || 'oss' }}
+      WIRE_TAGS: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && 'enterprise' || 'oss' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.5'
+          cache: true
 
       - name: Setup Enterprise
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
@@ -180,6 +189,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: integration-coverage
+
+      - name: Generate Go files
+        run: make gen-go
 
       - name: Generate Coverage Report
         uses: ./.github/actions/report-coverage
