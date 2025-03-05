@@ -1,0 +1,25 @@
+services:
+  grafana:
+    user: root
+    container_name: 'j-j-datasource'
+
+    build:
+      context: .
+      args:
+        grafana_image: ${GRAFANA_IMAGE:-grafana-enterprise}
+        grafana_version: ${GRAFANA_VERSION:-11.5.2}
+        development: ${DEVELOPMENT:-false}
+        anonymous_auth_enabled: ${ANONYMOUS_AUTH_ENABLED:-true}
+    ports:
+      - 3000:3000/tcp
+    volumes:
+      - ../dist:/var/lib/grafana/plugins/j-j-datasource
+      - ../provisioning:/etc/grafana/provisioning
+      - ..:/root/j-j-datasource
+
+    environment:
+      NODE_ENV: development
+      GF_LOG_FILTERS: plugin.j-j-datasource:debug
+      GF_LOG_LEVEL: debug
+      GF_DATAPROXY_LOGGING: 1
+      GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: j-j-datasource

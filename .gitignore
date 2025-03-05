@@ -233,3 +233,4 @@ public/app/plugins/**/dist/
 public/mockServiceWorker.js
 
 /e2e/test-plugins/*/dist
+pkg/plugins/manager/testdata/includes-symlinks/extra

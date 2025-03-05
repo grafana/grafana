@@ -1,0 +1,26 @@
+# This GitHub Action automates the process of building Grafana plugins.
+# (For more information, see https://github.com/grafana/plugin-actions/blob/main/build-plugin/README.md)
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Run workflow on version tags, e.g. v1.0.0.
+
+permissions: read-all
+
+jobs:
+  release:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: grafana/plugin-actions/build-plugin@main
+        # Uncomment to enable plugin signing
+        # (For more info on how to generate the access policy token see https://grafana.com/developers/plugin-tools/publish-a-plugin/sign-a-plugin#generate-an-access-policy-token)
+        #with:
+          # Make sure to save the token in your repository secrets
+          #policy_token: $
+          # Usage of GRAFANA_API_KEY is deprecated, prefer `policy_token` option above
+          #grafana_token: $

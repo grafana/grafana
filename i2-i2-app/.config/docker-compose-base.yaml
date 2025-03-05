@@ -1,0 +1,25 @@
+services:
+  grafana:
+    user: root
+    container_name: 'i2-i2-app'
+
+    build:
+      context: .
+      args:
+        grafana_image: ${GRAFANA_IMAGE:-grafana-enterprise}
+        grafana_version: ${GRAFANA_VERSION:-11.5.2}
+        development: ${DEVELOPMENT:-false}
+        anonymous_auth_enabled: ${ANONYMOUS_AUTH_ENABLED:-true}
+    ports:
+      - 3000:3000/tcp
+    volumes:
+      - ../dist:/var/lib/grafana/plugins/i2-i2-app
+      - ../provisioning:/etc/grafana/provisioning
+      - ..:/root/i2-i2-app
+
+    environment:
+      NODE_ENV: development
+      GF_LOG_FILTERS: plugin.i2-i2-app:debug
+      GF_LOG_LEVEL: debug
+      GF_DATAPROXY_LOGGING: 1
+      GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: i2-i2-app

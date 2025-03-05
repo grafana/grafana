@@ -1,0 +1,26 @@
+name: Create Plugin Update
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 1 * *' # run once a month on the 1st day
+
+# To use the default github token with the following elevated permissions make sure to check:
+# **Allow GitHub Actions to create and approve pull requests** in https://github.com/ORG_NAME/REPO_NAME/settings/actions.
+# Alternatively create a fine-grained personal access token for your repository with
+# `contents: read and write` and `pull requests: read and write` and pass it to the action.
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: grafana/plugin-actions/create-plugin-update@main
+        # Uncomment to use a fine-grained personal access token instead of default github token
+        # (For more info on how to generate the token see https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)
+        # with:
+          # Make sure to save the token in your repository secrets
+          # token: $
