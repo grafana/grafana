@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -222,9 +223,9 @@ func (s *Service) getDashIDMaybeEmpty(ctx context.Context, uid string, orgID int
 
 func (s *Service) getHistoryThroughK8s(ctx context.Context, orgID int64, dashboardUID string, rv int64) (*dashver.DashboardVersionDTO, error) {
 	out, err := s.k8sclient.Get(ctx, dashboardUID, orgID, v1.GetOptions{ResourceVersion: strconv.FormatInt(rv, 10)})
-	if err != nil {
+	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, err
-	} else if out == nil {
+	} else if out == nil || err != nil {
 		return nil, dashboards.ErrDashboardNotFound
 	}
 
@@ -242,7 +243,7 @@ func (s *Service) listHistoryThroughK8s(ctx context.Context, orgID int64, dashbo
 		Limit:         limit,
 		Continue:      continueToken,
 	})
-	if err != nil {
+	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, err
 	} else if out == nil {
 		return nil, dashboards.ErrDashboardNotFound
