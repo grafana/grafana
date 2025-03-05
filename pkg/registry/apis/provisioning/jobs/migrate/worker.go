@@ -91,6 +91,7 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		buffered *gogit.GoGitRepo
 	)
 
+	isFromLegacy := dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, w.storageStatus)
 	progress.SetTotal(10) // will show a progress bar
 	if repo.Config().Spec.GitHub != nil {
 		progress.SetMessage("clone " + repo.Config().Spec.GitHub.URL)
@@ -156,7 +157,7 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		}
 	}
 
-	if dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, w.storageStatus) {
+	if isFromLegacy {
 		progress.SetMessage("exporting folders")
 		err = worker.loadFolders(ctx)
 		if err != nil {
@@ -169,8 +170,6 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 			return err
 		}
 	} else {
-		// Already using unified storage
-		worker.legacy = nil
 		err = w.exportWorker.Process(ctx, rw, provisioning.Job{
 			Spec: provisioning.JobSpec{
 				Export: &provisioning.ExportJobOptions{
@@ -199,9 +198,8 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	}
 
 	// Clear unified and allow writing
-	if worker.legacy != nil {
-		err = worker.wipeUnifiedAndSetMigratedFlag(ctx, w.storageStatus)
-		if err != nil {
+	if isFromLegacy {
+		if err = worker.wipeUnifiedAndSetMigratedFlag(ctx, w.storageStatus); err != nil {
 			return fmt.Errorf("unable to reset unified storage %w", err)
 		}
 	}
@@ -217,9 +215,8 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 			},
 		},
 	}, progress)
-	if err != nil && worker.legacy != nil { // this will have an error when too many errors exist
-		e2 := stopReadingUnifiedStorage(ctx, w.storageStatus)
-		if e2 != nil {
+	if err != nil && isFromLegacy { // this will have an error when too many errors exist
+		if e2 := stopReadingUnifiedStorage(ctx, w.storageStatus); e2 != nil {
 			logger := logging.FromContext(ctx)
 			logger.Warn("error trying to revert dual write settings after an error", "err", err)
 		}
