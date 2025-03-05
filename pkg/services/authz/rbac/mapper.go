@@ -63,6 +63,15 @@ func newMapper() mapper {
 		"iam.grafana.app": {
 			"teams": newResourceTranslation("teams", "id", false),
 		},
+		"query.grafana.app": {
+			"query": translation{
+				resource:  "query",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbCreate: "datasources:query",
+				},
+			},
+		},
 	}
 }
 
