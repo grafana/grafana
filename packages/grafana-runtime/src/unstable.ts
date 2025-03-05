@@ -17,4 +17,4 @@ export {
   type ScopesContextValueState,
   type ScopesContextValue,
   useScopes,
-} from './services/ScopesContext';
+} from './unstable/ScopesContext';
