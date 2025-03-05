@@ -41,6 +41,7 @@ const ui = {
   nameInput: byRole('textbox', { name: /Evaluation group name/ }),
   intervalInput: byRole('textbox', { name: /Evaluation interval/ }),
   saveButton: byRole('button', { name: /Save/ }),
+  cancelButton: byRole('link', { name: /Cancel/ }),
   deleteButton: byRole('button', { name: /Delete/ }),
   rules: byTestId('reorder-alert-rule'),
   successMessage: byText('Successfully updated the rule group'),
@@ -94,6 +95,7 @@ describe('GroupEditPage', () => {
       const nameInput = await ui.nameInput.find();
       const intervalInput = await ui.intervalInput.find();
       const saveButton = await ui.saveButton.find();
+      const cancelButton = await ui.cancelButton.find();
       const rules = await ui.rules.findAll();
 
       expect(header).toHaveTextContent('Edit rule group');
@@ -101,6 +103,11 @@ describe('GroupEditPage', () => {
       expect(nameInput).toHaveValue('test-group-cpu');
       expect(intervalInput).toHaveValue('4m30s');
       expect(saveButton).toBeInTheDocument();
+      expect(cancelButton).toBeInTheDocument();
+      expect(cancelButton).toHaveProperty(
+        'href',
+        'http://localhost/alerting/grafana/namespaces/test-folder-uid/groups/test-group-cpu/view'
+      );
       expect(rules).toHaveLength(2);
       expect(rules[0]).toHaveTextContent('first-rule');
       expect(rules[1]).toHaveTextContent('second-rule');
