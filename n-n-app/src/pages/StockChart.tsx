@@ -8,7 +8,7 @@ const INTERVAL = '5min'; // Fetch every 5 minutes
 
 type StockDataPoint = {
   time: string;
-  value: number;
+  value: number;  
 };
 
 export default function StockChart() {
