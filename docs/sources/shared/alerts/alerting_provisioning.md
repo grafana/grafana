@@ -383,9 +383,7 @@ By default, you cannot edit API-provisioned alerting resources in Grafana.
 To enable editing these resources in the Grafana UI, add the **`X-Disable-Provenance: true`** header to the following API requests:
 
 - `POST /api/v1/provisioning/alert-rules`
-- `PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}`
-
-  _(Changes provenance for all alert rules in the alert group)_
+- `PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}` _(This endpoint changes provenance for all alert rules in the alert group)_
 
 - `POST /api/v1/provisioning/contact-points`
 - `POST /api/v1/provisioning/mute-timings`
