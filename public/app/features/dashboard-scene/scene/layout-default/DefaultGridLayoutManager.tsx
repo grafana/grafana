@@ -26,8 +26,8 @@ import {
   getGridItemKeyForPanelId,
   getDashboardSceneFor,
 } from '../../utils/utils';
-import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { DashboardGridItem } from './DashboardGridItem';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
@@ -45,7 +45,7 @@ export class DefaultGridLayoutManager
 
   public readonly isDashboardLayoutManager = true;
 
-  public static readonly descriptor = {
+  public static readonly descriptor: LayoutRegistryItem = {
     get name() {
       return t('dashboard.default-layout.name', 'Default grid');
     },
@@ -54,6 +54,7 @@ export class DefaultGridLayoutManager
     },
     id: 'default-grid',
     createFromLayout: DefaultGridLayoutManager.createFromLayout,
+    kind: 'GridLayout',
   };
 
   public readonly descriptor = DefaultGridLayoutManager.descriptor;
@@ -178,22 +179,6 @@ export class DefaultGridLayoutManager
     return panels;
   }
 
-  public hasVizPanels(): boolean {
-    for (const child of this.state.grid.state.children) {
-      if (child instanceof DashboardGridItem) {
-        return true;
-      } else if (child instanceof SceneGridRow) {
-        for (const rowChild of child.state.children) {
-          if (rowChild instanceof DashboardGridItem) {
-            return true;
-          }
-        }
-      }
-    }
-
-    return false;
-  }
-
   public addNewRow(): SceneGridRow {
     const id = dashboardSceneGraph.getNextPanelId(this);
 
@@ -222,17 +207,6 @@ export class DefaultGridLayoutManager
     return row;
   }
 
-  public addNewTab() {
-    const shouldAddTab = this.hasVizPanels();
-    const tabsLayout = TabsLayoutManager.createFromLayout(this);
-
-    if (shouldAddTab) {
-      tabsLayout.addNewTab();
-    }
-
-    getDashboardSceneFor(this).switchLayout(tabsLayout);
-  }
-
   public editModeChanged(isEditing: boolean) {
     const updateResizeAndDragging = () => {
       this.state.grid.setState({ isDraggable: isEditing, isResizable: isEditing });
@@ -250,6 +224,14 @@ export class DefaultGridLayoutManager
   }
 
   public activateRepeaters() {
+    if (!this.isActive) {
+      this.activate();
+    }
+
+    if (!this.state.grid.isActive) {
+      this.state.grid.activate();
+    }
+
     this.state.grid.forEachChild((child) => {
       if (child instanceof DashboardGridItem && !child.isActive) {
         child.activate();

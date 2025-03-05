@@ -542,6 +542,16 @@ type AddOrgUserParams struct {
 	OrgID int64 `json:"org_id"`
 }
 
+// swagger:parameters getOrgUsersForCurrentOrg
+type GetOrgUsersForCurrentOrgParams struct {
+	// in:query
+	// required:false
+	Query string `json:"query"`
+	// in:query
+	// required:false
+	Limit int `json:"limit"`
+}
+
 // swagger:parameters getOrgUsersForCurrentOrgLookup
 type LookupOrgUsersParams struct {
 	// in:query

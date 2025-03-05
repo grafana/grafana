@@ -59,7 +59,7 @@ type Client interface {
 var NewClient = func(ctx context.Context, ds *DatasourceInfo, logger log.Logger) (Client, error) {
 	logger = logger.FromContext(ctx).With("entity", "client")
 
-	ip, err := newIndexPattern(ds.Interval, ds.Database)
+	ip, err := NewIndexPattern(ds.Interval, ds.Database)
 	if err != nil {
 		logger.Error("Failed creating index pattern", "error", err, "interval", ds.Interval, "index", ds.Database)
 		return nil, err
@@ -135,7 +135,7 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 	c.logger.Debug("Sending request to Elasticsearch", "url", c.ds.URL)
 	u, err := url.Parse(c.ds.URL)
 	if err != nil {
-		return nil, err
+		return nil, backend.DownstreamError(fmt.Errorf("URL could not be parsed: %w", err))
 	}
 	u.Path = path.Join(u.Path, uriPath)
 	u.RawQuery = uriQuery
@@ -220,6 +220,10 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	} else {
 		dec := json.NewDecoder(res.Body)
 		err = dec.Decode(&msr)
+		if err != nil {
+			// Invalid JSON response from Elasticsearch
+			err = backend.DownstreamError(err)
+		}
 	}
 	if err != nil {
 		c.logger.Error("Failed to decode response from Elasticsearch", "error", err, "duration", time.Since(start), "improvedParsingEnabled", improvedParsingEnabled)
@@ -239,7 +243,8 @@ func StreamMultiSearchResponse(body io.Reader, msr *MultiSearchResponse) error {
 
 	_, err := dec.Token() // reads the `{` opening brace
 	if err != nil {
-		return err
+		// Invalid JSON response from Elasticsearch
+		return backend.DownstreamError(err)
 	}
 
 	for dec.More() {

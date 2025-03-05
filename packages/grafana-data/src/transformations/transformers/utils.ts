@@ -6,11 +6,6 @@ declare global {
     grafanaBootData?: BootData;
   }
 }
-
-export const transformationsVariableSupport = () => {
-  return window?.grafanaBootData?.settings?.featureToggles?.transformationsVariableSupport;
-};
-
 /**
  * Retrieve the maximum number of fields in a series of a dataframe.
  */

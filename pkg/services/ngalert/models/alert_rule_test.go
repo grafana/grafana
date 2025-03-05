@@ -15,6 +15,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/util"
@@ -262,7 +263,7 @@ func TestPatchPartialAlertRule(t *testing.T) {
 				name: "No metadata",
 				mutator: func(r *AlertRuleWithOptionals) {
 					r.Metadata = AlertRuleMetadata{}
-					r.HasMetadata = false
+					r.HasEditorSettings = false
 				},
 			},
 		}
@@ -407,7 +408,7 @@ func TestDiff(t *testing.T) {
 		rule1 := RuleGen.GenerateRef()
 		rule2 := RuleGen.GenerateRef()
 
-		diffs := rule1.Diff(rule2, "Data", "Annotations", "Labels", "NotificationSettings") // these fields will be tested separately
+		diffs := rule1.Diff(rule2, "Data", "Annotations", "Labels", "NotificationSettings", "Metadata") // these fields will be tested separately
 
 		difCnt := 0
 		if rule1.ID != rule2.ID {
@@ -417,6 +418,15 @@ func TestDiff(t *testing.T) {
 			assert.Equal(t, rule2.ID, diff[0].Right.Int())
 			difCnt++
 		}
+
+		if rule1.GUID != rule2.GUID {
+			diff := diffs.GetDiffsForField("GUID")
+			assert.Len(t, diff, 1)
+			assert.Equal(t, rule1.GUID, diff[0].Left.String())
+			assert.Equal(t, rule2.GUID, diff[0].Right.String())
+			difCnt++
+		}
+
 		if rule1.OrgID != rule2.OrgID {
 			diff := diffs.GetDiffsForField("OrgID")
 			assert.Len(t, diff, 1)
@@ -839,6 +849,39 @@ func TestDiff(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("should detect changes in Metadata.EditorSettings", func(t *testing.T) {
+		rule1 := RuleGen.With(RuleGen.WithMetadata(AlertRuleMetadata{EditorSettings: EditorSettings{
+			SimplifiedQueryAndExpressionsSection: false,
+			SimplifiedNotificationsSection:       false,
+		}})).GenerateRef()
+
+		rule2 := CopyRule(rule1, RuleGen.WithMetadata(AlertRuleMetadata{EditorSettings: EditorSettings{
+			SimplifiedQueryAndExpressionsSection: true,
+			SimplifiedNotificationsSection:       true,
+		}}))
+
+		diff := rule1.Diff(rule2)
+		assert.ElementsMatch(t, []string{
+			"Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection",
+			"Metadata.EditorSettings.SimplifiedNotificationsSection",
+		}, diff.Paths())
+	})
+
+	t.Run("should detect changes in Metadata.PrometheusStyleRule", func(t *testing.T) {
+		rule1 := RuleGen.With(RuleGen.WithMetadata(AlertRuleMetadata{PrometheusStyleRule: &PrometheusStyleRule{
+			OriginalRuleDefinition: "data",
+		}})).GenerateRef()
+
+		rule2 := CopyRule(rule1, RuleGen.WithMetadata(AlertRuleMetadata{PrometheusStyleRule: &PrometheusStyleRule{
+			OriginalRuleDefinition: "updated data",
+		}}))
+
+		diff := rule1.Diff(rule2)
+		assert.ElementsMatch(t, []string{
+			"Metadata.PrometheusStyleRule.OriginalRuleDefinition",
+		}, diff.Paths())
+	})
 }
 
 func TestSortByGroupIndex(t *testing.T) {
@@ -918,4 +961,126 @@ func TestAlertRuleGetKeyWithGroup(t *testing.T) {
 		}
 		require.Equal(t, expected, rule.GetKeyWithGroup())
 	})
+}
+
+func TestAlertRuleCopy(t *testing.T) {
+	t.Run("should return a copy of the rule", func(t *testing.T) {
+		for i := 0; i < 100; i++ {
+			rule := RuleGen.GenerateRef()
+			copied := rule.Copy()
+			require.Empty(t, rule.Diff(copied))
+		}
+	})
+
+	t.Run("should create a copy of the prometheus rule definition from the metadata", func(t *testing.T) {
+		rule := RuleGen.With(RuleGen.WithMetadata(AlertRuleMetadata{PrometheusStyleRule: &PrometheusStyleRule{
+			OriginalRuleDefinition: "data",
+		}})).GenerateRef()
+		copied := rule.Copy()
+		require.NotSame(t, rule.Metadata.PrometheusStyleRule, copied.Metadata.PrometheusStyleRule)
+	})
+}
+
+// This test makes sure the default generator
+func TestGeneratorFillsAllFields(t *testing.T) {
+	ignoredFields := map[string]struct{}{
+		"ID":       {},
+		"IsPaused": {},
+		"Record":   {},
+	}
+
+	tpe := reflect.TypeOf(AlertRule{})
+	fields := make(map[string]struct{}, tpe.NumField())
+	for i := 0; i < tpe.NumField(); i++ {
+		if _, ok := ignoredFields[tpe.Field(i).Name]; ok {
+			continue
+		}
+		fields[tpe.Field(i).Name] = struct{}{}
+	}
+
+	for i := 0; i < 1000; i++ {
+		rule := RuleGen.Generate()
+		v := reflect.ValueOf(rule)
+
+		for j := 0; j < tpe.NumField(); j++ {
+			field := tpe.Field(j)
+			value := v.Field(j)
+			if !value.IsValid() || value.Kind() == reflect.Ptr && value.IsNil() || value.IsZero() {
+				continue
+			}
+			delete(fields, field.Name)
+			if len(fields) == 0 {
+				return
+			}
+		}
+	}
+
+	require.FailNow(t, "AlertRule generator does not populate fields", "skipped fields: %v", maps.Keys(fields))
+}
+
+func TestAlertRule_PrometheusRuleDefinition(t *testing.T) {
+	tests := []struct {
+		name             string
+		rule             AlertRule
+		expectedResult   string
+		expectedErrorMsg string
+	}{
+		{
+			name: "rule with prometheus definition",
+			rule: AlertRule{
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: &PrometheusStyleRule{
+						OriginalRuleDefinition: "groups:\n- name: example\n  rules:\n  - alert: HighRequestLatency\n    expr: request_latency_seconds{job=\"myjob\"} > 0.5\n    for: 10m\n    labels:\n      severity: page\n    annotations:\n      summary: High request latency",
+					},
+				},
+			},
+			expectedResult:   "groups:\n- name: example\n  rules:\n  - alert: HighRequestLatency\n    expr: request_latency_seconds{job=\"myjob\"} > 0.5\n    for: 10m\n    labels:\n      severity: page\n    annotations:\n      summary: High request latency",
+			expectedErrorMsg: "",
+		},
+		{
+			name: "rule with empty prometheus definition",
+			rule: AlertRule{
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: &PrometheusStyleRule{
+						OriginalRuleDefinition: "",
+					},
+				},
+			},
+			expectedResult:   "",
+			expectedErrorMsg: "prometheus rule definition is missing",
+		},
+		{
+			name: "rule with nil prometheus style rule",
+			rule: AlertRule{
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: nil,
+				},
+			},
+			expectedResult:   "",
+			expectedErrorMsg: "prometheus rule definition is missing",
+		},
+		{
+			name:             "rule with empty metadata",
+			rule:             AlertRule{},
+			expectedResult:   "",
+			expectedErrorMsg: "prometheus rule definition is missing",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := tt.rule.PrometheusRuleDefinition()
+			isPrometheusRule := tt.rule.ImportedFromPrometheus()
+
+			if tt.expectedErrorMsg != "" {
+				require.Error(t, err)
+				require.Equal(t, tt.expectedErrorMsg, err.Error())
+				require.False(t, isPrometheusRule)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expectedResult, result)
+				require.True(t, isPrometheusRule)
+			}
+		})
+	}
 }

@@ -355,7 +355,7 @@ Content-Type: application/json
 
 Status Codes:
 
-- **200** – Deleted
+- **200** – Restored
 - **401** – Unauthorized
 - **403** – Access denied
 - **404** – Not found
