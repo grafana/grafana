@@ -150,11 +150,11 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     meta.canSave = false;
   }
 
-  //createLayoutManager(dashboard);
-
   const layoutManager: DashboardLayoutManager = layoutSerializerRegistry
     .get(dashboard.layout.kind)
     .serializer.deserialize(dashboard.layout, dashboard.elements, dashboard.preload);
+
+  //createLayoutManager(dashboard);
 
   const dashboardScene = new DashboardScene({
     description: dashboard.description,
