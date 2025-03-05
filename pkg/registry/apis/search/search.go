@@ -262,28 +262,12 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	types := queryParams["type"]
 	var federate *resource.ResourceKey
 	federated := make([]*resource.ResourceKey, 0)
-	switch len(types) {
-	case 0:
-		// When no type specified, search for dashboards
+	if len(types) == 0 {
 		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
-		// Currently a search query is across folders and dashboards
 		if err == nil {
-			federate, err = asResourceKey(user.GetNamespace(), "dashboards")
-			if err == nil {
-				federated = append(federated, federate)
-			}
+			federated, err = s.allKnownTypes(user.GetNamespace())
 		}
-	case 1:
-		searchRequest.Options.Key, err = s.typeToResourceKey(user.GetNamespace(), types[0])
-	case 2:
-		searchRequest.Options.Key, err = s.typeToResourceKey(user.GetNamespace(), types[0])
-		if err == nil {
-			federate, err = s.typeToResourceKey(user.GetNamespace(), types[1])
-			if err == nil {
-				federated = append(federated, federate)
-			}
-		}
-	default:
+	} else {
 		searchRequest.Options.Key, err = s.typeToResourceKey(user.GetNamespace(), types[0])
 		if err == nil {
 			for _, typ := range types {
@@ -402,6 +386,27 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.write(w, parsedResults)
+}
+
+var knownTypes = []string{
+	"dashboard.dashboards.grafana.app",
+	"folders.folder.grafana.app",
+	"playlists.playlist.grafana.app",
+	"alerts.alert.grafana.app",
+}
+
+func (s *SearchHandler) allKnownTypes(namespace string) ([]*resource.ResourceKey, error) {
+	resources := make([]*resource.ResourceKey, 0)
+	var federate *resource.ResourceKey
+	var err error
+	for _, typ := range knownTypes {
+		federate, err = s.typeToResourceKey(namespace, typ)
+		if err != nil {
+			return nil, err
+		}
+		resources = append(resources, federate)
+	}
+	return resources, err
 }
 
 func (s *SearchHandler) typeToResourceKey(namespace string, typ string) (*resource.ResourceKey, error) {
