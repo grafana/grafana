@@ -278,6 +278,7 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	doc.Title = summary.Title
 	doc.Description = summary.Description
 	doc.Tags = summary.Tags
+	doc.CreatedBy = obj.GetCreatedBy()
 
 	panelTypes := []string{}
 	transformations := []string{}

@@ -248,7 +248,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		Page:    int64(page), // for modes 0-2 (legacy)
 		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
 	}
-	fields := []string{"title", "folder", "tags"}
+	fields := []string{"title", "folder", "tags", "createdBy"}
 	if queryParams.Has("field") {
 		// add fields to search and exclude duplicates
 		for _, f := range queryParams["field"] {
@@ -279,7 +279,6 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	default:
 		err = apierrors.NewBadRequest("too many type requests")
 	}
-	s.log.Warn("foo", "err", err)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return

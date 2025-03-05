@@ -370,6 +370,11 @@ func StandardSearchFields() SearchableDocumentFields {
 				Type:        ResourceTableColumnDefinition_DOUBLE,
 				Description: "The search score",
 			},
+			{
+				Name:        SEARCH_FIELD_CREATED_BY,
+				Type:        ResourceTableColumnDefinition_STRING,
+				Description: "Created by user",
+			},
 		})
 		if err != nil {
 			panic("failed to initialize standard search fields")
