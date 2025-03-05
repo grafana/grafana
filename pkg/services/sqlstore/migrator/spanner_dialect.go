@@ -3,14 +3,23 @@
 package migrator
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"cloud.google.com/go/spanner"
+	"cloud.google.com/go/spanner/admin/database/apiv1/databasepb"
+	spannerdriver "github.com/googleapis/go-sql-spanner"
+	"google.golang.org/api/option"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"xorm.io/core"
 
 	"xorm.io/xorm"
+
+	database "cloud.google.com/go/spanner/admin/database/apiv1"
 )
 
 type SpannerDialect struct {
@@ -137,34 +146,90 @@ func (s *SpannerDialect) TruncateDBTables(engine *xorm.Engine) error {
 	return nil
 }
 
-// CleanDB drops all tables and their indexes. Unfortunately Spanner is super-slow at dropping and creating tables and
-// indexes (30s-60s per index/table) so it's better not to use this.
+// CleanDB drops all existing tables and their indexes.
 func (s *SpannerDialect) CleanDB(engine *xorm.Engine) error {
 	tables, err := engine.DBMetas()
 	if err != nil {
 		return err
 	}
-	sess := engine.NewSession()
-	defer sess.Close()
 
+	// Collect all DROP statements.
+	var statements []string
 	for _, table := range tables {
+		// Ignore these tables used by Unified storage.
+		if table.Name == "resource" || table.Name == "resource_blob" || table.Name == "resource_history" {
+			continue
+		}
+
 		// Indexes must be dropped first, otherwise dropping tables fails.
 		for _, index := range table.Indexes {
 			if !index.IsRegular {
 				// Don't drop primary key.
 				continue
 			}
-			//fmt.Println("Dropping index... ", index.XName(table.Name))
-			if _, err := sess.Exec(fmt.Sprintf("DROP INDEX %s", s.Quote(index.XName(table.Name)))); err != nil {
-				return fmt.Errorf("failed to drop index %q: %w", table.Name, err)
-			}
+			sql := fmt.Sprintf("DROP INDEX %s", s.Quote(index.XName(table.Name)))
+			statements = append(statements, sql)
 		}
 
-		//fmt.Println("Dropping table... ", table.Name)
-		if _, err := sess.Exec(fmt.Sprintf("DROP TABLE %s", s.Quote(table.Name))); err != nil {
-			return fmt.Errorf("failed to delete table %q: %w", table.Name, err)
-		}
+		sql := fmt.Sprintf("DROP TABLE %s", s.Quote(table.Name))
+		fmt.Println(sql, ";")
+		statements = append(statements, sql)
 	}
 
+	return s.executeDDLStatements(context.Background(), engine, statements)
+}
+
+func (s *SpannerDialect) executeDDLStatements(ctx context.Context, engine *xorm.Engine, statements []string) error {
+	// Datasource name contains string used for sql.Open.
+	dsn := engine.Dialect().DataSourceName()
+	cfg, err := spannerdriver.ExtractConnectorConfig(dsn)
+	if err != nil {
+		return err
+	}
+
+	opts := confToClientOptions(cfg)
+
+	databaseAdminClient, err := database.NewDatabaseAdminClient(ctx, opts...)
+	if err != nil {
+		return fmt.Errorf("failed to create database admin client: %v", err)
+	}
+	defer databaseAdminClient.Close()
+
+	databaseName := fmt.Sprintf("projects/%s/instances/%s/databases/%s", cfg.Project, cfg.Instance, cfg.Database)
+
+	op, err := databaseAdminClient.UpdateDatabaseDdl(ctx, &databasepb.UpdateDatabaseDdlRequest{
+		Database:   databaseName,
+		Statements: statements,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to start database DDL update: %v", err)
+	}
+
+	err = op.Wait(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to apply database DDL update: %v", err)
+	}
 	return nil
+}
+
+// Adapted from https://github.com/googleapis/go-sql-spanner/blob/main/driver.go#L341-L477, from version 1.11.1.
+func confToClientOptions(connectorConfig spannerdriver.ConnectorConfig) []option.ClientOption {
+	var opts []option.ClientOption
+	if connectorConfig.Host != "" {
+		opts = append(opts, option.WithEndpoint(connectorConfig.Host))
+	}
+	if strval, ok := connectorConfig.Params["credentials"]; ok {
+		opts = append(opts, option.WithCredentialsFile(strval))
+	}
+	if strval, ok := connectorConfig.Params["credentialsjson"]; ok {
+		opts = append(opts, option.WithCredentialsJSON([]byte(strval)))
+	}
+	if strval, ok := connectorConfig.Params["useplaintext"]; ok {
+		if val, err := strconv.ParseBool(strval); err == nil && val {
+			opts = append(opts,
+				option.WithGRPCDialOption(grpc.WithTransportCredentials(insecure.NewCredentials())),
+				option.WithoutAuthentication())
+		}
+	}
+	return opts
 }
