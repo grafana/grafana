@@ -23,6 +23,7 @@ import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/Na
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
+import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { ScopesSelector } from 'app/features/scopes';
@@ -71,7 +72,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const isViewingPanel = Boolean(viewPanelScene);
   const isEditedPanelDirty = usePanelEditDirty(editPanel);
   const isEditingLibraryPanel = editPanel && isLibraryPanel(editPanel.state.panelRef.resolve());
-  const isNew = !Boolean(uid || dashboard.getRepoName());
+  const isNew = !Boolean(uid || dashboard.isManaged());
 
   const hasCopiedPanel = store.exists(LS_PANEL_COPY_KEY);
   // Means we are not in settings view, fullscreen panel or edit panel
@@ -80,7 +81,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const showScopesSelector = config.featureToggles.scopeFilters && !isEditing;
   const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
   const folderRepo = useSelector((state) => selectFolderRepository(state, meta.folderUid));
-  const isProvisionedNG = Boolean(dashboard.isProvisioned() || folderRepo);
+  const isManaged = Boolean(dashboard.isManaged() || folderRepo);
 
   if (!isEditingPanel) {
     // This adds the presence indicators in enterprise
@@ -129,14 +130,22 @@ export function ToolbarActions({ dashboard }: Props) {
     });
   }
 
-  if (isProvisionedNG) {
+  if (isManaged && meta.canEdit) {
     toolbarActions.push({
       group: 'icon-actions',
       condition: true,
       render: () => {
-        return (
-          <Badge color="darkgrey" icon="exchange-alt" text="Provisioned" key="provisioned-dashboard-button-badge" />
-        );
+        // Tooltip with extra info would be nice
+        let text = 'Provisioned';
+        switch (dashboard.state.meta.k8s?.annotations?.[AnnoKeyManagerKind]) {
+          case ManagerKind.Terraform:
+            text = 'Terraform';
+          case ManagerKind.Kubectl:
+            text = 'Kubectl';
+          case ManagerKind.Plugin:
+            text = `Plugin: ${dashboard.state.meta.k8s?.annotations?.[AnnoKeyManagerIdentity]}`;
+        }
+        return <Badge color="darkgrey" icon="exchange-alt" text={text} key="provisioned-dashboard-button-badge" />;
       },
     });
   }
@@ -564,7 +573,7 @@ export function ToolbarActions({ dashboard }: Props) {
       }
 
       // If we only can save as copy
-      if (canSaveAs && !meta.canSave && !meta.canMakeEditable && !isProvisionedNG) {
+      if (canSaveAs && !meta.canSave && !meta.canMakeEditable && !isManaged) {
         return (
           <Button
             onClick={() => {
