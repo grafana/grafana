@@ -60,8 +60,8 @@ jobs:
             echo "generate=false" >> $GITHUB_OUTPUT
           fi
 
-  setup:
-    name: Setup Environment
+  verify-code-generation:
+    name: Verify Code Generation
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -89,7 +89,7 @@ jobs:
       matrix:
         test-type: [unit, integration]
     name: ${{ matrix.test-type == 'unit' && 'Unit Tests' || 'Integration Tests' }}
-    needs: [check-coverage, setup]
+    needs: [check-coverage, verify-code-generation]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
