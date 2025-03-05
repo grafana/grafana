@@ -66,11 +66,44 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder) func(*s
 						Paths:        s.Paths,
 					}
 
-					for k := range copy.Paths.Paths {
+					for k, v := range copy.Paths.Paths {
+						if k == prefix {
+							continue // API discovery
+						}
+
 						// Remove the deprecated watch URL -- can use list with ?watch=true
 						if strings.HasPrefix(k, prefix+"watch/") {
 							delete(copy.Paths.Paths, k)
 							continue
+						}
+
+						// Remove the "for all namespaces" global routes from OpenAPI (v3)
+						if !strings.HasPrefix(k, prefix+"namespaces/") {
+							delete(copy.Paths.Paths, k)
+							continue
+						}
+
+						// Delete has all parameters in the query string already
+						if v.Delete != nil {
+							action, ok := v.Delete.VendorExtensible.Extensions.GetString("x-kubernetes-action")
+							if ok && (action == "deletecollection" || action == "delete") {
+								v.Delete.RequestBody = nil // duplicates all the parameters
+							}
+						}
+
+						// Replace any */* media types with json+yaml (protobuf?)
+						ops := []*spec3.Operation{v.Delete, v.Put, v.Post}
+						for _, op := range ops {
+							if op == nil || op.RequestBody == nil || len(op.RequestBody.Content) != 1 {
+								continue
+							}
+							content, ok := op.RequestBody.Content["*/*"]
+							if ok {
+								op.RequestBody.Content = map[string]*spec3.MediaType{
+									"application/json": content,
+									"text/x-yaml":      content,
+								}
+							}
 						}
 					}
 
