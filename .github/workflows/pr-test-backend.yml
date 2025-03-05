@@ -122,7 +122,7 @@ jobs:
         with:
           name: ${{ matrix.test-type }}-coverage
           path: ${{ matrix.test-type }}.cov
-          retention-days: 30
+          retention-days: 1
 
   report-coverage:
     name: Generate Coverage Report
