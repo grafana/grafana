@@ -10,7 +10,7 @@ import UrlBuilder from '../../azure_monitor/url_builder';
 import DataSource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import { migrateQuery } from '../../grafanaTemplateVariableFns';
-import { AzureLogsVariable, AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../types';
+import { AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../types';
 import useLastError from '../../utils/useLastError';
 import ArgQueryEditor from '../ArgQueryEditor';
 import LogsQueryEditor from '../LogsQueryEditor';
