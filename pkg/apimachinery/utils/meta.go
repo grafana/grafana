@@ -640,7 +640,7 @@ func (m *grafanaMetaAccessor) GetManagerProperties() (ManagerProperties, bool) {
 
 	id, ok := annot[AnnoKeyManagerIdentity]
 	if !ok || id == "" {
-		// Temporarialy suppor the repo name annotation
+		// Temporarily support the repo name annotation
 		repo := annot[oldAnnoKeyRepoName]
 		if repo != "" {
 			return ManagerProperties{
@@ -678,8 +678,18 @@ func (m *grafanaMetaAccessor) SetManagerProperties(v ManagerProperties) {
 		annot = make(map[string]string, 4)
 	}
 
-	annot[AnnoKeyManagerIdentity] = v.Identity
-	annot[AnnoKeyManagerKind] = string(v.Kind)
+	if v.Identity != "" {
+		annot[AnnoKeyManagerIdentity] = v.Identity
+	} else {
+		delete(annot, AnnoKeyManagerIdentity)
+	}
+
+	if string(v.Kind) != "" {
+		annot[AnnoKeyManagerKind] = string(v.Kind)
+	} else {
+		delete(annot, AnnoKeyManagerKind)
+	}
+
 	if v.AllowsEdits {
 		annot[AnnoKeyManagerAllowsEdits] = strconv.FormatBool(v.AllowsEdits)
 	} else {

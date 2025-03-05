@@ -7,12 +7,12 @@ import (
 )
 
 // SetPluginIDMeta sets the repo name to "plugin" and the path to the plugin ID
-func SetPluginIDMeta(obj unstructured.Unstructured, pluginID string) {
+func SetPluginIDMeta(obj *unstructured.Unstructured, pluginID string) {
 	if pluginID == "" {
 		return
 	}
 
-	meta, err := utils.MetaAccessor(&obj)
+	meta, err := utils.MetaAccessor(obj)
 	if err == nil {
 		meta.SetManagerProperties(utils.ManagerProperties{
 			Kind:     utils.ManagerKindPlugin,

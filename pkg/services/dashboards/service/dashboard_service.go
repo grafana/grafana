@@ -1591,16 +1591,16 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 	return out, nil
 }
 
-func (dr *DashboardServiceImpl) createOrUpdateDash(ctx context.Context, obj unstructured.Unstructured, orgID int64) (*dashboards.Dashboard, error) {
+func (dr *DashboardServiceImpl) createOrUpdateDash(ctx context.Context, obj *unstructured.Unstructured, orgID int64) (*dashboards.Dashboard, error) {
 	var out *unstructured.Unstructured
 	current, err := dr.k8sclient.Get(ctx, obj.GetName(), orgID, v1.GetOptions{})
 	if current == nil || err != nil {
-		out, err = dr.k8sclient.Create(ctx, &obj, orgID)
+		out, err = dr.k8sclient.Create(ctx, obj, orgID)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		out, err = dr.k8sclient.Update(ctx, &obj, orgID)
+		out, err = dr.k8sclient.Update(ctx, obj, orgID)
 		if err != nil {
 			return nil, err
 		}
@@ -1874,7 +1874,7 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 				}
 
 				source, ok := meta.GetSourceProperties()
-				if ok {
+				if !ok {
 					return nil
 				}
 
@@ -2018,13 +2018,13 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 	return &out, nil
 }
 
-func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, namespace string) (unstructured.Unstructured, error) {
+func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, namespace string) (*unstructured.Unstructured, error) {
 	uid := cmd.GetDashboardModel().UID
 	if uid == "" {
 		uid = uuid.NewString()
 	}
 
-	finalObj := unstructured.Unstructured{
+	finalObj := &unstructured.Unstructured{
 		Object: map[string]interface{}{},
 	}
 
@@ -2052,7 +2052,7 @@ func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, names
 	finalObj.SetNamespace(namespace)
 	finalObj.SetGroupVersionKind(dashboardv0alpha1.DashboardResourceInfo.GroupVersionKind())
 
-	meta, err := utils.MetaAccessor(&finalObj)
+	meta, err := utils.MetaAccessor(finalObj)
 	if err != nil {
 		return finalObj, err
 	}

@@ -439,7 +439,7 @@ type FindPersistedDashboardsQuery struct {
 	Sort       model.SortOption
 	IsDeleted  bool
 
-	ManagedBy            utils.ManagerKind // always repo?  sometimes plugin?
+	ManagedBy            utils.ManagerKind
 	ManagerIdentity      string
 	SourcePath           string
 	ManagerIdentityNotIn []string
