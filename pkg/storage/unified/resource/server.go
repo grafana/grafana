@@ -456,12 +456,9 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		}
 	}
 
-	repo, err := obj.GetRepositoryInfo()
-	if err != nil {
-		return nil, NewBadRequestError("invalid repository info")
-	}
-	if repo != nil {
-		err = s.writeHooks.CanWriteValueFromRepository(ctx, user, repo.Name)
+	m, ok := obj.GetManagerProperties()
+	if ok && m.Kind == utils.ManagerKindRepo {
+		err = s.writeHooks.CanWriteValueFromRepository(ctx, user, m.Identity)
 		if err != nil {
 			return nil, AsErrorResult(err)
 		}

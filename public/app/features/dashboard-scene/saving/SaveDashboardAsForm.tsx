@@ -7,7 +7,7 @@ import { Button, Input, Switch, Field, Label, TextArea, Stack, Alert, Box } from
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
-import { AnnoKeyRepoName } from '../../apiserver/types';
+import { AnnoKeyManagerIdentity } from '../../apiserver/types';
 import { RepositoryView } from '../../provisioning/api';
 import { DashboardScene } from '../scene/DashboardScene';
 
@@ -140,7 +140,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
             setHasFolderChanged(uid !== folderUid);
             dashboard.setState({
               meta: {
-                k8s: name ? { annotations: { [AnnoKeyRepoName]: name } } : undefined,
+                k8s: name ? { annotations: { [AnnoKeyManagerIdentity]: name } } : undefined,
                 folderUid: uid,
               },
             });

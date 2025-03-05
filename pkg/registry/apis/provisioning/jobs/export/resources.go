@@ -92,8 +92,8 @@ func (r *exportJob) write(ctx context.Context, obj *unstructured.Unstructured) j
 	}
 
 	name := meta.GetName()
-	repoName := meta.GetRepositoryName()
-	if repoName == r.target.Config().GetName() {
+	manager, _ := meta.GetManagerProperties()
+	if manager.Identity == r.target.Config().GetName() {
 		result.Action = repository.FileActionIgnored
 		return result
 	}

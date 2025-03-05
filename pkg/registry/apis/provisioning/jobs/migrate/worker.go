@@ -12,6 +12,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
@@ -44,6 +45,9 @@ type MigrationWorker struct {
 	// Decrypt secret from config object
 	secrets secrets.Service
 
+	// Delegate the export to the export worker
+	exportWorker *export.ExportWorker
+
 	// Delegate the import to sync worker
 	syncWorker *sync.SyncWorker
 }
@@ -54,6 +58,7 @@ func NewMigrationWorker(clients *resources.ClientFactory,
 	storageStatus dualwrite.Service,
 	batch resource.BulkStoreClient,
 	secrets secrets.Service,
+	exportWorker *export.ExportWorker,
 	syncWorker *sync.SyncWorker,
 	clonedir string,
 ) *MigrationWorker {
@@ -65,6 +70,7 @@ func NewMigrationWorker(clients *resources.ClientFactory,
 		legacyMigrator,
 		batch,
 		secrets,
+		exportWorker,
 		syncWorker,
 	}
 }
@@ -80,15 +86,12 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		return errors.New("missing migrate settings")
 	}
 
-	if !dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, w.storageStatus) {
-		return errors.New("already reading from unified storage")
-	}
-
 	var (
 		err      error
 		buffered *gogit.GoGitRepo
 	)
 
+	isFromLegacy := dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, w.storageStatus)
 	progress.SetTotal(10) // will show a progress bar
 	if repo.Config().Spec.GitHub != nil {
 		progress.SetMessage("clone " + repo.Config().Spec.GitHub.URL)
@@ -120,7 +123,7 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		return fmt.Errorf("unable to read current tree: %w", err)
 	}
 
-	if true { // configurable?
+	if true { // configurable?  can we skip if the repo is currently empty?
 		for _, v := range tree {
 			if v.Blob && !resources.ShouldIgnorePath(v.Path) {
 				err = rw.Delete(ctx, v.Path, "", "initial cleanup")
@@ -154,17 +157,29 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		}
 	}
 
-	// Load and write all folders
-	progress.SetMessage("exporting folders")
-	err = worker.loadFolders(ctx)
-	if err != nil {
-		return err
-	}
+	if isFromLegacy {
+		progress.SetMessage("exporting folders")
+		err = worker.loadFolders(ctx)
+		if err != nil {
+			return err
+		}
 
-	progress.SetMessage("exporting resources")
-	err = worker.loadResources(ctx)
-	if err != nil {
-		return err
+		progress.SetMessage("exporting resources")
+		err = worker.loadResources(ctx)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = w.exportWorker.Process(ctx, rw, provisioning.Job{
+			Spec: provisioning.JobSpec{
+				Export: &provisioning.ExportJobOptions{
+					Identifier: options.Identifier,
+				},
+			},
+		}, progress)
+		if err != nil {
+			return err
+		}
 	}
 
 	if buffered != nil {
@@ -183,9 +198,10 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	}
 
 	// Clear unified and allow writing
-	err = worker.wipeUnifiedAndSetMigratedFlag(ctx, w.storageStatus)
-	if err != nil {
-		return fmt.Errorf("unable to reset unified storage %w", err)
+	if isFromLegacy {
+		if err = worker.wipeUnifiedAndSetMigratedFlag(ctx, w.storageStatus); err != nil {
+			return fmt.Errorf("unable to reset unified storage %w", err)
+		}
 	}
 
 	// enable sync (won't be saved)
@@ -199,9 +215,8 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 			},
 		},
 	}, progress)
-	if err != nil { // this will have an error when too many errors exist
-		e2 := stopReadingUnifiedStorage(ctx, w.storageStatus)
-		if e2 != nil {
+	if err != nil && isFromLegacy { // this will have an error when too many errors exist
+		if e2 := stopReadingUnifiedStorage(ctx, w.storageStatus); e2 != nil {
 			logger := logging.FromContext(ctx)
 			logger.Warn("error trying to revert dual write settings after an error", "err", err)
 		}
