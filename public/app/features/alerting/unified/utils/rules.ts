@@ -229,6 +229,10 @@ function isPluginInstalled(pluginId: string) {
   return Boolean(config.apps[pluginId]);
 }
 
+export function isPluginProvidedGroup(group: RulerRuleGroupDTO): boolean {
+  return group.rules.some((rule) => isPluginProvidedRule(rule));
+}
+
 export function isPluginProvidedRule(rule?: Rule | RulerRuleDTO): boolean {
   return Boolean(getRulePluginOrigin(rule));
 }

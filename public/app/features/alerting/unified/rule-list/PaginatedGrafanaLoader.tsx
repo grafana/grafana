@@ -82,6 +82,7 @@ interface GrafanaRuleGroupListItemProps {
   group: GrafanaPromRuleGroupDTO;
   namespaceName: string;
 }
+
 export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGroupListItemProps) {
   const groupIdentifier: GrafanaRuleGroupIdentifier = useMemo(
     () => ({
