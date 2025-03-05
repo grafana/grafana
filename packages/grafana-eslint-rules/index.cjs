@@ -3,6 +3,7 @@ const noBorderRadiusLiteral = require('./rules/no-border-radius-literal.cjs');
 const noUnreducedMotion = require('./rules/no-unreduced-motion.cjs');
 const noUntranslatedStrings = require('./rules/no-untranslated-strings.cjs');
 const themeTokenUsage = require('./rules/theme-token-usage.cjs');
+const trackingEventCreation = require('./rules/tracking-event-creation.cjs');
 
 module.exports = {
   rules: {
@@ -11,5 +12,6 @@ module.exports = {
     'no-border-radius-literal': noBorderRadiusLiteral,
     'theme-token-usage': themeTokenUsage,
     'no-untranslated-strings': noUntranslatedStrings,
+    'tracking-event-creation': trackingEventCreation,
   },
 };
