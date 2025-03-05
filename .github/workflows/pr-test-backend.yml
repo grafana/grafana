@@ -19,6 +19,7 @@ permissions:
 
 env:
   EDITION: 'oss'
+  GO_VERSION: '1.23.5'
 
 jobs:
   check-coverage:
@@ -68,7 +69,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23.5'
+          go-version: ${{ env.GO_VERSION }}
           cache: true
           
       - name: Install dependencies
@@ -82,8 +83,11 @@ jobs:
       - name: Verify Jsonnet generation
         run: CODEGEN_VERIFY=1 make gen-jsonnet
 
-  unit-tests:
-    name: Unit Tests
+  run-tests:
+    strategy:
+      matrix:
+        test-type: [unit, integration]
+    name: ${{ matrix.test-type == 'unit' && 'Unit Tests' || 'Integration Tests' }}
     needs: [check-coverage, setup]
     runs-on: ubuntu-latest
     env:
@@ -96,71 +100,33 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23.5'
+          go-version: ${{ env.GO_VERSION }}
           cache: true
 
       - name: Setup Enterprise
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
         uses: ./.github/actions/setup-enterprise
 
-      - name: Run unit tests
+      - name: Run ${{ matrix.test-type }} tests
         shell: bash
         run: |
-          if [ -n "${{ needs.check-coverage.outputs.generate == 'true' && '-coverprofile=unit.cov -coverpkg=github.com/grafana/grafana/...' || '' }}" ]; then
-            COVER_OPTS="${{ needs.check-coverage.outputs.generate == 'true' && '-coverprofile=unit.cov -coverpkg=github.com/grafana/grafana/...' || '' }}" make gen-go test-go-unit
+          if [ "${{ needs.check-coverage.outputs.generate }}" == "true" ]; then
+            COVER_OPTS="-coverprofile=${{ matrix.test-type }}.cov -coverpkg=github.com/grafana/grafana/..." make gen-go test-go-${{ matrix.test-type }}
           else
-            make gen-go test-go-unit
+            make gen-go test-go-${{ matrix.test-type }}
           fi
 
-      - name: Upload unit coverage
+      - name: Upload ${{ matrix.test-type }} coverage
         if: needs.check-coverage.outputs.generate == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: unit-coverage
-          path: unit.cov
-          retention-days: 30
-
-  integration-tests:
-    name: Integration Tests
-    needs: [check-coverage, setup]
-    runs-on: ubuntu-latest
-    env:
-      EDITION: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && 'enterprise' || 'oss' }}
-      WIRE_TAGS: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && 'enterprise' || 'oss' }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.23.5'
-          cache: true
-
-      - name: Setup Enterprise
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
-        uses: ./.github/actions/setup-enterprise
-
-      - name: Run integration tests
-        shell: bash
-        run: |
-          if [ -n "${{ needs.check-coverage.outputs.generate == 'true' && '-coverprofile=integration.cov -coverpkg=github.com/grafana/grafana/...' || '' }}" ]; then
-            COVER_OPTS="${{ needs.check-coverage.outputs.generate == 'true' && '-coverprofile=integration.cov -coverpkg=github.com/grafana/grafana/...' || '' }}" make gen-go test-go-integration
-          else
-            make gen-go test-go-integration
-          fi
-
-      - name: Upload integration coverage
-        if: needs.check-coverage.outputs.generate == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: integration-coverage
-          path: integration.cov
+          name: ${{ matrix.test-type }}-coverage
+          path: ${{ matrix.test-type }}.cov
           retention-days: 30
 
   report-coverage:
     name: Generate Coverage Report
-    needs: [check-coverage, unit-tests, integration-tests]
+    needs: [check-coverage, run-tests]
     if: needs.check-coverage.outputs.generate == 'true'
     runs-on: ubuntu-latest
     env:
@@ -173,7 +139,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23.5'
+          go-version: ${{ env.GO_VERSION }}
           cache: true
 
       - name: Setup Enterprise
