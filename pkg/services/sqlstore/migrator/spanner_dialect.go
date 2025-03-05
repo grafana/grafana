@@ -4,9 +4,11 @@ package migrator
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
 	"cloud.google.com/go/spanner"
 	"cloud.google.com/go/spanner/admin/database/apiv1/databasepb"
@@ -18,6 +20,8 @@ import (
 	"xorm.io/core"
 
 	"xorm.io/xorm"
+
+	_ "embed"
 
 	database "cloud.google.com/go/spanner/admin/database/apiv1"
 )
@@ -175,9 +179,84 @@ func (s *SpannerDialect) CleanDB(engine *xorm.Engine) error {
 		statements = append(statements, sql)
 	}
 
+	if len(statements) == 0 {
+		return nil
+	}
+
 	return s.executeDDLStatements(context.Background(), engine, statements)
 }
 
+//go:embed snapshot/spanner-ddl.json
+var snapshotDDL string
+
+//go:embed snapshot/spanner-log.json
+var snapshotMigrations string
+
+func (s *SpannerDialect) CreateDatabaseFromSnapshot(ctx context.Context, engine *xorm.Engine, tableName string) error {
+	var statements, migrationIDs []string
+	err := json.Unmarshal([]byte(snapshotDDL), &statements)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal([]byte(snapshotMigrations), &migrationIDs)
+	if err != nil {
+		return err
+	}
+
+	err = s.executeDDLStatements(ctx, engine, statements)
+	if err != nil {
+		return fmt.Errorf("failed to apply DDL statements from snapshot: %w", err)
+	}
+
+	return s.recordMigrationsToMigrationLog(engine, migrationIDs, tableName)
+}
+
+func (s *SpannerDialect) recordMigrationsToMigrationLog(engine *xorm.Engine, migrationIDs []string, tableName string) error {
+	now := time.Now()
+	makeRecord := func(id string) MigrationLog {
+		return MigrationLog{
+			MigrationID: id,
+			SQL:         "",
+			Success:     true,
+			Timestamp:   now,
+		}
+	}
+
+	sess := engine.NewSession()
+	defer sess.Close()
+
+	const batchSize = 100
+
+	if err := sess.Begin(); err != nil {
+		return err
+	}
+
+	// Insert all records in batches at once to avoid many roundtrips to database.
+	// Inserting all at once fails due to "Number of parameters in query exceeds the maximum allowed limit of 950." error,
+	// so we use smaller batches.
+	records := make([]MigrationLog, 0, len(migrationIDs))
+	for _, mid := range migrationIDs {
+		records = append(records, makeRecord(mid))
+
+		if len(records) >= batchSize {
+			if _, err := sess.Table(tableName).InsertMulti(records); err != nil {
+				err2 := sess.Rollback()
+				return errors.Join(fmt.Errorf("failed to insert migration logs: %w", err), err2)
+			}
+			records = records[:0]
+		}
+	}
+	if err := sess.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Spanner can be very slow at executing single DDL statements (it can take up to a minute), but when
+// many DDL statements are batched together, Spanner is *much* faster (total time to execute all statements
+// is often in tens of seconds). We can't execute batch of DDL statements using sql wrapper, we use "database admin client"
+// from Spanner library instead.
 func (s *SpannerDialect) executeDDLStatements(ctx context.Context, engine *xorm.Engine, statements []string) error {
 	// Datasource name contains string used for sql.Open.
 	dsn := engine.Dialect().DataSourceName()

@@ -151,7 +151,7 @@ func (s *spanner) SqlType(col *core.Column) string {
 	switch col.SQLType.Name {
 	case core.Int, core.SmallInt, core.BigInt:
 		return "INT64"
-	case core.Varchar, core.Text, core.MediumText, core.LongText, core.Char:
+	case core.Varchar, core.Text, core.MediumText, core.LongText, core.Char, core.NVarchar, core.NChar, core.NText:
 		l := col.Length
 		if l == 0 {
 			l = col.SQLType.DefaultLength
