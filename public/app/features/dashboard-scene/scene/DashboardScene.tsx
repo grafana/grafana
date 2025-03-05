@@ -600,17 +600,18 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   public onCreateNewRow() {
     const newRow = addNewRowTo(this.state.body);
     this.state.editPane.newObjectAddedToCanvas(newRow);
+    return newRow;
   }
 
   public onCreateNewTab() {
     const tab = addNewTabTo(this.state.body);
     this.state.editPane.newObjectAddedToCanvas(tab);
+    return tab;
   }
 
   public onCreateNewPanel(): VizPanel {
     const vizPanel = getDefaultVizPanel();
     this.addPanel(vizPanel);
-
     return vizPanel;
   }
 
