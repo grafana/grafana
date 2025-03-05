@@ -32,7 +32,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     // In order to make it possible we need to register them first due to how `<Switch>` is evaluating routes. (This will be unnecessary once/when we upgrade to React Router v6 and start using `<Routes>` instead.)
     ...getAppPluginRoutes(),
     {
-      path: '/folder-app',
+      path: '/finder',
       pageClass: 'page-folders',
       routeName: FolderRoutes.Browse,
       component: SafeDynamicImport(
@@ -80,7 +80,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/folder-app',
+      path: '/finder',
       pageClass: 'page-folders',
       routeName: FolderRoutes.Browse,
       component: SafeDynamicImport(

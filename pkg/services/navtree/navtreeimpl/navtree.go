@@ -101,11 +101,11 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	}
 
 	treeRoot.AddSection(&navtree.NavLink{
-		Text:       "Folders",
-		Id:         "folders",
-		SubTitle:   "Manage and organize your folders",
-		Icon:       "folder",
-		Url:        s.cfg.AppSubURL + "/folder-app",
+		Text:       "Finder",
+		Id:         "finder",
+		SubTitle:   "Search and explore your resources",
+		Icon:       "search",
+		Url:        s.cfg.AppSubURL + "/finder-app",
 		SortWeight: navtree.WeightFolders,
 	})
 

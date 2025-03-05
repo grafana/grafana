@@ -8,10 +8,10 @@ export const mockNavModel: NavIndex = {
     url: '/',
   },
   folders: {
-    id: 'folders',
-    text: 'Folders',
-    icon: 'folder',
-    url: '/folder-app',
+    id: 'finder',
+    text: 'Finder',
+    icon: 'search',
+    url: '/finder',
   },
   dashboards: {
     id: 'dashboards',

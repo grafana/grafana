@@ -249,8 +249,8 @@ const FoldersPage: React.FC = () => {
   return (
     <Page>
       <Page.Contents>
-        <h1>Folders</h1>
-        <h4>Search and Browse Folders</h4>
+        <h1>Finder</h1>
+        <h4>Search and Browse Resources</h4>
         <div className={styles.filtersRow}>
           <Stack direction="row" gap={2}>
             <FilterInput
