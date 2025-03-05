@@ -6,6 +6,7 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { useGetFrontendSettingsQuery } from './api';
 import { MIGRATE_URL } from './constants';
+import { FeatureList } from './Setup/FeatureList';
 
 export default function OnboardingPage({ legacyStorage }: { legacyStorage?: boolean }) {
   const settingsQuery = useGetFrontendSettingsQuery();
@@ -19,7 +20,11 @@ export default function OnboardingPage({ legacyStorage }: { legacyStorage?: bool
   return (
     <Page
       navId="provisioning"
-      pageNav={{ text: 'Setup provisioning', subTitle: 'Configure this instance to use provisioning' }}
+      pageNav={{
+        text: 'Setup provisioning',
+        subTitle:
+          'Configure your Grafana instance to use provisioning to manage your dashboards using GitHub and other storage systems',
+      }}
     >
       <Page.Contents>
         {legacyStorage && (
@@ -40,12 +45,12 @@ export default function OnboardingPage({ legacyStorage }: { legacyStorage?: bool
         >
           <Stack direction="column" alignItems="center">
             <Text>Store and provision your Grafana resources externally by connecting to a repository.</Text>
-            <Text>We currently support GitHub and local storage.</Text>
             <LinkButton fill="text" href="#" icon="external-link-alt">
               Learn more
             </LinkButton>
           </Stack>
         </EmptyState>
+        <FeatureList />
       </Page.Contents>
     </Page>
   );

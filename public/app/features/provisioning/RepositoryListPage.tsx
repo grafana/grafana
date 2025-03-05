@@ -82,6 +82,14 @@ export default function RepositoryListPage() {
             Configured repositories will not work while running legacy storage.
           </Alert>
         )}
+        <ConfirmModal
+          isOpen={showDeleteModal}
+          title="Delete all configured repositories"
+          body="Are you sure you want to delete all configured repositories? This action cannot be undone."
+          confirmText="Delete repositories"
+          onConfirm={onConfirmDelete}
+          onDismiss={() => setShowDeleteModal(false)}
+        />
         <Stack direction="column" gap={2}>
           <TabsBar>
             <Tab
@@ -93,14 +101,6 @@ export default function RepositoryListPage() {
           </TabsBar>
           {renderTabContent()}
         </Stack>
-        <ConfirmModal
-          isOpen={showDeleteModal}
-          title="Delete all configured repositories"
-          body="Are you sure you want to delete all configured repositories? This action cannot be undone."
-          confirmText="Delete repositories"
-          onConfirm={onConfirmDelete}
-          onDismiss={() => setShowDeleteModal(false)}
-        />
       </Page.Contents>
     </Page>
   );
