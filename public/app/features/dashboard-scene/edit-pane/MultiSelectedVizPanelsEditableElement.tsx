@@ -29,7 +29,7 @@ export class MultiSelectedVizPanelsEditableElement implements MultiSelectedEdita
       isOpenable: false,
       renderTitle: () => (
         <EditPaneHeader
-          title={t('dashboard.layout.common.panels-title', '{{length}} Panels Selected', {
+          title={t('dashboard.layout.common.panels-title', '{{length}} panels selected', {
             length: this._panels.length,
           })}
           onDelete={() => this.onDelete()}
