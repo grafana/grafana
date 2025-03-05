@@ -13,6 +13,7 @@ import {
   LoadingState,
   PanelData,
   QueryResultMetaNotice,
+  TimeRange,
   getDataSourceRef,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -29,7 +30,6 @@ import {
   QueryOperationRowRenderProps,
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { Trans, t } from 'app/core/internationalization';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
 
