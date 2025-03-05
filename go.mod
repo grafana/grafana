@@ -500,6 +500,9 @@ replace xorm.io/xorm => github.com/grafana/grafana/pkg/util/xorm v0.0.1
 // lock for mysql tsdb compat
 replace github.com/go-sql-driver/mysql => github.com/go-sql-driver/mysql v1.7.1
 
+// fails to compile on 32-bit architectures due to overflow (https://github.com/grpc-ecosystem/go-grpc-middleware/issues/752).
+replace github.com/grpc-ecosystem/go-grpc-middleware/v2 => github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.2.0
+
 // Pin Prometheus to a version before breaking change on UTF-8 characters in label names.
 replace github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.20.3
 
