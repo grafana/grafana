@@ -1,3 +1,5 @@
+import { config } from '@grafana/runtime';
+
 const graphitePlugin = async () =>
   await import(/* webpackChunkName: "graphitePlugin" */ 'app/plugins/datasource/graphite/module');
 const cloudwatchPlugin = async () =>
@@ -125,7 +127,9 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/welcome': welcomeBanner,
   'core:plugin/nodeGraph': nodeGraph,
   'core:plugin/histogram': histogramPanel,
-  'core:plugin/alertHistory': alertHistoryPanel,
+  ...(Boolean(config.featureToggles.alertingCentralAlertHistory) && {
+    'core:plugin/alertHistory': alertHistoryPanel,
+  }),
 };
 
 export default builtInPlugins;
