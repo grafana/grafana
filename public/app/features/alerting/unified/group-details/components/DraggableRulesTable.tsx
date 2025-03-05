@@ -21,6 +21,7 @@ import {
   getNumberEvaluationsToStartAlerting,
   getRuleName,
   isAlertingRulerRule,
+  isGrafanaOrDataSourceRecordingRule,
   isGrafanaRulerRule,
 } from '../../utils/rules';
 
@@ -120,10 +121,8 @@ const DraggableListItem = ({
   // @TODO does this work with Grafana-managed recording rules too? Double check that.
   const ruleName = getRuleName(rule);
   const pendingPeriod = isAlertingRulerRule(rule) || isGrafanaRulerRule(rule) ? rule.for : null;
-  const numberEvaluationsToStartAlerting =
-    isAlertingRulerRule(rule) || isGrafanaRulerRule(rule)
-      ? getNumberEvaluationsToStartAlerting(pendingPeriod ?? '0s', groupInterval)
-      : null;
+  const numberEvaluationsToStartAlerting = getNumberEvaluationsToStartAlerting(pendingPeriod ?? '0s', groupInterval);
+  const isRecordingRule = isGrafanaOrDataSourceRecordingRule(rule);
 
   // TODO Bring back isClone and isDraggin styles
   return (
@@ -132,8 +131,10 @@ const DraggableListItem = ({
       ruleName={ruleName}
       pendingPeriod={pendingPeriod}
       evalsToStartAlerting={
-        numberEvaluationsToStartAlerting ?? (
+        isRecordingRule ? (
           <Badge text={t('alerting.draggable-rules-table.recording', 'Recording')} color="purple" />
+        ) : (
+          numberEvaluationsToStartAlerting
         )
       }
       data-testid="reorder-alert-rule"
