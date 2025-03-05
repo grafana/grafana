@@ -43,6 +43,7 @@ import {
   AlertQuery,
   GrafanaAlertState,
   GrafanaAlertStateDecision,
+  GrafanaPromAlertingRuleDTO,
   GrafanaRuleDefinition,
   PromAlertingRuleState,
   PromRuleType,
@@ -57,6 +58,7 @@ import {
 import { DashboardSearchItem, DashboardSearchItemType } from '../../search/types';
 
 import { SimpleConditionIdentifier } from './components/rule-editor/query-and-alert-condition/SimpleCondition';
+import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { parsePromQLStyleMatcherLooseSafe } from './utils/matchers';
 
 let nextDataSourceId = 1;
@@ -219,6 +221,17 @@ export const mockPromAlertingRule = (partial: Partial<AlertingRule> = {}): Alert
     state: PromAlertingRuleState.Firing,
     health: 'OK',
     totalsFiltered: { alerting: 1 },
+    ...partial,
+  };
+};
+
+export const mockGrafanaPromAlertingRule = (
+  partial: Partial<GrafanaPromAlertingRuleDTO> = {}
+): GrafanaPromAlertingRuleDTO => {
+  return {
+    ...mockPromAlertingRule(),
+    uid: 'mock-rule-uid-123',
+    folderUid: 'NAMESPACE_UID',
     ...partial,
   };
 };
@@ -686,7 +699,7 @@ export function getGrafanaRule(override?: Partial<CombinedRule>, rulerOverride?:
     namespace: {
       groups: [],
       name: 'Grafana',
-      rulesSource: 'grafana',
+      rulesSource: GRAFANA_RULES_SOURCE_NAME,
     },
     rulerRule: mockGrafanaRulerRule(rulerOverride),
     ...override,

@@ -118,15 +118,17 @@ refs:
 
 # Configure Grafana-managed alert rules
 
-Grafana-managed rules can query data from multiple data sources in a single alert rule. They are the most flexible [alert rule type](ref:alert-rules). You can also add expressions to transform your data, set alert conditions, and images in alert notifications.
+Grafana-managed rules can query data from multiple data sources in a single alert rule.
+They're the most flexible [alert rule type](ref:alert-rules).
+You can also add expressions to transform your data, set alert conditions, and images in alert notifications.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 In Grafana Cloud, the number of Grafana-managed alert rules you can create depends on your Grafana Cloud plan.
 
 - Free Forever plan: You can create up to 100 free alert rules, with each alert rule having a maximum of 1000 alert instances.
 - All paid plans (Pro and Advanced): They have a soft limit of 2000 alert rules and support unlimited alert instances. To increase the limit, open a support ticket from the [Cloud portal](/docs/grafana-cloud/account-management/support/).
 
-{{% /admonition %}}
+{{< /admonition >}}
 
 To create or edit Grafana-managed alert rules, follow the instructions below. For a practical example, check out our [tutorial on getting started with Grafana alerting](http://grafana.com/tutorials/alerting-get-started/).
 
@@ -144,9 +146,11 @@ Only users with **Edit** permissions for the folder storing the rules can edit o
 
 You can use default or advanced options for Grafana-managed alert rule creation. The default options streamline rule creation with a cleaner header and a single query and condition. For more complex rules, use advanced options to add multiple queries and expressions.
 
-You can toggle between the two options. Once you have created an alert rule, the system defaults to your previous choice for the next alert rule.
+You can toggle between the two options.
+After you have created an alert rule, the system defaults to your previous choice for the next alert rule.
 
-Switching from advanced to default may result in queries and expressions that cannot be converted. In this case, a warning message asks if you want to continue to reset to default settings.
+Switching from advanced to default may result in queries and expressions that can't be converted.
+In this case, a warning message asks if you want to continue to reset to default settings.
 
 {{< docs/shared lookup="alerts/configure-alert-rule-name.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
@@ -169,9 +173,10 @@ You can toggle between **Default** and **Advanced** options. If the [Default vs.
 {{< collapse title="Advanced options" >}}
 
 1. Select a data source.
-1. From the **Options** dropdown, specify a [time range](ref:time-units-and-relative-ranges).
+1. From the **Options** drop-down menu, specify a [time range](ref:time-units-and-relative-ranges).
 
-   Note that Grafana Alerting only supports fixed relative time ranges, for example, `now-24hr: now`. It does not support absolute time ranges: `2021-12-02 00:00:00 to 2021-12-05 23:59:592` or semi-relative time ranges: `now/d to: now`.
+   Note that Grafana Alerting only supports fixed relative time ranges, for example, `now-24hr: now`.
+   It doesn't support absolute time ranges: `2021-12-02 00:00:00 to 2021-12-05 23:59:592` or semi-relative time ranges: `now/d to: now`.
 
 1. Add a query.
 
@@ -222,7 +227,8 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
    The pending period is the period in which an alert rule can be in breach of the condition until it fires.
 
-   Once a condition is met, the alert goes into the **Pending** state. If the condition remains active for the duration specified, the alert transitions to the **Firing** state, else it reverts to the **Normal** state.
+   After a condition is met, the alert goes into the **Pending** state.
+   If the condition remains active for the duration specified, the alert transitions to the **Firing** state, else it reverts to the **Normal** state.
 
 1. Turn on pause alert notifications, if required.
 
@@ -253,7 +259,7 @@ Complete the following steps to set up notifications.
 
    1. Choose this option to select an existing [contact point](ref:contact-points).
 
-      All notifications for this alert rule are sent to this contact point automatically and notification policies are not used.
+      All notifications for this alert rule are sent to this contact point automatically and notification policies aren't used.
 
    1. You can also optionally select a mute timing as well as groupings and timings to define when not to send notifications.
 
@@ -261,7 +267,8 @@ Complete the following steps to set up notifications.
 
    1. Choose this option to use the [notification policy tree](ref:notification-policies) to handle alert notifications.
 
-      All notifications for this alert rule are managed by the notification policy tree, which routes alerts based on their labels. If an alert does not match a specific policy, the default notification policy applies, ensuring all alerts are handled.
+      All notifications for this alert rule are managed by the notification policy tree, which routes alerts based on their labels.
+      If an alert doesn't match a specific policy, the default notification policy applies, ensuring all alerts are handled.
 
    1. Preview your alert instance routing set up.
 

@@ -1,24 +1,30 @@
 import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
-import { GrafanaPromRuleDTO, PromRuleType } from 'app/types/unified-alerting-dto';
+import { GrafanaPromRuleDTO, PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { GrafanaRulesSource } from '../utils/datasource';
+import { isGrafanaAlertingRule, isGrafanaRecordingRule } from '../utils/rules';
 import { createRelativeUrl } from '../utils/url';
 
 import { AlertRuleListItem, RecordingRuleListItem, UnknownRuleListItem } from './components/AlertRuleListItem';
-import { AlertRuleListItemLoader, RulerRuleLoadingError } from './components/AlertRuleListItemLoader';
+import { AlertRuleListItemSkeleton, RulerRuleLoadingError } from './components/AlertRuleListItemLoader';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
+import { RuleOperation } from './components/RuleListIcon';
 
 const { useGetGrafanaRulerGroupQuery } = alertRuleApi;
 
 interface GrafanaRuleLoaderProps {
   rule: GrafanaPromRuleDTO;
+
   groupIdentifier: GrafanaRuleGroupIdentifier;
   namespaceName: string;
 }
 
 export function GrafanaRuleLoader({ rule, groupIdentifier, namespaceName }: GrafanaRuleLoaderProps) {
-  const { data: rulerRuleGroup, isError } = useGetGrafanaRulerGroupQuery(groupIdentifier);
+  const { data: rulerRuleGroup, isError } = useGetGrafanaRulerGroupQuery({
+    folderUid: groupIdentifier.namespace.uid,
+    groupName: groupIdentifier.groupName,
+  });
 
   const rulerRule = rulerRuleGroup?.rules.find((rulerRule) => rulerRule.grafana_alert.uid === rule.uid);
 
@@ -27,11 +33,36 @@ export function GrafanaRuleLoader({ rule, groupIdentifier, namespaceName }: Graf
       return <RulerRuleLoadingError rule={rule} />;
     }
 
-    return <AlertRuleListItemLoader />;
+    return <AlertRuleListItemSkeleton />;
   }
 
+  return (
+    <GrafanaRuleListItem
+      rule={rule}
+      rulerRule={rulerRule}
+      groupIdentifier={groupIdentifier}
+      namespaceName={namespaceName}
+    />
+  );
+}
+
+interface GrafanaRuleListItemProps {
+  rule?: GrafanaPromRuleDTO;
+  rulerRule: RulerGrafanaRuleDTO;
+  groupIdentifier: GrafanaRuleGroupIdentifier;
+  namespaceName: string;
+  operation?: RuleOperation;
+}
+
+export function GrafanaRuleListItem({
+  rule,
+  rulerRule,
+  groupIdentifier,
+  namespaceName,
+  operation,
+}: GrafanaRuleListItemProps) {
   const {
-    grafana_alert: { title, provenance, is_paused },
+    grafana_alert: { uid, title, provenance, is_paused },
     annotations = {},
     labels = {},
   } = rulerRule;
@@ -41,9 +72,9 @@ export function GrafanaRuleLoader({ rule, groupIdentifier, namespaceName }: Graf
     rulesSource: GrafanaRulesSource,
     group: groupIdentifier.groupName,
     namespace: namespaceName,
-    href: createRelativeUrl(`/alerting/grafana/${rule.uid}/view`),
-    health: rule.health,
-    error: rule.lastError,
+    href: createRelativeUrl(`/alerting/grafana/${uid}/view`),
+    health: rule?.health,
+    error: rule?.lastError,
     labels: labels,
     isProvisioned: Boolean(provenance),
     isPaused: is_paused,
@@ -51,20 +82,23 @@ export function GrafanaRuleLoader({ rule, groupIdentifier, namespaceName }: Graf
     actions: <RuleActionsButtons rule={rulerRule} promRule={rule} groupIdentifier={groupIdentifier} compact />,
   };
 
-  if (rule.type === PromRuleType.Alerting) {
+  if (isGrafanaAlertingRule(rulerRule)) {
+    const promAlertingRule = rule && rule.type === PromRuleType.Alerting ? rule : undefined;
+
     return (
       <AlertRuleListItem
         {...commonProps}
         summary={annotations.summary}
-        state={rule.state}
-        instancesCount={rule.alerts?.length}
+        state={promAlertingRule?.state}
+        instancesCount={promAlertingRule?.alerts?.length}
+        operation={operation}
       />
     );
   }
 
-  if (rule.type === PromRuleType.Recording) {
+  if (isGrafanaRecordingRule(rulerRule)) {
     return <RecordingRuleListItem {...commonProps} />;
   }
 
-  return <UnknownRuleListItem rule={rule} groupIdentifier={groupIdentifier} />;
+  return <UnknownRuleListItem ruleName={title} groupIdentifier={groupIdentifier} ruleDefinition={rulerRule} />;
 }

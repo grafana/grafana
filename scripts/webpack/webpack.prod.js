@@ -10,8 +10,10 @@ const { EnvironmentPlugin } = require('webpack');
 const WebpackAssetsManifest = require('webpack-assets-manifest');
 const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 const { merge } = require('webpack-merge');
+const { SubresourceIntegrityPlugin } = require('webpack-subresource-integrity');
 
 const getEnvConfig = require('./env-util.js');
+const FeatureFlaggedSRIPlugin = require('./plugins/FeatureFlaggedSriPlugin');
 const common = require('./webpack.common.js');
 const esbuildTargets = resolveToEsbuildTarget(browserslist(), { printUnknownTargets: false });
 
@@ -51,6 +53,9 @@ module.exports = (env = {}) =>
         }),
       ],
     },
+    output: {
+      crossOriginLoading: 'anonymous',
+    },
     optimization: {
       nodeEnv: 'production',
       minimize: parseInt(env.noMinify, 10) !== 1,
@@ -70,6 +75,8 @@ module.exports = (env = {}) =>
       new MiniCssExtractPlugin({
         filename: 'grafana.[name].[contenthash].css',
       }),
+      new SubresourceIntegrityPlugin(),
+      new FeatureFlaggedSRIPlugin(),
       /**
        * I know we have two manifest plugins here.
        * WebpackManifestPlugin was only used in prod before and does not support integrity hashes
@@ -77,6 +84,7 @@ module.exports = (env = {}) =>
       new WebpackAssetsManifest({
         entrypoints: true,
         integrity: true,
+        integrityHashes: ['sha384', 'sha512'],
         publicPath: true,
       }),
       new WebpackManifestPlugin({

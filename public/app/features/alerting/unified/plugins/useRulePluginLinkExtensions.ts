@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 
-import { PluginExtensionPoints } from '@grafana/data';
+import { PluginExtensionLink, PluginExtensionPoints } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
 import { CombinedRule, Rule, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 import { PromRuleType } from 'app/types/unified-alerting-dto';
@@ -21,14 +21,21 @@ export interface AlertingRuleExtensionContext extends BaseRuleExtensionContext {
 
 export interface RecordingRuleExtensionContext extends BaseRuleExtensionContext {}
 
-export function useRulePluginLinkExtension(rule: Rule, groupIdentifier: RuleGroupIdentifierV2) {
+export function useRulePluginLinkExtension(rule: Rule | undefined, groupIdentifier: RuleGroupIdentifierV2) {
+  // This ref provides a stable reference to an empty array, which is used to avoid re-renders when the rule is undefined.
+  const emptyResponse = useRef<PluginExtensionLink[]>([]);
+
+  if (!rule) {
+    return emptyResponse.current;
+  }
+
   const ruleExtensionPoint = useRuleExtensionPoint(rule, groupIdentifier);
   const { links } = usePluginLinks(ruleExtensionPoint);
 
   const ruleOrigin = getRulePluginOrigin(rule);
   const ruleType = rule.type;
   if (!ruleOrigin || !ruleType) {
-    return [];
+    return emptyResponse.current;
   }
 
   const { pluginId } = ruleOrigin;
