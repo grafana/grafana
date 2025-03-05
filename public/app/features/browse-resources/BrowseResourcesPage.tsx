@@ -155,7 +155,14 @@ const FoldersPage: React.FC = () => {
           {
             id: 'location',
             header: 'Location',
-            cell: ({ row: { original } }) => original.location || '-',
+            cell: ({ row: { original } }) => {
+              return (
+                <div className="flex items-center">
+                  <Icon name={'folder'} style={{ marginRight: '6px' }}/>
+                  <span>{original.location}</span>
+                </div>
+              );
+            },
           },
           {
             id: 'tags',

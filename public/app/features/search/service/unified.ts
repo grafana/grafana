@@ -197,31 +197,35 @@ export class UnifiedSearcher implements GrafanaSearcher {
     const rsp = await getBackendSrv().get<SearchAPIResponse>(uri);
     const isFolderCacheStale = await this.isFolderCacheStale(rsp.hits);
     if (!isFolderCacheStale) {
-      return rsp;
+      return { ...rsp, hits: this.applyFolderName(rsp.hits, await this.locationInfo) };
     }
     // sync the location info ( folders )
     this.locationInfo = loadLocationInfo(uri);
     // recheck for missing folders
     const hasMissing = await this.isFolderCacheStale(rsp.hits);
     if (!hasMissing) {
-      return rsp;
+      return { ...rsp, hits: this.applyFolderName(rsp.hits, await this.locationInfo) };
     }
 
     const locationInfo = await this.locationInfo;
-    const hits = rsp.hits.map((hit) => {
-      if (hit.folder === undefined) {
-        return { ...hit, location: 'general', folder: 'general' };
-      }
-
-      // this means user has permission to see this dashboard, but not the folder contents
-      if (locationInfo[hit.folder] === undefined) {
-        return { ...hit, location: 'sharedwithme', folder: 'sharedwithme' };
-      }
-
-      return { ...hit, location: locationInfo[hit.folder].name, folder: 'sharedwithme' };
-    });
+    const hits = this.applyFolderName(rsp.hits, locationInfo);
     const totalHits = rsp.totalHits - (rsp.hits.length - hits.length);
     return { ...rsp, hits, totalHits };
+  }
+
+  applyFolderName(hits: SearchHit[], locationInfo: Record<string, LocationInfo>): SearchHit[] {
+    return hits.map((hit) => {
+    if (hit.folder === undefined) {
+      return { ...hit, location: 'general', folder: 'general' };
+    }
+
+    // this means user has permission to see this dashboard, but not the folder contents
+    if (locationInfo[hit.folder] === undefined) {
+      return { ...hit, location: 'sharedwithme', folder: 'sharedwithme' };
+    }
+
+    return { ...hit, location: locationInfo[hit.folder].name, folder: locationInfo[hit.folder].name };
+    });
   }
 
   async isFolderCacheStale(hits: SearchHit[]): Promise<boolean> {
