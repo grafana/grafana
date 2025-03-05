@@ -1017,3 +1017,70 @@ func TestGeneratorFillsAllFields(t *testing.T) {
 
 	require.FailNow(t, "AlertRule generator does not populate fields", "skipped fields: %v", maps.Keys(fields))
 }
+
+func TestAlertRule_PrometheusRuleDefinition(t *testing.T) {
+	tests := []struct {
+		name             string
+		rule             AlertRule
+		expectedResult   string
+		expectedErrorMsg string
+	}{
+		{
+			name: "rule with prometheus definition",
+			rule: AlertRule{
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: &PrometheusStyleRule{
+						OriginalRuleDefinition: "groups:\n- name: example\n  rules:\n  - alert: HighRequestLatency\n    expr: request_latency_seconds{job=\"myjob\"} > 0.5\n    for: 10m\n    labels:\n      severity: page\n    annotations:\n      summary: High request latency",
+					},
+				},
+			},
+			expectedResult:   "groups:\n- name: example\n  rules:\n  - alert: HighRequestLatency\n    expr: request_latency_seconds{job=\"myjob\"} > 0.5\n    for: 10m\n    labels:\n      severity: page\n    annotations:\n      summary: High request latency",
+			expectedErrorMsg: "",
+		},
+		{
+			name: "rule with empty prometheus definition",
+			rule: AlertRule{
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: &PrometheusStyleRule{
+						OriginalRuleDefinition: "",
+					},
+				},
+			},
+			expectedResult:   "",
+			expectedErrorMsg: "prometheus rule definition is missing",
+		},
+		{
+			name: "rule with nil prometheus style rule",
+			rule: AlertRule{
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: nil,
+				},
+			},
+			expectedResult:   "",
+			expectedErrorMsg: "prometheus rule definition is missing",
+		},
+		{
+			name:             "rule with empty metadata",
+			rule:             AlertRule{},
+			expectedResult:   "",
+			expectedErrorMsg: "prometheus rule definition is missing",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := tt.rule.PrometheusRuleDefinition()
+			isPrometheusRule := tt.rule.ImportedFromPrometheus()
+
+			if tt.expectedErrorMsg != "" {
+				require.Error(t, err)
+				require.Equal(t, tt.expectedErrorMsg, err.Error())
+				require.False(t, isPrometheusRule)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expectedResult, result)
+				require.True(t, isPrometheusRule)
+			}
+		})
+	}
+}
