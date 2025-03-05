@@ -3,6 +3,7 @@ import * as React from 'react';
 import { CoreApp, IconName, PluginExtensionPoints, RawTimeRange, TimeRange } from '@grafana/data';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, locationService, reportInteraction, usePluginLinks } from '@grafana/runtime';
+import { DataSourceRef } from '@grafana/schema';
 import { Button, DataLinkButton } from '@grafana/ui';
 import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
 
@@ -17,7 +18,7 @@ export type ProfilesButtonContext = {
   spanSelector: string;
   explorationType: string;
   timeRange: RawTimeRange;
-  targets: Array<{ datasource: { type: string; uid: string | undefined } }>;
+  datasource: DataSourceRef;
 };
 
 export type Props = {
@@ -131,14 +132,7 @@ export const getProfileLinkButtonsContext = (
       from: timeRange.from.toISOString(),
       to: timeRange.to.toISOString(),
     },
-    targets: [
-      {
-        datasource: {
-          type: 'grafana-pyroscope-datasource',
-          uid: traceToProfilesOptions?.datasourceUid,
-        },
-      },
-    ],
+    datasource: { uid: traceToProfilesOptions?.datasourceUid },
   };
   return context;
 };
