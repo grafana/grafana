@@ -12,6 +12,7 @@ import { StoreState } from 'app/types/store';
 import { buildInitialState } from '../core/reducers/navModel';
 import { addReducer, createRootReducer } from '../core/reducers/root';
 import { alertingApi } from '../features/alerting/unified/api/alertingApi';
+import { folderAPI } from '../features/folders/api';
 import { iamApi } from '../features/iam/api/api';
 
 import { setStore } from './store';
@@ -43,6 +44,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
         userPreferencesAPI.middleware,
         provisioningAPI.middleware,
         iamApi.middleware,
+        folderAPI.middleware,
         ...extraMiddleware
       ),
     devTools: process.env.NODE_ENV !== 'production',
