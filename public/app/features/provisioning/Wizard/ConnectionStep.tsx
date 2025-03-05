@@ -1,8 +1,11 @@
 import { Controller, useFormContext } from 'react-hook-form';
+import { useEffect } from 'react';
 
 import { Field, Input, Combobox, Stack, FieldSet, Card } from '@grafana/ui';
 
 import { WizardFormData } from './types';
+import { useGetFrontendSettingsQuery } from '../api';
+import { checkSyncSettings } from '../utils';
 
 const typeOptions = [
   { label: 'GitHub', value: 'github' },
@@ -34,6 +37,16 @@ export function ConnectionStep() {
   } = useFormContext<WizardFormData>();
 
   const workflows = watch('repository.workflows');
+  const settingsQuery = useGetFrontendSettingsQuery();
+  const [instanceConnected, folderConnected] = checkSyncSettings(settingsQuery.data);
+
+  useEffect(() => {
+    if (folderConnected) {
+      setValue('repository.sync.target', 'folder');
+    } else {
+      setValue('repository.sync.target', 'instance');
+    }
+  }, [folderConnected, setValue]);
 
   return (
     <FieldSet label="1. Set up your repository connection details">
@@ -82,7 +95,12 @@ export function ConnectionStep() {
             render={({ field: { onChange, value } }) => (
               <>
                 {modeOptions.map((option) => (
-                  <Card key={option.value} isSelected={value === option.value} onClick={() => onChange(option.value)}>
+                  <Card
+                    key={option.value}
+                    isSelected={value === option.value}
+                    onClick={() => onChange(option.value)}
+                    disabled={folderConnected || instanceConnected}
+                  >
                     <Card.Heading>{option.label}</Card.Heading>
                     <Card.Description>{option.description}</Card.Description>
                   </Card>
