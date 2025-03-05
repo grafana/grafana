@@ -12,11 +12,11 @@ export function buildSelector(selectedMetric: string, selectedLabelValues: Recor
   const selectorParts: string[] = [];
 
   Object.entries(selectedLabelValues).forEach(([key, value]) => {
-    let operator = '=';
     if (value.length > 1) {
-      operator = `=~`;
+      selectorParts.push(`${utf8Support(key)}=~"${value.map(escapeLabelValueInRegexSelector).join('|')}"`);
+    } else if (value.length === 1) {
+      selectorParts.push(`${utf8Support(key)}="${value.map(escapeLabelValueInExactSelector).join('|')}"`);
     }
-    selectorParts.push(`${utf8Support(key)}${operator}"${value.join('|')}"`);
   });
 
   if (selectedMetric !== '') {
@@ -29,42 +29,6 @@ export function buildSelector(selectedMetric: string, selectedLabelValues: Recor
   } else {
     return `{${selectorParts.join(',')}}`;
   }
-}
-
-export function buildSelector_old(labels: SelectableLabel[]): string {
-  let singleMetric = '';
-  const selectedLabels: string[] = [];
-  for (const label of labels) {
-    if ((label.name === METRIC_LABEL || label.selected) && label.values && label.values.length > 0) {
-      const selectedValues = label.values.filter((value) => value.selected).map((value) => value.name);
-      if (selectedValues.length > 1) {
-        selectedLabels.push(
-          `${utf8Support(label.name)}=~"${selectedValues.map(escapeLabelValueInRegexSelector).join('|')}"`
-        );
-      } else if (selectedValues.length === 1) {
-        if (label.name === METRIC_LABEL) {
-          singleMetric = selectedValues[0];
-        } else {
-          selectedLabels.push(`${utf8Support(label.name)}="${escapeLabelValueInExactSelector(selectedValues[0])}"`);
-        }
-      }
-    }
-  }
-
-  const selectorParts: string[] = [];
-  const isLegacyName = singleMetric === '' || isValidLegacyName(singleMetric);
-
-  if (isLegacyName) {
-    selectorParts.push(singleMetric, '{');
-  } else {
-    selectorParts.push('{', `"${singleMetric}"`);
-    if (selectedLabels.length > 0) {
-      selectorParts.push(',');
-    }
-  }
-
-  selectorParts.push(selectedLabels.join(','), '}');
-  return selectorParts.join('');
 }
 
 export function facetLabels(
