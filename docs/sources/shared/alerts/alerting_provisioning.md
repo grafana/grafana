@@ -17,7 +17,7 @@ For more information on the differences between Grafana-managed and data source-
 {{< admonition type="note" >}}
 In the Alerting provisioning HTTP API, the endpoints use a JSON format that differs from the format returned by the `export` endpoints.
 
-The `export` endpoints allows you to export alerting resources in a format suitable for [provisioning via JSON files](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/file-provisioning/). However, this format cannot be used to update resources via the HTTP API.
+The `export` endpoints allow you to export alerting resources in a JSON format suitable for [provisioning via files](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/file-provisioning/). However, this format cannot be used to update resources via the HTTP API.
 
 {{< /admonition >}}
 
