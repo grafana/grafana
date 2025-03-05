@@ -162,7 +162,7 @@ func (r *Resource) GetSuggestions(ctx context.Context, req *backend.CallResource
 	slices.Sort(selectorList)
 	selectorList = slices.Compact(selectorList)
 
-	matchers, err := models.FiltersToMatchers(sugReq.Scopes, sugReq.AdhocFilters)
+	matchers, err := models.FiltersToMatchers(sugReq.Scopes, sugReq.AdhocFilters, sugReq.LabelName)
 	if err != nil {
 		return nil, fmt.Errorf("error converting filters to matchers: %v", err)
 	}

@@ -20,7 +20,7 @@ func ApplyFiltersAndGroupBy(rawExpr string, scopeFilters, adHocFilters []ScopeFi
 		return "", err
 	}
 
-	matchers, err := FiltersToMatchers(scopeFilters, adHocFilters)
+	matchers, err := FiltersToMatchers(scopeFilters, adHocFilters, "")
 	if err != nil {
 		return "", err
 	}
@@ -75,11 +75,15 @@ func ApplyFiltersAndGroupBy(rawExpr string, scopeFilters, adHocFilters []ScopeFi
 	return expr.String(), nil
 }
 
-func FiltersToMatchers(scopeFilters, adhocFilters []ScopeFilter) ([]*labels.Matcher, error) {
+func FiltersToMatchers(scopeFilters, adhocFilters []ScopeFilter, labelName string) ([]*labels.Matcher, error) {
 	filterMap := make(map[string]*labels.Matcher)
 
 	// scope filters are applied first
 	for _, filter := range scopeFilters {
+		if filter.Key == labelName {
+			continue
+		}
+
 		matcher, err := filterToMatcher(filter)
 		if err != nil {
 			return nil, err
