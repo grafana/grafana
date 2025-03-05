@@ -138,6 +138,14 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   public onChangeTab = (tab: EditPaneTab) => {
     this.setState({ tab });
   };
+
+  public newObjectAddedToCanvas(obj: SceneObject) {
+    this.selectObject(obj, obj.state.key!, false);
+
+    if (this.state.tab !== 'configure') {
+      this.onChangeTab('configure');
+    }
+  }
 }
 
 export interface Props {

@@ -86,7 +86,7 @@ function RowHeaderSwitch({ row }: { row: RowItem }) {
 }
 
 function RowHeightSelect({ row }: { row: RowItem }) {
-  const { height = 'expand' } = row.useState();
+  const { height = 'min' } = row.useState();
 
   const options: Array<SelectableValue<'expand' | 'min'>> = [
     { label: t('dashboard.rows-layout.row-options.height.expand', 'Expand'), value: 'expand' },
