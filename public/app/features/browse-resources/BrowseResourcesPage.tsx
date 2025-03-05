@@ -1,25 +1,26 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { t } from 'i18next';
 import React, { useState, useEffect } from 'react';
+
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
   EmptyState,
   LoadingPlaceholder,
   InteractiveTable,
   Column,
   Select,
-  // Icon,
+  Icon,
   Stack,
   useStyles2,
   FilterInput,
 } from '@grafana/ui';
-
-import { Page } from 'app/core/components/Page/Page';
-import { SearchHit, UnifiedSearcher } from '../search/service/unified';
-import { GrafanaSearcher } from '../search/service/types';
 import { getAPINamespace } from 'app/api/utils';
-import { useNavModel } from 'app/core/hooks/useNavModel';
+import { Page } from 'app/core/components/Page/Page';
 import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
-import { t } from 'i18next';
+import { useNavModel } from 'app/core/hooks/useNavModel';
+
+import { GrafanaSearcher } from '../search/service/types';
+import { SearchHit, UnifiedSearcher } from '../search/service/unified';
 
 interface Resource extends SearchHit {
   isExpanded?: boolean;
@@ -45,7 +46,7 @@ const searchURI = `/apis/search.grafana.app/v0alpha1/namespaces/${getAPINamespac
 const searcher = new UnifiedSearcher({} as GrafanaSearcher, searchURI);
 
 const FoldersPage: React.FC = () => {
-  const [resources, setResources] = useState<Array<Resource>>([]);
+  const [resources, setResources] = useState<Resource[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -77,6 +78,19 @@ const FoldersPage: React.FC = () => {
     void loadData();
   }, [selectedTypes, selectedTags, searchTerm]);
 
+  const getIconForResource = (resource: string) => {
+    switch (resource) {
+      case 'playlists':
+        return 'play';
+      case 'dashboards':
+        return 'apps';
+      case 'folders':
+          return 'folder';  
+      default:
+        return 'folder';
+    }
+  };
+
   // TODO: Implement folder expand/collapse
   // const handleExpand = (folder: Folder) => {
   //   setFolders((prevFolders) =>
@@ -99,7 +113,17 @@ const FoldersPage: React.FC = () => {
           {
             id: 'type',
             header: 'Type',
-            cell: ({ row: { original } }) => original.resource,
+            cell: ({ row: { original } }) => {
+              // Adds an icon to the left of each resource type
+              const iconName = getIconForResource(original.resource);
+              
+              return (
+                <div className="flex items-center">
+                  {iconName && <Icon name={iconName} style={{ marginRight: '6px' }}/>}
+                  {original.resource}
+                </div>
+              );
+            },
           },
           {
             id: 'location',
