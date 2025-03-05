@@ -189,7 +189,7 @@ export function RepositoryStep({ onStatusChange }: Props) {
         )}
 
         <ControlledCollapse label="Advanced settings" isOpen={false}>
-          <Field label={'Enable automatic pull'} description="The repository will periodically pull changes">
+          <Field label={'Enable automatic pulling'} description="The repository will periodically pull changes">
             <Switch {...register('repository.sync.enabled')} />
           </Field>
           <Field label={'Interval (seconds)'}>

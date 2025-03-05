@@ -50,7 +50,7 @@ export function StatusBadge({ enabled, state, name }: StatusBadgeProps) {
 
   if (!enabled) {
     color = 'red';
-    text = 'Automatic pull disabled';
+    text = 'Automatic pulling disabled';
     icon = 'info-circle';
   }
   return (

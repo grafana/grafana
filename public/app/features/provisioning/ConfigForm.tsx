@@ -223,8 +223,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
         />
       )}
 
-      <ControlledCollapse label="Automatic Pull Settings" isOpen={false}>
-        <Field label={'Enabled'} description={'Once automatic pull is enabled, the target cannot be changed.'}>
+      <ControlledCollapse label="Automatic pulling" isOpen={false}>
+        <Field label={'Enabled'} description={'Once automatic pulling is enabled, the target cannot be changed.'}>
           <Switch {...register('sync.enabled')} id={'sync.enabled'} />
         </Field>
         <Field label={'Target'} required error={errors?.sync?.target?.message} invalid={!!errors?.sync?.target}>
