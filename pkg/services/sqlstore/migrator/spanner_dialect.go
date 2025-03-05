@@ -12,6 +12,7 @@ import (
 
 	"cloud.google.com/go/spanner"
 	"cloud.google.com/go/spanner/admin/database/apiv1/databasepb"
+	"github.com/googleapis/gax-go/v2"
 	spannerdriver "github.com/googleapis/go-sql-spanner"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
@@ -77,6 +78,7 @@ func (s *SpannerDialect) CreateTableSQL(table *Table) string {
 	for _, c := range table.Columns {
 		col := core.NewColumn(c.Name, c.Name, core.SQLType{Name: c.Type}, c.Length, c.Length2, c.Nullable)
 		col.IsAutoIncrement = c.IsAutoIncrement
+		col.Default = c.Default
 		t.AddColumn(col)
 	}
 	return s.d.CreateTableSql(t, t.Name, "", "")
@@ -205,7 +207,7 @@ func (s *SpannerDialect) CreateDatabaseFromSnapshot(ctx context.Context, engine 
 
 	err = s.executeDDLStatements(ctx, engine, statements)
 	if err != nil {
-		return fmt.Errorf("failed to apply DDL statements from snapshot: %w", err)
+		return err
 	}
 
 	return s.recordMigrationsToMigrationLog(engine, migrationIDs, tableName)
@@ -225,15 +227,15 @@ func (s *SpannerDialect) recordMigrationsToMigrationLog(engine *xorm.Engine, mig
 	sess := engine.NewSession()
 	defer sess.Close()
 
+	// Insert records in batches to avoid many roundtrips to database.
+	// Inserting all records at once fails due to "Number of parameters in query exceeds the maximum
+	// allowed limit of 950." error, so we use smaller batches.
 	const batchSize = 100
 
 	if err := sess.Begin(); err != nil {
 		return err
 	}
 
-	// Insert all records in batches at once to avoid many roundtrips to database.
-	// Inserting all at once fails due to "Number of parameters in query exceeds the maximum allowed limit of 950." error,
-	// so we use smaller batches.
 	records := make([]MigrationLog, 0, len(migrationIDs))
 	for _, mid := range migrationIDs {
 		records = append(records, makeRecord(mid))
@@ -246,6 +248,15 @@ func (s *SpannerDialect) recordMigrationsToMigrationLog(engine *xorm.Engine, mig
 			records = records[:0]
 		}
 	}
+
+	// Insert remaining records.
+	if len(records) > 0 {
+		if _, err := sess.Table(tableName).InsertMulti(records); err != nil {
+			err2 := sess.Rollback()
+			return errors.Join(fmt.Errorf("failed to insert migration logs: %w", err), err2)
+		}
+	}
+
 	if err := sess.Commit(); err != nil {
 		return err
 	}
@@ -278,12 +289,12 @@ func (s *SpannerDialect) executeDDLStatements(ctx context.Context, engine *xorm.
 	op, err := databaseAdminClient.UpdateDatabaseDdl(ctx, &databasepb.UpdateDatabaseDdlRequest{
 		Database:   databaseName,
 		Statements: statements,
-	})
+	}, gax.WithTimeout(0)) /* disable default timeout */
 	if err != nil {
 		return fmt.Errorf("failed to start database DDL update: %v", err)
 	}
 
-	err = op.Wait(ctx)
+	err = op.Wait(ctx, gax.WithTimeout(0)) /* disable default timeout */
 	if err != nil {
 		return fmt.Errorf("failed to apply database DDL update: %v", err)
 	}
