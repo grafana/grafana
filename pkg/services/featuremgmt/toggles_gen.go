@@ -51,10 +51,6 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
-	// FlagVizActions
-	// Allow actions in visualizations
-	FlagVizActions = "vizActions"
-
 	// FlagDisableSecretsCompatibility
 	// Disable duplicated secret storage in legacy tables
 	FlagDisableSecretsCompatibility = "disableSecretsCompatibility"
@@ -78,10 +74,6 @@ const (
 	// FlagMysqlAnsiQuotes
 	// Use double quotes to escape keyword in a MySQL query
 	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
-
-	// FlagAccessControlOnCall
-	// Access control primitives for OnCall
-	FlagAccessControlOnCall = "accessControlOnCall"
 
 	// FlagNestedFolders
 	// Enable folder nesting
@@ -599,10 +591,6 @@ const (
 	// Enables deleted dashboard restore feature
 	FlagDashboardRestore = "dashboardRestore"
 
-	// FlagDatasourceProxyDisableRBAC
-	// Disables applying a plugin route&#39;s ReqAction field to authorization
-	FlagDatasourceProxyDisableRBAC = "datasourceProxyDisableRBAC"
-
 	// FlagAlertingDisableSendAlertsExternal
 	// Disables the ability to send alerts to an external Alertmanager datasource.
 	FlagAlertingDisableSendAlertsExternal = "alertingDisableSendAlertsExternal"
@@ -934,4 +922,8 @@ const (
 	// FlagRendererDisableAppPluginsPreload
 	// Disable pre-loading app plugins when the request is coming from the renderer
 	FlagRendererDisableAppPluginsPreload = "rendererDisableAppPluginsPreload"
+
+	// FlagAssetSriChecks
+	// Enables SRI checks for Grafana JavaScript assets
+	FlagAssetSriChecks = "assetSriChecks"
 )

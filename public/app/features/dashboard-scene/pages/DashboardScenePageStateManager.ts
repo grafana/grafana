@@ -151,7 +151,7 @@ abstract class DashboardScenePageStateManagerBase<T>
       const queryController = sceneGraph.getQueryController(dashboard);
 
       trackDashboardSceneLoaded(dashboard, measure?.duration);
-      queryController?.startProfile(dashboard);
+      queryController?.startProfile('DashboardScene');
 
       if (options.route !== DashboardRoutes.New) {
         emitDashboardViewEvent({

@@ -1,5 +1,6 @@
 import { BusEventWithPayload, GrafanaTheme2 } from '@grafana/data';
 
+import { getDisplayedFieldValue } from './LogLine';
 import { LogListModel } from './processing';
 
 let ctx: CanvasRenderingContext2D | null = null;
@@ -7,6 +8,12 @@ let gridSize = 8;
 let paddingBottom = gridSize * 0.75;
 let lineHeight = 22;
 let measurementMode: 'canvas' | 'dom' = 'canvas';
+const iconWidth = 24;
+
+// Controls the space between fields in the log line, timestamp, level, displayed fields, and log line body
+export const FIELD_GAP_MULTIPLIER = 1.5;
+
+export const getLineHeight = () => lineHeight;
 
 export function init(theme: GrafanaTheme2) {
   const font = `${theme.typography.fontSize}px ${theme.typography.fontFamilyMonospace}`;
@@ -146,6 +153,7 @@ interface DisplayOptions {
 export function getLogLineSize(
   logs: LogListModel[],
   container: HTMLDivElement | null,
+  displayedFields: string[],
   { wrap, showTime }: DisplayOptions,
   index: number
 ) {
@@ -160,15 +168,26 @@ export function getLogLineSize(
   if (storedSize) {
     return storedSize;
   }
-  const gap = gridSize;
+
+  let textToMeasure = '';
+  const gap = gridSize * FIELD_GAP_MULTIPLIER;
   let optionsWidth = 0;
   if (showTime) {
-    optionsWidth += logs[index].dimensions.timestampWidth + gap;
+    optionsWidth += gap;
+    textToMeasure += logs[index].timestamp;
   }
   if (logs[index].logLevel) {
-    optionsWidth += logs[index].dimensions.levelWidth + gap;
+    optionsWidth += gap;
+    textToMeasure += logs[index].logLevel;
   }
-  const { height } = measureTextHeight(logs[index].body, getLogContainerWidth(container), optionsWidth);
+  for (const field of displayedFields) {
+    textToMeasure = getDisplayedFieldValue(field, logs[index]) + textToMeasure;
+  }
+  if (!displayedFields.length) {
+    textToMeasure += logs[index].body;
+  }
+
+  const { height } = measureTextHeight(textToMeasure, getLogContainerWidth(container), optionsWidth);
   return height;
 }
 
@@ -177,7 +196,7 @@ export function hasUnderOrOverflow(element: HTMLDivElement, calculatedHeight?: n
   if (element.scrollHeight > height) {
     return element.scrollHeight;
   }
-  const child = element.firstChild;
+  const child = element.children[1];
   if (child instanceof HTMLDivElement && child.clientHeight < height) {
     return child.clientHeight;
   }
@@ -187,7 +206,7 @@ export function hasUnderOrOverflow(element: HTMLDivElement, calculatedHeight?: n
 const scrollBarWidth = getScrollbarWidth();
 
 export function getLogContainerWidth(container: HTMLDivElement) {
-  return container.clientWidth - scrollBarWidth;
+  return container.clientWidth - scrollBarWidth - iconWidth;
 }
 
 export function getScrollbarWidth() {
