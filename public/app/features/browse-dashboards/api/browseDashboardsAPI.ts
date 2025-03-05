@@ -486,6 +486,11 @@ export async function addRepositoryData(
   }
 
   const addRepositoryToItem = (item: FolderDataType) => {
+    const instanceConfig = settings.items.find((repo) => repo.target === 'instance');
+
+    if (instanceConfig) {
+      return { ...item, repository: instanceConfig };
+    }
     const repository = settings.items.find((repo) => {
       if (typeof item.repository === 'string') {
         return repo.name === item.repository;

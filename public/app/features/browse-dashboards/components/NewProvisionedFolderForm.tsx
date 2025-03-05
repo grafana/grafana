@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
@@ -10,7 +11,10 @@ import { usePullRequestParam } from 'app/features/provisioning/hooks';
 import { WorkflowOption } from 'app/features/provisioning/types';
 import { validateBranchName } from 'app/features/provisioning/utils/git';
 
+import { FolderDTO } from '../../../types';
+import { AnnoKeySourcePath } from '../../apiserver/types';
 import { getDefaultWorkflow, getWorkflowOptions } from '../../dashboard-scene/saving/provisioned/defaults';
+import { useGetFolderQuery } from '../../folders/api';
 
 type FormData = {
   ref?: string;
@@ -24,8 +28,7 @@ type FormData = {
 interface Props {
   onSubmit: () => void;
   onCancel: () => void;
-  repositoryName: string;
-  parentTitle: string;
+  parentFolder: FolderDTO;
 }
 
 const initialFormValues: Partial<FormData> = {
@@ -34,10 +37,19 @@ const initialFormValues: Partial<FormData> = {
   ref: `folder/${Date.now()}`,
 };
 
-export function NewProvisionedFolderForm({ onSubmit, onCancel, repositoryName, parentTitle }: Props) {
-  const query = useGetRepositoryQuery({ name: repositoryName });
-  const repositoryConfig = query.data?.spec;
+export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: Props) {
+  const repositoryName = parentFolder.repository?.name;
+  const query = useGetRepositoryQuery(repositoryName ? { name: repositoryName } : skipToken);
   const prURL = usePullRequestParam();
+
+  // Get k8s folder data
+  const folderQuery = useGetFolderQuery({ name: parentFolder.uid });
+
+  if (!query.data && !query.isLoading) {
+    return <Alert title="Repository not found" severity="error" />;
+  }
+
+  const repositoryConfig = query.data?.spec;
   const isGitHub = Boolean(repositoryConfig?.github);
 
   const [create, request] = useCreateRepositoryFilesWithPathMutation();
@@ -84,8 +96,16 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, repositoryName, p
     if (!title) {
       return;
     }
+    const basePath = folderQuery.data?.metadata?.annotations?.[AnnoKeySourcePath] ?? '';
 
-    const path = `${title.toLowerCase().replace(/\s+/g, '-')}/`;
+    // Convert folder title to filename format (lowercase, replace spaces with hyphens)
+    const titleInFilenameFormat = title
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
+
+    const path = `${basePath}/${titleInFilenameFormat}/`;
+
     const folderModel = {
       title,
       type: 'folder',
@@ -97,7 +117,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, repositoryName, p
 
     create({
       ref,
-      name: repositoryName,
+      name: repositoryName ?? '',
       path,
       message: comment || `Create folder: ${title}`,
       body: folderModel,

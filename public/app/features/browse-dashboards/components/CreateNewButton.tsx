@@ -30,7 +30,7 @@ export default function CreateNewButton({ parentFolder, canCreateDashboard, canC
   const [newFolder] = useNewFolderMutation();
   const [showNewFolderDrawer, setShowNewFolderDrawer] = useState(false);
   const notifyApp = useAppNotification();
-  console.log('par', parentFolder);
+
   const onCreateFolder = async (folderName: string) => {
     try {
       const folder = await newFolder({
@@ -88,6 +88,8 @@ export default function CreateNewButton({ parentFolder, canCreateDashboard, canC
     </Menu>
   );
 
+  console.log('P', parentFolder);
+
   return (
     <>
       <Dropdown overlay={newMenu} onVisibleChange={setIsOpen}>
@@ -107,8 +109,7 @@ export default function CreateNewButton({ parentFolder, canCreateDashboard, canC
             <NewProvisionedFolderForm
               onSubmit={() => setShowNewFolderDrawer(false)}
               onCancel={() => setShowNewFolderDrawer(false)}
-              repositoryName={parentFolder.repository.name}
-              parentTitle={parentFolder.title}
+              parentFolder={parentFolder}
             />
           ) : (
             <NewFolderForm onConfirm={onCreateFolder} onCancel={() => setShowNewFolderDrawer(false)} />
