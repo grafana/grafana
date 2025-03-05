@@ -1,33 +1,40 @@
 import { cx } from '@emotion/css';
+import { useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, Label, Stack } from '@grafana/ui';
+import { Button, Label, Stack, useStyles2 } from '@grafana/ui';
 
-interface SelectorActionsProps {
-  selector: string;
-  validationStatus: string;
-  status: string;
-  error: string;
-  empty: boolean;
-  onClickRunQuery: () => void;
-  onClickRunRateQuery: () => void;
-  onClickValidate: () => void;
-  onClickClear: () => void;
-  styles: Record<string, string>;
-}
+import { useMetricsBrowser } from './MetricsBrowserContext';
+import { getStylesSelectorActions } from './styles';
+import { EMPTY_SELECTOR } from './types';
 
-export function SelectorActions({
-  selector,
-  validationStatus,
-  status,
-  error,
-  empty,
-  onClickRunQuery,
-  onClickRunRateQuery,
-  onClickValidate,
-  onClickClear,
-  styles,
-}: SelectorActionsProps) {
+export function SelectorActions() {
+  const styles = useStyles2(getStylesSelectorActions);
+  const [validationStatus, setValidationStatus] = useState('');
+  const { languageProvider, selector, onChange, status, err, setErr, onClearClick } = useMetricsBrowser();
+
+  const validateSelector = async (selector: string) => {
+    setValidationStatus(`Validating selector ${selector}`);
+    setErr('');
+    const streams = await languageProvider.fetchSeries(selector);
+    setValidationStatus(`Selector is valid (${streams.length} series found)`);
+  };
+
+  const onClickValidate = () => {
+    validateSelector(selector);
+  };
+
+  const onClickRunQuery = () => {
+    onChange(selector);
+  };
+
+  const onClickRunRateQuery = () => {
+    const query = `rate(${selector}[$__rate_interval])`;
+    onChange(query);
+  };
+
+  const empty = useMemo(() => selector === EMPTY_SELECTOR, [selector]);
+
   return (
     <div className={styles.section}>
       <Label>4. Resulting selector</Label>
@@ -66,12 +73,12 @@ export function SelectorActions({
           data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.clear}
           aria-label="Selector clear button"
           variant="secondary"
-          onClick={onClickClear}
+          onClick={onClearClick}
         >
           Clear
         </Button>
-        <div className={cx(styles.status, (status || error) && styles.statusShowing)}>
-          <span className={error ? styles.error : ''}>{error || status}</span>
+        <div className={cx(styles.status, (status || err) && styles.statusShowing)}>
+          <span className={err ? styles.error : ''}>{err || status}</span>
         </div>
       </Stack>
     </div>

@@ -17,6 +17,11 @@ export interface SelectableLabel {
   facets?: number;
 }
 
+export interface Metric {
+  name: string;
+  details?: string;
+}
+
 export interface BrowserProps {
   languageProvider: PromQlLanguageProvider;
   onChange: (selector: string) => void;
@@ -28,13 +33,8 @@ export interface BrowserProps {
 
 export interface BrowserState {
   labels: SelectableLabel[];
-  labelSearchTerm: string;
-  metricSearchTerm: string;
   status: string;
   error: string;
-  validationStatus: string;
-  valueSearchTerm: string;
-  seriesLimit?: string;
 }
 
 export const DEFAULT_SERIES_LIMIT = '40000';

@@ -1,42 +1,33 @@
 import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../../language_utils';
 import { isValidLegacyName, utf8Support } from '../../utf8_support';
 
-import { FacettableValue, METRIC_LABEL, SelectableLabel } from './types';
+import { FacettableValue, SelectableLabel } from './types';
 
-export function buildSelector(labels: SelectableLabel[]): string {
-  let singleMetric = '';
-  const selectedLabels: string[] = [];
-  for (const label of labels) {
-    if ((label.name === METRIC_LABEL || label.selected) && label.values && label.values.length > 0) {
-      const selectedValues = label.values.filter((value) => value.selected).map((value) => value.name);
-      if (selectedValues.length > 1) {
-        selectedLabels.push(
-          `${utf8Support(label.name)}=~"${selectedValues.map(escapeLabelValueInRegexSelector).join('|')}"`
-        );
-      } else if (selectedValues.length === 1) {
-        if (label.name === METRIC_LABEL) {
-          singleMetric = selectedValues[0];
-        } else {
-          selectedLabels.push(`${utf8Support(label.name)}="${escapeLabelValueInExactSelector(selectedValues[0])}"`);
-        }
-      }
-    }
+export function buildSelector(selectedMetric: string, selectedLabelValues: Record<string, string[]>): string {
+  if (selectedMetric === '' && Object.keys(selectedLabelValues).length === 0) {
+    return '{}';
   }
 
   const selectorParts: string[] = [];
-  const isLegacyName = singleMetric === '' || isValidLegacyName(singleMetric);
 
-  if (isLegacyName) {
-    selectorParts.push(singleMetric, '{');
-  } else {
-    selectorParts.push('{', `"${singleMetric}"`);
-    if (selectedLabels.length > 0) {
-      selectorParts.push(',');
+  Object.entries(selectedLabelValues).forEach(([key, value]) => {
+    if (value.length > 1) {
+      selectorParts.push(`${utf8Support(key)}=~"${value.map(escapeLabelValueInRegexSelector).join('|')}"`);
+    } else if (value.length === 1) {
+      selectorParts.push(`${utf8Support(key)}="${value.map(escapeLabelValueInExactSelector).join('|')}"`);
     }
-  }
+  });
 
-  selectorParts.push(selectedLabels.join(','), '}');
-  return selectorParts.join('');
+  if (selectedMetric !== '') {
+    if (isValidLegacyName(selectedMetric)) {
+      return `${selectedMetric}{${selectorParts.join(',')}}`;
+    } else {
+      selectorParts.unshift(utf8Support(selectedMetric));
+      return `{${selectorParts.join(',')}}`;
+    }
+  } else {
+    return `{${selectorParts.join(',')}}`;
+  }
 }
 
 export function facetLabels(
