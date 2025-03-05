@@ -1,8 +1,7 @@
 import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../../language_utils';
 import { isValidLegacyName, utf8Support } from '../../utf8_support';
 
-import { FacettableValue, METRIC_LABEL, SelectableLabel } from './types';
-
+import { FacettableValue, SelectableLabel } from './types';
 
 export function buildSelector(selectedMetric: string, selectedLabelValues: Record<string, string[]>): string {
   if (selectedMetric === '' && Object.keys(selectedLabelValues).length === 0) {

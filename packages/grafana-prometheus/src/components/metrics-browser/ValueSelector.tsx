@@ -50,9 +50,6 @@ export function ValueSelector() {
             >
               {({ index, style }) => {
                 const value = labelValues[index];
-                // if (!value) {
-                //   return null;
-                // }
                 return (
                   <div style={style}>
                     <PromLabel
