@@ -81,7 +81,11 @@ export function useOpenAIStream({ model, temperature, onResponse }: Options = de
   }, [messages]);
 
   const { error: enabledError, value: enabled } = useAsync(
-    async () => await isLLMPluginEnabled(),
+    async () => {
+      const result = await isLLMPluginEnabled();
+      console.log('LLM Plugin enabled status:', result);
+      return result;
+    },
     [isLLMPluginEnabled]
   );
 
