@@ -11,6 +11,7 @@ import { useGetFrontendSettingsQuery } from '../api';
 
 import { ConnectionStep } from './ConnectionStep';
 import { MigrateStep } from './MigrateStep';
+import { PullStep } from './PullStep';
 import { RepositoryStep } from './RepositoryStep';
 import { Stepper, Step } from './Stepper';
 import { WizardFormData, WizardStep } from './types';
@@ -20,6 +21,7 @@ const steps: Array<Step<WizardStep>> = [
   { id: 'connection', name: 'Repository connection' },
   { id: 'repository', name: 'Repository configuration' },
   { id: 'migrate', name: 'Migrate dashboards' },
+  { id: 'pull', name: 'Pull dashboards' },
 ];
 
 export function ProvisioningWizard() {
@@ -41,7 +43,9 @@ export function ProvisioningWizard() {
   const styles = useStyles2(getStyles);
 
   // Filter out migrate step if using legacy storage
-  const availableSteps = settingsQuery.data?.legacyStorage ? steps : steps.filter((step) => step.id !== 'migrate');
+  const availableSteps = settingsQuery.data?.legacyStorage
+    ? steps.filter((step) => step.id !== 'pull')
+    : steps.filter((step) => step.id !== 'migrate');
 
   // Calculate button text based on current step position
   const getNextButtonText = (currentStep: WizardStep) => {
@@ -102,6 +106,7 @@ export function ProvisioningWizard() {
             connection: { valid: true },
             repository: { valid: true },
             migrate: { valid: true },
+            pull: { valid: true },
           }}
         />
 
@@ -110,6 +115,9 @@ export function ProvisioningWizard() {
           {activeStep === 'repository' && <RepositoryStep onStatusChange={handleStatusChange} />}
           {activeStep === 'migrate' && settingsQuery.data?.legacyStorage && (
             <MigrateStep onStatusChange={handleStatusChange} />
+          )}
+          {activeStep === 'pull' && !settingsQuery.data?.legacyStorage && (
+            <PullStep onStatusChange={handleStatusChange} />
           )}
         </div>
 
@@ -121,7 +129,11 @@ export function ProvisioningWizard() {
           )}
           <Button
             onClick={handleNext}
-            disabled={(activeStep === 'repository' && !stepSuccess) || (activeStep === 'migrate' && !stepSuccess)}
+            disabled={
+              (activeStep === 'repository' && !stepSuccess) ||
+              (activeStep === 'migrate' && !stepSuccess) ||
+              (activeStep === 'pull' && !stepSuccess)
+            }
           >
             {getNextButtonText(activeStep)}
           </Button>
