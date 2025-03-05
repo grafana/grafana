@@ -2,7 +2,6 @@ import { noop } from 'lodash';
 import { Props } from 'react-virtualized-auto-sizer';
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
 import { defaultDashboard as defaultDashboardData } from '@grafana/schema';
 import { DashboardV2Spec, defaultDashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { backendSrv } from 'app/core/services/backend_srv';

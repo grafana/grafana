@@ -18,7 +18,7 @@ export class UnifiedDashboardAPI
 
   constructor() {
     this.v1Client = new K8sDashboardAPI();
-    this.v2Client = new K8sDashboardV2API(false);
+    this.v2Client = new K8sDashboardV2API();
   }
 
   async getDashboardDTO(uid: string, params?: UrlQueryMap) {

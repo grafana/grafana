@@ -1,4 +1,3 @@
-import { config } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
@@ -190,11 +189,14 @@ export class V2DashboardSerializer
 
   getTrackingInformation(s: DashboardScene): DashboardTrackingInfo | undefined {
     const panelPluginIds =
-      Object.values(this.initialSaveModel?.elements ?? [])
-        .filter((e) => e.kind === 'Panel')
-        .map((p) => p.spec.vizConfig.kind) || [];
+      'elements' in this.initialSaveModel!
+        ? Object.values(this.initialSaveModel.elements)
+            .filter((e) => e.kind === 'Panel')
+            .map((p) => p.spec.vizConfig.kind)
+        : [];
     const panels = getPanelPluginCounts(panelPluginIds);
-    const variables = getV2SchemaVariables(this.initialSaveModel?.variables || []);
+    const variables =
+      'variables' in this.initialSaveModel! ? getV2SchemaVariables(this.initialSaveModel.variables) : [];
 
     if (this.initialSaveModel) {
       return {

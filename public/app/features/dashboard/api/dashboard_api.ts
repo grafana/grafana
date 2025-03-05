@@ -43,7 +43,7 @@ export function getDashboardAPI(
     clients = {
       legacy: new LegacyDashboardAPI(),
       v1: new K8sDashboardAPI(),
-      v2: new K8sDashboardV2API(false),
+      v2: new K8sDashboardV2API(),
       unified: new UnifiedDashboardAPI(),
     };
   }
@@ -53,7 +53,7 @@ export function getDashboardAPI(
   }
 
   if (apiVersion === 'v2') {
-    return clients.v2 ?? new K8sDashboardV2API(false);
+    return clients.v2 ?? new K8sDashboardV2API();
   }
 
   if (!clients[v]) {
