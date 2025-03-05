@@ -13,6 +13,7 @@ import {
   Stack,
   useStyles2,
   FilterInput,
+  TagList,
 } from '@grafana/ui';
 import { getAPINamespace } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
@@ -21,6 +22,7 @@ import { useNavModel } from 'app/core/hooks/useNavModel';
 
 import { GrafanaSearcher } from '../search/service/types';
 import { SearchHit, UnifiedSearcher } from '../search/service/unified';
+import { getColumnStyles } from '../search/page/components/SearchResultsTable';
 
 interface Resource extends SearchHit {
   isExpanded?: boolean;
@@ -57,6 +59,8 @@ const FoldersPage: React.FC = () => {
   const styles = useStyles2(getStyles);
 
   const navModel = useNavModel('finder');
+
+  const columnStyles = useStyles2(getColumnStyles);
 
   useEffect(() => {
     const loadData = async () => {
@@ -99,6 +103,8 @@ const FoldersPage: React.FC = () => {
   // };
 
   const renderTable = (resources: SearchHit[]) => {
+    // makeTagsColumn(response, access.tags, availableWidth, styles, onTagSelected))
+
     const columns: Array<Column<Resource>> = 
       [
           {
@@ -133,7 +139,15 @@ const FoldersPage: React.FC = () => {
           {
             id: 'tags',
             header: 'Tags',
-            cell: ({ row: { original } }) => original.tags?.join(', ') || '-',
+            cell: ({ row: { original } }) => (
+              <div key={original.name} {...original} className={columnStyles.cell}>
+                  {original.tags ? <TagList className={columnStyles.tagList} tags={original.tags} 
+                    onClick={
+                      (tag) => setSelectedTags([...selectedTags, tag])
+                    } /> : '-'
+                  }
+              </div>
+            )
           },
         ];
         // TODO if we want to drill down into the folders
@@ -216,22 +230,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     gap: `6px`
   }),
-  groupBySelect: css({
-    marginLeft: 'auto',
-  }),
-  groupSection: css({
-    marginBottom: theme.spacing(3),
-  }),
-  groupHeader: css({
-    padding: theme.spacing(1),
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.shape.borderRadius(1),
-    marginBottom: theme.spacing(1),
-  }),
-  expandIcon: css({
-    cursor: 'pointer',
-    marginRight: theme.spacing(1),
-  }),
+  // expandIcon: css({
+  //   cursor: 'pointer',
+  //   marginRight: theme.spacing(1),
+  // }),
 });
 
 export default FoldersPage;
+
