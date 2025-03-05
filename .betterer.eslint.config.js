@@ -28,6 +28,7 @@ module.exports = [
       '.yarn',
       '**/.*',
       '**/*.gen.ts',
+      '**/*_gen.ts',
       '**/build/',
       '**/compiled/',
       '**/dist/',
