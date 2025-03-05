@@ -151,8 +151,15 @@ func NewMultiOrgAlertmanager(
 	if cfg.UnifiedAlerting.SkipClustering {
 		l.Info("Skipping setting up clustering for MOA")
 	} else {
+		l.Info("Setting up clustering for MultiOrgAlertmanager")
 		if err := moa.setupClustering(cfg); err != nil {
 			return nil, err
+		}
+		// Log information about the peer type
+		if moa.peer != nil {
+			l.Info("Cluster peer initialized", 
+				"peerType", fmt.Sprintf("%T", moa.peer),
+				"isNilPeer", moa.peer == &NilPeer{})
 		}
 	}
 

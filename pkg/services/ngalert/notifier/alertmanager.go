@@ -152,6 +152,9 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		PipelineAndStateTimestampsMismatchAction: action,
 	}
 
+	// Debug the cluster flow to understand how alerts are gossiped
+	DebugClusterFlow(l)
+	
 	gam, err := alertingNotify.NewGrafanaAlertmanager("orgID", orgID, amcfg, peer, l, alertingNotify.NewGrafanaAlertmanagerMetrics(m.Registerer, l))
 	if err != nil {
 		return nil, err
@@ -173,7 +176,10 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		// TODO: Preferably, logic around autogen would be outside of the specific alertmanager implementation so that remote alertmanager will get it for free.
 		withAutogen: featureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingSimplifiedRouting),
 	}
-
+	
+	// Inspect the alertmanager to understand its structure
+	InspectAlertmanager(am, l)
+	
 	return am, nil
 }
 
@@ -440,7 +446,7 @@ func (am *alertmanager) PutAlerts(_ context.Context, postableAlerts apimodels.Po
 		})
 	}
 
-	am.logger.Debug("Putting alerts into alertmanager", "count", len(alerts), "orgID", am.orgID)
+	am.logger.Debug("Putting alerts into alertmanager", "count", len(alerts), "orgID", am.orgID, "source", "API")
 	return am.Base.PutAlerts(alerts)
 }
 
