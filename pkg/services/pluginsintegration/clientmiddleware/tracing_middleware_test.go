@@ -398,7 +398,7 @@ func (m *alwaysErrorFuncMiddleware) MutateAdmission(ctx context.Context, req *ba
 }
 
 // ConvertObject implements backend.AdmissionHandler.
-func (m *alwaysErrorFuncMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+func (m *alwaysErrorFuncMiddleware) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	return nil, m.f()
 }
 
