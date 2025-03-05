@@ -2,7 +2,6 @@ package ossaccesscontrol
 
 import (
 	"context"
-	"errors"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -107,17 +106,6 @@ func ProvideFolderPermissions(
 			})
 
 			if err != nil {
-				// if the folder is not found, this may be on the create path,
-				// where the write path to legacy will then go through the read
-				// path and try to read from both legacy & unified before it exists on both
-				if features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) && errors.Is(err, dashboards.ErrFolderNotFound) {
-					_, err = folderService.GetLegacy(ctx, &folder.GetFolderQuery{
-						UID:          &resourceID,
-						OrgID:        orgID,
-						SignedInUser: ident,
-					})
-					return err
-				}
 				return err
 			}
 
