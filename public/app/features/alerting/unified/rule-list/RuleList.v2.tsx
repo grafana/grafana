@@ -1,4 +1,4 @@
-import { Button, Dropdown, Icon, Menu, Stack } from '@grafana/ui';
+import { Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
@@ -66,9 +66,9 @@ function RuleListActions() {
   return (
     <Stack direction="row" gap={1}>
       {canCreateRules && (
-        <Button variant="primary" icon="plus" onClick={() => {}}>
+        <LinkButton variant="primary" icon="plus" href="/alerting/new/alerting">
           <Trans i18nKey="alerting.rule-list.new-alert-rule">New alert rule</Trans>
-        </Button>
+        </LinkButton>
       )}
       <Dropdown overlay={moreActionsMenu}>
         <Button variant="secondary">
