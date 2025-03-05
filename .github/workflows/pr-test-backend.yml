@@ -104,10 +104,13 @@ jobs:
         uses: ./.github/actions/setup-enterprise
 
       - name: Run unit tests
-        uses: ./.github/actions/run-backend-tests
-        with:
-          coverage-opts: ${{ needs.check-coverage.outputs.generate == 'true' && '-coverprofile=unit.cov -coverpkg=github.com/grafana/grafana/...' || '' }}
-          test-command: 'make gen-go test-go-unit'
+        shell: bash
+        run: |
+          if [ -n "${{ needs.check-coverage.outputs.generate == 'true' && '-coverprofile=unit.cov -coverpkg=github.com/grafana/grafana/...' || '' }}" ]; then
+            COVER_OPTS="${{ needs.check-coverage.outputs.generate == 'true' && '-coverprofile=unit.cov -coverpkg=github.com/grafana/grafana/...' || '' }}" make gen-go test-go-unit
+          else
+            make gen-go test-go-unit
+          fi
 
       - name: Upload unit coverage
         if: needs.check-coverage.outputs.generate == 'true'
@@ -139,10 +142,13 @@ jobs:
         uses: ./.github/actions/setup-enterprise
 
       - name: Run integration tests
-        uses: ./.github/actions/run-backend-tests
-        with:
-          coverage-opts: ${{ needs.check-coverage.outputs.generate == 'true' && '-coverprofile=integration.cov -coverpkg=github.com/grafana/grafana/...' || '' }}
-          test-command: 'make gen-go test-go-integration'
+        shell: bash
+        run: |
+          if [ -n "${{ needs.check-coverage.outputs.generate == 'true' && '-coverprofile=integration.cov -coverpkg=github.com/grafana/grafana/...' || '' }}" ]; then
+            COVER_OPTS="${{ needs.check-coverage.outputs.generate == 'true' && '-coverprofile=integration.cov -coverpkg=github.com/grafana/grafana/...' || '' }}" make gen-go test-go-integration
+          else
+            make gen-go test-go-integration
+          fi
 
       - name: Upload integration coverage
         if: needs.check-coverage.outputs.generate == 'true'
