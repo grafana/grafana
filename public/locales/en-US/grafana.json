@@ -359,6 +359,10 @@
       "recording": "Recording",
       "rule-name": "Rule name"
     },
+    "ds-group-loader": {
+      "group-deleting": "The group is being deleted",
+      "group-load-failed": "Failed to load rules from group {{ groupName }} in {{ namespaceName }}"
+    },
     "export": {
       "subtitle": {
         "formats": "Select the format and download the file or copy the contents to clipboard",
@@ -377,10 +381,12 @@
     },
     "group-actions": {
       "actions-trigger": "Rule group actions",
-      "delete": "Delete",
-      "edit": "Edit",
-      "export": "Export",
-      "reorder": "Re-order rules"
+      "details": "Details",
+      "edit": "Edit"
+    },
+    "group-actions-menu": {
+      "group-load-failed": "Failed to load group details",
+      "unknown-error": "Unknown error"
     },
     "group-details": {
       "ds-features-error": "Error loading data source details",
@@ -437,6 +443,9 @@
       "new-integration-description": "A new IRM integration without escalation chains will be automatically created",
       "recommended": "Recommended",
       "validation-failed": "Failed to validate IRM integration name. Is the OnCall API available?"
+    },
+    "group-loader": {
+      "group-load-failed": "Failed to load rules from group {{ groupName }} in {{ namespaceName }}"
     },
     "list-view": {
       "empty": {
@@ -668,6 +677,7 @@
     },
     "rule-list": {
       "configure-datasource": "Configure",
+      "draft-new-rule": "Draft a new rule",
       "ds-error-boundary": {
         "description": "Check the data source configuration. Does the data source support Prometheus API?",
         "title": "Unable to load rules from this data source"
@@ -676,11 +686,15 @@
         "no-more-results": "No more results – showing {{numberOfRules}} rules",
         "no-rules-found": "No alert or recording rules matched your current set of filters."
       },
+      "more": "More",
       "new-alert-rule": "New alert rule",
+      "new-datasource-recording-rule": "New Data source recording rule",
+      "new-grafana-recording-rule": "New Grafana recording rule",
       "pagination": {
         "next-page": "next page",
         "previous-page": "previous page"
       },
+      "recording-rules": "Recording rules",
       "return-button": {
         "title": "Alert rules"
       },

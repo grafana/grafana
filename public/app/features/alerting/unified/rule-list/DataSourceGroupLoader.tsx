@@ -140,7 +140,7 @@ export function DataSourceGroupLoader({ groupIdentifier, expectedRulesCount = 3 
     <Alert
       title={t(
         'alerting.ds-group-loader.group-load-failed',
-        'Cannot find rules for group {{ groupName }} in {{ namespaceName }}',
+        'Failed to load rules from group {{ groupName }} in {{ namespaceName }}',
         { groupName, namespaceName }
       )}
       severity="warning"
