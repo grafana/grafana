@@ -133,6 +133,9 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           cache: true
 
+      - name: Generate Go code
+        run: make gen-go
+
       - name: Download unit coverage
         uses: actions/download-artifact@v4
         with:
