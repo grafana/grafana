@@ -600,6 +600,22 @@
     },
     {
       "metadata": {
+        "name": "assetSriChecks",
+        "resourceVersion": "1739984409734",
+        "creationTimestamp": "2025-02-19T15:56:59Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-02-19 17:00:09.734088 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables SRI checks for Grafana JavaScript assets",
+        "stage": "experimental",
+        "codeowner": "@grafana/frontend-ops",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "authAPIAccessTokenAuth",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-04-02T15:45:15Z",
