@@ -118,5 +118,10 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       opacity: 0,
     }),
+    checkboxWrapper: css({
+      display: 'flex',
+      alignItems: 'center',
+      paddingLeft: theme.spacing(1),
+    }),
   };
 }
