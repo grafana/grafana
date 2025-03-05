@@ -607,10 +607,7 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 				}
 			}
 			if query.ImportedPrometheusRule != nil { // remove false-positive hits from the result
-				hasOriginalRuleDefinition := converted.Metadata.PrometheusStyleRule != nil && len(converted.Metadata.PrometheusStyleRule.OriginalRuleDefinition) > 0
-				if *query.ImportedPrometheusRule && !hasOriginalRuleDefinition {
-					continue
-				} else if !*query.ImportedPrometheusRule && hasOriginalRuleDefinition {
+				if *query.ImportedPrometheusRule != converted.ImportedFromPrometheus() {
 					continue
 				}
 			}
