@@ -115,7 +115,7 @@ func (s *SocialGenericOAuth) Validate(ctx context.Context, newSettings ssoModels
 		return ssosettings.ErrInvalidOAuthConfig("If Team Ids are configured then Team Ids attribute path and Teams URL must be configured.")
 	}
 
-	if info.AllowedGroups != nil && len(info.AllowedGroups) > 0 && info.GroupsAttributePath == "" {
+	if len(info.AllowedGroups) > 0 && info.GroupsAttributePath == "" {
 		return ssosettings.ErrInvalidOAuthConfig("If Allowed groups is configured then Groups attribute path must be configured.")
 	}
 
@@ -517,7 +517,7 @@ func (s *SocialGenericOAuth) fetchPrivateEmail(ctx context.Context, client *http
 		IsConfirmed bool   `json:"is_confirmed"`
 	}
 
-	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.info.ApiUrl+"/emails"))
+	response, err := s.httpGet(ctx, client, s.info.ApiUrl+"/emails")
 	if err != nil {
 		s.log.Error("Error getting email address", "url", s.info.ApiUrl+"/emails", "error", err)
 		return "", fmt.Errorf("%v: %w", "Error getting email address", err)
@@ -579,7 +579,7 @@ func (s *SocialGenericOAuth) fetchTeamMembershipsFromDeprecatedTeamsUrl(ctx cont
 		Id int `json:"id"`
 	}
 
-	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.info.ApiUrl+"/teams"))
+	response, err := s.httpGet(ctx, client, s.info.ApiUrl+"/teams")
 	if err != nil {
 		s.log.Error("Error getting team memberships", "url", s.info.ApiUrl+"/teams", "error", err)
 		return []string{}, err
@@ -606,7 +606,7 @@ func (s *SocialGenericOAuth) fetchTeamMembershipsFromTeamsUrl(ctx context.Contex
 		return []string{}, nil
 	}
 
-	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.teamsUrl))
+	response, err := s.httpGet(ctx, client, s.teamsUrl)
 	if err != nil {
 		s.log.Error("Error getting team memberships", "url", s.teamsUrl, "error", err)
 		return nil, err
@@ -620,7 +620,7 @@ func (s *SocialGenericOAuth) fetchOrganizations(ctx context.Context, client *htt
 		Login string `json:"login"`
 	}
 
-	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.info.ApiUrl+"/orgs"))
+	response, err := s.httpGet(ctx, client, s.info.ApiUrl+"/orgs")
 	if err != nil {
 		s.log.Error("Error getting organizations", "url", s.info.ApiUrl+"/orgs", "error", err)
 		return nil, false

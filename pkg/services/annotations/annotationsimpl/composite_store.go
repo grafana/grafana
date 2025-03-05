@@ -2,6 +2,7 @@ package annotationsimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 
@@ -88,7 +89,7 @@ func handleJobPanic(logger log.Logger, storeType string, jobErr *error) {
 		errMsg := "concurrent job panic"
 
 		if jobErr != nil {
-			err := fmt.Errorf(errMsg)
+			err := errors.New(errMsg)
 			if panicErr, ok := r.(error); ok {
 				err = fmt.Errorf("%s: %w", errMsg, panicErr)
 			}
