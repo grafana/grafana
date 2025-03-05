@@ -53,43 +53,75 @@ const FoldersPage: React.FC = () => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    // TODO: fetch tags
-    // fetchTags();
-    fetchFolders();
+    const kinds = ['folders', 'dashboards'];
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        const results = await Promise.all([
+          fetchResources(kinds),
+          fetchTags(kinds),
+        ]);
+        setTags(results[0]); // Only pass the folder/dashboard results to setTags
+      } catch (e: any) {
+        setError(e.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    void loadData();
   }, []);
 
-  const fetchFolders = async () => {
-    setIsLoading(true);
+  const fetchResources = async (kinds: string[]): Promise<Folder[]> => {
+    const results = await Promise.all(
+      kinds.map(kind => searcher.fetchResults({ kind: [kind] }))
+    );
+    
+    // Set folders state only for resources of kind 'folder'
+    const folderResults = results.find(result => 
+      result.hits.length > 0 && result.hits[0].resource === 'folder'
+    );
+    if (folderResults) {
+      setFolders(folderResults.hits);
+    }
+
+    // Return all results combined
+    return results.flatMap(response => response.hits);
+  };
+
+  const fetchTags = async (kinds: string[]) => {
     try {
-      const [folderResponse, dashboardResponse] = await Promise.all([
-        searcher.fetchResults({ kind: ['folders'] }),
-        searcher.fetchResults({ kind: ['dashboards'] })
-      ]);
-
-      // TODO: fetch and populate the tags in a separate call - see above
-      // const tags = await searcher.tags({ kind: [selected kinds], query: [search input], tags: [selected tags] });
-      // Extract unique tags and owners for filters
-      // const tags = new Set<string>();
-      // const owners = new Set<string>();
-      // response.forEach((folder: Folder) => {
-      //   folder.tags = folder.tags || [];  // Initialize tags if undefined
-      //   folder.tags?.forEach((tag) => tags.add(tag));
-      //   if (folder.owner) {
-      //     owners.add(folder.owner);
-      //   }
-      // });
-
-      // setAvailableTags(Array.from(tags).map((tag) => ({ label: tag, value: tag })));
-      // setAvailableOwners(Array.from(owners).map((owner) => ({ label: owner, value: owner })));
-
-      // Combine the results from both calls
-      const combinedHits = [...folderResponse.hits, ...dashboardResponse.hits];
-      setFolders(combinedHits);
+      await Promise.all(
+        kinds.map(kind => searcher.tags({ kind: [kind] }))
+      );
     } catch (e: any) {
       setError(e.message);
-    } finally {
-      setIsLoading(false);
     }
+  }
+
+  const setTags = (results: SearchHit[]) => {
+    const tags = new Set<string>();
+    const owners = new Set<string>();
+    
+    // Filter only folder resources
+    const folderResults = results.filter(result => result.resource === 'folder');
+    
+    folderResults.forEach((folder: Folder) => {
+      // Initialize or ensure tags array exists
+      if (!folder.tags) {
+        folder.tags = [];
+      }
+      
+      // Add tags to the set
+      folder.tags.forEach(tag => tags.add(tag));
+      
+      // Add owner if exists
+      if (folder.owner) {
+        owners.add(folder.owner);
+      }
+    });
+
+    // setAvailableTags(Array.from(tags).map(tag => ({ label: tag, value: tag })));
+      // setAvailableOwners(Array.from(owners).map((owner) => ({ label: owner, value: owner })));
   };
 
   const filterFolders = (folders: SearchHit[]) => {
