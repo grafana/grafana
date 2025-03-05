@@ -627,7 +627,7 @@ func TestService_Check(t *testing.T) {
 
 	testCases := []testCase{
 		{
-			name: "should return allowed if user has permission",
+			name: "should allow user with permission",
 			req: &authzv1.CheckRequest{
 				Namespace: "org-12",
 				Subject:   "user:test-uid",
@@ -638,6 +638,20 @@ func TestService_Check(t *testing.T) {
 			},
 			permissions:   []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash1"}},
 			expected:      true,
+			expectedError: false,
+		},
+		{
+			name: "should deny user without permission",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			permissions:   []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash2"}},
+			expected:      false,
 			expectedError: false,
 		},
 		{
