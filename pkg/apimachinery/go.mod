@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/apimachinery
 
-go 1.22.7
+go 1.23.7
 
 require (
 	k8s.io/apimachinery v0.29.3

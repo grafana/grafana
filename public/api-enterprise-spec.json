@@ -3008,7 +3008,7 @@
           "description": "Policies contains all policy identifiers included in the certificate.\nIn Go 1.22, encoding/gob cannot handle and ignores this field.",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/OID"
+            "type": "string"
           }
         },
         "PolicyIdentifiers": {
@@ -5370,10 +5370,6 @@
       "type": "integer",
       "format": "int64",
       "title": "NoticeSeverity is a type for the Severity property of a Notice."
-    },
-    "OID": {
-      "type": "object",
-      "title": "An OID represents an ASN.1 OBJECT IDENTIFIER."
     },
     "ObjectIdentifier": {
       "type": "array",
