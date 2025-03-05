@@ -859,7 +859,7 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 				}
 				if v != nil {
 					// some fields like title have multiple mappings. This means match.Fields["title"] could be a slice.
-					if slice, ok := v.([]interface{}); ok {
+					if slice, ok := v.([]interface{}); ok && fieldName == resource.SEARCH_FIELD_TITLE {
 						if len(slice) > 0 {
 							v = slice[0]
 						}
