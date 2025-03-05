@@ -18,12 +18,14 @@ import (
 	"github.com/blevesearch/bleve/v2/search/query"
 	bleveSearch "github.com/blevesearch/bleve/v2/search/searcher"
 	index "github.com/blevesearch/bleve_index_api"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
 
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+
 	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -113,58 +115,60 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	_, span := b.tracer.Start(ctx, tracingPrexfixBleve+"BuildIndex")
 	defer span.End()
 
-	var err error
-	var index bleve.Index
+	//var err error
+	//var index bleve.Index
 
 	build := true
 	mapper := getBleveMappings(fields)
 
-	if size > b.opts.FileThreshold {
-		resourceDir := filepath.Join(b.opts.Root, key.Namespace,
-			fmt.Sprintf("%s.%s", key.Resource, key.Group),
-		)
-		fname := fmt.Sprintf("rv%d", resourceVersion)
-		if resourceVersion == 0 {
-			fname = b.start.Format("tmp-20060102-150405")
-		}
-		dir := filepath.Join(resourceDir, fname)
-		if resourceVersion > 0 {
-			info, _ := os.Stat(dir)
-			if info != nil && info.IsDir() {
-				index, err = bleve.Open(dir) // NOTE, will use the same mappings!!!
-				if err == nil {
-					found, err := index.DocCount()
-					if err != nil || int64(found) != size {
-						b.log.Info("this size changed since the last time the index opened")
-						_ = index.Close()
-
-						// Pick a new file name
-						fname = b.start.Format("tmp-20060102-150405-changed")
-						dir = filepath.Join(resourceDir, fname)
-						index = nil
-					} else {
-						build = false // no need to build the index
-					}
-				}
-			}
-		}
-
-		if index == nil {
-			index, err = bleve.New(dir, mapper)
-			if err != nil {
-				err = fmt.Errorf("error creating new bleve index: %s %w", dir, err)
-			}
-		}
-
-		// Start a background task to cleanup the old index directories
-		if index != nil && err == nil {
-			go b.cleanOldIndexes(resourceDir, fname)
-		}
-		resource.IndexMetrics.IndexTenants.WithLabelValues("file").Inc()
-	} else {
-		index, err = bleve.NewMemOnly(mapper)
-		resource.IndexMetrics.IndexTenants.WithLabelValues("memory").Inc()
-	}
+	//if size > b.opts.FileThreshold {
+	//	resourceDir := filepath.Join(b.opts.Root, key.Namespace,
+	//		fmt.Sprintf("%s.%s", key.Resource, key.Group),
+	//	)
+	//	fname := fmt.Sprintf("rv%d", resourceVersion)
+	//	if resourceVersion == 0 {
+	//		fname = b.start.Format("tmp-20060102-150405")
+	//	}
+	//	dir := filepath.Join(resourceDir, fname)
+	//	if resourceVersion > 0 {
+	//		info, _ := os.Stat(dir)
+	//		if info != nil && info.IsDir() {
+	//			index, err = bleve.Open(dir) // NOTE, will use the same mappings!!!
+	//			if err == nil {
+	//				found, err := index.DocCount()
+	//				if err != nil || int64(found) != size {
+	//					b.log.Info("this size changed since the last time the index opened")
+	//					_ = index.Close()
+	//
+	//					// Pick a new file name
+	//					fname = b.start.Format("tmp-20060102-150405-changed")
+	//					dir = filepath.Join(resourceDir, fname)
+	//					index = nil
+	//				} else {
+	//					build = false // no need to build the index
+	//				}
+	//			}
+	//		}
+	//	}
+	//
+	//	if index == nil {
+	//		index, err = bleve.New(dir, mapper)
+	//		if err != nil {
+	//			err = fmt.Errorf("error creating new bleve index: %s %w", dir, err)
+	//		}
+	//	}
+	//
+	//	// Start a background task to cleanup the old index directories
+	//	if index != nil && err == nil {
+	//		go b.cleanOldIndexes(resourceDir, fname)
+	//	}
+	//	resource.IndexMetrics.IndexTenants.WithLabelValues("file").Inc()
+	//} else {
+	//	index, err = bleve.NewMemOnly(mapper)
+	//	resource.IndexMetrics.IndexTenants.WithLabelValues("memory").Inc()
+	//}
+	blvIdx, err := bleve.NewMemOnly(mapper)
+	resource.IndexMetrics.IndexTenants.WithLabelValues("memory").Inc()
 	if err != nil {
 		return nil, err
 	}
@@ -172,8 +176,8 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	// Batch all the changes
 	idx := &bleveIndex{
 		key:       key,
-		index:     index,
-		batch:     index.NewBatch(),
+		index:     blvIdx,
+		batch:     blvIdx.NewBatch(),
 		batchSize: b.opts.BatchSize,
 		fields:    fields,
 		standard:  resource.StandardSearchFields(),
