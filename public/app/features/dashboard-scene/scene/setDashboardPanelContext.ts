@@ -14,7 +14,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   const dashboard = getDashboardSceneFor(vizPanel);
   context.app = dashboard.state.isEditing ? CoreApp.PanelEditor : CoreApp.Dashboard;
 
-  dashboard.subscribeToState(state => {
+  dashboard.subscribeToState((state) => {
     if (state.isEditing) {
       context.app = CoreApp.PanelEditor;
     } else {
