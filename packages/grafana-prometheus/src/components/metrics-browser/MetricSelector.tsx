@@ -8,11 +8,10 @@ import { useMetricsBrowser } from './MetricsBrowserContext';
 import { LIST_ITEM_SIZE } from './types';
 
 interface MetricSelectorProps {
-  onClickMetric: (name: string, value: string | undefined) => void;
   styles: Record<string, string>;
 }
 
-export function MetricSelector({ onClickMetric, styles }: MetricSelectorProps) {
+export function MetricSelector({ styles }: MetricSelectorProps) {
   const [metricSearchTerm, setMetricSearchTerm] = useState('');
   const { metrics, selectedMetric, seriesLimit, setSeriesLimit, onMetricClick } = useMetricsBrowser();
 
@@ -71,7 +70,6 @@ export function MetricSelector({ onClickMetric, styles }: MetricSelectorProps) {
                       // Resetting search to prevent empty results
                       setMetricSearchTerm('');
                       onMetricClick(name);
-                      onClickMetric(name, value);
                     }}
                     searchTerm={metricSearchTerm}
                   />

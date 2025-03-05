@@ -22,6 +22,8 @@ interface MetricsBrowserContextType {
   labelKeys: string[];
   labelValues: Record<string, string[]>;
   selectedMetric: string;
+  selectedLabelKeys: string[];
+  selectedLabelValues: string[];
   onMetricClick: (name: string) => void;
   onLabelKeyClick: (name: string) => void;
   onLabelValueClick: (name: string) => void;
@@ -74,6 +76,7 @@ export function MetricsBrowserProvider({
   // Fetch labels
   useEffect(() => {
     if (selectedMetric !== '') {
+      // TODO use selector insteadof selectedMetric
       languageProvider.fetchSeriesLabelsMatch(selectedMetric).then((fetchedLabelKeys) => {
         setLabelKeys(Object.keys(fetchedLabelKeys).filter(withoutMetricLabel));
       });
@@ -84,8 +87,19 @@ export function MetricsBrowserProvider({
 
   // Fetch label values
   useEffect(() => {
-    console.log('Fetch label values for: ', selectedLabelKeys);
-  }, [selectedLabelKeys]);
+    async function fetchValues() {
+      const newLabelValues: Record<string, string[]> = {};
+
+      for (const lk of selectedLabelKeys) {
+        const values = await languageProvider.fetchSeriesValuesWithMatch(lk, undefined);
+        newLabelValues[lk] = values;
+      }
+
+      setLabelValues(newLabelValues);
+    }
+
+    fetchValues();
+  }, [languageProvider, selectedLabelKeys]);
 
   const onMetricClick = useCallback(
     (metricName: string) => setSelectedMetric(selectedMetric !== metricName ? metricName : ''),
@@ -101,6 +115,7 @@ export function MetricsBrowserProvider({
       } else {
         newSelectedLabelKeys.splice(lkIdx, 1);
       }
+      localStorage.setItem(LAST_USED_LABELS_KEY, JSON.stringify(newSelectedLabelKeys));
       setSelectedLabelKeys(newSelectedLabelKeys);
     },
     [selectedLabelKeys]
@@ -135,6 +150,8 @@ export function MetricsBrowserProvider({
     labelKeys,
     labelValues,
     selectedMetric,
+    selectedLabelKeys,
+    selectedLabelValues,
     onMetricClick,
     onLabelKeyClick,
     onLabelValueClick,

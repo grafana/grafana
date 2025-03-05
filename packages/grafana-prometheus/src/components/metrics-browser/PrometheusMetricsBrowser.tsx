@@ -247,16 +247,11 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
     return (
       <div className={styles.wrapper}>
         <Stack gap={3}>
-          <MetricSelector onClickMetric={this.onClickMetric} styles={styles} />
+          <MetricSelector styles={styles} />
           <div>
-            <LabelSelector labels={labels} onClickLabel={this.onClickLabel} styles={styles} />
+            <LabelSelector styles={styles} />
 
-            <ValueSelector
-              labels={labels}
-              onClickValue={this.onClickValue}
-              onClickLabel={this.onClickLabel}
-              styles={styles}
-            />
+            <ValueSelector labels={labels} styles={styles} />
           </div>
         </Stack>
 

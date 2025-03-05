@@ -1,24 +1,22 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { BrowserLabel as PromLabel, Input, Label } from '@grafana/ui';
 
-import { METRIC_LABEL, SelectableLabel } from './types';
+import { useMetricsBrowser } from './MetricsBrowserContext';
 
 interface LabelSelectorProps {
-  labels: SelectableLabel[];
-  onClickLabel: (name: string, value: string | undefined) => void;
   styles: Record<string, string>;
 }
 
-export function LabelSelector({ onClickLabel, styles, labels }: LabelSelectorProps) {
+export function LabelSelector({ styles }: LabelSelectorProps) {
   const [labelSearchTerm, setLabelSearchTerm] = useState('');
+  const { labelKeys, selectedLabelKeys, onLabelKeyClick } = useMetricsBrowser();
 
-  let nonMetricLabels = labels.filter((label) => !label.hidden && label.name !== METRIC_LABEL);
-  if (labelSearchTerm) {
-    nonMetricLabels = nonMetricLabels.filter((label) => label.selected || label.name.includes(labelSearchTerm));
-  }
-    return null;
+  const filteredLabelKeys = useMemo(() => {
+    return labelKeys.filter((lk) => selectedLabelKeys.includes(lk) || lk.includes(labelSearchTerm));
+  }, [labelKeys, labelSearchTerm, selectedLabelKeys]);
+
   return (
     <div className={styles.section}>
       <Label description="Once label values are selected, only possible label combinations are shown.">
@@ -34,18 +32,18 @@ export function LabelSelector({ onClickLabel, styles, labels }: LabelSelectorPro
       </div>
       {/* Using fixed height here to prevent jumpy layout */}
       <div className={styles.list} style={{ height: 120 }}>
-        {nonMetricLabels.map((label) => (
+        {filteredLabelKeys.map((label) => (
           <PromLabel
-            key={label.name}
-            name={label.name}
-            loading={label.loading}
-            active={label.selected}
-            hidden={label.hidden}
-            facets={label.facets}
-            onClick={(name: string, value: string | undefined) => {
+            key={label}
+            name={label}
+            loading={false}
+            active={selectedLabelKeys.includes(label)}
+            hidden={false}
+            facets={undefined}
+            onClick={(name: string) => {
               // Resetting search to prevent empty results
               setLabelSearchTerm('');
-              onClickLabel(name, value);
+              onLabelKeyClick(name);
             }}
             searchTerm={labelSearchTerm}
           />
