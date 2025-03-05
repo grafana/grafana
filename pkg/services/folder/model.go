@@ -1,11 +1,13 @@
 package folder
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -20,6 +22,7 @@ var ErrInternal = errutil.Internal("folder.internal")
 var ErrCircularReference = errutil.BadRequest("folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
 var ErrTargetRegistrySrvConflict = errutil.Internal("folder.target-registry-srv-conflict")
 var ErrFolderNotEmpty = errutil.BadRequest("folder.not-empty", errutil.WithPublicMessage("Folder cannot be deleted: folder is not empty"))
+var ErrFolderCannotBeParentOfItself = errors.New("folder cannot be parent of itself")
 
 const (
 	GeneralFolderUID      = "general"
@@ -54,10 +57,10 @@ type Folder struct {
 	Fullpath     string `xorm:"fullpath"`
 	FullpathUIDs string `xorm:"fullpath_uids"`
 
-	// When the folder belongs to a repository
+	// The folder is managed by an external process
 	// NOTE: this is only populated when folders are managed by unified storage
 	// This is not ever used by xorm, but the translation functions flow through this type
-	Repository string `json:"repository,omitempty"`
+	ManagedBy utils.ManagerKind `json:"managedBy,omitempty"`
 }
 
 var GeneralFolder = Folder{ID: 0, Title: "General"}

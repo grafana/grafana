@@ -59,7 +59,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     const folderUid = params.get('folderUid') || undefined;
 
     const folderRepository = useGetResourceRepository({ folderUid });
-    const isProvisionedNG = dashboard.isProvisioned() || Boolean(folderRepository);
+    const isProvisionedNG = dashboard.isManaged() || Boolean(folderRepository);
 
     const tabs = (
       <TabsBar>

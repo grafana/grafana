@@ -104,7 +104,8 @@ func (t *FolderTree) AddUnstructured(item *unstructured.Unstructured, skipRepo s
 	if err != nil {
 		return fmt.Errorf("extract meta accessor: %w", err)
 	}
-	if meta.GetRepositoryName() == skipRepo {
+	manager, _ := meta.GetManagerProperties()
+	if manager.Identity == skipRepo {
 		return nil // skip it... already in tree?
 	}
 	folder := Folder{
