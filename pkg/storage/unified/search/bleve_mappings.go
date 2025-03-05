@@ -3,7 +3,7 @@ package search
 import (
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/keyword"
-	"github.com/blevesearch/bleve/v2/analysis/analyzer/simple"
+	"github.com/blevesearch/bleve/v2/analysis/analyzer/standard"
 	"github.com/blevesearch/bleve/v2/mapping"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -35,11 +35,11 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 	titleSearchMapping := bleve.NewTextFieldMapping()
 	titleSearchMapping.Analyzer = TITLE_ANALYZER
 	titleSearchMapping.Store = true
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE, titleSearchMapping)
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE_NGRAM, titleSearchMapping)
 
-	// secondary mapping for title to search on words/tokens larger than the ngram size
+	// mapping for title to search on words/tokens larger than the ngram size
 	titleWordMapping := bleve.NewTextFieldMapping()
-	titleWordMapping.Analyzer = simple.Name
+	titleWordMapping.Analyzer = standard.Name
 	titleWordMapping.Store = true
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE, titleWordMapping)
 

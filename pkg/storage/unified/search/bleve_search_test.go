@@ -24,6 +24,161 @@ func TestCanSearchByTitle(t *testing.T) {
 		Resource:  "dashboards",
 	}
 
+	t.Run("when query is empty, sort documents by title instead of search score", func(t *testing.T) {
+		index := newTestDashboardsIndex(t)
+		err := index.Write(&resource.IndexableDocument{
+			RV:   1,
+			Name: "name1",
+			Key: &resource.ResourceKey{
+				Name:      "name1",
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+			},
+			Title:       "bbb",
+			TitleNgram:  "bbb",
+			TitlePhrase: "bbb",
+		})
+		require.NoError(t, err)
+		err = index.Write(&resource.IndexableDocument{
+			RV:   1,
+			Name: "name2",
+			Key: &resource.ResourceKey{
+				Name:      "name2",
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+			},
+			Title:       "aaa",
+			TitleNgram:  "aaa",
+			TitlePhrase: "aaa",
+		})
+		require.NoError(t, err)
+
+		// search for phrase
+		query := newQuery("")
+		res, err := index.Search(context.Background(), nil, query, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(2), res.TotalHits)
+		require.Equal(t, "name2", string(res.Results.Rows[0].Key.Name))
+	})
+
+	t.Run("will boost phrase match query over match query results", func(t *testing.T) {
+		index := newTestDashboardsIndex(t)
+		err := index.Write(&resource.IndexableDocument{
+			RV:   1,
+			Name: "name1",
+			Key: &resource.ResourceKey{
+				Name:      "name1",
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+			},
+			Title:       "I want to say a hello",
+			TitleNgram:  "I want to say a hello",
+			TitlePhrase: "I want to say a hello",
+		})
+		require.NoError(t, err)
+		err = index.Write(&resource.IndexableDocument{
+			RV:   1,
+			Name: "name2",
+			Key: &resource.ResourceKey{
+				Name:      "name2",
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+			},
+			Title:       "we want hello",
+			TitleNgram:  "we want hello",
+			TitlePhrase: "we want hello",
+		})
+		require.NoError(t, err)
+
+		// search for phrase
+		query := newQuery("want hello")
+		res, err := index.Search(context.Background(), nil, query, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(2), res.TotalHits)
+		require.Equal(t, "name2", string(res.Results.Rows[0].Key.Name))
+	})
+
+	t.Run("will prioritize matches", func(t *testing.T) {
+		index := newTestDashboardsIndex(t)
+		err := index.Write(&resource.IndexableDocument{
+			RV:   1,
+			Name: "name1",
+			Key: &resource.ResourceKey{
+				Name:      "name1",
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+			},
+			Title:       "Asserts Dashboards",
+			TitleNgram:  "Asserts Dashboards",
+			TitlePhrase: "Asserts Dashboards",
+		})
+		require.NoError(t, err)
+		err = index.Write(&resource.IndexableDocument{
+			RV:   1,
+			Name: "name2",
+			Key: &resource.ResourceKey{
+				Name:      "name2",
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+			},
+			Title:       "New dashboard 10",
+			TitleNgram:  "New dashboard 10",
+			TitlePhrase: "New dashboard 10",
+		})
+		require.NoError(t, err)
+
+		query := newQuery("New dash")
+		res, err := index.Search(context.Background(), nil, query, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(2), res.TotalHits)
+		require.Equal(t, "name2", string(res.Results.Rows[0].Key.Name))
+	})
+
+	t.Run("will boost exact match query over match phrase query results", func(t *testing.T) {
+		index := newTestDashboardsIndex(t)
+		err := index.Write(&resource.IndexableDocument{
+			RV:   1,
+			Name: "name1",
+			Key: &resource.ResourceKey{
+				Name:      "name1",
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+			},
+			Title:       "we want hello pls",
+			TitleNgram:  "we want hello pls",
+			TitlePhrase: "we want hello pls",
+		})
+		require.NoError(t, err)
+		err = index.Write(&resource.IndexableDocument{
+			RV:   1,
+			Name: "name2",
+			Key: &resource.ResourceKey{
+				Name:      "name2",
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+			},
+			Title:       "we want hello",
+			TitleNgram:  "we want hello",
+			TitlePhrase: "we want hello",
+		})
+		require.NoError(t, err)
+
+		// search for exact match
+		query := newQuery("we want hello")
+		res, err := index.Search(context.Background(), nil, query, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(2), res.TotalHits)
+		require.Equal(t, "name2", string(res.Results.Rows[0].Key.Name))
+	})
+
 	t.Run("title with numbers will match document", func(t *testing.T) {
 		index := newTestDashboardsIndex(t)
 		err := index.Write(&resource.IndexableDocument{
@@ -35,15 +190,22 @@ func TestCanSearchByTitle(t *testing.T) {
 				Group:     key.Group,
 				Resource:  key.Resource,
 			},
-			Title: "A100",
+			Title:      "A123456",
+			TitleNgram: "A123456",
 		})
 		require.NoError(t, err)
 
 		// search for prefix of title with mix of chars and numbers
-		query := newQuery("A10")
+		query := newQuery("A12")
 		res, err := index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
-		require.Equal(t, res.TotalHits, int64(1))
+		require.Equal(t, int64(1), res.TotalHits)
+
+		// search for whole title
+		query = newQuery("A123456")
+		res, err = index.Search(context.Background(), nil, query, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), res.TotalHits)
 	})
 
 	t.Run("title search will match document", func(t *testing.T) {
@@ -57,65 +219,95 @@ func TestCanSearchByTitle(t *testing.T) {
 				Group:     key.Group,
 				Resource:  key.Resource,
 			},
-			Title: "I want to say a wonderful Hello to the WORLD! Hello-world",
+			Title:       "I want to say a wonderfully Hello to the WORLD! Hello-world",
+			TitleNgram:  "I want to say a wonderfully Hello to the WORLD! Hello-world",
+			TitlePhrase: "I want to say a wonderfully Hello to the WORLD! Hello-world",
 		})
 		require.NoError(t, err)
 
-		// search for word at start
-		query := newQuery("hello")
+		// search by entire phrase
+		query := newQuery("I want to say a wonderfully Hello to the WORLD! Hello-world")
 		res, err := index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
-		require.Equal(t, res.TotalHits, int64(1))
+		require.Equal(t, int64(1), res.TotalHits)
 
-		// search for word larger than ngram max size
-		query = newQuery("wonderful")
+		// search for word at start
+		query = newQuery("hello")
 		res, err = index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
-		require.Equal(t, res.TotalHits, int64(1))
+		require.Equal(t, int64(1), res.TotalHits)
+
+		// search for word larger than ngram max size
+		query = newQuery("wonderfully")
+		res, err = index.Search(context.Background(), nil, query, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), res.TotalHits)
 
 		// search for word at end
 		query = newQuery("world")
 		res, err = index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
-		require.Equal(t, res.TotalHits, int64(1))
-
-		// search for word in middle less than 3 chars
-		query = newQuery("to")
-		res, err = index.Search(context.Background(), nil, query, nil)
-		require.NoError(t, err)
-		require.Equal(t, res.TotalHits, int64(1))
+		require.Equal(t, int64(1), res.TotalHits)
 
 		// can search for word substring anchored at start of word (edge ngram)
 		query = newQuery("worl")
 		res, err = index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
-		require.Equal(t, res.TotalHits, int64(1))
+		require.Equal(t, int64(1), res.TotalHits)
 
 		// can search for multiple, non-consecutive words in title
 		query = newQuery("hello world")
 		res, err = index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
-		require.Equal(t, res.TotalHits, int64(1))
+		require.Equal(t, int64(1), res.TotalHits)
 
 		// can search for a term with a hyphen
 		query = newQuery("hello-world")
 		res, err = index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
-		require.Equal(t, res.TotalHits, int64(1))
+		require.Equal(t, int64(1), res.TotalHits)
 	})
 
-	t.Run("title search will NOT match document", func(t *testing.T) {
+	t.Run("title search will NOT match documents", func(t *testing.T) {
 		index := newTestDashboardsIndex(t)
 		err := index.Write(&resource.IndexableDocument{
 			RV:   1,
 			Name: "name1",
 			Key: &resource.ResourceKey{
-				Name:      "aaa",
+				Name:      "name1",
 				Namespace: key.Namespace,
 				Group:     key.Group,
 				Resource:  key.Resource,
 			},
-			Title: "I want to say a wonderful Hello to the WORLD! Hello-world",
+			Title:      "I want to say a wonderful Hello to the WORLD! Hello-world",
+			TitleNgram: "I want to say a wonderful Hello to the WORLD! Hello-world",
+		})
+		require.NoError(t, err)
+		err = index.Write(&resource.IndexableDocument{
+			RV:   1,
+			Name: "name2",
+			Key: &resource.ResourceKey{
+				Name:      "name2",
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+			},
+			Title:      "A0456",
+			TitleNgram: "A0456",
+		})
+		require.NoError(t, err)
+		err = index.Write(&resource.IndexableDocument{
+			RV:   1,
+			Name: "name3",
+			Key: &resource.ResourceKey{
+				Name:      "name3",
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+			},
+			Title:       "mash-A02382-10",
+			TitleNgram:  "mash-A02382-10",
+			TitlePhrase: "mash-A02382-10",
 		})
 		require.NoError(t, err)
 
@@ -123,13 +315,19 @@ func TestCanSearchByTitle(t *testing.T) {
 		query := newQuery("cats")
 		res, err := index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
-		require.Equal(t, res.TotalHits, int64(0))
+		require.Equal(t, int64(0), res.TotalHits)
 
 		// string shorter than 3 chars (ngam min)
-		query = newQuery("wa")
+		query = newQuery("ma")
 		res, err = index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
-		require.Equal(t, res.TotalHits, int64(0))
+		require.Equal(t, int64(0), res.TotalHits)
+
+		// substring that doesn't exist
+		query = newQuery("A01")
+		res, err = index.Search(context.Background(), nil, query, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(0), res.TotalHits)
 	})
 }
 
@@ -201,7 +399,7 @@ func debugAnalyzer(index bleve.Index, analyzerName string, text string) {
 	analysisResult := analyzer.Analyze([]byte(text))
 
 	// Print tokens
-	fmt.Println("Generated tokens:")
+	fmt.Println("Generated tokens for analyzer:", analyzerName)
 	for _, token := range analysisResult {
 		fmt.Println(string(token.Term))
 	}

@@ -13,7 +13,8 @@ import (
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
-	"github.com/blevesearch/bleve/v2/analysis/analyzer/simple"
+	"github.com/blevesearch/bleve/v2/analysis/analyzer/keyword"
+	"github.com/blevesearch/bleve/v2/analysis/analyzer/standard"
 	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/blevesearch/bleve/v2/search"
 	"github.com/blevesearch/bleve/v2/search/query"
@@ -600,10 +601,26 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 	// Add a text query
 	if req.Query != "" && req.Query != "*" {
 		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
-		// mimic the behavior of the sql search
-		query := bleve.NewMatchQuery(strings.ToLower(req.Query))
-		query.Analyzer = simple.Name
-		queries = append(queries, query)
+
+		// There are multiple ways to match the query string to documents. The following queries are ordered by priority:
+
+		// Query 1: Match the exact query string
+		queryExact := bleve.NewMatchQuery(req.Query)
+		queryExact.SetBoost(10.0)
+		queryExact.Analyzer = keyword.Name // don't analyze the query input - treat it as a single token
+
+		// Query 2: Phrase query with standard analyzer
+		queryPhrase := bleve.NewMatchPhraseQuery(req.Query)
+		queryExact.SetBoost(5.0)
+		queryPhrase.Analyzer = standard.Name
+
+		// Query 3: Match query with standard analyzer
+		queryAnalyzed := bleve.NewMatchQuery(req.Query)
+		queryAnalyzed.Analyzer = standard.Name
+
+		// At least one of the queries must match
+		searchQuery := bleve.NewDisjunctionQuery(queryExact, queryAnalyzed, queryPhrase)
+		queries = append(queries, searchQuery)
 	}
 
 	switch len(queries) {
@@ -666,11 +683,18 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 	sorting := getSortFields(req)
 	searchrequest.SortBy(sorting)
 
-	// Always sort by *something*, otherwise the order is unstable
+	// When no sort fields are provided, sort by score if there is a query, otherwise sort by title
 	if len(sorting) == 0 {
-		searchrequest.Sort = append(searchrequest.Sort, &search.SortDocID{
-			Desc: false,
-		})
+		if req.Query != "" && req.Query != "*" {
+			searchrequest.Sort = append(searchrequest.Sort, &search.SortScore{
+				Desc: true,
+			})
+		} else {
+			searchrequest.Sort = append(searchrequest.Sort, &search.SortField{
+				Field: resource.SEARCH_FIELD_TITLE,
+				Desc:  true,
+			})
+		}
 	}
 
 	return searchrequest, nil
@@ -858,12 +882,6 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 					v = match.Fields[resource.SEARCH_FIELD_PREFIX+fieldName]
 				}
 				if v != nil {
-					// some fields like title have multiple mappings. This means match.Fields["title"] could be a slice.
-					if slice, ok := v.([]interface{}); ok && fieldName == resource.SEARCH_FIELD_TITLE {
-						if len(slice) > 0 {
-							v = slice[0]
-						}
-					}
 					// Encode the value to protobuf
 					row.Cells[i], err = encoders[i](v)
 				}

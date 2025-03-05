@@ -23,7 +23,7 @@ func registerTitleAnalyzer(mapper *mapping.IndexMappingImpl) error {
 	edgeNgramTokenFilter := map[string]interface{}{
 		"type": edgengram.Name,
 		"min":  3.0,
-		"max":  6.0,
+		"max":  10.0,
 		"back": edgengram.FRONT,
 	}
 	err := mapper.AddCustomTokenFilter("edge_ngram_filter", edgeNgramTokenFilter)
