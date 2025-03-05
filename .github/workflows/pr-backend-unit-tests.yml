@@ -22,8 +22,8 @@ env:
   WIRE_TAGS: 'oss'
 
 jobs:
-  backend-tests:
-    name: Backend Tests
+  backend-testing-coverage:
+    name: Backend Testing & Coverage
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
