@@ -13,7 +13,7 @@ export function useIsProvisionedNG(dashboard: DashboardScene): boolean {
   const { data } = useGetFrontendSettingsQuery();
 
   return (
-    dashboard.isProvisioned() ||
+    dashboard.isManaged() ||
     Boolean(folderRepository) ||
     Boolean(data?.items.some((item) => item.target === 'instance'))
   );
