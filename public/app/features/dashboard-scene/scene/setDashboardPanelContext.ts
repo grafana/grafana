@@ -12,6 +12,7 @@ import { DashboardScene } from './DashboardScene';
 
 export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelContext) {
   const dashboard = getDashboardSceneFor(vizPanel);
+  context.app = dashboard.state.isEditing ? CoreApp.PanelEditor : CoreApp.Dashboard;
 
   dashboard.subscribeToState(state => {
     if (state.isEditing) {
