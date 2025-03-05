@@ -72,18 +72,19 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
     setValue('workflow', getDefaultWorkflow(repositoryConfig));
   }, [repositoryConfig, setValue]);
 
+  const prLink = getPRLink(repositoryConfig, ref);
   useEffect(() => {
     const appEvents = getAppEvents();
     if (request.isSuccess) {
       onSubmit();
-      locationService.partial({ prLink: getPRLink(repositoryConfig, ref) });
+      locationService.partial({ prLink });
     } else if (request.isError) {
       appEvents.publish({
         type: AppEvents.alertError.name,
         payload: ['Error creating folder', request.error],
       });
     }
-  }, [request.isSuccess, request.isError, request.error, onSubmit, ref]);
+  }, [request.isSuccess, request.isError, request.error, onSubmit, ref, prLink]);
 
   const validateFolderName = async (folderName: string) => {
     try {
