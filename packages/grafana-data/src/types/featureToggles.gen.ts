@@ -255,4 +255,5 @@ export interface FeatureToggles {
   newShareReportDrawer?: boolean;
   rendererDisableAppPluginsPreload?: boolean;
   assetSriChecks?: boolean;
+  alertRuleRestore?: boolean;
 }

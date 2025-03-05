@@ -39,7 +39,10 @@ var (
 )
 
 // DeleteAlertRulesByUID is a handler for deleting an alert rule.
-func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUID ...string) error {
+func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *ngmodels.UserUID, ruleUID ...string) error {
+	if len(ruleUID) == 0 {
+		return nil
+	}
 	logger := st.Logger.New("org_id", orgID, "rule_uids", ruleUID)
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		rows, err := sess.Table(alertRule{}).Where("org_id = ?", orgID).In("uid", ruleUID).Delete(alertRule{})
@@ -57,12 +60,6 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUI
 			})
 		}
 
-		rows, err = sess.Table(alertRuleVersion{}).Where("rule_org_id = ?", orgID).In("rule_uid", ruleUID).Delete(alertRule{})
-		if err != nil {
-			return err
-		}
-		logger.Debug("Deleted alert rule versions", "count", rows)
-
 		rows, err = sess.Table("alert_instance").Where("rule_org_id = ?", orgID).In("rule_uid", ruleUID).Delete(alertRule{})
 		if err != nil {
 			return err
@@ -75,8 +72,76 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUI
 		}
 		logger.Debug("Deleted alert rule state", "count", rows)
 
+		var versions []alertRuleVersion
+		if st.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertRuleRestore) {
+			versions, err = st.getLatestVersionOfRulesByUID(ctx, orgID, ruleUID)
+			if err != nil {
+				logger.Error("Failed to get latest version of deleted alert rules. The recovery will not be possible", "error", err)
+			}
+			for idx := range versions {
+				version := &versions[idx]
+				version.ID = 0
+				version.RuleUID = ""
+				version.Created = TimeNow()
+				version.CreatedBy = nil
+				if user != nil {
+					version.CreatedBy = util.Pointer(string(*user))
+				}
+			}
+		}
+
+		rows, err = sess.Table(alertRuleVersion{}).Where("rule_org_id = ?", orgID).In("rule_uid", ruleUID).Delete(alertRule{})
+		if err != nil {
+			return err
+		}
+		logger.Debug("Deleted alert rule versions", "count", rows)
+
+		if len(versions) > 0 {
+			_, err = sess.Insert(versions)
+			if err != nil {
+				return fmt.Errorf("failed to persist deleted rule for recovery: %w", err)
+			}
+			logger.Debug("Inserted alert rule versions for recovery", "count", len(versions))
+		}
 		return nil
 	})
+}
+
+func (st DBstore) getLatestVersionOfRulesByUID(ctx context.Context, orgID int64, ruleUIDs []string) ([]alertRuleVersion, error) {
+	var result []alertRuleVersion
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		args, in := getINSubQueryArgs(ruleUIDs)
+		// take only the latest versions of each rule by GUID
+		rows, err := sess.SQL(fmt.Sprintf(`
+		SELECT v1.* FROM alert_rule_version AS v1
+			INNER JOIN (
+			    SELECT rule_guid, MAX(id) AS id 
+			    FROM alert_rule_version 
+			    WHERE rule_org_id = ? 
+			      AND rule_uid IN (%s) 
+			    GROUP BY rule_guid
+			) AS v2 ON v1.rule_guid = v2.rule_guid AND v1.id = v2.id
+		`, strings.Join(in, ",")), append([]any{orgID}, args...)...).Rows(new(alertRuleVersion))
+
+		if err != nil {
+			return err
+		}
+		result = make([]alertRuleVersion, 0, len(ruleUIDs))
+		for rows.Next() {
+			rule := new(alertRuleVersion)
+			err = rows.Scan(rule)
+			if err != nil {
+				st.Logger.Error("Invalid rule version found in DB store, ignoring it", "func", "getLatestVersionOfRulesByUID", "error", err)
+				continue
+			}
+			result = append(result, *rule)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // IncreaseVersionForAllRulesInNamespaces Increases version for all rules that have specified namespace. Returns all rules that belong to the namespaces
@@ -820,7 +885,7 @@ func (st DBstore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs [
 			}
 		}
 
-		if err := st.DeleteAlertRulesByUID(ctx, orgID, uids...); err != nil {
+		if err := st.DeleteAlertRulesByUID(ctx, orgID, ngmodels.NewUserUID(user), uids...); err != nil {
 			return err
 		}
 	}

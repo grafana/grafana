@@ -110,6 +110,22 @@
     },
     {
       "metadata": {
+        "name": "alertRuleRestore",
+        "resourceVersion": "1741127758142",
+        "creationTimestamp": "2025-03-04T22:29:36Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-04 22:35:58.1421143 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the alert rule restore feature",
+        "stage": "preview",
+        "codeowner": "@grafana/alerting-squad",
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertStateHistoryLokiOnly",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-03-30T18:53:21Z"
