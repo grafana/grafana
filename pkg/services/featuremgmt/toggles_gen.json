@@ -110,6 +110,22 @@
     },
     {
       "metadata": {
+        "name": "alertRuleRestore",
+        "resourceVersion": "1741127758142",
+        "creationTimestamp": "2025-03-04T22:29:36Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-04 22:35:58.1421143 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the alert rule restore feature",
+        "stage": "preview",
+        "codeowner": "@grafana/alerting-squad",
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertStateHistoryLokiOnly",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-03-30T18:53:21Z"
@@ -596,6 +612,22 @@
         "description": "Enable the app sidecar feature that allows rendering 2 apps at the same time",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform"
+      }
+    },
+    {
+      "metadata": {
+        "name": "assetSriChecks",
+        "resourceVersion": "1739984409734",
+        "creationTimestamp": "2025-02-19T15:56:59Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-02-19 17:00:09.734088 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables SRI checks for Grafana JavaScript assets",
+        "stage": "experimental",
+        "codeowner": "@grafana/frontend-ops",
+        "frontend": true
       }
     },
     {
