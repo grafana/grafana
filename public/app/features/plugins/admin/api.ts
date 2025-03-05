@@ -37,6 +37,10 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
     iam: remote?.json?.iam,
     lastCommitDate: remote?.lastCommitDate,
     changelog: remote?.changelog || localChangelog,
+    licenseUrl: remote?.licenseUrl,
+    documentationUrl: remote?.documentationUrl,
+    signatureType: local?.signatureType || (remote?.signatureType !== '' ? remote?.signatureType : undefined),
+    signature: local?.signature,
   };
 }
 
@@ -92,6 +96,7 @@ async function getPluginVersions(id: string, isPublished: boolean): Promise<Vers
     return (versions.items || []).map((v) => ({
       version: v.version,
       createdAt: v.createdAt,
+      updatedAt: v.updatedAt,
       isCompatible: v.isCompatible,
       grafanaDependency: v.grafanaDependency,
       angularDetected: v.angularDetected,

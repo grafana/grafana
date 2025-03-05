@@ -2,7 +2,9 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 	"sync"
 	"time"
 
@@ -18,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 type pluginClient struct {
@@ -69,6 +72,14 @@ func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest)
 	// NOTE: this depends on uid unique across datasources
 	settings, err := d.pCtxProvider.GetDataSourceInstanceSettings(ctx, dsRef.UID)
 	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			status := metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    http.StatusNotFound,
+				Message: "datasource not found",
+			}
+			return nil, &apierrors.StatusError{ErrStatus: status}
+		}
 		return nil, err
 	}
 
