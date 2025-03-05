@@ -32,13 +32,7 @@ import {
   isGrafanaRulesSource,
 } from '../utils/datasource';
 import { hashQuery } from '../utils/rule-id';
-import {
-  isAlertingRule,
-  isAlertingRulerRule,
-  isGrafanaRulerRule,
-  isRecordingRule,
-  isRecordingRulerRule,
-} from '../utils/rules';
+import { getAnnotations, prometheusRuleType, rulerRuleType } from '../utils/rules';
 
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
@@ -98,7 +92,7 @@ export function useCombinedRuleNamespaces(
 
           // We need to set the namespace_uid for grafana rules as it's required to obtain the rule's groups
           // All rules from all groups have the same namespace_uid so we're taking the first one.
-          if (isGrafanaRulerRule(groups[0].rules[0])) {
+          if (rulerRuleType.grafanaManaged.rule(groups[0].rules[0])) {
             namespace.uid = groups[0].rules[0].grafana_alert.namespace_uid;
           }
 
@@ -247,8 +241,8 @@ export function addRulerGroupsToCombinedNamespace(
   groups: RulerRuleGroupDTO[] = []
 ): void {
   namespace.groups = groups.map((group) => {
-    const numRecordingRules = group.rules.filter((rule) => isRecordingRulerRule(rule)).length;
-    const numPaused = group.rules.filter((rule) => isGrafanaRulerRule(rule) && rule.grafana_alert.is_paused).length;
+    const numRecordingRules = group.rules.filter((rule) => rulerRuleType.any.recordingRule(rule)).length;
+    const numPaused = group.rules.filter((rule) => rulerRuleType.grafanaManaged.pausedRule(rule)).length;
 
     const combinedGroup: CombinedRuleGroup = {
       name: group.name,
@@ -298,8 +292,10 @@ export function addPromGroupsToCombinedNamespace(namespace: CombinedRuleNamespac
       const existingRule = getExistingRuleInGroup(rule, combinedRulesByName, namespace.rulesSource);
       if (existingRule) {
         existingRule.promRule = rule;
-        existingRule.instanceTotals = isAlertingRule(rule) ? calculateRuleTotals(rule) : {};
-        existingRule.filteredInstanceTotals = isAlertingRule(rule) ? calculateRuleFilteredTotals(rule) : {};
+        existingRule.instanceTotals = prometheusRuleType.alertingRule(rule) ? calculateRuleTotals(rule) : {};
+        existingRule.filteredInstanceTotals = prometheusRuleType.alertingRule(rule)
+          ? calculateRuleFilteredTotals(rule)
+          : {};
       } else {
         combinedGroup!.rules.push(promRuleToCombinedRule(rule, namespace, combinedGroup!));
       }
@@ -344,9 +340,9 @@ export function calculateGroupTotals(group: Pick<RuleGroup, 'rules' | 'totals'>)
     };
   }
 
-  const countsByState = countBy(group.rules, (rule) => isAlertingRule(rule) && rule.state);
+  const countsByState = countBy(group.rules, (rule) => prometheusRuleType.alertingRule(rule) && rule.state);
   const countsByHealth = countBy(group.rules, (rule) => rule.health);
-  const recordingCount = group.rules.filter((rule) => isRecordingRule(rule)).length;
+  const recordingCount = group.rules.filter((rule) => prometheusRuleType.recordingRule(rule)).length;
 
   return {
     alerting: countsByState[PromAlertingRuleState.Firing],
@@ -382,12 +378,12 @@ function promRuleToCombinedRule(rule: Rule, namespace: CombinedRuleNamespace, gr
     name: rule.name,
     query: rule.query,
     labels: rule.labels || {},
-    annotations: isAlertingRule(rule) ? rule.annotations || {} : {},
+    annotations: getAnnotations(rule) ?? {},
     promRule: rule,
     namespace: namespace,
     group,
-    instanceTotals: isAlertingRule(rule) ? calculateRuleTotals(rule) : {},
-    filteredInstanceTotals: isAlertingRule(rule) ? calculateRuleFilteredTotals(rule) : {},
+    instanceTotals: prometheusRuleType.alertingRule(rule) ? calculateRuleTotals(rule) : {},
+    filteredInstanceTotals: prometheusRuleType.alertingRule(rule) ? calculateRuleFilteredTotals(rule) : {},
   };
 }
 
@@ -396,7 +392,7 @@ function rulerRuleToCombinedRule(
   namespace: CombinedRuleNamespace,
   group: CombinedRuleGroup
 ): CombinedRule {
-  return isAlertingRulerRule(rule)
+  return rulerRuleType.dataSourceManaged.alertingRule(rule)
     ? {
         name: rule.alert,
         query: rule.expr,
@@ -408,7 +404,7 @@ function rulerRuleToCombinedRule(
         instanceTotals: {},
         filteredInstanceTotals: {},
       }
-    : isRecordingRulerRule(rule)
+    : rulerRuleType.dataSourceManaged.recordingRule(rule)
       ? {
           name: rule.record,
           query: rule.expr,
@@ -476,7 +472,7 @@ function isCombinedRuleEqualToPromRule(combinedRule: CombinedRule, rule: Rule, c
   if (combinedRule.name === rule.name) {
     return isEqual(
       [checkQuery ? hashQuery(combinedRule.query) : '', combinedRule.labels, combinedRule.annotations],
-      [checkQuery ? hashQuery(rule.query) : '', rule.labels || {}, isAlertingRule(rule) ? rule.annotations || {} : {}]
+      [checkQuery ? hashQuery(rule.query) : '', rule.labels || {}, getAnnotations(rule) ?? {}]
     );
   }
   return false;
@@ -554,7 +550,7 @@ export function useCombinedRules(
 
       // We need to set the namespace_uid for grafana rules as it's required to obtain the rule's groups
       // All rules from all groups have the same namespace_uid so we're taking the first one.
-      if (isGrafanaRulerRule(groups[0].rules[0])) {
+      if (rulerRuleType.grafanaManaged.rule(groups[0].rules[0])) {
         namespace.uid = groups[0].rules[0].grafana_alert.namespace_uid;
       }
 

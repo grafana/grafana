@@ -10,13 +10,13 @@ import {
   alertStateToReadable,
   alertStateToState,
   getFirstActiveAt,
-  isAlertingRule,
+  prometheusRuleType,
 } from 'app/features/alerting/unified/utils/rules';
 import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../../features/alerting/unified/utils/datasource';
-import { AlertInstanceTotalState, AlertingRule, CombinedRuleWithLocation } from '../../../../types/unified-alerting';
+import { AlertInstanceTotalState, CombinedRuleWithLocation } from '../../../../types/unified-alerting';
 import { AlertInstances } from '../AlertInstances';
 import { getStyles } from '../UnifiedAlertList';
 import { UnifiedAlertListOptions } from '../types';
@@ -47,7 +47,7 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
       <ol className={styles.alertRuleList}>
         {rulesToDisplay.map((ruleWithLocation, index) => {
           const { namespaceName, groupName, dataSourceName } = ruleWithLocation;
-          const alertingRule: AlertingRule | undefined = isAlertingRule(ruleWithLocation.promRule)
+          const alertingRule = prometheusRuleType.alertingRule(ruleWithLocation.promRule)
             ? ruleWithLocation.promRule
             : undefined;
           const firstActiveAt = getFirstActiveAt(alertingRule);
