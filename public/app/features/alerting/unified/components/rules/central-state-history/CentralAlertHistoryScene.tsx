@@ -140,14 +140,10 @@ function useGetScene(panelProps?: PanelProps<AlertHistoryOptions> | undefined) {
       body: new SceneFlexLayout({
         direction: 'column',
         children: [
-          ...(false ? [] : [getEventsScenesFlexItem()]), // todo: hide events graph
-          ...(false // todo hide events list
-            ? []
-            : [
-                new SceneFlexItem({
-                  body: new HistoryEventsListObject({}),
-                }),
-              ]),
+          getEventsScenesFlexItem(),
+          new SceneFlexItem({
+            body: new HistoryEventsListObject({}),
+          }),
         ],
       }),
     });
