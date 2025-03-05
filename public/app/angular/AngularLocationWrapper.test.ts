@@ -95,7 +95,7 @@ describe('AngularLocationWrapper', () => {
       locationService.push('/path/b');
       wrapper.search({ one: '1', two: true });
       expect(wrapper.search()).toEqual({ one: '1', two: true });
-      expect(wrapper.absUrl()).toBe('http://www.domain.com:9877/path/b?one=1&two');
+      expect(wrapper.absUrl()).toBe('http://www.domain.com:9877/path/b?one=1&two=true');
     });
 
     it('should copy object', function () {
@@ -106,7 +106,7 @@ describe('AngularLocationWrapper', () => {
       obj.one = 'changed';
 
       expect(wrapper.search()).toEqual({ one: '1', two: true });
-      expect(wrapper.absUrl()).toBe('http://www.domain.com:9877/path/b?one=1&two');
+      expect(wrapper.absUrl()).toBe('http://www.domain.com:9877/path/b?one=1&two=true');
     });
 
     it('should change single parameter', function () {
