@@ -358,6 +358,10 @@
       "recording": "Ŗęčőřđįŉģ",
       "rule-name": "Ŗūľę ŉämę"
     },
+    "ds-group-loader": {
+      "group-deleting": "Ŧĥę ģřőūp įş þęįŉģ đęľęŧęđ",
+      "group-load-failed": "Fäįľęđ ŧő ľőäđ řūľęş ƒřőm ģřőūp {{ groupName }} įŉ {{ namespaceName }}"
+    },
     "export": {
       "subtitle": {
         "formats": "Ŝęľęčŧ ŧĥę ƒőřmäŧ äŉđ đőŵŉľőäđ ŧĥę ƒįľę őř čőpy ŧĥę čőŉŧęŉŧş ŧő čľįpþőäřđ",
@@ -376,10 +380,12 @@
     },
     "group-actions": {
       "actions-trigger": "Ŗūľę ģřőūp äčŧįőŉş",
-      "delete": "Đęľęŧę",
-      "edit": "Ēđįŧ",
-      "export": "Ēχpőřŧ",
-      "reorder": "Ŗę-őřđęř řūľęş"
+      "details": "Đęŧäįľş",
+      "edit": "Ēđįŧ"
+    },
+    "group-actions-menu": {
+      "group-load-failed": "Fäįľęđ ŧő ľőäđ ģřőūp đęŧäįľş",
+      "unknown-error": "Ůŉĸŉőŵŉ ęřřőř"
     },
     "group-details": {
       "ds-features-error": "Ēřřőř ľőäđįŉģ đäŧä şőūřčę đęŧäįľş",
@@ -418,6 +424,9 @@
       "page-title": "Ēđįŧ řūľę ģřőūp",
       "rule-group-error": "Ēřřőř ľőäđįŉģ řūľę ģřőūp",
       "title": "Ēđįŧ ęväľūäŧįőŉ ģřőūp"
+    },
+    "group-loader": {
+      "group-load-failed": "Fäįľęđ ŧő ľőäđ řūľęş ƒřőm ģřőūp {{ groupName }} įŉ {{ namespaceName }}"
     },
     "list-view": {
       "empty": {
@@ -638,6 +647,7 @@
     },
     "rule-list": {
       "configure-datasource": "Cőŉƒįģūřę",
+      "draft-new-rule": "Đřäƒŧ ä ŉęŵ řūľę",
       "ds-error-boundary": {
         "description": "Cĥęčĸ ŧĥę đäŧä şőūřčę čőŉƒįģūřäŧįőŉ. Đőęş ŧĥę đäŧä şőūřčę şūppőřŧ Přőmęŧĥęūş ÅPĨ?",
         "title": "Ůŉäþľę ŧő ľőäđ řūľęş ƒřőm ŧĥįş đäŧä şőūřčę"
@@ -646,11 +656,15 @@
         "no-more-results": "Ńő mőřę řęşūľŧş – şĥőŵįŉģ {{numberOfRules}} řūľęş",
         "no-rules-found": "Ńő äľęřŧ őř řęčőřđįŉģ řūľęş mäŧčĥęđ yőūř čūřřęŉŧ şęŧ őƒ ƒįľŧęřş."
       },
+      "more": "Mőřę",
       "new-alert-rule": "Ńęŵ äľęřŧ řūľę",
+      "new-datasource-recording-rule": "Ńęŵ Đäŧä şőūřčę řęčőřđįŉģ řūľę",
+      "new-grafana-recording-rule": "Ńęŵ Ğřäƒäŉä řęčőřđįŉģ řūľę",
       "pagination": {
         "next-page": "ŉęχŧ päģę",
         "previous-page": "přęvįőūş päģę"
       },
+      "recording-rules": "Ŗęčőřđįŉģ řūľęş",
       "return-button": {
         "title": "Åľęřŧ řūľęş"
       },
