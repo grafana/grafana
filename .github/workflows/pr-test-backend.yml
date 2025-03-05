@@ -95,7 +95,7 @@ jobs:
 
       - name: Setup common environment
         id: common-env
-        uses: ./.github/actions/setup-common-env
+        uses: ./.github/actions/setup-common-backend-testing-env
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -138,7 +138,7 @@ jobs:
 
       - name: Setup common environment
         id: common-env
-        uses: ./.github/actions/setup-common-env
+        uses: ./.github/actions/setup-common-backend-testing-env
 
       - name: Setup Go
         uses: actions/setup-go@v5
