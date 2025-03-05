@@ -618,11 +618,12 @@ func TestService_Check(t *testing.T) {
 	})
 
 	type testCase struct {
-		name          string
-		req           *authzv1.CheckRequest
-		permissions   []accesscontrol.Permission
-		expected      bool
-		expectedError bool
+		name        string
+		req         *authzv1.CheckRequest
+		permissions []accesscontrol.Permission
+		expected    bool
+		storeErr    bool
+		expectErr   bool
 	}
 
 	runTestCase := func(t *testing.T, tc testCase) {
@@ -634,14 +635,14 @@ func TestService_Check(t *testing.T) {
 		store := &fakeStore{
 			userID:          userID,
 			userPermissions: tc.permissions,
-			err:             tc.expectedError,
+			err:             tc.storeErr,
 		}
 		s.store = store
 		s.permissionStore = store
 		s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
 
 		resp, err := s.Check(ctx, tc.req)
-		if tc.expectedError {
+		if tc.expectErr {
 			require.Error(t, err)
 			return
 		}
@@ -661,7 +662,7 @@ func TestService_Check(t *testing.T) {
 				Verb:      "get",
 				Name:      "dash1",
 			},
-			expectedError: true,
+			expectErr: true,
 		},
 		{
 			name: "should error if caller namespace does not match request namespace",
@@ -673,7 +674,7 @@ func TestService_Check(t *testing.T) {
 				Verb:      "get",
 				Name:      "dash1",
 			},
-			expectedError: true,
+			expectErr: true,
 		},
 		{
 			name: "should error if an invalid subject is provided",
@@ -685,7 +686,7 @@ func TestService_Check(t *testing.T) {
 				Verb:      "get",
 				Name:      "dash1",
 			},
-			expectedError: true,
+			expectErr: true,
 		},
 		{
 			name: "should error if an unknown group is provided",
@@ -697,7 +698,7 @@ func TestService_Check(t *testing.T) {
 				Verb:      "get",
 				Name:      "u1",
 			},
-			expectedError: true,
+			expectErr: true,
 		},
 	}
 	t.Run("Request validation", func(t *testing.T) {
@@ -710,6 +711,19 @@ func TestService_Check(t *testing.T) {
 
 	testCases = []testCase{
 		{
+			name: "should error if user does not exist",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:unknown",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			storeErr:  true,
+			expectErr: true,
+		},
+		{
 			name: "should allow user with permission",
 			req: &authzv1.CheckRequest{
 				Namespace: "org-12",
@@ -719,9 +733,9 @@ func TestService_Check(t *testing.T) {
 				Verb:      "get",
 				Name:      "dash1",
 			},
-			permissions:   []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash1"}},
-			expected:      true,
-			expectedError: false,
+			permissions: []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash1"}},
+			expected:    true,
+			expectErr:   false,
 		},
 		{
 			name: "should deny user without permission",
@@ -733,9 +747,9 @@ func TestService_Check(t *testing.T) {
 				Verb:      "get",
 				Name:      "dash1",
 			},
-			permissions:   []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash2"}},
-			expected:      false,
-			expectedError: false,
+			permissions: []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash2"}},
+			expected:    false,
+			expectErr:   false,
 		},
 	}
 	t.Run("User permission check", func(t *testing.T) {
