@@ -180,6 +180,9 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 	// Inspect the alertmanager to understand its structure
 	InspectAlertmanager(am, l)
 	
+	// Monitor alert flow in real-time
+	MonitorAlertFlow(am, l)
+	
 	return am, nil
 }
 
@@ -446,7 +449,42 @@ func (am *alertmanager) PutAlerts(_ context.Context, postableAlerts apimodels.Po
 		})
 	}
 
-	am.logger.Debug("Putting alerts into alertmanager", "count", len(alerts), "orgID", am.orgID, "source", "API")
+	// Get the caller information to help trace the source of alerts
+	pc, file, line, _ := runtime.Caller(1)
+	caller := runtime.FuncForPC(pc).Name()
+	
+	am.logger.Debug("Putting alerts into alertmanager", 
+		"count", len(alerts), 
+		"orgID", am.orgID, 
+		"source", "API",
+		"caller", caller,
+		"file", file,
+		"line", line)
+		
+	// Log some information about the alerts
+	for i, alert := range alerts {
+		if i >= 5 {
+			am.logger.Debug("Too many alerts to log individually, truncating log")
+			break
+		}
+		
+		// Extract key information from the alert
+		var fingerprint string
+		var labels string
+		
+		if alert.Alert != nil {
+			fingerprint = fmt.Sprintf("%v", alert.Alert.Fingerprint)
+			labels = fmt.Sprintf("%v", alert.Alert.Labels)
+		}
+		
+		am.logger.Debug("Alert details", 
+			"index", i,
+			"startsAt", alert.StartsAt,
+			"endsAt", alert.EndsAt,
+			"fingerprint", fingerprint,
+			"labels", labels)
+	}
+	
 	return am.Base.PutAlerts(alerts)
 }
 
