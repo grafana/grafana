@@ -168,3 +168,24 @@ return <input type="value" placeholder={placeholder} />;
 ```
 
 Check more info about how translations work in Grafana in [Internationalization.md](https://github.com/grafana/grafana/blob/main/contribute/internationalization.md)
+
+### `tracking-event-creation`
+
+Checks that the process to create a tracking event is followed in the right way.
+
+#### `eventFactoryLiterals`
+
+Check if the values passed to `createEventFactory` are literals.
+
+```tsx
+// Bad ❌
+const repo = 'grafana';
+const createUnifiedHistoryEvent = createEventFactory(repo, 'unified_history');
+
+// Bad ❌
+const history = 'history';
+const createUnifiedHistoryEvent = createEventFactory('grafana', `unified_${history}`);
+
+// Good ✅
+const createUnifiedHistoryEvent = createEventFactory('grafana', 'unified_history');
+```
