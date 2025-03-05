@@ -38,8 +38,7 @@ runs:
 
     - name: Convert coverage info to per-func stats
       shell: bash
-      run: |
-        go tool cover -func backend.cov > backend-funcs.log
+      run: go tool cover -func backend.cov > backend-funcs.log
 
     - name: Convert coverage info to HTML
       shell: bash
