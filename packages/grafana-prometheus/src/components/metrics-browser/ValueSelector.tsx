@@ -71,8 +71,8 @@ export function ValueSelector({ styles }: ValueSelectorProps) {
                     <PromLabel
                       name={value}
                       value={value}
-                      active={selectedLabelValues.includes(value)}
-                      onClick={onLabelValueClick}
+                      active={selectedLabelValues[labelKey]?.includes(value)}
+                      onClick={(name) => onLabelValueClick(labelKey, name)}
                       searchTerm={valueSearchTerm}
                     />
                   </div>

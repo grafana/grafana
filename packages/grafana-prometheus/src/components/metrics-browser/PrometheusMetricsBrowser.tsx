@@ -7,7 +7,7 @@ import { LabelSelector } from './LabelSelector';
 import { MetricSelector } from './MetricSelector';
 import { SelectorActions } from './SelectorActions';
 import { ValueSelector } from './ValueSelector';
-import { buildSelector, facetLabels } from './selectorBuilder';
+import { buildSelector_old, facetLabels } from './selectorBuilder';
 import { getStyles } from './styles';
 import {
   BrowserProps,
@@ -147,7 +147,7 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
     if (label.selected) {
       // Refetch values for newly selected label...
       if (!label.values) {
-        this.fetchValues(name, buildSelector(this.state.labels));
+        this.fetchValues(name, buildSelector_old(this.state.labels));
       }
     } else {
       // Only need to facet when deselecting labels
@@ -156,7 +156,7 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
   }
 
   doFacetting = (lastFacetted?: string) => {
-    const selector = buildSelector(this.state.labels);
+    const selector = buildSelector_old(this.state.labels);
     if (selector === EMPTY_SELECTOR) {
       // Clear up facetting
       const labels: SelectableLabel[] = this.state.labels.map((label) => {
@@ -180,7 +180,7 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
     try {
       let rawValues = await languageProvider.getLabelValues(name);
       // If selector changed, clear loading state and discard result by returning early
-      if (selector !== buildSelector(this.state.labels)) {
+      if (selector !== buildSelector_old(this.state.labels)) {
         this.updateLabelState(name, { loading: false });
         return;
       }
@@ -212,7 +212,7 @@ export class UnthemedPrometheusMetricsBrowser extends Component<BrowserProps, Br
       // FIXME use series limit from useMetricsBrowser
       const possibleLabels = await languageProvider.fetchSeriesLabels(selector, true, DEFAULT_SERIES_LIMIT);
       // If selector changed, clear loading state and discard result by returning early
-      if (selector !== buildSelector(this.state.labels)) {
+      if (selector !== buildSelector_old(this.state.labels)) {
         if (lastFacetted) {
           this.updateLabelState(lastFacetted, { loading: false });
         }

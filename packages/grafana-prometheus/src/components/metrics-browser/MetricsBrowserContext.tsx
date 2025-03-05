@@ -1,9 +1,10 @@
-import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { TimeRange } from '@grafana/data';
 
 import PromQlLanguageProvider from '../../language_provider';
 
+import { buildSelector } from './selectorBuilder';
 import { DEFAULT_SERIES_LIMIT, LAST_USED_LABELS_KEY, Metric, METRIC_LABEL } from './types';
 
 interface MetricsBrowserContextType {
@@ -23,10 +24,11 @@ interface MetricsBrowserContextType {
   labelValues: Record<string, string[]>;
   selectedMetric: string;
   selectedLabelKeys: string[];
-  selectedLabelValues: string[];
+  selectedLabelValues: Record<string, string[]>;
   onMetricClick: (name: string) => void;
   onLabelKeyClick: (name: string) => void;
-  onLabelValueClick: (name: string) => void;
+  onLabelValueClick: (labelKey: string, labelValue: string) => void;
+  selector: string;
 }
 
 const MetricsBrowserContext = createContext<MetricsBrowserContextType | undefined>(undefined);
@@ -55,7 +57,12 @@ export function MetricsBrowserProvider({
   const [labelKeys, setLabelKeys] = useState<string[]>([]);
   const [selectedLabelKeys, setSelectedLabelKeys] = useState<string[]>([]);
   const [labelValues, setLabelValues] = useState<Record<string, string[]>>({});
-  const [selectedLabelValues, setSelectedLabelValues] = useState<string[]>([]);
+  const [selectedLabelValues, setSelectedLabelValues] = useState<Record<string, string[]>>({});
+
+  const selector = useMemo(
+    () => buildSelector(selectedMetric, selectedLabelValues),
+    [selectedLabelValues, selectedMetric]
+  );
 
   useEffect(() => {
     const meta = languageProvider.metricsMetadata;
@@ -76,14 +83,13 @@ export function MetricsBrowserProvider({
   // Fetch labels
   useEffect(() => {
     if (selectedMetric !== '') {
-      // TODO use selector insteadof selectedMetric
-      languageProvider.fetchSeriesLabelsMatch(selectedMetric).then((fetchedLabelKeys) => {
+      languageProvider.fetchSeriesLabelsMatch(selector).then((fetchedLabelKeys) => {
         setLabelKeys(Object.keys(fetchedLabelKeys).filter(withoutMetricLabel));
       });
     } else {
       setLabelKeys([...languageProvider.labelKeys.filter(withoutMetricLabel)]);
     }
-  }, [languageProvider, selectedMetric]);
+  }, [languageProvider, selectedMetric, selector]);
 
   // Fetch label values
   useEffect(() => {
@@ -122,13 +128,15 @@ export function MetricsBrowserProvider({
   );
 
   const onLabelValueClick = useCallback(
-    (labelValue: string) => {
-      const newSelectedLabelValues = [...selectedLabelValues];
-      const lvIdx = newSelectedLabelValues.indexOf(labelValue);
+    (labelKey: string, labelValue: string) => {
+      console.log({ labelKey, labelValue });
+      const newSelectedLabelValues = { ...selectedLabelValues };
+      newSelectedLabelValues[labelKey] ??= [];
+      const lvIdx = newSelectedLabelValues[labelKey].indexOf(labelValue) ?? -1;
       if (lvIdx === -1) {
-        newSelectedLabelValues.push(labelValue);
+        newSelectedLabelValues[labelKey].push(labelValue);
       } else {
-        newSelectedLabelValues.splice(lvIdx, 1);
+        newSelectedLabelValues[labelKey].splice(lvIdx, 1);
       }
       setSelectedLabelValues(newSelectedLabelValues);
     },
@@ -155,6 +163,7 @@ export function MetricsBrowserProvider({
     onMetricClick,
     onLabelKeyClick,
     onLabelValueClick,
+    selector,
   };
 
   return <MetricsBrowserContext.Provider value={value}>{children}</MetricsBrowserContext.Provider>;

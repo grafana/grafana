@@ -3,7 +3,35 @@ import { isValidLegacyName, utf8Support } from '../../utf8_support';
 
 import { FacettableValue, METRIC_LABEL, SelectableLabel } from './types';
 
-export function buildSelector(labels: SelectableLabel[]): string {
+
+export function buildSelector(selectedMetric: string, selectedLabelValues: Record<string, string[]>): string {
+  if (selectedMetric === '' && Object.keys(selectedLabelValues).length === 0) {
+    return '{}';
+  }
+
+  const selectorParts: string[] = [];
+
+  Object.entries(selectedLabelValues).forEach(([key, value]) => {
+    let operator = '=';
+    if (value.length > 1) {
+      operator = `=~`;
+    }
+    selectorParts.push(`${utf8Support(key)}${operator}"${value.join('|')}"`);
+  });
+
+  if (selectedMetric !== '') {
+    if (isValidLegacyName(selectedMetric)) {
+      return `${selectedMetric}{${selectorParts.join(',')}}`;
+    } else {
+      selectorParts.unshift(utf8Support(selectedMetric));
+      return `{${selectorParts.join(',')}}`;
+    }
+  } else {
+    return `{${selectorParts.join(',')}}`;
+  }
+}
+
+export function buildSelector_old(labels: SelectableLabel[]): string {
   let singleMetric = '';
   const selectedLabels: string[] = [];
   for (const label of labels) {

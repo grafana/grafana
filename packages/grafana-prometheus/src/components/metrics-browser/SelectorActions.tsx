@@ -5,7 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Button, Label, Stack } from '@grafana/ui';
 
 import { useMetricsBrowser } from './MetricsBrowserContext';
-import { buildSelector } from './selectorBuilder';
+import { buildSelector_old } from './selectorBuilder';
 import { EMPTY_SELECTOR, SelectableLabel } from './types';
 
 interface SelectorActionsProps {
@@ -30,22 +30,22 @@ export function SelectorActions({
   };
 
   const onClickValidate = () => {
-    const selector = buildSelector(labels);
+    const selector = buildSelector_old(labels);
     validateSelector(selector);
   };
 
   const onClickRunQuery = () => {
-    const selector = buildSelector(labels);
+    const selector = buildSelector_old(labels);
     onChange(selector);
   };
 
   const onClickRunRateQuery = () => {
-    const selector = buildSelector(labels);
+    const selector = buildSelector_old(labels);
     const query = `rate(${selector}[$__rate_interval])`;
     onChange(query);
   };
 
-  const selector = buildSelector(labels);
+  const selector = buildSelector_old(labels);
   const empty = selector === EMPTY_SELECTOR;
   return null;
   return (
