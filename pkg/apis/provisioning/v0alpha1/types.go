@@ -262,6 +262,9 @@ type ResourceObjects struct {
 
 	// The value returned from a dryRun request
 	DryRun common.Unstructured `json:"dryRun,omitempty"`
+
+	// When the value has been saved in the grafana database
+	Apply common.Unstructured `json:"apply,omitempty"`
 }
 
 // Information we can get just from the file listing
