@@ -196,7 +196,7 @@ const VariableEditor = (props: Props) => {
         resourceName: resource,
       });
       datasource.getMetricNamespaces(subscription, resourceGroup, resourceUri, true).then((rgs) => {
-        setCustomNamespaces(rgs.map((s: AzureLogsVariable) => ({ label: s.text, value: s.value })));
+        setCustomNamespaces(rgs.map((s) => ({ label: s.text, value: s.value })));
       });
     }
   }, [datasource, subscription, resourceGroup, namespace, resource]);
