@@ -43,7 +43,6 @@ const ui = {
 };
 
 const server = setupMswServer();
-const mimirDs = mimirDataSource();
 
 afterEach(() => {
   server.resetHandlers();
