@@ -16,6 +16,7 @@ import {
   ConfirmModal,
   Tab,
   TabsBar,
+  TagList,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -176,6 +177,7 @@ function RepositoryListPageContent({ items }: { items: Repository[] }) {
                       state={item.status?.sync?.state}
                       name={name}
                     />
+                    <TagList tags={[item.spec?.sync?.target ?? '']} />
                   </Stack>
                 </Card.Heading>
                 <Card.Description>
