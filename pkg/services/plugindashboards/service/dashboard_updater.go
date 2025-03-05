@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -66,10 +67,11 @@ func (du *DashboardUpdater) updateAppDashboards() {
 		if !pluginSetting.Enabled {
 			continue
 		}
+		ctx, _ := identity.WithServiceIdentity(context.Background(), pluginSetting.OrgID)
 
-		if pluginDef, exists := du.pluginStore.Plugin(context.Background(), pluginSetting.PluginID); exists {
+		if pluginDef, exists := du.pluginStore.Plugin(ctx, pluginSetting.PluginID); exists {
 			if pluginDef.Info.Version != pluginSetting.PluginVersion {
-				du.syncPluginDashboards(context.Background(), pluginDef, pluginSetting.OrgID)
+				du.syncPluginDashboards(ctx, pluginDef, pluginSetting.OrgID)
 			}
 		}
 	}
