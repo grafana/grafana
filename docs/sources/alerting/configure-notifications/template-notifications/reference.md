@@ -96,15 +96,15 @@ You can execute this template by passing the dot (`.`):
 
 `Alert` contains data for an individual alert:
 
-| Name           | Type          | Description                                                                                                                                                          |
-| -------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Status`       | string        | Firing or resolved.                                                                                                                                                  |
-| `Labels`       | [KV](#kv)     | The labels associated with this alert. <br/> It includes all [types of labels](ref:label-types), but only those used in evaluating the alert condition are included. |
-| `Annotations`  | [KV](#kv)     | The annotations for this alert.                                                                                                                                      |
-| `StartsAt`     | [Time](#time) | The time the alert fired                                                                                                                                             |
-| `EndsAt`       | [Time](#time) | Only set if the end time of an alert is known. Otherwise set to a configurable timeout period from the time since the last alert was received.                       |
-| `GeneratorURL` | string        | A link to Grafana, or the source of the alert if using an external alert generator.                                                                                  |
-| `Fingerprint`  | string        | A unique string that identifies the alert.                                                                                                                           |
+| Name           | Type          | Description                                                                                                                                         |
+| -------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Status`       | string        | Firing or resolved.                                                                                                                                 |
+| `Labels`       | [KV](#kv)     | The labels associated with this alert. <br/> It includes all [types of labels](ref:label-types), but only query labels used in the alert condition. |
+| `Annotations`  | [KV](#kv)     | The annotations for this alert.                                                                                                                     |
+| `StartsAt`     | [Time](#time) | The time the alert fired                                                                                                                            |
+| `EndsAt`       | [Time](#time) | Only set if the end time of an alert is known. Otherwise set to a configurable timeout period from the time since the last alert was received.      |
+| `GeneratorURL` | string        | A link to Grafana, or the source of the alert if using an external alert generator.                                                                 |
+| `Fingerprint`  | string        | A unique string that identifies the alert.                                                                                                          |
 
 Grafana-managed alerts include these additional properties:
 
