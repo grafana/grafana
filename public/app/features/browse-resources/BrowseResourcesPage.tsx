@@ -90,6 +90,10 @@ const FoldersPage: React.FC = () => {
         return 'apps';
       case 'folders':
           return 'folder';  
+      case 'alerts':
+        return 'bell';
+      case 'slos':
+        return 'chart-line';
       default:
         return 'folder';
     }
