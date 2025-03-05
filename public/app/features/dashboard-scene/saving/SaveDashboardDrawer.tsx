@@ -1,9 +1,8 @@
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneObjectRef } from '@grafana/scenes';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
-import { useUrlParams } from 'app/core/navigation/hooks';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
+import { useIsProvisionedNG } from 'app/features/provisioning/hooks';
 
-import { useGetResourceRepository } from '../../provisioning/hooks';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { SaveDashboardAsForm } from './SaveDashboardAsForm';
@@ -55,11 +54,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     const dashboard = model.state.dashboardRef.resolve();
     const { meta } = dashboard.useState();
     const { provisioned: isProvisioned, folderTitle } = meta;
-    const [params] = useUrlParams();
-    const folderUid = params.get('folderUid') || undefined;
-
-    const folderRepository = useGetResourceRepository({ folderUid });
-    const isProvisionedNG = dashboard.isManaged() || Boolean(folderRepository);
+    const isProvisionedNG = useIsProvisionedNG(dashboard);
 
     const tabs = (
       <TabsBar>

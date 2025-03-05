@@ -135,7 +135,7 @@ export function ToolbarActions({ dashboard }: Props) {
       group: 'icon-actions',
       condition: true,
       render: () => {
-        return <ManagedDashboardNavBarBadge meta={meta} />;
+        return <ManagedDashboardNavBarBadge meta={meta} key="managed-dashboard-badge" />;
       },
     });
   }
