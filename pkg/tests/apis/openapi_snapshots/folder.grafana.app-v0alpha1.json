@@ -216,7 +216,12 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.folder.v0alpha1.Folder"
               }
             },
-            "text/x-yaml": {
+            "application/vnd.kubernetes.protobuf": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.folder.v0alpha1.Folder"
+              }
+            },
+            "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.folder.v0alpha1.Folder"
               }
@@ -547,7 +552,12 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.folder.v0alpha1.Folder"
               }
             },
-            "text/x-yaml": {
+            "application/vnd.kubernetes.protobuf": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.folder.v0alpha1.Folder"
+              }
+            },
+            "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.folder.v0alpha1.Folder"
               }

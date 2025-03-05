@@ -215,7 +215,12 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
               }
             },
-            "text/x-yaml": {
+            "application/vnd.kubernetes.protobuf": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+              }
+            },
+            "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
               }
@@ -546,7 +551,12 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
               }
             },
-            "text/x-yaml": {
+            "application/vnd.kubernetes.protobuf": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+              }
+            },
+            "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
               }
@@ -1035,7 +1045,12 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
               }
             },
-            "text/x-yaml": {
+            "application/vnd.kubernetes.protobuf": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
+              }
+            },
+            "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
               }
@@ -1366,7 +1381,12 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
               }
             },
-            "text/x-yaml": {
+            "application/vnd.kubernetes.protobuf": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
+              }
+            },
+            "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
               }

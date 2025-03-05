@@ -100,8 +100,9 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder) func(*s
 							content, ok := op.RequestBody.Content["*/*"]
 							if ok {
 								op.RequestBody.Content = map[string]*spec3.MediaType{
-									"application/json": content,
-									"text/x-yaml":      content,
+									"application/json":                    content,
+									"application/yaml":                    content,
+									"application/vnd.kubernetes.protobuf": content,
 								}
 							}
 						}

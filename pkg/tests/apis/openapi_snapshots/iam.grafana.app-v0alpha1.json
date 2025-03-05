@@ -593,7 +593,12 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.SSOSetting"
               }
             },
-            "text/x-yaml": {
+            "application/vnd.kubernetes.protobuf": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.SSOSetting"
+              }
+            },
+            "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.SSOSetting"
               }
