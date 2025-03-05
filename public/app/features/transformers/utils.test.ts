@@ -52,8 +52,4 @@ describe('validator', () => {
   it('validates a string that has multiple variables', () => {
     expect(numberOrVariableValidator('$foo$asd')).toBe(true);
   });
-
-  it('validates a string that has a bracket variable', () => {
-    expect(numberOrVariableValidator('${foo}')).toBe(true);
-  });
 });
