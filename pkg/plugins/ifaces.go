@@ -78,6 +78,12 @@ type FSRemover interface {
 	Remove() error
 }
 
+type FSBackuper interface {
+	Backup() error
+	RemoveBackup() error
+	RestoreBackup() error
+}
+
 type FoundBundle struct {
 	Primary  FoundPlugin
 	Children []*FoundPlugin

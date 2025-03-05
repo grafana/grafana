@@ -58,12 +58,24 @@ func upgradeAllCommand(c utils.CommandLine) error {
 	for _, p := range pluginsToUpgrade {
 		logger.Infof("Updating %v \n", p.JSONData.ID)
 
-		err = uninstallPlugin(ctx, p.JSONData.ID, c)
+		pluginBundle, err := backupPlugin(ctx, p.JSONData.ID, c)
 		if err != nil {
 			return err
 		}
 
 		err = installPlugin(ctx, p.JSONData.ID, "", newInstallPluginOpts(c))
+		if err != nil {
+
+			backupErr := restorePluginBackup(pluginBundle)
+			if backupErr != nil {
+				// logs the first error and return the second
+				logger.Errorf("Failed to update %v: %v\n", p.JSONData.ID, err)
+				return backupErr
+			}
+			return err
+		}
+
+		err = removePluginBackup(pluginBundle)
 		if err != nil {
 			return err
 		}
