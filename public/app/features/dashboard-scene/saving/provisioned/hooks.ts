@@ -1,7 +1,7 @@
 import { Chance } from 'chance';
 
 import { dateTime } from '@grafana/data';
-import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
+import { AnnoKeyManagerKind, AnnoKeyManagerIdentity, AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { useGetResourceRepository } from 'app/features/provisioning/hooks';
 import { DashboardMeta } from 'app/types';
 
@@ -25,10 +25,12 @@ function generatePath(timestamp: string, pathFromAnnotation?: string, slug?: str
 
 export function useDefaultValues({ meta, defaultTitle, defaultDescription }: UseDefaultValuesParams) {
   const annotations = meta.k8s?.annotations;
-  const annoName = annotations?.[AnnoKeyRepoName];
-  const annoPath = annotations?.[AnnoKeyRepoPath];
+  const managerKind = annotations?.[AnnoKeyManagerKind];
+  const managerId = annotations?.[AnnoKeyManagerIdentity];
+  const sourcePath = annotations?.[AnnoKeySourcePath];
   // Get config by resource name or folder UID for new resources
-  const repositoryConfig = useGetResourceRepository({ name: annoName, folderUid: meta.folderUid });
+  const repositoryConfig =
+    managerKind === 'repo' ? useGetResourceRepository({ name: managerId, folderUid: meta.folderUid }) : undefined;
   const repository = repositoryConfig?.spec;
 
   const random = Chance(1);
@@ -37,8 +39,8 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
   return {
     values: {
       ref: `dashboard/${timestamp}`,
-      path: generatePath(timestamp, annoPath, meta.slug),
-      repo: annoName || repositoryConfig?.metadata?.name || '',
+      path: generatePath(timestamp, sourcePath, meta.slug),
+      repo: managerId || repositoryConfig?.metadata?.name || '',
       comment: '',
       folder: {
         uid: meta.folderUid,
@@ -48,7 +50,7 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
       description: defaultDescription ?? '',
       workflow: getDefaultWorkflow(repository),
     },
-    isNew: !annoName,
+    isNew: !managerId,
     repositoryConfig: repository,
     isGitHub: repository?.type === 'github',
   };

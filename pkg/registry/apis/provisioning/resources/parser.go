@@ -130,11 +130,14 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 	}
 
 	obj.SetNamespace(cfg.GetNamespace())
-	parsed.Meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-		Name:      cfg.Name,
-		Path:      info.Path, // joinPathWithRef(info.Path, info.Ref),
-		Hash:      info.Hash,
-		Timestamp: nil, // ???&info.Modified.Time,
+	parsed.Meta.SetManagerProperties(utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: cfg.Name,
+	})
+	parsed.Meta.SetSourceProperties(utils.SourceProperties{
+		Path:            info.Path, // joinPathWithRef(info.Path, info.Ref),
+		Checksum:        info.Hash,
+		TimestampMillis: asMillis(info.Modified),
 	})
 
 	// Calculate name+folder from the file path
@@ -209,6 +212,13 @@ func (f *ParsedResource) ToSaveBytes() ([]byte, error) {
 	default:
 		return nil, fmt.Errorf("unexpected format")
 	}
+}
+
+func asMillis(t *metav1.Time) int64 {
+	if t == nil || t.IsZero() {
+		return 0
+	}
+	return t.UnixMilli()
 }
 
 func (f *ParsedResource) AsResourceWrapper() *provisioning.ResourceWrapper {

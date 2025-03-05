@@ -48,8 +48,9 @@ func (r *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, v
 		return fmt.Errorf("failed to unmarshal unstructured: %w", err)
 	}
 
-	// clear anything so it will get written
-	parsed.Meta.SetRepositoryInfo(nil)
+	// clear all manager fields so they are not exported
+	parsed.Meta.SetManagerProperties(utils.ManagerProperties{})
+	parsed.Meta.SetSourceProperties(utils.SourceProperties{})
 
 	if result := r.job.write(ctx, parsed.Obj); result.Error != nil {
 		r.job.progress.Record(ctx, result)
@@ -134,8 +135,8 @@ func (j *migrationJob) write(ctx context.Context, obj *unstructured.Unstructured
 	}
 
 	name := meta.GetName()
-	repoName := meta.GetRepositoryName()
-	if repoName == j.target.Config().GetName() {
+	manager, _ := meta.GetManagerProperties()
+	if manager.Identity == j.target.Config().GetName() {
 		result.Action = repository.FileActionIgnored
 		return result
 	}

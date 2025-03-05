@@ -538,7 +538,7 @@ func (r *syncJob) ensureFolderExists(ctx context.Context, folder resources.Folde
 	cfg := r.repository.Config()
 	obj, err := r.folders.Get(ctx, folder.ID, metav1.GetOptions{})
 	if err == nil {
-		current, ok := obj.GetAnnotations()[utils.AnnoKeyRepoName]
+		current, ok := obj.GetAnnotations()[utils.AnnoKeyManagerIdentity]
 		if !ok {
 			return fmt.Errorf("target folder is not managed by a repository")
 		}
@@ -568,11 +568,12 @@ func (r *syncJob) ensureFolderExists(ctx context.Context, folder resources.Folde
 	if parent != "" {
 		meta.SetFolder(parent)
 	}
-	meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-		Name:      cfg.GetName(),
-		Path:      folder.Path,
-		Hash:      "",  // FIXME: which hash?
-		Timestamp: nil, // ???&info.Modified.Time,
+	meta.SetManagerProperties(utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: cfg.GetName(),
+	})
+	meta.SetSourceProperties(utils.SourceProperties{
+		Path: folder.Path,
 	})
 
 	result := jobs.JobResourceResult{
