@@ -43,6 +43,13 @@ export const AnnoKeyFolderUrl = 'grafana.app/folderUrl';
 export const AnnoKeyMessage = 'grafana.app/message';
 export const AnnoKeySlug = 'grafana.app/slug';
 
+export enum ManagerKind {
+  Repo = 'repo',
+  Terraform = 'terraform',
+  Kubectl = 'kubectl',
+  Plugin = 'plugin',
+}
+
 export const AnnoKeyManagerKind = 'grafana.app/managedBy';
 export const AnnoKeyManagerIdentity = 'grafana.app/managerId';
 export const AnnoKeySourcePath = 'grafana.app/sourcePath';
@@ -66,7 +73,7 @@ type GrafanaAnnotations = {
   [AnnoKeyFolder]?: string;
   [AnnoKeySlug]?: string;
 
-  [AnnoKeyManagerKind]?: string;
+  [AnnoKeyManagerKind]?: ManagerKind;
   [AnnoKeyManagerIdentity]?: string;
   [AnnoKeySourcePath]?: string;
   [AnnoKeySourceChecksum]?: string;

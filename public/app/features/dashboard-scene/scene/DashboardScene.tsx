@@ -42,7 +42,7 @@ import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { AnnoKeyManagerIdentity, AnnoKeySourcePath } from '../../apiserver/types';
+import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath, ManagerKind } from '../../apiserver/types';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -743,25 +743,31 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return this._serializer.getDashboardChangesFromScene(this, { saveTimeRange, saveVariables, saveRefresh });
   }
 
-  /**
-   * Provisioned dashboards helpers
-   */
-  getRepoName() {
-    return this.state.meta.k8s?.annotations?.[AnnoKeyManagerIdentity];
+  getManagerKind(): ManagerKind | undefined {
+    return this.state.meta.k8s?.annotations?.[AnnoKeyManagerKind];
   }
 
-  isProvisioned() {
-    return Boolean(this.getRepoName());
+  isManaged() {
+    return Boolean(this.getManagerKind());
+  }
+
+  isManagedRepository() {
+    return Boolean(this.getManagerKind() === ManagerKind.Repo);
   }
 
   getPath() {
     return this.state.meta.k8s?.annotations?.[AnnoKeySourcePath];
   }
 
-  setRepoName(name: string) {
+  setManager(kind: ManagerKind, id: string) {
     this.setState({
       meta: {
-        k8s: { annotations: { [AnnoKeyManagerIdentity]: name } },
+        k8s: {
+          annotations: {
+            [AnnoKeyManagerKind]: kind,
+            [AnnoKeyManagerIdentity]: id,
+          },
+        },
       },
     });
   }
