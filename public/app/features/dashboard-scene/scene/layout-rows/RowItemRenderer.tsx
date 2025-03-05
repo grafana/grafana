@@ -14,7 +14,7 @@ import { RowItem } from './RowItem';
 import { RowItemMenu } from './RowItemMenu';
 
 export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
-  const { layout, title, isCollapsed, height = 'expand', isHeaderHidden, key } = model.useState();
+  const { layout, title, isCollapsed, height = 'min', isHeaderHidden, key } = model.useState();
   const isClone = useMemo(() => isClonedKey(key!), [key]);
   const dashboard = getDashboardSceneFor(model);
   const { isEditing, showHiddenElements } = dashboard.useState();
