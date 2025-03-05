@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Alert, Button, Input, RadioButtonGroup, Switch, TextLink } from '@grafana/ui';
+import { Alert, Input, RadioButtonGroup, Switch, TextLink } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -10,18 +10,25 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
+import { EditPaneHeader } from '../../edit-pane/EditPaneHeader';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
-import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
+import { DashboardLayoutSelector } from '../layouts-shared/DashboardLayoutSelector';
 
 import { RowItem } from './RowItem';
 
 export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] {
+  const { layout } = model.useState();
   const rowOptions = useMemo(() => {
-    return new OptionsPaneCategoryDescriptor({
-      title: t('dashboard.rows-layout.row-options.title', 'Row options'),
+    const dashboard = getDashboardSceneFor(model);
+
+    const editPaneHeaderOptions = new OptionsPaneCategoryDescriptor({
+      title: t('dashboard.rows-layout.row-options.title', 'Row'),
       id: 'row-options',
-      isOpenDefault: true,
+      isOpenable: false,
+      renderTitle: () => (
+        <EditPaneHeader title={t('dashboard.rows-layout.row-options.title', 'Row')} onDelete={() => model.onDelete()} />
+      ),
     })
       .addItem(
         new OptionsPaneItemDescriptor({
@@ -31,8 +38,28 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
       )
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.rows-layout.row-options.height.title', 'Height'),
+          title: t('dashboard.rows-layout.row-options.height', 'Height'),
           render: () => <RowHeightSelect row={model} />,
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard.layout.common.layout', 'Layout'),
+          render: () => <DashboardLayoutSelector layoutManager={layout} />,
+        })
+      );
+
+    if (layout.getOptions) {
+      for (const option of layout.getOptions()) {
+        editPaneHeaderOptions.addItem(option);
+      }
+    }
+
+    editPaneHeaderOptions
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard.rows-layout.row-options.repeat.variable.title', 'Repeat for'),
+          render: () => <RowRepeatSelect row={model} dashboard={dashboard} />,
         })
       )
       .addItem(
@@ -41,42 +68,23 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
           render: () => <RowHeaderSwitch row={model} />,
         })
       );
-  }, [model]);
 
-  const rowRepeatOptions = useMemo(() => {
-    const dashboard = getDashboardSceneFor(model);
+    return editPaneHeaderOptions;
+  }, [layout, model]);
 
-    return new OptionsPaneCategoryDescriptor({
-      title: t('dashboard.rows-layout.row-options.repeat.title', 'Repeat options'),
-      id: 'row-repeat-options',
-      isOpenDefault: true,
-    }).addItem(
-      new OptionsPaneItemDescriptor({
-        title: t('dashboard.rows-layout.row-options.repeat.variable.title', 'Variable'),
-        render: () => <RowRepeatSelect row={model} dashboard={dashboard} />,
-      })
-    );
-  }, [model]);
-
-  const { layout } = model.useState();
-  const layoutOptions = useLayoutCategory(layout);
-
-  return [rowOptions, rowRepeatOptions, layoutOptions];
-}
-
-export function renderActions(model: RowItem) {
-  return (
-    <>
-      <Button size="sm" variant="secondary" icon="copy" />
-      <Button size="sm" variant="destructive" fill="outline" onClick={() => model.onDelete()} icon="trash-alt" />
-    </>
-  );
+  return [rowOptions];
 }
 
 function RowTitleInput({ row }: { row: RowItem }) {
   const { title } = row.useState();
 
-  return <Input value={title} onChange={(e) => row.onChangeTitle(e.currentTarget.value)} />;
+  return (
+    <Input
+      title={t('dashboard.rows-layout.row-options.title-option', 'Title')}
+      value={title}
+      onChange={(e) => row.onChangeTitle(e.currentTarget.value)}
+    />
+  );
 }
 
 function RowHeaderSwitch({ row }: { row: RowItem }) {
