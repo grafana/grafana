@@ -104,14 +104,14 @@ const FoldersPage: React.FC = () => {
             ),
           },
           {
-            id: 'location',
-            header: 'Location',
-            cell: ({ row: { original } }) => original.location || '-',
-          },
-          {
             id: 'type',
             header: 'Type',
             cell: ({ row: { original } }) => original.resource,
+          },
+          {
+            id: 'location',
+            header: 'Location',
+            cell: ({ row: { original } }) => original.location || '-',
           },
           {
             id: 'tags',
@@ -158,11 +158,12 @@ const FoldersPage: React.FC = () => {
         <div className={styles.filtersRow}>
           <Stack direction="row" gap={2}>
             <FilterInput
-              value={searchTerm}
-              onChange={setSearchTerm}
-              placeholder="Search folders"
-              width={30}
-            />
+                value={searchTerm}
+                onChange={setSearchTerm}
+                placeholder="Search resources"
+              />
+          </Stack>
+          <Stack direction="row" gap={2}>
             <Select
               value={selectedTypes}
               onChange={(v) => setSelectedTypes(v as Array<SelectableValue<ResourceType>>)}
@@ -196,7 +197,9 @@ const FoldersPage: React.FC = () => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   filtersRow: css({
-    marginBottom: theme.spacing(2),
+    display: 'flex',
+    flexDirection: 'column',
+    gap: `6px`
   }),
   groupBySelect: css({
     marginLeft: 'auto',
