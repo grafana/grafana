@@ -261,6 +261,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 
 	types := queryParams["type"]
 	var federate *resource.ResourceKey
+	federated := make([]*resource.ResourceKey, 0)
 	switch len(types) {
 	case 0:
 		// When no type specified, search for dashboards
@@ -268,6 +269,9 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		// Currently a search query is across folders and dashboards
 		if err == nil {
 			federate, err = asResourceKey(user.GetNamespace(), "dashboards")
+			if err == nil {
+				federated = append(federated, federate)
+			}
 		}
 	case 1:
 		searchRequest.Options.Key, err = s.typeToResourceKey(user.GetNamespace(), types[0])
@@ -275,16 +279,28 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		searchRequest.Options.Key, err = s.typeToResourceKey(user.GetNamespace(), types[0])
 		if err == nil {
 			federate, err = s.typeToResourceKey(user.GetNamespace(), types[1])
+			if err == nil {
+				federated = append(federated, federate)
+			}
 		}
 	default:
-		err = apierrors.NewBadRequest("too many type requests")
+		searchRequest.Options.Key, err = s.typeToResourceKey(user.GetNamespace(), types[0])
+		if err == nil {
+			for _, typ := range types {
+				federate, err = s.typeToResourceKey(user.GetNamespace(), typ)
+				if err != nil {
+					break
+				}
+				federated = append(federated, federate)
+			}
+		}
 	}
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
 	}
-	if federate != nil {
-		searchRequest.Federated = []*resource.ResourceKey{federate}
+	if len(federated) > 0 {
+		searchRequest.Federated = federated
 	}
 
 	// Add sorting
