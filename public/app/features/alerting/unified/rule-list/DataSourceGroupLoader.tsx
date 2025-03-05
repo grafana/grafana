@@ -21,7 +21,7 @@ import { getRuleName, isCloudRulerGroup } from '../utils/rules';
 
 import { DataSourceRuleListItem } from './DataSourceRuleListItem';
 import { RuleOperationListItem } from './components/AlertRuleListItem';
-import { AlertRuleListItemLoader } from './components/AlertRuleListItemLoader';
+import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
 import { RuleOperation } from './components/RuleListIcon';
 import { matchRulesGroup } from './ruleMatching';
@@ -35,6 +35,10 @@ export interface DataSourceGroupLoaderProps {
   expectedRulesCount?: number;
 }
 
+/**
+ * Loads both Prometheus and Ruler endpoints for the specified group.
+ * There is a pooling for Prometheus query, to update if there are any changes in progress
+ */
 export function DataSourceGroupLoader({ groupIdentifier, expectedRulesCount = 3 }: DataSourceGroupLoaderProps) {
   const { namespace, groupName } = groupIdentifier;
   const namespaceName = namespace.name;
@@ -79,7 +83,7 @@ export function DataSourceGroupLoader({ groupIdentifier, expectedRulesCount = 3 
     return (
       <>
         {Array.from({ length: expectedRulesCount }).map((_, index) => (
-          <AlertRuleListItemLoader key={index} />
+          <AlertRuleListItemSkeleton key={index} />
         ))}
       </>
     );

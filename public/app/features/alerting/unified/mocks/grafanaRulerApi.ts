@@ -150,16 +150,6 @@ export const rulerTestDb = new RulerTestDb([
   [grafanaRulerEmptyGroup, grafanaRulerNamespace2],
 ]);
 
-// export const namespaceByUid: Record<string, { name: string; uid: string }> = {
-//   [grafanaRulerNamespace.uid]: grafanaRulerNamespace,
-//   [grafanaRulerNamespace2.uid]: grafanaRulerNamespace2,
-// };
-
-// export const namespaces: Record<string, RulerRuleGroupDTO[]> = {
-//   [grafanaRulerNamespace.uid]: [grafanaRulerGroup, grafanaRulerGroup2],
-//   [grafanaRulerNamespace2.uid]: [grafanaRulerEmptyGroup],
-// };
-
 //-------------------- for alert history tests we reuse these constants --------------------
 export const time_0 = 1718368710000;
 // time1 + 30 seg

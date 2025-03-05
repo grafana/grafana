@@ -3,7 +3,7 @@ import { catchError, take, tap, withAbort } from 'ix/asynciterable/operators';
 import { useEffect, useRef, useState, useTransition } from 'react';
 
 import { Card, EmptyState, Stack, Text } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 import { isLoading, useAsync } from '../hooks/useAsync';
 import { RulesFilter } from '../search/rulesSearchParser';
@@ -13,7 +13,7 @@ import { DataSourceRuleLoader } from './DataSourceRuleLoader';
 import { GrafanaRuleLoader } from './GrafanaRuleLoader';
 import LoadMoreHelper from './LoadMoreHelper';
 import { UnknownRuleListItem } from './components/AlertRuleListItem';
-import { AlertRuleListItemLoader } from './components/AlertRuleListItemLoader';
+import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
 import {
   GrafanaRuleWithOrigin,
   PromRuleWithOrigin,
@@ -136,7 +136,7 @@ function FilterViewResults({ filterState }: FilterViewProps) {
               return (
                 <UnknownRuleListItem
                   key={key}
-                  ruleName="Unknown rule"
+                  ruleName={t('alerting.rule-list.unknown-rule-type', 'Unknown rule type')}
                   groupIdentifier={groupIdentifier}
                   ruleDefinition={rule}
                 />
@@ -145,8 +145,8 @@ function FilterViewResults({ filterState }: FilterViewProps) {
         })}
         {loading && (
           <>
-            <AlertRuleListItemLoader />
-            <AlertRuleListItemLoader />
+            <AlertRuleListItemSkeleton />
+            <AlertRuleListItemSkeleton />
           </>
         )}
       </ul>
