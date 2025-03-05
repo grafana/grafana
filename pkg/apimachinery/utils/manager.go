@@ -21,6 +21,7 @@ type ManagerProperties struct {
 
 // ManagerKind is the type of manager, which is responsible for managing the resource.
 // It can be a user or a tool or a generic API client.
+// +enum
 type ManagerKind string
 
 // Known values for ManagerKind.

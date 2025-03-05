@@ -58,12 +58,7 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context
 	if updater.UID == "" {
 		updater = creator
 	}
-	repo := ""
-	manager, ok := meta.GetManagerProperties()
-	if ok && manager.Kind == utils.ManagerKindRepo {
-		repo = manager.Identity
-	}
-
+	manager, _ := meta.GetManagerProperties()
 	return &folder.Folder{
 		UID:         uid,
 		Title:       title,
@@ -71,7 +66,7 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context
 		ID:          meta.GetDeprecatedInternalID(), // nolint:staticcheck
 		ParentUID:   meta.GetFolder(),
 		Version:     int(meta.GetGeneration()),
-		Repository:  repo,
+		ManagedBy:   manager.Kind,
 
 		URL:       url,
 		Created:   created,
