@@ -499,3 +499,23 @@ replace xorm.io/xorm => github.com/grafana/grafana/pkg/util/xorm v0.0.1
 
 // lock for mysql tsdb compat
 replace github.com/go-sql-driver/mysql => github.com/go-sql-driver/mysql v1.7.1
+
+// Pin Prometheus to a version before breaking change on UTF-8 characters in label names.
+replace github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.20.3
+
+replace github.com/prometheus/common => github.com/prometheus/common v0.55.0
+
+// Pin K8s packages to v0.31.1 - as upgrading them requires a big lift in breaking changes, and there are no known vulnerabilities.
+replace k8s.io/api => k8s.io/api v0.31.1
+
+replace k8s.io/apimachinery => k8s.io/apimachinery v0.31.1
+
+replace k8s.io/client-go => k8s.io/client-go v0.31.1
+
+replace k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340
+
+replace k8s.io/utils => k8s.io/utils v0.0.0-20240711033017-18e509b52bc8
+
+replace sigs.k8s.io/json => sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd
+
+replace sigs.k8s.io/structured-merge-diff/v4 => sigs.k8s.io/structured-merge-diff/v4 v4.4.1
