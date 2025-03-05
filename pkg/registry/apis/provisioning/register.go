@@ -400,7 +400,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 			b.repositoryLister = repoInformer.Lister()
 
-			exportWorder := export.NewExportWorker(
+			exportWorker := export.NewExportWorker(
 				b.client,
 				b.storageStatus,
 				b.secrets,
