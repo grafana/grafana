@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -46,7 +45,7 @@ type SearchHandler struct {
 }
 
 func NewSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyDashboardSearcher resource.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
-	searchClient := resource.NewSearchClient(dual, dashboard.DashboardResourceInfo.GroupResource(), resourceClient, legacyDashboardSearcher)
+	searchClient := resource.NewSearchClient(dual, dashboardv0alpha1.DashboardResourceInfo.GroupResource(), resourceClient, legacyDashboardSearcher)
 	return &SearchHandler{
 		client:   searchClient,
 		log:      log.New("grafana-apiserver.dashboards.search"),
@@ -265,7 +264,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	switch len(types) {
 	case 0:
 		// When no type specified, search for dashboards
-		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), dashboard.DASHBOARD_RESOURCE)
+		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
 		// Currently a search query is across folders and dashboards
 		if err == nil {
 			federate, err = asResourceKey(user.GetNamespace(), "dashboards")
@@ -435,7 +434,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		return sharedDashboards, nil
 	}
 
-	key, err := asResourceKey(user.GetNamespace(), dashboard.DASHBOARD_RESOURCE)
+	key, err := asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
 	if err != nil {
 		return sharedDashboards, err
 	}

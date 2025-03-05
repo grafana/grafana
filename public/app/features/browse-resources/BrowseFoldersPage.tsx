@@ -1,22 +1,13 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import React, { useState, useEffect } from 'react';
-import {
-  EmptyState,
-  LoadingPlaceholder,
-  InteractiveTable,
-  Column,
-  Select,
-  Icon,
-  Stack,
-  useStyles2,
-  FilterInput,
-} from '@grafana/ui';
 
-import { Page } from 'app/core/components/Page/Page';
-import { SearchHit, UnifiedSearcher } from '../search/service/unified';
-import { GrafanaSearcher } from '../search/service/types';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { EmptyState, LoadingPlaceholder, InteractiveTable, Column, Select, Icon, Stack, useStyles2, FilterInput } from '@grafana/ui';
 import { getAPINamespace } from 'app/api/utils';
+import { Page } from 'app/core/components/Page/Page';
+
+import { GrafanaSearcher } from '../search/service/types';
+import { SearchHit, UnifiedSearcher } from '../search/service/unified';
 
 interface Folder extends SearchHit {
   isExpanded?: boolean;
@@ -48,7 +39,7 @@ const searchURI = `/apis/search.grafana.app/v0alpha1/namespaces/${getAPINamespac
 const searcher = new UnifiedSearcher({} as GrafanaSearcher, searchURI);
 
 const FoldersPage: React.FC = () => {
-  const [folders, setFolders] = useState<Array<Folder>>([]);
+  const [folders, setFolders] = useState<Folder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -98,7 +89,7 @@ const FoldersPage: React.FC = () => {
     }
   };
 
-  const filterFolders = (folders: Array<SearchHit>) => {
+  const filterFolders = (folders: SearchHit[]) => {
     return folders.filter((folder) => {
       const matchesSearch = folder.title.toLowerCase().includes(searchTerm.toLowerCase());
       // const matchesType = !selectedType?.value || folder.type === selectedType.value;
@@ -109,9 +100,9 @@ const FoldersPage: React.FC = () => {
     });
   };
 
-  const groupFolders = (folders: Array<Folder>) => {
+  const groupFolders = (folders: Folder[]) => {
     if (groupBy.value === 'type') {
-      const groups: Record<string, Array<Folder>> = {};
+      const groups: Record<string, Folder[]> = {};
       typeOptions.forEach((type) => {
         if (type.value) {
           groups[type.value] = folders.filter((f) => f.resource === type.value);
@@ -132,7 +123,7 @@ const FoldersPage: React.FC = () => {
     );
   };
 
-  const renderGroupedTable = (groupName: string, groupFolders: Array<Folder>) => {
+  const renderGroupedTable = (groupName: string, groupFolders: Folder[]) => {
     const columns: Array<Column<Folder>> = groupBy.value === 'type' 
       ? [
           {
