@@ -99,6 +99,9 @@ func Convert_V1_to_V0(in *dashboardV1.Dashboard, out *dashboardV0.Dashboard, sco
 	out.ObjectMeta = in.ObjectMeta
 
 	out.Spec.Object = in.Spec.Object
+	if out.Spec.Object == nil {
+		out.Spec.Object = make(map[string]interface{})
+	}
 	out.Spec.Object["title"] = in.Spec.Title
 
 	out.Status = dashboardV0.DashboardStatus{
