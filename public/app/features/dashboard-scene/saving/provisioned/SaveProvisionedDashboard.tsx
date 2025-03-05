@@ -79,6 +79,10 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
         // Redirect to the provisioning preview pages
         navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}`);
       } else {
+        appEvents.publish({
+          type: AppEvents.alertSuccess.name,
+          payload: ['Dashboard changes saved'],
+        });
         dashboard.closeModal();
         locationService.partial({
           viewPanel: null,
