@@ -31,7 +31,7 @@ refs:
       destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/create-dashboard/
   alert-label:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/annotation-label/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/
 ---
