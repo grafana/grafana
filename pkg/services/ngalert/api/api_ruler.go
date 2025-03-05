@@ -266,9 +266,11 @@ func (srv RulerSrv) RouteGetAlertRuleGroups(c *contextmodel.ReqContext) response
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")
 	}
+
 	result := apimodels.NamespaceListResponse{
 		RuleGroups: make([]apimodels.RuleGroupSummary, 0),
 	}
+
 	if len(namespaceMap) == 0 {
 		srv.log.Debug("User has no access to any namespaces")
 		return response.JSON(http.StatusOK, result)
@@ -297,6 +299,7 @@ func (srv RulerSrv) RouteGetAlertRuleGroups(c *contextmodel.ReqContext) response
 		NamespaceUIDs: namespaceUIDs,
 	})
 	keys := make([]ngmodels.AlertRuleGroupKey, 0, len(configs))
+
 	// in-place sort by namespaceUID and ruleGroup
 	for config := range configs {
 		keys = append(keys, config)
@@ -315,6 +318,7 @@ func (srv RulerSrv) RouteGetAlertRuleGroups(c *contextmodel.ReqContext) response
 	if err != nil {
 		return errorToResponse(err)
 	}
+
 	for groupKey := range configs {
 		folder, ok := namespaceMap[groupKey.NamespaceUID]
 		if !ok {
@@ -323,6 +327,7 @@ func (srv RulerSrv) RouteGetAlertRuleGroups(c *contextmodel.ReqContext) response
 			srv.log.Error("Namespace not visible to the user", "user", id, "userNamespace", userNamespace, "namespace", groupKey.NamespaceUID)
 			continue
 		}
+
 		if namespaceListParams.NextToken != "" {
 			// skip until we find the next group
 			if !TokenGreaterThanOrEqual(GetRuleGroupNextToken(groupKey.NamespaceUID, groupKey.RuleGroup), namespaceListParams.NextToken) {
@@ -330,16 +335,19 @@ func (srv RulerSrv) RouteGetAlertRuleGroups(c *contextmodel.ReqContext) response
 			}
 			namespaceListParams.NextToken = ""
 		}
+
 		if len(result.RuleGroups) >= namespaceListParams.PageSize {
 			// hash the last group name and namespace uid for the next token
 			result.NextToken = GetRuleGroupNextToken(groupKey.NamespaceUID, groupKey.RuleGroup)
 			break
 		}
+
 		ruleGroupSummary := apimodels.RuleGroupSummary{
 			Name:      groupKey.RuleGroup,
 			File:      folder.Fullpath,
 			FolderUID: groupKey.NamespaceUID,
 		}
+
 		result.RuleGroups = append(result.RuleGroups, ruleGroupSummary)
 	}
 	return response.JSON(http.StatusOK, result)
