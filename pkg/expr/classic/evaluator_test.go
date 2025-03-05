@@ -148,6 +148,54 @@ func TestRangedEvaluator(t *testing.T) {
 			inputNumber: newNumber(util.Pointer(50.0)),
 			expected:    false,
 		},
+		{
+			name:        "value 100 is outside range 1, 100: false",
+			evaluator:   &rangedEvaluator{"outside_range", 1, 100},
+			inputNumber: newNumber(util.Pointer(100.)),
+			expected:    false,
+		},
+		{
+			name:        "value 1 is outside range 1, 100: false",
+			evaluator:   &rangedEvaluator{"outside_range", 1, 100},
+			inputNumber: newNumber(util.Pointer(1.)),
+			expected:    false,
+		},
+		{
+			name:        "value 100 is within range included 1, 100: true",
+			evaluator:   &rangedEvaluator{"within_range_included", 1, 100},
+			inputNumber: newNumber(util.Pointer(100.)),
+			expected:    true,
+		},
+		{
+			name:        "value 1 is within range included 1, 100: true",
+			evaluator:   &rangedEvaluator{"within_range_included", 1, 100},
+			inputNumber: newNumber(util.Pointer(1.)),
+			expected:    true,
+		},
+		{
+			name:        "value 100 is outside range included 1, 100: true",
+			evaluator:   &rangedEvaluator{"outside_range_included", 1, 100},
+			inputNumber: newNumber(util.Pointer(100.)),
+			expected:    true,
+		},
+		{
+			name:        "value 1 is outside range included 1, 100: true",
+			evaluator:   &rangedEvaluator{"outside_range_included", 1, 100},
+			inputNumber: newNumber(util.Pointer(1.)),
+			expected:    true,
+		},
+		{
+			name:        "unknown evaluator type returns false",
+			evaluator:   &rangedEvaluator{"", 1, 100},
+			inputNumber: newNumber(util.Pointer(1.)),
+			expected:    false,
+		},
+		{
+			name:        "nil number conversion returns false",
+			evaluator:   &rangedEvaluator{"", 1, 100},
+			inputNumber: newNumber(nil),
+			expected:    false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

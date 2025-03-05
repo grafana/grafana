@@ -2,6 +2,7 @@ package connectors
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -86,7 +87,12 @@ const testGHUserTeamsJSON = `[
   }
 ]`
 
-const testGHUserJSON = `{
+var (
+	testGHUserJSON           = fmt.Sprintf(testGHUserJSONTemplate, "octocat@github.com")
+	testGHUserEmptyEmailJSON = fmt.Sprintf(testGHUserJSONTemplate, "")
+)
+
+const testGHUserJSONTemplate = `{
   "login": "octocat",
   "id": 1,
   "node_id": "MDQ6VXNlcjE=",
@@ -109,7 +115,7 @@ const testGHUserJSON = `{
   "company": "GitHub",
   "blog": "https://github.com/blog",
   "location": "San Francisco",
-  "email": "octocat@github.com",
+  "email": "%s",
   "hireable": false,
   "bio": "There once was...",
   "twitter_username": "monatheoctocat",
@@ -132,6 +138,16 @@ const testGHUserJSON = `{
     "collaborators": 0
   }
 }`
+
+const testGHUserEmailJSON = `[{
+	"email": "octocat@github.com",
+	"primary": true,
+	"verified": true
+}]`
+
+const testGHOrgsJSON = `[{
+	"login": "github"
+}]`
 
 func TestSocialGitHub_UserInfo(t *testing.T) {
 	var boolPointer *bool
@@ -310,19 +326,44 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			userTeamsRawJSON:    testGHUserTeamsJSON,
 			wantErr:             true,
 		},
+		{
+			name:             "should fetch email and allowed orgs",
+			userRawJSON:      testGHUserEmptyEmailJSON,
+			userTeamsRawJSON: testGHUserTeamsJSON,
+			oAuthExtraInfo: map[string]string{
+				"allowed_organizations": "github",
+			},
+			want: &social.BasicUserInfo{
+				Id:       "1",
+				Name:     "monalisa octocat",
+				Email:    "octocat@github.com",
+				Login:    "octocat",
+				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
+				Groups:   []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-				writer.WriteHeader(http.StatusOK)
+				reqURL := request.URL.String()
+
 				// return JSON if matches user endpoint
-				if strings.HasSuffix(request.URL.String(), "/user") {
+				if strings.HasSuffix(reqURL, "/user") {
 					writer.Header().Set("Content-Type", "application/json")
 					_, err := writer.Write([]byte(tt.userRawJSON))
 					require.NoError(t, err)
-				} else if strings.HasSuffix(request.URL.String(), "/user/teams?per_page=100") {
+				} else if strings.HasSuffix(reqURL, "/user/teams?per_page=100") {
 					writer.Header().Set("Content-Type", "application/json")
 					_, err := writer.Write([]byte(tt.userTeamsRawJSON))
+					require.NoError(t, err)
+				} else if strings.HasSuffix(reqURL, "/emails") { // only called if email is empty
+					writer.Header().Set("Content-Type", "application/json")
+					_, err := writer.Write([]byte(testGHUserEmailJSON))
+					require.NoError(t, err)
+				} else if strings.HasSuffix(reqURL, "/orgs?per_page=100") {
+					writer.Header().Set("Content-Type", "application/json")
+					_, err := writer.Write([]byte(testGHOrgsJSON))
 					require.NoError(t, err)
 				} else {
 					writer.WriteHeader(http.StatusNotFound)
