@@ -76,7 +76,7 @@ const useConfig = ({ folderUid, managerKind, managerIdentity }: UseConfigArgs) =
     return null;
   }
   const instanceConfig = items?.find((repo) => repo.spec?.sync.target === 'instance');
-  if (!instanceConfig) {
+  if (instanceConfig) {
     return instanceConfig;
   }
 
