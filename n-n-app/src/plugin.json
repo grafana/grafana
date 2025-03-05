@@ -1,0 +1,56 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
+  "type": "app",
+  "name": "N",
+  "id": "n-n-app",
+  "info": {
+    "keywords": [
+      "app"
+    ],
+    "description": "",
+    "author": {
+      "name": "N"
+    },
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "screenshots": [],
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  },
+  "includes": [
+    {
+      "type": "page",
+      "name": "Home",
+      "path": "/a/%PLUGIN_ID%/home",
+      "addToNav": true,
+      "defaultNav": true
+    },
+    {
+      "type": "page",
+      "name": "Page with tabs",
+      "path": "/a/%PLUGIN_ID%/page-with-tabs",
+      "addToNav": true,
+      "defaultNav": false
+    },
+    {
+      "type": "page",
+      "name": "Page with drilldown",
+      "path": "/a/%PLUGIN_ID%/page-with-drilldown",
+      "addToNav": true,
+      "defaultNav": false
+    },
+    {
+      "type": "page",
+      "name": "Hello world",
+      "path": "/a/%PLUGIN_ID%/hello-world",
+      "addToNav": true,
+      "defaultNav": false
+    }
+  ],
+  "dependencies": {
+    "grafanaDependency": ">=10.4.0",
+    "plugins": []
+  }
+}

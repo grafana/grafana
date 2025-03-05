@@ -1,0 +1,12 @@
+apiVersion: 1
+
+apps:
+  - type: 'n-n-app'
+    org_id: 1
+    org_name: 'n'
+    disabled: false
+    jsonData:
+      apiUrl: http://default-url.com
+      isApiKeySet: true
+    secureJsonData:
+      apiKey: secret-key

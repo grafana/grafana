@@ -1,0 +1,6 @@
+apiVersion: 1
+
+datasources:
+  - name: gdev-testdata
+    isDefault: false
+    type: testdata
