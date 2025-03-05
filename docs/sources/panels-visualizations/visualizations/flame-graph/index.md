@@ -18,7 +18,7 @@ weight: 100
 
 # Flame graph
 
-Flame graphs let you visualize profiling data. Using this visualization, the profile can be represented as a flame graph, table, or both
+Flame graphs let you visualize [profiling](https://grafana.com/docs/pyroscope/latest/introduction/what-is-profiling/) data. Using this visualization, a [profile](https://grafana.com/docs/pyroscope/latest/view-and-analyze-profile-data/profiling-types/) can be represented as a [flame graph](#flame-graph-mode), [top table](#top-table-mode), or both.
 
 ![<Flame graph>](/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1.png)
 
