@@ -43,7 +43,7 @@ jobs:
             echo "PR changed files:"
             files=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files --jq '.[].filename')
             echo "$files"
-            if echo "$files" | grep -E "(pkg/|go\.|\.github/workflows/pr-test-backend\.yml)"; then
+            if echo "$files" | grep -E "(pkg/|go\.|\.github/workflows/pr-backend-unit-tests\.yml)"; then
               echo "Coverage will be generated: true (PR changes)"
               echo "generate=true" >> $GITHUB_OUTPUT
             else
@@ -51,7 +51,7 @@ jobs:
               echo "generate=false" >> $GITHUB_OUTPUT
             fi
           elif [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]] && \
-               [[ "${{ github.event.head_commit.modified }}" =~ (pkg/|go\.|\.github/workflows/pr-test-backend\.yml) ]]; then
+               [[ "${{ github.event.head_commit.modified }}" =~ (pkg/|go\.|\.github/workflows/pr-backend-unit-tests\.yml) ]]; then
             echo "Coverage will be generated: true (push to main)"
             echo "generate=true" >> $GITHUB_OUTPUT
           else
