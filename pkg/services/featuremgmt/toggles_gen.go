@@ -950,4 +950,8 @@ const (
 	// FlagAssetSriChecks
 	// Enables SRI checks for Grafana JavaScript assets
 	FlagAssetSriChecks = "assetSriChecks"
+
+	// FlagAlertRuleRestore
+	// Enables the alert rule restore feature
+	FlagAlertRuleRestore = "alertRuleRestore"
 )
