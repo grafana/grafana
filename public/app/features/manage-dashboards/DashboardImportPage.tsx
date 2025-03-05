@@ -116,8 +116,8 @@ class UnthemedDashboardImport extends PureComponent<Props, State> {
     // TODO: replace this with dashboard.kind check - this is just for dev purposes
     if (dashboard.elements) {
       console.log('V2 dashboard detected');
-      processImportedDashboard(dashboard).then(() => {
-        this.setState({ v2Dashboard: dashboard });
+      processImportedDashboard(dashboard).then((processedDashboard) => {
+        this.setState({ v2Dashboard: processedDashboard });
         dispatch(setLoadingState(LoadingState.Done));
       });
       return;

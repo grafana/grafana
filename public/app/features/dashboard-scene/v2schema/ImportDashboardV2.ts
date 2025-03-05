@@ -12,10 +12,9 @@ import { addLibraryPanel, getLibraryPanel } from 'app/features/library-panels/st
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 export async function processImportedDashboard(dashboard: DashboardV2Spec) {
-  console.log('Processing imported dashboard');
   for (const element of Object.values(dashboard.elements)) {
     if (element.kind === 'Panel') {
-      await processPanel(element.spec);
+      processPanel(element.spec);
     } else if (element.kind === 'LibraryPanel') {
       await processLibraryPanel(element.spec);
     }
@@ -26,9 +25,10 @@ export async function processImportedDashboard(dashboard: DashboardV2Spec) {
       processVariables(variable);
     }
   });
-}
 
-export function processPanel(panel: PanelSpec) {
+  return dashboard;
+}
+function processPanel(panel: PanelSpec) {
   // check if the type exists in the registry
   const panelType = config.panels[panel.vizConfig.kind];
 
@@ -36,14 +36,14 @@ export function processPanel(panel: PanelSpec) {
     throw new Error(`Panel type ${panel.vizConfig.kind} not found`);
   }
 
-  panel.data.spec.queries.forEach((query) => {
-    resolveDatasource(query.spec);
+  panel.data.spec.queries.forEach(async (query) => {
+    await resolveDatasource(query.spec);
   });
 
   return panel;
 }
 
-export async function processLibraryPanel(panel: LibraryPanelSpec) {
+async function processLibraryPanel(panel: LibraryPanelSpec) {
   const libPanel = await getLibraryPanel(panel.libraryPanel.uid, true);
 
   if (libPanel === undefined) {
@@ -55,7 +55,7 @@ export async function processLibraryPanel(panel: LibraryPanelSpec) {
   return panel;
 }
 
-export async function resolveDatasource(
+async function resolveDatasource(
   querySpec: AnnotationQueryKind['spec'] | QueryVariableKind['spec'] | PanelQueryKind['spec']
 ) {
   const datasource = querySpec.datasource || querySpec.query?.kind;
