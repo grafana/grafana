@@ -247,8 +247,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
       this.apiPreviewVersion,
       // Only use the first query, as the metric namespaces should be the same for all queries
       this.replaceSingleTemplateVariables(query),
-      this.templateSrv,
       globalRegion,
+      this.templateSrv,
       region
     );
     return this.getResource(url)
