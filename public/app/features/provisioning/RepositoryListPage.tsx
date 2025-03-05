@@ -15,6 +15,8 @@ import {
   Text,
   Alert,
   ConfirmModal,
+  Tab,
+  TabsBar,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -25,6 +27,7 @@ import { SyncRepository } from './SyncRepository';
 import { Repository, ResourceCount, useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from './api';
 import { NEW_URL, PROVISIONING_URL } from './constants';
 import { useRepositoryList } from './hooks';
+import { FeatureList } from './Setup/FeatureList';
 
 const appEvents = getAppEvents();
 
@@ -33,6 +36,7 @@ export default function RepositoryListPage() {
   const settings = useGetFrontendSettingsQuery();
   const [deleteAll, deleteAllResult] = useDeletecollectionRepositoryMutation();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('repositories');
 
   useEffect(() => {
     if (deleteAllResult.isSuccess) {
@@ -50,6 +54,17 @@ export default function RepositoryListPage() {
   const onConfirmDelete = () => {
     deleteAll({ deleteOptions: {} });
     setShowDeleteModal(false);
+  };
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'repositories':
+        return <RepositoryListPageContent items={items} />;
+      case 'features':
+        return <FeatureList />;
+      default:
+        return null;
+    }
   };
 
   return (
@@ -75,7 +90,17 @@ export default function RepositoryListPage() {
           onConfirm={onConfirmDelete}
           onDismiss={() => setShowDeleteModal(false)}
         />
-        <RepositoryListPageContent items={items} />
+        <Stack direction="column" gap={2}>
+          <TabsBar>
+            <Tab
+              label="Repositories"
+              active={activeTab === 'repositories'}
+              onChangeTab={() => setActiveTab('repositories')}
+            />
+            <Tab label="Features" active={activeTab === 'features'} onChangeTab={() => setActiveTab('features')} />
+          </TabsBar>
+          {renderTabContent()}
+        </Stack>
       </Page.Contents>
     </Page>
   );

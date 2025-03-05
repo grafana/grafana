@@ -60,6 +60,18 @@ func TestIntegrationCreate(t *testing.T) {
 		require.Error(t, err)
 	})
 
+	t.Run("creating a folder with itself as a parent should fail", func(t *testing.T) {
+		uid := util.GenerateShortUID()
+		_, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
+			Title:       folderTitle,
+			OrgID:       orgID,
+			ParentUID:   uid,
+			Description: folderDsc,
+			UID:         uid,
+		})
+		require.ErrorIs(t, err, folder.ErrFolderCannotBeParentOfItself)
+	})
+
 	t.Run("creating a folder without providing a parent should default to the empty parent folder", func(t *testing.T) {
 		uid := util.GenerateShortUID()
 		f, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{

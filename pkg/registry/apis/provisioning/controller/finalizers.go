@@ -54,9 +54,10 @@ func (f *finalizer) process(ctx context.Context,
 			err := f.processExistingItems(ctx, repo.Config(),
 				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
 					_, err := client.Patch(ctx, item.Name, types.JSONPatchType, []byte(`[
-						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeyRepoName+`" },
-						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeyRepoPath+`" },
-						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeyRepoHash+`" }
+						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeyManagerKind+`" },
+						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeyManagerIdentity+`" },
+						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeySourcePath+`" },
+						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeySourceChecksum+`" }
 					]`), v1.PatchOptions{})
 					return err
 				})

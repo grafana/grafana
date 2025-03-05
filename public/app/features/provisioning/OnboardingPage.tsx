@@ -5,7 +5,7 @@ import { EmptyState, LinkButton, Alert, Stack, Text, Button } from '@grafana/ui'
 import { Page } from 'app/core/components/Page/Page';
 
 import { useGetFrontendSettingsQuery } from './api';
-import { NEW_URL, MIGRATE_URL } from './constants';
+import { MIGRATE_URL } from './constants';
 import { FeatureList } from './Setup/FeatureList';
 
 export default function OnboardingPage({ legacyStorage }: { legacyStorage?: boolean }) {
@@ -13,12 +13,8 @@ export default function OnboardingPage({ legacyStorage }: { legacyStorage?: bool
   const navigate = useNavigate();
 
   const onClick = async () => {
-    if (legacyStorage) {
-      await settingsQuery.refetch();
-      navigate(MIGRATE_URL);
-    } else {
-      navigate(NEW_URL);
-    }
+    await settingsQuery.refetch(); // makes sure we do not have 2 repos targeting the root!
+    navigate(MIGRATE_URL);
   };
 
   return (
