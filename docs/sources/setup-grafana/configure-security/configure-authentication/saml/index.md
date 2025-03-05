@@ -92,7 +92,7 @@ The SAML SSO standard uses asymmetric encryption to exchange information between
 
 > **Note:** Directly supplying a certificate and private key to Grafana is optional. Commonly, the certificate and key are embedded in the IDP metadata (see that configuration step below), and refreshed as needed by Grafana automatically. This can save you the work of manually rotating your certs and keys whenever they expire.
 
-Whether supplying certificate and key directly or via idp_metadata: loading certs into Grafana helps ensure that Grafana is connecting to a verified endpoint (for example in case of MITM takeover scenarios).
+Whether supplying certificate and key directly or via idp_metadata: loading certs into Grafana helps ensure that Grafana connects to a verified endpoint (for example, in case of MITM takeover scenarios).
 
 If you are directly supplying the certificate and key, also note that Grafana supports two ways of specifying both the `certificate` and `private_key`:
 
