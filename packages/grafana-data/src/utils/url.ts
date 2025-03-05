@@ -8,7 +8,6 @@ import { RawTimeRange } from '../types/time';
 
 export const variableRegex = /\$(\w+)|\[\[(\w+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}/g;
 
-
 /**
  * Type to represent the value of a single query variable.
  *

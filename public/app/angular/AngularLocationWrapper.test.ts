@@ -86,7 +86,7 @@ describe('AngularLocationWrapper', () => {
   describe('search', () => {
     it('should accept string', function () {
       locationService.push('/path/b');
-      wrapper.search('x=y&c');
+      wrapper.search('x=y&c=true');
       expect(wrapper.search()).toEqual({ x: 'y', c: true });
       expect(wrapper.absUrl()).toBe('http://www.domain.com:9877/path/b?x=y&c');
     });
