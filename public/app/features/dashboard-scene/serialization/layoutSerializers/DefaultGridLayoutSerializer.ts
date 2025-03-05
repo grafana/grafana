@@ -32,14 +32,9 @@ import { RowRepeaterBehavior } from '../../scene/layout-default/RowRepeaterBehav
 import { RowActions } from '../../scene/layout-default/row-actions/RowActions';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { DashboardLayoutManager, LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
-import { isClonedKey } from '../../utils/clone';
+import { getOriginalKey, isClonedKey } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import {
-  calculateGridItemDimensions,
-  getPanelIdForVizPanel,
-  getVizPanelKeyForPanelId,
-  isLibraryPanel,
-} from '../../utils/utils';
+import { calculateGridItemDimensions, getVizPanelKeyForPanelId, isLibraryPanel } from '../../utils/utils';
 import { GRID_ROW_HEIGHT } from '../const';
 
 import { buildVizPanel } from './utils';
@@ -149,7 +144,7 @@ function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, yOverride?: n
   const repeatVar = gridItem_.state.variableName;
 
   // For serialization we should retrieve the original element key
-  let elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(gridItem.state.body);
+  let elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(gridItem_.state.body);
 
   elementGridItem = {
     kind: 'GridLayoutItem',
@@ -273,7 +268,7 @@ function createSceneGridLayoutForItems(layout: GridLayoutKind, elements: Record<
       }
     } else if (element.kind === 'GridLayoutRow') {
       const children = element.spec.elements.map((gridElement) => {
-        const panel = elements[gridElement.spec.element.name];
+        const panel = elements[getOriginalKey(gridElement.spec.element.name)];
         if (panel.kind === 'Panel') {
           return buildGridItem(gridElement.spec, panel, element.spec.y + GRID_ROW_HEIGHT + gridElement.spec.y);
         } else {
