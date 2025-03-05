@@ -305,7 +305,8 @@ func (db *mysql) TableCheckSql(tableName string) (string, []any) {
 func (db *mysql) GetColumns(tableName string) ([]string, map[string]*core.Column, error) {
 	args := []any{db.DbName, tableName}
 	s := "SELECT `COLUMN_NAME`, `IS_NULLABLE`, `COLUMN_DEFAULT`, `COLUMN_TYPE`," +
-		" `COLUMN_KEY`, `EXTRA`,`COLUMN_COMMENT` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ?"
+		" `COLUMN_KEY`, `EXTRA`,`COLUMN_COMMENT` FROM `INFORMATION_SCHEMA`.`COLUMNS`" +
+		" WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ? ORDER BY ORDINAL_POSITION ASC"
 	db.LogSQL(s, args)
 
 	rows, err := db.DB().Query(s, args...)
