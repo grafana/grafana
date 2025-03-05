@@ -252,17 +252,17 @@ export interface LinkService {
 
 export class LinkSrv implements LinkService {
   getLinkUrl(link: DashboardLink) {
-    let params: { [key: string]: any } = {};
+    let params: string[] = [];
 
     if (link.keepTime) {
-      params[`\$${DataLinkBuiltInVars.keepTime}`] = true;
+      params.push(`\$${DataLinkBuiltInVars.keepTime}`);
     }
 
     if (link.includeVars) {
-      params[`\$${DataLinkBuiltInVars.includeVars}`] = true;
+      params.push(`\$${DataLinkBuiltInVars.includeVars}`);
     }
 
-    let url = locationUtil.assureBaseUrl(urlUtil.appendQueryToUrl(link.url || '', urlUtil.toUrlParams(params)));
+    let url = locationUtil.assureBaseUrl(urlUtil.appendQueryToUrl(link.url || '', params.join("&")));
     url = getTemplateSrv().replace(url);
 
     return getConfig().disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);

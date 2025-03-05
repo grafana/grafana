@@ -6,8 +6,6 @@ import { isDateTime } from '../datetime/moment_wrapper';
 import { ExploreUrlState, URLRange } from '../types/explore';
 import { RawTimeRange } from '../types/time';
 
-export const variableRegex = /\$(\w+)|\[\[(\w+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}/g;
-
 /**
  * Type to represent the value of a single query variable.
  *
@@ -62,11 +60,7 @@ function toUrlParams(a: any, encodeAsAngularJS = true) {
 
   const add = (k: string, v: any) => {
     v = typeof v === 'function' ? v() : v === null ? '' : v === undefined ? '' : v;
-    if (variableRegex.test(k) && v === true) {
-      s[s.length] = encodingFunction(k, true);
-    } else {
-      s[s.length] = encodingFunction(k, true) + '=' + encodingFunction(v, true);
-    }
+    s[s.length] = encodingFunction(k, true) + '=' + encodingFunction(v, true);
   };
 
   const buildParams = (prefix: string, obj: any) => {
