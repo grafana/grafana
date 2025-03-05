@@ -174,6 +174,9 @@ export const trackRuleListNavigation = async (
     user_id: contextSrv.user.id,
   }
 ) => {
+  if (props.user_id == 0) {
+    return;
+  }
   const isNew = await isNewUser();
   if (isNew) {
     return;
