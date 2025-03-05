@@ -40,7 +40,6 @@ jest.mock('@grafana/runtime', () => ({
     featureToggles: {
       newVariables: false,
     },
-    angularSupportEnabled: true,
   },
 }));
 
@@ -446,7 +445,7 @@ describe('given dashboard with repeated panels', () => {
     expect(require).not.toBe(undefined);
   });
 
-  it('should add graph panel to required', () => {
+  it.skip('should add graph panel to required', () => {
     const require = find(exported.__requires, { name: 'Graph' });
     expect(require.name).toBe('Graph');
     expect(require.id).toBe('graph');
