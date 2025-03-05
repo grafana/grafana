@@ -15,7 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/aws/aws-sdk-go/service/marketplacecatalog"
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/client"
 	"github.com/urfave/cli/v2"
@@ -60,9 +60,9 @@ type AwsMarketplacePublishingService struct {
 }
 
 type AwsMarketplaceDocker interface {
-	ImagePull(ctx context.Context, refStr string, options types.ImagePullOptions) (io.ReadCloser, error)
+	ImagePull(ctx context.Context, refStr string, options image.PullOptions) (io.ReadCloser, error)
 	ImageTag(ctx context.Context, source string, target string) error
-	ImagePush(ctx context.Context, image string, options types.ImagePushOptions) (io.ReadCloser, error)
+	ImagePush(ctx context.Context, image string, options image.PushOptions) (io.ReadCloser, error)
 }
 
 type AwsMarketplaceRegistry interface {
@@ -172,8 +172,8 @@ func (s *AwsMarketplacePublishingService) Login(ctx context.Context) error {
 	return err
 }
 
-func (s *AwsMarketplacePublishingService) PullImage(ctx context.Context, image string, version string) error {
-	reader, err := s.docker.ImagePull(ctx, fmt.Sprintf("%s:%s", image, version), types.ImagePullOptions{
+func (s *AwsMarketplacePublishingService) PullImage(ctx context.Context, img string, version string) error {
+	reader, err := s.docker.ImagePull(ctx, fmt.Sprintf("%s:%s", img, version), image.PullOptions{
 		Platform: imagePlatform,
 	})
 	if err != nil {
@@ -201,7 +201,7 @@ func (s *AwsMarketplacePublishingService) TagImage(ctx context.Context, image st
 }
 
 func (s *AwsMarketplacePublishingService) PushToMarketplace(ctx context.Context, repo string, version string) error {
-	reader, err := s.docker.ImagePush(ctx, fmt.Sprintf("%s/%s:%s", marketplaceRegistryUrl, repo, version), types.ImagePushOptions{
+	reader, err := s.docker.ImagePush(ctx, fmt.Sprintf("%s/%s:%s", marketplaceRegistryUrl, repo, version), image.PushOptions{
 		RegistryAuth: s.auth,
 	})
 	if err != nil {
