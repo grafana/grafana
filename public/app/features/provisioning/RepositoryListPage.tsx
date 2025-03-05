@@ -27,6 +27,7 @@ import { Repository, ResourceCount, useDeletecollectionRepositoryMutation, useGe
 import { PROVISIONING_URL, CONNECT_URL } from './constants';
 import { useRepositoryList } from './hooks';
 import { FeatureList } from './Setup/FeatureList';
+import { checkSyncSettings } from './utils';
 
 const appEvents = getAppEvents();
 
@@ -108,14 +109,18 @@ export default function RepositoryListPage() {
 function RepositoryListPageContent({ items }: { items: Repository[] }) {
   const [query, setQuery] = useState('');
   const filteredItems = items.filter((item) => item.metadata?.name?.includes(query));
+  const settings = useGetFrontendSettingsQuery();
+  const [instanceConnected] = checkSyncSettings(settings.data);
 
   return (
     <Stack direction={'column'} gap={3}>
       <Stack gap={2}>
         <FilterInput placeholder="Search" value={query} onChange={setQuery} />
-        <LinkButton href={CONNECT_URL} variant="primary" icon={'plus'}>
-          Connect to repository
-        </LinkButton>
+        {!instanceConnected && (
+          <LinkButton href={CONNECT_URL} variant="primary" icon={'plus'}>
+            Connect to repository
+          </LinkButton>
+        )}
       </Stack>
       <Stack direction={'column'}>
         {!!filteredItems.length ? (
