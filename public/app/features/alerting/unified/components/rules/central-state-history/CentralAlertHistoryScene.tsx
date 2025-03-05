@@ -193,7 +193,7 @@ function useGetScene(panelProps?: PanelProps<AlertHistoryOptions> | undefined) {
         children: [
           getEventsScenesFlexItem(),
           new SceneFlexItem({
-            body: new HistoryEventsListObject({}),
+            body: new HistoryEventsListObject({ fromPanel: true }),
           }),
         ],
       }),
