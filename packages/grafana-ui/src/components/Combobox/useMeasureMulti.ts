@@ -3,11 +3,12 @@ import { useMeasure } from 'react-use';
 
 import { measureText } from '../../utils';
 
-import { ComboboxOption } from './Combobox';
+import { ComboboxOption } from './types';
 
 const FONT_SIZE = 12;
 const EXTRA_PILL_SIZE = 50;
 const EXTRA_PILL_DISABLED_SIZE = 10;
+export const MAX_SHOWN_ITEMS = 15;
 
 /**
  * Updates the number of shown items in the multi combobox based on the available width.
@@ -34,8 +35,8 @@ export function useMeasureMulti<T extends string | number>(
         (disabled ? EXTRA_PILL_DISABLED_SIZE : EXTRA_PILL_SIZE);
       if (currWidth > maxWidth) {
         // If there is no space for that item, show the current number of items,
-        // but always show at least 1 item
-        setShownItems(i || 1);
+        // but always show at least 1 item. Cap at maximum number of items.
+        setShownItems(Math.min(i, MAX_SHOWN_ITEMS) || 1);
         break;
       }
       if (i === selectedItems.length - 1) {

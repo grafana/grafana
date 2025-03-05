@@ -3,10 +3,13 @@ package elasticsearch
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net/url"
 	"regexp"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -81,6 +84,13 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	if err != nil {
 		if backend.IsDownstreamHTTPError(err) {
 			err = backend.DownstreamError(err)
+		}
+		var urlErr *url.Error
+		if errors.As(err, &urlErr) {
+			// Unsupported protocol scheme is a common error when the URL is not valid and should be treated as a downstream error
+			if urlErr.Err != nil && strings.HasPrefix(urlErr.Err.Error(), "unsupported protocol scheme") {
+				err = backend.DownstreamError(err)
+			}
 		}
 		response.Responses[e.dataQueries[0].RefID] = backend.ErrorResponseWithErrorSource(err)
 		return response, nil
@@ -225,7 +235,7 @@ func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFro
 
 func addHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg) es.AggBuilder {
 	aggBuilder.Histogram(bucketAgg.ID, bucketAgg.Field, func(a *es.HistogramAgg, b es.AggBuilder) {
-		a.Interval = stringToIntWithDefaultValue(bucketAgg.Settings.Get("interval").MustString(), 1000)
+		a.Interval = stringToFloatWithDefaultValue(bucketAgg.Settings.Get("interval").MustString(), 1000)
 		a.MinDocCount = bucketAgg.Settings.Get("min_doc_count").MustInt(0)
 
 		if missing, err := bucketAgg.Settings.Get("missing").Int(); err == nil {
@@ -510,6 +520,18 @@ func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, from, to int64
 
 func stringToIntWithDefaultValue(valueStr string, defaultValue int) int {
 	value, err := strconv.Atoi(valueStr)
+	if err != nil {
+		value = defaultValue
+	}
+	// In our case, 0 is not a valid value and in this case we default to defaultValue
+	if value == 0 {
+		value = defaultValue
+	}
+	return value
+}
+
+func stringToFloatWithDefaultValue(valueStr string, defaultValue float64) float64 {
+	value, err := strconv.ParseFloat(valueStr, 64)
 	if err != nil {
 		value = defaultValue
 	}

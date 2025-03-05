@@ -1,17 +1,19 @@
-import { css, cx } from '@emotion/css';
-import { useMemo, useRef } from 'react';
+import { ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
-import { SceneObjectState, SceneObjectBase, SceneComponentProps, sceneGraph } from '@grafana/scenes';
-import { Button, Icon, Input, RadioButtonGroup, Switch, useStyles2 } from '@grafana/ui';
+import { SceneObjectState, SceneObjectBase, sceneGraph, VariableDependencyConfig, SceneObject } from '@grafana/scenes';
+import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
-import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { getDashboardSceneFor, getDefaultVizPanel } from '../../utils/utils';
-import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
-import { DashboardLayoutManager, EditableDashboardElement, LayoutParent } from '../types';
+import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
+import { BulkActionElement } from '../types/BulkActionElement';
+import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
+import { LayoutParent } from '../types/LayoutParent';
 
+import { getEditOptions, renderActions } from './RowItemEditor';
+import { RowItemRenderer } from './RowItemRenderer';
+import { RowItemRepeaterBehavior } from './RowItemRepeaterBehavior';
+import { RowItems } from './RowItems';
 import { RowsLayoutManager } from './RowsLayoutManager';
 
 export interface RowItemState extends SceneObjectState {
@@ -22,221 +24,93 @@ export interface RowItemState extends SceneObjectState {
   height?: 'expand' | 'min';
 }
 
-export class RowItem extends SceneObjectBase<RowItemState> implements LayoutParent, EditableDashboardElement {
-  public isEditableDashboardElement: true = true;
+export class RowItem
+  extends SceneObjectBase<RowItemState>
+  implements LayoutParent, BulkActionElement, EditableDashboardElement
+{
+  public static Component = RowItemRenderer;
 
-  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-    const row = this;
+  protected _variableDependency = new VariableDependencyConfig(this, {
+    statePaths: ['title'],
+  });
 
-    const rowOptions = useMemo(() => {
-      return new OptionsPaneCategoryDescriptor({
-        title: 'Row options',
-        id: 'row-options',
-        isOpenDefault: true,
-      })
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: 'Title',
-            render: () => <RowTitleInput row={row} />,
-          })
-        )
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: 'Height',
-            render: () => <RowHeightSelect row={row} />,
-          })
-        )
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: 'Hide row header',
-            render: () => <RowHeaderSwitch row={row} />,
-          })
-        );
-    }, [row]);
+  public readonly isEditableDashboardElement = true;
 
-    const { layout } = this.useState();
-    const layoutOptions = useLayoutCategory(layout);
-
-    return [rowOptions, layoutOptions];
+  public constructor(state?: Partial<RowItemState>) {
+    super({
+      ...state,
+      title: state?.title ?? t('dashboard.rows-layout.row.new', 'New row'),
+      layout: state?.layout ?? ResponsiveGridLayoutManager.createEmpty(),
+    });
   }
 
-  public getTypeName(): string {
-    return 'Row';
-  }
-
-  public onDelete = () => {
-    const layout = sceneGraph.getAncestor(this, RowsLayoutManager);
-    layout.removeRow(this);
-  };
-
-  public renderActions(): React.ReactNode {
-    return (
-      <>
-        <Button size="sm" variant="secondary">
-          Copy
-        </Button>
-        <Button size="sm" variant="primary" onClick={this.onAddPanel} fill="outline">
-          Add panel
-        </Button>
-        <Button size="sm" variant="destructive" fill="outline" onClick={this.onDelete}>
-          Delete
-        </Button>
-      </>
-    );
+  public getEditableElementInfo(): EditableDashboardElementInfo {
+    return { typeId: 'row', icon: 'line-alt', name: sceneGraph.interpolate(this, this.state.title, undefined, 'text') };
   }
 
   public getLayout(): DashboardLayoutManager {
     return this.state.layout;
   }
 
-  public switchLayout(layout: DashboardLayoutManager): void {
+  public switchLayout(layout: DashboardLayoutManager) {
     this.setState({ layout });
   }
 
-  public onCollapseToggle = () => {
-    this.setState({ isCollapsed: !this.state.isCollapsed });
-  };
+  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
+    return getEditOptions(this);
+  }
 
-  public onAddPanel = () => {
-    const vizPanel = getDefaultVizPanel();
-    this.state.layout.addPanel(vizPanel);
-  };
+  public renderActions(): ReactNode {
+    return renderActions(this);
+  }
 
-  public onEdit = () => {
-    const dashboard = getDashboardSceneFor(this);
-    dashboard.state.editPane.selectObject(this);
-  };
+  public onDelete() {
+    const layout = sceneGraph.getAncestor(this, RowsLayoutManager);
+    layout.removeRow(this);
+  }
 
-  public static Component = ({ model }: SceneComponentProps<RowItem>) => {
-    const { layout, title, isCollapsed, height = 'expand' } = model.useState();
-    const { isEditing } = getDashboardSceneFor(model).useState();
-    const styles = useStyles2(getStyles);
-    const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
-    const ref = useRef<HTMLDivElement>(null);
-    const shouldGrow = !isCollapsed && height === 'expand';
+  public createMultiSelectedElement(items: SceneObject[]): RowItems {
+    return new RowItems(items.filter((item) => item instanceof RowItem));
+  }
 
-    return (
-      <div
-        className={cx(styles.wrapper, isCollapsed && styles.wrapperCollapsed, shouldGrow && styles.wrapperGrow)}
-        ref={ref}
-      >
-        <div className={styles.rowHeader}>
-          <button
-            onClick={model.onCollapseToggle}
-            className={styles.rowTitleButton}
-            aria-label={isCollapsed ? 'Expand row' : 'Collapse row'}
-            data-testid={selectors.components.DashboardRow.title(titleInterpolated)}
-          >
-            <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />
-            <span className={styles.rowTitle} role="heading">
-              {titleInterpolated}
-            </span>
-          </button>
-          {isEditing && <Button icon="pen" variant="secondary" size="sm" fill="text" onClick={() => model.onEdit()} />}
-        </div>
-        {!isCollapsed && <layout.Component model={layout} />}
-      </div>
-    );
-  };
-}
+  public getRepeatVariable(): string | undefined {
+    return this._getRepeatBehavior()?.state.variableName;
+  }
 
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    rowHeader: css({
-      width: '100%',
-      display: 'flex',
-      gap: theme.spacing(1),
-      padding: theme.spacing(0, 0, 0.5, 0),
-      margin: theme.spacing(0, 0, 1, 0),
-      alignItems: 'center',
+  public onChangeTitle(title: string) {
+    this.setState({ title });
+  }
 
-      '&:hover, &:focus-within': {
-        '& > div': {
-          opacity: 1,
-        },
-      },
+  public onHeaderHiddenToggle(isHeaderHidden = !this.state.isHeaderHidden) {
+    this.setState({ isHeaderHidden });
+  }
 
-      '& > div': {
-        marginBottom: 0,
-        marginRight: theme.spacing(1),
-      },
-    }),
-    rowTitleButton: css({
-      display: 'flex',
-      alignItems: 'center',
-      cursor: 'pointer',
-      background: 'transparent',
-      border: 'none',
-      minWidth: 0,
-      gap: theme.spacing(1),
-    }),
-    rowTitle: css({
-      fontSize: theme.typography.h5.fontSize,
-      fontWeight: theme.typography.fontWeightMedium,
-      whiteSpace: 'nowrap',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      maxWidth: '100%',
-      flexGrow: 1,
-      minWidth: 0,
-    }),
-    wrapper: css({
-      display: 'flex',
-      flexDirection: 'column',
-      width: '100%',
-    }),
-    wrapperGrow: css({
-      flexGrow: 1,
-    }),
-    wrapperCollapsed: css({
-      flexGrow: 0,
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
-    }),
-    rowActions: css({
-      display: 'flex',
-      opacity: 0,
-    }),
-  };
-}
+  public onChangeHeight(height: 'expand' | 'min') {
+    this.setState({ height });
+  }
 
-export function RowTitleInput({ row }: { row: RowItem }) {
-  const { title } = row.useState();
+  public onChangeRepeat(repeat: string | undefined) {
+    let repeatBehavior = this._getRepeatBehavior();
 
-  return <Input value={title} onChange={(e) => row.setState({ title: e.currentTarget.value })} />;
-}
-
-export function RowHeaderSwitch({ row }: { row: RowItem }) {
-  const { isHeaderHidden } = row.useState();
-
-  return (
-    <Switch
-      value={isHeaderHidden}
-      onChange={() => {
-        row.setState({
-          isHeaderHidden: !row.state.isHeaderHidden,
-        });
-      }}
-    />
-  );
-}
-
-export function RowHeightSelect({ row }: { row: RowItem }) {
-  const { height = 'expand' } = row.useState();
-
-  const options = [
-    { label: 'Expand', value: 'expand' as const },
-    { label: 'Min', value: 'min' as const },
-  ];
-
-  return (
-    <RadioButtonGroup
-      options={options}
-      value={height}
-      onChange={(option) =>
-        row.setState({
-          height: option,
-        })
+    if (repeat) {
+      // Remove repeat behavior if it exists to trigger repeat when adding new one
+      if (repeatBehavior) {
+        repeatBehavior.removeBehavior();
       }
-    />
-  );
+
+      repeatBehavior = new RowItemRepeaterBehavior({ variableName: repeat });
+      this.setState({ $behaviors: [...(this.state.$behaviors ?? []), repeatBehavior] });
+      repeatBehavior.activate();
+    } else {
+      repeatBehavior?.removeBehavior();
+    }
+  }
+
+  public onCollapseToggle() {
+    this.setState({ isCollapsed: !this.state.isCollapsed });
+  }
+
+  private _getRepeatBehavior(): RowItemRepeaterBehavior | undefined {
+    return this.state.$behaviors?.find((b) => b instanceof RowItemRepeaterBehavior);
+  }
 }

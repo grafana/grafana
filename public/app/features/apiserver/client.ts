@@ -1,5 +1,9 @@
-import { config, getBackendSrv } from '@grafana/runtime';
+import { Observable, from, retry, catchError, filter, map, mergeMap } from 'rxjs';
+
+import { BackendSrvRequest, config, getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
+
+import { getAPINamespace } from '../../api/utils';
 
 import {
   ListOptions,
@@ -11,8 +15,10 @@ import {
   ResourceList,
   ResourceClient,
   ObjectMeta,
+  WatchOptions,
   K8sAPIGroupList,
   AnnoKeySavedFromUI,
+  ResourceEvent,
 } from './types';
 
 export interface GroupVersionResource {
@@ -25,13 +31,59 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
   readonly url: string;
 
   constructor(gvr: GroupVersionResource, namespaced = true) {
-    const ns = namespaced ? `namespaces/${config.namespace}/` : '';
+    const ns = namespaced ? `namespaces/${getAPINamespace()}/` : '';
 
     this.url = `/apis/${gvr.group}/${gvr.version}/${ns}${gvr.resource}`;
   }
 
   public async get(name: string): Promise<Resource<T, S, K>> {
     return getBackendSrv().get<Resource<T, S, K>>(`${this.url}/${name}`);
+  }
+
+  public watch(
+    params?: WatchOptions,
+    config?: Pick<BackendSrvRequest, 'data' | 'method'>
+  ): Observable<ResourceEvent<T, S, K>> {
+    const decoder = new TextDecoder();
+    const { name, ...rest } = params ?? {}; // name needs to be added to fieldSelector
+    const requestParams = {
+      ...rest,
+      watch: true,
+      labelSelector: this.parseListOptionsSelector(params?.labelSelector),
+      fieldSelector: this.parseListOptionsSelector(params?.fieldSelector),
+    };
+    if (name) {
+      requestParams.fieldSelector = `metadata.name=${name}`;
+    }
+    return getBackendSrv()
+      .chunked({
+        url: this.url,
+        params: requestParams,
+        ...config,
+      })
+      .pipe(
+        filter((response) => response.ok && response.data instanceof Uint8Array),
+        map((response) => {
+          const text = decoder.decode(response.data);
+          return text.split('\n');
+        }),
+        mergeMap((text) => from(text)),
+        filter((line) => line.length > 0),
+        map((line) => {
+          try {
+            return JSON.parse(line);
+          } catch (e) {
+            console.warn('Invalid JSON in watch stream:', e);
+            return null;
+          }
+        }),
+        filter((event): event is ResourceEvent<T, S, K> => event !== null),
+        retry({ count: 3, delay: 1000 }),
+        catchError((error) => {
+          console.error('Watch stream error:', error);
+          throw error;
+        })
+      );
   }
 
   public async subresource<S>(name: string, path: string): Promise<S> {
@@ -62,8 +114,10 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
     return getBackendSrv().put<Resource<T, S, K>>(`${this.url}/${obj.metadata.name}`, obj);
   }
 
-  public async delete(name: string): Promise<MetaStatus> {
-    return getBackendSrv().delete<MetaStatus>(`${this.url}/${name}`);
+  public async delete(name: string, showSuccessAlert: boolean): Promise<MetaStatus> {
+    return getBackendSrv().delete<MetaStatus>(`${this.url}/${name}`, undefined, {
+      showSuccessAlert,
+    });
   }
 
   private parseListOptionsSelector = parseListOptionsSelector;

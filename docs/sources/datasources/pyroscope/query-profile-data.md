@@ -1,5 +1,5 @@
 ---
-description: Explore your profiling data using Explore Profiles or the Pyroscope query editor.
+description: Explore your profiling data using Profiles Drilldown or the Pyroscope query editor.
 keywords:
   - query
   - profiling
@@ -33,7 +33,7 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/profiles/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/simplified-exploration/profiles/
-  explore-profile-install:
+  explore-profiles-install:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/profiles/access/
     - pattern: /docs/grafana-cloud/
@@ -54,22 +54,22 @@ https://grafana.com/docs/grafana-cloud/visualizations/panels-visualizations/visu
 
 # Query profile data
 
-You can query your profile data using the open source Grafana Explore Profiles app or the built-in Grafana Pyroscope data source query editor.
+You can query your profile data using the open source Grafana Profiles Drilldown app or the built-in Grafana Pyroscope data source query editor.
 
-- Explore Profiles provides a queryless experience for inspecting your profiling data with opinionated workflows to assist your investigation.
+- Profiles Drilldown provides a queryless experience for inspecting your profiling data with opinionated workflows to assist your investigation.
 - Data source query editor provides complete control over your data exploration and is recommended for experienced users.
 
 In addition, you can embed flame graph panels in Grafana dashboards.
 Refer to the [Flame graph panel](ref:flame-graph-panel) documentation for details.
 
-## Explore Profiles
+## Profiles Drilldown
 
-[Explore Profiles](ref:explore-profiles) is a native Grafana application designed to integrate seamlessly with Pyroscope, the open source continuous profiling platform, providing a smooth, queryless experience for browsing and analyzing profiling data.
+[Grafana Profiles Drilldown](ref:explore-profiles) is a native Grafana application designed to integrate seamlessly with Pyroscope, the open source continuous profiling platform, providing a smooth, queryless experience for browsing and analyzing profiling data.
 
-You can use Explore Profiles in Grafana Cloud or in your own Grafana instance.
-For more information, refer to [Access or install Explore Profiles](ref:explore-profiles-install).
+You can use Profiles Drilldown in Grafana Cloud or in your own Grafana instance.
+For more information, refer to [Access or install Profiles Drilldown](ref:explore-profiles-install).
 
-![Explore Profiles home screen](/media/docs/explore-profiles/explore-profiles-homescreen-v0.1.17.png)
+![Profiles Drilldown home screen](/media/docs/explore-profiles/explore-profiles-homescreen-v0.1.17.png)
 
 ### Use cases
 
@@ -80,10 +80,10 @@ The main use cases are the following:
 - Proactive: Cutting costs, addressing latency issues, or optimizing memory usage for applications
 - Reactive: Resolving incidents with line-level accuracy or debugging active latency/memory issues
 
-Explore Profiles provides an intuitive interface to specifically support proactivee and reactive use cases.
+Profiles Drilldown provides an intuitive interface to specifically support proactivee and reactive use cases.
 You get a holistic view of all of your services and how they're functioning, but also the ability to drill down for more targeted root cause analysis.
 
-Explore Profiles offers a convenient platform to analyze profiles and get insights that are impossible to get from using other traditional signals like logs, metrics, or tracing.
+Profiles Drilldown offers a convenient platform to analyze profiles and get insights that are impossible to get from using other traditional signals like logs, metrics, or tracing.
 
 {{< youtube id="x9aPw_CbIQc" >}}
 
@@ -93,7 +93,7 @@ Explore Profiles offers a convenient platform to analyze profiles and get insigh
 
 The Pyroscope data source query editor gives you access to a profile type selector, a label selector, and collapsible options.
 
-Like Explore Profiles, the query editor also provides a flame graph to visualize data.
+Like Profiles Drilldown, the query editor also provides a flame graph to visualize data.
 
 ![Query editor](/media/docs/pyroscope/query-editor/query-editor.png 'Query editor')
 

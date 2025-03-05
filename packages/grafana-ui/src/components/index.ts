@@ -40,7 +40,7 @@ export { TimePickerTooltip } from './DateTimePickers/TimeRangePicker';
 export { TimeRangeLabel } from './DateTimePickers/TimeRangePicker/TimeRangeLabel';
 export { TimeOfDayPicker } from './DateTimePickers/TimeOfDayPicker';
 export { TimeZonePicker } from './DateTimePickers/TimeZonePicker';
-export { WeekStartPicker, getWeekStart, type WeekStart } from './DateTimePickers/WeekStartPicker';
+export { WeekStartPicker, getWeekStart, type WeekStart, isWeekStart } from './DateTimePickers/WeekStartPicker';
 export { DatePicker, type DatePickerProps } from './DateTimePickers/DatePicker/DatePicker';
 export {
   DatePickerWithInput,
@@ -169,6 +169,10 @@ export { MenuGroup, type MenuItemsGroup, type MenuGroupProps } from './Menu/Menu
 export { MenuItem, type MenuItemProps } from './Menu/MenuItem';
 export { WithContextMenu } from './ContextMenu/WithContextMenu';
 export { DataLinksInlineEditor } from './DataLinks/DataLinksInlineEditor/DataLinksInlineEditor';
+export {
+  DataLinksInlineEditorBase,
+  type DataLinksInlineEditorBaseProps,
+} from './DataLinks/DataLinksInlineEditor/DataLinksInlineEditorBase';
 export { DataLinkInput } from './DataLinks/DataLinkInput';
 export {
   DataLinksContextMenu,
@@ -239,7 +243,9 @@ export { SelectMenuOptions } from './Select/SelectMenu';
 export { getSelectStyles } from './Select/getSelectStyles';
 export * from './Select/types';
 
-export { Combobox, type ComboboxOption } from './Combobox/Combobox';
+export { Combobox } from './Combobox/Combobox';
+export { MultiCombobox } from './Combobox/MultiCombobox';
+export { type ComboboxOption } from './Combobox/types';
 
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { Badge, type BadgeColor, type BadgeProps } from './Badge/Badge';
@@ -269,6 +275,7 @@ export { ButtonSelect } from './Dropdown/ButtonSelect';
 export { Dropdown } from './Dropdown/Dropdown';
 export { PluginSignatureBadge, type PluginSignatureBadgeProps } from './PluginSignatureBadge/PluginSignatureBadge';
 export { UserIcon, type UserIconProps } from './UsersIndicator/UserIcon';
+export { UsersIndicator, type UsersIndicatorProps } from './UsersIndicator/UsersIndicator';
 export { type UserView } from './UsersIndicator/types';
 export { Avatar } from './UsersIndicator/Avatar';
 // Export this until we've figured out a good approach to inline form styles.
@@ -328,4 +335,5 @@ export {
   ElementSelectionContext,
   useElementSelection,
   type ElementSelectionContextState,
+  type ElementSelectionContextItem,
 } from './ElementSelectionContext/ElementSelectionContext';

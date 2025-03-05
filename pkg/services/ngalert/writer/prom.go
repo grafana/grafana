@@ -25,9 +25,11 @@ const backendType = "prometheus"
 
 const (
 	// Fixed error messages
-	MimirDuplicateTimestampError = "err-mimir-sample-duplicate-timestamp"
-	MimirInvalidLabelError       = "err-mimir-label-invalid"
-	MimirMaxSeriesPerUserError   = "err-mimir-max-series-per-user"
+	MimirDuplicateTimestampError     = "err-mimir-sample-duplicate-timestamp"
+	MimirInvalidLabelError           = "err-mimir-label-invalid"
+	MimirLabelValueTooLongError      = "err-mimir-label-value-too-long"
+	MimirMaxLabelNamesPerSeriesError = "err-mimir-max-label-names-per-series"
+	MimirMaxSeriesPerUserError       = "err-mimir-max-series-per-user"
 
 	// Best effort error messages
 	PrometheusDuplicateTimestampError = "duplicate sample for timestamp"
@@ -266,12 +268,12 @@ func checkWriteError(writeErr promremote.WriteError) (err error, ignored bool) {
 			}
 		}
 
-		if strings.Contains(msg, MimirInvalidLabelError) {
-			return errors.Join(ErrRejectedWrite, writeErr), false
-		}
-
-		// this can happen when user exceeded defined maximum of
-		if strings.Contains(msg, MimirMaxSeriesPerUserError) {
+		// Check for expected user errors.
+		switch {
+		case strings.Contains(msg, MimirInvalidLabelError),
+			strings.Contains(msg, MimirMaxSeriesPerUserError),
+			strings.Contains(msg, MimirMaxLabelNamesPerSeriesError),
+			strings.Contains(msg, MimirLabelValueTooLongError):
 			return errors.Join(ErrRejectedWrite, writeErr), false
 		}
 

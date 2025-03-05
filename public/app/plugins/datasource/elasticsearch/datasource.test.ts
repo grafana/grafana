@@ -121,6 +121,48 @@ describe('ElasticDatasource', () => {
       expect(gte).toBe('1663740610000'); // 2022-09-21T06:10:10Z
       expect(lte).toBe('1663999821000'); // 2022-09-24T06:10:21Z
     });
+
+    it('should return fields properly', async () => {
+      const ds = createElasticDatasource({ jsonData: { timeField: '@timestamp' } });
+      const getTagValuesData = {
+        responses: [
+          {
+            aggregations: {
+              '1': {
+                buckets: [
+                  {
+                    doc_count: 10,
+                    key: 'foo',
+                  },
+                  {
+                    doc_count: 20,
+                    key: 6,
+                    key_as_string: 'six',
+                  },
+                  {
+                    doc_count: 30,
+                    key: 7,
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      };
+      const postResource = jest.spyOn(ds, 'postResourceRequest').mockResolvedValue(getTagValuesData);
+      const values = await ds.getTagValues({ key: 'test', timeRange: timeRangeMock, filters: [] });
+      expect(postResource).toHaveBeenCalledTimes(1);
+
+      expect(values.length).toBe(3);
+      expect(values[0].text).toBe('foo');
+      expect(values[0].value).toBe('foo');
+
+      expect(values[1].text).toBe('six');
+      expect(values[1].value).toBe('6');
+
+      expect(values[2].text).toBe('7');
+      expect(values[2].value).toBe('7');
+    });
   });
 
   describe('query', () => {
@@ -353,6 +395,20 @@ describe('ElasticDatasource', () => {
       ).toEqual(undefined);
     });
 
+    it('does not return logs volume query for hidden query', () => {
+      expect(
+        ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsVolume },
+          {
+            refId: 'A',
+            metrics: [{ type: 'logs', id: '1' }],
+            query: 'foo="bar"',
+            hide: true,
+          }
+        )
+      ).toEqual(undefined);
+    });
+
     it('returns logs volume query for log query', () => {
       expect(
         ds.getSupplementaryQuery(
@@ -417,6 +473,20 @@ describe('ElasticDatasource', () => {
         metrics: [{ type: 'logs', id: '1', settings: { limit: '100' } }],
       });
     });
+
+    it('does not return logs samples for hidden time series queries', () => {
+      expect(
+        ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsSample, limit: 100 },
+          {
+            refId: 'A',
+            query: '',
+            bucketAggs: [{ type: 'date_histogram', id: '1' }],
+            hide: true,
+          }
+        )
+      ).toEqual(undefined);
+    });
   });
 
   describe('getDataProvider', () => {
@@ -432,6 +502,21 @@ describe('ElasticDatasource', () => {
       };
 
       expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsSample, options)).not.toBeDefined();
+    });
+
+    it('does not create a logs volume provider for hidden queries', () => {
+      const options: DataQueryRequest<ElasticsearchQuery> = {
+        ...dataQueryDefaults,
+        targets: [
+          {
+            refId: 'A',
+            metrics: [{ type: 'logs', id: '1', settings: { limit: '100' } }],
+            hide: true,
+          },
+        ],
+      };
+
+      expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsVolume, options)).not.toBeDefined();
     });
 
     it('does create a logs sample provider for time series query', () => {
@@ -726,6 +811,13 @@ describe('ElasticDatasource', () => {
           const filters = [{ key: 'field:name', operator: '=~', value: 'field value\\/', condition: '' }];
           const query = ds.addAdHocFilters('', filters);
           expect(query).toBe('field\\:name:/field value\\//');
+        });
+
+        it('should replace level with the log level field', () => {
+          const ds = createElasticDatasource({ jsonData: { logLevelField: 'level_field' } });
+          const filters = [{ key: 'level', operator: '=', value: 'foo', condition: '' }];
+          const query = ds.addAdHocFilters('', filters);
+          expect(query).toBe('level_field:"foo"');
         });
       });
     });
@@ -1035,6 +1127,10 @@ describe('ElasticDatasource', () => {
                     key: 'test2',
                     key_as_string: 'test2_as_string',
                   },
+                  {
+                    doc_count: 2,
+                    key: 5,
+                  },
                 ],
               },
             },
@@ -1059,13 +1155,14 @@ describe('ElasticDatasource', () => {
 
     it('should get results', async () => {
       const { results } = await runScenario();
-      expect(results.length).toEqual(2);
+      expect(results.length).toEqual(3);
     });
 
-    it('should use key or key_as_string', async () => {
+    it('should use key, key_as_string, or cast key to string', async () => {
       const { results } = await runScenario();
       expect(results[0].text).toEqual('test');
       expect(results[1].text).toEqual('test2_as_string');
+      expect(results[2].text).toEqual('5');
     });
 
     it('should not set search type to count', async () => {

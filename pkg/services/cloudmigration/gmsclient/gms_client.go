@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -31,7 +32,7 @@ func NewGMSClient(cfg *setting.Cfg, httpClient *http.Client) (Client, error) {
 
 type gmsClientImpl struct {
 	cfg        *setting.Cfg
-	log        *log.ConcreteLogger
+	log        log.Logger
 	httpClient *http.Client
 
 	getStatusMux         sync.Mutex
@@ -40,7 +41,10 @@ type gmsClientImpl struct {
 
 func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMigrationSession) (err error) {
 	// TODO: there is a lot of boilerplate code in these methods, we should consolidate them when we have a gardening period
-	path := fmt.Sprintf("%s/api/v1/validate-key", c.buildBasePath(cm.ClusterSlug))
+	path, err := c.buildURL(cm.ClusterSlug, "/api/v1/validate-key")
+	if err != nil {
+		return err
+	}
 
 	ctx, cancel := context.WithTimeout(ctx, c.cfg.CloudMigration.GMSValidateKeyTimeout)
 	defer cancel()
@@ -78,7 +82,10 @@ func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cloud
 }
 
 func (c *gmsClientImpl) StartSnapshot(ctx context.Context, session cloudmigration.CloudMigrationSession) (out *cloudmigration.StartSnapshotResponse, err error) {
-	path := fmt.Sprintf("%s/api/v1/start-snapshot", c.buildBasePath(session.ClusterSlug))
+	path, err := c.buildURL(session.ClusterSlug, "/api/v1/start-snapshot")
+	if err != nil {
+		return nil, err
+	}
 
 	ctx, cancel := context.WithTimeout(ctx, c.cfg.CloudMigration.GMSStartSnapshotTimeout)
 	defer cancel()
@@ -123,7 +130,11 @@ func (c *gmsClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigr
 	c.getStatusMux.Lock()
 	defer c.getStatusMux.Unlock()
 
-	path := fmt.Sprintf("%s/api/v1/snapshots/%s/status?offset=%d", c.buildBasePath(session.ClusterSlug), snapshot.GMSSnapshotUID, offset)
+	path, err := c.buildURL(session.ClusterSlug, fmt.Sprintf("/api/v1/snapshots/%s/status?offset=%d", snapshot.GMSSnapshotUID, offset))
+	if err != nil {
+		c.log.Error("error parsing snapshot status url", "err", err.Error())
+		return nil, err
+	}
 
 	ctx, cancel := context.WithTimeout(ctx, c.cfg.CloudMigration.GMSGetSnapshotStatusTimeout)
 	defer cancel()
@@ -167,7 +178,11 @@ func (c *gmsClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigr
 }
 
 func (c *gmsClientImpl) CreatePresignedUploadUrl(ctx context.Context, session cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot) (string, error) {
-	path := fmt.Sprintf("%s/api/v1/snapshots/%s/create-upload-url", c.buildBasePath(session.ClusterSlug), snapshot.GMSSnapshotUID)
+	path, err := c.buildURL(session.ClusterSlug, fmt.Sprintf("/api/v1/snapshots/%s/create-upload-url", snapshot.GMSSnapshotUID))
+	if err != nil {
+		c.log.Error("error parsing upload url", "err", err.Error())
+		return "", err
+	}
 
 	ctx, cancel := context.WithTimeout(ctx, c.cfg.CloudMigration.GMSCreateUploadUrlTimeout)
 	defer cancel()
@@ -217,7 +232,11 @@ func (c *gmsClientImpl) ReportEvent(ctx context.Context, session cloudmigration.
 	ctx, cancel := context.WithTimeout(ctx, c.cfg.CloudMigration.GMSReportEventTimeout)
 	defer cancel()
 
-	path := fmt.Sprintf("%s/api/v1/events", c.buildBasePath(session.ClusterSlug))
+	path, err := c.buildURL(session.ClusterSlug, "/api/v1/events")
+	if err != nil {
+		c.log.Error("parsing events url", "err", err.Error())
+		return
+	}
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(event); err != nil {
@@ -255,12 +274,21 @@ func (c *gmsClientImpl) ReportEvent(ctx context.Context, session cloudmigration.
 	}()
 }
 
-func (c *gmsClientImpl) buildBasePath(clusterSlug string) string {
+func (c *gmsClientImpl) buildURL(clusterSlug, path string) (string, error) {
 	domain := c.cfg.CloudMigration.GMSDomain
+	baseURL := fmt.Sprintf("https://cms-%s.%s/cloud-migrations", clusterSlug, domain)
+
+	// Override the host if we are configuring it with a scheme prefix.
 	if strings.HasPrefix(domain, "http://") || strings.HasPrefix(domain, "https://") {
-		return domain
+		baseURL = domain
 	}
-	return fmt.Sprintf("https://cms-%s.%s/cloud-migrations", clusterSlug, domain)
+
+	parsed, err := url.Parse(baseURL + path)
+	if err != nil {
+		return "", fmt.Errorf("building url: %w", err)
+	}
+
+	return parsed.String(), nil
 }
 
 // handleGMSErrors parses the error message from GMS and translates it to an appropriate error message

@@ -181,6 +181,7 @@ describe('frame results with warnings', () => {
   const metaInfo = {
     notices: [
       {
+        severity: 'info',
         text: 'For your info, something is up.',
       },
     ],
@@ -192,6 +193,7 @@ describe('frame results with warnings', () => {
         text: 'Reduce operation is not needed. Input query or expression A is already reduced data.',
       },
       {
+        severity: 'info',
         text: 'For your info, something is up.',
       },
     ],
@@ -352,6 +354,7 @@ describe('QueryEditorRow', () => {
     onChange: jest.fn(),
     onRemoveQuery: jest.fn(),
     index: 0,
+    range: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
   });
   it('should display error message in corresponding panel', async () => {
     const data = {

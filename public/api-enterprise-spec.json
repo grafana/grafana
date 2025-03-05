@@ -2837,7 +2837,6 @@
     },
     "AnnotationPanelFilter": {
       "type": "object",
-      "title": "AnnotationPanelFilter defines model for AnnotationPanelFilter.",
       "properties": {
         "exclude": {
           "description": "Should the specified panels be included or excluded",
@@ -2848,7 +2847,7 @@
           "type": "array",
           "items": {
             "type": "integer",
-            "format": "int64"
+            "format": "uint8"
           }
         }
       }
@@ -2871,7 +2870,7 @@
         "builtIn": {
           "description": "Set to 1 for the standard annotation query all dashboards have by default.",
           "type": "number",
-          "format": "float"
+          "format": "double"
         },
         "datasource": {
           "$ref": "#/definitions/DataSourceRef"
@@ -3438,20 +3437,10 @@
     },
     "CookiePreferences": {
       "type": "object",
-      "title": "CookiePreferences defines model for CookiePreferences.",
       "properties": {
-        "analytics": {
-          "type": "object",
-          "additionalProperties": {}
-        },
-        "functional": {
-          "type": "object",
-          "additionalProperties": {}
-        },
-        "performance": {
-          "type": "object",
-          "additionalProperties": {}
-        }
+        "analytics": {},
+        "functional": {},
+        "performance": {}
       }
     },
     "CookieType": {
@@ -4760,6 +4749,10 @@
             "$ref": "#/definitions/Folder"
           }
         },
+        "repository": {
+          "description": "When the folder belongs to a repository\nNOTE: this is only populated when folders are managed by unified storage",
+          "type": "string"
+        },
         "title": {
           "type": "string"
         },
@@ -4790,6 +4783,10 @@
           "format": "int64"
         },
         "parentUid": {
+          "type": "string"
+        },
+        "repository": {
+          "description": "When the folder belongs to a repository\nNOTE: this is only populated when folders are managed by unified storage",
           "type": "string"
         },
         "title": {
@@ -5061,6 +5058,10 @@
         },
         "isStarred": {
           "type": "boolean"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
         },
         "permanentlyDeleteDate": {
           "type": "string",
@@ -5460,7 +5461,6 @@
     },
     "LibraryElementDTOMetaUser": {
       "type": "object",
-      "title": "LibraryElementDTOMetaUser defines model for LibraryElementDTOMetaUser.",
       "properties": {
         "avatarUrl": {
           "type": "string"
@@ -5670,6 +5670,7 @@
             "FOLDER",
             "LIBRARY_ELEMENT",
             "ALERT_RULE",
+            "ALERT_RULE_GROUP",
             "CONTACT_POINT",
             "NOTIFICATION_POLICY",
             "NOTIFICATION_TEMPLATE",
@@ -5739,7 +5740,6 @@
     },
     "NavbarPreference": {
       "type": "object",
-      "title": "NavbarPreference defines model for NavbarPreference.",
       "properties": {
         "bookmarkUrls": {
           "type": "array",
@@ -6249,7 +6249,7 @@
           "$ref": "#/definitions/QueryHistoryPreference"
         },
         "theme": {
-          "description": "Theme light, dark, empty is default",
+          "description": "light, dark, empty is default",
           "type": "string"
         },
         "timezone": {
@@ -6257,7 +6257,7 @@
           "type": "string"
         },
         "weekStart": {
-          "description": "WeekStart day of the week (sunday, monday, etc)",
+          "description": "day of the week (sunday, monday, etc)",
           "type": "string"
         }
       }
@@ -6450,10 +6450,9 @@
     },
     "QueryHistoryPreference": {
       "type": "object",
-      "title": "QueryHistoryPreference defines model for QueryHistoryPreference.",
       "properties": {
         "homeTab": {
-          "description": "HomeTab one of: '' | 'query' | 'starred';",
+          "description": "one of: '' | 'query' | 'starred';",
           "type": "string"
         }
       }

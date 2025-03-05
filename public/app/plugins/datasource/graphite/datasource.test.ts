@@ -55,6 +55,10 @@ describe('graphiteDatasource', () => {
 
   describe('convertResponseToDataFrames', () => {
     it('should transform regular result', () => {
+      const refIDMap = {
+        refIDA: 'A',
+        refIDB: 'B',
+      };
       const result = ctx.ds.convertResponseToDataFrames(
         createFetchResponse({
           meta: {
@@ -65,7 +69,7 @@ describe('graphiteDatasource', () => {
           },
           series: [
             {
-              target: 'seriesA',
+              target: 'seriesA refIDA',
               datapoints: [
                 [100, 200],
                 [101, 201],
@@ -85,7 +89,7 @@ describe('graphiteDatasource', () => {
               ],
             },
             {
-              target: 'seriesB',
+              target: 'seriesB refIDB',
               meta: [
                 {
                   'aggnum-norm': 1,
@@ -105,7 +109,8 @@ describe('graphiteDatasource', () => {
               ],
             },
           ],
-        })
+        }),
+        refIDMap
       );
 
       expect(result.data.length).toBe(2);
@@ -113,24 +118,68 @@ describe('graphiteDatasource', () => {
       expect(getFrameDisplayName(result.data[1])).toBe('seriesB');
       expect(result.data[0].length).toBe(2);
       expect(result.data[0].meta.notices.length).toBe(1);
+      expect(result.data[0].refId).toBe('A');
       expect(result.data[0].meta.notices[0].text).toBe('Data is rolled up, aggregated over 2h using Average function');
       expect(result.data[1].meta.notices).toBeUndefined();
+      expect(result.data[1].refId).toBe('B');
+    });
+    it('handles series with spaces in the name', () => {
+      const refIDMap = {
+        refIDA: 'A',
+        refIDB: 'B',
+      };
+      const result = ctx.ds.convertResponseToDataFrames(
+        createFetchResponse({
+          meta: {
+            stats: {
+              'executeplan.cache-hit-partial.count': 5,
+              'executeplan.cache-hit.count': 10,
+            },
+          },
+          series: [
+            {
+              target: 'series A with spaces refIDA',
+              datapoints: [
+                [100, 200],
+                [101, 201],
+              ],
+            },
+            {
+              target: 'series B with spaces refIDB',
+              datapoints: [
+                [200, 300],
+                [201, 301],
+              ],
+            },
+          ],
+        }),
+        refIDMap
+      );
+
+      expect(result.data.length).toBe(2);
+      expect(getFrameDisplayName(result.data[0])).toBe('series A with spaces');
+      expect(getFrameDisplayName(result.data[1])).toBe('series B with spaces');
+      expect(result.data[0].length).toBe(2);
+      expect(result.data[0].refId).toBe('A');
+      expect(result.data[1].refId).toBe('B');
     });
   });
 
   describe('When querying graphite with one target using query editor target spec', () => {
-    const query = {
-      panelId: 3,
-      dashboardId: 5,
-      range: { from: dateTime('2022-04-01T00:00:00'), to: dateTime('2022-07-01T00:00:00') },
-      targets: [{ target: 'prod1.count' }, { target: 'prod2.count' }],
-      maxDataPoints: 500,
-    };
-
     let response: unknown;
     let requestOptions: BackendSrvRequest;
 
     beforeEach(() => {
+      const query = {
+        panelId: 3,
+        dashboardId: 5,
+        range: { from: dateTime('2022-04-01T00:00:00'), to: dateTime('2022-07-01T00:00:00') },
+        targets: [
+          { target: 'prod1.count', refId: 'A' },
+          { target: 'prod2.count', refId: 'B' },
+        ],
+        maxDataPoints: 500,
+      };
       fetchMock.mockImplementation((options) => {
         requestOptions = options;
         return of(
@@ -164,8 +213,8 @@ describe('graphiteDatasource', () => {
 
     it('should query correctly', () => {
       const params = requestOptions.data.split('&');
-      expect(params).toContain('target=prod1.count');
-      expect(params).toContain('target=prod2.count');
+      expect(params).toContain(`target=${encodeURIComponent(`aliasSub(prod1.count, "(^.*$)", "\\1 A")`)}`);
+      expect(params).toContain(`target=${encodeURIComponent(`aliasSub(prod2.count, "(^.*$)", "\\1 B")`)}`);
       expect(params).toContain('from=1648789200');
       expect(params).toContain('until=1656655200');
     });

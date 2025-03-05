@@ -141,4 +141,10 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	externalsession.AddMigration(mg)
 
 	accesscontrol.AddReceiverCreateScopeMigration(mg)
+
+	ualert.AddAlertRuleUpdatedByMigration(mg)
+
+	ualert.AddAlertRuleStateTable(mg)
+
+	ualert.AddAlertRuleGuidMigration(mg)
 }

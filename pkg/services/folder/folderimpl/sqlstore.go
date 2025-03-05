@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/concurrency"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -37,6 +37,10 @@ func ProvideStore(db db.DB) *FolderStoreImpl {
 func (ss *FolderStoreImpl) Create(ctx context.Context, cmd folder.CreateFolderCommand) (*folder.Folder, error) {
 	if cmd.UID == "" {
 		return nil, folder.ErrBadRequest.Errorf("missing UID")
+	}
+
+	if cmd.UID == cmd.ParentUID {
+		return nil, folder.ErrFolderCannotBeParentOfItself
 	}
 
 	var foldr *folder.Folder

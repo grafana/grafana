@@ -1,5 +1,11 @@
-SELECT p.action, p.kind, p.attribute, p.identifier, p.scope FROM {{ .Ident .PermissionTable }} as p
-WHERE p.action = {{ .Arg .Query.Action }} AND p.role_id IN (
+SELECT p.kind, p.attribute, p.identifier, p.scope FROM {{ .Ident .PermissionTable }} as p
+WHERE
+  {{ if .Query.ActionSets }}
+  p.action IN ({{ .ArgList .Query.ActionSets }}, {{ .Arg .Query.Action }})
+  {{ else }}
+  p.action = {{ .Arg .Query.Action }}
+  {{ end }}
+AND p.role_id IN (
   SELECT role_id FROM {{ .Ident .BuiltinRoleTable }} as br WHERE (br.role = {{ .Arg .Query.Role }} AND (br.org_id = {{ .Arg .Query.OrgID }} OR br.org_id = 0))
     {{ if .Query.IsServerAdmin }}
    OR (br.role = 'Grafana Admin')

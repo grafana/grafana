@@ -6,144 +6,61 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 
 	alertingImages "github.com/grafana/alerting/images"
-	alertingModels "github.com/grafana/alerting/models"
-	alertingNotify "github.com/grafana/alerting/notify"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
-type imageProvider struct {
+type tokenStore struct {
 	store  store.ImageStore
 	logger log.Logger
 }
 
+var _ alertingImages.TokenStore = (*tokenStore)(nil)
+
 func newImageProvider(store store.ImageStore, logger log.Logger) alertingImages.Provider {
-	return &imageProvider{
+	return alertingImages.NewTokenProvider(&tokenStore{
 		store:  store,
 		logger: logger,
-	}
+	}, newLogWrapper(logger))
 }
 
-func (i imageProvider) GetImage(ctx context.Context, uri string) (*alertingImages.Image, error) {
-	image, err := i.getImageFromURI(ctx, uri)
+func (t tokenStore) GetImage(ctx context.Context, token string) (*alertingImages.Image, error) {
+	image, err := t.store.GetImage(ctx, token)
 	if err != nil {
 		if errors.Is(err, models.ErrImageNotFound) {
-			i.logger.Info("Image not found in database")
 			return nil, alertingImages.ErrImageNotFound
 		}
 		return nil, err
 	}
 
 	return &alertingImages.Image{
-		Token:     image.Token,
-		Path:      image.Path,
-		URL:       image.URL,
-		CreatedAt: image.CreatedAt,
+		URL: image.URL,
+		RawData: func(_ context.Context) (alertingImages.ImageContent, error) {
+			if image.Path == "" {
+				return alertingImages.ImageContent{}, models.ErrImageDataUnavailable
+			}
+			b, err := readImage(image.Path, t.logger)
+			if err != nil {
+				return alertingImages.ImageContent{}, err
+			}
+			return alertingImages.ImageContent{
+				Name:    filepath.Base(image.Path),
+				Content: b,
+			}, nil
+		},
 	}, nil
 }
 
-func (i imageProvider) GetImageURL(ctx context.Context, alert *alertingNotify.Alert) (string, error) {
-	uri, err := getImageURI(alert)
-	if err != nil {
-		return "", err
-	}
-
-	// If the identifier is a URL, validate that it corresponds to a stored, non-expired image.
-	if strings.HasPrefix(uri, "http") {
-		i.logger.Debug("Received an image URL in annotations", "alert", alert)
-		exists, err := i.store.URLExists(ctx, uri)
-		if err != nil {
-			return "", err
-		}
-		if !exists {
-			i.logger.Info("Image URL not found in database", "alert", alert)
-			return "", alertingImages.ErrImageNotFound
-		}
-		return uri, nil
-	}
-
-	// If the identifier is a token, remove the prefix, get the image and return the URL.
-	token := strings.TrimPrefix(uri, "token://")
-	i.logger.Debug("Received an image token in annotations", "alert", alert, "token", token)
-	return i.getImageURLFromToken(ctx, token)
-}
-
-// getImageURLFromToken takes a token and returns the URL of the image that token belongs to.
-func (i imageProvider) getImageURLFromToken(ctx context.Context, token string) (string, error) {
-	image, err := i.store.GetImage(ctx, token)
-	if err != nil {
-		if errors.Is(err, models.ErrImageNotFound) {
-			i.logger.Info("Image not found in database", "token", token)
-			return "", alertingImages.ErrImageNotFound
-		}
-		return "", err
-	}
-
-	if !image.HasURL() {
-		return "", alertingImages.ErrImagesNoURL
-	}
-	return image.URL, nil
-}
-
-func (i imageProvider) GetRawImage(ctx context.Context, alert *alertingNotify.Alert) (io.ReadCloser, string, error) {
-	uri, err := getImageURI(alert)
-	if err != nil {
-		return nil, "", err
-	}
-
-	image, err := i.getImageFromURI(ctx, uri)
-	if err != nil {
-		if errors.Is(err, models.ErrImageNotFound) {
-			i.logger.Info("Image not found in database", "alert", alert)
-			return nil, "", alertingImages.ErrImageNotFound
-		}
-		return nil, "", err
-	}
-	if !image.HasPath() {
-		return nil, "", alertingImages.ErrImagesNoPath
-	}
-
-	// Return image bytes and filename.
-	readCloser, err := openImage(image.Path)
-	if err != nil {
-		i.logger.Error("Error looking for image on disk", "alert", alert, "path", image.Path, "error", err)
-		return nil, "", err
-	}
-	filename := filepath.Base(image.Path)
-	return readCloser, filename, nil
-}
-
-func (i imageProvider) getImageFromURI(ctx context.Context, uri string) (*models.Image, error) {
-	// Check whether the uri is a URL or a token to know how to query the DB.
-	if strings.HasPrefix(uri, "http") {
-		i.logger.Debug("Received an image URL in annotations")
-		return i.store.GetImageByURL(ctx, uri)
-	}
-
-	token := strings.TrimPrefix(uri, "token://")
-	i.logger.Debug("Received an image token in annotations", "token", token)
-	return i.store.GetImage(ctx, token)
-}
-
-// getImageURI is a helper function to retrieve the image URI from the alert annotations as a string.
-func getImageURI(alert *alertingNotify.Alert) (string, error) {
-	uri, ok := alert.Annotations[alertingModels.ImageTokenAnnotation]
-	if !ok {
-		return "", alertingImages.ErrNoImageForAlert
-	}
-	return string(uri), nil
-}
-
-// openImage returns an the io representation of an image from the given path.
-func openImage(path string) (io.ReadCloser, error) {
+// readImage returns an image from the given path.
+func readImage(path string, logger log.Logger) ([]byte, error) {
 	fp := filepath.Clean(path)
 	_, err := os.Stat(fp)
 	if os.IsNotExist(err) || os.IsPermission(err) {
-		return nil, alertingImages.ErrImageNotFound
+		return nil, models.ErrImageNotFound
 	}
 
 	f, err := os.Open(fp)
@@ -151,5 +68,11 @@ func openImage(path string) (io.ReadCloser, error) {
 		return nil, err
 	}
 
-	return f, nil
+	defer func() {
+		if err := f.Close(); err != nil {
+			logger.Error("Failed to close image file", "error", err)
+		}
+	}()
+
+	return io.ReadAll(f)
 }

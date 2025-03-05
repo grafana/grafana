@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2, SelectableValue, TimeRange } from '@grafana/data';
-import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';
+import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
 import { getSelectStyles, Select, AsyncSelect, useStyles2, useTheme2 } from '@grafana/ui';
 

@@ -42,6 +42,7 @@ import {
   GraphiteQueryType,
   GraphiteType,
   MetricTankRequestMeta,
+  MetricTankSeriesMeta,
 } from './types';
 import { reduceError } from './utils';
 import { DEFAULT_GRAPHITE_VERSION } from './versions';
@@ -209,6 +210,17 @@ export class GraphiteDatasource
       return merge(...streams);
     }
 
+    // Use this object to map the original refID of the query to our sanitised one
+    const refIds: { [key: string]: string } = {};
+    for (const target of options.targets) {
+      // Sanitise the refID otherwise the Graphite query will fail
+      const formattedRefId = target.refId.replaceAll(' ', '_');
+      refIds[formattedRefId] = target.refId;
+      // Use aliasSub to include the refID in the response series name. This allows us to set the refID on the frame.
+      const updatedTarget = `aliasSub(${target.target}, "(^.*$)", "\\1 ${formattedRefId}")`;
+      target.target = updatedTarget;
+    }
+
     // handle the queries here
     const graphOptions = {
       from: this.translateTime(options.range.from, false, options.timezone),
@@ -243,7 +255,7 @@ export class GraphiteDatasource
       httpOptions.requestId = this.name + '.panelId.' + options.panelId;
     }
 
-    return this.doGraphiteRequest(httpOptions).pipe(map(this.convertResponseToDataFrames));
+    return this.doGraphiteRequest(httpOptions).pipe(map((result) => this.convertResponseToDataFrames(result, refIds)));
   }
 
   addTracingHeaders(
@@ -267,14 +279,20 @@ export class GraphiteDatasource
     }
   }
 
-  convertResponseToDataFrames = (result: FetchResponse): DataQueryResponse => {
+  convertResponseToDataFrames = (result: FetchResponse, refIdMap: { [key: string]: string }): DataQueryResponse => {
     const data: DataFrame[] = [];
     if (!result || !result.data) {
       return { data };
     }
 
     // Series are either at the root or under a node called 'series'
-    const series = result.data.series || result.data;
+    const series: Array<{
+      target: string;
+      title: string;
+      tags: Record<string, string | number>;
+      datapoints: Array<[number, number]>;
+      meta: MetricTankSeriesMeta[];
+    }> = result.data.series || result.data;
 
     if (!isArray(series)) {
       throw { message: 'Missing series in result', data: result };
@@ -283,6 +301,14 @@ export class GraphiteDatasource
     for (let i = 0; i < series.length; i++) {
       const s = series[i];
 
+      let refId = '';
+      // Retrieve the original refID of the query
+      const splitTarget = s.target.split(' ');
+      if (splitTarget.length > 1) {
+        // refID should always be the last element
+        refId = splitTarget.pop() || '';
+        s.target = splitTarget.join(' ');
+      }
       // Disables Grafana own series naming
       s.title = s.target;
 
@@ -291,6 +317,8 @@ export class GraphiteDatasource
       }
 
       const frame = toDataFrame(s);
+      // Set the refID value on the frame
+      frame.refId = refIdMap[refId];
 
       // Metrictank metadata
       if (s.meta) {

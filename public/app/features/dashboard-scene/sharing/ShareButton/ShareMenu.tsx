@@ -13,6 +13,7 @@ import { AccessControlAction } from 'app/types';
 
 import { isPublicDashboardsEnabled } from '../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { getTrackingSource, shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
+import { getExternalUserMngLinkUrl } from '../../../users/utils';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
 
@@ -93,13 +94,8 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       label: t('share-dashboard.menu.invite-user-title', 'Invite new member'),
       renderCondition: !!config.externalUserMngLinkUrl && contextSrv.hasPermission(AccessControlAction.OrgUsersAdd),
       onClick: () => {
-        const url = new URL(config.externalUserMngLinkUrl);
+        const url = getExternalUserMngLinkUrl('share-invite');
 
-        // Add query parameters to track conversion
-        url.searchParams.append('src', 'grafananet');
-        url.searchParams.append('cnt', 'share-invite');
-
-        // Open the modified URL
         window.open(url.toString(), '_blank');
       },
       renderDividerAbove: true,

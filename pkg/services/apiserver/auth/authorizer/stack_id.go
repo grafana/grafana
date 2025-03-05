@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/grafana/authlib/claims"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
 
 var _ authorizer.Authorizer = &stackIDAuthorizer{}
@@ -36,6 +37,11 @@ func (auth stackIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attrib
 		return authorizer.DecisionDeny, fmt.Sprintf("error getting signed in user: %v", err), nil
 	}
 
+	// If we have an anonymous user, let the next authorizers decide.
+	if signedInUser.GetIdentityType() == claims.TypeAnonymous {
+		return authorizer.DecisionNoOpinion, "", nil
+	}
+
 	info, err := claims.ParseNamespace(a.GetNamespace())
 	if err != nil {
 		return authorizer.DecisionDeny, fmt.Sprintf("error reading namespace: %v", err), nil
@@ -45,9 +51,9 @@ func (auth stackIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attrib
 	if info.Value == "" {
 		return authorizer.DecisionNoOpinion, "", nil
 	}
-
 	if info.StackID != auth.stackID {
-		return authorizer.DecisionDeny, "wrong stack id is selected", nil
+		msg := fmt.Sprintf("wrong stack id is selected (expected: %d, found %d)", auth.stackID, info.StackID)
+		return authorizer.DecisionDeny, msg, nil
 	}
 	if info.OrgID != 1 {
 		return authorizer.DecisionDeny, "cloud instance requires org 1", nil

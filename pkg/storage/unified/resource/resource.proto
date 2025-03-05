@@ -22,22 +22,6 @@ message ResourceWrapper {
   bytes value = 2;
 }
 
-// The history and trash commands need access to commit messages
-message ResourceMeta {
-  // The resource version
-  int64 resource_version = 1;
-
-  // Size of the full resource body
-  int32 size = 3;
-
-  // Hash for the resource
-  string hash = 4;
-
-  // The kubernetes metadata section (not the full resource)
-  // https://github.com/kubernetes/kubernetes/blob/v1.30.2/staging/src/k8s.io/apimachinery/pkg/apis/meta/v1/types.go#L1496
-  bytes partial_object_meta = 6;
-}
-
 // Status structure is copied from:
 // https://github.com/kubernetes/apimachinery/blob/v0.30.1/pkg/apis/meta/v1/generated.proto#L979
 // However, this is only used for error handling, never for succesful results
@@ -225,13 +209,13 @@ message ListOptions {
   ResourceKey key = 1;
 
   // (best effort) Match label
-  // Allowed to send more results than actually match because the filter will be appled
-  // to the resutls agin in the client.  That time with the full field selector
+  // Allowed to send more results than actually match because the filter will be applied
+  // to the results again in the client.  That time with the full field selector
   repeated Requirement labels = 2;
 
   // (best effort) fields matcher
-  // Allowed to send more results than actually match because the filter will be appled
-  // to the resutls agin in the client.  That time with the full field selector
+  // Allowed to send more results than actually match because the filter will be applied
+  // to the results again in the client.  That time with the full field selector
   repeated Requirement fields = 3;
 }
 
@@ -241,6 +225,12 @@ enum ResourceVersionMatch {
 }
 
 message ListRequest {
+  enum Source {
+    STORE = 0; // the standard place
+    HISTORY = 1;
+    TRASH = 2;
+  }
+
   // Starting from the requested page (other query parameters must match!)
   string next_page_token = 1;
 
@@ -256,6 +246,9 @@ message ListRequest {
 
   // Filtering
   ListOptions options = 5;
+
+  // Select values from history or trash
+  Source source = 6;
 }
 
 message ListResponse {
@@ -315,7 +308,7 @@ message WatchEvent {
   // Timestamp the event was sent
   int64 timestamp = 1;
 
-  // Timestamp the event was sent
+  // The event type
   Type type = 2;
 
   // Resource version for the object
@@ -324,6 +317,65 @@ message WatchEvent {
   // Previous resource version (for update+delete)
   Resource previous = 4;
 }
+
+message BulkRequest {
+  enum Action {
+    // will be an error
+    UNKNOWN = 0; 
+
+    // Matches Watch event enum
+    ADDED = 1;
+    MODIFIED = 2;
+    DELETED = 3;
+  }
+
+  // NOTE everything in the same stream must share the same Namespace/Group/Resource
+  ResourceKey key = 1;
+
+  // Requested action
+  Action action = 2;
+
+  // The resource value 
+  bytes value = 3;
+
+  // Hint that a new version will be written on-top of this
+  string folder = 4;
+}
+
+message BulkResponse {
+  message Summary {
+    string namespace = 1;
+    string group = 2;
+    string resource = 3;
+    int64 count = 4;
+    int64 history = 5;
+    int64 resource_version = 6; // The max saved RV
+
+    // The previous count
+    int64 previous_count = 7;
+    int64 previous_history = 8;
+  }
+
+  // Collect a few invalid messages
+  message Rejected {
+    ResourceKey         key    = 1;
+    BulkRequest.Action action = 2;
+    string              error  = 3;
+  }
+
+  // Error details
+  ErrorResult error = 1;
+
+  // Total events processed
+  int64 processed = 2;
+
+  // Summary status for the processed values
+  repeated Summary summary = 3;
+
+  // Rejected 
+  repeated Rejected rejected = 4;
+}
+
 
 // Get statistics across multiple resources
 // For these queries, we do not need authorization to see the actual values
@@ -336,7 +388,7 @@ message ResourceStatsRequest {
   // NOTE, this query may need to federate across a few storage instances
   repeated string kinds = 2;
 
-  // Limit the stats within a folder (not recursive!) 
+  // Limit the stats within a folder (not recursive!)
   string folder = 3;
 }
 
@@ -363,7 +415,7 @@ message ResourceSearchRequest {
     string field = 1;
     bool desc = 2; // defaults to ascending
   }
-  
+
   message Facet {
     string field = 1;
     int64 limit = 2;
@@ -377,8 +429,8 @@ message ResourceSearchRequest {
 
   // To search additional resource types, add additional keys to this list
   // NOTE: queries will only support federation across kinds with common fields
-  repeated ResourceKey federated = 2; 
-  
+  repeated ResourceKey federated = 2;
+
   // When a query exists, it is parsed and used to influence
   // query string for chosen implementation (currently just bleve)
   // The score is only relevant when a query exists
@@ -401,6 +453,12 @@ message ResourceSearchRequest {
 
   // explain each result (added to the each row)
   bool explain = 9;
+
+  bool is_deleted = 10;
+
+  int64 page = 11;
+
+  int64 permission = 12;
 }
 
 message ResourceSearchResponse {
@@ -413,7 +471,7 @@ message ResourceSearchResponse {
     // Top term stats
     repeated TermFacet terms = 4;
     // numeric range
-    // date range facets 
+    // date range facets
   }
 
   message TermFacet {
@@ -443,81 +501,74 @@ message ResourceSearchResponse {
   map<string,Facet> facet = 7;
 }
 
-message HistoryRequest {
+// List items within a resource type & repository name
+// Access control is managed above this request
+message ListRepositoryObjectsRequest {
   // Starting from the requested page (other query parameters must match!)
   string next_page_token = 1;
 
-  // Maximum number of items to return
-  int64 limit = 2;
+  // Namespace (tenant)
+  string namespace = 2;
 
-  // Resource identifier
-  ResourceKey key = 3;
-
-  // List the deleted values (eg, show trash)
-  bool show_deleted = 4;
+  // The name of the repository
+  string name = 3;
 }
 
-message HistoryResponse {
-  repeated ResourceMeta items = 1;
+message ListRepositoryObjectsResponse {
+  message Item {
+    // The resource object key
+    ResourceKey object = 1;
+
+    // Hash for the resource
+    string path = 2;
+
+    // Verification hash from the origin
+    string hash = 3;
+
+    // Change time from the origin
+    int64 time = 5;
+
+    // Title inside the payload
+    string title = 6;
+
+    // The name of the folder in metadata
+    string folder = 7;
+  }
+
+  // Item iterator
+  repeated Item items = 1;
 
   // More results exist... pass this in the next request
   string next_page_token = 2;
 
-  // ResourceVersion of the list response
-  int64 resource_version = 3;
+  // Error details
+  ErrorResult error = 3;
+}
+
+// Count the items that exist with
+message CountRepositoryObjectsRequest {
+  // Namespace (tenant)
+  string namespace = 1;
+
+  // The name of the repository
+  // empty to count across all repositories
+  string name = 2;
+}
+
+// Count the items that exist with
+message CountRepositoryObjectsResponse {
+  message ResourceCount {
+    string repository = 1;
+    string group = 2;
+    string resource = 3;
+    int64 count = 4;
+  }
+
+  // Resource counts
+  repeated ResourceCount items = 1;
 
   // Error details
-  ErrorResult error = 4;
-}
-
-message OriginRequest {
-  // Starting from the requested page (other query parameters must match!)
-  string next_page_token = 1;
-
-  // Maximum number of items to return
-  int64 limit = 2;
-
-  // Resource identifier
-  ResourceKey key = 3;
-
-  // List the deleted values (eg, show trash)
-  string origin = 4;
-}
-
-message ResourceOriginInfo {
-  // The resource
-  ResourceKey key = 1;
-
-  // Size of the full resource body
-  int32 resource_size = 2;
-
-  // Hash for the resource
-  string resource_hash = 3;
-
-  // The origin name
-  string origin = 4;
-
-  // Path on the origin
-  string path = 5;
-
-  // Verification hash from the origin
-  string hash = 6;
-
-  // Change time from the origin
-  int64 timestamp = 7;
-}
-
-message OriginResponse {
-  repeated ResourceOriginInfo items = 1;
-
-  // More results exist... pass this in the next request
-  string next_page_token = 2;
-
-  // ResourceVersion of the list response
-  int64 resource_version = 3;
-
-  // Error details
-  ErrorResult error = 4;
+  ErrorResult error = 2;
 }
 
 message HealthCheckRequest {
@@ -573,16 +624,16 @@ message ResourceTableColumnDefinition {
     STRING = 1;
     BOOLEAN = 2;
     INT32 = 3;
-    INT64 = 4; 
-    FLOAT = 5;  
-    DOUBLE = 6; 
-    DATE = 7; 
-    DATE_TIME = 8; 
-    BINARY = 9;  
+    INT64 = 4;
+    FLOAT = 5;
+    DOUBLE = 6;
+    DATE = 7;
+    DATE_TIME = 8;
+    BINARY = 9;
     OBJECT = 10; // map[string]any
   }
 
-  // These values are not part of standard k8s format 
+  // These values are not part of standard k8s format
   // however these are useful when indexing and analyzing results
   message Properties {
     // All values in this columns should be unique
@@ -609,7 +660,7 @@ message ResourceTableColumnDefinition {
   // Defines the column type.  In k8s, this will resolve into both the type and format fields
   ColumnType type = 2;
 
-  // The value is an arry of given type
+  // The value is an array of given type
   bool is_array = 3;
 
   // description is a human readable description of this column.
@@ -632,7 +683,7 @@ message ResourceTableRow {
   // The resource version for the given values
   int64 resource_version = 2;
 
-  // Cells will be as wide as the column definitions array 
+  // Cells will be as wide as the column definitions array
   // Numeric values will be encoded using big endian bytes
   // All arrays will be JSON encoded
   repeated bytes cells = 3;
@@ -652,7 +703,7 @@ message ResourceTableRow {
 message RestoreRequest {
   // Full key must be set
   ResourceKey key = 1;
-  
+
   // The resource version to restore
   int64 resource_version = 2;
 }
@@ -724,6 +775,9 @@ message GetBlobRequest {
 
   // Do not return a pre-signed URL (when possible)
   bool must_proxy_bytes = 3;
+
+  // The blob UID -- when empty, the value is loaded from annotations in the matching resource
+  string uid = 4;
 }
 
 message GetBlobResponse {
@@ -764,6 +818,13 @@ service ResourceStore {
   rpc Watch(WatchRequest) returns (stream WatchEvent);
 }
 
+service BulkStore {
+  // Write multiple resources to the same Namespace/Group/Resource
+  // Events will not be sent until the stream is complete
+  // Only the *create* permissions is checked
+  rpc BulkProcess(stream BulkRequest) returns (BulkResponse);
+}
+
 // Unlike the ResourceStore, this service can be exposed to clients directly
 // It should be implemented with efficient indexes and does not need read-after-write semantics
 service ResourceIndex {
@@ -771,12 +832,16 @@ service ResourceIndex {
 
   // Get the resource stats
   rpc GetStats(ResourceStatsRequest) returns (ResourceStatsResponse);
+}
 
-  // Show resource history (and trash)
-  rpc History(HistoryRequest) returns (HistoryResponse);
+// Query repository info from the search index.
+// Results access control is based on access to the repository *not* the items
+service RepositoryIndex {
+  // Describe how many resources of each type exist within a repository
+  rpc CountRepositoryObjects(CountRepositoryObjectsRequest) returns (CountRepositoryObjectsResponse);
 
-  // Used for efficient provisioning
-  rpc Origin(OriginRequest) returns (OriginResponse);
+  // List the resources of a specific kind within a repository
+  rpc ListRepositoryObjects(ListRepositoryObjectsRequest) returns (ListRepositoryObjectsResponse);
 }
 
 service BlobStore {

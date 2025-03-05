@@ -1,6 +1,7 @@
 package folder
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -20,6 +21,7 @@ var ErrInternal = errutil.Internal("folder.internal")
 var ErrCircularReference = errutil.BadRequest("folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
 var ErrTargetRegistrySrvConflict = errutil.Internal("folder.target-registry-srv-conflict")
 var ErrFolderNotEmpty = errutil.BadRequest("folder.not-empty", errutil.WithPublicMessage("Folder cannot be deleted: folder is not empty"))
+var ErrFolderCannotBeParentOfItself = errors.New("folder cannot be parent of itself")
 
 const (
 	GeneralFolderUID      = "general"
@@ -53,6 +55,11 @@ type Folder struct {
 	HasACL       bool
 	Fullpath     string `xorm:"fullpath"`
 	FullpathUIDs string `xorm:"fullpath_uids"`
+
+	// When the folder belongs to a repository
+	// NOTE: this is only populated when folders are managed by unified storage
+	// This is not ever used by xorm, but the translation functions flow through this type
+	Repository string `json:"repository,omitempty"`
 }
 
 var GeneralFolder = Folder{ID: 0, Title: "General"}
@@ -171,6 +178,15 @@ type GetFoldersQuery struct {
 	// Set to true when ordering is meaningful (used for listing folders)
 	// otherwise better to keep it false since ordering can have a performance impact
 	OrderByTitle bool
+	SignedInUser identity.Requester `json:"-"`
+}
+
+type SearchFoldersQuery struct {
+	OrgID        int64
+	UIDs         []string
+	IDs          []int64
+	Title        string
+	Limit        int64
 	SignedInUser identity.Requester `json:"-"`
 }
 

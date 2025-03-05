@@ -10,6 +10,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/alerting/templates"
+
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/templategroup/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -18,7 +20,7 @@ import (
 )
 
 var (
-	_ grafanarest.LegacyStorage = (*legacyStorage)(nil)
+	_ grafanarest.Storage = (*legacyStorage)(nil)
 )
 
 type TemplateService interface {
@@ -72,13 +74,26 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return nil, err
 	}
 
-	return convertToK8sResources(orgId, res, s.namespacer, opts.FieldSelector)
+	defaultTemplate, err := s.defaultTemplate()
+	if err != nil {
+		return nil, err
+	}
+
+	return convertToK8sResources(orgId, append([]definitions.NotificationTemplate{defaultTemplate}, res...), s.namespacer, opts.FieldSelector)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
+	}
+
+	if name == templates.DefaultTemplateName {
+		dto, err := s.defaultTemplate()
+		if err != nil {
+			return nil, err
+		}
+		return convertToK8sResource(info.OrgID, dto, s.namespacer), nil
 	}
 
 	dto, err := s.service.GetTemplate(ctx, info.OrgID, name)
@@ -182,4 +197,20 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	}
 	err = s.service.DeleteTemplate(ctx, info.OrgID, name, definitions.Provenance(models.ProvenanceNone), version) // TODO add support for dry-run option
 	return old, false, err                                                                                        // false - will be deleted async
+}
+
+func (s *legacyStorage) defaultTemplate() (definitions.NotificationTemplate, error) {
+	defaultTemplate, err := templates.DefaultTemplate()
+	if err != nil {
+		return definitions.NotificationTemplate{}, err
+	}
+
+	dto := definitions.NotificationTemplate{
+		Name:       model.DefaultTemplateTitle, // User friendly name.
+		UID:        defaultTemplate.Name,
+		Provenance: definitions.Provenance("system"),
+		Template:   defaultTemplate.Template,
+	}
+
+	return dto, nil
 }

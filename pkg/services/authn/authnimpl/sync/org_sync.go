@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -47,6 +47,16 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 	userID, err := id.GetInternalID()
 	if err != nil {
 		ctxLogger.Warn("Failed to sync org role, invalid ID for identity", "type", id.GetIdentityType(), "err", err)
+		return nil
+	}
+
+	// ignore org syncing if the user is provisioned
+	usr, err := s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
+	if err != nil {
+		ctxLogger.Error("Failed to get user from provided identity", "error", err)
+		return nil
+	}
+	if usr.IsProvisioned {
 		return nil
 	}
 

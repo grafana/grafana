@@ -1,141 +1,33 @@
-import { PureComponent } from 'react';
-
 import {
   DataTransformerID,
-  KeyValue,
   standardTransformers,
   TransformerRegistryItem,
   TransformerUIProps,
   TransformerCategory,
+  FrameMatcherID,
 } from '@grafana/data';
 import { FilterFramesByRefIdTransformerOptions } from '@grafana/data/src/transformations/transformers/filterByRefId';
-import { HorizontalGroup, FilterPill, FieldValidationMessage, InlineField } from '@grafana/ui';
+import { FrameMultiSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
-interface FilterByRefIdTransformerEditorProps extends TransformerUIProps<FilterFramesByRefIdTransformerOptions> {}
-
-interface FilterByRefIdTransformerEditorState {
-  include: string;
-  options: RefIdInfo[];
-  selected: string[];
-}
-
-interface RefIdInfo {
-  refId: string;
-  count: number;
-}
-export class FilterByRefIdTransformerEditor extends PureComponent<
-  FilterByRefIdTransformerEditorProps,
-  FilterByRefIdTransformerEditorState
-> {
-  constructor(props: FilterByRefIdTransformerEditorProps) {
-    super(props);
-    this.state = {
-      include: props.options.include || '',
-      options: [],
-      selected: [],
-    };
-  }
-
-  componentDidMount() {
-    this.initOptions();
-  }
-
-  componentDidUpdate(oldProps: FilterByRefIdTransformerEditorProps) {
-    if (this.props.input !== oldProps.input) {
-      this.initOptions();
-    }
-  }
-
-  private initOptions() {
-    const { input, options } = this.props;
-    const configuredOptions = options.include ? options.include.split('|') : [];
-
-    const allNames: RefIdInfo[] = [];
-    const byName: KeyValue<RefIdInfo> = {};
-    for (const frame of input) {
-      if (frame.refId) {
-        let v = byName[frame.refId];
-        if (!v) {
-          v = byName[frame.refId] = {
-            refId: frame.refId,
-            count: 0,
-          };
-          allNames.push(v);
-        }
-        v.count++;
-      }
-    }
-
-    if (configuredOptions.length) {
-      const options: RefIdInfo[] = [];
-      const selected: RefIdInfo[] = [];
-      for (const v of allNames) {
-        if (configuredOptions.includes(v.refId)) {
-          selected.push(v);
-        }
-        options.push(v);
-      }
-
-      this.setState({
-        options,
-        selected: selected.map((s) => s.refId),
-      });
-    } else {
-      this.setState({ options: allNames, selected: [] });
-    }
-  }
-
-  onFieldToggle = (fieldName: string) => {
-    const { selected } = this.state;
-    if (selected.indexOf(fieldName) > -1) {
-      this.onChange(selected.filter((s) => s !== fieldName));
-    } else {
-      this.onChange([...selected, fieldName]);
-    }
-  };
-
-  onChange = (selected: string[]) => {
-    this.setState({ selected });
-    this.props.onChange({
-      ...this.props.options,
-      include: selected.join('|'),
-    });
-  };
-
-  render() {
-    const { options, selected } = this.state;
-    const { input } = this.props;
-    return (
-      <>
-        {input.length <= 1 && (
-          <div>
-            <FieldValidationMessage>Filter data by query expects multiple queries in the input.</FieldValidationMessage>
-          </div>
-        )}
-        <InlineField label="Series refId" labelWidth={16} shrink>
-          <HorizontalGroup spacing="xs" align="flex-start" wrap>
-            {options.map((o, i) => {
-              const label = `${o.refId}${o.count > 1 ? ' (' + o.count + ')' : ''}`;
-              const isSelected = selected.indexOf(o.refId) > -1;
-              return (
-                <FilterPill
-                  key={`${o.refId}/${i}`}
-                  onClick={() => {
-                    this.onFieldToggle(o.refId);
-                  }}
-                  label={label}
-                  selected={isSelected}
-                />
-              );
-            })}
-          </HorizontalGroup>
-        </InlineField>
-      </>
-    );
-  }
-}
+export const FilterByRefIdTransformerEditor = (props: TransformerUIProps<FilterFramesByRefIdTransformerOptions>) => {
+  return (
+    <FrameMultiSelectionEditor
+      value={{
+        id: FrameMatcherID.byRefId,
+        options: props.options.include || '',
+      }}
+      onChange={(value) => {
+        props.onChange({
+          ...props.options,
+          include: value?.options || '',
+        });
+      }}
+      context={{ data: props.input }}
+    />
+  );
+};
 
 export const filterFramesByRefIdTransformRegistryItem: TransformerRegistryItem<FilterFramesByRefIdTransformerOptions> =
   {

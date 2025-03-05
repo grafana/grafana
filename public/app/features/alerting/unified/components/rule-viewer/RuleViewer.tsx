@@ -5,9 +5,9 @@ import { useMeasure } from 'react-use';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
 import { Alert, LinkButton, LoadingBar, Stack, TabContent, Text, TextLink, useStyles2 } from '@grafana/ui';
-import { Trans, t } from '@grafana/ui/src/utils/i18n';
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { Trans, t } from 'app/core/internationalization';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import { RuleActionsButtons } from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import { AlertInstanceTotalState, CombinedRule, RuleHealth, RuleIdentifier } from 'app/types/unified-alerting';
@@ -42,6 +42,7 @@ import { FederatedRuleWarning } from './FederatedRuleWarning';
 import PausedBadge from './PausedBadge';
 import { useAlertRule } from './RuleContext';
 import { RecordingBadge, StateBadge } from './StateBadges';
+import { AlertVersionHistory } from './tabs/AlertVersionHistory';
 import { Details } from './tabs/Details';
 import { History } from './tabs/History';
 import { InstancesList } from './tabs/Instances';
@@ -54,6 +55,7 @@ export enum ActiveTab {
   History = 'history',
   Routing = 'routing',
   Details = 'details',
+  VersionHistory = 'version-history',
 }
 
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
@@ -127,6 +129,9 @@ const RuleViewer = () => {
           {activeTab === ActiveTab.History && isGrafanaRulerRule(rule.rulerRule) && <History rule={rule.rulerRule} />}
           {activeTab === ActiveTab.Routing && <Routing />}
           {activeTab === ActiveTab.Details && <Details rule={rule} />}
+          {activeTab === ActiveTab.VersionHistory && isGrafanaRulerRule(rule.rulerRule) && (
+            <AlertVersionHistory rule={rule.rulerRule} />
+          )}
         </TabContent>
       </Stack>
       {duplicateRuleIdentifier && (
@@ -338,6 +343,7 @@ function usePageNav(rule: CombinedRule) {
   const groupName = rule.group.name;
 
   const isGrafanaAlertRule = isGrafanaRulerRule(rulerRule) && isAlertType;
+  const grafanaRecordingRule = isGrafanaRecordingRule(rulerRule);
   const isRecordingRuleType = isRecordingRule(promRule);
 
   const pageNav: NavModelItem = {
@@ -376,6 +382,14 @@ function usePageNav(rule: CombinedRule) {
         onClick: () => {
           setActiveTab(ActiveTab.Details);
         },
+      },
+      {
+        text: 'Versions',
+        active: activeTab === ActiveTab.VersionHistory,
+        onClick: () => {
+          setActiveTab(ActiveTab.VersionHistory);
+        },
+        hideFromTabs: !isGrafanaAlertRule && !grafanaRecordingRule,
       },
     ],
     parentItem: {

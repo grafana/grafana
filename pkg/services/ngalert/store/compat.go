@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -19,6 +20,7 @@ func alertRuleToModelsAlertRule(ar alertRule, l log.Logger) (models.AlertRule, e
 	result := models.AlertRule{
 		ID:              ar.ID,
 		OrgID:           ar.OrgID,
+		GUID:            ar.GUID,
 		Title:           ar.Title,
 		Condition:       ar.Condition,
 		Data:            data,
@@ -33,6 +35,10 @@ func alertRuleToModelsAlertRule(ar alertRule, l log.Logger) (models.AlertRule, e
 		RuleGroupIndex:  ar.RuleGroupIndex,
 		For:             ar.For,
 		IsPaused:        ar.IsPaused,
+	}
+
+	if ar.UpdatedBy != nil {
+		result.UpdatedBy = util.Pointer(models.UserUID(*ar.UpdatedBy))
 	}
 
 	if ar.NoDataState != "" {
@@ -102,6 +108,7 @@ func parseNotificationSettings(s string) ([]models.NotificationSettings, error) 
 func alertRuleFromModelsAlertRule(ar models.AlertRule) (alertRule, error) {
 	result := alertRule{
 		ID:              ar.ID,
+		GUID:            ar.GUID,
 		OrgID:           ar.OrgID,
 		Title:           ar.Title,
 		Condition:       ar.Condition,
@@ -118,6 +125,10 @@ func alertRuleFromModelsAlertRule(ar models.AlertRule) (alertRule, error) {
 		ExecErrState:    ar.ExecErrState.String(),
 		For:             ar.For,
 		IsPaused:        ar.IsPaused,
+	}
+
+	if ar.UpdatedBy != nil {
+		result.UpdatedBy = util.Pointer(string(*ar.UpdatedBy))
 	}
 
 	// Serialize complex types to JSON strings
@@ -171,6 +182,7 @@ func alertRuleFromModelsAlertRule(ar models.AlertRule) (alertRule, error) {
 func alertRuleToAlertRuleVersion(rule alertRule) alertRuleVersion {
 	return alertRuleVersion{
 		RuleOrgID:            rule.OrgID,
+		RuleGUID:             rule.GUID,
 		RuleUID:              rule.UID,
 		RuleNamespaceUID:     rule.NamespaceUID,
 		RuleGroup:            rule.RuleGroup,
@@ -179,6 +191,7 @@ func alertRuleToAlertRuleVersion(rule alertRule) alertRuleVersion {
 		RestoredFrom:         0,
 		Version:              rule.Version,
 		Created:              rule.Updated, // assuming the Updated time as the creation time
+		CreatedBy:            rule.UpdatedBy,
 		Title:                rule.Title,
 		Condition:            rule.Condition,
 		Data:                 rule.Data,
@@ -192,5 +205,37 @@ func alertRuleToAlertRuleVersion(rule alertRule) alertRuleVersion {
 		IsPaused:             rule.IsPaused,
 		NotificationSettings: rule.NotificationSettings,
 		Metadata:             rule.Metadata,
+	}
+}
+
+func alertRuleVersionToAlertRule(version alertRuleVersion) alertRule {
+	return alertRule{
+		ID:              version.ID,
+		GUID:            version.RuleGUID,
+		OrgID:           version.RuleOrgID,
+		Title:           version.Title,
+		Condition:       version.Condition,
+		Data:            version.Data,
+		Updated:         version.Created,
+		UpdatedBy:       version.CreatedBy,
+		IntervalSeconds: version.IntervalSeconds,
+		Version:         version.Version,
+		UID:             version.RuleUID,
+		NamespaceUID:    version.RuleNamespaceUID,
+		// Versions do not store Dashboard\Panel as separate column.
+		// However, these fields are part of annotations and information in these fields is redundant
+		DashboardUID:         nil,
+		PanelID:              nil,
+		RuleGroup:            version.RuleGroup,
+		RuleGroupIndex:       version.RuleGroupIndex,
+		Record:               version.Record,
+		NoDataState:          version.NoDataState,
+		ExecErrState:         version.ExecErrState,
+		For:                  version.For,
+		Annotations:          version.Annotations,
+		Labels:               version.Labels,
+		IsPaused:             version.IsPaused,
+		NotificationSettings: version.NotificationSettings,
+		Metadata:             version.Metadata,
 	}
 }

@@ -1,21 +1,27 @@
-package core
+package playlist
 
-externalName: {
-	kind: "Playlist"
-	group: "playlist"
-	apiResource: {
-		groupOverride: "playlist.grafana.app"
-		mutation: operations:  ["create","update"]
-		validation: operations:  ["create","update"]
-	}
-	codegen: {
-		frontend: false
-		backend: true
-	}
+playlist: {
+	kind:       "Playlist"
 	pluralName: "Playlists"
-	current: "v0alpha1"
+	current:    "v0alpha1"
 	versions: {
 		"v0alpha1": {
+			codegen: {
+				frontend: false
+				backend:  true
+			}
+			validation: {
+				operations: [
+					"CREATE",
+					"UPDATE",
+				]
+			}
+			mutation: {
+				operations: [
+					"CREATE",
+					"UPDATE",
+				]
+			}
 			schema: {
 				#Item: {
 					// type of the item.
@@ -29,9 +35,8 @@ externalName: {
 					//  - dashboard_by_uid: The value is the dashboard UID
 					value: string
 				}
-								
 				spec: {
-					title: string
+					title:    string
 					interval: string
 					items: [...#Item]
 				}

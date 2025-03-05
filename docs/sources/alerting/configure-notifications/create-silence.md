@@ -52,11 +52,16 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/mute-timings/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/mute-timings/
+  alertmanager-architecture:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager/
 ---
 
 # Configure silences
 
-Silences stop notifications from getting created and last for only a specified window of time. Use them to temporarily prevent alert notifications, such as during incident response or a maintenance window.
+Silences stop notifications from being created for a specified time window but do not interrupt alert evaluation. Use them to temporarily prevent alert notifications, such as during incident response or a maintenance window.
 
 {{< admonition type="note" >}}
 Silences are assigned to a [specific Alertmanager](ref:alertmanager-architecture) and only suppress notifications for alerts managed by that Alertmanager.

@@ -9,7 +9,7 @@ export * from './analytics/types';
 export { loadPluginCss, type PluginCssOptions, setPluginImportUtils, getPluginImportUtils } from './utils/plugin';
 export { reportMetaAnalytics, reportInteraction, reportPageview, reportExperimentView } from './analytics/utils';
 export { featureEnabled } from './utils/licensing';
-export { logInfo, logDebug, logWarning, logError, createMonitoringLogger } from './utils/logging';
+export { logInfo, logDebug, logWarning, logError, createMonitoringLogger, logMeasurement } from './utils/logging';
 export {
   DataSourceWithBackend,
   HealthCheckError,
@@ -57,3 +57,12 @@ export { hasPermission, hasPermissionInMetadata, hasAllPermissions, hasAnyPermis
 export { QueryEditorWithMigration } from './components/QueryEditorWithMigration';
 export { type MigrationHandler, isMigrationHandler, migrateQuery, migrateRequest } from './utils/migrationHandler';
 export { usePluginUserStorage } from './utils/userStorage';
+export {
+  type CorrelationsService,
+  type CorrelationData,
+  type CorrelationsData,
+  type CorrelationExternal,
+  type CorrelationQuery,
+  getCorrelationsService,
+  setCorrelationsService,
+} from './services/CorrelationsService';

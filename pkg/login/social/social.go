@@ -16,6 +16,7 @@ const (
 
 	// Values for ClientAuthentication under OAuthInfo (based on oidc spec)
 	ClientSecretPost = "client_secret_post"
+	None             = "none"
 	// Azure AD
 	ManagedIdentity = "managed_identity"
 	// Other providers...
@@ -119,6 +120,14 @@ func (o *OAuthInfo) IsSingleLogoutEnabled() bool {
 
 func (o *OAuthInfo) IsAutoLoginEnabled() bool {
 	return o.AutoLogin
+}
+
+func (o *OAuthInfo) IsSkipOrgRoleSyncEnabled() bool {
+	return o.SkipOrgRoleSync
+}
+
+func (o *OAuthInfo) IsAllowAssignGrafanaAdminEnabled() bool {
+	return o.AllowAssignGrafanaAdmin
 }
 
 type BasicUserInfo struct {

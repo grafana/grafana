@@ -84,7 +84,7 @@ const FilterOptions = () => {
         <Label>
           <Trans i18nKey="alerting.search.property.namespace">Folder / Namespace</Trans>
         </Label>
-        <Select options={[]} onChange={() => {}}></Select>
+        <Select options={[]} onChange={() => {}} />
         <Label>
           <Trans i18nKey="alerting.search.property.rule-name">Alerting rule name</Trans>
         </Label>
@@ -100,7 +100,7 @@ const FilterOptions = () => {
         <Label>
           <Trans i18nKey="alerting.search.property.data-source">Data source</Trans>
         </Label>
-        <Select options={[]} onChange={() => {}}></Select>
+        <Select options={[]} onChange={() => {}} />
         <Label>
           <Trans i18nKey="alerting.search.property.state">State</Trans>
         </Label>

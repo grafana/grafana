@@ -134,7 +134,7 @@ function getSettingsPages(dashboard: DashboardModel) {
     });
   }
 
-  if (dashboard.id && dashboard.meta.canSave) {
+  if (dashboard.uid && dashboard.meta.canSave) {
     pages.push({
       title: t('dashboard-settings.versions.title', 'Versions'),
       id: 'versions',
@@ -145,7 +145,7 @@ function getSettingsPages(dashboard: DashboardModel) {
 
   const permissionsTitle = t('dashboard-settings.permissions.title', 'Permissions');
 
-  if (dashboard.id && dashboard.meta.canAdmin) {
+  if (dashboard.uid && dashboard.meta.canAdmin) {
     if (contextSrv.hasPermission(AccessControlAction.DashboardsPermissionsRead)) {
       pages.push({
         title: permissionsTitle,

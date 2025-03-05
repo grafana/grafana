@@ -3,7 +3,8 @@ import { useArgs } from '@storybook/preview-api';
 import { Meta, StoryFn } from '@storybook/react';
 
 import { dateTime, DefaultTimeZone } from '@grafana/data';
-import { TimeRangePicker } from '@grafana/ui';
+
+import { TimeRangePicker } from './TimeRangePicker';
 
 const to = dateTime();
 const from = to.subtract(6, 'h');
