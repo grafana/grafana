@@ -1,32 +1,25 @@
 import { css } from '@emotion/css';
-import pluralize from 'pluralize';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Badge, ConfirmModal, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
-import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier, RulesSource } from 'app/types/unified-alerting';
+import { CombinedRuleGroup, CombinedRuleNamespace, RulesSource } from 'app/types/unified-alerting';
 
-import { LogMessages, logInfo } from '../../Analytics';
-import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
-import { useDeleteRuleGroup } from '../../hooks/ruleGroup/useDeleteRuleGroup';
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
-import { makeFolderLink, makeFolderSettingsLink } from '../../utils/misc';
+import { makeFolderLink } from '../../utils/misc';
 import { groups } from '../../utils/navigation';
 import { isFederatedRuleGroup, isGrafanaRulerRule, isPluginProvidedRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
 import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
-import { GrafanaRuleGroupExporter } from '../export/GrafanaRuleGroupExporter';
 import { decodeGrafanaNamespace } from '../expressions/util';
 
 import { ActionIcon } from './ActionIcon';
-import { EditRuleGroupModal } from './EditRuleGroupModal';
-import { ReorderCloudGroupModal } from './ReorderRuleGroupModal';
 import { RuleGroupStats } from './RuleStats';
 import { RulesTable, useIsRulesLoading } from './RulesTable';
 
@@ -39,28 +32,21 @@ interface Props {
   viewMode: ViewMode;
 }
 
-const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
-
 export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }: Props) => {
   const { rulesSource } = namespace;
   const rulesSourceName = getRulesSourceName(rulesSource);
   const rulerRulesLoaded = useIsRulesLoading(rulesSource);
 
-  const [deleteRuleGroup] = useDeleteRuleGroup();
   const styles = useStyles2(getStyles);
 
-  const [isEditingGroup, setIsEditingGroup] = useState(false);
-  const [isDeletingGroup, setIsDeletingGroup] = useState(false);
-  const [isReorderingGroup, setIsReorderingGroup] = useState(false);
-  const [isExporting, setIsExporting] = useState<'group' | 'folder' | undefined>(undefined);
+  const [isExporting, setIsExporting] = useState<'folder' | undefined>(undefined);
   const [isCollapsed, setIsCollapsed] = useState(!expandAll);
 
   useEffect(() => {
     setIsCollapsed(!expandAll);
   }, [expandAll]);
 
-  const { hasRuler, rulerConfig } = useHasRuler(namespace.rulesSource);
-  const { currentData: dsFeatures } = useDiscoverDsFeaturesQuery({ rulesSourceName });
+  const { hasRuler } = useHasRuler(namespace.rulesSource);
 
   const rulerRule = group.rules[0]?.rulerRule;
   const folderUID = (rulerRule && isGrafanaRulerRule(rulerRule) && rulerRule.grafana_alert.namespace_uid) || undefined;
@@ -85,19 +71,6 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   // check what view mode we are in
   const isListView = viewMode === 'list';
   const isGroupView = viewMode === 'grouped';
-
-  const ruleGroupIdentifier = useMemo<RuleGroupIdentifier>(() => {
-    const namespaceName = namespace.uid ?? namespace.name;
-    const groupName = group.name;
-    const dataSourceName = getRulesSourceName(namespace.rulesSource);
-
-    return { namespaceName, groupName, dataSourceName };
-  }, [namespace, group.name]);
-
-  const deleteGroup = async () => {
-    await deleteRuleGroup.execute(ruleGroupIdentifier);
-    setIsDeletingGroup(false);
-  };
 
   const actionIcons: React.ReactNode[] = [];
 
@@ -206,13 +179,6 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
     <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} group={group.name} />
   );
 
-  const closeEditModal = (saved = false) => {
-    if (!saved) {
-      logInfo(LogMessages.leavingRuleGroupEdit);
-    }
-    setIsEditingGroup(false);
-  };
-
   return (
     <div className={styles.wrapper} data-testid="rule-group">
       <div className={styles.header} data-testid="rule-group-header">
@@ -261,49 +227,8 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           rules={group.rules}
         />
       )}
-      {isEditingGroup && rulerConfig && (
-        <EditRuleGroupModal
-          ruleGroupIdentifier={ruleGroupIdentifier}
-          rulerConfig={rulerConfig}
-          folderTitle={decodeGrafanaNamespace(namespace).name}
-          onClose={() => closeEditModal()}
-          folderUrl={folder?.canEdit ? makeFolderSettingsLink(folder.uid) : undefined}
-        />
-      )}
-      {isReorderingGroup && dsFeatures?.rulerConfig && (
-        <ReorderCloudGroupModal
-          group={group}
-          folderUid={folderUID}
-          namespace={namespace}
-          onClose={() => setIsReorderingGroup(false)}
-          rulerConfig={dsFeatures.rulerConfig}
-        />
-      )}
-      <ConfirmModal
-        isOpen={isDeletingGroup}
-        title="Delete group"
-        body={
-          <div>
-            <p>
-              Deleting &quot;<strong>{group.name}</strong>&quot; will permanently remove the group and{' '}
-              {group.rules.length} alert {pluralize('rule', group.rules.length)} belonging to it.
-            </p>
-            <p>Are you sure you want to delete this group?</p>
-          </div>
-        }
-        onConfirm={deleteGroup}
-        onDismiss={() => setIsDeletingGroup(false)}
-        confirmText="Delete"
-      />
       {folder && isExporting === 'folder' && (
         <GrafanaRuleFolderExporter folder={folder} onClose={() => setIsExporting(undefined)} />
-      )}
-      {folder && isExporting === 'group' && (
-        <GrafanaRuleGroupExporter
-          folderUid={folder.uid}
-          groupName={group.name}
-          onClose={() => setIsExporting(undefined)}
-        />
       )}
     </div>
   );
