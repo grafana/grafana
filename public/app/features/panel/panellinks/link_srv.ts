@@ -262,7 +262,7 @@ export class LinkSrv implements LinkService {
       params.push(`\$${DataLinkBuiltInVars.includeVars}`);
     }
 
-    let url = locationUtil.assureBaseUrl(urlUtil.appendQueryToUrl(link.url || '', params.join("&")));
+    let url = locationUtil.assureBaseUrl(urlUtil.appendQueryToUrl(link.url || '', params.join('&')));
     url = getTemplateSrv().replace(url);
 
     return getConfig().disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);
