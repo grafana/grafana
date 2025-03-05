@@ -582,11 +582,11 @@ GET /api/v1/provisioning/alert-rules/:uid/export
 
 #### Parameters
 
-| Name     | Source  | Type    | Go type  | Required | Default  | Description                                                                                                                            |
-| -------- | ------- | ------- | -------- | :------: | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| UID      | `path`  | string  | `string` |    ✓     |          | Alert rule UID                                                                                                                         |
-| download | `query` | boolean | `bool`   |          |          | Whether to initiate a download of the file or not.                                                                                     |
-| format   | `query` | string  | `string` |          | `"yaml"` | Format of the downloaded file, either yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence. |
+| Name     | Source  | Type    | Go type  | Required | Default | Description                                                                                                                                  |
+| -------- | ------- | ------- | -------- | :------: | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| UID      | `path`  | string  | `string` |    ✓     |         | Alert rule UID                                                                                                                               |
+| download | `query` | boolean | `bool`   |          |         | Whether to initiate a download of the file or not.                                                                                           |
+| format   | `query` | string  | `string` |          | `yaml`  | Format of the downloaded file, either `yaml`, `json` or `hcl`. Accept header can also be used, but the query parameter will take precedence. |
 
 #### All responses
 
@@ -657,12 +657,12 @@ GET /api/v1/provisioning/folder/:folderUid/rule-groups/:group/export
 
 #### Parameters
 
-| Name      | Source  | Type    | Go type  | Required | Default  | Description                                                                                                                            |
-| --------- | ------- | ------- | -------- | :------: | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| FolderUID | `path`  | string  | `string` |    ✓     |          |                                                                                                                                        |
-| Group     | `path`  | string  | `string` |    ✓     |          |                                                                                                                                        |
-| download  | `query` | boolean | `bool`   |          |          | Whether to initiate a download of the file or not.                                                                                     |
-| format    | `query` | string  | `string` |          | `"yaml"` | Format of the downloaded file, either yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence. |
+| Name      | Source  | Type    | Go type  | Required | Default | Description                                                                                                                                  |
+| --------- | ------- | ------- | -------- | :------: | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| FolderUID | `path`  | string  | `string` |    ✓     |         |                                                                                                                                              |
+| Group     | `path`  | string  | `string` |    ✓     |         |                                                                                                                                              |
+| download  | `query` | boolean | `bool`   |          |         | Whether to initiate a download of the file or not.                                                                                           |
+| format    | `query` | string  | `string` |          | `yaml`  | Format of the downloaded file, either `yaml`, `json` or `hcl`. Accept header can also be used, but the query parameter will take precedence. |
 
 #### All responses
 
@@ -719,10 +719,10 @@ GET /api/v1/provisioning/alert-rules/export
 
 #### Parameters
 
-| Name     | Source  | Type    | Go type  | Required | Default  | Description                                                                                                                            |
-| -------- | ------- | ------- | -------- | :------: | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| download | `query` | boolean | `bool`   |          |          | Whether to initiate a download of the file or not.                                                                                     |
-| format   | `query` | string  | `string` |          | `"yaml"` | Format of the downloaded file, either yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence. |
+| Name     | Source  | Type    | Go type  | Required | Default | Description                                                                                                                                  |
+| -------- | ------- | ------- | -------- | :------: | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| download | `query` | boolean | `bool`   |          |         | Whether to initiate a download of the file or not.                                                                                           |
+| format   | `query` | string  | `string` |          | `yaml`  | Format of the downloaded file, either `yaml`, `json` or `hcl`. Accept header can also be used, but the query parameter will take precedence. |
 
 #### All responses
 
@@ -785,12 +785,12 @@ GET /api/v1/provisioning/contact-points/export
 
 #### Parameters
 
-| Name     | Source  | Type    | Go type  | Required | Default  | Description                                                                                                                                                                                     |
-| -------- | ------- | ------- | -------- | :------: | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| decrypt  | `query` | boolean | `bool`   |          |          | Whether any contained secure settings should be decrypted or left redacted. Redacted settings will contain RedactedValue instead. Currently, only org admin can view decrypted secure settings. |
-| download | `query` | boolean | `bool`   |          |          | Whether to initiate a download of the file or not.                                                                                                                                              |
-| format   | `query` | string  | `string` |          | `"yaml"` | Format of the downloaded file, either yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.                                                          |
-| name     | `query` | string  | `string` |          |          | Filter by name                                                                                                                                                                                  |
+| Name     | Source  | Type    | Go type  | Required | Default | Description                                                                                                                                                                                     |
+| -------- | ------- | ------- | -------- | :------: | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| decrypt  | `query` | boolean | `bool`   |          |         | Whether any contained secure settings should be decrypted or left redacted. Redacted settings will contain RedactedValue instead. Currently, only org admin can view decrypted secure settings. |
+| download | `query` | boolean | `bool`   |          |         | Whether to initiate a download of the file or not.                                                                                                                                              |
+| format   | `query` | string  | `string` |          | `yaml`  | Format of the downloaded file, either `yaml`, `json` or `hcl`. Accept header can also be used, but the query parameter will take precedence.                                                    |
+| name     | `query` | string  | `string` |          |         | Filter by name                                                                                                                                                                                  |
 
 #### All responses
 
@@ -884,10 +884,10 @@ GET /api/v1/provisioning/mute-timings/export
 
 #### Parameters
 
-| Name     | Source  | Type    | Go type  | Required | Default  | Description                                                                                                                            |
-| -------- | ------- | ------- | -------- | :------: | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| download | `query` | boolean | `bool`   |          |          | Whether to initiate a download of the file or not.                                                                                     |
-| format   | `query` | string  | `string` |          | `"yaml"` | Format of the downloaded file, either yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence. |
+| Name     | Source  | Type    | Go type  | Required | Default | Description                                                                                                                                  |
+| -------- | ------- | ------- | -------- | :------: | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| download | `query` | boolean | `bool`   |          |         | Whether to initiate a download of the file or not.                                                                                           |
+| format   | `query` | string  | `string` |          | `yaml`  | Format of the downloaded file, either `yaml`, `json` or `hcl`. Accept header can also be used, but the query parameter will take precedence. |
 
 #### All responses
 
@@ -924,11 +924,11 @@ GET /api/v1/provisioning/mute-timings/:name/export
 
 #### Parameters
 
-| Name     | Source  | Type    | Go type  | Required | Default  | Description                                                                                                                            |
-| -------- | ------- | ------- | -------- | :------: | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| name     | `path`  | string  | `string` |    ✓     |          | Mute timing name.                                                                                                                      |
-| download | `query` | boolean | `bool`   |          |          | Whether to initiate a download of the file or not.                                                                                     |
-| format   | `query` | string  | `string` |          | `"yaml"` | Format of the downloaded file, either yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence. |
+| Name     | Source  | Type    | Go type  | Required | Default | Description                                                                                                                                  |
+| -------- | ------- | ------- | -------- | :------: | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| name     | `path`  | string  | `string` |    ✓     |         | Mute timing name.                                                                                                                            |
+| download | `query` | boolean | `bool`   |          |         | Whether to initiate a download of the file or not.                                                                                           |
+| format   | `query` | string  | `string` |          | `yaml`  | Format of the downloaded file, either `yaml`, `json` or `hcl`. Accept header can also be used, but the query parameter will take precedence. |
 
 #### All responses
 
@@ -987,10 +987,10 @@ GET /api/v1/provisioning/policies/export
 
 #### Parameters
 
-| Name     | Source  | Type    | Go type  | Required | Default  | Description                                                                                                                            |
-| -------- | ------- | ------- | -------- | :------: | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| download | `query` | boolean | `bool`   |          |          | Whether to initiate a download of the file or not.                                                                                     |
-| format   | `query` | string  | `string` |          | `"yaml"` | Format of the downloaded file, either yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence. |
+| Name     | Source  | Type    | Go type  | Required | Default | Description                                                                                                                                  |
+| -------- | ------- | ------- | -------- | :------: | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| download | `query` | boolean | `bool`   |          |         | Whether to initiate a download of the file or not.                                                                                           |
+| format   | `query` | string  | `string` |          | `yaml`  | Format of the downloaded file, either `yaml`, `json` or `hcl`. Accept header can also be used, but the query parameter will take precedence. |
 
 #### All responses
 
