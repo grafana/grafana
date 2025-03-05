@@ -121,7 +121,7 @@ $ base64 -w0 key.pem > key.pem.base64
 $ base64 -w0 cert.pem > cert.pem.base64
 ```
 
-Convert the private key to [PKCS#8](https://en.wikipedia.org/wiki/PKCS_8) format
+Run the following command to convert the private key to [PKCS#8](https://en.wikipedia.org/wiki/PKCS_8) format.
 
 ```sh
 openssl pkcs8 -topk8 -inform PEM -outform PEM -in myoriginalkey.pem -out myconvertedkey.pem -nocrypt
