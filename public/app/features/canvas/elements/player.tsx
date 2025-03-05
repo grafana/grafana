@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useEffect, useState, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -19,13 +20,137 @@ import { Align, CanvasElementConfig, CanvasElementData, VAlign } from '../types'
 const Player = (props: CanvasElementProps<CanvasElementConfig, CanvasElementData>) => {
   const { data } = props;
   const styles = getStyles(config.theme2, data);
+  const uniqueId = useRef(uuidv4());
+
+  // const [position, setPosition] = useState({ top: 0, left: 0 });
+  // const [rotation, setRotation] = useState(0);
+
+  // useEffect(() => {
+  //   const handleKeyDown = (event: KeyboardEvent) => {
+  //     setPosition((prev) => {
+  //       const angle = (rotation * Math.PI) / 180;
+  //       const step = 10;
+  //       const dx = Math.cos(angle) * step;
+  //       const dy = Math.sin(angle) * step;
+
+  //       switch (event.key) {
+  //         case 'ArrowLeft':
+  //           return { top: prev.top - dy, left: prev.left - dx };
+  //         case 'ArrowRight':
+  //           return { top: prev.top + dy, left: prev.left + dx };
+  //         case 'ArrowUp':
+  //           return { top: prev.top - dx, left: prev.left + dy };
+  //         case 'ArrowDown':
+  //           return { top: prev.top + dx, left: prev.left - dy };
+  //         case 'd': // Rotate clockwise
+  //           setRotation((prevRotation) => prevRotation + 15);
+  //           return prev;
+  //         case 'a': // Rotate counterclockwise
+  //           setRotation((prevRotation) => prevRotation - 15);
+  //           return prev;
+  //         default:
+  //           return prev;
+  //       }
+  //     });
+  //   };
+
+  //   window.addEventListener('keydown', handleKeyDown);
+  //   return () => {
+  //     window.removeEventListener('keydown', handleKeyDown);
+  //   };
+  // }, [rotation]);
+
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [rotation, setRotation] = useState(0);
+  const [velocity, setVelocity] = useState({ x: 0, y: 0 });
+  const acceleration = 0.5;
+  const friction = 0.98;
+  const keysPressed = useRef(new Set());
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      keysPressed.current.add(event.key);
+    };
+
+    const handleKeyUp = (event: KeyboardEvent) => {
+      keysPressed.current.delete(event.key);
+    };
+
+    const updateMovement = () => {
+      setVelocity((prev) => {
+        let newVelocity = { ...prev };
+        const angle = ((rotation + 90) * Math.PI) / 180;
+        const ax = Math.cos(angle) * acceleration;
+        const ay = Math.sin(angle) * acceleration;
+
+        if (keysPressed.current.has('ArrowUp')) {
+          newVelocity.y -= ay;
+          newVelocity.x -= ax;
+        }
+        if (keysPressed.current.has('ArrowDown')) {
+          newVelocity.y += ay;
+          newVelocity.x += ax;
+        }
+        if (keysPressed.current.has('ArrowLeft')) {
+          setRotation((prevRotation) => prevRotation - 3);
+        }
+        if (keysPressed.current.has('ArrowRight')) {
+          setRotation((prevRotation) => prevRotation + 3);
+        }
+
+        return newVelocity;
+      });
+    };
+
+    const applyFriction = () => {
+      setVelocity((prev) => ({ x: prev.x * friction, y: prev.y * friction }));
+    };
+
+    const movePlayer = () => {
+      setPosition((prev) => ({
+        top: prev.top + velocity.y,
+        left: prev.left + velocity.x,
+      }));
+    };
+
+    // TODO: this loop may be the potential bottleneck
+    // maybe use requestAnimationFrame instead
+    const interval = setInterval(() => {
+      updateMovement();
+      applyFriction();
+      movePlayer();
+    }, 16);
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [rotation, velocity]);
 
   // uuid needed to avoid id conflicts when multiple elements are rendered
-  const uniqueId = uuidv4();
+  // const uniqueId = uuidv4();
   console.log(uniqueId);
 
   return (
-    <div className={styles.container}>
+    <div
+      className={styles.container}
+      // style={{
+      //   top: position.top,
+      //   left: position.left,
+      //   position: 'absolute',
+      //   transform: `rotate(${rotation}deg)`,
+      // }}
+      style={{
+        top: position.top,
+        left: position.left,
+        position: 'absolute',
+        transform: `rotate(${rotation}deg)`,
+      }}
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 200 200"
