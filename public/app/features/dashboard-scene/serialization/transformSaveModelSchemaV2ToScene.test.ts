@@ -35,6 +35,7 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { LayoutOrchestrator } from '../scene/layout-manager/LayoutOrchestrator';
 import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
 import { ResponsiveGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
@@ -228,8 +229,9 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
     expect(vizPanels).toHaveLength(3);
 
+    const orchestrator = scene.state.body as LayoutOrchestrator;
     // Layout
-    const layout = scene.state.body as DefaultGridLayoutManager;
+    const layout = orchestrator.state.manager as DefaultGridLayoutManager;
 
     // Panel
     const panel = getPanelElement(dash, 'panel-1')!;
@@ -523,7 +525,8 @@ describe('transformSaveModelSchemaV2ToScene', () => {
           },
         };
         const scene = transformSaveModelSchemaV2ToScene(dashboard);
-        const layoutManager = scene.state.body as ResponsiveGridLayoutManager;
+        const orchestrator = scene.state.body as LayoutOrchestrator;
+        const layoutManager = orchestrator.state.manager as ResponsiveGridLayoutManager;
         expect(layoutManager.descriptor.kind).toBe('ResponsiveGridLayout');
         expect(layoutManager.state.layout.state.templateColumns).toBe('colString');
         expect(layoutManager.state.layout.state.autoRows).toBe('rowString');
@@ -566,7 +569,8 @@ describe('transformSaveModelSchemaV2ToScene', () => {
           },
         };
         const scene = transformSaveModelSchemaV2ToScene(dashboard);
-        const layoutManager = scene.state.body as TabsLayoutManager;
+        const orchestrator = scene.state.body as LayoutOrchestrator;
+        const layoutManager = orchestrator.state.manager as TabsLayoutManager;
         expect(layoutManager.descriptor.kind).toBe('TabsLayout');
         expect(layoutManager.state.tabs.length).toBe(1);
         expect(layoutManager.state.tabs[0].state.title).toBe('tab1');
@@ -640,7 +644,8 @@ describe('transformSaveModelSchemaV2ToScene', () => {
           },
         };
         const scene = transformSaveModelSchemaV2ToScene(dashboard);
-        const layoutManager = scene.state.body as RowsLayoutManager;
+        const orchestrator = scene.state.body as LayoutOrchestrator;
+        const layoutManager = orchestrator.state.manager as RowsLayoutManager;
         expect(layoutManager.descriptor.kind).toBe('RowsLayout');
         expect(layoutManager.state.rows.length).toBe(2);
         const row1Manager = layoutManager.state.rows[0].state.layout as ResponsiveGridLayoutManager;

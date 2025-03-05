@@ -1,15 +1,17 @@
-import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import {
+  getPanelIdForVizPanel,
   getDashboardSceneFor,
   getGridItemKeyForPanelId,
-  getPanelIdForVizPanel,
   getVizPanelKeyForPanelId,
 } from '../../utils/utils';
+import { LayoutOrchestrator } from '../layout-manager/LayoutOrchestrator';
+import { getClosest } from '../layout-manager/utils';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -17,6 +19,7 @@ import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
 import { getEditOptions } from './ResponsiveGridLayoutManagerEditor';
+import { SceneCSSGridLayout } from './SceneCSSGridLayout';
 
 interface ResponsiveGridLayoutManagerState extends SceneObjectState {
   layout: SceneCSSGridLayout;
@@ -66,6 +69,22 @@ export class ResponsiveGridLayoutManager
     this.state.layout.setState({
       children: [new ResponsiveGridItem({ body: vizPanel }), ...this.state.layout.state.children],
     });
+  }
+
+  public getNextPanelId(): number {
+    let max = 0;
+
+    for (const child of this.state.layout.state.children) {
+      if (child instanceof VizPanel) {
+        let panelId = getPanelIdForVizPanel(child);
+
+        if (panelId > max) {
+          max = panelId;
+        }
+      }
+    }
+
+    return max;
   }
 
   public removePanel(panel: VizPanel) {
@@ -151,7 +170,8 @@ export class ResponsiveGridLayoutManager
       rowsLayout.addNewRow();
     }
 
-    getDashboardSceneFor(this).switchLayout(rowsLayout);
+    const layoutOrchestrator = getClosest(this, (s) => (s instanceof LayoutOrchestrator ? s : undefined));
+    layoutOrchestrator?.switchLayout(rowsLayout);
   }
 
   public addNewTab() {

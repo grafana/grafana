@@ -78,6 +78,7 @@ import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './ang
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { LayoutOrchestrator } from './layout-manager/LayoutOrchestrator';
 import { addNewRowTo, addNewTabTo } from './layouts-shared/addNew';
 import { DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { LayoutParent } from './types/LayoutParent';
@@ -189,7 +190,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       meta: {},
       editable: true,
       $timeRange: state.$timeRange ?? new SceneTimeRange({}),
-      body: state.body ?? DefaultGridLayoutManager.fromVizPanels(),
+      body: state.body ?? new LayoutOrchestrator({ manager: DefaultGridLayoutManager.fromVizPanels() }),
       links: state.links ?? [],
       ...state,
       editPane: new DashboardEditPane(),
@@ -700,7 +701,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public hasDashboardAngularPlugins() {
-    const sceneGridLayout = this.state.body;
+    let sceneGridLayout = this.state.body;
+    if (sceneGridLayout instanceof LayoutOrchestrator) {
+      sceneGridLayout = sceneGridLayout.state.manager;
+    }
     if (!(sceneGridLayout instanceof DefaultGridLayoutManager)) {
       return false;
     }
