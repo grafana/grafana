@@ -132,12 +132,13 @@ type UnifiedAlertingSettings struct {
 }
 
 type RecordingRuleSettings struct {
-	Enabled           bool
-	URL               string
-	BasicAuthUsername string
-	BasicAuthPassword string
-	CustomHeaders     map[string]string
-	Timeout           time.Duration
+	Enabled            bool
+	URL                string
+	BasicAuthUsername  string
+	BasicAuthPassword  string
+	CustomHeaders      map[string]string
+	Timeout            time.Duration
+	QueryDatasourceUID string
 }
 
 // RemoteAlertmanagerSettings contains the configuration needed
@@ -435,11 +436,12 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	rr := iniFile.Section("recording_rules")
 	uaCfgRecordingRules := RecordingRuleSettings{
-		Enabled:           rr.Key("enabled").MustBool(false),
-		URL:               rr.Key("url").MustString(""),
-		BasicAuthUsername: rr.Key("basic_auth_username").MustString(""),
-		BasicAuthPassword: rr.Key("basic_auth_password").MustString(""),
-		Timeout:           rr.Key("timeout").MustDuration(defaultRecordingRequestTimeout),
+		Enabled:            rr.Key("enabled").MustBool(false),
+		URL:                rr.Key("url").MustString(""),
+		BasicAuthUsername:  rr.Key("basic_auth_username").MustString(""),
+		BasicAuthPassword:  rr.Key("basic_auth_password").MustString(""),
+		Timeout:            rr.Key("timeout").MustDuration(defaultRecordingRequestTimeout),
+		QueryDatasourceUID: rr.Key("query_datasource_uid").MustString(""),
 	}
 
 	rrHeaders := iniFile.Section("recording_rules.custom_headers")

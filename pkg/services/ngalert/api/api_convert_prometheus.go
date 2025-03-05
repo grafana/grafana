@@ -48,6 +48,21 @@ var (
 
 	errInvalidHeaderValueMsg  = "Invalid value for header {{.Public.Header}}: must be 'true' or 'false'"
 	errInvalidHeaderValueBase = errutil.ValidationFailed("aleting.invalidHeaderValue").MustTemplate(errInvalidHeaderValueMsg, errutil.WithPublic(errInvalidHeaderValueMsg))
+
+	errRecordingRulesNotEnabled = errutil.ValidationFailed(
+		"alerting.recordingRulesNotEnabled",
+		errutil.WithPublicMessage("Cannot import recording rules: Feature not enabled."),
+	).Errorf("recording rules not enabled")
+
+	errQueryDatasourceNotConfigured = errutil.ValidationFailed(
+		"alerting.queryDatasourceNotConfigured",
+		errutil.WithPublicMessage("Cannot import recording rules: [recording_rules] query_datasource_uid configuration must be set"),
+	).Errorf("recording rules query_datasource_uid not set")
+
+	errRecordingRulesDatasourceMismatch = errutil.ValidationFailed(
+		"alerting.recordingRulesDatasourceMismatch",
+		errutil.WithPublicMessage("Cannot import recording rules: Data source specified for import must match configured write target for recording rules."),
+	).Errorf("datasource uid does not match query_datasource_uid")
 )
 
 func errInvalidHeaderValue(header string) error {
@@ -318,6 +333,25 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextm
 		return errorToResponse(err)
 	}
 
+	// If we're importing recording rules, we can only import them for the datasource which is
+	// also used as the recording rules write target.
+	if promGroupHasRecordingRules(promGroup) {
+		if !srv.cfg.RecordingRules.Enabled {
+			logger.Error("Cannot import recording rules", "error", errRecordingRulesNotEnabled)
+			return errorToResponse(errRecordingRulesNotEnabled)
+		}
+		cfgUID := srv.cfg.RecordingRules.QueryDatasourceUID
+		if cfgUID == "" {
+			logger.Error("Cannot import recording rules", "error", errQueryDatasourceNotConfigured)
+			return errorToResponse(errQueryDatasourceNotConfigured)
+		}
+		if datasourceUID != cfgUID {
+			logger.Error("Cannot import recording rules", "error", errRecordingRulesDatasourceMismatch,
+				"datasource_uid", datasourceUID, "query_datasource_uid", cfgUID)
+			return errorToResponse(errRecordingRulesDatasourceMismatch)
+		}
+	}
+
 	group, err := srv.convertToGrafanaRuleGroup(c, ds, ns.UID, promGroup, logger)
 	if err != nil {
 		logger.Error("Failed to convert Prometheus rules to Grafana rules", "error", err)
@@ -493,4 +527,13 @@ func namespaceErrorResponse(err error) response.Response {
 	}
 
 	return toNamespaceErrorResponse(err)
+}
+
+func promGroupHasRecordingRules(promGroup apimodels.PrometheusRuleGroup) bool {
+	for _, rule := range promGroup.Rules {
+		if rule.Record != "" {
+			return true
+		}
+	}
+	return false
 }
