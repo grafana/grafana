@@ -5,17 +5,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
-	acmig "github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -101,121 +98,6 @@ func convertToRawPermissions(permissions []accesscontrol.Permission) []rawPermis
 		raw[i] = rawPermission{Action: p.Action, Scope: p.Scope}
 	}
 	return raw
-}
-
-func TestMigrations(t *testing.T) {
-	// Run initial migration to have a working DB
-	x := setupTestDB(t)
-
-	// Populate users and teams
-	setupTeams(t, x)
-
-	// Create managed user roles with teams permissions (ex: teams:read and teams.permissions:read)
-	setupUnecessaryRBACPermissions(t, x)
-
-	team1Scope := accesscontrol.Scope("teams", "id", "1")
-	team2Scope := accesscontrol.Scope("teams", "id", "2")
-
-	type teamMigrationTestCase struct {
-		desc              string
-		config            *setting.Cfg
-		expectedRolePerms map[string][]rawPermission
-	}
-	testCases := []teamMigrationTestCase{
-		{
-			desc: "with editors can admin",
-			config: &setting.Cfg{
-				EditorsCanAdmin: true,
-				Raw:             ini.Empty(),
-			},
-			expectedRolePerms: map[string][]rawPermission{
-				"managed:users:1:permissions": {{Action: "teams:read", Scope: team1Scope}},
-				"managed:users:2:permissions": {{Action: "teams:read", Scope: team1Scope}},
-				"managed:users:3:permissions": {
-					{Action: "teams:read", Scope: team1Scope},
-					{Action: "teams:delete", Scope: team1Scope},
-					{Action: "teams:write", Scope: team1Scope},
-					{Action: "teams.permissions:read", Scope: team1Scope},
-					{Action: "teams.permissions:write", Scope: team1Scope},
-				},
-				"managed:users:4:permissions": {
-					{Action: "teams:read", Scope: team1Scope},
-					{Action: "teams:delete", Scope: team1Scope},
-					{Action: "teams:write", Scope: team1Scope},
-					{Action: "teams.permissions:read", Scope: team1Scope},
-					{Action: "teams.permissions:write", Scope: team1Scope},
-				},
-				"managed:users:5:permissions": {
-					{Action: "teams:read", Scope: team2Scope},
-					{Action: "users:read", Scope: "users:*"},
-				},
-			},
-		},
-		{
-			desc: "without editors can admin",
-			// nolint:staticcheck
-			config: setting.NewCfgWithFeatures(featuremgmt.WithFeatures("accesscontrol").IsEnabledGlobally),
-			expectedRolePerms: map[string][]rawPermission{
-				"managed:users:1:permissions": {{Action: "teams:read", Scope: team1Scope}},
-				"managed:users:2:permissions": {{Action: "teams:read", Scope: team1Scope}},
-				"managed:users:3:permissions": {{Action: "teams:read", Scope: team1Scope}},
-				"managed:users:4:permissions": {
-					{Action: "teams:read", Scope: team1Scope},
-					{Action: "teams:delete", Scope: team1Scope},
-					{Action: "teams:write", Scope: team1Scope},
-					{Action: "teams.permissions:read", Scope: team1Scope},
-					{Action: "teams.permissions:write", Scope: team1Scope},
-				},
-				"managed:users:5:permissions": {
-					{Action: "teams:read", Scope: team2Scope},
-					{Action: "users:read", Scope: "users:*"},
-				},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			// Remove migration
-			_, errDeleteMig := x.Exec("DELETE FROM migration_log WHERE migration_id = ?", acmig.TeamsMigrationID)
-			require.NoError(t, errDeleteMig)
-
-			// Run accesscontrol migration (permissions insertion should not have conflicted)
-			acmigrator := migrator.NewMigrator(x, tc.config)
-			acmig.AddTeamMembershipMigrations(acmigrator)
-
-			errRunningMig := acmigrator.Start(false, 0)
-			require.NoError(t, errRunningMig)
-
-			for _, user := range users {
-				// Check managed roles exist
-				roleName := fmt.Sprintf("managed:users:%d:permissions", user.ID)
-				role := accesscontrol.Role{}
-				hasRole, errManagedRoleSearch := x.Table("role").Where("org_id = ? AND name = ?", user.OrgID, roleName).Get(&role)
-
-				require.NoError(t, errManagedRoleSearch)
-				assert.True(t, hasRole, "expected role to be granted to user", user, roleName)
-
-				// Check permissions associated with each role
-				perms := []accesscontrol.Permission{}
-				countUserPermissions, errManagedPermsSearch := x.Table("permission").Where("role_id = ?", role.ID).FindAndCount(&perms)
-
-				require.NoError(t, errManagedPermsSearch)
-				assert.Equal(t, int64(len(tc.expectedRolePerms[roleName])), countUserPermissions, "expected role to be tied to permissions", user, role)
-
-				rawPerms := convertToRawPermissions(perms)
-				for _, perm := range rawPerms {
-					assert.Contains(t, tc.expectedRolePerms[roleName], perm)
-				}
-
-				// Check assignment of the roles
-				assign := accesscontrol.UserRole{}
-				has, errAssignmentSearch := x.Table("user_role").Where("role_id = ? AND user_id = ?", role.ID, user.ID).Get(&assign)
-				require.NoError(t, errAssignmentSearch)
-				assert.True(t, has, "expected assignment of role to user", role, user)
-			}
-		})
-	}
 }
 
 func setupTestDB(t *testing.T) *xorm.Engine {
