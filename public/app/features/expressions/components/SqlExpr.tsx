@@ -1,5 +1,5 @@
-import { useMemo, useRef, useEffect, useState } from 'react';
 import { css } from '@emotion/css';
+import { useMemo, useRef, useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { SQLEditor } from '@grafana/plugin-ui';
@@ -32,7 +32,9 @@ export const SqlExpr = ({ onChange, refIds, query }: Props) => {
 
   // Set up resize observer to handle container resizing
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current) {
+      return;
+    }
 
     const resizeObserver = new ResizeObserver((entries) => {
       const { height } = entries[0].contentRect;
