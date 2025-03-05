@@ -1,8 +1,6 @@
 module github.com/grafana/grafana/pkg/util/xorm
 
-go 1.23.0
-
-toolchain go1.24.0
+go 1.23.7
 
 require (
 	github.com/googleapis/go-sql-spanner v1.11.1
