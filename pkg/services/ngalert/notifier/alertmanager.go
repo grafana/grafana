@@ -129,7 +129,6 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 	if peer != nil && peer != &NilPeer{} {
 		l.Info("Alertmanager initialized with cluster peer", "peerType", fmt.Sprintf("%T", peer))
 	}
-	l := log.New("ngalert.notifier.alertmanager", "org", orgID)
 	action := stages.Disabled
 	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingAlertmanagerExtraDedupStage) {
 		if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingAlertmanagerExtraDedupStageStopPipeline) {
