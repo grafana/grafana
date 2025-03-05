@@ -2,13 +2,13 @@ import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
-import { getAppEvents, locationService } from '@grafana/runtime';
+import { getAppEvents } from '@grafana/runtime';
 import { Alert, Button, Field, Input, RadioButtonGroup, Stack, TextArea } from '@grafana/ui';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { useCreateRepositoryFilesWithPathMutation, useGetRepositoryQuery } from 'app/features/provisioning/api';
 import { usePullRequestParam } from 'app/features/provisioning/hooks';
 import { WorkflowOption } from 'app/features/provisioning/types';
-import { createPRLink, validateBranchName } from 'app/features/provisioning/utils/git';
+import { validateBranchName } from 'app/features/provisioning/utils/git';
 
 import { getDefaultWorkflow, getWorkflowOptions } from '../../dashboard-scene/saving/provisioned/defaults';
 
@@ -48,10 +48,9 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, repositoryName, p
     formState: { errors },
     control,
     setValue,
-  } = useForm<FormData>({ defaultValues: initialFormValues });
+  } = useForm<FormData>({ defaultValues: { ...initialFormValues, workflow: getDefaultWorkflow(repositoryConfig) } });
 
-  const [title, ref, workflow, comment] = watch(['title', 'ref', 'workflow', 'comment']);
-  const href = createPRLink(repositoryConfig, title, ref, comment);
+  const [workflow] = watch(['workflow']);
 
   useEffect(() => {
     setValue('workflow', getDefaultWorkflow(repositoryConfig));
@@ -60,8 +59,6 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, repositoryName, p
   useEffect(() => {
     const appEvents = getAppEvents();
     if (request.isSuccess) {
-      const prLink = workflow === WorkflowOption.Direct ? undefined : href;
-      locationService.partial({ prLink });
       onSubmit();
     } else if (request.isError) {
       appEvents.publish({
@@ -69,7 +66,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, repositoryName, p
         payload: ['Error creating folder', request.error],
       });
     }
-  }, [request.isSuccess, request.isError, request.error, onSubmit, workflow, href]);
+  }, [request.isSuccess, request.isError, request.error, onSubmit]);
 
   const validateFolderName = async (folderName: string) => {
     try {
@@ -94,7 +91,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, repositoryName, p
       type: 'folder',
     };
 
-    if (workflow === WorkflowOption.Direct) {
+    if (workflow === 'write') {
       ref = undefined;
     }
 
@@ -110,7 +107,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, repositoryName, p
   return (
     <form onSubmit={handleSubmit(doSave)}>
       <Stack direction="column" gap={2}>
-        {repositoryConfig?.readOnly && (
+        {!repositoryConfig?.workflows.length && (
           <Alert title="This repository is read only">
             If you have direct access to the target, copy the JSON and paste it there.
           </Alert>
@@ -143,11 +140,11 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, repositoryName, p
                 control={control}
                 name="workflow"
                 render={({ field: { ref, ...field } }) => (
-                  <RadioButtonGroup {...field} options={getWorkflowOptions(repositoryConfig?.github?.branch)} />
+                  <RadioButtonGroup {...field} options={getWorkflowOptions(repositoryConfig)} />
                 )}
               />
             </Field>
-            {workflow === WorkflowOption.PullRequest && (
+            {workflow === 'branch' && (
               <Field
                 label="Branch"
                 description="Branch name in GitHub"
