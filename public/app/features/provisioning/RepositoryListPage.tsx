@@ -5,7 +5,6 @@ import { getAppEvents } from '@grafana/runtime';
 import {
   Card,
   EmptySearchResult,
-  EmptyState,
   FilterInput,
   Icon,
   IconName,
@@ -59,7 +58,7 @@ export default function RepositoryListPage() {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'repositories':
-        return <RepositoryListPageContent items={items} />;
+        return <RepositoryListPageContent items={items ?? []} />;
       case 'features':
         return <FeatureList />;
       default:
@@ -106,22 +105,8 @@ export default function RepositoryListPage() {
   );
 }
 
-function RepositoryListPageContent({ items }: { items?: Repository[] }) {
+function RepositoryListPageContent({ items }: { items: Repository[] }) {
   const [query, setQuery] = useState('');
-  if (!items?.length) {
-    return (
-      <EmptyState
-        variant="call-to-action"
-        message="You haven't created any repository configs yet"
-        button={
-          <LinkButton icon="plus" href={CONNECT_URL} size="lg">
-            Create repository config
-          </LinkButton>
-        }
-      />
-    );
-  }
-
   const filteredItems = items.filter((item) => item.metadata?.name?.includes(query));
 
   return (
@@ -129,7 +114,7 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
       <Stack gap={2}>
         <FilterInput placeholder="Search" value={query} onChange={setQuery} />
         <LinkButton href={CONNECT_URL} variant="primary" icon={'plus'}>
-          Add repository config
+          Connect to repository
         </LinkButton>
       </Stack>
       <Stack direction={'column'}>
