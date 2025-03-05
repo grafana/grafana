@@ -88,8 +88,6 @@ export default function CreateNewButton({ parentFolder, canCreateDashboard, canC
     </Menu>
   );
 
-  console.log('P', parentFolder);
-
   return (
     <>
       <Dropdown overlay={newMenu} onVisibleChange={setIsOpen}>

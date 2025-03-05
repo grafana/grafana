@@ -46,7 +46,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
   const query = useGetRepositoryQuery(repositoryName ? { name: repositoryName } : skipToken);
   const prURL = usePullRequestParam();
 
-  // Get k8s folder data
+  // Get k8s folder data, necessary to get parent folder path
   const folderQuery = useGetFolderQuery({ name: parentFolder.uid });
 
   if (!query.data && !query.isLoading) {
