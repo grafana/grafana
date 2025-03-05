@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { t } from 'i18next';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { debounce } from 'lodash';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
@@ -55,12 +56,28 @@ const FoldersPage: React.FC = () => {
   const [selectedTypes, setSelectedTypes] = useState<Array<SelectableValue<ResourceType>>>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [availableTags, setAvailableTags] = useState<TermCount[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   
   const styles = useStyles2(getStyles);
 
   const navModel = useNavModel('finder');
 
   const columnStyles = useStyles2(getColumnStyles);
+
+  // Create a debounced function to update searchTerm
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((query: string) => {
+        setSearchTerm(query);
+      }, 300),
+    []
+  );
+
+  // Handle search input changes
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    debouncedSearch(value);
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -191,8 +208,8 @@ const FoldersPage: React.FC = () => {
         <div className={styles.filtersRow}>
           <Stack direction="row" gap={2}>
             <FilterInput
-                value={searchTerm}
-                onChange={setSearchTerm}
+                value={searchQuery}
+                onChange={handleSearchChange}
                 placeholder="Search resources"
               />
           </Stack>
