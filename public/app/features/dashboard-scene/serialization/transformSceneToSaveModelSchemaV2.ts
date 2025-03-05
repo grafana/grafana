@@ -1,7 +1,7 @@
 import { omit } from 'lodash';
 
 import { AnnotationQuery } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   behaviors,
   dataLayers,
@@ -68,6 +68,12 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
   const sceneDash = scene.state;
   const timeRange = sceneDash.$timeRange!.state;
 
+  const initialSaveModel = scene.getInitialSaveModel();
+
+  if (!initialSaveModel || (initialSaveModel && !('elements' in initialSaveModel))) {
+    throw new Error('The initial save model is not a valid V2 spec');
+  }
+
   const controlsState = sceneDash.controls?.state;
   const refreshPicker = controlsState?.refreshPicker;
 
@@ -103,7 +109,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF variables
 
     // elements
-    elements: getElements(sceneDash),
+    elements: getElements(sceneDash, initialSaveModel?.elements),
     // EOF elements
 
     // annotations
@@ -146,7 +152,7 @@ function getLiveNow(state: DashboardSceneState) {
   return Boolean(liveNow);
 }
 
-function getElements(state: DashboardSceneState) {
+function getElements(state: DashboardSceneState, initialElements?: Record<string, Element>): Record<string, Element> {
   const panels = state.body.getVizPanels() ?? [];
 
   const panelsArray = panels.map((vizPanel: VizPanel) => {
@@ -200,6 +206,12 @@ function getElements(state: DashboardSceneState) {
         defaults,
       };
 
+      const initialPanel = initialElements?.[getVizPanelKeyForPanelId(getPanelIdForVizPanel(vizPanel))];
+
+      if (initialPanel && initialPanel.kind !== 'Panel') {
+        throw new Error('Initial panel is not a Panel');
+      }
+
       const elementSpec: PanelKind = {
         kind: 'Panel',
         spec: {
@@ -210,7 +222,7 @@ function getElements(state: DashboardSceneState) {
           data: {
             kind: 'QueryGroup',
             spec: {
-              queries: getVizPanelQueries(vizPanel),
+              queries: getVizPanelQueries(vizPanel, initialPanel),
               transformations: getVizPanelTransformations(vizPanel),
               queryOptions: getVizPanelQueryOptions(vizPanel),
             },
@@ -239,24 +251,39 @@ function getPanelLinks(panel: VizPanel): DataLink[] {
   return [];
 }
 
-function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
+function getVizPanelQueries(vizPanel: VizPanel, initialPanel?: PanelKind): PanelQueryKind[] {
+  const isNewDash = locationService.getLocation().pathname === '/dashboard/new';
+
   const queries: PanelQueryKind[] = [];
   const queryRunner = getQueryRunnerFor(vizPanel);
   const vizPanelQueries = queryRunner?.state.queries;
   const datasource = queryRunner?.state.datasource ?? getDefaultDataSourceRef();
 
   if (vizPanelQueries) {
-    vizPanelQueries.forEach((query) => {
+    vizPanelQueries.forEach((query, i) => {
+      const initialQueryUID = initialPanel?.spec.data.spec.queries[i].spec.datasource?.uid;
+      const initialQuery = initialPanel?.spec.data.spec.queries[i].spec.query;
+      const updateQueryAndDS = isNewDash || initialQueryUID;
+
       const dataQuery: DataQueryKind = {
-        kind: getDataQueryKind(query),
-        spec: omit(query, 'datasource', 'refId', 'hide'),
+        /* If the datasource wasn't provided when dashboard was created and we are not creating a new dashboard, 
+        then we revert to the original query and datasource */
+        kind: updateQueryAndDS ? getDataQueryKind(query) : initialQuery!.kind,
+        spec: updateQueryAndDS || isNewDash ? omit(query, 'datasource', 'refId', 'hide') : initialQuery!.spec,
       };
+
       const querySpec: PanelQuerySpec = {
-        datasource: query.datasource ?? datasource,
         query: dataQuery,
         refId: query.refId,
         hidden: Boolean(query.hide),
       };
+
+      // If the datasource has changed and this is not a new dashboard, update the query
+      // Otherwise keep the initial datasource
+      if (updateQueryAndDS) {
+        querySpec.datasource = datasource;
+      }
+
       queries.push({
         kind: 'PanelQuery',
         spec: querySpec,
