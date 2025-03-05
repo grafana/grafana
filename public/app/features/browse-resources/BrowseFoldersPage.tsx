@@ -61,10 +61,10 @@ const FoldersPage: React.FC = () => {
   const fetchFolders = async () => {
     setIsLoading(true);
     try {
-      
-      // const response = await fetch('/api/folders');
-      // TODO: fix this - kind doesn't allow more than two values - and "types" doesn't seem to work
-      const response = await searcher.fetchResults({ kind: ['folders', 'dashboards'] });
+      const [folderResponse, dashboardResponse] = await Promise.all([
+        searcher.fetchResults({ kind: ['folders'] }),
+        searcher.fetchResults({ kind: ['dashboards'] })
+      ]);
 
       // TODO: fetch and populate the tags in a separate call - see above
       // const tags = await searcher.tags({ kind: [selected kinds], query: [search input], tags: [selected tags] });
@@ -81,7 +81,10 @@ const FoldersPage: React.FC = () => {
 
       // setAvailableTags(Array.from(tags).map((tag) => ({ label: tag, value: tag })));
       // setAvailableOwners(Array.from(owners).map((owner) => ({ label: owner, value: owner })));
-      setFolders(response.hits);
+
+      // Combine the results from both calls
+      const combinedHits = [...folderResponse.hits, ...dashboardResponse.hits];
+      setFolders(combinedHits);
     } catch (e: any) {
       setError(e.message);
     } finally {
