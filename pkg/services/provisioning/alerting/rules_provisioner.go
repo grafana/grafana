@@ -45,7 +45,7 @@ func (prov *defaultAlertRuleProvisioner) Provision(ctx context.Context,
 	files []*AlertingFile) error {
 	for _, file := range files {
 		for _, group := range file.Groups {
-			ctx, u := identity.WithServiceIdentitiy(ctx, group.OrgID)
+			ctx, u := identity.WithServiceIdentity(ctx, group.OrgID)
 
 			folderUID, err := prov.getOrCreateFolderFullpath(ctx, group.FolderFullpath, group.OrgID)
 			if err != nil {
@@ -121,7 +121,7 @@ func (prov *defaultAlertRuleProvisioner) getOrCreateFolderFullpath(
 
 func (prov *defaultAlertRuleProvisioner) getOrCreateFolderByTitle(
 	ctx context.Context, folderName string, orgID int64, parentUID *string) (string, error) {
-	ctx, user := identity.WithServiceIdentitiy(ctx, orgID)
+	ctx, user := identity.WithServiceIdentity(ctx, orgID)
 
 	cmd := &folder.GetFolderQuery{
 		Title:        &folderName,

@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
 	"strings"
 
+	authtypes "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -50,10 +50,12 @@ type FolderAPIBuilder struct {
 	folderSvc            folder.Service
 	folderPermissionsSvc accesscontrol.FolderPermissionsService
 	storage              grafanarest.Storage
-	accessControl        accesscontrol.AccessControl
-	searcher             resource.ResourceIndexClient
-	cfg                  *setting.Cfg
-	ignoreLegacy         bool // skip legacy storage and only use unified storage
+
+	authorizer authorizer.Authorizer
+
+	searcher     resource.ResourceIndexClient
+	cfg          *setting.Cfg
+	ignoreLegacy bool // skip legacy storage and only use unified storage
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
@@ -66,7 +68,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 	unified resource.ResourceClient,
 ) *FolderAPIBuilder {
 	if !featuremgmt.AnyEnabled(features,
-		featuremgmt.FlagKubernetesFoldersServiceV2,
+		featuremgmt.FlagKubernetesClientDashboardsFolders,
 		featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 		featuremgmt.FlagProvisioning) {
 		return nil // skip registration unless opting into Kubernetes folders or unless we want to customize registration when testing
@@ -79,17 +81,18 @@ func RegisterAPIService(cfg *setting.Cfg,
 		folderSvc:            folderSvc,
 		folderPermissionsSvc: folderPermissionsSvc,
 		cfg:                  cfg,
-		accessControl:        accessControl,
+		authorizer:           newLegacyAuthorizer(accessControl),
 		searcher:             unified,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
-func NewAPIService() *FolderAPIBuilder {
+func NewAPIService(ac authtypes.AccessClient) *FolderAPIBuilder {
 	return &FolderAPIBuilder{
 		gv:           resourceInfo.GroupVersion(),
 		namespacer:   request.GetNamespaceMapper(nil),
+		authorizer:   newMultiTenantAuthorizer(ac),
 		ignoreLegacy: true,
 	}
 }
@@ -201,58 +204,7 @@ type authorizerParams struct {
 }
 
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
-		in, err := authorizerFunc(ctx, attr)
-		if err != nil {
-			if errors.Is(err, errNoUser) {
-				return authorizer.DecisionDeny, "", nil
-			}
-			return authorizer.DecisionNoOpinion, "", nil
-		}
-
-		ok, err := b.accessControl.Evaluate(ctx, in.user, in.evaluator)
-		if ok {
-			return authorizer.DecisionAllow, "", nil
-		}
-		return authorizer.DecisionDeny, "folder", err
-	})
-}
-
-func authorizerFunc(ctx context.Context, attr authorizer.Attributes) (*authorizerParams, error) {
-	allowedVerbs := []string{utils.VerbCreate, utils.VerbDelete, utils.VerbList}
-	verb := attr.GetVerb()
-	name := attr.GetName()
-	if (!attr.IsResourceRequest()) || (name == "" && verb != utils.VerbCreate && slices.Contains(allowedVerbs, verb)) {
-		return nil, errNoResource
-	}
-
-	// require a user
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, errNoUser
-	}
-
-	scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(name)
-	var eval accesscontrol.Evaluator
-
-	// "get" is used for sub-resources with GET http (parents, access, count)
-	switch verb {
-	case utils.VerbCreate:
-		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)
-	case utils.VerbPatch:
-		fallthrough
-	case utils.VerbUpdate:
-		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, scope)
-	case utils.VerbDeleteCollection:
-		fallthrough
-	case utils.VerbDelete:
-		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, scope)
-	case utils.VerbList:
-		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersRead)
-	default:
-		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersRead, scope)
-	}
-	return &authorizerParams{evaluator: eval, user: user}, nil
+	return b.authorizer
 }
 
 var folderValidationRules = struct {
@@ -343,6 +295,10 @@ func (b *FolderAPIBuilder) validateOnCreate(ctx context.Context, id string, obj 
 	}
 	if f.Spec.Title == "" {
 		return dashboards.ErrFolderTitleEmpty
+	}
+
+	if f.Name == getParent(obj) {
+		return folder.ErrFolderCannotBeParentOfItself
 	}
 
 	_, err := b.checkFolderMaxDepth(ctx, obj)

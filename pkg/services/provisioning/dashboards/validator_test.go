@@ -19,8 +19,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	grafanasort "github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
 const (
@@ -50,13 +52,13 @@ func TestDuplicatesValidator(t *testing.T) {
 	folderStore := folderimpl.ProvideDashboardFolderStore(sql)
 	folderSvc := folderimpl.ProvideService(fStore, actest.FakeAccessControl{}, bus.ProvideBus(tracing.InitializeTracerForTest()),
 		dashStore, folderStore, nil, sql, featuremgmt.WithFeatures(),
-		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest())
+		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), grafanasort.ProvideService())
 
 	t.Run("Duplicates validator should collect info about duplicate UIDs and titles within folders", func(t *testing.T) {
 		const folderName = "duplicates-validator-folder"
 
 		ctx := context.Background()
-		ctx, _ = identity.WithServiceIdentitiy(ctx, 1)
+		ctx, _ = identity.WithServiceIdentity(ctx, 1)
 
 		fakeStore := &fakeDashboardStore{}
 		r, err := NewDashboardFileReader(cfg, logger, nil, fakeStore, folderSvc)
@@ -115,7 +117,7 @@ func TestDuplicatesValidator(t *testing.T) {
 		const folderName = "duplicates-validator-folder"
 
 		ctx := context.Background()
-		ctx, _ = identity.WithServiceIdentitiy(ctx, 1)
+		ctx, _ = identity.WithServiceIdentity(ctx, 1)
 
 		fakeStore := &fakeDashboardStore{}
 		r, err := NewDashboardFileReader(cfg, logger, nil, fakeStore, folderSvc)
@@ -221,7 +223,7 @@ func TestDuplicatesValidator(t *testing.T) {
 		duplicates := duplicateValidator.getDuplicates()
 
 		ctx := context.Background()
-		ctx, _ = identity.WithServiceIdentitiy(ctx, 1)
+		ctx, _ = identity.WithServiceIdentity(ctx, 1)
 
 		r, err := NewDashboardFileReader(cfg, logger, nil, fakeStore, folderSvc)
 		require.NoError(t, err)

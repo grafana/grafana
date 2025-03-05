@@ -1,3 +1,4 @@
+import { ScopedVars } from './ScopedVars';
 import { ExploreCorrelationHelperData, ExplorePanelsState } from './explore';
 import { InterpolateFunction } from './panel';
 import { DataQuery } from './query';
@@ -80,7 +81,7 @@ export interface DataLinkTransformationConfig {
 
 /** @internal */
 export interface InternalDataLink<T extends DataQuery = any> {
-  query: T;
+  query: T | ((options: { replaceVariables: InterpolateFunction; scopedVars: ScopedVars }) => T);
   datasourceUid: string;
   datasourceName: string; // used as a title if `DataLink.title` is empty
   panelsState?: ExplorePanelsState;

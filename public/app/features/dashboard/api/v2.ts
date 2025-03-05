@@ -87,7 +87,11 @@ export class K8sDashboardV2API
   }
 
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse> {
-    throw new Error('Method not implemented.');
+    return this.client.delete(uid, showSuccessAlert).then((v) => ({
+      id: 0,
+      message: v.message,
+      title: 'deleted',
+    }));
   }
 
   async saveDashboard(options: SaveDashboardCommand<DashboardV2Spec>): Promise<SaveDashboardResponseDTO> {
@@ -143,10 +147,15 @@ export class K8sDashboardV2API
       })
     );
 
+    let dashId = 0;
+    if (v.metadata.labels?.[DeprecatedInternalId]) {
+      dashId = parseInt(v.metadata.labels[DeprecatedInternalId], 10);
+    }
+
     return {
       uid: v.metadata.name,
       version: v.metadata.generation ?? 0,
-      id: v.metadata.labels?.[DeprecatedInternalId] ?? 0,
+      id: dashId,
       status: 'success',
       url,
       slug: '',

@@ -1,55 +1,49 @@
-import { ReactNode } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
-import { SceneObject, VizPanel } from '@grafana/scenes';
-import { Button, Stack, Text } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { VizPanel } from '@grafana/scenes';
+import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
-import { MultiSelectedEditableDashboardElement } from '../scene/types';
+import { EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
+import { MultiSelectedEditableDashboardElement } from '../scene/types/MultiSelectedEditableDashboardElement';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 
+import { EditPaneHeader } from './EditPaneHeader';
+
 export class MultiSelectedVizPanelsEditableElement implements MultiSelectedEditableDashboardElement {
-  public isMultiSelectedEditableDashboardElement: true = true;
+  public readonly isMultiSelectedEditableDashboardElement = true;
+  public readonly key: string;
 
-  private items?: VizPanel[];
-
-  constructor(items: SceneObject[]) {
-    this.items = [];
-
-    for (const item of items) {
-      if (item instanceof VizPanel) {
-        this.items.push(item);
-      }
-    }
+  constructor(private _panels: VizPanel[]) {
+    this.key = uuidv4();
   }
 
-  useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-    return [];
+  public getEditableElementInfo(): EditableDashboardElementInfo {
+    return { name: t('dashboard.edit-pane.elements.panels', 'Panels'), typeId: 'panels', icon: 'folder' };
   }
 
-  public onDelete = () => {
-    for (const panel of this.items || []) {
+  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
+    const header = new OptionsPaneCategoryDescriptor({
+      title: ``,
+      id: 'panel-header',
+      isOpenable: false,
+      renderTitle: () => (
+        <EditPaneHeader
+          title={t('dashboard.layout.common.panels-title', '{{length}} Panels Selected', {
+            length: this._panels.length,
+          })}
+          onDelete={() => this.onDelete()}
+        />
+      ),
+    });
+
+    return [header];
+  }
+
+  public onDelete() {
+    this._panels.forEach((panel) => {
       const layout = dashboardSceneGraph.getLayoutManagerFor(panel);
-      layout.removePanel(panel);
-    }
-  };
-
-  public getTypeName(): string {
-    return 'Panels';
-  }
-
-  renderActions(): ReactNode {
-    return (
-      <Stack direction="column">
-        <Text>
-          <Trans i18nKey="dashboard.edit-pane.panels.multi-select.selection-number">No. of panels selected: </Trans>
-          {this.items?.length}
-        </Text>
-        <Stack direction="row">
-          <Button size="sm" variant="secondary" icon="copy" />
-          <Button size="sm" variant="destructive" fill="outline" onClick={this.onDelete} icon="trash-alt" />
-        </Stack>
-      </Stack>
-    );
+      layout.removePanel?.(panel);
+    });
   }
 }

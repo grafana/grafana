@@ -160,6 +160,19 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		// Actually run the query
 		rsp, err := b.execute(ctx, req)
 		if err != nil {
+			// log unexpected errors
+			var k8sErr *errorsK8s.StatusError
+			if errors.As(err, &k8sErr) {
+				// we do not need to log 4xx errors as they are expected
+				if k8sErr.ErrStatus.Code >= 500 {
+					b.log.Error("hit unexpected k8s error while executing query", "err", err, "status", k8sErr.Status())
+				}
+				b.log.Debug("sending a known k8s error to the client", "err", err, "status", k8sErr.Status())
+			} else {
+				b.log.Error("hit unexpected error while executing query, this will show as an unhandled k8s status error", "err", err)
+			}
+
+			// return the error to the client, will send all non k8s errors as a k8 unexpected error
 			responder.Error(err)
 			return
 		}
@@ -368,8 +381,7 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 			if !ok {
 				dr, ok := qdr.Responses[refId]
 				if ok {
-					allowLongFrames := false // TODO -- depends on input type and only if SQL?
-					_, res, err := b.converter.Convert(ctx, req.RefIDTypes[refId], dr.Frames, allowLongFrames)
+					_, res, err := b.converter.Convert(ctx, req.RefIDTypes[refId], dr.Frames)
 					if err != nil {
 						expressionsLogger.Error("error converting frames for expressions", "error", err)
 						res.Error = err
@@ -409,13 +421,12 @@ func (b *QueryAPIBuilder) convertQueryWithoutExpression(ctx context.Context, req
 	if qdr == nil {
 		return nil, errors.New("queryDataResponse is nil")
 	}
-	allowLongFrames := false
 	refID := req.Request.Queries[0].RefID
 	if _, exist := qdr.Responses[refID]; !exist {
 		return nil, fmt.Errorf("refID '%s' does not exist", refID)
 	}
 	frames := qdr.Responses[refID].Frames
-	_, results, err := b.converter.Convert(ctx, req.PluginId, frames, allowLongFrames)
+	_, results, err := b.converter.Convert(ctx, req.PluginId, frames)
 	if err != nil {
 		results.Error = err
 	}

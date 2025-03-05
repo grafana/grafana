@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
@@ -158,7 +159,7 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
   }, [ruleIdentifier, ruleSourceName, promRuleNs, rulerRuleGroup, ruleSource, ruleLocation, namespaceName]);
 
   return {
-    loading: isLoadingDsFeatures || isLoadingPromRules || isLoadingRulerGroup,
+    loading: isLoadingRuleLocation || isLoadingDsFeatures || isLoadingPromRules || isLoadingRulerGroup,
     error: ruleLocationError ?? promRuleNsError ?? rulerRuleGroupError,
     result: rule,
   };
@@ -172,9 +173,18 @@ export interface RuleLocation {
 }
 
 export function useRuleLocation(ruleIdentifier: RuleIdentifier): RequestState<RuleLocation> {
+  const validIdentifier = (() => {
+    if (isGrafanaRuleIdentifier(ruleIdentifier) && ruleIdentifier.uid !== '') {
+      return { uid: ruleIdentifier.uid };
+    }
+    return skipToken;
+  })();
+
   const { isLoading, currentData, error, isUninitialized } = alertRuleApi.endpoints.getAlertRule.useQuery(
-    { uid: isGrafanaRuleIdentifier(ruleIdentifier) ? ruleIdentifier.uid : '' },
-    { skip: !isGrafanaRuleIdentifier(ruleIdentifier), refetchOnMountOrArgChange: true }
+    validIdentifier,
+    {
+      refetchOnMountOrArgChange: true,
+    }
   );
 
   return useMemo(() => {
