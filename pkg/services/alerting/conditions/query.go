@@ -210,7 +210,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange l
 		}
 
 		// If there are dataframes but no series on the result
-		useDataframes := v.Dataframes != nil && (v.Series == nil || len(v.Series) == 0)
+		useDataframes := v.Dataframes != nil && len(v.Series) == 0
 
 		if useDataframes { // convert the dataframes to plugins.DataTimeSeries
 			frames, err := v.Dataframes.Decoded()
