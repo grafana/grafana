@@ -11,6 +11,8 @@ import {
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
+import { variableRegex } from '../variables/utils';
+
 export function useAllFieldNamesFromDataFrames(input: DataFrame[]): string[] {
   return useMemo(() => {
     if (!Array.isArray(input)) {
@@ -64,7 +66,7 @@ export const numberOrVariableValidator = (value: string | number) => {
   if (!Number.isNaN(Number(value))) {
     return true;
   }
-  if (/^\$[A-Za-z0-9_]+$/.test(value)) {
+  if (variableRegex.test(value)) {
     return true;
   }
   return false;
