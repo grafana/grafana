@@ -172,7 +172,6 @@ func (s *SpannerDialect) CleanDB(engine *xorm.Engine) error {
 		}
 
 		sql := fmt.Sprintf("DROP TABLE %s", s.Quote(table.Name))
-		fmt.Println(sql, ";")
 		statements = append(statements, sql)
 	}
 
