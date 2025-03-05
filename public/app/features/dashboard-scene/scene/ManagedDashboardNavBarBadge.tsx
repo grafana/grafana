@@ -1,10 +1,9 @@
 import { Badge } from '@grafana/ui';
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
+import { DashboardMeta } from 'app/types';
 
-import { DashboardScene } from './DashboardScene';
-
-export default function ManagedDashboardNavBarBadge({ dashboard }: { dashboard: DashboardScene }) {
-  const obj = dashboard.state.meta.k8s;
+export default function ManagedDashboardNavBarBadge({ meta }: { meta: DashboardMeta }) {
+  const obj = meta.k8s;
   if (!obj?.annotations) {
     return;
   }
