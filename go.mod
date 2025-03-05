@@ -547,3 +547,8 @@ replace github.com/google/cel-go => github.com/google/cel-go v0.22.1
 
 // fails to compile on 32-bit architectures due to overflow (https://github.com/grpc-ecosystem/go-grpc-middleware/issues/752).
 replace github.com/grpc-ecosystem/go-grpc-middleware/v2 => github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.2.0
+
+// Pin Prometheus to a version before breaking change on UTF-8 characters in label names.
+replace github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.20.5
+
+replace github.com/prometheus/common => github.com/prometheus/common v0.61.0
