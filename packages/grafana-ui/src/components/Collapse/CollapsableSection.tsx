@@ -101,6 +101,7 @@ const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
     position: 'relative',
     justifyContent: 'space-between',
     fontSize: theme.typography.size.lg,
+    fontWeight: theme.typography.fontWeightMedium,
     padding: `${theme.spacing(0.5)} 0`,
     '&:focus-within': getFocusStyles(theme),
   }),
@@ -126,5 +127,6 @@ const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
   }),
   label: css({
     display: 'flex',
+    color: theme.colors.text.maxContrast,
   }),
 });
