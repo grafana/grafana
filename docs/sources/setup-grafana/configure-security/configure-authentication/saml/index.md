@@ -90,7 +90,7 @@ Related links:
 ### Edit SAML options in the Grafana config file
 
 1. In the `[auth.saml]` section in the Grafana configuration file, set [`enabled`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#enabled-3) to `true`.
-1. Configure the [certificate and private key](#certificate-and-private-key").
+1. Optionally, configure the [certificate and private key](#certificate-and-private-key").
 1. On the Okta application page where you have been redirected after application created, navigate to the **Sign On** tab and find **Identity Provider metadata** link in the **Settings** section.
 1. Set the [`idp_metadata_url`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#idp_metadata_url) to the URL obtained from the previous step. The URL should look like `https://<your-org-id>.okta.com/app/<application-id>/sso/saml/metadata`.
 1. Set the following options to the attribute names configured at the **step 10** of the SAML integration setup. You can find this attributes on the **General** tab of the application page (**ATTRIBUTE STATEMENTS** and **GROUP ATTRIBUTE STATEMENTS** in the **SAML Settings** section).
@@ -98,7 +98,7 @@ Related links:
    - [`assertion_attribute_email`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#assertion_attribute_email)
    - [`assertion_attribute_name`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#assertion_attribute_name)
    - [`assertion_attribute_groups`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#assertion_attribute_groups)
-1. (Optional) Set the `name` parameter in the `[auth.saml]` section in the Grafana configuration file. This parameter replaces SAML in the Grafana user interface in locations such as the sign-in button.
+1. Optionally, set the `name` parameter in the `[auth.saml]` section in the Grafana configuration file. This parameter replaces SAML in the Grafana user interface in locations such as the sign-in button.
 1. Save the configuration file and then restart the Grafana server.
 
 When you are finished, the Grafana configuration might look like this example:
@@ -140,7 +140,13 @@ For Grafana Cloud instances, please contact Grafana Support to update the `conte
 
 The SAML SSO standard uses asymmetric encryption to exchange information between the SP (Grafana) and the IdP. To perform such encryption, you need a public part and a private part. In this case, the X.509 certificate provides the public part, while the private key provides the private part. The private key needs to be issued in a [PKCS#8](https://en.wikipedia.org/wiki/PKCS_8) format.
 
-Grafana supports two ways of specifying both the `certificate` and `private_key`.
+{{% admonition type="note" %}}
+Directly supplying a certificate and private key to Grafana is optional. Commonly, the certificate and key are embedded in the [IDP metadata](#configure-the-saml-toolkit-application-endpoints) and refreshed as needed by Grafana automatically. This can save you the work of manually rotating your certs and keys whenever they expire.
+{{% /admonition %}}
+
+Whether supplying certificate and key directly or via idp_metadata, loading certs into Grafana helps ensure that Grafana connects to a verified endpoint (such as in the case of MITM takeover scenarios).
+
+If you are directly supplying the certificate and key, Grafana supports two ways of specifying both the `certificate` and `private_key`:
 
 - Without a suffix (`certificate` or `private_key`), the configuration assumes you've supplied the base64-encoded file contents.
 - With the `_path` suffix (`certificate_path` or `private_key_path`), then Grafana treats the value entered as a file path and attempts to read the file from the file system.
@@ -149,15 +155,30 @@ Grafana supports two ways of specifying both the `certificate` and `private_key`
 You can only use one form of each configuration option. Using multiple forms, such as both `certificate` and `certificate_path`, results in an error.
 {{% /admonition %}}
 
----
+Always work with your company's security team on setting up certificates and private keys. If you need to generate them yourself (such as in the short term, for testing purposes, and so on), use the following example to generate your certificate and private key, including the step of ensuring that the key is generated with the [PKCS#8](https://en.wikipedia.org/wiki/PKCS_8) format.
 
-### Generate private key for SAML authentication:
+### Example of private key generation for SAML authentication
 
 An example of how to generate a self-signed certificate and private key that's valid for one year:
 
 ```sh
 $ openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes​
 ```
+Base64-encode the cert.pem and key.pem files:
+(-w0 switch is not needed on Mac, only for Linux)
+
+```sh
+$ base64 -w0 key.pem > key.pem.base64
+$ base64 -w0 cert.pem > cert.pem.base64
+```
+The base64-encoded values (`key.pem.base64, cert.pem.base64` files) are then used for certificate and private_key.
+Run the following command to convert the private key to [PKCS#8](https://en.wikipedia.org/wiki/PKCS_8) format.
+
+```sh
+openssl pkcs8 -topk8 -inform PEM -outform PEM -in myoriginalkey.pem -out myconvertedkey.pem -nocrypt
+```
+
+The base64-encoded values (`myconvertedkey.pem.base64, cert.pem.base64` files) are then used for certificate and private_key.
 
 The generated `key.pem` and `cert.pem` files are then used for certificate and private_key.
 
