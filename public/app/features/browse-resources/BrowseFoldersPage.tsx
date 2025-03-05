@@ -1,13 +1,22 @@
 import { css } from '@emotion/css';
-import React, { useState, useEffect } from 'react';
-
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { EmptyState, LoadingPlaceholder, InteractiveTable, Column, Select, Icon, Stack, useStyles2, FilterInput } from '@grafana/ui';
-import { getAPINamespace } from 'app/api/utils';
-import { Page } from 'app/core/components/Page/Page';
+import React, { useState, useEffect } from 'react';
+import {
+  EmptyState,
+  LoadingPlaceholder,
+  InteractiveTable,
+  Column,
+  Select,
+  Icon,
+  Stack,
+  useStyles2,
+  FilterInput,
+} from '@grafana/ui';
 
-import { GrafanaSearcher } from '../search/service/types';
+import { Page } from 'app/core/components/Page/Page';
 import { SearchHit, UnifiedSearcher } from '../search/service/unified';
+import { GrafanaSearcher } from '../search/service/types';
+import { getAPINamespace } from 'app/api/utils';
 
 interface Folder extends SearchHit {
   isExpanded?: boolean;
@@ -39,7 +48,7 @@ const searchURI = `/apis/search.grafana.app/v0alpha1/namespaces/${getAPINamespac
 const searcher = new UnifiedSearcher({} as GrafanaSearcher, searchURI);
 
 const FoldersPage: React.FC = () => {
-  const [folders, setFolders] = useState<Folder[]>([]);
+  const [folders, setFolders] = useState<Array<Folder>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
