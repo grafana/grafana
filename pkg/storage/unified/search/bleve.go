@@ -691,8 +691,8 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 			})
 		} else {
 			searchrequest.Sort = append(searchrequest.Sort, &search.SortField{
-				Field: resource.SEARCH_FIELD_TITLE,
-				Desc:  true,
+				Field: resource.SEARCH_FIELD_TITLE_PHRASE,
+				Desc:  false,
 			})
 		}
 	}
