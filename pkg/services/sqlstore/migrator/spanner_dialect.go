@@ -81,6 +81,13 @@ func (s *SpannerDialect) CreateTableSQL(table *Table) string {
 		col.Default = c.Default
 		t.AddColumn(col)
 	}
+	if len(t.PrimaryKeys) == 0 {
+		for _, ix := range table.Indices {
+			if ix.Name == "PRIMARY_KEY" {
+				t.PrimaryKeys = append(t.PrimaryKeys, ix.Cols...)
+			}
+		}
+	}
 	return s.d.CreateTableSql(t, t.Name, "", "")
 }
 
