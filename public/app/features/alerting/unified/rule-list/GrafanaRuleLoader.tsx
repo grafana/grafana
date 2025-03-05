@@ -7,7 +7,7 @@ import { isGrafanaAlertingRule, isGrafanaRecordingRule } from '../utils/rules';
 import { createRelativeUrl } from '../utils/url';
 
 import { AlertRuleListItem, RecordingRuleListItem, UnknownRuleListItem } from './components/AlertRuleListItem';
-import { AlertRuleListItemLoader, RulerRuleLoadingError } from './components/AlertRuleListItemLoader';
+import { AlertRuleListItemSkeleton, RulerRuleLoadingError } from './components/AlertRuleListItemLoader';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
 import { RuleOperation } from './components/RuleListIcon';
 
@@ -33,7 +33,7 @@ export function GrafanaRuleLoader({ rule, groupIdentifier, namespaceName }: Graf
       return <RulerRuleLoadingError rule={rule} />;
     }
 
-    return <AlertRuleListItemLoader />;
+    return <AlertRuleListItemSkeleton />;
   }
 
   return (

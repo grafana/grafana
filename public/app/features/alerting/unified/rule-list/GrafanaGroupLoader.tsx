@@ -11,7 +11,7 @@ import { GrafanaRulesSource } from '../utils/datasource';
 
 import { GrafanaRuleListItem } from './GrafanaRuleLoader';
 import { RuleOperationListItem } from './components/AlertRuleListItem';
-import { AlertRuleListItemLoader } from './components/AlertRuleListItemLoader';
+import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
 import { RuleOperation } from './components/RuleListIcon';
 
 const { useGetGrafanaRulerGroupQuery } = alertRuleApi;
@@ -49,7 +49,7 @@ export function GrafanaGroupLoader({
     return (
       <>
         {Array.from({ length: expectedRulesCount }).map((_, index) => (
-          <AlertRuleListItemLoader key={index} />
+          <AlertRuleListItemSkeleton key={index} />
         ))}
       </>
     );

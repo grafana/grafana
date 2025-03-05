@@ -668,7 +668,8 @@
       "return-button": {
         "title": "Åľęřŧ řūľęş"
       },
-      "rulerrule-loading-error": "Fäįľęđ ŧő ľőäđ ŧĥę řūľę"
+      "rulerrule-loading-error": "Fäįľęđ ŧő ľőäđ ŧĥę řūľę",
+      "unknown-rule-type": "Ůŉĸŉőŵŉ řūľę ŧypę"
     },
     "rule-state": {
       "creating": "Cřęäŧįŉģ",
