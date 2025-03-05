@@ -90,7 +90,7 @@ Refer to [Configuration]({{< relref "../../../configure-grafana/" >}}) for more 
 
 The SAML SSO standard uses asymmetric encryption to exchange information between the SP (Grafana) and the IdP. To perform such encryption, you need a public part and a private part. In this case, the X.509 certificate provides the public part, while the private key provides the private part. The private key needs to be issued in a [PKCS#8](https://en.wikipedia.org/wiki/PKCS_8) format.
 
-> **Note:** Directly supplying a certificate and private key to Grafana is optional. Commonly, the certificate and key are embedded in the IDP metadata (see that configuration step below), and refreshed as needed by Grafana automatically. This can save you the work of manually rotating your certs and keys whenever they expire.
+> **Note:** Directly supplying a certificate and private key to Grafana is optional. Commonly, the certificate and key are embedded in the IDP metadata (see the configuration step below) and refreshed as needed by Grafana automatically. This can save you the work of manually rotating your certs and keys whenever they expire.
 
 Whether supplying certificate and key directly or via idp_metadata: loading certs into Grafana helps ensure that Grafana connects to a verified endpoint (for example, in case of MITM takeover scenarios).
 
