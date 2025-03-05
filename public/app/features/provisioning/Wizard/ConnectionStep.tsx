@@ -1,7 +1,7 @@
 import { Controller, useFormContext } from 'react-hook-form';
 import { useEffect } from 'react';
 
-import { Field, Input, Combobox, Stack, FieldSet, Card } from '@grafana/ui';
+import { Field, Input, Combobox, Stack, FieldSet, Card, Alert } from '@grafana/ui';
 
 import { WizardFormData } from './types';
 import { useGetFrontendSettingsQuery } from '../api';
@@ -39,6 +39,12 @@ export function ConnectionStep() {
   const workflows = watch('repository.workflows');
   const settingsQuery = useGetFrontendSettingsQuery();
   const [instanceConnected, folderConnected] = checkSyncSettings(settingsQuery.data);
+
+  const availableOptions = modeOptions.filter((option) => {
+    if (folderConnected) return option.value === 'folder';
+    if (instanceConnected) return option.value === 'instance';
+    return true;
+  });
 
   useEffect(() => {
     if (folderConnected) {
@@ -78,7 +84,7 @@ export function ConnectionStep() {
         </Field>
         <Field
           label="Display name"
-          description="Add a clear name for this configuration"
+          description="Add a clear name for this repository connection"
           error={errors.repository?.title?.message}
           invalid={!!errors.repository?.title}
         >
@@ -89,12 +95,18 @@ export function ConnectionStep() {
         </Field>
 
         <Stack direction="column" gap={2}>
+          {folderConnected && (
+            <Alert severity="info" title="Connect your entire Grafana instance is disabled">
+              Instance-wide connection is disabled because you have folders connected to repositories. You must
+              disconnect all folder repositories to use it.
+            </Alert>
+          )}
           <Controller
             name="repository.sync.target"
             control={control}
             render={({ field: { onChange, value } }) => (
               <>
-                {modeOptions.map((option) => (
+                {availableOptions.map((option) => (
                   <Card
                     key={option.value}
                     isSelected={value === option.value}
