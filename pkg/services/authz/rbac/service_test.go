@@ -6,11 +6,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/singleflight"
 
+	"github.com/grafana/authlib/authn"
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/cache"
+	"github.com/grafana/authlib/types"
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -600,6 +604,147 @@ func TestService_listPermission(t *testing.T) {
 			assert.Equal(t, tc.expectedAll, got.All)
 			assert.ElementsMatch(t, tc.expectedItems, got.Items)
 			assert.ElementsMatch(t, tc.expectedFolders, got.Folders)
+		})
+	}
+}
+
+func TestService_Check(t *testing.T) {
+	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Claims: jwt.Claims{
+			Subject:  claims.NewTypeID(types.TypeAccessPolicy, "some-service"),
+			Audience: []string{"authzservice"},
+		},
+		Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+	})
+
+	type testCase struct {
+		name          string
+		req           *authzv1.CheckRequest
+		permissions   []accesscontrol.Permission
+		expected      bool
+		expectedError bool
+	}
+
+	testCases := []testCase{
+		{
+			name: "should return allowed if user has permission",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			permissions:   []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash1"}},
+			expected:      true,
+			expectedError: false,
+		},
+		{
+			name: "should error if no namespace is provided",
+			req: &authzv1.CheckRequest{
+				Namespace: "",
+				Subject:   "user:test-uid",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			expectedError: true,
+		},
+		{
+			name: "should error if caller namespace does not match request namespace",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-13",
+				Subject:   "user:test-uid",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			expectedError: true,
+		},
+		{
+			name: "should error if an invalid subject is provided",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "invalid:12",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			expectedError: true,
+		},
+
+		// {
+		// 	name: "should return denied if user does not have permission",
+		// 	req: &authzv1.CheckRequest{
+		// 		Namespace: "default",
+		// 		Subject:   "user:test-uid",
+		// 		Group:     "dashboard.grafana.app",
+		// 		Resource:  "dashboards",
+		// 		Verb:      "read",
+		// 		Name:      "some_dashboard",
+		// 	},
+		// 	permissions:   []accesscontrol.Permission{},
+		// 	expected:      false,
+		// 	expectedError: false,
+		// },
+		// {
+		// 	name: "should return error if request is invalid",
+		// 	req: &authzv1.CheckRequest{
+		// 		Namespace: "",
+		// 		Subject:   "user:test-uid",
+		// 		Group:     "dashboard.grafana.app",
+		// 		Resource:  "dashboards",
+		// 		Verb:      "read",
+		// 		Name:      "some_dashboard",
+		// 	},
+		// 	permissions:   []accesscontrol.Permission{},
+		// 	expected:      false,
+		// 	expectedError: true,
+		// },
+		// {
+		// 	name: "should return error if getting permissions fails",
+		// 	req: &authzv1.CheckRequest{
+		// 		Namespace: "default",
+		// 		Subject:   "user:test-uid",
+		// 		Group:     "dashboard.grafana.app",
+		// 		Resource:  "dashboards",
+		// 		Verb:      "read",
+		// 		Name:      "some_dashboard",
+		// 	},
+		// 	permissions:   nil,
+		// 	expected:      false,
+		// 	expectedError: true,
+		// },
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := types.WithAuthInfo(context.Background(), callingService)
+			s := setupService()
+
+			userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+
+			store := &fakeStore{
+				userID:          userID,
+				userPermissions: tc.permissions,
+				err:             tc.expectedError,
+			}
+			s.store = store
+			s.permissionStore = store
+			s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
+
+			resp, err := s.Check(ctx, tc.req)
+			if tc.expectedError {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, resp.Allowed)
 		})
 	}
 }
