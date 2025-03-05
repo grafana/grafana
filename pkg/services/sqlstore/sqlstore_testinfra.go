@@ -121,9 +121,10 @@ func NewTestStore(tb TestingTB, opts ...TestOption) *SQLStore {
 
 	tracer := tracing.InitializeTracerForTest()
 	options := &testOptions{
-		FeatureFlags: make(map[string]bool),
-		Tracer:       tracer,
-		Bus:          bus.ProvideBus(tracer),
+		FeatureFlags:     make(map[string]bool),
+		Tracer:           tracer,
+		Bus:              bus.ProvideBus(tracer),
+		NoDefaultUserOrg: true,
 	}
 	WithOSSMigrations()(options) // Assign some default migrations
 	for _, opt := range opts {
