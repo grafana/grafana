@@ -5,6 +5,9 @@ import { Icon, Stack, Text } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
 import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { groups } from '../utils/navigation';
+
 import { GrafanaGroupLoader } from './GrafanaGroupLoader';
 import { DataSourceSection } from './components/DataSourceSection';
 import { LazyPagination } from './components/LazyPagination';
@@ -99,6 +102,7 @@ export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGr
     <ListGroup
       key={group.name}
       name={group.name}
+      href={groups.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, group.folderUid, group.name)}
       isOpen={false}
       actions={<RuleGroupActionsMenu groupIdentifier={groupIdentifier} />}
     >

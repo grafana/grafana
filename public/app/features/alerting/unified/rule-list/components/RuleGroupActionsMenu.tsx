@@ -1,7 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 
 import { isFetchError } from '@grafana/runtime';
-import { Dropdown, Icon, IconButton, Menu } from '@grafana/ui';
+import { Dropdown, Icon, IconButton, LinkButton, Menu } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { DataSourceRuleGroupIdentifier, GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 
@@ -138,31 +138,18 @@ function GrafanaGroupsActionMenu({ groupIdentifier }: GrafanaGroupsActionMenuPro
 
   const canEdit = folder?.canSave && !isProvisioned && !isPluginProvided && canEditRules(GRAFANA_RULES_SOURCE_NAME);
 
+  if (!canEdit) {
+    return null;
+  }
+
   return (
-    <>
-      <Dropdown
-        placement="right-start"
-        overlay={
-          <Menu>
-            <Menu.Item
-              label={t('alerting.group-actions.details', 'Details')}
-              icon="info-circle"
-              data-testid="details-group-action"
-              url={groups.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, folderUid, groupIdentifier.groupName)}
-            />
-            {canEdit && (
-              <Menu.Item
-                label={t('alerting.group-actions.edit', 'Edit')}
-                icon="pen"
-                data-testid="edit-group-action"
-                url={groups.editPageLink(GRAFANA_RULES_SOURCE_NAME, folderUid, groupIdentifier.groupName)}
-              />
-            )}
-          </Menu>
-        }
-      >
-        <IconButton name="ellipsis-h" aria-label={t('alerting.group-actions.actions-trigger', 'Rule group actions')} />
-      </Dropdown>
-    </>
+    <LinkButton
+      icon="pen"
+      variant="secondary"
+      size="sm"
+      href={groups.editPageLink(GRAFANA_RULES_SOURCE_NAME, folderUid, groupIdentifier.groupName)}
+    >
+      {t('alerting.group-actions.edit', 'Edit')}
+    </LinkButton>
   );
 }
