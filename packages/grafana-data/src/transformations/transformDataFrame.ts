@@ -13,9 +13,6 @@ import {
 import { getFrameMatchers } from './matchers';
 import { standardTransformersRegistry, TransformerRegistryItem } from './standardTransformersRegistry';
 
-// when running within Scenes, we can skip var interpolation, since it's already handled upstream
-const isScenes = window.__grafanaSceneContext != null;
-
 const getOperator =
   (config: DataTransformerConfig, ctx: DataTransformContext): MonoTypeOperatorFunction<DataFrame[]> =>
   (source) => {
@@ -27,6 +24,9 @@ const getOperator =
 
     const defaultOptions = info.transformation.defaultOptions ?? {};
     const options = { ...defaultOptions, ...config.options };
+
+    // when running within Scenes, we can skip var interpolation, since it's already handled upstream
+    const isScenes = window.__grafanaSceneContext != null;
 
     const interpolated = isScenes
       ? options
