@@ -1,8 +1,9 @@
+import { skipToken } from '@reduxjs/toolkit/query/react';
 import { Chance } from 'chance';
 
 import { dateTime } from '@grafana/data';
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from 'app/features/apiserver/types';
-import { useGetResourceRepository } from 'app/features/provisioning/hooks';
+import { useGetResourceRepository, useRepositoryList } from 'app/features/provisioning/hooks';
 import { DashboardMeta } from 'app/types';
 
 import { getDefaultWorkflow } from './defaults';
@@ -28,11 +29,9 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
   const managerKind = annotations?.[AnnoKeyManagerKind];
   const managerIdentity = annotations?.[AnnoKeyManagerIdentity];
   const sourcePath = annotations?.[AnnoKeySourcePath];
-  // Get config by resource name or folder UID for new resources
-  const repositoryConfig =
-    managerKind === 'repo' ? useGetResourceRepository({ name: managerIdentity, folderUid: meta.folderUid }) : undefined;
-  const repository = repositoryConfig?.spec;
 
+  const repositoryConfig = useConfig({ folderUid: meta.folderUid, managerKind, managerIdentity });
+  const repository = repositoryConfig?.spec;
   const random = Chance(1);
   const timestamp = `${dateTime().format('YYYY-MM-DD')}-${random.string({ length: 5, alpha: true })}`;
 
@@ -55,3 +54,32 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
     isGitHub: repository?.type === 'github',
   };
 }
+
+type UseConfigArgs = {
+  folderUid?: string;
+  managerKind?: string;
+  managerIdentity?: string;
+};
+const useConfig = ({ folderUid, managerKind, managerIdentity }: UseConfigArgs) => {
+  const repositoryConfig = useGetResourceRepository({
+    name: managerKind === 'repo' ? managerIdentity : undefined,
+    folderUid,
+  });
+
+  const [items, isLoading] = useRepositoryList(repositoryConfig ? skipToken : undefined);
+
+  if (repositoryConfig) {
+    return repositoryConfig;
+  }
+
+  if (isLoading) {
+    return null;
+  }
+  const instanceConfig = items?.find((repo) => repo.spec?.sync.target === 'instance');
+  if (!instanceConfig) {
+    return instanceConfig;
+  }
+
+  // Return the config, which targets the folder
+  return items?.find((repo) => repo?.metadata?.name === folderUid);
+};
