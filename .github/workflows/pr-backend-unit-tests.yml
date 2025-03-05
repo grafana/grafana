@@ -1,4 +1,4 @@
-name: Test Backend
+name: Backend Unit Tests
 
 on:
   workflow_dispatch:
@@ -18,7 +18,6 @@ permissions:
   id-token: write
 
 env:
-  GO_VERSION: '1.23.5'
   EDITION: 'oss'
   WIRE_TAGS: 'oss'
 
@@ -60,8 +59,9 @@ jobs:
             echo "generate=false" >> $GITHUB_OUTPUT
           fi
 
-  verify-code-generation:
-    name: Verify Code Generation
+  backend-tests:
+    name: Backend Tests
+    needs: [check-coverage]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -70,7 +70,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version-file: go.mod
           cache: true
           
       - name: Install dependencies
@@ -78,49 +78,34 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential shared-mime-info
 
-      - name: Verify CUE generation
-        run: CODEGEN_VERIFY=1 make gen-cue
+      - name: Verify code generation
+        run: |
+          CODEGEN_VERIFY=1 make gen-cue
+          CODEGEN_VERIFY=1 make gen-jsonnet
 
-      - name: Verify Jsonnet generation
-        run: CODEGEN_VERIFY=1 make gen-jsonnet
+      - name: Generate Go code
+        run: make gen-go
 
-  run-tests:
-    strategy:
-      matrix:
-        test-type: [unit, integration]
-    name: ${{ matrix.test-type == 'unit' && 'Unit Tests' || 'Integration Tests' }}
-    needs: [check-coverage, verify-code-generation]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
-
-      - name: Run ${{ matrix.test-type }} tests
+      - name: Run unit tests
         shell: bash
         run: |
           if [ "${{ needs.check-coverage.outputs.generate }}" == "true" ]; then
-            COVER_OPTS="-coverprofile=${{ matrix.test-type }}.cov -coverpkg=github.com/grafana/grafana/..." make gen-go test-go-${{ matrix.test-type }}
+            COVER_OPTS="-coverprofile=unit.cov -coverpkg=github.com/grafana/grafana/..." make test-go-unit
           else
-            make gen-go test-go-${{ matrix.test-type }}
+            make test-go-unit
           fi
 
-      - name: Upload ${{ matrix.test-type }} coverage
+      - name: Upload unit coverage
         if: needs.check-coverage.outputs.generate == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.test-type }}-coverage
-          path: ${{ matrix.test-type }}.cov
+          name: unit-coverage
+          path: unit.cov
           retention-days: 1
 
   report-coverage:
     name: Generate Coverage Report
-    needs: [check-coverage, run-tests]
+    needs: [check-coverage, backend-tests]
     if: needs.check-coverage.outputs.generate == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -130,7 +115,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version-file: go.mod
           cache: true
 
       - name: Generate Go code
@@ -141,17 +126,11 @@ jobs:
         with:
           name: unit-coverage
 
-      - name: Download integration coverage
-        uses: actions/download-artifact@v4
-        with:
-          name: integration-coverage
-
       - name: Generate Coverage Report
         uses: ./.github/actions/report-coverage
         with:
           unit-cov-path: unit.cov
-          integration-cov-path: integration.cov
-
+      
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
