@@ -18,7 +18,6 @@ permissions:
   id-token: write
 
 env:
-  EDITION: 'oss'
   GO_VERSION: '1.23.5'
 
 jobs:
@@ -90,12 +89,13 @@ jobs:
     name: ${{ matrix.test-type == 'unit' && 'Unit Tests' || 'Integration Tests' }}
     needs: [check-coverage, setup]
     runs-on: ubuntu-latest
-    env:
-      EDITION: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && 'enterprise' || 'oss' }}
-      WIRE_TAGS: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && 'enterprise' || 'oss' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Setup common environment
+        id: common-env
+        uses: ./.github/actions/setup-common-env
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -109,6 +109,9 @@ jobs:
 
       - name: Run ${{ matrix.test-type }} tests
         shell: bash
+        env:
+          EDITION: ${{ steps.common-env.outputs.edition }}
+          WIRE_TAGS: ${{ steps.common-env.outputs.wire_tags }}
         run: |
           if [ "${{ needs.check-coverage.outputs.generate }}" == "true" ]; then
             COVER_OPTS="-coverprofile=${{ matrix.test-type }}.cov -coverpkg=github.com/grafana/grafana/..." make gen-go test-go-${{ matrix.test-type }}
@@ -129,12 +132,13 @@ jobs:
     needs: [check-coverage, run-tests]
     if: needs.check-coverage.outputs.generate == 'true'
     runs-on: ubuntu-latest
-    env:
-      EDITION: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && 'enterprise' || 'oss' }}
-      WIRE_TAGS: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && 'enterprise' || 'oss' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Setup common environment
+        id: common-env
+        uses: ./.github/actions/setup-common-env
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -157,6 +161,9 @@ jobs:
           name: integration-coverage
 
       - name: Generate Go files
+        env:
+          EDITION: ${{ steps.common-env.outputs.edition }}
+          WIRE_TAGS: ${{ steps.common-env.outputs.wire_tags }}
         run: make gen-go
 
       - name: Generate Coverage Report
