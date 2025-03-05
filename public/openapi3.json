@@ -3108,6 +3108,7 @@
         "type": "object"
       },
       "AnnotationActions": {
+        "description": "+k8s:deepcopy-gen=true",
         "properties": {
           "canAdd": {
             "type": "boolean"
@@ -3182,6 +3183,7 @@
         "type": "object"
       },
       "AnnotationPermission": {
+        "description": "+k8s:deepcopy-gen=true",
         "properties": {
           "dashboard": {
             "$ref": "#/components/schemas/AnnotationActions"
