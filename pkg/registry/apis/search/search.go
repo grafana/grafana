@@ -389,7 +389,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 }
 
 var knownTypes = []string{
-	"dashboard.dashboards.grafana.app",
+	"dashboards.dashboard.grafana.app",
 	"folders.folder.grafana.app",
 	"playlists.playlist.grafana.app",
 	"alerts.alert.grafana.app",
