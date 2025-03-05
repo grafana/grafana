@@ -105,7 +105,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		Id:         "finder",
 		SubTitle:   "Search and explore your resources",
 		Icon:       "search",
-		Url:        s.cfg.AppSubURL + "/finder-app",
+		Url:        s.cfg.AppSubURL + "/finder",
 		SortWeight: navtree.WeightFolders,
 	})
 

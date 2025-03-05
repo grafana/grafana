@@ -7,7 +7,7 @@ import {
   InteractiveTable,
   Column,
   Select,
-  Icon,
+  // Icon,
   Stack,
   useStyles2,
   FilterInput,
@@ -18,7 +18,7 @@ import { SearchHit, UnifiedSearcher } from '../search/service/unified';
 import { GrafanaSearcher } from '../search/service/types';
 import { getAPINamespace } from 'app/api/utils';
 
-interface Folder extends SearchHit {
+interface Resource extends SearchHit {
   isExpanded?: boolean;
   owner?: string;
   level?: number;
@@ -27,7 +27,6 @@ interface Folder extends SearchHit {
 }
 
 type ResourceType = 'dashboard' | 'folder' | 'alert' | 'playlist' | 'slo';
-type GroupByOption = 'default' | 'type';
 
 const typeOptions: Array<SelectableValue<ResourceType>> = [
   { label: 'All', value: undefined },
@@ -38,24 +37,19 @@ const typeOptions: Array<SelectableValue<ResourceType>> = [
   { label: 'SLO', value: 'slo' },
 ];
 
-const groupByOptions: Array<SelectableValue<GroupByOption>> = [
-  { label: 'Default', value: 'default' },
-  { label: 'Type', value: 'type' },
-];
-
 const searchURI = `/apis/search.grafana.app/v0alpha1/namespaces/${getAPINamespace()}/search`;
 
 const searcher = new UnifiedSearcher({} as GrafanaSearcher, searchURI);
 
 const FoldersPage: React.FC = () => {
-  const [folders, setFolders] = useState<Array<Folder>>([]);
+  const [resources, setResources] = useState<Array<Resource>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<SelectableValue<ResourceType>>();
   const [selectedTag, setSelectedTag] = useState<SelectableValue<string>>();
   const [selectedOwner, setSelectedOwner] = useState<SelectableValue<string>>();
-  const [groupBy, setGroupBy] = useState<SelectableValue<GroupByOption>>(groupByOptions[0]);
+
   // const [availableTags, setAvailableTags] = useState<Array<SelectableValue<string>>>([]);
   // const [availableOwners, setAvailableOwners] = useState<Array<SelectableValue<string>>>([]);
   
@@ -67,10 +61,13 @@ const FoldersPage: React.FC = () => {
       setIsLoading(true);
       try {
         const results = await Promise.all([
-          fetchResources(kinds),
-          fetchTags(kinds),
+          searcher.fetchResults({ kind: kinds}),
+          searcher.tags({ kind: kinds })
         ]);
-        setTags(results[0]); // Only pass the folder/dashboard results to setTags
+        console.log(results);  // TODO: remove
+        setResources(results[0].hits);
+        // TODO: fix me
+        // setTags(results[0]); // Only pass the folder/dashboard results to setTags
       } catch (e: any) {
         setError(e.message);
       } finally {
@@ -80,96 +77,21 @@ const FoldersPage: React.FC = () => {
     void loadData();
   }, []);
 
-  const fetchResources = async (kinds: string[]): Promise<Folder[]> => {
-    const results = await Promise.all(
-      kinds.map(kind => searcher.fetchResults({ kind: [kind] }))
-    );
-    
-    // Set folders state only for resources of kind 'folder'
-    const folderResults = results.find(result => 
-      result.hits.length > 0 && result.hits[0].resource === 'folder'
-    );
-    if (folderResults) {
-      setFolders(folderResults.hits);
-    }
-
-    // Return all results combined
-    return results.flatMap(response => response.hits);
+  const filterResources = (resources: SearchHit[]) => {
+    // TODO: Implement filtering
+    return resources;
   };
 
-  const fetchTags = async (kinds: string[]) => {
-    try {
-      await Promise.all(
-        kinds.map(kind => searcher.tags({ kind: [kind] }))
-      );
-    } catch (e: any) {
-      setError(e.message);
-    }
-  }
+  // TODO: Implement folder expand/collapse
+  // const handleExpand = (folder: Folder) => {
+  //   setFolders((prevFolders) =>
+  //     prevFolders.map((f) => (f.name === folder.name ? { ...f, isExpanded: !f.isExpanded } : f))
+  //   );
+  // };
 
-  const setTags = (results: SearchHit[]) => {
-    const tags = new Set<string>();
-    const owners = new Set<string>();
-    
-    // Filter only folder resources
-    const folderResults = results.filter(result => result.resource === 'folder');
-    
-    folderResults.forEach((folder: Folder) => {
-      // Initialize or ensure tags array exists
-      if (!folder.tags) {
-        folder.tags = [];
-      }
-      
-      // Add tags to the set
-      folder.tags.forEach(tag => tags.add(tag));
-      
-      // Add owner if exists
-      if (folder.owner) {
-        owners.add(folder.owner);
-      }
-    });
-
-    // setAvailableTags(Array.from(tags).map(tag => ({ label: tag, value: tag })));
-      // setAvailableOwners(Array.from(owners).map((owner) => ({ label: owner, value: owner })));
-  };
-
-  const filterFolders = (folders: SearchHit[]) => {
-    return folders.filter((folder) => {
-      const matchesSearch = folder.title.toLowerCase().includes(searchTerm.toLowerCase());
-      // const matchesType = !selectedType?.value || folder.type === selectedType.value;
-      const matchesTag = !selectedTag?.value || folder.tags.includes(selectedTag.value);
-      // const matchesOwner = !selectedOwner?.value || folder.owner === selectedOwner.value;
-      // return matchesSearch && matchesType && matchesTag && matchesOwner;
-      return matchesSearch  && matchesTag;
-    });
-  };
-
-  const groupFolders = (folders: Folder[]) => {
-    if (groupBy.value === 'type') {
-      const groups: Record<string, Folder[]> = {};
-      typeOptions.forEach((type) => {
-        if (type.value) {
-          groups[type.value] = folders.filter((f) => f.resource === type.value);
-        }
-      });
-      return groups;
-    } else {
-      return {
-        'My Folders': folders.filter((f) => f.owner === 'currentUser'), // Replace with actual current user check
-        'Team Folders': folders.filter((f) => f.owner !== 'currentUser'),
-      };
-    }
-  };
-
-  const handleExpand = (folder: Folder) => {
-    setFolders((prevFolders) =>
-      prevFolders.map((f) => (f.name === folder.name ? { ...f, isExpanded: !f.isExpanded } : f))
-    );
-  };
-
-  const renderGroupedTable = (groupName: string, groupFolders: Folder[]) => {
-    const columns: Array<Column<Folder>> = groupBy.value === 'type' 
-      ? [
+  const renderTable = (resources: SearchHit[]) => {
+    const columns: Array<Column<Resource>> = 
+      [
           {
             id: 'name',
             header: 'Name',
@@ -190,61 +112,40 @@ const FoldersPage: React.FC = () => {
             cell: ({ row: { original } }) => original.resource,
           },
           {
-            id: 'owner',
-            header: 'Owner',
-            cell: ({ row: { original } }) => original.owner,
-          },
-        ]
-      : [
-          {
-            id: 'name',
-            header: 'Name',
-            cell: ({ row: { original } }) => (
-              <div style={{ marginLeft: original.level ? original.level * 20 : 0 }}>
-                {original.hasSubfolders && (
-                  <Icon
-                    name={original.isExpanded ? 'angle-down' : 'angle-right'}
-                    onClick={() => handleExpand(original)}
-                    className={styles.expandIcon}
-                  />
-                )}
-                {original.title}
-              </div>
-            ),
-          },
-          {
-            id: 'type',
-            header: 'Type',
-            cell: ({ row: { original } }) => original.resource,
-          },
-          {
             id: 'tags',
             header: 'Tags',
             cell: ({ row: { original } }) => original.tags?.join(', ') || '-',
           },
-          {
-            id: 'owner',
-            header: 'Owner',
-            cell: ({ row: { original } }) => original.owner,
-          },
         ];
+        // TODO if we want to drill down into the folders
+       
+          // {
+          //   id: 'name',
+          //   header: 'Name',
+          //   cell: ({ row: { original } }) => (
+          //     <div style={{ marginLeft: original.level ? original.level * 20 : 0 }}>
+          //       {original.hasSubfolders && (
+          //         <Icon
+          //           name={original.isExpanded ? 'angle-down' : 'angle-right'}
+          //           onClick={() => handleExpand(original)}
+          //           className={styles.expandIcon}
+          //         />
+          //       )}
+          //       {original.title}
+          //     </div>
+          //   ),
+          // }
 
     return (
-      <div className={styles.groupSection} key={groupName}>
-        <div className={styles.groupHeader}>
-          <h3>{groupName}</h3>
-        </div>
         <InteractiveTable
-          data={groupFolders}
+          data={resources}
           columns={columns}
           getRowId={(row) => row.name}
         />
-      </div>
     );
   };
 
-  const filteredFolders = filterFolders(folders);
-  const groupedFolders = groupFolders(filteredFolders);
+  const filteredResources = filterResources(resources);
 
   return (
     <Page>
@@ -282,14 +183,6 @@ const FoldersPage: React.FC = () => {
               placeholder="Filter by Owner"
               width={20}
             />
-            <div className={styles.groupBySelect}>
-              <Select
-                value={groupBy}
-                onChange={setGroupBy}
-                options={groupByOptions}
-                width={20}
-              />
-            </div>
           </Stack>
         </div>
 
@@ -299,9 +192,7 @@ const FoldersPage: React.FC = () => {
           <EmptyState message={error} variant={'call-to-action'} />
         )}
 
-        {!isLoading && !error && Object.entries(groupedFolders).map(([groupName, folders]) => 
-          renderGroupedTable(groupName, folders)
-        )}
+        {!isLoading && !error && renderTable(filteredResources)}
       </Page.Contents>
     </Page>
   );
