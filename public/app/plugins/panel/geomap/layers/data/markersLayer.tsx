@@ -75,15 +75,16 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     };
 
     const style = await getStyleConfigState(config.style);
-
-    const webGLStyle = await getWebGLStyle(config.style.symbol?.fixed, config.style.opacity);
+    const symbol = config.style.symbol?.fixed;
+    const webGLStyle = await getWebGLStyle(symbol, config.style.opacity);
     const hasText = styleUsesText(config.style);
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource<Point>(location);
     const symbolLayer = new WebGLPointsLayer({ source, style: webGLStyle });
     const textLayer = new VectorImage({ source, declutter: true });
     const layers = new LayerGroup({
-      layers: hasText ? [symbolLayer, textLayer] : [symbolLayer],
+      // If text and no symbol, only show text - fall back on default symbol
+      layers: hasText && symbol ? [symbolLayer, textLayer] : hasText && !symbol ? [textLayer] : [symbolLayer],
     });
 
     const legendProps = new ReplaySubject<MarkersLegendProps>(1);
