@@ -625,35 +625,32 @@ func TestService_Check(t *testing.T) {
 		expectedError bool
 	}
 
+	runTestCase := func(t *testing.T, tc testCase) {
+		ctx := types.WithAuthInfo(context.Background(), callingService)
+		s := setupService()
+
+		userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+
+		store := &fakeStore{
+			userID:          userID,
+			userPermissions: tc.permissions,
+			err:             tc.expectedError,
+		}
+		s.store = store
+		s.permissionStore = store
+		s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
+
+		resp, err := s.Check(ctx, tc.req)
+		if tc.expectedError {
+			require.Error(t, err)
+			return
+		}
+
+		require.NoError(t, err)
+		assert.Equal(t, tc.expected, resp.Allowed)
+	}
+
 	testCases := []testCase{
-		{
-			name: "should allow user with permission",
-			req: &authzv1.CheckRequest{
-				Namespace: "org-12",
-				Subject:   "user:test-uid",
-				Group:     "dashboard.grafana.app",
-				Resource:  "dashboards",
-				Verb:      "get",
-				Name:      "dash1",
-			},
-			permissions:   []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash1"}},
-			expected:      true,
-			expectedError: false,
-		},
-		{
-			name: "should deny user without permission",
-			req: &authzv1.CheckRequest{
-				Namespace: "org-12",
-				Subject:   "user:test-uid",
-				Group:     "dashboard.grafana.app",
-				Resource:  "dashboards",
-				Verb:      "get",
-				Name:      "dash1",
-			},
-			permissions:   []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash2"}},
-			expected:      false,
-			expectedError: false,
-		},
 		{
 			name: "should error if no namespace is provided",
 			req: &authzv1.CheckRequest{
@@ -690,77 +687,64 @@ func TestService_Check(t *testing.T) {
 			},
 			expectedError: true,
 		},
-
-		// {
-		// 	name: "should return denied if user does not have permission",
-		// 	req: &authzv1.CheckRequest{
-		// 		Namespace: "default",
-		// 		Subject:   "user:test-uid",
-		// 		Group:     "dashboard.grafana.app",
-		// 		Resource:  "dashboards",
-		// 		Verb:      "read",
-		// 		Name:      "some_dashboard",
-		// 	},
-		// 	permissions:   []accesscontrol.Permission{},
-		// 	expected:      false,
-		// 	expectedError: false,
-		// },
-		// {
-		// 	name: "should return error if request is invalid",
-		// 	req: &authzv1.CheckRequest{
-		// 		Namespace: "",
-		// 		Subject:   "user:test-uid",
-		// 		Group:     "dashboard.grafana.app",
-		// 		Resource:  "dashboards",
-		// 		Verb:      "read",
-		// 		Name:      "some_dashboard",
-		// 	},
-		// 	permissions:   []accesscontrol.Permission{},
-		// 	expected:      false,
-		// 	expectedError: true,
-		// },
-		// {
-		// 	name: "should return error if getting permissions fails",
-		// 	req: &authzv1.CheckRequest{
-		// 		Namespace: "default",
-		// 		Subject:   "user:test-uid",
-		// 		Group:     "dashboard.grafana.app",
-		// 		Resource:  "dashboards",
-		// 		Verb:      "read",
-		// 		Name:      "some_dashboard",
-		// 	},
-		// 	permissions:   nil,
-		// 	expected:      false,
-		// 	expectedError: true,
-		// },
+		{
+			name: "should error if an unknown group is provided",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "unknown.grafana.app",
+				Resource:  "unknown",
+				Verb:      "get",
+				Name:      "u1",
+			},
+			expectedError: true,
+		},
 	}
+	t.Run("Request validation", func(t *testing.T) {
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				runTestCase(t, tc)
+			})
+		}
+	})
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			ctx := types.WithAuthInfo(context.Background(), callingService)
-			s := setupService()
-
-			userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
-
-			store := &fakeStore{
-				userID:          userID,
-				userPermissions: tc.permissions,
-				err:             tc.expectedError,
-			}
-			s.store = store
-			s.permissionStore = store
-			s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
-
-			resp, err := s.Check(ctx, tc.req)
-			if tc.expectedError {
-				require.Error(t, err)
-				return
-			}
-
-			require.NoError(t, err)
-			assert.Equal(t, tc.expected, resp.Allowed)
-		})
+	testCases = []testCase{
+		{
+			name: "should allow user with permission",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			permissions:   []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash1"}},
+			expected:      true,
+			expectedError: false,
+		},
+		{
+			name: "should deny user without permission",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			permissions:   []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash2"}},
+			expected:      false,
+			expectedError: false,
+		},
 	}
+	t.Run("User permission check", func(t *testing.T) {
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				runTestCase(t, tc)
+			})
+		}
+	})
 }
 
 func setupService() *Service {
