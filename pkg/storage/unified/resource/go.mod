@@ -8,7 +8,7 @@ require (
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240808164224-787abccfbc9e
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
 	github.com/prometheus/client_golang v1.19.1
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/otel/trace v1.28.0
 	gocloud.dev v0.25.0
 	google.golang.org/grpc v1.65.0
