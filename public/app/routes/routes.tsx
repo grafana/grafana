@@ -17,7 +17,7 @@ import { ConfigureIRM } from 'app/features/gops/configuration-tracker/components
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
-import { AccessControlAction, DashboardRoutes } from 'app/types';
+import { AccessControlAction, DashboardRoutes, FolderRoutes } from 'app/types';
 
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
@@ -31,6 +31,14 @@ export function getAppRoutes(): RouteDescriptor[] {
     // Based on the Grafana configuration standalone plugin pages can even override and extend existing core pages, or they can register new routes under existing ones.
     // In order to make it possible we need to register them first due to how `<Switch>` is evaluating routes. (This will be unnecessary once/when we upgrade to React Router v6 and start using `<Routes>` instead.)
     ...getAppPluginRoutes(),
+    {
+      path: '/folder-app',
+      pageClass: 'page-folders',
+      routeName: FolderRoutes.Browse,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "FoldersPage" */ '../features/browse-resources/BrowseFoldersPage')
+      ),
+    },
     {
       path: '/',
       pageClass: 'page-dashboard',
@@ -69,6 +77,14 @@ export function getAppRoutes(): RouteDescriptor[] {
       routeName: DashboardRoutes.Normal,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPageProxy')
+      ),
+    },
+    {
+      path: '/folder-app',
+      pageClass: 'page-folders',
+      routeName: FolderRoutes.Browse,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "FoldersPage" */ 'app/features/browse-resources/BrowseFoldersPage')
       ),
     },
     {
