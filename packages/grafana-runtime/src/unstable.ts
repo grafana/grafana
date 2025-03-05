@@ -11,3 +11,10 @@
 
 // This is a dummy export so typescript doesn't error importing an "empty module"
 export const unstable = {};
+
+export {
+  ScopesContext,
+  type ScopesContextValueState,
+  type ScopesContextValue,
+  useScopes,
+} from './services/ScopesContext';
