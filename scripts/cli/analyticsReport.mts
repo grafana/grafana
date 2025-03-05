@@ -92,6 +92,7 @@ for (const file of files) {
   // Find all createEventFactory() calls
   for (const variableDecl of variableDecls) {
     const eventFactoryName = variableDecl.getName();
+
     const initializer = variableDecl.getInitializer();
     if (!initializer) continue;
     if (!Node.isCallExpression(initializer)) continue;
@@ -175,7 +176,7 @@ for (const file of files) {
       owner,
     };
 
-    console.log('\nEvent: fullEventName');
+    console.log('\nEvent:', fullEventName);
     console.log('  Description: ', description);
     console.log('  Owner: ', owner);
 

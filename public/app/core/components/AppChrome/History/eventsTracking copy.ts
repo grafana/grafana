@@ -13,10 +13,25 @@ const createFeatureB = cef('grafana', 'feature_b');
 type JustOneMember = 'foo';
 type UnifiedHistoryDrawerActions = 'open' | 'close';
 
+enum ActionsEnum {
+  Open = 'open',
+  Close = 'close',
+}
+
 interface UnifiedHistoryDrawerInteraction extends TrackingEventProps {
+  /** just one member */
   justOneMember: JustOneMember;
+  /**
+   * this is a comment that goes
+   * over multiple lines
+   * */
   aliasdUnionOfStrings: UnifiedHistoryDrawerActions;
+  /** directUnionOfStrings */
   directUnionOfStrings: 'foo' | 'bar';
+  /** enumAction */
+
+  // TODO: blows up on enum, see if we can fix with time
+  // enumAction: ActionsEnum;
 }
 
 /**
@@ -42,5 +57,6 @@ export const logBar = createFeatureB<UnifiedHistoryEntryDuplicated>('click_B');
  * Handle clicks on feature B2
  * */
 export const logBaz = createFeatureB<{
+  /** inline type jsdoc comment */
   inlineProp: string;
 }>('click_B2');
