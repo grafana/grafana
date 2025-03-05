@@ -141,13 +141,13 @@ const FoldersPage: React.FC = () => {
             id: 'type',
             header: 'Type',
             cell: ({ row: { original } }) => {
-              // Adds an icon to the left of each resource type
               const iconName = getIconForResource(original.resource);
+              const displayType = original.resource.slice(0, -1); // Remove last character ('s')
               
               return (
                 <div className="flex items-center">
                   {iconName && <Icon name={iconName} style={{ marginRight: '6px' }}/>}
-                  {original.resource}
+                  <span className={styles.resourceType}>{displayType}</span>
                 </div>
               );
             },
@@ -250,6 +250,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: `6px`
+  }),
+  resourceType: css({
+    textTransform: 'capitalize',
   }),
   // expandIcon: css({
   //   cursor: 'pointer',
