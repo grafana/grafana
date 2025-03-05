@@ -3,6 +3,7 @@
 package xorm
 
 import (
+	"fmt"
 	"strings"
 
 	_ "github.com/googleapis/go-sql-spanner"
@@ -148,20 +149,36 @@ func (s *spanner) ShowCreateNull() bool      { return false }
 func (s *spanner) Quote(name string) string  { return "`" + name + "`" }
 func (s *spanner) SqlType(col *core.Column) string {
 	switch col.SQLType.Name {
-	case core.Int, core.BigInt:
+	case core.Int, core.SmallInt, core.BigInt:
 		return "INT64"
-	case core.Varchar, core.Text:
+	case core.Varchar, core.Text, core.MediumText, core.LongText, core.Char:
+		l := col.Length
+		if l == 0 {
+			l = col.SQLType.DefaultLength
+		}
+		if l > 0 {
+			return fmt.Sprintf("STRING(%d)", l)
+		}
 		return "STRING(MAX)"
-	case core.Bool:
+	case core.Bool, core.TinyInt:
 		return "BOOL"
 	case core.Float, core.Double:
 		return "FLOAT64"
-	case core.Bytea:
+	case core.Bytea, core.Blob, core.MediumBlob, core.LongBlob:
+		l := col.Length
+		if l == 0 {
+			l = col.SQLType.DefaultLength
+		}
+		if l > 0 {
+			return fmt.Sprintf("BYTES(%d)", l)
+		}
 		return "BYTES(MAX)"
 	case core.DateTime, core.TimeStamp:
 		return "TIMESTAMP"
 	default:
-		return "STRING(MAX)" // XXX: more types to add
+		panic("unknown column type: " + col.SQLType.Name)
+		//default:
+		//	return "STRING(MAX)" // XXX: more types to add
 	}
 }
 
