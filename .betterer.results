@@ -3308,9 +3308,6 @@ exports[`better eslint`] = {
     "public/app/features/dashboard-scene/scene/DashboardLinksControls.tsx:5381": [
       [0, 0, 0, "\'@grafana/data/src/text/sanitize\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
-    "public/app/features/dashboard-scene/scene/NavToolbarActions.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
-    ],
     "public/app/features/dashboard-scene/scene/PanelLinks.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
