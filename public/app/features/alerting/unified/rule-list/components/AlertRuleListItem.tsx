@@ -131,7 +131,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
       aria-labelledby={listItemAriaId}
       title={
         <Stack direction="row" alignItems="center">
-          <TextLink href={href} inline={false} id={listItemAriaId}>
+          <TextLink href={href} color="primary" inline={false} id={listItemAriaId}>
             {name}
           </TextLink>
           {origin && <PluginOriginBadge pluginId={origin.pluginId} size="sm" />}

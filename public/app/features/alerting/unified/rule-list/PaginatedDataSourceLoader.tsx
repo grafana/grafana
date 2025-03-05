@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Icon, Stack, Text } from '@grafana/ui';
 import { DataSourceRuleGroupIdentifier, DataSourceRulesSourceIdentifier, RuleGroup } from 'app/types/unified-alerting';
 
+import { groups } from '../utils/navigation';
+
 import { DataSourceGroupLoader } from './DataSourceGroupLoader';
 import { DataSourceSection, DataSourceSectionProps } from './components/DataSourceSection';
 import { LazyPagination } from './components/LazyPagination';
@@ -100,6 +102,7 @@ function RuleGroupListItem({ rulesSourceIdentifier, group, namespaceName }: Rule
     <ListGroup
       key={group.name}
       name={group.name}
+      href={groups.detailsPageLink(rulesSourceIdentifier.uid, namespaceName, group.name)}
       isOpen={false}
       actions={<RuleGroupActionsMenu groupIdentifier={groupIdentifier} />}
     >
