@@ -78,7 +78,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          if [ "${{ steps.check-coverage.outputs.generate }}" == "true" ]; then
+          if ${{ steps.check-coverage.outputs.generate }}; then
             COVER_OPTS="-coverprofile=unit.cov -coverpkg=github.com/grafana/grafana/..." make test-go-unit
           else
             make test-go-unit
