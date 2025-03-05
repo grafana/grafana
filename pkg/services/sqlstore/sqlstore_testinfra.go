@@ -36,6 +36,7 @@ type testOptions struct {
 	Bus              bus.Bus
 	NoDefaultUserOrg bool
 	Cfg              *setting.Cfg
+	Truncate         bool
 }
 
 type TestOption func(*testOptions)
@@ -109,6 +110,16 @@ func WithCfg(cfg *setting.Cfg) TestOption {
 	}
 }
 
+// WithTruncation enables truncating the entire database's tables after setup.
+// This is similar to the old infrastructure's behaviour.
+//
+// Most tests should just run with the data the migrations create, as they should assume a position very close to a customer's database, and customers are not going to truncate their database before updating.
+func WithTruncation() TestOption {
+	return func(o *testOptions) {
+		o.Truncate = true
+	}
+}
+
 // NewTestStore creates a new SQLStore with a test database. It is useful in parallel tests.
 // All cleanup is scheduled via the passed TestingTB; the caller does not need to do anything about it.
 // Temporary, clean databases are created for each test, and are destroyed when the test finishes.
@@ -165,6 +176,13 @@ func NewTestStore(tb TestingTB, opts ...TestOption) *SQLStore {
 	if err := store.Migrate(false); err != nil {
 		tb.Fatalf("failed to migrate database: %v", err)
 		panic("unreachable")
+	}
+
+	if options.Truncate {
+		if err := store.dialect.TruncateDBTables(store.GetEngine()); err != nil {
+			tb.Fatalf("failed to truncate DB tables after migrations: %v", err)
+			panic("unreachable")
+		}
 	}
 
 	return store
