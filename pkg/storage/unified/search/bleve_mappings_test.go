@@ -26,11 +26,14 @@ func TestDocumentMapping(t *testing.T) {
 			"x": "y",
 		},
 		RV: 1234,
-		RepoInfo: &utils.ResourceRepositoryInfo{
-			Name:      "nnn",
-			Path:      "ppp",
-			Hash:      "hhh",
-			Timestamp: asTimePointer(1234),
+		Manager: &utils.ManagerProperties{
+			Kind:     utils.ManagerKindRepo,
+			Identity: "rrr",
+		},
+		Source: &utils.SourceProperties{
+			Path:            "ppp",
+			Checksum:        "ooo",
+			TimestampMillis: 1234,
 		},
 	}
 
