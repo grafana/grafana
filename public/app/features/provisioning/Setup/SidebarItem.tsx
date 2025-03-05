@@ -57,19 +57,19 @@ export const SidebarItem = ({ step, index, currentStep, onStepClick, styles }: P
 };
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  stepItem: css`
-    padding: ${theme.spacing(1)};
-    cursor: pointer;
-    &:hover {
-      background: ${theme.colors.action.hover};
-    }
-  `,
-  activeStep: css`
-    color: ${theme.colors.primary.text};
-  `,
-  plainCard: css`
-    background: transparent;
-    border: none;
-    box-shadow: none;
-  `,
+  stepItem: css({
+    padding: theme.spacing(1),
+    cursor: 'pointer',
+    '&:hover': {
+      background: theme.colors.action.hover,
+    },
+  }),
+  activeStep: css({
+    color: theme.colors.primary.text,
+  }),
+  plainCard: css({
+    background: 'transparent',
+    border: 'none',
+    boxShadow: 'none',
+  }),
 });
