@@ -2087,9 +2087,10 @@ func createAlertRuleService(t *testing.T, folderService folder.Service) AlertRul
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval: time.Second * 10,
 		},
-		Logger:        log.NewNopLogger(),
-		FolderService: folderService,
-		Bus:           bus.ProvideBus(tracing.InitializeTracerForTest()),
+		Logger:         log.NewNopLogger(),
+		FolderService:  folderService,
+		Bus:            bus.ProvideBus(tracing.InitializeTracerForTest()),
+		FeatureToggles: featuremgmt.WithFeatures(),
 	}
 	// store := fakes.NewRuleStore(t)
 	quotas := MockQuotaChecker{}

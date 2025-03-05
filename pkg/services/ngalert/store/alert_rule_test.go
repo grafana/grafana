@@ -793,7 +793,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 
 		store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
 		store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
-		
+
 		result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, gen.GenerateMany(3))
 		uids := make([]string, 0, len(result))
 		for _, rule := range result {
