@@ -297,6 +297,10 @@ func (b *FolderAPIBuilder) validateOnCreate(ctx context.Context, id string, obj 
 		return dashboards.ErrFolderTitleEmpty
 	}
 
+	if f.Name == getParent(obj) {
+		return folder.ErrFolderCannotBeParentOfItself
+	}
+
 	_, err := b.checkFolderMaxDepth(ctx, obj)
 	if err != nil {
 		return err
