@@ -18,6 +18,8 @@ import { SearchHit, UnifiedSearcher } from '../search/service/unified';
 import { GrafanaSearcher } from '../search/service/types';
 import { getAPINamespace } from 'app/api/utils';
 import { useNavModel } from 'app/core/hooks/useNavModel';
+import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { t } from 'i18next';
 
 interface Resource extends SearchHit {
   isExpanded?: boolean;
@@ -48,10 +50,8 @@ const FoldersPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTypes, setSelectedTypes] = useState<Array<SelectableValue<ResourceType>>>([]);
-  const [selectedTag, setSelectedTag] = useState<SelectableValue<string>>();
-
-  const [availableTags, setAvailableTags] = useState<Array<SelectableValue<string>>>([]);
-  // const [availableOwners, setAvailableOwners] = useState<Array<SelectableValue<string>>>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [availableTags, setAvailableTags] = useState<TermCount[]>([]);
   
   const styles = useStyles2(getStyles);
 
@@ -63,7 +63,7 @@ const FoldersPage: React.FC = () => {
       const kinds = selectedTypes.map((t) => t.value!.toString());
       try {
         const results = await Promise.all([
-          searcher.fetchResults({ kind: kinds}),
+          searcher.fetchResults({ kind: kinds, tags: selectedTags, query: searchTerm }),
           searcher.tags({ kind: kinds })
         ]);
         setResources(results[0].hits);
@@ -75,12 +75,7 @@ const FoldersPage: React.FC = () => {
       }
     };
     void loadData();
-  }, [selectedTypes, selectedTag]);
-
-  const filterResources = (resources: SearchHit[]) => {
-    // TODO: Implement filtering
-    return resources;
-  };
+  }, [selectedTypes, selectedTags, searchTerm]);
 
   // TODO: Implement folder expand/collapse
   // const handleExpand = (folder: Folder) => {
@@ -145,8 +140,6 @@ const FoldersPage: React.FC = () => {
     );
   };
 
-  const filteredResources = filterResources(resources);
-
   return (
     <Page
       navId="finder"
@@ -170,12 +163,12 @@ const FoldersPage: React.FC = () => {
               width={20}
               isMulti={true}
             />
-            <Select
-              value={selectedTag}
-              onChange={setSelectedTag}
-              options={availableTags}
-              opotions={[]}
-              placeholder="Filter by Tag"
+            <TagFilter
+              isClearable
+              tags={selectedTags}
+              tagOptions={() => Promise.resolve(availableTags)}
+              onChange={setSelectedTags}
+              placeholder={t('playlist-edit.form.add-tag-placeholder', 'Filter by Tags')}
               width={20}
             />
           </Stack>
@@ -187,7 +180,7 @@ const FoldersPage: React.FC = () => {
           <EmptyState message={error} variant={'call-to-action'} />
         )}
 
-        {!isLoading && !error && renderTable(filteredResources)}
+        {!isLoading && !error && renderTable(resources)}
       </Page.Contents>
     </Page>
   );
