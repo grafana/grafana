@@ -1,26 +1,17 @@
 import { cx } from '@emotion/css';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, Label, Stack } from '@grafana/ui';
+import { Button, Label, Stack, useStyles2 } from '@grafana/ui';
 
 import { useMetricsBrowser } from './MetricsBrowserContext';
-import { buildSelector_old } from './selectorBuilder';
-import { EMPTY_SELECTOR, SelectableLabel } from './types';
+import { getStylesSelectorActions } from './styles';
+import { EMPTY_SELECTOR } from './types';
 
-interface SelectorActionsProps {
-  labels: SelectableLabel[];
-  onClickClear: () => void;
-  styles: Record<string, string>;
-}
-
-export function SelectorActions({
-  labels,
-  onClickClear,
-  styles,
-}: SelectorActionsProps) {
+export function SelectorActions() {
+  const styles = useStyles2(getStylesSelectorActions);
   const [validationStatus, setValidationStatus] = useState('');
-  const { languageProvider, onChange, status, err, setErr } = useMetricsBrowser();
+  const { languageProvider, selector, onChange, status, err, setErr, onClearClick } = useMetricsBrowser();
 
   const validateSelector = async (selector: string) => {
     setValidationStatus(`Validating selector ${selector}`);
@@ -30,24 +21,20 @@ export function SelectorActions({
   };
 
   const onClickValidate = () => {
-    const selector = buildSelector_old(labels);
     validateSelector(selector);
   };
 
   const onClickRunQuery = () => {
-    const selector = buildSelector_old(labels);
     onChange(selector);
   };
 
   const onClickRunRateQuery = () => {
-    const selector = buildSelector_old(labels);
     const query = `rate(${selector}[$__rate_interval])`;
     onChange(query);
   };
 
-  const selector = buildSelector_old(labels);
-  const empty = selector === EMPTY_SELECTOR;
-  return null;
+  const empty = useMemo(() => selector === EMPTY_SELECTOR, [selector]);
+
   return (
     <div className={styles.section}>
       <Label>4. Resulting selector</Label>
@@ -86,7 +73,7 @@ export function SelectorActions({
           data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.clear}
           aria-label="Selector clear button"
           variant="secondary"
-          onClick={onClickClear}
+          onClick={onClearClick}
         >
           Clear
         </Button>

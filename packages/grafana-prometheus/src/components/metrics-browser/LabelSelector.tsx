@@ -1,15 +1,13 @@
 import { useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { BrowserLabel as PromLabel, Input, Label } from '@grafana/ui';
+import { BrowserLabel as PromLabel, Input, Label, useStyles2 } from '@grafana/ui';
 
 import { useMetricsBrowser } from './MetricsBrowserContext';
+import { getStylesLabelSelector } from './styles';
 
-interface LabelSelectorProps {
-  styles: Record<string, string>;
-}
-
-export function LabelSelector({ styles }: LabelSelectorProps) {
+export function LabelSelector() {
+  const styles = useStyles2(getStylesLabelSelector);
   const [labelSearchTerm, setLabelSearchTerm] = useState('');
   const { labelKeys, selectedLabelKeys, onLabelKeyClick } = useMetricsBrowser();
 

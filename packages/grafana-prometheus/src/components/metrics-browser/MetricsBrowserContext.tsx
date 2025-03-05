@@ -29,6 +29,7 @@ interface MetricsBrowserContextType {
   onLabelKeyClick: (name: string) => void;
   onLabelValueClick: (labelKey: string, labelValue: string) => void;
   selector: string;
+  onClearClick: () => void;
 }
 
 const MetricsBrowserContext = createContext<MetricsBrowserContextType | undefined>(undefined);
@@ -143,6 +144,12 @@ export function MetricsBrowserProvider({
     [selectedLabelValues]
   );
 
+  const onClearClick = useCallback(() => {
+    setSelectedMetric('');
+    setSelectedLabelKeys([]);
+    setSelectedLabelValues({});
+  }, []);
+
   const value: MetricsBrowserContextType = {
     err,
     setErr,
@@ -164,6 +171,7 @@ export function MetricsBrowserProvider({
     onLabelKeyClick,
     onLabelValueClick,
     selector,
+    onClearClick,
   };
 
   return <MetricsBrowserContext.Provider value={value}>{children}</MetricsBrowserContext.Provider>;

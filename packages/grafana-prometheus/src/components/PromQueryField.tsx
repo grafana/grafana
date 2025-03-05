@@ -13,7 +13,7 @@ import { PromOptions, PromQuery } from '../types';
 
 import { CancelablePromise, isCancelablePromiseRejection, makePromiseCancelable } from './cancelable-promise';
 import { MetricsBrowserProvider } from './metrics-browser/MetricsBrowserContext';
-import { PrometheusMetricsBrowser } from './metrics-browser/PrometheusMetricsBrowser';
+import { MetricsBrowser } from './metrics-browser/PrometheusMetricsBrowser';
 import { MonacoQueryFieldWrapper } from './monaco-query-field/MonacoQueryFieldWrapper';
 import { useMetricsState } from './useMetricsState';
 import { usePromQueryFieldEffects } from './usePromQueryFieldEffects';
@@ -173,11 +173,12 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
       {labelBrowserVisible && (
         <div className="gf-form">
           <MetricsBrowserProvider languageProvider={languageProvider} onChange={onChangeLabelBrowser} timeRange={range}>
-            <PrometheusMetricsBrowser
-              languageProvider={languageProvider}
-              onChange={onChangeLabelBrowser}
-              timeRange={range}
-            />
+            {/*<PrometheusMetricsBrowser*/}
+            {/*  languageProvider={languageProvider}*/}
+            {/*  onChange={onChangeLabelBrowser}*/}
+            {/*  timeRange={range}*/}
+            {/*/>*/}
+            <MetricsBrowser />
           </MetricsBrowserProvider>
         </div>
       )}

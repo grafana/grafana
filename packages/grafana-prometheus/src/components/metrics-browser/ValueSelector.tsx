@@ -2,29 +2,16 @@ import { useState } from 'react';
 import { FixedSizeList } from 'react-window';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Input, Label, BrowserLabel as PromLabel } from '@grafana/ui';
+import { BrowserLabel as PromLabel, Input, Label, useStyles2 } from '@grafana/ui';
 
 import { useMetricsBrowser } from './MetricsBrowserContext';
-import { SelectableLabel, LIST_ITEM_SIZE } from './types';
+import { getStylesValueSelector } from './styles';
+import { LIST_ITEM_SIZE } from './types';
 
-interface ValueSelectorProps {
-  labels: SelectableLabel[];
-  styles: Record<string, string>;
-}
-
-export function ValueSelector({ styles }: ValueSelectorProps) {
+export function ValueSelector() {
+  const styles = useStyles2(getStylesValueSelector);
   const [valueSearchTerm, setValueSearchTerm] = useState('');
   const { labelValues, selectedLabelValues, onLabelValueClick, onLabelKeyClick } = useMetricsBrowser();
-
-  // let nonMetricLabels = labels.filter((label) => !label.hidden && label.name !== METRIC_LABEL);
-  // // Filter non-metric label values
-  // let selectedLabels = nonMetricLabels.filter((label) => label.selected && label.values);
-  // if (valueSearchTerm) {
-  //   selectedLabels = selectedLabels.map((label) => ({
-  //     ...label,
-  //     values: label.values?.filter((value) => value.selected || value.name.includes(valueSearchTerm)),
-  //   }));
-  // }
 
   return (
     <div className={styles.section}>
