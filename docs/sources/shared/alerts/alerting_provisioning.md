@@ -408,10 +408,10 @@ DELETE /api/v1/provisioning/alert-rules/:uid
 
 {{% responsive-table %}}
 
-| Name                       | Source   | Type   | Go type  | Separator | Required | Default | Description                                               |
-| -------------------------- | -------- | ------ | -------- | --------- | :------: | ------- | --------------------------------------------------------- |
-| UID                        | `path`   | string | `string` |           |    ✓     |         | Alert rule UID                                            |
-| X-Disable-Provenance: true | `header` | string | `string` |           |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Name                       | Source   | Type   | Go type  | Required | Default | Description                                               |
+| -------------------------- | -------- | ------ | -------- | :------: | ------- | --------------------------------------------------------- |
+| UID                        | `path`   | string | `string` |    ✓     |         | Alert rule UID                                            |
+| X-Disable-Provenance: true | `header` | string | `string` |          |         | Allows editing of provisioned resources in the Grafana UI |
 
 {{% /responsive-table %}}
 
@@ -437,9 +437,9 @@ DELETE /api/v1/provisioning/contact-points/:uid
 
 #### Parameters
 
-| Name | Source | Type   | Go type  | Separator | Required | Default | Description                                |
-| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ------------------------------------------ |
-| UID  | `path` | string | `string` |           |    ✓     |         | UID is the contact point unique identifier |
+| Name | Source | Type   | Go type  | Required | Default | Description                                |
+| ---- | ------ | ------ | -------- | :------: | ------- | ------------------------------------------ |
+| UID  | `path` | string | `string` |    ✓     |         | UID is the contact point unique identifier |
 
 #### All responses
 
@@ -463,10 +463,10 @@ DELETE /api/v1/provisioning/mute-timings/:name
 
 #### Parameters
 
-| Name    | Source  | Type   | Go type  | Separator | Required | Default | Description                                                                                                   |
-| ------- | ------- | ------ | -------- | --------- | :------: | ------- | ------------------------------------------------------------------------------------------------------------- |
-| name    | `path`  | string | `string` |           |    ✓     |         | Mute timing name                                                                                              |
-| version | `query` | string | `string` |           |          |         | Current version of the resource. Used for optimistic concurrency validation. Keep empty to bypass validation. |
+| Name    | Source  | Type   | Go type  | Required | Default | Description                                                                                                   |
+| ------- | ------- | ------ | -------- | :------: | ------- | ------------------------------------------------------------------------------------------------------------- |
+| name    | `path`  | string | `string` |    ✓     |         | Mute timing name                                                                                              |
+| version | `query` | string | `string` |          |         | Current version of the resource. Used for optimistic concurrency validation. Keep empty to bypass validation. |
 
 #### All responses
 
@@ -499,10 +499,10 @@ DELETE /api/v1/provisioning/templates/:name
 
 #### Parameters
 
-| Name    | Source  | Type   | Go type  | Separator | Required | Default | Description                                                                                                   |
-| ------- | ------- | ------ | -------- | --------- | :------: | ------- | ------------------------------------------------------------------------------------------------------------- |
-| name    | `path`  | string | `string` |           |    ✓     |         | Name of the template group                                                                                    |
-| version | `query` | string | `string` |           |          |         | Current version of the resource. Used for optimistic concurrency validation. Keep empty to bypass validation. |
+| Name    | Source  | Type   | Go type  | Required | Default | Description                                                                                                   |
+| ------- | ------- | ------ | -------- | :------: | ------- | ------------------------------------------------------------------------------------------------------------- |
+| name    | `path`  | string | `string` |    ✓     |         | Name of the template group                                                                                    |
+| version | `query` | string | `string` |          |         | Current version of the resource. Used for optimistic concurrency validation. Keep empty to bypass validation. |
 
 #### All responses
 
@@ -535,9 +535,9 @@ GET /api/v1/provisioning/alert-rules/:uid
 
 #### Parameters
 
-| Name | Source | Type   | Go type  | Separator | Required | Default | Description    |
-| ---- | ------ | ------ | -------- | --------- | :------: | ------- | -------------- |
-| UID  | `path` | string | `string` |           |    ✓     |         | Alert rule UID |
+| Name | Source | Type   | Go type  | Required | Default | Description    |
+| ---- | ------ | ------ | -------- | :------: | ------- | -------------- |
+| UID  | `path` | string | `string` |    ✓     |         | Alert rule UID |
 
 #### All responses
 
@@ -578,11 +578,11 @@ GET /api/v1/provisioning/alert-rules/:uid/export
 
 #### Parameters
 
-| Name     | Source  | Type    | Go type  | Separator | Required | Default  | Description                                                                                                                            |
-| -------- | ------- | ------- | -------- | --------- | :------: | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| UID      | `path`  | string  | `string` |           |    ✓     |          | Alert rule UID                                                                                                                         |
-| download | `query` | boolean | `bool`   |           |          |          | Whether to initiate a download of the file or not.                                                                                     |
-| format   | `query` | string  | `string` |           |          | `"yaml"` | Format of the downloaded file, either yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence. |
+| Name     | Source  | Type    | Go type  | Required | Default  | Description                                                                                                                            |
+| -------- | ------- | ------- | -------- | :------: | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| UID      | `path`  | string  | `string` |    ✓     |          | Alert rule UID                                                                                                                         |
+| download | `query` | boolean | `bool`   |          |          | Whether to initiate a download of the file or not.                                                                                     |
+| format   | `query` | string  | `string` |          | `"yaml"` | Format of the downloaded file, either yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence. |
 
 #### All responses
 
@@ -615,10 +615,10 @@ GET /api/v1/provisioning/folder/:folderUid/rule-groups/:group
 
 #### Parameters
 
-| Name      | Source | Type   | Go type  | Separator | Required | Default | Description |
-| --------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| FolderUID | `path` | string | `string` |           |    ✓     |         |             |
-| Group     | `path` | string | `string` |           |    ✓     |         |             |
+| Name      | Source | Type   | Go type  | Required | Default | Description |
+| --------- | ------ | ------ | -------- | :------: | ------- | ----------- |
+| FolderUID | `path` | string | `string` |    ✓     |         |             |
+| Group     | `path` | string | `string` |    ✓     |         |             |
 
 #### All responses
 
@@ -659,12 +659,12 @@ GET /api/v1/provisioning/folder/:folderUid/rule-groups/:group/export
 
 #### Parameters
 
-| Name      | Source  | Type    | Go type  | Separator | Required | Default  | Description                                                                                                                            |
-| --------- | ------- | ------- | -------- | --------- | :------: | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| FolderUID | `path`  | string  | `string` |           |    ✓     |          |                                                                                                                                        |
-| Group     | `path`  | string  | `string` |           |    ✓     |          |                                                                                                                                        |
-| download  | `query` | boolean | `bool`   |           |          |          | Whether to initiate a download of the file or not.                                                                                     |
-| format    | `query` | string  | `string` |           |          | `"yaml"` | Format of the downloaded file, either yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence. |
+| Name      | Source  | Type    | Go type  | Required | Default  | Description                                                                                                                            |
+| --------- | ------- | ------- | -------- | :------: | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| FolderUID | `path`  | string  | `string` |    ✓     |          |                                                                                                                                        |
+| Group     | `path`  | string  | `string` |    ✓     |          |                                                                                                                                        |
+| download  | `query` | boolean | `bool`   |          |          | Whether to initiate a download of the file or not.                                                                                     |
+| format    | `query` | string  | `string` |          | `"yaml"` | Format of the downloaded file, either yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence. |
 
 #### All responses
 
@@ -727,10 +727,10 @@ GET /api/v1/provisioning/alert-rules/export
 
 #### Parameters
 
-| Name     | Source  | Type    | Go type  | Separator | Required | Default  | Description                                                                                                                            |
-| -------- | ------- | ------- | -------- | --------- | :------: | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| download | `query` | boolean | `bool`   |           |          |          | Whether to initiate a download of the file or not.                                                                                     |
-| format   | `query` | string  | `string` |           |          | `"yaml"` | Format of the downloaded file, either yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence. |
+| Name     | Source  | Type    | Go type  | Required | Default  | Description                                                                                                                            |
+| -------- | ------- | ------- | -------- | :------: | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| download | `query` | boolean | `bool`   |          |          | Whether to initiate a download of the file or not.                                                                                     |
+| format   | `query` | string  | `string` |          | `"yaml"` | Format of the downloaded file, either yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence. |
 
 #### All responses
 
@@ -763,9 +763,9 @@ GET /api/v1/provisioning/contact-points
 
 #### Parameters
 
-| Name | Source  | Type   | Go type  | Separator | Required | Default | Description    |
-| ---- | ------- | ------ | -------- | --------- | :------: | ------- | -------------- |
-| name | `query` | string | `string` |           |          |         | Filter by name |
+| Name | Source  | Type   | Go type  | Required | Default | Description    |
+| ---- | ------- | ------ | -------- | :------: | ------- | -------------- |
+| name | `query` | string | `string` |          |         | Filter by name |
 
 #### All responses
 
@@ -799,12 +799,12 @@ GET /api/v1/provisioning/contact-points/export
 
 #### Parameters
 
-| Name     | Source  | Type    | Go type  | Separator | Required | Default  | Description                                                                                                                                                                                     |
-| -------- | ------- | ------- | -------- | --------- | :------: | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| decrypt  | `query` | boolean | `bool`   |           |          |          | Whether any contained secure settings should be decrypted or left redacted. Redacted settings will contain RedactedValue instead. Currently, only org admin can view decrypted secure settings. |
-| download | `query` | boolean | `bool`   |           |          |          | Whether to initiate a download of the file or not.                                                                                                                                              |
-| format   | `query` | string  | `string` |           |          | `"yaml"` | Format of the downloaded file, either yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.                                                          |
-| name     | `query` | string  | `string` |           |          |          | Filter by name                                                                                                                                                                                  |
+| Name     | Source  | Type    | Go type  | Required | Default  | Description                                                                                                                                                                                     |
+| -------- | ------- | ------- | -------- | :------: | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| decrypt  | `query` | boolean | `bool`   |          |          | Whether any contained secure settings should be decrypted or left redacted. Redacted settings will contain RedactedValue instead. Currently, only org admin can view decrypted secure settings. |
+| download | `query` | boolean | `bool`   |          |          | Whether to initiate a download of the file or not.                                                                                                                                              |
+| format   | `query` | string  | `string` |          | `"yaml"` | Format of the downloaded file, either yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.                                                          |
+| name     | `query` | string  | `string` |          |          | Filter by name                                                                                                                                                                                  |
 
 #### All responses
 
@@ -839,9 +839,9 @@ GET /api/v1/provisioning/mute-timings/:name
 
 #### Parameters
 
-| Name | Source | Type   | Go type  | Separator | Required | Default | Description      |
-| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ---------------- |
-| name | `path` | string | `string` |           |    ✓     |         | Mute timing name |
+| Name | Source | Type   | Go type  | Required | Default | Description      |
+| ---- | ------ | ------ | -------- | :------: | ------- | ---------------- |
+| name | `path` | string | `string` |    ✓     |         | Mute timing name |
 
 #### All responses
 
@@ -904,10 +904,10 @@ GET /api/v1/provisioning/mute-timings/export
 
 #### Parameters
 
-| Name     | Source  | Type    | Go type  | Separator | Required | Default  | Description                                                                                                                            |
-| -------- | ------- | ------- | -------- | --------- | :------: | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| download | `query` | boolean | `bool`   |           |          |          | Whether to initiate a download of the file or not.                                                                                     |
-| format   | `query` | string  | `string` |           |          | `"yaml"` | Format of the downloaded file, either yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence. |
+| Name     | Source  | Type    | Go type  | Required | Default  | Description                                                                                                                            |
+| -------- | ------- | ------- | -------- | :------: | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| download | `query` | boolean | `bool`   |          |          | Whether to initiate a download of the file or not.                                                                                     |
+| format   | `query` | string  | `string` |          | `"yaml"` | Format of the downloaded file, either yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence. |
 
 #### All responses
 
@@ -950,11 +950,11 @@ GET /api/v1/provisioning/mute-timings/:name/export
 
 #### Parameters
 
-| Name     | Source  | Type    | Go type  | Separator | Required | Default  | Description                                                                                                                            |
-| -------- | ------- | ------- | -------- | --------- | :------: | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| name     | `path`  | string  | `string` |           |    ✓     |          | Mute timing name.                                                                                                                      |
-| download | `query` | boolean | `bool`   |           |          |          | Whether to initiate a download of the file or not.                                                                                     |
-| format   | `query` | string  | `string` |           |          | `"yaml"` | Format of the downloaded file, either yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence. |
+| Name     | Source  | Type    | Go type  | Required | Default  | Description                                                                                                                            |
+| -------- | ------- | ------- | -------- | :------: | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| name     | `path`  | string  | `string` |    ✓     |          | Mute timing name.                                                                                                                      |
+| download | `query` | boolean | `bool`   |          |          | Whether to initiate a download of the file or not.                                                                                     |
+| format   | `query` | string  | `string` |          | `"yaml"` | Format of the downloaded file, either yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence. |
 
 #### All responses
 
@@ -1019,10 +1019,10 @@ GET /api/v1/provisioning/policies/export
 
 #### Parameters
 
-| Name     | Source  | Type    | Go type  | Separator | Required | Default  | Description                                                                                                                            |
-| -------- | ------- | ------- | -------- | --------- | :------: | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| download | `query` | boolean | `bool`   |           |          |          | Whether to initiate a download of the file or not.                                                                                     |
-| format   | `query` | string  | `string` |           |          | `"yaml"` | Format of the downloaded file, either yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence. |
+| Name     | Source  | Type    | Go type  | Required | Default  | Description                                                                                                                            |
+| -------- | ------- | ------- | -------- | :------: | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| download | `query` | boolean | `bool`   |          |          | Whether to initiate a download of the file or not.                                                                                     |
+| format   | `query` | string  | `string` |          | `"yaml"` | Format of the downloaded file, either yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence. |
 
 #### All responses
 
@@ -1057,9 +1057,9 @@ GET /api/v1/provisioning/templates/:name
 
 #### Parameters
 
-| Name | Source | Type   | Go type  | Separator | Required | Default | Description                |
-| ---- | ------ | ------ | -------- | --------- | :------: | ------- | -------------------------- |
-| name | `path` | string | `string` |           |    ✓     |         | Name of the template group |
+| Name | Source | Type   | Go type  | Required | Default | Description                |
+| ---- | ------ | ------ | -------- | :------: | ------- | -------------------------- |
+| name | `path` | string | `string` |    ✓     |         | Name of the template group |
 
 #### All responses
 
@@ -1116,10 +1116,10 @@ POST /api/v1/provisioning/alert-rules
 
 {{% responsive-table %}}
 
-| Name                       | Source   | Type                                            | Go type                       | Separator | Required | Default | Description                                               |
-| -------------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | --------------------------------------------------------- |
-| X-Disable-Provenance: true | `header` | string                                          | `string`                      |           |          |         | Allows editing of provisioned resources in the Grafana UI |
-| Body                       | `body`   | [ProvisionedAlertRule](#provisioned-alert-rule) | `models.ProvisionedAlertRule` |           |          |         |                                                           |
+| Name                       | Source   | Type                                            | Go type                       | Required | Default | Description                                               |
+| -------------------------- | -------- | ----------------------------------------------- | ----------------------------- | :------: | ------- | --------------------------------------------------------- |
+| X-Disable-Provenance: true | `header` | string                                          | `string`                      |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Body                       | `body`   | [ProvisionedAlertRule](#provisioned-alert-rule) | `models.ProvisionedAlertRule` |          |         |                                                           |
 
 {{% /responsive-table %}}
 
@@ -1160,10 +1160,10 @@ When creating a contact point, the `EmbeddedContactPoint.name` property determin
 
 {{% responsive-table %}}
 
-| Name                       | Source   | Type                                            | Go type                       | Separator | Required | Default | Description                                               |
-| -------------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | --------------------------------------------------------- |
-| X-Disable-Provenance: true | `header` | string                                          | `string`                      |           |          |         | Allows editing of provisioned resources in the Grafana UI |
-| Body                       | `body`   | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |           |          |         |                                                           |
+| Name                       | Source   | Type                                            | Go type                       | Required | Default | Description                                               |
+| -------------------------- | -------- | ----------------------------------------------- | ----------------------------- | :------: | ------- | --------------------------------------------------------- |
+| X-Disable-Provenance: true | `header` | string                                          | `string`                      |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Body                       | `body`   | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |          |         |                                                           |
 
 {{% /responsive-table %}}
 
@@ -1202,10 +1202,10 @@ POST /api/v1/provisioning/mute-timings
 
 {{% responsive-table %}}
 
-| Name                       | Source   | Type                                    | Go type                   | Separator | Required | Default | Description                                               |
-| -------------------------- | -------- | --------------------------------------- | ------------------------- | --------- | :------: | ------- | --------------------------------------------------------- |
-| X-Disable-Provenance: true | `header` | string                                  | `string`                  |           |          |         | Allows editing of provisioned resources in the Grafana UI |
-| Body                       | `body`   | [MuteTimeInterval](#mute-time-interval) | `models.MuteTimeInterval` |           |          |         |                                                           |
+| Name                       | Source   | Type                                    | Go type                   | Required | Default | Description                                               |
+| -------------------------- | -------- | --------------------------------------- | ------------------------- | :------: | ------- | --------------------------------------------------------- |
+| X-Disable-Provenance: true | `header` | string                                  | `string`                  |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Body                       | `body`   | [MuteTimeInterval](#mute-time-interval) | `models.MuteTimeInterval` |          |         |                                                           |
 
 {{% /responsive-table %}}
 
@@ -1244,11 +1244,11 @@ PUT /api/v1/provisioning/alert-rules/:uid
 
 {{% responsive-table %}}
 
-| Name                       | Source   | Type                                            | Go type                       | Separator | Required | Default | Description                                               |
-| -------------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | --------------------------------------------------------- |
-| UID                        | `path`   | string                                          | `string`                      |           |    ✓     |         | Alert rule UID                                            |
-| X-Disable-Provenance: true | `header` | string                                          | `string`                      |           |          |         | Allows editing of provisioned resources in the Grafana UI |
-| Body                       | `body`   | [ProvisionedAlertRule](#provisioned-alert-rule) | `models.ProvisionedAlertRule` |           |          |         |                                                           |
+| Name                       | Source   | Type                                            | Go type                       | Required | Default | Description                                               |
+| -------------------------- | -------- | ----------------------------------------------- | ----------------------------- | :------: | ------- | --------------------------------------------------------- | --- |
+| UID                        | `path`   | string                                          | `string`                      |    ✓     |         | Alert rule UID                                            |
+| X-Disable-Provenance: true | `header` | string                                          | `string`                      |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Body                       | `body`   | [ProvisionedAlertRule](#provisioned-alert-rule) | `models.ProvisionedAlertRule` |          |         |                                                           |     |
 
 {{% /responsive-table %}}
 
@@ -1287,12 +1287,12 @@ PUT /api/v1/provisioning/folder/:folderUid/rule-groups/:group
 
 {{% responsive-table %}}
 
-| Name                       | Source   | Type                                | Go type                 | Separator | Required | Default | Description                                                                                             |
-| -------------------------- | -------- | ----------------------------------- | ----------------------- | --------- | :------: | ------- | ------------------------------------------------------------------------------------------------------- |
-| FolderUID                  | `path`   | string                              | `string`                |           |    ✓     |         |                                                                                                         |
-| Group                      | `path`   | string                              | `string`                |           |    ✓     |         |                                                                                                         |
-| X-Disable-Provenance: true | `header` | string                              | `string`                |           |          |         | Allows editing of provisioned resources in the Grafana UI                                               |
-| Body                       | `body`   | [AlertRuleGroup](#alert-rule-group) | `models.AlertRuleGroup` |           |          |         | This action is idempotent and rules included in this body will overwrite configured rules for the group |
+| Name                       | Source   | Type                                | Go type                 | Required | Default | Description                                                                                             |
+| -------------------------- | -------- | ----------------------------------- | ----------------------- | :------: | ------- | ------------------------------------------------------------------------------------------------------- |
+| FolderUID                  | `path`   | string                              | `string`                |    ✓     |         |                                                                                                         |
+| Group                      | `path`   | string                              | `string`                |    ✓     |         |                                                                                                         |
+| X-Disable-Provenance: true | `header` | string                              | `string`                |          |         | Allows editing of provisioned resources in the Grafana UI                                               |
+| Body                       | `body`   | [AlertRuleGroup](#alert-rule-group) | `models.AlertRuleGroup` |          |         | This action is idempotent and rules included in this body will overwrite configured rules for the group |
 
 {{% /responsive-table %}}
 
@@ -1331,11 +1331,11 @@ PUT /api/v1/provisioning/contact-points/:uid
 
 {{% responsive-table %}}
 
-| Name                       | Source   | Type                                            | Go type                       | Separator | Required | Default | Description                                               |
-| -------------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | --------------------------------------------------------- |
-| UID                        | `path`   | string                                          | `string`                      |           |    ✓     |         | UID is the contact point unique identifier                |
-| X-Disable-Provenance: true | `header` | string                                          | `string`                      |           |          |         | Allows editing of provisioned resources in the Grafana UI |
-| Body                       | `body`   | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |           |          |         |                                                           |
+| Name                       | Source   | Type                                            | Go type                       | Required | Default | Description                                               |
+| -------------------------- | -------- | ----------------------------------------------- | ----------------------------- | :------: | ------- | --------------------------------------------------------- |
+| UID                        | `path`   | string                                          | `string`                      |    ✓     |         | UID is the contact point unique identifier                |
+| X-Disable-Provenance: true | `header` | string                                          | `string`                      |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Body                       | `body`   | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |          |         |                                                           |
 
 {{% /responsive-table %}}
 
@@ -1374,11 +1374,11 @@ PUT /api/v1/provisioning/mute-timings/:name
 
 {{% responsive-table %}}
 
-| Name                       | Source   | Type                                    | Go type                   | Separator | Required | Default | Description                                               |
-| -------------------------- | -------- | --------------------------------------- | ------------------------- | --------- | :------: | ------- | --------------------------------------------------------- |
-| name                       | `path`   | string                                  | `string`                  |           |    ✓     |         | Mute timing name                                          |
-| X-Disable-Provenance: true | `header` | string                                  | `string`                  |           |          |         | Allows editing of provisioned resources in the Grafana UI |
-| Body                       | `body`   | [MuteTimeInterval](#mute-time-interval) | `models.MuteTimeInterval` |           |          |         |                                                           |
+| Name                       | Source   | Type                                    | Go type                   | Required | Default | Description                                               |
+| -------------------------- | -------- | --------------------------------------- | ------------------------- | -------- | :-----: | --------------------------------------------------------- |
+| name                       | `path`   | string                                  | `string`                  | ✓        |         | Mute timing name                                          |
+| X-Disable-Provenance: true | `header` | string                                  | `string`                  |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Body                       | `body`   | [MuteTimeInterval](#mute-time-interval) | `models.MuteTimeInterval` |          |         |                                                           |
 
 {{% /responsive-table %}}
 
@@ -1426,10 +1426,10 @@ PUT /api/v1/provisioning/policies
 
 {{% responsive-table %}}
 
-| Name                       | Source   | Type            | Go type        | Separator | Required | Default | Description                                               |
-| -------------------------- | -------- | --------------- | -------------- | --------- | :------: | ------- | --------------------------------------------------------- |
-| X-Disable-Provenance: true | `header` | string          | `string`       |           |          |         | Allows editing of provisioned resources in the Grafana UI |
-| Body                       | `body`   | [Route](#route) | `models.Route` |           |          |         | The new notification routing tree to use                  |
+| Name                       | Source   | Type            | Go type        | Required | Default | Description                                               |
+| -------------------------- | -------- | --------------- | -------------- | :------: | ------- | --------------------------------------------------------- |
+| X-Disable-Provenance: true | `header` | string          | `string`       |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Body                       | `body`   | [Route](#route) | `models.Route` |          |         | The new notification routing tree to use                  |
 
 {{% /responsive-table %}}
 
@@ -1468,11 +1468,11 @@ PUT /api/v1/provisioning/templates/:name
 
 #### Parameters
 
-| Name                       | Source   | Type                                                          | Go type                              | Separator | Required | Default | Description                                               |
-| -------------------------- | -------- | ------------------------------------------------------------- | ------------------------------------ | --------- | :------: | ------- | --------------------------------------------------------- |
-| name                       | `path`   | string                                                        | `string`                             |           |    ✓     |         | Name of the template group                                |
-| X-Disable-Provenance: true | `header` | string                                                        | `string`                             |           |          |         | Allows editing of provisioned resources in the Grafana UI |
-| Body                       | `body`   | [NotificationTemplateContent](#notification-template-content) | `models.NotificationTemplateContent` |           |          |         |                                                           |
+| Name                       | Source   | Type                                                          | Go type                              | Required | Default | Description                                               |
+| -------------------------- | -------- | ------------------------------------------------------------- | ------------------------------------ | -------- | :-----: | --------------------------------------------------------- | --- |
+| name                       | `path`   | string                                                        | `string`                             | ✓        |         | Name of the template group                                |
+| X-Disable-Provenance: true | `header` | string                                                        | `string`                             |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Body                       | `body`   | [NotificationTemplateContent](#notification-template-content) | `models.NotificationTemplateContent` |          |         |                                                           |     |
 
 {{% /responsive-table %}}
 
@@ -1544,14 +1544,13 @@ Status: Accepted
 
 {{% responsive-table %}}
 
-| Name                                                      | Type                                      | Go type             | Required | Default | Description                                                                                            | Example |
-| --------------------------------------------------------- | ----------------------------------------- | ------------------- | :------: | ------- | ------------------------------------------------------------------------------------------------------ | ------- |
-| datasourceUid                                             | string                                    | `string`            |          |         | Grafana data source unique identifier; it should be '**expr**' for a Server Side Expression operation. |         |
-| model                                                     | [interface{}](#interface)                 | `interface{}`       |          |         | JSON is the raw JSON query and includes the above properties as well as custom properties.             |         |
-| queryType                                                 | string                                    | `string`            |          |         | QueryType is an optional identifier for the type of query.                                             |
-| It can be used to distinguish different types of queries. |                                           |
-| refId                                                     | string                                    | `string`            |          |         | RefID is the unique identifier of the query, set by the frontend call.                                 |         |
-| relativeTimeRange                                         | [RelativeTimeRange](#relative-time-range) | `RelativeTimeRange` |          |         |                                                                                                        |         |
+| Name              | Type                                      | Go type             | Required | Default | Description                                                                                                          | Example |
+| ----------------- | ----------------------------------------- | ------------------- | :------: | ------- | -------------------------------------------------------------------------------------------------------------------- | ------- |
+| datasourceUid     | string                                    | `string`            |          |         | Grafana data source unique identifier; it should be '**expr**' for a Server Side Expression operation.               |         |
+| model             | [interface{}](#interface)                 | `interface{}`       |          |         | JSON is the raw JSON query and includes the above properties as well as custom properties.                           |         |
+| queryType         | string                                    | `string`            |          |         | QueryType is an optional identifier for the type of query. It can be used to distinguish different types of queries. |         |
+| refId             | string                                    | `string`            |          |         | RefID is the unique identifier of the query, set by the frontend call.                                               |         |
+| relativeTimeRange | [RelativeTimeRange](#relative-time-range) | `RelativeTimeRange` |          |         |                                                                                                                      |         |
 
 {{% /responsive-table %}}
 
