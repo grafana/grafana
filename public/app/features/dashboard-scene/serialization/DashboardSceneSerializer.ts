@@ -68,10 +68,6 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
     saveModel.panels?.forEach((panel) => {
       if (panel.id) {
         const elementKey = getVizPanelKeyForPanelId(panel.id);
-        // check panel id exists and is unique
-        if (this.getElementIdForPanel(panel.id)) {
-          console.error('Panel id is not unique');
-        }
         this.elementPanelMap.set(elementKey, panel.id);
       }
     });
@@ -191,10 +187,6 @@ export class V2DashboardSerializer
     elementKeys.forEach((key) => {
       const elementPanel = saveModel.elements[key];
       if (elementPanel.kind === 'Panel') {
-        // check panel id exists and is unique
-        if (this.getElementIdForPanel(elementPanel.spec.id)) {
-          console.error('Panel id is not unique');
-        }
         this.elementPanelMap.set(key, elementPanel.spec.id);
       }
     });
