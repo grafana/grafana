@@ -60,7 +60,7 @@ func TestCanSearchByTitle(t *testing.T) {
 		res, err := index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(2), res.TotalHits)
-		require.Equal(t, "name2", string(res.Results.Rows[0].Key.Name))
+		require.Equal(t, "name2", res.Results.Rows[0].Key.Name)
 	})
 
 	t.Run("will boost phrase match query over match query results", func(t *testing.T) {
@@ -99,7 +99,7 @@ func TestCanSearchByTitle(t *testing.T) {
 		res, err := index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(2), res.TotalHits)
-		require.Equal(t, "name2", string(res.Results.Rows[0].Key.Name))
+		require.Equal(t, "name2", res.Results.Rows[0].Key.Name)
 	})
 
 	t.Run("will prioritize matches", func(t *testing.T) {
@@ -137,7 +137,7 @@ func TestCanSearchByTitle(t *testing.T) {
 		res, err := index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(2), res.TotalHits)
-		require.Equal(t, "name2", string(res.Results.Rows[0].Key.Name))
+		require.Equal(t, "name2", res.Results.Rows[0].Key.Name)
 	})
 
 	t.Run("will boost exact match query over match phrase query results", func(t *testing.T) {
@@ -176,7 +176,7 @@ func TestCanSearchByTitle(t *testing.T) {
 		res, err := index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(2), res.TotalHits)
-		require.Equal(t, "name2", string(res.Results.Rows[0].Key.Name))
+		require.Equal(t, "name2", res.Results.Rows[0].Key.Name)
 	})
 
 	t.Run("title with numbers will match document", func(t *testing.T) {
