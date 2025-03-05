@@ -5,11 +5,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"xorm.io/xorm"
 )
 
 // Ensure that we can get any connection at all.
@@ -87,4 +89,51 @@ func TestIntegrationUniqueConstraintViolation(t *testing.T) {
 			assert.True(t, store.GetDialect().IsUniqueConstraintViolation(err))
 		})
 	}
+}
+
+func TestIntegrationTruncateDatabase(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	migrator := &truncateDatabaseSetup{}
+	store := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator), sqlstore.WithTruncation())
+
+	var beans []*truncateBean
+	err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		return sess.Find(&beans)
+	})
+	require.NoError(t, err, "could not find truncateBeans")
+
+	require.Empty(t, beans, "database should have no truncateBeans")
+}
+
+var (
+	_ registry.DatabaseMigrator = (*truncateDatabaseSetup)(nil)
+	_ migrator.CodeMigration    = (*truncateDatabaseSetup)(nil)
+)
+
+type truncateDatabaseSetup struct {
+	migrator.MigrationBase
+}
+
+func (t *truncateDatabaseSetup) AddMigration(mg *migrator.Migrator) {
+	mg.AddCreateMigration()
+	mg.AddMigration("add_to_truncate_table", t)
+}
+
+func (*truncateDatabaseSetup) SQL(dialect migrator.Dialect) string {
+	return "code migration"
+}
+
+func (t *truncateDatabaseSetup) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
+	if err := sess.CreateTable(&truncateBean{}); err != nil {
+		return err
+	}
+	_, err := sess.InsertOne(&truncateBean{1234})
+	return err
+}
+
+type truncateBean struct {
+	Value int
 }
