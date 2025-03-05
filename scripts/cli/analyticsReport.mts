@@ -1,4 +1,5 @@
 import { Project, Node, type SourceFile, SyntaxKind, type JSDoc, type Type } from 'ts-morph';
+import util from 'util';
 import path from 'path';
 
 /**
@@ -76,8 +77,23 @@ interface EventNamespace {
   prefixFeature: string;
 }
 
+interface EventProperty {
+  name: string;
+  type: string;
+  description?: string;
+}
+
+interface Event {
+  name: string;
+  description: string;
+  owner?: string;
+  properties?: EventProperty[];
+}
+
+const allEvents: Event[] = [];
+
 for (const file of files) {
-  if (!file.getFilePath().includes('copy.ts')) continue;
+  // if (!file.getFilePath().includes('copy.ts')) continue;
 
   console.log('---');
   const createEventFactoryImportedName = getEventFactoryFunctionName(file);
@@ -170,11 +186,12 @@ for (const file of files) {
     }
 
     const fullEventName = `${eventNamespace.prefixRepo}_${eventNamespace.prefixFeature}_${eventName}`;
-    const event = {
+    const event: Event = {
       name: fullEventName,
       description,
       owner,
     };
+    allEvents.push(event);
 
     console.log('\nEvent:', fullEventName);
     console.log('  Description: ', description);
@@ -198,20 +215,41 @@ for (const file of files) {
 
     const parameterType = parameter.getTypeAtLocation(parameter.getDeclarations()[0]);
 
-    if (!parameterType.isObject()) {
-      throw new Error(`Expected parameter type to be an object, got ${parameterType.getText()}`);
-    }
+    if (parameterType.isObject()) {
+      event.properties = [];
 
-    const properties = parameterType.getProperties();
-    console.log('  Properties:');
-    for (const property of properties) {
-      const propertyType = property.getTypeAtLocation(property.getDeclarations()[0]);
-      const resolvedType = resolveType(propertyType);
+      const properties = parameterType.getProperties();
+      console.log('  Properties:');
+      for (const property of properties) {
+        const declarations = property.getDeclarations();
+        if (declarations.length !== 1) {
+          throw new Error(`Expected property to have one declaration, got ${declarations.length}`);
+        }
 
-      console.log(`    ${property.getName()}: ${resolvedType}`);
+        const declaration = declarations[0];
+        const propertyType = property.getTypeAtLocation(declaration);
+        const resolvedType = resolveType(propertyType);
+
+        if (!Node.isPropertySignature(declaration)) {
+          throw new Error(`Expected property to be a property signature, got ${declaration.getKindName()}`);
+        }
+
+        const { description } = getMetadataFromJSDocs(declaration.getJsDocs());
+        console.log(`    ${property.getName()}: ${resolvedType} - ${description}`);
+        event.properties.push({
+          name: property.getName(),
+          type: resolvedType,
+          description,
+        });
+      }
+    } else if (!parameterType.isVoid()) {
+      // void type is allowed, but we don't need to report anything
+      throw new Error(`Expected parameter type to be an object or void, got ${parameterType.getText()}`);
     }
   }
 }
+
+console.log(util.inspect(allEvents, { depth: null, colors: true }));
 
 // Function to fully resolve types (aliases, unions, literals)
 function resolveType(type: Type): string {
@@ -254,7 +292,7 @@ function getMetadataFromJSDocs(docs: JSDoc[]): JSDocMetadata {
   }
 
   for (const doc of docs) {
-    const desc = doc.getDescription().trim();
+    const desc = doc.getDescription().trim().replace(/\n/g, ' ');
     if (desc) description = desc;
 
     const tags = doc.getTags();
