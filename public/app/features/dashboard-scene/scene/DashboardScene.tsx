@@ -42,7 +42,7 @@ import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { AnnoKeyRepoName, AnnoKeyRepoPath } from '../../apiserver/types';
+import { AnnoKeyManagerIdentity, AnnoKeySourcePath } from '../../apiserver/types';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -747,7 +747,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    * Provisioned dashboards helpers
    */
   getRepoName() {
-    return this.state.meta.k8s?.annotations?.[AnnoKeyRepoName];
+    return this.state.meta.k8s?.annotations?.[AnnoKeyManagerIdentity];
   }
 
   isProvisioned() {
@@ -755,13 +755,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   getPath() {
-    return this.state.meta.k8s?.annotations?.[AnnoKeyRepoPath];
+    return this.state.meta.k8s?.annotations?.[AnnoKeySourcePath];
   }
 
   setRepoName(name: string) {
     this.setState({
       meta: {
-        k8s: { annotations: { [AnnoKeyRepoName]: name } },
+        k8s: { annotations: { [AnnoKeyManagerIdentity]: name } },
       },
     });
   }

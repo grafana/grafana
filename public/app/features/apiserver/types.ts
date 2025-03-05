@@ -43,11 +43,11 @@ export const AnnoKeyFolderUrl = 'grafana.app/folderUrl';
 export const AnnoKeyMessage = 'grafana.app/message';
 export const AnnoKeySlug = 'grafana.app/slug';
 
-// Identify where values came from
-export const AnnoKeyRepoName = 'grafana.app/repoName';
-export const AnnoKeyRepoPath = 'grafana.app/repoPath';
-export const AnnoKeyRepoHash = 'grafana.app/repoHash';
-export const AnnoKeyRepoTimestamp = 'grafana.app/repoTimestamp';
+export const AnnoKeyManagerKind = 'grafana.app/managedBy';
+export const AnnoKeyManagerIdentity = 'grafana.app/managerId';
+export const AnnoKeySourcePath = 'grafana.app/sourcePath';
+export const AnnoKeySourceChecksum = 'grafana.app/sourceChecksum';
+export const AnnoKeySourceTimestamp = 'grafana.app/sourceTimestamp';
 
 export const AnnoKeySavedFromUI = 'grafana.app/saved-from-ui';
 export const AnnoKeyDashboardNotFound = 'grafana.app/dashboard-not-found';
@@ -66,10 +66,11 @@ type GrafanaAnnotations = {
   [AnnoKeyFolder]?: string;
   [AnnoKeySlug]?: string;
 
-  [AnnoKeyRepoName]?: string;
-  [AnnoKeyRepoPath]?: string;
-  [AnnoKeyRepoHash]?: string;
-  [AnnoKeyRepoTimestamp]?: string;
+  [AnnoKeyManagerKind]?: string;
+  [AnnoKeyManagerIdentity]?: string;
+  [AnnoKeySourcePath]?: string;
+  [AnnoKeySourceChecksum]?: string;
+  [AnnoKeySourceTimestamp]?: string;
 };
 
 // Annotations provided by the front-end client

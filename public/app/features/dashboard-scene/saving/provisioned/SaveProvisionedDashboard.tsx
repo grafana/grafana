@@ -7,7 +7,7 @@ import { getAppEvents, locationService } from '@grafana/runtime';
 import { Alert, Button, Field, Input, RadioButtonGroup, Stack, TextArea } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { useUrlParams } from 'app/core/navigation/hooks';
-import { AnnoKeyRepoName } from 'app/features/apiserver/types';
+import { AnnoKeyManagerIdentity } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { RepositoryView } from 'app/features/provisioning/api';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
@@ -167,7 +167,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
                         }
                         dashboard.setState({
                           meta: {
-                            k8s: name ? { annotations: { [AnnoKeyRepoName]: name } } : undefined,
+                            k8s: name ? { annotations: { [AnnoKeyManagerIdentity]: name } } : undefined,
                             folderUid: uid,
                           },
                         });
