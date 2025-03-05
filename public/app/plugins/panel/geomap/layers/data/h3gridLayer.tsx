@@ -258,7 +258,12 @@ export const h3gridLayer: MapLayerRegistryItem<H3GridConfig> = {
                 }
                 const h3Feature = new Feature({
                   geometry: fixedExtentPoly426.transform('EPSG:4326', 'EPSG:3857'),
-                  id: h3_index,                  
+                  id: h3_index,  
+                  ...frame.fields.reduce((acc: Record<string, string | number | boolean>, field) => {
+                    acc[field.name] = field.values[idx];
+                    return acc;
+                  }, {}),
+
                 });
                 source.addFeature(h3Feature);
               })
