@@ -124,6 +124,11 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 			return stateStore.SaveNotificationLog(context.Background(), state)
 		},
 	}
+	
+	l := log.New("ngalert.notifier.alertmanager", "org", orgID)
+	if peer != nil && peer != &NilPeer{} {
+		l.Info("Alertmanager initialized with cluster peer", "peerType", fmt.Sprintf("%T", peer))
+	}
 	l := log.New("ngalert.notifier.alertmanager", "org", orgID)
 	action := stages.Disabled
 	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingAlertmanagerExtraDedupStage) {
@@ -152,6 +157,8 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 	if err != nil {
 		return nil, err
 	}
+
+	l.Info("Created GrafanaAlertmanager instance", "orgID", orgID)
 
 	am := &alertmanager{
 		Base:                gam,
@@ -434,6 +441,7 @@ func (am *alertmanager) PutAlerts(_ context.Context, postableAlerts apimodels.Po
 		})
 	}
 
+	am.logger.Debug("Putting alerts into alertmanager", "count", len(alerts), "orgID", am.orgID)
 	return am.Base.PutAlerts(alerts)
 }
 

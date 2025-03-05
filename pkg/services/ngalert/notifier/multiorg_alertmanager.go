@@ -178,6 +178,7 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 	const settleTimeout = alertingCluster.DefaultGossipInterval * 10
 	// Redis setup.
 	if cfg.UnifiedAlerting.HARedisAddr != "" {
+		clusterLogger.Info("Setting up Redis-based alertmanager clustering")
 		redisPeer, err := newRedisPeer(redisConfig{
 			addr:       cfg.UnifiedAlerting.HARedisAddr,
 			name:       cfg.UnifiedAlerting.HARedisPeerName,
@@ -200,6 +201,10 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 	}
 	// Memberlist setup.
 	if len(cfg.UnifiedAlerting.HAPeers) > 0 {
+		clusterLogger.Info("Setting up memberlist-based alertmanager clustering", 
+			"peers", cfg.UnifiedAlerting.HAPeers,
+			"listenAddr", cfg.UnifiedAlerting.HAListenAddr,
+			"advertiseAddr", cfg.UnifiedAlerting.HAAdvertiseAddr)
 		peer, err := alertingCluster.Create(
 			clusterLogger,
 			moa.metrics.Registerer,
