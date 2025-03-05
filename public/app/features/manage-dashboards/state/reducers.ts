@@ -114,6 +114,9 @@ const importDashboardSlice = createSlice({
     fetchDashboard: (state: Draft<ImportDashboardState>) => {
       state.state = LoadingState.Loading;
     },
+    setLoadingState: (state: Draft<ImportDashboardState>, action: PayloadAction<LoadingState>) => {
+      state.state = action.payload;
+    },
   },
 });
 
@@ -125,6 +128,7 @@ export const {
   setLibraryPanelInputs,
   fetchFailed,
   fetchDashboard,
+  setLoadingState,
 } = importDashboardSlice.actions;
 
 export const importDashboardReducer = importDashboardSlice.reducer;

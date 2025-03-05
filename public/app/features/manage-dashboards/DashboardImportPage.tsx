@@ -5,6 +5,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { AppEvents, GrafanaTheme2, LoadingState, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import {
   Button,
   Field,
@@ -27,13 +28,16 @@ import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
 import { t, Trans } from 'app/core/internationalization';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { dispatch } from 'app/store/store';
 import { StoreState } from 'app/types';
 
 import { cleanUpAction } from '../../core/actions/cleanUp';
+import { ImportDashboardOverviewV2 } from '../dashboard-scene/v2schema/ImportDashboardOverviewV2';
+import { processImportedDashboard } from '../dashboard-scene/v2schema/ImportDashboardV2';
 
 import { ImportDashboardOverview } from './components/ImportDashboardOverview';
 import { fetchGcomDashboard, importDashboardJson } from './state/actions';
-import { initialImportDashboardState } from './state/reducers';
+import { initialImportDashboardState, setLoadingState } from './state/reducers';
 import { validateDashboardJson, validateGcomDashboard } from './utils/validation';
 
 type DashboardImportPageRouteSearchParams = {
@@ -65,9 +69,14 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
-class UnthemedDashboardImport extends PureComponent<Props> {
+interface State {
+  v2Dashboard?: DashboardV2Spec;
+}
+
+class UnthemedDashboardImport extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
+    this.state = {};
     const { gcomDashboardId } = this.props.queryParams;
     if (gcomDashboardId) {
       this.getGcomDashboard({ gcomDashboard: gcomDashboardId });
@@ -102,7 +111,19 @@ class UnthemedDashboardImport extends PureComponent<Props> {
       import_source: 'json_pasted',
     });
 
-    this.props.importDashboardJson(JSON.parse(formData.dashboardJson));
+    const dashboard = JSON.parse(formData.dashboardJson);
+
+    // TODO: replace this with dashboard.kind check - this is just for dev purposes
+    if (dashboard.elements) {
+      console.log('V2 dashboard detected');
+      processImportedDashboard(dashboard).then(() => {
+        this.setState({ v2Dashboard: dashboard });
+        dispatch(setLoadingState(LoadingState.Done));
+      });
+      return;
+    }
+
+    this.props.importDashboardJson(dashboard);
   };
 
   getGcomDashboard = (formData: { gcomDashboard: string }) => {
@@ -228,6 +249,22 @@ class UnthemedDashboardImport extends PureComponent<Props> {
     subTitle: 'Import dashboard from file or Grafana.com',
   };
 
+  getDashboardOverview() {
+    const { loadingState } = this.props;
+    const { v2Dashboard } = this.state;
+
+    console.log('loadingState', loadingState);
+
+    if (loadingState === LoadingState.Done) {
+      if (v2Dashboard) {
+        return <ImportDashboardOverviewV2 dashboard={v2Dashboard} />;
+      }
+      return <ImportDashboardOverview />;
+    }
+
+    return null;
+  }
+
   render() {
     const { loadingState } = this.props;
 
@@ -242,7 +279,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
             </Stack>
           )}
           {[LoadingState.Error, LoadingState.NotStarted].includes(loadingState) && this.renderImportForm()}
-          {loadingState === LoadingState.Done && <ImportDashboardOverview />}
+          {this.getDashboardOverview()}
         </Page.Contents>
       </Page>
     );
