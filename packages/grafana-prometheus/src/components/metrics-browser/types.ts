@@ -1,40 +1,6 @@
-import { GrafanaTheme2, TimeRange } from '@grafana/data';
-
-import PromQlLanguageProvider from '../../language_provider';
-
-export interface FacettableValue {
-  name: string;
-  selected?: boolean;
-  details?: string;
-}
-
-export interface SelectableLabel {
-  name: string;
-  selected?: boolean;
-  loading?: boolean;
-  values?: FacettableValue[];
-  hidden?: boolean;
-  facets?: number;
-}
-
 export interface Metric {
   name: string;
   details?: string;
-}
-
-export interface BrowserProps {
-  languageProvider: PromQlLanguageProvider;
-  onChange: (selector: string) => void;
-  theme: GrafanaTheme2;
-  autoSelect?: number;
-  hide?: () => void;
-  timeRange?: TimeRange;
-}
-
-export interface BrowserState {
-  labels: SelectableLabel[];
-  status: string;
-  error: string;
 }
 
 export const DEFAULT_SERIES_LIMIT = '40000';
