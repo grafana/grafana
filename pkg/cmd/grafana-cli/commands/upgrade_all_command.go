@@ -65,7 +65,6 @@ func upgradeAllCommand(c utils.CommandLine) error {
 
 		err = installPlugin(ctx, p.JSONData.ID, "", newInstallPluginOpts(c))
 		if err != nil {
-
 			backupErr := restorePluginBackup(pluginBundle)
 			if backupErr != nil {
 				// logs the first error and return the second
