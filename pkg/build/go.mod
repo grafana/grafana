@@ -5,7 +5,7 @@ go 1.23.7
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
 // github.com/docker/docker@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000
-replace github.com/docker/docker => github.com/moby/moby v26.0.0+incompatible
+replace github.com/docker/docker => github.com/moby/moby v27.4.1+incompatible
 
 // Override Prometheus version because Prometheus v2.X is tagged as v0.X for Go modules purposes and Go assumes
 // that v1.Y is higher than v0.X, so when we resolve dependencies if any dependency imports v1.Y we'd
