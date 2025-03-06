@@ -18,11 +18,11 @@ You can use Explore to query and visualize traces from tracing data sources.
 
 Supported data sources are:
 
-- [Tempo]({{< relref "../datasources/tempo/" >}}) (supported ingestion formats: OpenTelemetry, Jaeger, and Zipkin)
-- [Jaeger]({{< relref "../datasources/jaeger/" >}})
-- [Zipkin]({{< relref "../datasources/zipkin/" >}})
+- [Tempo](../../datasources/tempo/) (supported ingestion formats: OpenTelemetry, Jaeger, and Zipkin)
+- [Jaeger](../../datasources/jaeger/)
+- [Zipkin](../../datasources/zipkin/)
 - [X-Ray](https://grafana.com/grafana/plugins/grafana-x-ray-datasource)
-- [Azure Monitor Application Insights]({{< relref "../datasources/azure-monitor/" >}})
+- [Azure Monitor Application Insights](../../datasources/azure-monitor/)
 
 For information on how to configure queries for the data sources listed above, refer to the documentation for specific data source.
 
@@ -34,10 +34,10 @@ Each data source can have it's own query editor. The query editor for the Tempo 
 
 For information on querying each data source, refer to their documentation:
 
-- [Tempo query editor]({{< relref "../datasources/tempo/query-editor" >}})
-- [Jaeger query editor]({{< relref "../datasources/jaeger/#query-the-data-source" >}})
-- [Zipkin query editor]({{< relref "../datasources/zipkin/#query-the-data-source" >}})
-- [Azure Monitor Application Insights query editor]({{< relref "../datasources/azure-monitor/query-editor/#query-application-insights-traces" >}})
+- [Tempo query editor](../../datasources/tempo/query-editor/)
+- [Jaeger query editor](../../datasources/jaeger/#query-the-data-source)
+- [Zipkin query editor](../../datasources/zipkin/#query-the-data-source)
+- [Azure Monitor Application Insights query editor](../../datasources/azure-monitor/query-editor/#query-application-insights-traces)
 
 ## Trace view
 
@@ -133,7 +133,7 @@ You can optionally expand the node graph for the displayed trace. Depending on t
 The Service Graph visualizes the span metrics (traces data for rates, error rates, and durations (RED)) and service graphs.
 Once the requirements are set up, this pre-configured view is immediately available.
 
-For more information, refer to the [Service Graph view section]({{< relref "../datasources/tempo/#open-the-service-graph-view" >}}) of the Tempo data source page and the [service graph view page](/docs/tempo/latest/metrics-generator/service-graph-view/) in the Tempo documentation.
+For more information, refer to the [Service Graph view section](../../datasources/tempo/#open-the-service-graph-view) of the Tempo data source page and the [service graph view page](/docs/tempo/latest/metrics-generator/service-graph-view/) in the Tempo documentation.
 
 {{< figure src="/static/img/docs/grafana-cloud/apm-overview.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the Service Graph view" >}}
 

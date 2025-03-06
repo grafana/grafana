@@ -242,7 +242,7 @@ You can configure the **Hide search** setting to hide the search query option in
 The **Loki search** setting configures the Loki search query type.
 
 Configure the **Data source** setting to define which Loki instance you want to use to search traces.
-You must configure [derived fields]({{< relref "../loki#configure-derived-fields" >}}) in the Loki instance.
+You must configure [derived fields](../../loki/#configure-derived-fields) in the Loki instance.
 
 ## TraceID query
 

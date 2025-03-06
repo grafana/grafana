@@ -86,7 +86,7 @@ These examples show how often and when reminders are sent for a triggered alert.
 
 ### Email
 
-To enable email notifications you have to set up [SMTP settings]({{< relref "../setup-grafana/configure-grafana#smtp" >}})
+To enable email notifications you have to set up [SMTP settings](../../setup-grafana/configure-grafana/#smtp)
 in the Grafana config. Email notifications will upload an image of the alert graph to an
 external image destination if available or fallback to attaching the image to the email.
 Be aware that if you use the `local` image storage email servers and clients might not be
@@ -134,7 +134,7 @@ To setup Opsgenie you will need an API Key and the Alert API Url. These can be o
 | Alert API URL             | The API URL for your Opsgenie instance. This will normally be either `https://api.opsgenie.com` or, for EU customers, `https://api.eu.opsgenie.com`.                                                                                     |
 | API Key                   | The API Key as provided by Opsgenie for your configured Grafana integration.                                                                                                                                                             |
 | Override priority         | Configures the alert priority using the `og_priority` tag. The `og_priority` tag must have one of the following values: `P1`, `P2`, `P3`, `P4`, or `P5`. Default is `False`.                                                             |
-| Send notification tags as | Specify how you would like [Notification Tags]({{< relref "./create-alerts#notifications" >}}) delivered to Opsgenie. They can be delivered as `Tags`, `Extra Properties` or both. Default is Tags. See note below for more information. |
+| Send notification tags as | Specify how you would like [Notification Tags](../create-alerts/#notifications) delivered to Opsgenie. They can be delivered as `Tags`, `Extra Properties` or both. Default is Tags. See note below for more information. |
 
 {{% admonition type="note" %}}
 When notification tags are sent as `Tags` they are concatenated into a string with a `key:value` format. If you prefer to receive the notifications tags as key/values under Extra Properties in Opsgenie then change the `Send notification tags as` to either `Extra Properties` or `Tags & Extra Properties`.
@@ -283,16 +283,16 @@ Grafana alert notifications can be sent to [Sensu](https://sensu.io) Go as event
 ## Enable images in notifications {#external-image-store}
 
 Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure
-[image rendering]({{< relref "../setup-grafana/image-rendering" >}}).
+[image rendering](../../setup-grafana/image-rendering/).
 
-You must configure an [external image storage provider]({{< relref "../setup-grafana/configure-grafana#external_image_storage" >}}) in order to receive images in alert notifications. If your notification channel requires that the image be publicly accessible (e.g. Slack, PagerDuty), configure a provider which uploads the image to a remote image store like Amazon S3, Webdav, Google Cloud Storage, or Azure Blob Storage. Otherwise, the local provider can be used to serve the image directly from Grafana.
+You must configure an [external image storage provider](../../setup-grafana/configure-grafana/#external_image_storage) in order to receive images in alert notifications. If your notification channel requires that the image be publicly accessible (e.g. Slack, PagerDuty), configure a provider which uploads the image to a remote image store like Amazon S3, Webdav, Google Cloud Storage, or Azure Blob Storage. Otherwise, the local provider can be used to serve the image directly from Grafana.
 
 Notification services which need public image access are marked as 'external only'.
 
 ## Configure the link back to Grafana from alert notifications
 
 All alert notifications contain a link back to the triggered alert in the Grafana instance.
-This URL is based on the [domain]({{< relref "../setup-grafana/configure-grafana#domain" >}}) setting in Grafana.
+This URL is based on the [domain](../../setup-grafana/configure-grafana/#domain) setting in Grafana.
 
 ## Notification templating
 
@@ -300,4 +300,4 @@ This URL is based on the [domain]({{< relref "../setup-grafana/configure-grafana
 Alert notification templating is only available in Grafana v7.4 and above.
 {{% /admonition %}}
 
-The alert notification template feature allows you to take the [label]({{< relref "../fundamentals/timeseries-dimensions#labels" >}}) value from an alert query and [inject that into alert notifications]({{< relref "./add-notification-template" >}}).
+The alert notification template feature allows you to take the [label](../../fundamentals/timeseries-dimensions/#labels) value from an alert query and [inject that into alert notifications](../add-notification-template/).

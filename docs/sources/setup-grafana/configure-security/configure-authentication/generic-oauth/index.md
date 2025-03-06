@@ -23,17 +23,17 @@ weight: 700
 
 Grafana provides OAuth2 integrations for the following auth providers:
 
-- [Azure AD OAuth]({{< relref "../azuread" >}})
-- [GitHub OAuth]({{< relref "../github" >}})
-- [GitLab OAuth]({{< relref "../gitlab" >}})
-- [Google OAuth]({{< relref "../google" >}})
-- [Grafana Com OAuth]({{< relref "../grafana-com" >}})
-- [Keycloak OAuth]({{< relref "../keycloak" >}})
-- [Okta OAuth]({{< relref "../okta" >}})
+- [Azure AD OAuth](../azuread/)
+- [GitHub OAuth](../github/)
+- [GitLab OAuth](../gitlab/)
+- [Google OAuth](../google/)
+- [Grafana Com OAuth](../grafana-com/)
+- [Keycloak OAuth](../keycloak/)
+- [Okta OAuth](../okta/)
 
 If your OAuth2 provider is not listed, you can use generic OAuth2 authentication.
 
-This topic describes how to configure generic OAuth2 authentication using different methods and includes [examples of setting up generic OAuth2]({{< relref "#examples-of-setting-up-generic-oauth2" >}}) with specific OAuth2 providers.
+This topic describes how to configure generic OAuth2 authentication using different methods and includes [examples of setting up generic OAuth2](#examples-of-setting-up-generic-oauth2) with specific OAuth2 providers.
 
 ## Before you begin
 
@@ -59,7 +59,7 @@ If you need to reset changes you made in the UI back to the default values, clic
 If you run Grafana in high availability mode, configuration changes may not get applied to all Grafana instances immediately. You may need to wait a few minutes for the configuration to propagate to all Grafana instances.
 {{% /admonition %}}
 
-Refer to [configuration options]({{< relref "#configuration-options" >}}) for more information.
+Refer to [configuration options](#configuration-options) for more information.
 
 ## Configure generic OAuth authentication client using the Terraform provider
 
@@ -90,7 +90,7 @@ Refer to [Terraform Registry](https://registry.terraform.io/providers/grafana/gr
 
 ## Configure generic OAuth authentication client using the Grafana configuration file
 
-Ensure that you have access to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}).
+Ensure that you have access to the [Grafana configuration file](../../../configure-grafana/#configuration-file-location).
 
 ### Steps
 
@@ -112,9 +112,9 @@ To integrate your OAuth2 provider with Grafana using our generic OAuth2 authenti
    | `api_url`                    | The user information endpoint of your OAuth2 provider. Information returned by this endpoint must be compatible with [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo). |
    | `enabled`                    | Enables generic OAuth2 authentication. Set this value to `true`.                                                                                                                                  |
 
-   Review the list of other generic OAuth2 [configuration options]({{< relref "#configuration-options" >}}) and complete them, as necessary.
+   Review the list of other generic OAuth2 [configuration options](#configuration-options) and complete them, as necessary.
 
-1. Optional: [Configure a refresh token]({{< relref "#configure-a-refresh-token" >}}):
+1. Optional: [Configure a refresh token](#configure-a-refresh-token):
 
    a. Extend the `scopes` field of `[auth.generic_oauth]` section in Grafana configuration file with refresh token scope used by your OAuth2 provider.
 
@@ -122,8 +122,8 @@ To integrate your OAuth2 provider with Grafana using our generic OAuth2 authenti
 
    c. Enable the refresh token on the provider if required.
 
-1. [Configure role mapping]({{< relref "#configure-role-mapping" >}}).
-1. Optional: [Configure team synchronization]({{< relref "#configure-team-synchronization" >}}).
+1. [Configure role mapping](#configure-role-mapping).
+1. Optional: [Configure team synchronization](#configure-team-synchronization).
 1. Restart Grafana.
 
    You should now see a generic OAuth2 login button on the login page and be able to log in or sign up with your OAuth2 provider.
@@ -196,9 +196,9 @@ Unless `skip_org_role_sync` option is enabled, the user's role will be set to th
 
 The user's role is retrieved using a [JMESPath](http://jmespath.org/examples.html) expression from the `role_attribute_path` configuration option.
 To map the server administrator role, use the `allow_assign_grafana_admin` configuration option.
-Refer to [configuration options]({{< relref "#configuration-options" >}}) for more information.
+Refer to [configuration options](#configuration-options) for more information.
 
-If no valid role is found, the user is assigned the role specified by [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
+If no valid role is found, the user is assigned the role specified by [the `auto_assign_org_role` option](../../../configure-grafana/#auto_assign_org_role).
 You can disable this default role assignment by setting `role_attribute_strict = true`.
 This setting denies user access if no role or an invalid role is returned.
 
@@ -294,15 +294,15 @@ skip_org_role_sync = false
 
 ### Configure team synchronization
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
+> **Note:** Available in [Grafana Enterprise](../../../../introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud/).
 
 By using Team Sync, you can link your OAuth2 groups to teams within Grafana. This will automatically assign users to the appropriate teams.
 Teams for each user are synchronized when the user logs in.
 
 Generic OAuth2 groups can be referenced by group ID, such as `8bab1c86-8fba-33e5-2089-1d1c80ec267d` or `myteam`.
-For information on configuring OAuth2 groups with Grafana using the `groups_attribute_path` configuration option, refer to [configuration options]({{< relref "#configuration-options" >}}).
+For information on configuring OAuth2 groups with Grafana using the `groups_attribute_path` configuration option, refer to [configuration options](#configuration-options).
 
-To learn more about Team Sync, refer to [Configure team sync]({{< relref "../../configure-team-sync" >}}).
+To learn more about Team Sync, refer to [Configure team sync](../../configure-team-sync/).
 
 #### Team synchronization example
 
@@ -349,13 +349,13 @@ The following table outlines the various generic OAuth2 configuration options. Y
 | `allow_sign_up`              | No       | Controls Grafana user creation through the generic OAuth2 login. Only existing Grafana users can log in with generic OAuth if set to `false`.                                                                                                                                                                                                                                                                                                                                                                                                                                                              | `true`          |
 | `auto_login`                 | No       | Set to `true` to enable users to bypass the login screen and automatically log in. This setting is ignored if you configure multiple auth providers to use auto-login.                                                                                                                                                                                                                                                                                                                                                                                                                                     | `false`         |
 | `id_token_attribute_name`    | No       | The name of the key used to extract the ID token from the returned OAuth2 token.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | `id_token`      |
-| `login_attribute_path`       | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for user login lookup from the user ID token. For more information on how user login is retrieved, refer to [Configure login]({{< relref "#configure-login" >}}).                                                                                                                                                                                                                                                                                                                                                                          |                 |
-| `name_attribute_path`        | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for user name lookup from the user ID token. This name will be used as the user's display name. For more information on how user display name is retrieved, refer to [Configure display name]({{< relref "#configure-display-name" >}}).                                                                                                                                                                                                                                                                                                   |                 |
-| `email_attribute_path`       | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for user email lookup from the user information. For more information on how user email is retrieved, refer to [Configure email address]({{< relref "#configure-email-address" >}}).                                                                                                                                                                                                                                                                                                                                                       |                 |
-| `email_attribute_name`       | No       | Name of the key to use for user email lookup within the `attributes` map of OAuth2 ID token. For more information on how user email is retrieved, refer to [Configure email address]({{< relref "#configure-email-address" >}}).                                                                                                                                                                                                                                                                                                                                                                           | `email:primary` |
-| `role_attribute_path`        | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for Grafana role lookup. Grafana will first evaluate the expression using the OAuth2 ID token. If no role is found, the expression will be evaluated using the user information obtained from the UserInfo endpoint. The result of the evaluation should be a valid Grafana role (`Viewer`, `Editor`, `Admin` or `GrafanaAdmin`). For more information on user role mapping, refer to [Configure role mapping]({{< relref "#configure-role-mapping" >}}).                                                                                  |                 |
-| `role_attribute_strict`      | No       | Set to `true` to deny user login if the Grafana role cannot be extracted using `role_attribute_path`. For more information on user role mapping, refer to [Configure role mapping]({{< relref "#configure-role-mapping" >}}).                                                                                                                                                                                                                                                                                                                                                                              | `false`         |
-| `allow_assign_grafana_admin` | No       | Set to `true` to enable automatic sync of the Grafana server administrator role. If this option is set to `true` and the result of evaluating `role_attribute_path` for a user is `GrafanaAdmin`, Grafana grants the user the server administrator privileges and organization administrator role. If this option is set to `false` and the result of evaluating `role_attribute_path` for a user is `GrafanaAdmin`, Grafana grants the user only organization administrator role. For more information on user role mapping, refer to [Configure role mapping]({{< relref "#configure-role-mapping" >}}). | `false`         |
+| `login_attribute_path`       | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for user login lookup from the user ID token. For more information on how user login is retrieved, refer to [Configure login](#configure-login).                                                                                                                                                                                                                                                                                                                                                                          |                 |
+| `name_attribute_path`        | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for user name lookup from the user ID token. This name will be used as the user's display name. For more information on how user display name is retrieved, refer to [Configure display name](#configure-display-name).                                                                                                                                                                                                                                                                                                   |                 |
+| `email_attribute_path`       | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for user email lookup from the user information. For more information on how user email is retrieved, refer to [Configure email address](#configure-email-address).                                                                                                                                                                                                                                                                                                                                                       |                 |
+| `email_attribute_name`       | No       | Name of the key to use for user email lookup within the `attributes` map of OAuth2 ID token. For more information on how user email is retrieved, refer to [Configure email address](#configure-email-address).                                                                                                                                                                                                                                                                                                                                                                           | `email:primary` |
+| `role_attribute_path`        | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for Grafana role lookup. Grafana will first evaluate the expression using the OAuth2 ID token. If no role is found, the expression will be evaluated using the user information obtained from the UserInfo endpoint. The result of the evaluation should be a valid Grafana role (`Viewer`, `Editor`, `Admin` or `GrafanaAdmin`). For more information on user role mapping, refer to [Configure role mapping](#configure-role-mapping).                                                                                  |                 |
+| `role_attribute_strict`      | No       | Set to `true` to deny user login if the Grafana role cannot be extracted using `role_attribute_path`. For more information on user role mapping, refer to [Configure role mapping](#configure-role-mapping).                                                                                                                                                                                                                                                                                                                                                                              | `false`         |
+| `allow_assign_grafana_admin` | No       | Set to `true` to enable automatic sync of the Grafana server administrator role. If this option is set to `true` and the result of evaluating `role_attribute_path` for a user is `GrafanaAdmin`, Grafana grants the user the server administrator privileges and organization administrator role. If this option is set to `false` and the result of evaluating `role_attribute_path` for a user is `GrafanaAdmin`, Grafana grants the user only organization administrator role. For more information on user role mapping, refer to [Configure role mapping](#configure-role-mapping). | `false`         |
 | `skip_org_role_sync`         | No       | Set to `true` to stop automatically syncing user roles. This will allow you to set organization roles for your users from within Grafana manually.                                                                                                                                                                                                                                                                                                                                                                                                                                                         | `false`         |
 | `groups_attribute_path`      | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for user group lookup. Grafana will first evaluate the expression using the OAuth2 ID token. If no groups are found, the expression will be evaluated using the user information obtained from the UserInfo endpoint. The result of the evaluation should be a string array of groups.                                                                                                                                                                                                                                                     |                 |
 | `allowed_groups`             | No       | List of comma- or space-separated groups. The user should be a member of at least one group to log in. If you configure `allowed_groups`, you must also configure `groups_attribute_path`.                                                                                                                                                                                                                                                                                                                                                                                                                 |                 |

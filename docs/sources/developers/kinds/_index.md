@@ -27,10 +27,10 @@ for every large-scale refactoring.
 
 In the Grafana ecosystem, there are three basic Kind categories and associated schema categories:
 
-- [Core Kinds]({{< relref "core/" >}})
+- [Core Kinds](core/)
 - Custom Kinds
-- [Composable Kinds]({{< relref "composable/" >}})
+- [Composable Kinds](composable/)
 
 The schema authoring workflow for each varies, as does the path to maturity.
-[Grafana Kinds - From Zero to Maturity]({{< relref "maturity/" >}}) contains general reference material applicable to
+[Grafana Kinds - From Zero to Maturity](maturity/) contains general reference material applicable to
 all Kind-writing, and links to the guides for each category of Kind.
