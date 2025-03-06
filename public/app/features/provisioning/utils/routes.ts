@@ -3,8 +3,8 @@ import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynami
 import { RouteDescriptor } from 'app/core/navigation/types';
 import { DashboardRoutes } from 'app/types';
 
-import { requiredFeatureToggles } from '../Setup/types';
-import { PROVISIONING_URL, CONNECT_URL, MIGRATE_URL } from '../constants';
+import { requiredFeatureToggles } from '../GettingStarted/types';
+import { PROVISIONING_URL, CONNECT_URL, MIGRATE_URL, GETTING_STARTED_URL } from '../constants';
 
 export function getProvisioningRoutes(): RouteDescriptor[] {
   if (!requiredFeatureToggles.every((toggle) => config.featureToggles[toggle])) {
@@ -12,7 +12,7 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
       {
         path: PROVISIONING_URL,
         component: SafeDynamicImport(
-          () => import(/* webpackChunkName: "SetupPage"*/ 'app/features/provisioning/Setup/SetupPage')
+          () => import(/* webpackChunkName: "SetupPage"*/ 'app/features/provisioning/GettingStarted/SetupPage')
         ),
       },
     ];
@@ -26,9 +26,12 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: PROVISIONING_URL + '/setup',
+      path: GETTING_STARTED_URL,
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "SetupPage"*/ 'app/features/provisioning/Setup/SetupPage')
+        () =>
+          import(
+            /* webpackChunkName: "GettingStartedPage"*/ 'app/features/provisioning/GettingStarted/GettingStartedPage'
+          )
       ),
     },
     {

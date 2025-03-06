@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { config } from '@grafana/runtime';
 import { Alert, ControlledCollapse, Field } from '@grafana/ui';
 
-import { checkPublicAccess } from './Setup/utils';
+import { checkPublicAccess } from './GettingStarted/utils';
 import { PROVISIONING_URL } from './constants';
 
 export interface ConfigFormGithubCollpaseProps {

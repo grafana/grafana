@@ -4,9 +4,9 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { EmptyState, LinkButton, Alert, Stack, Text, Button, Box, Card } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
-import { FeatureList } from './Setup/FeatureList';
-import { useGetFrontendSettingsQuery } from './api';
-import { CONNECT_URL, MIGRATE_URL } from './constants';
+import { FeatureList } from './FeatureList';
+import { useGetFrontendSettingsQuery } from '../api';
+import { CONNECT_URL, MIGRATE_URL } from '../constants';
 
 export default function OnboardingPage({ legacyStorage }: { legacyStorage?: boolean }) {
   const settingsQuery = useGetFrontendSettingsQuery();
