@@ -47,8 +47,8 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
   ) {
     super(instanceSettings);
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings);
-    this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
     this.azureResourceGraphDatasource = new AzureResourceGraphDatasource(instanceSettings);
+    this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
     this.resourcePickerData = new ResourcePickerData(instanceSettings, this.azureMonitorDatasource);
 
     this.pseudoDatasource = {
@@ -168,7 +168,13 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     return this.azureMonitorDatasource.getResourceGroups(this.templateSrv.replace(subscriptionId));
   }
 
-  getMetricNamespaces(subscriptionId: string, resourceGroup?: string, resourceUri?: string, custom?: boolean) {
+  getMetricNamespaces(
+    subscriptionId: string,
+    resourceGroup?: string,
+    resourceUri?: string,
+    custom?: boolean,
+    variableQuery?: boolean
+  ) {
     let url = `/subscriptions/${subscriptionId}`;
     if (resourceGroup) {
       url += `/resourceGroups/${resourceGroup}`;
@@ -176,6 +182,14 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     if (resourceUri) {
       url = resourceUri;
     }
+
+    // For variable queries it's more efficient to use resource graph
+    // Using resource graph allows us to return namespaces irrespective of a users permissions
+    // This also ensure the returned namespaces are filtered to the selected resource group when specified
+    if (variableQuery) {
+      return this.azureResourceGraphDatasource.getMetricNamespaces(url);
+    }
+
     return this.azureMonitorDatasource.getMetricNamespaces(
       { resourceUri: url },
       // If custom namespaces are being queried we do not issue the query against the global region
