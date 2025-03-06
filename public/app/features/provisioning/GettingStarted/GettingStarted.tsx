@@ -12,6 +12,16 @@ import { feature_ini, ngrok_example, root_url_ini } from './types';
 
 type SetupType = 'public-access' | 'required-features' | null;
 
+interface FeatureItemProps {
+  children: React.ReactNode;
+}
+
+const FeatureItem = ({ children }: FeatureItemProps) => (
+  <Text variant="body">
+    <Icon name="check" className="text-success" /> {children}
+  </Text>
+);
+
 export default function GettingStarted() {
   const settingsQuery = useGetFrontendSettingsQuery();
   const legacyStorage = settingsQuery.data?.legacyStorage;
@@ -80,29 +90,26 @@ export default function GettingStarted() {
           <Stack direction="column" gap={2}>
             <Stack direction="column" gap={2}>
               <Text variant="h2">Provisioning as-code directly from Grafana</Text>
-              <Text variant="body">
-                <Icon name="check" className="text-success" /> Manage your dashboards as code and deploy them
-                automatically from your GitHub repository or local storage
-              </Text>
-              <Text variant="body">
-                <Icon name="check" className="text-success" /> Review, discuss, and approve dashboard changes with your
-                team before they go live using GitHub pull requests
-              </Text>
-              <Text variant="body">
-                <Icon name="check" className="text-success" /> Export your existing dashboards as code and store them in
-                GitHub repositories for version control and collaboration
-              </Text>
+              <FeatureItem>
+                Manage your dashboards as code and deploy them automatically from your GitHub repository or local
+                storage
+              </FeatureItem>
+              <FeatureItem>
+                Review, discuss, and approve dashboard changes with your team before they go live using GitHub pull
+                requests
+              </FeatureItem>
+              <FeatureItem>
+                Export your existing dashboards as code and store them in GitHub repositories for version control and
+                collaboration
+              </FeatureItem>
               {hasPublicAccess && (
-                <Text variant="body">
-                  <Icon name="check" className="text-success" /> Automatically provision and update your dashboards as
-                  soon as changes are pushed to your GitHub repository
-                </Text>
+                <FeatureItem>
+                  Automatically provision and update your dashboards as soon as changes are pushed to your GitHub
+                  repository
+                </FeatureItem>
               )}
               {hasImageRenderer && hasPublicAccess && (
-                <Text variant="body">
-                  <Icon name="check" className="text-success" /> Visual previews in pull requests to review your changes
-                  before going live
-                </Text>
+                <FeatureItem>Visual previews in pull requests to review your changes before going live</FeatureItem>
               )}
 
               <LinkButton fill="text" href="#" icon="external-link-alt">
