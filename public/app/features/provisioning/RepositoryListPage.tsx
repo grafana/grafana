@@ -22,7 +22,7 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
 import GettingStartedPage from './GettingStarted/GettingStartedPage';
-import { FeatureList } from './GettingStarted/FeatureList';
+import GettingStarted from './GettingStarted/GettingStarted';
 import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
 import { Repository, ResourceCount, useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from './api';
@@ -49,7 +49,7 @@ export default function RepositoryListPage() {
   }, [deleteAllResult.isSuccess]);
 
   if (!items?.length && !isLoading) {
-    return <GettingStartedPage legacyStorage={settings.data?.legacyStorage} />;
+    return <GettingStartedPage />;
   }
 
   const onConfirmDelete = () => {
@@ -62,7 +62,7 @@ export default function RepositoryListPage() {
       case 'repositories':
         return <RepositoryListPageContent items={items ?? []} />;
       case 'getting-started':
-        return <FeatureList />;
+        return <GettingStarted />;
       default:
         return null;
     }
