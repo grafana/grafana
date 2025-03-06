@@ -24,6 +24,8 @@ export function ElementEditPane({ element }: Props) {
           title={elementInfo.name}
           isOpenDefault={true}
           className={styles.noBorderTop}
+          renderTitle={element.renderTitle}
+          isOpenable={element.isOpenable}
         >
           <div className={styles.actionsBox}>{element.renderActions()}</div>
         </OptionsPaneCategory>

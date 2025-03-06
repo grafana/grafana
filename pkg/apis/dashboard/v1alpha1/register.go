@@ -4,16 +4,21 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 const (
 	GROUP      = "dashboard.grafana.app"
 	VERSION    = "v1alpha1"
 	APIVERSION = GROUP + "/" + VERSION
+
+	// Resource constants
+	DASHBOARD_RESOURCE     = "dashboards"
+	LIBRARY_PANEL_RESOURCE = "librarypanels"
 )
 
 var DashboardResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
