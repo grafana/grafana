@@ -6,6 +6,8 @@ import {
 import createMockDatasource from '../__mocks__/datasource';
 import { createMockInstanceSetttings } from '../__mocks__/instanceSettings';
 import { resourceTypes } from '../azureMetadata';
+import AzureMonitorDatasource from '../azure_monitor/azure_monitor_datasource';
+import AzureResourceGraphDatasource from '../azure_resource_graph/azure_resource_graph_datasource';
 import { ResourceRowType } from '../components/ResourcePicker/types';
 import { AzureGraphResponse } from '../types';
 
@@ -22,22 +24,24 @@ jest.mock('@grafana/runtime', () => ({
 
 const createResourcePickerData = (responses: AzureGraphResponse[], noNamespaces?: boolean) => {
   const instanceSettings = createMockInstanceSetttings();
-  const mockDatasource = createMockDatasource();
+  const azureResourceGraphDatasource = new AzureResourceGraphDatasource(instanceSettings);
+  const postResource = jest.fn();
+  responses.forEach((res) => {
+    postResource.mockResolvedValueOnce(res);
+  });
+  azureResourceGraphDatasource.postResource = postResource;
+  const mockDatasource = createMockDatasource({ azureResourceGraphDatasource: azureResourceGraphDatasource });
   mockDatasource.azureMonitorDatasource.getMetricNamespaces = jest
     .fn()
     .mockResolvedValueOnce(
       noNamespaces ? [] : [{ text: 'Microsoft.Storage/storageAccounts', value: 'Microsoft.Storage/storageAccounts' }]
     );
+
   const resourcePickerData = new ResourcePickerData(
     instanceSettings,
     mockDatasource.azureMonitorDatasource,
     mockDatasource.azureResourceGraphDatasource
   );
-  const postResource = jest.fn();
-  responses.forEach((res) => {
-    postResource.mockResolvedValueOnce(res);
-  });
-  resourcePickerData.postResource = postResource;
   return { resourcePickerData, postResource, mockDatasource };
 };
 
