@@ -52,7 +52,7 @@ export default function RepositoryListPage() {
   }
 
   const onConfirmDelete = () => {
-    deleteAll({ deleteOptions: {} });
+    deleteAll({});
     setShowDeleteModal(false);
   };
 
