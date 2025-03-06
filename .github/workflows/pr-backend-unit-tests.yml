@@ -1,0 +1,66 @@
+name: Backend Unit Tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  EDITION: 'oss'
+  WIRE_TAGS: 'oss'
+
+jobs:
+  backend-testing-coverage:
+    name: Backend Testing & Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+          
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential shared-mime-info
+
+      - name: Verify code generation
+        run: |
+          CODEGEN_VERIFY=1 make gen-cue
+          CODEGEN_VERIFY=1 make gen-jsonnet
+
+      - name: Generate Go code
+        run: make gen-go
+
+      - name: Run unit tests
+        run: COVER_OPTS="-coverprofile=be-unit.cov -coverpkg=github.com/grafana/grafana/..." make test-go-unit
+
+      - name: Process and upload coverage
+        uses: ./.github/actions/test-coverage-processor
+        with:
+          test-type: 'be-unit'
+          # Needs to be named 'unit.cov' based on the Makefile command `make test-go-unit`
+          coverage-file: 'unit.cov'
+          codecov-token: ${{ secrets.CODECOV_TOKEN }}
+          codecov-flag: 'be-unit'
+          codecov-name: 'be-unit'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true

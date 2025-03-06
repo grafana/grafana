@@ -328,7 +328,7 @@ func TestStore_RegisterActionSet(t *testing.T) {
 	tests := []actionSetTest{
 		{
 			desc:     "should be able to register a plugin action set if the right feature toggles are enabled",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets, featuremgmt.FlagAccessControlOnCall),
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets),
 			pluginID: "test-app",
 			pluginActions: []plugins.ActionSet{
 				{
@@ -345,7 +345,7 @@ func TestStore_RegisterActionSet(t *testing.T) {
 		},
 		{
 			desc:     "should not register plugin action set if feature toggles are missing",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall),
+			features: featuremgmt.WithFeatures(),
 			pluginID: "test-app",
 			pluginActions: []plugins.ActionSet{
 				{
@@ -357,7 +357,7 @@ func TestStore_RegisterActionSet(t *testing.T) {
 		},
 		{
 			desc:     "should be able to register multiple plugin action sets",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets, featuremgmt.FlagAccessControlOnCall),
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets),
 			pluginID: "test-app",
 			pluginActions: []plugins.ActionSet{
 				{
@@ -382,7 +382,7 @@ func TestStore_RegisterActionSet(t *testing.T) {
 		},
 		{
 			desc:     "action set actions should be added not replaced",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets, featuremgmt.FlagAccessControlOnCall),
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets),
 			pluginID: "test-app",
 			pluginActions: []plugins.ActionSet{
 				{
@@ -425,7 +425,7 @@ func TestStore_RegisterActionSet(t *testing.T) {
 		},
 		{
 			desc:     "should not be able to register an action that doesn't have a plugin prefix",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets, featuremgmt.FlagAccessControlOnCall),
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets),
 			pluginID: "test-app",
 			pluginActions: []plugins.ActionSet{
 				{
@@ -441,7 +441,7 @@ func TestStore_RegisterActionSet(t *testing.T) {
 		},
 		{
 			desc:     "should not be able to register action set that is not in the allow list",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets, featuremgmt.FlagAccessControlOnCall),
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets),
 			pluginID: "test-app",
 			pluginActions: []plugins.ActionSet{
 				{

@@ -28,6 +28,7 @@ const tronTheme: NewThemeOptions = {
       canvas: '#0A0F18',
       primary: '#0F1B2A',
       secondary: '#152234',
+      elevated: '#152234',
     },
     action: {
       hover: 'rgba(0, 255, 255, 0.16)',

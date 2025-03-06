@@ -185,7 +185,6 @@ describe('transformSceneToSaveModel', () => {
         timepicker: {
           ...dashboard_to_load1.timepicker,
           refresh_intervals: ['5m', '15m', '30m', '1h'],
-          time_options: ['5m', '15m', '30m'],
           hidden: true,
         },
         links: [{ ...NEW_LINK, title: 'Link 1' }],
@@ -1055,6 +1054,33 @@ describe('transformSceneToSaveModel', () => {
       saveModel = transformSceneToSaveModel(scene);
       expect(saveModel.panels?.[1].gridPos?.h).toBe(34);
     });
+  });
+});
+
+describe('Given a scene with custom quick ranges', () => {
+  it('should save quick ranges to save model', () => {
+    const dashboardWithCustomSettings = {
+      ...dashboard_to_load1,
+      timepicker: {
+        ...dashboard_to_load1.timepicker,
+        quick_ranges: [
+          {
+            display: 'Last 6 hours',
+            from: 'now-6h',
+            to: 'now',
+          },
+          {
+            display: 'Last 3 days',
+            from: 'now-3d',
+            to: 'now',
+          },
+        ],
+      },
+    };
+    const scene = transformSaveModelToScene({ dashboard: dashboardWithCustomSettings as DashboardDataDTO, meta: {} });
+    const saveModel = transformSceneToSaveModel(scene);
+
+    expect(saveModel).toMatchSnapshot();
   });
 });
 

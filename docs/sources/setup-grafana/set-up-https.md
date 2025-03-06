@@ -48,13 +48,13 @@ This section shows you how to use `openssl` tooling to generate all necessary fi
 1. Run the following command to generate a 2048-bit RSA private key, which is used to decrypt traffic:
 
    ```bash
-   $ sudo openssl genrsa -out /etc/grafana/grafana.key 2048
+   sudo openssl genrsa -out /etc/grafana/grafana.key 2048
    ```
 
 1. Run the following command to generate a certificate, using the private key from the previous step.
 
    ```bash
-   $ sudo openssl req -new -key /etc/grafana/grafana.key -out /etc/grafana/grafana.csr
+   sudo openssl req -new -key /etc/grafana/grafana.key -out /etc/grafana/grafana.csr
    ```
 
    When prompted, answer the questions, which might include your fully-qualified domain name, email address, country code, and others. The following example is similar to the prompts you will see.
@@ -224,7 +224,7 @@ To adjust permissions, perform the following steps:
 
 ## Configure Grafana HTTPS and restart Grafana
 
-In this section you edit the `grafana.ini` file so that it includes the certificate you created. If you need help identifying where to find this file, or what each key means, refer to [Configuration file location]({{< relref "./configure-grafana#configuration-file-location" >}}).
+In this section you edit the `grafana.ini` file so that it includes the certificate you created. If you need help identifying where to find this file, or what each key means, refer to [Configuration file location](../configure-grafana/#configuration-file-location).
 
 To configure Grafana HTTPS and restart Grafana, complete the following steps.
 
@@ -246,7 +246,7 @@ To configure Grafana HTTPS and restart Grafana, complete the following steps.
 
 1. Optional. From Grafana v11.2, edit the `cert_pass` configuration option with the decryption password if you are using encrypted certificates.
 
-1. [Restart the Grafana server]({{< relref "./start-restart-grafana#linux" >}}) using `systemd`, `init.d`, or the binary as appropriate for your environment.
+1. [Restart the Grafana server](../start-restart-grafana/#linux) using `systemd`, `init.d`, or the binary as appropriate for your environment.
 
 ## Troubleshooting
 
