@@ -12,7 +12,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func Run(cfg *setting.Cfg, typ, connStr string, fs embed.FS, path string) error {
+type Location struct {
+	FS   embed.FS
+	Path string
+}
+
+func Run(cfg *setting.Cfg, typ, connStr string, locations []Location) error {
 	engine, err := xorm.NewEngine(typ, connStr)
 	if err != nil {
 		return fmt.Errorf("failed to create db engine: %w", err)
@@ -21,17 +26,22 @@ func Run(cfg *setting.Cfg, typ, connStr string, fs embed.FS, path string) error 
 	m := migrator.NewMigrator(engine, cfg)
 	m.AddCreateMigration()
 
-	if err := RunWithMigrator(m, cfg, fs, path); err != nil {
+	if err := RunWithMigrator(m, cfg, locations); err != nil {
 		return err
 	}
 
 	return engine.Close()
 }
 
-func RunWithMigrator(m *migrator.Migrator, cfg *setting.Cfg, fs embed.FS, path string) error {
-	migrations, err := getMigrations(fs, path)
-	if err != nil {
-		return err
+func RunWithMigrator(m *migrator.Migrator, cfg *setting.Cfg, locations []Location) error {
+	var migrations []migration
+
+	for _, loc := range locations {
+		parsed, err := parseMigrations(loc.FS, loc.Path)
+		if err != nil {
+			return err
+		}
+		migrations = append(migrations, parsed...)
 	}
 
 	for _, mig := range migrations {
@@ -50,7 +60,7 @@ type migration struct {
 	migration migrator.Migration
 }
 
-func getMigrations(fs embed.FS, path string) ([]migration, error) {
+func parseMigrations(fs embed.FS, path string) ([]migration, error) {
 	entries, err := fs.ReadDir(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read migration dir: %w", err)
