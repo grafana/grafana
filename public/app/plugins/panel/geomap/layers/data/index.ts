@@ -1,6 +1,7 @@
 import { dayNightLayer } from './dayNightLayer';
 import { dynamicGeoJSONLayer } from './geojsonDynamic';
 import { geojsonLayer } from './geojsonLayer';
+import { h3gridLayer } from './h3gridLayer';
 import { heatmapLayer } from './heatMap';
 import { lastPointTracker } from './lastPointTracker';
 import { markersLayer } from './markersLayer';
@@ -13,6 +14,7 @@ import { routeLayer } from './routeLayer';
  */
 export const dataLayers = [
   markersLayer,
+  h3gridLayer,
   heatmapLayer,
   lastPointTracker,
   geojsonLayer,
@@ -20,5 +22,5 @@ export const dataLayers = [
   dayNightLayer,
   routeLayer,
   photosLayer,
-  networkLayer,
+  networkLayer,  
 ];
