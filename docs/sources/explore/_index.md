@@ -18,24 +18,24 @@ weight: 90
 
 Grafana's dashboard UI is all about building dashboards for visualization. Explore strips away the dashboard and panel options so that you can focus on the query. It helps you iterate until you have a working query and then think about building a dashboard.
 
-> Refer to [Role-based access control]({{< relref "../administration/roles-and-permissions/access-control/" >}}) in Grafana Enterprise to understand how you can control access with role-based permissions.
+> Refer to [Role-based access control](../administration/roles-and-permissions/access-control/) in Grafana Enterprise to understand how you can control access with role-based permissions.
 
 If you just want to explore your data and do not want to create a dashboard, then Explore makes this much easier. If your data source supports graph and table data, then Explore shows the results both as a graph and a table. This allows you to see trends in the data and more details at the same time. See also:
 
-- [Query management in Explore]({{< relref "query-management/" >}})
-- [Logs integration in Explore]({{< relref "logs-integration/" >}})
-- [Trace integration in Explore]({{< relref "trace-integration/" >}})
-- [Explore metrics]({{< relref "explore-metrics/" >}})
-- [Correlations Editor in Explore]({{< relref "correlations-editor-in-explore/" >}})
-- [Inspector in Explore]({{< relref "explore-inspector/" >}})
+- [Query management in Explore](query-management/)
+- [Logs integration in Explore](logs-integration/)
+- [Trace integration in Explore](trace-integration/)
+- [Explore metrics](explore-metrics/)
+- [Correlations Editor in Explore](correlations-editor-in-explore/)
+- [Inspector in Explore](explore-inspector/)
 
 ## Start exploring
 
 {{< youtube id="1q3YzX2DDM4" >}}
 
-> Refer to [Role-based access Control]({{< relref "../administration/roles-and-permissions/access-control/" >}}) in Grafana Enterprise to understand how you can manage Explore with role-based permissions.
+> Refer to [Role-based access Control](../administration/roles-and-permissions/access-control/) in Grafana Enterprise to understand how you can manage Explore with role-based permissions.
 
-In order to access Explore, you must have an editor or an administrator role, unless the [viewers_can_edit option]({{< relref "../setup-grafana/configure-grafana/#viewers_can_edit" >}}) is enabled. Refer to [About users and permissions]({{< relref "../administration/roles-and-permissions/" >}}) for more information on what each role has access to.
+In order to access Explore, you must have an editor or an administrator role, unless the [viewers_can_edit option](../setup-grafana/configure-grafana/#viewers_can_edit) is enabled. Refer to [About users and permissions](../administration/roles-and-permissions/) for more information on what each role has access to.
 
 {{% admonition type="note" %}}
 If you are using Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to enable the `viewers_can_edit` option
@@ -55,8 +55,8 @@ To access Explore:
 
    You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only).
 
-1. Write the query using a query editor provided by the selected data source. Please check [data sources documentation]({{< relref "../datasources" >}}) to see how to use various query editors.
-1. For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../panels-visualizations/query-transform-data" >}}).
+1. Write the query using a query editor provided by the selected data source. Please check [data sources documentation](../datasources/) to see how to use various query editors.
+1. For general documentation on querying data sources in Grafana, see [Query and transform data](../panels-visualizations/query-transform-data/).
 1. Run the query using the button in the top right corner.
 
 ## Split and compare
@@ -128,7 +128,7 @@ where:
 ```
 
 {{% admonition type="note" %}}
-The `from` and `to` also accept relative ranges defined in [Time units and relative ranges]({{< relref "../dashboards/use-dashboards/#time-units-and-relative-ranges" >}}).
+The `from` and `to` also accept relative ranges defined in [Time units and relative ranges](../dashboards/use-dashboards/#time-units-and-relative-ranges).
 {{% /admonition %}}
 
 ## Share shortened link

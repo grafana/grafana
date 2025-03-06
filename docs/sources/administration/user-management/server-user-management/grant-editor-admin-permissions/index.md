@@ -17,8 +17,8 @@ This setting can be used to enable self-organizing teams to administer their own
 
 When `editors_can_admin` is enabled:
 
-- Users with the Editor role in an organization are Administrators for new dashboards and folders they create, meaning they can edit dashboard permissions. To learn more about dashboard permissions, refer to [Manage dashboard permissions]({{< relref "../../manage-dashboard-permissions/" >}}).
-- Users with the Editor role in an organization can create teams, and they are Administrators of the teams they create. To learn more about team permissions, refer to [Team management]({{< relref "../../../team-management/" >}}).
+- Users with the Editor role in an organization are Administrators for new dashboards and folders they create, meaning they can edit dashboard permissions. To learn more about dashboard permissions, refer to [Manage dashboard permissions](../../manage-dashboard-permissions/).
+- Users with the Editor role in an organization can create teams, and they are Administrators of the teams they create. To learn more about team permissions, refer to [Team management](../../../team-management/).
 
 {{% admonition type="note" %}}
 If you use Grafana Enterprise and customize users' permissions using RBAC, the RBAC permissions override the functionality enabled by the `editors_can_admin` flag.
@@ -32,7 +32,7 @@ If you use Grafana Enterprise and customize users' permissions using RBAC, the R
 
 1. Log in to the Grafana server and open the Grafana configuration file.
 
-   For more information about the Grafana configuration file and its location, refer to [Configuration]({{< relref "../../../../setup-grafana/configure-grafana/" >}}).
+   For more information about the Grafana configuration file and its location, refer to [Configuration](../../../../setup-grafana/configure-grafana/).
 
 1. Locate the `editors_can_admin` parameter.
 1. Set the `editors_can_admin` value to `true`.

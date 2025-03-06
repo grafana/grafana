@@ -67,7 +67,7 @@ If you enable `Match Exact`, you must also specify all dimensions of the metric 
 If `Match Exact` is disabled, you can specify any number of dimensions on which you'd like to filter.
 The data source returns up to 100 metrics matching your filter criteria.
 
-You can also augment queries by using [template variables]({{< relref "./template-variables" >}}).
+You can also augment queries by using [template variables](../template-variables/).
 
 #### Create dynamic queries with dimension wildcards
 
@@ -161,7 +161,7 @@ For details about the Metrics Insights syntax, refer to the [AWS reference docum
 
 For information about Metrics Insights limits, refer to the [AWS feature documentation](https://docs.aws.amazon.com/console/cloudwatch/metricsinsights).
 
-You can also augment queries by using [template variables]({{< relref "./template-variables" >}}).
+You can also augment queries by using [template variables](../template-variables/).
 
 #### Use Metrics Insights keywords
 
@@ -251,7 +251,7 @@ To enable cross-account observability, complete the following steps:
 
 1. Go to the [Amazon CloudWatch docs](http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html) and follow the instructions on enabling cross-account observability.
 
-1. Add [two API actions]({{< relref "../../aws-cloudwatch#cross-account-observability-permissions" >}}) to the IAM policy attached to the role/user running the plugin.
+1. Add [two API actions](../#cross-account-observability-permissions) to the IAM policy attached to the role/user running the plugin.
 
 Cross-account querying is available in the plugin through the `Logs` mode and the `Metric search` mode. Once you have it configured correctly, you'll see a "Monitoring account" badge displayed in the query editor header.
 
