@@ -91,26 +91,32 @@ export default function GettingStarted() {
         <Box marginTop={4}>
           <Stack direction="row" gap={2}>
             <Box width="25%" padding={4}>
-              <Stack direction="column" gap={2}>
-                <Text variant="h3">Instantenous provisioning</Text>
-                <div
-                  className={css`
-                    background: rgba(24, 121, 219, 0.12);
-                    border-radius: 50%;
-                    padding: 16px;
-                    width: fit-content;
-                  `}
-                >
-                  <Icon name="sync" size="xxl" color="primary" />
-                </div>
-                <Text variant="body">
-                  Automatically provision and update your dashboards as soon as changes are pushed to your GitHub
-                  repository
-                </Text>
-                <Box>
-                  <Button variant="secondary">Setup Public Access</Button>
-                </Box>
-              </Stack>
+              <div
+                className={css`
+                  border-right: 1px solid rgba(204, 204, 220, 0.15);
+                `}
+              >
+                <Stack direction="column" gap={2}>
+                  <Text variant="h3">Instantenous Provisioning</Text>
+                  <div
+                    className={css`
+                      background: rgba(24, 121, 219, 0.12);
+                      border-radius: 50%;
+                      padding: 16px;
+                      width: fit-content;
+                    `}
+                  >
+                    <Icon name="sync" size="xxl" color="primary" />
+                  </div>
+                  <Text variant="body">
+                    Automatically provision and update your dashboards as soon as changes are pushed to your GitHub
+                    repository
+                  </Text>
+                  <Box>
+                    <Button variant="secondary">Setup public access</Button>
+                  </Box>
+                </Stack>
+              </div>
             </Box>
             <Box width="25%" padding={4}>
               <Stack direction="column" gap={2}>
@@ -141,7 +147,7 @@ export default function GettingStarted() {
                   Review how your changes look like before going live in Grafana and directly in Pull Requests
                 </Text>
                 <Box>
-                  <Button variant="secondary">Setup Image Rendering</Button>
+                  <Button variant="secondary">Setup image rendering</Button>
                 </Box>
               </Stack>
             </Box>
