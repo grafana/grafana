@@ -32,7 +32,7 @@ Grafana relies on other open source software to operate. For a list of open sour
 Grafana supports the following operating systems:
 
 - [Debian or Ubuntu]({{< relref "./debian" >}})
-- [Red Hat, RHEL, or Fedora]({{< relref "./redhat-rhel-fedora" >}})
+- [RHEL or Fedora]({{< relref "./rhel-fedora" >}})
 - [SUSE or openSUSE]({{< relref "./suse-opensuse" >}})
 - [macOS]({{< relref "./mac" >}})
 - [Windows]({{< relref "./windows" >}})
