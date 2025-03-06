@@ -1,5 +1,7 @@
 import { isEmpty } from 'lodash';
 
+import { SortOrder } from '@grafana/schema';
+
 import { DataFrameView } from '../dataframe/DataFrameView';
 import { getTimeField } from '../dataframe/processDataFrame';
 import { GrafanaTheme2 } from '../themes/types';
@@ -29,6 +31,8 @@ export interface ReduceDataOptions {
   calcs: string[];
   /** Which fields to show.  By default this is only numeric fields */
   fields?: string;
+  /** what sort order, if any, to give to the final display of the values */
+  sort?: SortOrder;
 }
 
 // TODO: use built in variables, same as for data links?
@@ -239,6 +243,15 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
   if (values.length === 0) {
     values.push(createNoValuesFieldDisplay(options));
+  }
+
+  if ((reduceOptions.sort ?? SortOrder.None) !== SortOrder.None) {
+    const isAscSort = reduceOptions.sort === SortOrder.Ascending;
+    values.sort((va, vb) => {
+      const aTitle = va.display.title ?? '';
+      const bTitle = vb.display.title ?? '';
+      return (isAscSort ? aTitle < bTitle : aTitle > bTitle) ? -1 : 1;
+    });
   }
 
   return values;
