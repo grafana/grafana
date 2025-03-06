@@ -27,7 +27,11 @@ const modeOptions = [
   },
 ];
 
-export function ConnectionStep() {
+type Props = {
+  targetSelectable?: boolean;
+};
+
+export function ConnectionStep({ targetSelectable = true }: Props) {
   const {
     register,
     control,
@@ -101,25 +105,27 @@ export function ConnectionStep() {
               disconnect all folder repositories to use it.
             </Alert>
           )}
-          <Controller
-            name="repository.sync.target"
-            control={control}
-            render={({ field: { onChange, value } }) => (
-              <>
-                {availableOptions.map((option) => (
-                  <Card
-                    key={option.value}
-                    isSelected={value === option.value}
-                    onClick={() => onChange(option.value)}
-                    disabled={folderConnected || instanceConnected}
-                  >
-                    <Card.Heading>{option.label}</Card.Heading>
-                    <Card.Description>{option.description}</Card.Description>
-                  </Card>
-                ))}
-              </>
-            )}
-          />
+          {targetSelectable && (
+            <Controller
+              name="repository.sync.target"
+              control={control}
+              render={({ field: { onChange, value } }) => (
+                <>
+                  {availableOptions.map((option) => (
+                    <Card
+                      key={option.value}
+                      isSelected={value === option.value}
+                      onClick={() => onChange(option.value)}
+                      disabled={folderConnected || instanceConnected}
+                    >
+                      <Card.Heading>{option.label}</Card.Heading>
+                      <Card.Description>{option.description}</Card.Description>
+                    </Card>
+                  ))}
+                </>
+              )}
+            />
+          )}
         </Stack>
       </Stack>
     </FieldSet>

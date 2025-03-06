@@ -24,7 +24,11 @@ const steps: Array<Step<WizardStep>> = [
   { id: 'pull', name: 'Pull dashboards' },
 ];
 
-export function ProvisioningWizard() {
+type Props = {
+  requiresMigration: boolean;
+};
+
+export function ProvisioningWizard({ requiresMigration }: Props) {
   const [activeStep, setActiveStep] = useState<WizardStep>('connection');
   const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
   const [stepSuccess, setStepSuccess] = useState(false);
@@ -43,7 +47,7 @@ export function ProvisioningWizard() {
   const styles = useStyles2(getStyles);
 
   // Filter out migrate step if using legacy storage
-  const availableSteps = settingsQuery.data?.legacyStorage
+  const availableSteps = requiresMigration
     ? steps.filter((step) => step.id !== 'pull')
     : steps.filter((step) => step.id !== 'migrate');
 
@@ -111,14 +115,10 @@ export function ProvisioningWizard() {
         />
 
         <div className={styles.content}>
-          {activeStep === 'connection' && <ConnectionStep />}
+          {activeStep === 'connection' && <ConnectionStep targetSelectable={!requiresMigration} />}
           {activeStep === 'repository' && <RepositoryStep onStatusChange={handleStatusChange} />}
-          {activeStep === 'migrate' && settingsQuery.data?.legacyStorage && (
-            <MigrateStep onStatusChange={handleStatusChange} />
-          )}
-          {activeStep === 'pull' && !settingsQuery.data?.legacyStorage && (
-            <PullStep onStatusChange={handleStatusChange} />
-          )}
+          {activeStep === 'migrate' && requiresMigration && <MigrateStep onStatusChange={handleStatusChange} />}
+          {activeStep === 'pull' && !requiresMigration && <PullStep onStatusChange={handleStatusChange} />}
         </div>
 
         <Stack gap={2} justifyContent="flex-end">

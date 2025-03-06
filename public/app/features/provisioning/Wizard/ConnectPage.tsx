@@ -8,7 +8,7 @@ export default function ConnectPage() {
       pageNav={{ text: 'Connect to repository', subTitle: 'Connect to a repository to manage your resources' }}
     >
       <Page.Contents>
-        <ProvisioningWizard />
+        <ProvisioningWizard requiresMigration={false} />
       </Page.Contents>
     </Page>
   );
