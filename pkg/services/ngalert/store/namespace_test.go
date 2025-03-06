@@ -2,21 +2,23 @@ package store
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util"
-
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestIntegration_GetUserVisibleNamespaces(t *testing.T) {
@@ -49,7 +51,7 @@ func TestIntegration_GetUserVisibleNamespaces(t *testing.T) {
 	}
 
 	for _, f := range folders {
-		createFolder(t, store, f.uid, f.title, 1, f.parentUid)
+		createFolder(t, folderService, f.uid, f.title, 1, f.parentUid)
 	}
 
 	t.Run("returns all folders", func(t *testing.T) {
@@ -89,8 +91,8 @@ func TestIntegration_GetNamespaceByUID(t *testing.T) {
 	parentUid := uuid.NewString()
 	title := "folder/title"
 	parentTitle := "parent-title"
-	createFolder(t, store, parentUid, parentTitle, 1, "")
-	createFolder(t, store, uid, title, 1, parentUid)
+	createFolder(t, folderService, parentUid, parentTitle, 1, "")
+	createFolder(t, folderService, uid, title, 1, parentUid)
 
 	actual, err := store.GetNamespaceByUID(context.Background(), uid, 1, u)
 	require.NoError(t, err)
@@ -132,10 +134,7 @@ func TestIntegration_GetNamespaceByTitle(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
-	b := &fakeBus{}
-	logger := log.New("test-dbstore")
-	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
-	store.FolderService = setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	store := createAlertingFolderService(t, folderService, &mockServerLockService{})
 
 	u := &user.SignedInUser{
 		UserID:         1,
@@ -147,16 +146,16 @@ func TestIntegration_GetNamespaceByTitle(t *testing.T) {
 	// Create parent folder
 	parentUID := uuid.NewString()
 	parentTitle := "parent-folder"
-	createFolder(t, store, parentUID, parentTitle, 1, "")
+	createFolder(t, folderService, parentUID, parentTitle, 1, "")
 
 	// Create child folder under parent
 	childUID := uuid.NewString()
 	childTitle := "child-folder"
-	createFolder(t, store, childUID, childTitle, 1, parentUID)
+	createFolder(t, folderService, childUID, childTitle, 1, parentUID)
 
 	// Create another folder with same title but under root
 	sameTitleInRoot := uuid.NewString()
-	createFolder(t, store, sameTitleInRoot, childTitle, 1, "")
+	createFolder(t, folderService, sameTitleInRoot, childTitle, 1, "")
 
 	t.Run("should find folder by title and parent UID", func(t *testing.T) {
 		actual, err := store.GetNamespaceByTitle(context.Background(), childTitle, 1, u, parentUID)
@@ -194,16 +193,12 @@ func TestIntegration_GetOrCreateNamespaceByTitle(t *testing.T) {
 		IsGrafanaAdmin: true,
 	}
 
-	setupStore := func(t *testing.T) *DBstore {
+	setupStore := func(t *testing.T) *AlertingFolderService {
 		sqlStore := db.InitTestDB(t)
 		cfg := setting.NewCfg()
 		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
-		b := &fakeBus{}
-		logger := log.New("test-dbstore")
-		store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
-		store.FolderService = setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
-
-		return store
+		mockLock := &mockServerLockService{}
+		return createAlertingFolderService(t, folderService, mockLock)
 	}
 
 	t.Run("should create folder when it does not exist", func(t *testing.T) {
@@ -231,7 +226,7 @@ func TestIntegration_GetOrCreateNamespaceByTitle(t *testing.T) {
 		store := setupStore(t)
 
 		title := "existing folder"
-		createFolder(t, store, "", title, 1, "")
+		createFolder(t, store.FolderService, "", title, 1, "")
 		f, err := store.GetOrCreateNamespaceByTitle(context.Background(), title, 1, u, folder.RootFolderUID)
 		require.NoError(t, err)
 		require.Equal(t, title, f.Title)
@@ -327,10 +322,9 @@ func TestIntegration_GetNamespaceChildren(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
-	b := &fakeBus{}
-	logger := log.New("test-dbstore")
-	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
-	store.FolderService = setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+
+	mockLock := &mockServerLockService{}
+	store := createAlertingFolderService(t, folderService, mockLock)
 
 	admin := &user.SignedInUser{
 		UserID:         1,
@@ -342,21 +336,21 @@ func TestIntegration_GetNamespaceChildren(t *testing.T) {
 	// Create root folders
 	rootFolder1 := uuid.NewString()
 	rootFolder2 := uuid.NewString()
-	createFolder(t, store, rootFolder1, "Root Folder 1", 1, "")
-	createFolder(t, store, rootFolder2, "Root Folder 2", 1, "")
+	createFolder(t, folderService, rootFolder1, "Root Folder 1", 1, "")
+	createFolder(t, folderService, rootFolder2, "Root Folder 2", 1, "")
 
 	// Create child folders under root folder 1
 	child1 := uuid.NewString()
 	child2 := uuid.NewString()
-	createFolder(t, store, child1, "Child Folder 1", 1, rootFolder1)
-	createFolder(t, store, child2, "Child Folder 2", 1, rootFolder1)
+	createFolder(t, folderService, child1, "Child Folder 1", 1, rootFolder1)
+	createFolder(t, folderService, child2, "Child Folder 2", 1, rootFolder1)
 
 	// Create nested child under child1
 	nestedChild := uuid.NewString()
-	createFolder(t, store, nestedChild, "Nested Child", 1, child1)
+	createFolder(t, folderService, nestedChild, "Nested Child", 1, child1)
 
 	differentOrgID := int64(999)
-	createFolder(t, store, util.GenerateShortUID(), "Root Folder 1", differentOrgID, "")
+	createFolder(t, folderService, util.GenerateShortUID(), "Root Folder 1", differentOrgID, "")
 
 	/*
 	 * Folder structure:
@@ -416,4 +410,90 @@ func TestIntegration_GetNamespaceChildren(t *testing.T) {
 		require.Equal(t, len(children), 2)
 		require.ElementsMatch(t, []string{rootFolder1, rootFolder2}, []string{children[0].UID, children[1].UID})
 	})
+}
+
+func TestServerLockInGetOrCreateNamespace(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	u := &user.SignedInUser{
+		UserID:         1,
+		OrgID:          1,
+		OrgRole:        org.RoleAdmin,
+		IsGrafanaAdmin: true,
+	}
+
+	setupStoreWithMockLock := func(t *testing.T, mockLock ServerLockService) *AlertingFolderService {
+		sqlStore := db.InitTestDB(t)
+		cfg := setting.NewCfg()
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		return createAlertingFolderService(t, folderService, mockLock)
+	}
+
+	t.Run("should handle lock acquisition failure", func(t *testing.T) {
+		mockLock := &mockServerLockService{ShouldFail: true}
+		store := setupStoreWithMockLock(t, mockLock)
+
+		_, err := store.GetOrCreateNamespaceByTitle(context.Background(), "new folder", 1, u, folder.RootFolderUID)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "mock lock acquisition failed")
+		require.True(t, mockLock.LockWasAcquired)
+		require.Equal(t, 0, mockLock.ExecutionCount)
+	})
+
+	t.Run("should handle lock timeout", func(t *testing.T) {
+		mockLock := &mockServerLockService{ShouldTimeout: true}
+		store := setupStoreWithMockLock(t, mockLock)
+
+		_, err := store.GetOrCreateNamespaceByTitle(context.Background(), "new folder", 1, u, folder.RootFolderUID)
+		require.Error(t, err)
+		require.True(t, errors.Is(err, context.DeadlineExceeded))
+		require.True(t, mockLock.LockWasAcquired)
+		require.Equal(t, 0, mockLock.ExecutionCount)
+	})
+
+	t.Run("should successfully use lock when creating folder", func(t *testing.T) {
+		mockLock := &mockServerLockService{}
+		store := setupStoreWithMockLock(t, mockLock)
+
+		f, err := store.GetOrCreateNamespaceByTitle(context.Background(), "new folder", 1, u, folder.RootFolderUID)
+		require.NoError(t, err)
+		require.Equal(t, "new folder", f.Title)
+		require.True(t, mockLock.LockWasAcquired)
+		require.Equal(t, 1, mockLock.ExecutionCount)
+	})
+}
+
+type mockServerLockService struct {
+	LockWasAcquired bool
+	ExecutionCount  int
+	ShouldFail      bool
+	ShouldTimeout   bool
+}
+
+func (m *mockServerLockService) LockExecuteAndReleaseWithRetries(ctx context.Context, actionName string, timeConfig serverlock.LockTimeConfig, fn func(ctx context.Context), retryOpts ...serverlock.RetryOpt) error {
+	m.LockWasAcquired = true
+
+	if m.ShouldFail {
+		return fmt.Errorf("mock lock acquisition failed")
+	}
+
+	if m.ShouldTimeout {
+		return context.DeadlineExceeded
+	}
+
+	fn(ctx)
+	m.ExecutionCount++
+	return nil
+}
+
+func createAlertingFolderService(t *testing.T, folderService folder.Service, lockService ServerLockService) *AlertingFolderService {
+	t.Helper()
+
+	return NewAlertingFolderService(
+		folderService,
+		log.NewNopLogger(),
+		lockService,
+	)
 }

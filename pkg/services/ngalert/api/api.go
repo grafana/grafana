@@ -51,35 +51,36 @@ type RuleAccessControlService interface {
 
 // API handlers.
 type API struct {
-	Cfg                  *setting.Cfg
-	DatasourceCache      datasources.CacheService
-	DatasourceService    datasources.DataSourceService
-	RouteRegister        routing.RouteRegister
-	QuotaService         quota.Service
-	TransactionManager   provisioning.TransactionManager
-	ProvenanceStore      provisioning.ProvisioningStore
-	RuleStore            RuleStore
-	AlertingStore        store.AlertingStore
-	AdminConfigStore     store.AdminConfigurationStore
-	DataProxy            *datasourceproxy.DataSourceProxyService
-	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
-	StateManager         *state.Manager
-	Scheduler            StatusReader
-	AccessControl        ac.AccessControl
-	Policies             *provisioning.NotificationPolicyService
-	ReceiverService      *notifier.ReceiverService
-	ContactPointService  *provisioning.ContactPointService
-	Templates            *provisioning.TemplateService
-	MuteTimings          *provisioning.MuteTimingService
-	AlertRules           *provisioning.AlertRuleService
-	AlertsRouter         *sender.AlertsRouter
-	EvaluatorFactory     eval.EvaluatorFactory
-	ConditionValidator   *eval.ConditionValidator
-	FeatureManager       featuremgmt.FeatureToggles
-	Historian            Historian
-	Tracer               tracing.Tracer
-	AppUrl               *url.URL
-	UserService          user.Service
+	Cfg                   *setting.Cfg
+	DatasourceCache       datasources.CacheService
+	DatasourceService     datasources.DataSourceService
+	RouteRegister         routing.RouteRegister
+	QuotaService          quota.Service
+	TransactionManager    provisioning.TransactionManager
+	ProvenanceStore       provisioning.ProvisioningStore
+	RuleStore             RuleStore
+	AlertingStore         store.AlertingStore
+	AdminConfigStore      store.AdminConfigurationStore
+	DataProxy             *datasourceproxy.DataSourceProxyService
+	MultiOrgAlertmanager  *notifier.MultiOrgAlertmanager
+	StateManager          *state.Manager
+	Scheduler             StatusReader
+	AccessControl         ac.AccessControl
+	Policies              *provisioning.NotificationPolicyService
+	ReceiverService       *notifier.ReceiverService
+	ContactPointService   *provisioning.ContactPointService
+	Templates             *provisioning.TemplateService
+	MuteTimings           *provisioning.MuteTimingService
+	AlertRules            *provisioning.AlertRuleService
+	AlertsRouter          *sender.AlertsRouter
+	EvaluatorFactory      eval.EvaluatorFactory
+	ConditionValidator    *eval.ConditionValidator
+	FeatureManager        featuremgmt.FeatureToggles
+	Historian             Historian
+	Tracer                tracing.Tracer
+	AppUrl                *url.URL
+	UserService           user.Service
+	AlertingFolderService alertingFolderService
 
 	// Hooks can be used to replace API handlers for specific paths.
 	Hooks *Hooks
@@ -188,7 +189,13 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 
 	if api.FeatureManager.IsEnabledGlobally(featuremgmt.FlagAlertingConversionAPI) {
 		api.RegisterConvertPrometheusApiEndpoints(NewConvertPrometheusApi(
-			NewConvertPrometheusSrv(&api.Cfg.UnifiedAlerting, logger, api.RuleStore, api.DatasourceCache, api.AlertRules),
+			NewConvertPrometheusSrv(
+				&api.Cfg.UnifiedAlerting,
+				logger,
+				api.AlertingFolderService,
+				api.DatasourceCache,
+				api.AlertRules,
+			),
 		), m)
 	}
 }

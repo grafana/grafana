@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -80,6 +81,7 @@ func ProvideService(
 	httpClientProvider httpclient.Provider,
 	resourcePermissions accesscontrol.ReceiverPermissionsService,
 	userService user.Service,
+	serverLockService *serverlock.ServerLockService,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                  cfg,
@@ -109,6 +111,7 @@ func ProvideService(
 		httpClientProvider:   httpClientProvider,
 		ResourcePermissions:  resourcePermissions,
 		userService:          userService,
+		serverLockService:    serverLockService,
 	}
 
 	if ng.IsDisabled() {
@@ -161,9 +164,10 @@ type AlertNG struct {
 	store                *store.DBstore
 	userService          user.Service
 
-	bus          bus.Bus
-	pluginsStore pluginstore.Store
-	tracer       tracing.Tracer
+	bus               bus.Bus
+	pluginsStore      pluginstore.Store
+	tracer            tracing.Tracer
+	serverLockService *serverlock.ServerLockService
 }
 
 func (ng *AlertNG) init() error {
@@ -406,6 +410,8 @@ func (ng *AlertNG) init() error {
 		return err
 	}
 
+	alertingFolderService := store.NewAlertingFolderService(ng.folderService, ng.Log, ng.serverLockService)
+
 	ng.InstanceStore, ng.StartupInstanceReader = initInstanceStore(ng.store.SQLStore, ng.Log, ng.FeatureToggles)
 
 	stateManagerCfg := state.ManagerCfg{
@@ -472,36 +478,37 @@ func (ng *AlertNG) init() error {
 		ac.NewRuleService(ng.accesscontrol))
 
 	ng.Api = &api.API{
-		Cfg:                  ng.Cfg,
-		DatasourceCache:      ng.DataSourceCache,
-		DatasourceService:    ng.DataSourceService,
-		RouteRegister:        ng.RouteRegister,
-		DataProxy:            ng.DataProxy,
-		QuotaService:         ng.QuotaService,
-		TransactionManager:   ng.store,
-		RuleStore:            ng.store,
-		AlertingStore:        ng.store,
-		AdminConfigStore:     ng.store,
-		ProvenanceStore:      ng.store,
-		MultiOrgAlertmanager: ng.MultiOrgAlertmanager,
-		StateManager:         ng.stateManager,
-		Scheduler:            scheduler,
-		AccessControl:        ng.accesscontrol,
-		Policies:             policyService,
-		ReceiverService:      receiverService,
-		ContactPointService:  contactPointService,
-		Templates:            templateService,
-		MuteTimings:          muteTimingService,
-		AlertRules:           alertRuleService,
-		AlertsRouter:         alertsRouter,
-		EvaluatorFactory:     evalFactory,
-		ConditionValidator:   conditionValidator,
-		FeatureManager:       ng.FeatureToggles,
-		AppUrl:               appUrl,
-		Historian:            history,
-		Hooks:                api.NewHooks(ng.Log),
-		Tracer:               ng.tracer,
-		UserService:          ng.userService,
+		Cfg:                   ng.Cfg,
+		DatasourceCache:       ng.DataSourceCache,
+		DatasourceService:     ng.DataSourceService,
+		RouteRegister:         ng.RouteRegister,
+		DataProxy:             ng.DataProxy,
+		QuotaService:          ng.QuotaService,
+		TransactionManager:    ng.store,
+		RuleStore:             ng.store,
+		AlertingStore:         ng.store,
+		AdminConfigStore:      ng.store,
+		ProvenanceStore:       ng.store,
+		MultiOrgAlertmanager:  ng.MultiOrgAlertmanager,
+		StateManager:          ng.stateManager,
+		Scheduler:             scheduler,
+		AccessControl:         ng.accesscontrol,
+		Policies:              policyService,
+		ReceiverService:       receiverService,
+		ContactPointService:   contactPointService,
+		Templates:             templateService,
+		MuteTimings:           muteTimingService,
+		AlertRules:            alertRuleService,
+		AlertsRouter:          alertsRouter,
+		EvaluatorFactory:      evalFactory,
+		ConditionValidator:    conditionValidator,
+		FeatureManager:        ng.FeatureToggles,
+		AppUrl:                appUrl,
+		Historian:             history,
+		Hooks:                 api.NewHooks(ng.Log),
+		Tracer:                ng.tracer,
+		UserService:           ng.userService,
+		AlertingFolderService: alertingFolderService,
 	}
 	ng.Api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
