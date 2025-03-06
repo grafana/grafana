@@ -939,6 +939,8 @@ github.com/blevesearch/zapx/v15 v15.3.16 h1:Ct3rv7FUJPfPk99TI/OofdC+Kpb4IdyfdMH4
 github.com/blevesearch/zapx/v15 v15.3.16/go.mod h1:Turk/TNRKj9es7ZpKK95PS7f6D44Y7fAFy8F4LXQtGg=
 github.com/blevesearch/zapx/v16 v16.1.8 h1:Bxzpw6YQpFs7UjoCV1+RvDw6fmAT2GZxldwX8b3wVBM=
 github.com/blevesearch/zapx/v16 v16.1.8/go.mod h1:JqQlOqlRVaYDkpLIl3JnKql8u4zKTNlVEa3nLsi0Gn8=
+github.com/bluele/gcache v0.0.2 h1:WcbfdXICg7G/DGBh1PFfcirkWOQV+v077yF1pSy3DGw=
+github.com/bluele/gcache v0.0.2/go.mod h1:m15KV+ECjptwSPxKhOhQoAFQVtUFjTVkc3H8o0t/fp0=
 github.com/blugelabs/bluge v0.2.2 h1:gat8CqE6P6tOgeX30XGLOVNTC26cpM2RWVcreXWtYcM=
 github.com/blugelabs/bluge v0.2.2/go.mod h1:am1LU9jS8dZgWkRzkGLQN3757EgMs3upWrU2fdN9foE=
 github.com/blugelabs/bluge_segment_api v0.2.0 h1:cCX1Y2y8v0LZ7+EEJ6gH7dW6TtVTW4RhG0vp3R+N2Lo=
@@ -2053,6 +2055,12 @@ github.com/onsi/gomega v1.4.3/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1Cpa
 github.com/onsi/gomega v1.5.0/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1CpauHY=
 github.com/onsi/gomega v1.36.1 h1:bJDPBO7ibjxcbHMgSCoo4Yj18UWbKDlLwX1x9sybDcw=
 github.com/onsi/gomega v1.36.1/go.mod h1:PvZbdDc8J6XJEpDK4HCuRBm8a6Fzp9/DmhC9C7yFlog=
+github.com/open-feature/go-sdk v1.14.1 h1:jcxjCIG5Up3XkgYwWN5Y/WWfc6XobOhqrIwjyDBsoQo=
+github.com/open-feature/go-sdk v1.14.1/go.mod h1:t337k0VB/t/YxJ9S0prT30ISUHwYmUd/jhUZgFcOvGg=
+github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.3 h1:6jpO63NCEZv4xunJj+aNlDuFVuRkVBPMcIuxvFPYRWQ=
+github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.3/go.mod h1:dPUHjAIFzg+ci/wt6XxlNiiMkOh5Yw4SGyeRY0AFT0g=
+github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.5 h1:ZdqlGnNwhWf3luhBQlIpbglvcCzjkcuEgOEhYhr5Emc=
+github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.5/go.mod h1:jrD4UG3ZCzuwImKHlyuIN2iWeYjlOX5+zJ/sX45efuE=
 github.com/opencontainers/go-digest v1.0.0-rc1/go.mod h1:cMLVZDEM3+U2I4VmLI6N8jQYUd2OVphdqWwCJHrFt2s=
 github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8Oi/yOhh5U=
 github.com/opencontainers/go-digest v1.0.0/go.mod h1:0JzlMkj0TRzQZfJkVvzbP0HBR3IKzErnv2BNG4W4MAM=

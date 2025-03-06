@@ -301,6 +301,7 @@ var wireBasicSet = wire.NewSet(
 	expr.ProvideService,
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
+	featuremgmt.ProvideOpenFeatureService,
 	dashboardservice.ProvideDashboardServiceImpl,
 	wire.Bind(new(dashboards.PermissionsRegistrationService), new(*dashboardservice.DashboardServiceImpl)),
 	dashboardservice.ProvideDashboardService,
