@@ -115,15 +115,19 @@ export function MetricsBrowserProvider({
       });
   }, [getSelector, languageProvider]);
 
-  // Initialize component with metrics and saved labels
-  useEffect(() => {
+  const showAllMetrics = useCallback(() => {
     setMetrics(
       languageProvider.metrics.map((m) => ({
         name: m,
         details: getMetricDetails(m),
       }))
     );
-    
+  }, [getMetricDetails, languageProvider.metrics]);
+
+  // Initialize component with metrics and saved labels
+  useEffect(() => {
+    showAllMetrics();
+
     setLabelKeys([...languageProvider.labelKeys.filter(withoutMetricLabel)]);
     
     try {
@@ -155,6 +159,7 @@ export function MetricsBrowserProvider({
           setStatus('');
         });
     } else {
+      showAllMetrics();
       setLabelKeys([...languageProvider.labelKeys.filter(withoutMetricLabel)]);
       setStatus('Ready');
     }
@@ -207,6 +212,7 @@ export function MetricsBrowserProvider({
     async function fetchMetrics() {
       const selector = buildSelector(selectedMetric, selectedLabelValues);
       if (selector === EMPTY_SELECTOR) {
+        showAllMetrics();
         return;
       }
       
