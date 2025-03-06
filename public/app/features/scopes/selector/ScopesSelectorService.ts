@@ -194,8 +194,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   };
 
   public closeAndReset = () => {
-    this.updateState({ opened: false });
-    this.updateState({ treeScopes: this.getTreeScopesFromSelectedScopes(this.state.selectedScopes) });
+    this.updateState({ opened: false, treeScopes: this.getTreeScopesFromSelectedScopes(this.state.selectedScopes) });
   };
 
   public closeAndApply = () => {
@@ -205,7 +204,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
   public toggleDrawer = () => ScopesService.instance?.setDrawerOpened(!ScopesService.instance?.state.drawerOpened);
 
-  public closeNodes = (nodes: NodesMap): NodesMap => {
+  private closeNodes = (nodes: NodesMap): NodesMap => {
     return Object.entries(nodes).reduce<NodesMap>((acc, [id, node]) => {
       acc[id] = {
         ...node,
@@ -217,7 +216,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     }, {});
   };
 
-  public expandNodes = (nodes: NodesMap, path: string[]): NodesMap => {
+  private expandNodes = (nodes: NodesMap, path: string[]): NodesMap => {
     nodes = { ...nodes };
     let currentNodes = nodes;
 
@@ -234,7 +233,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     return nodes;
   };
 
-  public getBasicScope = (name: string): Scope => {
+  private getBasicScope = (name: string): Scope => {
     return {
       metadata: { name },
       spec: {
@@ -247,7 +246,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     };
   };
 
-  public getTreeScopesFromSelectedScopes = (scopes: SelectedScope[]): TreeScope[] => {
+  private getTreeScopesFromSelectedScopes = (scopes: SelectedScope[]): TreeScope[] => {
     return scopes.map(({ scope, path }) => ({
       scopeName: scope.metadata.name,
       path,
@@ -257,7 +256,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   // helper func to get the selected/tree scopes together with their paths
   // needed to maintain selected scopes in tree for example when navigating
   // between categories or when loading scopes from URL to find the scope's path
-  public getScopesAndTreeScopesWithPaths = (
+  private getScopesAndTreeScopesWithPaths = (
     selectedScopes: SelectedScope[],
     treeScopes: TreeScope[],
     path: string[],
