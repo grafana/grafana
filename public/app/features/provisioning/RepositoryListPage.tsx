@@ -22,12 +22,12 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
 import OnboardingPage from './OnboardingPage';
+import { FeatureList } from './Setup/FeatureList';
 import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
 import { Repository, ResourceCount, useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from './api';
 import { NEW_URL, PROVISIONING_URL } from './constants';
 import { useRepositoryList } from './hooks';
-import { FeatureList } from './Setup/FeatureList';
 
 const appEvents = getAppEvents();
 
