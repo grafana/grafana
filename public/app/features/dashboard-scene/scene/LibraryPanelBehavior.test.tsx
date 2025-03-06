@@ -164,9 +164,34 @@ describe('LibraryPanelBehavior', () => {
     expect(behaviorClone.state._loadedPanel?.name).toBe('LibraryPanel A');
     expect(behaviorClone.state._loadedPanel?.uid).toBe('111');
   });
+
+  it('should use library panel title and disable hover header when panel has no custom title', async () => {
+    const { scene, vizPanel } = constructSceneWithLibraryPanel();
+    vizPanel.setState({ title: undefined, hoverHeader: true });
+
+    activateFullSceneTree(scene);
+
+    await new Promise((r) => setTimeout(r, 1));
+
+    const panel = sceneGraph.findByKey(scene, 'panel-1') as VizPanel;
+    expect(panel.state.title).toBe('LibraryPanel A title');
+    expect(panel.state.hoverHeader).toBe(false);
+  });
+
+  it('should preserve custom panel title when using library panel', async () => {
+    const { scene, vizPanel } = constructSceneWithLibraryPanel();
+    vizPanel.setState({ title: 'test123', hoverHeader: false });
+
+    activateFullSceneTree(scene);
+
+    await new Promise((r) => setTimeout(r, 1));
+
+    const panel = sceneGraph.findByKey(scene, 'panel-1') as VizPanel;
+    expect(panel.state.title).toBe('test123');
+  });
 });
 
-async function buildTestSceneWithLibraryPanel() {
+function constructSceneWithLibraryPanel() {
   const behavior = new LibraryPanelBehavior({ name: 'LibraryPanel A', uid: '111' });
 
   const vizPanel = new VizPanel({
@@ -215,6 +240,11 @@ async function buildTestSceneWithLibraryPanel() {
       }),
     }),
   });
+  return { scene, gridItem, spy, behavior, vizPanel };
+}
+
+async function buildTestSceneWithLibraryPanel() {
+  const { scene, gridItem, spy, behavior } = constructSceneWithLibraryPanel();
 
   activateFullSceneTree(scene);
 
