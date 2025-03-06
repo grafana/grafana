@@ -188,7 +188,7 @@ func (ng *AlertNG) init() error {
 	remoteOnly := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteOnly)
 	remotePrimary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemotePrimary)
 	remoteSecondary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary)
-	if ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Enable {
+	if remoteOnly || remotePrimary || remoteSecondary {
 		autogenFn := remote.NoopAutogenFn
 		if ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertingSimplifiedRouting) {
 			autogenFn = func(ctx context.Context, logger log.Logger, orgID int64, cfg *definitions.PostableApiAlertingConfig, skipInvalid bool) error {
