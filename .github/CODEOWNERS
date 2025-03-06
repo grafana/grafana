@@ -532,6 +532,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/preferences/ @grafana/grafana-frontend-platform
 /public/app/features/bookmarks/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/alertlist/ @grafana/alerting-frontend
+/public/app/plugins/panel/alertHistory/ @grafana/alerting-frontend
 /public/app/plugins/panel/annolist/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/barchart/ @grafana/dataviz-squad
 /public/app/plugins/panel/bargauge/ @grafana/dataviz-squad
