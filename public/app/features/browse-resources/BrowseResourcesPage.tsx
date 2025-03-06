@@ -204,13 +204,29 @@ const FoldersPage: React.FC = () => {
     // Get root level resources (location === "general")
     const rootResources = resources.filter(resource => resource.location === "general" || resource.location === "");
     
+    // Recursive function to get all children
+    const getAllChildren = (parent: Resource, allResources: Resource[]): Resource[] => {
+      const result: Resource[] = [];
+      // Get immediate children
+      const children = allResources.filter(r => r.location === parent.title);
+      
+      // Add each child and recursively get their children if they're expanded folders
+      children.forEach(child => {
+        result.push(child);
+        if (child.isExpanded && child.resource === 'folders') {
+          result.push(...getAllChildren(child, allResources));
+        }
+      });
+      
+      return result;
+    };
+
     // Create the final data array with expanded children
     const tableData = rootResources.reduce((acc: Resource[], resource: Resource) => {
       acc.push(resource);
-      // If this is an expanded folder, add all its children (any resource type)
+      // If this is an expanded folder, add all its children recursively
       if (resource.isExpanded) {
-        const children = resources.filter(r => r.location === resource.title);
-        acc.push(...children);
+        acc.push(...getAllChildren(resource, resources));
       }
       return acc;
     }, []);
