@@ -33,7 +33,7 @@ import { useRepositoryList } from './hooks';
 import { checkSyncSettings } from './utils';
 import { RepositoryOverview } from './RepositoryOverview';
 import { RepositoryResources } from './RepositoryResources';
-import RepositoryStatusPage from './RepositoryStatusPage';
+import { FilesView } from './FilesView';
 import { RepositoryActions } from './RepositoryActions';
 import { ExportToRepository } from './ExportToRepository';
 import { MigrateToRepository } from './MigrateToRepository';
@@ -94,7 +94,7 @@ export default function RepositoryListPage() {
       case TabSelection.Resources:
         return <RepositoryResources repo={repo} />;
       case TabSelection.Files:
-        return <RepositoryStatusPage />;
+        return <FilesView repo={repo} />;
       case TabSelection.Features:
         return <FeatureList />;
       default:
