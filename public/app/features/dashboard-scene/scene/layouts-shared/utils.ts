@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react';
+
 import { SceneObject } from '@grafana/scenes';
 
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -14,4 +16,17 @@ export function findParentLayout(sceneObject: SceneObject): DashboardLayoutManag
   }
 
   return null;
+}
+
+export function useEditPaneInputAutoFocus() {
+  const ref = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (ref.current) {
+      // Need the setTimeout here for some reason
+      setTimeout(() => ref.current?.focus(), 200);
+    }
+  }, []);
+
+  return ref;
 }

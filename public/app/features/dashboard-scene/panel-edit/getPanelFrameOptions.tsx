@@ -10,6 +10,7 @@ import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/
 
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
+import { useEditPaneInputAutoFocus } from '../scene/layouts-shared/utils';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -108,9 +109,11 @@ function ScenePanelLinksEditor({ panelLinks }: ScenePanelLinksEditorProps) {
 
 export function PanelFrameTitleInput({ panel }: { panel: VizPanel }) {
   const { title } = panel.useState();
+  const ref = useEditPaneInputAutoFocus();
 
   return (
     <Input
+      ref={ref}
       data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Title')}
       value={title}
       onChange={(e) => setPanelTitle(panel, e.currentTarget.value)}
