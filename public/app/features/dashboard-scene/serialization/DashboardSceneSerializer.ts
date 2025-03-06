@@ -82,18 +82,18 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
   }
 
   getElementIdForPanel(panelId: number) {
-    // Find element ID by looking for matching panel ID
-    let elementIdentifier;
+    // First try to find an existing mapping
     for (const [elementId, id] of this.elementPanelMap.entries()) {
       if (id === panelId) {
-        elementIdentifier = elementId;
+        return elementId;
       }
     }
-    // if element identifier is not found, return defaultr 'panel-id'
-    if (!elementIdentifier) {
-      elementIdentifier = getVizPanelKeyForPanelId(panelId);
-    }
-    return elementIdentifier;
+
+    // For runtime-created panels, generate a new element identifier
+    const newElementId = getVizPanelKeyForPanelId(panelId);
+    // Store the new mapping for future lookups
+    this.elementPanelMap.set(newElementId, panelId);
+    return newElementId;
   }
 
   getSaveModel(s: DashboardScene) {
@@ -201,17 +201,18 @@ export class V2DashboardSerializer
   }
 
   getElementIdForPanel(panelId: number) {
-    // Find element ID by looking for matching panel ID
-    let elementIdentifier;
+    // First try to find an existing mapping
     for (const [elementId, id] of this.elementPanelMap.entries()) {
       if (id === panelId) {
-        elementIdentifier = elementId;
+        return elementId;
       }
     }
-    if (!elementIdentifier) {
-      elementIdentifier = getVizPanelKeyForPanelId(panelId);
-    }
-    return elementIdentifier;
+
+    // For runtime-created panels, generate a new element identifier
+    const newElementId = getVizPanelKeyForPanelId(panelId);
+    // Store the new mapping for future lookups
+    this.elementPanelMap.set(newElementId, panelId);
+    return newElementId;
   }
 
   getSaveModel(s: DashboardScene) {
