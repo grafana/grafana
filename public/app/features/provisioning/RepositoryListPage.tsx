@@ -18,6 +18,7 @@ import {
   TabsBar,
   TagList,
   TabContent,
+  Modal,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -33,6 +34,9 @@ import { checkSyncSettings } from './utils';
 import { RepositoryOverview } from './RepositoryOverview';
 import { RepositoryResources } from './RepositoryResources';
 import RepositoryStatusPage from './RepositoryStatusPage';
+import { RepositoryActions } from './RepositoryActions';
+import { ExportToRepository } from './ExportToRepository';
+import { MigrateToRepository } from './MigrateToRepository';
 
 const appEvents = getAppEvents();
 
@@ -55,6 +59,8 @@ export default function RepositoryListPage() {
   const settings = useGetFrontendSettingsQuery();
   const [deleteAll, deleteAllResult] = useDeletecollectionRepositoryMutation();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [showMigrateModal, setShowMigrateModal] = useState(false);
   const [activeTab, setActiveTab] = useState<TabSelection>(TabSelection.Overview);
   const [instanceConnected] = checkSyncSettings(settings.data);
 
@@ -97,7 +103,20 @@ export default function RepositoryListPage() {
   };
 
   return (
-    <Page navId="provisioning" subTitle="View and manage your configured repositories">
+    <Page
+      navId="provisioning"
+      subTitle="View and manage your configured repositories"
+      actions={
+        instanceConnected && items?.length ? (
+          <RepositoryActions
+            repository={items[0]}
+            showMigrateButton={settings.data?.legacyStorage}
+            onExportClick={() => setShowExportModal(true)}
+            onMigrateClick={() => setShowMigrateModal(true)}
+          />
+        ) : undefined
+      }
+    >
       <Page.Contents isLoading={isLoading}>
         {settings.data?.legacyStorage && (
           <Alert
@@ -119,6 +138,16 @@ export default function RepositoryListPage() {
           onConfirm={onConfirmDelete}
           onDismiss={() => setShowDeleteModal(false)}
         />
+        {showExportModal && items?.length && (
+          <Modal isOpen={true} title="Export to Repository" onDismiss={() => setShowExportModal(false)}>
+            <ExportToRepository repo={items[0]} />
+          </Modal>
+        )}
+        {showMigrateModal && items?.length && (
+          <Modal isOpen={true} title="Migrate to Repository" onDismiss={() => setShowMigrateModal(false)}>
+            <MigrateToRepository repo={items[0]} />
+          </Modal>
+        )}
         <Stack direction="column" gap={2}>
           {instanceConnected ? (
             <>

@@ -43,6 +43,7 @@ import {
 import { FileDetails } from './api/types';
 import { PROVISIONING_URL } from './constants';
 import { getRemoteURL } from './utils/git';
+import { RepositoryActions } from './RepositoryActions';
 
 enum TabSelection {
   Overview = 'overview',
@@ -70,9 +71,9 @@ export default function RepositoryStatusPage() {
   const [queryParams] = useQueryParams();
   const settings = useGetFrontendSettingsQuery();
   const tab = queryParams['tab'] ?? TabSelection.Overview;
-  const remoteURL = data ? getRemoteURL(data) : undefined;
 
   const notFound = query.isError && isNotFoundError(query.error);
+
   return (
     <Page
       navId="provisioning"
@@ -82,27 +83,12 @@ export default function RepositoryStatusPage() {
       }}
       actions={
         data && (
-          <Stack>
-            <StatusBadge enabled={Boolean(data.spec?.sync?.enabled)} state={data.status?.sync?.state} name={name} />
-            {remoteURL && (
-              <Button variant="secondary" icon="github" onClick={() => window.open(remoteURL, '_blank')}>
-                Source Code
-              </Button>
-            )}
-            <SyncRepository repository={data} />
-            {settings.data?.legacyStorage ? (
-              <Button variant="secondary" icon="cloud-upload" onClick={() => setShowMigrateModal(true)}>
-                Migrate
-              </Button>
-            ) : (
-              <Button variant="secondary" icon="cloud-upload" onClick={() => setShowExportModal(true)}>
-                Push
-              </Button>
-            )}
-            <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`}>
-              Settings
-            </LinkButton>
-          </Stack>
+          <RepositoryActions
+            repository={data}
+            showMigrateButton={settings.data?.legacyStorage}
+            onExportClick={() => setShowExportModal(true)}
+            onMigrateClick={() => setShowMigrateModal(true)}
+          />
         )
       }
     >
@@ -158,6 +144,7 @@ export default function RepositoryStatusPage() {
     </Page>
   );
 }
+
 interface RepoProps {
   repo: Repository;
 }
