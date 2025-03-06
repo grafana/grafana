@@ -75,7 +75,10 @@ export default function createMockDatasource(overrides?: DeepPartial<Datasource>
       getResourceURIDisplayProperties: jest.fn().mockResolvedValue({}),
     },
 
-    azureResourceGraphDatasource: {},
+    azureResourceGraphDatasource: {
+      pagedResourceGraphRequest: jest.fn().mockResolvedValue([]),
+      ...overrides?.azureResourceGraphDatasource,
+    },
     getVariablesRaw: jest.fn().mockReturnValue([]),
     currentUserAuth: false,
     ...overrides,
