@@ -754,11 +754,11 @@ describe('AzureMonitorDatasource', () => {
 
     describe('When performing getResourceGroups', () => {
       const response = {
-        value: [{ name: 'grp1' }, { name: 'grp2' }],
+        data: [{ resourceGroupName: 'grp1' }, { resourceGroupName: 'grp2' }],
       };
 
       beforeEach(() => {
-        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockResolvedValue(response);
+        ctx.ds.azureResourceGraphDatasource.postResource = jest.fn().mockResolvedValue(response);
       });
 
       it('should return list of Resource Groups', () => {
@@ -786,26 +786,16 @@ describe('AzureMonitorDatasource', () => {
 
       describe('and there are no special cases', () => {
         const response = {
-          value: [
+          data: [
             {
               name: 'Failure Anomalies - nodeapp',
               type: 'microsoft.insights/alertrules',
-            },
-            {
-              name: resourceGroup,
-              type: metricNamespace,
             },
           ],
         };
 
         beforeEach(() => {
-          ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-            const basePath = `azuremonitor/subscriptions/${subscription}/resourceGroups`;
-            expect(path).toBe(
-              `${basePath}/${resourceGroup}/resources?api-version=2021-04-01&$filter=resourceType eq '${metricNamespace}'${
-                region ? ` and location eq '${region}'` : ''
-              }`
-            );
+          ctx.ds.azureResourceGraphDatasource.postResource = jest.fn().mockImplementation((path: string) => {
             return Promise.resolve(response);
           });
         });
@@ -869,7 +859,6 @@ describe('AzureMonitorDatasource', () => {
             return target === `$${multiVariable.id}` ? 'foo,bar' : (target ?? '');
           };
           const ds = new AzureMonitorDatasource(ctx.instanceSettings);
-          //ds.azureMonitorDatasource.templateSrv = tsrv;
           ds.azureMonitorDatasource.getResource = jest
             .fn()
             .mockImplementationOnce((path: string) => {
@@ -987,7 +976,7 @@ describe('AzureMonitorDatasource', () => {
 
       describe('without a resource group or a metric definition', () => {
         const response = {
-          value: [
+          data: [
             {
               name: 'Failure Anomalies - nodeapp',
               type: 'microsoft.insights/alertrules',
@@ -1000,9 +989,7 @@ describe('AzureMonitorDatasource', () => {
         };
 
         beforeEach(() => {
-          ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-            const basePath = `azuremonitor/subscriptions/${subscription}/resources?api-version=2021-04-01`;
-            expect(path).toBe(basePath);
+          ctx.ds.azureResourceGraphDatasource.postResource = jest.fn().mockImplementation((path: string) => {
             return Promise.resolve(response);
           });
         });
