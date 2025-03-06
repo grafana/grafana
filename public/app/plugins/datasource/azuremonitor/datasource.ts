@@ -186,7 +186,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     // For variable queries it's more efficient to use resource graph
     // Using resource graph allows us to return namespaces irrespective of a users permissions
     // This also ensure the returned namespaces are filtered to the selected resource group when specified
-    if (variableQuery && resourceGroup) {
+    if (variableQuery) {
       return this.azureResourceGraphDatasource.getMetricNamespaces(url);
     }
 
