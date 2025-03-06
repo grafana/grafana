@@ -128,6 +128,8 @@ composableKinds: DataQuery: {
 					basicLogsQuery?: bool
 					// Workspace ID. This was removed in Grafana 8, but remains for backwards compat.
 					workspace?: string
+					// Denotes if logs query editor is in builder mode
+					mode?: #LogsEditorMode
 
 					// @deprecated Use resources instead 
 					resource?: string
@@ -161,6 +163,7 @@ composableKinds: DataQuery: {
 				} @cuetsy(kind="interface")
 
 				#ResultFormat: "table" | "time_series" | "trace" | "logs" @cuetsy(kind="enum", memberNames="Table|TimeSeries|Trace|Logs")
+				#LogsEditorMode: "builder" | "raw" @cuetsy(kind="enum", memberNames="Builder|Raw")
 
 				#AzureResourceGraphQuery: {
 					// Azure Resource Graph KQL query to be executed.
