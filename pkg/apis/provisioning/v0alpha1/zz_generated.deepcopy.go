@@ -621,7 +621,7 @@ func (in *ResourceObjects) DeepCopyInto(out *ResourceObjects) {
 	in.File.DeepCopyInto(&out.File)
 	in.Existing.DeepCopyInto(&out.Existing)
 	in.DryRun.DeepCopyInto(&out.DryRun)
-	in.Apply.DeepCopyInto(&out.Apply)
+	in.Upsert.DeepCopyInto(&out.Upsert)
 	return
 }
 

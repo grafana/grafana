@@ -269,8 +269,8 @@ type ResourceObjects struct {
 	// The value returned from a dryRun request
 	DryRun common.Unstructured `json:"dryRun,omitempty"`
 
-	// When the value has been saved in the grafana database
-	Apply common.Unstructured `json:"apply,omitempty"`
+	// For write events, this will return the value that was added or updated
+	Upsert common.Unstructured `json:"upsert,omitempty"`
 }
 
 type ResourceRepositoryInfo struct {

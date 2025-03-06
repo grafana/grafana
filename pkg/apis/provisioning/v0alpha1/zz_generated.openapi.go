@@ -1380,9 +1380,9 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceObjects(ref common.ReferenceC
 							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
 						},
 					},
-					"apply": {
+					"upsert": {
 						SchemaProps: spec.SchemaProps{
-							Description: "When the value has been saved in the grafana database",
+							Description: "For write events, this will return the value that was added or updated",
 							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
 						},
 					},

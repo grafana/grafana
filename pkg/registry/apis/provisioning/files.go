@@ -267,12 +267,12 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 	// Behaves the same running sync after writing
 	if ref == "" {
 		if parsed.Existing == nil {
-			parsed.Apply, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
+			parsed.Upsert, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
 			if err != nil {
 				parsed.Errors = append(parsed.Errors, err)
 			}
 		} else {
-			parsed.Apply, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
+			parsed.Upsert, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
 			if err != nil {
 				parsed.Errors = append(parsed.Errors, err)
 			}

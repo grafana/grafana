@@ -3457,14 +3457,6 @@
               "update"
             ]
           },
-          "apply": {
-            "description": "When the value has been saved in the grafana database",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
-              }
-            ]
-          },
           "dryRun": {
             "description": "The value returned from a dryRun request",
             "allOf": [
@@ -3495,6 +3487,14 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceType"
+              }
+            ]
+          },
+          "upsert": {
+            "description": "For write events, this will return the value that was added or updated",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
               }
             ]
           }
