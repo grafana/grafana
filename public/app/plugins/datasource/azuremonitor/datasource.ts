@@ -49,7 +49,11 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings);
     this.azureResourceGraphDatasource = new AzureResourceGraphDatasource(instanceSettings);
     this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
-    this.resourcePickerData = new ResourcePickerData(instanceSettings, this.azureMonitorDatasource);
+    this.resourcePickerData = new ResourcePickerData(
+      instanceSettings,
+      this.azureMonitorDatasource,
+      this.azureResourceGraphDatasource
+    );
 
     this.pseudoDatasource = {
       [AzureQueryType.AzureMonitor]: this.azureMonitorDatasource,
@@ -164,10 +168,6 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
   }
 
   /* Azure Monitor REST API methods */
-  getResourceGroups(subscriptionId: string) {
-    return this.azureMonitorDatasource.getResourceGroups(this.templateSrv.replace(subscriptionId));
-  }
-
   getMetricNamespaces(
     subscriptionId: string,
     resourceGroup?: string,
@@ -200,10 +200,6 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     );
   }
 
-  getResourceNames(subscriptionId: string, resourceGroup?: string, metricNamespace?: string, region?: string) {
-    return this.azureMonitorDatasource.getResourceNames({ subscriptionId, resourceGroup, metricNamespace, region });
-  }
-
   getMetricNames(
     subscriptionId: string,
     resourceGroup: string,
@@ -220,13 +216,27 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     });
   }
 
+  getSubscriptions() {
+    return this.azureMonitorDatasource.getSubscriptions();
+  }
+
   /*Azure Log Analytics */
   getAzureLogAnalyticsWorkspaces(subscriptionId: string) {
     return this.azureLogAnalyticsDatasource.getWorkspaces(subscriptionId);
   }
 
-  getSubscriptions() {
-    return this.azureMonitorDatasource.getSubscriptions();
+  /*Azure Resource Graph */
+  getResourceGroups(subscriptionId: string) {
+    return this.azureResourceGraphDatasource.getResourceGroups(this.templateSrv.replace(subscriptionId));
+  }
+
+  getResourceNames(subscriptionId: string, resourceGroup?: string, metricNamespace?: string, region?: string) {
+    return this.azureResourceGraphDatasource.getResourceNames({
+      subscriptionId,
+      resourceGroup,
+      metricNamespace,
+      region,
+    });
   }
 
   interpolateVariablesInQueries(queries: AzureMonitorQuery[], scopedVars: ScopedVars): AzureMonitorQuery[] {

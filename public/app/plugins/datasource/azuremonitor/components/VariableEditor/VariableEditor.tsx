@@ -149,7 +149,7 @@ const VariableEditor = (props: Props) => {
   useEffect(() => {
     if (subscription) {
       datasource.getResourceGroups(subscription).then((rgs) => {
-        setResourceGroups(rgs.map((s) => ({ label: s.text, value: s.value })));
+        setResourceGroups(rgs.map((s) => ({ label: s.resourceGroupName, value: s.resourceGroupName })));
       });
     }
   }, [datasource, subscription]);
@@ -179,8 +179,8 @@ const VariableEditor = (props: Props) => {
   // When subscription, resource group, and namespace are all set, retrieve resource names
   useEffect(() => {
     if (subscription && resourceGroup && namespace) {
-      datasource.getResourceNames(subscription, resourceGroup, namespace).then((rgs) => {
-        setResources(rgs.map((s) => ({ label: s.text, value: s.value })));
+      datasource.getResourceNames(subscription, resourceGroup, namespace).then((resources) => {
+        setResources(resources.map((s) => ({ label: s.name, value: s.name })));
       });
     }
   }, [datasource, subscription, resourceGroup, namespace]);
