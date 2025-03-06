@@ -49,7 +49,11 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings);
     this.azureResourceGraphDatasource = new AzureResourceGraphDatasource(instanceSettings);
     this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
-    this.resourcePickerData = new ResourcePickerData(instanceSettings, this.azureMonitorDatasource);
+    this.resourcePickerData = new ResourcePickerData(
+      instanceSettings,
+      this.azureMonitorDatasource,
+      this.azureResourceGraphDatasource
+    );
 
     this.pseudoDatasource = {
       [AzureQueryType.AzureMonitor]: this.azureMonitorDatasource,

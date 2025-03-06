@@ -28,7 +28,11 @@ const createResourcePickerData = (responses: AzureGraphResponse[], noNamespaces?
     .mockResolvedValueOnce(
       noNamespaces ? [] : [{ text: 'Microsoft.Storage/storageAccounts', value: 'Microsoft.Storage/storageAccounts' }]
     );
-  const resourcePickerData = new ResourcePickerData(instanceSettings, mockDatasource.azureMonitorDatasource);
+  const resourcePickerData = new ResourcePickerData(
+    instanceSettings,
+    mockDatasource.azureMonitorDatasource,
+    mockDatasource.azureResourceGraphDatasource
+  );
   const postResource = jest.fn();
   responses.forEach((res) => {
     postResource.mockResolvedValueOnce(res);
