@@ -624,29 +624,6 @@ func TestService_Check(t *testing.T) {
 		expectErr   bool
 	}
 
-	runTestCase := func(t *testing.T, tc testCase, s *Service) {
-		ctx := types.WithAuthInfo(context.Background(), callingService)
-
-		userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
-
-		store := &fakeStore{
-			userID:          userID,
-			userPermissions: tc.permissions,
-		}
-		s.store = store
-		s.permissionStore = store
-		s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
-
-		resp, err := s.Check(ctx, tc.req)
-		if tc.expectErr {
-			require.Error(t, err)
-			return
-		}
-
-		require.NoError(t, err)
-		assert.Equal(t, tc.expected, resp.Allowed)
-	}
-
 	testCases := []testCase{
 		{
 			name: "should error if no namespace is provided",
@@ -701,7 +678,18 @@ func TestService_Check(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
 				s := setupService()
-				runTestCase(t, tc, s)
+				ctx := types.WithAuthInfo(context.Background(), callingService)
+				userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+				store := &fakeStore{
+					userID:          userID,
+					userPermissions: tc.permissions,
+				}
+				s.store = store
+				s.permissionStore = store
+				s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
+
+				_, err := s.Check(ctx, tc.req)
+				require.Error(t, err)
 			})
 		}
 	})
@@ -719,7 +707,6 @@ func TestService_Check(t *testing.T) {
 			},
 			permissions: []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash1"}},
 			expected:    true,
-			expectErr:   false,
 		},
 		{
 			name: "should deny user without permission",
@@ -733,17 +720,27 @@ func TestService_Check(t *testing.T) {
 			},
 			permissions: []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash2"}},
 			expected:    false,
-			expectErr:   false,
 		},
 	}
 	t.Run("User permission check", func(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
 				s := setupService()
-				runTestCase(t, tc, s)
+				ctx := types.WithAuthInfo(context.Background(), callingService)
+				userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+				store := &fakeStore{
+					userID:          userID,
+					userPermissions: tc.permissions,
+				}
+				s.store = store
+				s.permissionStore = store
+				s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
+
+				resp, err := s.Check(ctx, tc.req)
+				require.NoError(t, err)
+				assert.Equal(t, tc.expected, resp.Allowed)
 
 				// Check cache
-				ctx := context.Background()
 				id, ok := s.idCache.Get(ctx, userIdentifierCacheKey("org-12", "test-uid"))
 				require.True(t, ok)
 				require.Equal(t, id.UID, "test-uid")
@@ -767,7 +764,6 @@ func TestService_Check(t *testing.T) {
 			},
 			permissions: []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash1"}},
 			expected:    true,
-			expectErr:   false,
 		},
 		{
 			name: "should deny anonymous without permission",
@@ -781,17 +777,23 @@ func TestService_Check(t *testing.T) {
 			},
 			permissions: []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash2"}},
 			expected:    false,
-			expectErr:   false,
 		},
 	}
 	t.Run("Anonymous permission check", func(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
 				s := setupService()
-				runTestCase(t, tc, s)
+				ctx := types.WithAuthInfo(context.Background(), callingService)
+				store := &fakeStore{userPermissions: tc.permissions}
+				s.store = store
+				s.permissionStore = store
+				s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
+
+				resp, err := s.Check(ctx, tc.req)
+				require.NoError(t, err)
+				assert.Equal(t, tc.expected, resp.Allowed)
 
 				// Check cache
-				ctx := context.Background()
 				perms, ok := s.permCache.Get(ctx, anonymousPermCacheKey("org-12", "dashboards:read"))
 				require.True(t, ok)
 				require.Len(t, perms, 1)
@@ -830,7 +832,15 @@ func TestService_Check(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
 				s := setupService()
-				runTestCase(t, tc, s)
+				ctx := types.WithAuthInfo(context.Background(), callingService)
+
+				resp, err := s.Check(ctx, tc.req)
+				if tc.expectErr {
+					require.Error(t, err)
+					return
+				}
+				require.NoError(t, err)
+				assert.Equal(t, tc.expected, resp.Allowed)
 			})
 		}
 	})
