@@ -49,37 +49,18 @@ jobs:
         run: make gen-go
 
       - name: Run unit tests
-        run: COVER_OPTS="-coverprofile=unit.cov -coverpkg=github.com/grafana/grafana/..." make test-go-unit
+        run: COVER_OPTS="-coverprofile=be-unit.cov -coverpkg=github.com/grafana/grafana/..." make test-go-unit
 
-      - name: Process coverage output
-        run: |
-          # Ensure valid coverage file even if empty
-          if [ ! -s unit.cov ]; then
-            echo "mode: set" > unit.cov
-          fi
-          
-          # Convert to different formats
-          go tool cover -func unit.cov > unit-funcs.log
-          go tool cover -html unit.cov -o unit.html
-          
-          # Add coverage summary to GitHub step summary
-          echo '# Coverage' >> $GITHUB_STEP_SUMMARY
-          if grep -q "total:" unit-funcs.log; then
-            grep 'total:' unit-funcs.log | tr '\t' ' ' >> $GITHUB_STEP_SUMMARY
-          else
-            echo "No coverage data available" >> $GITHUB_STEP_SUMMARY
-          fi
-
-      - name: Upload coverage reports
-        uses: actions/upload-artifact@v4
+      - name: Process and upload coverage
+        uses: ./.github/actions/test-coverage-processor
         with:
-          name: backend-unit-coverage
-          path: |
-            unit.cov
-            unit-funcs.log
-            unit.html
+          test-type: 'be-unit'
+          coverage-file: 'be-unit.cov'
           retention-days: 30
           compression-level: 9
+          codecov-token: ${{ secrets.CODECOV_TOKEN }}
+          codecov-flag: 'be-unit'
+          codecov-name: 'be-unit'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

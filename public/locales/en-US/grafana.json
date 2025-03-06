@@ -1011,7 +1011,7 @@
       "subtitle": "Alert rules related to this dashboard"
     },
     "default-layout": {
-      "description": "The default grid layout",
+      "description": "Manually size and position panels",
       "item-options": {
         "repeat": {
           "direction": {
@@ -1027,7 +1027,7 @@
           }
         }
       },
-      "name": "Default grid",
+      "name": "Custom",
       "row-actions": {
         "delete": "Delete row",
         "modal": {
@@ -1190,7 +1190,7 @@
       }
     },
     "responsive-layout": {
-      "description": "CSS layout that adjusts to the available space",
+      "description": "Automatically positions panels into a grid.",
       "item-options": {
         "hide-no-data": "Hide when no data",
         "repeat": {
@@ -1201,7 +1201,7 @@
         },
         "title": "Layout options"
       },
-      "name": "Responsive grid",
+      "name": "Auto",
       "options": {
         "columns": "Columns",
         "fixed": "Fixed: {{size}}px",
@@ -1214,7 +1214,18 @@
     },
     "rows-layout": {
       "description": "Rows layout",
+      "item-name": "Row",
       "name": "Rows",
+      "option": {
+        "height": "Height",
+        "hide-header": "Hide row header",
+        "repeat": "Repeat for",
+        "title": "Title"
+      },
+      "options": {
+        "height-expand": "Expand",
+        "height-min": "Min"
+      },
       "row": {
         "collapse": "Collapse row",
         "expand": "Expand row",
@@ -1234,15 +1245,6 @@
         }
       },
       "row-options": {
-        "height": {
-          "hide-row-header": "Hide row header"
-        },
-        "repeat": {
-          "variable": {
-            "title": "Repeat for"
-          }
-        },
-        "title": "Row",
         "title-option": "Title"
       }
     },

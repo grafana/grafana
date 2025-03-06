@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
+
 	"xorm.io/xorm"
 
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -76,7 +77,8 @@ func TestIntegrationMigrationLock(t *testing.T) {
 	}
 
 	dbType := sqlutil.GetTestDBType()
-	if dbType == SQLite {
+	// skip for SQLite and Spanner since there is no database locking (only migrator locking)
+	if dbType == SQLite || dbType == Spanner {
 		t.Skip()
 	}
 
@@ -233,8 +235,8 @@ func TestMigratorLocking(t *testing.T) {
 func TestDatabaseLocking(t *testing.T) {
 	dbType := sqlutil.GetTestDBType()
 
-	// skip for SQLite since there is no database locking (only migrator locking)
-	if dbType == SQLite {
+	// skip for SQLite and Spanner since there is no database locking (only migrator locking)
+	if dbType == SQLite || dbType == Spanner {
 		t.Skip()
 	}
 
