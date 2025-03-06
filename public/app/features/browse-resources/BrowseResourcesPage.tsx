@@ -16,7 +16,9 @@ import {
   FilterInput,
   TagList,
   Link,
+  Button,
 } from '@grafana/ui';
+import { clearLinkButtonStyles } from '@grafana/ui/src/components/Button';
 import { getAPINamespace } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
 import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
@@ -27,7 +29,7 @@ import kbn from 'app/core/utils/kbn';
 import { getColumnStyles } from '../search/page/components/SearchResultsTable';
 import { GrafanaSearcher, SearchQuery } from '../search/service/types';
 import { SearchHit, UnifiedSearcher } from '../search/service/unified';
-// import { iconItem } from '../canvas/elements/icon';
+
 interface Resource extends SearchHit {
   isExpanded?: boolean;
   owner?: string;
@@ -62,6 +64,7 @@ const FoldersPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const styles = useStyles2(getStyles);
+  const clearButtonStyle = useStyles2(clearLinkButtonStyles);
 
   const defaultNavModel = useNavModel('finder');
   const location = useLocation();
@@ -170,7 +173,6 @@ const FoldersPage: React.FC = () => {
                 <Link
                   aria-label={`open-${original.title}`}
                   href={toURL(original.resource, original.name, original.title)}
-                  className="external-link"
                   onClick={onResourceLinkClicked}
                 >
                 {original.title}
@@ -187,8 +189,15 @@ const FoldersPage: React.FC = () => {
 
               return (
                 <div className="flex items-center">
+                  <Button
+                    variant="secondary"
+                    aria-label={`open-${original.location}`}
+                    className={clearButtonStyle}
+                    onClick={() => setSelectedTypes([{label: displayType, value: original.resource as ResourceType}])}
+                  >
                   {iconName && <Icon name={iconName} style={{ marginRight: '6px' }}/>}
                   <span className={styles.resourceType}>{displayType}</span>
+                  </Button>
                 </div>
               );
             },
@@ -203,7 +212,6 @@ const FoldersPage: React.FC = () => {
                   <Link
                     aria-label={`open-${original.location}`}
                     href={toURL('folder', original.folder, original.location)}
-                    className="external-link"
                     onClick={onResourceLinkClicked}
                   >
                   <span>{original.location}</span>
