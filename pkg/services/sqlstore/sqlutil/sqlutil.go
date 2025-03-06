@@ -173,7 +173,7 @@ func spannerTestDB() (*TestDB, error) {
 
 		return &TestDB{
 			DriverName: "spanner",
-			ConnStr:    fmt.Sprintf("%s/projects/test/instances/test/databases/test;usePlainText=true", srv.Addr),
+			ConnStr:    fmt.Sprintf("%s/projects/grafanatest/instances/grafanatest/databases/grafanatest;usePlainText=true", srv.Addr),
 			Cleanup:    srv.Close,
 		}, nil
 	}
@@ -184,9 +184,13 @@ func spannerTestDB() (*TestDB, error) {
 			host = "localhost:9010"
 		}
 
+		// To create instance and database manually, run:
+		//
+		//  $ curl "localhost:9020/v1/projects/grafanatest/instances" --data '{"instanceId": "'grafanatest'"}'
+		//  $ curl "localhost:9020/v1/projects/grafanatest/instances/grafanatest/databases" --data '{"createStatement": "CREATE DATABASE `grafanatest`"}'
 		return &TestDB{
 			DriverName: "spanner",
-			ConnStr:    fmt.Sprintf("%s/projects/test/instances/test/databases/test;usePlainText=true", host),
+			ConnStr:    fmt.Sprintf("%s/projects/grafanatest/instances/grafanatest/databases/grafanatest;usePlainText=true", host),
 			Cleanup:    func() {},
 		}, nil
 	}
@@ -196,5 +200,4 @@ func spannerTestDB() (*TestDB, error) {
 		ConnStr:    spannerDB,
 		Cleanup:    func() {},
 	}, nil
-
 }
