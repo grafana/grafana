@@ -89,8 +89,6 @@ export const getStylesSelectorActions = (theme: GrafanaTheme2) => ({
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
-    /* using absolute positioning because flex interferes with ellipsis */
-    position: 'absolute',
     width: '50%',
     right: 0,
     textAlign: 'right',
