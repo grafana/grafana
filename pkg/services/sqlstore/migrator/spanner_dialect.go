@@ -114,12 +114,8 @@ func (s *SpannerDialect) ColStringNoPk(col *Column) string {
 
 	sql += s.dialect.SQLType(col) + " "
 
-	if s.dialect.ShowCreateNull() {
-		if col.Nullable {
-			// Nothing. Columns are nullable by default.
-		} else {
-			sql += "NOT NULL "
-		}
+	if s.dialect.ShowCreateNull() && !col.Nullable {
+		sql += "NOT NULL "
 	}
 
 	if col.Default != "" {
