@@ -22,11 +22,13 @@ import { Threshold } from 'app/features/expressions/components/Threshold';
 import {
   ExpressionQuery,
   ExpressionQueryType,
+  defaultJoin,
   expressionTypes,
   getExpressionLabel,
 } from 'app/features/expressions/types';
 import { AlertQuery, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
+import Join from '../../../../expressions/components/Join';
 import LabelRewrite from '../../../../expressions/components/LabelRewrite';
 import Merge from '../../../../expressions/components/Merge';
 import { usePagination } from '../../hooks/usePagination';
@@ -139,6 +141,18 @@ export const Expression: FC<ExpressionProps> = ({
           return <LabelRewrite refIds={availableRefIds} expression={query} onChange={onChangeQuery} />;
         case ExpressionQueryType.merge:
           return <Merge refIds={availableRefIds} expression={query} onChange={onChangeQuery} />;
+        case ExpressionQueryType.join:
+          return (
+            <Join
+              refIds={availableRefIds}
+              expression={query.join ?? defaultJoin()}
+              onChange={(e) => {
+                onChangeQuery({ ...query, join: e });
+              }}
+              onRunQuery={() => {}}
+              labelWidth={'auto'}
+            />
+          );
         default:
           return <>Expression not supported: {query.type}</>;
       }

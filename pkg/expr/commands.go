@@ -347,6 +347,8 @@ const (
 	TypeLabelRewrite
 	// TypeMerge is CMDType for merging multiple results
 	TypeMerge
+	// TypeJoin is CMDType for joining two results
+	TypeJoin
 )
 
 func (gt CommandType) String() string {
@@ -367,6 +369,8 @@ func (gt CommandType) String() string {
 		return "label_rewrite"
 	case TypeMerge:
 		return "merge"
+	case TypeJoin:
+		return "join"
 	default:
 		return "unknown"
 	}
@@ -391,6 +395,8 @@ func ParseCommandType(s string) (CommandType, error) {
 		return TypeLabelRewrite, nil
 	case "merge":
 		return TypeMerge, nil
+	case "join":
+		return TypeJoin, nil
 	default:
 		return TypeUnknown, fmt.Errorf("'%v' is not a recognized expression type", s)
 	}

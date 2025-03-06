@@ -170,6 +170,8 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles) (*CMDNode, er
 		node.Command, err = UnmarshalLabelReplaceCommand(rn.RefID, rn.QueryRaw)
 	case TypeMerge:
 		node.Command, err = UnmarshalMergeCommand(rn.RefID, rn.QueryRaw)
+	case TypeJoin:
+		node.Command, err = UnmarshalJoinCommand(rn.RefID, rn.QueryRaw)
 	default:
 		return nil, fmt.Errorf("expression command type '%v' in expression '%v' not implemented", commandType, rn.RefID)
 	}

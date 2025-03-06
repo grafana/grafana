@@ -19,120 +19,142 @@ const mathPlaceholder =
   'The sum of two scalar values: $A + $B > 10';
 
 export const Math = ({ labelWidth, onChange, query, onRunQuery }: Props) => {
+  const onExpressionChange = (exp: string) => {
+    onChange({ ...query, expression: exp });
+  };
+
+  return (
+    <Stack>
+      <MathExpressionInput
+        labelWidth={labelWidth}
+        expression={query.expression}
+        onChange={onExpressionChange}
+        onRunQuery={onRunQuery}
+      />
+    </Stack>
+  );
+};
+
+interface MathExpressionInputProps {
+  labelWidth: number | 'auto';
+  expression: string | undefined;
+  onChange: (query: string) => void;
+  onRunQuery: () => void;
+}
+
+export const MathExpressionInput = ({ labelWidth, onChange, expression, onRunQuery }: MathExpressionInputProps) => {
   const onExpressionChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
-    onChange({ ...query, expression: event.target.value });
+    onChange(event.target.value);
   };
 
   const styles = useStyles2(getStyles);
 
   const executeQuery = () => {
-    if (query.expression) {
+    if (expression) {
       onRunQuery();
     }
   };
 
   return (
-    <Stack>
-      <InlineField
-        label={
-          <InlineLabel width="auto">
-            <Toggletip
-              fitContent
-              content={
-                <div className={styles.documentationContainer}>
-                  <div>
-                    Run math operations on one or more queries. You reference the query by {'${refId}'} ie. $A, $B, $C
-                    etc.
-                    <br />
-                    Example: <code>$A + $B</code>
-                  </div>
-                  <header className={styles.documentationHeader}>Available Math functions</header>
-                  <div className={styles.documentationFunctions}>
-                    <DocumentedFunction
-                      name="abs"
-                      description="returns the absolute value of its argument which can be a number or a series"
-                    />
-                    <DocumentedFunction
-                      name="is_inf"
-                      description="returns 1 for Inf values (negative or positive) and 0 for other values. It's able to operate on series or scalar values."
-                    />
-                    <DocumentedFunction
-                      name="is_nan"
-                      description="returns 1 for NaN values and 0 for other values. It's able to operate on series or scalar values."
-                    />
-                    <DocumentedFunction
-                      name="is_null"
-                      description="returns 1 for null values and 0 for other values. It's able to operate on series or scalar values."
-                    />
-                    <DocumentedFunction
-                      name="is_number"
-                      description="returns 1 for all real number values and 0 for non-number. It's able to operate on series or scalar values."
-                    />
-                    <DocumentedFunction
-                      name="log"
-                      description="returns the natural logarithm of its argument, which can be a number or a series"
-                    />
-                    <DocumentedFunction
-                      name="inf, infn, nan, and null"
-                      description="The inf for infinity positive, infn for infinity negative, nan, and null functions all return a single scalar value that matches its name."
-                    />
-                    <DocumentedFunction
-                      name="round"
-                      description="returns a rounded integer value. It's able to operate on series or escalar values."
-                    />
-                    <DocumentedFunction
-                      name="ceil"
-                      description="rounds the number up to the nearest integer value. It's able to operate on series or escalar values."
-                    />
-                    <DocumentedFunction
-                      name="floor"
-                      description="rounds the number down to the nearest integer value. It's able to operate on series or escalar values."
-                    />
-                  </div>
-                </div>
-              }
-              title={
-                <Stack gap={1} direction="row">
-                  <Icon name="book-open" /> Math operator
-                </Stack>
-              }
-              footer={
+    <InlineField
+      label={
+        <InlineLabel width="auto">
+          <Toggletip
+            fitContent
+            content={
+              <div className={styles.documentationContainer}>
                 <div>
-                  See our additional documentation on{' '}
-                  <a
-                    className={styles.documentationLink}
-                    target="_blank"
-                    href="https://grafana.com/docs/grafana/latest/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/#math"
-                    rel="noreferrer"
-                  >
-                    <Icon size="xs" name="external-link-alt" /> Math expressions
-                  </a>
-                  .
+                  Run math operations on one or more queries. You reference the query by {'${refId}'} ie. $A, $B, $C
+                  etc.
+                  <br />
+                  Example: <code>$A + $B</code>
                 </div>
-              }
-              closeButton={true}
-              placement="bottom-start"
-            >
-              <div className={styles.info}>
-                Expression <Icon name="info-circle" />
+                <header className={styles.documentationHeader}>Available Math functions</header>
+                <div className={styles.documentationFunctions}>
+                  <DocumentedFunction
+                    name="abs"
+                    description="returns the absolute value of its argument which can be a number or a series"
+                  />
+                  <DocumentedFunction
+                    name="is_inf"
+                    description="returns 1 for Inf values (negative or positive) and 0 for other values. It's able to operate on series or scalar values."
+                  />
+                  <DocumentedFunction
+                    name="is_nan"
+                    description="returns 1 for NaN values and 0 for other values. It's able to operate on series or scalar values."
+                  />
+                  <DocumentedFunction
+                    name="is_null"
+                    description="returns 1 for null values and 0 for other values. It's able to operate on series or scalar values."
+                  />
+                  <DocumentedFunction
+                    name="is_number"
+                    description="returns 1 for all real number values and 0 for non-number. It's able to operate on series or scalar values."
+                  />
+                  <DocumentedFunction
+                    name="log"
+                    description="returns the natural logarithm of its argument, which can be a number or a series"
+                  />
+                  <DocumentedFunction
+                    name="inf, infn, nan, and null"
+                    description="The inf for infinity positive, infn for infinity negative, nan, and null functions all return a single scalar value that matches its name."
+                  />
+                  <DocumentedFunction
+                    name="round"
+                    description="returns a rounded integer value. It's able to operate on series or escalar values."
+                  />
+                  <DocumentedFunction
+                    name="ceil"
+                    description="rounds the number up to the nearest integer value. It's able to operate on series or escalar values."
+                  />
+                  <DocumentedFunction
+                    name="floor"
+                    description="rounds the number down to the nearest integer value. It's able to operate on series or escalar values."
+                  />
+                </div>
               </div>
-            </Toggletip>
-          </InlineLabel>
-        }
-        labelWidth={labelWidth}
-        grow={true}
-        shrink={true}
-      >
-        <TextArea
-          value={query.expression}
-          onChange={onExpressionChange}
-          rows={1}
-          placeholder={mathPlaceholder}
-          onBlur={executeQuery}
-          style={{ minWidth: 250, lineHeight: '26px', minHeight: 32 }}
-        />
-      </InlineField>
-    </Stack>
+            }
+            title={
+              <Stack gap={1} direction="row">
+                <Icon name="book-open" /> Math operator
+              </Stack>
+            }
+            footer={
+              <div>
+                See our additional documentation on{' '}
+                <a
+                  className={styles.documentationLink}
+                  target="_blank"
+                  href="https://grafana.com/docs/grafana/latest/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/#math"
+                  rel="noreferrer"
+                >
+                  <Icon size="xs" name="external-link-alt" /> Math expressions
+                </a>
+                .
+              </div>
+            }
+            closeButton={true}
+            placement="bottom-start"
+          >
+            <div className={styles.info}>
+              Expression <Icon name="info-circle" />
+            </div>
+          </Toggletip>
+        </InlineLabel>
+      }
+      labelWidth={labelWidth}
+      grow={true}
+      shrink={true}
+    >
+      <TextArea
+        value={expression}
+        onChange={onExpressionChange}
+        rows={1}
+        placeholder={mathPlaceholder}
+        onBlur={executeQuery}
+        style={{ minWidth: 250, lineHeight: '26px', minHeight: 32 }}
+      />
+    </InlineField>
   );
 };
 
@@ -140,7 +162,8 @@ interface DocumentedFunctionProps {
   name: string;
   description: React.ReactNode;
 }
-const DocumentedFunction = ({ name, description }: DocumentedFunctionProps) => {
+
+export const DocumentedFunction = ({ name, description }: DocumentedFunctionProps) => {
   const styles = useStyles2(getDocumentedFunctionStyles);
 
   return (
@@ -151,7 +174,7 @@ const DocumentedFunction = ({ name, description }: DocumentedFunctionProps) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+export const getStyles = (theme: GrafanaTheme2) => ({
   documentationHeader: css({
     fontSize: theme.typography.h5.fontSize,
     fontWeight: theme.typography.h5.fontWeight,

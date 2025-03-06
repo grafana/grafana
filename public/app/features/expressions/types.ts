@@ -17,6 +17,7 @@ export enum ExpressionQueryType {
   sql = 'sql',
   labelRewrite = 'label_rewrite',
   merge = 'merge',
+  join = 'join',
 }
 
 export const getExpressionLabel = (type: ExpressionQueryType) => {
@@ -37,6 +38,8 @@ export const getExpressionLabel = (type: ExpressionQueryType) => {
       return 'Rewrite Labels';
     case ExpressionQueryType.merge:
       return 'Merge Results';
+    case ExpressionQueryType.join:
+      return 'Join';
   }
 };
 
@@ -83,6 +86,11 @@ export const expressionTypes: Array<SelectableValue<ExpressionQueryType>> = [
     value: ExpressionQueryType.merge,
     label: 'Merge Results',
     description: 'Allows to merge results of other expressions into one set',
+  },
+  {
+    value: ExpressionQueryType.join,
+    label: 'Join',
+    description: 'Allows to join results of other expressions by labels into one set',
   },
 ].filter((expr) => {
   if (expr.value === ExpressionQueryType.sql) {
@@ -167,6 +175,7 @@ export interface ExpressionQuery extends DataQuery {
   settings?: ExpressionQuerySettings;
   labelRewrite?: LabelRewriteSettings;
   merge?: MergeSettings;
+  join?: JoinSettings;
 }
 
 export interface ThresholdExpressionQuery extends ExpressionQuery {
@@ -234,3 +243,21 @@ export interface MergeSettings {
   refids: string[];
   resolution: string;
 }
+
+export interface JoinSettings {
+  joinType: string;
+  leftRefId: string;
+  rightRefId: string;
+  expression: string;
+  labels: string[];
+}
+
+export const defaultJoin = (): JoinSettings => {
+  return {
+    joinType: 'inner',
+    leftRefId: '',
+    rightRefId: '',
+    expression: '',
+    labels: [],
+  };
+};
