@@ -74,18 +74,18 @@ func UnmarshalSQLCommand(rn *rawNode) (*SQLCommand, error) {
 
 // NeedsVars returns the variable names (refIds) that are dependencies
 // to execute the command and allows the command to fulfill the Command interface.
-func (gr *SQLCommand) NeedsVars() []string {
-	return gr.varsToQuery
+func (cmd *SQLCommand) NeedsVars() []string {
+	return cmd.varsToQuery
 }
 
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
-func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error) {
+func (cmd *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error) {
 	_, span := tracer.Start(ctx, "SSE.ExecuteSQL")
 	defer span.End()
 
 	allFrames := []*data.Frame{}
-	for _, ref := range gr.varsToQuery {
+	for _, ref := range cmd.varsToQuery {
 		results, ok := vars[ref]
 		if !ok {
 			logger.Warn("no results found for", "ref", ref)
@@ -96,19 +96,19 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	}
 
 	totalRows := totalRows(allFrames)
-	if totalRows > gr.limit {
+	if totalRows > cmd.limit {
 		return mathexp.Results{},
 			fmt.Errorf(
 				"SQL expression: total row count across all input tables exceeds limit of %d. Total rows: %d",
-				gr.limit,
+				cmd.limit,
 				totalRows,
 			)
 	}
 
-	logger.Debug("Executing query", "query", gr.query, "frames", len(allFrames))
+	logger.Debug("Executing query", "query", cmd.query, "frames", len(allFrames))
 
 	db := sql.DB{}
-	frame, err := db.QueryFrames(ctx, gr.refID, gr.query, allFrames)
+	frame, err := db.QueryFrames(ctx, cmd.refID, cmd.query, allFrames)
 
 	rsp := mathexp.Results{}
 	if err != nil {
@@ -116,7 +116,7 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 		rsp.Error = err
 		return rsp, nil
 	}
-	logger.Debug("Done Executing query", "query", gr.query, "rows", frame.Rows())
+	logger.Debug("Done Executing query", "query", cmd.query, "rows", frame.Rows())
 
 	if frame.Rows() == 0 {
 		rsp.Values = mathexp.Values{
@@ -132,7 +132,7 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	return rsp, nil
 }
 
-func (gr *SQLCommand) Type() string {
+func (cmd *SQLCommand) Type() string {
 	return TypeSQL.String()
 }
 
