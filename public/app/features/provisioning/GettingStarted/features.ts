@@ -1,6 +1,12 @@
 import { config } from '@grafana/runtime';
+import { FeatureToggles } from '@grafana/data';
 
-import { requiredFeatureToggles } from './types';
+export const requiredFeatureToggles: Array<keyof FeatureToggles> = [
+  'provisioning',
+  'kubernetesDashboards',
+  'kubernetesClientDashboardsFolders',
+  'unifiedStorageSearch',
+];
 
 /**
  * Checks if all required feature toggles are enabled
