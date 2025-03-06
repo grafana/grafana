@@ -37,6 +37,7 @@ func TestStandardDocumentBuilder(t *testing.T) {
 		"rv": 10,
 		"title": "test playlist unified storage",
 		"title_phrase": "test playlist unified storage",
+		"title_ngram": "test playlist unified storage",
 		"created": 1717236672000,
 		"createdBy": "user:ABC",
 		"updatedBy": "user:XYZ",
