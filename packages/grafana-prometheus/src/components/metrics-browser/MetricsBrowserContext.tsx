@@ -173,7 +173,7 @@ export function MetricsBrowserProvider({
         setLabelValues({});
         return;
       }
-      
+
       setStatus('Fetching label values...');
       const newLabelValues: Record<string, string[]> = {};
       let hasErrors = false;
@@ -182,7 +182,9 @@ export function MetricsBrowserProvider({
         for (const lk of selectedLabelKeys) {
           if (labelKeys.includes(lk)) {
             try {
-              const values = await languageProvider.fetchSeriesValuesWithMatch(lk, undefined);
+              const selector = getSelector();
+              const safeSelector = selector === EMPTY_SELECTOR ? undefined : selector;
+              const values = await languageProvider.fetchSeriesValuesWithMatch(lk, safeSelector);
               newLabelValues[lk] = values;
             } catch (error) {
               console.error(`Error fetching values for label ${lk}:`, error);
@@ -191,9 +193,9 @@ export function MetricsBrowserProvider({
             }
           }
         }
-        
+
         setLabelValues(newLabelValues);
-        
+
         if (hasErrors) {
           setErr('Some label values could not be loaded');
         } else {
@@ -205,7 +207,7 @@ export function MetricsBrowserProvider({
     }
 
     fetchValues();
-  }, [labelKeys, languageProvider, selectedLabelKeys]);
+  }, [getSelector, labelKeys, languageProvider, selectedLabelKeys]);
 
   // Fetch metrics with new selector
   useEffect(() => {
