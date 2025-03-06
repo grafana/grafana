@@ -85,16 +85,6 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     throw new Error('Method not implemented.');
   }
 
-  public hasVizPanels(): boolean {
-    for (const tab of this.state.tabs) {
-      if (tab.getLayout().hasVizPanels()) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
   public addNewTab() {
     const currentTab = new TabItem();
     this.setState({ tabs: [...this.state.tabs, currentTab], currentTabIndex: this.state.tabs.length });
@@ -126,6 +116,50 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     const tabs = filteredTab.length === 0 ? [new TabItem()] : filteredTab;
 
     this.setState({ tabs, currentTabIndex: 0 });
+  }
+
+  public addTabBefore(tab: TabItem) {
+    const newTab = new TabItem();
+    const tabs = this.state.tabs.slice();
+    tabs.splice(tabs.indexOf(tab), 0, newTab);
+    this.setState({ tabs, currentTabIndex: this.state.currentTabIndex });
+  }
+
+  public addTabAfter(tab: TabItem) {
+    const newTab = new TabItem();
+    const tabs = this.state.tabs.slice();
+    tabs.splice(tabs.indexOf(tab) + 1, 0, newTab);
+    this.setState({ tabs, currentTabIndex: this.state.currentTabIndex + 1 });
+  }
+
+  public moveTabLeft(tab: TabItem) {
+    const currentIndex = this.state.tabs.indexOf(tab);
+    if (currentIndex <= 0) {
+      return;
+    }
+    const tabs = this.state.tabs.slice();
+    tabs.splice(currentIndex, 1);
+    tabs.splice(currentIndex - 1, 0, tab);
+    this.setState({ tabs, currentTabIndex: this.state.currentTabIndex - 1 });
+  }
+
+  public moveTabRight(tab: TabItem) {
+    const currentIndex = this.state.tabs.indexOf(tab);
+    if (currentIndex >= this.state.tabs.length - 1) {
+      return;
+    }
+    const tabs = this.state.tabs.slice();
+    tabs.splice(currentIndex, 1);
+    tabs.splice(currentIndex + 1, 0, tab);
+    this.setState({ tabs, currentTabIndex: this.state.currentTabIndex + 1 });
+  }
+
+  public isFirstTab(tab: TabItem): boolean {
+    return this.state.tabs[0] === tab;
+  }
+
+  public isLastTab(tab: TabItem): boolean {
+    return this.state.tabs[this.state.tabs.length - 1] === tab;
   }
 
   public static createEmpty(): TabsLayoutManager {

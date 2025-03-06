@@ -3,7 +3,6 @@ import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { getRulesPermissions } from '../utils/access-control';
-import { getDatasourceAPIUid } from '../utils/datasource';
 import { isGrafanaRulerRule } from '../utils/rules';
 
 import { useFolder } from './useFolder';
@@ -13,17 +12,33 @@ interface ResultBag {
   isEditable?: boolean;
   isRemovable?: boolean;
   loading: boolean;
+  error?: unknown;
 }
 
 export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO): ResultBag {
-  const { currentData: dsFeatures, isLoading } = featureDiscoveryApi.endpoints.discoverDsFeatures.useQuery({
-    uid: getDatasourceAPIUid(rulesSourceName),
+  const {
+    currentData: dsFeatures,
+    isLoading,
+    error,
+  } = featureDiscoveryApi.endpoints.discoverDsFeatures.useQuery({
+    rulesSourceName,
   });
 
   const folderUID = rule && isGrafanaRulerRule(rule) ? rule.grafana_alert.namespace_uid : undefined;
 
   const rulePermission = getRulesPermissions(rulesSourceName);
   const { folder, loading } = useFolder(folderUID);
+
+  // handle discovery and data source errors
+  if (error) {
+    return {
+      isEditable: false,
+      isRemovable: false,
+      loading: false,
+      isRulerAvailable: false,
+      error,
+    };
+  }
 
   if (!rule) {
     return { isEditable: false, isRemovable: false, loading: false };

@@ -286,16 +286,16 @@ type ResourceRepositoryInfo struct {
 
 type ResourceURLs struct {
 	// A URL pointing to the this file in the repository
-	Source string `json:"source,omitempty"`
+	SourceURL string `json:"source_url,omitempty"`
 
 	// A URL pointing to the repository this lives in
-	Repository string `json:"repository,omitempty"`
+	RepositoryURL string `json:"repository_url,omitempty"`
 
 	// A URL that will create a new pull requeset for this branch
-	NewPullRequest string `json:"newPullRequest,omitempty"`
+	NewPullRequestURL string `json:"newPullRequest_url,omitempty"`
 
 	// Compare this version to the target branch
-	Compare string `json:"compare,omitempty"`
+	CompareURL string `json:"compare_url,omitempty"`
 }
 
 // Information we can get just from the file listing

@@ -723,15 +723,15 @@ func (r *githubRepository) ResourceURLs(ctx context.Context, file *FileInfo) (*p
 	}
 
 	urls := &provisioning.ResourceURLs{
-		Repository: cfg.URL,
-		Source:     fmt.Sprintf("%s/blob/%s/%s", cfg.URL, ref, file.Path),
+		RepositoryURL: cfg.URL,
+		SourceURL:     fmt.Sprintf("%s/blob/%s/%s", cfg.URL, ref, file.Path),
 	}
 
 	if ref != cfg.Branch {
-		urls.Compare = fmt.Sprintf("%s/compare/%s...%s", cfg.URL, cfg.Branch, ref)
+		urls.CompareURL = fmt.Sprintf("%s/compare/%s...%s", cfg.URL, cfg.Branch, ref)
 
 		// Create a new pull request
-		urls.NewPullRequest = fmt.Sprintf("%s?quick_pull=1&labels=grafana", urls.Compare)
+		urls.NewPullRequestURL = fmt.Sprintf("%s?quick_pull=1&labels=grafana", urls.CompareURL)
 	}
 
 	return urls, nil
