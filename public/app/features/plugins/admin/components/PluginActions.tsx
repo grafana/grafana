@@ -1,14 +1,20 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, PluginErrorCode } from '@grafana/data';
 import { Icon, Stack, useStyles2 } from '@grafana/ui';
 
 import { GetStartedWithPlugin } from '../components/GetStartedWithPlugin';
 import { InstallControlsButton } from '../components/InstallControls';
-import { getLatestCompatibleVersion, hasInstallControlWarning, isInstallControlsEnabled } from '../helpers';
+import {
+  getLatestCompatibleVersion,
+  hasInstallControlWarning,
+  isDisabledAngularPlugin,
+  isInstallControlsEnabled,
+  isNonAngularVersion,
+} from '../helpers';
 import { useIsRemotePluginsAvailable } from '../state/hooks';
-import { CatalogPlugin, PluginStatus } from '../types';
+import { CatalogPlugin, PluginStatus, Version } from '../types';
 
 interface Props {
   plugin?: CatalogPlugin;
@@ -25,13 +31,8 @@ export const PluginActions = ({ plugin }: Props) => {
   }
 
   const hasInstallWarning = hasInstallControlWarning(plugin, isRemotePluginsAvailable, latestCompatibleVersion);
-  const pluginStatus = plugin.isInstalled
-    ? plugin.hasUpdate
-      ? PluginStatus.UPDATE
-      : PluginStatus.UNINSTALL
-    : PluginStatus.INSTALL;
-  const isInstallControlsDisabled =
-    plugin.isCore || plugin.isDisabled || plugin.isProvisioned || !isInstallControlsEnabled();
+  const pluginStatus = getPluginStatus(plugin, latestCompatibleVersion);
+  const isInstallControlsDisabled = getInstallControlsDisabled(plugin, latestCompatibleVersion);
 
   return (
     <Stack direction="column">
@@ -64,3 +65,41 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+
+function getAngularPluginStatus(plugin: CatalogPlugin, latestCompatibleVersion: Version | undefined): PluginStatus {
+  if (!plugin.isInstalled) {
+    return PluginStatus.INSTALL;
+  }
+
+  if (isNonAngularVersion(latestCompatibleVersion)) {
+    return PluginStatus.UPDATE;
+  }
+
+  return PluginStatus.UNINSTALL;
+}
+
+function getPluginStatus(plugin: CatalogPlugin, latestCompatibleVersion: Version | undefined) {
+  if (plugin.error === PluginErrorCode.angular) {
+    return getAngularPluginStatus(plugin, latestCompatibleVersion);
+  }
+
+  if (!plugin.isInstalled) {
+    return PluginStatus.INSTALL;
+  }
+
+  if (plugin.hasUpdate) {
+    return PluginStatus.UPDATE;
+  }
+
+  return PluginStatus.UNINSTALL;
+}
+
+function getInstallControlsDisabled(plugin: CatalogPlugin, latestCompatibleVersion: Version | undefined) {
+  if (isDisabledAngularPlugin(plugin) && isNonAngularVersion(latestCompatibleVersion)) {
+    return false;
+  }
+
+  return plugin.isCore || plugin.isDisabled || plugin.isProvisioned || !isInstallControlsEnabled();
+}
+
+export { getPluginStatus, getInstallControlsDisabled };
