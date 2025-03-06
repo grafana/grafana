@@ -4,6 +4,7 @@ import { PROVISIONING_URL } from './constants';
 import { SyncRepository } from './SyncRepository';
 import { getRemoteURL } from './utils/git';
 import { StatusBadge } from './StatusBadge';
+import { DeleteRepositoryButton } from './DeleteRepositoryButton';
 
 interface RepositoryActionsProps {
   repository: Repository;
@@ -46,6 +47,7 @@ export function RepositoryActions({
       <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`}>
         Settings
       </LinkButton>
+      <DeleteRepositoryButton name={name} />
     </Stack>
   );
 }
