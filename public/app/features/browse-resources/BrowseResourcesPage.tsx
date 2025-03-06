@@ -63,8 +63,9 @@ const FoldersPage: React.FC = () => {
 
   const styles = useStyles2(getStyles);
 
+  const defaultNavModel = useNavModel('finder');
   const location = useLocation();
-  const [navModel, setNavModel] = useState(useNavModel('finder'));
+  const [navModel, setNavModel] = useState(defaultNavModel);
 
   const columnStyles = useStyles2(getColumnStyles);
 
@@ -84,12 +85,12 @@ const FoldersPage: React.FC = () => {
   };
 
   useEffect(() => {
-    buildNavModel(navModel, location.pathname, searcher).then((updatedNavModel) => {
+    buildNavModel(defaultNavModel, location.pathname, searcher).then((updatedNavModel) => {
     if (updatedNavModel !== null) {
       setNavModel(updatedNavModel as NavModel);
     }
     });
-  }, [location.pathname]);
+  }, [location.pathname, defaultNavModel]);
 
   useEffect(() => {
     const loadData = async () => {
