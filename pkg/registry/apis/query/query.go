@@ -191,7 +191,7 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 	case 1:
 		b.log.Debug("executing single query")
 		qdr, err = b.handleQuerySingleDatasource(ctx, req.Requests[0])
-		if alertQueryWithoutExpression(req) {
+		if err == nil && alertQueryWithoutExpression(req) {
 			b.log.Debug("handling alert query without expression")
 			qdr, err = b.convertQueryWithoutExpression(ctx, req.Requests[0], qdr)
 		}
