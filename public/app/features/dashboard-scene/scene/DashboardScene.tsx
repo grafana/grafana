@@ -687,12 +687,26 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     saveModel?: Dashboard | DashboardV2Spec,
     meta?: DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
   ): void {
-    this._serializer.initialSaveModel = sortedDeepCloneWithoutNulls(saveModel);
+    this._serializer.initializeMapping(saveModel);
+    const sortedModel = sortedDeepCloneWithoutNulls(saveModel);
+    this._serializer.initialSaveModel = sortedModel;
     this._serializer.metadata = meta;
   }
 
   public getTrackingInformation() {
     return this._serializer.getTrackingInformation(this);
+  }
+
+  public getPanelIdForElement(elementId: string) {
+    return this._serializer.getPanelIdForElement(elementId);
+  }
+
+  public getElementPanelMapping() {
+    return this._serializer.getElementPanelMapping();
+  }
+
+  public getElementIdentifierForPanel(panelId: number) {
+    return this._serializer.getElementIdForPanel(panelId);
   }
 
   public async onDashboardDelete() {

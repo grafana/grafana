@@ -15,6 +15,7 @@ import { DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
 import { getRawDashboardChanges, getRawDashboardV2Changes } from '../saving/getDashboardChanges';
 import { DashboardChangeInfo } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
+import { getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
@@ -25,6 +26,7 @@ export interface DashboardSceneSerializerLike<T, M> {
    */
   initialSaveModel?: T;
   metadata?: M;
+  initializeMapping(saveModel: T | undefined): void;
   getSaveModel: (s: DashboardScene) => T;
   getSaveAsModel: (s: DashboardScene, options: SaveDashboardAsOptions) => T;
   getDashboardChangesFromScene: (
@@ -38,6 +40,9 @@ export interface DashboardSceneSerializerLike<T, M> {
   onSaveComplete(saveModel: T, result: SaveDashboardResponseDTO): void;
   getTrackingInformation: (s: DashboardScene) => DashboardTrackingInfo | undefined;
   getSnapshotUrl: () => string | undefined;
+  getPanelIdForElement: (elementId: string) => number | undefined;
+  getElementIdForPanel: (panelId: number) => string | undefined;
+  getElementPanelMapping: () => Map<string, number>;
 }
 
 interface DashboardTrackingInfo {
@@ -52,6 +57,44 @@ interface DashboardTrackingInfo {
 export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashboard, DashboardMeta> {
   initialSaveModel?: Dashboard;
   metadata?: DashboardMeta;
+  protected elementPanelMap = new Map<string, number>();
+
+  initializeMapping(saveModel: Dashboard | undefined) {
+    this.elementPanelMap.clear();
+
+    if (!saveModel || !saveModel.panels) {
+      return;
+    }
+    saveModel.panels?.forEach((panel) => {
+      if (panel.id) {
+        const elementKey = getVizPanelKeyForPanelId(panel.id);
+        this.elementPanelMap.set(elementKey, panel.id);
+      }
+    });
+  }
+
+  getElementPanelMapping() {
+    return this.elementPanelMap;
+  }
+
+  getPanelIdForElement(elementId: string) {
+    return this.elementPanelMap.get(elementId);
+  }
+
+  getElementIdForPanel(panelId: number) {
+    // First try to find an existing mapping
+    for (const [elementId, id] of this.elementPanelMap.entries()) {
+      if (id === panelId) {
+        return elementId;
+      }
+    }
+
+    // For runtime-created panels, generate a new element identifier
+    const newElementId = getVizPanelKeyForPanelId(panelId);
+    // Store the new mapping for future lookups
+    this.elementPanelMap.set(newElementId, panelId);
+    return newElementId;
+  }
 
   getSaveModel(s: DashboardScene) {
     return transformSceneToSaveModel(s);
@@ -131,6 +174,46 @@ export class V2DashboardSerializer
 {
   initialSaveModel?: DashboardV2Spec;
   metadata?: DashboardWithAccessInfo<DashboardV2Spec>['metadata'];
+  protected elementPanelMap = new Map<string, number>();
+
+  getElementPanelMapping() {
+    return this.elementPanelMap;
+  }
+
+  initializeMapping(saveModel: DashboardV2Spec | undefined) {
+    this.elementPanelMap.clear();
+
+    if (!saveModel || !saveModel.elements) {
+      return;
+    }
+
+    const elementKeys = Object.keys(saveModel.elements);
+    elementKeys.forEach((key) => {
+      const elementPanel = saveModel.elements[key];
+      if (elementPanel.kind === 'Panel') {
+        this.elementPanelMap.set(key, elementPanel.spec.id);
+      }
+    });
+  }
+
+  getPanelIdForElement(elementId: string) {
+    return this.elementPanelMap.get(elementId);
+  }
+
+  getElementIdForPanel(panelId: number) {
+    // First try to find an existing mapping
+    for (const [elementId, id] of this.elementPanelMap.entries()) {
+      if (id === panelId) {
+        return elementId;
+      }
+    }
+
+    // For runtime-created panels, generate a new element identifier
+    const newElementId = getVizPanelKeyForPanelId(panelId);
+    // Store the new mapping for future lookups
+    this.elementPanelMap.set(newElementId, panelId);
+    return newElementId;
+  }
 
   getSaveModel(s: DashboardScene) {
     return transformSceneToSaveModelSchemaV2(s);
