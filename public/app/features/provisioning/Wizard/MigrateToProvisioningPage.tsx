@@ -18,10 +18,6 @@ export default function MigrateToProvisioningPage() {
     if (settingsQuery.isSuccess && !configChecked.current) {
       configChecked.current = true;
       if (settingsQuery.data) {
-        // Do not run the migration wizard if you are already using unified storage
-        if (!Boolean(settingsQuery.data.legacyStorage)) {
-          navigate(PROVISIONING_URL);
-        }
         // Do not run the migration wizard if something is already targeting the instance
         if (settingsQuery.data.items.find((v) => v.target === 'instance')) {
           navigate(PROVISIONING_URL);

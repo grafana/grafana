@@ -3,7 +3,6 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -53,10 +52,6 @@ func (c *migrateConnector) Connect(
 	repo, err := c.repoGetter.GetHealthyRepository(ctx, name)
 	if err != nil {
 		return nil, err
-	}
-
-	if !dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, c.dual) {
-		return nil, fmt.Errorf("this instance is already reading from unified storage")
 	}
 
 	cfg := repo.Config()
