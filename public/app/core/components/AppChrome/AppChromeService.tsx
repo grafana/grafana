@@ -37,11 +37,6 @@ export class AppChromeService {
   private currentRoute?: RouteDescriptor;
   private routeChangeHandled = true;
 
-  private megaMenuDocked = Boolean(
-    window.innerWidth >= config.theme2.breakpoints.values.xl &&
-      store.getBool(DOCKED_LOCAL_STORAGE_KEY, Boolean(window.innerWidth >= config.theme2.breakpoints.values.xxl))
-  );
-
   private sessionStorageData = window.sessionStorage.getItem('returnToPrevious');
   private returnToPreviousData = this.sessionStorageData ? JSON.parse(this.sessionStorageData) : undefined;
 
@@ -49,8 +44,8 @@ export class AppChromeService {
     chromeless: true, // start out hidden to not flash it on pages without chrome
     sectionNav: { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } },
     searchBarHidden: store.getBool(this.searchBarStorageKey, false),
-    megaMenuOpen: this.megaMenuDocked && store.getBool(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, true),
-    megaMenuDocked: this.megaMenuDocked,
+    megaMenuOpen: false,
+    megaMenuDocked: false,
     kioskMode: null,
     layout: PageLayoutType.Canvas,
     returnToPrevious: this.returnToPreviousData,
