@@ -38,7 +38,7 @@ This endpoint is deprecated.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#authentication-api" >}}) for an explanation.
+See note in the [introduction](#authentication-api) for an explanation.
 
 | Action         | Scope       |
 | -------------- | ----------- |
@@ -110,7 +110,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#authentication-api" >}}) for an explanation.
+See note in the [introduction](#authentication-api) for an explanation.
 
 | Action           | Scope      |
 | ---------------- | ---------- |

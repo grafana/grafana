@@ -43,7 +43,7 @@ Checks if a valid license is available.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#enterprise-license-api" >}}) for an explanation.
+See note in the [introduction](#enterprise-license-api) for an explanation.
 
 | Action         | Scope |
 | -------------- | ----- |
@@ -85,7 +85,7 @@ Applies a license to a Grafana instance.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#enterprise-license-api" >}}) for an explanation.
+See note in the [introduction](#enterprise-license-api) for an explanation.
 
 | Action          | Scope |
 | --------------- | ----- |
@@ -147,7 +147,7 @@ Manually ask license issuer for a new token.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#enterprise-license-api" >}}) for an explanation.
+See note in the [introduction](#enterprise-license-api) for an explanation.
 
 | Action          | Scope |
 | --------------- | ----- |
@@ -208,7 +208,7 @@ Removes the license stored in the Grafana database.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#enterprise-license-api" >}}) for an explanation.
+See note in the [introduction](#enterprise-license-api) for an explanation.
 
 | Action           | Scope |
 | ---------------- | ----- |

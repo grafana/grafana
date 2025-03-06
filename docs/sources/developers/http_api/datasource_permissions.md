@@ -39,7 +39,7 @@ Gets all existing permissions for the data source with the given `uid`.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
+See note in the [introduction](#data-source-permissions-api) for an explanation.
 
 | Action                       | Scope                                                                                      |
 | ---------------------------- | ------------------------------------------------------------------------------------------ |
@@ -134,7 +134,7 @@ To remove a permission, set the `permission` field to an empty string.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
+See note in the [introduction](#data-source-permissions-api) for an explanation.
 
 | Action                        | Scope                                                                                      |
 | ----------------------------- | ------------------------------------------------------------------------------------------ |
@@ -206,7 +206,7 @@ To remove a permission, set the `permission` field to an empty string.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
+See note in the [introduction](#data-source-permissions-api) for an explanation.
 
 | Action                        | Scope                                                                                      |
 | ----------------------------- | ------------------------------------------------------------------------------------------ |
@@ -280,7 +280,7 @@ To remove a permission, set the `permission` field to an empty string.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
+See note in the [introduction](#data-source-permissions-api) for an explanation.
 
 | Action                        | Scope                                                                                      |
 | ----------------------------- | ------------------------------------------------------------------------------------------ |

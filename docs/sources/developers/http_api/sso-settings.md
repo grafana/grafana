@@ -45,7 +45,7 @@ The providers or SSO keys that are not managed by this API are retrieved from th
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#sso-settings" >}}) for an explanation.
+See note in the [introduction](#sso-settings) for an explanation.
 
 | Action          | Scope                        |
 | --------------- | ---------------------------- |
@@ -112,7 +112,7 @@ The SSO keys that are not managed by this API are retrieved from the other sourc
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#sso-settings" >}}) for an explanation.
+See note in the [introduction](#sso-settings) for an explanation.
 
 | Action          | Scope                        |
 | --------------- | ---------------------------- |
@@ -175,7 +175,7 @@ to wait a few minutes for the configuration to propagate to all Grafana instance
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#sso-settings" >}}) for an explanation.
+See note in the [introduction](#sso-settings) for an explanation.
 
 | Action           | Scope                        |
 | ---------------- | ---------------------------- |
@@ -222,7 +222,7 @@ Deletes an existing SSO Settings entry for a provider.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#sso-settings" >}}) for an explanation.
+See note in the [introduction](#sso-settings) for an explanation.
 
 | Action           | Scope                        |
 | ---------------- | ---------------------------- |
