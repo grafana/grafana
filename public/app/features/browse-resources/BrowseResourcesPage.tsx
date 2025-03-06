@@ -22,11 +22,12 @@ import { Page } from 'app/core/components/Page/Page';
 import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 
-import { GrafanaSearcher } from '../search/service/types';
+import { GrafanaSearcher, SearchQuery } from '../search/service/types';
 import { SearchHit, UnifiedSearcher } from '../search/service/unified';
 import { getColumnStyles } from '../search/page/components/SearchResultsTable';
 import kbn from 'app/core/utils/kbn';
-
+import { useLocation } from 'react-router-dom-v5-compat';
+import { iconItem } from '../canvas/elements/icon';
 interface Resource extends SearchHit {
   isExpanded?: boolean;
   owner?: string;
@@ -62,7 +63,8 @@ const FoldersPage: React.FC = () => {
   
   const styles = useStyles2(getStyles);
 
-  const navModel = useNavModel('finder');
+  const location = useLocation();
+  const [navModel, setNavModel] = useState(useNavModel('finder'));
 
   const columnStyles = useStyles2(getColumnStyles);
 
@@ -82,12 +84,67 @@ const FoldersPage: React.FC = () => {
   };
 
   useEffect(() => {
+    const fetchFolderName = async (folderId: string) => {
+      const folder = await searcher.fetchResults({ kind: ['folder'], uid: [folderId] });
+      return folder.hits[0].title;
+    };
+    const buildNavModel = async () => {
+      if (!location.pathname.endsWith('finder')) {
+        // TODO: handle multiple levels of folders
+        const parts = location.pathname.split('/');
+        const folderId = parts[parts.length - 1];
+        const folderName = await fetchFolderName(folderId);
+        const navModelWithChildren = {
+          ...navModel,
+          main: {
+            ...navModel.main,
+            active: false,
+            children: [
+              // TODO: first child is ignored for some reason, so add a dummy child
+              { text: folderName, icon: 'folder'},
+              {
+                text: folderName,
+                url: '/foo',
+                icon: 'folder',
+                active: true,
+              },
+            ],
+          },
+          node: {
+            ...navModel.node,
+            active: false,
+            children: [
+              // TODO: first child is ignored for some reason
+              { text: folderName, icon: 'folder' },
+              {
+                text: folderName,
+                url: '/foo',
+                icon: 'folder',
+                active: true,
+              },
+            ],
+          },
+        };
+        // @ts-ignore
+        setNavModel(navModelWithChildren);
+      }
+    };
+    buildNavModel()
+  }, [location.pathname]);
+
+  useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
       const kinds = selectedTypes.map((t) => t.value!.toString());
+      let query: SearchQuery = { kind: kinds, tags: selectedTags, query: searchTerm }
+      if (!location.pathname.endsWith('finder')) {
+        const parts = location.pathname.split('/');
+        const folderId = parts[parts.length - 1];
+        query = {...query, location: folderId}
+      }
       try {
         const results = await Promise.all([
-          searcher.fetchResults({ kind: kinds, tags: selectedTags, query: searchTerm }),
+          searcher.fetchResults(query),
           searcher.tags({ kind: kinds })
         ]);
         setResources(results[0].hits);
@@ -99,7 +156,7 @@ const FoldersPage: React.FC = () => {
       }
     };
     void loadData();
-  }, [selectedTypes, selectedTags, searchTerm]);
+  }, [selectedTypes, selectedTags, searchTerm, location.pathname]);
 
   const getIconForResource = (resource: string) => {
     switch (resource) {
@@ -127,8 +184,7 @@ const FoldersPage: React.FC = () => {
 
   function toURL(resource: string, name: string, title: string): string {
     if (resource.startsWith('folder')) {
-      // TODO: where do we open folders?
-      return `/dashboards/f/${name}`;
+      return `/finder/${name}`;
     }
     if (resource.startsWith('playlist')) {
       return `/playlists/play/${name}`;
@@ -295,4 +351,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 export default FoldersPage;
-
