@@ -580,3 +580,21 @@ RENDERING_VIEWPORT_PAGE_ZOOM_LEVEL=1
   }
 }
 ```
+
+#### Tracing
+
+Enable OpenTelemetry Tracing by setting the tracing URL. Default is empty (disabled).
+
+```bash
+RENDERING_TRACING_URL="http://localhost:4318/v1/traces"
+```
+
+```json
+{
+  "rendering": {
+    "tracing": {
+      "url": "http://localhost:4318/v1/traces"
+    }
+  }
+}
+```
