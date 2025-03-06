@@ -39,6 +39,10 @@ func (ss *FolderStoreImpl) Create(ctx context.Context, cmd folder.CreateFolderCo
 		return nil, folder.ErrBadRequest.Errorf("missing UID")
 	}
 
+	if cmd.UID == cmd.ParentUID {
+		return nil, folder.ErrFolderCannotBeParentOfItself
+	}
+
 	var foldr *folder.Folder
 	/*
 		version := 1

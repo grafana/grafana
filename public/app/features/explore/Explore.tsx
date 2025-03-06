@@ -514,6 +514,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
             dataFrames={dataFrames}
             splitOpenFn={this.onSplitOpen('traceView')}
             scrollElement={this.scrollElement}
+            timeRange={queryResponse.timeRange}
           />
         </ContentOutlineItem>
       )
