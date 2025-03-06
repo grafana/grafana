@@ -60,7 +60,7 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		}
 		// Add the plugins defined in the configuration
 		for _, plugin := range rawInstallPlugins {
-			parts := strings.Split(plugin, "@")
+			parts := strings.SplitN(plugin, "@", 3)
 			id := parts[0]
 			version := ""
 			url := ""
