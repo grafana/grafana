@@ -10,14 +10,6 @@ inputs:
     description: 'Path to the Go coverage file (.cov)'
     required: true
     type: string
-  retention-days:
-    description: 'Number of days to retain artifacts'
-    required: false
-    default: '30'
-  compression-level:
-    description: 'Compression level for artifacts'
-    required: false
-    default: '9'
   codecov-token:
     description: 'Token for CodeCov (required for CodeCov reporting)'
     required: false
@@ -58,17 +50,6 @@ runs:
         else
           echo "No coverage data available" >> $GITHUB_STEP_SUMMARY
         fi
-
-    - name: Upload coverage reports
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ inputs.test-type }}-coverage
-        path: |
-          ${{ inputs.coverage-file }}
-          ${{ inputs.test-type }}-funcs.log
-          ${{ inputs.test-type }}.html
-        retention-days: ${{ inputs.retention-days }}
-        compression-level: ${{ inputs.compression-level }}
 
     - name: Report coverage to CodeCov
       uses: codecov/codecov-action@v5
