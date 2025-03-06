@@ -16,10 +16,10 @@ weight: 60
 # Provisioning RBAC with Grafana
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud).
+Available in [Grafana Enterprise](../../../../introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
 {{% /admonition %}}
 
-You can create, change or remove [Custom roles]({{< relref "./manage-rbac-roles/#create-custom-roles-using-provisioning" >}}) and create or remove [basic role assignments]({{< relref "./assign-rbac-roles/#assign-a-fixed-role-to-a-basic-role-using-provisioning" >}}), by adding one or more YAML configuration files in the `provisioning/access-control/` directory.
+You can create, change or remove [Custom roles](../manage-rbac-roles/#create-custom-roles-using-provisioning) and create or remove [basic role assignments](../assign-rbac-roles/#assign-a-fixed-role-to-a-basic-role-using-provisioning), by adding one or more YAML configuration files in the `provisioning/access-control/` directory.
 
 Grafana performs provisioning during startup. After you make a change to the configuration file, you can reload it during runtime. You do not need to restart the Grafana server for your changes to take effect.
 
@@ -37,13 +37,13 @@ Grafana performs provisioning during startup. After you make a change to the con
 
 1. Add RBAC provisioning details to the configuration file.
 
-   Refer to [Manage RBAC roles]({{< relref "./manage-rbac-roles/" >}}) and [Assign RBAC roles]({{< relref "./assign-rbac-roles/" >}}) for instructions.
+   Refer to [Manage RBAC roles](../manage-rbac-roles/) and [Assign RBAC roles](../assign-rbac-roles/) for instructions.
 
-   Refer to [example role provisioning file]({{< relref "#example-role-configuration-file-using-grafana-provisioning" >}}) for a complete example of a provisioning file.
+   Refer to [example role provisioning file](#example-role-configuration-file-using-grafana-provisioning) for a complete example of a provisioning file.
 
 1. Reload the provisioning configuration file.
 
-   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../../../developers/http_api/admin/#reload-provisioning-configurations" >}}).
+   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations](../../../../developers/http_api/admin/#reload-provisioning-configurations).
 
 ## Example role configuration file using Grafana provisioning
 
@@ -130,6 +130,6 @@ teams:
 
 ## Useful Links
 
-[Provisioning RBAC setup with Terraform]({{< relref "./rbac-terraform-provisioning">}})
+[Provisioning RBAC setup with Terraform](../rbac-terraform-provisioning/)
 
 [Grafana provisioning](https://grafana.com/docs/grafana/latest/administration/provisioning/)
