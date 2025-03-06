@@ -208,14 +208,6 @@ ${transformationDocsContent[transformationName].getHelperDocs(ImageRenderType.Sh
   return content;
 }
 
-export function buildMarkdownContent(): void {
-  // Build the path to the Markdown file.
-  const indexPath = resolve(__dirname, '../../' + WRITE_PATH);
-
-  // Write content to the Markdown file.
-  writeFileSync(indexPath, completeTemplate, 'utf-8');
-}
-
 export function getMarkdownContent(): string {
   const rootDir = resolve(__dirname, '../../');
   const pathToMarkdown = resolve(rootDir, WRITE_PATH);
@@ -225,3 +217,9 @@ export function getMarkdownContent(): string {
 export function getJavaScriptContent(): string {
   return completeTemplate;
 }
+
+// Build the path to the Markdown file.
+const indexPath = resolve(__dirname, '../../' + WRITE_PATH);
+
+// Write content to the Markdown file.
+writeFileSync(indexPath, completeTemplate, 'utf-8');
