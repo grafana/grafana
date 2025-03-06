@@ -141,7 +141,7 @@ export const getIntrinsicTags = (scopes: Scope[]) => {
       .flat()
   );
   // Add the default intrinsic tags to the list of tags.
-  // This is needed because the /api/v2/search/tags API 
+  // This is needed because the /api/v2/search/tags API
   // may not always return all the default intrinsic tags
   // but generally has the most up to date list.
   tags = uniq(tags.concat(intrinsics));

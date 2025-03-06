@@ -108,7 +108,9 @@ describe('Language_provider', () => {
     it('for API v2 tags', async () => {
       const lp = setup(undefined, v2Tags);
       const tags = lp.getAutocompleteTags();
-      expect(tags).toEqual(uniq(['cluster', 'container', 'db', 'duration', 'kind', 'name', 'status'].concat(intrinsics)));
+      expect(tags).toEqual(
+        uniq(['cluster', 'container', 'db', 'duration', 'kind', 'name', 'status'].concat(intrinsics))
+      );
     });
   });
 
