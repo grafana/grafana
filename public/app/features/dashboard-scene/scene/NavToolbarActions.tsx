@@ -20,7 +20,6 @@ import {
 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
-import grafanaConfig from 'app/core/config';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
@@ -38,6 +37,7 @@ import { isLibraryPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
+import ManagedDashboardNavBarBadge from './ManagedDashboardNavBarBadge';
 
 interface Props {
   dashboard: DashboardScene;
@@ -70,7 +70,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const isViewingPanel = Boolean(viewPanelScene);
   const isEditedPanelDirty = usePanelEditDirty(editPanel);
   const isEditingLibraryPanel = editPanel && isLibraryPanel(editPanel.state.panelRef.resolve());
-  const isNew = !Boolean(uid);
+  const isNew = !Boolean(uid || dashboard.isManaged());
 
   const hasCopiedPanel = store.exists(LS_PANEL_COPY_KEY);
   // Means we are not in settings view, fullscreen panel or edit panel
@@ -78,11 +78,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
   const showScopesSelector = config.featureToggles.scopeFilters && !isEditing;
   const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
-
-  // Internal only;
-  // allows viewer editing without ability to save
-  // used for grafana play
-  const canEdit = grafanaConfig.viewersCanEdit;
+  const isManaged = Boolean(dashboard.isManaged());
 
   if (!isEditingPanel) {
     // This adds the presence indicators in enterprise
@@ -127,6 +123,16 @@ export function ToolbarActions({ dashboard }: Props) {
             data-testid={selectors.pages.Dashboard.DashNav.publicDashboardTag}
           />
         );
+      },
+    });
+  }
+
+  if (isManaged && meta.canEdit) {
+    toolbarActions.push({
+      group: 'icon-actions',
+      condition: true,
+      render: () => {
+        return <ManagedDashboardNavBarBadge meta={meta} />;
       },
     });
   }
@@ -360,7 +366,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: !isEditing && (dashboard.canEditDashboard() || canEdit) && !isViewingPanel && !isPlaying && editable,
+    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isPlaying && editable,
     render: () => (
       <Button
         onClick={() => {
@@ -554,7 +560,7 @@ export function ToolbarActions({ dashboard }: Props) {
       }
 
       // If we only can save as copy
-      if (canSaveAs && !meta.canSave && !meta.canMakeEditable) {
+      if (canSaveAs && !meta.canSave && !meta.canMakeEditable && !isManaged) {
         return (
           <Button
             onClick={() => {
