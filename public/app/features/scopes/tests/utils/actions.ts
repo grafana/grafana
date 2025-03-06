@@ -5,16 +5,8 @@ import { MultiValueVariable, sceneGraph, VariableValue } from '@grafana/scenes';
 import { defaultTimeZone, TimeZone } from '@grafana/schema';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { scopesSelectorScene } from '../../instance';
+import { ScopesService } from '../../ScopesService';
 
-import {
-  dashboardReloadSpy,
-  fetchDashboardsSpy,
-  fetchNodesSpy,
-  fetchScopeSpy,
-  fetchSelectedScopesSpy,
-  getMock,
-} from './mocks';
 import {
   getDashboardFolderExpand,
   getDashboardsExpand,
@@ -37,30 +29,13 @@ import {
   getTreeSearch,
 } from './selectors';
 
-export const clearMocks = () => {
-  fetchNodesSpy.mockClear();
-  fetchScopeSpy.mockClear();
-  fetchSelectedScopesSpy.mockClear();
-  fetchDashboardsSpy.mockClear();
-  dashboardReloadSpy.mockClear();
-  getMock.mockClear();
-};
-
 const click = async (selector: () => HTMLElement) => act(() => fireEvent.click(selector()));
 const type = async (selector: () => HTMLInputElement, value: string) => {
   await act(() => fireEvent.input(selector(), { target: { value } }));
   await jest.runOnlyPendingTimersAsync();
 };
 
-export const updateScopes = async (scopes: string[]) =>
-  act(async () =>
-    scopesSelectorScene?.updateScopes(
-      scopes.map((scopeName) => ({
-        scopeName,
-        path: [],
-      }))
-    )
-  );
+export const updateScopes = async (scopes: string[]) => act(async () => ScopesService.instance?.changeScopes(scopes));
 export const openSelector = async () => click(getSelectorInput);
 export const applyScopes = async () => {
   await click(getSelectorApply);

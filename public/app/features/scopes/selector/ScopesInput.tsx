@@ -10,26 +10,19 @@ import { NodesMap, SelectedScope } from './types';
 export interface ScopesInputProps {
   nodes: NodesMap;
   scopes: SelectedScope[];
-  isDisabled: boolean;
-  isLoading: boolean;
+  disabled: boolean;
+  loading: boolean;
   onInputClick: () => void;
   onRemoveAllClick: () => void;
 }
 
-export function ScopesInput({
-  nodes,
-  scopes,
-  isDisabled,
-  isLoading,
-  onInputClick,
-  onRemoveAllClick,
-}: ScopesInputProps) {
+export function ScopesInput({ nodes, scopes, disabled, loading, onInputClick, onRemoveAllClick }: ScopesInputProps) {
   const styles = useStyles2(getStyles);
 
-  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+  const [tooltipVisible, setTooltipVisible] = useState(false);
 
   useEffect(() => {
-    setIsTooltipVisible(false);
+    setTooltipVisible(false);
   }, [scopes]);
 
   const scopesPaths = useMemo(() => {
@@ -82,13 +75,13 @@ export function ScopesInput({
       <Input
         readOnly
         placeholder={t('scopes.selector.input.placeholder', 'Select scopes...')}
-        disabled={isDisabled}
-        loading={isLoading}
+        disabled={disabled}
+        loading={loading}
         value={scopesTitles}
         aria-label={t('scopes.selector.input.placeholder', 'Select scopes...')}
         data-testid="scopes-selector-input"
         suffix={
-          scopes.length > 0 && !isDisabled ? (
+          scopes.length > 0 && !disabled ? (
             <IconButton
               aria-label={t('scopes.selector.input.removeAll', 'Remove all scopes')}
               name="times"
@@ -96,20 +89,20 @@ export function ScopesInput({
             />
           ) : undefined
         }
-        onMouseOver={() => setIsTooltipVisible(true)}
-        onMouseOut={() => setIsTooltipVisible(false)}
+        onMouseOver={() => setTooltipVisible(true)}
+        onMouseOut={() => setTooltipVisible(false)}
         onClick={() => {
-          if (!isDisabled) {
+          if (!disabled) {
             onInputClick();
           }
         }}
       />
     ),
-    [isDisabled, isLoading, onInputClick, onRemoveAllClick, scopes, scopesTitles]
+    [disabled, loading, onInputClick, onRemoveAllClick, scopes, scopesTitles]
   );
 
   return (
-    <Tooltip content={scopesPaths} show={scopes.length === 0 ? false : isTooltipVisible}>
+    <Tooltip content={scopesPaths} show={scopes.length === 0 ? false : tooltipVisible}>
       {input}
     </Tooltip>
   );

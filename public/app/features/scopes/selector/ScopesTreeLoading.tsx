@@ -7,13 +7,13 @@ import { useStyles2 } from '@grafana/ui';
 
 export interface ScopesTreeLoadingProps {
   children: ReactNode;
-  isNodeLoading: boolean;
+  nodeLoading: boolean;
 }
 
-export function ScopesTreeLoading({ children, isNodeLoading }: ScopesTreeLoadingProps) {
+export function ScopesTreeLoading({ children, nodeLoading }: ScopesTreeLoadingProps) {
   const styles = useStyles2(getStyles);
 
-  if (isNodeLoading) {
+  if (nodeLoading) {
     return <Skeleton count={5} className={styles.loader} />;
   }
 
