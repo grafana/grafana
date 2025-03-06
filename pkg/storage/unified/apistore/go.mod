@@ -7,7 +7,7 @@ require (
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240821155123-6891eb1d35da
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20240821155123-6891eb1d35da
 	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20240821161612-71f0dae39e9d
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	gocloud.dev v0.39.0
 	google.golang.org/grpc v1.66.0
 	k8s.io/apimachinery v0.31.1
@@ -25,6 +25,7 @@ require (
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
+	github.com/elazarl/goproxy v1.7.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fullstorydev/grpchan v1.1.1 // indirect
