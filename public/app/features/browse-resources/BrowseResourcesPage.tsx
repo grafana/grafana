@@ -15,6 +15,7 @@ import {
   useStyles2,
   FilterInput,
   TagList,
+  Link,
 } from '@grafana/ui';
 import { getAPINamespace } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
@@ -24,6 +25,7 @@ import { useNavModel } from 'app/core/hooks/useNavModel';
 import { GrafanaSearcher } from '../search/service/types';
 import { SearchHit, UnifiedSearcher } from '../search/service/unified';
 import { getColumnStyles } from '../search/page/components/SearchResultsTable';
+import kbn from 'app/core/utils/kbn';
 
 interface Resource extends SearchHit {
   isExpanded?: boolean;
@@ -123,9 +125,27 @@ const FoldersPage: React.FC = () => {
   //   );
   // };
 
-  const renderTable = (resources: SearchHit[]) => {
-    // makeTagsColumn(response, access.tags, availableWidth, styles, onTagSelected))
+  function toURL(resource: string, name: string, title: string): string {
+    if (resource.startsWith('folder')) {
+      // TODO: where do we open folders?
+      return `/dashboards/f/${name}`;
+    }
+    if (resource.startsWith('playlist')) {
+      return `/playlists/play/${name}`;
+    }
+    if (resource.startsWith('alert')) {
+      return `/alerting/grafana/${name}`;
+    }
+    if (resource.startsWith('slo')) {
+      return `/d/grafana_slo_app-${name}`;
+    }
+    const slug = kbn.slugifyForUrl(title);
+    return `/d/${name}/${slug}`;
+  }
+  
+  const onResourceLinkClicked = () => {}
 
+  const renderTable = (resources: SearchHit[]) => {
     const columns: Array<Column<Resource>> = 
       [
           {
@@ -133,7 +153,14 @@ const FoldersPage: React.FC = () => {
             header: 'Name',
             cell: ({ row: { original } }) => (
               <div style={{ marginLeft: original.level ? original.level * 20 : 0 }}>
+                <Link
+                  aria-label={`open-${original.title}`}
+                  href={toURL(original.resource, original.name, original.title)}
+                  className="external-link"
+                  onClick={onResourceLinkClicked}
+                >
                 {original.title}
+                </Link>
               </div>
             ),
           },
