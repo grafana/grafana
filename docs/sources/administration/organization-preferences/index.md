@@ -20,9 +20,9 @@ Grafana preferences are basic settings. They control the Grafana UI theme, home 
 
 Preferences are sometimes confusing because they can be set at four different levels, listed from highest level to lowest:
 
-- **Server -** Affects all users on the Grafana server. Set by a [Grafana server admin]({{< relref "../roles-and-permissions/#grafana-server-administrators" >}}).
-- **Organization -** Affects all users in an organization. Set by an [Organization admin]({{< relref "../roles-and-permissions/#organization-roles" >}}).
-- **Team -** Affects all users assigned to a team. Set by an Organization Admin or Team Admin. To learn more about these roles, refer to [Teams and permissions]({{< relref "../roles-and-permissions/#teams-and-permissions" >}}).
+- **Server -** Affects all users on the Grafana server. Set by a [Grafana server admin](../roles-and-permissions/#grafana-server-administrators).
+- **Organization -** Affects all users in an organization. Set by an [Organization admin](../roles-and-permissions/#organization-roles).
+- **Team -** Affects all users assigned to a team. Set by an Organization Admin or Team Admin. To learn more about these roles, refer to [Teams and permissions](../roles-and-permissions/#teams-and-permissions).
 - **User account -** Affects the individual user. Set by the user on their own account.
 
 The lowest level always takes precedence. For example, if a user sets their theme to **Light**, then their visualization of Grafana displays the light theme. Nothing at any higher level can override that.
@@ -33,7 +33,7 @@ If the user is aware of the change and intended it, then that's great! But if th
 
 In Grafana, you can change your names and emails associated with groups or accounts in the Settings or Preferences. This topic provides instructions for each task.
 
-Some tasks require certain permissions. For more information about roles, refer to [Roles and permissions]({{< relref "../roles-and-permissions/" >}}).
+Some tasks require certain permissions. For more information about roles, refer to [Roles and permissions](../roles-and-permissions/).
 
 ### Change organization name
 
@@ -75,13 +75,13 @@ To change the team name or email, follow these steps:
 
 ### Change user name or email
 
-To learn how to edit your user information, refer to [Edit your profile]({{< relref "../user-management/user-preferences/#edit-your-profile" >}}).
+To learn how to edit your user information, refer to [Edit your profile](../user-management/user-preferences/#edit-your-profile).
 
 ## Change Grafana UI theme
 
 In Grafana, you can modify the UI theme configured in the Settings or Preferences. Set the UI theme for the server, an organization, a team, or your personal user account using the instructions in this topic.
 
-Some tasks require certain permissions. For more information about roles, refer to [Roles and permissions]({{< relref "../roles-and-permissions/" >}}).
+Some tasks require certain permissions. For more information about roles, refer to [Roles and permissions](../roles-and-permissions/).
 
 ### Theme options
 
@@ -105,9 +105,9 @@ Here is an example of the light theme.
 
 ### Change server UI theme
 
-As a Grafana server administrator, you can change the default Grafana UI theme for all users who are on the server by setting the [default_theme]({{< relref "../../setup-grafana/configure-grafana/#default_theme" >}}) option in the Grafana configuration file.
+As a Grafana server administrator, you can change the default Grafana UI theme for all users who are on the server by setting the [default_theme](../../setup-grafana/configure-grafana/#default_theme) option in the Grafana configuration file.
 
-To see what the current settings are, refer to [View server settings]({{< relref "../stats-and-license#view-server-settings" >}}).
+To see what the current settings are, refer to [View server settings](../stats-and-license/#view-server-settings).
 
 ### Change organization UI theme
 
@@ -141,11 +141,11 @@ You can change the UI theme for your user account. This setting overrides UI the
 
 By default, Grafana uses the timezone in your web browser. However, you can override this setting at the server, organization, team, or individual user level. This topic provides instructions for each task.
 
-Some tasks require certain permissions. For more information about roles, refer to [Roles and permissions]({{< relref "../roles-and-permissions/" >}}).
+Some tasks require certain permissions. For more information about roles, refer to [Roles and permissions](../roles-and-permissions/).
 
 ### Set server timezone
 
-Grafana server administrators can choose a default timezone for all users on the server by setting the [default_timezone]({{< relref "../../setup-grafana/configure-grafana/#default_timezone" >}}) option in the Grafana configuration file.
+Grafana server administrators can choose a default timezone for all users on the server by setting the [default_timezone](../../setup-grafana/configure-grafana/#default_timezone) option in the Grafana configuration file.
 
 ### Set organization timezone
 
@@ -179,7 +179,7 @@ You can change the timezone for your user account. This setting overrides timezo
 
 The home dashboard you set is the one all users will see by default when they log in. Click the Grafana icon or **Home** in the breadcrumb to return to it. You can set the home dashboard for the server, an organization, a team, or your personal user account. This topic provides instructions for each task.
 
-Some tasks require certain permissions. For more information about roles, refer to [Roles and permissions]({{< relref "../roles-and-permissions/" >}}).
+Some tasks require certain permissions. For more information about roles, refer to [Roles and permissions](../roles-and-permissions/).
 
 ### Set the home dashboard for the server
 
@@ -194,7 +194,7 @@ Users with the Grafana Server Admin flag on their account or access to the confi
 #### Use a JSON file as the home dashboard
 
 1. Save your JSON file somewhere that Grafana can access it. For example, in the Grafana `data` folder of Grafana.
-1. Update your configuration file to set the path to the JSON file. Refer to [default_home_dashboard_path]({{< relref "../../setup-grafana/configure-grafana/#default_home_dashboard_path" >}}) for more information about modifying the Grafana configuration files.
+1. Update your configuration file to set the path to the JSON file. Refer to [default_home_dashboard_path](../../setup-grafana/configure-grafana/#default_home_dashboard_path) for more information about modifying the Grafana configuration files.
 
 ```ini
 [dashboards]
@@ -244,7 +244,7 @@ You can choose your own personal home dashboard. This setting overrides all home
 
 ### Change server language
 
-Grafana server administrators can change the default Grafana UI language for all users on the server by setting the [default_language]({{< relref "../../setup-grafana/configure-grafana/#default_language" >}}) option in the Grafana configuration file.
+Grafana server administrators can change the default Grafana UI language for all users on the server by setting the [default_language](../../setup-grafana/configure-grafana/#default_language) option in the Grafana configuration file.
 
 ### Change organization language
 

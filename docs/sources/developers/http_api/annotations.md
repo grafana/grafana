@@ -22,7 +22,7 @@ title: Annotations HTTP API
 
 Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annotations can be organization annotations that can be shown on any dashboard by configuring an annotation data source - they are filtered by tags. Or they can be tied to a panel on a dashboard and are then only shown on that panel.
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
 ## Find Annotations
 
@@ -30,7 +30,7 @@ Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annot
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
+See note in the [introduction](#annotations-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action             | Scope                                                                                                                                                        |
@@ -123,7 +123,7 @@ The format for `time` and `timeEnd` should be epoch numbers in millisecond resol
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
+See note in the [introduction](#annotations-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action               | Scope                                                                                                                                                        |
@@ -178,7 +178,7 @@ format (string with multiple tags being separated by a space).
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
+See note in the [introduction](#annotations-api) for an explanation.
 
 | Action               | Scope                           |
 | -------------------- | ------------------------------- |
@@ -219,7 +219,7 @@ Updates all properties of an annotation that matches the specified id. To only u
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
+See note in the [introduction](#annotations-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action              | Scope                                                                                                                                                        |
@@ -265,7 +265,7 @@ This operation currently supports updating of the `text`, `tags`, `time` and `ti
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
+See note in the [introduction](#annotations-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action              | Scope                                                                                                                                                        |
@@ -307,7 +307,7 @@ Deletes the annotation that matches the specified id.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
+See note in the [introduction](#annotations-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action               | Scope                                                                                                                                                        |
@@ -344,7 +344,7 @@ Find all the event tags created in the annotations.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
+See note in the [introduction](#annotations-api) for an explanation.
 
 | Action             | Scope |
 | ------------------ | ----- |

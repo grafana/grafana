@@ -102,7 +102,7 @@ Grafana Alerting now provides the ability to capture an image for Grafana manage
 
 ## Envelope encryption is generally available and enabled by default
 
-Grafana now uses envelope encryption to encrypt secrets in the database. Envelope encryption adds a layer of indirection to the encryption process. Instead of encrypting all secrets in the database with a single key, Grafana uses a set of keys called data encryption keys (DEKs) to encrypt them. These data encryption keys are themselves encrypted with a single key encryption key (KEK). This allows you to rotate your KEK and quickly re-encrypt your DEKs in case a key is compromised. In Grafana Enterprise, you can also store your KEK in an external key management service (KMS) like AWS KMS or Azure Key Vault, for extra security. Learn more about envelope encryption in the [database encryption documentation]({{< relref "../setup-grafana/configure-security/configure-database-encryption#envelope-encryption" >}}).
+Grafana now uses envelope encryption to encrypt secrets in the database. Envelope encryption adds a layer of indirection to the encryption process. Instead of encrypting all secrets in the database with a single key, Grafana uses a set of keys called data encryption keys (DEKs) to encrypt them. These data encryption keys are themselves encrypted with a single key encryption key (KEK). This allows you to rotate your KEK and quickly re-encrypt your DEKs in case a key is compromised. In Grafana Enterprise, you can also store your KEK in an external key management service (KMS) like AWS KMS or Azure Key Vault, for extra security. Learn more about envelope encryption in the [database encryption documentation](../../setup-grafana/configure-security/configure-database-encryption/#envelope-encryption).
 
 {{< figure src="/static/img/docs/enterprise/dashboards/envelope-encryption.png" max-width="750px" caption="Envelope encryption" >}}
 
@@ -177,7 +177,7 @@ Reporting is all about convenience - getting info to eyeballs as quickly as poss
 
 ## Breaking changes
 
-This is a partial list of notable breaking changes. For the complete list, see our [Release Notes]({{< relref "../release-notes/release-notes-9-0-0" >}}).
+This is a partial list of notable breaking changes. For the complete list, see our [Release Notes](../../release-notes/release-notes-9-0-0/).
 
 ### Role-based access control: changes for general release
 
@@ -212,7 +212,7 @@ In the Prometheus data source, when grafana receives numeric data from Prometheu
 
 <!-- ### InfluxDB: Support for browser access mode removed (should this stay??)
 
-In the InfluxDB data source, browser access mode was deprecated in grafana 8.0.0 and we are removing this feature in 9.0.0. If you are using this mode, you need to [switch to server access mode]({{< relref "../datasources/influxdb##influxql-classic-influxdb-query" >}}) on the data source configuration page or you can do this via provisioning. -->
+In the InfluxDB data source, browser access mode was deprecated in grafana 8.0.0 and we are removing this feature in 9.0.0. If you are using this mode, you need to [switch to server access mode](../../datasources/influxdb/##influxql-classic-influxdb-query) on the data source configuration page or you can do this via provisioning. -->
 
 ### Transformations: Allow more complex regex expressions in rename by regex
 
@@ -251,7 +251,7 @@ Therefore, any secret created or updated in Grafana v9.0 won't be decryptable by
 
 We strongly recommend that you enable `envelopeEncryption` for older versions to deploy envelope encryption. You can alternatively configure the `disableEnvelopeEncryption` feature toggle before upgrading to v9.0; however, this feature toggle might be removed in a future Grafana release.
 
-For more details, and workarounds for potential issues, refer to the [documentation]({{< relref "../setup-grafana/configure-security/configure-database-encryption" >}}).
+For more details, and workarounds for potential issues, refer to the [documentation](../../setup-grafana/configure-security/configure-database-encryption/).
 
 ## A note on Grafana Enterprise licensing
 
