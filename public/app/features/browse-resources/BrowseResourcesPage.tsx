@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import React, { useState, useEffect, useMemo } from 'react';
 import { debounce } from 'lodash';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, NavModel, NavModelItem, SelectableValue } from '@grafana/data';
 import {
   EmptyState,
   LoadingPlaceholder,
@@ -27,7 +27,7 @@ import { SearchHit, UnifiedSearcher } from '../search/service/unified';
 import { getColumnStyles } from '../search/page/components/SearchResultsTable';
 import kbn from 'app/core/utils/kbn';
 import { useLocation } from 'react-router-dom-v5-compat';
-import { iconItem } from '../canvas/elements/icon';
+// import { iconItem } from '../canvas/elements/icon';
 interface Resource extends SearchHit {
   isExpanded?: boolean;
   owner?: string;
@@ -84,52 +84,11 @@ const FoldersPage: React.FC = () => {
   };
 
   useEffect(() => {
-    const fetchFolderName = async (folderId: string) => {
-      const folder = await searcher.fetchResults({ kind: ['folder'], uid: [folderId] });
-      return folder.hits[0].title;
-    };
-    const buildNavModel = async () => {
-      if (!location.pathname.endsWith('finder')) {
-        // TODO: handle multiple levels of folders
-        const parts = location.pathname.split('/');
-        const folderId = parts[parts.length - 1];
-        const folderName = await fetchFolderName(folderId);
-        const navModelWithChildren = {
-          ...navModel,
-          main: {
-            ...navModel.main,
-            active: false,
-            children: [
-              // TODO: first child is ignored for some reason, so add a dummy child
-              { text: folderName, icon: 'folder'},
-              {
-                text: folderName,
-                url: '/foo',
-                icon: 'folder',
-                active: true,
-              },
-            ],
-          },
-          node: {
-            ...navModel.node,
-            active: false,
-            children: [
-              // TODO: first child is ignored for some reason
-              { text: folderName, icon: 'folder' },
-              {
-                text: folderName,
-                url: '/foo',
-                icon: 'folder',
-                active: true,
-              },
-            ],
-          },
-        };
-        // @ts-ignore
-        setNavModel(navModelWithChildren);
-      }
-    };
-    buildNavModel()
+    buildNavModel(navModel, location as unknown as Location, searcher).then((updatedNavModel) => {
+    if (updatedNavModel !== null) {
+      setNavModel(updatedNavModel as NavModel);
+    }
+    });
   }, [location.pathname]);
 
   useEffect(() => {
@@ -351,3 +310,95 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 export default FoldersPage;
+
+async function buildNavModel(navModel: NavModel, location: Location, searcher: UnifiedSearcher) {
+  if (!location.pathname.endsWith('finder')) {
+    const parts = location.pathname.split('/');
+    const folderId = parts[parts.length - 1];
+    const path = await fetchPath(folderId, searcher);
+    if (path.length === 0) {
+      return null;
+    }
+
+    let parentNodes = []
+    let node = navModel.node
+    while (true) {
+      if (isPageNode(node)) {
+        parentNodes.unshift(node)
+      }
+      if (node.parentItem) {
+        node = node.parentItem
+      } else {
+        break
+      }
+    }
+    
+    const children = [
+      ...path.map((folder, index) => ({
+        text: folder.title,
+        url: `/finder/${folder.name}`,
+        icon: 'folder',
+        active: index === path.length - 1,
+        parentItem: index === 0 ? null : {
+          text: path[index - 1].title,
+          url: `/finder/${path[index - 1].name}`,
+          icon: 'folder',
+        },
+      })),
+    ];
+
+    // make sure every parent up the tree is set
+    const nodes = [...parentNodes, ...children]
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
+      if (nodes[i - 1]) {
+        node.parentItem = nodes[i - 1]
+        if (node.parentItem.url !==  '/' && node.url !== '/finder') {
+          setParentItem(node as NavModelItem, nodes[i - 1] as NavModelItem)
+        }
+      }
+    }
+  
+    const navModelWithChildren = {
+      ...navModel,
+      main: {
+        ...navModel.main,
+        active: false,
+        children: nodes,
+      },
+      node: nodes[nodes.length - 1],
+    };
+    return navModelWithChildren;
+  }
+  return null;
+}
+
+const fetchPath = async (folderId: string, searcher: UnifiedSearcher) => {
+  const path: SearchHit[] = [];
+  const folder = await fetchFolder(folderId, searcher);
+  path.push(folder);
+  if (folder.folder !== undefined && folder.folder !== null && folder.folder.length > 0 && folder.folder !== 'general') {
+    const parentFolder = await fetchFolder(folder.folder, searcher);
+    path.unshift(parentFolder)
+  }
+  return path;
+};
+
+const fetchFolder = async (folderId: string, searcher: UnifiedSearcher) => {
+  const resp = await searcher.fetchResults({ kind: ['folder'], uid: [folderId] });
+  return resp.hits[0];
+};
+
+function isPageNode(node: NavModelItem) {
+  return node.url === '/finder' || node.url == '/';
+}
+
+const setParentItem = (node: NavModelItem, parent: NavModelItem) => {
+  if (node === null || parent === null) {
+    return;
+  }
+  node.parentItem = parent
+  if (parent.parentItem && parent.parentItem.url !== '/' && parent.parentItem.url !== '/finder') {
+    setParentItem(parent, parent.parentItem)
+  }
+}

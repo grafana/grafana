@@ -224,7 +224,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
       return { ...hit, location: 'sharedwithme', folder: 'sharedwithme' };
     }
 
-    return { ...hit, location: locationInfo[hit.folder].name, folder: locationInfo[hit.folder].name };
+    return { ...hit, location: locationInfo[hit.folder].name };
     });
   }
 
