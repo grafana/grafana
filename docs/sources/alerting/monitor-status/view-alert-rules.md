@@ -69,5 +69,3 @@ To view previous alert rules for an alert, complete the following steps.
    The page displays a list of the previous rule versions.
 
 On the Alert rule's Versions page you can view and compare the previous rule versions.
-
-{{< figure src="/media/docs/alerting/screenshot-grafana-alerting-version-history.png" max-width="750px" alt="View the history of your alert rule versions in Grafana Alerting" >}}
