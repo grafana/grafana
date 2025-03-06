@@ -25,10 +25,10 @@ export class ResponsiveGridLayoutManager
 
   public static readonly descriptor: LayoutRegistryItem = {
     get name() {
-      return t('dashboard.responsive-layout.name', 'Responsive grid');
+      return t('dashboard.responsive-layout.name', 'Auto');
     },
     get description() {
-      return t('dashboard.responsive-layout.description', 'CSS layout that adjusts to the available space');
+      return t('dashboard.responsive-layout.description', 'Automatically positions panels into a grid.');
     },
     id: 'responsive-grid',
     createFromLayout: ResponsiveGridLayoutManager.createFromLayout,
