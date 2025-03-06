@@ -154,11 +154,13 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 	}
 
 	obj.SetNamespace(r.repo.Namespace)
-	parsed.Meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-		Name:      r.repo.Name,
-		Path:      info.Path, // joinPathWithRef(info.Path, info.Ref),
-		Hash:      info.Hash,
-		Timestamp: nil, // ???&info.Modified.Time,
+	parsed.Meta.SetManagerProperties(utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: r.repo.Name,
+	})
+	parsed.Meta.SetSourceProperties(utils.SourceProperties{
+		Path:     info.Path, // joinPathWithRef(info.Path, info.Ref),
+		Checksum: info.Hash,
 	})
 
 	// Calculate name+folder from the file path

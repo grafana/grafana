@@ -620,11 +620,11 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 				Properties: map[string]spec.Schema{
 					"action": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Possible enum values:\n - `\"export\"` Export from grafana into the remote repository\n - `\"migrate\"` Migration task -- this will migrate an full instance from SQL > Git\n - `\"pr\"` Update a pull request -- send preview images, links etc\n - `\"sync\"` Sync the remote branch with the grafana instance",
+							Description: "Possible enum values:\n - `\"migrate\"` Migration task -- this will migrate an full instance from SQL > Git\n - `\"pr\"` Update a pull request -- send preview images, links etc\n - `\"pull\"` Sync the remote branch with the grafana instance\n - `\"push\"` Export from grafana into the remote repository",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"export", "migrate", "pr", "sync"},
+							Enum:        []interface{}{"migrate", "pr", "pull", "push"},
 						},
 					},
 					"repository": {
@@ -1538,28 +1538,28 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceURLs(ref common.ReferenceCall
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"source": {
+					"sourceURL": {
 						SchemaProps: spec.SchemaProps{
 							Description: "A URL pointing to the this file in the repository",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"repository": {
+					"repositoryURL": {
 						SchemaProps: spec.SchemaProps{
 							Description: "A URL pointing to the repository this lives in",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"newPullRequest": {
+					"newPullRequestURL": {
 						SchemaProps: spec.SchemaProps{
 							Description: "A URL that will create a new pull requeset for this branch",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"compare": {
+					"compareURL": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Compare this version to the target branch",
 							Type:        []string{"string"},

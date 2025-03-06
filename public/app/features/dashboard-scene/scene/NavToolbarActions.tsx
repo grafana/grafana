@@ -80,7 +80,8 @@ export function ToolbarActions({ dashboard }: Props) {
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
   const showScopesSelector = config.featureToggles.scopeFilters && !isEditing;
   const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
-  const isManaged = Boolean(dashboard.isManaged());
+  const folderRepo = useSelector((state) => selectFolderRepository(state, meta.folderUid));
+  const isManaged = Boolean(dashboard.isManaged() || folderRepo);
 
   if (!isEditingPanel) {
     // This adds the presence indicators in enterprise
