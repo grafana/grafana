@@ -7,16 +7,6 @@ export interface Step {
   copyCode?: boolean;
 }
 
-export interface Feature {
-  title: string;
-  description: string;
-  additional: boolean;
-  icon?: string; // Optional icon name for the feature
-  setupSteps: Step[];
-  isConfigured: boolean;
-  docsLink?: string;
-}
-
 // List of required feature toggles
 export const requiredFeatureToggles: Array<keyof FeatureToggles> = [
   'provisioning',
