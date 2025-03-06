@@ -110,7 +110,7 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 	if d.readUnified {
 		return storageObj, errObjectSt
 	}
-	return createdFromLegacy, errObjectSt
+	return createdFromLegacy, err
 }
 
 func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
@@ -121,7 +121,7 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 	// but legacy failed, the user would get a failure, but not be able to retry the delete
 	// as they would not be able to see the object in unistore anymore.
 	objFromLegacy, asyncLegacy, err := d.legacy.Delete(ctx, name, deleteValidation, options)
-	if err != nil && !d.readUnified {
+	if err != nil && !d.readUnified || !d.errorIsOK && !apierrors.IsNotFound(err) {
 		return objFromLegacy, asyncLegacy, err
 	}
 
