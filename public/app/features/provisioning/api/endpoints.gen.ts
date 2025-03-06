@@ -738,16 +738,6 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
-export type ExportJobOptions = {
-  /** Target branch for export (only git) */
-  branch?: string;
-  /** The source folder (or empty) to export */
-  folder?: string;
-  /** Include the identifier in the exported metadata */
-  identifier: boolean;
-  /** Prefix in target file system */
-  prefix?: string;
-};
 export type MigrateJobOptions = {
   /** Preserve history (if possible) */
   history?: boolean;
@@ -769,23 +759,33 @@ export type SyncJobOptions = {
   /** Incremental synchronization for versioned repositories */
   incremental: boolean;
 };
+export type ExportJobOptions = {
+  /** Target branch for export (only git) */
+  branch?: string;
+  /** The source folder (or empty) to export */
+  folder?: string;
+  /** Include the identifier in the exported metadata */
+  identifier: boolean;
+  /** Prefix in target file system */
+  prefix?: string;
+};
 export type JobSpec = {
   /** Possible enum values:
      - `"migrate"` Migration task -- this will migrate an full instance from SQL > Git
-     - `"pr"` Update a pull request -- send preview images, links etc
+     - `"pr"` Process a pull request -- apply comments with preview images, links etc
      - `"pull"` Sync the remote branch with the grafana instance
      - `"push"` Export from grafana into the remote repository */
   action: 'migrate' | 'pr' | 'pull' | 'push';
-  /** Required when the action is `export` */
-  export?: ExportJobOptions;
   /** Required when the action is `migrate` */
   migrate?: MigrateJobOptions;
   /** Pull request options */
   pr?: PullRequestJobOptions;
+  /** Required when the action is `pull` */
+  pull?: SyncJobOptions;
+  /** Required when the action is `push` */
+  push?: ExportJobOptions;
   /** The the repository reference (for now also in labels) */
   repository: string;
-  /** Required when the action is `sync` */
-  sync?: SyncJobOptions;
 };
 export type JobResourceSummary = {
   create?: number;

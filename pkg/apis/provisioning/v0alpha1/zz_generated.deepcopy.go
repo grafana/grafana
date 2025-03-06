@@ -276,13 +276,13 @@ func (in *JobSpec) DeepCopyInto(out *JobSpec) {
 		*out = new(PullRequestJobOptions)
 		**out = **in
 	}
-	if in.Export != nil {
-		in, out := &in.Export, &out.Export
+	if in.Push != nil {
+		in, out := &in.Push, &out.Push
 		*out = new(ExportJobOptions)
 		**out = **in
 	}
-	if in.Sync != nil {
-		in, out := &in.Sync, &out.Sync
+	if in.Pull != nil {
+		in, out := &in.Pull, &out.Pull
 		*out = new(SyncJobOptions)
 		**out = **in
 	}

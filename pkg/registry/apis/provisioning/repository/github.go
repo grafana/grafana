@@ -562,7 +562,7 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 		Job: &provisioning.JobSpec{
 			Repository: r.Config().GetName(),
 			Action:     provisioning.JobActionSync,
-			Sync: &provisioning.SyncJobOptions{
+			Pull: &provisioning.SyncJobOptions{
 				Incremental: true,
 			},
 		},

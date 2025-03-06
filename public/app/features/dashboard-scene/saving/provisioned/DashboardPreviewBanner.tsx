@@ -55,7 +55,7 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
   }
 
   // Check if this is a github link
-  const githubURL = file.data?.urls?.newPullRequest ?? file.data?.urls?.compare;
+  const githubURL = file.data?.urls?.newPullRequestURL ?? file.data?.urls?.compareURL;
   if (githubURL) {
     return (
       <Alert

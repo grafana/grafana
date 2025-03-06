@@ -3171,7 +3171,7 @@
         ],
         "properties": {
           "action": {
-            "description": "Possible enum values:\n - `\"migrate\"` Migration task -- this will migrate an full instance from SQL \u003e Git\n - `\"pr\"` Update a pull request -- send preview images, links etc\n - `\"pull\"` Sync the remote branch with the grafana instance\n - `\"push\"` Export from grafana into the remote repository",
+            "description": "Possible enum values:\n - `\"migrate\"` Migration task -- this will migrate an full instance from SQL \u003e Git\n - `\"pr\"` Process a pull request -- apply comments with preview images, links etc\n - `\"pull\"` Sync the remote branch with the grafana instance\n - `\"push\"` Export from grafana into the remote repository",
             "type": "string",
             "default": "",
             "enum": [
@@ -3179,14 +3179,6 @@
               "pr",
               "pull",
               "push"
-            ]
-          },
-          "export": {
-            "description": "Required when the action is `export`",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportJobOptions"
-              }
             ]
           },
           "migrate": {
@@ -3205,18 +3197,26 @@
               }
             ]
           },
-          "repository": {
-            "description": "The the repository reference (for now also in labels)",
-            "type": "string",
-            "default": ""
-          },
-          "sync": {
-            "description": "Required when the action is `sync`",
+          "pull": {
+            "description": "Required when the action is `pull`",
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncJobOptions"
               }
             ]
+          },
+          "push": {
+            "description": "Required when the action is `push`",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportJobOptions"
+              }
+            ]
+          },
+          "repository": {
+            "description": "The the repository reference (for now also in labels)",
+            "type": "string",
+            "default": ""
           }
         }
       },

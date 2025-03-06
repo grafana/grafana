@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-import { Text, Stack } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
 
 import { FeatureCard } from './FeatureCard';
 import { SetupModal } from './SetupModal';
