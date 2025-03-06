@@ -4,6 +4,7 @@ import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { CollapsableSection, Stack, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
 
@@ -37,15 +38,15 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
   });
   const contactPointWithMetadata = contactPoints.find((cp) => cp.name === contactPointInForm);
 
+  const onSelectContactPoint = (contactPoint?: ContactPointWithMetadata) => {
+    setSelectedContactPointWithMetadata(contactPoint);
+  };
+
   useEffect(() => {
     if (contactPointWithMetadata && !selectedContactPointWithMetadata) {
       onSelectContactPoint(contactPointWithMetadata);
     }
   }, [contactPointWithMetadata, selectedContactPointWithMetadata]);
-
-  const onSelectContactPoint = (contactPoint?: ContactPointWithMetadata) => {
-    setSelectedContactPointWithMetadata(contactPoint);
-  };
 
   const hasRouteSettings =
     watch(`contactPoints.${alertManagerName}.overrideGrouping`) ||
@@ -57,9 +58,9 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
       <Stack direction="row" alignItems="center">
         <div className={styles.firstAlertManagerLine} />
         <div className={styles.alertManagerName}>
-          Alertmanager:
+          <Trans i18nKey="alerting.notification-preview.alertmanager">Alertmanager:</Trans>
           <img src={alertManager.imgUrl} alt="Alert manager logo" className={styles.img} />
-          {alertManagerName}
+          <span>{alertManagerName}</span>
         </div>
         <div className={styles.secondAlertManagerLine} />
       </Stack>
@@ -71,7 +72,7 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
       )}
       <div className={styles.routingSection}>
         <CollapsableSection
-          label="Muting, grouping and timings (optional)"
+          label={t('alerting.notification-preview.timing-options', 'Muting, grouping and timings (optional)')}
           isOpen={hasRouteSettings}
           className={styles.collapsableSection}
         >
