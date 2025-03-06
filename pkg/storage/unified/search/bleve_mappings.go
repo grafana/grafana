@@ -112,6 +112,8 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 
 	mapper.AddSubDocumentMapping("manager", manager)
 	mapper.AddSubDocumentMapping("source", source)
+	createdByMapping := bleve.NewTextFieldMapping()
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_CREATED_BY, createdByMapping)
 
 	labelMapper := bleve.NewDocumentMapping()
 	mapper.AddSubDocumentMapping(resource.SEARCH_FIELD_LABELS, labelMapper)

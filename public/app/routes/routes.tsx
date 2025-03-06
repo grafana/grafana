@@ -17,7 +17,7 @@ import { ConfigureIRM } from 'app/features/gops/configuration-tracker/components
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
-import { AccessControlAction, DashboardRoutes } from 'app/types';
+import { AccessControlAction, DashboardRoutes, FolderRoutes } from 'app/types';
 
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
@@ -69,6 +69,14 @@ export function getAppRoutes(): RouteDescriptor[] {
       routeName: DashboardRoutes.Normal,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPageProxy')
+      ),
+    },
+    {
+      path: '/finder',
+      pageClass: 'page-folders',
+      routeName: FolderRoutes.Browse,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "FoldersPage" */ 'app/features/browse-resources/BrowseResourcesPage')
       ),
     },
     {

@@ -318,6 +318,8 @@ export function getNavSubTitle(navId: string | undefined) {
         'nav.private-data-source-connections.subtitle',
         'Query data that lives within a secured network without opening the network to inbound traffic from Grafana Cloud. Learn more in our docs.'
       );
+    case 'finder':
+      return t('nav.finder.subtitle', 'Search and browse resources');
     default:
       return undefined;
   }
