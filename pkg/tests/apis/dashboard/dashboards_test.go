@@ -2,6 +2,7 @@ package dashboards
 
 import (
 	"context"
+	"net/http"
 	"strings"
 	"testing"
 
@@ -421,38 +422,35 @@ func TestIntegrationDashboardsAppV1Alpha1LargeObjects(t *testing.T) {
 		require.NoError(t, err)
 		created := obj.GetName()
 
-		// Check that the panel exists with the correct title in the created object
-		createdSpec, ok := obj.Object["spec"].(map[string]interface{})
-		require.True(t, ok, "Created spec should be a map")
+		resp := apis.DoRequest(helper, apis.RequestParams{
+			User:   client.Args.User,
+			Method: http.MethodGet,
+			Path:   "/api/dashboards/uid/" + created,
+		}, &dtos.DashboardFullWithMeta{})
 
-		createdPanels, ok := createdSpec["panels"].([]interface{})
-		require.True(t, ok, "Created panels should be an array")
-		require.Len(t, createdPanels, 1, "Created dashboard should have 1 panel")
+		r := resp.Result
 
-		createdPanel, ok := createdPanels[0].(map[string]interface{})
-		require.True(t, ok, "Created panel should be a map")
-		require.Equal(t, "Test Panel", createdPanel["title"], "Created panel should have the correct title")
+		uid := r.Dashboard.Get("uid").MustString()
+		require.Equal(t, created, uid)
 
-		// Retrieve and check the saved object
-		found, err := client.Resource.Get(context.Background(), created, metav1.GetOptions{})
-		require.NoError(t, err)
-		require.Equal(t, created, found.GetName())
+		dashboardObject := r.Dashboard.Interface()
+		dashboardMap, ok := dashboardObject.(map[string]interface{})
+		require.True(t, ok)
+		objj, ok := dashboardMap["Object"].(map[string]interface{})
+		require.True(t, ok)
 
-		meta, err := utils.MetaAccessor(found)
-		require.NoError(t, err)
-		foundTitle := meta.FindTitle("")
-		require.Equal(t, "Test empty dashboard", foundTitle)
+		title, ok := objj["title"].(string)
+		require.True(t, ok)
+		require.Equal(t, "Test empty dashboard", title)
 
-		// Check that the panel exists with the correct title in the found object
-		foundSpec, ok := found.Object["spec"].(map[string]interface{})
-		require.True(t, ok, "Found spec should be a map")
-
-		foundPanels, ok := foundSpec["panels"].([]interface{})
-		require.True(t, ok, "Found panels should be an array")
-		require.Len(t, foundPanels, 1, "Found dashboard should have 1 panel")
-
-		foundPanel, ok := foundPanels[0].(map[string]interface{})
-		require.True(t, ok, "Found panel should be a map")
-		require.Equal(t, "Test Panel", foundPanel["title"], "Found panel should have the correct title")
+		panels, ok := objj["panels"].(interface{})
+		require.True(t, ok)
+		panelsMap, ok := panels.([]interface{})
+		require.True(t, ok)
+		data, ok := panelsMap[0].(interface{})
+		require.True(t, ok)
+		tt, ok := data.(map[string]interface{})["title"]
+		require.True(t, ok)
+		require.Equal(t, "Test Panel", tt)
 	})
 }
