@@ -376,6 +376,8 @@ settings:
     clientKey: key in PEM format
     # <string>
     caCertificate: CA certificate in PEM format
+  # <bool>
+  addGroupKeyToTopic: false
 ```
 
 {{< /collapse >}}
