@@ -1,3 +1,4 @@
+import { CoreApp } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
@@ -109,7 +110,7 @@ function ScenePanelLinksEditor({ panelLinks }: ScenePanelLinksEditorProps) {
 
 export function PanelFrameTitleInput({ panel }: { panel: VizPanel }) {
   const { title } = panel.useState();
-  const ref = useEditPaneInputAutoFocus();
+  let ref = useEditPaneInputAutoFocus({ noAutoFocus: panel.getPanelContext().app === CoreApp.PanelEditor });
 
   return (
     <Input
