@@ -15,7 +15,6 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/cache"
 	"github.com/grafana/authlib/types"
-	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -181,7 +180,7 @@ func TestService_checkPermission(t *testing.T) {
 			s := setupService()
 
 			s.folderCache.Set(context.Background(), folderCacheKey("default"), newFolderTree(tc.folders))
-			tc.check.Namespace = claims.NamespaceInfo{Value: "default", OrgID: 1}
+			tc.check.Namespace = types.NamespaceInfo{Value: "default", OrgID: 1}
 			got, err := s.checkPermission(context.Background(), getScopeMap(tc.permissions), &tc.check)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, got)
@@ -227,7 +226,7 @@ func TestService_getUserTeams(t *testing.T) {
 			ctx := context.Background()
 			s := setupService()
 
-			ns := claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
+			ns := types.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 
 			userIdentifiers := &store.UserIdentifiers{UID: "test-uid"}
 			identityStore := &fakeIdentityStore{teams: tc.teams, err: tc.expectedError}
@@ -303,7 +302,7 @@ func TestService_getUserBasicRole(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
 			s := setupService()
-			ns := claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
+			ns := types.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 
 			userIdentifiers := &store.UserIdentifiers{UID: "test-uid", ID: 1}
 			store := &fakeStore{basicRole: &tc.basicRole, err: tc.expectedError}
@@ -370,7 +369,7 @@ func TestService_getUserPermissions(t *testing.T) {
 			s := setupService()
 
 			userID := &store.UserIdentifiers{UID: "test-uid", ID: 112}
-			ns := claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
+			ns := types.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 			action := "dashboards:read"
 
 			if tc.cacheHit {
@@ -386,7 +385,7 @@ func TestService_getUserPermissions(t *testing.T) {
 			s.permissionStore = store
 			s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
 
-			perms, err := s.getIdentityPermissions(ctx, ns, claims.TypeUser, userID.UID, action)
+			perms, err := s.getIdentityPermissions(ctx, ns, types.TypeUser, userID.UID, action)
 			require.NoError(t, err)
 			require.Len(t, perms, len(tc.expectedPerms))
 			for _, perm := range tc.permissions {
@@ -598,7 +597,7 @@ func TestService_listPermission(t *testing.T) {
 				s.folderCache.Set(context.Background(), folderCacheKey("default"), newFolderTree(tc.folders))
 			}
 
-			tc.list.Namespace = claims.NamespaceInfo{Value: "default", OrgID: 1}
+			tc.list.Namespace = types.NamespaceInfo{Value: "default", OrgID: 1}
 			got, err := s.listPermission(context.Background(), getScopeMap(tc.permissions), &tc.list)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedAll, got.All)
@@ -611,7 +610,7 @@ func TestService_listPermission(t *testing.T) {
 func TestService_Check(t *testing.T) {
 	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
 		Claims: jwt.Claims{
-			Subject:  claims.NewTypeID(types.TypeAccessPolicy, "some-service"),
+			Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
 			Audience: []string{"authzservice"},
 		},
 		Rest: authn.AccessTokenClaims{Namespace: "org-12"},
@@ -873,7 +872,7 @@ type fakeStore struct {
 	calls           int
 }
 
-func (f *fakeStore) GetBasicRoles(ctx context.Context, namespace claims.NamespaceInfo, query store.BasicRoleQuery) (*store.BasicRole, error) {
+func (f *fakeStore) GetBasicRoles(ctx context.Context, namespace types.NamespaceInfo, query store.BasicRoleQuery) (*store.BasicRole, error) {
 	f.calls++
 	if f.err {
 		return nil, fmt.Errorf("store error")
@@ -889,7 +888,7 @@ func (f *fakeStore) GetUserIdentifiers(ctx context.Context, query store.UserIden
 	return f.userID, nil
 }
 
-func (f *fakeStore) GetUserPermissions(ctx context.Context, namespace claims.NamespaceInfo, query store.PermissionsQuery) ([]accesscontrol.Permission, error) {
+func (f *fakeStore) GetUserPermissions(ctx context.Context, namespace types.NamespaceInfo, query store.PermissionsQuery) ([]accesscontrol.Permission, error) {
 	f.calls++
 	if f.err {
 		return nil, fmt.Errorf("store error")
@@ -897,7 +896,7 @@ func (f *fakeStore) GetUserPermissions(ctx context.Context, namespace claims.Nam
 	return f.userPermissions, nil
 }
 
-func (f *fakeStore) ListFolders(ctx context.Context, namespace claims.NamespaceInfo) ([]store.Folder, error) {
+func (f *fakeStore) ListFolders(ctx context.Context, namespace types.NamespaceInfo) ([]store.Folder, error) {
 	f.calls++
 	if f.err {
 		return nil, fmt.Errorf("store error")
@@ -912,7 +911,7 @@ type fakeIdentityStore struct {
 	calls int
 }
 
-func (f *fakeIdentityStore) ListUserTeams(ctx context.Context, namespace claims.NamespaceInfo, query legacy.ListUserTeamsQuery) (*legacy.ListUserTeamsResult, error) {
+func (f *fakeIdentityStore) ListUserTeams(ctx context.Context, namespace types.NamespaceInfo, query legacy.ListUserTeamsQuery) (*legacy.ListUserTeamsResult, error) {
 	f.calls++
 	if f.err {
 		return nil, fmt.Errorf("identity store error")
