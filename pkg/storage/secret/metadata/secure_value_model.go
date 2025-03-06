@@ -71,9 +71,15 @@ func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
 			Keeper:     sv.Keeper,
 			Decrypters: decrypters,
 		},
+		Status: secretv0alpha1.SecureValueStatus{
+			Phase: secretv0alpha1.SecureValuePhase(sv.Phase),
+		},
 	}
 	if sv.Ref != nil {
 		resource.Spec.Ref = *sv.Ref
+	}
+	if sv.Message != nil && *sv.Message != "" {
+		resource.Status.Message = *sv.Message
 	}
 
 	// Set all meta fields here for consistency.

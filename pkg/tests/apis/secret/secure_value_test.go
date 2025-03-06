@@ -78,6 +78,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 		require.NotEmpty(t, secureValue.Spec.Title)
 		require.NotEmpty(t, secureValue.Spec.Keeper)
 		require.NotEmpty(t, secureValue.Spec.Decrypters)
+		require.NotEmpty(t, secureValue.Status.Phase)
 
 		t.Run("and creating another secure value with the same name in the same namespace returns an error", func(t *testing.T) {
 			testSecureValue := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
