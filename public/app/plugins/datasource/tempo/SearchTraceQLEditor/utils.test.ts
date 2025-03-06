@@ -3,12 +3,14 @@ import { uniq } from 'lodash';
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
+import { intrinsics } from '../traceql/traceql';
 
 import {
   filterToQuerySection,
   generateQueryFromAdHocFilters,
   getAllTags,
   getFilteredTags,
+  getIntrinsicTags,
   getTagsByScope,
   getUnscopedTags,
 } from './utils';
@@ -105,6 +107,11 @@ describe('gets correct tags', () => {
   it('for tags by span scope', () => {
     const tags = getTagsByScope(v2Tags, TraceqlSearchScope.Span);
     expect(tags).toEqual(['db']);
+  });
+
+  it('for intrinsic tags', () => {
+    const tags = getIntrinsicTags(v2Tags);
+    expect(tags).toEqual(uniq(testIntrinsics.concat(intrinsics)));
   });
 });
 
