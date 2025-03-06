@@ -715,7 +715,8 @@
       "button-save": "Save",
       "button-saving": "Saving...",
       "enabled": {
-        "label": "Enabled"
+        "label": "Enabled",
+        "switch-label": "Enabled"
       },
       "end": {
         "description": "If no end date is selected, the banner is displayed indefinitely.",
@@ -737,7 +738,8 @@
       },
       "title": "Configure banner",
       "variant": {
-        "label": "Variant"
+        "label": "Variant",
+        "placeholder": "Select banner type"
       }
     },
     "preview": {

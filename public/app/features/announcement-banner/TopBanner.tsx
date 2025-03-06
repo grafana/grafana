@@ -1,4 +1,4 @@
-import { dateTimeAsMoment } from '@grafana/data/src/datetime/moment_wrapper';
+import { dateTimeAsMoment } from '@grafana/data';
 import { contextSrv } from 'app/core/core';
 
 import { Banner } from './Banner';

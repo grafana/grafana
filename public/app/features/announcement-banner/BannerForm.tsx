@@ -82,7 +82,7 @@ export function BannerForm({ banner, name }: Props) {
           <FormPrompt onDiscard={reset} confirmRedirect={isDirty} />
           <Field label={t('banner.form.enabled.label', 'Enabled')}>
             {/*Switch label is necessary for tests to work*/}
-            <Switch {...register('enabled')} label={'Enabled'} />
+            <Switch {...register('enabled')} label={t('banner.form.enabled.switch-label', 'Enabled')} />
           </Field>
           <Field
             label={t('banner.form.message.label', 'Message')}
@@ -175,7 +175,7 @@ export function BannerForm({ banner, name }: Props) {
                     onChange={(variant) => {
                       onChange(variant.value);
                     }}
-                    placeholder={'Select banner type'}
+                    placeholder={t('banner.form.variant.placeholder', 'Select banner type')}
                     options={[
                       { label: t('banner.form.options.info', 'Info'), value: 'info' },
                       { label: t('banner.form.options.warning', 'Warning'), value: 'warning' },

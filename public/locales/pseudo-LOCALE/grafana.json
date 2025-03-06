@@ -715,7 +715,8 @@
       "button-save": "Ŝävę",
       "button-saving": "Ŝävįŉģ...",
       "enabled": {
-        "label": "Ēŉäþľęđ"
+        "label": "Ēŉäþľęđ",
+        "switch-label": "Ēŉäþľęđ"
       },
       "end": {
         "description": "Ĩƒ ŉő ęŉđ đäŧę įş şęľęčŧęđ, ŧĥę þäŉŉęř įş đįşpľäyęđ įŉđęƒįŉįŧęľy.",
@@ -737,7 +738,8 @@
       },
       "title": "Cőŉƒįģūřę þäŉŉęř",
       "variant": {
-        "label": "Väřįäŉŧ"
+        "label": "Väřįäŉŧ",
+        "placeholder": "Ŝęľęčŧ þäŉŉęř ŧypę"
       }
     },
     "preview": {
