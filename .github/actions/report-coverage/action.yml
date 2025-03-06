@@ -8,6 +8,9 @@ inputs:
   integration-cov-path:
     description: 'Path to integration test coverage file'
     required: true
+  codecov-token:
+    description: 'Token for CodeCov'
+    required: true
 
 runs:
   using: "composite"
@@ -43,4 +46,15 @@ runs:
         echo '# Coverage' >> $GITHUB_STEP_SUMMARY
         echo '```' >> $GITHUB_STEP_SUMMARY
         grep 'total:' backend-funcs.log | tr '\t' ' ' >> $GITHUB_STEP_SUMMARY
-        echo '```' >> $GITHUB_STEP_SUMMARY 
+        echo '```' >> $GITHUB_STEP_SUMMARY
+
+    - name: Report coverage to CodeCov
+      uses: codecov/codecov-action@v5
+      with:
+        files: backend.cov
+        flags: unified-backend
+        name: backend
+        slug: grafana/grafana
+        # This URL doesn't use the Google auth, but is much more locked down. As such, it requires OIDC or a CodeCov-provided token to do anything.
+        url: https://codecov-webhook.grafana-dev.net
+        token: ${{ inputs.codecov-token }}
