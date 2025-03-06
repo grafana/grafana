@@ -106,7 +106,13 @@ The order in which Grafana applies transformations directly impacts the results.
 
 ## Dashboard variables in transformations
 
-Blah blah
+All text input fields in transformations accept [variable syntax](ref:dashboard-variable):
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-transformation-variables-v11.6.png" alt="Transformation with a mock variable in a text field" >}}
+
+When you use dashboard variables in transformations, the variables are automatically interpolated before the transformations are applied to the data.
+
+For an example, refer to [Use a dashboard variable](#use-a-dashboard-variable) in the **Filter fields by name** transformation.
 
 ## Add a transformation function to data
 
