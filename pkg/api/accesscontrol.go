@@ -66,12 +66,13 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				{
 					Action: ac.ActionDatasourcesExplore,
 				},
-				{
-					Action: ac.ActionDatasourcesDrilldown,
-				},
 			},
 		},
 		Grants: []string{string(org.RoleEditor)},
+	}
+
+	if hs.Cfg.ViewersCanEdit {
+		datasourcesExplorerRole.Grants = append(datasourcesExplorerRole.Grants, string(org.RoleViewer))
 	}
 
 	datasourcesReaderRole := ac.RoleRegistration{

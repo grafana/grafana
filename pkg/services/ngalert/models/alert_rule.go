@@ -266,7 +266,9 @@ func NewUserUID(requester interface{ GetIdentifier() string }) *UserUID {
 
 // AlertRule is the model for alert rules in unified alerting.
 type AlertRule struct {
-	ID              int64
+	ID int64
+	// Uniquely identifies alert rule across all organizations and time
+	GUID            string
 	OrgID           int64
 	Title           string
 	Condition       string
@@ -327,8 +329,8 @@ type AlertRuleWithOptionals struct {
 	AlertRule
 	// This parameter is to know if an optional API field was sent and, therefore, patch it with the current field from
 	// DB in case it was not sent.
-	HasPause    bool
-	HasMetadata bool
+	HasPause          bool
+	HasEditorSettings bool
 }
 
 // AlertsRulesBy is a function that defines the ordering of alert rules.
@@ -395,19 +397,18 @@ func WithoutInternalLabels() LabelOption {
 }
 
 func (alertRule *AlertRule) ImportedFromPrometheus() bool {
-	if alertRule.Metadata.PrometheusStyleRule == nil {
-		return false
-	}
-
-	return alertRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition != ""
+	_, err := alertRule.PrometheusRuleDefinition()
+	return err == nil
 }
 
-func (alertRule *AlertRule) PrometheusRuleDefinition() string {
-	if !alertRule.ImportedFromPrometheus() {
-		return ""
+func (alertRule *AlertRule) PrometheusRuleDefinition() (string, error) {
+	if alertRule.Metadata.PrometheusStyleRule != nil {
+		if alertRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition != "" {
+			return alertRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition, nil
+		}
 	}
 
-	return alertRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition
+	return "", fmt.Errorf("prometheus rule definition is missing")
 }
 
 // GetLabels returns the labels specified as part of the alert rule.
@@ -708,6 +709,7 @@ func (alertRule *AlertRule) Copy() *AlertRule {
 	}
 	result := AlertRule{
 		ID:              alertRule.ID,
+		GUID:            alertRule.GUID,
 		OrgID:           alertRule.OrgID,
 		Title:           alertRule.Title,
 		Condition:       alertRule.Condition,
@@ -902,9 +904,10 @@ func (c Condition) IsValid() bool {
 
 // PatchPartialAlertRule patches `ruleToPatch` by `existingRule` following the rule that if a field of `ruleToPatch` is empty or has the default value, it is populated by the value of the corresponding field from `existingRule`.
 // There are several exceptions:
-// 1. Following fields are not patched and therefore will be ignored: AlertRule.ID, AlertRule.OrgID, AlertRule.Updated, AlertRule.Version, AlertRule.UID, AlertRule.DashboardUID, AlertRule.PanelID, AlertRule.Annotations and AlertRule.Labels
-// 2. There are fields that are patched together:
-//   - AlertRule.Condition and AlertRule.Data
+//  1. Following fields are not patched and therefore will be ignored: AlertRule.ID, AlertRule.OrgID, AlertRule.Updated, AlertRule.Version,
+//     AlertRule.UID, AlertRule.DashboardUID, AlertRule.PanelID, AlertRule.Annotations, AlertRule.Labels, AlertRule.Metadata (except for EditorSettings)
+//  2. There are fields that are patched together:
+//     - AlertRule.Condition and AlertRule.Data
 //
 // If either of the pair is specified, neither is patched.
 func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOptionals) {
@@ -936,12 +939,12 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOp
 	if !ruleToPatch.HasPause {
 		ruleToPatch.IsPaused = existingRule.IsPaused
 	}
+	if !ruleToPatch.HasEditorSettings {
+		ruleToPatch.Metadata.EditorSettings = existingRule.Metadata.EditorSettings
+	}
 
-	// Currently metadata contains only editor settings, so we can just copy it.
-	// If we add more fields to metadata, we might need to handle them separately,
-	// and/or merge or update their values.
-	if !ruleToPatch.HasMetadata {
-		ruleToPatch.Metadata = existingRule.Metadata
+	if ruleToPatch.GUID == "" {
+		ruleToPatch.GUID = existingRule.GUID
 	}
 }
 

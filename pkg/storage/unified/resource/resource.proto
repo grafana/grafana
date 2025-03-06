@@ -318,7 +318,7 @@ message WatchEvent {
   Resource previous = 4;
 }
 
-message BatchRequest {
+message BulkRequest {
   enum Action {
     // will be an error
     UNKNOWN = 0; 
@@ -342,7 +342,7 @@ message BatchRequest {
   string folder = 4;
 }
 
-message BatchResponse {
+message BulkResponse {
   message Summary {
     string namespace = 1;
     string group = 2;
@@ -359,7 +359,7 @@ message BatchResponse {
   // Collect a few invalid messages
   message Rejected {
     ResourceKey         key    = 1;
-    BatchRequest.Action action = 2;
+    BulkRequest.Action action = 2;
     string              error  = 3;
   }
 
@@ -818,11 +818,11 @@ service ResourceStore {
   rpc Watch(WatchRequest) returns (stream WatchEvent);
 }
 
-service BatchStore {
+service BulkStore {
   // Write multiple resources to the same Namespace/Group/Resource
   // Events will not be sent until the stream is complete
   // Only the *create* permissions is checked
-  rpc BatchProcess(stream BatchRequest) returns (BatchResponse);
+  rpc BulkProcess(stream BulkRequest) returns (BulkResponse);
 }
 
 // Unlike the ResourceStore, this service can be exposed to clients directly

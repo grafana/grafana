@@ -87,6 +87,7 @@ export enum AlertRuleAction {
   Silence = 'silence-alert-rule',
   ModifyExport = 'modify-export-rule',
   Pause = 'pause-alert-rule',
+  Restore = 'restore-alert-rule',
 }
 
 // this enum lists all of the actions we can perform within alerting in general, not linked to a specific
@@ -231,6 +232,7 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
       [AlertRuleAction.Silence]: canSilence,
       [AlertRuleAction.ModifyExport]: [isGrafanaManagedAlertRule, exportAllowed],
       [AlertRuleAction.Pause]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
+      [AlertRuleAction.Restore]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
     };
 
     return abilities;
@@ -277,6 +279,7 @@ export function useAllRulerRuleAbilities(
       [AlertRuleAction.Silence]: canSilence,
       [AlertRuleAction.ModifyExport]: [isGrafanaManagedAlertRule, exportAllowed],
       [AlertRuleAction.Pause]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
+      [AlertRuleAction.Restore]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
     };
 
     return abilities;
