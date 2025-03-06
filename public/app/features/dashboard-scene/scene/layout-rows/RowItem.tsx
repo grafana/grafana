@@ -1,17 +1,16 @@
-import { ReactNode } from 'react';
-
 import { sceneGraph, SceneObject, SceneObjectBase, SceneObjectState, VariableDependencyConfig } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/ConditionalRenderingGroup';
+import { getDefaultVizPanel } from '../../utils/utils';
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { BulkActionElement } from '../types/BulkActionElement';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
-import { EditableDashboardElement } from '../types/EditableDashboardElement';
+import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
 import { LayoutParent } from '../types/LayoutParent';
 
-import { getEditOptions, renderActions } from './RowItemEditor';
+import { getEditOptions } from './RowItemEditor';
 import { RowItemRenderer } from './RowItemRenderer';
 import { RowItemRepeaterBehavior } from './RowItemRepeaterBehavior';
 import { RowItems } from './RowItems';
@@ -37,7 +36,6 @@ export class RowItem
   });
 
   public readonly isEditableDashboardElement = true;
-  public readonly typeName = 'Row';
 
   public constructor(state?: Partial<RowItemState>) {
     super({
@@ -45,6 +43,10 @@ export class RowItem
       title: state?.title ?? t('dashboard.rows-layout.row.new', 'New row'),
       layout: state?.layout ?? ResponsiveGridLayoutManager.createEmpty(),
     });
+  }
+
+  public getEditableElementInfo(): EditableDashboardElementInfo {
+    return { typeId: 'row', icon: 'line-alt', name: sceneGraph.interpolate(this, this.state.title, undefined, 'text') };
   }
 
   public getLayout(): DashboardLayoutManager {
@@ -59,17 +61,40 @@ export class RowItem
     return getEditOptions(this);
   }
 
-  public renderActions(): ReactNode {
-    return renderActions(this);
-  }
-
   public onDelete() {
-    const layout = sceneGraph.getAncestor(this, RowsLayoutManager);
-    layout.removeRow(this);
+    this._getParentLayout().removeRow(this);
   }
 
   public createMultiSelectedElement(items: SceneObject[]): RowItems {
     return new RowItems(items.filter((item) => item instanceof RowItem));
+  }
+
+  public onAddPanel(panel = getDefaultVizPanel()) {
+    this.getLayout().addPanel(panel);
+  }
+
+  public onAddRowAbove() {
+    this._getParentLayout().addRowAbove(this);
+  }
+
+  public onAddRowBelow() {
+    this._getParentLayout().addRowBelow(this);
+  }
+
+  public onMoveUp() {
+    this._getParentLayout().moveRowUp(this);
+  }
+
+  public onMoveDown() {
+    this._getParentLayout().moveRowDown(this);
+  }
+
+  public isFirstRow(): boolean {
+    return this._getParentLayout().isFirstRow(this);
+  }
+
+  public isLastRow(): boolean {
+    return this._getParentLayout().isLastRow(this);
   }
 
   public getRepeatVariable(): string | undefined {
@@ -107,6 +132,10 @@ export class RowItem
 
   public onCollapseToggle() {
     this.setState({ isCollapsed: !this.state.isCollapsed });
+  }
+
+  private _getParentLayout(): RowsLayoutManager {
+    return sceneGraph.getAncestor(this, RowsLayoutManager);
   }
 
   private _getRepeatBehavior(): RowItemRepeaterBehavior | undefined {

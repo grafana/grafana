@@ -4,12 +4,20 @@ import { useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneObjectState, SceneObjectBase, SceneObject, sceneGraph, useSceneObjectState } from '@grafana/scenes';
-import { ElementSelectionContextItem, ElementSelectionContextState, ToolbarButton, useStyles2 } from '@grafana/ui';
+import {
+  ElementSelectionContextItem,
+  ElementSelectionContextState,
+  Tab,
+  TabsBar,
+  ToolbarButton,
+  useStyles2,
+} from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { isInCloneChain } from '../utils/clone';
-import { getDashboardSceneFor } from '../utils/utils';
 
+import { DashboardAddPane } from './DashboardAddPane';
+import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
 import { ElementSelection } from './ElementSelection';
 import { useEditableElement } from './useEditableElement';
@@ -17,7 +25,10 @@ import { useEditableElement } from './useEditableElement';
 export interface DashboardEditPaneState extends SceneObjectState {
   selection?: ElementSelection;
   selectionContext: ElementSelectionContextState;
+  tab?: EditPaneTab;
 }
+
+export type EditPaneTab = 'add' | 'configure' | 'outline';
 
 export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   public constructor() {
@@ -61,22 +72,20 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   }
 
   public selectObject(obj: SceneObject, id: string, multi?: boolean) {
-    if (!this.state.selection) {
-      return;
-    }
-
-    const prevItem = this.state.selection.getFirstObject();
+    const prevItem = this.state.selection?.getFirstObject();
     if (prevItem === obj && !multi) {
       this.clearSelection();
       return;
     }
 
-    if (multi && this.state.selection.hasValue(id)) {
+    if (multi && this.state.selection?.hasValue(id)) {
       this.removeMultiSelectedObject(id);
       return;
     }
 
-    const { selection, contextItems: selected } = this.state.selection.getStateWithValue(id, obj, !!multi);
+    const elementSelection = this.state.selection ?? new ElementSelection([[id, obj.getRef()]]);
+
+    const { selection, contextItems: selected } = elementSelection.getStateWithValue(id, obj, !!multi);
 
     this.setState({
       selection: new ElementSelection(selection),
@@ -109,14 +118,29 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   }
 
   public clearSelection() {
-    const dashboard = getDashboardSceneFor(this);
+    if (!this.state.selection) {
+      return;
+    }
+
     this.setState({
-      selection: new ElementSelection([[dashboard.state.uid!, dashboard.getRef()]]),
+      selection: undefined,
       selectionContext: {
         ...this.state.selectionContext,
         selected: [],
       },
     });
+  }
+
+  public onChangeTab = (tab: EditPaneTab) => {
+    this.setState({ tab });
+  };
+
+  public newObjectAddedToCanvas(obj: SceneObject) {
+    this.selectObject(obj, obj.state.key!, false);
+
+    if (this.state.tab !== 'configure') {
+      this.onChangeTab('configure');
+    }
   }
 }
 
@@ -133,13 +157,6 @@ export interface Props {
 export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleCollapse, openOverlay }: Props) {
   // Activate the edit pane
   useEffect(() => {
-    if (!editPane.state.selection) {
-      const dashboard = getDashboardSceneFor(editPane);
-      editPane.setState({
-        selection: new ElementSelection([[dashboard.state.uid!, dashboard.getRef()]]),
-      });
-    }
-
     editPane.enableSelection();
 
     return () => {
@@ -148,19 +165,21 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
   }, [editPane]);
 
   useEffect(() => {
-    if (isCollapsed && editPane.state.selection?.getSelectionEntries().length) {
+    if (isCollapsed) {
       editPane.clearSelection();
     }
   }, [editPane, isCollapsed]);
 
-  const { selection } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
+  const { selection, tab = 'configure' } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const styles = useStyles2(getStyles);
   const paneRef = useRef<HTMLDivElement>(null);
-  const editableElement = useEditableElement(selection);
+  const editableElement = useEditableElement(selection, editPane);
 
   if (!editableElement) {
     return null;
   }
+
+  const { typeId } = editableElement.getEditableElementInfo();
 
   if (isCollapsed) {
     return (
@@ -178,7 +197,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
 
         {openOverlay && (
           <Resizable className={cx(styles.fixed, styles.container)} defaultSize={{ height: '100%', width: '20vw' }}>
-            <ElementEditPane element={editableElement} key={editableElement.typeName} />
+            <ElementEditPane element={editableElement} key={typeId} />
           </Resizable>
         )}
       </>
@@ -187,7 +206,28 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
 
   return (
     <div className={styles.wrapper} ref={paneRef}>
-      <ElementEditPane element={editableElement} key={editableElement.typeName} />
+      <TabsBar className={styles.tabsbar}>
+        <Tab
+          active={tab === 'add'}
+          label={t('dashboard.editpane.add', 'Add')}
+          onChangeTab={() => editPane.onChangeTab('add')}
+        />
+        <Tab
+          active={tab === 'configure'}
+          label={t('dashboard.editpane.configure', 'Configure')}
+          onChangeTab={() => editPane.onChangeTab('configure')}
+        />
+        <Tab
+          active={tab === 'outline'}
+          label={t('dashboard.editpane.outline', 'Outline')}
+          onChangeTab={() => editPane.onChangeTab('outline')}
+        />
+      </TabsBar>
+      <div className={styles.tabContent}>
+        {tab === 'add' && <DashboardAddPane editPane={editPane} />}
+        {tab === 'configure' && <ElementEditPane element={editableElement} key={typeId} />}
+        {tab === 'outline' && <DashboardOutline editPane={editPane} />}
+      </div>
     </div>
   );
 }
@@ -198,10 +238,20 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       flex: '1 1 0',
+    }),
+    tabContent: css({
+      display: 'flex',
+      flex: '1 1 0',
+      flexDirection: 'column',
+      minHeight: 0,
       overflow: 'auto',
     }),
     rotate180: css({
       rotate: '180deg',
+    }),
+    tabsbar: css({
+      padding: theme.spacing(0, 1),
+      margin: theme.spacing(0.5, 1),
     }),
     expandOptionsWrapper: css({
       display: 'flex',

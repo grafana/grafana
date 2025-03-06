@@ -16,6 +16,7 @@ const debugTheme: NewThemeOptions = {
       canvas: '#000033',
       primary: '#000044',
       secondary: '#000055',
+      elevated: '#000055',
     },
     text: {
       primary: '#bbbb00',

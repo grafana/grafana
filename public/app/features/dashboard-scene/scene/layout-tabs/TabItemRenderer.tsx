@@ -1,23 +1,33 @@
-import { SceneComponentProps } from '@grafana/scenes';
-import { Tab } from '@grafana/ui';
+import { css, cx } from '@emotion/css';
+import { useLocation } from 'react-router';
 
-import { useIsClone } from '../../utils/clone';
+import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
+import { SceneComponentProps } from '@grafana/scenes';
+import { Checkbox, clearButtonStyles, useStyles2 } from '@grafana/ui';
+// eslint-disable-next-line no-restricted-imports
+import { getFocusStyles } from '@grafana/ui/src/themes/mixins';
+
 import {
   useDashboardState,
+  useIsConditionallyHidden,
   useElementSelectionScene,
   useInterpolatedTitle,
-  useIsConditionallyHidden,
 } from '../../utils/utils';
 
 import { TabItem } from './TabItem';
 
 export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
-  const isClone = useIsClone(model);
   const parentLayout = model.getParentLayout();
-  const { currentTab } = parentLayout.useState();
-  const { isEditing, showHiddenElements } = useDashboardState(model);
+  const { tabs, currentTabIndex } = parentLayout.useState();
+  const myIndex = tabs.findIndex((tab) => tab === model);
+  const isActive = myIndex === currentTabIndex;
+  const location = useLocation();
+  const href = textUtil.sanitize(locationUtil.getUrlForPartial(location, { tab: myIndex }));
+  const styles = useStyles2(getStyles);
+  const clearStyles = useStyles2(clearButtonStyles);
+  const { showHiddenElements } = useDashboardState(model);
   const isConditionallyHidden = useIsConditionallyHidden(model);
-  const { isSelected, onSelect, onClear } = useElementSelectionScene(model);
+  const { isSelected, onSelect } = useElementSelectionScene(model);
   const title = useInterpolatedTitle(model);
 
   if (isConditionallyHidden && !showHiddenElements) {
@@ -25,23 +35,76 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   }
 
   return (
-    <Tab
-      className={!isClone && isSelected ? 'dashboard-selected-element' : undefined}
-      label={title}
-      active={model === currentTab}
-      onPointerDown={(evt) => {
-        evt.stopPropagation();
+    <>
+      <div className={cx(styles.container, isSelected && 'dashboard-selected-element')} role="presentation">
+        <span onPointerDown={onSelect}>
+          <Checkbox value={!!isSelected} />
+        </span>
 
-        if (isEditing) {
-          if (isClone) {
-            onClear?.();
-          } else {
-            onSelect?.(evt);
-          }
-        }
-
-        parentLayout.changeTab(model);
-      }}
-    />
+        <a
+          href={href}
+          className={cx(clearStyles, styles.label, isActive ? styles.labelActive : styles.labelNotActive)}
+          role="tab"
+          aria-selected={isActive}
+        >
+          {title}
+        </a>
+      </div>
+    </>
   );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    container: css({
+      listStyle: 'none',
+      position: 'relative',
+      display: 'flex',
+      whiteSpace: 'nowrap',
+      alignItems: 'center',
+    }),
+    label: css({
+      color: theme.colors.text.secondary,
+      padding: theme.spacing(1, 1.5, 0.5),
+      borderRadius: theme.shape.radius.default,
+      userSelect: 'none',
+
+      display: 'block',
+      height: '100%',
+
+      svg: {
+        marginRight: theme.spacing(1),
+      },
+
+      '&:focus-visible': getFocusStyles(theme),
+
+      '&::before': {
+        display: 'block',
+        content: '" "',
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        height: '4px',
+        borderRadius: theme.shape.radius.default,
+        bottom: 0,
+      },
+    }),
+    labelNotActive: css({
+      'a:hover, &:hover, &:focus': {
+        color: theme.colors.text.primary,
+
+        '&::before': {
+          backgroundColor: theme.colors.action.hover,
+        },
+      },
+    }),
+    labelActive: css({
+      color: theme.colors.text.primary,
+      overflow: 'hidden',
+
+      '&::before': {
+        backgroundImage: theme.colors.gradients.brandHorizontal,
+      },
+    }),
+  };
 }

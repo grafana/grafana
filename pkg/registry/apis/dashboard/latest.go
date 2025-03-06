@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/storage"
 
@@ -25,20 +24,16 @@ type LatestConnector interface {
 	rest.StorageMetadata
 }
 
-func NewLatestConnector(unified resource.ResourceClient, gr schema.GroupResource, opts generic.RESTOptions, scheme *runtime.Scheme) LatestConnector {
+func NewLatestConnector(unified resource.ResourceClient, gr schema.GroupResource) LatestConnector {
 	return &latestREST{
 		unified: unified,
 		gr:      gr,
-		opts:    opts,
-		scheme:  scheme,
 	}
 }
 
 type latestREST struct {
 	unified resource.ResourceClient
 	gr      schema.GroupResource
-	opts    generic.RESTOptions
-	scheme  *runtime.Scheme
 }
 
 func (l *latestREST) New() runtime.Object {

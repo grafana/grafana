@@ -54,6 +54,7 @@ const sapphireDuskTheme: NewThemeOptions = {
       canvas: '#1e273d',
       primary: '#12192e',
       secondary: '#212c47',
+      elevated: '#212c47',
     },
     action: {
       hover: '#364057',
@@ -61,8 +62,8 @@ const sapphireDuskTheme: NewThemeOptions = {
       selectedBorder: '#D448EA',
       focus: '#364057',
       hoverOpacity: 0.08,
-      disabledText: 'rgba(54, 64, 87, 0.6)',
-      disabledBackground: 'rgba(54, 64, 87, 0.04)',
+      disabledText: '#838da5',
+      disabledBackground: 'rgba(54, 64, 87, 0.2)',
       disabledOpacity: 0.38,
     },
     gradients: {

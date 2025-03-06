@@ -640,7 +640,7 @@
     "name": "area/configuration",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/96"
+      "url": "https://github.com/orgs/grafana/projects/665"
     }
   },
   {
@@ -744,7 +744,7 @@
     "name": "area/backend/db/postgres",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/96"
+      "url": "https://github.com/orgs/grafana/projects/835"
     }
   },
   {

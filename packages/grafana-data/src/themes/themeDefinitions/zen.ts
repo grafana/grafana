@@ -28,6 +28,7 @@ const zenTheme: NewThemeOptions = {
       canvas: '#F4F4F4',
       primary: '#E9E9E9',
       secondary: '#D8D8D8',
+      elevated: '#E9E9E9',
     },
     action: {
       hover: '#D1D1D1',

@@ -33,6 +33,7 @@
       performance.mark('frontend_boot_css_time_seconds');
     </script>
 
+    <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="msapplication-TileColor" content="#2b5797" />
@@ -354,13 +355,26 @@
     <!-- End Google Tag Manager -->
     [[end]]
 
-    [[range $asset := .Assets.JSFiles]]
-      <script
-      nonce="[[$.Nonce]]"
-      src="[[$asset.FilePath]]"
-      type="text/javascript"
-      defer
-    ></script>
+    [[if .Settings.FeatureToggles.assetSriChecks ]]
+      [[range $asset := .Assets.JSFiles]]
+        <script
+        nonce="[[$.Nonce]]"
+        src="[[$asset.FilePath]]"
+        integrity="[[$asset.Integrity]]"
+        crossorigin="anonymous"
+        type="text/javascript"
+        defer
+      ></script>
+      [[end]]
+    [[else]]
+      [[range $asset := .Assets.JSFiles]]
+        <script
+        nonce="[[$.Nonce]]"
+        src="[[$asset.FilePath]]"
+        type="text/javascript"
+        defer
+      ></script>
+      [[end]]
     [[end]]
 
     <script nonce="[[.Nonce]]">

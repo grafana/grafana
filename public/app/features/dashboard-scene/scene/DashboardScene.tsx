@@ -30,6 +30,7 @@ import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
 import store from 'app/core/store';
+import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -41,6 +42,7 @@ import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath, ManagerKind } from '../../apiserver/types';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -77,7 +79,9 @@ import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './ang
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { addNewRowTo, addNewTabTo } from './layouts-shared/addNew';
 import { DashboardLayoutManager } from './types/DashboardLayoutManager';
+import { LayoutParent } from './types/LayoutParent';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 export const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
@@ -140,7 +144,7 @@ export interface DashboardSceneState extends SceneObjectState {
   editPane: DashboardEditPane;
 }
 
-export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
+export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {
   static Component = DashboardSceneRenderer;
 
   /**
@@ -372,7 +376,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
     let versionRsp;
-    if (config.featureToggles.kubernetesCliDashboards) {
+    if (config.featureToggles.kubernetesClientDashboardsFolders) {
       // the id here is the resource version in k8s, use this instead to get the specific version
       versionRsp = await historySrv.restoreDashboard(version.uid, version.id);
     } else {
@@ -484,7 +488,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this.onEnterEditMode();
     }
 
+    // Add panel to layout
     this.state.body.addPanel(vizPanel);
+    // Select panel
+    this.state.editPane.newObjectAddedToCanvas(vizPanel);
   }
 
   public createLibraryPanel(panelToReplace: VizPanel, libPanel: LibraryPanel) {
@@ -592,24 +599,30 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public onCreateNewRow() {
-    this.state.body.addNewRow();
+    const newRow = addNewRowTo(this.state.body);
+    this.state.editPane.newObjectAddedToCanvas(newRow);
+    return newRow;
   }
 
   public onCreateNewTab() {
-    this.state.body.addNewTab();
+    const tab = addNewTabTo(this.state.body);
+    this.state.editPane.newObjectAddedToCanvas(tab);
+    return tab;
   }
 
   public onCreateNewPanel(): VizPanel {
     const vizPanel = getDefaultVizPanel();
-
     this.addPanel(vizPanel);
-
     return vizPanel;
   }
 
   public switchLayout(layout: DashboardLayoutManager) {
     this.setState({ body: layout });
     layout.activateRepeaters?.();
+  }
+
+  public getLayout(): DashboardLayoutManager {
+    return this.state.body;
   }
 
   /**
@@ -674,7 +687,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     saveModel?: Dashboard | DashboardV2Spec,
     meta?: DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
   ): void {
-    this._serializer.initialSaveModel = saveModel;
+    this._serializer.initialSaveModel = sortedDeepCloneWithoutNulls(saveModel);
     this._serializer.metadata = meta;
   }
 
@@ -733,6 +746,35 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   getDashboardChanges(saveTimeRange?: boolean, saveVariables?: boolean, saveRefresh?: boolean): DashboardChangeInfo {
     return this._serializer.getDashboardChangesFromScene(this, { saveTimeRange, saveVariables, saveRefresh });
+  }
+
+  getManagerKind(): ManagerKind | undefined {
+    return this.state.meta.k8s?.annotations?.[AnnoKeyManagerKind];
+  }
+
+  isManaged() {
+    return Boolean(this.getManagerKind());
+  }
+
+  isManagedRepository() {
+    return Boolean(this.getManagerKind() === ManagerKind.Repo);
+  }
+
+  getPath() {
+    return this.state.meta.k8s?.annotations?.[AnnoKeySourcePath];
+  }
+
+  setManager(kind: ManagerKind, id: string) {
+    this.setState({
+      meta: {
+        k8s: {
+          annotations: {
+            [AnnoKeyManagerKind]: kind,
+            [AnnoKeyManagerIdentity]: id,
+          },
+        },
+      },
+    });
   }
 }
 
