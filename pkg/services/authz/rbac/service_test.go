@@ -650,6 +650,30 @@ func TestService_Check(t *testing.T) {
 			expectErr: true,
 		},
 		{
+			name: "should error if an no subject is provided",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			expectErr: true,
+		},
+		{
+			name: "should error if an unsupported subject type is provided",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "api-key:12",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			expectErr: true,
+		},
+		{
 			name: "should error if an invalid subject is provided",
 			req: &authzv1.CheckRequest{
 				Namespace: "org-12",
