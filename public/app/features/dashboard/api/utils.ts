@@ -16,18 +16,14 @@ export function getDashboardsApiVersion() {
   if (!config.featureToggles.dashboardScene || forcingOldDashboardArch) {
     // for old architecture, use v1 API for k8s dashboards
     if (config.featureToggles.kubernetesDashboards) {
-      return 'v1';
+      return 'unified';
     }
 
     return 'legacy';
   }
 
-  if (config.featureToggles.useV2DashboardsAPI) {
-    return 'v2';
-  }
-
   if (config.featureToggles.kubernetesDashboards) {
-    return 'v1';
+    return 'unified';
   }
 
   return 'legacy';
