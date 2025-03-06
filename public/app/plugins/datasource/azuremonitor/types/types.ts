@@ -145,11 +145,14 @@ export interface AzureResourceSummaryItem {
 export interface RawAzureSubscriptionItem {
   subscriptionName: string;
   subscriptionId: string;
+  subscriptionURI: string;
+  count: number;
 }
 
 export interface RawAzureResourceGroupItem {
   resourceGroupURI: string;
   resourceGroupName: string;
+  count: number;
 }
 
 export interface RawAzureResourceItem {
