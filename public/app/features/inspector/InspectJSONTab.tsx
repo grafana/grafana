@@ -9,7 +9,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
@@ -130,12 +130,12 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
         </Field>
         {panel && isPanelJSON && canEdit && (
           <Button className={styles.toolbarItem} onClick={onApplyPanelModel}>
-            Apply
+            <Trans i18nKey="inspector.inspect-jsontab.apply">Apply</Trans>
           </Button>
         )}
         {show === ShowContent.DataFrames && dashboard !== undefined && (
           <Button className={styles.toolbarItem} onClick={onShowHelpWizard}>
-            Support
+            <Trans i18nKey="inspector.inspect-jsontab.support">Support</Trans>
           </Button>
         )}
       </div>

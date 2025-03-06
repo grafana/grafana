@@ -13,6 +13,7 @@ import {
 import { LogRowContextOptions, LogRowModel } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 import { ClipboardButton, IconButton, PopoverContent } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { handleOpenLogsContextClick } from '../utils';
 
@@ -110,9 +111,9 @@ export const LogRowMenuCell = memo(
             size="md"
             name="gf-pin"
             onClick={() => onUnpinLine && onUnpinLine(row)}
-            tooltip="Unpin line"
+            tooltip={t('logs.log-row-menu-cell.tooltip-unpin-line', 'Unpin line')}
             tooltipPlacement="top"
-            aria-label="Unpin line"
+            aria-label={t('logs.log-row-menu-cell.aria-label-unpin-line', 'Unpin line')}
             tabIndex={0}
           />
         )}
@@ -124,9 +125,9 @@ export const LogRowMenuCell = memo(
                 size="md"
                 name="gf-show-context"
                 onClick={onShowContextClick}
-                tooltip="Show context"
+                tooltip={t('logs.log-row-menu-cell.tooltip-show-context', 'Show context')}
                 tooltipPlacement="top"
-                aria-label="Show context"
+                aria-label={t('logs.log-row-menu-cell.aria-label-show-context', 'Show context')}
                 tabIndex={0}
               />
             )}
@@ -137,7 +138,7 @@ export const LogRowMenuCell = memo(
               fill="text"
               size="md"
               getText={getLogText}
-              tooltip="Copy to clipboard"
+              tooltip={t('logs.log-row-menu-cell.tooltip-copy-to-clipboard', 'Copy to clipboard')}
               tooltipPlacement="top"
               tabIndex={0}
             />
@@ -147,9 +148,9 @@ export const LogRowMenuCell = memo(
                 size="md"
                 name="gf-pin"
                 onClick={() => onUnpinLine && onUnpinLine(row)}
-                tooltip="Unpin line"
+                tooltip={t('logs.log-row-menu-cell.tooltip-unpin-line', 'Unpin line')}
                 tooltipPlacement="top"
-                aria-label="Unpin line"
+                aria-label={t('logs.log-row-menu-cell.aria-label-unpin-line', 'Unpin line')}
                 tabIndex={0}
               />
             )}
@@ -161,14 +162,14 @@ export const LogRowMenuCell = memo(
                 onClick={() => onPinLine && onPinLine(row)}
                 tooltip={pinLineButtonTooltipTitle ?? 'Pin line'}
                 tooltipPlacement="top"
-                aria-label="Pin line"
+                aria-label={t('logs.log-row-menu-cell.aria-label-pin-line', 'Pin line')}
                 tabIndex={0}
               />
             )}
             {onPermalinkClick && row.rowId !== undefined && row.uid && (
               <IconButton
-                tooltip="Copy shortlink"
-                aria-label="Copy shortlink"
+                tooltip={t('logs.log-row-menu-cell.tooltip-copy-shortlink', 'Copy shortlink')}
+                aria-label={t('logs.log-row-menu-cell.aria-label-copy-shortlink', 'Copy shortlink')}
                 tooltipPlacement="top"
                 size="md"
                 name="share-alt"

@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Button } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 export interface Props {
   canSave: boolean;
@@ -21,7 +22,7 @@ export function ButtonRow({ canSave, canDelete, onDelete, onSubmit, onTest }: Pr
         onClick={onDelete}
         data-testid={selectors.pages.DataSource.delete}
       >
-        Delete
+        <Trans i18nKey="datasources.button-row.delete">Delete</Trans>
       </Button>
       {canSave && (
         <Button
@@ -36,7 +37,7 @@ export function ButtonRow({ canSave, canDelete, onDelete, onSubmit, onTest }: Pr
       )}
       {!canSave && (
         <Button variant="primary" onClick={onTest}>
-          Test
+          <Trans i18nKey="datasources.button-row.test">Test</Trans>
         </Button>
       )}
     </div>

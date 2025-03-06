@@ -3,6 +3,7 @@ import { ReactElement } from 'react';
 import { PluginErrorCode } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Alert } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { CatalogPlugin } from '../types';
 
@@ -19,19 +20,25 @@ export function PluginDetailsDisabledError({ className, plugin }: Props): ReactE
   return (
     <Alert
       severity="error"
-      title="Plugin disabled"
+      title={t('plugins.plugin-details-disabled-error.title-plugin-disabled', 'Plugin disabled')}
       className={className}
       data-testid={selectors.pages.PluginPage.disabledInfo}
     >
       {renderDescriptionFromError(plugin.error)}
-      <p>Please contact your server administrator to get this resolved.</p>
+      <p>
+        <Trans i18nKey="plugins.plugin-details-disabled-error.please-contact-server-administrator-resolved">
+          Please contact your server administrator to get this resolved.
+        </Trans>
+      </p>
       <a
         href="https://grafana.com/docs/grafana/latest/administration/cli/#plugins-commands"
         className="external-link"
         target="_blank"
         rel="noreferrer"
       >
-        Read more about managing plugins
+        <Trans i18nKey="plugins.plugin-details-disabled-error.read-more-about-managing-plugins">
+          Read more about managing plugins
+        </Trans>
       </a>
     </Alert>
   );

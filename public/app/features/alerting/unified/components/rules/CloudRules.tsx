@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { LinkButton, LoadingPlaceholder, Pagination, Spinner, Text, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
@@ -79,8 +79,18 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
         );
       })}
 
-      {!hasDataSourcesConfigured && <p>There are no Prometheus or Loki data sources configured.</p>}
-      {hasDataSourcesConfigured && !hasDataSourcesLoading && !hasNamespaces && <p>No rules found.</p>}
+      {!hasDataSourcesConfigured && (
+        <p>
+          <Trans i18nKey="alerting.cloud-rules.there-prometheus-sources-configured">
+            There are no Prometheus or Loki data sources configured.
+          </Trans>
+        </p>
+      )}
+      {hasDataSourcesConfigured && !hasDataSourcesLoading && !hasNamespaces && (
+        <p>
+          <Trans i18nKey="alerting.cloud-rules.no-rules-found">No rules found.</Trans>
+        </p>
+      )}
       {!hasSomeResults && hasDataSourcesLoading && <Spinner size="xl" className={styles.spinner} />}
 
       <Pagination
@@ -133,11 +143,14 @@ export function CreateRecordingRuleButton() {
         href={urlUtil.renderUrl(`alerting/new/recording`, {
           returnTo: location.pathname + location.search,
         })}
-        tooltip="Create new Data source-managed recording rule"
+        tooltip={t(
+          'alerting.create-recording-rule-button.tooltip-create-new-data-sourcemanaged-recording-rule',
+          'Create new Data source-managed recording rule'
+        )}
         icon="plus"
         variant="secondary"
       >
-        New recording rule
+        <Trans i18nKey="alerting.create-recording-rule-button.new-recording-rule">New recording rule</Trans>
       </LinkButton>
     );
   }

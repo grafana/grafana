@@ -4,6 +4,7 @@ import { createElement, useMemo } from 'react';
 import { DataFrame, DataTransformerConfig, GrafanaTheme2, TransformerRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Icon, JSONFormatter, useStyles2, Drawer } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { TransformationsEditorTransformation } from './types';
 
@@ -50,13 +51,19 @@ export const TransformationEditor = ({
     <div data-testid={selectors.components.TransformTab.transformationEditor(uiConfig.name)}>
       {editor}
       {debugMode && (
-        <Drawer title="Debug transformation" subtitle={uiConfig.name} onClose={toggleShowDebug}>
+        <Drawer
+          title={t('dashboard.transformation-editor.title-debug-transformation', 'Debug transformation')}
+          subtitle={uiConfig.name}
+          onClose={toggleShowDebug}
+        >
           <div
             className={styles.debugWrapper}
             data-testid={selectors.components.TransformTab.transformationEditorDebugger(uiConfig.name)}
           >
             <div className={styles.debug}>
-              <div className={styles.debugTitle}>Input data</div>
+              <div className={styles.debugTitle}>
+                <Trans i18nKey="dashboard.transformation-editor.input-data">Input data</Trans>
+              </div>
               <div className={styles.debugJson}>
                 <JSONFormatter json={input} />
               </div>
@@ -65,7 +72,9 @@ export const TransformationEditor = ({
               <Icon name="arrow-right" />
             </div>
             <div className={styles.debug}>
-              <div className={styles.debugTitle}>Output data</div>
+              <div className={styles.debugTitle}>
+                <Trans i18nKey="dashboard.transformation-editor.output-data">Output data</Trans>
+              </div>
               <div className={styles.debugJson}>{output && <JSONFormatter json={output} />}</div>
             </div>
           </div>

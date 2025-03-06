@@ -11,6 +11,7 @@ import {
 } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select, InlineSwitch, Input, Combobox, ComboboxOption } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
+import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -114,8 +115,23 @@ export const extractFieldsTransformerEditor = ({
       </InlineFieldRow>
       {options.format === FieldExtractorID.RegExp && (
         <InlineFieldRow>
-          <InlineField label="RegExp" labelWidth={16} interactive={true} tooltip="Example: /(?<NewField>.*)/">
-            <Input placeholder="/(?<NewField>.*)/" value={options.regExp} onChange={onRegexpChange} />
+          <InlineField
+            label={t('transformers.extract-fields-transformer-editor.label-reg-exp', 'RegExp')}
+            labelWidth={16}
+            interactive={true}
+            tooltip={t(
+              'transformers.extract-fields-transformer-editor.tooltip-example-new-field',
+              'Example: /(?<NewField>.*)/'
+            )}
+          >
+            <Input
+              placeholder={t(
+                'transformers.extract-fields-transformer-editor.placeholder-new-field',
+                '/(?<NewField>.*)/'
+              )}
+              value={options.regExp}
+              onChange={onRegexpChange}
+            />
           </InlineField>
         </InlineFieldRow>
       )}
@@ -124,12 +140,18 @@ export const extractFieldsTransformerEditor = ({
       )}
       {options.format === FieldExtractorID.Delimiter && (
         <InlineFieldRow>
-          <InlineField label="Delimiter" labelWidth={16}>
+          <InlineField
+            label={t('transformers.extract-fields-transformer-editor.label-delimiter', 'Delimiter')}
+            labelWidth={16}
+          >
             <Combobox
               value={options.delimiter}
               options={[{ value: ',' }, { value: ';' }, { value: '|' }]}
               onChange={onDelimiterChange}
-              placeholder="Select delimiter..."
+              placeholder={t(
+                'transformers.extract-fields-transformer-editor.placeholder-select-delimiter',
+                'Select delimiter...'
+              )}
               width={24}
             />
           </InlineField>

@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
 import { Card, IconButton, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { DataTrail } from './DataTrail';
 import { getTrailStore, DataTrailBookmark } from './TrailStore/TrailStore';
@@ -79,7 +79,7 @@ export function DataTrailCard(props: Props) {
                 key="delete"
                 name="trash-alt"
                 className={styles.secondary}
-                tooltip="Remove bookmark"
+                tooltip={t('trails.data-trail-card.deleteButton-tooltip-remove-bookmark', 'Remove bookmark')}
                 onClick={onDelete}
                 data-testid="deleteButton"
               />

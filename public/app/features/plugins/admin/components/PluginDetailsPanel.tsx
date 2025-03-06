@@ -207,7 +207,9 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
                 This feature is for reporting malicious or harmful behaviour within plugins. For plugin concerns, email
                 us at:{' '}
               </Trans>
-              <TextLink href="mailto:integrations+report-plugin@grafana.com">integrations@grafana.com</TextLink>
+              <TextLink href="mailto:integrations+report-plugin@grafana.com">
+                <Trans i18nKey="plugins.plugin-details-panel.integrationsgrafanacom">integrations@grafana.com</Trans>
+              </TextLink>
             </Text>
             <Text>
               <Trans i18nKey="plugins.details.modal.node">

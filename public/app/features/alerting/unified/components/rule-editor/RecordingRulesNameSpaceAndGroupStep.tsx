@@ -1,5 +1,7 @@
 import { useFormContext } from 'react-hook-form';
 
+import { t } from 'app/core/internationalization';
+
 import { RuleFormValues } from '../../types/rule-form';
 
 import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
@@ -18,7 +20,10 @@ export function RecordingRulesNameSpaceAndGroupStep() {
     <RuleEditorSection
       stepNo={3}
       title={'Add namespace and group'}
-      description="Select the Namespace and Group for your recording rule."
+      description={t(
+        'alerting.recording-rules-name-space-and-group-step.description-select-namespace-group-recording',
+        'Select the Namespace and Group for your recording rule.'
+      )}
     >
       <GroupAndNamespaceFields rulesSourceName={dataSourceName} />
     </RuleEditorSection>

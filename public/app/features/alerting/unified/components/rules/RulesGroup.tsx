@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Badge, ConfirmModal, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier, RulesSource } from 'app/types/unified-alerting';
 
 import { LogMessages, logInfo } from '../../Analytics';
@@ -109,11 +110,11 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
         if (isGroupView && !isProvisioned) {
           actionIcons.push(
             <ActionIcon
-              aria-label="edit rule group"
+              aria-label={t('alerting.rules-group.edit-group-aria-label-edit-rule-group', 'edit rule group')}
               data-testid="edit-group"
               key="edit"
               icon="pen"
-              tooltip="edit rule group"
+              tooltip={t('alerting.rules-group.edit-group-tooltip-edit-rule-group', 'edit rule group')}
               onClick={() => setIsEditingGroup(true)}
             />
           );
@@ -122,7 +123,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
               data-testid="reorder-group"
               key="reorder"
               icon="exchange-alt"
-              tooltip="reorder rules"
+              tooltip={t('alerting.rules-group.reorder-group-tooltip-reorder-rules', 'reorder rules')}
               className={styles.rotate90}
               onClick={() => setIsReorderingGroup(true)}
             />
@@ -131,10 +132,10 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
         if (isListView) {
           actionIcons.push(
             <ActionIcon
-              aria-label="go to folder"
+              aria-label={t('alerting.rules-group.aria-label-go-to-folder', 'go to folder')}
               key="goto"
               icon="folder-open"
-              tooltip="go to folder"
+              tooltip={t('alerting.rules-group.tooltip-go-to-folder', 'go to folder')}
               to={baseUrl}
               target="__blank"
             />
@@ -143,10 +144,10 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           if (folder?.canAdmin) {
             actionIcons.push(
               <ActionIcon
-                aria-label="manage permissions"
+                aria-label={t('alerting.rules-group.aria-label-manage-permissions', 'manage permissions')}
                 key="manage-perms"
                 icon="lock"
-                tooltip="manage permissions"
+                tooltip={t('alerting.rules-group.tooltip-manage-permissions', 'manage permissions')}
                 to={baseUrl + '/permissions'}
                 target="__blank"
               />
@@ -158,22 +159,22 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
         if (isListView) {
           actionIcons.push(
             <ActionIcon
-              aria-label="export rule folder"
+              aria-label={t('alerting.rules-group.export-folder-aria-label-export-rule-folder', 'export rule folder')}
               data-testid="export-folder"
               key="export-folder"
               icon="download-alt"
-              tooltip="Export rules folder"
+              tooltip={t('alerting.rules-group.export-folder-tooltip-export-rules-folder', 'Export rules folder')}
               onClick={() => setIsExporting('folder')}
             />
           );
         } else if (isGroupView) {
           actionIcons.push(
             <ActionIcon
-              aria-label="export rule group"
+              aria-label={t('alerting.rules-group.export-group-aria-label-export-rule-group', 'export rule group')}
               data-testid="export-group"
               key="export-group"
               icon="download-alt"
-              tooltip="Export rule group"
+              tooltip={t('alerting.rules-group.export-group-tooltip-export-rule-group', 'Export rule group')}
               onClick={() => setIsExporting('group')}
             />
           );
@@ -184,11 +185,11 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
     if (!isFederated) {
       actionIcons.push(
         <ActionIcon
-          aria-label="edit rule group"
+          aria-label={t('alerting.rules-group.edit-group-aria-label-edit-rule-group', 'edit rule group')}
           data-testid="edit-group"
           key="edit"
           icon="pen"
-          tooltip="edit rule group"
+          tooltip={t('alerting.rules-group.edit-group-tooltip-edit-rule-group', 'edit rule group')}
           onClick={() => setIsEditingGroup(true)}
         />
       );
@@ -197,7 +198,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           data-testid="reorder-group"
           key="reorder"
           icon="exchange-alt"
-          tooltip="reorder rules"
+          tooltip={t('alerting.rules-group.reorder-group-tooltip-reorder-rules', 'reorder rules')}
           className={styles.rotate90}
           onClick={() => setIsReorderingGroup(true)}
         />
@@ -206,11 +207,11 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
 
     actionIcons.push(
       <ActionIcon
-        aria-label="delete rule group"
+        aria-label={t('alerting.rules-group.delete-group-aria-label-delete-rule-group', 'delete rule group')}
         data-testid="delete-group"
         key="delete-group"
         icon="trash-alt"
-        tooltip="delete rule group"
+        tooltip={t('alerting.rules-group.delete-group-tooltip-delete-rule-group', 'delete rule group')}
         onClick={() => setIsDeletingGroup(true)}
       />
     );
@@ -245,7 +246,8 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
         {
           // eslint-disable-next-line
           <div className={styles.groupName} onClick={() => setIsCollapsed(!isCollapsed)}>
-            {isFederated && <Badge color="purple" text="Federated" />} {groupName}
+            {isFederated && <Badge color="purple" text={t('alerting.rules-group.text-federated', 'Federated')} />}{' '}
+            {groupName}
           </div>
         }
         <div className={styles.spacer} />
@@ -256,7 +258,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           <>
             <div className={styles.actionsSeparator}>|</div>
             <div className={styles.actionIcons}>
-              <Badge color="purple" text="Provisioned" />
+              <Badge color="purple" text={t('alerting.rules-group.text-provisioned', 'Provisioned')} />
             </div>
           </>
         )}
@@ -298,14 +300,16 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
       )}
       <ConfirmModal
         isOpen={isDeletingGroup}
-        title="Delete group"
+        title={t('alerting.rules-group.title-delete-group', 'Delete group')}
         body={
           <div>
             <p>
               Deleting &quot;<strong>{group.name}</strong>&quot; will permanently remove the group and{' '}
               {group.rules.length} alert {pluralize('rule', group.rules.length)} belonging to it.
             </p>
-            <p>Are you sure you want to delete this group?</p>
+            <p>
+              <Trans i18nKey="alerting.rules-group.delete-group">Are you sure you want to delete this group?</Trans>
+            </p>
           </div>
         }
         onConfirm={deleteGroup}

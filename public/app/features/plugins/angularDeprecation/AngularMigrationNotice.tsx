@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { migrationFeatureFlags } from './utils';
 
@@ -46,10 +47,10 @@ export function AngularMigrationNotice({ dashboardUid }: Props) {
       >
         <div className="markdown-html">
           <Button fill="outline" size="sm" className={styles.linkButton} onClick={reportIssue}>
-            Report issue
+            <Trans i18nKey="plugins.angular-migration-notice.report-issue">Report issue</Trans>
           </Button>
           <Button fill="outline" size="sm" className={styles.linkButton} onClick={revertAutoMigrateUrlFlag}>
-            Revert migration
+            <Trans i18nKey="plugins.angular-migration-notice.revert-migration">Revert migration</Trans>
           </Button>
         </div>
       </Alert>

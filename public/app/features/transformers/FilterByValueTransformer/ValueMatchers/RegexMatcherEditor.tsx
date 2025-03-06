@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import * as React from 'react';
 
 import { ValueMatcherID, BasicValueMatcherOptions } from '@grafana/data';
+import { t } from 'app/core/internationalization';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 import { getVariableSuggestions } from '../../utils';
@@ -32,7 +33,7 @@ export function regexMatcherEditor(
         invalid={isInvalid}
         value={value}
         onChange={onChangeVariableValue}
-        placeholder="Value or variable"
+        placeholder={t('transformers.regex-matcher-editor.placeholder-value-or-variable', 'Value or variable')}
         suggestions={getVariableSuggestions()}
       />
     );
