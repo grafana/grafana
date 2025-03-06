@@ -12,7 +12,10 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
       {
         path: PROVISIONING_URL,
         component: SafeDynamicImport(
-          () => import(/* webpackChunkName: "SetupPage"*/ 'app/features/provisioning/GettingStarted/SetupPage')
+          () =>
+            import(
+              /* webpackChunkName: "GettingStartedPage"*/ 'app/features/provisioning/GettingStarted/GettingStartedPage'
+            )
         ),
       },
     ];

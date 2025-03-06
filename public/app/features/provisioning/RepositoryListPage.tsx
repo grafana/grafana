@@ -21,7 +21,7 @@ import {
 import { Page } from 'app/core/components/Page/Page';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
-import OnboardingPage from './GettingStarted/OnboardingPage';
+import GettingStartedPage from './GettingStarted/GettingStartedPage';
 import { FeatureList } from './GettingStarted/FeatureList';
 import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
@@ -49,7 +49,7 @@ export default function RepositoryListPage() {
   }, [deleteAllResult.isSuccess]);
 
   if (!items?.length && !isLoading) {
-    return <OnboardingPage legacyStorage={settings.data?.legacyStorage} />;
+    return <GettingStartedPage legacyStorage={settings.data?.legacyStorage} />;
   }
 
   const onConfirmDelete = () => {

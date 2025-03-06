@@ -8,7 +8,7 @@ import { FeatureList } from './FeatureList';
 import { useGetFrontendSettingsQuery } from '../api';
 import { CONNECT_URL, MIGRATE_URL } from '../constants';
 
-export default function OnboardingPage({ legacyStorage }: { legacyStorage?: boolean }) {
+export default function GettingStartedPage({ legacyStorage }: { legacyStorage?: boolean }) {
   const settingsQuery = useGetFrontendSettingsQuery();
   const navigate = useNavigate();
 
