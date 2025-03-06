@@ -80,16 +80,17 @@ export default function RepositoryListPage() {
     }
   }, [deleteAllResult.isSuccess]);
 
+  // Early return for onboarding
+  if (!items?.length && !isLoading) {
+    return <OnboardingPage legacyStorage={settings.data?.legacyStorage} />;
+  }
+
   const onConfirmDelete = () => {
     deleteAll({});
     setShowDeleteModal(false);
   };
 
   const renderTabContent = () => {
-    if (!items?.length && !isLoading) {
-      return <OnboardingPage legacyStorage={settings.data?.legacyStorage} />;
-    }
-
     if (!instanceConnected) {
       switch (activeTab) {
         case TabSelection.Repositories:
