@@ -24,10 +24,10 @@ jobs:
           go-version: '1.23.7'
           cache: true
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential shared-mime-info
+      # - name: Install dependencies
+      #   run: |
+      #     sudo apt-get update
+      #     sudo apt-get install -y build-essential shared-mime-info
 
       - name: Verify code generation
         run: |
