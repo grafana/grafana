@@ -28,6 +28,7 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 		promGroup   PrometheusRuleGroup
 		config      Config
 		expectError bool
+		errorMsg    string
 	}{
 		{
 			name:      "valid rule group",
@@ -68,6 +69,7 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				},
 			},
 			expectError: true,
+			errorMsg:    "keep_firing_for is not supported",
 		},
 		{
 			name:      "rule group with empty interval",
@@ -100,6 +102,63 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 			},
 			expectError: false,
 		},
+		{
+			name:      "rule group with query_offset is not supported",
+			orgID:     1,
+			namespace: "namespaceUID",
+			promGroup: PrometheusRuleGroup{
+				Name:     "test-group-1",
+				Interval: prommodel.Duration(10 * time.Second),
+				QueryOffset: func() *prommodel.Duration {
+					d := prommodel.Duration(30 * time.Second)
+					return &d
+				}(),
+				Rules: []PrometheusRule{
+					{
+						Alert: "alert-1",
+						Expr:  "up == 0",
+					},
+				},
+			},
+			expectError: true,
+			errorMsg:    "query_offset is not supported",
+		},
+		{
+			name:      "rule group with limit is not supported",
+			orgID:     1,
+			namespace: "namespaceUID",
+			promGroup: PrometheusRuleGroup{
+				Name:     "test-group-1",
+				Interval: prommodel.Duration(10 * time.Second),
+				Limit:    5,
+				Rules: []PrometheusRule{
+					{
+						Alert: "alert-1",
+						Expr:  "up == 0",
+					},
+				},
+			},
+			expectError: true,
+			errorMsg:    "limit is not supported",
+		},
+		{
+			name:      "rule group with labels is not supported",
+			orgID:     1,
+			namespace: "namespaceUID",
+			promGroup: PrometheusRuleGroup{
+				Name:     "test-group-1",
+				Interval: prommodel.Duration(10 * time.Second),
+				Labels:   map[string]string{"team": "devops"},
+				Rules: []PrometheusRule{
+					{
+						Alert: "alert-1",
+						Expr:  "up == 0",
+					},
+				},
+			},
+			expectError: true,
+			errorMsg:    "labels are not supported",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -114,6 +173,9 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 
 			if tc.expectError {
 				require.Error(t, err, tc.name)
+				if tc.errorMsg != "" {
+					require.Contains(t, err.Error(), tc.errorMsg, tc.name)
+				}
 				return
 			}
 			require.NoError(t, err, tc.name)
