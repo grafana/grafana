@@ -251,6 +251,68 @@ for (const file of files) {
 
 console.log(util.inspect(allEvents, { depth: null, colors: true }));
 
+function makeMarkdownTable(properties: Record<string, string | undefined>[]): string {
+  const keys = Object.keys(properties[0]);
+
+  const header = `| ${keys.join(' | ')} |`;
+  const border = `| ${keys.map((header) => '-'.padEnd(header.length, '-')).join(' | ')} |`;
+
+  const rows = properties.map((property) => {
+    const columns = keys.map((key) => {
+      const value = property[key] ?? '';
+
+      return String(value).replace(/\|/g, '\\|');
+    });
+
+    return '| ' + columns.join(' | ') + ' |';
+  });
+
+  return [header, border, ...rows].join('\n');
+}
+
+const markdownPerEvent = allEvents
+  .map((event) => {
+    const preparedProperties =
+      event.properties?.map((property) => {
+        return {
+          name: property.name,
+          type: '`' + property.type + '`',
+          description: property.description,
+        };
+      }) ?? [];
+
+    const propertiesTable = event.properties ? makeMarkdownTable(preparedProperties) : '';
+
+    let eventMarkdown = `
+### ${event.name}
+
+${event.description}
+`;
+
+    if (event.properties) {
+      eventMarkdown += `
+
+#### Properties
+
+${propertiesTable}
+`;
+    }
+    return eventMarkdown;
+  })
+  .join('\n');
+
+let markdown = `
+# Analytics report
+
+This report contains all the analytics events that are defined in the project.
+
+## Events
+
+${markdownPerEvent}
+`;
+
+console.log(markdown);
+
 // Function to fully resolve types (aliases, unions, literals)
 function resolveType(type: Type): string {
   // Step 1: If the type is an alias (e.g., `Action`), resolve its declaration
