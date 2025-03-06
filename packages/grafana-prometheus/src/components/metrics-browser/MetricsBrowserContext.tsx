@@ -93,15 +93,19 @@ export function MetricsBrowserProvider({
       const newLabelValues: Record<string, string[]> = {};
 
       for (const lk of selectedLabelKeys) {
-        const values = await languageProvider.fetchSeriesValuesWithMatch(lk, undefined);
-        newLabelValues[lk] = values;
+        if (labelKeys.includes(lk)) {
+          const values = await languageProvider.fetchSeriesValuesWithMatch(lk, undefined);
+          newLabelValues[lk] = values;
+        } else {
+          delete newLabelValues[lk];
+        }
       }
 
       setLabelValues(newLabelValues);
     }
 
     fetchValues();
-  }, [languageProvider, selectedLabelKeys]);
+  }, [labelKeys, languageProvider, selectedLabelKeys]);
 
   const onMetricClick = useCallback(
     (metricName: string) => setSelectedMetric(selectedMetric !== metricName ? metricName : ''),
