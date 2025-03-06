@@ -143,7 +143,7 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
               )}
             </AutoSizer>
           </div>
-          <Stack direction={'row'} alignItems="flex-end" justifyContent="end" gap={1}>
+          <Stack alignItems="flex-end" justifyContent="end">
             <Button
               variant="primary"
               disabled={replaceFileStatus.isLoading}
