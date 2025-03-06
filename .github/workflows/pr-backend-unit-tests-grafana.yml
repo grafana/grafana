@@ -18,7 +18,7 @@ permissions:
   id-token: write
 
 jobs:
-  call-backend-tests:
+  call-backend-unit-tests:
     # Run this workflow only for PRs from forks; if it gets merged into `main`, 
     # the `pr-backend-unit-tests-enterprise` workflow will run instead
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
