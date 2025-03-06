@@ -1,5 +1,4 @@
-// eslint-disable-next-line lodash/import-scope
-import _, { startsWith } from 'lodash';
+import { startsWith, includes, find, filter } from 'lodash';
 
 import { ScopedVars } from '@grafana/data';
 import { getTemplateSrv, DataSourceWithBackend, TemplateSrv } from '@grafana/runtime';
@@ -43,14 +42,14 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
       return target;
     }
     const variableNames = ts.getVariables().map((v) => `$${v.name}`);
-    const subscriptionVar = _.find(target.subscriptions, (sub) => _.includes(variableNames, sub));
+    const subscriptionVar = find(target.subscriptions, (sub) => includes(variableNames, sub));
     const interpolatedSubscriptions = ts
       .replace(subscriptionVar, scopedVars, (v: string[] | string) => v)
       .split(',')
       .filter((v) => v.length > 0);
     const subscriptions = [
       ...interpolatedSubscriptions,
-      ..._.filter(target.subscriptions, (sub) => !_.includes(variableNames, sub)),
+      ...filter(target.subscriptions, (sub) => !includes(variableNames, sub)),
     ];
     const query = ts.replace(item.query, scopedVars, interpolateVariable);
 
