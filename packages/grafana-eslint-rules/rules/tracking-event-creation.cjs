@@ -14,10 +14,7 @@ const trackingEventCreation = createRule({
 
     return {
       ImportSpecifier(node) {
-        if (
-          node.imported.type === AST_NODE_TYPES.Identifier &&
-          node.imported.name === 'createEventFactory'
-        ) {
+        if (node.imported.type === AST_NODE_TYPES.Identifier && node.imported.name === 'createEventFactory') {
           // Remember what name it was imported as (handles aliased imports)
           createEventFactoryName = node.local.name;
         }
@@ -51,10 +48,7 @@ const trackingEventCreation = createRule({
           node.declaration.declarations[0].init?.type === AST_NODE_TYPES.CallExpression
         ) {
           const callee = node.declaration.declarations[0].init.callee;
-          if (
-            callee.type === AST_NODE_TYPES.Identifier &&
-            eventFactoryVariables.has(callee.name)
-          ) {
+          if (callee.type === AST_NODE_TYPES.Identifier && eventFactoryVariables.has(callee.name)) {
             // Check for comments
             const comments = context.sourceCode.getCommentsBefore(node);
             if (!comments || comments.length === 0) {
@@ -64,6 +58,45 @@ const trackingEventCreation = createRule({
               });
             }
           }
+        }
+      },
+      TSInterfaceDeclaration(node) {
+        // Check if interface extends TrackingEvent
+        let extendsTrackingEvent = false;
+        if (node.extends && node.extends.length > 0) {
+          const interfaceExtends = node.extends;
+          extendsTrackingEvent = interfaceExtends.some((extend) => {
+            return extend.expression.type === AST_NODE_TYPES.Identifier && extend.expression.name === 'TrackingEventProps';
+          });
+        }
+        if (!node.extends || !extendsTrackingEvent) {
+          return context.report({
+            node,
+            messageId: 'interfaceMustExtend',
+          });
+        }
+        //Check if the interface properties has comments
+        if(node.body.type === AST_NODE_TYPES.TSInterfaceBody){
+          const properties = node.body.body;
+          properties.forEach(property => {
+            const comments = context.sourceCode.getCommentsBefore(property);
+            if (!comments || comments.length === 0) {
+              return context.report({
+                node: property,
+                messageId: 'missingPropertyComment',
+              });
+            }
+          });
+        }
+      },
+      TSTypeAliasDeclaration(node) {
+        // Check if types has comments
+        const comments = context.sourceCode.getCommentsBefore(node);
+        if (!comments || comments.length === 0) {
+          return context.report({
+            node,
+            messageId: 'missingPropertyComment',
+          });
         }
       }
     };
@@ -77,6 +110,8 @@ const trackingEventCreation = createRule({
     messages: {
       eventFactoryLiterals: 'Params passed to `createEventFactory` must be literals',
       missingFunctionComment: 'Event function needs to have a description of its purpose',
+      missingPropertyComment: 'Event property needs to have a description of its purpose',
+      interfaceMustExtend: 'Interface must extend `TrackingEvent`',
     },
     schema: [],
   },
