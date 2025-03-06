@@ -70,6 +70,7 @@ let llmHealthCheck: Promise<boolean> | undefined;
  */
 export async function isLLMPluginEnabled(): Promise<boolean> {
   if (!config.apps['grafana-llm-app']) {
+    console.log('LLM plugin is not available');
     return false;
   }
 
@@ -81,6 +82,7 @@ export async function isLLMPluginEnabled(): Promise<boolean> {
   // If not, we won't be able to make requests, so return early.
   llmHealthCheck = new Promise((resolve) => {
     openai.health().then((response) => {
+      console.log('LLM plugin health check response', response);
       if (!response.ok) {
         // Health check fail clear cached promise so we can try again later
         llmHealthCheck = undefined;
