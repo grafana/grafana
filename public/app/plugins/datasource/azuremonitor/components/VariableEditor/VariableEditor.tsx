@@ -149,7 +149,7 @@ const VariableEditor = (props: Props) => {
   useEffect(() => {
     if (subscription) {
       datasource.getResourceGroups(subscription).then((rgs) => {
-        setResourceGroups(rgs.map((s) => ({ label: s.text, value: s.value })));
+        setResourceGroups(rgs.map((s) => ({ label: s.resourceGroupName, value: s.resourceGroupName })));
       });
     }
   }, [datasource, subscription]);
