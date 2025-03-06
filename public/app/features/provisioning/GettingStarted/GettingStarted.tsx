@@ -125,15 +125,15 @@ export default function GettingStarted() {
         </Box>
         <Box width="50%">
           <div
-            className={css`
-              height: 100%;
-              background: linear-gradient(to right, rgba(255, 179, 102, 0.6), rgba(255, 143, 143, 0.8));
-              border-radius: 4px;
-              padding: 16px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            `}
+            className={css({
+              height: `100%`,
+              background: `linear-gradient(to right, rgba(255, 179, 102, 0.6), rgba(255, 143, 143, 0.8))`,
+              borderRadius: `4px`,
+              padding: `16px`,
+              display: `flex`,
+              alignItems: `center`,
+              justifyContent: `center`,
+            })}
           >
             <Text variant="h2">Engaging graphic</Text>
           </div>
