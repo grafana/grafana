@@ -1,7 +1,11 @@
 // @ts-check
 /** @typedef {import('@typescript-eslint/utils').TSESTree.Node} Node */
 /** @typedef {import('@typescript-eslint/utils').TSESTree.JSXAttribute} JSXAttribute */
+/** @typedef {import('@typescript-eslint/utils').TSESTree.JSXExpressionContainer} JSXExpressionContainer */
+/** @typedef {import('@typescript-eslint/utils').TSESTree.JSXElement} JSXElement */
+/** @typedef {import('@typescript-eslint/utils').TSESTree.JSXFragment} JSXFragment */
 /** @typedef {import('@typescript-eslint/utils').TSESTree.JSXText} JSXText */
+/** @typedef {import('@typescript-eslint/utils').TSESTree.JSXChild} JSXChild */
 /** @typedef {import('@typescript-eslint/utils/ts-eslint').RuleFixer} RuleFixer */
 
 const { ESLintUtils, AST_NODE_TYPES } = require('@typescript-eslint/utils');
@@ -42,7 +46,7 @@ const noUntranslatedStrings = createRule({
 
     /**
      * Checks if a node can be fixed automatically
-     * @param {JSXAttribute|JSXText} node The node to check
+     * @param {JSXAttribute|JSXElement|JSXFragment} node The node to check
      * @returns {boolean} Whether the node can be fixed
      */
     function canBeFixed(node) {
@@ -50,80 +54,45 @@ const noUntranslatedStrings = createRule({
         return false;
       }
 
-      // We can only fix strings that are within a function,
+      // We can only fix JSX attribute strings that are within a function,
       // otherwise the `t` function call will be made too early
-      const ancestors = context.sourceCode.getAncestors(node);
-      const isInFunction = ancestors.some((anc) => {
-        return [
-          AST_NODE_TYPES.ArrowFunctionExpression,
-          AST_NODE_TYPES.FunctionDeclaration,
-          AST_NODE_TYPES.ClassDeclaration,
-        ].includes(anc.type);
-      });
 
-      if (!isInFunction) {
-        return false;
+      if (node.type === AST_NODE_TYPES.JSXAttribute) {
+        const ancestors = context.sourceCode.getAncestors(node);
+        const isInFunction = ancestors.some((anc) => {
+          return [
+            AST_NODE_TYPES.ArrowFunctionExpression,
+            AST_NODE_TYPES.FunctionDeclaration,
+            AST_NODE_TYPES.ClassDeclaration,
+          ].includes(anc.type);
+        });
+        if (!isInFunction) {
+          return false;
+        }
+        if (node.value?.type === AST_NODE_TYPES.JSXExpressionContainer) {
+          return false;
+        }
       }
 
-      if (node.type === AST_NODE_TYPES.JSXAttribute && node.value?.type === AST_NODE_TYPES.JSXExpressionContainer) {
-        return false;
-      }
+      const values =
+        node.type === AST_NODE_TYPES.JSXElement || node.type === AST_NODE_TYPES.JSXFragment
+          ? node.children.map((child) => {
+              return getNodeValue(child);
+            })
+          : [getNodeValue(node)];
 
-      const value = getNodeValue(node);
-      const stringIsTooLong = value.trim().split(' ').length > 10;
+      const stringIsTooLong = values.some((value) => value.trim().split(' ').length > 10);
       // If we have more than 10 words,
       // we don't want to fix it automatically as the chance of a duplicate key is higher,
       // and it's better for a user to manually decide the key
       if (stringIsTooLong) {
         return false;
       }
-      const stringIsNonAlphanumeric = value && !/[a-zA-Z0-9]/.test(value);
-      const stringContainsHTMLEntities = /(&[a-zA-Z0-9]+;)/.test(value);
+      const stringIsNonAlphanumeric = values.some((value) => !/[a-zA-Z0-9]/.test(value));
+      const stringContainsHTMLEntities = values.some((value) => /(&[a-zA-Z0-9]+;)/.test(value));
       // If node only contains non-alphanumeric characters,
       // or contains HTML character entities, then we don't want to autofix
       if (stringIsNonAlphanumeric || stringContainsHTMLEntities) {
-        return false;
-      }
-
-      // If we've got to this point for a JSX attribute,
-      // then we can assume we can autofix
-      if (node.type === AST_NODE_TYPES.JSXAttribute) {
-        return true;
-      }
-
-      // Check if node has JSX expression siblings
-      const parent = node.parent;
-
-      // If we have a sibling that is an expression or element, then we don't want to autofix
-      // E.g.:
-      // <div>Foo {someVar}</div>
-      const hasJSXExpressionOrElementSibling =
-        parent.type === AST_NODE_TYPES.JSXElement &&
-        parent.children.some(
-          (child) => child.type === AST_NODE_TYPES.JSXExpressionContainer || child.type === AST_NODE_TYPES.JSXElement
-        );
-      if (hasJSXExpressionOrElementSibling) {
-        return false;
-      }
-
-      const siblings =
-        parent.type === AST_NODE_TYPES.JSXElement && parent.parent.type === AST_NODE_TYPES.JSXElement
-          ? parent.parent.children
-          : [];
-
-      const hasJSXTextSibling = siblings.some((child) => {
-        return child.type === AST_NODE_TYPES.JSXText && getNodeValue(child).trim();
-      });
-
-      const hasHtmlTagSibling = siblings.some((child) => {
-        return (
-          child.type === AST_NODE_TYPES.JSXElement &&
-          child.openingElement.name.type === AST_NODE_TYPES.JSXIdentifier &&
-          ['code', 'pre'].includes(child.openingElement.name.name)
-        );
-      });
-
-      if (hasHtmlTagSibling || hasJSXTextSibling) {
         return false;
       }
 
@@ -132,7 +101,7 @@ const noUntranslatedStrings = createRule({
 
     /**
      * Gets the import fixer for a node
-     * @param {JSXAttribute|JSXText} node The node
+     * @param {JSXElement|JSXFragment|JSXAttribute} node
      * @param {RuleFixer} fixer The fixer
      * @param {string} importName The import name
      * @returns {import('@typescript-eslint/utils/ts-eslint').RuleFix|undefined} The fix
@@ -190,13 +159,15 @@ const noUntranslatedStrings = createRule({
         .trim()
         .split(/\s+/);
 
+      const maxWordsForKey = 6;
+
       // If we have more than 6 words, filter out the words that are less than 4 characters
       // This heuristic tends to result in a good balance between unique and descriptive keys
-      const filteredWords = words.length > 6 ? words.filter((word) => word.length > 4) : words;
+      const filteredWords = words.length > maxWordsForKey ? words.filter((word) => word.length > 4) : words;
 
       // If we've filtered everything out, use the original words, deduplicated
       const wordsToUse = filteredWords.length === 0 ? words : filteredWords;
-      const uniqueWords = [...new Set(wordsToUse)].slice(0, 6);
+      const uniqueWords = [...new Set(wordsToUse)].slice(0, maxWordsForKey);
 
       let kebabString = toKebabCase(uniqueWords.join(' '));
 
@@ -252,7 +223,7 @@ const noUntranslatedStrings = createRule({
 
     /**
      * Gets the value of a node
-     * @param {JSXAttribute|JSXText} node The node
+     * @param {JSXAttribute|JSXText|JSXElement|JSXFragment|JSXChild} node The node
      * @returns {string} The node value
      */
     function getNodeValue(node) {
@@ -267,14 +238,19 @@ const noUntranslatedStrings = createRule({
     }
 
     /**
-     * @param {JSXAttribute|JSXText} node
+     * @param {JSXElement|JSXFragment} node
      * @returns {(fixer: RuleFixer) => import('@typescript-eslint/utils/ts-eslint').RuleFix[]}
      */
     const getTransFixers = (node) => (fixer) => {
       const fixes = [];
-      const i18nKey = getI18nKey(node);
-      const value = getNodeValue(node);
-      fixes.push(fixer.replaceText(node, `<Trans i18nKey="${i18nKey}">${value}</Trans>`));
+      const children = node.children;
+      children.forEach((child) => {
+        if (child.type === AST_NODE_TYPES.JSXText) {
+          const i18nKey = getI18nKey(child);
+          const value = getNodeValue(child);
+          fixes.push(fixer.replaceText(child, `<Trans i18nKey="${i18nKey}">${value}</Trans>`));
+        }
+      });
 
       const importsFixer = getImportsFixer(node, fixer, 'Trans');
       if (importsFixer) {
@@ -304,6 +280,18 @@ const noUntranslatedStrings = createRule({
       return fixes;
     };
 
+    /**
+     * @param {Node} node
+     */
+    const elementIsTrans = (node) => {
+      return (
+        node.type === AST_NODE_TYPES.JSXElement &&
+        node.openingElement.type === AST_NODE_TYPES.JSXOpeningElement &&
+        node.openingElement.name.type === AST_NODE_TYPES.JSXIdentifier &&
+        node.openingElement.name.name === 'Trans'
+      );
+    };
+
     return {
       JSXAttribute(node) {
         if (!propsToCheck.includes(String(node.name.name)) || !node.value) {
@@ -312,7 +300,7 @@ const noUntranslatedStrings = createRule({
 
         const isUntranslatedProp =
           (node.value.type === 'Literal' && node.value.value !== '') ||
-          (node.value.type === 'JSXExpressionContainer' &&
+          (node.value.type === AST_NODE_TYPES.JSXExpressionContainer &&
             (node.value.expression.type === 'Literal' || node.value.expression.type === 'TemplateLiteral'));
 
         if (isUntranslatedProp) {
@@ -323,18 +311,39 @@ const noUntranslatedStrings = createRule({
           });
         }
       },
-      JSXText(node) {
-        const ancestors = context.sourceCode.getAncestors(node);
-        const isEmpty = !node.value.trim();
-        const hasTransAncestor = ancestors.some((ancestor) => {
-          return (
-            ancestor.type === AST_NODE_TYPES.JSXElement &&
-            ancestor.openingElement.type === AST_NODE_TYPES.JSXOpeningElement &&
-            ancestor.openingElement.name.type === AST_NODE_TYPES.JSXIdentifier &&
-            ancestor.openingElement.name.name === 'Trans'
-          );
+      /**
+       * @param {JSXElement|JSXFragment} node
+       */
+      'JSXElement, JSXFragment'(node) {
+        const parent = node.parent;
+        const children = node.children;
+        const untranslatedTextNodes = children.filter((child) => {
+          if (child.type === AST_NODE_TYPES.JSXText) {
+            const hasValue = child.value.trim();
+            if (!hasValue) {
+              return false;
+            }
+            const ancestors = context.sourceCode.getAncestors(node);
+            const hasTransAncestor =
+              elementIsTrans(node) ||
+              ancestors.some((ancestor) => {
+                return elementIsTrans(ancestor);
+              });
+            return !hasTransAncestor;
+          }
+          return false;
         });
-        if (!isEmpty && !hasTransAncestor) {
+
+        const parentHasChildren =
+          parent.type === AST_NODE_TYPES.JSXElement || parent.type === AST_NODE_TYPES.JSXFragment;
+
+        // We don't want to report if the parent has a text node,
+        // as we'd end up doing it twice. This makes it awkward for us to auto fix
+        const parentHasText = parentHasChildren
+          ? parent.children.some((child) => child.type === AST_NODE_TYPES.JSXText && getNodeValue(child).trim())
+          : false;
+
+        if (untranslatedTextNodes.length && !parentHasText) {
           context.report({
             node,
             messageId: 'noUntranslatedStrings',
@@ -355,8 +364,6 @@ const noUntranslatedStrings = createRule({
     messages: {
       noUntranslatedStrings: 'No untranslated strings. Wrap text with <Trans />',
       noUntranslatedStringsProp: `No untranslated strings in text props. Wrap text with <Trans /> or use t()`,
-      wrapWithTrans: `Wrap with <Trans /> with suggested key`,
-      wrapWithT: `Wrap with t() method with suggested key`,
     },
     schema: [],
   },
