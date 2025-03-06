@@ -119,7 +119,7 @@ export default function GettingStarted() {
             <Stack direction="column" gap={2}>
               {hasRequiredFeatures ? (
                 <>
-                  <Text variant="h2">Migrate Or Connect</Text>
+                  <Text variant="h2">Migrate or connect</Text>
                   <Text variant="body">Migrate your existing dashboards and manage the entire instance as code:</Text>
                   <Box>
                     <Button
@@ -177,13 +177,13 @@ export default function GettingStarted() {
               justify-content: center;
             `}
           >
-            <Text variant="h2">Engaging Graphic</Text>
+            <Text variant="h2">Engaging graphic</Text>
           </div>
         </Box>
       </Stack>
       {(!hasPublicAccess || !hasImageRenderer) && (
         <Box marginTop={2}>
-          <Text variant="h2">Unlock enhanced functionality for Github</Text>
+          <Text variant="h2">Unlock enhanced functionality for GitHub</Text>
           <Box marginTop={4}>
             <Stack direction="row" gap={2}>
               <Box width="25%" padding={2}>
@@ -203,7 +203,7 @@ export default function GettingStarted() {
                     >
                       <Icon name="sync" size="xxl" color="primary" />
                     </div>
-                    <Text variant="h3">Instantenous Provisioning</Text>
+                    <Text variant="h3">Instantenous provisioning</Text>
                     <Text variant="body">
                       Automatically provision and update your dashboards as soon as changes are pushed to your GitHub
                       repository
@@ -248,9 +248,9 @@ export default function GettingStarted() {
                       <Icon name="code-branch" size="xxl" color="purple" />
                     </div>
                   </Stack>
-                  <Text variant="h3">Visual Previews in Pull Requests</Text>
+                  <Text variant="h3">Visual previews in pull requests</Text>
                   <Text variant="body">
-                    Review how your changes look like before going live in Grafana and directly in Pull Requests
+                    Review how your changes look like before going live in Grafana and directly in pull requests
                   </Text>
                   {hasImageRenderer && (
                     <Box>
