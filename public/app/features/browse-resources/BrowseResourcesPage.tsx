@@ -200,7 +200,14 @@ const FoldersPage: React.FC = () => {
               return (
                 <div className="flex items-center">
                   <Icon name={'folder'} style={{ marginRight: '6px' }}/>
+                  <Link
+                    aria-label={`open-${original.location}`}
+                    href={toURL('folder', original.folder, original.location)}
+                    className="external-link"
+                    onClick={onResourceLinkClicked}
+                  >
                   <span>{original.location}</span>
+                  </Link>
                 </div>
               );
             },
