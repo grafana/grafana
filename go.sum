@@ -3097,6 +3097,8 @@ github.com/tmc/grpc-websocket-proxy v0.0.0-20220101234140-673ab2c3ae75/go.mod h1
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
 github.com/ua-parser/uap-go v0.0.0-20211112212520-00c877edfe0f h1:A+MmlgpvrHLeUP8dkBVn4Pnf5Bp5Yk2OALm7SEJLLE8=
 github.com/ua-parser/uap-go v0.0.0-20211112212520-00c877edfe0f/go.mod h1:OBcG9bn7sHtXgarhUEb3OfCnNsgtGnkVf41ilSZ3K3E=
+github.com/ua-parser/uap-go v0.0.0-20250213224047-9c035f085b90 h1:rB0J+hLNltG1Qv+UF+MkdFz89XMps5BOAFJN4xWjc+s=
+github.com/ua-parser/uap-go v0.0.0-20250213224047-9c035f085b90/go.mod h1:BUbeWZiieNxAuuADTBNb3/aeje6on3DhU3rpWsQSB1E=
 github.com/uber/jaeger-client-go v2.30.0+incompatible h1:D6wyKGCecFaSRUpo8lCVbaOOb6ThwMmTEbhRwtKR97o=
 github.com/uber/jaeger-client-go v2.30.0+incompatible/go.mod h1:WVhlPFC8FDjOFMMWRy2pZqQJSXxYSwNYOkTr/Z6d3Kk=
 github.com/uber/jaeger-lib v2.4.1+incompatible h1:td4jdvLcExb4cBISKIpHuGoVXh+dVKhn2Um6rjCsSsg=

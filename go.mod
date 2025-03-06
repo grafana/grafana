@@ -87,7 +87,7 @@ require (
 	github.com/russellhaering/goxmldsig v1.4.0 // @grafana/backend-platform
 	github.com/stretchr/testify v1.9.0 // @grafana/backend-platform
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf // @grafana/backend-platform
-	github.com/ua-parser/uap-go v0.0.0-20211112212520-00c877edfe0f // @grafana/backend-platform
+	github.com/ua-parser/uap-go v0.0.0-20250213224047-9c035f085b90 // @grafana/backend-platform
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
 	github.com/urfave/cli/v2 v2.27.1 // @grafana/backend-platform
 	github.com/vectordotdev/go-datemath v0.1.1-0.20220323213446-f3954d0b18ae // @grafana/backend-platform
