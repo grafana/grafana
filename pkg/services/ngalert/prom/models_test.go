@@ -23,6 +23,9 @@ func TestPrometheusRuleGroup_Validate(t *testing.T) {
 			group: PrometheusRuleGroup{
 				Name:     "test_group",
 				Interval: prommodel.Duration(60),
+				Labels: map[string]string{
+					"label-1": "value-1",
+				},
 				Rules: []PrometheusRule{
 					{
 						Alert: "test_alert",
@@ -51,16 +54,6 @@ func TestPrometheusRuleGroup_Validate(t *testing.T) {
 			},
 			expectError: true,
 			errorMsg:    "limit is not supported",
-		},
-		{
-			name: "invalid group with labels",
-			group: PrometheusRuleGroup{
-				Name:     "test_group",
-				Interval: prommodel.Duration(60),
-				Labels:   map[string]string{"foo": "bar"},
-			},
-			expectError: true,
-			errorMsg:    "labels are not supported",
 		},
 		{
 			name: "invalid group with invalid rule",
