@@ -26,8 +26,10 @@ import { Trans, t } from 'app/core/internationalization';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { ScopesSelector } from 'app/features/scopes';
+import { useSelector } from 'app/types';
 
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
+import { selectFolderRepository } from '../../provisioning/api';
 import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
 import ExportButton from '../sharing/ExportButton/ExportButton';
 import ShareButton from '../sharing/ShareButton/ShareButton';
@@ -78,7 +80,8 @@ export function ToolbarActions({ dashboard }: Props) {
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
   const showScopesSelector = config.featureToggles.scopeFilters && !isEditing;
   const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
-  const isManaged = Boolean(dashboard.isManaged());
+  const folderRepo = useSelector((state) => selectFolderRepository(state, meta.folderUid));
+  const isManaged = Boolean(dashboard.isManaged() || folderRepo);
 
   if (!isEditingPanel) {
     // This adds the presence indicators in enterprise
