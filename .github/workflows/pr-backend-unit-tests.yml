@@ -55,6 +55,7 @@ jobs:
         uses: ./.github/actions/test-coverage-processor
         with:
           test-type: 'be-unit'
+          # Needs to be named 'unit.cov' based on the Makefile command `make test-go-unit`
           coverage-file: 'unit.cov'
           codecov-token: ${{ secrets.CODECOV_TOKEN }}
           codecov-flag: 'be-unit'

@@ -34,22 +34,6 @@ runs:
           echo "Coverage file is empty, creating a minimal valid file"
           echo "mode: set" > ${{ inputs.coverage-file }}
         fi
-        
-        # Set output file names based on test type
-        FUNC_LOG="${{ inputs.test-type }}-funcs.log"
-        HTML_REPORT="${{ inputs.test-type }}.html"
-        
-        # Convert to different formats
-        go tool cover -func ${{ inputs.coverage-file }} > $FUNC_LOG
-        go tool cover -html ${{ inputs.coverage-file }} -o $HTML_REPORT
-        
-        # Add coverage summary to GitHub step summary
-        echo "# ${{ inputs.test-type }} Coverage" >> $GITHUB_STEP_SUMMARY
-        if grep -q "total:" $FUNC_LOG; then
-          grep 'total:' $FUNC_LOG | tr '\t' ' ' >> $GITHUB_STEP_SUMMARY
-        else
-          echo "No coverage data available" >> $GITHUB_STEP_SUMMARY
-        fi
 
     - name: Report coverage to CodeCov
       uses: codecov/codecov-action@v5
