@@ -1,6 +1,4 @@
-import { useNavigate } from 'react-router-dom-v5-compat';
-
-import { Stack, Text, Button, Box, LinkButton, Icon } from '@grafana/ui';
+import { Stack, Text, Box, LinkButton, Icon } from '@grafana/ui';
 
 import { RepositoryViewList } from '../api';
 import { CONNECT_URL, MIGRATE_URL } from '../constants';
@@ -30,8 +28,6 @@ export const FeaturesList = ({
   hasRequiredFeatures,
   onSetupFeatures,
 }: FeaturesListProps) => {
-  const navigate = useNavigate();
-
   const actions = () => {
     if (!hasRequiredFeatures) {
       return (
@@ -52,9 +48,9 @@ export const FeaturesList = ({
     if (settings.legacyStorage) {
       return (
         <Stack>
-          <Button size="md" icon="plus" onClick={() => navigate(MIGRATE_URL)}>
+          <LinkButton size="md" icon="plus" href={MIGRATE_URL}>
             Migrate Grafana to repository
-          </Button>
+          </LinkButton>
         </Stack>
       );
     }
@@ -64,7 +60,7 @@ export const FeaturesList = ({
       // or instance is empty?
       return (
         <Stack>
-          <LinkButton fill="outline" icon="plus" onClick={() => navigate(CONNECT_URL)}>
+          <LinkButton fill="outline" icon="plus" href={CONNECT_URL}>
             Connect Grafana to repository
           </LinkButton>
         </Stack>
@@ -74,11 +70,11 @@ export const FeaturesList = ({
     // Could choose either
     return (
       <Stack direction="row" alignItems="center" gap={2}>
-        <Button size="md" icon="plus" onClick={() => navigate(MIGRATE_URL)}>
+        <LinkButton size="md" icon="plus" href={MIGRATE_URL}>
           Migrate Grafana to repository
-        </Button>
+        </LinkButton>
         <Text variant="body">or</Text>
-        <LinkButton fill="outline" icon="plus" onClick={() => navigate(CONNECT_URL)}>
+        <LinkButton fill="outline" icon="plus" href={CONNECT_URL}>
           Connect Grafana to repository
         </LinkButton>
       </Stack>

@@ -1,11 +1,12 @@
-import { Controller, useFormContext } from 'react-hook-form';
 import { useEffect } from 'react';
+import { Controller, useFormContext } from 'react-hook-form';
 
 import { Field, Input, Combobox, Stack, FieldSet, Card, Alert } from '@grafana/ui';
 
-import { WizardFormData } from './types';
 import { useGetFrontendSettingsQuery } from '../api';
 import { checkSyncSettings } from '../utils';
+
+import { WizardFormData } from './types';
 
 const typeOptions = [
   { label: 'GitHub', value: 'github' },
@@ -15,9 +16,8 @@ const typeOptions = [
 const modeOptions = [
   {
     value: 'instance',
-    label: 'Connect your entire Grafana instance to an empty repository',
-    description:
-      'Export all dashboards from this instance to a new, empty repository. After setup, all dashboards in this instance will be saved and managed exclusively through this repository.',
+    label: 'Connect your entire Grafana instance to an external repository',
+    description: 'Read all dashboards from an external repository',
   },
   {
     value: 'folder',
