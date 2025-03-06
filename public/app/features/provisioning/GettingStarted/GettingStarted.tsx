@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { LinkButton, Alert, Stack, Text, Button, Box, Card, Icon } from '@grafana/ui';
+import { LinkButton, Alert, Stack, Text, Button, Box, Icon } from '@grafana/ui';
 
 import { useGetFrontendSettingsQuery } from '../api';
 import { CONNECT_URL, MIGRATE_URL } from '../constants';
