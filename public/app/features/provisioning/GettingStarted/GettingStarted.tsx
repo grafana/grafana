@@ -76,10 +76,10 @@ export default function GettingStarted() {
         </Alert>
       )}
       <Stack direction="row" gap={2}>
-        <Box width="50%" marginTop={2}>
-          <Text variant="h2">Provisioning as-code directly from Grafana</Text>
-          <Box padding={2}>
+        <Box width="50%" marginTop={2} paddingTop={2} paddingBottom={2}>
+          <Stack direction="column" gap={2}>
             <Stack direction="column" gap={2}>
+              <Text variant="h2">Provisioning as-code directly from Grafana</Text>
               <Text variant="body">
                 <Icon name="check" className="text-success" /> Manage your dashboards as code and deploy them
                 automatically from your GitHub repository or local storage
@@ -108,11 +108,15 @@ export default function GettingStarted() {
               <LinkButton fill="text" href="#" icon="external-link-alt">
                 Learn more
               </LinkButton>
+            </Stack>
+            <Stack direction="column" gap={2}>
               {hasRequiredFeatures ? (
                 <>
+                  <Text variant="h2">Migrate Or Connect</Text>
+                  <Text variant="body">Migrate your existing dashboards and manage the entire instance as code:</Text>
                   <Box>
                     <Button
-                      size="lg"
+                      size="md"
                       icon="plus"
                       onClick={async () => {
                         await settingsQuery.refetch();
@@ -152,7 +156,7 @@ export default function GettingStarted() {
                 </Box>
               )}
             </Stack>
-          </Box>
+          </Stack>
         </Box>
         <Box width="50%">
           <div
@@ -234,7 +238,7 @@ export default function GettingStarted() {
                         width: fit-content;
                       `}
                     >
-                      <Icon name="github" size="xxl" color="purple" />
+                      <Icon name="code-branch" size="xxl" color="purple" />
                     </div>
                   </Stack>
                   <Text variant="h3">Visual Previews in Pull Requests</Text>
