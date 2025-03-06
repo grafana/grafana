@@ -397,19 +397,18 @@ func WithoutInternalLabels() LabelOption {
 }
 
 func (alertRule *AlertRule) ImportedFromPrometheus() bool {
-	if alertRule.Metadata.PrometheusStyleRule == nil {
-		return false
-	}
-
-	return alertRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition != ""
+	_, err := alertRule.PrometheusRuleDefinition()
+	return err == nil
 }
 
-func (alertRule *AlertRule) PrometheusRuleDefinition() string {
-	if !alertRule.ImportedFromPrometheus() {
-		return ""
+func (alertRule *AlertRule) PrometheusRuleDefinition() (string, error) {
+	if alertRule.Metadata.PrometheusStyleRule != nil {
+		if alertRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition != "" {
+			return alertRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition, nil
+		}
 	}
 
-	return alertRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition
+	return "", fmt.Errorf("prometheus rule definition is missing")
 }
 
 // GetLabels returns the labels specified as part of the alert rule.

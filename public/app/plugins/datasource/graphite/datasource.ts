@@ -143,7 +143,7 @@ export class GraphiteDatasource
         target: query.target || '',
         textEditor: false,
       },
-      getTemplateSrv()
+      this.templateSrv
     );
     graphiteQuery.parseTarget();
 

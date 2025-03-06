@@ -7,7 +7,8 @@ import (
 )
 
 var (
-	ErrPrometheusRuleValidationFailed = errutil.ValidationFailed("alerting.prometheusRuleInvalid")
+	ErrPrometheusRuleValidationFailed      = errutil.ValidationFailed("alerting.prometheusRuleInvalid")
+	ErrPrometheusRuleGroupValidationFailed = errutil.ValidationFailed("alerting.prometheusRuleGroupInvalid")
 )
 
 type PrometheusRulesFile struct {
@@ -15,9 +16,34 @@ type PrometheusRulesFile struct {
 }
 
 type PrometheusRuleGroup struct {
-	Name     string             `yaml:"name"`
-	Interval prommodel.Duration `yaml:"interval"`
-	Rules    []PrometheusRule   `yaml:"rules"`
+	Name        string              `yaml:"name"`
+	Interval    prommodel.Duration  `yaml:"interval"`
+	QueryOffset *prommodel.Duration `yaml:"query_offset,omitempty"`
+	Limit       int                 `yaml:"limit,omitempty"`
+	Rules       []PrometheusRule    `yaml:"rules"`
+	Labels      map[string]string   `yaml:"labels,omitempty"`
+}
+
+func (g *PrometheusRuleGroup) Validate() error {
+	if g.QueryOffset != nil {
+		return ErrPrometheusRuleGroupValidationFailed.Errorf("query_offset is not supported")
+	}
+
+	if g.Limit != 0 {
+		return ErrPrometheusRuleGroupValidationFailed.Errorf("limit is not supported")
+	}
+
+	if len(g.Labels) > 0 {
+		return ErrPrometheusRuleGroupValidationFailed.Errorf("labels are not supported")
+	}
+
+	for _, rule := range g.Rules {
+		if err := rule.Validate(); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 type PrometheusRule struct {
