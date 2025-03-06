@@ -502,3 +502,6 @@ replace github.com/go-sql-driver/mysql => github.com/go-sql-driver/mysql v1.7.1
 
 // k8s.io/apiserver fails due to incompatibility with cel-go 0.23, can be removed once apiserver v0.32.3 is released.
 replace github.com/google/cel-go => github.com/google/cel-go v0.22.1
+
+// Pin the version so ngalert functionality isn't affected.
+replace github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.20.3
