@@ -10,6 +10,7 @@ import { useURLSearchParams } from '../hooks/useURLSearchParams';
 
 import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
+import { useMemo } from 'react';
 
 function RuleList() {
   const [queryParams] = useURLSearchParams();
@@ -26,7 +27,7 @@ function RuleList() {
   );
 }
 
-function RuleListActions() {
+export function RuleListActions() {
   const [createGrafanaRuleSupported, createGrafanaRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
   const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
 
@@ -35,32 +36,35 @@ function RuleListActions() {
 
   const canCreateRules = canCreateGrafanaRules || canCreateCloudRules;
 
-  const moreActionsMenu = (
-    <Menu>
-      <Menu.Group>
-        <Menu.Item
-          label={t('alerting.rule-list.draft-new-rule', 'Draft a new rule')}
-          icon="file-export"
-          url="/alerting/export-new-rule"
-        />
-      </Menu.Group>
-      <Menu.Group label={t('alerting.rule-list.recording-rules', 'Recording rules')}>
-        {canCreateGrafanaRules && (
+  const moreActionsMenu = useMemo(
+    () => (
+      <Menu>
+        <Menu.Group>
           <Menu.Item
-            label={t('alerting.rule-list.new-grafana-recording-rule', 'New Grafana recording rule')}
-            icon="grafana"
-            url="/alerting/new/grafana-recording"
+            label={t('alerting.rule-list.draft-new-rule', 'Draft a new rule')}
+            icon="file-export"
+            url="/alerting/export-new-rule"
           />
-        )}
-        {canCreateCloudRules && (
-          <Menu.Item
-            label={t('alerting.rule-list.new-datasource-recording-rule', 'New Data source recording rule')}
-            icon="gf-prometheus"
-            url="/alerting/new/recording"
-          />
-        )}
-      </Menu.Group>
-    </Menu>
+        </Menu.Group>
+        <Menu.Group label={t('alerting.rule-list.recording-rules', 'Recording rules')}>
+          {canCreateGrafanaRules && (
+            <Menu.Item
+              label={t('alerting.rule-list.new-grafana-recording-rule', 'New Grafana recording rule')}
+              icon="grafana"
+              url="/alerting/new/grafana-recording"
+            />
+          )}
+          {canCreateCloudRules && (
+            <Menu.Item
+              label={t('alerting.rule-list.new-datasource-recording-rule', 'New Data source recording rule')}
+              icon="gf-prometheus"
+              url="/alerting/new/recording"
+            />
+          )}
+        </Menu.Group>
+      </Menu>
+    ),
+    [canCreateGrafanaRules, canCreateCloudRules]
   );
 
   return (
