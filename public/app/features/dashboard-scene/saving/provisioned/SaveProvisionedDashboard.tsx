@@ -110,6 +110,8 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
 
   useEffect(() => {
     setValue('workflow', getDefaultWorkflow(repositoryConfig));
+    setValue('repo', defaultValues.repo);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [repositoryConfig, setValue]);
 
   const doSave = async ({ ref, path, comment, repo, title, description }: FormData) => {
