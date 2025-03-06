@@ -201,7 +201,13 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
     }
 
     if (query.kind === 'ResourceGroupsQuery') {
-      return this.datasource.getResourceGroups(this.replaceVariable(query.subscription));
+      return this.datasource.getResourceGroups(this.replaceVariable(query.subscription)).then((rgs) => {
+        if (rgs.length > 0) {
+          return rgs.map((rg) => ({ text: rg.resourceGroupName, value: rg.resourceGroupName }));
+        }
+
+        return [];
+      });
     }
 
     if (query.kind === 'ResourceNamesQuery') {
