@@ -533,6 +533,10 @@ type Record struct {
 	// required: true
 	// example: A
 	From string `json:"from" yaml:"from"`
+	// Which data source should be used to write the output of the recording rule, specified by UID.
+	// required: false
+	// example: my-prom
+	TargetDatasourceUID string `json:"target_datasource_uid,omitempty" yaml:"target_datasource_uid,omitempty"`
 }
 
 // swagger:model

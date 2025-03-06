@@ -193,6 +193,18 @@ func createAuthOpts(username, password string) *httpclient.BasicAuthOptions {
 }
 
 // Write writes the given frames to the Prometheus remote write endpoint.
+func (w PrometheusWriter) WriteDatasource(ctx context.Context, dsUID string, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error {
+	l := w.logger.FromContext(ctx)
+
+	if dsUID != "" {
+		l.Error("Writing to specific data sources is not enabled", "org_id", orgID, "datasource_uid", dsUID)
+		return errors.New("writing to specific data sources is not enabled")
+	}
+
+	return w.Write(ctx, name, t, frames, orgID, extraLabels)
+}
+
+// Write writes the given frames to the Prometheus remote write endpoint.
 func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error {
 	l := w.logger.FromContext(ctx)
 	lvs := []string{fmt.Sprint(orgID), backendType}
