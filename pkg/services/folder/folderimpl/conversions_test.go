@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -63,7 +64,7 @@ func TestFolderConversions(t *testing.T) {
 		Title:       "test folder",
 		Description: "Something set in the file",
 		URL:         "/dashboards/f/be79sztagf20wd/test-folder",
-		Repository:  "example-repo",
+		ManagedBy:   utils.ManagerKindRepo,
 		Created:     created,
 		Updated:     created.Add(time.Hour * 5),
 		CreatedBy:   10,
