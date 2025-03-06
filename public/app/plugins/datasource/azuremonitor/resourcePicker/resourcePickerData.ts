@@ -18,9 +18,7 @@ import {
   AzureMonitorResource,
   AzureMonitorQuery,
   AzureResourceSummaryItem,
-  RawAzureResourceGroupItem,
   RawAzureResourceItem,
-  RawAzureSubscriptionItem,
 } from '../types';
 
 const logsSupportedResourceTypesKusto = logsResourceTypes.map((v) => `"${v}"`).join(',');
@@ -136,23 +134,8 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     });
   };
 
-  // private
   async getSubscriptions(): Promise<ResourceRowGroup> {
-    const query = `
-    resources
-    | join kind=inner (
-              ResourceContainers
-                | where type == 'microsoft.resources/subscriptions'
-                | project subscriptionName=name, subscriptionURI=id, subscriptionId
-              ) on subscriptionId
-    | summarize count() by subscriptionName, subscriptionURI, subscriptionId
-    | order by subscriptionName desc
-  `;
-
-    const subscriptions = await this.azureResourceGraphDatasource.pagedResourceGraphRequest<RawAzureSubscriptionItem>(
-      query,
-      1
-    );
+    const subscriptions = await this.azureResourceGraphDatasource.getSubscriptions();
 
     if (!subscriptions.length) {
       throw new Error('No subscriptions were found');
@@ -172,29 +155,9 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     subscriptionId: string,
     type: ResourcePickerQueryType
   ): Promise<ResourceRowGroup> {
-    // We can use subscription ID for the filtering here as they're unique
-    // The logic of this query is:
-    // Retrieve _all_ resources a user/app registration/identity has access to
-    // Filter by the namespaces that support metrics
-    // Filter to resources contained within the subscription
-    // Conduct a left-outer join on the resourcecontainers table to allow us to get the case-sensitive resource group name
-    // Return the count of resources in a group, the URI, and name of the group in ascending order
-    const query = `
-    resources 
-    ${await this.filterByType(type)}
-    | where subscriptionId == '${subscriptionId}'
-    | extend resourceGroupURI = strcat("/subscriptions/", subscriptionId, "/resourcegroups/", resourceGroup) 
-    | join kind=leftouter (resourcecontainers  
-        | where type =~ 'microsoft.resources/subscriptions/resourcegroups'  
-        | project resourceGroupName=name, resourceGroupURI=tolower(id)) on resourceGroupURI 
-    | project resourceGroupName=iff(resourceGroupName != "", resourceGroupName, resourceGroup), resourceGroupURI
-    | summarize count() by resourceGroupName, resourceGroupURI
-    | order by tolower(resourceGroupName) asc `;
+    const filter = await this.filterByType(type);
 
-    const resourceGroups = await this.azureResourceGraphDatasource.pagedResourceGraphRequest<RawAzureResourceGroupItem>(
-      query,
-      1
-    );
+    const resourceGroups = await this.azureResourceGraphDatasource.getResourceGroups(subscriptionId, filter);
 
     return resourceGroups.map((r) => {
       const parsedUri = parseResourceURI(r.resourceGroupURI);
@@ -212,6 +175,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     });
   }
 
+  // Refactor this one out at a later date
   async getResourcesForResourceGroup(
     resourceGroupUri: string,
     type: ResourcePickerQueryType
