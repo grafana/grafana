@@ -705,6 +705,48 @@
       "trace-id": "Trace ID: {{traceId}}"
     }
   },
+  "banner": {
+    "api": {
+      "result": {
+        "saved": "Banner settings saved"
+      }
+    },
+    "form": {
+      "button-save": "Save",
+      "button-saving": "Saving...",
+      "enabled": {
+        "label": "Enabled"
+      },
+      "end": {
+        "description": "If no end date is selected, the banner is displayed indefinitely.",
+        "error": "End time must be after start time",
+        "label": "Ends at"
+      },
+      "message": {
+        "description": "Text content of the banner. Supports markdown.",
+        "label": "Message"
+      },
+      "options": {
+        "error": "Error",
+        "info": "Info",
+        "warning": "Warning"
+      },
+      "start": {
+        "description": "The banner will be shown starting from this date/time.",
+        "label": "Starts at"
+      },
+      "title": "Configure banner",
+      "variant": {
+        "label": "Variant"
+      }
+    },
+    "preview": {
+      "message": {
+        "default": "Update this preview by modifying the message field."
+      },
+      "title": "Preview"
+    }
+  },
   "bookmarks-page": {
     "empty": {
       "message": "It looks like you haven’t created any bookmarks yet",

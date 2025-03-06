@@ -705,6 +705,48 @@
       "trace-id": "Ŧřäčę ĨĐ: {{traceId}}"
     }
   },
+  "banner": {
+    "api": {
+      "result": {
+        "saved": "ßäŉŉęř şęŧŧįŉģş şävęđ"
+      }
+    },
+    "form": {
+      "button-save": "Ŝävę",
+      "button-saving": "Ŝävįŉģ...",
+      "enabled": {
+        "label": "Ēŉäþľęđ"
+      },
+      "end": {
+        "description": "Ĩƒ ŉő ęŉđ đäŧę įş şęľęčŧęđ, ŧĥę þäŉŉęř įş đįşpľäyęđ įŉđęƒįŉįŧęľy.",
+        "error": "Ēŉđ ŧįmę mūşŧ þę äƒŧęř şŧäřŧ ŧįmę",
+        "label": "Ēŉđş äŧ"
+      },
+      "message": {
+        "description": "Ŧęχŧ čőŉŧęŉŧ őƒ ŧĥę þäŉŉęř. Ŝūppőřŧş mäřĸđőŵŉ.",
+        "label": "Męşşäģę"
+      },
+      "options": {
+        "error": "Ēřřőř",
+        "info": "Ĩŉƒő",
+        "warning": "Ŵäřŉįŉģ"
+      },
+      "start": {
+        "description": "Ŧĥę þäŉŉęř ŵįľľ þę şĥőŵŉ şŧäřŧįŉģ ƒřőm ŧĥįş đäŧę/ŧįmę.",
+        "label": "Ŝŧäřŧş äŧ"
+      },
+      "title": "Cőŉƒįģūřę þäŉŉęř",
+      "variant": {
+        "label": "Väřįäŉŧ"
+      }
+    },
+    "preview": {
+      "message": {
+        "default": "Ůpđäŧę ŧĥįş přęvįęŵ þy mőđįƒyįŉģ ŧĥę męşşäģę ƒįęľđ."
+      },
+      "title": "Přęvįęŵ"
+    }
+  },
   "bookmarks-page": {
     "empty": {
       "message": "Ĩŧ ľőőĸş ľįĸę yőū ĥävęŉ’ŧ čřęäŧęđ äŉy þőőĸmäřĸş yęŧ",
