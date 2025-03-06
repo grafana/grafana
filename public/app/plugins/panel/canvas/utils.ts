@@ -45,10 +45,16 @@ export function doSelect(scene: Scene, element: ElementState | FrameState) {
 export function getElementTypes(
   shouldShowAdvancedTypes: boolean | undefined,
   current?: string,
-  multiplayer?: boolean
+  multiplayer?: boolean,
+  existingPlayer?: ElementState | undefined
 ): RegistrySelectInfo {
   if (multiplayer) {
-    return getElementTypesOptions([...multiplayerElementItems], current);
+    const addPlayerOption = getElementTypesOptions([...multiplayerElementItems], current);
+    // This limits the player to only one player element
+    if (existingPlayer) {
+      addPlayerOption.options[0].isDisabled = true;
+    }
+    return addPlayerOption;
   }
   if (shouldShowAdvancedTypes) {
     return getElementTypesOptions([...defaultElementItems, ...advancedElementItems], current);
@@ -86,7 +92,6 @@ export function getElementTypesOptions(items: CanvasElementItem[], current: stri
   for (const a of alpha) {
     selectables.options.push(a);
   }
-
   return selectables;
 }
 

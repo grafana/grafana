@@ -111,7 +111,16 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
       return null;
     };
 
-    const typeOptions = getElementTypes(scene.shouldShowAdvancedTypes, undefined, scene.multiplayer).options;
+    // Check if player element exists
+    const existingPlayer = scene.currentLayer?.elements.find((element) => {
+      return element.item.id === 'player';
+    });
+    const typeOptions = getElementTypes(
+      scene.shouldShowAdvancedTypes,
+      undefined,
+      scene.multiplayer,
+      existingPlayer
+    ).options;
 
     const getTypeOptionsSubmenu = () => {
       const submenuItems: Array<
@@ -137,7 +146,13 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
 
       typeOptions.map((option) => {
         submenuItems.push(
-          <MenuItem key={option.value} label={option.label ?? 'Canvas item'} onClick={() => onClickItem(option)} />
+          // Disable the menu item to limit number of player elements to 1
+          <MenuItem
+            key={option.value}
+            label={option.label ?? 'Canvas item'}
+            onClick={() => onClickItem(option)}
+            disabled={option.isDisabled}
+          />
         );
       });
 

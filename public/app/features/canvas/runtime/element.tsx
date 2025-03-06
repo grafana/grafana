@@ -382,7 +382,10 @@ export class ElementState implements LayerElement {
   updateData(ctx: DimensionContext) {
     if (this.item.prepareData) {
       this.data = this.item.prepareData(ctx, this.options);
-      this.revId++; // rerender
+      // Don't re-render local player on data update
+      if (this.item.id !== 'player') {
+        this.revId++; // rerender
+      }
     }
 
     const scene = this.getScene();
