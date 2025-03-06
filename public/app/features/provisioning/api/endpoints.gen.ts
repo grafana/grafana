@@ -771,11 +771,11 @@ export type SyncJobOptions = {
 };
 export type JobSpec = {
   /** Possible enum values:
-     - `"export"` Export from grafana into the remote repository
      - `"migrate"` Migration task -- this will migrate an full instance from SQL > Git
      - `"pr"` Update a pull request -- send preview images, links etc
-     - `"sync"` Sync the remote branch with the grafana instance */
-  action: 'export' | 'migrate' | 'pr' | 'sync';
+     - `"pull"` Sync the remote branch with the grafana instance
+     - `"push"` Export from grafana into the remote repository */
+  action: 'migrate' | 'pr' | 'pull' | 'push';
   /** Required when the action is `export` */
   export?: ExportJobOptions;
   /** Required when the action is `migrate` */
@@ -1037,7 +1037,7 @@ export type DeleteOptions = {
 export type ResourceRepositoryInfo = {
   /** The name (identifier) */
   name: string;
-  /** The namepsace this belongs to */
+  /** The namespace this belongs to */
   namespace: string;
   /** The display name for this repository */
   title: string;
@@ -1083,16 +1083,14 @@ export type ResourceObjects = {
   type: ResourceType;
 };
 export type ResourceUrLs = {
-  /** A URL pointing to the repository this lives in */
-  compare?: string;
+  /** Compare this version to the target branch */
+  compareURL?: string;
   /** A URL that will create a new pull requeset for this branch */
-  newPullRequest?: string;
+  newPullRequestURL?: string;
   /** A URL pointing to the repository this lives in */
-  pullRequest?: string;
-  /** A URL pointing to the repository this lives in */
-  repository?: string;
+  repositoryURL?: string;
   /** A URL pointing to the this file in the repository */
-  source?: string;
+  sourceURL?: string;
 };
 export type ResourceWrapper = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1112,7 +1110,7 @@ export type ResourceWrapper = {
   /** Different flavors of the same object */
   resource: ResourceObjects;
   /** The modified time in the remote file system */
-  timestampMillis?: number;
+  timestamp?: Time;
   /** Typed links for this file (only supported by external systems, github etc) */
   urls?: ResourceUrLs;
 };
