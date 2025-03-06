@@ -8,6 +8,7 @@ import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { getDefaultValues } from '../ConfigForm';
 import { useGetFrontendSettingsQuery } from '../api';
+import { PROVISIONING_URL } from '../constants';
 
 import { ConnectionStep } from './ConnectionStep';
 import { MigrateStep } from './MigrateStep';
@@ -15,7 +16,6 @@ import { PullStep } from './PullStep';
 import { RepositoryStep } from './RepositoryStep';
 import { Stepper, Step } from './Stepper';
 import { WizardFormData, WizardStep } from './types';
-import { PROVISIONING_URL } from '../constants';
 
 const steps: Array<Step<WizardStep>> = [
   { id: 'connection', name: 'Repository connection' },
