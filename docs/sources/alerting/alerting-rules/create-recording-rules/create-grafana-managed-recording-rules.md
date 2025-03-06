@@ -65,7 +65,7 @@ This section only applies to Grafana OSS and Grafana Enterprise.
 
 First, enable the `grafanaManagedRecordingRules` [feature flag](ref:configure-feature-toggles).
 
-Then, enable the feature by setting `enabled = true` in the `[recording_rules]` section of the Grafana config .ini. Provide the URL of your Prometheus-compatible remote-write endpoint in the `url` field, along with optional credentials or headers.
+Then, enable the feature by setting `enabled = true` in the `[recording_rules]` section of the Grafana config .ini. Provide the URL of your Prometheus-compatible remote-write endpoint in the `url` field, along with optional credentials or headers. You can optionally specify the UID of the data source which can be used to query the data. This is required for using the APIs to import Prometheus recording rule definitions.
 
 ```
 [recording_rules]
@@ -73,6 +73,8 @@ enabled = true
 url = http://my-example-prometheus.local:9090/api/prom/push
 basic_auth_username = my-user
 basic_auth_password = my-pass
+
+query_datasource_uid = my-prom-uid
 
 [recording_rules.custom_headers]
 X-My-Header = MyValue

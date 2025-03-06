@@ -51,6 +51,17 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		},
 	}
 
+	recordingGroup := apimodels.PrometheusRuleGroup{
+		Name:     "Test Group",
+		Interval: prommodel.Duration(1 * time.Minute),
+		Rules: []apimodels.PrometheusRule{
+			{
+				Record: "something",
+				Expr:   "up + 1",
+			},
+		},
+	}
+
 	t.Run("without datasource UID header should return 400", func(t *testing.T) {
 		srv, _, _, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
@@ -263,6 +274,50 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
 		require.Equal(t, http.StatusAccepted, response.Status())
 	})
+
+	t.Run("with recording rules disabled when importing recording rules request should return 400", func(t *testing.T) {
+		srv, _, _, _ := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+
+		srv.cfg.RecordingRules.Enabled = false
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", recordingGroup)
+		require.Equal(t, http.StatusBadRequest, response.Status())
+	})
+
+	t.Run("with recording rules query_datasource_uid empty when importing recording rules request should return 400", func(t *testing.T) {
+		srv, _, _, _ := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+
+		srv.cfg.RecordingRules.Enabled = true
+		srv.cfg.RecordingRules.QueryDatasourceUID = ""
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", recordingGroup)
+		require.Equal(t, http.StatusBadRequest, response.Status())
+	})
+
+	t.Run("with recording rules query_datasource_uid mismatching when importing recording rules request should return 400", func(t *testing.T) {
+		srv, _, _, _ := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+
+		srv.cfg.RecordingRules.Enabled = true
+		srv.cfg.RecordingRules.QueryDatasourceUID = "woops"
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", recordingGroup)
+		require.Equal(t, http.StatusBadRequest, response.Status())
+	})
+
+	t.Run("with recording rules enabled when importing recording rules request should return 202", func(t *testing.T) {
+		srv, _, _, _ := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+
+		srv.cfg.RecordingRules.Enabled = true
+		srv.cfg.RecordingRules.QueryDatasourceUID = existingDSUID
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", recordingGroup)
+		require.Equal(t, http.StatusAccepted, response.Status())
+	})
+
 }
 
 func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {
