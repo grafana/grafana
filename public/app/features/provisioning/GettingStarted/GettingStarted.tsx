@@ -24,6 +24,18 @@ export default function GettingStarted() {
           <Text variant="h2">Provisining as-code directly from Grafana</Text>
           <Box padding={2}>
             <Stack direction="column" gap={2}>
+              <Text variant="body">
+                ✔️ Manage your dashboards as code and deploy them automatically from your GitHub repository or local
+                storage
+              </Text>
+              <Text variant="body">
+                ✔️ Review, discuss, and approve dashboard changes with your team before they go live using GitHub pull
+                requests
+              </Text>
+              <Text variant="body">
+                ✔️ Export your existing dashboards as code and store them in GitHub repositories for version control and
+                collaboration
+              </Text>
               <LinkButton fill="text" href="#" icon="external-link-alt">
                 Learn more
               </LinkButton>
@@ -55,19 +67,6 @@ export default function GettingStarted() {
                   </Button>
                 </Card.Actions>
               </Card>
-
-              <Text variant="body">
-                ✔️ Manage your dashboards as code and deploy them automatically from your GitHub repository or local
-                storage
-              </Text>
-              <Text variant="body">
-                ✔️ Review, discuss, and approve dashboard changes with your team before they go live using GitHub pull
-                requests
-              </Text>
-              <Text variant="body">
-                ✔️ Export your existing dashboards as code and store them in GitHub repositories for version control and
-                collaboration
-              </Text>
             </Stack>
           </Box>
         </Box>
@@ -93,7 +92,16 @@ export default function GettingStarted() {
           <Box width="50%">
             <Stack direction="column" gap={2}>
               <Text variant="h3">Automatic provisioning as soon as changes are merged</Text>
-              <Icon name="sync" size="xxxl" color="light-blue" />
+              <div
+                className={css`
+                  background: rgba(24, 121, 219, 0.12);
+                  border-radius: 50%;
+                  padding: 16px;
+                  width: fit-content;
+                `}
+              >
+                <Icon name="sync" size="xxl" color="primary" />
+              </div>
               <Text variant="body">
                 Automatically provision and update your dashboards as soon as changes are pushed to your GitHub
                 repository
@@ -105,8 +113,26 @@ export default function GettingStarted() {
             <Stack direction="column" gap={2}>
               <Text variant="h3">Visual Previews in Pull Requests</Text>
               <Stack direction="row" gap={2}>
-                <Icon name="camera" size="xxxl" color="orange" />
-                <Icon name="github" size="xxxl" color="purple" />
+                <div
+                  className={css`
+                    background: rgba(255, 120, 10, 0.12);
+                    border-radius: 50%;
+                    padding: 16px;
+                    width: fit-content;
+                  `}
+                >
+                  <Icon name="camera" size="xxl" color="orange" />
+                </div>
+                <div
+                  className={css`
+                    background: rgba(135, 73, 237, 0.12);
+                    border-radius: 50%;
+                    padding: 16px;
+                    width: fit-content;
+                  `}
+                >
+                  <Icon name="github" size="xxl" color="purple" />
+                </div>
               </Stack>
               <Text variant="body">
                 Review how your changes look like before going live in Grafana and directly in Pull Requests
