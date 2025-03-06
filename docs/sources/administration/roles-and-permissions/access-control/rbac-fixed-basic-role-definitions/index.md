@@ -39,7 +39,7 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/oncall/
   available-grafana-oncall-rbac-roles--granted-actions:
     - pattern: /docs/grafana/
-      destination: /docs/oncall/<GRAFANA_VERSION>/user-and-team-management/#available-grafana-oncall-rbac-roles--granted-actions
+      destination: /docs/oncall/<ONCALL_VERSION>/user-and-team-management/#available-grafana-oncall-rbac-roles--granted-actions
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/oncall/user-and-team-management/#available-grafana-oncall-rbac-roles--granted-actions
 ---
