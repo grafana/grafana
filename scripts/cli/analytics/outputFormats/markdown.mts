@@ -1,4 +1,4 @@
-import type { Event } from '../types.mjsex.mjs';
+import type { Event } from '../types.mts';
 
 function makeMarkdownTable(properties: Array<Record<string, string | undefined>>): string {
   const keys = Object.keys(properties[0]);
@@ -31,7 +31,7 @@ export function formatEventAsMarkdown(event: Event): string {
   const propertiesTable = event.properties ? makeMarkdownTable(preparedProperties) : '';
 
   let eventMarkdown = `
-### ${event.name}
+### ${event.fullEventName}
 
 ${event.description}
 `;

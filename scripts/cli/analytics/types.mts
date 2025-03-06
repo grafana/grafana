@@ -11,7 +11,11 @@ export interface EventProperty {
 }
 
 export interface Event {
-  name: string;
+  fullEventName: string;
+  eventProject: string;
+  eventFeature: string;
+  eventName: string;
+
   description: string;
   owner?: string;
   properties?: EventProperty[];

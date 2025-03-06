@@ -3,7 +3,7 @@ import { parseEvents } from './eventParser.mts';
 import { type SourceFile, Node } from 'ts-morph';
 
 /**
- * Finds all events - calls to the function returned by createEventFactory - declared in a file
+ * Finds all events - calls to the function returned by createEventFactory - declared in files
  *
  * An event feature namespace is defined by:
  *   const createNavEvent = createEventFactory('grafana', 'navigation');

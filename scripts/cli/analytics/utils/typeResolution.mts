@@ -1,4 +1,4 @@
-import { type JSDoc, type Type } from 'ts-morph';
+import type { JSDoc, Type } from 'ts-morph';
 
 /**
  * Resolves a TypeScript type to a string representation. For example for:
