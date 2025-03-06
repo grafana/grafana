@@ -1,7 +1,9 @@
 {
   "compilerOptions": {
     "moduleResolution": "node",
-    "module": "commonjs"
+    "module": "commonjs",
+    "allowImportingTsExtensions": true,
+    "noEmit": true
   },
   "extends": "../../tsconfig.json",
   "include": ["./**/*.ts", "./**/*.mts"],
