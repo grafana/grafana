@@ -1214,7 +1214,18 @@
     },
     "rows-layout": {
       "description": "Ŗőŵş ľäyőūŧ",
+      "item-name": "Ŗőŵ",
       "name": "Ŗőŵş",
+      "option": {
+        "height": "Ħęįģĥŧ",
+        "hide-header": "Ħįđę řőŵ ĥęäđęř",
+        "repeat": "Ŗępęäŧ ƒőř",
+        "title": "Ŧįŧľę"
+      },
+      "options": {
+        "height-expand": "Ēχpäŉđ",
+        "height-min": "Mįŉ"
+      },
       "row": {
         "collapse": "Cőľľäpşę řőŵ",
         "expand": "Ēχpäŉđ řőŵ",
@@ -1234,15 +1245,6 @@
         }
       },
       "row-options": {
-        "height": {
-          "hide-row-header": "Ħįđę řőŵ ĥęäđęř"
-        },
-        "repeat": {
-          "variable": {
-            "title": "Ŗępęäŧ ƒőř"
-          }
-        },
-        "title": "Ŗőŵ",
         "title-option": "Ŧįŧľę"
       }
     },

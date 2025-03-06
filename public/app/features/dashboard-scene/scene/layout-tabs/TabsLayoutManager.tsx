@@ -86,8 +86,9 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public addNewTab() {
-    const currentTab = new TabItem();
-    this.setState({ tabs: [...this.state.tabs, currentTab], currentTabIndex: this.state.tabs.length });
+    const newTab = new TabItem();
+    this.setState({ tabs: [...this.state.tabs, newTab], currentTabIndex: this.state.tabs.length });
+    return newTab;
   }
 
   public editModeChanged(isEditing: boolean) {
