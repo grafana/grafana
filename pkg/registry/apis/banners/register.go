@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	banners "github.com/grafana/grafana/pkg/apis/banners/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	"github.com/grafana/grafana/pkg/extensions/licensing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -27,10 +26,11 @@ type BannersAPIBuilder struct {
 	accessControl ac.AccessControl
 }
 
-func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar, token licensing.LicenseToken, accessControl ac.AccessControl) *BannersAPIBuilder {
-	if !token.FeatureEnabled(licensing.FeatureAnnouncementBanner) {
-		return nil // skip registration unless opting into experimental apis
-	}
+func RegisterAPIService(
+	features featuremgmt.FeatureToggles,
+	apiregistration builder.APIRegistrar,
+	accessControl ac.AccessControl,
+) *BannersAPIBuilder {
 	builder := &BannersAPIBuilder{accessControl: accessControl}
 	apiregistration.RegisterAPI(builder)
 	return builder
