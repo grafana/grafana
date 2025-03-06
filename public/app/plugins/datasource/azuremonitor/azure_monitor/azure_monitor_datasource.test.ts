@@ -7,7 +7,12 @@ import createMockQuery from '../__mocks__/query';
 import { createTemplateVariables } from '../__mocks__/utils';
 import { multiVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
-import { AzureAPIResponse, AzureMonitorDataSourceInstanceSettings, Location } from '../types';
+import {
+  AzureAPIResponse,
+  AzureMonitorDataSourceInstanceSettings,
+  Location,
+  RawAzureResourceGroupItem,
+} from '../types';
 
 // We want replace to just return the value as is in general/
 // We declare this as a function so that we can overwrite it in each test
@@ -762,12 +767,12 @@ describe('AzureMonitorDatasource', () => {
       });
 
       it('should return list of Resource Groups', () => {
-        return ctx.ds.getResourceGroups('subscriptionId').then((results: Array<{ text: string; value: string }>) => {
+        return ctx.ds.getResourceGroups('subscriptionId').then((results: RawAzureResourceGroupItem[]) => {
           expect(results.length).toEqual(2);
-          expect(results[0].text).toEqual('grp1');
-          expect(results[0].value).toEqual('grp1');
-          expect(results[1].text).toEqual('grp2');
-          expect(results[1].value).toEqual('grp2');
+          expect(results[0].resourceGroupName).toEqual('grp1');
+          expect(results[0].resourceGroupName).toEqual('grp1');
+          expect(results[1].resourceGroupName).toEqual('grp2');
+          expect(results[1].resourceGroupName).toEqual('grp2');
         });
       });
     });
@@ -911,7 +916,7 @@ describe('AzureMonitorDatasource', () => {
                 {
                   options: { resultFormat: 'objectArray' },
                   query: `resources
-        | where id hasprefix \"/subscriptions/${subscription}/resourceGroups/${resourceGroup}\"
+        | where id hasprefix \"/subscriptions/${subscription}/resourceGroups/${resourceGroup}/\"
         | where type == '${validMetricNamespace}'
         | order by tolower(name) asc`,
                 }

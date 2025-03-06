@@ -26,7 +26,8 @@ jest.mock('@grafana/runtime', () => ({
     },
   }),
 }));
-
+const getResourceGroups = jest.fn().mockResolvedValue([{ resourceGroupURI: 'rg', resourceGroupName: 'rg', count: 1 }]);
+const getResourceNames = jest.fn().mockResolvedValue([{ text: 'foobar', value: 'foobar' }]);
 const defaultProps = {
   query: {
     refId: 'A',
@@ -39,7 +40,6 @@ const defaultProps = {
   onChange: jest.fn(),
   datasource: createMockDatasource({
     getSubscriptions: jest.fn().mockResolvedValue([{ text: 'Primary Subscription', value: 'sub' }]),
-    getResourceGroups: jest.fn().mockResolvedValue([{ text: 'rg', value: 'rg' }]),
     getMetricNamespaces: jest
       .fn()
       .mockImplementation(
@@ -50,11 +50,16 @@ const defaultProps = {
           return [{ text: 'foo/custom', value: 'foo/custom' }];
         }
       ),
-    getResourceNames: jest.fn().mockResolvedValue([{ text: 'foobar', value: 'foobar' }]),
     getVariablesRaw: jest.fn().mockReturnValue([
       { label: 'query0', name: 'sub0' },
       { label: 'query1', name: 'rg', query: { queryType: AzureQueryType.ResourceGroupsQuery } },
     ]),
+    azureResourceGraphDatasource: {
+      getResourceGroups,
+      getResourceNames,
+    },
+    getResourceGroups,
+    getResourceNames,
   }),
 };
 

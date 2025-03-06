@@ -6,7 +6,6 @@ import {
 import createMockDatasource from '../__mocks__/datasource';
 import { createMockInstanceSetttings } from '../__mocks__/instanceSettings';
 import { resourceTypes } from '../azureMetadata';
-import AzureMonitorDatasource from '../azure_monitor/azure_monitor_datasource';
 import AzureResourceGraphDatasource from '../azure_resource_graph/azure_resource_graph_datasource';
 import { ResourceRowType } from '../components/ResourcePicker/types';
 import { AzureGraphResponse } from '../types';
