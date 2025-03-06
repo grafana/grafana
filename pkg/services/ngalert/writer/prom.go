@@ -161,7 +161,6 @@ func NewPrometheusWriter(
 	l log.Logger,
 	metrics *metrics.RemoteWriter,
 ) (*PrometheusWriter, error) {
-
 	cl, err := httpClientProvider.New(cfg.HTTPOptions)
 	if err != nil {
 		return nil, err
