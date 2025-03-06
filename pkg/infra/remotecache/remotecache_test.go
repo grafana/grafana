@@ -34,7 +34,8 @@ func createTestClient(t *testing.T, opts *setting.RemoteCacheSettings, sqlstore 
 }
 
 func TestCachedBasedOnConfig(t *testing.T) {
-	db, cfg := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	err := cfg.Load(setting.CommandLineArgs{
 		HomePath: "../../../",
 	})
