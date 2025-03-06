@@ -6,6 +6,7 @@ aliases:
 cascade:
   LOKI_VERSION: latest
   TEMPO_VERSION: latest
+  ONCALL_VERSION: latest
   PYROSCOPE_VERSION: latest
 description: Find answers to your technical questions and learn how to use Grafana OSS and Enterprise products.
 keywords:
