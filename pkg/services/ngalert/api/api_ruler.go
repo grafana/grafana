@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"net/http"
 	"slices"
 	"sort"
@@ -60,6 +61,7 @@ type RulerSrv struct {
 	amConfigStore  AMConfigStore
 	amRefresher    AMRefresher
 	featureManager featuremgmt.FeatureToggles
+	unifiedStore   resource.ResourceStoreClient
 }
 
 var (
@@ -162,6 +164,24 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceU
 				return err
 			}
 			logger.Info("Alert rules were deleted", "ruleUid", strings.Join(rulesToDelete, ","))
+			logger.Info("deleting from unified storage")
+			for _, rule := range rulesToDelete {
+				resp, err := srv.unifiedStore.Delete(c.Req.Context(), &resource.DeleteRequest{
+					Key: &resource.ResourceKey{
+						Namespace: "default",
+						Name:      rule,
+						Group:     "alert.grafana.app",
+						Resource:  "alerts",
+					},
+				})
+				if err != nil {
+					logger.Error("failed to delete alert rule from unified storage", "rule", rule, "error", err)
+				} else if resp != nil && resp.Error != nil {
+					logger.Error("failed to delete alert rule from unified storage", "rule", rule, "error", resp.Error)
+				} else {
+					logger.Info("deleted alert rule from unified storage", "rule", rule, "resp", resp.String())
+				}
+			}
 			return nil
 		}
 		// if none rules were deleted return an error.
@@ -464,6 +484,23 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 			if err = srv.store.DeleteAlertRulesByUID(tranCtx, c.SignedInUser.GetOrgID(), UIDs...); err != nil {
 				return fmt.Errorf("failed to delete rules: %w", err)
 			}
+			for _, rule := range UIDs {
+				resp, err := srv.unifiedStore.Delete(c.Req.Context(), &resource.DeleteRequest{
+					Key: &resource.ResourceKey{
+						Namespace: "default",
+						Name:      rule,
+						Group:     "alert.grafana.app",
+						Resource:  "alerts",
+					},
+				})
+				if err != nil {
+					logger.Error("failed to delete alert rule from unified storage", "rule", rule, "error", err)
+				} else if resp != nil && resp.Error != nil {
+					logger.Error("failed to delete alert rule from unified storage", "rule", rule, "error", resp.Error)
+				} else {
+					logger.Info("deleted alert rule from unified storage", "rule", rule, "resp", resp.String())
+				}
+			}
 		}
 
 		if len(finalChanges.Update) > 0 {
@@ -496,6 +533,26 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 				for i, newRule := range finalChanges.New {
 					newRule.ID = added[i].ID
 					newRule.UID = added[i].UID
+				}
+			}
+			// Hack: insert into unified storage
+			logger.Info("Inserting rule(s) into unified storage")
+			for _, rule := range finalChanges.New {
+				resp, err := srv.unifiedStore.Create(c.Req.Context(), &resource.CreateRequest{
+					Key: &resource.ResourceKey{
+						Namespace: "default",
+						Group:     "alert.grafana.app",
+						Resource:  "alerts",
+						Name:      rule.UID,
+					},
+					Value: []byte(fmt.Sprintf(`{"kind":"Alert","apiVersion":"alert.grafana.app/v1alpha1","metadata":{"name":"%s","namespace":"default","generation":1,"creationTimestamp":"%s","labels":{"grafana.app/deprecatedInternalID":"%d"},"uid":"%d","annotations":{"grafana.app/createdBy":"%s"}},"spec":{}}`, rule.UID, time.Now().Format(time.RFC3339), rule.ID, rule.UID, rule.UpdatedBy)),
+				})
+				if err != nil {
+					logger.Error("Failed to insert rule into unified storage", "error", err)
+				} else if resp != nil && resp.Error != nil {
+					logger.Error("Failed to insert rule into unified storage", "error", resp.Error)
+				} else {
+					logger.Info("Inserted alert rule into unified storage", "response", resp.String())
 				}
 			}
 		}
