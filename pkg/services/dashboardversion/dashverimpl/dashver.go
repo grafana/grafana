@@ -223,9 +223,14 @@ func (s *Service) getDashIDMaybeEmpty(ctx context.Context, uid string, orgID int
 
 func (s *Service) getHistoryThroughK8s(ctx context.Context, orgID int64, dashboardUID string, rv int64) (*dashver.DashboardVersionDTO, error) {
 	out, err := s.k8sclient.Get(ctx, dashboardUID, orgID, v1.GetOptions{ResourceVersion: strconv.FormatInt(rv, 10)})
-	if err != nil && !apierrors.IsNotFound(err) {
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, dashboards.ErrDashboardNotFound
+		}
+
 		return nil, err
-	} else if out == nil || err != nil {
+	}
+	if out == nil {
 		return nil, dashboards.ErrDashboardNotFound
 	}
 
@@ -243,9 +248,14 @@ func (s *Service) listHistoryThroughK8s(ctx context.Context, orgID int64, dashbo
 		Limit:         limit,
 		Continue:      continueToken,
 	})
-	if err != nil && !apierrors.IsNotFound(err) {
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, dashboards.ErrDashboardNotFound
+		}
+
 		return nil, err
-	} else if out == nil {
+	}
+	if out == nil {
 		return nil, dashboards.ErrDashboardNotFound
 	}
 
@@ -285,7 +295,9 @@ func (s *Service) UnstructuredToLegacyDashboardVersion(ctx context.Context, item
 
 	createdBy, err := s.k8sclient.GetUserFromMeta(ctx, obj.GetCreatedBy())
 	if err != nil {
-		return nil, err
+		if !apierrors.IsNotFound(err) {
+			return nil, err
+		}
 	}
 
 	// if updated by is set, then this version of the dashboard was "created"
