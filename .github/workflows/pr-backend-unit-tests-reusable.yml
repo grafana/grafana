@@ -1,25 +1,16 @@
-name: Backend Unit Tests
+name: Backend Unit Tests Reusable Workflow
 
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - 'docs/**'
-      - '**/*.md'
-  pull_request:
-    paths-ignore:
-      - 'docs/**'
-      - '**/*.md'
-
-permissions:
-  contents: read
-  id-token: write
-
-env:
-  EDITION: 'oss'
-  WIRE_TAGS: 'oss'
+  workflow_call:
+    inputs:
+      wire-tags:
+        description: 'Wire tags to use for the build' # 'oss' or 'enterprise'
+        required: false
+        type: string
+        default: 'oss'
+    secrets:
+      codecov-token:
+        required: true
 
 jobs:
   backend-testing-coverage:
@@ -40,6 +31,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential shared-mime-info
 
+      - name: Setup Enterprise
+        if: inputs.wire-tags == 'enterprise'
+        uses: ./.github/actions/setup-enterprise
+        with:
+          github-app-name: 'grafana-ci-bot'
+
       - name: Verify code generation
         run: |
           CODEGEN_VERIFY=1 make gen-cue
@@ -47,9 +44,13 @@ jobs:
 
       - name: Generate Go code
         run: make gen-go
+        env:
+          WIRE_TAGS: ${{ inputs.wire-tags }}
 
       - name: Run unit tests
         run: COVER_OPTS="-coverprofile=be-unit.cov -coverpkg=github.com/grafana/grafana/..." make test-go-unit
+        env:
+          WIRE_TAGS: ${{ inputs.wire-tags }}
 
       - name: Process and upload coverage
         uses: ./.github/actions/test-coverage-processor
@@ -57,10 +58,6 @@ jobs:
           test-type: 'be-unit'
           # Needs to be named 'unit.cov' based on the Makefile command `make test-go-unit`
           coverage-file: 'unit.cov'
-          codecov-token: ${{ secrets.CODECOV_TOKEN }}
+          codecov-token: ${{ secrets.codecov-token }}
           codecov-flag: 'be-unit'
           codecov-name: 'be-unit'
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
