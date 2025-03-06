@@ -33,6 +33,7 @@ import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath, ManagerKind } from '../../apiserver/types';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -481,7 +482,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.onEnterEditMode();
     }
 
+    // Add panel to layout
     this.state.body.addPanel(vizPanel);
+    // Select panel
+    this.state.editPane.newObjectAddedToCanvas(vizPanel);
   }
 
   public createLibraryPanel(panelToReplace: VizPanel, libPanel: LibraryPanel) {
@@ -589,18 +593,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onCreateNewRow() {
-    addNewRowTo(this.state.body);
+    const newRow = addNewRowTo(this.state.body);
+    this.state.editPane.newObjectAddedToCanvas(newRow);
+    return newRow;
   }
 
   public onCreateNewTab() {
-    addNewTabTo(this.state.body);
+    const tab = addNewTabTo(this.state.body);
+    this.state.editPane.newObjectAddedToCanvas(tab);
+    return tab;
   }
 
   public onCreateNewPanel(): VizPanel {
     const vizPanel = getDefaultVizPanel();
-
     this.addPanel(vizPanel);
-
     return vizPanel;
   }
 
@@ -727,6 +733,35 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   getDashboardChanges(saveTimeRange?: boolean, saveVariables?: boolean, saveRefresh?: boolean): DashboardChangeInfo {
     return this._serializer.getDashboardChangesFromScene(this, { saveTimeRange, saveVariables, saveRefresh });
+  }
+
+  getManagerKind(): ManagerKind | undefined {
+    return this.state.meta.k8s?.annotations?.[AnnoKeyManagerKind];
+  }
+
+  isManaged() {
+    return Boolean(this.getManagerKind());
+  }
+
+  isManagedRepository() {
+    return Boolean(this.getManagerKind() === ManagerKind.Repo);
+  }
+
+  getPath() {
+    return this.state.meta.k8s?.annotations?.[AnnoKeySourcePath];
+  }
+
+  setManager(kind: ManagerKind, id: string) {
+    this.setState({
+      meta: {
+        k8s: {
+          annotations: {
+            [AnnoKeyManagerKind]: kind,
+            [AnnoKeyManagerIdentity]: id,
+          },
+        },
+      },
+    });
   }
 }
 

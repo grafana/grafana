@@ -128,7 +128,7 @@
     "@types/lucene": "^2",
     "@types/node": "22.12.0",
     "@types/node-forge": "^1",
-    "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.4",
+    "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.3.0",
     "@types/pluralize": "^0.0.33",
     "@types/prismjs": "1.26.5",
     "@types/react": "18.3.18",
@@ -437,7 +437,8 @@
     "react-grid-layout": "patch:react-grid-layout@npm%3A1.4.4#~/.yarn/patches/react-grid-layout-npm-1.4.4-4024c5395b.patch",
     "@grafana/plugin-e2e/@grafana/e2e-selectors": "workspace:*",
     "@grafana/scenes/@grafana/e2e-selectors": "workspace:*",
-    "@grafana/scenes-react/@grafana/e2e-selectors": "workspace:*"
+    "@grafana/scenes-react/@grafana/e2e-selectors": "workspace:*",
+    "swagger-ui-react/dompurify": "3.2.4"
   },
   "workspaces": {
     "packages": [
