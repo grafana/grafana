@@ -221,8 +221,6 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
         changeDelta
       );
 
-      setMatchingGroupPageUrl(updatedGroupIdentifier);
-
       const shouldWaitForPromConsistency = !!changeDelta.namespaceName || !!changeDelta.groupName;
       if (shouldWaitForPromConsistency) {
         await waitForGroupConsistency(updatedGroupIdentifier);
@@ -230,6 +228,8 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
 
       const successMessage = t('alerting.group-edit.form.update-success', 'Successfully updated the rule group');
       appInfo.success(successMessage);
+
+      setMatchingGroupPageUrl(updatedGroupIdentifier);
     } catch (error) {
       logError(error instanceof Error ? error : new Error('Failed to update rule group'));
       appInfo.error(
