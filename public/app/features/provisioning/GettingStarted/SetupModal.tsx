@@ -6,38 +6,40 @@ import { Modal, Button, useStyles2, Stack, Text } from '@grafana/ui';
 
 import { SetupStep } from './SetupStep';
 import { Sidebar } from './Sidebar';
-import { Feature } from './types';
+import { Step } from './types';
 
 export interface Props {
-  feature: Feature;
+  title: string;
+  description: string;
+  steps: Step[];
 
   isOpen: boolean;
   onDismiss: () => void;
 }
 
-export const SetupModal = ({ feature, isOpen, onDismiss }: Props) => {
+export const SetupModal = ({ title, description, steps, isOpen, onDismiss }: Props) => {
   const styles = useStyles2(getStyles);
 
   const [currentStep, setCurrentStep] = useState(0);
 
   const isFirstStep = currentStep === 0;
-  const isLastStep = currentStep === feature.setupSteps.length - 1;
-  const stepTitles = feature.setupSteps.map((step) => step.title);
+  const isLastStep = currentStep === steps.length - 1;
+  const stepTitles = steps.map((step) => step.title);
 
   const handleNext = () => !isLastStep && setCurrentStep(currentStep + 1);
   const handlePrevious = () => !isFirstStep && setCurrentStep(currentStep - 1);
 
   return (
-    <Modal isOpen={isOpen} title={`Setup ${feature.title}`} onDismiss={onDismiss} className={styles.modal}>
+    <Modal isOpen={isOpen} title={title} onDismiss={onDismiss} className={styles.modal}>
       <Stack direction={'column'} gap={4}>
         <Text variant="body" color="secondary">
-          {feature.description}
+          {description}
         </Text>
         <Stack direction="row" height="100%">
           <Sidebar steps={stepTitles} currentStep={currentStep} onStepClick={setCurrentStep} />
 
           <div className={styles.contentWrapper}>
-            <SetupStep step={feature.setupSteps[currentStep]} />
+            <SetupStep step={steps[currentStep]} />
           </div>
         </Stack>
       </Stack>

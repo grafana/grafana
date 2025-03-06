@@ -21,8 +21,8 @@ import {
 import { Page } from 'app/core/components/Page/Page';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
-import OnboardingPage from './OnboardingPage';
-import { FeatureList } from './Setup/FeatureList';
+import GettingStarted from './GettingStarted/GettingStarted';
+import GettingStartedPage from './GettingStarted/GettingStartedPage';
 import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
 import { Repository, ResourceCount, useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from './api';
@@ -49,7 +49,7 @@ export default function RepositoryListPage() {
   }, [deleteAllResult.isSuccess]);
 
   if (!items?.length && !isLoading) {
-    return <OnboardingPage legacyStorage={settings.data?.legacyStorage} />;
+    return <GettingStartedPage />;
   }
 
   const onConfirmDelete = () => {
@@ -61,8 +61,8 @@ export default function RepositoryListPage() {
     switch (activeTab) {
       case 'repositories':
         return <RepositoryListPageContent items={items ?? []} />;
-      case 'features':
-        return <FeatureList />;
+      case 'getting-started':
+        return <GettingStarted />;
       default:
         return null;
     }
@@ -98,7 +98,11 @@ export default function RepositoryListPage() {
               active={activeTab === 'repositories'}
               onChangeTab={() => setActiveTab('repositories')}
             />
-            <Tab label="Features" active={activeTab === 'features'} onChangeTab={() => setActiveTab('features')} />
+            <Tab
+              label="Getting started"
+              active={activeTab === 'getting-started'}
+              onChangeTab={() => setActiveTab('getting-started')}
+            />
           </TabsBar>
           {renderTabContent()}
         </Stack>
