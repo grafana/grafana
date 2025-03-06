@@ -45,16 +45,18 @@ export function ConnectionStep({ targetSelectable = true }: Props) {
   const [instanceConnected, folderConnected] = checkSyncSettings(settingsQuery.data);
 
   const availableOptions = modeOptions.filter((option) => {
-    if (folderConnected) return option.value === 'folder';
-    if (instanceConnected) return option.value === 'instance';
+    if (folderConnected) {
+      return option.value === 'folder';
+    }
+    if (instanceConnected) {
+      return option.value === 'instance';
+    }
     return true;
   });
 
   useEffect(() => {
     if (folderConnected) {
-      setValue('repository.sync.target', 'folder');
-    } else {
-      setValue('repository.sync.target', 'instance');
+      setValue('repository.sync.target', folderConnected ? 'folder' : 'instance');
     }
   }, [folderConnected, setValue]);
 
