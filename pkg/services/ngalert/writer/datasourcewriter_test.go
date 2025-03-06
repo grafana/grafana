@@ -116,5 +116,4 @@ func TestDatasourceWriter(t *testing.T) {
 		err := writer.WriteDatasource(context.Background(), "", "metric", time.Now(), frames, 1, map[string]string{})
 		require.NoError(t, err)
 	})
-
 }
