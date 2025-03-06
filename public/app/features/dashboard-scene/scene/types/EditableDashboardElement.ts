@@ -32,6 +32,16 @@ export interface EditableDashboardElement {
    * creates a new multi-selection element from a list of selected items
    */
   createMultiSelectedElement?(items: SceneObject[]): MultiSelectedEditableDashboardElement;
+
+  /**
+   * Return custom title for the edit panel header
+   */
+  renderTitle?(): ReactNode;
+
+  /**
+   * determines if first edit panel header can be collapsed
+   */
+  isOpenable?: Readonly<boolean>;
 }
 
 export interface EditableDashboardElementInfo {

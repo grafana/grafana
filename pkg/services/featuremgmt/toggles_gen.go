@@ -950,4 +950,12 @@ const (
 	// FlagRendererDisableAppPluginsPreload
 	// Disable pre-loading app plugins when the request is coming from the renderer
 	FlagRendererDisableAppPluginsPreload = "rendererDisableAppPluginsPreload"
+
+	// FlagAssetSriChecks
+	// Enables SRI checks for Grafana JavaScript assets
+	FlagAssetSriChecks = "assetSriChecks"
+
+	// FlagAlertRuleRestore
+	// Enables the alert rule restore feature
+	FlagAlertRuleRestore = "alertRuleRestore"
 )

@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -22,6 +23,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -113,7 +115,10 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		require.Equal(t, fmt.Sprintf("[%s] %s", simpleGroup.Name, simpleGroup.Rules[0].Alert), remaining[0].Title)
 		promRuleYAML, err := yaml.Marshal(simpleGroup.Rules[0])
 		require.NoError(t, err)
-		require.Equal(t, string(promRuleYAML), remaining[0].PrometheusRuleDefinition())
+
+		promDefinition, err := remaining[0].PrometheusRuleDefinition()
+		require.NoError(t, err)
+		require.Equal(t, string(promRuleYAML), promDefinition)
 	})
 
 	t.Run("should fail to replace a provisioned rule group", func(t *testing.T) {
@@ -149,6 +154,32 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.NotNil(t, remaining)
+	})
+
+	t.Run("with no access to the datasource should return 403", func(t *testing.T) {
+		acFake := &acfakes.FakeRuleService{}
+		srv, _, _, _ := createConvertPrometheusSrv(t, withFakeAccessControlRuleService(acFake))
+
+		acFake.AuthorizeRuleChangesFunc = func(context.Context, identity.Requester, *store.GroupDelta) error {
+			return datasources.ErrDataSourceAccessDenied
+		}
+
+		rc := createRequestCtx()
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "folder", simpleGroup)
+		require.Equal(t, http.StatusForbidden, response.Status())
+		require.Contains(t, string(response.Body()), "data source access denied")
+	})
+
+	t.Run("when alert rule quota limit exceeded", func(t *testing.T) {
+		quotas := &provisioning.MockQuotaChecker{}
+		quotas.EXPECT().LimitExceeded()
+
+		srv, _, _, _ := createConvertPrometheusSrv(t, withQuotaChecker(quotas))
+
+		rc := createRequestCtx()
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "folder", simpleGroup)
+		require.Equal(t, http.StatusForbidden, response.Status())
+		require.Contains(t, string(response.Body()), "quota has been exceeded")
 	})
 
 	t.Run("with valid pause header values should return 202", func(t *testing.T) {
@@ -397,8 +428,8 @@ func TestRouteConvertPrometheusGetNamespace(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Len(t, respNamespaces, 1)
-		require.Contains(t, respNamespaces, fldr.Fullpath)
-		require.ElementsMatch(t, respNamespaces[fldr.Fullpath], []apimodels.PrometheusRuleGroup{promGroup1, promGroup2})
+		require.Contains(t, respNamespaces, fldr.Title)
+		require.ElementsMatch(t, respNamespaces[fldr.Title], []apimodels.PrometheusRuleGroup{promGroup1, promGroup2})
 	})
 }
 
@@ -442,17 +473,53 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 		},
 	}
 
-	t.Run("with no rules should return empty response", func(t *testing.T) {
-		srv, _, _, _ := createConvertPrometheusSrv(t)
-		rc := createRequestCtx()
+	assertEmptyResponse := func(t *testing.T, srv *ConvertPrometheusSrv, reqCtx *contextmodel.ReqContext) {
+		t.Helper()
 
-		response := srv.RouteConvertPrometheusGetRules(rc)
+		response := srv.RouteConvertPrometheusGetRules(reqCtx)
 		require.Equal(t, http.StatusOK, response.Status())
 
 		var respNamespaces map[string][]apimodels.PrometheusRuleGroup
 		err := yaml.Unmarshal(response.Body(), &respNamespaces)
 		require.NoError(t, err)
 		require.Empty(t, respNamespaces)
+	}
+
+	// testForEmptyResponses tests that RouteConvertPrometheusGetRules returns an empty response
+	// when there are no rules in the folder or the folder does not exist.
+	testForEmptyResponses := func(t *testing.T, withCustomFolderHeader bool) {
+		rc := createRequestCtx()
+		unknownFolderUID := "some unknown folder"
+		rootFolderUID := ""
+		if withCustomFolderHeader {
+			rootFolderUID = unknownFolderUID
+			rc.Context.Req.Header.Set(folderUIDHeader, unknownFolderUID)
+		}
+
+		t.Run("for non-existent folder should return empty response", func(t *testing.T) {
+			srv, _, _, _ := createConvertPrometheusSrv(t)
+			assertEmptyResponse(t, srv, rc)
+		})
+
+		t.Run("for existing folder with no children should return empty response", func(t *testing.T) {
+			srv, _, ruleStore, folderService := createConvertPrometheusSrv(t)
+
+			fldr := randFolder()
+			fldr.UID = unknownFolderUID
+			fldr.ParentUID = rootFolderUID
+			folderService.ExpectedFolders = []*folder.Folder{fldr}
+			ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
+
+			assertEmptyResponse(t, srv, rc)
+		})
+	}
+
+	t.Run("without custom root folder", func(t *testing.T) {
+		testForEmptyResponses(t, false)
+	})
+
+	t.Run("with custom root folder", func(t *testing.T) {
+		testForEmptyResponses(t, true)
 	})
 
 	t.Run("with rules should return 200 with rules", func(t *testing.T) {
@@ -489,8 +556,8 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Len(t, respNamespaces, 1)
-		require.Contains(t, respNamespaces, fldr.Fullpath)
-		require.ElementsMatch(t, respNamespaces[fldr.Fullpath], []apimodels.PrometheusRuleGroup{promGroup1, promGroup2})
+		require.Contains(t, respNamespaces, fldr.Title)
+		require.ElementsMatch(t, respNamespaces[fldr.Title], []apimodels.PrometheusRuleGroup{promGroup1, promGroup2})
 	})
 }
 
@@ -498,6 +565,20 @@ func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {
 	t.Run("for non-existent folder should return 404", func(t *testing.T) {
 		srv, _, _, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
+
+		response := srv.RouteConvertPrometheusDeleteNamespace(rc, "non-existent")
+		require.Equal(t, http.StatusNotFound, response.Status())
+	})
+
+	t.Run("for existing folder with no groups should return 404", func(t *testing.T) {
+		srv, _, ruleStore, folderService := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+
+		fldr := randFolder()
+		fldr.ParentUID = ""
+		folderService.ExpectedFolder = fldr
+		folderService.ExpectedFolders = []*folder.Folder{fldr}
+		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
 
 		response := srv.RouteConvertPrometheusDeleteNamespace(rc, "non-existent")
 		require.Equal(t, http.StatusNotFound, response.Status())
@@ -596,6 +677,20 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 		require.Equal(t, http.StatusNotFound, response.Status())
 	})
 
+	t.Run("for existing folder with no group should return 404", func(t *testing.T) {
+		srv, _, ruleStore, folderService := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+
+		fldr := randFolder()
+		fldr.ParentUID = ""
+		folderService.ExpectedFolder = fldr
+		folderService.ExpectedFolders = []*folder.Folder{fldr}
+		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
+
+		response := srv.RouteConvertPrometheusDeleteRuleGroup(rc, fldr.Title, "test-group")
+		require.Equal(t, http.StatusNotFound, response.Status())
+	})
+
 	const groupName = "test-group"
 
 	t.Run("valid request should delete rules", func(t *testing.T) {
@@ -685,7 +780,9 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 }
 
 type convertPrometheusSrvOptions struct {
-	provenanceStore provisioning.ProvisioningStore
+	provenanceStore              provisioning.ProvisioningStore
+	fakeAccessControlRuleService *acfakes.FakeRuleService
+	quotaChecker                 *provisioning.MockQuotaChecker
 }
 
 type convertPrometheusSrvOptionsFunc func(*convertPrometheusSrvOptions)
@@ -696,11 +793,29 @@ func withProvenanceStore(store provisioning.ProvisioningStore) convertPrometheus
 	}
 }
 
+func withFakeAccessControlRuleService(service *acfakes.FakeRuleService) convertPrometheusSrvOptionsFunc {
+	return func(opts *convertPrometheusSrvOptions) {
+		opts.fakeAccessControlRuleService = service
+	}
+}
+
+func withQuotaChecker(checker *provisioning.MockQuotaChecker) convertPrometheusSrvOptionsFunc {
+	return func(opts *convertPrometheusSrvOptions) {
+		opts.quotaChecker = checker
+	}
+}
+
 func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOptionsFunc) (*ConvertPrometheusSrv, datasources.CacheService, *fakes.RuleStore, *foldertest.FakeService) {
 	t.Helper()
 
+	// By default the quota checker will allow the operation
+	quotas := &provisioning.MockQuotaChecker{}
+	quotas.EXPECT().LimitOK()
+
 	options := convertPrometheusSrvOptions{
-		provenanceStore: fakes.NewFakeProvisioningStore(),
+		provenanceStore:              fakes.NewFakeProvisioningStore(),
+		fakeAccessControlRuleService: &acfakes.FakeRuleService{},
+		quotaChecker:                 quotas,
 	}
 
 	for _, opt := range opts {
@@ -718,23 +833,20 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 	}
 	dsCache.DataSources = append(dsCache.DataSources, ds)
 
-	quotas := &provisioning.MockQuotaChecker{}
-	quotas.EXPECT().LimitOK()
-
 	folderService := foldertest.NewFakeService()
 
 	alertRuleService := provisioning.NewAlertRuleService(
 		ruleStore,
 		options.provenanceStore,
 		folderService,
-		quotas,
+		options.quotaChecker,
 		&provisioning.NopTransactionManager{},
 		60,
 		10,
 		100,
 		log.New("test"),
 		&provisioning.NotificationSettingsValidatorProviderFake{},
-		&acfakes.FakeRuleService{},
+		options.fakeAccessControlRuleService,
 	)
 
 	cfg := &setting.UnifiedAlertingSettings{
@@ -757,4 +869,40 @@ func createRequestCtx() *contextmodel.ReqContext {
 		},
 		SignedInUser: &user.SignedInUser{OrgID: 1},
 	}
+}
+
+func TestGetWorkingFolderUID(t *testing.T) {
+	t.Run("should return root folder UID when header is not present", func(t *testing.T) {
+		rc := createRequestCtx()
+		rc.Req.Header.Del(folderUIDHeader)
+
+		folderUID := getWorkingFolderUID(rc)
+		require.Equal(t, folder.RootFolderUID, folderUID)
+	})
+
+	t.Run("should return specified folder UID when header is present", func(t *testing.T) {
+		rc := createRequestCtx()
+		specifiedFolderUID := "specified-folder-uid"
+		rc.Req.Header.Set(folderUIDHeader, specifiedFolderUID)
+
+		folderUID := getWorkingFolderUID(rc)
+		require.Equal(t, specifiedFolderUID, folderUID)
+	})
+
+	t.Run("should return root folder UID when header is empty", func(t *testing.T) {
+		rc := createRequestCtx()
+		rc.Req.Header.Set(folderUIDHeader, "")
+
+		folderUID := getWorkingFolderUID(rc)
+		require.Equal(t, folder.RootFolderUID, folderUID)
+	})
+
+	t.Run("should trim whitespace from header value", func(t *testing.T) {
+		rc := createRequestCtx()
+		specifiedFolderUID := "specified-folder-uid"
+		rc.Req.Header.Set(folderUIDHeader, "  "+specifiedFolderUID+"  ")
+
+		folderUID := getWorkingFolderUID(rc)
+		require.Equal(t, specifiedFolderUID, folderUID)
+	})
 }
