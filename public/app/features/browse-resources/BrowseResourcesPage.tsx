@@ -6,7 +6,6 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { GrafanaTheme2, NavModel, NavModelItem, SelectableValue } from '@grafana/data';
 import {
   EmptyState,
-  LoadingPlaceholder,
   InteractiveTable,
   Column,
   Select,
@@ -62,6 +61,8 @@ const FoldersPage: React.FC = () => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [availableTags, setAvailableTags] = useState<TermCount[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<string>('');
+  const [showTable, setShowTable] = useState(true);
 
   const styles = useStyles2(getStyles);
   const clearButtonStyle = useStyles2(clearLinkButtonStyles);
@@ -97,7 +98,13 @@ const FoldersPage: React.FC = () => {
     const loadData = async () => {
       setIsLoading(true);
       const kinds = selectedTypes.map((t) => t.value!.toString());
-      let query: SearchQuery = { kind: kinds, tags: selectedTags, query: searchTerm }
+      const sort = sortBy !== '' ? sortBy : undefined;
+      let query: SearchQuery = { 
+        kind: kinds, 
+        tags: selectedTags, 
+        query: searchTerm,
+        sort: sort
+      }
       if (!location.pathname.endsWith('finder')) {
         const parts = location.pathname.split('/');
         const folderId = parts[parts.length - 1];
@@ -117,7 +124,7 @@ const FoldersPage: React.FC = () => {
       }
     };
     void loadData();
-  }, [selectedTypes, selectedTags, searchTerm, location.pathname]);
+  }, [selectedTypes, selectedTags, searchTerm, location.pathname, sortBy]);
 
   const getIconForResource = (resource: string) => {
     switch (resource) {
@@ -162,21 +169,41 @@ const FoldersPage: React.FC = () => {
 
   const onResourceLinkClicked = () => {}
 
+  // This is a hack to force the table to re-render when the sort order changes
+  const handleSortChange = () => {
+    setShowTable(!showTable);
+    setSortBy((sortBy === '' || sortBy === '-name') ? 'name' : '-name');
+    setTimeout(() => {
+      setShowTable(true);
+    }, 0);
+  };
+
   const renderTable = (resources: SearchHit[]) => {
+    if (!showTable) {
+      return;
+    }
     const columns: Array<Column<Resource>> =
       [
           {
             id: 'name',
             header: 'Name',
+            sortType: () => {
+              setTimeout(() => {
+                handleSortChange();
+              }, 0);
+              return 0; // Return value doesn't matter since we're using backend sorting
+            },
             cell: ({ row: { original } }) => (
               <div style={{ marginLeft: original.level ? original.level * 20 : 0 }}>
-                <Link
-                  aria-label={`open-${original.title}`}
-                  href={toURL(original.resource, original.name, original.title)}
-                  onClick={onResourceLinkClicked}
-                >
-                {original.title}
-                </Link>
+                <Stack direction="row" alignItems="center" gap={1}>
+                  <Link
+                    aria-label={`open-${original.title}`}
+                    href={toURL(original.resource, original.name, original.title)}
+                    onClick={onResourceLinkClicked}
+                  >
+                    {original.title}
+                  </Link>
+                </Stack>
               </div>
             ),
           },
@@ -295,8 +322,6 @@ const FoldersPage: React.FC = () => {
             />
           </Stack>
         </div>
-
-        {isLoading && <LoadingPlaceholder text="Loading folders..." />}
 
         {error && (
           <EmptyState message={error} variant={'call-to-action'} />
