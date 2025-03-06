@@ -11,7 +11,12 @@ import {
   ConnectionDirection,
 } from 'app/features/canvas/element';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
-import { advancedElementItems, canvasElementRegistry, defaultElementItems } from 'app/features/canvas/registry';
+import {
+  advancedElementItems,
+  canvasElementRegistry,
+  defaultElementItems,
+  multiplayerElementItems,
+} from 'app/features/canvas/registry';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene, SelectionParams } from 'app/features/canvas/runtime/scene';
@@ -37,7 +42,14 @@ export function doSelect(scene: Scene, element: ElementState | FrameState) {
   }
 }
 
-export function getElementTypes(shouldShowAdvancedTypes: boolean | undefined, current?: string): RegistrySelectInfo {
+export function getElementTypes(
+  shouldShowAdvancedTypes: boolean | undefined,
+  current?: string,
+  multiplayer?: boolean
+): RegistrySelectInfo {
+  if (multiplayer) {
+    return getElementTypesOptions([...multiplayerElementItems], current);
+  }
   if (shouldShowAdvancedTypes) {
     return getElementTypesOptions([...defaultElementItems, ...advancedElementItems], current);
   }
