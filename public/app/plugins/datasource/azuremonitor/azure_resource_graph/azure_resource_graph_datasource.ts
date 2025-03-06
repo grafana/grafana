@@ -164,7 +164,8 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
 
         const filters: string[] = [];
         if (validMetricNamespace) {
-          filters.push(`type == '${validMetricNamespace}'`);
+          // Ensure the namespace is always lowercase as that's how it's stored in Resource Graph
+          filters.push(`type == '${validMetricNamespace.toLowerCase()}'`);
         }
         if (region) {
           filters.push(`location == '${region}'`);
