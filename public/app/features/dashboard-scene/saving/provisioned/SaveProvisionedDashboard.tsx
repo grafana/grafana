@@ -132,14 +132,13 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
 
     // Quick hack to send the current UID without changing the whole shape
     (saveModel as any)['uid'] = meta.uid;
-
     action({ ref, name: repo, path, message: comment, body: saveModel });
   };
 
   const workflows = getWorkflowOptions(repositoryConfig, loadedFromRef);
 
   return (
-    <form onSubmit={handleSubmit(doSave)}>
+    <form onSubmit={handleSubmit(doSave)} name="save-provisioned-form">
       <Stack direction="column" gap={2}>
         {!repositoryConfig?.workflows.length && (
           <Alert title="This repository is read only">
@@ -151,11 +150,12 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
           <>
             <Field label={'Title'} invalid={!!errors.title} error={errors.title?.message}>
               <Input
+                id="dashboard-title"
                 {...register('title', { required: 'Dashboard title is required', validate: validateDashboardName })}
               />
             </Field>
             <Field label="Description" invalid={!!errors.description} error={errors.description?.message}>
-              <TextArea {...register('description')} />
+              <TextArea id="dashboard-description" {...register('description')} />
             </Field>
 
             <Field label={'Target folder'}>
@@ -165,6 +165,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
                 render={({ field: { ref, value, onChange, ...field } }) => {
                   return (
                     <FolderPicker
+                      inputId="dashboard-folder"
                       onChange={(uid?: string, title?: string, repository?: RepositoryView) => {
                         onChange({ uid, title });
                         const name = repository?.name;
@@ -191,11 +192,12 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
         {!isNew && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
 
         <Field label="Path" description="File path inside the repository. This must be .json or .yaml">
-          <Input {...register('path')} readOnly={false} />
+          <Input id="dashboard-path" {...register('path')} readOnly={false} />
         </Field>
 
         <Field label="Comment">
           <TextArea
+            id="dashboard-comment"
             {...register('comment')}
             aria-label="comment"
             placeholder="Add a note to describe your changes (optional)."
@@ -211,7 +213,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
                 control={control}
                 name={'workflow'}
                 render={({ field: { ref, ...field } }) => {
-                  return <RadioButtonGroup {...field} options={workflows} />;
+                  return <RadioButtonGroup id="dashboard-workflow" {...field} options={workflows} />;
                 }}
               />
             </Field>
@@ -222,7 +224,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
                 invalid={!!errors?.ref}
                 error={errors.ref ? <BranchValidationError /> : ''}
               >
-                <Input {...register('ref', { validate: validateBranchName })} />
+                <Input id="dashboard-branch" {...register('ref', { validate: validateBranchName })} />
               </Field>
             )}
           </>
