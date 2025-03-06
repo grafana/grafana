@@ -66,8 +66,8 @@ To view previous alert rules for an alert, complete the following steps.
 1. Navigate to **Alerts & IRM -> Alerting -> Alert rules**.
 1. Select an alert rule and click **View**.
 1. Click the **Versions** tab.  
-  The page displays a list of the previous rule versions. 
-  
-  On the Alert rule's Versions page you can view and compare the previous rule versions.
+   The page displays a list of the previous rule versions.
+
+On the Alert rule's Versions page you can view and compare the previous rule versions.
 
 {{< figure src="/media/docs/alerting/screenshot-grafana-alerting-version-history.png" max-width="750px" alt="View the history of your alert rule versions in Grafana Alerting" >}}
