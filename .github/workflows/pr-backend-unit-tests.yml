@@ -56,8 +56,6 @@ jobs:
         with:
           test-type: 'be-unit'
           coverage-file: 'unit.cov'
-          retention-days: 30
-          compression-level: 9
           codecov-token: ${{ secrets.CODECOV_TOKEN }}
           codecov-flag: 'be-unit'
           codecov-name: 'be-unit'
