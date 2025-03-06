@@ -167,7 +167,7 @@ func NewTestStore(tb TestingTB, opts ...TestOption) *SQLStore {
 	engine.TZLocation = time.UTC
 
 	store, err := newStore(cfg, engine, features, options.MigratorFactory(features),
-		options.Bus, options.Tracer, options.NoDefaultUserOrg)
+		options.Bus, options.Tracer, options.NoDefaultUserOrg || options.Truncate)
 	if err != nil {
 		tb.Fatalf("failed to create a new SQLStore: %v", err)
 		panic("unreachable")
