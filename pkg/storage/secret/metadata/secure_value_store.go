@@ -60,6 +60,11 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 	// From this point on, we should not have a need to read value.
 	sv.Spec.Value = ""
 
+	// TODO: Remove once the outbox is implemented, as the status will be set to `Succeeded` by a separate process.
+	// Temporarily mark succeeded here since the value is already stored in the keeper.
+	sv.Status.Phase = secretv0alpha1.SecureValuePhaseSucceeded
+	sv.Status.Message = ""
+
 	row, err := toCreateRow(sv, authInfo.GetUID(), externalID.String())
 	if err != nil {
 		return nil, fmt.Errorf("to create row: %w", err)
@@ -163,6 +168,11 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 
 	// From this point on, we should not have a need to read value.
 	newSecureValue.Spec.Value = ""
+
+	// TODO: Remove once the outbox is implemented, as the status will be set to `Succeeded` by a separate process.
+	// Temporarily mark succeeded here since the value is already stored in the keeper.
+	newSecureValue.Status.Phase = secretv0alpha1.SecureValuePhaseSucceeded
+	newSecureValue.Status.Message = ""
 
 	newRow, err := toUpdateRow(currentRow, newSecureValue, authInfo.GetUID(), currentRow.ExternalID)
 	if err != nil {
