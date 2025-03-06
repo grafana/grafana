@@ -546,7 +546,7 @@ func withQueryForHealth(health string) models.AlertRuleMutator {
 func setupWriter(t *testing.T, target *writer.TestRemoteWriteTarget, reg prometheus.Registerer) *writer.PrometheusWriter {
 	provider := testClientProvider{}
 	m := metrics.NewNGAlert(reg)
-	wr, err := writer.NewPrometheusWriter(target.ClientSettings(), provider, clock.NewMock(), log.NewNopLogger(), m.GetRemoteWriterMetrics())
+	wr, err := writer.NewPrometheusWriterWithSettings(target.ClientSettings(), provider, clock.NewMock(), log.NewNopLogger(), m.GetRemoteWriterMetrics())
 	require.NoError(t, err)
 	return wr
 }
