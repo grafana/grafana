@@ -55,7 +55,7 @@ jobs:
         uses: ./.github/actions/test-coverage-processor
         with:
           test-type: 'be-unit'
-          coverage-file: 'be-unit.cov'
+          coverage-file: 'unit.cov'
           retention-days: 30
           compression-level: 9
           codecov-token: ${{ secrets.CODECOV_TOKEN }}
