@@ -68,11 +68,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
   const sceneDash = scene.state;
   const timeRange = sceneDash.$timeRange!.state;
 
-  const initialSaveModel = scene.getInitialSaveModel();
-
-  if (!initialSaveModel || (initialSaveModel && !('elements' in initialSaveModel))) {
-    throw new Error('The initial save model is not a valid V2 spec');
-  }
+  const { initialElements } = getInitialModelContext(scene);
 
   const controlsState = sceneDash.controls?.state;
   const refreshPicker = controlsState?.refreshPicker;
@@ -109,7 +105,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF variables
 
     // elements
-    elements: getElements(sceneDash, initialSaveModel?.elements),
+    elements: getElements(sceneDash, initialElements),
     // EOF elements
 
     // annotations
@@ -465,6 +461,39 @@ export function getDefaultDataSourceRef(): DataSourceRef {
   const ds = dsList[defaultDatasource];
 
   return { type: ds.meta.id, uid: ds.name }; // in the datasource list from bootData "id" is the type
+}
+
+interface InitialModelContext {
+  initialElements: Record<string, Element>;
+  initialVariables: Array<
+    | QueryVariableKind
+    | TextVariableKind
+    | IntervalVariableKind
+    | DatasourceVariableKind
+    | CustomVariableKind
+    | ConstantVariableKind
+    | GroupByVariableKind
+    | AdhocVariableKind
+  >;
+  initialAnnotations: AnnotationQueryKind[];
+}
+
+function getInitialModelContext(scene: DashboardScene): InitialModelContext {
+  const initialModel = scene.getInitialSaveModel();
+
+  if (!initialModel || !('elements' in initialModel)) {
+    return {
+      initialElements: {},
+      initialVariables: [],
+      initialAnnotations: [],
+    };
+  }
+
+  return {
+    initialElements: initialModel.elements,
+    initialVariables: initialModel.variables,
+    initialAnnotations: initialModel.annotations,
+  };
 }
 
 // Function to know if the dashboard transformed is a valid DashboardV2Spec
