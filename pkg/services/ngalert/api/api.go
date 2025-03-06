@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"net/url"
 	"time"
 
@@ -83,6 +84,8 @@ type API struct {
 
 	// Hooks can be used to replace API handlers for specific paths.
 	Hooks *Hooks
+	// UnifiedStorage is a hack to stick alerts into unified storage for finder usage
+	UnifiedStorage resource.ResourceClient
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -138,6 +141,8 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			amRefresher:        api.MultiOrgAlertmanager,
 			featureManager:     api.FeatureManager,
 			userService:        api.UserService,
+			// Hack: unified storage
+			unifiedStore: api.UnifiedStorage,
 		},
 	), m)
 	api.RegisterTestingApiEndpoints(NewTestingApi(

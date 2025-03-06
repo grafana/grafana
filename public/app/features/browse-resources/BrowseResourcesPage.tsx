@@ -15,16 +15,19 @@ import {
   useStyles2,
   FilterInput,
   TagList,
+  Link,
 } from '@grafana/ui';
 import { getAPINamespace } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
 import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 
-import { GrafanaSearcher } from '../search/service/types';
+import { GrafanaSearcher, SearchQuery } from '../search/service/types';
 import { SearchHit, UnifiedSearcher } from '../search/service/unified';
 import { getColumnStyles } from '../search/page/components/SearchResultsTable';
-
+import kbn from 'app/core/utils/kbn';
+import { useLocation } from 'react-router-dom-v5-compat';
+import { iconItem } from '../canvas/elements/icon';
 interface Resource extends SearchHit {
   isExpanded?: boolean;
   owner?: string;
@@ -60,7 +63,8 @@ const FoldersPage: React.FC = () => {
   
   const styles = useStyles2(getStyles);
 
-  const navModel = useNavModel('finder');
+  const location = useLocation();
+  const [navModel, setNavModel] = useState(useNavModel('finder'));
 
   const columnStyles = useStyles2(getColumnStyles);
 
@@ -80,12 +84,67 @@ const FoldersPage: React.FC = () => {
   };
 
   useEffect(() => {
+    const fetchFolderName = async (folderId: string) => {
+      const folder = await searcher.fetchResults({ kind: ['folder'], uid: [folderId] });
+      return folder.hits[0].title;
+    };
+    const buildNavModel = async () => {
+      if (!location.pathname.endsWith('finder')) {
+        // TODO: handle multiple levels of folders
+        const parts = location.pathname.split('/');
+        const folderId = parts[parts.length - 1];
+        const folderName = await fetchFolderName(folderId);
+        const navModelWithChildren = {
+          ...navModel,
+          main: {
+            ...navModel.main,
+            active: false,
+            children: [
+              // TODO: first child is ignored for some reason, so add a dummy child
+              { text: folderName, icon: 'folder'},
+              {
+                text: folderName,
+                url: '/foo',
+                icon: 'folder',
+                active: true,
+              },
+            ],
+          },
+          node: {
+            ...navModel.node,
+            active: false,
+            children: [
+              // TODO: first child is ignored for some reason
+              { text: folderName, icon: 'folder' },
+              {
+                text: folderName,
+                url: '/foo',
+                icon: 'folder',
+                active: true,
+              },
+            ],
+          },
+        };
+        // @ts-ignore
+        setNavModel(navModelWithChildren);
+      }
+    };
+    buildNavModel()
+  }, [location.pathname]);
+
+  useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
       const kinds = selectedTypes.map((t) => t.value!.toString());
+      let query: SearchQuery = { kind: kinds, tags: selectedTags, query: searchTerm }
+      if (!location.pathname.endsWith('finder')) {
+        const parts = location.pathname.split('/');
+        const folderId = parts[parts.length - 1];
+        query = {...query, location: folderId}
+      }
       try {
         const results = await Promise.all([
-          searcher.fetchResults({ kind: kinds, tags: selectedTags, query: searchTerm }),
+          searcher.fetchResults(query),
           searcher.tags({ kind: kinds })
         ]);
         setResources(results[0].hits);
@@ -97,7 +156,7 @@ const FoldersPage: React.FC = () => {
       }
     };
     void loadData();
-  }, [selectedTypes, selectedTags, searchTerm]);
+  }, [selectedTypes, selectedTags, searchTerm, location.pathname]);
 
   const getIconForResource = (resource: string) => {
     switch (resource) {
@@ -121,6 +180,25 @@ const FoldersPage: React.FC = () => {
       prevResources.map((r) => (r.name === resource.name ? { ...r, isExpanded: !r.isExpanded } : r))
     );
   };
+
+  function toURL(resource: string, name: string, title: string): string {
+    if (resource.startsWith('folder')) {
+      return `/finder/${name}`;
+    }
+    if (resource.startsWith('playlist')) {
+      return `/playlists/play/${name}`;
+    }
+    if (resource.startsWith('alert')) {
+      return `/alerting/grafana/${name}`;
+    }
+    if (resource.startsWith('slo')) {
+      return `/d/grafana_slo_app-${name}`;
+    }
+    const slug = kbn.slugifyForUrl(title);
+    return `/d/${name}/${slug}`;
+  }
+  
+  const onResourceLinkClicked = () => {}
 
   const renderTable = (resources: SearchHit[]) => {
     // Get root level resources (location === "general")
@@ -163,10 +241,17 @@ const FoldersPage: React.FC = () => {
         id: 'name',
         header: 'Name',
         cell: ({ row: { original } }) => (
-          <div style={{ marginLeft: original.location !== "general" ? 20 : 0 }} className="flex items-center">
-            {original.title}
+          <div style={{ marginLeft: original.level ? original.level * 20 : 0 }}>
+            <Link
+              aria-label={`open-${original.title}`}
+              href={toURL(original.resource, original.name, original.title)}
+              className="external-link"
+              onClick={onResourceLinkClicked}
+            >
+              {original.title}
+            </Link>
           </div>
-        ),
+        )
       },
       {
         id: 'type',
@@ -211,11 +296,11 @@ const FoldersPage: React.FC = () => {
     ];
 
     return (
-        <InteractiveTable
-          data={tableData}
-          columns={columns}
-          getRowId={(row) => row.name}
-        />
+      <InteractiveTable
+        data={tableData}
+        columns={columns}
+        getRowId={(row) => row.name}
+      />
     );
   };
 
@@ -297,4 +382,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 export default FoldersPage;
-

@@ -43,6 +43,7 @@ type DBstore struct {
 	DashboardService dashboards.DashboardService
 	AccessControl    accesscontrol.AccessControl
 	Bus              bus.Bus
+	// TODO: unified storage
 }
 
 func ProvideDBStore(

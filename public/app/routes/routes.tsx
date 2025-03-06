@@ -80,6 +80,14 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/finder/:uid',
+      pageClass: 'page-folders',
+      routeName: FolderRoutes.Browse,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "FoldersPage" */ 'app/features/browse-resources/BrowseResourcesPage')
+      ),
+    },
+    {
       // We currently have no core usage of the embedded dashboard so is to have a page for e2e to test
       path: '/dashboards/embedding-test',
       component: SafeDynamicImport(
