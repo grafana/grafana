@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { ComponentProps } from 'react';
 
-import { urlUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Alert, CodeEditor, ConfirmModal, Stack, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
@@ -15,7 +14,8 @@ import { RuleFormValues } from '../../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { grafanaRuleDtoToFormValues } from '../../../utils/rule-form';
-import { isGrafanaRulerRule } from '../../../utils/rules';
+import { isGrafanaRecordingRule, isGrafanaRulerRule } from '../../../utils/rules';
+import { createRelativeUrl } from '../../../utils/url';
 
 type ModalProps = Pick<ComponentProps<typeof ConfirmModal>, 'isOpen' | 'onDismiss'> & {
   isOpen: boolean;
@@ -159,8 +159,10 @@ const createAlert = async (ruleToRecover: RulerGrafanaRuleDTO, namespace: string
     throw new Error(message);
   }
 
-  const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
-    isManualRestore: true,
+  const urlPath = isGrafanaRecordingRule(ruleToRecover) ? '/alerting/new/grafana-recording' : '/alerting/new';
+
+  const ruleFormUrl = createRelativeUrl(urlPath, {
+    isManualRestore: 'true',
     defaults: JSON.stringify(formValues),
     returnTo: location.pathname + location.search,
   });
