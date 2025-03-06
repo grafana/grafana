@@ -18,43 +18,12 @@ permissions:
   id-token: write
 
 jobs:
-  backend-testing-coverage:
-    name: Backend Testing & Coverage
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: true
-          
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential shared-mime-info
-
-      - name: Verify code generation
-        run: |
-          CODEGEN_VERIFY=1 make gen-cue
-          CODEGEN_VERIFY=1 make gen-jsonnet
-
-      - name: Generate Go code
-        run: make gen-go
-
-      - name: Run unit tests
-        run: COVER_OPTS="-coverprofile=be-unit.cov -coverpkg=github.com/grafana/grafana/..." make test-go-unit
-
-      - name: Process and upload coverage
-        uses: ./.github/actions/test-coverage-processor
-        with:
-          test-type: 'be-unit'
-          coverage-file: 'unit.cov'
-          codecov-token: ${{ secrets.CODECOV_TOKEN }}
-          codecov-flag: 'be-unit'
-          codecov-name: 'be-unit'
+  call-backend-tests:
+    uses: ./.github/workflows/pr-backend-unit-tests-reusable.yml
+    with:
+      wire-tags: 'oss'
+    secrets:
+      codecov-token: ${{ secrets.CODECOV_TOKEN }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
