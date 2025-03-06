@@ -464,8 +464,8 @@ export function getDefaultDataSourceRef(): DataSourceRef {
 }
 
 interface InitialModelContext {
-  initialElements: Record<string, Element>;
-  initialVariables: Array<
+  initialElements?: Record<string, Element>;
+  initialVariables?: Array<
     | QueryVariableKind
     | TextVariableKind
     | IntervalVariableKind
@@ -475,18 +475,14 @@ interface InitialModelContext {
     | GroupByVariableKind
     | AdhocVariableKind
   >;
-  initialAnnotations: AnnotationQueryKind[];
+  initialAnnotations?: AnnotationQueryKind[];
 }
 
 function getInitialModelContext(scene: DashboardScene): InitialModelContext {
   const initialModel = scene.getInitialSaveModel();
 
   if (!initialModel || !('elements' in initialModel)) {
-    return {
-      initialElements: {},
-      initialVariables: [],
-      initialAnnotations: [],
-    };
+    return {};
   }
 
   return {
