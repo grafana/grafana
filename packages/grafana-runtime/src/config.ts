@@ -103,7 +103,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   passwordHint = '';
   loginError: string | undefined = undefined;
   viewersCanEdit = false;
-  editorsCanAdmin = false;
   disableSanitizeHtml = false;
   trustedTypesDefaultPolicyEnabled = false;
   cspReportOnlyEnabled = false;
@@ -229,7 +228,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
         env: 'production',
       },
       viewersCanEdit: false,
-      editorsCanAdmin: false,
       disableSanitizeHtml: false,
     };
 

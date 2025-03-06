@@ -35,11 +35,6 @@ func (s *Service) getUsageStats(ctx context.Context) (map[string]any, error) {
 		m["stats.authz.viewers_can_edit.count"] = 1
 	}
 
-	m["stats.authz.editors_can_admin.count"] = 0
-	if s.cfg.EditorsCanAdmin {
-		m["stats.authz.editors_can_admin.count"] = 1
-	}
-
 	for _, client := range s.clients {
 		if usac, ok := client.(authn.UsageStatClient); ok {
 			clientStats, err := usac.UsageStatFn(ctx)
