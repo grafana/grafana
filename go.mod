@@ -398,7 +398,7 @@ require (
 
 require (
 	cloud.google.com/go/iam v1.1.12 // indirect
-	filippo.io/age v1.1.1 // @grafana/grafana-authnz-team
+	filippo.io/age v1.2.1 // @grafana/grafana-authnz-team
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.11.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/internal v0.7.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.2 // indirect
