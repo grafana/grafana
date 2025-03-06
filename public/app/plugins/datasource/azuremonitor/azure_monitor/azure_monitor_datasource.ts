@@ -2,7 +2,7 @@ import { find, startsWith } from 'lodash';
 
 import { AzureCredentials } from '@grafana/azure-sdk';
 import { ScopedVars } from '@grafana/data';
-import { DataSourceWithBackend, getTemplateSrv, TemplateSrv, VariableInterpolation } from '@grafana/runtime';
+import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import { getCredentials } from '../credentials';
 import TimegrainConverter from '../time_grain_converter';
@@ -27,7 +27,7 @@ import {
   Metric,
   MetricNamespace,
 } from '../types';
-import { routeNames } from '../utils/common';
+import { replaceTemplateVariables, routeNames } from '../utils/common';
 import migrateQuery from '../utils/migrateQuery';
 
 import ResponseParser from './response_parser';
@@ -123,7 +123,9 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
       migratedTarget.subscription || this.defaultSubscriptionId,
       scopedVars
     );
-    const resources = migratedQuery.resources?.map((r) => this.replaceTemplateVariables(r, scopedVars)).flat();
+    const resources = migratedQuery.resources
+      ?.map((r) => replaceTemplateVariables(this.templateSrv, r, scopedVars))
+      .flat();
     const metricNamespace = this.templateSrv.replace(migratedQuery.metricNamespace, scopedVars);
     const customNamespace = this.templateSrv.replace(migratedQuery.customNamespace, scopedVars);
     const timeGrain = this.templateSrv.replace((migratedQuery.timeGrain || '').toString(), scopedVars);
@@ -185,7 +187,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
   }
 
   async getResourceNames(query: AzureGetResourceNamesQuery, skipToken?: string) {
-    const promises = this.replaceTemplateVariables(query).map(
+    const promises = replaceTemplateVariables(this.templateSrv, query).map(
       ({ metricNamespace, subscriptionId, resourceGroup, region }) => {
         const validMetricNamespace = startsWith(metricNamespace?.toLowerCase(), 'microsoft.storage/storageaccounts/')
           ? 'microsoft.storage/storageaccounts'
@@ -348,47 +350,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
     // { resourceGroup: 'rg1', resourceName: 'res1' } which is valid but
     // { resourceGroup: ['rg1', 'rg2'], resourceName: ['res2'] } would result in
     // { resourceGroup: 'rg1', resourceName: 'res2' } which is not.
-    return this.replaceTemplateVariables(query, scopedVars)[0];
-  }
-
-  private replaceTemplateVariables<T extends { [K in keyof T]: string }>(query: T, scopedVars?: ScopedVars) {
-    const workingQueries: Array<{ [K in keyof T]: string }> = [{ ...query }];
-    const keys = Object.keys(query) as Array<keyof T>;
-    keys.forEach((key) => {
-      const rawValue = workingQueries[0][key];
-      let interpolated: VariableInterpolation[] = [];
-      const replaced = this.templateSrv.replace(rawValue, scopedVars, 'raw', interpolated);
-      if (interpolated.length > 0) {
-        for (const variable of interpolated) {
-          if (variable.found === false) {
-            continue;
-          }
-          if (variable.value.includes(',')) {
-            const multiple = variable.value.split(',');
-            const currentQueries = [...workingQueries];
-            multiple.forEach((value, i) => {
-              currentQueries.forEach((q) => {
-                if (i === 0) {
-                  q[key] = rawValue.replace(variable.match, value);
-                } else {
-                  workingQueries.push({ ...q, [key]: rawValue.replace(variable.match, value) });
-                }
-              });
-            });
-          } else {
-            workingQueries.forEach((q) => {
-              q[key] = replaced;
-            });
-          }
-        }
-      } else {
-        workingQueries.forEach((q) => {
-          q[key] = replaced;
-        });
-      }
-    });
-
-    return workingQueries;
+    return replaceTemplateVariables(this.templateSrv, query, scopedVars)[0];
   }
 
   async getProvider(providerName: string) {
