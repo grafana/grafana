@@ -146,7 +146,7 @@ require (
 	github.com/spf13/cobra v1.8.1 // @grafana/grafana-app-platform-squad
 	github.com/spf13/pflag v1.0.5 // @grafana-app-platform-squad
 	github.com/spyzhov/ajson v0.9.0 // @grafana/grafana-app-platform-squad
-	github.com/stretchr/testify v1.9.0 // @grafana/grafana-backend-group
+	github.com/stretchr/testify v1.10.0 // @grafana/grafana-backend-group
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf // @grafana/grafana-backend-group
 	github.com/ua-parser/uap-go v0.0.0-20250213224047-9c035f085b90 // @grafana/grafana-backend-group
 	github.com/urfave/cli v1.22.15 // indirect; @grafana/grafana-backend-group
@@ -267,7 +267,7 @@ require (
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/edsrzf/mmap-go v1.1.0 // indirect
-	github.com/elazarl/goproxy v0.0.0-20231117061959-7cc037d33fb5 // indirect
+	github.com/elazarl/goproxy v1.7.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/emicklei/proto v1.10.0 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.0.4 // indirect

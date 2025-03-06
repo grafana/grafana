@@ -9,7 +9,7 @@ require (
 	github.com/prometheus/client_golang v1.19.1
 	github.com/prometheus/common v0.55.0
 	github.com/prometheus/prometheus v1.8.2-0.20221021121301-51a44e6657c3
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/otel v1.28.0
 	go.opentelemetry.io/otel/trace v1.28.0
 	golang.org/x/exp v0.0.0-20240416160154-fe59bbe5cc7f
@@ -32,7 +32,7 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dennwc/varint v1.0.0 // indirect
-	github.com/elazarl/goproxy v0.0.0-20231117061959-7cc037d33fb5 // indirect
+	github.com/elazarl/goproxy v1.7.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect

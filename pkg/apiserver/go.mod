@@ -6,7 +6,7 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240701135906-559738ce6ae1
 	github.com/prometheus/client_golang v1.19.1
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/otel/trace v1.28.0
 	k8s.io/apimachinery v0.31.0-rc.1
 	k8s.io/apiserver v0.31.0-rc.1
