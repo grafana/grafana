@@ -52,7 +52,7 @@ func GetSuggestions(ctx context.Context, lokiAPI *LokiAPI, req *backend.CallReso
 			}
 		}
 	} else if len(sugReq.Scopes) > 0 {
-		matchers, err := models.FiltersToMatchers(sugReq.Scopes, sugReq.AdhocFilters)
+		matchers, err := models.FiltersToMatchers(sugReq.Scopes, sugReq.AdhocFilters, sugReq.LabelName)
 		if err != nil {
 			return RawLokiResponse{}, fmt.Errorf("error converting filters to matchers: %v", err)
 		}
@@ -84,7 +84,7 @@ func ApplyScopes(rawExpr string, scopeFilters []models.ScopeFilter) (string, err
 		return rawExpr, nil
 	}
 
-	scopeMatchers, err := models.FiltersToMatchers(scopeFilters, nil)
+	scopeMatchers, err := models.FiltersToMatchers(scopeFilters, nil, "")
 	if err != nil {
 		return "", fmt.Errorf("failed to convert filters to matchers: %w", err)
 	}
