@@ -23,6 +23,7 @@ func TestService_getUsageStats(t *testing.T) {
 	svc.cfg.AuthProxy.Enabled = true
 	svc.cfg.JWTAuth.Enabled = true
 	svc.cfg.LDAPAuthEnabled = true
+	//nolint:staticcheck
 	svc.cfg.ViewersCanEdit = true
 
 	got, err := svc.getUsageStats(context.Background())
