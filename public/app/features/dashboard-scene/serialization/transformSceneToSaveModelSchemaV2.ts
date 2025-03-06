@@ -249,7 +249,6 @@ function getPanelLinks(panel: VizPanel): DataLink[] {
 
 function getVizPanelQueries(vizPanel: VizPanel, initialPanel?: PanelKind): PanelQueryKind[] {
   const isNewDash = locationService.getLocation().pathname === '/dashboard/new';
-
   const queries: PanelQueryKind[] = [];
   const queryRunner = getQueryRunnerFor(vizPanel);
   const vizPanelQueries = queryRunner?.state.queries;
@@ -257,16 +256,23 @@ function getVizPanelQueries(vizPanel: VizPanel, initialPanel?: PanelKind): Panel
 
   if (vizPanelQueries) {
     vizPanelQueries.forEach((query, i) => {
-      const initialQueryUID = initialPanel?.spec.data.spec.queries[i].spec.datasource?.uid;
+      const initialDatasourceUID = initialPanel?.spec.data.spec.queries[i].spec.datasource?.uid;
       const initialQuery = initialPanel?.spec.data.spec.queries[i].spec.query;
       const isNewPanel = !initialPanel;
-      const updateQueryAndDS = isNewDash || isNewPanel || initialQueryUID;
+
+      if (isNewPanel && initialQuery === undefined) {
+        throw new Error('Initial query needs to be defined for a new panel');
+      } else if (!initialQuery) {
+        throw new Error('Initial query needed to be defined when creating a panel');
+      }
+
+      const updateQueryAndDS = isNewDash || isNewPanel || initialDatasourceUID;
 
       const dataQuery: DataQueryKind = {
         /* If the datasource wasn't provided when dashboard was created and we are not creating a new dashboard, 
         then we revert to the original query and datasource */
-        kind: updateQueryAndDS ? getDataQueryKind(query) : initialQuery!.kind,
-        spec: updateQueryAndDS ? omit(query, 'datasource', 'refId', 'hide') : initialQuery!.spec,
+        kind: updateQueryAndDS ? getDataQueryKind(query) : initialQuery.kind,
+        spec: updateQueryAndDS ? omit(query, 'datasource', 'refId', 'hide') : initialQuery.spec,
       };
 
       const querySpec: PanelQuerySpec = {
