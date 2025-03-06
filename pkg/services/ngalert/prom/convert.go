@@ -98,10 +98,8 @@ func NewConverter(cfg Config) (*Converter, error) {
 
 // PrometheusRulesToGrafana converts a Prometheus rule group into Grafana Alerting rule group.
 func (p *Converter) PrometheusRulesToGrafana(orgID int64, namespaceUID string, group PrometheusRuleGroup) (*models.AlertRuleGroup, error) {
-	for _, rule := range group.Rules {
-		if err := rule.Validate(); err != nil {
-			return nil, err
-		}
+	if err := group.Validate(); err != nil {
+		return nil, err
 	}
 
 	grafanaGroup, err := p.convertRuleGroup(orgID, namespaceUID, group)
