@@ -1076,8 +1076,8 @@ func TestService_List(t *testing.T) {
 
 				resp, err := s.List(ctx, tc.req)
 				require.NoError(t, err)
-				require.Len(t, resp.Items, len(tc.expected.Items))
-				require.Len(t, resp.Folders, len(tc.expected.Folders))
+				require.ElementsMatch(t, resp.Items, tc.expected.Items)
+				require.ElementsMatch(t, resp.Folders, tc.expected.Folders)
 
 				// Check cache
 				id, ok := s.idCache.Get(ctx, userIdentifierCacheKey("org-12", "test-uid"))
@@ -1089,6 +1089,63 @@ func TestService_List(t *testing.T) {
 			})
 		}
 	})
+
+	testCases = []testCase{
+		{
+			name: "should list permissions for anonymous with permission",
+			req: &authzv1.ListRequest{
+				Namespace: "org-12",
+				Subject:   "anonymous:0",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:dash1"},
+				{Action: "dashboards:read", Scope: "dashboards:uid:dash2"},
+				{Action: "dashboards:read", Scope: "folders:uid:fold1"},
+			},
+			expected: &authzv1.ListResponse{
+				Items:   []string{"dash1", "dash2"},
+				Folders: []string{"fold1"},
+			},
+		},
+		{
+			name: "should return empty list for anonymous without permission",
+			req: &authzv1.ListRequest{
+				Namespace: "org-12",
+				Subject:   "anonymous:0",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+			},
+			permissions: []accesscontrol.Permission{},
+			expected:    &authzv1.ListResponse{},
+		},
+	}
+	t.Run("Anonymous permission list", func(t *testing.T) {
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				s := setupService()
+				ctx := types.WithAuthInfo(context.Background(), callingService)
+				store := &fakeStore{userPermissions: tc.permissions}
+				s.store = store
+				s.permissionStore = store
+				s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
+
+				resp, err := s.List(ctx, tc.req)
+				require.NoError(t, err)
+				require.ElementsMatch(t, resp.Items, tc.expected.Items)
+				require.ElementsMatch(t, resp.Folders, tc.expected.Folders)
+
+				// Check cache
+				perms, ok := s.permCache.Get(ctx, anonymousPermCacheKey("org-12", "dashboards:read"))
+				require.True(t, ok)
+				require.Len(t, perms, len(tc.expected.Items)+len(tc.expected.Folders))
+			})
+		}
+	})
+
 }
 
 func setupService() *Service {
