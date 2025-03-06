@@ -4295,6 +4295,9 @@
           },
           "state": {
             "$ref": "#/components/schemas/State"
+          },
+          "subject": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -9546,6 +9549,9 @@
           },
           "state": {
             "$ref": "#/components/schemas/State"
+          },
+          "subject": {
+            "type": "string"
           },
           "uid": {
             "type": "string"

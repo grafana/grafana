@@ -258,6 +258,20 @@ describe('Graphite query model', () => {
         ctx.queryModel.updateModelTarget(targets);
         expect(ctx.queryModel.target.target).toContain(nestedFunctionAsParam);
       });
+
+      //This is not preferred behavior. The query builder cannot parse `maxSeries(sum(testSeries1), sum(testSeries2))` and when it can, remove this test
+      it('should return an error when visual query builder query does not match raw query', () => {
+        jest.spyOn(console, 'error').mockImplementation();
+        ctx.target = {
+          refId: 'A',
+          target: 'maxSeries(sum(testSeries1), sum(testSeries2))',
+        };
+        ctx.targets = [ctx.target];
+        ctx.queryModel = new GraphiteQuery(ctx.datasource, ctx.target, ctx.templateSrv);
+        expect(ctx.queryModel.error).toBe(
+          'Failed to make a visual query builder query that is equivalent to the query.\nOriginal query: maxSeries(sum(testSeries1), sum(testSeries2))\nQuery builder query: maxSeries(sumSeries(sumSeries(testSeries1), testSeries2))'
+        );
+      });
     });
   });
 });
