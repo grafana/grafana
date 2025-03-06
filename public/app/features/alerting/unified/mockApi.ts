@@ -184,6 +184,9 @@ export function mockAlertRuleApi(server: SetupServer) {
     getAlertRule: (uid: string, response: RulerGrafanaRuleDTO) => {
       server.use(http.get(`/api/ruler/grafana/api/v1/rule/${uid}`, () => HttpResponse.json(response)));
     },
+    getAlertRuleVersionHistory: (uid: string, response: RulerGrafanaRuleDTO[]) => {
+      server.use(http.get(`/api/ruler/grafana/api/v1/rule/${uid}/versions`, () => HttpResponse.json(response)));
+    },
   };
 }
 

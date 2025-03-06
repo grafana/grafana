@@ -4,6 +4,7 @@ import { forwardRef } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
+import { t } from '../../utils/i18n';
 import { IconButton } from '../IconButton/IconButton';
 
 interface ValuePillProps {
@@ -15,6 +16,7 @@ interface ValuePillProps {
 export const ValuePill = forwardRef<HTMLSpanElement, ValuePillProps>(
   ({ children, onRemove, disabled, ...rest }, ref) => {
     const styles = useStyles2(getValuePillStyles, disabled);
+    const removeButtonLabel = t('grafana-ui.value-pill.remove-button', 'Remove {{children}}', { children });
     return (
       <span className={styles.wrapper} {...rest} ref={ref}>
         <span className={styles.text}>{children}</span>
@@ -24,7 +26,7 @@ export const ValuePill = forwardRef<HTMLSpanElement, ValuePillProps>(
             <IconButton
               name="times"
               size="md"
-              aria-label={`Remove ${children}`}
+              aria-label={removeButtonLabel}
               onClick={(e) => {
                 e.stopPropagation();
                 onRemove();
@@ -40,7 +42,6 @@ export const ValuePill = forwardRef<HTMLSpanElement, ValuePillProps>(
 const getValuePillStyles = (theme: GrafanaTheme2, disabled?: boolean) => ({
   wrapper: css({
     display: 'inline-flex',
-    gap: theme.spacing(0.5),
     borderRadius: theme.shape.radius.default,
     color: theme.colors.text.primary,
     background: theme.colors.background.secondary,
@@ -49,6 +50,7 @@ const getValuePillStyles = (theme: GrafanaTheme2, disabled?: boolean) => ({
     fontSize: theme.typography.bodySmall.fontSize,
     flexShrink: 0,
     minWidth: '50px',
+    alignItems: 'center',
 
     '&:first-child:has(+ div)': {
       flexShrink: 1,
@@ -59,12 +61,13 @@ const getValuePillStyles = (theme: GrafanaTheme2, disabled?: boolean) => ({
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+    padding: theme.spacing(0, 1, 0, 0.75),
   }),
 
   separator: css({
     background: theme.colors.border.weak,
     width: '2px',
-    marginLeft: theme.spacing(0.25),
     height: '100%',
+    marginRight: theme.spacing(0.5),
   }),
 });

@@ -6,12 +6,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/singleflight"
 
+	"github.com/grafana/authlib/authn"
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/cache"
-	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -25,6 +28,7 @@ func TestService_checkPermission(t *testing.T) {
 		name        string
 		permissions []accesscontrol.Permission
 		check       CheckRequest
+		folders     []store.Folder
 		expected    bool
 	}
 
@@ -146,11 +150,37 @@ func TestService_checkPermission(t *testing.T) {
 			},
 			expected: false,
 		},
+		{
+			name: "should return true if user has permissions on folder",
+			permissions: []accesscontrol.Permission{
+				{
+					Scope:      "folders:uid:parent",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "parent",
+				},
+			},
+			folders: []store.Folder{
+				{UID: "parent"},
+				{UID: "child", ParentUID: strPtr("parent")},
+			},
+			check: CheckRequest{
+				Action:       "dashboards:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "dashboards",
+				Name:         "some_dashboard",
+				ParentFolder: "child",
+			},
+			expected: true,
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			s := setupService()
+
+			s.folderCache.Set(context.Background(), folderCacheKey("default"), newFolderTree(tc.folders))
+			tc.check.Namespace = types.NamespaceInfo{Value: "default", OrgID: 1}
 			got, err := s.checkPermission(context.Background(), getScopeMap(tc.permissions), &tc.check)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, got)
@@ -196,7 +226,7 @@ func TestService_getUserTeams(t *testing.T) {
 			ctx := context.Background()
 			s := setupService()
 
-			ns := claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
+			ns := types.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 
 			userIdentifiers := &store.UserIdentifiers{UID: "test-uid"}
 			identityStore := &fakeIdentityStore{teams: tc.teams, err: tc.expectedError}
@@ -272,7 +302,7 @@ func TestService_getUserBasicRole(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
 			s := setupService()
-			ns := claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
+			ns := types.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 
 			userIdentifiers := &store.UserIdentifiers{UID: "test-uid", ID: 1}
 			store := &fakeStore{basicRole: &tc.basicRole, err: tc.expectedError}
@@ -339,7 +369,7 @@ func TestService_getUserPermissions(t *testing.T) {
 			s := setupService()
 
 			userID := &store.UserIdentifiers{UID: "test-uid", ID: 112}
-			ns := claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
+			ns := types.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 			action := "dashboards:read"
 
 			if tc.cacheHit {
@@ -355,7 +385,7 @@ func TestService_getUserPermissions(t *testing.T) {
 			s.permissionStore = store
 			s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
 
-			perms, err := s.getIdentityPermissions(ctx, ns, claims.TypeUser, userID.UID, action)
+			perms, err := s.getIdentityPermissions(ctx, ns, types.TypeUser, userID.UID, action)
 			require.NoError(t, err)
 			require.Len(t, perms, len(tc.expectedPerms))
 			for _, perm := range tc.permissions {
@@ -371,90 +401,11 @@ func TestService_getUserPermissions(t *testing.T) {
 	}
 }
 
-func TestService_buildFolderTree(t *testing.T) {
-	type testCase struct {
-		name         string
-		folders      []store.Folder
-		cacheHit     bool
-		expectedTree map[string]FolderNode
-	}
-
-	testCases := []testCase{
-		{
-			name: "should return folder tree from cache if available",
-			folders: []store.Folder{
-				{UID: "folder1", ParentUID: nil},
-				{UID: "folder2", ParentUID: strPtr("folder1")},
-			},
-			cacheHit: true,
-			expectedTree: map[string]FolderNode{
-				"folder1": {UID: "folder1", ChildrenUIDs: []string{"folder2"}},
-				"folder2": {UID: "folder2", ParentUID: strPtr("folder1")},
-			},
-		},
-		{
-			name: "should return folder tree from store if not in cache",
-			folders: []store.Folder{
-				{UID: "folder1", ParentUID: nil},
-				{UID: "folder2", ParentUID: strPtr("folder1")},
-			},
-			cacheHit: false,
-			expectedTree: map[string]FolderNode{
-				"folder1": {UID: "folder1", ChildrenUIDs: []string{"folder2"}},
-				"folder2": {UID: "folder2", ParentUID: strPtr("folder1")},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			ctx := context.Background()
-			s := setupService()
-
-			ns := claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
-
-			if tc.cacheHit {
-				s.folderCache.Set(ctx, folderCacheKey(ns.Value), tc.expectedTree)
-			}
-
-			store := &fakeStore{folders: tc.folders}
-			s.store = store
-			s.permissionStore = store
-
-			tree, err := s.buildFolderTree(ctx, ns)
-
-			require.NoError(t, err)
-			require.Len(t, tree, len(tc.expectedTree))
-			for _, folder := range tc.folders {
-				node, ok := tree[folder.UID]
-				require.True(t, ok)
-				// Check parent
-				if folder.ParentUID != nil {
-					require.NotNil(t, node.ParentUID)
-					require.Equal(t, *folder.ParentUID, *node.ParentUID)
-				} else {
-					require.Nil(t, node.ParentUID)
-				}
-				// Check children
-				if len(node.ChildrenUIDs) > 0 {
-					epectedChildren := tc.expectedTree[folder.UID].ChildrenUIDs
-					require.ElementsMatch(t, node.ChildrenUIDs, epectedChildren)
-				}
-			}
-			if tc.cacheHit {
-				require.Zero(t, store.calls)
-			} else {
-				require.Equal(t, 1, store.calls)
-			}
-		})
-	}
-}
-
 func TestService_listPermission(t *testing.T) {
 	type testCase struct {
 		name            string
 		permissions     []accesscontrol.Permission
-		folderTree      map[string]FolderNode
+		folders         []store.Folder
 		list            ListRequest
 		expectedItems   []string
 		expectedFolders []string
@@ -503,9 +454,9 @@ func TestService_listPermission(t *testing.T) {
 					Identifier: "some_folder_2",
 				},
 			},
-			folderTree: map[string]FolderNode{
-				"some_folder_1": {UID: "some_folder_1"},
-				"some_folder_2": {UID: "some_folder_2"},
+			folders: []store.Folder{
+				{UID: "some_folder_1"},
+				{UID: "some_folder_2"},
 			},
 			list: ListRequest{
 				Action:   "dashboards:read",
@@ -526,13 +477,13 @@ func TestService_listPermission(t *testing.T) {
 					Identifier: "some_folder_1",
 				},
 			},
-			folderTree: map[string]FolderNode{
-				"some_folder_parent":      {UID: "some_folder_parent", ChildrenUIDs: []string{"some_folder_child"}},
-				"some_folder_child":       {UID: "some_folder_child", ParentUID: strPtr("some_folder_parent"), ChildrenUIDs: []string{"some_folder_subchild1", "some_folder_subchild2"}},
-				"some_folder_subchild1":   {UID: "some_folder_subchild1", ParentUID: strPtr("some_folder_child")},
-				"some_folder_subchild2":   {UID: "some_folder_subchild2", ParentUID: strPtr("some_folder_child"), ChildrenUIDs: []string{"some_folder_subsubchild"}},
-				"some_folder_subsubchild": {UID: "some_folder_subsubchild", ParentUID: strPtr("some_folder_subchild2")},
-				"some_folder_1":           {UID: "some_folder_1", ParentUID: strPtr("some_other_folder")},
+			folders: []store.Folder{
+				{UID: "some_folder_parent"},
+				{UID: "some_folder_child", ParentUID: strPtr("some_folder_parent")},
+				{UID: "some_folder_subchild1", ParentUID: strPtr("some_folder_child")},
+				{UID: "some_folder_subchild2", ParentUID: strPtr("some_folder_child")},
+				{UID: "some_folder_subsubchild", ParentUID: strPtr("some_folder_subchild2")},
+				{UID: "some_folder_1", ParentUID: strPtr("some_other_folder")},
 			},
 			list: ListRequest{
 				Action:   "dashboards:read",
@@ -559,9 +510,9 @@ func TestService_listPermission(t *testing.T) {
 					Identifier: "some_folder_parent",
 				},
 			},
-			folderTree: map[string]FolderNode{
-				"some_folder_parent": {UID: "some_folder_parent", ChildrenUIDs: []string{"some_folder_child"}},
-				"some_folder_child":  {UID: "some_folder_child", ParentUID: strPtr("some_folder_parent")},
+			folders: []store.Folder{
+				{UID: "some_folder_parent"},
+				{UID: "some_folder_child", ParentUID: strPtr("some_folder_parent")},
 			},
 			list: ListRequest{
 				Action:   "dashboards:read",
@@ -589,23 +540,25 @@ func TestService_listPermission(t *testing.T) {
 					Identifier: "some_folder_parent",
 				},
 			},
-			folderTree: map[string]FolderNode{
-				"some_folder_parent":   {UID: "some_folder_parent", ChildrenUIDs: []string{"some_folder_child"}},
-				"some_folder_child":    {UID: "some_folder_child", ParentUID: strPtr("some_folder_parent"), ChildrenUIDs: []string{"some_folder_subchild"}},
-				"some_folder_subchild": {UID: "some_folder_subchild", ParentUID: strPtr("some_folder_child")},
+			folders: []store.Folder{
+				{UID: "some_folder_parent"},
+				{UID: "some_folder_child", ParentUID: strPtr("some_folder_parent")},
+				{UID: "some_folder_subchild", ParentUID: strPtr("some_folder_child")},
+				{UID: "some_folder_child2", ParentUID: strPtr("some_folder_parent")},
 			},
 			list: ListRequest{
 				Action:   "dashboards:read",
 				Group:    "dashboard.grafana.app",
 				Resource: "dashboards",
 			},
-			expectedFolders: []string{"some_folder_parent", "some_folder_child", "some_folder_subchild"},
+			expectedFolders: []string{"some_folder_parent", "some_folder_child", "some_folder_child2", "some_folder_subchild"},
 		},
 		{
 			name:        "return no dashboards and folders if the user doesn't have access to any resources",
 			permissions: []accesscontrol.Permission{},
-			folderTree: map[string]FolderNode{
-				"some_folder_1": {UID: "some_folder_1"},
+
+			folders: []store.Folder{
+				{UID: "some_folder_1"},
 			},
 			list: ListRequest{
 				Action:   "dashboards:read",
@@ -624,9 +577,9 @@ func TestService_listPermission(t *testing.T) {
 					Identifier: "some_folder_parent",
 				},
 			},
-			folderTree: map[string]FolderNode{
-				"some_folder_parent": {UID: "some_folder_parent", ChildrenUIDs: []string{"some_folder_child"}},
-				"some_folder_child":  {UID: "some_folder_child", ParentUID: strPtr("some_folder_parent")},
+			folders: []store.Folder{
+				{UID: "some_folder_parent"},
+				{UID: "some_folder_child", ParentUID: strPtr("some_folder_parent")},
 			},
 			list: ListRequest{
 				Action:   "folders:read",
@@ -640,11 +593,11 @@ func TestService_listPermission(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			s := setupService()
-			if tc.folderTree != nil {
-				s.folderCache.Set(context.Background(), folderCacheKey("default"), tc.folderTree)
+			if tc.folders != nil {
+				s.folderCache.Set(context.Background(), folderCacheKey("default"), newFolderTree(tc.folders))
 			}
 
-			tc.list.Namespace = claims.NamespaceInfo{Value: "default", OrgID: 1}
+			tc.list.Namespace = types.NamespaceInfo{Value: "default", OrgID: 1}
 			got, err := s.listPermission(context.Background(), getScopeMap(tc.permissions), &tc.list)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedAll, got.All)
@@ -652,6 +605,296 @@ func TestService_listPermission(t *testing.T) {
 			assert.ElementsMatch(t, tc.expectedFolders, got.Folders)
 		})
 	}
+}
+
+func TestService_Check(t *testing.T) {
+	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Claims: jwt.Claims{
+			Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
+			Audience: []string{"authzservice"},
+		},
+		Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+	})
+
+	type testCase struct {
+		name        string
+		req         *authzv1.CheckRequest
+		permissions []accesscontrol.Permission
+		expected    bool
+		expectErr   bool
+	}
+
+	t.Run("Require auth info", func(t *testing.T) {
+		s := setupService()
+		ctx := context.Background()
+		_, err := s.Check(ctx, &authzv1.CheckRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+			Verb:      "get",
+			Name:      "dash1",
+		})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "could not get auth info")
+	})
+
+	testCases := []testCase{
+		{
+			name: "should error if no namespace is provided",
+			req: &authzv1.CheckRequest{
+				Namespace: "",
+				Subject:   "user:test-uid",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			expectErr: true,
+		},
+		{
+			name: "should error if caller namespace does not match request namespace",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-13",
+				Subject:   "user:test-uid",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			expectErr: true,
+		},
+		{
+			name: "should error if no subject is provided",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			expectErr: true,
+		},
+		{
+			name: "should error if an unsupported subject type is provided",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "api-key:12",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			expectErr: true,
+		},
+		{
+			name: "should error if an invalid subject is provided",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "invalid:12",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			expectErr: true,
+		},
+		{
+			name: "should error if an unknown group is provided",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "unknown.grafana.app",
+				Resource:  "unknown",
+				Verb:      "get",
+				Name:      "u1",
+			},
+			expectErr: true,
+		},
+		{
+			name: "should error if an unknown verb is provided",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "unknown",
+				Name:      "u1",
+			},
+			expectErr: true,
+		},
+	}
+	t.Run("Request validation", func(t *testing.T) {
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				s := setupService()
+				ctx := types.WithAuthInfo(context.Background(), callingService)
+				userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+				store := &fakeStore{
+					userID:          userID,
+					userPermissions: tc.permissions,
+				}
+				s.store = store
+				s.permissionStore = store
+				s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
+
+				_, err := s.Check(ctx, tc.req)
+				require.Error(t, err)
+			})
+		}
+	})
+
+	testCases = []testCase{
+		{
+			name: "should allow user with permission",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			permissions: []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash1"}},
+			expected:    true,
+		},
+		{
+			name: "should deny user without permission",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			permissions: []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash2"}},
+			expected:    false,
+		},
+	}
+	t.Run("User permission check", func(t *testing.T) {
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				s := setupService()
+				ctx := types.WithAuthInfo(context.Background(), callingService)
+				userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+				store := &fakeStore{
+					userID:          userID,
+					userPermissions: tc.permissions,
+				}
+				s.store = store
+				s.permissionStore = store
+				s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
+
+				resp, err := s.Check(ctx, tc.req)
+				require.NoError(t, err)
+				assert.Equal(t, tc.expected, resp.Allowed)
+
+				// Check cache
+				id, ok := s.idCache.Get(ctx, userIdentifierCacheKey("org-12", "test-uid"))
+				require.True(t, ok)
+				require.Equal(t, id.UID, "test-uid")
+				perms, ok := s.permCache.Get(ctx, userPermCacheKey("org-12", "test-uid", "dashboards:read"))
+				require.True(t, ok)
+				require.Len(t, perms, 1)
+			})
+		}
+	})
+
+	testCases = []testCase{
+		{
+			name: "should allow anonymous with permission",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "anonymous:0",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			permissions: []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash1"}},
+			expected:    true,
+		},
+		{
+			name: "should deny anonymous without permission",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "anonymous:0",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			permissions: []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash2"}},
+			expected:    false,
+		},
+	}
+	t.Run("Anonymous permission check", func(t *testing.T) {
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				s := setupService()
+				ctx := types.WithAuthInfo(context.Background(), callingService)
+				store := &fakeStore{userPermissions: tc.permissions}
+				s.store = store
+				s.permissionStore = store
+				s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
+
+				resp, err := s.Check(ctx, tc.req)
+				require.NoError(t, err)
+				assert.Equal(t, tc.expected, resp.Allowed)
+
+				// Check cache
+				perms, ok := s.permCache.Get(ctx, anonymousPermCacheKey("org-12", "dashboards:read"))
+				require.True(t, ok)
+				require.Len(t, perms, 1)
+			})
+		}
+	})
+
+	testCases = []testCase{
+		{
+			name: "should allow rendering with permission",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "render:0",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			expected: true,
+		},
+		{
+			name: "should deny rendering access to another app resources",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "render:0",
+				Group:     "another.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			expected:  false,
+			expectErr: true,
+		},
+	}
+	t.Run("Rendering permission check", func(t *testing.T) {
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				s := setupService()
+				ctx := types.WithAuthInfo(context.Background(), callingService)
+
+				resp, err := s.Check(ctx, tc.req)
+				if tc.expectErr {
+					require.Error(t, err)
+					return
+				}
+				require.NoError(t, err)
+				assert.Equal(t, tc.expected, resp.Allowed)
+			})
+		}
+	})
 }
 
 func setupService() *Service {
@@ -667,9 +910,10 @@ func setupService() *Service {
 		permCache:       newCacheWrap[map[string]bool](cache, logger, shortCacheTTL),
 		teamCache:       newCacheWrap[[]int64](cache, logger, shortCacheTTL),
 		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, longCacheTTL),
-		folderCache:     newCacheWrap[map[string]FolderNode](cache, logger, shortCacheTTL),
+		folderCache:     newCacheWrap[folderTree](cache, logger, shortCacheTTL),
 		store:           fStore,
 		permissionStore: fStore,
+		folderStore:     fStore,
 		identityStore:   &fakeIdentityStore{},
 		sf:              new(singleflight.Group),
 	}
@@ -689,7 +933,7 @@ type fakeStore struct {
 	calls           int
 }
 
-func (f *fakeStore) GetBasicRoles(ctx context.Context, namespace claims.NamespaceInfo, query store.BasicRoleQuery) (*store.BasicRole, error) {
+func (f *fakeStore) GetBasicRoles(ctx context.Context, namespace types.NamespaceInfo, query store.BasicRoleQuery) (*store.BasicRole, error) {
 	f.calls++
 	if f.err {
 		return nil, fmt.Errorf("store error")
@@ -705,7 +949,7 @@ func (f *fakeStore) GetUserIdentifiers(ctx context.Context, query store.UserIden
 	return f.userID, nil
 }
 
-func (f *fakeStore) GetUserPermissions(ctx context.Context, namespace claims.NamespaceInfo, query store.PermissionsQuery) ([]accesscontrol.Permission, error) {
+func (f *fakeStore) GetUserPermissions(ctx context.Context, namespace types.NamespaceInfo, query store.PermissionsQuery) ([]accesscontrol.Permission, error) {
 	f.calls++
 	if f.err {
 		return nil, fmt.Errorf("store error")
@@ -713,7 +957,7 @@ func (f *fakeStore) GetUserPermissions(ctx context.Context, namespace claims.Nam
 	return f.userPermissions, nil
 }
 
-func (f *fakeStore) GetFolders(ctx context.Context, namespace claims.NamespaceInfo) ([]store.Folder, error) {
+func (f *fakeStore) ListFolders(ctx context.Context, namespace types.NamespaceInfo) ([]store.Folder, error) {
 	f.calls++
 	if f.err {
 		return nil, fmt.Errorf("store error")
@@ -728,7 +972,7 @@ type fakeIdentityStore struct {
 	calls int
 }
 
-func (f *fakeIdentityStore) ListUserTeams(ctx context.Context, namespace claims.NamespaceInfo, query legacy.ListUserTeamsQuery) (*legacy.ListUserTeamsResult, error) {
+func (f *fakeIdentityStore) ListUserTeams(ctx context.Context, namespace types.NamespaceInfo, query legacy.ListUserTeamsQuery) (*legacy.ListUserTeamsResult, error) {
 	f.calls++
 	if f.err {
 		return nil, fmt.Errorf("identity store error")

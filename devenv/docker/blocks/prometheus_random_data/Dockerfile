@@ -7,7 +7,7 @@ RUN CGO_ENABLED=0 GOOS=linux go install -tags netgo -ldflags '-w' github.com/pro
 
 # Final image.
 FROM scratch
-LABEL maintainer "The Prometheus Authors <prometheus-developers@googlegroups.com>"
+LABEL maintainer="The Prometheus Authors <prometheus-developers@googlegroups.com>"
 COPY --from=builder /go/bin/random .
 EXPOSE 8080
 ENTRYPOINT ["/random"]

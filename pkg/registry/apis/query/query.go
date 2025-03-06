@@ -160,7 +160,19 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		// Actually run the query
 		rsp, err := b.execute(ctx, req)
 		if err != nil {
-			b.log.Error("hit unexpected error while executing query, this will show as an unhandled k8s status error", "err", err)
+			// log unexpected errors
+			var k8sErr *errorsK8s.StatusError
+			if errors.As(err, &k8sErr) {
+				// we do not need to log 4xx errors as they are expected
+				if k8sErr.ErrStatus.Code >= 500 {
+					b.log.Error("hit unexpected k8s error while executing query", "err", err, "status", k8sErr.Status())
+				}
+				b.log.Debug("sending a known k8s error to the client", "err", err, "status", k8sErr.Status())
+			} else {
+				b.log.Error("hit unexpected error while executing query, this will show as an unhandled k8s status error", "err", err)
+			}
+
+			// return the error to the client, will send all non k8s errors as a k8 unexpected error
 			responder.Error(err)
 			return
 		}
@@ -179,7 +191,7 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 	case 1:
 		b.log.Debug("executing single query")
 		qdr, err = b.handleQuerySingleDatasource(ctx, req.Requests[0])
-		if alertQueryWithoutExpression(req) {
+		if err == nil && alertQueryWithoutExpression(req) {
 			b.log.Debug("handling alert query without expression")
 			qdr, err = b.convertQueryWithoutExpression(ctx, req.Requests[0], qdr)
 		}
@@ -407,7 +419,8 @@ func (b *QueryAPIBuilder) convertQueryWithoutExpression(ctx context.Context, req
 		return nil, errors.New("no queries to convert")
 	}
 	if qdr == nil {
-		return nil, errors.New("queryDataResponse is nil")
+		b.log.Debug("unexpected response of nil from datasource", "datasource.type", req.PluginId, "datasource.uid", req.UID)
+		return nil, errors.New("unexpected response of nil from datasource")
 	}
 	refID := req.Request.Queries[0].RefID
 	if _, exist := qdr.Responses[refID]; !exist {

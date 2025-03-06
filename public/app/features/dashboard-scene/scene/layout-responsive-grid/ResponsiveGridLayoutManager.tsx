@@ -2,11 +2,11 @@ import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectSt
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import { getDashboardSceneFor, getGridItemKeyForPanelId, getVizPanelKeyForPanelId } from '../../utils/utils';
-import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
-import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
+import { getGridItemKeyForPanelId, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
 import { getEditOptions } from './ResponsiveGridLayoutManagerEditor';
@@ -23,15 +23,17 @@ export class ResponsiveGridLayoutManager
 
   public readonly isDashboardLayoutManager = true;
 
-  public static readonly descriptor = {
+  public static readonly descriptor: LayoutRegistryItem = {
     get name() {
-      return t('dashboard.responsive-layout.name', 'Responsive grid');
+      return t('dashboard.responsive-layout.name', 'Auto');
     },
     get description() {
-      return t('dashboard.responsive-layout.description', 'CSS layout that adjusts to the available space');
+      return t('dashboard.responsive-layout.description', 'Automatically positions panels into a grid.');
     },
     id: 'responsive-grid',
     createFromLayout: ResponsiveGridLayoutManager.createFromLayout,
+
+    kind: 'ResponsiveGridLayout',
   };
 
   public readonly descriptor = ResponsiveGridLayoutManager.descriptor;
@@ -102,36 +104,26 @@ export class ResponsiveGridLayoutManager
     return panels;
   }
 
-  public hasVizPanels(): boolean {
-    for (const child of this.state.layout.state.children) {
-      if (child instanceof ResponsiveGridItem) {
-        return true;
-      }
-    }
+  public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
+    return this.clone({
+      layout: this.state.layout.clone({
+        children: this.state.layout.state.children.map((gridItem) => {
+          if (gridItem instanceof ResponsiveGridItem) {
+            // Get the original panel ID from the gridItem's key
+            const panelId = getPanelIdForVizPanel(gridItem.state.body);
+            const gridItemKey = joinCloneKeys(ancestorKey, getGridItemKeyForPanelId(panelId));
 
-    return false;
-  }
-
-  public addNewRow() {
-    const shouldAddRow = this.hasVizPanels();
-    const rowsLayout = RowsLayoutManager.createFromLayout(this);
-
-    if (shouldAddRow) {
-      rowsLayout.addNewRow();
-    }
-
-    getDashboardSceneFor(this).switchLayout(rowsLayout);
-  }
-
-  public addNewTab() {
-    const shouldAddTab = this.hasVizPanels();
-    const tabsLayout = TabsLayoutManager.createFromLayout(this);
-
-    if (shouldAddTab) {
-      tabsLayout.addNewTab();
-    }
-
-    getDashboardSceneFor(this).switchLayout(tabsLayout);
+            return gridItem.clone({
+              key: gridItemKey,
+              body: gridItem.state.body.clone({
+                key: joinCloneKeys(gridItemKey, getVizPanelKeyForPanelId(panelId)),
+              }),
+            });
+          }
+          throw new Error('Unexpected child type');
+        }),
+      }),
+    });
   }
 
   public getOptions(): OptionsPaneItemDescriptor[] {

@@ -18,9 +18,11 @@ import (
 	"github.com/blevesearch/bleve/v2/search/query"
 	bleveSearch "github.com/blevesearch/bleve/v2/search/searcher"
 	index "github.com/blevesearch/bleve_index_api"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
+
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -217,7 +219,7 @@ func (b *bleveBackend) cleanOldIndexes(dir string, skip string) {
 			if err != nil {
 				b.log.Error("Unable to remove old index folder", "directory", fpath, "error", err)
 			} else {
-				b.log.Error("Removed old index folder", "directory", fpath)
+				b.log.Info("Removed old index folder", "directory", fpath)
 			}
 		}
 	}
@@ -303,19 +305,20 @@ func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.Li
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
 		Query: &query.TermQuery{
 			Term:     req.Name,
-			FieldVal: resource.SEARCH_FIELD_REPOSITORY_NAME,
+			FieldVal: resource.SEARCH_FIELD_MANAGER_ID,
 		},
 		Fields: []string{
 			resource.SEARCH_FIELD_TITLE,
 			resource.SEARCH_FIELD_FOLDER,
-			resource.SEARCH_FIELD_REPOSITORY_NAME,
-			resource.SEARCH_FIELD_REPOSITORY_PATH,
-			resource.SEARCH_FIELD_REPOSITORY_HASH,
-			resource.SEARCH_FIELD_REPOSITORY_TIME,
+			resource.SEARCH_FIELD_MANAGER_KIND,
+			resource.SEARCH_FIELD_MANAGER_ID,
+			resource.SEARCH_FIELD_SOURCE_PATH,
+			resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+			resource.SEARCH_FIELD_SOURCE_TIME,
 		},
 		Sort: search.SortOrder{
 			&search.SortField{
-				Field: resource.SEARCH_FIELD_REPOSITORY_PATH,
+				Field: resource.SEARCH_FIELD_SOURCE_PATH,
 				Type:  search.SortFieldAsString,
 				Desc:  false,
 			},
@@ -346,6 +349,10 @@ func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.Li
 		if ok {
 			return intV
 		}
+		floatV, ok := v.(float64)
+		if ok {
+			return int64(floatV)
+		}
 		str, ok := v.(string)
 		if ok {
 			t, _ := time.Parse(time.RFC3339, str)
@@ -358,9 +365,9 @@ func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.Li
 	for _, hit := range found.Hits {
 		item := &resource.ListRepositoryObjectsResponse_Item{
 			Object: &resource.ResourceKey{},
-			Hash:   asString(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_HASH]),
-			Path:   asString(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_PATH]),
-			Time:   asTime(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_TIME]),
+			Hash:   asString(hit.Fields[resource.SEARCH_FIELD_SOURCE_CHECKSUM]),
+			Path:   asString(hit.Fields[resource.SEARCH_FIELD_SOURCE_PATH]),
+			Time:   asTime(hit.Fields[resource.SEARCH_FIELD_SOURCE_TIME]),
 			Title:  asString(hit.Fields[resource.SEARCH_FIELD_TITLE]),
 			Folder: asString(hit.Fields[resource.SEARCH_FIELD_FOLDER]),
 		}
@@ -378,7 +385,7 @@ func (b *bleveIndex) CountRepositoryObjects(ctx context.Context) ([]*resource.Co
 		Query: bleve.NewMatchAllQuery(),
 		Size:  0,
 		Facets: bleve.FacetsRequest{
-			"count": bleve.NewFacetRequest(resource.SEARCH_FIELD_REPOSITORY_NAME, 1000), // typically less then 5
+			"count": bleve.NewFacetRequest(resource.SEARCH_FIELD_MANAGER_ID, 1000), // typically less then 5
 		},
 	})
 	if err != nil {
@@ -551,7 +558,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 	fields := make([]string, 0, len(req.Fields))
 	for _, f := range req.Fields {
 		if slices.Contains(DashboardFields(), f) {
-			f = "fields." + f
+			f = resource.SEARCH_FIELD_PREFIX + f
 		}
 		fields = append(fields, f)
 	}
@@ -611,11 +618,16 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 		if !ok {
 			return nil, resource.AsErrorResult(fmt.Errorf("missing auth info"))
 		}
+		verb := utils.VerbList
+		if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
+			verb = utils.VerbPatch
+		}
+
 		checker, err := access.Compile(ctx, auth, authlib.ListRequest{
 			Namespace: b.key.Namespace,
 			Group:     b.key.Group,
 			Resource:  b.key.Resource,
-			Verb:      utils.VerbList,
+			Verb:      verb,
 		})
 		if err != nil {
 			return nil, resource.AsErrorResult(err)
@@ -671,7 +683,7 @@ func getSortFields(req *resource.ResourceSearchRequest) []string {
 		}
 
 		if slices.Contains(DashboardFields(), input) {
-			input = "fields." + input
+			input = resource.SEARCH_FIELD_PREFIX + input
 		}
 
 		if sort.Desc {
@@ -841,7 +853,7 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 				v := match.Fields[fieldName]
 				// fields that are specific to the resource get stored as fields.<fieldName>, so we need to check for that
 				if v == nil {
-					v = match.Fields["fields."+fieldName]
+					v = match.Fields[resource.SEARCH_FIELD_PREFIX+fieldName]
 				}
 				if v != nil {
 					// Encode the value to protobuf
@@ -959,7 +971,7 @@ func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReade
 			q.log.Debug("No resource checker found", "resource", resource)
 			return false
 		}
-		allowed := q.checkers[resource](ns, name, folder)
+		allowed := q.checkers[resource](name, folder)
 		if !allowed {
 			q.log.Debug("Denying access", "ns", ns, "name", name, "folder", folder)
 		}

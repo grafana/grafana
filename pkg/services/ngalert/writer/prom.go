@@ -25,10 +25,11 @@ const backendType = "prometheus"
 
 const (
 	// Fixed error messages
-	MimirDuplicateTimestampError = "err-mimir-sample-duplicate-timestamp"
-	MimirInvalidLabelError       = "err-mimir-label-invalid"
-	MimirMaxSeriesPerUserError   = "err-mimir-max-series-per-user"
-	MimirLabelValueTooLongError  = "err-mimir-label-value-too-long"
+	MimirDuplicateTimestampError     = "err-mimir-sample-duplicate-timestamp"
+	MimirInvalidLabelError           = "err-mimir-label-invalid"
+	MimirLabelValueTooLongError      = "err-mimir-label-value-too-long"
+	MimirMaxLabelNamesPerSeriesError = "err-mimir-max-label-names-per-series"
+	MimirMaxSeriesPerUserError       = "err-mimir-max-series-per-user"
 
 	// Best effort error messages
 	PrometheusDuplicateTimestampError = "duplicate sample for timestamp"
@@ -119,7 +120,13 @@ type PrometheusWriter struct {
 	metrics *metrics.RemoteWriter
 }
 
-func NewPrometheusWriter(
+type PrometheusWriterConfig struct {
+	URL         string
+	HTTPOptions httpclient.Options
+	Timeout     time.Duration
+}
+
+func NewPrometheusWriterWithSettings(
 	settings setting.RecordingRuleSettings,
 	httpClientProvider HttpClientProvider,
 	clock clock.Clock,
@@ -135,18 +142,34 @@ func NewPrometheusWriter(
 		headers.Add(k, v)
 	}
 
-	cl, err := httpClientProvider.New(httpclient.Options{
-		BasicAuth: createAuthOpts(settings.BasicAuthUsername, settings.BasicAuthPassword),
-		Header:    headers,
-	})
+	cfg := PrometheusWriterConfig{
+		URL: settings.URL,
+		HTTPOptions: httpclient.Options{
+			BasicAuth: createAuthOpts(settings.BasicAuthUsername, settings.BasicAuthPassword),
+			Header:    headers,
+		},
+		Timeout: settings.Timeout,
+	}
+
+	return NewPrometheusWriter(cfg, httpClientProvider, clock, l, metrics)
+}
+
+func NewPrometheusWriter(
+	cfg PrometheusWriterConfig,
+	httpClientProvider HttpClientProvider,
+	clock clock.Clock,
+	l log.Logger,
+	metrics *metrics.RemoteWriter,
+) (*PrometheusWriter, error) {
+	cl, err := httpClientProvider.New(cfg.HTTPOptions)
 	if err != nil {
 		return nil, err
 	}
 
 	clientCfg := promremote.NewConfig(
 		promremote.UserAgent("grafana-recording-rule"),
-		promremote.WriteURLOption(settings.URL),
-		promremote.HTTPClientTimeoutOption(settings.Timeout),
+		promremote.WriteURLOption(cfg.URL),
+		promremote.HTTPClientTimeoutOption(cfg.Timeout),
 		promremote.HTTPClientOption(cl),
 	)
 
@@ -189,6 +212,18 @@ func createAuthOpts(username, password string) *httpclient.BasicAuthOptions {
 		User:     username,
 		Password: password,
 	}
+}
+
+// Write writes the given frames to the Prometheus remote write endpoint.
+func (w PrometheusWriter) WriteDatasource(ctx context.Context, dsUID string, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error {
+	l := w.logger.FromContext(ctx)
+
+	if dsUID != "" {
+		l.Error("Writing to specific data sources is not enabled", "org_id", orgID, "datasource_uid", dsUID)
+		return errors.New("writing to specific data sources is not enabled")
+	}
+
+	return w.Write(ctx, name, t, frames, orgID, extraLabels)
 }
 
 // Write writes the given frames to the Prometheus remote write endpoint.
@@ -267,16 +302,12 @@ func checkWriteError(writeErr promremote.WriteError) (err error, ignored bool) {
 			}
 		}
 
-		if strings.Contains(msg, MimirInvalidLabelError) {
-			return errors.Join(ErrRejectedWrite, writeErr), false
-		}
-
-		// this can happen when user exceeded defined maximum of
-		if strings.Contains(msg, MimirMaxSeriesPerUserError) {
-			return errors.Join(ErrRejectedWrite, writeErr), false
-		}
-
-		if strings.Contains(msg, MimirLabelValueTooLongError) {
+		// Check for expected user errors.
+		switch {
+		case strings.Contains(msg, MimirInvalidLabelError),
+			strings.Contains(msg, MimirMaxSeriesPerUserError),
+			strings.Contains(msg, MimirMaxLabelNamesPerSeriesError),
+			strings.Contains(msg, MimirLabelValueTooLongError):
 			return errors.Join(ErrRejectedWrite, writeErr), false
 		}
 
