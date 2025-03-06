@@ -119,9 +119,7 @@ export default function GettingStarted() {
             <Stack direction="column" gap={2}>
               {hasRequiredFeatures ? (
                 <>
-                  <Text variant="h2">Migrate or connect</Text>
-                  <Text variant="body">Migrate your existing dashboards and manage the entire instance as code:</Text>
-                  <Box>
+                  <Stack direction="row" alignItems="center" gap={2}>
                     <Button
                       size="md"
                       icon="plus"
@@ -132,11 +130,7 @@ export default function GettingStarted() {
                     >
                       Migrate Grafana to repository
                     </Button>
-                  </Box>
-                  <Text variant="body">
-                    Alternatively, connect to repository and add more repositories for other folders as needed:
-                  </Text>
-                  <Box>
+                    <Text variant="body">or</Text>
                     <LinkButton
                       fill="outline"
                       icon="plus"
@@ -147,7 +141,7 @@ export default function GettingStarted() {
                     >
                       Connect Grafana to repository
                     </LinkButton>
-                  </Box>
+                  </Stack>
                 </>
               ) : (
                 <Box>
