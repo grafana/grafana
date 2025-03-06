@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -28,6 +29,11 @@ type ruleAccessControlService interface {
 	// CanWriteAllRules returns true if the user has full access to write rules via provisioning API and bypass regular checks
 	CanWriteAllRules(ctx context.Context, user identity.Requester) (bool, error)
 }
+
+var errProvenanceMismatch = errutil.NewBase(errutil.StatusConflict, "alerting.provenanceMismatch").MustTemplate(
+	"cannot {{ .Public.Operation }} with provided provenance '{{ .Public.ProvidedProvenance }}', needs '{{ .Public.StoredProvenance }}'",
+	errutil.WithPublic("cannot {{ .Public.Operation }} with provided provenance '{{ .Public.ProvidedProvenance }}', needs '{{ .Public.StoredProvenance }}'"),
+)
 
 type NotificationSettingsValidatorProvider interface {
 	Validator(ctx context.Context, orgID int64) (notifier.NotificationSettingsValidator, error)
@@ -262,12 +268,41 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 	return rule, nil
 }
 
+// FilterOptions provides filtering for alert rule queries.
+// All fields are optional and will be applied as filters if provided.
+type FilterOptions struct {
+	ImportedPrometheusRule *bool
+	RuleGroups             []string
+	NamespaceUIDs          []string
+}
+
+func (opts *FilterOptions) apply(q models.ListAlertRulesQuery) models.ListAlertRulesQuery {
+	if opts == nil {
+		return q
+	}
+
+	if opts.ImportedPrometheusRule != nil {
+		q.ImportedPrometheusRule = opts.ImportedPrometheusRule
+	}
+
+	if len(opts.NamespaceUIDs) > 0 {
+		q.NamespaceUIDs = opts.NamespaceUIDs
+	}
+
+	if len(opts.RuleGroups) > 0 {
+		q.RuleGroups = opts.RuleGroups
+	}
+
+	return q
+}
+
 func (service *AlertRuleService) GetRuleGroup(ctx context.Context, user identity.Requester, namespaceUID, group string) (models.AlertRuleGroup, error) {
 	q := models.ListAlertRulesQuery{
 		OrgID:         user.GetOrgID(),
 		NamespaceUIDs: []string{namespaceUID},
 		RuleGroups:    []string{group},
 	}
+
 	ruleList, err := service.ruleStore.ListAlertRules(ctx, &q)
 	if err != nil {
 		return models.AlertRuleGroup{}, err
@@ -416,27 +451,42 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, user iden
 }
 
 func (service *AlertRuleService) DeleteRuleGroup(ctx context.Context, user identity.Requester, namespaceUID, group string, provenance models.Provenance) error {
-	delta, err := store.CalculateRuleGroupDelete(ctx, service.ruleStore, models.AlertRuleGroupKey{
-		OrgID:        user.GetOrgID(),
-		NamespaceUID: namespaceUID,
-		RuleGroup:    group,
+	return service.DeleteRuleGroups(ctx, user, provenance, &FilterOptions{
+		NamespaceUIDs: []string{namespaceUID},
+		RuleGroups:    []string{group},
 	})
+}
+
+// DeleteRuleGroups deletes alert rule groups by the specified filter options.
+func (service *AlertRuleService) DeleteRuleGroups(ctx context.Context, user identity.Requester, provenance models.Provenance, filterOpts *FilterOptions) error {
+	q := models.ListAlertRulesQuery{}
+	q = filterOpts.apply(q)
+	q.OrgID = user.GetOrgID()
+
+	deltas, err := store.CalculateRuleGroupsDelete(ctx, service.ruleStore, user.GetOrgID(), &q)
 	if err != nil {
 		return err
 	}
 
-	// check if the current user has permissions to all rules and can bypass the regular authorization validation.
-	can, err := service.authz.CanWriteAllRules(ctx, user)
-	if err != nil {
-		return err
-	}
-	if !can {
-		if err := service.authz.AuthorizeRuleGroupWrite(ctx, user, delta); err != nil {
-			return err
+	// Perform all deletions in a transaction
+	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
+		for _, delta := range deltas {
+			can, err := service.authz.CanWriteAllRules(ctx, user)
+			if err != nil {
+				return err
+			}
+			if !can {
+				if err := service.authz.AuthorizeRuleGroupWrite(ctx, user, delta); err != nil {
+					return err
+				}
+			}
+			err = service.persistDelta(ctx, user, delta, provenance)
+			if err != nil {
+				return err
+			}
 		}
-	}
-
-	return service.persistDelta(ctx, user, delta, provenance)
+		return nil
+	})
 }
 
 func (service *AlertRuleService) calcDelta(ctx context.Context, user identity.Requester, group models.AlertRuleGroup) (*store.GroupDelta, error) {
@@ -497,7 +547,13 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 					return err
 				}
 				if canUpdate := validation.CanUpdateProvenanceInRuleGroup(storedProvenance, provenance); !canUpdate {
-					return fmt.Errorf("cannot delete with provided provenance '%s', needs '%s'", provenance, storedProvenance)
+					return errProvenanceMismatch.Build(errutil.TemplateData{
+						Public: map[string]interface{}{
+							"ProvidedProvenance": provenance,
+							"StoredProvenance":   storedProvenance,
+							"Operation":          "delete",
+						},
+					})
 				}
 			}
 			if err := service.deleteRules(ctx, user, delta.Delete...); err != nil {
@@ -514,7 +570,13 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 					return err
 				}
 				if canUpdate := validation.CanUpdateProvenanceInRuleGroup(storedProvenance, provenance); !canUpdate {
-					return fmt.Errorf("cannot update with provided provenance '%s', needs '%s'", provenance, storedProvenance)
+					return errProvenanceMismatch.Build(errutil.TemplateData{
+						Public: map[string]interface{}{
+							"ProvidedProvenance": provenance,
+							"StoredProvenance":   storedProvenance,
+							"Operation":          "update",
+						},
+					})
 				}
 				updates = append(updates, models.UpdateRule{
 					Existing: update.Existing,
@@ -660,7 +722,13 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, user ident
 		return err
 	}
 	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
-		return fmt.Errorf("cannot delete with provided provenance '%s', needs '%s'", provenance, storedProvenance)
+		return errProvenanceMismatch.Build(errutil.TemplateData{
+			Public: map[string]interface{}{
+				"ProvidedProvenance": provenance,
+				"StoredProvenance":   storedProvenance,
+				"Operation":          "delete",
+			},
+		})
 	}
 
 	can, err := service.authz.CanWriteAllRules(ctx, user)
@@ -748,15 +816,17 @@ func (service *AlertRuleService) GetAlertRuleGroupWithFolderFullpath(ctx context
 	return res, nil
 }
 
-// GetAlertGroupsWithFolderFullpath returns all groups with folder's full path in the folders identified by folderUID that have at least one alert. If argument folderUIDs is nil or empty - returns groups in all folders.
-func (service *AlertRuleService) GetAlertGroupsWithFolderFullpath(ctx context.Context, user identity.Requester, folderUIDs []string) ([]models.AlertRuleGroupWithFolderFullpath, error) {
+// GetAlertGroupsWithFolderFullpath returns all groups that have at least one alert with the full folder path for each group.
+
+// It queries all alert rules for the user's organization, applies optional filtering specified in filterOpts,
+// and groups the rules by groups. The function then fetches folder details (including the full path)
+// for each namespace (folder UID) associated with the rule groups. If the user lacks blanket read permissions,
+// only the groups that the user is authorized to view are returned.
+func (service *AlertRuleService) GetAlertGroupsWithFolderFullpath(ctx context.Context, user identity.Requester, filterOpts *FilterOptions) ([]models.AlertRuleGroupWithFolderFullpath, error) {
 	q := models.ListAlertRulesQuery{
 		OrgID: user.GetOrgID(),
 	}
-
-	if len(folderUIDs) > 0 {
-		q.NamespaceUIDs = folderUIDs
-	}
+	q = filterOpts.apply(q)
 
 	ruleList, err := service.ruleStore.ListAlertRules(ctx, &q)
 	if err != nil {

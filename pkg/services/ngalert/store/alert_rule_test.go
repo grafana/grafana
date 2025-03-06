@@ -686,7 +686,6 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 	b := &fakeBus{}
 	logger := log.New("test-dbstore")
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
-
 	rule := createRule(t, store, nil)
 
 	t.Run("should not be able to delete folder without permissions to delete rules", func(t *testing.T) {
@@ -791,7 +790,10 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		// Create a new store to pass the custom bus to check the signal
 		b := &fakeBus{}
 		logger := log.New("test-dbstore")
+
 		store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
+		store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
+
 		result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, gen.GenerateMany(3))
 		uids := make([]string, 0, len(result))
 		for _, rule := range result {
@@ -813,6 +815,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		require.NoError(t, err)
 
 		versions, err := store.GetAlertRuleVersions(context.Background(), orgID, rules[0].GUID)
+		require.NoError(t, err)
 		require.Len(t, versions, 2)
 
 		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), uids...)
@@ -1893,6 +1896,64 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 	})
 }
 
+func TestIntegration_ListAlertRules(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
+		BaseInterval: time.Duration(rand.Int63n(100)) * time.Second,
+	}
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	b := &fakeBus{}
+	orgID := int64(1)
+	ruleGen := models.RuleGen
+	ruleGen = ruleGen.With(
+		ruleGen.WithIntervalMatching(cfg.UnifiedAlerting.BaseInterval),
+		ruleGen.WithOrgID(orgID),
+	)
+	t.Run("filter by ImportedPrometheusRule", func(t *testing.T) {
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+		regularRule := createRule(t, store, ruleGen)
+		importedRule := createRule(t, store, ruleGen.With(
+			models.RuleMuts.WithPrometheusOriginalRuleDefinition("data"),
+		))
+		tc := []struct {
+			name                   string
+			importedPrometheusRule *bool
+			expectedRules          []*models.AlertRule
+		}{
+			{
+				name:                   "should return only imported prometheus rules when filter is true",
+				importedPrometheusRule: util.Pointer(true),
+				expectedRules:          []*models.AlertRule{importedRule},
+			},
+			{
+				name:                   "should return only non-imported rules when filter is false",
+				importedPrometheusRule: util.Pointer(false),
+				expectedRules:          []*models.AlertRule{regularRule},
+			},
+			{
+				name:                   "should return all rules when filter is not set",
+				importedPrometheusRule: nil,
+				expectedRules:          []*models.AlertRule{regularRule, importedRule},
+			},
+		}
+		for _, tt := range tc {
+			t.Run(tt.name, func(t *testing.T) {
+				query := &models.ListAlertRulesQuery{
+					OrgID:                  orgID,
+					ImportedPrometheusRule: tt.importedPrometheusRule,
+				}
+				result, err := store.ListAlertRules(context.Background(), query)
+				require.NoError(t, err)
+				require.ElementsMatch(t, tt.expectedRules, result)
+			})
+		}
+	})
+}
+
 func TestIntegration_ListDeletedRules(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -1956,11 +2017,12 @@ func createTestStore(
 	bus bus.Bus,
 ) *DBstore {
 	return &DBstore{
-		SQLStore:      sqlStore,
-		FolderService: folderService,
-		Logger:        logger,
-		Cfg:           cfg,
-		Bus:           bus,
+		SQLStore:       sqlStore,
+		FolderService:  folderService,
+		Logger:         logger,
+		Cfg:            cfg,
+		Bus:            bus,
+		FeatureToggles: featuremgmt.WithFeatures(),
 	}
 }
 

@@ -4,14 +4,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import {
-  getDashboardSceneFor,
-  getGridItemKeyForPanelId,
-  getPanelIdForVizPanel,
-  getVizPanelKeyForPanelId,
-} from '../../utils/utils';
-import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
-import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
+import { getGridItemKeyForPanelId, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -32,10 +25,10 @@ export class ResponsiveGridLayoutManager
 
   public static readonly descriptor: LayoutRegistryItem = {
     get name() {
-      return t('dashboard.responsive-layout.name', 'Responsive grid');
+      return t('dashboard.responsive-layout.name', 'Auto');
     },
     get description() {
-      return t('dashboard.responsive-layout.description', 'CSS layout that adjusts to the available space');
+      return t('dashboard.responsive-layout.description', 'Automatically positions panels into a grid.');
     },
     id: 'responsive-grid',
     createFromLayout: ResponsiveGridLayoutManager.createFromLayout,
@@ -111,16 +104,6 @@ export class ResponsiveGridLayoutManager
     return panels;
   }
 
-  public hasVizPanels(): boolean {
-    for (const child of this.state.layout.state.children) {
-      if (child instanceof ResponsiveGridItem) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
     return this.clone({
       layout: this.state.layout.clone({
@@ -141,28 +124,6 @@ export class ResponsiveGridLayoutManager
         }),
       }),
     });
-  }
-
-  public addNewRow() {
-    const shouldAddRow = this.hasVizPanels();
-    const rowsLayout = RowsLayoutManager.createFromLayout(this);
-
-    if (shouldAddRow) {
-      rowsLayout.addNewRow();
-    }
-
-    getDashboardSceneFor(this).switchLayout(rowsLayout);
-  }
-
-  public addNewTab() {
-    const shouldAddTab = this.hasVizPanels();
-    const tabsLayout = TabsLayoutManager.createFromLayout(this);
-
-    if (shouldAddTab) {
-      tabsLayout.addNewTab();
-    }
-
-    getDashboardSceneFor(this).switchLayout(tabsLayout);
   }
 
   public getOptions(): OptionsPaneItemDescriptor[] {

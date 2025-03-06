@@ -15,9 +15,19 @@ export interface ContactPointSelectorProps {
 }
 
 export function ContactPointSelector({ alertManager, onSelectContactPoint }: ContactPointSelectorProps) {
-  const { control, watch, trigger } = useFormContext<RuleFormValues>();
+  const { control, watch, trigger, setError } = useFormContext<RuleFormValues>();
 
   const contactPointInForm = watch(`contactPoints.${alertManager}.selectedContactPoint`);
+
+  // Wrap in useCallback to avoid infinite render loop
+  const handleError = useCallback(
+    (err: Error) => {
+      setError(`contactPoints.${alertManager}.selectedContactPoint`, {
+        message: err.message,
+      });
+    },
+    [alertManager, setError]
+  );
 
   // if we have a contact point selected, check if it still exists in the event that someone has deleted it
   const validateContactPoint = useCallback(() => {
@@ -49,6 +59,7 @@ export function ContactPointSelector({ alertManager, onSelectContactPoint }: Con
                     }}
                     showRefreshButton
                     selectedContactPointName={contactPointInForm}
+                    onError={handleError}
                   />
                   <LinkToContactPoints />
                 </Stack>

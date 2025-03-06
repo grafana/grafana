@@ -98,10 +98,8 @@ func NewConverter(cfg Config) (*Converter, error) {
 
 // PrometheusRulesToGrafana converts a Prometheus rule group into Grafana Alerting rule group.
 func (p *Converter) PrometheusRulesToGrafana(orgID int64, namespaceUID string, group PrometheusRuleGroup) (*models.AlertRuleGroup, error) {
-	for _, rule := range group.Rules {
-		if err := rule.Validate(); err != nil {
-			return nil, err
-		}
+	if err := group.Validate(); err != nil {
+		return nil, err
 	}
 
 	grafanaGroup, err := p.convertRuleGroup(orgID, namespaceUID, group)
@@ -202,6 +200,13 @@ func (p *Converter) convertRule(orgID int64, namespaceUID, group string, rule Pr
 		isPaused = p.cfg.AlertRules.IsPaused
 		title = rule.Alert
 	}
+
+	// Temporary workaround for avoiding the uniqueness check for the rule title.
+	// In Grafana alert rule titles must be unique within the same org and folder,
+	// but Prometheus allows multiple rules with the same name. By adding the group name
+	// to the title we ensure that the title is unique within the group.
+	// TODO: Remove this workaround when we have a proper solution for handling rule title uniqueness.
+	title = fmt.Sprintf("[%s] %s", group, title)
 
 	labels := make(map[string]string, len(rule.Labels)+1)
 	for k, v := range rule.Labels {

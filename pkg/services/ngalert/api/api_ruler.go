@@ -262,6 +262,9 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 // RouteGetRulesConfig returns all alert rules that are available to the current user
 func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Response {
 	if strings.ToLower(c.Query("deleted")) == "true" {
+		if !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertRuleRestore) {
+			return ErrResp(http.StatusBadRequest, errors.New("restore of deleted rules is not enabled"), "")
+		}
 		if !c.SignedInUser.HasRole(identity.RoleAdmin) {
 			return ErrResp(http.StatusForbidden, errors.New("only admins can get deleted rules"), "")
 		}

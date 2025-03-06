@@ -26,10 +26,12 @@ func testIntegrationSavingTags(t *testing.T, fn getStore) {
 		{Key: "outage"},
 		{Key: "type", Value: "outage"},
 		{Key: "server", Value: "server-1"},
+		{Key: "server", Value: "server-1"}, // duplicates will generate a new ID.
 		{Key: "error"},
+		{Key: "error"}, // duplicates will generate a new ID.
 	}
 	tags, err := store.EnsureTagsExist(context.Background(), tagPairs)
 
 	require.Nil(t, err)
-	require.Equal(t, 4, len(tags))
+	require.Equal(t, len(tagPairs), len(tags))
 }

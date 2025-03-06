@@ -245,6 +245,18 @@ func SetupConfig(
 
 	serverConfig.EffectiveVersion = v
 
+	// set priority for aggregated discovery
+	for i, b := range builders {
+		gvs := GetGroupVersions(b)
+		if len(gvs) == 0 {
+			return fmt.Errorf("builder did not return any API group versions: %T", b)
+		}
+		pvs := scheme.PrioritizedVersionsForGroup(gvs[0].Group)
+		for j, gv := range pvs {
+			serverConfig.AggregatedDiscoveryGroupManager.SetGroupVersionPriority(metav1.GroupVersion(gv), 15000+i, len(pvs)-j)
+		}
+	}
+
 	if err := AddPostStartHooks(serverConfig, builders); err != nil {
 		return err
 	}
@@ -286,7 +298,7 @@ func InstallAPIs(
 
 	// nolint:staticcheck
 	if storageOpts.StorageType != options.StorageTypeLegacy {
-		dualWrite = func(gr schema.GroupResource, legacy grafanarest.LegacyStorage, storage grafanarest.Storage) (grafanarest.Storage, error) {
+		dualWrite = func(gr schema.GroupResource, legacy grafanarest.Storage, storage grafanarest.Storage) (grafanarest.Storage, error) {
 			// Dashboards + Folders may be managed (depends on feature toggles and database state)
 			if dualWriteService != nil && dualWriteService.ShouldManage(gr) {
 				return dualWriteService.NewStorage(gr, legacy, storage) // eventually this can replace this whole function
@@ -360,7 +372,7 @@ func InstallAPIs(
 			if currentMode != mode {
 				klog.Warningf("Requested DualWrite mode: %d, but using %d for %+v", mode, currentMode, gr)
 			}
-			return grafanarest.NewDualWriter(currentMode, legacy, storage, reg, key), nil
+			return dualwrite.NewDualWriter(gr, currentMode, legacy, storage)
 		}
 	}
 

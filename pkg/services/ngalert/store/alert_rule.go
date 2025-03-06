@@ -40,6 +40,9 @@ var (
 
 // DeleteAlertRulesByUID is a handler for deleting an alert rule.
 func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *ngmodels.UserUID, ruleUID ...string) error {
+	if len(ruleUID) == 0 {
+		return nil
+	}
 	logger := st.Logger.New("org_id", orgID, "rule_uids", ruleUID)
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		rows, err := sess.Table(alertRule{}).Where("org_id = ?", orgID).In("uid", ruleUID).Delete(alertRule{})
@@ -69,18 +72,21 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 		}
 		logger.Debug("Deleted alert rule state", "count", rows)
 
-		versions, err := st.getLatestVersionOfRulesByUID(ctx, orgID, ruleUID)
-		if err != nil {
-			logger.Error("Failed to get latest version of deleted alert rules. The recovery will not be possible", "error", err)
-		}
-		for idx := range versions {
-			version := &versions[idx]
-			version.ID = 0
-			version.RuleUID = ""
-			version.Created = TimeNow()
-			version.CreatedBy = nil
-			if user != nil {
-				version.CreatedBy = util.Pointer(string(*user))
+		var versions []alertRuleVersion
+		if st.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertRuleRestore) {
+			versions, err = st.getLatestVersionOfRulesByUID(ctx, orgID, ruleUID)
+			if err != nil {
+				logger.Error("Failed to get latest version of deleted alert rules. The recovery will not be possible", "error", err)
+			}
+			for idx := range versions {
+				version := &versions[idx]
+				version.ID = 0
+				version.RuleUID = ""
+				version.Created = TimeNow()
+				version.CreatedBy = nil
+				if user != nil {
+					version.CreatedBy = util.Pointer(string(*user))
+				}
 			}
 		}
 
@@ -90,10 +96,11 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 		}
 		logger.Debug("Deleted alert rule versions", "count", rows)
 
-		_, err = sess.Insert(versions)
-		if err != nil {
-			logger.Error("Failed to insert latest version of deleted alert rules. The recovery will not be possible", "error", err)
-		} else {
+		if len(versions) > 0 {
+			_, err = sess.Insert(versions)
+			if err != nil {
+				return fmt.Errorf("failed to persist deleted rule for recovery: %w", err)
+			}
 			logger.Debug("Inserted alert rule versions for recovery", "count", len(versions))
 		}
 		return nil
@@ -241,7 +248,6 @@ func (st DBstore) ListDeletedRules(ctx context.Context, orgID int64) ([]*ngmodel
 			return err
 		}
 		// Deserialize each rule separately in case any of them contain invalid JSON.
-		var previousVersion *alertRuleVersion
 		for rows.Next() {
 			rule := new(alertRuleVersion)
 			err = rows.Scan(rule)
@@ -249,17 +255,11 @@ func (st DBstore) ListDeletedRules(ctx context.Context, orgID int64) ([]*ngmodel
 				st.Logger.Error("Invalid rule version found in DB store, ignoring it", "func", "GetAlertRuleVersions", "error", err)
 				continue
 			}
-			// skip version that has no diff with previous version
-			// this is pretty basic comparison, it may have false negatives
-			if previousVersion != nil && previousVersion.EqualSpec(*rule) {
-				continue
-			}
 			converted, err := alertRuleToModelsAlertRule(alertRuleVersionToAlertRule(*rule), st.Logger)
 			if err != nil {
 				st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "GetAlertRuleVersions", "error", err, "version_id", rule.ID)
 				continue
 			}
-			previousVersion = rule
 			alertRules = append(alertRules, &converted)
 		}
 		return nil
@@ -429,7 +429,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 				return fmt.Errorf("failed to convert alert rule %s to storage model: %w", r.New.UID, err)
 			}
 			// no way to update multiple rules at once
-			if updated, err := sess.ID(r.Existing.ID).AllCols().Update(converted); err != nil || updated == 0 {
+			if updated, err := sess.ID(r.Existing.ID).AllCols().Omit("rule_guid").Update(converted); err != nil || updated == 0 {
 				if err != nil {
 					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
 						return ruleConstraintViolationToErr(sess, r.New, err, st.Logger)
@@ -659,6 +659,13 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 			}
 		}
 
+		if query.ImportedPrometheusRule != nil {
+			q, err = st.filterImportedPrometheusRules(*query.ImportedPrometheusRule, q)
+			if err != nil {
+				return err
+			}
+		}
+
 		q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
 
 		alertRules := make([]*ngmodels.AlertRule, 0)
@@ -695,6 +702,11 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 				if !slices.ContainsFunc(converted.NotificationSettings, func(settings ngmodels.NotificationSettings) bool {
 					return slices.Contains(settings.MuteTimeIntervals, query.TimeIntervalName)
 				}) {
+					continue
+				}
+			}
+			if query.ImportedPrometheusRule != nil { // remove false-positive hits from the result
+				if *query.ImportedPrometheusRule != converted.ImportedFromPrometheus() {
 					continue
 				}
 			}
@@ -1031,6 +1043,23 @@ func (st DBstore) filterByContentInNotificationSettings(value string, sess *xorm
 		search = strings.ReplaceAll(strings.ReplaceAll(search, `\`, `\\`), `"`, `\"`)
 	}
 	return sess.And(fmt.Sprintf("notification_settings %s ?", st.SQLStore.GetDialect().LikeStr()), "%"+search+"%"), nil
+}
+
+func (st DBstore) filterImportedPrometheusRules(value bool, sess *xorm.Session) (*xorm.Session, error) {
+	if value {
+		// Filter for rules that have both prometheus_style_rule and original_rule_definition in metadata
+		return sess.And(
+			"metadata LIKE ? AND metadata LIKE ?",
+			"%prometheus_style_rule%",
+			"%original_rule_definition%",
+		), nil
+	}
+	// Filter for rules that don't have prometheus_style_rule and original_rule_definition in metadata
+	return sess.And(
+		"metadata NOT LIKE ? AND metadata NOT LIKE ?",
+		"%prometheus_style_rule%",
+		"%original_rule_definition%",
+	), nil
 }
 
 func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(ngmodels.Provenance) bool, dryRun bool) ([]ngmodels.AlertRuleKey, []ngmodels.AlertRuleKey, error) {
