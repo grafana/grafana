@@ -11,6 +11,7 @@ import { LogLineMenu } from './LogLineMenu';
 import { useLogIsPinned } from './LogListContext';
 import { LogFieldDimension, LogListModel } from './processing';
 import { FIELD_GAP_MULTIPLIER, hasUnderOrOverflow, getLineHeight } from './virtualization';
+import { italic } from 'ansicolor';
 
 interface Props {
   displayedFields: string[];
@@ -73,15 +74,15 @@ interface LogProps {
 const Log = ({ displayedFields, log, showTime, styles }: LogProps) => {
   return (
     <>
-      {showTime && <span className={`${styles.timestamp} level-${log.logLevel} field`}>{log.timestamp}</span>}
-      <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel}</span>
+     {showTime && <span className={`${styles.timestamp} level-${log.logLevel} field`}>{log.timestamp}</span>}
+     <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel}</span>
       {displayedFields.length > 0 ? (
         displayedFields.map((field) =>
           field === LOG_LINE_BODY_FIELD_NAME ? (
             <LogLineBody log={log} />
           ) : (
             <span className="field" title={field} key={field}>
-              {getDisplayedFieldValue(field, log)}
+              {getDisplayedFieldValue(field, log)}ß
             </span>
           )
         )
@@ -129,17 +130,19 @@ export function getGridTemplateColumns(dimensions: LogFieldDimension[]) {
 export type LogLineStyles = ReturnType<typeof getStyles>;
 export const getStyles = (theme: GrafanaTheme2) => {
   const colors = {
-    critical: '#B877D9',
-    error: '#FF5286',
+    critical: '#f22f44',
+    error: '#f22f44',
     warning: '#FBAD37',
     debug: '#6CCF8E',
     trace: '#6ed0e0',
     info: '#6E9FFF',
+    metadata:  `rgba(204, 204, 220, 0.9)`,
+    parsedField: `rgba(204, 204, 220, 0.8)`,
   };
 
   return {
     logLine: css({
-      color: theme.colors.text.primary,
+      color: theme.colors.text.secondary,
       display: 'flex',
       gap: theme.spacing(0.5),
       flexDirection: 'row',
@@ -165,7 +168,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
           color: theme.colors.text.disabled,
         },
         '.token.log-token-string': {
-          color: theme.colors.text.primary,
+          color: theme.colors.text.secondary,
+
         },
         '.token.log-token-number': {
           color: theme.colors.success.text,
@@ -174,14 +178,16 @@ export const getStyles = (theme: GrafanaTheme2) => {
           color: theme.colors.success.text,
         },
         '.token.log-token-key': {
-          color: theme.colors.text.secondary,
+          color: colors.parsedField,
+          fontWeight: theme.typography.fontWeightMedium,
         },
         '.token.log-token-json-key': {
-          color: theme.colors.text.secondary,
+          color: colors.parsedField,
+          fontWeight: theme.typography.fontWeightMedium,
         },
         '.token.log-token-label': {
-          color: theme.colors.text.maxContrast,
-          fontWeight: theme.typography.fontWeightMedium,
+          color: colors.metadata,
+          fontWeight: theme.typography.fontWeightBold,
         },
       },
     }),
@@ -198,12 +204,13 @@ export const getStyles = (theme: GrafanaTheme2) => {
       textAlign: 'center',
     }),
     timestamp: css({
-      color: theme.colors.text.secondary,
+      color: theme.colors.text.disabled,
       display: 'inline-block',
     }),
     level: css({
       color: theme.colors.text.secondary,
       fontWeight: theme.typography.fontWeightBold,
+      textTransform:'uppercase',
       display: 'inline-block',
       textTransform: 'uppercase',
       '&.level-critical': {
