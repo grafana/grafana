@@ -11,23 +11,24 @@ import { useGetFrontendSettingsQuery } from '../api';
 
 import { ConnectionStep } from './ConnectionStep';
 import { MigrateStep } from './MigrateStep';
+import { PullStep } from './PullStep';
 import { RepositoryStep } from './RepositoryStep';
 import { Stepper, Step } from './Stepper';
 import { WizardFormData, WizardStep } from './types';
+import { PROVISIONING_URL } from '../constants';
 
 const steps: Array<Step<WizardStep>> = [
   { id: 'connection', name: 'Repository connection' },
   { id: 'repository', name: 'Repository configuration' },
   { id: 'migrate', name: 'Migrate dashboards' },
+  { id: 'pull', name: 'Pull dashboards' },
 ];
 
-const nextButtonText = {
-  connection: 'Next',
-  repository: 'Next',
-  migrate: 'Finish',
-} as const;
+type Props = {
+  requiresMigration: boolean;
+};
 
-export function ProvisioningWizard() {
+export function ProvisioningWizard({ requiresMigration }: Props) {
   const [activeStep, setActiveStep] = useState<WizardStep>('connection');
   const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
   const [stepSuccess, setStepSuccess] = useState(false);
@@ -45,9 +46,21 @@ export function ProvisioningWizard() {
 
   const styles = useStyles2(getStyles);
 
+  // Filter out migrate step if using legacy storage
+  const availableSteps = requiresMigration
+    ? steps.filter((step) => step.id !== 'pull')
+    : steps.filter((step) => step.id !== 'migrate');
+
+  // Calculate button text based on current step position
+  const getNextButtonText = (currentStep: WizardStep) => {
+    const stepIndex = availableSteps.findIndex((s) => s.id === currentStep);
+    return stepIndex === availableSteps.length - 1 ? 'Finish' : 'Next';
+  };
+
   const handleNext = async () => {
-    const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
-    if (currentStepIndex < steps.length - 1) {
+    const currentStepIndex = availableSteps.findIndex((s) => s.id === activeStep);
+    const isLastStep = currentStepIndex === availableSteps.length - 1;
+    if (currentStepIndex < availableSteps.length - 1) {
       if (activeStep === 'connection') {
         // Validate repository form data before proceeding
         const isValid = await methods.trigger('repository');
@@ -56,21 +69,23 @@ export function ProvisioningWizard() {
         }
       }
 
-      if (activeStep === 'migrate') {
+      // If we're on the last step, mark it as completed
+      const isLastStep = currentStepIndex === availableSteps.length - 1;
+      if (isLastStep) {
         setCompletedSteps((prev) => [...prev, activeStep]);
       }
-      setActiveStep(steps[currentStepIndex + 1].id);
+      setActiveStep(availableSteps[currentStepIndex + 1].id);
       setStepSuccess(false);
-    } else if (activeStep === 'migrate') {
+    } else if (isLastStep) {
       settingsQuery.refetch();
-      navigate('/dashboards');
+      navigate(PROVISIONING_URL);
     }
   };
 
   const handleBack = () => {
-    const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
+    const currentStepIndex = availableSteps.findIndex((s) => s.id === activeStep);
     if (currentStepIndex > 0) {
-      setActiveStep(steps[currentStepIndex - 1].id);
+      setActiveStep(availableSteps[currentStepIndex - 1].id);
       setStepSuccess(true);
       // Remove the last completed step when going back
       setCompletedSteps((prev) => prev.slice(0, -1));
@@ -88,20 +103,22 @@ export function ProvisioningWizard() {
     <FormProvider {...methods}>
       <form className={styles.form}>
         <Stepper
-          steps={steps}
+          steps={availableSteps}
           activeStep={activeStep}
           visitedSteps={completedSteps}
           validationResults={{
             connection: { valid: true },
             repository: { valid: true },
             migrate: { valid: true },
+            pull: { valid: true },
           }}
         />
 
         <div className={styles.content}>
-          {activeStep === 'connection' && <ConnectionStep />}
+          {activeStep === 'connection' && <ConnectionStep targetSelectable={!requiresMigration} />}
           {activeStep === 'repository' && <RepositoryStep onStatusChange={handleStatusChange} />}
-          {activeStep === 'migrate' && <MigrateStep onStatusChange={handleStatusChange} />}
+          {activeStep === 'migrate' && requiresMigration && <MigrateStep onStatusChange={handleStatusChange} />}
+          {activeStep === 'pull' && !requiresMigration && <PullStep onStatusChange={handleStatusChange} />}
         </div>
 
         <Stack gap={2} justifyContent="flex-end">
@@ -112,9 +129,13 @@ export function ProvisioningWizard() {
           )}
           <Button
             onClick={handleNext}
-            disabled={(activeStep === 'repository' && !stepSuccess) || (activeStep === 'migrate' && !stepSuccess)}
+            disabled={
+              (activeStep === 'repository' && !stepSuccess) ||
+              (activeStep === 'migrate' && !stepSuccess) ||
+              (activeStep === 'pull' && !stepSuccess)
+            }
           >
-            {nextButtonText[activeStep]}
+            {getNextButtonText(activeStep)}
           </Button>
         </Stack>
       </form>

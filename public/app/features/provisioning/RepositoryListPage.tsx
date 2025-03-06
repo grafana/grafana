@@ -5,7 +5,6 @@ import { getAppEvents } from '@grafana/runtime';
 import {
   Card,
   EmptySearchResult,
-  EmptyState,
   FilterInput,
   Icon,
   IconName,
@@ -17,6 +16,7 @@ import {
   ConfirmModal,
   Tab,
   TabsBar,
+  TagList,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -26,8 +26,9 @@ import { FeatureList } from './Setup/FeatureList';
 import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
 import { Repository, ResourceCount, useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from './api';
-import { NEW_URL, PROVISIONING_URL } from './constants';
+import { PROVISIONING_URL, CONNECT_URL } from './constants';
 import { useRepositoryList } from './hooks';
+import { checkSyncSettings } from './utils';
 
 const appEvents = getAppEvents();
 
@@ -59,7 +60,7 @@ export default function RepositoryListPage() {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'repositories':
-        return <RepositoryListPageContent items={items} />;
+        return <RepositoryListPageContent items={items ?? []} />;
       case 'features':
         return <FeatureList />;
       default:
@@ -106,31 +107,21 @@ export default function RepositoryListPage() {
   );
 }
 
-function RepositoryListPageContent({ items }: { items?: Repository[] }) {
+function RepositoryListPageContent({ items }: { items: Repository[] }) {
   const [query, setQuery] = useState('');
-  if (!items?.length) {
-    return (
-      <EmptyState
-        variant="call-to-action"
-        message="You haven't created any repository configs yet"
-        button={
-          <LinkButton icon="plus" href={NEW_URL} size="lg">
-            Create repository config
-          </LinkButton>
-        }
-      />
-    );
-  }
-
   const filteredItems = items.filter((item) => item.metadata?.name?.includes(query));
+  const settings = useGetFrontendSettingsQuery();
+  const [instanceConnected] = checkSyncSettings(settings.data);
 
   return (
     <Stack direction={'column'} gap={3}>
       <Stack gap={2}>
         <FilterInput placeholder="Search" value={query} onChange={setQuery} />
-        <LinkButton href={NEW_URL} variant="primary" icon={'plus'}>
-          Add repository config
-        </LinkButton>
+        {!instanceConnected && (
+          <LinkButton href={CONNECT_URL} variant="primary" icon={'plus'}>
+            Connect to repository
+          </LinkButton>
+        )}
       </Stack>
       <Stack direction={'column'}>
         {!!filteredItems.length ? (
@@ -186,6 +177,7 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                       state={item.status?.sync?.state}
                       name={name}
                     />
+                    <TagList tags={[item.spec?.sync?.target ?? '']} />
                   </Stack>
                 </Card.Heading>
                 <Card.Description>
