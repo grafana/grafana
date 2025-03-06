@@ -1,6 +1,6 @@
 module github.com/grafana/grafana
 
-go 1.23.5
+go 1.23.7
 
 require (
 	buf.build/gen/go/parca-dev/parca/connectrpc/go v1.17.0-20240902100956-02fd72488966.1 // @grafana/observability-traces-and-profiling
@@ -72,7 +72,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.14.1 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.3 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20250303221654-bb85a58ec897 // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20250305143710-aae4827ec061 // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20250225105729-99e678595501 // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20250224151205-5ef97131cc82 // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
@@ -583,5 +583,8 @@ exclude github.com/prometheus/prometheus v1.8.2-0.20221021121301-51a44e6657c3
 // otherwise pulled in as a transitive dependency.
 exclude k8s.io/client-go v12.0.0+incompatible
 
-// k8s.io/apiserver fails due to incompatibility with cel-go 0.23
+// k8s.io/apiserver fails due to incompatibility with cel-go 0.23, can be removed once apiserver v0.32.3 is released.
 replace github.com/google/cel-go => github.com/google/cel-go v0.22.1
+
+// fails to compile on 32-bit architectures due to overflow (https://github.com/grpc-ecosystem/go-grpc-middleware/issues/752).
+replace github.com/grpc-ecosystem/go-grpc-middleware/v2 => github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.2.0
