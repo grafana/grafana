@@ -419,7 +419,8 @@ func (b *QueryAPIBuilder) convertQueryWithoutExpression(ctx context.Context, req
 		return nil, errors.New("no queries to convert")
 	}
 	if qdr == nil {
-		return nil, errors.New("queryDataResponse is nil")
+		b.log.Debug("unexpected response of nil from datasource", "datasource.type", req.PluginId, "datasource.uid", req.UID, "request", req.Request)
+		return nil, errors.New("unexpected response of nil from datasource")
 	}
 	refID := req.Request.Queries[0].RefID
 	if _, exist := qdr.Responses[refID]; !exist {
