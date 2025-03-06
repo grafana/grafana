@@ -18,49 +18,14 @@ import {
 import { Align, CanvasElementConfig, CanvasElementData, VAlign } from '../types';
 
 const Player = (props: CanvasElementProps<CanvasElementConfig, CanvasElementData>) => {
+  // TODO: this is hardcoded for now; should be from the panel options/config
+  const { panelWidth, panelHeight } = { panelWidth: 1000, panelHeight: 500 };
+
   const { data } = props;
   const styles = getStyles(config.theme2, data);
   const uniqueId = useRef(uuidv4());
 
-  // const [position, setPosition] = useState({ top: 0, left: 0 });
-  // const [rotation, setRotation] = useState(0);
-
-  // useEffect(() => {
-  //   const handleKeyDown = (event: KeyboardEvent) => {
-  //     setPosition((prev) => {
-  //       const angle = (rotation * Math.PI) / 180;
-  //       const step = 10;
-  //       const dx = Math.cos(angle) * step;
-  //       const dy = Math.sin(angle) * step;
-
-  //       switch (event.key) {
-  //         case 'ArrowLeft':
-  //           return { top: prev.top - dy, left: prev.left - dx };
-  //         case 'ArrowRight':
-  //           return { top: prev.top + dy, left: prev.left + dx };
-  //         case 'ArrowUp':
-  //           return { top: prev.top - dx, left: prev.left + dy };
-  //         case 'ArrowDown':
-  //           return { top: prev.top + dx, left: prev.left - dy };
-  //         case 'd': // Rotate clockwise
-  //           setRotation((prevRotation) => prevRotation + 15);
-  //           return prev;
-  //         case 'a': // Rotate counterclockwise
-  //           setRotation((prevRotation) => prevRotation - 15);
-  //           return prev;
-  //         default:
-  //           return prev;
-  //       }
-  //     });
-  //   };
-
-  //   window.addEventListener('keydown', handleKeyDown);
-  //   return () => {
-  //     window.removeEventListener('keydown', handleKeyDown);
-  //   };
-  // }, [rotation]);
-
-  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [position, setPosition] = useState({ top: 200, left: 500 });
   const [rotation, setRotation] = useState(0);
   const [velocity, setVelocity] = useState({ x: 0, y: 0 });
   const acceleration = 0.5;
@@ -107,10 +72,22 @@ const Player = (props: CanvasElementProps<CanvasElementConfig, CanvasElementData
     };
 
     const movePlayer = () => {
-      setPosition((prev) => ({
-        top: prev.top + velocity.y,
-        left: prev.left + velocity.x,
-      }));
+      setPosition((prev) => {
+        let newTop = prev.top + velocity.y;
+        let newLeft = prev.left + velocity.x;
+
+        // Collision detection and reflection
+        if (newTop <= 0 || newTop >= panelHeight) {
+          newTop = Math.max(0, Math.min(panelHeight, newTop));
+          setVelocity((prevVelocity) => ({ x: prevVelocity.x, y: -prevVelocity.y }));
+        }
+        if (newLeft <= 0 || newLeft >= panelWidth) {
+          newLeft = Math.max(0, Math.min(panelWidth, newLeft));
+          setVelocity((prevVelocity) => ({ x: -prevVelocity.x, y: prevVelocity.y }));
+        }
+
+        return { top: newTop, left: newLeft };
+      });
     };
 
     // TODO: this loop may be the potential bottleneck
@@ -129,20 +106,12 @@ const Player = (props: CanvasElementProps<CanvasElementConfig, CanvasElementData
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rotation, velocity]);
-
-  // uuid needed to avoid id conflicts when multiple elements are rendered
-  // const uniqueId = uuidv4();
 
   return (
     <div
       className={styles.container}
-      // style={{
-      //   top: position.top,
-      //   left: position.left,
-      //   position: 'absolute',
-      //   transform: `rotate(${rotation}deg)`,
-      // }}
       style={{
         top: position.top,
         left: position.left,
