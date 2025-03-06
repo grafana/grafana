@@ -4,7 +4,7 @@ import { RouteDescriptor } from 'app/core/navigation/types';
 import { DashboardRoutes } from 'app/types';
 
 import { requiredFeatureToggles } from '../Setup/types';
-import { PROVISIONING_URL } from '../constants';
+import { PROVISIONING_URL, CONNECT_URL, MIGRATE_URL } from '../constants';
 
 export function getProvisioningRoutes(): RouteDescriptor[] {
   if (!requiredFeatureToggles.every((toggle) => config.featureToggles[toggle])) {
@@ -32,18 +32,15 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: PROVISIONING_URL + '/migrate',
+      path: CONNECT_URL,
       component: SafeDynamicImport(
-        () =>
-          import(
-            /* webpackChunkName: "ProvisioningWizardPage"*/ 'app/features/provisioning/Wizard/MigrateToProvisioningPage'
-          )
+        () => import(/* webpackChunkName: "ProvisioningWizardPage"*/ 'app/features/provisioning/Wizard/ConnectPage')
       ),
     },
     {
-      path: PROVISIONING_URL + '/new',
+      path: MIGRATE_URL,
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "NewRepositoryPage"*/ 'app/features/provisioning/NewRepositoryPage')
+        () => import(/* webpackChunkName: "ProvisioningWizardPage"*/ 'app/features/provisioning/Wizard/MigratePage')
       ),
     },
     {
