@@ -20,8 +20,8 @@ export default function GettingStarted() {
         </Alert>
       )}
       <Stack direction="row" gap={2}>
-        <Box width="50%">
-          <Text variant="h2">Provisining as-code directly from Grafana</Text>
+        <Box width="50%" marginTop={2}>
+          <Text variant="h2">Provisioning as-code directly from Grafana</Text>
           <Box padding={2}>
             <Stack direction="column" gap={2}>
               <Text variant="body">
@@ -39,34 +39,33 @@ export default function GettingStarted() {
               <LinkButton fill="text" href="#" icon="external-link-alt">
                 Learn more
               </LinkButton>
-              <Button
-                size="lg"
-                icon="plus"
-                onClick={async () => {
-                  await settingsQuery.refetch();
-                  navigate(MIGRATE_URL);
-                }}
-              >
-                Migrate Grafana to repository
-              </Button>
-              <Card>
-                <Card.Description>
-                  Alternatively, connect to repository and add more repositories for other folders as needed
-                </Card.Description>
-                <Card.Actions>
-                  <Button
-                    size="md"
-                    variant="secondary"
-                    icon="plus"
-                    onClick={async () => {
-                      await settingsQuery.refetch();
-                      navigate(CONNECT_URL);
-                    }}
-                  >
-                    Connect Grafana to repository
-                  </Button>
-                </Card.Actions>
-              </Card>
+              <Box>
+                <Button
+                  size="lg"
+                  icon="plus"
+                  onClick={async () => {
+                    await settingsQuery.refetch();
+                    navigate(MIGRATE_URL);
+                  }}
+                >
+                  Migrate Grafana to repository
+                </Button>
+              </Box>
+              <Text variant="body">
+                Alternatively, connect to repository and add more repositories for other folders as needed:
+              </Text>
+              <Box>
+                <LinkButton
+                  fill="outline"
+                  icon="plus"
+                  onClick={async () => {
+                    await settingsQuery.refetch();
+                    navigate(CONNECT_URL);
+                  }}
+                >
+                  Connect Grafana to repository
+                </LinkButton>
+              </Box>
             </Stack>
           </Box>
         </Box>
@@ -86,18 +85,17 @@ export default function GettingStarted() {
           </div>
         </Box>
       </Stack>
-      <Box>
+      <Box marginTop={2}>
         <Text variant="h2">Unlock enhanced functionality for Github</Text>
         <Box marginTop={4}>
           <Stack direction="row" gap={2}>
-            <Box width="25%" padding={4}>
+            <Box width="25%" padding={2}>
               <div
                 className={css`
                   border-right: 1px solid rgba(204, 204, 220, 0.15);
                 `}
               >
                 <Stack direction="column" gap={2}>
-                  <Text variant="h3">Instantenous Provisioning</Text>
                   <div
                     className={css`
                       background: rgba(24, 121, 219, 0.12);
@@ -108,19 +106,19 @@ export default function GettingStarted() {
                   >
                     <Icon name="sync" size="xxl" color="primary" />
                   </div>
+                  <Text variant="h3">Instantenous Provisioning</Text>
                   <Text variant="body">
                     Automatically provision and update your dashboards as soon as changes are pushed to your GitHub
                     repository
                   </Text>
                   <Box>
-                    <Button variant="secondary">Setup public access</Button>
+                    <LinkButton fill="outline">Set up webhooks</LinkButton>
                   </Box>
                 </Stack>
               </div>
             </Box>
             <Box width="25%" padding={4}>
               <Stack direction="column" gap={2}>
-                <Text variant="h3">Visual Previews in Pull Requests</Text>
                 <Stack direction="row" gap={2}>
                   <div
                     className={css`
@@ -143,11 +141,12 @@ export default function GettingStarted() {
                     <Icon name="github" size="xxl" color="purple" />
                   </div>
                 </Stack>
+                <Text variant="h3">Visual Previews in Pull Requests</Text>
                 <Text variant="body">
                   Review how your changes look like before going live in Grafana and directly in Pull Requests
                 </Text>
                 <Box>
-                  <Button variant="secondary">Setup image rendering</Button>
+                  <LinkButton fill="outline">Set up image rendering</LinkButton>
                 </Box>
               </Stack>
             </Box>
