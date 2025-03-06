@@ -5,7 +5,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { VizPanelLinks } from '../scene/PanelLinks';
 
 import { isClonedKey } from './clone';
-import { getDashboardSceneFor, getLayoutManagerFor, getPanelIdForVizPanel } from './utils';
+import { getDashboardSceneFor, getLayoutManagerFor, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from './utils';
 
 function getTimePicker(scene: DashboardScene) {
   return scene.state.controls?.state.timePicker;
@@ -79,6 +79,18 @@ export function getCursorSync(scene: DashboardScene) {
 
   return;
 }
+// Functions to manage the lookup table in dashboard scene that will hold element_identifer : panel_id
+export function getElementIdentifierForVizPanel(vizPanel: VizPanel): string {
+  const scene = getDashboardSceneFor(vizPanel);
+  const panelId = getPanelIdForVizPanel(vizPanel);
+  let elementKey = scene.getElementIdentifierForPanel(panelId);
+
+  if (!elementKey) {
+    // assign a panel-id key
+    elementKey = getVizPanelKeyForPanelId(panelId);
+  }
+  return elementKey;
+}
 
 export const dashboardSceneGraph = {
   getTimePicker,
@@ -90,4 +102,5 @@ export const dashboardSceneGraph = {
   getCursorSync,
   getLayoutManagerFor,
   getNextPanelId,
+  getElementIdentifierForVizPanel,
 };
