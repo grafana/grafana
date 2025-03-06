@@ -738,16 +738,6 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
-export type ExportJobOptions = {
-  /** Target branch for export (only git) */
-  branch?: string;
-  /** The source folder (or empty) to export */
-  folder?: string;
-  /** Include the identifier in the exported metadata */
-  identifier: boolean;
-  /** Prefix in target file system */
-  prefix?: string;
-};
 export type MigrateJobOptions = {
   /** Preserve history (if possible) */
   history?: boolean;
@@ -769,23 +759,33 @@ export type SyncJobOptions = {
   /** Incremental synchronization for versioned repositories */
   incremental: boolean;
 };
+export type ExportJobOptions = {
+  /** Target branch for export (only git) */
+  branch?: string;
+  /** The source folder (or empty) to export */
+  folder?: string;
+  /** Include the identifier in the exported metadata */
+  identifier: boolean;
+  /** Prefix in target file system */
+  prefix?: string;
+};
 export type JobSpec = {
   /** Possible enum values:
-     - `"export"` Export from grafana into the remote repository
      - `"migrate"` Migration task -- this will migrate an full instance from SQL > Git
-     - `"pr"` Update a pull request -- send preview images, links etc
-     - `"sync"` Sync the remote branch with the grafana instance */
-  action: 'export' | 'migrate' | 'pr' | 'sync';
-  /** Required when the action is `export` */
-  export?: ExportJobOptions;
+     - `"pr"` Process a pull request -- apply comments with preview images, links etc
+     - `"pull"` Sync the remote branch with the grafana instance
+     - `"push"` Export from grafana into the remote repository */
+  action: 'migrate' | 'pr' | 'pull' | 'push';
   /** Required when the action is `migrate` */
   migrate?: MigrateJobOptions;
   /** Pull request options */
   pr?: PullRequestJobOptions;
+  /** Required when the action is `pull` */
+  pull?: SyncJobOptions;
+  /** Required when the action is `push` */
+  push?: ExportJobOptions;
   /** The the repository reference (for now also in labels) */
   repository: string;
-  /** Required when the action is `sync` */
-  sync?: SyncJobOptions;
 };
 export type JobResourceSummary = {
   create?: number;
@@ -1034,6 +1034,20 @@ export type DeleteOptions = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
 };
+export type ResourceRepositoryInfo = {
+  /** The name (identifier) */
+  name: string;
+  /** The namespace this belongs to */
+  namespace: string;
+  /** The display name for this repository */
+  title: string;
+  /** The repository type
+    
+    Possible enum values:
+     - `"github"`
+     - `"local"` */
+  type: 'github' | 'local';
+};
 export type Unstructured = {
   [key: string]: any;
 };
@@ -1068,6 +1082,16 @@ export type ResourceObjects = {
   /** The identified type for this object */
   type: ResourceType;
 };
+export type ResourceUrLs = {
+  /** Compare this version to the target branch */
+  compareURL?: string;
+  /** A URL that will create a new pull requeset for this branch */
+  newPullRequestURL?: string;
+  /** A URL pointing to the repository this lives in */
+  repositoryURL?: string;
+  /** A URL pointing to the this file in the repository */
+  sourceURL?: string;
+};
 export type ResourceWrapper = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -1079,12 +1103,16 @@ export type ResourceWrapper = {
   kind?: string;
   /** Path to the remote file */
   path?: string;
-  /** The commit hash (if exists) */
+  /** The request ref (or branch if exists) */
   ref?: string;
+  /** Basic repository info */
+  repository: ResourceRepositoryInfo;
   /** Different flavors of the same object */
   resource: ResourceObjects;
   /** The modified time in the remote file system */
   timestamp?: Time;
+  /** Typed links for this file (only supported by external systems, github etc) */
+  urls?: ResourceUrLs;
 };
 export type ResourceListItem = {
   folder?: string;

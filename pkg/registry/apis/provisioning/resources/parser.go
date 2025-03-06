@@ -35,8 +35,15 @@ func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 		return nil, err
 	}
 
+	urls, _ := repo.(repository.RepositoryWithURLs)
 	parser := &Parser{
-		repo:   config,
+		repo: provisioning.ResourceRepositoryInfo{
+			Type:      config.Spec.Type,
+			Title:     config.Spec.Title,
+			Namespace: config.Namespace,
+			Name:      config.Name,
+		},
+		urls:   urls,
 		client: client,
 		kinds:  kinds,
 	}
@@ -46,7 +53,10 @@ func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 
 type Parser struct {
 	// The target repository
-	repo *provisioning.Repository
+	repo provisioning.ResourceRepositoryInfo
+
+	// for repositories that have URL support
+	urls repository.RepositoryWithURLs
 
 	// client helper (for this namespace?)
 	client *DynamicClient
@@ -56,6 +66,12 @@ type Parser struct {
 type ParsedResource struct {
 	// Original file Info
 	Info *repository.FileInfo
+
+	// The repository details
+	Repo provisioning.ResourceRepositoryInfo
+
+	// Resource URLs
+	URLs *provisioning.ResourceURLs
 
 	// Check for classic file types (dashboard.json, etc)
 	Classic provisioning.ClassicFileType
@@ -97,6 +113,7 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 	logger := logging.FromContext(ctx).With("path", info.Path, "validate", validate)
 	parsed = &ParsedResource{
 		Info: info,
+		Repo: r.repo,
 	}
 
 	if ShouldIgnorePath(info.Path) && info.Path != "" {
@@ -113,7 +130,15 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 		}
 	}
 
-	// Remove the internal UID,version and id if they exist
+	if r.urls != nil {
+		parsed.URLs, err = r.urls.ResourceURLs(ctx, info)
+		if err != nil {
+			logger.Debug("failed to load resource URLs", "error", err)
+			return parsed, err
+		}
+	}
+
+	// Remove the internal dashboard UID,version and id if they exist
 	if parsed.GVK.Group == dashboard.GROUP && parsed.GVK.Kind == "Dashboard" {
 		unstructured.RemoveNestedField(parsed.Obj.Object, "spec", "uid")
 		unstructured.RemoveNestedField(parsed.Obj.Object, "spec", "version")
@@ -125,17 +150,16 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 		return nil, err
 	}
 	obj := parsed.Obj
-	cfg := r.repo
 
 	// Validate the namespace
-	if obj.GetNamespace() != "" && obj.GetNamespace() != cfg.GetNamespace() {
+	if obj.GetNamespace() != "" && obj.GetNamespace() != r.repo.Namespace {
 		parsed.Errors = append(parsed.Errors, ErrNamespaceMismatch)
 	}
 
-	obj.SetNamespace(cfg.GetNamespace())
+	obj.SetNamespace(r.repo.Namespace)
 	parsed.Meta.SetManagerProperties(utils.ManagerProperties{
 		Kind:     utils.ManagerKindRepo,
-		Identity: cfg.Name,
+		Identity: r.repo.Name,
 	})
 	parsed.Meta.SetSourceProperties(utils.SourceProperties{
 		Path:     info.Path, // joinPathWithRef(info.Path, info.Ref),
@@ -144,7 +168,7 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 
 	// Calculate name+folder from the file path
 	if info.Path != "" {
-		objName, folderName := NamesFromHashedRepoPath(cfg.Name, info.Path)
+		objName, folderName := NamesFromHashedRepoPath(r.repo.Name, info.Path)
 		parsed.Meta.SetFolder(folderName)
 		if obj.GetName() == "" {
 			obj.SetName(objName) // use the name saved in config
@@ -248,11 +272,13 @@ func (f *ParsedResource) AsResourceWrapper() *provisioning.ResourceWrapper {
 		res.DryRun = v0alpha1.Unstructured{Object: f.DryRunResponse.Object}
 	}
 	wrap := &provisioning.ResourceWrapper{
-		Path:      info.Path,
-		Ref:       info.Ref,
-		Hash:      info.Hash,
-		Timestamp: info.Modified,
-		Resource:  res,
+		Path:       info.Path,
+		Ref:        info.Ref,
+		Hash:       info.Hash,
+		Repository: f.Repo,
+		URLs:       f.URLs,
+		Timestamp:  info.Modified,
+		Resource:   res,
 	}
 	for _, err := range f.Errors {
 		wrap.Errors = append(wrap.Errors, err.Error())

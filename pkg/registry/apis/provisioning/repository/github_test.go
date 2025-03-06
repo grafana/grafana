@@ -84,7 +84,7 @@ func TestParseWebhooks(t *testing.T) {
 			Job: &provisioning.JobSpec{ // we want to always push a sync job
 				Repository: "unit-test-repo",
 				Action:     provisioning.JobActionSync,
-				Sync: &provisioning.SyncJobOptions{
+				Pull: &provisioning.SyncJobOptions{
 					Incremental: true,
 				},
 			},
@@ -94,7 +94,7 @@ func TestParseWebhooks(t *testing.T) {
 			Job: &provisioning.JobSpec{
 				Repository: "unit-test-repo",
 				Action:     provisioning.JobActionSync,
-				Sync: &provisioning.SyncJobOptions{
+				Pull: &provisioning.SyncJobOptions{
 					Incremental: true,
 				},
 			},
