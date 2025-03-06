@@ -149,12 +149,16 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     | order by subscriptionName desc
   `;
 
-    const resources = await this.azureResourceGraphDatasource.pagedResourceGraphRequest<RawAzureSubscriptionItem>(
+    const subscriptions = await this.azureResourceGraphDatasource.pagedResourceGraphRequest<RawAzureSubscriptionItem>(
       query,
       1
     );
 
-    return resources.map((subscription) => ({
+    if (!subscriptions.length) {
+      throw new Error('No subscriptions were found');
+    }
+
+    return subscriptions.map((subscription) => ({
       name: subscription.subscriptionName,
       id: subscription.subscriptionId,
       uri: `/subscriptions/${subscription.subscriptionId}`,
