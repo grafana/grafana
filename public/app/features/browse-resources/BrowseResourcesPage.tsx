@@ -202,20 +202,20 @@ const FoldersPage: React.FC = () => {
 
   const renderTable = (resources: SearchHit[]) => {
     // Get root level resources (location === "general")
-    const rootResources = resources.filter(resource => resource.location === "general");
+    const rootResources = resources.filter(resource => resource.location === "general" || resource.location === "");
     
     // Create the final data array with expanded children
     const tableData = rootResources.reduce((acc: Resource[], resource: Resource) => {
       acc.push(resource);
-      // If this is an expanded folder, add its children
-      if (resource.isExpanded && resource.resource === 'folders') {
+      // If this is an expanded folder, add all its children (any resource type)
+      if (resource.isExpanded) {
         const children = resources.filter(r => r.location === resource.title);
         acc.push(...children);
       }
       return acc;
     }, []);
 
-    // Helper to check if a folder has any children
+    // Helper to check if a folder has any children (any resource type)
     const hasChildren = (folder: Resource) => {
       return resources.some(r => r.location === folder.title);
     };
