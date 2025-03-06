@@ -3457,6 +3457,14 @@
               "update"
             ]
           },
+          "apply": {
+            "description": "When the value has been saved in the grafana database",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
+              }
+            ]
+          },
           "dryRun": {
             "description": "The value returned from a dryRun request",
             "allOf": [
