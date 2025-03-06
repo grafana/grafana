@@ -27,7 +27,7 @@ Before you begin, ensure you have the following:
 - **AWS SNS Topic**: An SNS topic to send notifications to.
 - **AWS IAM Identity with necessary access**: An IAM identity (e.g. user, role) with the necessary permissions to publish messages to the SNS topic.
 
-For an example setup, see [Example Minimal Setup Using Assumed IAM Role]({{< relref "#example-minimal-setup-using-assumed-iam-role" >}}).
+For an example setup, see [Example Minimal Setup Using Assumed IAM Role](#example-minimal-setup-using-assumed-iam-role).
 
 ## Adding the SNS Contact Point in Grafana
 
@@ -181,7 +181,7 @@ This section outlines a minimal setup to configure SNS with Grafana using an ass
 
 ### 5. Add the SNS Contact Point in Grafana
 
-After creating the IAM user and obtaining the necessary credentials, proceed to [configure the SNS contact point in Grafana]({{< relref "#adding-the-sns-contact-point-in-grafana" >}}) using the following details:
+After creating the IAM user and obtaining the necessary credentials, proceed to [configure the SNS contact point in Grafana](#adding-the-sns-contact-point-in-grafana) using the following details:
 
 - **The Amazon SNS API URL**: `https://sns.us-east-1.amazonaws.com`
 - **Signature Version (sigv4)**:
@@ -200,4 +200,4 @@ Replace the placeholder values (`https://sns.us-east-1.amazonaws.com`, `us-east-
 - [Amazon SNS Documentation](https://docs.aws.amazon.com/sns/index.html)
 - [AWS IAM Documentation](https://docs.aws.amazon.com/iam/index.html)
 - [Prometheus Alertmanager SNS Integration](https://prometheus.io/docs/alerting/configuration/#sns_config)
-- [Cloudwatch AWS Authentication]({{< relref "../../../../datasources/aws-cloudwatch/aws-authentication" >}})
+- [Cloudwatch AWS Authentication](../../../../../datasources/aws-cloudwatch/aws-authentication/)

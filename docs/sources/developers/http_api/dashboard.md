@@ -18,7 +18,7 @@ title: Dashboard HTTP API
 
 # Dashboard API
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
 ## Identifier (id) vs unique identifier (uid)
 
@@ -26,7 +26,7 @@ The identifier (id) of a dashboard is an auto-incrementing numeric value and is 
 
 The unique identifier (uid) of a dashboard can be used for uniquely identify a dashboard between multiple Grafana installs.
 It's automatically generated if not provided when creating a dashboard. The uid allows having consistent URLs for accessing
-dashboards and when syncing dashboards between multiple Grafana installs, see [dashboard provisioning]({{< relref "/docs/grafana/latest/administration/provisioning#dashboards" >}})
+dashboards and when syncing dashboards between multiple Grafana installs, see [dashboard provisioning](/docs/grafana/latest/administration/provisioning/#dashboards)
 for more information. This means that changing the title of a dashboard will not break any bookmarked links to that dashboard.
 
 The uid can have a maximum length of 40 characters.
@@ -80,7 +80,7 @@ JSON Body schema:
 - **dashboard** – The complete dashboard model.
 - **dashboard.id** – id = null to create a new dashboard.
 - **dashboard.uid** – Optional unique identifier when creating a dashboard. uid = null will generate a new uid.
-- **dashboard.refresh** - Set the dashboard refresh interval. If this is lower than [the minimum refresh interval]({{< relref "/docs/grafana/latest/setup-grafana/configure-grafana#min_refresh_interval" >}}), then Grafana will ignore it and will enforce the minimum refresh interval.
+- **dashboard.refresh** - Set the dashboard refresh interval. If this is lower than [the minimum refresh interval](/docs/grafana/latest/setup-grafana/configure-grafana/#min_refresh_interval), then Grafana will ignore it and will enforce the minimum refresh interval.
 - **folderId** – The id of the folder to save the dashboard in.
 - **folderUid** – The UID of the folder to save the dashboard in. Overrides the `folderId`.
 - **overwrite** – Set to true if you want to overwrite existing dashboard with newer version, same dashboard title in folder or same dashboard uid.
@@ -453,4 +453,4 @@ Content-Type: application/json
 
 ## Dashboard Search
 
-See [Folder/Dashboard Search API]({{< relref "folder_dashboard_search/" >}}).
+See [Folder/Dashboard Search API](../folder_dashboard_search/).
