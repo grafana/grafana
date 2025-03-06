@@ -665,7 +665,7 @@ func TestService_Check(t *testing.T) {
 			expectErr: true,
 		},
 		{
-			name: "should error if an no subject is provided",
+			name: "should error if no subject is provided",
 			req: &authzv1.CheckRequest{
 				Namespace: "org-12",
 				Subject:   "",
