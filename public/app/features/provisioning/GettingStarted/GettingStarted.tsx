@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { LinkButton, Alert, Stack, Text, Button, Box, Icon } from '@grafana/ui';
+import { LinkButton, Alert, Stack, Text, Button, Box, Icon, IconName } from '@grafana/ui';
 
 import { useGetFrontendSettingsQuery } from '../api';
 import { CONNECT_URL, MIGRATE_URL } from '../constants';
@@ -20,6 +20,165 @@ const FeatureItem = ({ children }: FeatureItemProps) => (
   <Text variant="body">
     <Icon name="check" className="text-success" /> {children}
   </Text>
+);
+
+interface FeatureCardProps {
+  title: string;
+  description: string;
+  icon?: React.ReactNode;
+  action?: React.ReactNode;
+  showBorder?: boolean;
+}
+
+interface IconCircleProps {
+  icon: string;
+  color: string;
+  background: string;
+}
+
+const IconCircle = ({ icon, color, background }: IconCircleProps) => (
+  <div
+    className={css`
+      background: ${background};
+      border-radius: 50%;
+      padding: 16px;
+      width: fit-content;
+    `}
+  >
+    <Icon name={icon as IconName} size="xxl" color={color} />
+  </div>
+);
+
+const FeatureCard = ({ title, description, icon, action, showBorder = false }: FeatureCardProps) => (
+  <Box width="25%" padding={2}>
+    <div
+      className={css`
+        ${showBorder ? 'border-right: 1px solid rgba(204, 204, 220, 0.15);' : ''}
+        height: 100%;
+      `}
+    >
+      <Stack direction="column" gap={2}>
+        {icon}
+        <Text variant="h3">{title}</Text>
+        <Text variant="body">{description}</Text>
+        {action && <Box>{action}</Box>}
+      </Stack>
+    </div>
+  </Box>
+);
+
+interface FeaturesListProps {
+  hasPublicAccess: boolean;
+  hasImageRenderer: boolean;
+  hasRequiredFeatures: boolean;
+  onMigrate: () => void;
+  onConnect: () => void;
+  onSetupFeatures: () => void;
+}
+
+const FeaturesList = ({
+  hasPublicAccess,
+  hasImageRenderer,
+  hasRequiredFeatures,
+  onMigrate,
+  onConnect,
+  onSetupFeatures,
+}: FeaturesListProps) => (
+  <Stack direction="column" gap={2}>
+    <Text variant="h2">Provisioning as-code directly from Grafana</Text>
+    <FeatureItem>
+      Manage your dashboards as code and deploy them automatically from your GitHub repository or local storage
+    </FeatureItem>
+    <FeatureItem>
+      Review, discuss, and approve dashboard changes with your team before they go live using GitHub pull requests
+    </FeatureItem>
+    <FeatureItem>
+      Export your existing dashboards as code and store them in GitHub repositories for version control and
+      collaboration
+    </FeatureItem>
+    {hasPublicAccess && (
+      <FeatureItem>
+        Automatically provision and update your dashboards as soon as changes are pushed to your GitHub repository
+      </FeatureItem>
+    )}
+    {hasImageRenderer && hasPublicAccess && (
+      <FeatureItem>Visual previews in pull requests to review your changes before going live</FeatureItem>
+    )}
+
+    <LinkButton fill="text" href="#" icon="external-link-alt">
+      Learn more
+    </LinkButton>
+
+    {hasRequiredFeatures ? (
+      <>
+        <Stack direction="row" alignItems="center" gap={2}>
+          <Button size="md" icon="plus" onClick={onMigrate}>
+            Migrate Grafana to repository
+          </Button>
+          <Text variant="body">or</Text>
+          <LinkButton fill="outline" icon="plus" onClick={onConnect}>
+            Connect Grafana to repository
+          </LinkButton>
+        </Stack>
+      </>
+    ) : (
+      <Box>
+        <LinkButton fill="outline" onClick={onSetupFeatures}>
+          Set up required features
+        </LinkButton>
+      </Box>
+    )}
+  </Stack>
+);
+
+interface EnhancedFeaturesProps {
+  hasPublicAccess: boolean;
+  hasImageRenderer: boolean;
+  onSetupPublicAccess: () => void;
+}
+
+const EnhancedFeatures = ({ hasPublicAccess, hasImageRenderer, onSetupPublicAccess }: EnhancedFeaturesProps) => (
+  <Box marginTop={2}>
+    <Text variant="h2">Unlock enhanced functionality for GitHub</Text>
+    <Box marginTop={4}>
+      <Stack direction="row" gap={2}>
+        <FeatureCard
+          title="Instantenous provisioning"
+          description="Automatically provision and update your dashboards as soon as changes are pushed to your GitHub repository"
+          icon={<IconCircle icon="sync" color="primary" background="rgba(24, 121, 219, 0.12)" />}
+          action={
+            !hasPublicAccess && (
+              <LinkButton fill="outline" onClick={onSetupPublicAccess}>
+                Set up public access
+              </LinkButton>
+            )
+          }
+          showBorder
+        />
+        <FeatureCard
+          title="Visual previews in pull requests"
+          description="Review how your changes look like before going live in Grafana and directly in pull requests"
+          icon={
+            <Stack direction="row" gap={2}>
+              <IconCircle icon="camera" color="orange" background="rgba(255, 120, 10, 0.12)" />
+              <IconCircle icon="code-branch" color="purple" background="rgba(135, 73, 237, 0.12)" />
+            </Stack>
+          }
+          action={
+            !hasImageRenderer && (
+              <LinkButton
+                fill="outline"
+                href="https://grafana.com/grafana/plugins/grafana-image-renderer/"
+                icon="external-link-alt"
+              >
+                Set up image rendering
+              </LinkButton>
+            )
+          }
+        />
+      </Stack>
+    </Box>
+  </Box>
 );
 
 export default function GettingStarted() {
@@ -87,77 +246,23 @@ export default function GettingStarted() {
       )}
       <Stack direction="row" gap={2}>
         <Box width="50%" marginTop={2} paddingTop={2} paddingBottom={2}>
-          <Stack direction="column" gap={2}>
-            <Stack direction="column" gap={2}>
-              <Text variant="h2">Provisioning as-code directly from Grafana</Text>
-              <FeatureItem>
-                Manage your dashboards as code and deploy them automatically from your GitHub repository or local
-                storage
-              </FeatureItem>
-              <FeatureItem>
-                Review, discuss, and approve dashboard changes with your team before they go live using GitHub pull
-                requests
-              </FeatureItem>
-              <FeatureItem>
-                Export your existing dashboards as code and store them in GitHub repositories for version control and
-                collaboration
-              </FeatureItem>
-              {hasPublicAccess && (
-                <FeatureItem>
-                  Automatically provision and update your dashboards as soon as changes are pushed to your GitHub
-                  repository
-                </FeatureItem>
-              )}
-              {hasImageRenderer && hasPublicAccess && (
-                <FeatureItem>Visual previews in pull requests to review your changes before going live</FeatureItem>
-              )}
-
-              <LinkButton fill="text" href="#" icon="external-link-alt">
-                Learn more
-              </LinkButton>
-            </Stack>
-            <Stack direction="column" gap={2}>
-              {hasRequiredFeatures ? (
-                <>
-                  <Stack direction="row" alignItems="center" gap={2}>
-                    <Button
-                      size="md"
-                      icon="plus"
-                      onClick={async () => {
-                        await settingsQuery.refetch();
-                        navigate(MIGRATE_URL);
-                      }}
-                    >
-                      Migrate Grafana to repository
-                    </Button>
-                    <Text variant="body">or</Text>
-                    <LinkButton
-                      fill="outline"
-                      icon="plus"
-                      onClick={async () => {
-                        await settingsQuery.refetch();
-                        navigate(CONNECT_URL);
-                      }}
-                    >
-                      Connect Grafana to repository
-                    </LinkButton>
-                  </Stack>
-                </>
-              ) : (
-                <Box>
-                  <LinkButton
-                    fill="outline"
-                    onClick={() => {
-                      setSetupType('required-features');
-                      setShowModal(true);
-                    }}
-                  >
-                    Set up required features
-                  </LinkButton>
-                </Box>
-              )}
-            </Stack>
-          </Stack>
+          <FeaturesList
+            hasPublicAccess={hasPublicAccess}
+            hasImageRenderer={hasImageRenderer}
+            hasRequiredFeatures={hasRequiredFeatures}
+            onMigrate={async () => {
+              await settingsQuery.refetch();
+              navigate(MIGRATE_URL);
+            }}
+            onConnect={async () => {
+              await settingsQuery.refetch();
+              navigate(CONNECT_URL);
+            }}
+            onSetupFeatures={() => {
+              setSetupType('required-features');
+              setShowModal(true);
+            }}
+          />
         </Box>
         <Box width="50%">
           <div
@@ -176,92 +281,14 @@ export default function GettingStarted() {
         </Box>
       </Stack>
       {(!hasPublicAccess || !hasImageRenderer) && (
-        <Box marginTop={2}>
-          <Text variant="h2">Unlock enhanced functionality for GitHub</Text>
-          <Box marginTop={4}>
-            <Stack direction="row" gap={2}>
-              <Box width="25%" padding={2}>
-                <div
-                  className={css`
-                    border-right: 1px solid rgba(204, 204, 220, 0.15);
-                  `}
-                >
-                  <Stack direction="column" gap={2}>
-                    <div
-                      className={css`
-                        background: rgba(24, 121, 219, 0.12);
-                        border-radius: 50%;
-                        padding: 16px;
-                        width: fit-content;
-                      `}
-                    >
-                      <Icon name="sync" size="xxl" color="primary" />
-                    </div>
-                    <Text variant="h3">Instantenous provisioning</Text>
-                    <Text variant="body">
-                      Automatically provision and update your dashboards as soon as changes are pushed to your GitHub
-                      repository
-                    </Text>
-                    {!hasPublicAccess && (
-                      <Box>
-                        <LinkButton
-                          fill="outline"
-                          onClick={() => {
-                            setSetupType('public-access');
-                            setShowModal(true);
-                          }}
-                        >
-                          Set up public access
-                        </LinkButton>
-                      </Box>
-                    )}
-                  </Stack>
-                </div>
-              </Box>
-              <Box width="25%" padding={4}>
-                <Stack direction="column" gap={2}>
-                  <Stack direction="row" gap={2}>
-                    <div
-                      className={css`
-                        background: rgba(255, 120, 10, 0.12);
-                        border-radius: 50%;
-                        padding: 16px;
-                        width: fit-content;
-                      `}
-                    >
-                      <Icon name="camera" size="xxl" color="orange" />
-                    </div>
-                    <div
-                      className={css`
-                        background: rgba(135, 73, 237, 0.12);
-                        border-radius: 50%;
-                        padding: 16px;
-                        width: fit-content;
-                      `}
-                    >
-                      <Icon name="code-branch" size="xxl" color="purple" />
-                    </div>
-                  </Stack>
-                  <Text variant="h3">Visual previews in pull requests</Text>
-                  <Text variant="body">
-                    Review how your changes look like before going live in Grafana and directly in pull requests
-                  </Text>
-                  {hasImageRenderer && (
-                    <Box>
-                      <LinkButton
-                        fill="outline"
-                        href="https://grafana.com/grafana/plugins/grafana-image-renderer/"
-                        icon="external-link-alt"
-                      >
-                        Set up image rendering
-                      </LinkButton>
-                    </Box>
-                  )}
-                </Stack>
-              </Box>
-            </Stack>
-          </Box>
-        </Box>
+        <EnhancedFeatures
+          hasPublicAccess={hasPublicAccess}
+          hasImageRenderer={hasImageRenderer}
+          onSetupPublicAccess={() => {
+            setSetupType('public-access');
+            setShowModal(true);
+          }}
+        />
       )}
       {showInstructionsModal && setupType && (
         <SetupModal {...getModalContent()} isOpen={showInstructionsModal} onDismiss={() => setShowModal(false)} />
