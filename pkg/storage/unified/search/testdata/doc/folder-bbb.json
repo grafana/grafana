@@ -8,7 +8,7 @@
     "creationTimestamp": "2024-11-01T19:42:22Z",
     "annotations": {
       "grafana.app/createdBy": "user:1",
-      "grafana.app/originName": "SQL"
+      "grafana.app/repoName": "MyGIT"
     }
   },
   "spec": {
