@@ -1117,14 +1117,6 @@
   },
   {
     "type": "label",
-    "name": "area/editor",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/grafana/grafana/projects/21"
-    }
-  },
-  {
-    "type": "label",
     "name": "area/data/export",
     "action": "addToProject",
     "addToProject": {
