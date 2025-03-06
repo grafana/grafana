@@ -35,7 +35,7 @@ import { fetchRulerRulesAction, rulesInSameGroupHaveInvalidFor } from '../../sta
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { stringifyErrorLike } from '../../utils/misc';
-import { AlertInfo, getAlertInfo, isGrafanaOrDataSourceRecordingRule } from '../../utils/rules';
+import { AlertInfo, getAlertInfo, rulerRuleType } from '../../utils/rules';
 import { formatPrometheusDuration, parsePrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
@@ -310,9 +310,7 @@ export function EditRuleGroupModalForm(props: ModalFormProps): React.ReactElemen
     notifyApp.error('There are errors in the form. Correct the errors and retry.');
   };
 
-  const rulesWithoutRecordingRules = compact(
-    ruleGroup?.rules.filter((rule) => !isGrafanaOrDataSourceRecordingRule(rule))
-  );
+  const rulesWithoutRecordingRules = compact(ruleGroup?.rules.filter((rule) => !rulerRuleType.any.recordingRule(rule)));
   const hasSomeNoRecordingRules = rulesWithoutRecordingRules.length > 0;
 
   return (

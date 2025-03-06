@@ -6,19 +6,19 @@ import { Controller, FormProvider, RegisterOptions, useForm, useFormContext } fr
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
-  Box,
-  Button,
-  Field,
-  Icon,
-  Input,
-  Label,
-  Modal,
-  Select,
-  Stack,
-  Switch,
-  Text,
-  Tooltip,
-  useStyles2,
+    Box,
+    Button,
+    Field,
+    Icon,
+    Input,
+    Label,
+    Modal,
+    Select,
+    Stack,
+    Switch,
+    Text,
+    Tooltip,
+    useStyles2,
 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
@@ -28,10 +28,10 @@ import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
 import { RuleFormValues } from '../../types/rule-form';
 import {
-  isGrafanaAlertingRuleByType,
-  isGrafanaManagedRuleByType,
-  isGrafanaRecordingRuleByType,
-  isGrafanaRulerRule,
+    isGrafanaAlertingRuleByType,
+    isGrafanaManagedRuleByType,
+    isGrafanaRecordingRuleByType,
+    rulerRuleType,
 } from '../../utils/rules';
 import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
@@ -82,7 +82,9 @@ const namespaceToGroupOptions = (rulerNamespace: RulerRulesConfigDTO, enableProv
 };
 
 const isProvisionedGroup = (group: RulerRuleGroupDTO) => {
-  return group.rules.some((rule) => isGrafanaRulerRule(rule) && Boolean(rule.grafana_alert.provenance) === true);
+  return group.rules.some(
+    (rule) => rulerRuleType.grafanaManaged.rule(rule) && Boolean(rule.grafana_alert.provenance) === true
+  );
 };
 
 const sortByLabel = (a: SelectableValue<string>, b: SelectableValue<string>) => {

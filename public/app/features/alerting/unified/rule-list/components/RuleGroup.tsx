@@ -7,7 +7,8 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { usePagination } from '../../hooks/usePagination';
-import { isAlertingRule } from '../../utils/rules';
+import { Annotation } from '../../utils/constants';
+import { prometheusRuleType } from '../../utils/rules';
 
 import { AlertRuleListItem } from './AlertRuleListItem';
 import { EvaluationGroup } from './EvaluationGroup';
@@ -65,7 +66,7 @@ export const EvaluationGroupLoader = ({
                 state={PromAlertingRuleState.Inactive}
                 name={rule.name}
                 href={'/'}
-                summary={isAlertingRule(rule) ? rule.annotations?.summary : undefined}
+                summary={prometheusRuleType.alertingRule(rule) ? rule.annotations?.[Annotation.summary] : undefined}
               />;
 
               return null;
