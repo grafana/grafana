@@ -799,6 +799,42 @@ func TestService_Check(t *testing.T) {
 			})
 		}
 	})
+
+	testCases = []testCase{
+		{
+			name: "should allow rendering with permission",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "render:0",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			expected: true,
+		},
+		{
+			name: "should deny rendering access to another app resources",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "render:0",
+				Group:     "another.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			expected:  false,
+			expectErr: true,
+		},
+	}
+	t.Run("Rendering permission check", func(t *testing.T) {
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				s := setupService()
+				runTestCase(t, tc, s)
+			})
+		}
+	})
 }
 
 func setupService() *Service {
