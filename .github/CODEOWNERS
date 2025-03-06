@@ -500,7 +500,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/dimensions/ @grafana/dataviz-squad
 /public/app/features/dataframe-import/ @grafana/dataviz-squad
 /public/app/features/explore/ @grafana/observability-traces-and-profiling
-/public/app/features/expressions/ @grafana/observability-metrics
+/public/app/features/expressions/ @grafana/grafana-datasources-core-services
 /public/app/features/folders/ @grafana/grafana-frontend-platform
 /public/app/features/iam/ @grafana/grafana-frontend-platform
 /public/app/features/inspector/ @grafana/dashboards-squad
