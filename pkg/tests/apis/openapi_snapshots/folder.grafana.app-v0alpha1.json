@@ -211,7 +211,17 @@
         ],
         "requestBody": {
           "content": {
-            "*/*": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.folder.v0alpha1.Folder"
+              }
+            },
+            "application/vnd.kubernetes.protobuf": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.folder.v0alpha1.Folder"
+              }
+            },
+            "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.folder.v0alpha1.Folder"
               }
@@ -413,15 +423,6 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "*/*": {
-              "schema": {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.DeleteOptions"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "OK",
@@ -546,7 +547,17 @@
         ],
         "requestBody": {
           "content": {
-            "*/*": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.folder.v0alpha1.Folder"
+              }
+            },
+            "application/vnd.kubernetes.protobuf": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.folder.v0alpha1.Folder"
+              }
+            },
+            "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.folder.v0alpha1.Folder"
               }
@@ -656,15 +667,6 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "*/*": {
-              "schema": {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.DeleteOptions"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "OK",
