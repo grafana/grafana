@@ -2,21 +2,21 @@
 import _, { startsWith } from 'lodash';
 
 import { ScopedVars } from '@grafana/data';
-import { getTemplateSrv, DataSourceWithBackend, TemplateSrv, VariableInterpolation } from '@grafana/runtime';
+import { getTemplateSrv, DataSourceWithBackend, TemplateSrv } from '@grafana/runtime';
 
 import { resourceTypes } from '../azureMetadata';
 import {
   AzureMonitorQuery,
   AzureMonitorDataSourceJsonData,
   AzureQueryType,
-  AzureResourceGraphOptions,
   RawAzureResourceGroupItem,
-  AzureGraphResponse,
-  AzureMonitorDataSourceInstanceSettings,
   AzureGetResourceNamesQuery,
+  AzureMonitorDataSourceInstanceSettings,
   RawAzureResourceItem,
+  AzureGraphResponse,
+  AzureResourceGraphOptions,
 } from '../types';
-import { interpolateVariable, routeNames } from '../utils/common';
+import { interpolateVariable, replaceTemplateVariables, routeNames } from '../utils/common';
 
 export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
   AzureMonitorQuery,
@@ -63,46 +63,6 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
         query,
       },
     };
-  }
-
-  private replaceTemplateVariables<T extends { [K in keyof T]: string }>(query: T, scopedVars?: ScopedVars) {
-    const workingQueries: Array<{ [K in keyof T]: string }> = [{ ...query }];
-    const keys = Object.keys(query) as Array<keyof T>;
-    keys.forEach((key) => {
-      const rawValue = workingQueries[0][key];
-      let interpolated: VariableInterpolation[] = [];
-      const replaced = this.templateSrv.replace(rawValue, scopedVars, 'raw', interpolated);
-      if (interpolated.length > 0) {
-        for (const variable of interpolated) {
-          if (variable.found === false) {
-            continue;
-          }
-          if (variable.value.includes(',')) {
-            const multiple = variable.value.split(',');
-            const currentQueries = [...workingQueries];
-            multiple.forEach((value, i) => {
-              currentQueries.forEach((q) => {
-                if (i === 0) {
-                  q[key] = rawValue.replace(variable.match, value);
-                } else {
-                  workingQueries.push({ ...q, [key]: rawValue.replace(variable.match, value) });
-                }
-              });
-            });
-          } else {
-            workingQueries.forEach((q) => {
-              q[key] = replaced;
-            });
-          }
-        }
-      } else {
-        workingQueries.forEach((q) => {
-          q[key] = replaced;
-        });
-      }
-    });
-
-    return workingQueries;
   }
 
   async pagedResourceGraphRequest<T = unknown>(query: string, maxRetries = 1): Promise<T[]> {
@@ -163,7 +123,7 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
   }
 
   async getResourceNames(query: AzureGetResourceNamesQuery) {
-    const promises = this.replaceTemplateVariables(query).map(
+    const promises = replaceTemplateVariables(this.templateSrv, query).map(
       async ({ metricNamespace, subscriptionId, resourceGroup, region }) => {
         const validMetricNamespace = startsWith(metricNamespace?.toLowerCase(), 'microsoft.storage/storageaccounts/')
           ? 'microsoft.storage/storageaccounts'
@@ -209,13 +169,14 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
 
   // Retrieve metric namespaces relevant to a subscription/resource group/resource
   async getMetricNamespaces(resourceUri: string) {
-    const promises = this.replaceTemplateVariables({ resourceUri }).map(async ({ resourceUri }) => {
+    const promises = replaceTemplateVariables(this.templateSrv, { resourceUri }).map(async ({ resourceUri }) => {
       const namespacesFilter = resourceTypes.map((type) => `"${type}"`).join(',');
       const query = `
         resources
         | where id hasprefix "${resourceUri}"
         | where type in (${namespacesFilter})
         | project type
+        | distinct type
         | order by tolower(type) asc`;
 
       const namespaces = await this.pagedResourceGraphRequest<RawAzureResourceItem>(query);

@@ -47,8 +47,8 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
   ) {
     super(instanceSettings);
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings);
-    this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
     this.azureResourceGraphDatasource = new AzureResourceGraphDatasource(instanceSettings);
+    this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
     this.resourcePickerData = new ResourcePickerData(instanceSettings, this.azureMonitorDatasource);
 
     this.pseudoDatasource = {
@@ -182,6 +182,10 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     if (resourceUri) {
       url = resourceUri;
     }
+
+    // For variable queries it's more efficient to use resource graph
+    // Using resource graph allows us to return namespaces irrespective of a users permissions
+    // This also ensure the returned namespaces are filtered to the selected resource group when specified
     if (variableQuery) {
       return this.azureResourceGraphDatasource.getMetricNamespaces(url);
     }
