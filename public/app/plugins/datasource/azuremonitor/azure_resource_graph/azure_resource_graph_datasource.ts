@@ -64,7 +64,7 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
     };
   }
 
-  async pagedResourceGraphRequest<T = unknown>(query: string, maxRetries = 1): Promise<T[]> {
+  async pagedResourceGraphRequest<T>(query: string, maxRetries = 1): Promise<T[]> {
     try {
       let allFetched = false;
       let $skipToken = undefined;
