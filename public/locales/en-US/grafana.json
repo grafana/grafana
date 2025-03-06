@@ -1214,7 +1214,18 @@
     },
     "rows-layout": {
       "description": "Rows layout",
+      "item-name": "Row",
       "name": "Rows",
+      "option": {
+        "height": "Height",
+        "hide-header": "Hide row header",
+        "repeat": "Repeat for",
+        "title": "Title"
+      },
+      "options": {
+        "height-expand": "Expand",
+        "height-min": "Min"
+      },
       "row": {
         "collapse": "Collapse row",
         "expand": "Expand row",
@@ -1234,15 +1245,6 @@
         }
       },
       "row-options": {
-        "height": {
-          "hide-row-header": "Hide row header"
-        },
-        "repeat": {
-          "variable": {
-            "title": "Repeat for"
-          }
-        },
-        "title": "Row",
         "title-option": "Title"
       }
     },
