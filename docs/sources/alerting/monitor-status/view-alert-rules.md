@@ -5,7 +5,7 @@ aliases:
   - ../../alerting/alerting-rules/rule-list/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/rule-list
   - ../../alerting/manage-notifications/view-alert-rules/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/view-alert-rules/
 canonical: https://grafana.com/docs/grafana/latest/alerting/monitor-status/view-alert-rules/
-description: View alert rules, and compare their versions.
+description: View alert rules, compare their versions, and restore previous alert rules.
 keywords:
   - grafana
   - alerting
