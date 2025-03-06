@@ -21,7 +21,7 @@ jobs:
   call-backend-tests:
     # Run this workflow for non-PR events (like pushes to `main`) OR for internal PRs (PRs not from forks)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
-    uses: ./.github/workflows/pr-backend-unit-tests-reusable.yml
+    uses: ./.github/workflows/backend-unit-tests.yml
     with:
       wire-tags: 'enterprise'
     secrets:

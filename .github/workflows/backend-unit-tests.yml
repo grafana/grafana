@@ -1,4 +1,11 @@
-name: Backend Unit Tests Reusable Workflow
+name: Backend Unit Tests Shared Workflow
+description: >
+  This reusable workflow runs backend unit tests for Grafana.
+  It can be configured to run with either OSS or Enterprise wire tags.
+  The workflow handles Go code generation, running unit tests,
+  and processing/uploading test coverage to Codecov.
+  It's used by both the OSS and Enterprise workflows, with the appropriate
+  wire-tags parameter passed in based on the PR source.
 
 on:
   workflow_call:
