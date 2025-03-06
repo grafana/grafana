@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { PropsWithChildren } from 'react';
 
 import { DataQueryRequest, dateTime, LoadingState, PanelData, toDataFrame } from '@grafana/data';
+import { setPluginComponentsHook } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 
@@ -33,6 +34,8 @@ function makePretendRequest(requestId: string, subRequests?: DataQueryRequest[])
     // subRequests,
   } as DataQueryRequest;
 }
+
+setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 
 describe('filterPanelDataToQuery', () => {
   const data: PanelData = {
