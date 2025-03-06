@@ -5,22 +5,19 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/org"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
 
-var _ authorizer.Authorizer = &orgRoleAuthorizer{}
+var _ authorizer.Authorizer = &roleAuthorizer{}
 
-type orgRoleAuthorizer struct {
-	log log.Logger
+type roleAuthorizer struct{}
+
+func newRoleAuthorizer() *roleAuthorizer {
+	return &roleAuthorizer{}
 }
 
-func newOrgRoleAuthorizer(orgService org.Service) *orgRoleAuthorizer {
-	return &orgRoleAuthorizer{log: log.New("grafana-apiserver.authorizer.orgrole")}
-}
-
-func (auth orgRoleAuthorizer) Authorize(ctx context.Context, a authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
+func (auth roleAuthorizer) Authorize(ctx context.Context, a authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
 	signedInUser, err := identity.GetRequester(ctx)
 	if err != nil {
 		return authorizer.DecisionDeny, fmt.Sprintf("error getting signed in user: %v", err), nil
