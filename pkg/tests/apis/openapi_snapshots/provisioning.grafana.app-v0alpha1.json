@@ -3171,22 +3171,14 @@
         ],
         "properties": {
           "action": {
-            "description": "Possible enum values:\n - `\"export\"` Export from grafana into the remote repository\n - `\"migrate\"` Migration task -- this will migrate an full instance from SQL \u003e Git\n - `\"pr\"` Update a pull request -- send preview images, links etc\n - `\"sync\"` Sync the remote branch with the grafana instance",
+            "description": "Possible enum values:\n - `\"migrate\"` Migration task -- this will migrate an full instance from SQL \u003e Git\n - `\"pr\"` Process a pull request -- apply comments with preview images, links etc\n - `\"pull\"` Sync the remote branch with the grafana instance\n - `\"push\"` Export from grafana into the remote repository",
             "type": "string",
             "default": "",
             "enum": [
-              "export",
               "migrate",
               "pr",
-              "sync"
-            ]
-          },
-          "export": {
-            "description": "Required when the action is `export`",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportJobOptions"
-              }
+              "pull",
+              "push"
             ]
           },
           "migrate": {
@@ -3205,18 +3197,26 @@
               }
             ]
           },
-          "repository": {
-            "description": "The the repository reference (for now also in labels)",
-            "type": "string",
-            "default": ""
-          },
-          "sync": {
-            "description": "Required when the action is `sync`",
+          "pull": {
+            "description": "Required when the action is `pull`",
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncJobOptions"
               }
             ]
+          },
+          "push": {
+            "description": "Required when the action is `push`",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportJobOptions"
+              }
+            ]
+          },
+          "repository": {
+            "description": "The the repository reference (for now also in labels)",
+            "type": "string",
+            "default": ""
           }
         }
       },
@@ -3776,6 +3776,41 @@
           }
         }
       },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceRepositoryInfo": {
+        "type": "object",
+        "required": [
+          "type",
+          "title",
+          "namespace",
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "description": "The name (identifier)",
+            "type": "string",
+            "default": ""
+          },
+          "namespace": {
+            "description": "The namespace this belongs to",
+            "type": "string",
+            "default": ""
+          },
+          "title": {
+            "description": "The display name for this repository",
+            "type": "string",
+            "default": ""
+          },
+          "type": {
+            "description": "The repository type\n\nPossible enum values:\n - `\"github\"`\n - `\"local\"`",
+            "type": "string",
+            "default": "",
+            "enum": [
+              "github",
+              "local"
+            ]
+          }
+        }
+      },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceStats": {
         "description": "Information we can get just from the file listing",
         "type": "object",
@@ -3831,10 +3866,32 @@
           }
         }
       },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceURLs": {
+        "type": "object",
+        "properties": {
+          "compareURL": {
+            "description": "Compare this version to the target branch",
+            "type": "string"
+          },
+          "newPullRequestURL": {
+            "description": "A URL that will create a new pull requeset for this branch",
+            "type": "string"
+          },
+          "repositoryURL": {
+            "description": "A URL pointing to the repository this lives in",
+            "type": "string"
+          },
+          "sourceURL": {
+            "description": "A URL pointing to the this file in the repository",
+            "type": "string"
+          }
+        }
+      },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceWrapper": {
         "description": "This is a container type for any resource type",
         "type": "object",
         "required": [
+          "repository",
           "resource"
         ],
         "properties": {
@@ -3864,8 +3921,17 @@
             "type": "string"
           },
           "ref": {
-            "description": "The commit hash (if exists)",
+            "description": "The request ref (or branch if exists)",
             "type": "string"
+          },
+          "repository": {
+            "description": "Basic repository info",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceRepositoryInfo"
+              }
+            ]
           },
           "resource": {
             "description": "Different flavors of the same object",
@@ -3881,6 +3947,14 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Time"
+              }
+            ]
+          },
+          "urls": {
+            "description": "Typed links for this file (only supported by external systems, github etc)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceURLs"
               }
             ]
           }

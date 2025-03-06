@@ -74,7 +74,7 @@ func (c *syncConnector) Connect(
 			Spec: provisioning.JobSpec{
 				Action:     provisioning.JobActionSync,
 				Repository: cfg.Name,
-				Sync:       &options,
+				Pull:       &options,
 			},
 		})
 		if err != nil {
