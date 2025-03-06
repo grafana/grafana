@@ -2,9 +2,9 @@ import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { useStyles2 } from '../../themes';
+import { t } from '../../utils/i18n';
 import { Button, ButtonVariant } from '../Button';
 import { Icon } from '../Icon/Icon';
-import { t } from '../../utils/i18n';
 
 export interface Props {
   /** The current page index being shown. */
