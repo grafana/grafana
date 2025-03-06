@@ -54,7 +54,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'flex-start',
     alignItems: 'center',
     overflowX: 'auto',
-    overflowY: 'visible',
+    overflowY: 'hidden',
     paddingInline: theme.spacing(0.125),
   }),
   tabContentContainer: css({
