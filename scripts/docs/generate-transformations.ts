@@ -118,6 +118,10 @@ When there are multiple transformations, Grafana applies them in the order they 
 
 The order in which Grafana applies transformations directly impacts the results. For example, if you use a Reduce transformation to condense all the results of one column into a single value, then you can only apply transformations to that single value.
 
+## Dashboard variables in transformations
+
+Blah blah
+
 ## Add a transformation function to data
 
 The following steps guide you in adding a transformation to data. This documentation does not include steps for each type of transformation. For a complete list of transformations, refer to [Transformation functions](#transformation-functions).
