@@ -86,61 +86,67 @@ export default function GettingStarted() {
           </div>
         </Box>
       </Stack>
-      <Box padding={2}>
+      <Box>
         <Text variant="h2">Unlock enhanced functionality for Github</Text>
-        <Stack direction="row" gap={2}>
-          <Box width="50%">
-            <Stack direction="column" gap={2}>
-              <Text variant="h3">Automatic provisioning as soon as changes are merged</Text>
-              <div
-                className={css`
-                  background: rgba(24, 121, 219, 0.12);
-                  border-radius: 50%;
-                  padding: 16px;
-                  width: fit-content;
-                `}
-              >
-                <Icon name="sync" size="xxl" color="primary" />
-              </div>
-              <Text variant="body">
-                Automatically provision and update your dashboards as soon as changes are pushed to your GitHub
-                repository
-              </Text>
-              <Button variant="secondary">Setup Public Access</Button>
-            </Stack>
-          </Box>
-          <Box width="50%">
-            <Stack direction="column" gap={2}>
-              <Text variant="h3">Visual Previews in Pull Requests</Text>
-              <Stack direction="row" gap={2}>
+        <Box marginTop={4}>
+          <Stack direction="row" gap={2}>
+            <Box width="25%" padding={4}>
+              <Stack direction="column" gap={2}>
+                <Text variant="h3">Instantenous provisioning</Text>
                 <div
                   className={css`
-                    background: rgba(255, 120, 10, 0.12);
+                    background: rgba(24, 121, 219, 0.12);
                     border-radius: 50%;
                     padding: 16px;
                     width: fit-content;
                   `}
                 >
-                  <Icon name="camera" size="xxl" color="orange" />
+                  <Icon name="sync" size="xxl" color="primary" />
                 </div>
-                <div
-                  className={css`
-                    background: rgba(135, 73, 237, 0.12);
-                    border-radius: 50%;
-                    padding: 16px;
-                    width: fit-content;
-                  `}
-                >
-                  <Icon name="github" size="xxl" color="purple" />
-                </div>
+                <Text variant="body">
+                  Automatically provision and update your dashboards as soon as changes are pushed to your GitHub
+                  repository
+                </Text>
+                <Box>
+                  <Button variant="secondary">Setup Public Access</Button>
+                </Box>
               </Stack>
-              <Text variant="body">
-                Review how your changes look like before going live in Grafana and directly in Pull Requests
-              </Text>
-              <Button variant="secondary">Setup Image Rendering</Button>
-            </Stack>
-          </Box>
-        </Stack>
+            </Box>
+            <Box width="25%" padding={4}>
+              <Stack direction="column" gap={2}>
+                <Text variant="h3">Visual Previews in Pull Requests</Text>
+                <Stack direction="row" gap={2}>
+                  <div
+                    className={css`
+                      background: rgba(255, 120, 10, 0.12);
+                      border-radius: 50%;
+                      padding: 16px;
+                      width: fit-content;
+                    `}
+                  >
+                    <Icon name="camera" size="xxl" color="orange" />
+                  </div>
+                  <div
+                    className={css`
+                      background: rgba(135, 73, 237, 0.12);
+                      border-radius: 50%;
+                      padding: 16px;
+                      width: fit-content;
+                    `}
+                  >
+                    <Icon name="github" size="xxl" color="purple" />
+                  </div>
+                </Stack>
+                <Text variant="body">
+                  Review how your changes look like before going live in Grafana and directly in Pull Requests
+                </Text>
+                <Box>
+                  <Button variant="secondary">Setup Image Rendering</Button>
+                </Box>
+              </Stack>
+            </Box>
+          </Stack>
+        </Box>
       </Box>
     </>
   );
