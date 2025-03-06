@@ -96,7 +96,7 @@ describe('gets correct tags', () => {
 
   it('for all tags', () => {
     const tags = getAllTags(v2Tags);
-    expect(tags).toEqual(['cluster', 'container', 'db', 'duration', 'kind', 'name', 'status']);
+    expect(tags).toEqual(uniq(['cluster', 'container', 'db', 'duration', 'kind', 'name', 'status'].concat(intrinsics)));
   });
 
   it('for tags by resource scope', () => {
@@ -111,7 +111,7 @@ describe('gets correct tags', () => {
 
   it('for intrinsic tags', () => {
     const tags = getIntrinsicTags(v2Tags);
-    expect(tags).toEqual(uniq(testIntrinsics.concat(intrinsics)));
+    expect(tags).toEqual(testIntrinsics);
   });
 });
 
@@ -186,7 +186,7 @@ describe('filterToQuerySection returns the correct query section for a filter', 
 });
 
 export const emptyTags = [];
-export const testIntrinsics = ['duration', 'kind', 'name', 'status'];
+export const testIntrinsics = uniq(['duration', 'kind', 'name', 'status'].concat(intrinsics));
 export const v1Tags = ['bar', 'foo'];
 export const v2Tags = [
   {
