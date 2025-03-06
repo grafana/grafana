@@ -441,6 +441,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			}
 			return AddOrUpdateTeamMemberHook(sess, userIds[2], orgID, teamId, false, 0)
 		})
+		require.NoError(t, err, "failed seeing team memberships")
 
 		searchQuery := &team.SearchTeamsQuery{OrgID: orgID, Page: 1, Limit: 10, SignedInUser: ctx.TestUser, HiddenUsers: hiddenUsers}
 		searchQueryResult, err := ctx.TeamSvc.SearchTeams(ctx, searchQuery)
