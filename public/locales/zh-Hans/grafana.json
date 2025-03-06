@@ -1075,8 +1075,7 @@
           "title": ""
         },
         "multi-select": {
-          "options-header": "",
-          "selection-number": ""
+          "title": ""
         }
       }
     },
@@ -1210,6 +1209,15 @@
       "row": {
         "collapse": "",
         "expand": "",
+        "menu": {
+          "add": "",
+          "add-panel": "",
+          "add-row-above": "",
+          "add-row-below": "",
+          "move-down": "",
+          "move-row": "",
+          "move-up": ""
+        },
         "new": "",
         "repeat": {
           "learn-more": "",
@@ -1218,13 +1226,9 @@
       },
       "row-options": {
         "height": {
-          "expand": "",
-          "hide-row-header": "",
-          "min": "",
-          "title": ""
+          "hide-row-header": ""
         },
         "repeat": {
-          "title": "",
           "variable": {
             "title": ""
           }
