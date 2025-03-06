@@ -209,6 +209,8 @@
       "alerting": "",
       "alerting-change-description": "",
       "annotations": "",
+      "compare": "",
+      "compare-with-latest": "",
       "compareVersions": "",
       "comparing-versions": "",
       "condition": "",
@@ -228,17 +230,22 @@
       "provisioning": "",
       "provisioning-change-description": "",
       "queryAndAlertCondition": "",
-      "reset": "",
       "restore": "",
+      "restore-manually": "",
       "restore-modal": {
         "body": "",
+        "confirm": "",
+        "error": "",
         "summary": "",
         "title": ""
       },
+      "restore-version": "",
       "rule_group": "",
       "unknown": "",
       "unknown-change-description": "",
-      "user-id": ""
+      "user-id": "",
+      "warning-restore-manually": "",
+      "warning-restore-manually-title": ""
     },
     "annotations": {
       "description": "",
@@ -314,6 +321,10 @@
       "delivery-duration": "",
       "empty-state": {
         "title": ""
+      },
+      "key-value-map": {
+        "add": "",
+        "confirm-add": ""
       },
       "last-delivery-attempt": "",
       "last-delivery-failed": "",
@@ -1043,35 +1054,37 @@
         },
         "modal": {
           "title": ""
-        }
+        },
+        "repeat": {
+          "title": "",
+          "variable": {
+            "title": ""
+          }
+        },
+        "title": ""
       }
     },
     "edit-pane": {
+      "elements": {
+        "dashboard": "",
+        "objects": "",
+        "panels": "",
+        "rows": "",
+        "tabs": ""
+      },
       "objects": {
         "multi-select": {
           "selection-number": ""
         }
       },
       "open": "",
-      "panels": {
-        "multi-select": {
-          "selection-number": ""
-        }
-      },
       "row": {
         "header": {
           "hide": "",
           "title": ""
         },
         "multi-select": {
-          "options-header": "",
-          "selection-number": ""
-        }
-      },
-      "tab": {
-        "multi-select": {
-          "options-header": "",
-          "selection-number": ""
+          "title": ""
         }
       }
     },
@@ -1146,10 +1159,29 @@
       "rows": "Número total de linhas",
       "table-title": "Estatísticas"
     },
+    "layout": {
+      "common": {
+        "copy": "",
+        "copy-or-duplicate": "",
+        "delete": "",
+        "duplicate": "",
+        "layout": "",
+        "panels-title": ""
+      }
+    },
     "options": {
       "description": "",
       "title": "",
       "title-option": ""
+    },
+    "outline": {
+      "tree": {
+        "item": {
+          "collapse": "",
+          "empty": "",
+          "expand": ""
+        }
+      }
     },
     "panel-edit": {
       "alerting-tab": {
@@ -1161,6 +1193,12 @@
       "description": "",
       "item-options": {
         "hide-no-data": "",
+        "repeat": {
+          "variable": {
+            "description": "",
+            "title": ""
+          }
+        },
         "title": ""
       },
       "name": "",
@@ -1180,6 +1218,15 @@
       "row": {
         "collapse": "",
         "expand": "",
+        "menu": {
+          "add": "",
+          "add-panel": "",
+          "add-row-above": "",
+          "add-row-below": "",
+          "move-down": "",
+          "move-row": "",
+          "move-up": ""
+        },
         "new": "",
         "repeat": {
           "learn-more": "",
@@ -1188,13 +1235,9 @@
       },
       "row-options": {
         "height": {
-          "expand": "",
-          "hide-row-header": "",
-          "min": "",
-          "title": ""
+          "hide-row-header": ""
         },
         "repeat": {
-          "title": "",
           "variable": {
             "title": ""
           }
@@ -1205,8 +1248,23 @@
     },
     "tabs-layout": {
       "description": "",
+      "menu": {
+        "move-tab": ""
+      },
+      "multi-select": {
+        "title": ""
+      },
       "name": "",
       "tab": {
+        "menu": {
+          "add": "",
+          "add-panel": "",
+          "add-tab-above": "",
+          "add-tab-after": "",
+          "add-tab-before": "",
+          "move-left": "",
+          "move-right": ""
+        },
         "new": ""
       },
       "tab-options": {
@@ -1285,6 +1343,8 @@
     "viz-panel": {
       "options": {
         "description": "",
+        "open-edit": "",
+        "plugin-type-image": "",
         "title": "",
         "title-option": "",
         "transparent-background": ""
@@ -2223,6 +2283,14 @@
       "links": "",
       "log-line": "",
       "no-details": ""
+    },
+    "log-line-menu": {
+      "copy-link": "",
+      "copy-log": "",
+      "icon-label": "",
+      "pin-to-outline": "",
+      "show-context": "",
+      "unpin-from-outline": ""
     },
     "log-row-message": {
       "ellipsis": "",

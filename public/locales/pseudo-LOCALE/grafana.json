@@ -1011,7 +1011,7 @@
       "subtitle": "Åľęřŧ řūľęş řęľäŧęđ ŧő ŧĥįş đäşĥþőäřđ"
     },
     "default-layout": {
-      "description": "Ŧĥę đęƒäūľŧ ģřįđ ľäyőūŧ",
+      "description": "Mäŉūäľľy şįžę äŉđ pőşįŧįőŉ päŉęľş",
       "item-options": {
         "repeat": {
           "direction": {
@@ -1027,7 +1027,7 @@
           }
         }
       },
-      "name": "Đęƒäūľŧ ģřįđ",
+      "name": "Cūşŧőm",
       "row-actions": {
         "delete": "Đęľęŧę řőŵ",
         "modal": {
@@ -1078,25 +1078,13 @@
         }
       },
       "open": "Øpęŉ őpŧįőŉş päŉę",
-      "panels": {
-        "multi-select": {
-          "selection-number": "Ńő. őƒ päŉęľş şęľęčŧęđ: {{length}}"
-        }
-      },
       "row": {
         "header": {
           "hide": "Ħįđę",
           "title": "Ŗőŵ ĥęäđęř"
         },
         "multi-select": {
-          "options-header": "Mūľŧį-şęľęčŧęđ Ŗőŵ őpŧįőŉş",
-          "selection-number": "Ńő. őƒ řőŵş şęľęčŧęđ: {{length}}"
-        }
-      },
-      "tab": {
-        "multi-select": {
-          "options-header": "Mūľŧį-şęľęčŧęđ Ŧäþ őpŧįőŉş",
-          "selection-number": "Ńő. őƒ ŧäþş şęľęčŧęđ: "
+          "title": "{{length}} řőŵş şęľęčŧęđ"
         }
       }
     },
@@ -1171,6 +1159,16 @@
       "rows": "Ŧőŧäľ ŉūmþęř řőŵş",
       "table-title": "Ŝŧäŧş"
     },
+    "layout": {
+      "common": {
+        "copy": "Cőpy",
+        "copy-or-duplicate": "Cőpy őř Đūpľįčäŧę",
+        "delete": "Đęľęŧę",
+        "duplicate": "Đūpľįčäŧę",
+        "layout": "Ŀäyőūŧ",
+        "panels-title": "{{length}} päŉęľş şęľęčŧęđ"
+      }
+    },
     "options": {
       "description": "Đęşčřįpŧįőŉ",
       "title": "Đäşĥþőäřđ őpŧįőŉş",
@@ -1192,7 +1190,7 @@
       }
     },
     "responsive-layout": {
-      "description": "CŜŜ ľäyőūŧ ŧĥäŧ äđĵūşŧş ŧő ŧĥę äväįľäþľę şpäčę",
+      "description": "Åūŧőmäŧįčäľľy pőşįŧįőŉş päŉęľş įŉŧő ä ģřįđ.",
       "item-options": {
         "hide-no-data": "Ħįđę ŵĥęŉ ŉő đäŧä",
         "repeat": {
@@ -1203,7 +1201,7 @@
         },
         "title": "Ŀäyőūŧ őpŧįőŉş"
       },
-      "name": "Ŗęşpőŉşįvę ģřįđ",
+      "name": "Åūŧő",
       "options": {
         "columns": "Cőľūmŉş",
         "fixed": "Fįχęđ: {{size}}pχ",
@@ -1216,10 +1214,30 @@
     },
     "rows-layout": {
       "description": "Ŗőŵş ľäyőūŧ",
+      "item-name": "Ŗőŵ",
       "name": "Ŗőŵş",
+      "option": {
+        "height": "Ħęįģĥŧ",
+        "hide-header": "Ħįđę řőŵ ĥęäđęř",
+        "repeat": "Ŗępęäŧ ƒőř",
+        "title": "Ŧįŧľę"
+      },
+      "options": {
+        "height-expand": "Ēχpäŉđ",
+        "height-min": "Mįŉ"
+      },
       "row": {
         "collapse": "Cőľľäpşę řőŵ",
         "expand": "Ēχpäŉđ řőŵ",
+        "menu": {
+          "add": "Åđđ řőŵ",
+          "add-panel": "Päŉęľ",
+          "add-row-above": "Ŗőŵ äþővę",
+          "add-row-below": "Ŗőŵ þęľőŵ",
+          "move-down": "Mővę řőŵ đőŵŉ",
+          "move-row": "Mővę řőŵ",
+          "move-up": "Mővę řőŵ ūp"
+        },
         "new": "Ńęŵ řőŵ",
         "repeat": {
           "learn-more": "Ŀęäřŉ mőřę",
@@ -1227,30 +1245,32 @@
         }
       },
       "row-options": {
-        "height": {
-          "expand": "Ēχpäŉđ",
-          "hide-row-header": "Ħįđę řőŵ ĥęäđęř",
-          "min": "Mįŉ",
-          "title": "Ħęįģĥŧ"
-        },
-        "repeat": {
-          "title": "Ŗępęäŧ őpŧįőŉş",
-          "variable": {
-            "title": "Väřįäþľę"
-          }
-        },
-        "title": "Ŗőŵ őpŧįőŉş",
         "title-option": "Ŧįŧľę"
       }
     },
     "tabs-layout": {
       "description": "Ŧäþş ľäyőūŧ",
+      "menu": {
+        "move-tab": "Mővę ŧäþ"
+      },
+      "multi-select": {
+        "title": "{{length}} ŧäþş şęľęčŧęđ"
+      },
       "name": "Ŧäþş",
       "tab": {
+        "menu": {
+          "add": "Åđđ ŧäþ",
+          "add-panel": "Päŉęľ",
+          "add-tab-above": "Ŧäþ þęƒőřę",
+          "add-tab-after": "Ŧäþ äƒŧęř",
+          "add-tab-before": "Ŧäþ þęƒőřę",
+          "move-left": "Mővę ŧäþ ľęƒŧ",
+          "move-right": "Mővę ŧäþ řįģĥŧ"
+        },
         "new": "Ńęŵ ŧäþ"
       },
       "tab-options": {
-        "title": "Ŧäþ őpŧįőŉş",
+        "title": "Ŧäþ",
         "title-option": "Ŧįŧľę"
       }
     },
@@ -1325,7 +1345,9 @@
     "viz-panel": {
       "options": {
         "description": "Đęşčřįpŧįőŉ",
-        "title": "Päŉęľ őpŧįőŉş",
+        "open-edit": "Øpęŉ Päŉęľ Ēđįŧ",
+        "plugin-type-image": "Ĩmäģę őƒ pľūģįŉ ŧypę",
+        "title": "Päŉęľ",
         "title-option": "Ŧįŧľę",
         "transparent-background": "Ŧřäŉşpäřęŉŧ þäčĸģřőūŉđ"
       }
@@ -3036,7 +3058,7 @@
     },
     "details": {
       "connections-tab": {
-        "description": "Ŧĥę đäŧä şőūřčę čőŉŉęčŧįőŉş þęľőŵ äřę äľľ {{pluginName}}. Ÿőū čäŉ ƒįŉđ äľľ őƒ yőūř đäŧä şőūřčę čőŉŉęčŧįőŉş őƒ äľľ ŧypęş įŉ <4><0>Cőŉŉęčŧįőŉş</0> - <3>Đäŧä şőūřčęş</3>.</4>"
+        "description": "Ÿőū čūřřęŉŧľy ĥävę ŧĥę ƒőľľőŵįŉģ đäŧä şőūřčęş čőŉƒįģūřęđ ƒőř {{pluginName}}, čľįčĸ ä ŧįľę ŧő vįęŵ ŧĥę čőŉƒįģūřäŧįőŉ đęŧäįľş. Ÿőū čäŉ ƒįŉđ äľľ őƒ yőūř đäŧä şőūřčę čőŉŉęčŧįőŉş įŉ <4><0>Cőŉŉęčŧįőŉş</0> - <3>Đäŧä şőūřčęş</3>.</4>"
       },
       "labels": {
         "contactGrafanaLabs": "Cőŉŧäčŧ Ğřäƒäŉä Ŀäþş",
