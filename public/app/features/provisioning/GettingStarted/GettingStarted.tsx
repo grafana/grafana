@@ -81,17 +81,30 @@ export default function GettingStarted() {
           <Box padding={2}>
             <Stack direction="column" gap={2}>
               <Text variant="body">
-                ✔️ Manage your dashboards as code and deploy them automatically from your GitHub repository or local
-                storage
+                <Icon name="check" className="text-success" /> Manage your dashboards as code and deploy them
+                automatically from your GitHub repository or local storage
               </Text>
               <Text variant="body">
-                ✔️ Review, discuss, and approve dashboard changes with your team before they go live using GitHub pull
-                requests
+                <Icon name="check" className="text-success" /> Review, discuss, and approve dashboard changes with your
+                team before they go live using GitHub pull requests
               </Text>
               <Text variant="body">
-                ✔️ Export your existing dashboards as code and store them in GitHub repositories for version control and
-                collaboration
+                <Icon name="check" className="text-success" /> Export your existing dashboards as code and store them in
+                GitHub repositories for version control and collaboration
               </Text>
+              {hasPublicAccess && (
+                <Text variant="body">
+                  <Icon name="check" className="text-success" /> Automatically provision and update your dashboards as
+                  soon as changes are pushed to your GitHub repository
+                </Text>
+              )}
+              {hasImageRenderer && hasPublicAccess && (
+                <Text variant="body">
+                  <Icon name="check" className="text-success" /> Visual previews in pull requests to review your changes
+                  before going live
+                </Text>
+              )}
+
               <LinkButton fill="text" href="#" icon="external-link-alt">
                 Learn more
               </LinkButton>
@@ -157,7 +170,7 @@ export default function GettingStarted() {
           </div>
         </Box>
       </Stack>
-      {!hasPublicAccess && (
+      {(!hasPublicAccess || !hasImageRenderer) && (
         <Box marginTop={2}>
           <Text variant="h2">Unlock enhanced functionality for Github</Text>
           <Box marginTop={4}>
