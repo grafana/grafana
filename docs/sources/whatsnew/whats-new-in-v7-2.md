@@ -32,7 +32,7 @@ The main highlights are:
 - [**New transformations and enhancements**](#new-transformations-and-enhancements)
 - [**Drag to reorder queries**](#drag-to-reorder-queries)
 - [**Inspect queries in Explore**](#inspect-queries-in-explore)
-- [**$__rate_interval for Prometheus**](#__rate_interval-for-prometheus)
+- [**$\_\_rate_interval for Prometheus**](#__rate_interval-for-prometheus)
 - [**Toggle parsed log fields**](#toggle-parsed-log-fields)
 - [**Sensitive alert channel settings are now encrypted**](#sensitive-alert-channel-settings-are-now-encrypted)
 - [**Grafana Enterprise features**](#grafana-enterprise-features)

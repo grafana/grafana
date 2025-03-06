@@ -19,8 +19,8 @@ Grafana provides many ways to authenticate users. Some authentication integratio
 
 The following table shows all supported authentication providers and the features available for them. [Team sync](../configure-team-sync/) and [active sync](enhanced-ldap/#active-ldap-synchronization) are only available in Grafana Enterprise.
 
-| Provider                                            | Multi Org Mapping | Enforce Sync | Role Mapping | Grafana Admin Mapping | Team Sync | Allowed groups | Active Sync | Skip OrgRole mapping | Auto Login | Single Logout |
-| :-------------------------------------------------- | :---------------- | :----------- | :----------- | :-------------------- | :-------- | :------------- | :---------- | :------------------- | :--------- | :------------ |
+| Provider                          | Multi Org Mapping | Enforce Sync | Role Mapping | Grafana Admin Mapping | Team Sync | Allowed groups | Active Sync | Skip OrgRole mapping | Auto Login | Single Logout |
+| :-------------------------------- | :---------------- | :----------- | :----------- | :-------------------- | :-------- | :------------- | :---------- | :------------------- | :--------- | :------------ |
 | [Auth Proxy](auth-proxy/)         | no                | yes          | yes          | no                    | yes       | no             | N/A         | no                   | N/A        | N/A           |
 | [Azure AD OAuth](azuread/)        | no                | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
 | [Generic OAuth](generic-oauth/)   | no                | yes          | yes          | yes                   | yes       | no             | N/A         | yes                  | yes        | yes           |
