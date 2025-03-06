@@ -115,7 +115,9 @@ export function ProvisioningWizard({ requiresMigration }: Props) {
         />
 
         <div className={styles.content}>
-          {activeStep === 'connection' && <ConnectionStep targetSelectable={!requiresMigration} />}
+          {activeStep === 'connection' && (
+            <ConnectionStep targetSelectable={!requiresMigration} generateName={requiresMigration} />
+          )}
           {activeStep === 'repository' && <RepositoryStep onStatusChange={handleStatusChange} />}
           {activeStep === 'migrate' && requiresMigration && <MigrateStep onStatusChange={handleStatusChange} />}
           {activeStep === 'pull' && !requiresMigration && <PullStep onStatusChange={handleStatusChange} />}
