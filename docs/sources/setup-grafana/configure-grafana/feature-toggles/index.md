@@ -13,7 +13,7 @@ weight: 150
 
 You use feature toggles, also known as feature flags, to enable or disable features in Grafana. You can turn on feature toggles to try out new functionality in development or test environments.
 
-This page contains a list of available feature toggles. To learn how to turn on feature toggles, refer to our [Configure Grafana documentation]({{< relref "../_index.md#feature_toggles" >}}). Feature toggles are also available to Grafana Cloud Advanced customers. If you use Grafana Cloud Advanced, you can open a support ticket and specify the feature toggles and stack for which you want them enabled.
+This page contains a list of available feature toggles. To learn how to turn on feature toggles, refer to our [Configure Grafana documentation](../#feature_toggles). Feature toggles are also available to Grafana Cloud Advanced customers. If you use Grafana Cloud Advanced, you can open a support ticket and specify the feature toggles and stack for which you want them enabled.
 
 For more information about feature release stages, refer to [Release life cycle for Grafana Labs](https://grafana.com/docs/release-life-cycle/) and [Manage feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/feature-toggles/#manage-feature-toggles).
 
@@ -28,7 +28,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `featureHighlights`                    | Highlight Grafana Enterprise features                                                                                                                              |                    |
 | `correlations`                         | Correlations page                                                                                                                                                  | Yes                |
 | `cloudWatchCrossAccountQuerying`       | Enables cross-account querying in CloudWatch datasources                                                                                                           | Yes                |
-| `accessControlOnCall`                  | Access control primitives for OnCall                                                                                                                               | Yes                |
 | `nestedFolders`                        | Enable folder nesting                                                                                                                                              | Yes                |
 | `logsContextDatasourceUi`              | Allow datasource to provide custom UI for context view                                                                                                             | Yes                |
 | `lokiQuerySplitting`                   | Split large interval queries into subqueries with smaller time intervals                                                                                           | Yes                |
@@ -118,6 +117,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `improvedExternalSessionHandling`     | Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.                                                           |
 | `elasticsearchCrossClusterSearch`     | Enables cross cluster search in the Elasticsearch datasource                                                                                                                                 |
 | `improvedExternalSessionHandlingSAML` | Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.                                |
+| `alertRuleRestore`                    | Enables the alert rule restore feature                                                                                                                                                       |
 
 ## Experimental feature toggles
 
@@ -131,7 +131,6 @@ Experimental features might be changed or removed without prior notice.
 | `lokiExperimentalStreaming`                 | Support new streaming approach for loki (prototype, needs special loki build)                                                                                                                                                                                                     |
 | `storage`                                   | Configurable storage for dashboards, datasources, and resources                                                                                                                                                                                                                   |
 | `canvasPanelNesting`                        | Allow elements nesting                                                                                                                                                                                                                                                            |
-| `vizActions`                                | Allow actions in visualizations                                                                                                                                                                                                                                                   |
 | `disableSecretsCompatibility`               | Disable duplicated secret storage in legacy tables                                                                                                                                                                                                                                |
 | `logRequestsInstrumentedAsUnknown`          | Logs the path for requests that are instrumented as unknown                                                                                                                                                                                                                       |
 | `showDashboardValidationWarnings`           | Show warnings when dashboards do not validate against the schema                                                                                                                                                                                                                  |
@@ -228,10 +227,11 @@ Experimental features might be changed or removed without prior notice.
 | `datasourceConnectionsTab`                  | Shows defined connections for a data source in the plugins detail page                                                                                                                                                                                                            |
 | `newLogsPanel`                              | Enables the new logs panel in Explore                                                                                                                                                                                                                                             |
 | `pluginsCDNSyncLoader`                      | Load plugins from CDN synchronously                                                                                                                                                                                                                                               |
+| `assetSriChecks`                            | Enables SRI checks for Grafana JavaScript assets                                                                                                                                                                                                                                  |
 
 ## Development feature toggles
 
-The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be experimental.
+The following toggles require explicitly setting Grafana's [app mode](../#app_mode) to 'development' before you can enable this feature toggle. These features tend to be experimental.
 
 | Feature toggle name                    | Description                                                                   |
 | -------------------------------------- | ----------------------------------------------------------------------------- |

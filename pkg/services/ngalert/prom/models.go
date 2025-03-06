@@ -2,6 +2,13 @@ package prom
 
 import (
 	prommodel "github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+)
+
+var (
+	ErrPrometheusRuleValidationFailed      = errutil.ValidationFailed("alerting.prometheusRuleInvalid")
+	ErrPrometheusRuleGroupValidationFailed = errutil.ValidationFailed("alerting.prometheusRuleGroupInvalid")
 )
 
 type PrometheusRulesFile struct {
@@ -9,9 +16,34 @@ type PrometheusRulesFile struct {
 }
 
 type PrometheusRuleGroup struct {
-	Name     string             `yaml:"name"`
-	Interval prommodel.Duration `yaml:"interval"`
-	Rules    []PrometheusRule   `yaml:"rules"`
+	Name        string              `yaml:"name"`
+	Interval    prommodel.Duration  `yaml:"interval"`
+	QueryOffset *prommodel.Duration `yaml:"query_offset,omitempty"`
+	Limit       int                 `yaml:"limit,omitempty"`
+	Rules       []PrometheusRule    `yaml:"rules"`
+	Labels      map[string]string   `yaml:"labels,omitempty"`
+}
+
+func (g *PrometheusRuleGroup) Validate() error {
+	if g.QueryOffset != nil {
+		return ErrPrometheusRuleGroupValidationFailed.Errorf("query_offset is not supported")
+	}
+
+	if g.Limit != 0 {
+		return ErrPrometheusRuleGroupValidationFailed.Errorf("limit is not supported")
+	}
+
+	if len(g.Labels) > 0 {
+		return ErrPrometheusRuleGroupValidationFailed.Errorf("labels are not supported")
+	}
+
+	for _, rule := range g.Rules {
+		if err := rule.Validate(); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 type PrometheusRule struct {
@@ -22,4 +54,12 @@ type PrometheusRule struct {
 	Labels        map[string]string   `yaml:"labels,omitempty"`
 	Annotations   map[string]string   `yaml:"annotations,omitempty"`
 	Record        string              `yaml:"record,omitempty"`
+}
+
+func (r *PrometheusRule) Validate() error {
+	if r.KeepFiringFor != nil {
+		return ErrPrometheusRuleValidationFailed.Errorf("keep_firing_for is not supported")
+	}
+
+	return nil
 }

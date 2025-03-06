@@ -550,6 +550,7 @@ export {
   type PluginExtensionLink,
   type PluginExtensionComponent,
   type PluginExtensionComponentMeta,
+  type ComponentTypeWithExtensionMeta,
   type PluginExtensionConfig,
   type PluginExtensionFunction,
   type PluginExtensionLinkConfig,
@@ -576,6 +577,8 @@ export {
   type ScopeNodeSpec,
   type ScopeNode,
   scopeFilterOperatorMap,
+  reverseScopeFilterOperatorMap,
+  isEqualityOrMultiOperator,
 } from './types/scopes';
 export {
   PluginState,
