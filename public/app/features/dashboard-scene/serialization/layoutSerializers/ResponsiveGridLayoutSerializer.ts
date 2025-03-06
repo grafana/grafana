@@ -1,6 +1,7 @@
 import { SceneCSSGridLayout } from '@grafana/scenes';
 import { DashboardV2Spec, ResponsiveGridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
+import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { ResponsiveGridItem } from '../../scene/layout-responsive-grid/ResponsiveGridItem';
 import { ResponsiveGridLayoutManager } from '../../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { DashboardLayoutManager, LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
@@ -61,6 +62,7 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
         key: getGridItemKeyForPanelId(panel.spec.id),
         body: buildVizPanel(panel),
         variableName: item.spec.repeat?.value,
+        $behaviors: [ConditionalRendering.createEmpty()],
       });
     });
 

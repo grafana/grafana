@@ -1010,6 +1010,38 @@
       "redirect-link": "Ŀįşŧ įŉ Ğřäƒäŉä Åľęřŧįŉģ",
       "subtitle": "Åľęřŧ řūľęş řęľäŧęđ ŧő ŧĥįş đäşĥþőäřđ"
     },
+    "conditional-rendering": {
+      "after": {
+        "label": "Åƒŧęř"
+      },
+      "before": {
+        "label": "ßęƒőřę"
+      },
+      "data": {
+        "label": "Đäŧä"
+      },
+      "group": {
+        "add": {
+          "between": "ßęŧŵęęŉ",
+          "button": "Åđđ",
+          "data": "Đäŧä",
+          "from": "Fřőm",
+          "group": "Ğřőūp",
+          "to": "Ŧő"
+        },
+        "condition": {
+          "and": "Åŉđ",
+          "label": "Cőŉđįŧįőŉ",
+          "or": "Øř"
+        },
+        "label": "Ğřőūp"
+      },
+      "title": "Cőŉđįŧįőŉäľ řęŉđęřįŉģ őpŧįőŉş",
+      "variable": {
+        "label": "Väřįäþľę",
+        "placeholder": "Ħęřę įŧ şĥőūľđ þę väřįäþľę ęđįŧőř"
+      }
+    },
     "default-layout": {
       "description": "Ŧĥę đęƒäūľŧ ģřįđ ľäyőūŧ",
       "item-options": {
@@ -1191,16 +1223,6 @@
     },
     "responsive-layout": {
       "description": "CŜŜ ľäyőūŧ ŧĥäŧ äđĵūşŧş ŧő ŧĥę äväįľäþľę şpäčę",
-      "item-options": {
-        "hide-no-data": "Ħįđę ŵĥęŉ ŉő đäŧä",
-        "repeat": {
-          "variable": {
-            "description": "Ŗępęäŧ ŧĥįş päŉęľ ƒőř ęäčĥ väľūę įŉ ŧĥę şęľęčŧęđ väřįäþľę. Ŧĥįş įş ŉőŧ vįşįþľę ŵĥįľę įŉ ęđįŧ mőđę. Ÿőū ŉęęđ ŧő ģő þäčĸ ŧő đäşĥþőäřđ äŉđ ŧĥęŉ ūpđäŧę ŧĥę väřįäþľę őř řęľőäđ ŧĥę đäşĥþőäřđ.",
-            "title": "Ŗępęäŧ þy väřįäþľę"
-          }
-        },
-        "title": "Ŀäyőūŧ őpŧįőŉş"
-      },
       "name": "Ŗęşpőŉşįvę ģřįđ",
       "options": {
         "columns": "Cőľūmŉş",

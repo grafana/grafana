@@ -2,25 +2,37 @@ import { css, cx } from '@emotion/css';
 import { useLocation } from 'react-router';
 
 import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
-import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
-import { Checkbox, clearButtonStyles, useElementSelection, useStyles2 } from '@grafana/ui';
+import { SceneComponentProps } from '@grafana/scenes';
+import { Checkbox, clearButtonStyles, useStyles2 } from '@grafana/ui';
 // eslint-disable-next-line no-restricted-imports
 import { getFocusStyles } from '@grafana/ui/src/themes/mixins';
+
+import {
+  useDashboardState,
+  useIsConditionallyHidden,
+  useElementSelectionScene,
+  useInterpolatedTitle,
+} from '../../utils/utils';
 
 import { TabItem } from './TabItem';
 
 export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
-  const { title, key } = model.useState();
   const parentLayout = model.getParentLayout();
   const { tabs, currentTabIndex } = parentLayout.useState();
-  const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
-  const { isSelected, onSelect } = useElementSelection(key);
   const myIndex = tabs.findIndex((tab) => tab === model);
   const isActive = myIndex === currentTabIndex;
   const location = useLocation();
   const href = textUtil.sanitize(locationUtil.getUrlForPartial(location, { tab: myIndex }));
   const styles = useStyles2(getStyles);
   const clearStyles = useStyles2(clearButtonStyles);
+  const { showHiddenElements } = useDashboardState(model);
+  const isConditionallyHidden = useIsConditionallyHidden(model);
+  const { isSelected, onSelect } = useElementSelectionScene(model);
+  const title = useInterpolatedTitle(model);
+
+  if (isConditionallyHidden && !showHiddenElements) {
+    return null;
+  }
 
   return (
     <>
@@ -35,7 +47,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
           role="tab"
           aria-selected={isActive}
         >
-          {titleInterpolated}
+          {title}
         </a>
       </div>
     </>

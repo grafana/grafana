@@ -5,6 +5,7 @@ import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { useConditionalRenderingEditor } from '../../conditional-rendering/ConditionalRenderingEditor';
 import { EditPaneHeader } from '../../edit-pane/EditPaneHeader';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 
@@ -29,8 +30,14 @@ export function getEditOptions(model: TabItem): OptionsPaneCategoryDescriptor[] 
 
   const { layout } = model.useState();
   const layoutOptions = useLayoutCategory(layout);
+  const options = [tabOptions, layoutOptions];
+  const rowConditionalRenderingOptions = useConditionalRenderingEditor(model);
 
-  return [tabOptions, layoutOptions];
+  if (rowConditionalRenderingOptions) {
+    options.push(rowConditionalRenderingOptions);
+  }
+
+  return options;
 }
 
 function TabTitleInput({ tab }: { tab: TabItem }) {

@@ -7,6 +7,7 @@ import {
 } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 
+import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -86,7 +87,9 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public addNewTab() {
-    const newTab = new TabItem();
+    const newTab = new TabItem({
+      $behaviors: [ConditionalRendering.createEmpty()],
+    });
     this.setState({ tabs: [...this.state.tabs, newTab], currentTabIndex: this.state.tabs.length });
     return newTab;
   }
@@ -114,7 +117,14 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     }
 
     const filteredTab = this.state.tabs.filter((tab) => tab !== tabToRemove);
-    const tabs = filteredTab.length === 0 ? [new TabItem()] : filteredTab;
+    const tabs =
+      filteredTab.length === 0
+        ? [
+            new TabItem({
+              $behaviors: [ConditionalRendering.createEmpty()],
+            }),
+          ]
+        : filteredTab;
 
     this.setState({ tabs, currentTabIndex: 0 });
   }
@@ -164,12 +174,12 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public static createEmpty(): TabsLayoutManager {
-    const tab = new TabItem();
+    const tab = new TabItem({});
     return new TabsLayoutManager({ tabs: [tab] });
   }
 
   public static createFromLayout(layout: DashboardLayoutManager): TabsLayoutManager {
-    const tab = new TabItem({ layout: layout.clone() });
+    const tab = new TabItem({ $behaviors: [ConditionalRendering.createEmpty()], layout: layout.clone() });
     return new TabsLayoutManager({ tabs: [tab] });
   }
 }
