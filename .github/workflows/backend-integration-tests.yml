@@ -39,7 +39,10 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-      - run: |
+      - env:
+          GRAFANA_TEST_DB: mysql
+          MYSQL_HOST: mysql80
+        run: |
           apt-get update -yq && apt-get install mariadb-client
           cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h mariadb -P 3306 -u root -prootpass --disable-ssl-verify-server-cert
           go clean -testcache
@@ -62,7 +65,11 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-      - run: |
+      - env:
+          GRAFANA_TEST_DB: postgres
+          PGPASSWORD: grafanatest
+          POSTGRES_HOST: postgres
+        run: |
           apt-get update -yq && apt-get install postgresql-client
           psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
           go clean -testcache
