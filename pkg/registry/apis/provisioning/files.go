@@ -263,21 +263,19 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 		return nil, err
 	}
 
-	// Which context?  request of background???
+	// Directly update the grafana database
 	// Behaves the same running sync after writing
-	if parsed.Existing == nil {
-		obj, err := parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
-		if err != nil {
-			parsed.Errors = append(parsed.Errors, err)
+	if ref == "" {
+		if parsed.Existing == nil {
+			parsed.Upsert, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
+			if err != nil {
+				parsed.Errors = append(parsed.Errors, err)
+			}
 		} else {
-			parsed.Obj = obj
-		}
-	} else {
-		obj, err := parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
-		if err != nil {
-			parsed.Errors = append(parsed.Errors, err)
-		} else {
-			parsed.Obj = obj
+			parsed.Upsert, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
+			if err != nil {
+				parsed.Errors = append(parsed.Errors, err)
+			}
 		}
 	}
 
@@ -289,23 +287,50 @@ func (s *filesConnector) doDelete(ctx context.Context, repo repository.Repositor
 		return nil, err
 	}
 
-	writer, ok := repo.(repository.Writer)
+	// Read the existing value
+	access, ok := repo.(repository.ReaderWriter)
 	if !ok {
-		return nil, apierrors.NewBadRequest("repository does not support writing")
+		return nil, fmt.Errorf("repository is not read+writeable")
 	}
 
-	err := writer.Delete(ctx, path, ref, message)
+	if strings.HasSuffix(path, "/") {
+		return nil, fmt.Errorf("deleting folders (safely) is not yet supported")
+	}
+
+	file, err := access.Read(ctx, path, ref)
+	if err != nil {
+		return nil, err // unable to read value
+	}
+
+	parser, err := s.parsers.GetParser(ctx, access)
+	if err != nil {
+		return nil, err // unable to read value
+	}
+
+	// We can only delete parsable things
+	parsed, err := parser.Parse(ctx, file, false)
+	if err != nil {
+		return nil, err // unable to read value
+	}
+
+	parsed.Action = provisioning.ResourceActionDelete
+	wrap := parsed.AsResourceWrapper()
+
+	// Now delete the file
+	err = access.Delete(ctx, path, ref, message)
 	if err != nil {
 		return nil, err
 	}
 
-	logger := logging.FromContext(ctx).With("path", path)
-	logger.Info("TODO! trigger sync for this file we just deleted...")
+	// Delete the file in the grafana database
+	if ref == "" {
+		err = parsed.Client.Delete(ctx, parsed.Obj.GetName(), metav1.DeleteOptions{})
+		if apierrors.IsNotFound(err) {
+			err = nil // ignorable
+		}
+	}
 
-	return &provisioning.ResourceWrapper{
-		Path: path,
-		// TODO: should we return the deleted object and / or commit?
-	}, nil
+	return wrap, err
 }
 
 var (

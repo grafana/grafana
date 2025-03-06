@@ -1,11 +1,12 @@
-import { Controller, useFormContext } from 'react-hook-form';
 import { useEffect } from 'react';
+import { Controller, useFormContext } from 'react-hook-form';
 
 import { Field, Input, Combobox, Stack, FieldSet, Card, Alert } from '@grafana/ui';
 
-import { WizardFormData } from './types';
 import { useGetFrontendSettingsQuery } from '../api';
 import { checkSyncSettings } from '../utils';
+
+import { WizardFormData } from './types';
 
 const typeOptions = [
   { label: 'GitHub', value: 'github' },

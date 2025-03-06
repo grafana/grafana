@@ -268,6 +268,9 @@ type ResourceObjects struct {
 
 	// The value returned from a dryRun request
 	DryRun common.Unstructured `json:"dryRun,omitempty"`
+
+	// For write events, this will return the value that was added or updated
+	Upsert common.Unstructured `json:"upsert,omitempty"`
 }
 
 type ResourceRepositoryInfo struct {

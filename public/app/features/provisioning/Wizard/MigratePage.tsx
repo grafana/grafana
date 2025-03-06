@@ -1,4 +1,5 @@
 import { Page } from 'app/core/components/Page/Page';
+
 import { ProvisioningWizard } from './ProvisioningWizard';
 
 export default function MigratePage() {

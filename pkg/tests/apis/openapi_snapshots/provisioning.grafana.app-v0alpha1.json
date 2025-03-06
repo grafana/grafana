@@ -3489,6 +3489,14 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceType"
               }
             ]
+          },
+          "upsert": {
+            "description": "For write events, this will return the value that was added or updated",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
+              }
+            ]
           }
         }
       },
