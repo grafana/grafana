@@ -98,7 +98,7 @@ export default function RepositoryListPage() {
     if (!instanceConnected) {
       switch (activeTab) {
         case TabSelection.Repositories:
-          return <RepositoryListPageContent items={items ?? []} />;
+          return <FolderRepositoryList items={items ?? []} />;
         case TabSelection.Features:
           return <FeatureList />;
         default:
@@ -187,7 +187,7 @@ export default function RepositoryListPage() {
   );
 }
 
-function RepositoryListPageContent({ items }: { items: Repository[] }) {
+function FolderRepositoryList({ items }: { items: Repository[] }) {
   const [query, setQuery] = useState('');
   const filteredItems = items.filter((item) => item.metadata?.name?.includes(query));
   const settings = useGetFrontendSettingsQuery();
