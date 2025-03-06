@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Label, Stack, useStyles2 } from '@grafana/ui';
@@ -10,21 +10,9 @@ import { EMPTY_SELECTOR } from './types';
 
 export function SelectorActions() {
   const styles = useStyles2(getStylesSelectorActions);
-  const [validationStatus, setValidationStatus] = useState('');
-  const { languageProvider, getSelector, onChange, status, err, setErr, onClearClick } = useMetricsBrowser();
+  const { validationStatus, onValidationClick, getSelector, onChange, status, err, onClearClick } = useMetricsBrowser();
 
   const selector = getSelector();
-
-  const validateSelector = async (selector: string) => {
-    setValidationStatus(`Validating selector ${selector}`);
-    setErr('');
-    const streams = await languageProvider.fetchLabelsWithMatch(selector);
-    setValidationStatus(`Selector is valid (${Object.keys(streams).length} labels found)`);
-  };
-
-  const onClickValidate = () => {
-    validateSelector(selector);
-  };
 
   const onClickRunQuery = () => {
     onChange(selector);
@@ -67,7 +55,7 @@ export function SelectorActions() {
           aria-label="Validate submit button"
           variant="secondary"
           disabled={empty}
-          onClick={onClickValidate}
+          onClick={onValidationClick}
         >
           Validate selector
         </Button>

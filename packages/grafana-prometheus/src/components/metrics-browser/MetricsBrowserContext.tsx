@@ -14,7 +14,6 @@ interface MetricsBrowserContextType {
   seriesLimit: string;
   setSeriesLimit: (limit: string) => void;
 
-  languageProvider: PromQlLanguageProvider;
   onChange: (selector: string) => void;
 
   metrics: Metric[];
@@ -28,6 +27,9 @@ interface MetricsBrowserContextType {
   onLabelValueClick: (labelKey: string, labelValue: string) => void;
   getSelector: () => string;
   onClearClick: () => void;
+
+  validationStatus: string;
+  onValidationClick: () => void;
 }
 
 const MetricsBrowserContext = createContext<MetricsBrowserContextType | undefined>(undefined);
@@ -47,6 +49,7 @@ export function MetricsBrowserProvider({
   const [seriesLimit, setSeriesLimit] = useState(DEFAULT_SERIES_LIMIT);
   const [err, setErr] = useState('');
   const [status, setStatus] = useState('Ready');
+  const [validationStatus, setValidationStatus] = useState('');
 
   const [metrics, setMetrics] = useState<Metric[]>([]);
   const [selectedMetric, setSelectedMetric] = useState('');
@@ -67,6 +70,15 @@ export function MetricsBrowserProvider({
     },
     [languageProvider.metricsMetadata]
   );
+
+  const onValidationClick = useCallback(() => {
+    const selector = getSelector();
+    setValidationStatus(`Validating selector ${selector}`);
+    setErr('');
+    languageProvider.fetchLabelsWithMatch(selector).then((results) => {
+      setValidationStatus(`Selector is valid (${Object.keys(results).length} labels found)`);
+    });
+  }, [getSelector, languageProvider]);
 
   useEffect(() => {
     setMetrics(
@@ -180,7 +192,6 @@ export function MetricsBrowserProvider({
 
     seriesLimit,
     setSeriesLimit,
-    languageProvider,
     onChange,
 
     metrics,
@@ -194,6 +205,9 @@ export function MetricsBrowserProvider({
     onLabelValueClick,
     getSelector,
     onClearClick,
+
+    validationStatus,
+    onValidationClick,
   };
 
   return <MetricsBrowserContext.Provider value={value}>{children}</MetricsBrowserContext.Provider>;
