@@ -61,7 +61,7 @@ export default function RepositoryListPage() {
     switch (activeTab) {
       case 'repositories':
         return <RepositoryListPageContent items={items ?? []} />;
-      case 'features':
+      case 'getting-started':
         return <FeatureList />;
       default:
         return null;
@@ -98,7 +98,11 @@ export default function RepositoryListPage() {
               active={activeTab === 'repositories'}
               onChangeTab={() => setActiveTab('repositories')}
             />
-            <Tab label="Features" active={activeTab === 'features'} onChangeTab={() => setActiveTab('features')} />
+            <Tab
+              label="Getting started"
+              active={activeTab === 'getting-started'}
+              onChangeTab={() => setActiveTab('getting-started')}
+            />
           </TabsBar>
           {renderTabContent()}
         </Stack>
