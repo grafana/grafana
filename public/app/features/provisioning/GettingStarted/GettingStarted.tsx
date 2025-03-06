@@ -113,6 +113,7 @@ export default function GettingStarted() {
       <Stack direction="row" gap={2}>
         <Box width="50%" marginTop={2} paddingTop={2} paddingBottom={2}>
           <FeaturesList
+            settings={settingsQuery.data}
             hasPublicAccess={hasPublicAccess}
             hasImageRenderer={hasImageRenderer}
             hasRequiredFeatures={hasRequiredFeatures}

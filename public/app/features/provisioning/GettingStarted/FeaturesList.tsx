@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Stack, Text, Button, Box, LinkButton, Icon } from '@grafana/ui';
 
+import { RepositoryViewList } from '../api';
 import { CONNECT_URL, MIGRATE_URL } from '../constants';
 
 interface FeatureItemProps {
@@ -15,6 +16,7 @@ const FeatureItem = ({ children }: FeatureItemProps) => (
 );
 
 interface FeaturesListProps {
+  settings?: RepositoryViewList;
   hasPublicAccess: boolean;
   hasImageRenderer: boolean;
   hasRequiredFeatures: boolean;
@@ -22,12 +24,66 @@ interface FeaturesListProps {
 }
 
 export const FeaturesList = ({
+  settings,
   hasPublicAccess,
   hasImageRenderer,
   hasRequiredFeatures,
   onSetupFeatures,
 }: FeaturesListProps) => {
   const navigate = useNavigate();
+
+  const actions = () => {
+    if (!hasRequiredFeatures) {
+      return (
+        <Box>
+          <LinkButton fill="outline" onClick={onSetupFeatures}>
+            Set up required feature toggles
+          </LinkButton>
+        </Box>
+      );
+    }
+
+    const isInstance = Boolean(settings?.items.some((item) => item.target === 'instance'));
+    if (isInstance || !settings) {
+      return null; // already setup and can not add more
+    }
+
+    // When legacy you can only migrate
+    if (settings.legacyStorage) {
+      return (
+        <Stack>
+          <Button size="md" icon="plus" onClick={() => navigate(MIGRATE_URL)}>
+            Migrate Grafana to repository
+          </Button>
+        </Stack>
+      );
+    }
+
+    // Repos are already setup (and not targeting instance)
+    if (settings.items.length) {
+      // or instance is empty?
+      return (
+        <Stack>
+          <LinkButton fill="outline" icon="plus" onClick={() => navigate(CONNECT_URL)}>
+            Connect Grafana to repository
+          </LinkButton>
+        </Stack>
+      );
+    }
+
+    // Could choose either
+    return (
+      <Stack direction="row" alignItems="center" gap={2}>
+        <Button size="md" icon="plus" onClick={() => navigate(MIGRATE_URL)}>
+          Migrate Grafana to repository
+        </Button>
+        <Text variant="body">or</Text>
+        <LinkButton fill="outline" icon="plus" onClick={() => navigate(CONNECT_URL)}>
+          Connect Grafana to repository
+        </LinkButton>
+      </Stack>
+    );
+  };
 
   return (
     <Stack direction="column" gap={2}>
@@ -55,25 +111,7 @@ export const FeaturesList = ({
         Learn more
       </LinkButton>
 
-      {hasRequiredFeatures ? (
-        <>
-          <Stack direction="row" alignItems="center" gap={2}>
-            <Button size="md" icon="plus" onClick={() => navigate(MIGRATE_URL)}>
-              Migrate Grafana to repository
-            </Button>
-            <Text variant="body">or</Text>
-            <LinkButton fill="outline" icon="plus" onClick={() => navigate(CONNECT_URL)}>
-              Connect Grafana to repository
-            </LinkButton>
-          </Stack>
-        </>
-      ) : (
-        <Box>
-          <LinkButton fill="outline" onClick={onSetupFeatures}>
-            Set up required features
-          </LinkButton>
-        </Box>
-      )}
+      {actions()}
     </Stack>
   );
 };
