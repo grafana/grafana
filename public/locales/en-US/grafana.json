@@ -1062,7 +1062,7 @@
       "subtitle": "Alert rules related to this dashboard"
     },
     "default-layout": {
-      "description": "The default grid layout",
+      "description": "Manually size and position panels",
       "item-options": {
         "repeat": {
           "direction": {
@@ -1078,7 +1078,7 @@
           }
         }
       },
-      "name": "Default grid",
+      "name": "Custom",
       "row-actions": {
         "delete": "Delete row",
         "modal": {
@@ -1241,7 +1241,7 @@
       }
     },
     "responsive-layout": {
-      "description": "CSS layout that adjusts to the available space",
+      "description": "Automatically positions panels into a grid.",
       "item-options": {
         "hide-no-data": "Hide when no data",
         "repeat": {
@@ -1252,7 +1252,7 @@
         },
         "title": "Layout options"
       },
-      "name": "Responsive grid",
+      "name": "Auto",
       "options": {
         "columns": "Columns",
         "fixed": "Fixed: {{size}}px",
