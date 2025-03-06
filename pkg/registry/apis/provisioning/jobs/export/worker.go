@@ -48,7 +48,7 @@ func (r *ExportWorker) IsSupported(ctx context.Context, job provisioning.Job) bo
 
 // Process will start a job
 func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
-	options := job.Spec.Export
+	options := job.Spec.Push
 	if options == nil {
 		return errors.New("missing export settings")
 	}

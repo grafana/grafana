@@ -71,7 +71,7 @@ func (c *exportConnector) Connect(
 			Spec: provisioning.JobSpec{
 				Action:     provisioning.JobActionExport,
 				Repository: cfg.Name,
-				Export:     options,
+				Push:       options,
 			},
 		})
 		if err != nil {

@@ -172,7 +172,7 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	} else {
 		err = w.exportWorker.Process(ctx, rw, provisioning.Job{
 			Spec: provisioning.JobSpec{
-				Export: &provisioning.ExportJobOptions{
+				Push: &provisioning.ExportJobOptions{
 					Identifier: options.Identifier,
 				},
 			},
@@ -210,7 +210,7 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	// Delegate the import to a sync (from the already checked out go-git repository!)
 	err = w.syncWorker.Process(ctx, rw, provisioning.Job{
 		Spec: provisioning.JobSpec{
-			Sync: &provisioning.SyncJobOptions{
+			Pull: &provisioning.SyncJobOptions{
 				Incremental: false,
 			},
 		},
