@@ -60,6 +60,15 @@ export class ElementState implements LayerElement {
   oneClickMode = OneClickMode.Off;
   showConfirmation = false;
 
+  position: { top: number; left: number } = { top: 0, left: 0 };
+  rotation: number = 0;
+  velocity: { x: number; y: number } = { x: 0, y: 0 };
+  acceleration: number = 0;
+  friction: number = 0;
+  keysPressed: Set<string> = new Set();
+  panelWidth: number = 0;
+  panelHeight: number = 0;
+
   constructor(
     public item: CanvasElementItem,
     public options: CanvasElementOptions,
@@ -84,6 +93,89 @@ export class ElementState implements LayerElement {
       options.name = newName ?? fallbackName;
     }
     scene?.byName.set(options.name, this);
+
+    if (item.id === 'player') {
+      const { top = 0, left = 0 } = this.options.placement ?? { top: 0, left: 0 };
+      this.position = { top, left };
+      this.rotation = 0;
+      this.velocity = { x: 0, y: 0 };
+
+      this.acceleration = 0.5;
+      this.friction = 0.98;
+      this.keysPressed = new Set();
+      this.panelWidth = scene?.width ?? 0;
+      this.panelHeight = scene?.height ?? 0;
+
+      this.initEventListeners();
+    }
+  }
+
+  initEventListeners() {
+    window.addEventListener('keydown', (e) => this.keysPressed.add(e.key));
+    window.addEventListener('keyup', (e) => this.keysPressed.delete(e.key));
+    this.startMovementLoop();
+  }
+
+  startMovementLoop() {
+    setInterval(() => {
+      this.updateMovement();
+      this.applyFriction();
+      this.moveElement();
+
+      if (this.options.placement) {
+        this.options.placement.top = this.position.top;
+        this.options.placement.left = this.position.left;
+        this.options.placement.rotation = this.rotation;
+      }
+
+      this.onChange(this.options);
+    }, 16);
+  }
+
+  updateMovement() {
+    let newVelocity = { ...this.velocity };
+    const angle = ((this.rotation + 90) * Math.PI) / 180;
+    const ax = Math.cos(angle) * this.acceleration;
+    const ay = Math.sin(angle) * this.acceleration;
+
+    if (this.keysPressed.has('ArrowUp')) {
+      newVelocity.x -= ax;
+      newVelocity.y -= ay;
+    }
+    if (this.keysPressed.has('ArrowDown')) {
+      newVelocity.x += ax;
+      newVelocity.y += ay;
+    }
+    if (this.keysPressed.has('ArrowLeft')) {
+      this.rotation -= 3;
+    }
+    if (this.keysPressed.has('ArrowRight')) {
+      this.rotation += 3;
+    }
+
+    this.velocity = newVelocity;
+  }
+
+  applyFriction() {
+    this.velocity.x *= this.friction;
+    this.velocity.y *= this.friction;
+  }
+
+  moveElement() {
+    let newTop = this.position.top + this.velocity.y;
+    let newLeft = this.position.left + this.velocity.x;
+
+    // Collision detection and reflection
+    if (newTop <= 0 || newTop >= this.panelHeight) {
+      newTop = Math.max(0, Math.min(this.panelHeight, newTop));
+      this.velocity.y = -this.velocity.y;
+    }
+    if (newLeft <= 0 || newLeft >= this.panelWidth) {
+      newLeft = Math.max(0, Math.min(this.panelWidth, newLeft));
+      this.velocity.x = -this.velocity.x;
+    }
+
+    this.position = { top: newTop, left: newLeft };
   }
 
   private getScene(): Scene | undefined {
@@ -113,7 +205,11 @@ export class ElementState implements LayerElement {
     const { vertical, horizontal } = constraint ?? {};
     const placement: Placement = this.options.placement ?? {};
 
-    const editingEnabled = this.getScene()?.isEditingEnabled;
+    const scene = this.getScene();
+    const editingEnabled = scene?.isEditingEnabled;
+
+    this.panelWidth = scene?.width ?? 0;
+    this.panelHeight = scene?.height ?? 0;
 
     const style: React.CSSProperties = {
       cursor: editingEnabled ? 'grab' : 'auto',

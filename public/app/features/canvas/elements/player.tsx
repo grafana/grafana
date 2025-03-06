@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useState, useRef } from 'react';
+import { useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -18,107 +18,12 @@ import {
 import { Align, CanvasElementConfig, CanvasElementData, VAlign } from '../types';
 
 const Player = (props: CanvasElementProps<CanvasElementConfig, CanvasElementData>) => {
-  // TODO: this is hardcoded for now; should be from the panel options/config
-  const { panelWidth, panelHeight } = { panelWidth: 1000, panelHeight: 500 };
-
   const { data } = props;
   const styles = getStyles(config.theme2, data);
   const uniqueId = useRef(uuidv4());
 
-  const [position, setPosition] = useState({ top: 200, left: 500 });
-  const [rotation, setRotation] = useState(0);
-  const [velocity, setVelocity] = useState({ x: 0, y: 0 });
-  const acceleration = 0.5;
-  const friction = 0.98;
-  const keysPressed = useRef(new Set());
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      keysPressed.current.add(event.key);
-    };
-
-    const handleKeyUp = (event: KeyboardEvent) => {
-      keysPressed.current.delete(event.key);
-    };
-
-    const updateMovement = () => {
-      setVelocity((prev) => {
-        let newVelocity = { ...prev };
-        const angle = ((rotation + 90) * Math.PI) / 180;
-        const ax = Math.cos(angle) * acceleration;
-        const ay = Math.sin(angle) * acceleration;
-
-        if (keysPressed.current.has('ArrowUp')) {
-          newVelocity.y -= ay;
-          newVelocity.x -= ax;
-        }
-        if (keysPressed.current.has('ArrowDown')) {
-          newVelocity.y += ay;
-          newVelocity.x += ax;
-        }
-        if (keysPressed.current.has('ArrowLeft')) {
-          setRotation((prevRotation) => prevRotation - 3);
-        }
-        if (keysPressed.current.has('ArrowRight')) {
-          setRotation((prevRotation) => prevRotation + 3);
-        }
-
-        return newVelocity;
-      });
-    };
-
-    const applyFriction = () => {
-      setVelocity((prev) => ({ x: prev.x * friction, y: prev.y * friction }));
-    };
-
-    const movePlayer = () => {
-      setPosition((prev) => {
-        let newTop = prev.top + velocity.y;
-        let newLeft = prev.left + velocity.x;
-
-        // Collision detection and reflection
-        if (newTop <= 0 || newTop >= panelHeight) {
-          newTop = Math.max(0, Math.min(panelHeight, newTop));
-          setVelocity((prevVelocity) => ({ x: prevVelocity.x, y: -prevVelocity.y }));
-        }
-        if (newLeft <= 0 || newLeft >= panelWidth) {
-          newLeft = Math.max(0, Math.min(panelWidth, newLeft));
-          setVelocity((prevVelocity) => ({ x: -prevVelocity.x, y: prevVelocity.y }));
-        }
-
-        return { top: newTop, left: newLeft };
-      });
-    };
-
-    // TODO: this loop may be the potential bottleneck
-    // maybe use requestAnimationFrame instead
-    const interval = setInterval(() => {
-      updateMovement();
-      applyFriction();
-      movePlayer();
-    }, 16);
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rotation, velocity]);
-
   return (
-    <div
-      className={styles.container}
-      style={{
-        top: position.top,
-        left: position.left,
-        position: 'absolute',
-        transform: `rotate(${rotation}deg)`,
-      }}
-    >
+    <div className={styles.container}>
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 200 200"
