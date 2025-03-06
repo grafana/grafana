@@ -165,7 +165,7 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
         }
 
         const query = `resources
-        | where id hasprefix "${prefix}"
+        | where id hasprefix "${prefix}/"
         ${filters.length > 0 ? `| where ${filters.join(' and ')}` : ''}
         | order by tolower(name) asc`;
 
