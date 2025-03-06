@@ -82,3 +82,49 @@ export const getTooltipContainerStyles = (theme: GrafanaTheme2) => ({
   borderRadius: theme.shape.radius.default,
   zIndex: theme.zIndex.tooltip,
 });
+
+interface ExternalRadiusOptions {
+  selfBorderWidth?: number;
+  childBorderRadius?: number;
+  offset: number;
+}
+/**
+ * Calculates a border radius for an element, based on border radius of its child.
+ *
+ * @param theme
+ * @param options
+ * @param options.selfBorderWidth - The border width of the element itself (default: 1)
+ * @param options.childBorderRadius - The border radius of the child element (default: theme default radius)
+ * @param options.offset - The distance to offset from the child element, should be >= 0.
+ * @returns A CSS calc() expression that returns the relative external radius value
+ */
+export const getExternalRadius = (theme: GrafanaTheme2, options: ExternalRadiusOptions) => {
+  const { selfBorderWidth = 1, childBorderRadius, offset } = options;
+
+  const childBorderRadiusPx = childBorderRadius !== undefined ? `${childBorderRadius}px` : theme.shape.radius.default;
+  return `calc(max(0px, ${childBorderRadiusPx} + ${offset}px + ${selfBorderWidth}px))`;
+};
+
+interface InternalRadiusOptions {
+  parentBorderWidth?: number;
+  parentBorderRadius?: number;
+  offset: number;
+}
+
+/**
+ * Calculates a border radius for an element, based on border radius of its parent.
+ *
+ * @param theme
+ * @param options
+ * @param options.parentBorderWidth - The border width of the parent element (default: 1)
+ * @param options.parentBorderRadius - The border radius of the parent element (default: theme default radius)
+ * @param options.offset - The distance to offset from the parent element, should be >= 0.
+ * @returns A CSS calc() expression that returns the relative internal radius value
+ */
+export const getInternalRadius = (theme: GrafanaTheme2, options: InternalRadiusOptions) => {
+  const { parentBorderWidth = 1, parentBorderRadius, offset } = options;
+
+  const parentBorderRadiusPx =
+    parentBorderRadius !== undefined ? `${parentBorderRadius}px` : theme.shape.radius.default;
+  return `calc(max(0px, ${parentBorderRadiusPx} - ${offset}px - ${parentBorderWidth}px))`;
+};
