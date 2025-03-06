@@ -388,9 +388,9 @@ To reset the notification policy tree to the default and unlock it for editing i
 
 The Alerting Provisioning HTTP API can only be used to manage Grafana-managed alert resources. To manage resources related to [data source-managed alerts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-data-source-managed-rule/), consider the following tools:
 
-- [mimirtool](https://grafana.com/docs/mimir/<GRAFANA_VERSION>/manage/tools/mimirtool/): to interact with the Mimir alertmanager and ruler configuration.
+- [mimirtool](https://grafana.com/docs/mimir/<MIMIR_VERSION>/manage/tools/mimirtool/): to interact with the Mimir alertmanager and ruler configuration.
 - [cortex-tools](https://github.com/grafana/cortex-tools#cortextool): to interact with the Cortex alertmanager and ruler configuration.
-- [lokitool](https://grafana.com/docs/loki/<GRAFANA_VERSION>/alert/#lokitool): to configure the Loki Ruler.
+- [lokitool](https://grafana.com/docs/loki/<LOKI_VERSION>/alert/#lokitool): to configure the Loki Ruler.
 
 Alternatively, the [Grafana Alerting API](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json) can be used to access data from data source-managed alerts. This API is primarily intended for internal usage, with the exception of the `/api/v1/provisioning/` endpoints. It's important to note that internal APIs may undergo changes without prior notice and are not officially supported for user consumption.
 
@@ -1582,7 +1582,7 @@ Status: Accepted
 | annotations  | map of string                             | `map[string]string`   |          |         |             |         |
 | condition    | string                                    | `string`              |          |         |             |         |
 | dashboardUid | string                                    | `string`              |          |         |             |         |
-| data         | [][AlertQueryExport](#alert-query-export) | `[]*AlertQueryExport` |          |         |             |         |
+| data         | [][alertqueryexport](#alert-query-export) | `[]*AlertQueryExport` |          |         |             |         |
 | execErrState | string                                    | `string`              |          |         |             |         |
 | for          | [Duration](#duration)                     | `Duration`            |          |         |             |         |
 | isPaused     | boolean                                   | `bool`                |          |         |             |         |
@@ -1604,7 +1604,7 @@ Status: Accepted
 | --------- | ------------------------------------------------- | ------------------------- | :------: | ------- | ----------- | ------- |
 | folderUid | string                                            | `string`                  |          |         |             |         |
 | interval  | int64 (formatted integer)                         | `int64`                   |          |         |             |         |
-| rules     | [][ProvisionedAlertRule](#provisioned-alert-rule) | `[]*ProvisionedAlertRule` |          |         |             |         |
+| rules     | [][provisionedalertrule](#provisioned-alert-rule) | `[]*ProvisionedAlertRule` |          |         |             |         |
 | title     | string                                            | `string`                  |          |         |             |         |
 
 {{% /responsive-table %}}
@@ -1621,7 +1621,7 @@ Status: Accepted
 | interval | [Duration](#duration)                   | `Duration`           |          |         |             |         |
 | name     | string                                  | `string`             |          |         |             |         |
 | orgId    | int64 (formatted integer)               | `int64`              |          |         |             |         |
-| rules    | [][AlertRuleExport](#alert-rule-export) | `[]*AlertRuleExport` |          |         |             |         |
+| rules    | [][alertruleexport](#alert-rule-export) | `[]*AlertRuleExport` |          |         |             |         |
 
 {{% /responsive-table %}}
 
@@ -1634,9 +1634,9 @@ Status: Accepted
 | Name          | Type                                                      | Go type                       | Required | Default | Description | Example |
 | ------------- | --------------------------------------------------------- | ----------------------------- | :------: | ------- | ----------- | ------- |
 | apiVersion    | int64 (formatted integer)                                 | `int64`                       |          |         |             |         |
-| contactPoints | [][ContactPointExport](#contact-point-export)             | `[]*ContactPointExport`       |          |         |             |         |
-| groups        | [][AlertRuleGroupExport](#alert-rule-group-export)        | `[]*AlertRuleGroupExport`     |          |         |             |         |
-| policies      | [][NotificationPolicyExport](#notification-policy-export) | `[]*NotificationPolicyExport` |          |         |             |         |
+| contactPoints | [][contactpointexport](#contact-point-export)             | `[]*ContactPointExport`       |          |         |             |         |
+| groups        | [][alertrulegroupexport](#alert-rule-group-export)        | `[]*AlertRuleGroupExport`     |          |         |             |         |
+| policies      | [][notificationpolicyexport](#notification-policy-export) | `[]*NotificationPolicyExport` |          |         |             |         |
 
 {{% /responsive-table %}}
 
@@ -1648,11 +1648,11 @@ Status: Accepted
 | --------- | ------------------------------------ | ------------------- | :------: | ------- | ----------- | ------- |
 | name      | string                               | `string`            |          |         |             |         |
 | orgId     | int64 (formatted integer)            | `int64`             |          |         |             |         |
-| receivers | [][ReceiverExport](#receiver-export) | `[]*ReceiverExport` |          |         |             |         |
+| receivers | [][receiverexport](#receiver-export) | `[]*ReceiverExport` |          |         |             |         |
 
 ### <span id="contact-points"></span> ContactPoints
 
-[][EmbeddedContactPoint](#embedded-contact-point)
+[][embeddedcontactpoint](#embedded-contact-point)
 
 ### <span id="duration"></span> Duration
 
@@ -1715,7 +1715,7 @@ When creating a contact point, the `EmbeddedContactPoint.name` property determin
 > provides a Matches method to match a LabelSet against all Matchers in the
 > slice. Note that some users of Matchers might require it to be sorted.
 
-[][Matcher](#matcher)
+[][matcher](#matcher)
 
 ### <span id="mute-time-interval"></span> MuteTimeInterval
 
@@ -1726,7 +1726,7 @@ When creating a contact point, the `EmbeddedContactPoint.name` property determin
 | Name           | Type                             | Go type           | Required | Default | Description         | Example |
 | -------------- | -------------------------------- | ----------------- | :------: | ------- | ------------------- | ------- |
 | name           | string                           | `string`          |          |         |                     |         |
-| time_intervals | [][TimeInterval](#time-interval) | `[]*TimeInterval` |          |         |                     |         |
+| time_intervals | [][timeinterval](#time-interval) | `[]*TimeInterval` |          |         |                     |         |
 | version        | string                           | `string`          |          |         | Version of resource |         |
 
 {{% /responsive-table %}}
@@ -1741,7 +1741,7 @@ When creating a contact point, the `EmbeddedContactPoint.name` property determin
 
 ### <span id="mute-timings"></span> MuteTimings
 
-[][MuteTimeInterval](#mute-time-interval)
+[][mutetimeinterval](#mute-time-interval)
 
 ### <span id="not-found"></span> NotFound
 
@@ -1786,7 +1786,7 @@ When creating a contact point, the `EmbeddedContactPoint.name` property determin
 
 ### <span id="notification-templates"></span> NotificationTemplates
 
-[][NotificationTemplate](#notification-template)
+[][notificationtemplate](#notification-template)
 
 ### <span id="object-matchers"></span> ObjectMatchers
 
@@ -1814,7 +1814,7 @@ When creating a contact point, the `EmbeddedContactPoint.name` property determin
 | ------------ | ---------------------------- | ------------------- | :------: | ------- | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | annotations  | map of string                | `map[string]string` |          |         | Optional key-value pairs. `dashboardUId` and `panelId` must be set together; one cannot be set without the other. | `{"runbook_url":"https://supercoolrunbook.com/page/13"}`                                                                                                                                                                                                                                                                                                                                                                         |
 | condition    | string                       | `string`            |    ✓     |         |                                                                                                                   | `A`                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| data         | [][AlertQuery](#alert-query) | `[]*AlertQuery`     |    ✓     |         |                                                                                                                   | `[{"datasourceUid":"__expr__","model":{"conditions":[{"evaluator":{"params":[0,0],"type":"gt"},"operator":{"type":"and"},"query":{"params":[]},"reducer":{"params":[],"type":"avg"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1 == 1","hide":false,"intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"},"queryType":"","refId":"A","relativeTimeRange":{"from":0,"to":0}}]` |
+| data         | [][alertquery](#alert-query) | `[]*AlertQuery`     |    ✓     |         |                                                                                                                   | `[{"datasourceUid":"__expr__","model":{"conditions":[{"evaluator":{"params":[0,0],"type":"gt"},"operator":{"type":"and"},"query":{"params":[]},"reducer":{"params":[],"type":"avg"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1 == 1","hide":false,"intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"},"queryType":"","refId":"A","relativeTimeRange":{"from":0,"to":0}}]` |
 | execErrState | string                       | `string`            |    ✓     |         |                                                                                                                   |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | folderUID    | string                       | `string`            |    ✓     |         |                                                                                                                   | `project_x`                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | for          | [Duration](#duration)        | `Duration`          |    ✓     |         |                                                                                                                   |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -1833,7 +1833,7 @@ When creating a contact point, the `EmbeddedContactPoint.name` property determin
 
 ### <span id="provisioned-alert-rules"></span> ProvisionedAlertRules
 
-[][ProvisionedAlertRule](#provisioned-alert-rule)
+[][provisionedalertrule](#provisioned-alert-rule)
 
 ### <span id="raw-message"></span> RawMessage
 
@@ -1896,7 +1896,7 @@ When creating a contact point, the `EmbeddedContactPoint.name` property determin
 | provenance          | [Provenance](#provenance)          | `Provenance`        |          |         |                                         |         |
 | receiver            | string                             | `string`            |          |         |                                         |         |
 | repeat_interval     | string                             | `string`            |          |         |                                         |         |
-| routes              | [][Route](#route)                  | `[]*Route`          |          |         |                                         |         |
+| routes              | [][route](#route)                  | `[]*Route`          |          |         |                                         |         |
 
 {{% /responsive-table %}}
 
@@ -1920,7 +1920,7 @@ When creating a contact point, the `EmbeddedContactPoint.name` property determin
 | object_matchers     | [ObjectMatchers](#object-matchers) | `ObjectMatchers`    |          |         |                                         |         |
 | receiver            | string                             | `string`            |          |         |                                         |         |
 | repeat_interval     | string                             | `string`            |          |         |                                         |         |
-| routes              | [][RouteExport](#route-export)     | `[]*RouteExport`    |          |         |                                         |         |
+| routes              | [][routeexport](#route-export)     | `[]*RouteExport`    |          |         |                                         |         |
 
 ### <span id="time-interval"></span> TimeInterval
 
@@ -1936,7 +1936,7 @@ When creating a contact point, the `EmbeddedContactPoint.name` property determin
 | days_of_month | []string                   | `[]string`     |          |         |             |         |
 | location      | string                     | `string`       |          |         |             |         |
 | months        | []string                   | `[]string`     |          |         |             |         |
-| times         | [][TimeRange](#time-range) | `[]*TimeRange` |          |         |             |         |
+| times         | [][timerange](#time-range) | `[]*TimeRange` |          |         |             |         |
 | weekdays      | []string                   | `[]string`     |          |         |             |         |
 | years         | []string                   | `[]string`     |          |         |             |         |
 
