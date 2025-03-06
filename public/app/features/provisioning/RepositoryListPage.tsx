@@ -80,6 +80,10 @@ export default function RepositoryListPage() {
     }
   }, [deleteAllResult.isSuccess]);
 
+  useEffect(() => {
+    setActiveTab(instanceConnected ? TabSelection.Overview : TabSelection.Repositories);
+  }, [instanceConnected]);
+
   // Early return for onboarding
   if (!items?.length && !isLoading) {
     return <OnboardingPage legacyStorage={settings.data?.legacyStorage} />;
