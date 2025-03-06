@@ -280,7 +280,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    */
   fetchSeriesValuesWithMatch = async (
     name: string,
-    match: string,
+    match?: string,
     requestId?: string,
     timeRange: TimeRange = this.timeRange
   ): Promise<string[]> => {

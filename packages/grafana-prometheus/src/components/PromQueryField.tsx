@@ -12,7 +12,8 @@ import { getInitHints } from '../query_hints';
 import { PromOptions, PromQuery } from '../types';
 
 import { CancelablePromise, isCancelablePromiseRejection, makePromiseCancelable } from './cancelable-promise';
-import { PrometheusMetricsBrowser } from './metrics-browser/PrometheusMetricsBrowser';
+import { MetricsBrowser } from './metrics-browser/MetricsBrowser';
+import { MetricsBrowserProvider } from './metrics-browser/MetricsBrowserContext';
 import { MonacoQueryFieldWrapper } from './monaco-query-field/MonacoQueryFieldWrapper';
 import { useMetricsState } from './useMetricsState';
 import { usePromQueryFieldEffects } from './usePromQueryFieldEffects';
@@ -171,11 +172,9 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
       </div>
       {labelBrowserVisible && (
         <div className="gf-form">
-          <PrometheusMetricsBrowser
-            languageProvider={languageProvider}
-            onChange={onChangeLabelBrowser}
-            timeRange={range}
-          />
+          <MetricsBrowserProvider languageProvider={languageProvider} onChange={onChangeLabelBrowser}>
+            <MetricsBrowser />
+          </MetricsBrowserProvider>
         </div>
       )}
       {ExtraFieldElement}
