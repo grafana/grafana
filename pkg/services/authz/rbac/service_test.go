@@ -1146,6 +1146,48 @@ func TestService_List(t *testing.T) {
 		}
 	})
 
+	testCases = []testCase{
+		{
+			name: "should list permissions for rendering",
+			req: &authzv1.ListRequest{
+				Namespace: "org-12",
+				Subject:   "render:0",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+			},
+			expected: &authzv1.ListResponse{
+				All: true,
+			},
+		},
+		{
+			name: "should deny rendering access to another app resources",
+			req: &authzv1.ListRequest{
+				Namespace: "org-12",
+				Subject:   "render:0",
+				Group:     "another.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+			},
+			expectErr: true,
+		},
+	}
+	t.Run("Rendering permission list", func(t *testing.T) {
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				s := setupService()
+				ctx := types.WithAuthInfo(context.Background(), callingService)
+
+				resp, err := s.List(ctx, tc.req)
+				if tc.expectErr {
+					require.Error(t, err)
+					return
+				}
+				require.NoError(t, err)
+				assert.Equal(t, tc.expected.All, resp.All)
+			})
+		}
+	})
 }
 
 func setupService() *Service {
