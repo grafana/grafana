@@ -488,7 +488,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.onEnterEditMode();
     }
 
+    // Add panel to layout
     this.state.body.addPanel(vizPanel);
+    // Select panel
+    this.state.editPane.newObjectAddedToCanvas(vizPanel);
   }
 
   public createLibraryPanel(panelToReplace: VizPanel, libPanel: LibraryPanel) {
@@ -596,18 +599,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onCreateNewRow() {
-    addNewRowTo(this.state.body);
+    const newRow = addNewRowTo(this.state.body);
+    this.state.editPane.newObjectAddedToCanvas(newRow);
+    return newRow;
   }
 
   public onCreateNewTab() {
-    addNewTabTo(this.state.body);
+    const tab = addNewTabTo(this.state.body);
+    this.state.editPane.newObjectAddedToCanvas(tab);
+    return tab;
   }
 
   public onCreateNewPanel(): VizPanel {
     const vizPanel = getDefaultVizPanel();
-
     this.addPanel(vizPanel);
-
     return vizPanel;
   }
 

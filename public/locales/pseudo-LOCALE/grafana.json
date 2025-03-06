@@ -1011,7 +1011,7 @@
       "subtitle": "Åľęřŧ řūľęş řęľäŧęđ ŧő ŧĥįş đäşĥþőäřđ"
     },
     "default-layout": {
-      "description": "Ŧĥę đęƒäūľŧ ģřįđ ľäyőūŧ",
+      "description": "Mäŉūäľľy şįžę äŉđ pőşįŧįőŉ päŉęľş",
       "item-options": {
         "repeat": {
           "direction": {
@@ -1027,7 +1027,7 @@
           }
         }
       },
-      "name": "Đęƒäūľŧ ģřįđ",
+      "name": "Cūşŧőm",
       "row-actions": {
         "delete": "Đęľęŧę řőŵ",
         "modal": {
@@ -1190,7 +1190,7 @@
       }
     },
     "responsive-layout": {
-      "description": "CŜŜ ľäyőūŧ ŧĥäŧ äđĵūşŧş ŧő ŧĥę äväįľäþľę şpäčę",
+      "description": "Åūŧőmäŧįčäľľy pőşįŧįőŉş päŉęľş įŉŧő ä ģřįđ.",
       "item-options": {
         "hide-no-data": "Ħįđę ŵĥęŉ ŉő đäŧä",
         "repeat": {
@@ -1201,7 +1201,7 @@
         },
         "title": "Ŀäyőūŧ őpŧįőŉş"
       },
-      "name": "Ŗęşpőŉşįvę ģřįđ",
+      "name": "Åūŧő",
       "options": {
         "columns": "Cőľūmŉş",
         "fixed": "Fįχęđ: {{size}}pχ",
@@ -1214,7 +1214,18 @@
     },
     "rows-layout": {
       "description": "Ŗőŵş ľäyőūŧ",
+      "item-name": "Ŗőŵ",
       "name": "Ŗőŵş",
+      "option": {
+        "height": "Ħęįģĥŧ",
+        "hide-header": "Ħįđę řőŵ ĥęäđęř",
+        "repeat": "Ŗępęäŧ ƒőř",
+        "title": "Ŧįŧľę"
+      },
+      "options": {
+        "height-expand": "Ēχpäŉđ",
+        "height-min": "Mįŉ"
+      },
       "row": {
         "collapse": "Cőľľäpşę řőŵ",
         "expand": "Ēχpäŉđ řőŵ",
@@ -1234,15 +1245,6 @@
         }
       },
       "row-options": {
-        "height": {
-          "hide-row-header": "Ħįđę řőŵ ĥęäđęř"
-        },
-        "repeat": {
-          "variable": {
-            "title": "Ŗępęäŧ ƒőř"
-          }
-        },
-        "title": "Ŗőŵ",
         "title-option": "Ŧįŧľę"
       }
     },
