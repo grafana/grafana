@@ -88,8 +88,8 @@ func newMultiTenantAuthorizer(ac types.AccessClient) authorizer.Authorizer {
 			Verb:        a.GetVerb(),
 			Group:       a.GetAPIGroup(),
 			Resource:    a.GetResource(),
+			Name:        a.GetName(),
 			Namespace:   a.GetNamespace(),
-			Name:        a.GetNamespace(),
 			Subresource: a.GetSubresource(),
 		})
 
