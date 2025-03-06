@@ -281,7 +281,7 @@ func (srv RulerSrv) RouteGetAlertRuleGroups(c *contextmodel.ReqContext) response
 		namespaceUIDs = append(namespaceUIDs, k)
 	}
 
-	const defaultPageSize = 100
+	const defaultPageSize = -1
 	var namespaceListParams apimodels.NamespaceListParams
 	namespaceListParams.NextToken = c.Query("group_next_token")
 	if namespaceListParams.NextToken != "" {
@@ -298,54 +298,56 @@ func (srv RulerSrv) RouteGetAlertRuleGroups(c *contextmodel.ReqContext) response
 		User:          c.SignedInUser,
 		NamespaceUIDs: namespaceUIDs,
 	})
-	keys := make([]ngmodels.AlertRuleGroupKey, 0, len(configs))
-
-	// in-place sort by namespaceUID and ruleGroup
+	keys := make([]ngmodels.AlertRuleGroupKeyWithFolderFullpath, 0, len(configs))
+	// in-place sort by folder path and ruleGroup
 	for config := range configs {
-		keys = append(keys, config)
+		folder, ok := namespaceMap[config.NamespaceUID]
+		if !ok {
+			id, _ := c.SignedInUser.GetInternalID()
+			userNamespace := c.SignedInUser.GetIdentityType()
+			srv.log.Error("Namespace not visible to the user", "user", id, "userNamespace", userNamespace, "namespace", config.NamespaceUID)
+			continue
+		}
+
+		fullConfig := ngmodels.AlertRuleGroupKeyWithFolderFullpath{
+			AlertRuleGroupKey: config,
+			FolderFullpath:    folder.Fullpath,
+		}
+		keys = append(keys, fullConfig)
 		i := sort.Search(len(keys)-1, func(i int) bool {
 			existing := keys[i]
-			nsComp := strings.Compare(existing.NamespaceUID, config.NamespaceUID)
+			nsComp := strings.Compare(existing.FolderFullpath, fullConfig.FolderFullpath)
 			if nsComp != 0 {
 				return nsComp > 0
 			}
-			return strings.Compare(existing.RuleGroup, config.RuleGroup) > 0
+			return strings.Compare(existing.RuleGroup, fullConfig.RuleGroup) > 0
 		})
 		copy(keys[i+1:], keys[i:])
-		keys[i] = config
+		keys[i] = fullConfig
 	}
 
 	if err != nil {
 		return errorToResponse(err)
 	}
 
-	for groupKey := range configs {
-		folder, ok := namespaceMap[groupKey.NamespaceUID]
-		if !ok {
-			id, _ := c.SignedInUser.GetInternalID()
-			userNamespace := c.SignedInUser.GetIdentityType()
-			srv.log.Error("Namespace not visible to the user", "user", id, "userNamespace", userNamespace, "namespace", groupKey.NamespaceUID)
-			continue
-		}
-
+	for _, key := range keys {
 		if namespaceListParams.NextToken != "" {
 			// skip until we find the next group
-			if !TokenGreaterThanOrEqual(GetRuleGroupNextToken(groupKey.NamespaceUID, groupKey.RuleGroup), namespaceListParams.NextToken) {
+			if !TokenGreaterThanOrEqual(GetRuleGroupNextToken(key.FolderFullpath, key.RuleGroup), namespaceListParams.NextToken) {
 				continue
 			}
 			namespaceListParams.NextToken = ""
 		}
-
-		if len(result.RuleGroups) >= namespaceListParams.PageSize {
+		if len(result.RuleGroups) == namespaceListParams.PageSize {
 			// hash the last group name and namespace uid for the next token
-			result.NextToken = GetRuleGroupNextToken(groupKey.NamespaceUID, groupKey.RuleGroup)
+			result.NextToken = GetRuleGroupNextToken(key.FolderFullpath, key.RuleGroup)
 			break
 		}
 
 		ruleGroupSummary := apimodels.RuleGroupSummary{
-			Name:      groupKey.RuleGroup,
-			File:      folder.Fullpath,
-			FolderUID: groupKey.NamespaceUID,
+			Name:      key.RuleGroup,
+			File:      key.FolderFullpath,
+			FolderUID: key.NamespaceUID,
 		}
 
 		result.RuleGroups = append(result.RuleGroups, ruleGroupSummary)
