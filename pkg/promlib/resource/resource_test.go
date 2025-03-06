@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"net/url"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -13,15 +14,20 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/promlib/models"
 	"github.com/grafana/grafana/pkg/promlib/resource"
 )
 
 type mockRoundTripper struct {
-	Response *http.Response
-	Err      error
+	Response        *http.Response
+	Err             error
+	customRoundTrip func(req *http.Request) (*http.Response, error)
 }
 
 func (m *mockRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	if m.customRoundTrip != nil {
+		return m.customRoundTrip(req)
+	}
 	return m.Response, m.Err
 }
 
@@ -106,4 +112,78 @@ func TestResource_GetSuggestions(t *testing.T) {
 	resp, err := res.GetSuggestions(ctx, req)
 	require.NoError(t, err)
 	assert.NotNil(t, resp)
+}
+
+func TestResource_GetSuggestionsWithEmptyQueriesButFilters(t *testing.T) {
+	var capturedURL string
+
+	// Create a mock transport that captures the request URL
+	mockTransport := &mockRoundTripper{
+		Response: &http.Response{
+			StatusCode: 200,
+			Body:       io.NopCloser(bytes.NewReader([]byte(`{"status":"success","data":[]}`))),
+			Header:     make(http.Header),
+		},
+		customRoundTrip: func(req *http.Request) (*http.Response, error) {
+			capturedURL = req.URL.String()
+			return &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(bytes.NewReader([]byte(`{"status":"success","data":[]}`))),
+				Header:     make(http.Header),
+			}, nil
+		},
+	}
+
+	// Create a client with the mock transport
+	mockClient := &http.Client{
+		Transport: mockTransport,
+	}
+
+	settings := backend.DataSourceInstanceSettings{
+		ID:       1,
+		URL:      "http://localhost:9090",
+		JSONData: []byte(`{"httpMethod": "GET"}`),
+	}
+
+	res, err := resource.New(mockClient, settings, log.DefaultLogger)
+	require.NoError(t, err)
+
+	// Create a request with empty queries but with filters
+	suggestionReq := resource.SuggestionRequest{
+		Queries: []string{}, // Empty queries
+		Scopes: []models.ScopeFilter{
+			{Key: "job", Operator: models.FilterOperatorEquals, Value: "testjob"},
+		},
+		AdhocFilters: []models.ScopeFilter{
+			{Key: "instance", Operator: models.FilterOperatorEquals, Value: "localhost:9090"},
+		},
+	}
+
+	body, err := json.Marshal(suggestionReq)
+	require.NoError(t, err)
+
+	req := &backend.CallResourceRequest{
+		Body: body,
+	}
+	ctx := context.Background()
+
+	resp, err := res.GetSuggestions(ctx, req)
+	require.NoError(t, err)
+	assert.NotNil(t, resp)
+
+	// Parse the captured URL to get the query parameters
+	parsedURL, err := url.Parse(capturedURL)
+	require.NoError(t, err)
+
+	// Get the match[] parameter
+	matchValues := parsedURL.Query()["match[]"]
+	require.Len(t, matchValues, 1, "Expected exactly one match[] parameter")
+
+	// The actual filter expression should match our expectation, regardless of URL encoding
+	decodedMatch, err := url.QueryUnescape(matchValues[0])
+	require.NoError(t, err)
+
+	// Check that both label matchers are present with their correct values
+	assert.Contains(t, decodedMatch, `job="testjob"`)
+	assert.Contains(t, decodedMatch, `instance="localhost:9090"`)
 }
