@@ -545,7 +545,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 						Resource:  "alerts",
 						Name:      rule.UID,
 					},
-					Value: []byte(fmt.Sprintf(`{"kind":"Alert","apiVersion":"alert.grafana.app/v1alpha1","metadata":{"name":"%s","namespace":"default","generation":1,"creationTimestamp":"%s","labels":{"grafana.app/deprecatedInternalID":"%d"},"uid":"%d","annotations":{"grafana.app/createdBy":"%s"}},"spec":{}}`, rule.UID, time.Now().Format(time.RFC3339), rule.ID, rule.UID, rule.UpdatedBy)),
+					Value: []byte(fmt.Sprintf(`{"kind":"Alert","apiVersion":"alert.grafana.app/v1alpha1","metadata":{"name":"%s","namespace":"default","generation":1,"creationTimestamp":"%s","labels":{"grafana.app/deprecatedInternalID":"%d"},"uid":"%d","annotations":{"grafana.app/createdBy":"user:%s"}},"spec":{"title":"%s"}}`, rule.UID, time.Now().Format(time.RFC3339), rule.ID, rule.UID, rule.UpdatedBy, rule.Title)),
 				})
 				if err != nil {
 					logger.Error("Failed to insert rule into unified storage", "error", err)
