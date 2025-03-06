@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { VariableValueOption } from '@grafana/scenes';
 import { Button, InlineFieldRow, InlineLabel, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 export interface VariableValuesPreviewProps {
   options: VariableValueOption[];
@@ -29,7 +30,9 @@ export const VariableValuesPreview = ({ options }: VariableValuesPreviewProps) =
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', marginTop: '16px' }}>
-      <h5>Preview of values</h5>
+      <h5>
+        <Trans i18nKey="dashboard-scene.variable-values-preview.preview-of-values">Preview of values</Trans>
+      </h5>
       <InlineFieldRow>
         {previewOptions.map((o, index) => (
           <InlineFieldRow key={`${o.value}-${index}`} className={styles.optionContainer}>
@@ -45,9 +48,12 @@ export const VariableValuesPreview = ({ options }: VariableValuesPreviewProps) =
             onClick={showMoreOptions}
             variant="secondary"
             size="sm"
-            aria-label="Variable editor Preview of Values Show More link"
+            aria-label={t(
+              'dashboard-scene.variable-values-preview.aria-label-variable-editor-preview-values',
+              'Variable editor Preview of Values Show More link'
+            )}
           >
-            Show more
+            <Trans i18nKey="dashboard-scene.variable-values-preview.show-more">Show more</Trans>
           </Button>
         </InlineFieldRow>
       )}

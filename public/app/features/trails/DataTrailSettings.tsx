@@ -50,7 +50,9 @@ export class DataTrailSettings extends SceneObjectBase<DataTrailSettingsState> {
       return (
         /* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */
         <div className={styles.popover} onClick={(evt) => evt.stopPropagation()}>
-          <div className={styles.heading}>Settings</div>
+          <div className={styles.heading}>
+            <Trans i18nKey="trails.data-trail-settings.render-popover.settings">Settings</Trans>
+          </div>
           {topScene instanceof MetricScene && (
             <div className={styles.options}>
               <div>

@@ -1,6 +1,7 @@
 import { FormEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from 'app/core/internationalization';
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextField';
 
@@ -14,12 +15,17 @@ interface TextBoxVariableFormProps {
 export function TextBoxVariableForm({ defaultValue, value, onChange, onBlur }: TextBoxVariableFormProps) {
   return (
     <>
-      <VariableLegend>Text options</VariableLegend>
+      <VariableLegend>
+        <Trans i18nKey="dashboard-scene.text-box-variable-form.text-options">Text options</Trans>
+      </VariableLegend>
       <VariableTextField
         value={value}
         defaultValue={defaultValue}
         name="Default value"
-        placeholder="default value, if any"
+        placeholder={t(
+          'dashboard-scene.text-box-variable-form.placeholder-default-value-if-any',
+          'default value, if any'
+        )}
         onChange={onChange}
         onBlur={onBlur}
         width={30}

@@ -8,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Button, Field, Input, Label, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useNewFolderMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { AccessControlAction } from 'app/types';
@@ -155,7 +156,7 @@ function FolderCreationModal({
               data-testid={selectors.components.AlertRules.newFolderNameField}
               autoFocus={true}
               id="folderName"
-              placeholder="Enter a name"
+              placeholder={t('alerting.folder-creation-modal.placeholder-enter-a-name', 'Enter a name')}
               value={title}
               onChange={(e) => setTitle(e.currentTarget.value)}
             />

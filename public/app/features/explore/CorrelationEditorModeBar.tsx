@@ -6,6 +6,7 @@ import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { Prompt } from 'app/core/components/FormPrompt/Prompt';
+import { Trans } from 'app/core/internationalization';
 import { CORRELATION_EDITOR_POST_CONFIRM_ACTION, ExploreItemState, useDispatch, useSelector } from 'app/types';
 
 import { CorrelationUnsavedChangesModal } from './CorrelationUnsavedChangesModal';
@@ -242,7 +243,7 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
               saveCorrelationPostAction(true);
             }}
           >
-            Save
+            <Trans i18nKey="explore.correlation-editor-mode-bar.save">Save</Trans>
           </Button>
           <Button
             variant="secondary"
@@ -254,7 +255,7 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
               reportInteraction('grafana_explore_correlation_editor_exit_pressed');
             }}
           >
-            Exit correlation editor
+            <Trans i18nKey="explore.correlation-editor-mode-bar.exit-correlation-editor">Exit correlation editor</Trans>
           </Button>
         </Stack>
       </div>

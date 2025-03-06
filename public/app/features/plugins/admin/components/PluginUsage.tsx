@@ -8,6 +8,7 @@ import { GrafanaTheme2, PluginMeta, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Alert, Spinner, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { t } from 'app/core/internationalization';
 import { SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { SearchQuery } from 'app/features/search/service/types';
@@ -69,7 +70,12 @@ export function PluginUsage({ plugin }: Props) {
 
   if (!config.featureToggles.panelTitleSearch) {
     return (
-      <Alert title="Missing feature toggle: panelTitleSearch">
+      <Alert
+        title={t(
+          'plugins.plugin-usage.title-missing-feature-toggle-panel-title-search',
+          'Missing feature toggle: panelTitleSearch'
+        )}
+      >
         Plugin usage requires the new search index to find usage across dashboards
       </Alert>
     );

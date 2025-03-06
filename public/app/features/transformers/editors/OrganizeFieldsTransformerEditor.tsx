@@ -23,6 +23,7 @@ import {
   Text,
   Box,
 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { useAllFieldNamesFromDataFrames } from '../utils';
@@ -165,7 +166,15 @@ const DraggableFieldName = ({
           <InlineLabel width={60} as="div">
             <Stack gap={0} justifyContent="flex-start" alignItems="center" width="100%">
               <span {...provided.dragHandleProps}>
-                <Icon name="draggabledots" title="Drag and drop to reorder" size="lg" className={styles.draggable} />
+                <Icon
+                  name="draggabledots"
+                  title={t(
+                    'transformers.draggable-field-name.title-drag-and-drop-to-reorder',
+                    'Drag and drop to reorder'
+                  )}
+                  size="lg"
+                  className={styles.draggable}
+                />
               </span>
               <IconButton
                 className={styles.toggle}

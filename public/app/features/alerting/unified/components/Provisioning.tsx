@@ -1,7 +1,7 @@
 import { ComponentPropsWithoutRef } from 'react';
 
 import { Alert, Badge, Tooltip } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 export enum ProvisionedResource {
   ContactPoint = 'contact point',
@@ -37,7 +37,7 @@ export const ProvisioningBadge = ({
    */
   provenance?: string;
 }) => {
-  const badge = <Badge text="Provisioned" color="purple" />;
+  const badge = <Badge text={t('alerting.provisioning-badge.badge.text-provisioned', 'Provisioned')} color="purple" />;
 
   if (tooltip) {
     const provenanceTooltip = (

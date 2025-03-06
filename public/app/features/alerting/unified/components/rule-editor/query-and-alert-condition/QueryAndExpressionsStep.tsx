@@ -550,7 +550,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
                   disabled={noCompatibleDataSources}
                   className={styles.addQueryButton}
                 >
-                  Add query
+                  <Trans i18nKey="alerting.query-and-expressions-step.add-query">Add query</Trans>
                 </Button>
               </Tooltip>
             )}
@@ -567,9 +567,13 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
             {!simplifiedQueryStep && (
               <>
                 <Stack direction="column" gap={0}>
-                  <Text element="h5">Expressions</Text>
+                  <Text element="h5">
+                    <Trans i18nKey="alerting.query-and-expressions-step.expressions">Expressions</Trans>
+                  </Text>
                   <Text variant="bodySmall" color="secondary">
-                    Manipulate data returned from queries with math and other operations.
+                    <Trans i18nKey="alerting.query-and-expressions-step.manipulate-returned-queries-other-operations">
+                      Manipulate data returned from queries with math and other operations.
+                    </Trans>
                   </Text>
                 </Stack>
 
@@ -628,7 +632,13 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
             {/* No Queries */}
             {emptyQueries && (
-              <Alert title="No queries or expressions have been configured" severity="warning">
+              <Alert
+                title={t(
+                  'alerting.query-and-expressions-step.title-queries-expressions-configured',
+                  'No queries or expressions have been configured'
+                )}
+                severity="warning"
+              >
                 Create at least one query or expression to be alerted on
               </Alert>
             )}
@@ -638,7 +648,10 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
       <ConfirmModal
         isOpen={showResetModeModal}
-        title="Deactivate advanced options"
+        title={t(
+          'alerting.query-and-expressions-step.title-deactivate-advanced-options',
+          'Deactivate advanced options'
+        )}
         body={
           <div>
             <Text element="p">

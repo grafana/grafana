@@ -1,5 +1,6 @@
 import { OrgRole } from '@grafana/data';
 import { Select } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 interface Props {
   value: OrgRole;
@@ -21,7 +22,7 @@ export function OrgRolePicker({ value, onChange, 'aria-label': ariaLabel, inputI
       value={value}
       options={options}
       onChange={(val) => onChange(val.value ?? OrgRole.None)}
-      placeholder="Choose role..."
+      placeholder={t('admin.org-role-picker.placeholder-choose-role', 'Choose role...')}
       aria-label={ariaLabel}
       autoFocus={autoFocus}
       {...restProps}

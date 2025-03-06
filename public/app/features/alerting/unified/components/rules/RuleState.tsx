@@ -90,7 +90,11 @@ export const RuleState = ({ rule, isDeleting, isCreating, isPaused }: Props) => 
   } else if (promRule && isRecordingRule(promRule)) {
     return <RecordingRuleState />;
   }
-  return <>n/a</>;
+  return (
+    <>
+      <Trans i18nKey="alerting.rule-state.na">n/a</Trans>
+    </>
+  );
 };
 
 const getStyle = (theme: GrafanaTheme2) => ({

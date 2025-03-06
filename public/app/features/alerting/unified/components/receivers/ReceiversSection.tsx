@@ -5,6 +5,7 @@ import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Dropdown, Icon, Menu, MenuItem, Stack, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { GrafanaReceiversExporter } from '../export/GrafanaReceiversExporter';
 
@@ -34,7 +35,16 @@ export const ReceiversSection = ({
   const showMore = showExport;
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
 
-  const newMenu = <Menu>{showExport && <MenuItem onClick={toggleShowExportDrawer} label="Export all" />}</Menu>;
+  const newMenu = (
+    <Menu>
+      {showExport && (
+        <MenuItem
+          onClick={toggleShowExportDrawer}
+          label={t('alerting.receivers-section.new-menu.label-export-all', 'Export all')}
+        />
+      )}
+    </Menu>
+  );
 
   return (
     <Stack direction="column" gap={2}>

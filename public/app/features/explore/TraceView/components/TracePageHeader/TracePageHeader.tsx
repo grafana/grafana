@@ -20,6 +20,7 @@ import * as React from 'react';
 import { CoreApp, DataFrame, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
 import { Badge, BadgeColor, Tooltip, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { SearchProps } from '../../useSearch';
 import ExternalLinks from '../common/ExternalLinks';
@@ -113,7 +114,11 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const urlTooltip = (url: string) => {
     return (
       <>
-        <div>http.url or http.target or http.path</div>
+        <div>
+          <Trans i18nKey="explore.trace-page-header.url-tooltip.httpurl-or-httptarget-httppath">
+            http.url or http.target or http.path
+          </Trans>
+        </div>
         <div>({url})</div>
       </>
     );

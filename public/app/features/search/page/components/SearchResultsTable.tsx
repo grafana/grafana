@@ -11,6 +11,7 @@ import { TableCellHeight } from '@grafana/schema';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
 import { useTableStyles } from '@grafana/ui/src/components/Table/styles';
+import { Trans, t } from 'app/core/internationalization';
 import { useCustomFlexLayout } from 'app/features/browse-dashboards/components/customFlexTableLayout';
 
 import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelection';
@@ -169,11 +170,19 @@ export const SearchResultsTable = React.memo(
     );
 
     if (!rows.length) {
-      return <div className={styles.noData}>No data</div>;
+      return (
+        <div className={styles.noData}>
+          <Trans i18nKey="search.search-results-table.no-data">No data</Trans>
+        </div>
+      );
     }
 
     return (
-      <div {...getTableProps()} aria-label="Search results table" role="table">
+      <div
+        {...getTableProps()}
+        aria-label={t('search.search-results-table.aria-label-search-results-table', 'Search results table')}
+        role="table"
+      >
         {headerGroups.map((headerGroup) => {
           const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps({
             style: { width },

@@ -12,6 +12,7 @@ import {
 } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { Button, Dropdown, Icon, IconButton, Menu, Modal, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { trackInsightsFeedback } from '../Analytics';
 
@@ -77,7 +78,7 @@ const InsightsMenuButtonRenderer = ({ model }: SceneComponentProps<InsightsMenuB
 
   const modal = (
     <Modal
-      title="Rate this panel"
+      title={t('alerting.insights-menu-button-renderer.modal.title-rate-this-panel', 'Rate this panel')}
       isOpen={showModal}
       onDismiss={onDismiss}
       onClickBackdrop={onDismiss}
@@ -95,7 +96,9 @@ const InsightsMenuButtonRenderer = ({ model }: SceneComponentProps<InsightsMenuB
           <Button variant="secondary" className={styles.buttonContainer} onClick={() => onButtonClick(true)}>
             <div className={styles.button}>
               <Icon name="thumbs-up" size="xxxl" />
-              <span>I like it</span>
+              <span>
+                <Trans i18nKey="alerting.insights-menu-button-renderer.modal.i-like-it">I like it</Trans>
+              </span>
             </div>
           </Button>
         </div>
@@ -105,15 +108,29 @@ const InsightsMenuButtonRenderer = ({ model }: SceneComponentProps<InsightsMenuB
 
   const menu = (
     <Menu>
-      <Menu.Item label="Explore" icon="compass" url={url} target="_blank" />
-      <Menu.Item label="Rate this panel" icon="comment-alt-message" onClick={() => setShowModal(true)} />
+      <Menu.Item
+        label={t('alerting.insights-menu-button-renderer.menu.label-explore', 'Explore')}
+        icon="compass"
+        url={url}
+        target="_blank"
+      />
+      <Menu.Item
+        label={t('alerting.insights-menu-button-renderer.menu.label-rate-this-panel', 'Rate this panel')}
+        icon="comment-alt-message"
+        onClick={() => setShowModal(true)}
+      />
     </Menu>
   );
 
   return (
     <div>
       <Dropdown overlay={menu} placement="bottom-start">
-        <IconButton name="ellipsis-v" variant="secondary" className={styles.menu} aria-label="Rate this panel" />
+        <IconButton
+          name="ellipsis-v"
+          variant="secondary"
+          className={styles.menu}
+          aria-label={t('alerting.insights-menu-button-renderer.aria-label-rate-this-panel', 'Rate this panel')}
+        />
       </Dropdown>
       {modal}
     </div>

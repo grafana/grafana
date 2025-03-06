@@ -49,7 +49,7 @@ import {
   withTheme2,
 } from '@grafana/ui';
 import { mapMouseEventToMode } from '@grafana/ui/src/components/VizLegend/utils';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { createAndCopyShortLink, getLogsPermalinkRange } from 'app/core/utils/shortLinks';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
@@ -819,7 +819,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         />
       )}
       <PanelChrome
-        title="Logs volume"
+        title={t('explore.unthemed-logs.title-logs-volume', 'Logs volume')}
         collapsible
         collapsed={!logsVolumeEnabled}
         onToggleCollapse={onToggleLogsVolumeCollapse}
@@ -844,7 +844,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         titleItems={[
           config.featureToggles.logsExploreTableVisualisation ? (
             visualisationType === 'logs' ? null : (
-              <PanelChrome.TitleItem title="Feedback" key="A">
+              <PanelChrome.TitleItem title={t('explore.unthemed-logs.title-feedback', 'Feedback')} key="A">
                 <LogsFeedback feedbackUrl="https://forms.gle/5YyKdRQJ5hzq4c289" />
               </PanelChrome.TitleItem>
             )
@@ -883,7 +883,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           {visualisationType !== 'table' && (
             <div className={styles.logOptions}>
               <InlineFieldRow>
-                <InlineField label="Time" className={styles.horizontalInlineLabel} transparent>
+                <InlineField
+                  label={t('explore.unthemed-logs.label-time', 'Time')}
+                  className={styles.horizontalInlineLabel}
+                  transparent
+                >
                   <InlineSwitch
                     value={showTime}
                     onChange={onChangeShowTime}
@@ -892,7 +896,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                     id={`show-time_${exploreId}`}
                   />
                 </InlineField>
-                <InlineField label="Unique labels" className={styles.horizontalInlineLabel} transparent>
+                <InlineField
+                  label={t('explore.unthemed-logs.label-unique-labels', 'Unique labels')}
+                  className={styles.horizontalInlineLabel}
+                  transparent
+                >
                   <InlineSwitch
                     value={showLabels}
                     onChange={onChangeLabels}
@@ -901,7 +909,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                     id={`unique-labels_${exploreId}`}
                   />
                 </InlineField>
-                <InlineField label="Wrap lines" className={styles.horizontalInlineLabel} transparent>
+                <InlineField
+                  label={t('explore.unthemed-logs.label-wrap-lines', 'Wrap lines')}
+                  className={styles.horizontalInlineLabel}
+                  transparent
+                >
                   <InlineSwitch
                     value={wrapLogMessage}
                     onChange={onChangeWrapLogMessage}
@@ -910,7 +922,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                     id={`wrap-lines_${exploreId}`}
                   />
                 </InlineField>
-                <InlineField label="Prettify JSON" className={styles.horizontalInlineLabel} transparent>
+                <InlineField
+                  label={t('explore.unthemed-logs.label-prettify-json', 'Prettify JSON')}
+                  className={styles.horizontalInlineLabel}
+                  transparent
+                >
                   <InlineSwitch
                     value={prettifyLogMessage}
                     onChange={onChangePrettifyLogMessage}
@@ -919,7 +935,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                     id={`prettify_${exploreId}`}
                   />
                 </InlineField>
-                <InlineField label="Deduplication" className={styles.horizontalInlineLabel} transparent>
+                <InlineField
+                  label={t('explore.unthemed-logs.label-deduplication', 'Deduplication')}
+                  className={styles.horizontalInlineLabel}
+                  transparent
+                >
                   <RadioButtonGroup
                     options={DEDUP_OPTIONS.map((dedupType) => ({
                       label: capitalize(dedupType),
@@ -935,7 +955,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
               <div>
                 <InlineField
-                  label="Display results"
+                  label={t('explore.unthemed-logs.label-display-results', 'Display results')}
                   className={styles.horizontalInlineLabel}
                   transparent
                   disabled={isFlipping || loading}

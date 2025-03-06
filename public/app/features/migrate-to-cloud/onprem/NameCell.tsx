@@ -126,7 +126,9 @@ function FolderInfo({ data }: { data: ResourceTableItem }) {
   if (isError) {
     return (
       <>
-        <Text italic>Unable to load folder</Text>
+        <Text italic>
+          <Trans i18nKey="migrate-to-cloud.folder-info.unable-to-load-folder">Unable to load folder</Trans>
+        </Text>
         <Text color="secondary">Folder {data.refId}</Text>
       </>
     );

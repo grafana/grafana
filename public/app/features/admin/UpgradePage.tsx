@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import { GrafanaTheme2, NavModel } from '@grafana/data';
 import { LinkButton, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { getNavModel } from '../../core/selectors/navModel';
 import { StoreState } from '../../types';
@@ -110,18 +110,30 @@ const ServiceInfo = () => {
       </h4>
 
       <List>
-        <Item title="Enterprise Plugins" image="public/img/licensing/plugin_enterprise.svg" />
-        <Item title="Critical SLA: 2 hours" image="public/img/licensing/sla.svg" />
-        <Item title="Unlimited Expert Support" image="public/img/licensing/customer_support.svg">
+        <Item
+          title={t('admin.service-info.title-enterprise-plugins', 'Enterprise Plugins')}
+          image="public/img/licensing/plugin_enterprise.svg"
+        />
+        <Item
+          title={t('admin.service-info.title-critical-sla-hours', 'Critical SLA: 2 hours')}
+          image="public/img/licensing/sla.svg"
+        />
+        <Item
+          title={t('admin.service-info.title-unlimited-expert-support', 'Unlimited Expert Support')}
+          image="public/img/licensing/customer_support.svg"
+        >
           24 x 7 x 365 support via
           <List nested={true}>
-            <Item title="Email" />
-            <Item title="Private Slack channel" />
-            <Item title="Phone" />
+            <Item title={t('admin.service-info.title-email', 'Email')} />
+            <Item title={t('admin.service-info.title-private-slack-channel', 'Private Slack channel')} />
+            <Item title={t('admin.service-info.title-phone', 'Phone')} />
           </List>
         </Item>
-        <Item title="Hand-in-hand support" image="public/img/licensing/handinhand_support.svg">
-          in the upgrade process
+        <Item
+          title={t('admin.service-info.title-handinhand-support', 'Hand-in-hand support')}
+          image="public/img/licensing/handinhand_support.svg"
+        >
+          <Trans i18nKey="admin.service-info.in-the-upgrade-process">in the upgrade process</Trans>
         </Item>
       </List>
 
@@ -154,41 +166,48 @@ const FeatureInfo = () => {
 const FeatureListing = () => {
   return (
     <List>
-      <Item title="Data source permissions" />
-      <Item title="Reporting" />
-      <Item title="SAML authentication" />
-      <Item title="Enhanced LDAP integration" />
-      <Item title="Team Sync">
+      <Item title={t('admin.feature-listing.title-data-source-permissions', 'Data source permissions')} />
+      <Item title={t('admin.feature-listing.title-reporting', 'Reporting')} />
+      <Item title={t('admin.feature-listing.title-saml-authentication', 'SAML authentication')} />
+      <Item title={t('admin.feature-listing.title-enhanced-ldap-integration', 'Enhanced LDAP integration')} />
+      <Item title={t('admin.feature-listing.title-team-sync', 'Team Sync')}>
         <Trans i18nKey="admin.get-enterprise.team-sync-details">LDAP, GitHub OAuth, Auth Proxy, Okta</Trans>
       </Item>
-      <Item title="White labeling" />
-      <Item title="Auditing" />
-      <Item title="Settings updates at runtime" />
-      <Item title="Grafana usage insights">
+      <Item title={t('admin.feature-listing.title-white-labeling', 'White labeling')} />
+      <Item title={t('admin.feature-listing.title-auditing', 'Auditing')} />
+      <Item title={t('admin.feature-listing.title-settings-updates-at-runtime', 'Settings updates at runtime')} />
+      <Item title={t('admin.feature-listing.title-grafana-usage-insights', 'Grafana usage insights')}>
         <List nested={true}>
-          <Item title="Sort dashboards by popularity in search" />
-          <Item title="Find unused dashboards" />
-          <Item title="Dashboard usage stats drawer" />
-          <Item title="Dashboard presence indicators" />
+          <Item
+            title={t(
+              'admin.feature-listing.title-sort-dashboards-by-popularity-in-search',
+              'Sort dashboards by popularity in search'
+            )}
+          />
+          <Item title={t('admin.feature-listing.title-find-unused-dashboards', 'Find unused dashboards')} />
+          <Item title={t('admin.feature-listing.title-dashboard-usage-stats-drawer', 'Dashboard usage stats drawer')} />
+          <Item
+            title={t('admin.feature-listing.title-dashboard-presence-indicators', 'Dashboard presence indicators')}
+          />
         </List>
       </Item>
-      <Item title="Enterprise plugins">
+      <Item title={t('admin.feature-listing.title-enterprise-plugins', 'Enterprise plugins')}>
         <List nested={true}>
-          <Item title="Oracle" />
-          <Item title="Splunk" />
-          <Item title="Service Now" />
-          <Item title="Dynatrace" />
-          <Item title="New Relic" />
-          <Item title="DataDog" />
-          <Item title="AppDynamics" />
-          <Item title="SAP HANA®" />
-          <Item title="Gitlab" />
-          <Item title="Honeycomb" />
-          <Item title="Jira" />
-          <Item title="MongoDB" />
-          <Item title="Salesforce" />
-          <Item title="Snowflake" />
-          <Item title="Wavefront" />
+          <Item title={t('admin.feature-listing.title-oracle', 'Oracle')} />
+          <Item title={t('admin.feature-listing.title-splunk', 'Splunk')} />
+          <Item title={t('admin.feature-listing.title-service-now', 'Service Now')} />
+          <Item title={t('admin.feature-listing.title-dynatrace', 'Dynatrace')} />
+          <Item title={t('admin.feature-listing.title-new-relic', 'New Relic')} />
+          <Item title={t('admin.feature-listing.title-data-dog', 'DataDog')} />
+          <Item title={t('admin.feature-listing.title-app-dynamics', 'AppDynamics')} />
+          <Item title={t('admin.feature-listing.title-sap-hana', 'SAP HANA®')} />
+          <Item title={t('admin.feature-listing.title-gitlab', 'Gitlab')} />
+          <Item title={t('admin.feature-listing.title-honeycomb', 'Honeycomb')} />
+          <Item title={t('admin.feature-listing.title-jira', 'Jira')} />
+          <Item title={t('admin.feature-listing.title-mongo-db', 'MongoDB')} />
+          <Item title={t('admin.feature-listing.title-salesforce', 'Salesforce')} />
+          <Item title={t('admin.feature-listing.title-snowflake', 'Snowflake')} />
+          <Item title={t('admin.feature-listing.title-wavefront', 'Wavefront')} />
         </List>
       </Item>
     </List>

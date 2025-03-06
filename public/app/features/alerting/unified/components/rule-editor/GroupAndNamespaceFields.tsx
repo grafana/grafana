@@ -4,6 +4,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Field, VirtualizedSelect, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { RuleFormValues } from '../../types/rule-form';
 
@@ -44,7 +45,7 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
     <div className={style.flexRow}>
       <Field
         data-testid="namespace-picker"
-        label="Namespace"
+        label={t('alerting.group-and-namespace-fields.namespace-picker-label-namespace', 'Namespace')}
         error={errors.namespace?.message}
         invalid={!!errors.namespace?.message}
       >
@@ -71,7 +72,12 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
           }}
         />
       </Field>
-      <Field data-testid="group-picker" label="Group" error={errors.group?.message} invalid={!!errors.group?.message}>
+      <Field
+        data-testid="group-picker"
+        label={t('alerting.group-and-namespace-fields.group-picker-label-group', 'Group')}
+        error={errors.group?.message}
+        invalid={!!errors.group?.message}
+      >
         <Controller
           render={({ field: { ref, ...field } }) => (
             <VirtualizedSelect

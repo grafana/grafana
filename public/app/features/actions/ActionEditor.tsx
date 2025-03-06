@@ -9,7 +9,7 @@ import { InlineFieldRow } from '@grafana/ui/src/components/Forms/InlineFieldRow'
 import { RadioButtonGroup } from '@grafana/ui/src/components/Forms/RadioButtonGroup/RadioButtonGroup';
 import { JSONFormatter } from '@grafana/ui/src/components/JSONFormatter/JSONFormatter';
 import { useStyles2 } from '@grafana/ui/src/themes';
-import { t } from '@grafana/ui/src/utils/i18n';
+import { t } from 'app/core/internationalization';
 
 import { HTMLElementType, SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
 
@@ -167,12 +167,12 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
       </InlineFieldRow>
 
       <InlineFieldRow>
-        <InlineField label="URL" labelWidth={LABEL_WIDTH} grow={true}>
+        <InlineField label={t('actions.action-editor.label-url', 'URL')} labelWidth={LABEL_WIDTH} grow={true}>
           <SuggestionsInput
             value={value.fetch.url}
             onChange={onUrlChange}
             suggestions={suggestions}
-            placeholder="URL"
+            placeholder={t('actions.action-editor.placeholder-url', 'URL')}
           />
         </InlineField>
       </InlineFieldRow>
@@ -184,7 +184,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
         <ParamsEditor value={value?.fetch.queryParams ?? []} onChange={onQueryParamsChange} suggestions={suggestions} />
       </Field>
 
-      <Field label="Headers">
+      <Field label={t('actions.action-editor.label-headers', 'Headers')}>
         <ParamsEditor
           value={value?.fetch.headers ?? []}
           onChange={onHeadersChange}

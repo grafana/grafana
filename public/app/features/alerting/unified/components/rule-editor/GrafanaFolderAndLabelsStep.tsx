@@ -57,7 +57,11 @@ export function GrafanaFolderAndLabelsStep() {
   }
 
   return (
-    <RuleEditorSection stepNo={3} title="Add folder and labels" description={<SectionDescription />}>
+    <RuleEditorSection
+      stepNo={3}
+      title={t('alerting.grafana-folder-and-labels-step.title-add-folder-and-labels', 'Add folder and labels')}
+      description={<SectionDescription />}
+    >
       <Stack direction="column" justify-content="flex-start" align-items="flex-start">
         <FolderSelector />
         <LabelsFieldInForm onEditClick={() => setShowLabelsEditor(true)} />

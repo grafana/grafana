@@ -17,7 +17,7 @@ import {
 } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema/';
 import { Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getPanelInspectorStyles2 } from 'app/features/inspector/styles';
@@ -177,7 +177,7 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
           </Field>
           {model.isEditable() && (
             <Button className={styles.toolbarItem} onClick={model.onApplyChange}>
-              Apply
+              <Trans i18nKey="dashboard-scene.inspect-json-tab.apply">Apply</Trans>
             </Button>
           )}
         </div>

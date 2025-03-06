@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { DataTrailCard } from './DataTrailCard';
 import { getTrailStore, getBookmarkKey } from './TrailStore/TrailStore';
@@ -38,7 +38,7 @@ export function DataTrailsBookmarks({ onSelect, onDelete }: Props) {
         <IconButton
           name={toggleBookmark ? 'angle-up' : 'angle-down'}
           size="xl"
-          aria-label="bookmarkCarrot"
+          aria-label={t('trails.data-trails-bookmarks.aria-label-bookmark-carrot', 'bookmarkCarrot')}
           variant="secondary"
           onClick={() => setToggleBookmark(!toggleBookmark)}
         />

@@ -5,7 +5,7 @@ import { FormEvent, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Field, Icon, Input, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { parsePromQLStyleMatcherLoose } from '../../utils/matchers';
 import { getSilenceFiltersFromUrlParams } from '../../utils/misc';
@@ -72,7 +72,7 @@ export const SilencesFilter = () => {
           prefix={<Icon name="search" />}
           onChange={handleQueryStringChange}
           defaultValue={queryString ?? ''}
-          placeholder="Search"
+          placeholder={t('alerting.silences-filter.search-query-input-placeholder-search', 'Search')}
           data-testid="search-query-input"
         />
       </Field>

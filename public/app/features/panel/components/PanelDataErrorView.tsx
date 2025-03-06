@@ -12,6 +12,7 @@ import { PanelDataErrorViewProps, locationService } from '@grafana/runtime';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { CardButton } from 'app/core/components/CardButton';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
+import { Trans } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { toggleVizPicker } from 'app/features/dashboard/components/PanelEditor/state/reducers';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
@@ -81,10 +82,12 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
             </>
           )}
           <CardButton icon="table" onClick={switchToTable}>
-            Switch to table
+            <Trans i18nKey="panel.panel-data-error-view.switch-to-table">Switch to table</Trans>
           </CardButton>
           <CardButton icon="chart-line" onClick={openVizPicker}>
-            Open visualization suggestions
+            <Trans i18nKey="panel.panel-data-error-view.open-visualization-suggestions">
+              Open visualization suggestions
+            </Trans>
           </CardButton>
         </div>
       )}

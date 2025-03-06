@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { config } from '@grafana/runtime';
 import { Box, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { isLocalDevEnv } from '../utils/misc';
@@ -19,7 +20,7 @@ function Home() {
 
   return (
     <AlertingPageWrapper
-      title="Alerting"
+      title={t('alerting.home.title-alerting', 'Alerting')}
       subTitle="Learn about problems in your systems moments after they occur"
       navId="alerting"
     >
@@ -32,14 +33,14 @@ function Home() {
           {insightsEnabled && (
             <Tab
               key="insights"
-              label="Insights"
+              label={t('alerting.home.label-insights', 'Insights')}
               active={activeTab === 'insights'}
               onChangeTab={() => setActiveTab('insights')}
             />
           )}
           <Tab
             key="overview"
-            label="Get started"
+            label={t('alerting.home.label-get-started', 'Get started')}
             active={activeTab === 'overview'}
             onChangeTab={() => setActiveTab('overview')}
           />

@@ -5,6 +5,7 @@ import { GrafanaTheme2, PanelData, ThresholdsConfig, isTimeSeriesFrames } from '
 import { GraphThresholdsStyleMode } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { Trans } from 'app/core/internationalization';
 import { GraphContainer } from 'app/features/explore/Graph/GraphContainer';
 
 import { ExpressionResult } from '../expressions/Expression';
@@ -46,7 +47,9 @@ export const VizWrapper = ({ data, thresholds, thresholdsType }: Props) => {
               />
             ) : (
               <div className={styles.instantVectorResultWrapper}>
-                <header className={styles.title}>Table</header>
+                <header className={styles.title}>
+                  <Trans i18nKey="alerting.viz-wrapper.table">Table</Trans>
+                </header>
                 <ExpressionResult series={data.series} />
               </div>
             )}
