@@ -53,7 +53,7 @@ For more information on how to setup LBAC for data sources rules for a Prometheu
 
 LBAC for data sources is available in Grafana Enterprise for Prometheus created with basic authentication. Prometheus data sources for LBAC for data sources can only be created.
 
-You cannot configure LBAC rules for Grafana-provisioned data sources from the UI. Alternatively, you can replicate the setting of the provisioned data source in a new data source as described in [LBAC Configuration for new Prometheus data source](#task-1-lbac-configuration-for-new-prometheus-data-source) and then add the LBAC configuration to the new data source.
+You cannot configure LBAC rules for Grafana-provisioned data sources from the UI. Alternatively, you can replicate the setting of the provisioned data source in a new data source as described in [LBAC Configuration for new Prometheus data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/configure-teamlbac-for-prometheus/#task-1-lbac-configuration-for-new-prometheus-data-source) and then add the LBAC configuration to the new data source.
 
 ## Before you begin
 
