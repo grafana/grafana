@@ -11,13 +11,15 @@ import { EMPTY_SELECTOR } from './types';
 export function SelectorActions() {
   const styles = useStyles2(getStylesSelectorActions);
   const [validationStatus, setValidationStatus] = useState('');
-  const { languageProvider, selector, onChange, status, err, setErr, onClearClick } = useMetricsBrowser();
+  const { languageProvider, getSelector, onChange, status, err, setErr, onClearClick } = useMetricsBrowser();
+
+  const selector = getSelector();
 
   const validateSelector = async (selector: string) => {
     setValidationStatus(`Validating selector ${selector}`);
     setErr('');
-    const streams = await languageProvider.fetchSeries(selector);
-    setValidationStatus(`Selector is valid (${streams.length} series found)`);
+    const streams = await languageProvider.fetchLabelsWithMatch(selector);
+    setValidationStatus(`Selector is valid (${Object.keys(streams).length} labels found)`);
   };
 
   const onClickValidate = () => {

@@ -1,9 +1,9 @@
-import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useState } from 'react';
 
 import PromQlLanguageProvider from '../../language_provider';
 
 import { buildSelector } from './selectorBuilder';
-import { DEFAULT_SERIES_LIMIT, LAST_USED_LABELS_KEY, Metric, METRIC_LABEL } from './types';
+import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, LAST_USED_LABELS_KEY, Metric, METRIC_LABEL } from './types';
 
 interface MetricsBrowserContextType {
   err: string;
@@ -26,7 +26,7 @@ interface MetricsBrowserContextType {
   onMetricClick: (name: string) => void;
   onLabelKeyClick: (name: string) => void;
   onLabelValueClick: (labelKey: string, labelValue: string) => void;
-  selector: string;
+  getSelector: () => string;
   onClearClick: () => void;
 }
 
@@ -55,18 +55,24 @@ export function MetricsBrowserProvider({
   const [labelValues, setLabelValues] = useState<Record<string, string[]>>({});
   const [selectedLabelValues, setSelectedLabelValues] = useState<Record<string, string[]>>({});
 
-  const selector = useMemo(
+  const getSelector = useCallback(
     () => buildSelector(selectedMetric, selectedLabelValues),
     [selectedLabelValues, selectedMetric]
   );
 
-  useEffect(() => {
-    const meta = languageProvider.metricsMetadata;
+  const getMetricDetails = useCallback(
+    (metricName: string) => {
+      const meta = languageProvider.metricsMetadata;
+      return meta && meta[metricName] ? `(${meta[metricName].type}) ${meta[metricName].help}` : undefined;
+    },
+    [languageProvider.metricsMetadata]
+  );
 
+  useEffect(() => {
     setMetrics(
       languageProvider.metrics.map((m) => ({
         name: m,
-        details: meta && meta[m] ? `(${meta.type}) ${meta.help}` : undefined,
+        details: getMetricDetails(m),
       }))
     );
     setLabelKeys([...languageProvider.labelKeys.filter(withoutMetricLabel)]);
@@ -79,13 +85,15 @@ export function MetricsBrowserProvider({
   // Fetch labels
   useEffect(() => {
     if (selectedMetric !== '') {
+      const selector = buildSelector(selectedMetric, selectedLabelValues);
       languageProvider.fetchSeriesLabelsMatch(selector).then((fetchedLabelKeys) => {
         setLabelKeys(Object.keys(fetchedLabelKeys).filter(withoutMetricLabel));
       });
     } else {
       setLabelKeys([...languageProvider.labelKeys.filter(withoutMetricLabel)]);
     }
-  }, [languageProvider, selectedMetric, selector]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [languageProvider, selectedMetric]);
 
   // Fetch label values
   useEffect(() => {
@@ -106,6 +114,21 @@ export function MetricsBrowserProvider({
 
     fetchValues();
   }, [labelKeys, languageProvider, selectedLabelKeys]);
+
+  // Fetch metrics with new selector
+  useEffect(() => {
+    async function fetchMetrics() {
+      const selector = buildSelector(selectedMetric, selectedLabelValues);
+      if (selector === EMPTY_SELECTOR) {
+        return;
+      }
+      const metrics = await languageProvider.fetchSeriesValuesWithMatch(METRIC_LABEL, selector);
+      setMetrics(metrics.map((m) => ({ name: m, details: getMetricDetails(m) })));
+    }
+
+    fetchMetrics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [languageProvider, selectedLabelValues]);
 
   const onMetricClick = useCallback(
     (metricName: string) => setSelectedMetric(selectedMetric !== metricName ? metricName : ''),
@@ -169,7 +192,7 @@ export function MetricsBrowserProvider({
     onMetricClick,
     onLabelKeyClick,
     onLabelValueClick,
-    selector,
+    getSelector,
     onClearClick,
   };
 
