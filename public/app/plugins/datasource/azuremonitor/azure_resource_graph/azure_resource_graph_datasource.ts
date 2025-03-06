@@ -14,6 +14,7 @@ import {
   RawAzureResourceItem,
   AzureGraphResponse,
   AzureResourceGraphOptions,
+  RawAzureSubscriptionItem,
 } from '../types';
 import { interpolateVariable, replaceTemplateVariables, routeNames } from '../utils/common';
 
@@ -103,6 +104,22 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
   }
 
   async getResourceGroups(subscriptionId: string): Promise<Array<{ text: string; value: string }>> {
+  async getSubscriptions() {
+    const query = `
+        resources
+        | join kind=inner (
+                  ResourceContainers
+                    | where type == 'microsoft.resources/subscriptions'
+                    | project subscriptionName=name, subscriptionURI=id, subscriptionId
+                  ) on subscriptionId
+        | summarize count=count() by subscriptionName, subscriptionURI, subscriptionId
+        | order by subscriptionName desc
+      `;
+
+    const subscriptions = await this.pagedResourceGraphRequest<RawAzureSubscriptionItem>(query, 1);
+
+    return subscriptions;
+  }
     const query = `resources 
     | where subscriptionId == '${subscriptionId}'
     | extend resourceGroupURI = strcat("/subscriptions/", subscriptionId, "/resourcegroups/", resourceGroup) 
