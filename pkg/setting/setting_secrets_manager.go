@@ -31,9 +31,7 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 
 	// TODO: These are not used yet by the secrets manager because we need to distentagle the dependencies with OSS.
 	cfg.SecretsManagement.SecretKey = secretsMgmt.Key("secret_key").MustString("")
-	// parse comma separated list
-	r := regexp.MustCompile(`\s*,\s*`)
-	cfg.SecretsManagement.AvailableProviders = r.Split(secretsMgmt.Key("available_encryption_providers").MustString(""), -1)
+	cfg.SecretsManagement.AvailableProviders = regexp.MustCompile(`\s*,\s*`).Split(secretsMgmt.Key("available_encryption_providers").MustString(""), -1) // parse comma separated list
 
 	encryption := cfg.Raw.Section("secrets_manager.encryption")
 	cfg.SecretsManagement.Encryption.DataKeysCacheTTL = encryption.Key("data_keys_cache_ttl").MustDuration(15 * time.Minute)
