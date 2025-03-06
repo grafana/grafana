@@ -41,10 +41,10 @@ jobs:
           cache: true
       - env:
           GRAFANA_TEST_DB: mysql
-          MYSQL_HOST: mysql80
+          MYSQL_HOST: mysql
         run: |
           sudo apt-get update -yq && sudo apt-get install mariadb-client
-          cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h mariadb -P 3306 -u root -prootpass --disable-ssl-verify-server-cert
+          cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h mysql -P 3306 -u root -prootpass --disable-ssl-verify-server-cert
           go clean -testcache
           go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)
   postgres:
