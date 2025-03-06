@@ -21,17 +21,19 @@ export class UnifiedDashboardAPI
     this.v2Client = new K8sDashboardV2API();
   }
 
-  async getDashboardDTO(uid: string, params?: UrlQueryMap) {
+  // Get operation depends on the dashboard format to use one of the two clients
+  async getDashboardDTO(uid: string) {
     try {
       return await this.v1Client.getDashboardDTO(uid);
     } catch (error) {
-      if (error instanceof DashboardVersionError && error.data.isV2) {
-        return await this.v2Client.getDashboardDTO(uid, params);
+      if (error instanceof DashboardVersionError && error.data.storedVersion === 'v2alpha1') {
+        return await this.v2Client.getDashboardDTO(uid);
       }
       throw error;
     }
   }
 
+  // Save operation depends on the dashboard format to use one of the two clients
   async saveDashboard(options: SaveDashboardCommand<Dashboard | DashboardV2Spec>) {
     if (isV2DashboardCommand(options)) {
       return await this.v2Client.saveDashboard(options);
@@ -42,14 +44,8 @@ export class UnifiedDashboardAPI
     throw new Error('Invalid dashboard command');
   }
 
+  // Delete operation for any version is supported in the v1 client
   async deleteDashboard(uid: string, showSuccessAlert: boolean) {
-    try {
-      return await this.v1Client.deleteDashboard(uid, showSuccessAlert);
-    } catch (error) {
-      if (error instanceof DashboardVersionError && error.data.isV2) {
-        return await this.v2Client.deleteDashboard(uid, showSuccessAlert);
-      }
-      throw error;
-    }
+    return await this.v1Client.deleteDashboard(uid, showSuccessAlert);
   }
 }

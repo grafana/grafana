@@ -594,11 +594,12 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
       return await operation(this.activeManager);
     } catch (error) {
       if (error instanceof DashboardVersionError) {
-        const manager = error.data?.isV2 ? this.v2Manager : this.v1Manager;
+        const manager = error.data.storedVersion === 'v2alpha1' ? this.v2Manager : this.v1Manager;
         this.activeManager = manager;
         return await operation(manager);
+      } else {
+        throw error;
       }
-      throw error;
     }
   }
 
@@ -636,11 +637,15 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     try {
       return await this.v1Manager.loadSnapshotScene(slug);
     } catch (error) {
-      if (error instanceof DashboardVersionError && error.data?.isV2) {
+      if (error instanceof DashboardVersionError && error.data.storedVersion === 'v2alpha1') {
         return await this.v2Manager.loadSnapshotScene(slug);
       }
       throw new Error('Snapshot not found');
     }
+  }
+
+  public async loadSnapshot(slug: string) {
+    return this.withVersionHandling((manager) => manager.loadSnapshot(slug));
   }
 }
 

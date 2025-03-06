@@ -1,4 +1,4 @@
-import { locationUtil, UrlQueryMap } from '@grafana/data';
+import { locationUtil } from '@grafana/data';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
@@ -22,7 +22,6 @@ import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types';
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo } from './types';
-import { isDashboardV2Resource } from './utils';
 
 export class K8sDashboardV2API
   implements DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO, DashboardV2Spec>
@@ -37,16 +36,13 @@ export class K8sDashboardV2API
     });
   }
 
-  async getDashboardDTO(uid: string, params?: UrlQueryMap) {
+  async getDashboardDTO(uid: string) {
     try {
       const dashboard = await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto');
 
-      if (!isDashboardV2Resource(dashboard)) {
-        throw new DashboardVersionError(false, 'Dashboard is V1 format');
+      if (dashboard.status?.conversion?.failed) {
+        throw new DashboardVersionError(dashboard.status.conversion.storedVersion, dashboard.status.conversion.error);
       }
-
-      // TODO: For dev purposes only, the conversion should and will happen in the API. This is just to stub v2 api responses.
-      // result = ResponseTransformers.ensureV2Response(dashboard);
 
       // load folder info if available
       if (dashboard.metadata.annotations && dashboard.metadata.annotations[AnnoKeyFolder]) {

@@ -1,3 +1,4 @@
+import { Dashboard } from '@grafana/schema/dist/esm/index';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/types.gen';
 import { DashboardDTO } from 'app/types';
 
@@ -5,10 +6,9 @@ import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { UnifiedDashboardAPI } from './UnifiedDashboardAPI';
 import { DashboardVersionError, DashboardWithAccessInfo } from './types';
+import { isV2DashboardCommand } from './utils';
 import { K8sDashboardAPI } from './v1';
 import { K8sDashboardV2API } from './v2';
-import { Dashboard } from '@grafana/schema/dist/esm/index';
-import { isV2DashboardCommand } from './utils';
 
 jest.mock('./v1');
 jest.mock('./v2');
@@ -39,13 +39,13 @@ describe('UnifiedDashboardAPI', () => {
 
     it('should fallback to v2 if v1 throws DashboardVersionError', async () => {
       const mockV2Response = { spec: { title: 'test' } };
-      v1Client.getDashboardDTO.mockRejectedValue(new DashboardVersionError(true));
+      v1Client.getDashboardDTO.mockRejectedValue(new DashboardVersionError('v2alpha1', 'Dashboard is V1 format'));
       v2Client.getDashboardDTO.mockResolvedValue(mockV2Response as DashboardWithAccessInfo<DashboardV2Spec>);
 
       const result = await api.getDashboardDTO('123');
 
       expect(result).toBe(mockV2Response);
-      expect(v2Client.getDashboardDTO).toHaveBeenCalledWith('123', undefined);
+      expect(v2Client.getDashboardDTO).toHaveBeenCalledWith('123');
     });
   });
 
@@ -60,7 +60,7 @@ describe('UnifiedDashboardAPI', () => {
       expect(v2Client.saveDashboard).not.toHaveBeenCalled();
     });
 
-    it.only('should use v2 client for v2 dashboard', async () => {
+    it('should use v2 client for v2 dashboard', async () => {
       const mockCommand: SaveDashboardCommand<DashboardV2Spec> = {
         dashboard: {
           title: 'test',
@@ -99,14 +99,14 @@ describe('UnifiedDashboardAPI', () => {
   });
 
   describe('deleteDashboard', () => {
-    it('should try v1 first and fallback to v2 on version error', async () => {
-      v1Client.deleteDashboard.mockRejectedValue(new DashboardVersionError(true));
-      v2Client.deleteDashboard.mockResolvedValue({ id: 1, message: 'Deleted', title: 'test' });
+    it('should not try other version if fails', async () => {
+      v1Client.deleteDashboard.mockRejectedValue(new DashboardVersionError('v2alpha1', 'Dashboard is V1 format'));
 
-      await api.deleteDashboard('123', true);
-
+      try {
+        await api.deleteDashboard('123', true);
+      } catch (error) {}
       expect(v1Client.deleteDashboard).toHaveBeenCalledWith('123', true);
-      expect(v2Client.deleteDashboard).toHaveBeenCalledWith('123', true);
+      expect(v2Client.deleteDashboard).not.toHaveBeenCalled();
     });
   });
 });
