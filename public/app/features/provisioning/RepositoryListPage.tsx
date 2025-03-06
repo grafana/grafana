@@ -17,6 +17,7 @@ import {
   Tab,
   TabsBar,
   TagList,
+  TabContent,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -29,15 +30,33 @@ import { Repository, ResourceCount, useDeletecollectionRepositoryMutation, useGe
 import { PROVISIONING_URL, CONNECT_URL } from './constants';
 import { useRepositoryList } from './hooks';
 import { checkSyncSettings } from './utils';
+import { RepositoryOverview } from './RepositoryOverview';
+import { RepositoryResources } from './RepositoryResources';
+import RepositoryStatusPage from './RepositoryStatusPage';
 
 const appEvents = getAppEvents();
+
+enum TabSelection {
+  Overview = 'overview',
+  Resources = 'resources',
+  Files = 'files',
+  Features = 'features',
+}
+
+const tabInfo = [
+  { value: TabSelection.Overview, label: 'Overview', title: 'Repository overview' },
+  { value: TabSelection.Resources, label: 'Resources', title: 'Resources saved in grafana database' },
+  { value: TabSelection.Files, label: 'Files', title: 'The raw file list from the repository' },
+  { value: TabSelection.Features, label: 'Features', title: 'Available features' },
+];
 
 export default function RepositoryListPage() {
   const [items, isLoading] = useRepositoryList({ watch: true });
   const settings = useGetFrontendSettingsQuery();
   const [deleteAll, deleteAllResult] = useDeletecollectionRepositoryMutation();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<string>('repositories');
+  const [activeTab, setActiveTab] = useState<TabSelection>(TabSelection.Overview);
+  const [instanceConnected] = checkSyncSettings(settings.data);
 
   useEffect(() => {
     if (deleteAllResult.isSuccess) {
@@ -58,10 +77,19 @@ export default function RepositoryListPage() {
   };
 
   const renderTabContent = () => {
+    if (!instanceConnected || !items?.length) {
+      return <RepositoryListPageContent items={items ?? []} />;
+    }
+
+    const repo = items[0];
     switch (activeTab) {
-      case 'repositories':
-        return <RepositoryListPageContent items={items ?? []} />;
-      case 'features':
+      case TabSelection.Overview:
+        return <RepositoryOverview repo={repo} />;
+      case TabSelection.Resources:
+        return <RepositoryResources repo={repo} />;
+      case TabSelection.Files:
+        return <RepositoryStatusPage />;
+      case TabSelection.Features:
         return <FeatureList />;
       default:
         return null;
@@ -92,15 +120,24 @@ export default function RepositoryListPage() {
           onDismiss={() => setShowDeleteModal(false)}
         />
         <Stack direction="column" gap={2}>
-          <TabsBar>
-            <Tab
-              label="Repositories"
-              active={activeTab === 'repositories'}
-              onChangeTab={() => setActiveTab('repositories')}
-            />
-            <Tab label="Features" active={activeTab === 'features'} onChangeTab={() => setActiveTab('features')} />
-          </TabsBar>
-          {renderTabContent()}
+          {instanceConnected ? (
+            <>
+              <TabsBar>
+                {tabInfo.map((t) => (
+                  <Tab
+                    key={t.value}
+                    label={t.label}
+                    active={activeTab === t.value}
+                    onChangeTab={() => setActiveTab(t.value as TabSelection)}
+                    title={t.title}
+                  />
+                ))}
+              </TabsBar>
+              <TabContent>{renderTabContent()}</TabContent>
+            </>
+          ) : (
+            <RepositoryListPageContent items={items ?? []} />
+          )}
         </Stack>
       </Page.Contents>
     </Page>
