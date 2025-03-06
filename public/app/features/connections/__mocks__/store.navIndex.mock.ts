@@ -170,6 +170,12 @@ export const navIndex: NavIndex = {
         url: '/alerting/new',
         hideFromTabs: true,
       },
+      {
+        id: 'alerts-trash',
+        text: 'Trash',
+        icon: 'trash-alt',
+        url: '/alerting/trash',
+      },
     ],
     parentItem: {
       id: 'home',
