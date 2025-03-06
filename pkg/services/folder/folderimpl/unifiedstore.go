@@ -2,7 +2,9 @@ package folderimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -75,6 +77,10 @@ func (ss *FolderUnifiedStoreImpl) Delete(ctx context.Context, UIDs []string, org
 func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateFolderCommand) (*folder.Folder, error) {
 	obj, err := ss.k8sclient.Get(ctx, cmd.UID, cmd.OrgID, v1.GetOptions{})
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, dashboards.ErrFolderNotFound
+		}
+
 		return nil, err
 	}
 	updated := obj.DeepCopy()
@@ -142,13 +148,14 @@ func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetPa
 	parentUid := q.UID
 
 	for parentUid != "" {
-		out, err := ss.k8sclient.Get(ctx, parentUid, q.OrgID, v1.GetOptions{})
+		folder, err := ss.Get(ctx, folder.GetFolderQuery{UID: &parentUid, OrgID: q.OrgID})
 		if err != nil {
-			return nil, err
-		}
-
-		folder, err := ss.UnstructuredToLegacyFolder(ctx, out)
-		if err != nil {
+			var statusError *apierrors.StatusError
+			if errors.As(err, &statusError) && statusError.ErrStatus.Code == http.StatusForbidden {
+				// If we get a Forbidden error when requesting the parent folder, it means the user does not have access
+				// to it, nor its parents. So we can stop looping
+				break
+			}
 			return nil, err
 		}
 
@@ -173,6 +180,15 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 	}
 	if q.Page == 0 {
 		q.Page = 1
+	}
+
+	if q.UID != "" {
+		// the original get children query fails if the parent folder does not exist
+		// check that the parent exists first
+		_, err := ss.Get(ctx, folder.GetFolderQuery{UID: &q.UID, OrgID: q.OrgID})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	req := &resource.ResourceSearchRequest{
@@ -221,12 +237,7 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 		}
 
 		// search only returns a subset of info, get all info of the folder
-		item, err := ss.k8sclient.Get(ctx, item.Name, q.OrgID, v1.GetOptions{})
-		if err != nil {
-			return nil, err
-		}
-
-		f, err := ss.UnstructuredToLegacyFolder(ctx, item)
+		f, err := ss.Get(ctx, folder.GetFolderQuery{UID: &item.Name, OrgID: q.OrgID})
 		if err != nil {
 			return nil, err
 		}
@@ -403,6 +414,10 @@ func getDescendants(nodes map[string]*folder.Folder, tree map[string]map[string]
 func (ss *FolderUnifiedStoreImpl) CountFolderContent(ctx context.Context, orgID int64, ancestor_uid string) (folder.DescendantCounts, error) {
 	counts, err := ss.k8sclient.Get(ctx, ancestor_uid, orgID, v1.GetOptions{}, "counts")
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, dashboards.ErrFolderNotFound
+		}
+
 		return nil, err
 	}
 

@@ -40,21 +40,6 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
   getVizPanels(): VizPanel[];
 
   /**
-   * Check if the layout has viz panels
-   */
-  hasVizPanels(): boolean;
-
-  /**
-   * Add row
-   */
-  addNewRow(): void;
-
-  /**
-   * Add tab
-   */
-  addNewTab(): void;
-
-  /**
    * Notify the layout manager that the edit mode has changed
    * @param isEditing
    */

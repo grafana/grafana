@@ -151,14 +151,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:              "vizActions",
-			Description:       "Allow actions in visualizations",
-			Stage:             FeatureStageExperimental,
-			FrontendOnly:      true,
-			Owner:             grafanaDatavizSquad,
-			HideFromAdminPage: true,
-		},
-		{
 			Name:            "disableSecretsCompatibility",
 			Description:     "Disable duplicated secret storage in legacy tables",
 			Stage:           FeatureStageExperimental,
@@ -197,14 +189,6 @@ var (
 			Description: "Use double quotes to escape keyword in a MySQL query",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSearchAndStorageSquad,
-		},
-		{
-			Name:              "accessControlOnCall",
-			Description:       "Access control primitives for OnCall",
-			Stage:             FeatureStageGeneralAvailability,
-			Owner:             identityAccessTeam,
-			HideFromAdminPage: true,
-			Expression:        "true", // enabled by default
 		},
 		{
 			Name:        "nestedFolders",
@@ -1179,14 +1163,6 @@ var (
 			Expression:        "false", // enabled by default
 		},
 		{
-			Name:         "datasourceProxyDisableRBAC",
-			Description:  "Disables applying a plugin route's ReqAction field to authorization",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:              "alertingDisableSendAlertsExternal",
 			Description:       "Disables the ability to send alerts to an external Alertmanager datasource.",
 			Stage:             FeatureStageExperimental,
@@ -1776,10 +1752,11 @@ var (
 			Name:              "alertingRuleVersionHistoryRestore",
 			Description:       "Enables the alert rule version history restore feature",
 			FrontendOnly:      true,
-			Stage:             FeatureStageExperimental,
+			Stage:             FeatureStageGeneralAvailability,
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
+			Expression:        "true", // enabled by default
 		},
 		{
 			Name:              "newShareReportDrawer",
@@ -1797,6 +1774,20 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			FrontendOnly:      true,
+		},
+		{
+			Name:         "assetSriChecks",
+			Description:  "Enables SRI checks for Grafana JavaScript assets",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendOpsWG,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "alertRuleRestore",
+			Description: "Enables the alert rule restore feature",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaAlertingSquad,
+			Expression:  "true", // enabled by default
 		},
 	}
 )

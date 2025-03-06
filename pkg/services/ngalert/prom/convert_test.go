@@ -28,6 +28,7 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 		promGroup   PrometheusRuleGroup
 		config      Config
 		expectError bool
+		errorMsg    string
 	}{
 		{
 			name:      "valid rule group",
@@ -68,6 +69,7 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				},
 			},
 			expectError: true,
+			errorMsg:    "keep_firing_for is not supported",
 		},
 		{
 			name:      "rule group with empty interval",
@@ -100,6 +102,63 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 			},
 			expectError: false,
 		},
+		{
+			name:      "rule group with query_offset is not supported",
+			orgID:     1,
+			namespace: "namespaceUID",
+			promGroup: PrometheusRuleGroup{
+				Name:     "test-group-1",
+				Interval: prommodel.Duration(10 * time.Second),
+				QueryOffset: func() *prommodel.Duration {
+					d := prommodel.Duration(30 * time.Second)
+					return &d
+				}(),
+				Rules: []PrometheusRule{
+					{
+						Alert: "alert-1",
+						Expr:  "up == 0",
+					},
+				},
+			},
+			expectError: true,
+			errorMsg:    "query_offset is not supported",
+		},
+		{
+			name:      "rule group with limit is not supported",
+			orgID:     1,
+			namespace: "namespaceUID",
+			promGroup: PrometheusRuleGroup{
+				Name:     "test-group-1",
+				Interval: prommodel.Duration(10 * time.Second),
+				Limit:    5,
+				Rules: []PrometheusRule{
+					{
+						Alert: "alert-1",
+						Expr:  "up == 0",
+					},
+				},
+			},
+			expectError: true,
+			errorMsg:    "limit is not supported",
+		},
+		{
+			name:      "rule group with labels is not supported",
+			orgID:     1,
+			namespace: "namespaceUID",
+			promGroup: PrometheusRuleGroup{
+				Name:     "test-group-1",
+				Interval: prommodel.Duration(10 * time.Second),
+				Labels:   map[string]string{"team": "devops"},
+				Rules: []PrometheusRule{
+					{
+						Alert: "alert-1",
+						Expr:  "up == 0",
+					},
+				},
+			},
+			expectError: true,
+			errorMsg:    "labels are not supported",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -114,6 +173,9 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 
 			if tc.expectError {
 				require.Error(t, err, tc.name)
+				if tc.errorMsg != "" {
+					require.Contains(t, err.Error(), tc.errorMsg, tc.name)
+				}
 				return
 			}
 			require.NoError(t, err, tc.name)
@@ -132,12 +194,12 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				grafanaRule := grafanaGroup.Rules[j]
 
 				if promRule.Record != "" {
-					require.Equal(t, promRule.Record, grafanaRule.Title)
+					require.Equal(t, fmt.Sprintf("[%s] %s", tc.promGroup.Name, promRule.Record), grafanaRule.Title)
 					require.NotNil(t, grafanaRule.Record)
 					require.Equal(t, grafanaRule.Record.From, queryRefID)
 					require.Equal(t, promRule.Record, grafanaRule.Record.Metric)
 				} else {
-					require.Equal(t, promRule.Alert, grafanaRule.Title)
+					require.Equal(t, fmt.Sprintf("[%s] %s", tc.promGroup.Name, promRule.Alert), grafanaRule.Title)
 				}
 
 				var expectedFor time.Duration
@@ -205,10 +267,10 @@ func TestPrometheusRulesToGrafanaWithDuplicateRuleNames(t *testing.T) {
 
 	require.Equal(t, "test-group-1", group.Title)
 	require.Len(t, group.Rules, 4)
-	require.Equal(t, "alert", group.Rules[0].Title)
-	require.Equal(t, "alert (2)", group.Rules[1].Title)
-	require.Equal(t, "another alert", group.Rules[2].Title)
-	require.Equal(t, "alert (3)", group.Rules[3].Title)
+	require.Equal(t, "[test-group-1] alert", group.Rules[0].Title)
+	require.Equal(t, "[test-group-1] alert (2)", group.Rules[1].Title)
+	require.Equal(t, "[test-group-1] another alert", group.Rules[2].Title)
+	require.Equal(t, "[test-group-1] alert (3)", group.Rules[3].Title)
 }
 
 func TestCreateMathNode(t *testing.T) {

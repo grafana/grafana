@@ -52,6 +52,7 @@
         "name": "accessControlOnCall",
         "resourceVersion": "1726562036211",
         "creationTimestamp": "2022-10-19T16:10:09Z",
+        "deletionTimestamp": "2025-02-24T14:40:54Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-09-17 08:33:56.211355566 +0000 UTC"
         }
@@ -105,6 +106,22 @@
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertRuleRestore",
+        "resourceVersion": "1741127758142",
+        "creationTimestamp": "2025-03-04T22:29:36Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-04 22:35:58.1421143 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the alert rule restore feature",
+        "stage": "preview",
+        "codeowner": "@grafana/alerting-squad",
+        "expression": "true"
       }
     },
     {
@@ -404,19 +421,20 @@
     {
       "metadata": {
         "name": "alertingRuleVersionHistoryRestore",
-        "resourceVersion": "1738831836776",
+        "resourceVersion": "1740740039764",
         "creationTimestamp": "2025-01-16T14:08:12Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-02-06 08:50:36.776739 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-02-28 10:53:59.764894 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables the alert rule version history restore feature",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
         "frontend": true,
         "hideFromAdminPage": true,
-        "hideFromDocs": true
+        "hideFromDocs": true,
+        "expression": "true"
       }
     },
     {
@@ -594,6 +612,22 @@
         "description": "Enable the app sidecar feature that allows rendering 2 apps at the same time",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform"
+      }
+    },
+    {
+      "metadata": {
+        "name": "assetSriChecks",
+        "resourceVersion": "1739984409734",
+        "creationTimestamp": "2025-02-19T15:56:59Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-02-19 17:00:09.734088 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables SRI checks for Grafana JavaScript assets",
+        "stage": "experimental",
+        "codeowner": "@grafana/frontend-ops",
+        "frontend": true
       }
     },
     {
@@ -1276,6 +1310,7 @@
         "name": "datasourceProxyDisableRBAC",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2024-05-21T13:05:16Z",
+        "deletionTimestamp": "2025-02-24T17:23:43Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -4200,7 +4235,8 @@
       "metadata": {
         "name": "vizActions",
         "resourceVersion": "1722461779830",
-        "creationTimestamp": "2024-09-09T14:11:55Z"
+        "creationTimestamp": "2024-09-09T14:11:55Z",
+        "deletionTimestamp": "2025-02-07T18:50:26Z"
       },
       "spec": {
         "description": "Allow actions in visualizations",
