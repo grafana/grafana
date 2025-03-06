@@ -38,7 +38,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action        | Scope                                                                               |
 | ------------- | ----------------------------------------------------------------------------------- |
@@ -213,7 +213,7 @@ This endpoint only supports changes to `auth.saml` configuration.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action         | Scope                                                                               |
 | -------------- | ----------------------------------------------------------------------------------- |
@@ -267,7 +267,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action            | Scope |
 | ----------------- | ----- |
@@ -349,7 +349,7 @@ Create new user. Only works with Basic Authentication (username and password). S
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action       | Scope |
 | ------------ | ----- |
@@ -391,7 +391,7 @@ Change password for a specific user.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action               | Scope           |
 | -------------------- | --------------- |
@@ -424,7 +424,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action                  | Scope           |
 | ----------------------- | --------------- |
@@ -457,7 +457,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action       | Scope           |
 | ------------ | --------------- |
@@ -490,7 +490,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action               | Scope           |
 | -------------------- | --------------- |
@@ -549,7 +549,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action                | Scope           |
 | --------------------- | --------------- |
@@ -589,7 +589,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action       | Scope           |
 | ------------ | --------------- |
@@ -634,7 +634,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action              | Scope                      | Provision entity |
 | ------------------- | -------------------------- | ---------------- |

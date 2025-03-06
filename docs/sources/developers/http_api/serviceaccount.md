@@ -27,7 +27,7 @@ title: Service account HTTP API
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+See note in the [introduction](#service-account-api) for an explanation.
 
 | Action               | Scope |
 | -------------------- | ----- |
@@ -94,7 +94,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+See note in the [introduction](#service-account-api) for an explanation.
 
 | Action                 | Scope |
 | ---------------------- | ----- |
@@ -141,7 +141,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+See note in the [introduction](#service-account-api) for an explanation.
 
 | Action               | Scope                 |
 | -------------------- | --------------------- |
@@ -182,7 +182,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+See note in the [introduction](#service-account-api) for an explanation.
 
 | Action                | Scope                 |
 | --------------------- | --------------------- |
@@ -228,7 +228,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+See note in the [introduction](#service-account-api) for an explanation.
 
 | Action                 | Scope                 |
 | ---------------------- | --------------------- |
@@ -262,7 +262,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+See note in the [introduction](#service-account-api) for an explanation.
 
 | Action                | Scope              |
 | --------------------- | ------------------ |
@@ -294,7 +294,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+See note in the [introduction](#service-account-api) for an explanation.
 
 | Action                | Scope              |
 | --------------------- | ------------------ |
@@ -326,7 +326,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+See note in the [introduction](#service-account-api) for an explanation.
 
 | Action               | Scope              |
 | -------------------- | ------------------ |
@@ -358,7 +358,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+See note in the [introduction](#service-account-api) for an explanation.
 
 | Action                | Scope              |
 | --------------------- | ------------------ |
@@ -390,7 +390,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+See note in the [introduction](#service-account-api) for an explanation.
 
 | Action               | Scope                 |
 | -------------------- | --------------------- |
@@ -430,7 +430,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+See note in the [introduction](#service-account-api) for an explanation.
 
 | Action                | Scope                 |
 | --------------------- | --------------------- |
@@ -471,7 +471,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+See note in the [introduction](#service-account-api) for an explanation.
 
 | Action                | Scope                 |
 | --------------------- | --------------------- |
@@ -505,7 +505,7 @@ This operation will delete the service account and create a legacy API Key for t
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+See note in the [introduction](#service-account-api) for an explanation.
 
 | Action                 | Scope                 |
 | ---------------------- | --------------------- |

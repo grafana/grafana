@@ -42,7 +42,7 @@ Gets all existing permissions for the folder with the given `uid`.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#folder-permission-api" >}}) for an explanation.
+See note in the [introduction](#folder-permission-api) for an explanation.
 
 | Action                     | Scope       |
 | -------------------------- | ----------- |
@@ -121,7 +121,7 @@ Updates permissions for a folder. This operation will remove existing permission
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#folder-permission-api" >}}) for an explanation.
+See note in the [introduction](#folder-permission-api) for an explanation.
 
 | Action                      | Scope       |
 | --------------------------- | ----------- |

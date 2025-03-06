@@ -41,7 +41,7 @@ Creates a new dashboard or updates an existing dashboard. When updating existing
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
+See note in the [introduction](#dashboard-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action              | Scope                                                                                                   |
@@ -166,7 +166,7 @@ Will return the dashboard given the dashboard unique identifier (uid). Informati
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
+See note in the [introduction](#dashboard-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action            | Scope                                                                                                   |
@@ -225,7 +225,7 @@ Will delete the dashboard given the specified unique identifier (uid).
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
+See note in the [introduction](#dashboard-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action              | Scope                                                                                                   |
@@ -275,7 +275,7 @@ Will delete permanently the dashboard given the specified unique identifier (uid
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
+See note in the [introduction](#dashboard-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action              | Scope                                                                                                   |
@@ -325,7 +325,7 @@ Will restore a deleted dashboard given the specified unique identifier (uid).
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
+See note in the [introduction](#dashboard-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action              | Scope                                                 |

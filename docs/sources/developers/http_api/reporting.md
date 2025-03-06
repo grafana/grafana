@@ -198,7 +198,7 @@ Content-Length: 940
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
+See note in the [introduction](#reporting-api) for an explanation.
 
 | Action         | Scope |
 | -------------- | ----- |
@@ -308,7 +308,7 @@ Content-Length: 35
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
+See note in the [introduction](#reporting-api) for an explanation.
 
 | Action        | Scope                                                     |
 | ------------- | --------------------------------------------------------- |
@@ -316,7 +316,7 @@ See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
 
 ### Example request
 
-See [JSON body schema]({{< ref "#config-json-body-schema" >}}) for fields description.
+See [JSON body schema](#config-json-body-schema) for fields description.
 
 ```http
 GET /api/reports HTTP/1.1
@@ -392,7 +392,7 @@ Content-Length: 28
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
+See note in the [introduction](#reporting-api) for an explanation.
 
 | Action         | Scope                                                     |
 | -------------- | --------------------------------------------------------- |
@@ -435,7 +435,7 @@ Generate and send a report. This API waits for the report to be generated before
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
+See note in the [introduction](#reporting-api) for an explanation.
 
 | Action       | Scope |
 | ------------ | ----- |
@@ -490,7 +490,7 @@ Returns reports branding settings that are global and used across all the report
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
+See note in the [introduction](#reporting-api) for an explanation.
 
 | Action                | Scope |
 | --------------------- | ----- |
@@ -540,7 +540,7 @@ Creates settings if they don't exist, otherwise updates them. These settings are
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
+See note in the [introduction](#reporting-api) for an explanation.
 
 | Action                 | Scope |
 | ---------------------- | ----- |
@@ -602,7 +602,7 @@ Sends a test email with a report without persisting it in the database.
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
+See note in the [introduction](#reporting-api) for an explanation.
 
 | Action       | Scope |
 | ------------ | ----- |
@@ -610,7 +610,7 @@ See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
 
 ### Example request
 
-See [JSON body schema]({{< ref "#config-json-body-schema" >}}) for fields description.
+See [JSON body schema](#config-json-body-schema) for fields description.
 
 ```http
 POST /api/reports/test-email HTTP/1.1

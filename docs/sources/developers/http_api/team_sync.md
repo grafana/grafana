@@ -33,7 +33,7 @@ title: Team Sync HTTP API
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#external-group-synchronization-api" >}}) for an explanation.
+See note in the [introduction](#external-group-synchronization-api) for an explanation.
 
 | Action                 | Scope    |
 | ---------------------- | -------- |
@@ -75,7 +75,7 @@ Status Codes:
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#external-group-synchronization-api" >}}) for an explanation.
+See note in the [introduction](#external-group-synchronization-api) for an explanation.
 
 | Action                  | Scope    |
 | ----------------------- | -------- |
@@ -117,7 +117,7 @@ Status Codes:
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#external-group-synchronization-api" >}}) for an explanation.
+See note in the [introduction](#external-group-synchronization-api) for an explanation.
 
 | Action                  | Scope    |
 | ----------------------- | -------- |
