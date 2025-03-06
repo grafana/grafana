@@ -23,6 +23,7 @@ const (
 
 type authzClientSettings struct {
 	remoteAddress string
+	certFile      string
 	mode          clientMode
 
 	token            string
@@ -46,6 +47,7 @@ func readAuthzClientSettings(cfg *setting.Cfg) (*authzClientSettings, error) {
 	}
 
 	s.remoteAddress = authzSection.Key("remote_address").MustString("")
+	s.certFile = authzSection.Key("cert_file").MustString("")
 	s.token = grpcClientAuthSection.Key("token").MustString("")
 	s.tokenNamespace = grpcClientAuthSection.Key("token_namespace").MustString("stacks-" + cfg.StackID)
 	s.tokenExchangeURL = grpcClientAuthSection.Key("token_exchange_url").MustString("")
