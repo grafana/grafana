@@ -265,7 +265,9 @@ func TestService_OrgID(t *testing.T) {
 	type TestCase struct {
 		desc          string
 		req           *authn.Request
+		stackID       int64
 		expectedOrgID int64
+		expectedErr   error
 	}
 
 	tests := []TestCase{
@@ -301,12 +303,48 @@ func TestService_OrgID(t *testing.T) {
 			}},
 			expectedOrgID: 0,
 		},
+		{
+			desc: "should set org id from default namespace",
+			req: &authn.Request{HTTPRequest: &http.Request{
+				Header: map[string][]string{},
+				URL:    mustParseURL("http://localhost/apis/folder.grafana.app/v0alpha1/namespaces/default/folders"),
+			}},
+			expectedOrgID: 1,
+		},
+		{
+			desc: "should set org id from namespace",
+			req: &authn.Request{HTTPRequest: &http.Request{
+				Header: map[string][]string{},
+				URL:    mustParseURL("http://localhost/apis/folder.grafana.app/v0alpha1/namespaces/org-2/folders"),
+			}},
+			expectedOrgID: 2,
+		},
+		{
+			desc: "should set set org 1 for stack namespace",
+			req: &authn.Request{HTTPRequest: &http.Request{
+				Header: map[string][]string{},
+				URL:    mustParseURL("http://localhost/apis/folder.grafana.app/v0alpha1/namespaces/stacks-100/folders"),
+			}},
+			stackID:       100,
+			expectedOrgID: 1,
+		},
+		{
+			desc: "should error for wrong stack namespace",
+			req: &authn.Request{HTTPRequest: &http.Request{
+				Header: map[string][]string{},
+				URL:    mustParseURL("http://localhost/apis/folder.grafana.app/v0alpha1/namespaces/stacks-100/folders"),
+			}},
+			stackID:       101,
+			expectedOrgID: 0,
+			expectedErr:   errInvalidNamespace,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			var calledWith int64
 			s := setupTests(t, func(svc *Service) {
+				svc.stackID = tt.stackID
 				svc.RegisterClient(authntest.MockClient{
 					AuthenticateFunc: func(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 						calledWith = r.OrgID
@@ -316,7 +354,8 @@ func TestService_OrgID(t *testing.T) {
 				})
 			})
 
-			_, _ = s.Authenticate(context.Background(), tt.req)
+			_, err := s.Authenticate(context.Background(), tt.req)
+			assert.ErrorIs(t, tt.expectedErr, err)
 			assert.Equal(t, tt.expectedOrgID, calledWith)
 		})
 	}
