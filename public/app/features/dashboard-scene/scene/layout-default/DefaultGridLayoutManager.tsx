@@ -47,10 +47,10 @@ export class DefaultGridLayoutManager
 
   public static readonly descriptor: LayoutRegistryItem = {
     get name() {
-      return t('dashboard.default-layout.name', 'Default grid');
+      return t('dashboard.default-layout.name', 'Custom');
     },
     get description() {
-      return t('dashboard.default-layout.description', 'The default grid layout');
+      return t('dashboard.default-layout.description', 'Manually size and position panels');
     },
     id: 'default-grid',
     createFromLayout: DefaultGridLayoutManager.createFromLayout,
