@@ -101,7 +101,7 @@ require (
 	golang.org/x/crypto v0.31.0 // @grafana/backend-platform
 	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa // @grafana/alerting-squad-backend
 	golang.org/x/net v0.28.0 // @grafana/oss-big-tent @grafana/partner-datasources
-	golang.org/x/oauth2 v0.22.0 // @grafana/grafana-authnz-team
+	golang.org/x/oauth2 v0.28.0 // @grafana/grafana-authnz-team
 	golang.org/x/sync v0.10.0 // @grafana/alerting-squad-backend
 	golang.org/x/time v0.5.0 // @grafana/backend-platform
 	golang.org/x/tools v0.24.0 // @grafana/grafana-as-code
