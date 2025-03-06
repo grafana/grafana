@@ -85,10 +85,8 @@ const FoldersPage: React.FC = () => {
   };
 
   useEffect(() => {
-    buildNavModel(defaultNavModel, location.pathname, searcher).then((updatedNavModel) => {
-    if (updatedNavModel !== null) {
+      buildNavModel(defaultNavModel, location.pathname, searcher).then((updatedNavModel) => {
       setNavModel(updatedNavModel as NavModel);
-    }
     });
   }, [location.pathname, defaultNavModel]);
 
@@ -318,7 +316,7 @@ async function buildNavModel(navModel: NavModel, path: string, searcher: Unified
     const folderId = parts[parts.length - 1];
     const path = await fetchPath(folderId, searcher);
     if (path.length === 0) {
-      return null;
+      return navModel;
     }
 
     let parentNodes = []
@@ -371,7 +369,7 @@ async function buildNavModel(navModel: NavModel, path: string, searcher: Unified
     };
     return navModelWithChildren;
   }
-  return null;
+  return navModel;
 }
 
 const fetchPath = async (folderId: string, searcher: UnifiedSearcher) => {
