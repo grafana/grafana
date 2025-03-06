@@ -3,7 +3,7 @@ import { Fragment } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
-import { Divider, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { getDashboardSceneFor } from '../../utils/utils';
 
@@ -23,9 +23,8 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
       <TabsBar className={styles.tabsWrapper}>
         <div className={styles.tabsRow}>
           <div className={styles.tabsContainer}>
-            {tabs.map((tab, idx) => (
+            {tabs.map((tab) => (
               <Fragment key={tab.state.key!}>
-                {isEditing && idx > 0 && <Divider direction="vertical" />}
                 <tab.Component model={tab} />
               </Fragment>
             ))}
