@@ -124,6 +124,7 @@ var serviceIdentityTokenPermissions = getTokenPermissions(
 	"folder.grafana.app",
 	"dashboard.grafana.app",
 	"secret.grafana.app",
+	"query.grafana.app",
 )
 
 var ServiceIdentityClaims = &authn.Claims[authn.AccessTokenClaims]{
