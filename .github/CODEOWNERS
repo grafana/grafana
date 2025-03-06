@@ -500,7 +500,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/dimensions/ @grafana/dataviz-squad
 /public/app/features/dataframe-import/ @grafana/dataviz-squad
 /public/app/features/explore/ @grafana/observability-traces-and-profiling
-/public/app/features/expressions/ @grafana/observability-metrics
+/public/app/features/expressions/ @grafana/grafana-datasources-core-services
 /public/app/features/folders/ @grafana/grafana-frontend-platform
 /public/app/features/iam/ @grafana/grafana-frontend-platform
 /public/app/features/inspector/ @grafana/dashboards-squad
@@ -754,9 +754,7 @@ embed.go @grafana/grafana-as-code
 /.github/pr-checks.json @tolzhabayev
 /.github/pr-commands.json @tolzhabayev
 /.github/renovate.json5 @grafana/frontend-ops
-/.github/actions/report-coverage @grafana/grafana-backend-group
-/.github/actions/run-backend-tests @grafana/grafana-backend-group
-/.github/actions/setup-enterprise @grafana/grafana-backend-group
+/.github/actions/test-coverage-processor/action.yml @grafana/grafana-backend-group
 /.github/workflows/add-to-whats-new.yml @grafana/docs-tooling
 /.github/workflows/auto-triager/ @grafana/plugins-platform-frontend
 /.github/workflows/alerting-swagger-gen.yml @grafana/alerting-backend
@@ -790,7 +788,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-codeql-analysis-python.yml @DanCech
 /.github/workflows/pr-commands.yml @tolzhabayev
 /.github/workflows/pr-patch-check.yml @grafana/grafana-developer-enablement-squad
-/.github/workflows/pr-test-backend.yml @grafana/grafana-backend-group
+/.github/workflows/pr-backend-unit-tests.yml @grafana/grafana-backend-group
 /.github/workflows/sync-mirror.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/publish-technical-documentation-next.yml @grafana/docs-tooling
 /.github/workflows/publish-technical-documentation-release.yml @grafana/docs-tooling
@@ -819,6 +817,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/actions/changelog @zserge
 /.github/workflows/frontend-unit-tests.yml @grafana/grafana-frontend-platform
 /.github/workflows/frontend-lint.yml @grafana/grafana-frontend-platform
+/.github/workflows/analytics-events-report.yml @grafana/grafana-frontend-platform
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot

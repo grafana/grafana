@@ -45,13 +45,7 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import {
-  getLibraryPanelBehavior,
-  getPanelIdForVizPanel,
-  getQueryRunnerFor,
-  getVizPanelKeyForPanelId,
-  isLibraryPanel,
-} from '../utils/utils';
+import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
 
 import { getLayout } from './layoutSerializers/utils';
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
@@ -148,8 +142,8 @@ function getLiveNow(state: DashboardSceneState) {
   return Boolean(liveNow);
 }
 
-function getElements(state: DashboardSceneState, initialElements?: Record<string, Element>): Record<string, Element> {
-  const panels = state.body.getVizPanels() ?? [];
+function getElements(scene: DashboardScene, initialElements?: Record<string, Element>): Record<string, Element> {
+  const panels = scene.state.body.getVizPanels() ?? [];
 
   const panelsArray = panels.map((vizPanel: VizPanel) => {
     if (isLibraryPanel(vizPanel)) {
@@ -236,7 +230,7 @@ function getElements(state: DashboardSceneState, initialElements?: Record<string
       return elementSpec;
     }
   });
-  return createElements(panelsArray);
+  return createElements(panelsArray, scene);
 }
 
 function getPanelLinks(panel: VizPanel): DataLink[] {
@@ -375,9 +369,10 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
   return queryOptions;
 }
 
-function createElements(panels: Element[]): Record<string, Element> {
+function createElements(panels: Element[], scene: DashboardScene): Record<string, Element> {
   return panels.reduce<Record<string, Element>>((elements, panel) => {
-    elements[getVizPanelKeyForPanelId(panel.spec.id)] = panel;
+    let elementKey = scene.getElementIdentifierForPanel(panel.spec.id);
+    elements[elementKey!] = panel;
     return elements;
   }, {});
 }
