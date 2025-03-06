@@ -1,5 +1,7 @@
-import { Box, Stack, Text, LinkButton, Icon, IconName } from '@grafana/ui';
 import { css } from '@emotion/css';
+
+import { Box, Stack, Text, LinkButton, Icon, IconName } from '@grafana/ui';
+
 import { FeatureCard } from './FeatureCard';
 
 interface IconCircleProps {

@@ -1,5 +1,6 @@
-import { Box, Stack, Text } from '@grafana/ui';
 import { css } from '@emotion/css';
+
+import { Box, Stack, Text } from '@grafana/ui';
 
 interface FeatureCardProps {
   title: string;

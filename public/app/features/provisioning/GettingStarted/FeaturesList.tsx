@@ -1,5 +1,7 @@
-import { Stack, Text, Button, Box, LinkButton, Icon } from '@grafana/ui';
 import { useNavigate } from 'react-router-dom-v5-compat';
+
+import { Stack, Text, Button, Box, LinkButton, Icon } from '@grafana/ui';
+
 import { CONNECT_URL, MIGRATE_URL } from '../constants';
 
 interface FeatureItemProps {

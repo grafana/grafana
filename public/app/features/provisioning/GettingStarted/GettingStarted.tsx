@@ -1,12 +1,14 @@
+import { css } from '@emotion/css';
+import { useState } from 'react';
+
 import { Alert, Stack, Text, Box } from '@grafana/ui';
 
 import { useGetFrontendSettingsQuery } from '../api';
-import { css } from '@emotion/css';
-import { getConfigurationStatus } from './features';
-import { useState } from 'react';
-import { SetupModal } from './SetupModal';
-import { FeaturesList } from './FeaturesList';
+
 import { EnhancedFeatures } from './EnhancedFeatures';
+import { FeaturesList } from './FeaturesList';
+import { SetupModal } from './SetupModal';
+import { getConfigurationStatus } from './features';
 
 type SetupType = 'public-access' | 'required-features' | null;
 

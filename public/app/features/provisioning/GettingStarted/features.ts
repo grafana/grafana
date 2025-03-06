@@ -1,5 +1,5 @@
-import { config } from '@grafana/runtime';
 import { FeatureToggles } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 export const requiredFeatureToggles: Array<keyof FeatureToggles> = [
   'provisioning',
