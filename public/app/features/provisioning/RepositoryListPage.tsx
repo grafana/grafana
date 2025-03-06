@@ -16,7 +16,6 @@ import {
   ConfirmModal,
   Tab,
   TabsBar,
-  TagList,
   TabContent,
   Modal,
 } from '@grafana/ui';
@@ -45,12 +44,18 @@ enum TabSelection {
   Resources = 'resources',
   Files = 'files',
   Features = 'features',
+  Repositories = 'repositories',
 }
 
-const tabInfo = [
+const connectedTabInfo = [
   { value: TabSelection.Overview, label: 'Overview', title: 'Repository overview' },
   { value: TabSelection.Resources, label: 'Resources', title: 'Resources saved in grafana database' },
   { value: TabSelection.Files, label: 'Files', title: 'The raw file list from the repository' },
+  { value: TabSelection.Features, label: 'Features', title: 'Available features' },
+];
+
+const disconnectedTabInfo = [
+  { value: TabSelection.Repositories, label: 'Repositories', title: 'List of repositories' },
   { value: TabSelection.Features, label: 'Features', title: 'Available features' },
 ];
 
@@ -61,8 +66,10 @@ export default function RepositoryListPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showMigrateModal, setShowMigrateModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabSelection>(TabSelection.Overview);
   const [instanceConnected] = checkSyncSettings(settings.data);
+  const [activeTab, setActiveTab] = useState<TabSelection>(
+    instanceConnected ? TabSelection.Overview : TabSelection.Repositories
+  );
 
   useEffect(() => {
     if (deleteAllResult.isSuccess) {
@@ -73,21 +80,29 @@ export default function RepositoryListPage() {
     }
   }, [deleteAllResult.isSuccess]);
 
-  if (!items?.length && !isLoading) {
-    return <OnboardingPage legacyStorage={settings.data?.legacyStorage} />;
-  }
-
   const onConfirmDelete = () => {
     deleteAll({});
     setShowDeleteModal(false);
   };
 
   const renderTabContent = () => {
-    if (!instanceConnected || !items?.length) {
-      return <RepositoryListPageContent items={items ?? []} />;
+    if (!items?.length && !isLoading) {
+      return <OnboardingPage legacyStorage={settings.data?.legacyStorage} />;
     }
 
-    const repo = items[0];
+    if (!instanceConnected) {
+      switch (activeTab) {
+        case TabSelection.Repositories:
+          return <RepositoryListPageContent items={items ?? []} />;
+        case TabSelection.Features:
+          return <FeatureList />;
+        default:
+          return null;
+      }
+    }
+
+    // At this point we know items exists and has length > 0
+    const repo = items![0];
     switch (activeTab) {
       case TabSelection.Overview:
         return <RepositoryOverview repo={repo} />;
@@ -149,24 +164,18 @@ export default function RepositoryListPage() {
           </Modal>
         )}
         <Stack direction="column" gap={2}>
-          {instanceConnected ? (
-            <>
-              <TabsBar>
-                {tabInfo.map((t) => (
-                  <Tab
-                    key={t.value}
-                    label={t.label}
-                    active={activeTab === t.value}
-                    onChangeTab={() => setActiveTab(t.value as TabSelection)}
-                    title={t.title}
-                  />
-                ))}
-              </TabsBar>
-              <TabContent>{renderTabContent()}</TabContent>
-            </>
-          ) : (
-            <RepositoryListPageContent items={items ?? []} />
-          )}
+          <TabsBar>
+            {(instanceConnected ? connectedTabInfo : disconnectedTabInfo).map((t) => (
+              <Tab
+                key={t.value}
+                label={t.label}
+                active={activeTab === t.value}
+                onChangeTab={() => setActiveTab(t.value as TabSelection)}
+                title={t.title}
+              />
+            ))}
+          </TabsBar>
+          <TabContent>{renderTabContent()}</TabContent>
         </Stack>
       </Page.Contents>
     </Page>
@@ -243,7 +252,6 @@ function RepositoryListPageContent({ items }: { items: Repository[] }) {
                       state={item.status?.sync?.state}
                       name={name}
                     />
-                    <TagList tags={[item.spec?.sync?.target ?? '']} />
                   </Stack>
                 </Card.Heading>
                 <Card.Description>
