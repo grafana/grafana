@@ -345,6 +345,8 @@ const (
 	TypeSQL
 	// TypeLabelRewrite is the CMDType for label rewriting expressions.
 	TypeLabelRewrite
+	// TypeMerge is CMDType for merging multiple results
+	TypeMerge
 )
 
 func (gt CommandType) String() string {
@@ -363,6 +365,8 @@ func (gt CommandType) String() string {
 		return "sql"
 	case TypeLabelRewrite:
 		return "label_rewrite"
+	case TypeMerge:
+		return "merge"
 	default:
 		return "unknown"
 	}
@@ -385,6 +389,8 @@ func ParseCommandType(s string) (CommandType, error) {
 		return TypeSQL, nil
 	case "label_rewrite":
 		return TypeLabelRewrite, nil
+	case "merge":
+		return TypeMerge, nil
 	default:
 		return TypeUnknown, fmt.Errorf("'%v' is not a recognized expression type", s)
 	}

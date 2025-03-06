@@ -16,6 +16,7 @@ export enum ExpressionQueryType {
   threshold = 'threshold',
   sql = 'sql',
   labelRewrite = 'label_rewrite',
+  merge = 'merge',
 }
 
 export const getExpressionLabel = (type: ExpressionQueryType) => {
@@ -34,6 +35,8 @@ export const getExpressionLabel = (type: ExpressionQueryType) => {
       return 'SQL';
     case ExpressionQueryType.labelRewrite:
       return 'Rewrite Labels';
+    case ExpressionQueryType.merge:
+      return 'Merge Results';
   }
 };
 
@@ -75,6 +78,11 @@ export const expressionTypes: Array<SelectableValue<ExpressionQueryType>> = [
     value: ExpressionQueryType.labelRewrite,
     label: 'Label Rewrite',
     description: 'Add, remove and replace labels in the series',
+  },
+  {
+    value: ExpressionQueryType.merge,
+    label: 'Merge Results',
+    description: 'Allows to merge results of other expressions into one set',
   },
 ].filter((expr) => {
   if (expr.value === ExpressionQueryType.sql) {
@@ -158,6 +166,7 @@ export interface ExpressionQuery extends DataQuery {
   conditions?: ClassicCondition[];
   settings?: ExpressionQuerySettings;
   labelRewrite?: LabelRewriteSettings;
+  merge?: MergeSettings;
 }
 
 export interface ThresholdExpressionQuery extends ExpressionQuery {
@@ -219,4 +228,9 @@ export interface LabelReplace {
   constant: string | null;
   regex: string | null;
   replace: string | null;
+}
+
+export interface MergeSettings {
+  refids: string[];
+  resolution: string;
 }

@@ -132,6 +132,8 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles) (*CMDNode, er
 			return nil, err // should not happen because the command was parsed first thing
 		}
 
+		// TODO add new commands
+
 		// NOTE: this structure of this is weird now, because it is targeting a structure
 		// where this is actually run in the root loop, however we want to verify the individual
 		// node parsing before changing the full tree parser
@@ -166,6 +168,8 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles) (*CMDNode, er
 		node.Command, err = UnmarshalSQLCommand(rn)
 	case TypeLabelRewrite:
 		node.Command, err = UnmarshalLabelReplaceCommand(rn.RefID, rn.QueryRaw)
+	case TypeMerge:
+		node.Command, err = UnmarshalMergeCommand(rn.RefID, rn.QueryRaw)
 	default:
 		return nil, fmt.Errorf("expression command type '%v' in expression '%v' not implemented", commandType, rn.RefID)
 	}
