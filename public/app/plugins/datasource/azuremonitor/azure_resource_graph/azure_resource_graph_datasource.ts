@@ -103,7 +103,6 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
     }
   }
 
-  async getResourceGroups(subscriptionId: string): Promise<Array<{ text: string; value: string }>> {
   async getSubscriptions() {
     const query = `
         resources
@@ -120,22 +119,29 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
 
     return subscriptions;
   }
+
+  async getResourceGroups(subscriptionId: string, filter?: string) {
+    // We can use subscription ID for the filtering here as they're unique
+    // The logic of this query is:
+    // Retrieve _all_ resources a user/app registration/identity has access to
+    // Filter by the namespaces that support metrics (if this request is from the resource picker)
+    // Filter to resources contained within the subscription
+    // Conduct a left-outer join on the resourcecontainers table to allow us to get the case-sensitive resource group name
+    // Return the count of resources in a group, the URI, and name of the group in ascending order
     const query = `resources 
+    ${filter || ''}
     | where subscriptionId == '${subscriptionId}'
     | extend resourceGroupURI = strcat("/subscriptions/", subscriptionId, "/resourcegroups/", resourceGroup) 
     | join kind=leftouter (resourcecontainers  
         | where type =~ 'microsoft.resources/subscriptions/resourcegroups'  
         | project resourceGroupName=name, resourceGroupURI=tolower(id)) on resourceGroupURI 
     | project resourceGroupName=iff(resourceGroupName != "", resourceGroupName, resourceGroup), resourceGroupURI
-    | summarize count() by resourceGroupName, resourceGroupURI
+    | summarize count=count() by resourceGroupName, resourceGroupURI
     | order by tolower(resourceGroupName) asc `;
 
     const resourceGroups = await this.pagedResourceGraphRequest<RawAzureResourceGroupItem>(query);
 
-    return resourceGroups.map((r) => ({
-      text: r.resourceGroupName,
-      value: r.resourceGroupName,
-    }));
+    return resourceGroups;
   }
 
   async getResourceNames(query: AzureGetResourceNamesQuery) {
