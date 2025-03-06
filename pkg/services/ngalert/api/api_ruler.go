@@ -336,6 +336,45 @@ func (srv RulerSrv) RouteGetRuleByUID(c *contextmodel.ReqContext, ruleUID string
 	return response.JSON(http.StatusOK, result)
 }
 
+// RouteGetAllRules returns all alert rules that the user has access to
+func (srv RulerSrv) RouteGetAllRules(c *contextmodel.ReqContext) response.Response {
+	// Get the query parameters
+	limit := c.QueryInt64("limit")
+	if limit <= 0 {
+		limit = 100 // Default limit
+	}
+	cursor := c.Query("cursor")
+
+	// Create the query
+	q := &ngmodels.ListAlertRulesQuery{
+		OrgID:  c.SignedInUser.GetOrgID(),
+		Limit:  limit,
+		Cursor: cursor,
+	}
+
+	// Get the rules
+	ruleList, nextCursor, err := srv.store.ListAlertRulesWithPagination(c.Req.Context(), q)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rules")
+	}
+
+	// Create a simple response with the lightweight rules
+	// Note: Provenance information is now included directly in each rule
+	type LightweightRuleResponse struct {
+		Rules      []*ngmodels.LightweightAlertRule `json:"rules"`
+		Limit      int                              `json:"limit,omitempty"`
+		NextCursor string                           `json:"nextCursor,omitempty"`
+	}
+
+	resp := LightweightRuleResponse{
+		Rules:      ruleList,
+		Limit:      int(limit),
+		NextCursor: nextCursor,
+	}
+
+	return response.JSON(http.StatusOK, resp)
+}
+
 func (srv RulerSrv) RouteGetRuleVersionsByUID(c *contextmodel.ReqContext, ruleUID string) response.Response {
 	ctx := c.Req.Context()
 	// make sure the user has access to the current version of the rule. Also, check if it exists
@@ -792,4 +831,50 @@ func (srv RulerSrv) resolveUserIdToNameFn(ctx context.Context) userIDToUserInfoF
 		cache[*id] = result
 		return result
 	}
+}
+
+// toLightweightGettableExtendedRuleNode converts a LightweightAlertRule to a GettableExtendedRuleNode
+func toLightweightGettableExtendedRuleNode(r ngmodels.LightweightAlertRule, provenanceRecords map[string]ngmodels.Provenance, userIdToName userIDToUserInfoFn) apimodels.GettableExtendedRuleNode {
+	provenance := ngmodels.ProvenanceNone
+	if p, ok := provenanceRecords[r.UID]; ok {
+		provenance = p
+	}
+
+	// Create the base rule
+	rule := apimodels.GettableExtendedRuleNode{
+		ApiRuleNode: &apimodels.ApiRuleNode{
+			// Initialize empty maps
+			Labels:      make(map[string]string),
+			Annotations: make(map[string]string),
+		},
+		GrafanaManagedAlert: &apimodels.GettableGrafanaRule{
+			UID:             r.UID,
+			Title:           r.Title,
+			Condition:       r.Condition,
+			Updated:         r.Updated,
+			IntervalSeconds: r.IntervalSeconds,
+			Version:         r.Version,
+			NamespaceUID:    r.NamespaceUID,
+			RuleGroup:       r.RuleGroup,
+			NoDataState:     apimodels.NoDataState(r.NoDataState),
+			ExecErrState:    apimodels.ExecutionErrorState(r.ExecErrState),
+			Provenance:      apimodels.Provenance(provenance),
+			IsPaused:        r.IsPaused,
+		},
+	}
+
+	// Copy labels and annotations if they exist
+	if r.Labels != nil {
+		for k, v := range r.Labels {
+			rule.ApiRuleNode.Labels[k] = v
+		}
+	}
+
+	if r.Annotations != nil {
+		for k, v := range r.Annotations {
+			rule.ApiRuleNode.Annotations[k] = v
+		}
+	}
+
+	return rule
 }

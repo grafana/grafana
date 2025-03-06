@@ -2,10 +2,12 @@ package store
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"golang.org/x/exp/maps"
@@ -581,31 +583,31 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 		q := sess.Table("alert_rule")
 
 		if query.OrgID >= 0 {
-			q = q.Where("org_id = ?", query.OrgID)
+			q = q.Where("alert_rule.org_id = ?", query.OrgID)
 		}
 
 		if query.DashboardUID != "" {
-			q = q.Where("dashboard_uid = ?", query.DashboardUID)
+			q = q.Where("alert_rule.dashboard_uid = ?", query.DashboardUID)
 			if query.PanelID != 0 {
-				q = q.Where("panel_id = ?", query.PanelID)
+				q = q.Where("alert_rule.panel_id = ?", query.PanelID)
 			}
 		}
 
 		if len(query.NamespaceUIDs) > 0 {
 			args, in := getINSubQueryArgs(query.NamespaceUIDs)
-			q = q.Where(fmt.Sprintf("namespace_uid IN (%s)", strings.Join(in, ",")), args...)
+			q = q.Where(fmt.Sprintf("alert_rule.namespace_uid IN (%s)", strings.Join(in, ",")), args...)
 		}
 
 		if len(query.RuleUIDs) > 0 {
 			args, in := getINSubQueryArgs(query.RuleUIDs)
-			q = q.Where(fmt.Sprintf("uid IN (%s)", strings.Join(in, ",")), args...)
+			q = q.Where(fmt.Sprintf("alert_rule.uid IN (%s)", strings.Join(in, ",")), args...)
 		}
 
 		var groupsMap map[string]struct{}
 		if len(query.RuleGroups) > 0 {
 			groupsMap = make(map[string]struct{})
 			args, in := getINSubQueryArgs(query.RuleGroups)
-			q = q.Where(fmt.Sprintf("rule_group IN (%s)", strings.Join(in, ",")), args...)
+			q = q.Where(fmt.Sprintf("alert_rule.rule_group IN (%s)", strings.Join(in, ",")), args...)
 			for _, group := range query.RuleGroups {
 				groupsMap[group] = struct{}{}
 			}
@@ -632,7 +634,16 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 			}
 		}
 
-		q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
+		// Join with folder table to get folder information for ordering
+		q = q.Join("LEFT", "folder", "alert_rule.namespace_uid = folder.uid AND alert_rule.org_id = folder.org_id")
+
+		// Order by folder name first, then by rule group
+		q = q.OrderBy("folder.title ASC, alert_rule.rule_group ASC")
+
+		// Apply limit if specified
+		if query.Limit > 0 {
+			q = q.Limit(int(query.Limit))
+		}
 
 		alertRules := make([]*ngmodels.AlertRule, 0)
 		rule := new(alertRule)
@@ -1218,4 +1229,299 @@ func getINSubQueryArgs[T any](inputSlice []T) ([]any, []string) {
 	}
 
 	return args, in
+}
+
+// ListAlertRulesWithPagination returns alert rules with pagination support.
+// The function returns the rules and a next cursor for pagination.
+func (st DBstore) ListAlertRulesWithPagination(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (result ngmodels.LightweightRulesGroup, nextCursor string, err error) {
+	result = make([]*ngmodels.LightweightAlertRule, 0)
+	nextCursor = ""
+
+	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		// Build the main query for fetching data
+		q := sess.Table("alert_rule")
+
+		// Select only necessary columns, excluding large JSON fields
+		q = q.Cols(
+			"alert_rule.id", "alert_rule.org_id", "alert_rule.title", "alert_rule.condition",
+			"alert_rule.updated", "alert_rule.interval_seconds", "alert_rule.version",
+			"alert_rule.uid", "alert_rule.namespace_uid", "alert_rule.rule_group",
+			"alert_rule.no_data_state", "alert_rule.exec_err_state", "alert_rule.is_paused",
+			"alert_rule.rule_group_idx", "alert_rule.annotations", "alert_rule.labels",
+		)
+
+		// Apply basic filters
+		if query.OrgID >= 0 {
+			q = q.Where("alert_rule.org_id = ?", query.OrgID)
+		}
+
+		if query.DashboardUID != "" {
+			q = q.Where("alert_rule.dashboard_uid = ?", query.DashboardUID)
+			if query.PanelID != 0 {
+				q = q.Where("alert_rule.panel_id = ?", query.PanelID)
+			}
+		}
+
+		if len(query.NamespaceUIDs) > 0 {
+			args, in := getINSubQueryArgs(query.NamespaceUIDs)
+			q = q.Where(fmt.Sprintf("alert_rule.namespace_uid IN (%s)", strings.Join(in, ",")), args...)
+		}
+
+		if len(query.RuleUIDs) > 0 {
+			args, in := getINSubQueryArgs(query.RuleUIDs)
+			q = q.Where(fmt.Sprintf("alert_rule.uid IN (%s)", strings.Join(in, ",")), args...)
+		}
+
+		var groupsMap map[string]struct{}
+		if len(query.RuleGroups) > 0 {
+			groupsMap = make(map[string]struct{})
+			args, in := getINSubQueryArgs(query.RuleGroups)
+			q = q.Where(fmt.Sprintf("alert_rule.rule_group IN (%s)", strings.Join(in, ",")), args...)
+			for _, group := range query.RuleGroups {
+				groupsMap[group] = struct{}{}
+			}
+		}
+
+		// Optimize the join to use our new composite index
+		// Join with folder table for ordering, using the indexed columns
+		q = q.Join("LEFT", "folder", "alert_rule.namespace_uid = folder.uid AND alert_rule.org_id = folder.org_id")
+
+		// Fixed sort order: folder.title, rule_group, id
+		sortField1 := "folder.title"
+		sortField2 := "alert_rule.rule_group"
+		sortField3 := "alert_rule.id"
+		sortDirection := "ASC"
+
+		// Apply cursor-based pagination if a cursor is provided
+		if query.Cursor != "" {
+			// Decode the cursor (base64 encoded JSON)
+			cursorData, err := decodeCursor(query.Cursor)
+			if err != nil {
+				st.Logger.Error("Failed to decode cursor", "error", err)
+				// Fall back to regular query if cursor is invalid
+			} else {
+				// Apply cursor filtering based on the stored values
+				// The cursor contains the last seen folder title, rule group, and ID
+				if cursorData.FolderTitle != "" && cursorData.RuleGroup != "" {
+					// Complex cursor logic for our compound sort
+					q = q.Where(
+						"(folder.title > ?) OR (folder.title = ? AND alert_rule.rule_group > ?) OR (folder.title = ? AND alert_rule.rule_group = ? AND alert_rule.id > ?)",
+						cursorData.FolderTitle,
+						cursorData.FolderTitle, cursorData.RuleGroup,
+						cursorData.FolderTitle, cursorData.RuleGroup, cursorData.ID,
+					)
+				} else {
+					// Fallback to simple ID-based cursor if we don't have folder/group info
+					q = q.Where("alert_rule.id > ?", cursorData.ID)
+				}
+			}
+		}
+
+		// Apply fixed ordering
+		q = q.OrderBy(fmt.Sprintf("%s %s, %s %s, %s %s",
+			sortField1, sortDirection,
+			sortField2, sortDirection,
+			sortField3, sortDirection))
+
+		// Apply limit for pagination
+		if query.Limit > 0 {
+			q = q.Limit(int(query.Limit + 1)) // +1 to check if there are more results
+		} else {
+			// Default limit if none specified
+			q = q.Limit(100)
+		}
+
+		// Measure main query execution time
+		mainQueryStart := time.Now()
+
+		// Define the struct for mapping
+		type ruleRow struct {
+			ID              int64                        `xorm:"id"`
+			OrgID           int64                        `xorm:"org_id"`
+			Title           string                       `xorm:"title"`
+			Condition       string                       `xorm:"condition"`
+			Updated         time.Time                    `xorm:"updated"`
+			IntervalSeconds int64                        `xorm:"interval_seconds"`
+			Version         int64                        `xorm:"version"`
+			UID             string                       `xorm:"uid"`
+			NamespaceUID    string                       `xorm:"namespace_uid"`
+			RuleGroup       string                       `xorm:"rule_group"`
+			NoDataState     ngmodels.NoDataState         `xorm:"no_data_state"`
+			ExecErrState    ngmodels.ExecutionErrorState `xorm:"exec_err_state"`
+			IsPaused        bool                         `xorm:"is_paused"`
+			RuleGroupIdx    int                          `xorm:"rule_group_idx"`
+			AnnotationsRaw  string                       `xorm:"annotations"`
+			LabelsRaw       string                       `xorm:"labels"`
+		}
+
+		// Fetch all rules in one go
+		var rules []ruleRow
+		err := q.Find(&rules)
+		if err != nil {
+			return err
+		}
+
+		mainQueryTime := time.Since(mainQueryStart)
+		st.Logger.Info("Main query execution time", "duration_ms", mainQueryTime.Milliseconds())
+
+		// Measure data processing time
+		processingStart := time.Now()
+
+		// Process the results
+		hasMore := false
+		if query.Limit > 0 && int64(len(rules)) > query.Limit {
+			hasMore = true
+			rules = rules[:query.Limit]
+		}
+
+		// Convert to lightweight rules
+		ruleUIDs := make([]string, 0, len(rules))
+		uidToRuleMap := make(map[string]*ngmodels.LightweightAlertRule, len(rules))
+
+		for _, rule := range rules {
+			// Filter by rule group if needed
+			// MySQL (and potentially other databases) can use case-insensitive comparison
+			// so we need to filter again to ensure exact match
+			if groupsMap != nil {
+				if _, ok := groupsMap[rule.RuleGroup]; !ok {
+					continue
+				}
+			}
+
+			// Create a lightweight rule
+			lightweightRule := &ngmodels.LightweightAlertRule{
+				ID:              rule.ID,
+				OrgID:           rule.OrgID,
+				Title:           rule.Title,
+				Condition:       rule.Condition,
+				Updated:         rule.Updated,
+				IntervalSeconds: rule.IntervalSeconds,
+				Version:         rule.Version,
+				UID:             rule.UID,
+				NamespaceUID:    rule.NamespaceUID,
+				RuleGroup:       rule.RuleGroup,
+				NoDataState:     rule.NoDataState,
+				ExecErrState:    rule.ExecErrState,
+				IsPaused:        rule.IsPaused,
+				RuleGroupIndex:  rule.RuleGroupIdx,
+				// Initialize empty maps for annotations and labels
+				Annotations: make(map[string]string),
+				Labels:      make(map[string]string),
+				// Default provenance to none, will be updated later
+				Provenance: ngmodels.ProvenanceNone,
+			}
+
+			// Parse annotations JSON
+			if rule.AnnotationsRaw != "" {
+				if err := json.Unmarshal([]byte(rule.AnnotationsRaw), &lightweightRule.Annotations); err != nil {
+					st.Logger.Error("Failed to unmarshal annotations", "rule_id", rule.ID, "error", err)
+				}
+			}
+
+			// Parse labels JSON
+			if rule.LabelsRaw != "" {
+				if err := json.Unmarshal([]byte(rule.LabelsRaw), &lightweightRule.Labels); err != nil {
+					st.Logger.Error("Failed to unmarshal labels", "rule_id", rule.ID, "error", err)
+				}
+			}
+
+			result = append(result, lightweightRule)
+			ruleUIDs = append(ruleUIDs, rule.UID)
+			uidToRuleMap[rule.UID] = lightweightRule
+		}
+
+		// Now fetch provenance data for just the rules we're returning
+		if len(ruleUIDs) > 0 {
+			// Fetch provenance data for these rules
+			type provenanceRow struct {
+				RecordKey  string              `xorm:"record_key"`
+				Provenance ngmodels.Provenance `xorm:"provenance"`
+			}
+
+			var provenanceData []provenanceRow
+
+			// Build the query for provenance data
+			args, in := getINSubQueryArgs(ruleUIDs)
+			provenanceQuery := sess.Table("provenance_type").
+				Where("record_type = ? AND org_id = ?", "alertRule", query.OrgID).
+				Where(fmt.Sprintf("record_key IN (%s)", strings.Join(in, ",")), args...)
+
+			err := provenanceQuery.Find(&provenanceData)
+			if err != nil {
+				st.Logger.Error("Failed to fetch provenance data", "error", err)
+			} else {
+				// Update the rules with provenance data
+				for _, p := range provenanceData {
+					if rule, ok := uidToRuleMap[p.RecordKey]; ok {
+						rule.Provenance = p.Provenance
+					}
+				}
+			}
+		}
+
+		// Set cursor information if we have more results
+		if len(result) > 0 && hasMore {
+			// Generate next cursor
+			lastRule := result[len(result)-1]
+
+			// Get the folder title for the last rule
+			var folderTitle string
+			has, err := sess.Table("folder").
+				Where("uid = ? AND org_id = ?", lastRule.NamespaceUID, lastRule.OrgID).
+				Cols("title").
+				Get(&folderTitle)
+
+			if err != nil || !has {
+				st.Logger.Error("Failed to get folder title for cursor", "error", err)
+				folderTitle = ""
+			}
+
+			// Create and encode the cursor
+			cursor := cursorData{
+				ID:          lastRule.ID,
+				FolderTitle: folderTitle,
+				RuleGroup:   lastRule.RuleGroup,
+			}
+
+			cursorStr, err := encodeCursor(cursor)
+			if err != nil {
+				st.Logger.Error("Failed to encode cursor", "error", err)
+			} else {
+				nextCursor = cursorStr
+			}
+		}
+
+		processingTime := time.Since(processingStart)
+		st.Logger.Info("Data processing time", "duration_ms", processingTime.Milliseconds())
+
+		return nil
+	})
+	return result, nextCursor, err
+}
+
+// cursorData represents the data encoded in a pagination cursor
+type cursorData struct {
+	ID          int64  `json:"id"`           // The ID of the last item
+	FolderTitle string `json:"folder_title"` // The folder title of the last item
+	RuleGroup   string `json:"rule_group"`   // The rule group of the last item
+}
+
+// encodeCursor encodes cursor data into a base64 string
+func encodeCursor(data cursorData) (string, error) {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(jsonData), nil
+}
+
+// decodeCursor decodes a base64 string into cursor data
+func decodeCursor(cursor string) (cursorData, error) {
+	var data cursorData
+	jsonData, err := base64.StdEncoding.DecodeString(cursor)
+	if err != nil {
+		return data, err
+	}
+	err = json.Unmarshal(jsonData, &data)
+	return data, err
 }
