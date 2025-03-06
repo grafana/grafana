@@ -3,7 +3,7 @@ import { catchError, take, tap, withAbort } from 'ix/asynciterable/operators';
 import { useEffect, useRef, useState, useTransition } from 'react';
 
 import { Card, EmptyState, Stack, Text } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { isLoading, useAsync } from '../hooks/useAsync';
 import { RulesFilter } from '../search/rulesSearchParser';

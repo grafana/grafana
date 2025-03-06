@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
@@ -10,7 +12,6 @@ import { useURLSearchParams } from '../hooks/useURLSearchParams';
 
 import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
-import { useMemo } from 'react';
 
 function RuleList() {
   const [queryParams] = useURLSearchParams();
