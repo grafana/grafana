@@ -82,19 +82,19 @@ Instead of using the Grafana role picker, you can use file-based provisioning to
 
 1. Refer to the following table to add attributes and values.
 
-   | Attribute                | Description                                                                                                                                                                                                    |
-   | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | `roles`                  | Enter the custom role or custom roles you want to create/update.                                                                                                                                               |
-   | `roles > name`           | Enter the name of the custom role.                                                                                                                                                                             |
-   | `roles > version`        | Enter the custom role version number. Role assignments are independent of the role version number.                                                                                                             |
-   | `roles > global`         | Enter `true`. You can specify the `orgId` otherwise.                                                                                                                                                           |
+   | Attribute                | Description                                                                                                                                                                                    |
+   | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | `roles`                  | Enter the custom role or custom roles you want to create/update.                                                                                                                               |
+   | `roles > name`           | Enter the name of the custom role.                                                                                                                                                             |
+   | `roles > version`        | Enter the custom role version number. Role assignments are independent of the role version number.                                                                                             |
+   | `roles > global`         | Enter `true`. You can specify the `orgId` otherwise.                                                                                                                                           |
    | `roles > permissions`    | Enter the permissions `action` and `scope` values. For more information about permissions actions and scopes, refer to [RBAC permissions, actions, and scopes](../custom-role-actions-scopes/) |
-   | `teams`                  | Enter the team or teams to which you are adding the custom role.                                                                                                                                               |
-   | `teams > orgId`          | Because teams belong to organizations, you must add the `orgId` value.                                                                                                                                         |
-   | `teams > name`           | Enter the name of the team.                                                                                                                                                                                    |
-   | `teams > roles`          | Enter the custom or fixed role or roles that you want to grant to the team.                                                                                                                                    |
-   | `teams > roles > name`   | Enter the name of the role.                                                                                                                                                                                    |
-   | `teams > roles > global` | Enter `true`, or specify `orgId` of the role you want to assign to the team. Fixed roles are global.                                                                                                           |
+   | `teams`                  | Enter the team or teams to which you are adding the custom role.                                                                                                                               |
+   | `teams > orgId`          | Because teams belong to organizations, you must add the `orgId` value.                                                                                                                         |
+   | `teams > name`           | Enter the name of the team.                                                                                                                                                                    |
+   | `teams > roles`          | Enter the custom or fixed role or roles that you want to grant to the team.                                                                                                                    |
+   | `teams > roles > name`   | Enter the name of the role.                                                                                                                                                                    |
+   | `teams > roles > global` | Enter `true`, or specify `orgId` of the role you want to assign to the team. Fixed roles are global.                                                                                           |
 
    For more information about managing custom roles, refer to [Create custom roles using provisioning](../manage-rbac-roles/#create-custom-roles-using-provisioning).
 
