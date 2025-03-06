@@ -1,4 +1,4 @@
-import { find, startsWith } from 'lodash';
+import { find } from 'lodash';
 
 import { AzureCredentials } from '@grafana/azure-sdk';
 import { ScopedVars } from '@grafana/data';
@@ -20,10 +20,8 @@ import {
   AzureMonitorLocations,
   AzureMonitorProvidersResponse,
   AzureAPIResponse,
-  AzureGetResourceNamesQuery,
   Subscription,
   Location,
-  ResourceGroup,
   Metric,
   MetricNamespace,
 } from '../types';
@@ -176,68 +174,6 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
     ).then((result) => {
       return ResponseParser.parseSubscriptions(result);
     });
-  }
-
-  getResourceGroups(subscriptionId: string) {
-    return this.getResource(
-      `${this.resourcePath}/subscriptions/${subscriptionId}/resourceGroups?api-version=${this.listByResourceGroupApiVersion}`
-    ).then((result: AzureAPIResponse<ResourceGroup>) => {
-      return ResponseParser.parseResponseValues<ResourceGroup>(result, 'name', 'name');
-    });
-  }
-
-  async getResourceNames(query: AzureGetResourceNamesQuery, skipToken?: string) {
-    const promises = replaceTemplateVariables(this.templateSrv, query).map(
-      ({ metricNamespace, subscriptionId, resourceGroup, region }) => {
-        const validMetricNamespace = startsWith(metricNamespace?.toLowerCase(), 'microsoft.storage/storageaccounts/')
-          ? 'microsoft.storage/storageaccounts'
-          : metricNamespace;
-        let url = `${this.resourcePath}/subscriptions/${subscriptionId}`;
-        if (resourceGroup) {
-          url += `/resourceGroups/${resourceGroup}`;
-        }
-        url += `/resources?api-version=${this.listByResourceGroupApiVersion}`;
-        const filters: string[] = [];
-        if (validMetricNamespace) {
-          filters.push(`resourceType eq '${validMetricNamespace}'`);
-        }
-        if (region) {
-          filters.push(`location eq '${region}'`);
-        }
-        if (filters.length > 0) {
-          url += `&$filter=${filters.join(' and ')}`;
-        }
-        if (skipToken) {
-          url += `&$skiptoken=${skipToken}`;
-        }
-        return this.getResource(url).then(async (result) => {
-          let list: Array<{ text: string; value: string }> = [];
-          if (startsWith(metricNamespace?.toLowerCase(), 'microsoft.storage/storageaccounts/')) {
-            list = ResponseParser.parseResourceNames(result, 'microsoft.storage/storageaccounts');
-            for (let i = 0; i < list.length; i++) {
-              list[i].text += '/default';
-              list[i].value += '/default';
-            }
-          } else {
-            list = ResponseParser.parseResourceNames(result, metricNamespace);
-          }
-
-          if (result.nextLink) {
-            // If there is a nextLink, we should request more pages
-            const nextURL = new URL(result.nextLink);
-            const nextToken = nextURL.searchParams.get('$skiptoken');
-            if (!nextToken) {
-              throw Error('unable to request the next page of resources');
-            }
-            const nextPage = await this.getResourceNames({ metricNamespace, subscriptionId, resourceGroup }, nextToken);
-            list = list.concat(nextPage);
-          }
-
-          return list;
-        });
-      }
-    );
-    return (await Promise.all(promises)).flat();
   }
 
   // Note globalRegion should be false when querying custom metric namespaces
