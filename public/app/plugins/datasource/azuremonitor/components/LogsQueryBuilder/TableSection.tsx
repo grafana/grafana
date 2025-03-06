@@ -4,7 +4,11 @@ import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/plugin-ui';
 import { Select } from '@grafana/ui';
 
-import { BuilderQueryExpression, BuilderQueryEditorPropertyType, BuilderQueryEditorExpressionType } from '../../dataquery.gen';
+import {
+  BuilderQueryExpression,
+  BuilderQueryEditorPropertyType,
+  BuilderQueryEditorExpressionType,
+} from '../../dataquery.gen';
 import { AzureMonitorQuery, AzureLogAnalyticsMetadataColumn, AzureLogAnalyticsMetadataTable } from '../../types';
 
 import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
@@ -66,8 +70,8 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
     const updatedBuilderQuery: BuilderQueryExpression = {
       ...DEFAULT_LOGS_BUILDER_QUERY,
       ...builderQuery,
-      columns: { columns: selectedArray, type: BuilderQueryEditorExpressionType.Property }
-    }
+      columns: { columns: selectedArray, type: BuilderQueryEditorExpressionType.Property },
+    };
     const updatedQuery = AzureMonitorKustoQueryParser.toQuery({
       selectedTable: builderQuery?.from?.property.name || '',
       selectedColumns: selectedArray,
@@ -104,8 +108,8 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
             options={columnOptions}
             placeholder="Select columns"
             onChange={(e) => {
-              console.log(e)
-              handleColumnsChange(e)
+              console.log(e);
+              handleColumnsChange(e);
             }}
             isDisabled={!query.azureLogAnalytics?.builderQuery?.from?.property.name}
           />

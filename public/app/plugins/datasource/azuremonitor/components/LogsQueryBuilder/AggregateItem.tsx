@@ -58,7 +58,7 @@ export const AggregateItem: React.FC<AggregateItemProps> = ({ aggregate, onChang
     }
 
     return allAggregates.filter((agg) => {
-      const aggValue = agg.value as string;
+      const aggValue = agg.value;
       if (columnType === QueryEditorPropertyType.Number) {
         return ['sum', 'avg', 'min', 'max', 'percentile'].includes(aggValue);
       }
