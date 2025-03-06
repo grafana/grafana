@@ -133,7 +133,6 @@ const Player = (props: CanvasElementProps<CanvasElementConfig, CanvasElementData
 
   // uuid needed to avoid id conflicts when multiple elements are rendered
   // const uniqueId = uuidv4();
-  console.log(uniqueId);
 
   return (
     <div
