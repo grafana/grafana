@@ -622,20 +622,17 @@ func TestService_Check(t *testing.T) {
 		req         *authzv1.CheckRequest
 		permissions []accesscontrol.Permission
 		expected    bool
-		storeErr    bool
 		expectErr   bool
 	}
 
-	runTestCase := func(t *testing.T, tc testCase) {
+	runTestCase := func(t *testing.T, tc testCase, s *Service) {
 		ctx := types.WithAuthInfo(context.Background(), callingService)
-		s := setupService()
 
 		userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
 
 		store := &fakeStore{
 			userID:          userID,
 			userPermissions: tc.permissions,
-			err:             tc.storeErr,
 		}
 		s.store = store
 		s.permissionStore = store
@@ -704,25 +701,13 @@ func TestService_Check(t *testing.T) {
 	t.Run("Request validation", func(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				runTestCase(t, tc)
+				s := setupService()
+				runTestCase(t, tc, s)
 			})
 		}
 	})
 
 	testCases = []testCase{
-		{
-			name: "should error if user does not exist",
-			req: &authzv1.CheckRequest{
-				Namespace: "org-12",
-				Subject:   "user:unknown",
-				Group:     "dashboard.grafana.app",
-				Resource:  "dashboards",
-				Verb:      "get",
-				Name:      "dash1",
-			},
-			storeErr:  true,
-			expectErr: true,
-		},
 		{
 			name: "should allow user with permission",
 			req: &authzv1.CheckRequest{
@@ -755,7 +740,62 @@ func TestService_Check(t *testing.T) {
 	t.Run("User permission check", func(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				runTestCase(t, tc)
+				s := setupService()
+				runTestCase(t, tc, s)
+
+				// Check cache
+				ctx := context.Background()
+				id, ok := s.idCache.Get(ctx, userIdentifierCacheKey("org-12", "test-uid"))
+				require.True(t, ok)
+				id.UID = "test-uid"
+				perms, ok := s.permCache.Get(ctx, userPermCacheKey("org-12", "test-uid", "dashboards:read"))
+				require.True(t, ok)
+				require.Len(t, perms, 1)
+			})
+		}
+	})
+
+	testCases = []testCase{
+		{
+			name: "should allow anonymous with permission",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "anonymous:0",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			permissions: []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash1"}},
+			expected:    true,
+			expectErr:   false,
+		},
+		{
+			name: "should deny anonymous without permission",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "anonymous:0",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			permissions: []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash2"}},
+			expected:    false,
+			expectErr:   false,
+		},
+	}
+	t.Run("Anonymous permission check", func(t *testing.T) {
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				s := setupService()
+				runTestCase(t, tc, s)
+
+				// Check cache
+				ctx := context.Background()
+				perms, ok := s.permCache.Get(ctx, anonymousPermCacheKey("org-12", "dashboards:read"))
+				require.True(t, ok)
+				require.Len(t, perms, 1)
 			})
 		}
 	})
