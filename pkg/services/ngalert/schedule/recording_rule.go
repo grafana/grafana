@@ -113,7 +113,7 @@ func (r *recordingRule) Eval(eval *Evaluation) (bool, *Evaluation) {
 	}
 }
 
-func (r *recordingRule) Update(lastVersion RuleVersionAndPauseStatus) bool {
+func (r *recordingRule) Update(_ *Evaluation) bool {
 	return true
 }
 

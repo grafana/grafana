@@ -501,7 +501,7 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 			if frame.Fields[0].Len() == 1 {
 				v = frame.At(0, 0).(*float64) // type checked above
 			}
-			captureFn(frame.RefID, frame.Fields[0].Labels, v)
+			captureFn(refID, frame.Fields[0].Labels, v)
 		}
 
 		if refID == c.Condition {

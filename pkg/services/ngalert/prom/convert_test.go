@@ -19,7 +19,7 @@ import (
 )
 
 func TestPrometheusRulesToGrafana(t *testing.T) {
-	fiveMin := prommodel.Duration(5 * time.Minute)
+	defaultInterval := 2 * time.Minute
 
 	testCases := []struct {
 		name        string
@@ -28,6 +28,7 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 		promGroup   PrometheusRuleGroup
 		config      Config
 		expectError bool
+		errorMsg    string
 	}{
 		{
 			name:      "valid rule group",
@@ -40,7 +41,7 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 					{
 						Alert: "alert-1",
 						Expr:  "cpu_usage > 80",
-						For:   &fiveMin,
+						For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
 						Labels: map[string]string{
 							"severity": "critical",
 						},
@@ -63,14 +64,15 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 					{
 						Alert:         "alert-1",
 						Expr:          "up == 0",
-						KeepFiringFor: &fiveMin,
+						KeepFiringFor: util.Pointer(prommodel.Duration(5 * time.Minute)),
 					},
 				},
 			},
 			expectError: true,
+			errorMsg:    "keep_firing_for is not supported",
 		},
 		{
-			name:      "rule with empty interval",
+			name:      "rule group with empty interval",
 			orgID:     1,
 			namespace: "namespaceUID",
 			promGroup: PrometheusRuleGroup{
@@ -89,7 +91,8 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 			orgID:     1,
 			namespace: "namespaceUID",
 			promGroup: PrometheusRuleGroup{
-				Name: "test-group-1",
+				Name:     "test-group-1",
+				Interval: prommodel.Duration(10 * time.Second),
 				Rules: []PrometheusRule{
 					{
 						Record: "some_metric",
@@ -99,12 +102,70 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 			},
 			expectError: false,
 		},
+		{
+			name:      "rule group with query_offset is not supported",
+			orgID:     1,
+			namespace: "namespaceUID",
+			promGroup: PrometheusRuleGroup{
+				Name:     "test-group-1",
+				Interval: prommodel.Duration(10 * time.Second),
+				QueryOffset: func() *prommodel.Duration {
+					d := prommodel.Duration(30 * time.Second)
+					return &d
+				}(),
+				Rules: []PrometheusRule{
+					{
+						Alert: "alert-1",
+						Expr:  "up == 0",
+					},
+				},
+			},
+			expectError: true,
+			errorMsg:    "query_offset is not supported",
+		},
+		{
+			name:      "rule group with limit is not supported",
+			orgID:     1,
+			namespace: "namespaceUID",
+			promGroup: PrometheusRuleGroup{
+				Name:     "test-group-1",
+				Interval: prommodel.Duration(10 * time.Second),
+				Limit:    5,
+				Rules: []PrometheusRule{
+					{
+						Alert: "alert-1",
+						Expr:  "up == 0",
+					},
+				},
+			},
+			expectError: true,
+			errorMsg:    "limit is not supported",
+		},
+		{
+			name:      "rule group with labels is not supported",
+			orgID:     1,
+			namespace: "namespaceUID",
+			promGroup: PrometheusRuleGroup{
+				Name:     "test-group-1",
+				Interval: prommodel.Duration(10 * time.Second),
+				Labels:   map[string]string{"team": "devops"},
+				Rules: []PrometheusRule{
+					{
+						Alert: "alert-1",
+						Expr:  "up == 0",
+					},
+				},
+			},
+			expectError: true,
+			errorMsg:    "labels are not supported",
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.config.DatasourceUID = "datasource-uid"
 			tc.config.DatasourceType = datasources.DS_PROMETHEUS
+			tc.config.DefaultInterval = defaultInterval
 			converter, err := NewConverter(tc.config)
 			require.NoError(t, err)
 
@@ -112,12 +173,19 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 
 			if tc.expectError {
 				require.Error(t, err, tc.name)
+				if tc.errorMsg != "" {
+					require.Contains(t, err.Error(), tc.errorMsg, tc.name)
+				}
 				return
 			}
 			require.NoError(t, err, tc.name)
 
 			require.Equal(t, tc.promGroup.Name, grafanaGroup.Title, tc.name)
+
 			expectedInterval := int64(time.Duration(tc.promGroup.Interval).Seconds())
+			if expectedInterval == 0 {
+				expectedInterval = int64(defaultInterval.Seconds())
+			}
 			require.Equal(t, expectedInterval, grafanaGroup.Interval, tc.name)
 
 			require.Equal(t, len(tc.promGroup.Rules), len(grafanaGroup.Rules), tc.name)
@@ -126,12 +194,12 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				grafanaRule := grafanaGroup.Rules[j]
 
 				if promRule.Record != "" {
-					require.Equal(t, promRule.Record, grafanaRule.Title)
+					require.Equal(t, fmt.Sprintf("[%s] %s", tc.promGroup.Name, promRule.Record), grafanaRule.Title)
 					require.NotNil(t, grafanaRule.Record)
 					require.Equal(t, grafanaRule.Record.From, queryRefID)
 					require.Equal(t, promRule.Record, grafanaRule.Record.Metric)
 				} else {
-					require.Equal(t, promRule.Alert, grafanaRule.Title)
+					require.Equal(t, fmt.Sprintf("[%s] %s", tc.promGroup.Name, promRule.Alert), grafanaRule.Title)
 				}
 
 				var expectedFor time.Duration
@@ -164,8 +232,9 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 
 func TestPrometheusRulesToGrafanaWithDuplicateRuleNames(t *testing.T) {
 	cfg := Config{
-		DatasourceUID:  "datasource-uid",
-		DatasourceType: datasources.DS_PROMETHEUS,
+		DatasourceUID:   "datasource-uid",
+		DatasourceType:  datasources.DS_PROMETHEUS,
+		DefaultInterval: 2 * time.Minute,
 	}
 	converter, err := NewConverter(cfg)
 	require.NoError(t, err)
@@ -198,10 +267,10 @@ func TestPrometheusRulesToGrafanaWithDuplicateRuleNames(t *testing.T) {
 
 	require.Equal(t, "test-group-1", group.Title)
 	require.Len(t, group.Rules, 4)
-	require.Equal(t, "alert", group.Rules[0].Title)
-	require.Equal(t, "alert (2)", group.Rules[1].Title)
-	require.Equal(t, "another alert", group.Rules[2].Title)
-	require.Equal(t, "alert (3)", group.Rules[3].Title)
+	require.Equal(t, "[test-group-1] alert", group.Rules[0].Title)
+	require.Equal(t, "[test-group-1] alert (2)", group.Rules[1].Title)
+	require.Equal(t, "[test-group-1] another alert", group.Rules[2].Title)
+	require.Equal(t, "[test-group-1] alert (3)", group.Rules[3].Title)
 }
 
 func TestCreateMathNode(t *testing.T) {
@@ -257,8 +326,9 @@ func TestCreateThresholdNode(t *testing.T) {
 
 func TestPrometheusRulesToGrafana_NodesInRules(t *testing.T) {
 	cfg := Config{
-		DatasourceUID:  "datasource-uid",
-		DatasourceType: datasources.DS_PROMETHEUS,
+		DatasourceUID:   "datasource-uid",
+		DatasourceType:  datasources.DS_PROMETHEUS,
+		DefaultInterval: 2 * time.Minute,
 	}
 	converter, err := NewConverter(cfg)
 	require.NoError(t, err)
@@ -344,8 +414,9 @@ func TestPrometheusRulesToGrafana_UID(t *testing.T) {
 	}
 
 	converter, err := NewConverter(Config{
-		DatasourceUID:  "datasource-uid",
-		DatasourceType: datasources.DS_PROMETHEUS,
+		DatasourceUID:   "datasource-uid",
+		DatasourceType:  datasources.DS_PROMETHEUS,
+		DefaultInterval: 2 * time.Minute,
 	})
 	require.NoError(t, err)
 
@@ -372,8 +443,9 @@ func TestPrometheusRulesToGrafana_UID(t *testing.T) {
 			namespace := "some-namespace"
 
 			converter, err := NewConverter(Config{
-				DatasourceUID:  "datasource-uid",
-				DatasourceType: datasources.DS_PROMETHEUS,
+				DatasourceUID:   "datasource-uid",
+				DatasourceType:  datasources.DS_PROMETHEUS,
+				DefaultInterval: 2 * time.Minute,
 			})
 			require.NoError(t, err)
 
@@ -390,8 +462,9 @@ func TestPrometheusRulesToGrafana_UID(t *testing.T) {
 			namespace := "some-namespace"
 
 			converter, err := NewConverter(Config{
-				DatasourceUID:  "datasource-uid",
-				DatasourceType: datasources.DS_PROMETHEUS,
+				DatasourceUID:   "datasource-uid",
+				DatasourceType:  datasources.DS_PROMETHEUS,
+				DefaultInterval: 2 * time.Minute,
 			})
 			require.NoError(t, err)
 
@@ -408,8 +481,9 @@ func TestPrometheusRulesToGrafana_UID(t *testing.T) {
 			namespace := "some-namespace"
 
 			converter, err := NewConverter(Config{
-				DatasourceUID:  "datasource-uid",
-				DatasourceType: datasources.DS_PROMETHEUS,
+				DatasourceUID:   "datasource-uid",
+				DatasourceType:  datasources.DS_PROMETHEUS,
+				DefaultInterval: 2 * time.Minute,
 			})
 			require.NoError(t, err)
 

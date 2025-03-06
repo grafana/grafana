@@ -256,6 +256,7 @@ export enum PluginStatus {
   UNINSTALL = 'UNINSTALL',
   UPDATE = 'UPDATE',
   REINSTALL = 'REINSTALL',
+  DOWNGRADE = 'DOWNGRADE',
 }
 
 export enum PluginTabLabels {

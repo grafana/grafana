@@ -48,16 +48,17 @@ jest.mock('../state/explorePane', () => ({
   changePanelState: (exploreId: string, panel: 'logs', panelState: {} | ExploreLogsPanelState) => {
     return fakeChangePanelState(exploreId, panel, panelState);
   },
-  changeQueries: (args: { queries: DataQuery[]; exploreId: string | undefined }) => {
-    return fakeChangeQueries(args);
-  },
 }));
 
 const fakeChangeQueries = jest.fn().mockReturnValue({ type: 'fakeChangeQueries' });
+const fakeRunQueries = jest.fn().mockReturnValue({ type: 'fakeRunQueries' });
 jest.mock('../state/query', () => ({
   ...jest.requireActual('../state/query'),
   changeQueries: (args: { queries: DataQuery[]; exploreId: string | undefined }) => {
     return fakeChangeQueries(args);
+  },
+  runQueries: (args: { queries: DataQuery[]; exploreId: string | undefined }) => {
+    return fakeRunQueries(args);
   },
 }));
 
@@ -388,6 +389,7 @@ describe('Logs', () => {
     expect(logRows.length).toBe(3);
     expect(logRows[0].textContent).toContain('log message 1');
     expect(logRows[2].textContent).toContain('log message 3');
+    expect(fakeRunQueries).not.toHaveBeenCalled();
   });
 
   it('should sync the query direction when changing the order of loki queries', async () => {
@@ -399,6 +401,7 @@ describe('Logs', () => {
       exploreId: 'left',
       queries: [{ ...query, direction: LokiQueryDirection.Forward }],
     });
+    expect(fakeRunQueries).toHaveBeenCalledWith({ exploreId: 'left' });
   });
 
   it('should not change the query direction when changing the order of non-loki queries', async () => {
