@@ -37,8 +37,12 @@ runs:
     - name: Process Go coverage output
       shell: bash
       run: |
+        # Debug information
+        echo "Processing coverage file: ${{ inputs.coverage-file }}"
+        
         # Ensure valid coverage file even if empty
         if [ ! -s ${{ inputs.coverage-file }} ]; then
+          echo "Coverage file is empty, creating a minimal valid file"
           echo "mode: set" > ${{ inputs.coverage-file }}
         fi
         
@@ -46,14 +50,9 @@ runs:
         FUNC_LOG="${{ inputs.test-type }}-funcs.log"
         HTML_REPORT="${{ inputs.test-type }}.html"
         
-        # Process Go coverage
-        if ! go tool cover -func ${{ inputs.coverage-file }} > $FUNC_LOG; then
-          echo "::warning::Failed to generate function coverage report"
-        fi
-        
-        if ! go tool cover -html ${{ inputs.coverage-file }} -o $HTML_REPORT; then
-          echo "::warning::Failed to generate HTML coverage report"
-        fi
+        # Convert to different formats
+        go tool cover -func ${{ inputs.coverage-file }} > $FUNC_LOG
+        go tool cover -html ${{ inputs.coverage-file }} -o $HTML_REPORT
         
         # Add coverage summary to GitHub step summary
         echo "# ${{ inputs.test-type }} Coverage" >> $GITHUB_STEP_SUMMARY
