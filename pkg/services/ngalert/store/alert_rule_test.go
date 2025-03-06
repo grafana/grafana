@@ -16,23 +16,23 @@ import (
 	"golang.org/x/exp/rand"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
-
-	"github.com/grafana/grafana/pkg/infra/db"
-	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -1962,12 +1962,13 @@ func createTestStore(
 	bus bus.Bus,
 ) *DBstore {
 	return &DBstore{
-		SQLStore:       sqlStore,
-		FolderService:  folderService,
-		Logger:         logger,
-		Cfg:            cfg,
-		Bus:            bus,
-		FeatureToggles: featuremgmt.WithFeatures(),
+		SQLStore:          sqlStore,
+		FolderService:     folderService,
+		Logger:            logger,
+		Cfg:               cfg,
+		Bus:               bus,
+		FeatureToggles:    featuremgmt.WithFeatures(),
+		ServerLockService: serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
 	}
 }
 

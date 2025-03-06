@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
@@ -86,7 +87,8 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration, opts ...TestEnvOpti
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	dashboardService, dashboardStore := testutil.SetupDashboardService(tb, sqlStore, folderStore, cfg)
 	folderService := testutil.SetupFolderService(tb, cfg, sqlStore, dashboardStore, folderStore, bus, options.featureToggles, ac)
-	ruleStore, err := store.ProvideDBStore(cfg, options.featureToggles, sqlStore, folderService, &dashboards.FakeDashboardService{}, ac, bus)
+	serverLockService := serverlock.ProvideService(sqlStore, tracer)
+	ruleStore, err := store.ProvideDBStore(cfg, options.featureToggles, sqlStore, folderService, &dashboards.FakeDashboardService{}, ac, bus, serverLockService)
 	require.NoError(tb, err)
 	ng, err := ngalert.ProvideService(
 		cfg, options.featureToggles, nil, nil, routing.NewRouteRegister(), sqlStore, kvstore.NewFakeKVStore(), nil, nil, quotatest.New(false, nil),
@@ -101,10 +103,11 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration, opts ...TestEnvOpti
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval: baseInterval * time.Second,
 		},
-		Logger:           log.New("ngalert-test"),
-		DashboardService: dashboardService,
-		FolderService:    folderService,
-		Bus:              bus,
+		Logger:            log.New("ngalert-test"),
+		DashboardService:  dashboardService,
+		FolderService:     folderService,
+		Bus:               bus,
+		ServerLockService: serverLockService,
 	}
 }
 

@@ -2,21 +2,23 @@ package store
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util"
-
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestIntegration_GetUserVisibleNamespaces(t *testing.T) {
@@ -416,4 +418,86 @@ func TestIntegration_GetNamespaceChildren(t *testing.T) {
 		require.Equal(t, len(children), 2)
 		require.ElementsMatch(t, []string{rootFolder1, rootFolder2}, []string{children[0].UID, children[1].UID})
 	})
+}
+
+func TestServerLockInGetOrCreateNamespace(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	u := &user.SignedInUser{
+		UserID:         1,
+		OrgID:          1,
+		OrgRole:        org.RoleAdmin,
+		IsGrafanaAdmin: true,
+	}
+
+	setupStoreWithMockLock := func(t *testing.T, mockLock ServerLockService) *DBstore {
+		sqlStore := db.InitTestDB(t)
+		cfg := setting.NewCfg()
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		b := &fakeBus{}
+		logger := log.New("test-dbstore")
+		store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
+		store.FolderService = setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+		store.ServerLockService = mockLock
+
+		return store
+	}
+
+	t.Run("should handle lock acquisition failure", func(t *testing.T) {
+		mockLock := &mockServerLockService{ShouldFail: true}
+		store := setupStoreWithMockLock(t, mockLock)
+
+		_, err := store.GetOrCreateNamespaceByTitle(context.Background(), "new folder", 1, u, folder.RootFolderUID)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "mock lock acquisition failed")
+		require.True(t, mockLock.LockWasAcquired)
+		require.Equal(t, 0, mockLock.ExecutionCount)
+	})
+
+	t.Run("should handle lock timeout", func(t *testing.T) {
+		mockLock := &mockServerLockService{ShouldTimeout: true}
+		store := setupStoreWithMockLock(t, mockLock)
+
+		_, err := store.GetOrCreateNamespaceByTitle(context.Background(), "new folder", 1, u, folder.RootFolderUID)
+		require.Error(t, err)
+		require.True(t, errors.Is(err, context.DeadlineExceeded))
+		require.True(t, mockLock.LockWasAcquired)
+		require.Equal(t, 0, mockLock.ExecutionCount)
+	})
+
+	t.Run("should successfully use lock when creating folder", func(t *testing.T) {
+		mockLock := &mockServerLockService{}
+		store := setupStoreWithMockLock(t, mockLock)
+
+		f, err := store.GetOrCreateNamespaceByTitle(context.Background(), "new folder", 1, u, folder.RootFolderUID)
+		require.NoError(t, err)
+		require.Equal(t, "new folder", f.Title)
+		require.True(t, mockLock.LockWasAcquired)
+		require.Equal(t, 1, mockLock.ExecutionCount)
+	})
+}
+
+type mockServerLockService struct {
+	LockWasAcquired bool
+	ExecutionCount  int
+	ShouldFail      bool
+	ShouldTimeout   bool
+}
+
+func (m *mockServerLockService) LockExecuteAndReleaseWithRetries(ctx context.Context, actionName string, timeConfig serverlock.LockTimeConfig, fn func(ctx context.Context), retryOpts ...serverlock.RetryOpt) error {
+	m.LockWasAcquired = true
+
+	if m.ShouldFail {
+		return fmt.Errorf("mock lock acquisition failed")
+	}
+
+	if m.ShouldTimeout {
+		return context.DeadlineExceeded
+	}
+
+	fn(ctx)
+	m.ExecutionCount++
+	return nil
 }

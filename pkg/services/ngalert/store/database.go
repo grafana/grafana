@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -33,16 +34,21 @@ type AlertingStore interface {
 	GetHistoricalConfiguration(ctx context.Context, orgID int64, id int64) (*models.HistoricAlertConfiguration, error)
 }
 
+type ServerLockService interface {
+	LockExecuteAndReleaseWithRetries(ctx context.Context, actionName string, timeConfig serverlock.LockTimeConfig, fn func(ctx context.Context), retryOpts ...serverlock.RetryOpt) error
+}
+
 // DBstore stores the alert definitions and instances in the database.
 type DBstore struct {
-	Cfg              setting.UnifiedAlertingSettings
-	FeatureToggles   featuremgmt.FeatureToggles
-	SQLStore         db.DB
-	Logger           log.Logger
-	FolderService    folder.Service
-	DashboardService dashboards.DashboardService
-	AccessControl    accesscontrol.AccessControl
-	Bus              bus.Bus
+	Cfg               setting.UnifiedAlertingSettings
+	FeatureToggles    featuremgmt.FeatureToggles
+	SQLStore          db.DB
+	Logger            log.Logger
+	FolderService     folder.Service
+	DashboardService  dashboards.DashboardService
+	AccessControl     accesscontrol.AccessControl
+	Bus               bus.Bus
+	ServerLockService ServerLockService
 }
 
 func ProvideDBStore(
@@ -53,16 +59,18 @@ func ProvideDBStore(
 	dashboards dashboards.DashboardService,
 	ac accesscontrol.AccessControl,
 	bus bus.Bus,
+	serverLockService *serverlock.ServerLockService,
 ) (*DBstore, error) {
 	store := DBstore{
-		Cfg:              cfg.UnifiedAlerting,
-		FeatureToggles:   featureToggles,
-		SQLStore:         sqlstore,
-		Logger:           log.New("ngalert.dbstore"),
-		FolderService:    folderService,
-		DashboardService: dashboards,
-		AccessControl:    ac,
-		Bus:              bus,
+		Cfg:               cfg.UnifiedAlerting,
+		FeatureToggles:    featureToggles,
+		SQLStore:          sqlstore,
+		Logger:            log.New("ngalert.dbstore"),
+		FolderService:     folderService,
+		DashboardService:  dashboards,
+		AccessControl:     ac,
+		Bus:               bus,
+		ServerLockService: serverLockService,
 	}
 	if err := folderService.RegisterService(store); err != nil {
 		return nil, err
