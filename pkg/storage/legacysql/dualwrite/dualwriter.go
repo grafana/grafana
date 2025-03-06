@@ -95,7 +95,7 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 
 	storageObj, errObjectSt := d.unified.Create(ctx, createdCopy, createValidation, options)
 	if errObjectSt != nil {
-		log.Error("unable to create object in unified storage", "err", err)
+		log.Error("unable to create object in unified storage", "err", errObjectSt)
 		if d.errorIsOK {
 			return createdFromLegacy, nil
 		}
@@ -105,6 +105,7 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 		if err != nil {
 			log.Error("unable to cleanup object in legacy storage", "err", err)
 		}
+		return storageObj, errObjectSt
 	}
 
 	if d.readUnified {
