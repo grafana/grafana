@@ -60,7 +60,7 @@ const FoldersPage: React.FC = () => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [availableTags, setAvailableTags] = useState<TermCount[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   const styles = useStyles2(getStyles);
 
   const location = useLocation();
@@ -165,7 +165,7 @@ const FoldersPage: React.FC = () => {
       case 'dashboards':
         return 'apps';
       case 'folders':
-          return 'folder';  
+          return 'folder';
       case 'alerts':
         return 'bell';
       case 'slos':
@@ -190,7 +190,7 @@ const FoldersPage: React.FC = () => {
       return `/playlists/play/${name}`;
     }
     if (resource.startsWith('alert')) {
-      return `/alerting/grafana/${name}`;
+      return `/alerting/grafana/${name}/view`;
     }
     if (resource.startsWith('slo')) {
       return `/d/grafana_slo_app-${name}`;
@@ -198,11 +198,11 @@ const FoldersPage: React.FC = () => {
     const slug = kbn.slugifyForUrl(title);
     return `/d/${name}/${slug}`;
   }
-  
+
   const onResourceLinkClicked = () => {}
 
   const renderTable = (resources: SearchHit[]) => {
-    const columns: Array<Column<Resource>> = 
+    const columns: Array<Column<Resource>> =
       [
           {
             id: 'name',
@@ -226,7 +226,7 @@ const FoldersPage: React.FC = () => {
             cell: ({ row: { original } }) => {
               const iconName = getIconForResource(original.resource);
               const displayType = original.resource.slice(0, -1); // Remove last character ('s')
-              
+
               return (
                 <div className="flex items-center">
                   {iconName && <Icon name={iconName} style={{ marginRight: '6px' }}/>}
@@ -252,7 +252,7 @@ const FoldersPage: React.FC = () => {
             header: 'Tags',
             cell: ({ row: { original } }) => (
               <div key={original.name} {...original} className={columnStyles.cell}>
-                  {original.tags ? <TagList className={columnStyles.tagList} tags={original.tags} 
+                  {original.tags ? <TagList className={columnStyles.tagList} tags={original.tags}
                     onClick={
                       (tag) => setSelectedTags([...selectedTags, tag])
                     } /> : '-'
@@ -262,7 +262,7 @@ const FoldersPage: React.FC = () => {
           },
         ];
         // TODO if we want to drill down into the folders
-       
+
           // {
           //   id: 'name',
           //   header: 'Name',
@@ -324,7 +324,7 @@ const FoldersPage: React.FC = () => {
         </div>
 
         {isLoading && <LoadingPlaceholder text="Loading folders..." />}
-        
+
         {error && (
           <EmptyState message={error} variant={'call-to-action'} />
         )}
