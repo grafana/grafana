@@ -11,7 +11,7 @@ import { EnhancedFeatures } from './EnhancedFeatures';
 type SetupType = 'public-access' | 'required-features' | null;
 
 // Configuration examples
-const feature_ini = `# In your custom.ini file
+const featureIni = `# In your custom.ini file
 app_mode = development
 
 [feature_toggles]
@@ -23,7 +23,7 @@ kubernetesClientDashboardsFolders = true
 # If you want easy kubectl setup development mode
 grafanaAPIServerEnsureKubectlAccess = true`;
 
-const ngrok_example = `ngrok http 3000
+const ngrokExample = `ngrok http 3000
 
 Help shape K8s Bindings https://ngrok.com/new-features-update?ref=k8s
 
@@ -43,7 +43,7 @@ HTTP Requests
 09:18:46.147 CET             GET  /favicon.ico                   302 Found
 09:18:46.402 CET             GET  /login`;
 
-const root_url_ini = `[server]
+const rootUrlExample = `[server]
 root_url = https://d60d-83-33-235-27.ngrok-free.app`;
 
 export default function GettingStarted() {
@@ -69,13 +69,13 @@ export default function GettingStarted() {
             {
               title: 'Copy your public URL',
               description: 'From the ngrok output, copy the https:// forwarding URL that looks like this:',
-              code: ngrok_example,
+              code: ngrokExample,
               copyCode: false,
             },
             {
               title: 'Update your Grafana configuration',
               description: 'Add this to your custom.ini file, replacing the URL with your actual ngrok URL:',
-              code: root_url_ini,
+              code: rootUrlExample,
             },
           ],
         };
@@ -87,7 +87,7 @@ export default function GettingStarted() {
             {
               title: 'Enable Required Feature Toggles',
               description: 'Add these settings to your custom.ini file to enable necessary features:',
-              code: feature_ini,
+              code: featureIni,
             },
           ],
         };
