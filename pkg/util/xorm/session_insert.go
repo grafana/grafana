@@ -7,7 +7,6 @@ package xorm
 import (
 	"errors"
 	"fmt"
-	"math/rand"
 	"reflect"
 	"sort"
 	"strconv"
@@ -346,20 +345,20 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 		return 0, err
 	}
 
-	// XXX: hack to handle autoincrement in spanner
-	if len(table.AutoIncrement) > 0 && session.engine.dialect.DBType() == "spanner" {
-		var found bool
-		for _, col := range colNames {
-			if col == table.AutoIncrement {
-				found = true
-				break
-			}
-		}
-		if !found {
-			colNames = append(colNames, table.AutoIncrement)
-			args = append(args, rand.Int63n(9e15))
-		}
-	}
+	//// XXX: hack to handle autoincrement in spanner
+	//if len(table.AutoIncrement) > 0 && session.engine.dialect.DBType() == "spanner" {
+	//	var found bool
+	//	for _, col := range colNames {
+	//		if col == table.AutoIncrement {
+	//			found = true
+	//			break
+	//		}
+	//	}
+	//	if !found {
+	//		colNames = append(colNames, table.AutoIncrement)
+	//		args = append(args, rand.Int63n(9e15))
+	//	}
+	//}
 
 	exprs := session.statement.exprColumns
 	colPlaces := strings.Repeat("?, ", len(colNames))

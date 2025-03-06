@@ -16,6 +16,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/atomic"
+
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -161,16 +162,7 @@ func (mg *Migrator) GetMigrationIDs(excludeNotLogged bool) []string {
 func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 	logMap := make(map[string]MigrationLog)
 	logItems := make([]MigrationLog, 0)
-
-	exists, err := mg.DBEngine.IsTableExist(mg.tableName)
-	if err != nil {
-		return nil, fmt.Errorf("%v: %w", "failed to check table existence", err)
-	}
-	if !exists {
-		return logMap, nil
-	}
-
-	if err = mg.DBEngine.Table(mg.tableName).Find(&logItems); err != nil {
+	if err := mg.DBEngine.Table(mg.tableName).Find(&logItems); err != nil {
 		return nil, err
 	}
 
@@ -246,9 +238,29 @@ func (mg *Migrator) run(ctx context.Context) (err error) {
 
 	logger.Info("Starting DB migrations")
 
-	_, err = mg.GetMigrationLog()
+	migrationLogExists, err := mg.DBEngine.IsTableExist(mg.tableName)
 	if err != nil {
-		return err
+		return fmt.Errorf("%v: %w", "failed to check table existence", err)
+	}
+
+	if !migrationLogExists {
+		// Check if dialect can initialize database from a snapshot.
+		err := mg.Dialect.CreateDatabaseFromSnapshot(ctx, mg.DBEngine, mg.tableName)
+		if err != nil {
+			return fmt.Errorf("%v: %w", "failed to create database from snapshot", err)
+		}
+
+		migrationLogExists, err = mg.DBEngine.IsTableExist(mg.tableName)
+		if err != nil {
+			return fmt.Errorf("%v: %w", "failed to check table existence after applying snapshot", err)
+		}
+	}
+
+	if migrationLogExists {
+		_, err = mg.GetMigrationLog()
+		if err != nil {
+			return err
+		}
 	}
 
 	successLabel := prometheus.Labels{"success": "true"}
