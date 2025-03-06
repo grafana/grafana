@@ -508,15 +508,15 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 
 	parentFolderUid := uuid.NewString()
 	parentFolderTitle := "Very Parent Folder"
-	createFolder(t, store, parentFolderUid, parentFolderTitle, rule1.OrgID, "")
+	createFolder(t, store.FolderService, parentFolderUid, parentFolderTitle, rule1.OrgID, "")
 	rule1FolderTitle := "folder-" + rule1.Title
 	rule2FolderTitle := "folder-" + rule2.Title
 	rule3FolderTitle := "folder-" + rule3.Title
-	createFolder(t, store, rule1.NamespaceUID, rule1FolderTitle, rule1.OrgID, parentFolderUid)
-	createFolder(t, store, rule2.NamespaceUID, rule2FolderTitle, rule2.OrgID, "")
-	createFolder(t, store, rule3.NamespaceUID, rule3FolderTitle, rule3.OrgID, "")
+	createFolder(t, store.FolderService, rule1.NamespaceUID, rule1FolderTitle, rule1.OrgID, parentFolderUid)
+	createFolder(t, store.FolderService, rule2.NamespaceUID, rule2FolderTitle, rule2.OrgID, "")
+	createFolder(t, store.FolderService, rule3.NamespaceUID, rule3FolderTitle, rule3.OrgID, "")
 
-	createFolder(t, store, rule2.NamespaceUID, "same UID folder", gen.GenerateRef().OrgID, "") // create a folder with the same UID but in the different org
+	createFolder(t, store.FolderService, rule2.NamespaceUID, "same UID folder", gen.GenerateRef().OrgID, "") // create a folder with the same UID but in the different org
 
 	tc := []struct {
 		name         string
@@ -1739,7 +1739,7 @@ func createRule(t *testing.T, store *DBstore, generator *models.AlertRuleGenerat
 	return rule
 }
 
-func createFolder(t *testing.T, store *DBstore, uid, title string, orgID int64, parentUID string) {
+func createFolder(t *testing.T, folderService folder.Service, uid, title string, orgID int64, parentUID string) {
 	t.Helper()
 	u := &user.SignedInUser{
 		UserID:         1,
@@ -1748,7 +1748,7 @@ func createFolder(t *testing.T, store *DBstore, uid, title string, orgID int64, 
 		IsGrafanaAdmin: true,
 	}
 
-	_, err := store.FolderService.Create(context.Background(), &folder.CreateFolderCommand{
+	_, err := folderService.Create(context.Background(), &folder.CreateFolderCommand{
 		UID:          uid,
 		OrgID:        orgID,
 		Title:        title,

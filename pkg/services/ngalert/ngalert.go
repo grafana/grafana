@@ -406,6 +406,8 @@ func (ng *AlertNG) init() error {
 		return err
 	}
 
+	alertingFolderService := store.NewAlertingFolderService(ng.folderService, ng.Log)
+
 	ng.InstanceStore, ng.StartupInstanceReader = initInstanceStore(ng.store.SQLStore, ng.Log, ng.FeatureToggles)
 
 	stateManagerCfg := state.ManagerCfg{
@@ -472,36 +474,37 @@ func (ng *AlertNG) init() error {
 		ac.NewRuleService(ng.accesscontrol))
 
 	ng.Api = &api.API{
-		Cfg:                  ng.Cfg,
-		DatasourceCache:      ng.DataSourceCache,
-		DatasourceService:    ng.DataSourceService,
-		RouteRegister:        ng.RouteRegister,
-		DataProxy:            ng.DataProxy,
-		QuotaService:         ng.QuotaService,
-		TransactionManager:   ng.store,
-		RuleStore:            ng.store,
-		AlertingStore:        ng.store,
-		AdminConfigStore:     ng.store,
-		ProvenanceStore:      ng.store,
-		MultiOrgAlertmanager: ng.MultiOrgAlertmanager,
-		StateManager:         ng.stateManager,
-		Scheduler:            scheduler,
-		AccessControl:        ng.accesscontrol,
-		Policies:             policyService,
-		ReceiverService:      receiverService,
-		ContactPointService:  contactPointService,
-		Templates:            templateService,
-		MuteTimings:          muteTimingService,
-		AlertRules:           alertRuleService,
-		AlertsRouter:         alertsRouter,
-		EvaluatorFactory:     evalFactory,
-		ConditionValidator:   conditionValidator,
-		FeatureManager:       ng.FeatureToggles,
-		AppUrl:               appUrl,
-		Historian:            history,
-		Hooks:                api.NewHooks(ng.Log),
-		Tracer:               ng.tracer,
-		UserService:          ng.userService,
+		Cfg:                   ng.Cfg,
+		DatasourceCache:       ng.DataSourceCache,
+		DatasourceService:     ng.DataSourceService,
+		RouteRegister:         ng.RouteRegister,
+		DataProxy:             ng.DataProxy,
+		QuotaService:          ng.QuotaService,
+		TransactionManager:    ng.store,
+		RuleStore:             ng.store,
+		AlertingStore:         ng.store,
+		AdminConfigStore:      ng.store,
+		ProvenanceStore:       ng.store,
+		MultiOrgAlertmanager:  ng.MultiOrgAlertmanager,
+		StateManager:          ng.stateManager,
+		Scheduler:             scheduler,
+		AccessControl:         ng.accesscontrol,
+		Policies:              policyService,
+		ReceiverService:       receiverService,
+		ContactPointService:   contactPointService,
+		Templates:             templateService,
+		MuteTimings:           muteTimingService,
+		AlertRules:            alertRuleService,
+		AlertsRouter:          alertsRouter,
+		EvaluatorFactory:      evalFactory,
+		ConditionValidator:    conditionValidator,
+		FeatureManager:        ng.FeatureToggles,
+		AppUrl:                appUrl,
+		Historian:             history,
+		Hooks:                 api.NewHooks(ng.Log),
+		Tracer:                ng.tracer,
+		UserService:           ng.userService,
+		AlertingFolderService: alertingFolderService,
 	}
 	ng.Api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 

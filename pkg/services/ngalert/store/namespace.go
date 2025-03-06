@@ -6,11 +6,13 @@ import (
 	"sort"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 // GetUserVisibleNamespaces returns the folders that are visible to the user
+// TODO: Move this to AlertingFolderService
 func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, user identity.Requester) (map[string]*folder.Folder, error) {
 	folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
 		OrgID:        orgID,
@@ -29,6 +31,7 @@ func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, use
 }
 
 // GetNamespaceByUID is a handler for retrieving a namespace by its UID. Alerting rules follow a Grafana folder-like structure which we call namespaces.
+// TODO: Move this to AlertingFolderService
 func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user identity.Requester) (*folder.Folder, error) {
 	f, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{OrgID: orgID, UIDs: []string{uid}, WithFullpath: true, SignedInUser: user})
 	if err != nil {
@@ -40,14 +43,26 @@ func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64
 	return f[0], nil
 }
 
+type AlertingFolderService struct {
+	FolderService folder.Service
+	Logger        log.Logger
+}
+
+func NewAlertingFolderService(fs folder.Service, logger log.Logger) *AlertingFolderService {
+	return &AlertingFolderService{
+		FolderService: fs,
+		Logger:        logger,
+	}
+}
+
 // GetNamespaceChildren gets namespace (folder) children (first level) by its UID.
-func (st DBstore) GetNamespaceChildren(ctx context.Context, uid string, orgID int64, user identity.Requester) ([]*folder.Folder, error) {
+func (s AlertingFolderService) GetNamespaceChildren(ctx context.Context, uid string, orgID int64, user identity.Requester) ([]*folder.Folder, error) {
 	q := &folder.GetChildrenQuery{
 		UID:          uid,
 		OrgID:        orgID,
 		SignedInUser: user,
 	}
-	folders, err := st.FolderService.GetChildren(ctx, q)
+	folders, err := s.FolderService.GetChildren(ctx, q)
 	if err != nil {
 		return nil, err
 	}
@@ -63,8 +78,8 @@ func (st DBstore) GetNamespaceChildren(ctx context.Context, uid string, orgID in
 }
 
 // GetNamespaceByTitle gets namespace by its title in the specified folder.
-func (st DBstore) GetNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.Folder, error) {
-	folders, err := st.GetNamespaceChildren(ctx, parentUID, orgID, user)
+func (s AlertingFolderService) GetNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.Folder, error) {
+	folders, err := s.GetNamespaceChildren(ctx, parentUID, orgID, user)
 	if err != nil {
 		return nil, err
 	}
@@ -89,11 +104,11 @@ func (st DBstore) GetNamespaceByTitle(ctx context.Context, title string, orgID i
 }
 
 // GetOrCreateNamespaceByTitle gets or creates a namespace by title in the specified folder.
-func (st DBstore) GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.Folder, error) {
+func (s AlertingFolderService) GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.Folder, error) {
 	var f *folder.Folder
 	var err error
 
-	f, err = st.GetNamespaceByTitle(ctx, title, orgID, user, parentUID)
+	f, err = s.GetNamespaceByTitle(ctx, title, orgID, user, parentUID)
 	if err != nil && !errors.Is(err, dashboards.ErrFolderNotFound) {
 		return nil, err
 	}
@@ -105,7 +120,7 @@ func (st DBstore) GetOrCreateNamespaceByTitle(ctx context.Context, title string,
 			SignedInUser: user,
 			ParentUID:    parentUID,
 		}
-		f, err = st.FolderService.Create(ctx, cmd)
+		f, err = s.FolderService.Create(ctx, cmd)
 		if err != nil {
 			return nil, err
 		}
