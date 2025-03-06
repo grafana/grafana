@@ -30,7 +30,7 @@ interface MetricsBrowserContextType {
   selectedMetric: string;
   selectedLabelKeys: string[];
   selectedLabelValues: Record<string, string[]>;
-  
+
   // Event handlers
   onMetricClick: (name: string) => void;
   onLabelKeyClick: (name: string) => void;
@@ -104,8 +104,9 @@ export function MetricsBrowserProvider({
     const selector = getSelector();
     setValidationStatus(`Validating selector ${selector}`);
     setErr('');
-    
-    languageProvider.fetchLabelsWithMatch(selector)
+
+    languageProvider
+      .fetchLabelsWithMatch(selector)
       .then((results) => {
         setValidationStatus(`Selector is valid (${Object.keys(results).length} labels found)`);
       })
@@ -129,7 +130,7 @@ export function MetricsBrowserProvider({
     showAllMetrics();
 
     setLabelKeys([...languageProvider.labelKeys.filter(withoutMetricLabel)]);
-    
+
     try {
       const savedLabelsJson = localStorage.getItem(LAST_USED_LABELS_KEY) || '[]';
       const selectedLabelsFromStorage: string[] = JSON.parse(savedLabelsJson);
@@ -145,11 +146,12 @@ export function MetricsBrowserProvider({
   // Fetch label keys when metric selection changes
   useEffect(() => {
     setStatus('Fetching labels...');
-    
+
     if (selectedMetric !== '') {
       const selector = buildSelector(selectedMetric, selectedLabelValues);
-      
-      languageProvider.fetchSeriesLabelsMatch(selector)
+
+      languageProvider
+        .fetchSeriesLabelsMatch(selector)
         .then((fetchedLabelKeys) => {
           setLabelKeys(Object.keys(fetchedLabelKeys).filter(withoutMetricLabel));
           setStatus('Ready');
@@ -217,9 +219,9 @@ export function MetricsBrowserProvider({
         showAllMetrics();
         return;
       }
-      
+
       setStatus('Fetching metrics...');
-      
+
       try {
         const metricsResult = await languageProvider.fetchSeriesValuesWithMatch(METRIC_LABEL, selector);
         setMetrics(metricsResult.map((m) => ({ name: m, details: getMetricDetails(m) })));
@@ -249,7 +251,7 @@ export function MetricsBrowserProvider({
     (labelKey: string) => {
       const newSelectedLabelKeys = [...selectedLabelKeys];
       const lkIdx = newSelectedLabelKeys.indexOf(labelKey);
-      
+
       if (lkIdx === -1) {
         newSelectedLabelKeys.push(labelKey);
       } else {
@@ -267,25 +269,25 @@ export function MetricsBrowserProvider({
   const onLabelValueClick = useCallback(
     (labelKey: string, labelValue: string) => {
       const newSelectedLabelValues = { ...selectedLabelValues };
-      
+
       // Initialize array if it doesn't exist
       if (!newSelectedLabelValues[labelKey]) {
         newSelectedLabelValues[labelKey] = [];
       }
-      
+
       const lvIdx = newSelectedLabelValues[labelKey].indexOf(labelValue);
-      
+
       if (lvIdx === -1) {
         newSelectedLabelValues[labelKey].push(labelValue);
       } else {
         newSelectedLabelValues[labelKey].splice(lvIdx, 1);
       }
-      
+
       // Remove empty arrays
       if (newSelectedLabelValues[labelKey].length === 0) {
         delete newSelectedLabelValues[labelKey];
       }
-      
+
       setSelectedLabelValues(newSelectedLabelValues);
     },
     [selectedLabelValues]
