@@ -19,7 +19,7 @@ title: Licensing HTTP API
 
 # Enterprise License API
 
-Licensing is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "/docs/grafana/latest/introduction/grafana-enterprise" >}}).
+Licensing is only available in Grafana Enterprise. Read more about [Grafana Enterprise](/docs/grafana/latest/introduction/grafana-enterprise/).
 
 {{< admonition type="caution" >}}
 You can't authenticate to the Licensing HTTP API with service account tokens.
@@ -31,7 +31,7 @@ To use these API endpoints you have to use Basic authentication and the Grafana 
 The `admin` user that Grafana is provisioned with by default has permissions to use these API endpoints.
 {{< /admonition >}}
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
 ## Check license availability
 
