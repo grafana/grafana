@@ -21,8 +21,8 @@ import {
 import { Page } from 'app/core/components/Page/Page';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
-import GettingStartedPage from './GettingStarted/GettingStartedPage';
 import GettingStarted from './GettingStarted/GettingStarted';
+import GettingStartedPage from './GettingStarted/GettingStartedPage';
 import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
 import { Repository, ResourceCount, useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from './api';

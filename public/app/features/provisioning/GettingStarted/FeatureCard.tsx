@@ -13,10 +13,10 @@ interface FeatureCardProps {
 export const FeatureCard = ({ title, description, icon, action, showBorder = false }: FeatureCardProps) => (
   <Box width="25%" padding={2}>
     <div
-      className={css`
-        ${showBorder ? 'border-right: 1px solid rgba(204, 204, 220, 0.15);' : ''}
-        height: 100%;
-      `}
+      className={css({
+        borderRight: showBorder ? ': 1px solid rgba(204, 204, 220, 0.15);' : undefined,
+        height: `100%`,
+      })}
     >
       <Stack direction="column" gap={2}>
         {icon}

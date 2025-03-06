@@ -12,12 +12,12 @@ interface IconCircleProps {
 
 const IconCircle = ({ icon, color, background }: IconCircleProps) => (
   <div
-    className={css`
-      background: ${background};
-      border-radius: 50%;
-      padding: 16px;
-      width: fit-content;
-    `}
+    className={css({
+      background: `${background}`,
+      borderRadius: `50%`,
+      padding: `16px`,
+      width: `fit-content`,
+    })}
   >
     <Icon name={icon as IconName} size="xxl" color={color} />
   </div>
