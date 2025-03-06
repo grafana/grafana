@@ -52,7 +52,7 @@ You can specify these Azure Monitor data source queries in the Variable edit vie
 | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Subscriptions**       | Returns subscriptions.                                                                                                                                                              |
 | **Resource Groups**     | Returns resource groups for a specified subscription. Supports multi-value.                                                                                                         |
-| **Namespaces**          | Returns metric namespaces for the specified subscription. If a resource group is supplied the namespaces returned will be filtered to those that are present in the resource group. |
+| **Namespaces**          | Returns metric namespaces for the specified subscription. If a resource group is provided, only the namespaces within that group are returned. |
 | **Regions**             | Returns regions for the specified subscription                                                                                                                                      |
 | **Resource Names**      | Returns a list of resource names for a specified subscription, resource group and namespace. Supports multi-value.                                                                  |
 | **Metric Names**        | Returns a list of metric names for a resource.                                                                                                                                      |
