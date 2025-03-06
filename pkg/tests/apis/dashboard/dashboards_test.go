@@ -394,6 +394,25 @@ func TestIntegrationDashboardsAppV1Alpha1LargeObjects(t *testing.T) {
 			Object: map[string]interface{}{
 				"spec": map[string]any{
 					"title": "Test empty dashboard",
+					"panels": []map[string]any{
+						{
+							"id": 1,
+							"gridPos": map[string]any{
+								"h": 8,
+								"w": 12,
+								"x": 0,
+								"y": 0,
+							},
+							"title": "Test Panel",
+							"type":  "graph",
+							"targets": []map[string]any{
+								{
+									"refId": "A",
+									"expr":  "up",
+								},
+							},
+						},
+					},
 				},
 			},
 		}
@@ -402,6 +421,19 @@ func TestIntegrationDashboardsAppV1Alpha1LargeObjects(t *testing.T) {
 		require.NoError(t, err)
 		created := obj.GetName()
 
+		// Check that the panel exists with the correct title in the created object
+		createdSpec, ok := obj.Object["spec"].(map[string]interface{})
+		require.True(t, ok, "Created spec should be a map")
+
+		createdPanels, ok := createdSpec["panels"].([]interface{})
+		require.True(t, ok, "Created panels should be an array")
+		require.Len(t, createdPanels, 1, "Created dashboard should have 1 panel")
+
+		createdPanel, ok := createdPanels[0].(map[string]interface{})
+		require.True(t, ok, "Created panel should be a map")
+		require.Equal(t, "Test Panel", createdPanel["title"], "Created panel should have the correct title")
+
+		// Retrieve and check the saved object
 		found, err := client.Resource.Get(context.Background(), created, metav1.GetOptions{})
 		require.NoError(t, err)
 		require.Equal(t, created, found.GetName())
@@ -410,5 +442,17 @@ func TestIntegrationDashboardsAppV1Alpha1LargeObjects(t *testing.T) {
 		require.NoError(t, err)
 		foundTitle := meta.FindTitle("")
 		require.Equal(t, "Test empty dashboard", foundTitle)
+
+		// Check that the panel exists with the correct title in the found object
+		foundSpec, ok := found.Object["spec"].(map[string]interface{})
+		require.True(t, ok, "Found spec should be a map")
+
+		foundPanels, ok := foundSpec["panels"].([]interface{})
+		require.True(t, ok, "Found panels should be an array")
+		require.Len(t, foundPanels, 1, "Found dashboard should have 1 panel")
+
+		foundPanel, ok := foundPanels[0].(map[string]interface{})
+		require.True(t, ok, "Found panel should be a map")
+		require.Equal(t, "Test Panel", foundPanel["title"], "Found panel should have the correct title")
 	})
 }
