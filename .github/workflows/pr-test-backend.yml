@@ -25,17 +25,17 @@ jobs:
     name: Test Backend
     runs-on: ubuntu-latest
     continue-on-error: true
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.23.7'
           cache: true
-          
+
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -61,7 +61,7 @@ jobs:
         run: |
           echo "Event: ${{ github.event_name }}"
           echo "Ref: ${{ github.ref }}"
-          
+
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             echo "PR changed files:"
             files=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files --jq '.[].filename')
@@ -100,6 +100,7 @@ jobs:
         with:
           unit-cov-path: unit.cov
           integration-cov-path: integration.cov
+          codecov-token: ${{ secrets.CODECOV_TOKEN }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
