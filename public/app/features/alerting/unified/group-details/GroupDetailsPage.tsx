@@ -20,7 +20,7 @@ import { useRulesAccess } from '../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { stringifyErrorLike } from '../utils/misc';
 import { createListFilterLink, groups } from '../utils/navigation';
-import { getEvaluationsToStartAlerting, getRuleName, isAlertingRulerRule, isGrafanaAlertingRule } from '../utils/rules';
+import { calcRuleEvalsToStartAlerting, getRuleName, isAlertingRulerRule, isGrafanaAlertingRule } from '../utils/rules';
 import { formatPrometheusDuration, safeParsePrometheusDuration } from '../utils/time';
 
 type GroupPageRouteParams = {
@@ -257,7 +257,7 @@ function promRuleGroupToRuleGroupDetails(group: RuleGroup): RuleGroupDetails {
             name: rule.name,
             type: 'alerting',
             pendingPeriod: formatPrometheusDuration(rule.duration ? rule.duration * 1000 : 0),
-            evaluationsToFire: getEvaluationsToStartAlerting(rule.duration ? rule.duration * 1000 : 0, groupIntervalMs),
+            evaluationsToFire: calcRuleEvalsToStartAlerting(rule.duration ? rule.duration * 1000 : 0, groupIntervalMs),
           };
         case PromRuleType.Recording:
           return { name: rule.name, type: 'recording' };
@@ -275,23 +275,12 @@ function rulerRuleGroupToRuleGroupDetails(group: RulerRuleGroupDTO): RuleGroupDe
     rules: group.rules.map<RuleDetails>((rule) => {
       const name = getRuleName(rule);
 
-      if (isAlertingRulerRule(rule)) {
+      if (isAlertingRulerRule(rule) || isGrafanaAlertingRule(rule)) {
         return {
           name,
           type: 'alerting',
           pendingPeriod: rule.for ?? '0s',
-          evaluationsToFire: getEvaluationsToStartAlerting(
-            rule.for ? safeParsePrometheusDuration(rule.for) : 0,
-            groupIntervalMs
-          ),
-        };
-      }
-      if (isGrafanaAlertingRule(rule)) {
-        return {
-          name,
-          type: 'alerting',
-          pendingPeriod: rule.for ?? '0s',
-          evaluationsToFire: getEvaluationsToStartAlerting(
+          evaluationsToFire: calcRuleEvalsToStartAlerting(
             rule.for ? safeParsePrometheusDuration(rule.for) : 0,
             groupIntervalMs
           ),

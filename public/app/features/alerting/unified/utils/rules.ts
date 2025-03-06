@@ -358,7 +358,13 @@ export const getNumberEvaluationsToStartAlerting = (forDuration: string, current
   }
 };
 
-export function getEvaluationsToStartAlerting(pendingPeriodMs: number, groupIntervalMs: number) {
+/**
+ * Calculates the number of rule evaluations before the alerting rule will fire
+ * @param pendingPeriodMs - The pending period of the alerting rule in milliseconds
+ * @param groupIntervalMs - The group's evaluation interval in milliseconds
+ * @returns The number of rule evaluations before the rule will fire
+ */
+export function calcRuleEvalsToStartAlerting(pendingPeriodMs: number, groupIntervalMs: number) {
   if (pendingPeriodMs === 0) {
     return 1; // No pending period, the rule will fire immediately
   }
