@@ -117,6 +117,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `improvedExternalSessionHandling`     | Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.                                                           |
 | `elasticsearchCrossClusterSearch`     | Enables cross cluster search in the Elasticsearch datasource                                                                                                                                 |
 | `improvedExternalSessionHandlingSAML` | Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.                                |
+| `alertRuleRestore`                    | Enables the alert rule restore feature                                                                                                                                                       |
 
 ## Experimental feature toggles
 
@@ -226,6 +227,7 @@ Experimental features might be changed or removed without prior notice.
 | `datasourceConnectionsTab`                  | Shows defined connections for a data source in the plugins detail page                                                                                                                                                                                                            |
 | `newLogsPanel`                              | Enables the new logs panel in Explore                                                                                                                                                                                                                                             |
 | `pluginsCDNSyncLoader`                      | Load plugins from CDN synchronously                                                                                                                                                                                                                                               |
+| `assetSriChecks`                            | Enables SRI checks for Grafana JavaScript assets                                                                                                                                                                                                                                  |
 
 ## Development feature toggles
 
