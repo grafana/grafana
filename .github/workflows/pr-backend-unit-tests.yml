@@ -48,44 +48,10 @@ jobs:
       - name: Generate Go code
         run: make gen-go
 
-      - name: Check if coverage should be generated
-        id: check-coverage
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          echo "Event: ${{ github.event_name }}"
-          echo "Ref: ${{ github.ref }}"
-          
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "PR changed files:"
-            files=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files --jq '.[].filename')
-            echo "$files"
-            if echo "$files" | grep -E "(pkg/|go\.)"; then
-              echo "Coverage will be generated: true (PR changes)"
-              echo "generate=true" >> $GITHUB_OUTPUT
-            else
-              echo "Coverage will be generated: false"
-              echo "generate=false" >> $GITHUB_OUTPUT
-            fi
-          elif [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]] && \
-               [[ "${{ github.event.head_commit.modified }}" =~ (pkg/|go\.) ]]; then
-            echo "Coverage will be generated: true (push to main)"
-            echo "generate=true" >> $GITHUB_OUTPUT
-          else
-            echo "Coverage will be generated: false"
-            echo "generate=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Run unit tests
-        run: |
-          if ${{ steps.check-coverage.outputs.generate }}; then
-            COVER_OPTS="-coverprofile=unit.cov -coverpkg=github.com/grafana/grafana/..." make test-go-unit
-          else
-            make test-go-unit
-          fi
+        run: COVER_OPTS="-coverprofile=unit.cov -coverpkg=github.com/grafana/grafana/..." make test-go-unit
 
       - name: Process coverage output
-        if: steps.check-coverage.outputs.generate == 'true'
         run: |
           # Ensure valid coverage file even if empty
           if [ ! -s unit.cov ]; then
@@ -105,17 +71,16 @@ jobs:
           fi
 
       - name: Upload coverage reports
-        if: steps.check-coverage.outputs.generate == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: backend-coverage
+          name: backend-unit-coverage
           path: |
             unit.cov
             unit-funcs.log
             unit.html
           retention-days: 30
           compression-level: 9
-      
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
