@@ -77,6 +77,7 @@ type FS interface {
 type FSRemover interface {
 	Remove() error
 }
+
 type FoundBundle struct {
 	Primary  FoundPlugin
 	Children []*FoundPlugin
