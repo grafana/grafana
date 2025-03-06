@@ -624,6 +624,21 @@ func TestService_Check(t *testing.T) {
 		expectErr   bool
 	}
 
+	t.Run("Require auth info", func(t *testing.T) {
+		s := setupService()
+		ctx := context.Background()
+		_, err := s.Check(ctx, &authzv1.CheckRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+			Verb:      "get",
+			Name:      "dash1",
+		})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "could not get auth info")
+	})
+
 	testCases := []testCase{
 		{
 			name: "should error if no namespace is provided",
@@ -693,6 +708,18 @@ func TestService_Check(t *testing.T) {
 				Group:     "unknown.grafana.app",
 				Resource:  "unknown",
 				Verb:      "get",
+				Name:      "u1",
+			},
+			expectErr: true,
+		},
+		{
+			name: "should error if an unknown verb is provided",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "unknown",
 				Name:      "u1",
 			},
 			expectErr: true,
