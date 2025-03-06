@@ -130,7 +130,7 @@ const FoldersPage: React.FC = () => {
       }
     };
     buildNavModel()
-  }, [location.pathname]);
+  }, [location.pathname, navModel]);
 
   useEffect(() => {
     const loadData = async () => {
