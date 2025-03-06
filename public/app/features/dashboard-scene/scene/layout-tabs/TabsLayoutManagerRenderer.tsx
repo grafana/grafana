@@ -53,7 +53,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     justifyContent: 'flex-start',
     alignItems: 'center',
-    overflowX: 'scroll',
+    overflowX: 'auto',
     overflowY: 'visible',
     paddingInline: theme.spacing(0.125),
   }),
