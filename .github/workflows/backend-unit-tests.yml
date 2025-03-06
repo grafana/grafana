@@ -20,8 +20,8 @@ on:
         required: true
 
 jobs:
-  backend-testing-coverage:
-    name: Backend Testing & Coverage
+  backend-unit-testing-coverage:
+    name: Backend Unit Testing & Coverage
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -43,11 +43,6 @@ jobs:
         uses: ./.github/actions/setup-enterprise
         with:
           github-app-name: 'grafana-ci-bot'
-
-      - name: Verify code generation
-        run: |
-          CODEGEN_VERIFY=1 make gen-cue
-          CODEGEN_VERIFY=1 make gen-jsonnet
 
       - name: Generate Go code
         run: make gen-go
