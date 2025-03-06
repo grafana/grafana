@@ -1,7 +1,5 @@
 import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
-import { TimeRange } from '@grafana/data';
-
 import PromQlLanguageProvider from '../../language_provider';
 
 import { buildSelector } from './selectorBuilder';
@@ -37,7 +35,6 @@ const MetricsBrowserContext = createContext<MetricsBrowserContextType | undefine
 type MetricsBrowserProviderProps = {
   languageProvider: PromQlLanguageProvider;
   onChange: (selector: string) => void;
-  timeRange?: TimeRange;
 };
 
 const withoutMetricLabel = (ml: string) => ml !== METRIC_LABEL;
@@ -46,8 +43,6 @@ export function MetricsBrowserProvider({
   children,
   languageProvider,
   onChange,
-  // FIXME time range changes should reflect on metrics and labels
-  timeRange,
 }: PropsWithChildren<MetricsBrowserProviderProps>) {
   const [seriesLimit, setSeriesLimit] = useState(DEFAULT_SERIES_LIMIT);
   const [err, setErr] = useState('');
