@@ -282,7 +282,7 @@ Plugins running inside the Frontend Sandbox should continue to work normally wit
 
 The Frontend Sandbox feature is currently behind the `pluginsFrontendSandbox` feature flag. To enable it, you'll need to:
 
-1. Enable the feature flag in your Grafana configuration. For more information about enabling feature flags, refer to [Configure feature toggles](/setup-grafana/configure-grafana/feature-toggles/).
+1. Enable the feature flag in your Grafana configuration. For more information about enabling feature flags, refer to [Configure feature toggles](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
 
 2. For self-hosted Grafana installations, add the plugin IDs you want to sandbox in the `security` section using the `enable_frontend_sandbox_for_plugins` configuration option.
 

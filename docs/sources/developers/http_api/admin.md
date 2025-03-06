@@ -34,7 +34,7 @@ The `admin` user that Grafana is provisioned with by default has permissions to 
 
 `GET /api/admin/settings`
 
-Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
 
 **Required permissions**
 
@@ -263,7 +263,7 @@ Status codes:
 
 `GET /api/admin/stats`
 
-Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
 
 **Required permissions**
 
@@ -307,7 +307,7 @@ Content-Type: application/json
 
 Preview usage report to be sent to vendor.
 
-Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
 
 **Example Request**:
 
@@ -345,7 +345,7 @@ Content-Type: application/json
 
 `POST /api/admin/users`
 
-Create new user. Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+Create new user. Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
 
 **Required permissions**
 
@@ -386,7 +386,7 @@ Content-Type: application/json
 
 `PUT /api/admin/users/:id/password`
 
-Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
 Change password for a specific user.
 
 **Required permissions**
@@ -420,7 +420,7 @@ Content-Type: application/json
 
 `PUT /api/admin/users/:id/permissions`
 
-Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
 
 **Required permissions**
 
@@ -453,7 +453,7 @@ Content-Type: application/json
 
 `DELETE /api/admin/users/:id`
 
-Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
 
 **Required permissions**
 
@@ -486,7 +486,7 @@ Content-Type: application/json
 
 Return a list of all auth tokens (devices) that the user currently have logged in from.
 
-Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
 
 **Required permissions**
 
@@ -545,7 +545,7 @@ Content-Type: application/json
 Revokes the given auth token (device) for the user. User of issued auth token (device) will no longer be logged in
 and will be required to authenticate again upon next activity.
 
-Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
 
 **Required permissions**
 
@@ -585,7 +585,7 @@ Content-Type: application/json
 Logout user revokes all auth tokens (devices) for the user. User of issued auth tokens (devices) will no longer be logged in
 and will be required to authenticate again upon next activity.
 
-Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
 
 **Required permissions**
 
@@ -630,7 +630,7 @@ Reloads the provisioning config files for specified type and provision entities 
 until the new provisioned entities are already stored in the database. In case of dashboards, it will stop
 polling for changes in dashboard files and then restart it with new configurations after returning.
 
-Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
 
 **Required permissions**
 
@@ -669,7 +669,7 @@ Content-Type: application/json
 
 Reloads the LDAP configuration.
 
-Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
 
 **Example Request**:
 

@@ -173,7 +173,7 @@ We've built a [CLI tool](https://grafana.com/blog/2022/12/12/guide-to-using-the-
 #### Background
 
 Grafana used to validate identity provider accounts based on the email claim. On many identity providers, the email field is not unique, and this could open a possible account vector to perform an account takeover and authentication bypass in certain scenarios.
-This change also ensures that Grafana is protected against the [CVE-2023-3128](https://grafana.com/security/security-advisories/CVE-2023-3128) vulnerability.
+This change also ensures that Grafana is protected against the [CVE-2023-3128](https://grafana.com/security/security-advisories/cve-2023-3128/) vulnerability.
 
 #### Change in Grafana v10
 
@@ -192,7 +192,7 @@ We strongly recommend not doing this in case you are using Azure AD as an identi
 
 #### Learn more
 
-- [CVE-2023-3128 Advisory](https://grafana.com/security/security-advisories/cve-2023-3128/)
+- [CVE-2023-3128 Advisory](https://grafana.com/security/security-advisories/cve-2023-3128//)
 - [Enable email lookup](../../setup-grafana/configure-security/configure-authentication/)
 
 ### The "Alias" field in the CloudWatch data source is removed
