@@ -149,7 +149,13 @@ export const FeatureList = () => {
       </Stack>
 
       {showInstructionsModal && activeFeature && (
-        <SetupModal feature={activeFeature} isOpen={true} onDismiss={onDismiss} />
+        <SetupModal
+          title={activeFeature.title}
+          description={activeFeature.description}
+          steps={activeFeature.setupSteps}
+          isOpen={true}
+          onDismiss={onDismiss}
+        />
       )}
     </Stack>
   );
