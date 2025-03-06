@@ -116,90 +116,103 @@ const FoldersPage: React.FC = () => {
     }
   };
 
-  // TODO: Implement folder expand/collapse
-  // const handleExpand = (folder: Folder) => {
-  //   setFolders((prevFolders) =>
-  //     prevFolders.map((f) => (f.name === folder.name ? { ...f, isExpanded: !f.isExpanded } : f))
-  //   );
-  // };
+  const handleExpand = (resource: Resource) => {
+    setResources((prevResources) =>
+      prevResources.map((r) => (r.name === resource.name ? { ...r, isExpanded: !r.isExpanded } : r))
+    );
+  };
 
   const renderTable = (resources: SearchHit[]) => {
-    // makeTagsColumn(response, access.tags, availableWidth, styles, onTagSelected))
+    // Get root level resources (location === "general")
+    const rootResources = resources.filter(resource => resource.location === "general");
+    
+    // Create the final data array with expanded children
+    const tableData = rootResources.reduce((acc: Resource[], resource: Resource) => {
+      acc.push(resource);
+      // If this is an expanded folder, add its children
+      if (resource.isExpanded && resource.resource === 'folders') {
+        const children = resources.filter(r => r.location === resource.title);
+        acc.push(...children);
+      }
+      return acc;
+    }, []);
 
-    const columns: Array<Column<Resource>> = 
-      [
-          {
-            id: 'name',
-            header: 'Name',
-            cell: ({ row: { original } }) => (
-              <div style={{ marginLeft: original.level ? original.level * 20 : 0 }}>
-                {original.title}
+    // Helper to check if a folder has any children
+    const hasChildren = (folder: Resource) => {
+      return resources.some(r => r.location === folder.title);
+    };
+
+    const columns: Array<Column<Resource>> = [
+      {
+        id: 'expand',
+        header: '',
+        cell: ({ row: { original } }) => {
+          if (original.resource === 'folders' && hasChildren(original)) {
+            return (
+              <div className={styles.expandCell}>
+                <button onClick={() => handleExpand(original)} className={styles.expandButton}>
+                  <Icon name={original.isExpanded ? 'angle-down' : 'angle-right'} />
+                </button>
               </div>
-            ),
-          },
-          {
-            id: 'type',
-            header: 'Type',
-            cell: ({ row: { original } }) => {
-              const iconName = getIconForResource(original.resource);
-              const displayType = original.resource.slice(0, -1); // Remove last character ('s')
-              
-              return (
-                <div className="flex items-center">
-                  {iconName && <Icon name={iconName} style={{ marginRight: '6px' }}/>}
-                  <span className={styles.resourceType}>{displayType}</span>
-                </div>
-              );
-            },
-          },
-          {
-            id: 'location',
-            header: 'Location',
-            cell: ({ row: { original } }) => {
-              return (
-                <div className="flex items-center">
-                  <Icon name={'folder'} style={{ marginRight: '6px' }}/>
-                  <span>{original.location}</span>
-                </div>
-              );
-            },
-          },
-          {
-            id: 'tags',
-            header: 'Tags',
-            cell: ({ row: { original } }) => (
-              <div key={original.name} {...original} className={columnStyles.cell}>
-                  {original.tags ? <TagList className={columnStyles.tagList} tags={original.tags} 
-                    onClick={
-                      (tag) => setSelectedTags([...selectedTags, tag])
-                    } /> : '-'
-                  }
-              </div>
-            )
-          },
-        ];
-        // TODO if we want to drill down into the folders
-       
-          // {
-          //   id: 'name',
-          //   header: 'Name',
-          //   cell: ({ row: { original } }) => (
-          //     <div style={{ marginLeft: original.level ? original.level * 20 : 0 }}>
-          //       {original.hasSubfolders && (
-          //         <Icon
-          //           name={original.isExpanded ? 'angle-down' : 'angle-right'}
-          //           onClick={() => handleExpand(original)}
-          //           className={styles.expandIcon}
-          //         />
-          //       )}
-          //       {original.title}
-          //     </div>
-          //   ),
-          // }
+            );
+          }
+          return <div className={styles.expandCell} />;
+        },
+      },
+      {
+        id: 'name',
+        header: 'Name',
+        cell: ({ row: { original } }) => (
+          <div style={{ marginLeft: original.location !== "general" ? 20 : 0 }} className="flex items-center">
+            {original.title}
+          </div>
+        ),
+      },
+      {
+        id: 'type',
+        header: 'Type',
+        cell: ({ row: { original } }) => {
+          const iconName = getIconForResource(original.resource);
+          const displayType = original.resource.slice(0, -1); // Remove last character ('s')
+          
+          return (
+            <div className="flex items-center">
+              {iconName && <Icon name={iconName} style={{ marginRight: '6px' }}/>}
+              <span className={styles.resourceType}>{displayType}</span>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'location',
+        header: 'Location',
+        cell: ({ row: { original } }) => {
+          return (
+            <div className="flex items-center">
+              <Icon name={'folder'} style={{ marginRight: '6px' }}/>
+              <span>{original.location}</span>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'tags',
+        header: 'Tags',
+        cell: ({ row: { original } }) => (
+          <div key={original.name} {...original} className={columnStyles.cell}>
+              {original.tags ? <TagList className={columnStyles.tagList} tags={original.tags} 
+                onClick={
+                  (tag) => setSelectedTags([...selectedTags, tag])
+                } /> : '-'
+              }
+          </div>
+        )
+      },
+    ];
 
     return (
         <InteractiveTable
-          data={resources}
+          data={tableData}
           columns={columns}
           getRowId={(row) => row.name}
         />
@@ -261,10 +274,26 @@ const getStyles = (theme: GrafanaTheme2) => ({
   resourceType: css({
     textTransform: 'capitalize',
   }),
-  // expandIcon: css({
-  //   cursor: 'pointer',
-  //   marginRight: theme.spacing(1),
-  // }),
+  expandCell: css({
+    width: '40px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  }),
+  expandButton: css({
+    background: 'none',
+    border: 'none',
+    padding: theme.spacing(0, 1),
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '24px',
+    height: '24px',
+    '&:hover': {
+      color: theme.colors.text.primary,
+    },
+  }),
 });
 
 export default FoldersPage;
