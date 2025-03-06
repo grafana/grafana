@@ -9,7 +9,7 @@ import { InlineFieldRow } from '@grafana/ui/src/components/Forms/InlineFieldRow'
 import { RadioButtonGroup } from '@grafana/ui/src/components/Forms/RadioButtonGroup/RadioButtonGroup';
 import { JSONFormatter } from '@grafana/ui/src/components/JSONFormatter/JSONFormatter';
 import { useStyles2 } from '@grafana/ui/src/themes';
-import { t } from '@grafana/ui/src/utils/i18n';
+import { t } from 'app/core/internationalization';
 
 import { HTMLElementType, SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
 

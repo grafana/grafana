@@ -122,6 +122,11 @@ module.exports = [
               importNames: ['t'],
               message: 'Please import from app/core/internationalization instead',
             },
+            {
+              name: '@grafana/ui/src/utils/i18n',
+              importNames: ['Trans', 't'],
+              message: 'Please import from app/core/internationalization instead',
+            },
           ],
         },
       ],
