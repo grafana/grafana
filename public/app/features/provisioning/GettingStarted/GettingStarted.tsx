@@ -1,8 +1,7 @@
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { LinkButton, Alert, Stack, Text, Button, Box, Card } from '@grafana/ui';
+import { LinkButton, Alert, Stack, Text, Button, Box, Card, Icon } from '@grafana/ui';
 
-import { FeatureList } from './FeatureList';
 import { useGetFrontendSettingsQuery } from '../api';
 import { CONNECT_URL, MIGRATE_URL } from '../constants';
 import { css } from '@emotion/css';
@@ -56,6 +55,19 @@ export default function GettingStarted() {
                   </Button>
                 </Card.Actions>
               </Card>
+
+              <Text variant="body">
+                ✔️ Manage your dashboards as code and deploy them automatically from your GitHub repository or local
+                storage
+              </Text>
+              <Text variant="body">
+                ✔️ Review, discuss, and approve dashboard changes with your team before they go live using GitHub pull
+                requests
+              </Text>
+              <Text variant="body">
+                ✔️ Export your existing dashboards as code and store them in GitHub repositories for version control and
+                collaboration
+              </Text>
             </Stack>
           </Box>
         </Box>
@@ -75,7 +87,35 @@ export default function GettingStarted() {
           </div>
         </Box>
       </Stack>
-      <FeatureList />
+      <Box padding={2}>
+        <Text variant="h2">Unlock enhanced functionality for Github</Text>
+        <Stack direction="row" gap={2}>
+          <Box width="50%">
+            <Stack direction="column" gap={2}>
+              <Text variant="h3">Automatic provisioning as soon as changes are merged</Text>
+              <Icon name="sync" size="xxxl" color="light-blue" />
+              <Text variant="body">
+                Automatically provision and update your dashboards as soon as changes are pushed to your GitHub
+                repository
+              </Text>
+              <Button variant="secondary">Setup Public Access</Button>
+            </Stack>
+          </Box>
+          <Box width="50%">
+            <Stack direction="column" gap={2}>
+              <Text variant="h3">Visual Previews in Pull Requests</Text>
+              <Stack direction="row" gap={2}>
+                <Icon name="camera" size="xxxl" color="orange" />
+                <Icon name="github" size="xxxl" color="purple" />
+              </Stack>
+              <Text variant="body">
+                Review how your changes look like before going live in Grafana and directly in Pull Requests
+              </Text>
+              <Button variant="secondary">Setup Image Rendering</Button>
+            </Stack>
+          </Box>
+        </Stack>
+      </Box>
     </>
   );
 }
