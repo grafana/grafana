@@ -7,7 +7,139 @@ import (
 	prommodel "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
+
+	"github.com/grafana/grafana/pkg/util"
 )
+
+func TestPrometheusRuleGroup_Validate(t *testing.T) {
+	tests := []struct {
+		name        string
+		group       PrometheusRuleGroup
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name: "valid group with no unsupported fields",
+			group: PrometheusRuleGroup{
+				Name:     "test_group",
+				Interval: prommodel.Duration(60),
+				Rules: []PrometheusRule{
+					{
+						Alert: "test_alert",
+						Expr:  "up == 0",
+					},
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "invalid group with query_offset",
+			group: PrometheusRuleGroup{
+				Name:        "test_group",
+				Interval:    prommodel.Duration(60),
+				QueryOffset: util.Pointer(prommodel.Duration(10)),
+			},
+			expectError: true,
+			errorMsg:    "query_offset is not supported",
+		},
+		{
+			name: "invalid group with limit",
+			group: PrometheusRuleGroup{
+				Name:     "test_group",
+				Interval: prommodel.Duration(60),
+				Limit:    10,
+			},
+			expectError: true,
+			errorMsg:    "limit is not supported",
+		},
+		{
+			name: "invalid group with labels",
+			group: PrometheusRuleGroup{
+				Name:     "test_group",
+				Interval: prommodel.Duration(60),
+				Labels:   map[string]string{"foo": "bar"},
+			},
+			expectError: true,
+			errorMsg:    "labels are not supported",
+		},
+		{
+			name: "invalid group with invalid rule",
+			group: PrometheusRuleGroup{
+				Name:     "test_group",
+				Interval: prommodel.Duration(60),
+				Rules: []PrometheusRule{
+					{
+						Alert:         "test_alert",
+						Expr:          "up == 0",
+						KeepFiringFor: util.Pointer(prommodel.Duration(10)),
+					},
+				},
+			},
+			expectError: true,
+			errorMsg:    "keep_firing_for is not supported",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.group.Validate()
+			if tt.expectError {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.errorMsg)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestPrometheusRule_Validate(t *testing.T) {
+	tests := []struct {
+		name        string
+		rule        PrometheusRule
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name: "valid alert rule",
+			rule: PrometheusRule{
+				Alert: "test_alert",
+				Expr:  "up == 0",
+			},
+			expectError: false,
+		},
+		{
+			name: "valid recording rule",
+			rule: PrometheusRule{
+				Record: "test_recording",
+				Expr:   "sum(up)",
+			},
+			expectError: false,
+		},
+		{
+			name: "invalid rule with keep_firing_for",
+			rule: PrometheusRule{
+				Alert:         "test_alert",
+				Expr:          "up == 0",
+				KeepFiringFor: util.Pointer(prommodel.Duration(10)),
+			},
+			expectError: true,
+			errorMsg:    "keep_firing_for is not supported",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.rule.Validate()
+			if tt.expectError {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.errorMsg)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
 
 func TestPrometheusRulesFileYAML(t *testing.T) {
 	interval := prommodel.Duration(5 * time.Minute)
