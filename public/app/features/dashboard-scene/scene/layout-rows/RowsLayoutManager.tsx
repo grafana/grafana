@@ -65,22 +65,14 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     return panels;
   }
 
-  public hasVizPanels(): boolean {
-    for (const row of this.state.rows) {
-      if (row.getLayout().hasVizPanels()) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
     throw new Error('Method not implemented.');
   }
 
-  public addNewRow() {
-    this.setState({ rows: [...this.state.rows, new RowItem()] });
+  public addNewRow(): RowItem {
+    const row = new RowItem();
+    this.setState({ rows: [...this.state.rows, row] });
+    return row;
   }
 
   public editModeChanged(isEditing: boolean) {
