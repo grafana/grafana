@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { t } from 'i18next';
-import React, { useState, useEffect, useMemo } from 'react';
 import { debounce } from 'lodash';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, NavModel, NavModelItem, SelectableValue } from '@grafana/data';
 import {
@@ -21,12 +21,12 @@ import { getAPINamespace } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
 import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { useNavModel } from 'app/core/hooks/useNavModel';
+import { t } from 'app/core/internationalization';
+import kbn from 'app/core/utils/kbn';
 
+import { getColumnStyles } from '../search/page/components/SearchResultsTable';
 import { GrafanaSearcher, SearchQuery } from '../search/service/types';
 import { SearchHit, UnifiedSearcher } from '../search/service/unified';
-import { getColumnStyles } from '../search/page/components/SearchResultsTable';
-import kbn from 'app/core/utils/kbn';
-import { useLocation } from 'react-router-dom-v5-compat';
 // import { iconItem } from '../canvas/elements/icon';
 interface Resource extends SearchHit {
   isExpanded?: boolean;
@@ -84,12 +84,12 @@ const FoldersPage: React.FC = () => {
   };
 
   useEffect(() => {
-    buildNavModel(navModel, location as unknown as Location, searcher).then((updatedNavModel) => {
+    buildNavModel(navModel, location.pathname, searcher).then((updatedNavModel) => {
     if (updatedNavModel !== null) {
       setNavModel(updatedNavModel as NavModel);
     }
     });
-  }, [location.pathname]);
+  }, [location.pathname, navModel]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -311,8 +311,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 export default FoldersPage;
 
-async function buildNavModel(navModel: NavModel, location: Location, searcher: UnifiedSearcher) {
-  if (!location.pathname.endsWith('finder')) {
+async function buildNavModel(navModel: NavModel, path: string, searcher: UnifiedSearcher) {
+  if (!path.endsWith('finder')) {
     const parts = location.pathname.split('/');
     const folderId = parts[parts.length - 1];
     const path = await fetchPath(folderId, searcher);
@@ -390,7 +390,7 @@ const fetchFolder = async (folderId: string, searcher: UnifiedSearcher) => {
 };
 
 function isPageNode(node: NavModelItem) {
-  return node.url === '/finder' || node.url == '/';
+  return node.url === '/finder' || node.url === '/';
 }
 
 const setParentItem = (node: NavModelItem, parent: NavModelItem) => {
