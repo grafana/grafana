@@ -39,20 +39,3 @@ func (in *DashboardList) DeepCopy() *DashboardList {
 	in.DeepCopyInto(out)
 	return out
 }
-
-// TODO: we currently don't generate these methods for spec / status types.
-// We probably should do that in the SDK.
-
-func (in *DashboardSpec) DeepCopyInto(out *DashboardSpec) {
-	*out = *in
-	in.Unstructured.DeepCopyInto(&out.Unstructured)
-}
-
-func (in *DashboardSpec) DeepCopy() *DashboardSpec {
-	if in == nil {
-		return nil
-	}
-	out := new(DashboardSpec)
-	in.DeepCopyInto(out)
-	return out
-}

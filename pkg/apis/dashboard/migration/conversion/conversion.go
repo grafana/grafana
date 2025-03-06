@@ -99,10 +99,6 @@ func Convert_V1_to_V0(in *dashboardV1.Dashboard, out *dashboardV0.Dashboard, sco
 	out.ObjectMeta = in.ObjectMeta
 
 	out.Spec.Object = in.Spec.Object
-	if out.Spec.Object == nil {
-		out.Spec.Object = make(map[string]interface{})
-	}
-	out.Spec.Object["title"] = in.Spec.Title
 
 	out.Status = dashboardV0.DashboardStatus{
 		Conversion: &dashboardV0.DashboardConversionStatus{
@@ -119,7 +115,11 @@ func Convert_V1_to_V2(in *dashboardV1.Dashboard, out *dashboardV2.Dashboard, sco
 	// TODO (@radiohead): implement V1 to V2 conversion
 	// This is the bare minimum conversion that is needed to make the dashboard servable.
 
-	out.Spec.Title = in.Spec.Title
+	if v, ok := in.Spec.Object["title"]; ok {
+		if title, ok := v.(string); ok {
+			out.Spec.Title = title
+		}
+	}
 
 	// We need to make sure the layout is set to some value, otherwise the JSON marshaling will fail.
 	out.Spec.Layout = dashboardV2.DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind{
@@ -160,7 +160,6 @@ func Convert_V2_to_V1(in *dashboardV2.Dashboard, out *dashboardV1.Dashboard, sco
 	out.ObjectMeta = in.ObjectMeta
 
 	// TODO: implement V2 to V1 conversion
-	out.Spec.Title = in.Spec.Title
 
 	out.Status = dashboardV1.DashboardStatus{
 		Conversion: &dashboardV1.DashboardConversionStatus{

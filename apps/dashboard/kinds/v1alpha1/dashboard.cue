@@ -14,6 +14,4 @@ Dashboard: {
 // TODO: this outputs nothing.
 // For now, we use unstructured for the spec,
 // but it cannot be produced by the SDK codegen.
-Spec: [string]: _ & {
-	title: string
-}
+Spec: [string]: _

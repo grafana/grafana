@@ -34,7 +34,7 @@ func NewDashboardLargeObjectSupport(scheme *runtime.Scheme) *apistore.BasicLarge
 			case *dashboardV0.Dashboard:
 				reduceUnstructredSpec(&dash.Spec)
 			case *dashboardV1.Dashboard:
-				reduceUnstructredSpec(&dash.Spec.Unstructured)
+				reduceUnstructredSpec(&dash.Spec)
 			case *dashboardV2.Dashboard:
 				dash.Spec = dashboardV2.DashboardSpec{
 					Title:       dash.Spec.Title,
@@ -54,7 +54,7 @@ func NewDashboardLargeObjectSupport(scheme *runtime.Scheme) *apistore.BasicLarge
 			case *dashboardV0.Dashboard:
 				return dash.Spec.UnmarshalJSON(blob)
 			case *dashboardV1.Dashboard:
-				return dash.Spec.Unstructured.UnmarshalJSON(blob)
+				return dash.Spec.UnmarshalJSON(blob)
 			case *dashboardV2.Dashboard:
 				return json.Unmarshal(blob, &dash.Spec)
 			default:
