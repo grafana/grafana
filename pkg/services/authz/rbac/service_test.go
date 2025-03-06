@@ -747,7 +747,7 @@ func TestService_Check(t *testing.T) {
 				ctx := context.Background()
 				id, ok := s.idCache.Get(ctx, userIdentifierCacheKey("org-12", "test-uid"))
 				require.True(t, ok)
-				id.UID = "test-uid"
+				require.Equal(t, id.UID, "test-uid")
 				perms, ok := s.permCache.Get(ctx, userPermCacheKey("org-12", "test-uid", "dashboards:read"))
 				require.True(t, ok)
 				require.Len(t, perms, 1)
