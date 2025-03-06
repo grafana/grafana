@@ -120,7 +120,7 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
     return subscriptions;
   }
 
-  async getResourceGroups(subscriptionId: string, filter?: string) {
+  async getResourceGroups(subscriptionId: string, metricNamespacesFilter?: string) {
     // We can use subscription ID for the filtering here as they're unique
     // The logic of this query is:
     // Retrieve _all_ resources a user/app registration/identity has access to
@@ -129,7 +129,7 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
     // Conduct a left-outer join on the resourcecontainers table to allow us to get the case-sensitive resource group name
     // Return the count of resources in a group, the URI, and name of the group in ascending order
     const query = `resources 
-    ${filter || ''}
+    ${metricNamespacesFilter || ''}
     | where subscriptionId == '${subscriptionId}'
     | extend resourceGroupURI = strcat("/subscriptions/", subscriptionId, "/resourcegroups/", resourceGroup) 
     | join kind=leftouter (resourcecontainers  
@@ -144,16 +144,22 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
     return resourceGroups;
   }
 
-  async getResourceNames(query: AzureGetResourceNamesQuery) {
+  async getResourceNames(query: AzureGetResourceNamesQuery, metricNamespacesFilter?: string) {
     const promises = replaceTemplateVariables(this.templateSrv, query).map(
-      async ({ metricNamespace, subscriptionId, resourceGroup, region }) => {
+      async ({ metricNamespace, subscriptionId, resourceGroup, region, uri }) => {
         const validMetricNamespace = startsWith(metricNamespace?.toLowerCase(), 'microsoft.storage/storageaccounts/')
           ? 'microsoft.storage/storageaccounts'
           : metricNamespace;
 
-        let prefix = `/subscriptions/${subscriptionId}`;
-        if (resourceGroup) {
-          prefix += `/resourceGroups/${resourceGroup}`;
+        // URI takes precedence over subscription ID and resource group
+        let prefix = uri;
+        if (!prefix) {
+          if (subscriptionId) {
+            prefix = `/subscriptions/${subscriptionId}`;
+          }
+          if (resourceGroup) {
+            prefix += `/resourceGroups/${resourceGroup}`;
+          }
         }
 
         const filters: string[] = [];
@@ -164,26 +170,17 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
           filters.push(`location == '${region}'`);
         }
 
-        const query = `resources
+        // We use URIs for the filtering here because resource group names are not unique across subscriptions
+        // We also add a slash at the end of the URI to ensure we do not pull resources from a resource group
+        // that has a similar naming prefix e.g. resourceGroup1 and resourceGroup10
+        const query = `resources${metricNamespacesFilter ? '\n' + metricNamespacesFilter : ''}
         | where id hasprefix "${prefix}/"
         ${filters.length > 0 ? `| where ${filters.join(' and ')}` : ''}
         | order by tolower(name) asc`;
 
         const resources = await this.pagedResourceGraphRequest<RawAzureResourceItem>(query);
 
-        return resources.map((r) => {
-          if (startsWith(metricNamespace?.toLowerCase(), 'microsoft.storage/storageaccounts/')) {
-            return {
-              text: r.name + '/default',
-              value: r.name + '/default',
-            };
-          }
-
-          return {
-            text: r.name,
-            value: r.name,
-          };
-        });
+        return resources;
       }
     );
     return (await Promise.all(promises)).flat();

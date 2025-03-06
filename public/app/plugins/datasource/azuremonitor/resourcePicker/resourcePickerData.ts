@@ -176,35 +176,19 @@ export default class ResourcePickerData extends DataSourceWithBackend<
   }
 
   // Refactor this one out at a later date
-  async getResourcesForResourceGroup(
-    resourceGroupUri: string,
-    type: ResourcePickerQueryType
-  ): Promise<ResourceRowGroup> {
-    // We use resource group URI for the filtering here because resource group names are not unique across subscriptions
-    // We also add a slash at the end of the resource group URI to ensure we do not pull resources from a resource group
-    // that has a similar naming prefix e.g. resourceGroup1 and resourceGroup10
-    const query = `
-    resources 
-    | where id hasprefix "${resourceGroupUri}/"
-    ${await this.filterByType(type)}
-    | order by tolower(name) asc`;
+  async getResourcesForResourceGroup(uri: string, type: ResourcePickerQueryType): Promise<ResourceRowGroup> {
+    const resources = await this.azureResourceGraphDatasource.getResourceNames({ uri }, await this.filterByType(type));
 
-    const resources = await this.azureResourceGraphDatasource.pagedResourceGraphRequest<RawAzureResourceItem>(query, 1);
-
-    return resources.map((item) => {
-      const parsedUri = parseResourceURI(item.id);
-      if (!parsedUri || !parsedUri.resourceName) {
-        throw new Error('unable to fetch resource details');
-      }
+    return resources.map((resource) => {
       return {
-        name: item.name,
-        id: parsedUri.resourceName,
-        uri: item.id,
-        resourceGroupName: item.resourceGroup,
+        name: resource.name,
+        id: resource.name,
+        uri: resource.id,
+        resourceGroupName: resource.resourceGroup,
         type: ResourceRowType.Resource,
-        typeLabel: resourceTypeDisplayNames[item.type] || item.type,
-        locationDisplayName: item.location,
-        location: item.location,
+        typeLabel: resourceTypeDisplayNames[resource.type] || resource.type,
+        locationDisplayName: resource.location,
+        location: resource.location,
       };
     });
   }

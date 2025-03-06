@@ -308,32 +308,6 @@ describe('AzureMonitor resourcePickerData', () => {
       });
     });
 
-    it('throws an error if it recieves data with a malformed uri', async () => {
-      const mockResponse = {
-        data: [
-          {
-            id: '/a-differently-formatted/uri/than/the/type/we/planned/to/parse',
-            name: 'web-server',
-            type: 'Microsoft.Compute/virtualMachines',
-            resourceGroup: 'dev',
-            subscriptionId: 'def-456',
-            location: 'northeurope',
-          },
-        ],
-      };
-      const { resourcePickerData } = createResourcePickerData([mockResponse]);
-      try {
-        await resourcePickerData.getResourcesForResourceGroup('dev', 'logs');
-        throw Error('expected getResourcesForResourceGroup to fail but it succeeded');
-      } catch (err) {
-        if (err instanceof Error) {
-          expect(err.message).toEqual('unable to fetch resource details');
-        } else {
-          throw err;
-        }
-      }
-    });
-
     it('should filter metrics resources', async () => {
       const mockSubscriptionsResponse = createMockARGSubscriptionResponse();
       const mockResourcesResponse = createARGResourcesResponse();

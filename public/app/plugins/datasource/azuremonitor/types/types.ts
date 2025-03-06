@@ -229,10 +229,11 @@ export interface LegacyAzureGetMetricMetadataQuery {
 }
 
 export interface AzureGetResourceNamesQuery {
-  subscriptionId: string;
+  subscriptionId?: string;
   resourceGroup?: string;
   metricNamespace?: string;
   region?: string;
+  uri?: string;
 }
 
 export interface AzureMonitorLocations {

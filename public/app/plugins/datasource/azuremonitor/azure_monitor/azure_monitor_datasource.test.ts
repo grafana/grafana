@@ -12,6 +12,7 @@ import {
   AzureMonitorDataSourceInstanceSettings,
   Location,
   RawAzureResourceGroupItem,
+  RawAzureResourceItem,
 } from '../types';
 
 // We want replace to just return the value as is in general/
@@ -808,10 +809,10 @@ describe('AzureMonitorDatasource', () => {
         it('should return list of Resource Names', () => {
           return ctx.ds
             .getResourceNames(subscription, resourceGroup, metricNamespace)
-            .then((results: Array<{ text: string; value: string }>) => {
+            .then((results: RawAzureResourceItem[]) => {
               expect(results.length).toEqual(1);
-              expect(results[0].text).toEqual('nodeapp');
-              expect(results[0].value).toEqual('nodeapp');
+              expect(results[0].name).toEqual('nodeapp');
+              expect(results[0].name).toEqual('nodeapp');
             });
         });
 
@@ -819,10 +820,10 @@ describe('AzureMonitorDatasource', () => {
           metricNamespace = 'microsoft.insights/Components';
           return ctx.ds
             .getResourceNames(subscription, resourceGroup, metricNamespace)
-            .then((results: Array<{ text: string; value: string }>) => {
+            .then((results: RawAzureResourceItem[]) => {
               expect(results.length).toEqual(1);
-              expect(results[0].text).toEqual('nodeapp');
-              expect(results[0].value).toEqual('nodeapp');
+              expect(results[0].name).toEqual('nodeapp');
+              expect(results[0].name).toEqual('nodeapp');
             });
         });
 
@@ -830,10 +831,10 @@ describe('AzureMonitorDatasource', () => {
           region = 'eastus';
           return ctx.ds
             .getResourceNames(subscription, resourceGroup, metricNamespace, region)
-            .then((results: Array<{ text: string; value: string }>) => {
+            .then((results: RawAzureResourceItem[]) => {
               expect(results.length).toEqual(1);
-              expect(results[0].text).toEqual('nodeapp');
-              expect(results[0].value).toEqual('nodeapp');
+              expect(results[0].name).toEqual('nodeapp');
+              expect(results[0].name).toEqual('nodeapp');
             });
         });
 
@@ -879,12 +880,12 @@ describe('AzureMonitorDatasource', () => {
             );
           return ds
             .getResourceNames(subscription, `$${multiVariable.id}`, metricNamespace)
-            .then((results: Array<{ text: string; value: string }>) => {
+            .then((results: RawAzureResourceItem[]) => {
               expect(results.length).toEqual(2);
-              expect(results[0].text).toEqual('nodeapp');
-              expect(results[0].value).toEqual('nodeapp');
-              expect(results[1].text).toEqual('nodeapp2');
-              expect(results[1].value).toEqual('nodeapp2');
+              expect(results[0].name).toEqual('nodeapp');
+              expect(results[0].name).toEqual('nodeapp');
+              expect(results[1].name).toEqual('nodeapp2');
+              expect(results[1].name).toEqual('nodeapp2');
             });
         });
       });
@@ -907,10 +908,10 @@ describe('AzureMonitorDatasource', () => {
             .mockImplementation(() => Promise.resolve(response));
           return ctx.ds
             .getResourceNames(subscription, resourceGroup, metricNamespace)
-            .then((results: Array<{ text: string; value: string }>) => {
+            .then((results: RawAzureResourceItem[]) => {
               expect(results.length).toEqual(1);
-              expect(results[0].text).toEqual('storagetest/default');
-              expect(results[0].value).toEqual('storagetest/default');
+              expect(results[0].name).toEqual('storagetest');
+              expect(results[0].name).toEqual('storagetest');
               expect(ctx.ds.azureResourceGraphDatasource.postResource).toHaveBeenCalledWith(
                 'resourcegraph/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01',
                 {
@@ -946,7 +947,7 @@ describe('AzureMonitorDatasource', () => {
         });
 
         it('should return list of Resource Names', () => {
-          return ctx.ds.getResourceNames(subscription).then((results: Array<{ text: string; value: string }>) => {
+          return ctx.ds.getResourceNames(subscription).then((results: RawAzureResourceItem[]) => {
             expect(results.length).toEqual(2);
           });
         });
