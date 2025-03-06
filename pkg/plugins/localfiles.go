@@ -172,44 +172,6 @@ func (f LocalFS) Remove() error {
 	return os.RemoveAll(f.basePath)
 }
 
-func (f LocalFS) Backup() error {
-	// Extra security check to ensure we only move a directory that looks like a plugin
-	if _, err := os.Stat(filepath.Join(f.basePath, "plugin.json")); os.IsNotExist(err) {
-		if _, err = os.Stat(filepath.Join(f.basePath, "dist/plugin.json")); os.IsNotExist(err) {
-			return ErrUninstallInvalidPluginDir
-		}
-	}
-	backupPath := filepath.Join(os.TempDir(), filepath.Base(f.basePath))
-
-	return os.Rename(f.basePath, backupPath)
-}
-
-func (f LocalFS) RemoveBackup() error {
-	backupPath := filepath.Join(os.TempDir(), filepath.Base(f.basePath))
-
-	// Extra security check to ensure we only remove a directory that looks like a plugin
-	if _, err := os.Stat(filepath.Join(backupPath, "plugin.json")); os.IsNotExist(err) {
-		if _, err = os.Stat(filepath.Join(backupPath, "dist/plugin.json")); os.IsNotExist(err) {
-			return ErrUninstallInvalidPluginDir
-		}
-	}
-
-	return os.RemoveAll(backupPath)
-}
-
-func (f LocalFS) RestoreBackup() error {
-	backupPath := filepath.Join(os.TempDir(), filepath.Base(f.basePath))
-
-	// Extra security check to ensure we only move a directory that looks like a plugin
-	if _, err := os.Stat(filepath.Join(backupPath, "plugin.json")); os.IsNotExist(err) {
-		if _, err = os.Stat(filepath.Join(backupPath, "dist/plugin.json")); os.IsNotExist(err) {
-			return ErrUninstallInvalidPluginDir
-		}
-	}
-
-	return os.Rename(backupPath, f.basePath)
-}
-
 // staticFilesMap is a set-like map that contains files that can be accessed from a plugins.FS.
 type staticFilesMap map[string]struct{}
 

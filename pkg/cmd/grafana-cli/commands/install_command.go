@@ -213,52 +213,6 @@ func uninstallPlugin(_ context.Context, pluginID string, c utils.CommandLine) er
 	return nil
 }
 
-// backupPlugin moves the plugin directory to temporary location
-func backupPlugin(_ context.Context, pluginID string, c utils.CommandLine) (*plugins.FoundBundle, error) {
-	for _, bundle := range services.GetLocalPlugins(c.PluginDirectory()) {
-		if bundle.Primary.JSONData.ID == pluginID {
-			logger.Infof("Backing up plugin: %v\n", pluginID)
-			if backuper, ok := bundle.Primary.FS.(plugins.FSBackuper); ok {
-				logger.Debugf("Backing up directory %v\n\n", bundle.Primary.FS.Base())
-				if err := backuper.Backup(); err != nil {
-					return bundle, err
-				}
-				return bundle, nil
-			} else {
-				return bundle, fmt.Errorf("plugin %v is immutable and therefore cannot be uninstalled", pluginID)
-			}
-		}
-	}
-
-	return nil, nil
-}
-
-// removePluginBackup removes the backup of the temporary location
-func removePluginBackup(pluginBundle *plugins.FoundBundle) error {
-	logger.Infof("Removing plugin backup: %v\n", pluginBundle.Primary.JSONData.ID)
-	if backuper, ok := pluginBundle.Primary.FS.(plugins.FSBackuper); ok {
-		logger.Debugf("Removing backup directory %v\n\n", pluginBundle.Primary.FS.Base())
-		if err := backuper.RemoveBackup(); err != nil {
-			return err
-		}
-		return nil
-	}
-	return nil
-}
-
-// restorePluginBackup restores the backup from the temporary location back to the plugin directory
-func restorePluginBackup(pluginBundle *plugins.FoundBundle) error {
-	logger.Infof("Restoring plugin backup: %v\n", pluginBundle.Primary.JSONData.ID)
-	if backuper, ok := pluginBundle.Primary.FS.(plugins.FSBackuper); ok {
-		logger.Debugf("Restoring backup directory %v\n\n", pluginBundle.Primary.FS.Base())
-		if err := backuper.RestoreBackup(); err != nil {
-			return err
-		}
-		return nil
-	}
-	return nil
-}
-
 func osAndArchString() string {
 	osString := strings.ToLower(runtime.GOOS)
 	arch := runtime.GOARCH
