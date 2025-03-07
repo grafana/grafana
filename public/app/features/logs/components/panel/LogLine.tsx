@@ -11,7 +11,6 @@ import { LogLineMenu } from './LogLineMenu';
 import { useLogIsPinned } from './LogListContext';
 import { LogFieldDimension, LogListModel } from './processing';
 import { FIELD_GAP_MULTIPLIER, hasUnderOrOverflow, getLineHeight } from './virtualization';
-import { italic } from 'ansicolor';
 
 interface Props {
   displayedFields: string[];
@@ -82,7 +81,7 @@ const Log = ({ displayedFields, log, showTime, styles }: LogProps) => {
             <LogLineBody log={log} />
           ) : (
             <span className="field" title={field} key={field}>
-              {getDisplayedFieldValue(field, log)}ß
+              {getDisplayedFieldValue(field, log)}
             </span>
           )
         )
