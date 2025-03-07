@@ -8,6 +8,7 @@
   "name": "bbb",
   "rv": 1234,
   "title": "test-bbb",
+  "title_ngram": "test-bbb",
   "title_phrase": "test-bbb",
   "created": 1730490142000,
   "createdBy": "user:1",
