@@ -9,7 +9,7 @@ import { AccessControlAction } from 'app/types';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
 export function InviteUserButton() {
-  return !!config.externalUserMngLinkUrl && contextSrv.hasPermission(AccessControlAction.OrgUsersAdd) ? (
+  return config.externalUserMngLinkUrl && contextSrv.hasPermission(AccessControlAction.OrgUsersAdd) ? (
     <Stack gap={2} alignItems="center">
       <NavToolbarSeparator />
       <Button
