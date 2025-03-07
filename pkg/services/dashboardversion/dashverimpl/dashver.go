@@ -295,9 +295,7 @@ func (s *Service) UnstructuredToLegacyDashboardVersion(ctx context.Context, item
 
 	createdBy, err := s.k8sclient.GetUserFromMeta(ctx, obj.GetCreatedBy())
 	if err != nil {
-		if !apierrors.IsNotFound(err) {
-			return nil, err
-		}
+		return nil, err
 	}
 
 	// if updated by is set, then this version of the dashboard was "created"
