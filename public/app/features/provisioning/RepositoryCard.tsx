@@ -96,7 +96,7 @@ export function RepositoryCard({ repository }: Props) {
 
       <Card.Actions>
         <Stack gap={1} direction="row">
-          <LinkButton icon="eye" href={`${PROVISIONING_URL}/${name}`} variant="secondary" size="md">
+          <LinkButton icon="eye" href={`${PROVISIONING_URL}/${name}`} variant="primary" size="md">
             View
           </LinkButton>
           <SyncRepository repository={repository} />
