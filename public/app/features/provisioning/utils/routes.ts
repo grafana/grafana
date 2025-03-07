@@ -24,7 +24,7 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
     {
       path: PROVISIONING_URL,
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "RepositoryListPage"*/ 'app/features/provisioning/RepositoryListPage')
+        () => import(/* webpackChunkName: "RepositoryListPage"*/ 'app/features/provisioning/HomePage')
       ),
     },
     {
