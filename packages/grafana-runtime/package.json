@@ -31,10 +31,10 @@
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
     "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
-    "clean": "rimraf ./dist ./compiled ./package.tgz",
+    "clean": "rimraf ./dist ./compiled ./unstable ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
-    "postpack": "mv package.json.bak package.json"
+    "prepack": "cp package.json package.json.bak && ALIAS_PACKAGE_NAME=unstable node ../../scripts/prepare-npm-package.js",
+    "postpack": "mv package.json.bak package.json && rimraf ./unstable"
   },
   "dependencies": {
     "@grafana/data": "11.6.0-pre",

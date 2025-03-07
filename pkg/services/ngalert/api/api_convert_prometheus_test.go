@@ -115,7 +115,10 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		require.Equal(t, fmt.Sprintf("[%s] %s", simpleGroup.Name, simpleGroup.Rules[0].Alert), remaining[0].Title)
 		promRuleYAML, err := yaml.Marshal(simpleGroup.Rules[0])
 		require.NoError(t, err)
-		require.Equal(t, string(promRuleYAML), remaining[0].PrometheusRuleDefinition())
+
+		promDefinition, err := remaining[0].PrometheusRuleDefinition()
+		require.NoError(t, err)
+		require.Equal(t, string(promRuleYAML), promDefinition)
 	})
 
 	t.Run("should fail to replace a provisioned rule group", func(t *testing.T) {

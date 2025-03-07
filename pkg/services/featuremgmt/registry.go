@@ -1070,8 +1070,9 @@ var (
 		{
 			Name:           "ssoSettingsSAML",
 			Description:    "Use the new SSO Settings API to configure the SAML connector",
-			Stage:          FeatureStagePublicPreview,
+			Stage:          FeatureStageGeneralAvailability,
 			Owner:          identityAccessTeam,
+			Expression:     "true",
 			AllowSelfServe: true,
 		},
 		{
@@ -1774,6 +1775,20 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			FrontendOnly:      true,
+		},
+		{
+			Name:         "assetSriChecks",
+			Description:  "Enables SRI checks for Grafana JavaScript assets",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendOpsWG,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "alertRuleRestore",
+			Description: "Enables the alert rule restore feature",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaAlertingSquad,
+			Expression:  "true", // enabled by default
 		},
 	}
 )

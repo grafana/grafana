@@ -254,4 +254,6 @@ export interface FeatureToggles {
   alertingRuleVersionHistoryRestore?: boolean;
   newShareReportDrawer?: boolean;
   rendererDisableAppPluginsPreload?: boolean;
+  assetSriChecks?: boolean;
+  alertRuleRestore?: boolean;
 }
