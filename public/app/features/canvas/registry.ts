@@ -39,10 +39,13 @@ export const defaultElementItems = [
 
 export const advancedElementItems = [buttonItem, windTurbineItem, droneTopItem, droneFrontItem, droneSideItem];
 
-export const multiplayerElementItems = [playerItem, enemyItem];
+export const multiplayerElementItems = [playerItem];
+
+export const multiplayerEnemies = [enemyItem];
 
 export const canvasElementRegistry = new Registry<CanvasElementItem>(() => [
   ...defaultElementItems,
   ...advancedElementItems,
   ...multiplayerElementItems,
+  ...multiplayerEnemies,
 ]);

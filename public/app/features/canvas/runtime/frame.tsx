@@ -6,7 +6,7 @@ import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/plugins
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
 import { updateConnectionsForSource } from '../../../plugins/panel/canvas/utils';
-import { CanvasElementItem } from '../element';
+import { CanvasElementItem, CanvasElementOptions } from '../element';
 import { CanvasFrameOptions } from '../frame';
 import { canvasElementRegistry } from '../registry';
 
@@ -67,6 +67,55 @@ export class FrameState extends ElementState {
   }
 
   updateData(ctx: DimensionContext) {
+    const currentElementNames = this.elements.map((element) => element.options.name);
+
+    const playerSize = 24;
+    // for each player in database, check if already on the map and if position needs to be updated
+    ctx.getPanelData()?.series[0]?.fields[0]?.values.map((player, index) => {
+      const x = ctx.getPanelData()?.series[0].fields[1].values[index];
+      const y = ctx.getPanelData()?.series[0].fields[2].values[index];
+      const r = ctx.getPanelData()?.series[0].fields[3].values[index];
+      if (!currentElementNames.includes(player)) {
+        // TODO check if player UID matches and ignore it
+        // add player element
+        const newItem = canvasElementRegistry.getIfExists('enemy') ?? notFoundItem;
+        const newElementOptions: CanvasElementOptions = {
+          ...newItem.getNewOptions(),
+          type: newItem.id,
+          name: player,
+          config: { color: { fixed: 'red' }, text: { fixed: player } },
+        };
+        newElementOptions.placement = {
+          ...newElementOptions.placement,
+          top: y,
+          left: x,
+          rotation: r,
+          width: playerSize,
+          height: playerSize,
+        };
+        const newElement = new ElementState(newItem, newElementOptions, this.scene.root);
+        console.log(newElement);
+        this.elements.push(newElement);
+      } else {
+        // Update existing element's placement if it exists
+        const matchingElementIndex = this.elements.findIndex((element) => element.options.name === player);
+        const matchingElement = this.elements[matchingElementIndex];
+        const matchingElementOptions = matchingElement.options;
+        if (
+          matchingElementIndex > -1 &&
+          (matchingElementOptions.placement?.top !== y ||
+            matchingElementOptions.placement?.left !== x ||
+            matchingElementOptions.placement?.rotation !== r)
+        ) {
+          console.log(`updating: ${player}`);
+          this.elements[matchingElementIndex].onChange({
+            ...matchingElementOptions,
+            placement: { top: y, left: x, rotation: r, width: playerSize, height: playerSize },
+          });
+        }
+      }
+    });
+
     super.updateData(ctx);
     for (const elem of this.elements) {
       elem.updateData(ctx);
