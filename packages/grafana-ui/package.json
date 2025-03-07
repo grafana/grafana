@@ -18,6 +18,22 @@
   },
   "main": "src/index.ts",
   "types": "src/index.ts",
+  "module": "src/index.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": "./src/index.ts",
+      "require": "./src/index.ts"
+    },
+    "./internal": {
+      "import": "./src/internal/index.ts",
+      "require": "./src/internal/index.ts"
+    },
+    "./unstable": {
+      "import": "./src/unstable.ts",
+      "require": "./src/unstable.ts"
+    }
+  },
   "publishConfig": {
     "main": "./dist/cjs/index.cjs",
     "module": "./dist/esm/index.mjs",
