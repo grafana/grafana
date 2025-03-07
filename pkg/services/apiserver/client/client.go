@@ -53,7 +53,7 @@ type k8sHandler struct {
 func NewK8sHandler(dual dualwrite.Service, namespacer request.NamespaceMapper, gvr schema.GroupVersionResource,
 	restConfig func(context.Context) (*rest.Config, error), dashStore dashboards.Store, userSvc user.Service, resourceClient resource.ResourceClient, sorter sort.Service) K8sHandler {
 	legacySearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
-	searchClient := resource.NewSearchClient(dual, gvr.GroupResource(), resourceClient, legacySearcher)
+	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), gvr.GroupResource(), resourceClient, legacySearcher)
 
 	return &k8sHandler{
 		namespacer:  namespacer,
