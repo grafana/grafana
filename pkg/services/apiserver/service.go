@@ -247,9 +247,11 @@ func ProvideService(
 }
 
 func (s *service) GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
+	fmt.Println("awaiting running " + s.NamedService.ServiceName())
 	if err := s.NamedService.AwaitRunning(ctx); err != nil {
 		return nil, fmt.Errorf("unable to get rest config: %w", err)
 	}
+	fmt.Println("got rest config")
 	return s.restConfig, nil
 }
 
