@@ -18,6 +18,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -47,7 +48,17 @@ var (
 	).Errorf("missing datasource UID header")
 
 	errInvalidHeaderValueMsg  = "Invalid value for header {{.Public.Header}}: must be 'true' or 'false'"
-	errInvalidHeaderValueBase = errutil.ValidationFailed("aleting.invalidHeaderValue").MustTemplate(errInvalidHeaderValueMsg, errutil.WithPublic(errInvalidHeaderValueMsg))
+	errInvalidHeaderValueBase = errutil.ValidationFailed("alerting.invalidHeaderValue").MustTemplate(errInvalidHeaderValueMsg, errutil.WithPublic(errInvalidHeaderValueMsg))
+
+	errRecordingRulesNotEnabled = errutil.ValidationFailed(
+		"alerting.recordingRulesNotEnabled",
+		errutil.WithPublicMessage("Cannot import recording rules: Feature not enabled."),
+	).Errorf("recording rules not enabled")
+
+	errRecordingRulesDatasourcesNotEnabled = errutil.ValidationFailed(
+		"alerting.recordingRulesDatasourcesNotEnabled",
+		errutil.WithPublicMessage("Cannot import recording rules: Configuration of target datasources not enabled."),
+	).Errorf("recording rules target datasources configuration not enabled")
 )
 
 func errInvalidHeaderValue(header string) error {
@@ -98,15 +109,24 @@ type ConvertPrometheusSrv struct {
 	ruleStore        RuleStore
 	datasourceCache  datasources.CacheService
 	alertRuleService *provisioning.AlertRuleService
+	featureToggles   featuremgmt.FeatureToggles
 }
 
-func NewConvertPrometheusSrv(cfg *setting.UnifiedAlertingSettings, logger log.Logger, ruleStore RuleStore, datasourceCache datasources.CacheService, alertRuleService *provisioning.AlertRuleService) *ConvertPrometheusSrv {
+func NewConvertPrometheusSrv(
+	cfg *setting.UnifiedAlertingSettings,
+	logger log.Logger,
+	ruleStore RuleStore,
+	datasourceCache datasources.CacheService,
+	alertRuleService *provisioning.AlertRuleService,
+	featureToggles featuremgmt.FeatureToggles,
+) *ConvertPrometheusSrv {
 	return &ConvertPrometheusSrv{
 		cfg:              cfg,
 		logger:           logger,
 		ruleStore:        ruleStore,
 		datasourceCache:  datasourceCache,
 		alertRuleService: alertRuleService,
+		featureToggles:   featureToggles,
 	}
 }
 
@@ -301,6 +321,20 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextm
 	workingFolderUID := getWorkingFolderUID(c)
 	logger = logger.New("folder_title", namespaceTitle, "group", promGroup.Name, "working_folder_uid", workingFolderUID)
 
+	// If we're importing recording rules, we can only import them if the feature is enabled,
+	// and the feature flag that enables configuring target datasources per-rule is also enabled.
+	if promGroupHasRecordingRules(promGroup) {
+		if !srv.cfg.RecordingRules.Enabled {
+			logger.Error("Cannot import recording rules", "error", errRecordingRulesNotEnabled)
+			return errorToResponse(errRecordingRulesNotEnabled)
+		}
+
+		if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRulesDatasources) {
+			logger.Error("Cannot import recording rules", "error", errRecordingRulesDatasourcesNotEnabled)
+			return errorToResponse(errRecordingRulesDatasourcesNotEnabled)
+		}
+	}
+
 	logger.Info("Converting Prometheus rule group", "rules", len(promGroup.Rules))
 
 	ns, errResp := srv.getOrCreateNamespace(c, namespaceTitle, logger, workingFolderUID)
@@ -493,4 +527,13 @@ func namespaceErrorResponse(err error) response.Response {
 	}
 
 	return toNamespaceErrorResponse(err)
+}
+
+func promGroupHasRecordingRules(promGroup apimodels.PrometheusRuleGroup) bool {
+	for _, rule := range promGroup.Rules {
+		if rule.Record != "" {
+			return true
+		}
+	}
+	return false
 }
