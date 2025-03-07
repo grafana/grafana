@@ -22,6 +22,8 @@ type RuleLimits struct {
 	BaseInterval time.Duration
 	// Whether recording rules are allowed.
 	RecordingRulesAllowed bool
+	// Whether or not recording rules must have a TargetDatasourceUID
+	RecordingRulesRequireTarget bool
 }
 
 func RuleLimitsFromConfig(cfg *setting.UnifiedAlertingSettings, toggles featuremgmt.FeatureToggles) RuleLimits {
@@ -29,6 +31,7 @@ func RuleLimitsFromConfig(cfg *setting.UnifiedAlertingSettings, toggles featurem
 		DefaultRuleEvaluationInterval: cfg.DefaultRuleEvaluationInterval,
 		BaseInterval:                  cfg.BaseInterval,
 		RecordingRulesAllowed:         toggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules),
+		RecordingRulesRequireTarget:   toggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRulesDatasources),
 	}
 }
 
@@ -164,6 +167,10 @@ func validateAlertingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule 
 func validateRecordingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule ngmodels.AlertRule, limits RuleLimits, canPatch bool) (ngmodels.AlertRule, error) {
 	if !limits.RecordingRulesAllowed {
 		return ngmodels.AlertRule{}, fmt.Errorf("%w: recording rules cannot be created on this instance", ngmodels.ErrAlertRuleFailedValidation)
+	}
+
+	if limits.RecordingRulesRequireTarget && in.GrafanaManagedAlert.Record.TargetDatasourceUID == "" {
+		return ngmodels.AlertRule{}, fmt.Errorf("%w: recording rules require a target data source", ngmodels.ErrAlertRuleFailedValidation)
 	}
 
 	err := validateCondition(in.GrafanaManagedAlert.Record.From, in.GrafanaManagedAlert.Data, canPatch)
