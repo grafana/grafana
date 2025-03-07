@@ -27,6 +27,10 @@ type fakeSecureValueMetadataStorage struct {
 }
 
 func (s *fakeSecureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+	// TODO: Remove once the outbox is implemented
+	sv.Status.Phase = secretv0alpha1.SecureValuePhaseSucceeded
+	sv.Status.Message = ""
+
 	v := *sv
 	v.SetUID(types.UID(uuid.NewString()))
 	v.ObjectMeta.SetResourceVersion(strconv.FormatInt(metav1.Now().UnixMicro(), 10))
@@ -57,6 +61,10 @@ func (s *fakeSecureValueMetadataStorage) Read(ctx context.Context, namespace xku
 }
 
 func (s *fakeSecureValueMetadataStorage) Update(ctx context.Context, nsv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+	// TODO: Remove once the outbox is implemented
+	nsv.Status.Phase = secretv0alpha1.SecureValuePhaseSucceeded
+	nsv.Status.Message = ""
+
 	v := *nsv
 	v.Spec.Value = ""
 	v.SetResourceVersion(strconv.FormatInt(metav1.Now().UnixMicro(), 10))
