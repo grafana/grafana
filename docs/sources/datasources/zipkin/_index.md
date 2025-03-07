@@ -340,10 +340,10 @@ To only show the spans you have matched, you can press the `Show matches only` t
 
 You can link to Zipkin traces from logs in Loki, Elasticsearch, Splunk, and other logs data sources by configuring an internal link.
 
-To configure this feature, see the [Derived fields]({{< relref "../loki#configure-derived-fields" >}}) section of the Loki data source docs or the [Data links]({{< relref "../elasticsearch#data-links" >}}) section of the Elasticsearch or Splunk data source docs.
+To configure this feature, see the [Derived fields](../loki/#configure-derived-fields) section of the Loki data source docs or the [Data links](../elasticsearch/#data-links) section of the Elasticsearch or Splunk data source docs.
 
 ## Link to a trace ID from metrics
 
 You can link to Zipkin traces from metrics in Prometheus data sources by configuring an exemplar.
 
-To configure this feature, see the [introduction to exemplars]({{< relref "docs/grafana/latest/fundamentals/exemplars" >}}) documentation.
+To configure this feature, see the [introduction to exemplars](../../fundamentals/exemplars/) documentation.
