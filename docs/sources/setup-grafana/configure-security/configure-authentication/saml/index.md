@@ -201,7 +201,7 @@ Ensure you have permission to administer SAML authentication. For more informati
 
 Learn the [limitations of Azure AD SAML] (https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim) integration.
 
-Configure SAML integration with Azure AD, [creating an app integration](https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/add-application-portal-configure)  inside the Azure AD organization first.
+Configure SAML integration with Azure AD, [creating an app integration](https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/add-application-portal-configure) inside the Azure AD organization first.
 
 If you have users that belong to more than 150 groups, configure a registered application to provide an Azure Graph API to retrieve the groups. Refer to [Setup Azure AD Graph API applications](#set-up-saml-with-azure-ad).
 
