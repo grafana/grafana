@@ -2,7 +2,7 @@ import { HttpResponse, http } from 'msw';
 import { SetupServer, setupServer } from 'msw/node';
 
 import { setBackendSrv } from '@grafana/runtime';
-import { AlertGroupUpdated } from 'app/features/alerting/unified/api/alertRuleApi';
+import { GrafanaGroupUpdatedResponse } from 'app/features/alerting/unified/api/alertRuleApi';
 import allHandlers from 'app/features/alerting/unified/mocks/server/all-handlers';
 import {
   setupAlertmanagerConfigMapDefaultState,
@@ -173,7 +173,7 @@ export function mockAlertRuleApi(server: SetupServer) {
     rulerRules: (dsName: string, response: RulerRulesConfigDTO) => {
       server.use(http.get(`/api/ruler/${dsName}/api/v1/rules`, () => HttpResponse.json(response)));
     },
-    updateRule: (dsName: string, response: AlertGroupUpdated) => {
+    updateRule: (dsName: string, response: GrafanaGroupUpdatedResponse) => {
       server.use(http.post(`/api/ruler/${dsName}/api/v1/rules/:namespaceUid`, () => HttpResponse.json(response)));
     },
     rulerRuleGroup: (dsName: string, namespace: string, group: string, response: RulerRuleGroupDTO) => {

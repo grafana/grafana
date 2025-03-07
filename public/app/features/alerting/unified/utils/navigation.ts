@@ -1,8 +1,12 @@
-import { RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
+import { RuleIdentifier, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
+
+import { stringifyIdentifier } from './rule-id';
 
 import { createReturnTo } from '../hooks/useReturnTo';
 
 import { createRelativeUrl } from './url';
+
+type QueryParams = ConstructorParameters<typeof URLSearchParams>[0];
 
 export const createListFilterLink = (values: Array<[string, string]>) => {
   const params = new URLSearchParams([['search', values.map(([key, value]) => `${key}:"${value}"`).join(' ')]]);
@@ -42,4 +46,15 @@ export const groups = {
       { skipSubPath: options?.skipSubPath }
     );
   },
+};
+
+export const rulesNav = {
+  /**
+   * Creates a link to the details page of a rule. Encodes the rules source name and rule identifier.
+   */
+  detailsPageLink: (rulesSourceName: string, ruleIdentifier: RuleIdentifier, params?: QueryParams) =>
+    createRelativeUrl(
+      `/alerting/${encodeURIComponent(rulesSourceName)}/${encodeURIComponent(stringifyIdentifier(ruleIdentifier))}/view`,
+      params
+    ),
 };

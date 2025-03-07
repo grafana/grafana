@@ -22,6 +22,7 @@ import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid, isGrafanaRulesSource } 
 import { arrayKeyValuesToObject } from '../utils/labels';
 import { isCloudRuleIdentifier, isPrometheusRuleIdentifier, rulerRuleType } from '../utils/rules';
 
+import { RulerGroupUpdatedResponse } from './alertRuleModel';
 import { WithNotificationOptions, alertingApi } from './alertingApi';
 import { GRAFANA_RULER_CONFIG } from './featureDiscoveryApi';
 import {
@@ -82,14 +83,6 @@ interface ExportRulesParams {
   folderUid?: string;
   group?: string;
   ruleUid?: string;
-}
-
-export interface AlertGroupUpdated {
-  message: string;
-  /**
-   * UIDs of rules updated from this request
-   */
-  updated: string[];
 }
 
 export const alertRuleApi = alertingApi.injectEndpoints({
@@ -303,7 +296,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
     }),
 
     upsertRuleGroupForNamespace: build.mutation<
-      AlertGroupUpdated,
+      RulerGroupUpdatedResponse,
       WithNotificationOptions<{
         rulerConfig: RulerDataSourceConfig;
         namespace: string;
