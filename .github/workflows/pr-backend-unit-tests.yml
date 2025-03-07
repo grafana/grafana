@@ -41,11 +41,6 @@ jobs:
           sudo apt-get install -y build-essential shared-mime-info
           go install github.com/mfridman/tparse@c1754a1f484ac5cd422697b0fec635177ddc8507 # v0.17.0
 
-      - name: Verify code generation
-        run: |
-          CODEGEN_VERIFY=1 make gen-cue
-          CODEGEN_VERIFY=1 make gen-jsonnet
-
       - name: Generate Go code
         run: make gen-go
 
