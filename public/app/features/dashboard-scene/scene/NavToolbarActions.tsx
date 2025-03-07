@@ -29,7 +29,7 @@ import { ScopesSelector } from 'app/features/scopes';
 import { useSelector } from 'app/types';
 
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
-import { selectFolderRepository } from '../../provisioning/api';
+import { selectFolderRepository } from '../../provisioning/api/selectors';
 import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
 import ExportButton from '../sharing/ExportButton/ExportButton';
 import ShareButton from '../sharing/ShareButton/ShareButton';
