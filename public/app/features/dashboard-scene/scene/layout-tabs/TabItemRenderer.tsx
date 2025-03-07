@@ -3,7 +3,7 @@ import { useLocation } from 'react-router';
 
 import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
-import { Checkbox, clearButtonStyles, useElementSelection, useStyles2 } from '@grafana/ui';
+import { clearButtonStyles, useElementSelection, useStyles2 } from '@grafana/ui';
 // eslint-disable-next-line no-restricted-imports
 import { getFocusStyles } from '@grafana/ui/src/themes/mixins';
 
@@ -24,18 +24,20 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
 
   return (
     <>
-      <div className={cx(styles.container, isSelected && 'dashboard-selected-element')} role="presentation">
-        {isSelectable && (
-          <div className={styles.checkboxWrapper} onPointerDown={onSelect}>
-            <Checkbox value={!!isSelected} />
-          </div>
+      <div
+        className={cx(
+          styles.container,
+          isSelected && 'dashboard-selected-element',
+          isSelectable && !isSelected && 'dashboard-selectable-element'
         )}
-
+        role="presentation"
+      >
         <a
           href={href}
           className={cx(clearStyles, styles.label, isActive ? styles.labelActive : styles.labelNotActive)}
           role="tab"
           aria-selected={isActive}
+          onPointerDown={onSelect}
         >
           {titleInterpolated}
         </a>
@@ -58,7 +60,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     label: css({
       color: theme.colors.text.secondary,
-      padding: theme.spacing(1, 1.5, 0.5),
+      padding: theme.spacing(1, 2, 0.5),
       borderRadius: theme.shape.radius.default,
       userSelect: 'none',
 
@@ -83,7 +85,7 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     labelNotActive: css({
-      'a:hover, &:hover, &:focus': {
+      '&:hover, &:focus': {
         color: theme.colors.text.primary,
 
         '&::before': {

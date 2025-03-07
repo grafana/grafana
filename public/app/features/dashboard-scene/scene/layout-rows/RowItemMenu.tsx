@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Dropdown, Menu, ToolbarButton, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
+import { Button, Dropdown, Menu, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { RowItem } from './RowItem';
@@ -38,16 +38,16 @@ export function RowItemMenu({ model }: RowItemMenuProps) {
           </Menu>
         )}
       >
-        <ToolbarButton
+        <Button
           aria-label={t('dashboard.rows-layout.row.menu.add', 'Add row')}
           title={t('dashboard.rows-layout.row.menu.add', 'Add row')}
           tooltip={t('dashboard.rows-layout.row.menu.add', 'Add row')}
           icon="plus"
-          iconSize="sm"
-          variant="default"
+          size="sm"
+          variant="secondary"
         >
           <Trans i18nKey="grafana-ui.tags-input.add">Add</Trans>
-        </ToolbarButton>
+        </Button>
       </Dropdown>
       <Dropdown
         placement="bottom-end"
@@ -69,13 +69,13 @@ export function RowItemMenu({ model }: RowItemMenuProps) {
           </Menu>
         )}
       >
-        <ToolbarButton
+        <Button
           aria-label={t('dashboard.rows-layout.row.menu.move-row', 'Move row')}
           title={t('dashboard.rows-layout.row.menu.move-row', 'Move row')}
           tooltip={t('dashboard.rows-layout.row.menu.move-row', 'Move row')}
           icon="arrows-v"
-          iconSize="md"
-          variant="default"
+          size="sm"
+          variant="secondary"
         />
       </Dropdown>
     </ToolbarButtonRow>
