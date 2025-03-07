@@ -38,6 +38,7 @@ func (s Service) ListPluginDashboards(ctx context.Context, req *plugindashboards
 	if err != nil {
 		return nil, err
 	}
+	s.logger.Info("got plugin dashboards files", "pluginId", req.PluginID, "count", len(listResp.FileReferences))
 
 	result := make([]*plugindashboards.PluginDashboard, 0)
 
@@ -47,6 +48,7 @@ func (s Service) ListPluginDashboards(ctx context.Context, req *plugindashboards
 	if err != nil {
 		return nil, err
 	}
+	s.logger.Info("got plugin dashboards", "pluginId", req.PluginID, "count", len(queryResult))
 
 	existingMatches := make(map[int64]bool)
 	for _, reference := range listResp.FileReferences {
@@ -54,6 +56,7 @@ func (s Service) ListPluginDashboards(ctx context.Context, req *plugindashboards
 			PluginID:  req.PluginID,
 			Reference: reference,
 		}
+		s.logger.Info("loading pluign dashboard", "pluginId", req.PluginID)
 		loadResp, err := s.LoadPluginDashboard(ctx, loadReq)
 		if err != nil {
 			return nil, err
@@ -67,6 +70,7 @@ func (s Service) ListPluginDashboards(ctx context.Context, req *plugindashboards
 		res.PluginId = req.PluginID
 		res.Title = dashboard.Title
 		res.Revision = dashboard.Data.Get("revision").MustInt64(1)
+		s.logger.Info("got pluign dashboard", "pluginId", req.PluginID, "dash", dashboard.UID)
 
 		// find existing dashboard
 		for _, existingDash := range queryResult {

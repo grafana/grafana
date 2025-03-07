@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -67,9 +68,10 @@ func (du *DashboardUpdater) updateAppDashboards() {
 			continue
 		}
 
-		if pluginDef, exists := du.pluginStore.Plugin(context.Background(), pluginSetting.PluginID); exists {
+		ctx, _ := identity.WithServiceIdentity(context.Background(), pluginSetting.OrgID)
+		if pluginDef, exists := du.pluginStore.Plugin(ctx, pluginSetting.PluginID); exists {
 			if pluginDef.Info.Version != pluginSetting.PluginVersion {
-				du.syncPluginDashboards(context.Background(), pluginDef, pluginSetting.OrgID)
+				du.syncPluginDashboards(ctx, pluginDef, pluginSetting.OrgID)
 			}
 		}
 	}
@@ -89,6 +91,8 @@ func (du *DashboardUpdater) syncPluginDashboards(ctx context.Context, plugin plu
 		return
 	}
 
+	du.logger.Info("Got plugin dashboards", "pluginId", plugin.ID, "count", len(resp.Items))
+
 	// Update dashboards with updated revisions
 	for _, dash := range resp.Items {
 		// remove removed ones
@@ -105,12 +109,14 @@ func (du *DashboardUpdater) syncPluginDashboards(ctx context.Context, plugin plu
 
 		// update updated ones
 		if dash.ImportedRevision != dash.Revision {
+			du.logger.Info("updating dashboard", "pluginId", plugin.ID, "slug", dash.Slug)
 			if err := du.autoUpdateAppDashboard(ctx, dash, orgID); err != nil {
 				du.logger.Error("Failed to auto update app dashboard", "pluginId", plugin.ID, "error", err)
 				return
 			}
 		}
 	}
+	du.logger.Info("processed plugin dashboards", "pluginId", plugin.ID)
 
 	// update version in plugin_setting table to mark that we have processed the update
 	query := pluginsettings.GetByPluginIDArgs{PluginID: plugin.ID, OrgID: orgID}
@@ -119,6 +125,7 @@ func (du *DashboardUpdater) syncPluginDashboards(ctx context.Context, plugin plu
 		du.logger.Error("Failed to read plugin setting by ID", "error", err)
 		return
 	}
+	du.logger.Info("got plugin settings", "pluginId", plugin.ID)
 
 	cmd := pluginsettings.UpdatePluginVersionArgs{
 		OrgID:         ps.OrgID,
@@ -129,6 +136,7 @@ func (du *DashboardUpdater) syncPluginDashboards(ctx context.Context, plugin plu
 	if err := du.pluginSettingsService.UpdatePluginSettingPluginVersion(ctx, &cmd); err != nil {
 		du.logger.Error("Failed to update plugin setting version", "error", err)
 	}
+	du.logger.Info("updated plugin settings", "pluginId", plugin.ID)
 }
 
 func (du *DashboardUpdater) handlePluginStateChanged(ctx context.Context, event *pluginsettings.PluginStateChangedEvent) error {
@@ -164,6 +172,7 @@ func (du *DashboardUpdater) autoUpdateAppDashboard(ctx context.Context, pluginDa
 		PluginID:  pluginDashInfo.PluginId,
 		Reference: pluginDashInfo.Reference,
 	}
+	du.logger.Info("loading plugin dashboard", "pluginId", pluginDashInfo.PluginId, "reference", pluginDashInfo.Reference)
 	resp, err := du.pluginDashboardService.LoadPluginDashboard(ctx, req)
 	if err != nil {
 		return err
@@ -181,5 +190,6 @@ func (du *DashboardUpdater) autoUpdateAppDashboard(ctx context.Context, pluginDa
 		Overwrite: true,
 		Inputs:    nil,
 	})
+	du.logger.Info("completed auto update", "pluginId", pluginDashInfo.PluginId, "reference", pluginDashInfo.Reference)
 	return err
 }
