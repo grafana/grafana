@@ -329,21 +329,13 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		group.Get("/push/:streamId", g.pushWebsocketHandler)
 		group.Get("/pipeline/push/*", g.pushPipelineWebsocketHandler)
 
-		// Separate subgroup for player endpoints
 		logger.Debug("Registering player endpoints under /api/live/players")
 		group.Group("/players", func(playerGroup routing.RouteRegister) {
 			playerGroup.Post("/", func(ctx *contextmodel.ReqContext) response.Response {
 				logger.Debug("Handling POST /api/live/players")
 				return g.handleAddPlayer(ctx)
 			})
-			playerGroup.Delete("/:player_id", func(ctx *contextmodel.ReqContext) response.Response {
-				logger.Debug("Handling DELETE /api/live/players/:player_id", "player_id", web.Params(ctx.Req)[":player_id"])
-				return g.handleRemovePlayer(ctx)
-			})
-			playerGroup.Put("/:player_id", func(ctx *contextmodel.ReqContext) response.Response {
-				logger.Debug("Handling PUT /api/live/players/:player_id", "player_id", web.Params(ctx.Req)[":player_id"])
-				return g.handleUpdatePlayer(ctx)
-			})
+			// Removed DELETE /:player_id endpoint
 		})
 	}, middleware.ReqOrgAdmin, requestmeta.SetSLOGroup(requestmeta.SLOGroupNone))
 
@@ -1527,7 +1519,7 @@ type Player struct {
 }
 
 type PlayerPayload struct {
-	Action   string   `json:"action"` // "add" or "update"
+	Action   string   `json:"action"` // "add", "update", or "delete"
 	PlayerID string   `json:"player_id"`
 	X        *float64 `json:"x,omitempty"`
 	Y        *float64 `json:"y,omitempty"`
@@ -1543,20 +1535,20 @@ func (g *GrafanaLive) handleAddPlayer(ctx *contextmodel.ReqContext) response.Res
 	if err := web.Bind(ctx.Req, &req); err != nil {
 		return response.Error(http.StatusBadRequest, "Invalid request", err)
 	}
-	x := 50.0
-	y := 50.0
-	rotation := 0.0
-	if req.X != nil {
-		x = *req.X
-	}
-	if req.Y != nil {
-		y = *req.Y
-	}
-	if req.Rotation != nil {
-		rotation = *req.Rotation
-	}
 	switch req.Action {
 	case "add", "": // Default to "add" if action is omitted
+		x := 50.0
+		y := 50.0
+		rotation := 0.0
+		if req.X != nil {
+			x = *req.X
+		}
+		if req.Y != nil {
+			y = *req.Y
+		}
+		if req.Rotation != nil {
+			rotation = *req.Rotation
+		}
 		result, err := g.playerDB.ExecContext(ctx.Req.Context(),
 			"INSERT INTO live_players (org_id, player_id, x, y, rotation) VALUES (?, ?, ?, ?, ?)",
 			orgID, req.PlayerID, x, y, rotation)
@@ -1601,89 +1593,23 @@ func (g *GrafanaLive) handleAddPlayer(ctx *contextmodel.ReqContext) response.Res
 		}
 		logger.Info("Player updated", "orgID", orgID, "playerID", req.PlayerID)
 		return response.JSON(http.StatusOK, map[string]string{"message": "Player updated"})
+	case "delete":
+		result, err := g.playerDB.ExecContext(ctx.Req.Context(),
+			"DELETE FROM live_players WHERE org_id = ? AND player_id = ?",
+			orgID, req.PlayerID)
+		if err != nil {
+			logger.Error("Failed to delete player", "orgID", orgID, "playerID", req.PlayerID, "error", err)
+			return response.Error(http.StatusInternalServerError, "Failed to delete player", err)
+		}
+		rows, _ := result.RowsAffected()
+		if rows == 0 {
+			return response.Error(http.StatusNotFound, "Player not found", nil)
+		}
+		logger.Info("Player deleted", "orgID", orgID, "playerID", req.PlayerID)
+		return response.JSON(http.StatusOK, map[string]string{"message": "Player deleted"})
 	default:
 		return response.Error(http.StatusBadRequest, "Invalid action", nil)
 	}
-}
-
-func (g *GrafanaLive) handleRemovePlayer(ctx *contextmodel.ReqContext) response.Response {
-	playerID := web.Params(ctx.Req)[":player_id"]
-	orgID := ctx.SignedInUser.GetOrgID()
-	if g.playerDB == nil {
-		return response.Error(http.StatusServiceUnavailable, "Player database not initialized", nil)
-	}
-	result, err := g.playerDB.ExecContext(ctx.Req.Context(),
-		"DELETE FROM live_players WHERE org_id = ? AND player_id = ?",
-		orgID, playerID)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to remove player", err)
-	}
-	rows, _ := result.RowsAffected()
-	if rows == 0 {
-		return response.Error(http.StatusNotFound, "Player not found", nil)
-	}
-	logger.Info("Removed player", "orgID", orgID, "playerID", playerID)
-	return response.JSON(http.StatusOK, map[string]string{"message": "Player removed"})
-}
-
-func (g *GrafanaLive) handleUpdatePlayer(ctx *contextmodel.ReqContext) response.Response {
-	playerID := web.Params(ctx.Req)[":player_id"]
-	orgID := ctx.SignedInUser.GetOrgID()
-	if g.playerDB == nil {
-		return response.Error(http.StatusServiceUnavailable, "Player database not initialized", nil)
-	}
-	var req struct {
-		X                *float64 `json:"x,omitempty"`
-		Y                *float64 `json:"y,omitempty"`
-		Rotation         *float64 `json:"rotation,omitempty"`
-		XVelocity        *float64 `json:"x_velocity,omitempty"`
-		YVelocity        *float64 `json:"y_velocity,omitempty"`
-		RotationVelocity *float64 `json:"rotation_velocity,omitempty"`
-	}
-	if err := web.Bind(ctx.Req, &req); err != nil {
-		return response.Error(http.StatusBadRequest, "Invalid request", err)
-	}
-	updates := []string{}
-	args := []interface{}{}
-	if req.X != nil {
-		updates = append(updates, "x = ?")
-		args = append(args, *req.X)
-	}
-	if req.Y != nil {
-		updates = append(updates, "y = ?")
-		args = append(args, *req.Y)
-	}
-	if req.Rotation != nil {
-		updates = append(updates, "rotation = ?")
-		args = append(args, *req.Rotation)
-	}
-	if req.XVelocity != nil {
-		updates = append(updates, "x_velocity = ?")
-		args = append(args, *req.XVelocity)
-	}
-	if req.YVelocity != nil {
-		updates = append(updates, "y_velocity = ?")
-		args = append(args, *req.YVelocity)
-	}
-	if req.RotationVelocity != nil {
-		updates = append(updates, "rotation_velocity = ?")
-		args = append(args, *req.RotationVelocity)
-	}
-	if len(updates) == 0 {
-		return response.Error(http.StatusBadRequest, "No fields to update", nil)
-	}
-	query := "UPDATE live_players SET " + strings.Join(updates, ", ") + " WHERE org_id = ? AND player_id = ?"
-	args = append(args, orgID, playerID)
-	result, err := g.playerDB.ExecContext(ctx.Req.Context(), query, args...)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to update player", err)
-	}
-	rows, _ := result.RowsAffected()
-	if rows == 0 {
-		return response.Error(http.StatusNotFound, "Player not found", nil)
-	}
-	logger.Info("Updated player", "orgID", orgID, "playerID", playerID)
-	return response.JSON(http.StatusOK, map[string]string{"message": "Player updated"})
 }
 
 func (g *GrafanaLive) SimulateGameServer(ctx context.Context) {
