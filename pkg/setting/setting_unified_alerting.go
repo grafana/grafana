@@ -132,12 +132,14 @@ type UnifiedAlertingSettings struct {
 }
 
 type RecordingRuleSettings struct {
-	Enabled           bool
-	URL               string
-	BasicAuthUsername string
-	BasicAuthPassword string
-	CustomHeaders     map[string]string
-	Timeout           time.Duration
+	Enabled               bool
+	URL                   string
+	BasicAuthUsername     string
+	BasicAuthPassword     string
+	CustomHeaders         map[string]string
+	Timeout               time.Duration
+	DefaultDatasourceUID  string
+	RemoteWritePathSuffix string
 }
 
 // RemoteAlertmanagerSettings contains the configuration needed
@@ -435,11 +437,13 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	rr := iniFile.Section("recording_rules")
 	uaCfgRecordingRules := RecordingRuleSettings{
-		Enabled:           rr.Key("enabled").MustBool(false),
-		URL:               rr.Key("url").MustString(""),
-		BasicAuthUsername: rr.Key("basic_auth_username").MustString(""),
-		BasicAuthPassword: rr.Key("basic_auth_password").MustString(""),
-		Timeout:           rr.Key("timeout").MustDuration(defaultRecordingRequestTimeout),
+		Enabled:               rr.Key("enabled").MustBool(false),
+		URL:                   rr.Key("url").MustString(""),
+		BasicAuthUsername:     rr.Key("basic_auth_username").MustString(""),
+		BasicAuthPassword:     rr.Key("basic_auth_password").MustString(""),
+		Timeout:               rr.Key("timeout").MustDuration(defaultRecordingRequestTimeout),
+		DefaultDatasourceUID:  rr.Key("default_datasource_uid").MustString(""),
+		RemoteWritePathSuffix: rr.Key("remote_write_path_suffix").MustString("/push"),
 	}
 
 	rrHeaders := iniFile.Section("recording_rules.custom_headers")

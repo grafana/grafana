@@ -1966,6 +1966,20 @@
     },
     {
       "metadata": {
+        "name": "grafanaManagedRecordingRulesDatasources",
+        "resourceVersion": "1741291902441",
+        "creationTimestamp": "2025-03-06T20:11:42Z"
+      },
+      "spec": {
+        "description": "Enables writing to data sources for Grafana-managed recording rules.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "grafanaconThemes",
         "resourceVersion": "1738661140740",
         "creationTimestamp": "2025-02-04T09:25:40Z"
