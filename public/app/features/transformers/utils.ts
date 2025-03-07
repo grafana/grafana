@@ -11,20 +11,22 @@ import {
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
+export const getAllFieldNamesFromDataFrames = (frames: DataFrame[], withBaseFieldNames = false) => {
+  // get full names
+  let names = frames.flatMap((frame) => frame.fields.map((field) => getFieldDisplayName(field, frame, frames)));
+
+  if (withBaseFieldNames) {
+    let baseNames = frames.flatMap((frame) => frame.fields.map((field) => field.name));
+
+    // prepend base names + uniquify
+    names = [...new Set(baseNames.concat(names))];
+  }
+
+  return names;
+};
+
 export function useAllFieldNamesFromDataFrames(frames: DataFrame[], withBaseFieldNames = false): string[] {
-  return useMemo(() => {
-    // get full names
-    let names = frames.flatMap((frame) => frame.fields.map((field) => getFieldDisplayName(field, frame, frames)));
-
-    if (withBaseFieldNames) {
-      let baseNames = frames.flatMap((frame) => frame.fields.map((field) => field.name));
-
-      // prepend base names + uniquify
-      names = [...new Set(baseNames.concat(names))];
-    }
-
-    return names;
-  }, [frames, withBaseFieldNames]);
+  return useMemo(() => getAllFieldNamesFromDataFrames(frames, withBaseFieldNames), [frames, withBaseFieldNames]);
 }
 
 export function getDistinctLabels(input: DataFrame[]): Set<string> {
