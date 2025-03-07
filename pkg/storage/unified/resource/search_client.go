@@ -9,7 +9,6 @@ import (
 
 type DualWriter interface {
 	IsEnabled(schema.GroupResource) bool
-	ReadUnified(schema.GroupResource) bool
 	ReadFromUnified(context.Context, schema.GroupResource) (bool, error)
 }
 
@@ -22,7 +21,8 @@ func NewSearchClient(dual DualWriter, gr schema.GroupResource, unifiedClient Res
 			legacyClient:  legacyClient,
 		}
 	}
-	if dual.ReadUnified(gr) {
+	//nolint:errcheck
+	if ok, _ := dual.ReadFromUnified(context.Background(), gr); ok {
 		return unifiedClient
 	}
 	return legacyClient

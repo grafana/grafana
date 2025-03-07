@@ -64,9 +64,3 @@ func (d *SearchAdapter) IsEnabled(gr schema.GroupResource) bool {
 	status, _ := d.Status(context.Background(), gr)
 	return status.Runtime && d.Service.ShouldManage(gr)
 }
-
-func (d *SearchAdapter) ReadUnified(gr schema.GroupResource) bool {
-	//nolint:errcheck
-	status, _ := d.Status(context.Background(), gr)
-	return status.ReadUnified
-}
