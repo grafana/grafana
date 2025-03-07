@@ -57,7 +57,7 @@ If you need to reset changes you made in the UI back to the default values, clic
 
 {{< admonition type="note" >}}
 If you run Grafana in high availability mode, configuration changes may not get applied to all Grafana instances immediately. You may need to wait a few minutes for the configuration to propagate to all Grafana instances.
-{{<> /admonition >}}
+{{< /admonition >}}
 
 Refer to [configuration options](#configuration-options) for more information.
 
