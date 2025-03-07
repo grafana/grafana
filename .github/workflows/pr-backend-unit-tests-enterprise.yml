@@ -18,14 +18,50 @@ permissions:
   id-token: write
 
 jobs:
-  call-backend-unit-tests:
+  backend-unit-testing-coverage:
     # Run this workflow for non-PR events (like pushes to `main`) OR for internal PRs (PRs not from forks)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
-    uses: ./.github/workflows/backend-unit-tests.yml
-    with:
-      wire-tags: 'enterprise'
-    secrets:
-      codecov-token: ${{ secrets.CODECOV_TOKEN }}
+    name: Backend Unit Testing & Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+          
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential shared-mime-info
+
+      - name: Setup Enterprise
+        uses: ./.github/actions/setup-enterprise
+        with:
+          github-app-name: 'grafana-ci-bot'
+
+      - name: Generate Go code
+        run: make gen-go
+        env:
+          WIRE_TAGS: 'enterprise'
+
+      - name: Run unit tests
+        run: COVER_OPTS="-coverprofile=unit.cov -coverpkg=github.com/grafana/grafana/..." make test-go-unit
+        env:
+          WIRE_TAGS: 'enterprise'
+
+      - name: Process and upload coverage
+        uses: ./.github/actions/test-coverage-processor
+        with:
+          test-type: 'be-unit-enterprise'
+          # Needs to be named 'unit.cov' based on the Makefile command `make test-go-unit`
+          coverage-file: 'unit.cov'
+          codecov-token: ${{ secrets.CODECOV_TOKEN }}
+          codecov-flag: 'be-unit'
+          codecov-name: 'be-unit'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
