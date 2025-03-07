@@ -1,18 +1,20 @@
-import { config } from '@grafana/runtime';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from 'app/core/navigation/types';
 import { DashboardRoutes } from 'app/types';
 
-import { requiredFeatureToggles } from '../Setup/types';
-import { PROVISIONING_URL, CONNECT_URL, MIGRATE_URL } from '../constants';
+import { checkRequiredFeatures } from '../GettingStarted/features';
+import { PROVISIONING_URL, CONNECT_URL, MIGRATE_URL, GETTING_STARTED_URL } from '../constants';
 
 export function getProvisioningRoutes(): RouteDescriptor[] {
-  if (!requiredFeatureToggles.every((toggle) => config.featureToggles[toggle])) {
+  if (!checkRequiredFeatures()) {
     return [
       {
         path: PROVISIONING_URL,
         component: SafeDynamicImport(
-          () => import(/* webpackChunkName: "SetupPage"*/ 'app/features/provisioning/Setup/SetupPage')
+          () =>
+            import(
+              /* webpackChunkName: "GettingStartedPage"*/ 'app/features/provisioning/GettingStarted/GettingStartedPage'
+            )
         ),
       },
     ];
@@ -26,9 +28,12 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: PROVISIONING_URL + '/setup',
+      path: GETTING_STARTED_URL,
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "SetupPage"*/ 'app/features/provisioning/Setup/SetupPage')
+        () =>
+          import(
+            /* webpackChunkName: "GettingStartedPage"*/ 'app/features/provisioning/GettingStarted/GettingStartedPage'
+          )
       ),
     },
     {

@@ -22,8 +22,8 @@ import {
 import { Page } from 'app/core/components/Page/Page';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
-import OnboardingPage from './OnboardingPage';
-import { FeatureList } from './Setup/FeatureList';
+import GettingStarted from './GettingStarted/GettingStarted';
+import GettingStartedPage from './GettingStarted/GettingStartedPage';
 import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
 import { Repository, ResourceCount, useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from './api';
@@ -43,7 +43,7 @@ enum TabSelection {
   Overview = 'overview',
   Resources = 'resources',
   Files = 'files',
-  Features = 'features',
+  GettingStarted = 'getting-started',
   Repositories = 'repositories',
 }
 
@@ -51,12 +51,12 @@ const connectedTabInfo = [
   { value: TabSelection.Overview, label: 'Overview', title: 'Repository overview' },
   { value: TabSelection.Resources, label: 'Resources', title: 'Resources saved in grafana database' },
   { value: TabSelection.Files, label: 'Files', title: 'The raw file list from the repository' },
-  { value: TabSelection.Features, label: 'Features', title: 'Available features' },
+  { value: TabSelection.GettingStarted, label: 'Features', title: 'Available features' },
 ];
 
 const disconnectedTabInfo = [
   { value: TabSelection.Repositories, label: 'Repositories', title: 'List of repositories' },
-  { value: TabSelection.Features, label: 'Features', title: 'Available features' },
+  { value: TabSelection.GettingStarted, label: 'Features', title: 'Available features' },
 ];
 
 export default function RepositoryListPage() {
@@ -86,7 +86,7 @@ export default function RepositoryListPage() {
 
   // Early return for onboarding
   if (!items?.length && !isLoading) {
-    return <OnboardingPage legacyStorage={settings.data?.legacyStorage} />;
+    return <GettingStartedPage />;
   }
 
   const onConfirmDelete = () => {
@@ -99,8 +99,8 @@ export default function RepositoryListPage() {
       switch (activeTab) {
         case TabSelection.Repositories:
           return <FolderRepositoryList items={items ?? []} />;
-        case TabSelection.Features:
-          return <FeatureList />;
+        case TabSelection.GettingStarted:
+          return <GettingStarted />;
         default:
           return null;
       }
@@ -115,8 +115,8 @@ export default function RepositoryListPage() {
         return <RepositoryResources repo={repo} />;
       case TabSelection.Files:
         return <FilesView repo={repo} />;
-      case TabSelection.Features:
-        return <FeatureList />;
+      case TabSelection.GettingStarted:
+        return <GettingStarted />;
       default:
         return null;
     }

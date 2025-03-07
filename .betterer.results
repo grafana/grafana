@@ -5689,6 +5689,41 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"]
     ],
+    "public/app/features/provisioning/GettingStarted/EnhancedFeatures.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "4"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"]
+    ],
+    "public/app/features/provisioning/GettingStarted/FeaturesList.tsx:5381": [
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "8"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "9"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "10"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "11"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "12"]
+    ],
+    "public/app/features/provisioning/GettingStarted/GettingStarted.tsx:5381": [
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
+    ],
+    "public/app/features/provisioning/GettingStarted/SetupModal.tsx:5381": [
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
+    ],
     "public/app/features/provisioning/JobStatus.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
@@ -5707,15 +5742,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "5"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "6"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"]
-    ],
-    "public/app/features/provisioning/OnboardingPage.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"]
     ],
     "public/app/features/provisioning/RecentJobs.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
@@ -5788,25 +5814,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"]
-    ],
-    "public/app/features/provisioning/Setup/FeatureCard.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
-    ],
-    "public/app/features/provisioning/Setup/SetupModal.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
-    ],
-    "public/app/features/provisioning/Setup/StatusAlerts.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
     ],
     "public/app/features/provisioning/SyncRepository.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
@@ -7038,9 +7045,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "1"]
     ],
-    "public/app/plugins/datasource/azuremonitor/azure_monitor/azure_monitor_datasource.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "public/app/plugins/datasource/azuremonitor/components/ArgQueryEditor/index.tsx:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./ArgQueryEditor\`)", "0"]
     ],
@@ -7089,6 +7093,9 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/azuremonitor/types/templateVariables.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`../dataquery.gen\`)", "0"]
+    ],
+    "public/app/plugins/datasource/azuremonitor/utils/common.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/datasource/azuremonitor/utils/messageFromError.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
