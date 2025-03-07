@@ -66,8 +66,6 @@ jobs:
         # We can't allow forks here, as we need secret access.
         if: ${{ true || github.event_name != 'pull_request' }}
         uses: ./.github/actions/setup-grafana-bench
-        with:
-          branch: go-test-reporter
 
       - name: Process output for Bench
         if: ${{ true || github.event_name != 'pull_request' }}
