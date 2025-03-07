@@ -352,7 +352,7 @@ func (hs *HTTPServer) UpdateUserEmail(c *contextmodel.ReqContext) response.Respo
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetSignedInUserOrgList(c *contextmodel.ReqContext) response.Response {
-	userID, errResponse := getUserID(c)
+	userID, errResponse := hs.getUserID(c)
 	if errResponse != nil {
 		return errResponse
 	}
@@ -372,7 +372,7 @@ func (hs *HTTPServer) GetSignedInUserOrgList(c *contextmodel.ReqContext) respons
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetSignedInUserTeamList(c *contextmodel.ReqContext) response.Response {
-	userID, errResponse := getUserID(c)
+	userID, errResponse := hs.getUserID(c)
 	if errResponse != nil {
 		return errResponse
 	}
@@ -482,7 +482,7 @@ func (hs *HTTPServer) UserSetUsingOrg(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	userID, errResponse := getUserID(c)
+	userID, errResponse := hs.getUserID(c)
 	if errResponse != nil {
 		return errResponse
 	}
@@ -553,7 +553,7 @@ func (hs *HTTPServer) ChangeUserPassword(c *contextmodel.ReqContext) response.Re
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	userID, errResponse := getUserID(c)
+	userID, errResponse := hs.getUserID(c)
 	if errResponse != nil {
 		return errResponse
 	}
@@ -589,7 +589,7 @@ func (hs *HTTPServer) SetHelpFlag(c *contextmodel.ReqContext) response.Response 
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	userID, errResponse := getUserID(c)
+	userID, errResponse := hs.getUserID(c)
 	if errResponse != nil {
 		return errResponse
 	}
@@ -619,7 +619,7 @@ func (hs *HTTPServer) SetHelpFlag(c *contextmodel.ReqContext) response.Response 
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) ClearHelpFlags(c *contextmodel.ReqContext) response.Response {
-	userID, errResponse := getUserID(c)
+	userID, errResponse := hs.getUserID(c)
 	if errResponse != nil {
 		return errResponse
 	}
