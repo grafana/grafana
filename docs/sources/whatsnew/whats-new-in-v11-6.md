@@ -20,10 +20,15 @@ posts:
       - docs/grafana-cloud/whats-new/2025-02-14-actions-added-to-visualizations.md
       - docs/grafana-cloud/whats-new/2025-02-19-better-time-region-control-with-cron-syntax.md
       - docs/grafana-cloud/whats-new/2025-02-26-new-actionscell-for-table-visualization.md
+      - docs/grafana-cloud/whats-new/2025-03-06-improved-performance-in-geomap-visualizations.md
+      - docs/grafana-cloud-whats-new/2025-03-06-variables-supported-for-all-transformations.md
   - title: Alerting
     items:
       - docs/grafana-cloud/whats-new/2025-03-05-alert-rule-version-history.md
       - docs/grafana-cloud/whats-new/2025-03-05-alerting-support-for-jira-service-management-contact-point.md
+  - title: Data sources
+    items:
+      - docs/grafana-cloud/whats-new/2025-02-28-lbac-for-datasources-metrics.md
   - title: Security
     items:
       - docs/grafana-cloud/whats-new/2025-02-10-auto-migration-of-api-keys-to-service-accounts.md
