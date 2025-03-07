@@ -6,6 +6,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { GrafanaTheme2, NavModel, NavModelItem, SelectableValue } from '@grafana/data';
 import {
   EmptyState,
+  LoadingPlaceholder,
   InteractiveTable,
   Column,
   Select,
@@ -15,9 +16,7 @@ import {
   FilterInput,
   TagList,
   Link,
-  Button,
 } from '@grafana/ui';
-import { clearLinkButtonStyles } from '@grafana/ui/src/components/Button';
 import { getAPINamespace } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
 import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
@@ -28,7 +27,7 @@ import kbn from 'app/core/utils/kbn';
 import { getColumnStyles } from '../search/page/components/SearchResultsTable';
 import { GrafanaSearcher, SearchQuery } from '../search/service/types';
 import { SearchHit, UnifiedSearcher } from '../search/service/unified';
-
+// import { iconItem } from '../canvas/elements/icon';
 interface Resource extends SearchHit {
   isExpanded?: boolean;
   owner?: string;
@@ -61,11 +60,8 @@ const FoldersPage: React.FC = () => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [availableTags, setAvailableTags] = useState<TermCount[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<string>('');
-  const [showTable, setShowTable] = useState(true);
 
   const styles = useStyles2(getStyles);
-  const clearButtonStyle = useStyles2(clearLinkButtonStyles);
 
   const defaultNavModel = useNavModel('finder');
   const location = useLocation();
@@ -89,22 +85,59 @@ const FoldersPage: React.FC = () => {
   };
 
   useEffect(() => {
-      buildNavModel(defaultNavModel, location.pathname, searcher).then((updatedNavModel) => {
-      setNavModel(updatedNavModel as NavModel);
-    });
-  }, [location.pathname, defaultNavModel]);
+      const fetchFolderName = async (folderId: string) => {
+      const folder = await searcher.fetchResults({ kind: ['folder'], uid: [folderId] });
+      return folder.hits[0].title;
+    };
+    const buildNavModel = async () => {
+      if (!location.pathname.endsWith('finder')) {
+        // TODO: handle multiple levels of folders
+        const parts = location.pathname.split('/');
+        const folderId = parts[parts.length - 1];
+        const folderName = await fetchFolderName(folderId);
+        const navModelWithChildren = {
+          ...navModel,
+          main: {
+            ...navModel.main,
+            active: false,
+            children: [
+              // TODO: first child is ignored for some reason, so add a dummy child
+              { text: folderName, icon: 'folder'},
+              {
+                text: folderName,
+                url: '/foo',
+                icon: 'folder',
+                active: true,
+              },
+            ],
+          },
+          node: {
+            ...navModel.node,
+            active: false,
+            children: [
+              // TODO: first child is ignored for some reason
+              { text: folderName, icon: 'folder' },
+              {
+                text: folderName,
+                url: '/foo',
+                icon: 'folder',
+                active: true,
+              },
+            ],
+          },
+        };
+        // @ts-ignore
+        setNavModel(navModelWithChildren);
+      }
+    };
+    buildNavModel()
+  }, [location.pathname, navModel]);
 
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
       const kinds = selectedTypes.map((t) => t.value!.toString());
-      const sort = sortBy !== '' ? sortBy : undefined;
-      let query: SearchQuery = { 
-        kind: kinds, 
-        tags: selectedTags, 
-        query: searchTerm,
-        sort: sort
-      }
+      let query: SearchQuery = { kind: kinds, tags: selectedTags, query: searchTerm }
       if (!location.pathname.endsWith('finder')) {
         const parts = location.pathname.split('/');
         const folderId = parts[parts.length - 1];
@@ -124,7 +157,7 @@ const FoldersPage: React.FC = () => {
       }
     };
     void loadData();
-  }, [selectedTypes, selectedTags, searchTerm, location.pathname, sortBy]);
+  }, [selectedTypes, selectedTags, searchTerm, location.pathname]);
 
   const getIconForResource = (resource: string) => {
     switch (resource) {
@@ -143,12 +176,11 @@ const FoldersPage: React.FC = () => {
     }
   };
 
-  // TODO: Implement folder expand/collapse
-  // const handleExpand = (folder: Folder) => {
-  //   setFolders((prevFolders) =>
-  //     prevFolders.map((f) => (f.name === folder.name ? { ...f, isExpanded: !f.isExpanded } : f))
-  //   );
-  // };
+  const handleExpand = (resource: Resource) => {
+    setResources((prevResources) =>
+      prevResources.map((r) => (r.name === resource.name ? { ...r, isExpanded: !r.isExpanded } : r))
+    );
+  };
 
   function toURL(resource: string, name: string, title: string): string {
     if (resource.startsWith('folder')) {
@@ -169,41 +201,72 @@ const FoldersPage: React.FC = () => {
 
   const onResourceLinkClicked = () => {}
 
-  // This is a hack to force the table to re-render when the sort order changes
-  const handleSortChange = () => {
-    setShowTable(!showTable);
-    setSortBy((sortBy === '' || sortBy === '-name') ? 'name' : '-name');
-    setTimeout(() => {
-      setShowTable(true);
-    }, 0);
-  };
-
   const renderTable = (resources: SearchHit[]) => {
-    if (!showTable) {
-      return;
-    }
-    const columns: Array<Column<Resource>> =
-      [
+    // Get root level resources (location === "general")
+    const rootResources = resources.filter(resource => resource.location === "general" || resource.location === "");
+    
+    // Recursive function to get all children
+    const getAllChildren = (parent: Resource, allResources: Resource[]): Resource[] => {
+      const result: Resource[] = [];
+      // Get immediate children
+      const children = allResources.filter(r => r.location === parent.title);
+      
+      // Add each child and recursively get their children if they're expanded folders
+      children.forEach(child => {
+        result.push(child);
+        if (child.isExpanded && child.resource === 'folders') {
+          result.push(...getAllChildren(child, allResources));
+        }
+      });
+      
+      return result;
+    };
+
+    // Create the final data array with expanded children
+    const tableData = rootResources.reduce((acc: Resource[], resource: Resource) => {
+      acc.push(resource);
+      // If this is an expanded folder, add all its children recursively
+      if (resource.isExpanded) {
+        acc.push(...getAllChildren(resource, resources));
+      }
+      return acc;
+    }, []);
+
+    // Helper to check if a folder has any children (any resource type)
+    const hasChildren = (folder: Resource) => {
+      return resources.some(r => r.location === folder.title);
+    };
+
+    const columns: Array<Column<Resource>> = [
+          {
+            id: 'expand',
+            header: '',
+            cell: ({ row: { original } }) => {
+              if (original.resource === 'folders' && hasChildren(original)) {
+                return (
+                  <div className={styles.expandCell}>
+                    <button onClick={() => handleExpand(original)} className={styles.expandButton}>
+                      <Icon name={original.isExpanded ? 'angle-down' : 'angle-right'} />
+                    </button>
+                  </div>
+                );
+              }
+              return <div className={styles.expandCell} />;
+            },
+          },
           {
             id: 'name',
             header: 'Name',
-            sortType: () => {
-              setTimeout(() => {
-                handleSortChange();
-              }, 0);
-              return 0; // Return value doesn't matter since we're using backend sorting
-            },
             cell: ({ row: { original } }) => (
               <div style={{ marginLeft: original.level ? original.level * 20 : 0 }}>
-                <Stack direction="row" alignItems="center" gap={1}>
-                  <Link
-                    aria-label={`open-${original.title}`}
-                    href={toURL(original.resource, original.name, original.title)}
-                    onClick={onResourceLinkClicked}
-                  >
-                    {original.title}
-                  </Link>
-                </Stack>
+                <Link
+                  aria-label={`open-${original.title}`}
+                  href={toURL(original.resource, original.name, original.title)}
+                  className="external-link"
+                  onClick={onResourceLinkClicked}
+                >
+                {original.title}
+                </Link>
               </div>
             ),
           },
@@ -216,15 +279,8 @@ const FoldersPage: React.FC = () => {
 
               return (
                 <div className="flex items-center">
-                  <Button
-                    variant="secondary"
-                    aria-label={`open-${original.location}`}
-                    className={clearButtonStyle}
-                    onClick={() => setSelectedTypes([{label: displayType, value: original.resource as ResourceType}])}
-                  >
                   {iconName && <Icon name={iconName} style={{ marginRight: '6px' }}/>}
                   <span className={styles.resourceType}>{displayType}</span>
-                  </Button>
                 </div>
               );
             },
@@ -239,6 +295,7 @@ const FoldersPage: React.FC = () => {
                   <Link
                     aria-label={`open-${original.location}`}
                     href={toURL('folder', original.folder, original.location)}
+                    className="external-link"
                     onClick={onResourceLinkClicked}
                   >
                   <span>{original.location}</span>
@@ -281,11 +338,11 @@ const FoldersPage: React.FC = () => {
           // }
 
     return (
-        <InteractiveTable
-          data={resources}
-          columns={columns}
-          getRowId={(row) => row.name}
-        />
+      <InteractiveTable
+        data={tableData}
+        columns={columns}
+        getRowId={(row) => row.name}
+      />
     );
   };
 
@@ -323,6 +380,8 @@ const FoldersPage: React.FC = () => {
           </Stack>
         </div>
 
+        {isLoading && <LoadingPlaceholder text="Loading folders..." />}
+
         {error && (
           <EmptyState message={error} variant={'call-to-action'} />
         )}
@@ -342,10 +401,26 @@ const getStyles = (theme: GrafanaTheme2) => ({
   resourceType: css({
     textTransform: 'capitalize',
   }),
-  // expandIcon: css({
-  //   cursor: 'pointer',
-  //   marginRight: theme.spacing(1),
-  // }),
+  expandCell: css({
+    width: '40px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  }),
+  expandButton: css({
+    background: 'none',
+    border: 'none',
+    padding: theme.spacing(0, 1),
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '24px',
+    height: '24px',
+    '&:hover': {
+      color: theme.colors.text.primary,
+    },
+  }),
 });
 
 export default FoldersPage;
