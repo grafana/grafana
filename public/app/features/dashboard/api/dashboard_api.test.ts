@@ -1,10 +1,10 @@
 import { config } from '@grafana/runtime';
 
+import { UnifiedDashboardAPI } from './UnifiedDashboardAPI';
 import { getDashboardAPI, setDashboardAPI } from './dashboard_api';
 import { LegacyDashboardAPI } from './legacy';
 import { K8sDashboardAPI } from './v1';
 import { K8sDashboardV2API } from './v2';
-import { UnifiedDashboardAPI } from './UnifiedDashboardAPI';
 
 describe('DashboardApi', () => {
   it('should use legacy api by default', () => {

@@ -591,7 +591,11 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     operation: (manager: DashboardScenePageStateManager | DashboardScenePageStateManagerV2) => Promise<T>
   ): Promise<T> {
     try {
-      return await operation(this.activeManager);
+      const result = await operation(this.activeManager);
+      // need to sync the state of the active manager with the unified manager
+      // in cases when components are subscribed to unified manager's state
+      this.setState(this.activeManager.state);
+      return result;
     } catch (error) {
       if (error instanceof DashboardVersionError) {
         const manager = error.data.storedVersion === 'v2alpha1' ? this.v2Manager : this.v1Manager;
