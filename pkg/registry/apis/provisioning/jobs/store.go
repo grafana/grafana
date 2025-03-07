@@ -175,12 +175,12 @@ func (s *jobStore) Add(ctx context.Context, job *provisioning.Job) (*provisionin
 	if job.Spec.Action == "" {
 		return nil, apierrors.NewBadRequest("missing spec.action")
 	}
-	if job.Spec.Action == provisioning.JobActionExport && job.Spec.Export == nil {
-		return nil, apierrors.NewBadRequest("missing spec.export")
+	if job.Spec.Action == provisioning.JobActionExport && job.Spec.Push == nil {
+		return nil, apierrors.NewBadRequest("missing spec.push")
 	}
 
-	if job.Spec.Action == provisioning.JobActionSync && job.Spec.Sync == nil {
-		return nil, apierrors.NewBadRequest("missing spec.sync")
+	if job.Spec.Action == provisioning.JobActionSync && job.Spec.Pull == nil {
+		return nil, apierrors.NewBadRequest("missing spec.pull")
 	}
 
 	// Only for add

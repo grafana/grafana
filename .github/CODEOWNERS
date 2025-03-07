@@ -67,6 +67,7 @@
 /hack/ @grafana/grafana-app-platform-squad
 
 /pkg/apis/provisioning @grafana/grafana-git-ui-sync-team
+/public/app/features/provisioning @grafana/grafana-git-ui-sync-team
 /pkg/registry/apis/provisioning @grafana/grafana-git-ui-sync-team
 
 /apps/alerting/ @grafana/alerting-backend

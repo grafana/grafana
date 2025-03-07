@@ -102,8 +102,8 @@ const (
 	SyncTargetTypeInstance SyncTargetType = "instance"
 
 	// Resources will be saved into a folder managed by this repository
-	// The folder k8s name will be the same as the repository k8s name
 	// It will contain a copy of everything from the remote
+	// The folder k8s name will be the same as the repository k8s name
 	SyncTargetTypeFolder SyncTargetType = "folder"
 )
 
@@ -150,7 +150,8 @@ type HealthStatus struct {
 	// When the health was checked last time
 	Checked int64 `json:"checked,omitempty"`
 
-	// Summary messages (will be shown to users)
+	// Summary messages (can be shown to users)
+	// Will only be populated when not healthy
 	// +listType=atomic
 	Message []string `json:"message,omitempty"`
 }
@@ -218,11 +219,17 @@ type ResourceWrapper struct {
 	// Path to the remote file
 	Path string `json:"path,omitempty"`
 
-	// The commit hash (if exists)
+	// The request ref (or branch if exists)
 	Ref string `json:"ref,omitempty"`
 
 	// The repo hash value
 	Hash string `json:"hash,omitempty"`
+
+	// Basic repository info
+	Repository ResourceRepositoryInfo `json:"repository"`
+
+	// Typed links for this file (only supported by external systems, github etc)
+	URLs *ResourceURLs `json:"urls,omitempty"`
 
 	// The modified time in the remote file system
 	Timestamp *metav1.Time `json:"timestamp,omitempty"`
@@ -230,32 +237,9 @@ type ResourceWrapper struct {
 	// Different flavors of the same object
 	Resource ResourceObjects `json:"resource"`
 
-	// Lint results
-	// +listType=atomic
-	Lint []LintIssue `json:"lint,omitempty"`
-
 	// If errors exist, show them here
 	// +listType=atomic
 	Errors []string `json:"errors,omitempty"`
-}
-
-// The kubernetes action required when loading a given resource
-// +enum
-type LintSeverity string
-
-// ResourceAction values
-const (
-	LintSeverityExclude LintSeverity = "exclude"
-	LintSeverityQuiet   LintSeverity = "quiet"
-	LintSeverityWarning LintSeverity = "warning"
-	LintSeverityError   LintSeverity = "error"
-	LintSeverityFixed   LintSeverity = "fixed"
-)
-
-type LintIssue struct {
-	Severity LintSeverity `json:"severity"`
-	Rule     string       `json:"rule"`
-	Message  string       `json:"message"`
 }
 
 type ResourceType struct {
@@ -284,6 +268,37 @@ type ResourceObjects struct {
 
 	// The value returned from a dryRun request
 	DryRun common.Unstructured `json:"dryRun,omitempty"`
+
+	// For write events, this will return the value that was added or updated
+	Upsert common.Unstructured `json:"upsert,omitempty"`
+}
+
+type ResourceRepositoryInfo struct {
+	// The repository type
+	Type RepositoryType `json:"type"`
+
+	// The display name for this repository
+	Title string `json:"title"`
+
+	// The namespace this belongs to
+	Namespace string `json:"namespace"`
+
+	// The name (identifier)
+	Name string `json:"name"`
+}
+
+type ResourceURLs struct {
+	// A URL pointing to the this file in the repository
+	SourceURL string `json:"sourceURL,omitempty"`
+
+	// A URL pointing to the repository this lives in
+	RepositoryURL string `json:"repositoryURL,omitempty"`
+
+	// A URL that will create a new pull requeset for this branch
+	NewPullRequestURL string `json:"newPullRequestURL,omitempty"`
+
+	// Compare this version to the target branch
+	CompareURL string `json:"compareURL,omitempty"`
 }
 
 // Information we can get just from the file listing
