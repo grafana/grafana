@@ -68,6 +68,9 @@ export class ElementState implements LayerElement {
   keysPressed: Set<string> = new Set();
   panelWidth: number = 0;
   panelHeight: number = 0;
+  movementInterval: number | null = null;
+  numbersAfterDot = 5;
+  decayPrecision = 1 / Math.pow(10, this.numbersAfterDot);
 
   constructor(
     public item: CanvasElementItem,
@@ -100,24 +103,36 @@ export class ElementState implements LayerElement {
       this.rotation = 0;
       this.velocity = { x: 0, y: 0 };
 
-      this.acceleration = 0.5;
+      this.acceleration = 0.1;
       this.friction = 0.98;
       this.keysPressed = new Set();
       this.panelWidth = scene?.width ?? 0;
       this.panelHeight = scene?.height ?? 0;
+      this.movementInterval = null;
 
       this.initEventListeners();
     }
   }
 
   initEventListeners() {
-    window.addEventListener('keydown', (e) => this.keysPressed.add(e.key));
-    window.addEventListener('keyup', (e) => this.keysPressed.delete(e.key));
-    this.startMovementLoop();
+    window.addEventListener('keydown', (e) => {
+      this.keysPressed.add(e.key);
+      // start movement loop if it's not already running
+      if (!this.movementInterval) {
+        this.startMovementLoop();
+      }
+    });
+    window.addEventListener('keyup', (e) => {
+      this.keysPressed.delete(e.key);
+    });
   }
 
   startMovementLoop() {
-    setInterval(() => {
+    this.movementInterval = window.setInterval(() => {
+      if (this.shouldStopMovement()) {
+        this.stopMovementLoop();
+      }
+
       this.updateMovement();
       this.applyFriction();
       this.moveElement();
@@ -130,6 +145,22 @@ export class ElementState implements LayerElement {
 
       this.onChange(this.options);
     }, 16);
+  }
+
+  stopMovementLoop() {
+    if (this.movementInterval !== null) {
+      clearInterval(this.movementInterval);
+      this.movementInterval = null;
+    }
+  }
+
+  shouldStopMovement() {
+    // Stop movement if velocity is very low and no keys are pressed
+    return (
+      Math.abs(this.velocity.x) < this.decayPrecision &&
+      Math.abs(this.velocity.y) < this.decayPrecision &&
+      !this.keysPressed.size
+    );
   }
 
   updateMovement() {
@@ -175,8 +206,23 @@ export class ElementState implements LayerElement {
       this.velocity.x = -this.velocity.x;
     }
 
-    this.position = { top: newTop, left: newLeft };
+    // Limit decimal precision and stop updating when stale
+    const roundedTop = this.roundToPrecision(newTop, this.numbersAfterDot);
+    const roundedLeft = this.roundToPrecision(newLeft, this.numbersAfterDot);
+
+    if (this.position.top !== roundedTop || this.position.left !== roundedLeft) {
+      this.position = {
+        top: roundedTop,
+        left: roundedLeft,
+      };
+    }
   }
+
+  roundToPrecision = (value: number, precision: number) => {
+    // TODO: toFixed() may be expensive, so round() may be a better option
+    const factor = 10 ** precision;
+    return Math.round(value * factor) / factor;
+  };
 
   private getScene(): Scene | undefined {
     let trav = this.parent;
