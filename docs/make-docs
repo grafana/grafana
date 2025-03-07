@@ -8,6 +8,12 @@
 # [Semantic versioning](https://semver.org/) is used to help the reader identify the significance of changes.
 # Changes are relevant to this script and the support docs.mk GNU Make interface.
 #
+# ## 8.5.2 (2025-02-28)
+#
+# ### Fixed
+#
+# - topic/<KIND> targets are no longer no-ops as a result of 8.5.1.
+#
 # ## 8.5.1 (2025-02-18)
 #
 # ### Fixed
