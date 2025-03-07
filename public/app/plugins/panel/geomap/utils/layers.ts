@@ -1,5 +1,7 @@
 import { Map as OpenLayersMap } from 'ol';
 import { FeatureLike } from 'ol/Feature';
+import LayerGroup from 'ol/layer/Group';
+import WebGLPointsLayer from 'ol/layer/WebGLPoints';
 import { Subject } from 'rxjs';
 
 import { getFrameMatchers, MapLayerHandler, MapLayerOptions, PanelData, textUtil } from '@grafana/data';
@@ -148,6 +150,19 @@ export async function initLayer(
   panel.byName.set(UID, state);
   // eslint-disable-next-line
   (state.layer as any).__state = state;
+
+  // Pass state into WebGLPointsLayers contained in a LayerGroup
+  if (layer instanceof LayerGroup) {
+    layer
+      .getLayers()
+      .getArray()
+      .forEach((layer) => {
+        if (layer instanceof WebGLPointsLayer) {
+          // eslint-disable-next-line
+          (layer as any).__state = state;
+        }
+      });
+  }
 
   applyLayerFilter(handler, options, panel.props.data);
 
