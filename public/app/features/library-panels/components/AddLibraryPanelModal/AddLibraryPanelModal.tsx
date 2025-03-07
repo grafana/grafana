@@ -35,7 +35,7 @@ export const AddLibraryPanelContents = ({
   const { saveLibraryPanel } = usePanelSave();
 
   const onCreate = useCallback(() => {
-    panel.libraryPanel = { uid: '', name: panelName };
+    panel.libraryPanel = { uid: '', name: panelName ?? '' };
 
     saveLibraryPanel(panel, folderUid!).then((res: LibraryPanel | FetchError) => {
       if (!isFetchError(res)) {
@@ -49,7 +49,7 @@ export const AddLibraryPanelContents = ({
 
   const isValidName = useAsync(async () => {
     try {
-      return !(await getLibraryPanelByName(panelName)).some((lp) => lp.folderUid === folderUid);
+      return !(await getLibraryPanelByName(panelName ?? '')).some((lp) => lp.folderUid === folderUid);
     } catch (err) {
       if (isFetchError(err)) {
         err.isHandled = true;

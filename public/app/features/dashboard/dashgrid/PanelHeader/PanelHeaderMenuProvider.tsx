@@ -47,7 +47,7 @@ function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): P
   return {
     id: panel.id,
     pluginId: panel.type,
-    title: panel.title,
+    title: panel.title ?? '',
     timeRange: dashboard.time,
     timeZone: getTimeZone({
       timeZone: dashboard.timezone,
