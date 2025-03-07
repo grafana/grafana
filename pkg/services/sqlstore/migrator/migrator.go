@@ -254,14 +254,13 @@ func (mg *Migrator) run(ctx context.Context) (err error) {
 		if err != nil {
 			return fmt.Errorf("failed to check table existence after applying snapshot: %w", err)
 		}
-		if !migrationLogExists {
-			return fmt.Errorf("table %s not found after applying snapshot: %w", mg.tableName, err)
-		}
 	}
 
-	_, err = mg.GetMigrationLog()
-	if err != nil {
-		return err
+	if migrationLogExists {
+		_, err = mg.GetMigrationLog()
+		if err != nil {
+			return err
+		}
 	}
 
 	successLabel := prometheus.Labels{"success": "true"}
