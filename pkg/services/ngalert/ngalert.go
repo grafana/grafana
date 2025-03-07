@@ -770,7 +770,6 @@ func createRecordingWriter(featureToggles featuremgmt.FeatureToggles, settings s
 				"remote_write_path_suffix", cfg.RemoteWritePathSuffix)
 
 			return writer.NewDatasourceWriter(cfg, datasourceService, httpClientProvider, clock, logger, m), nil
-
 		} else {
 			logger.Info("Setting up remote write using static configuration")
 			return writer.NewPrometheusWriterWithSettings(settings, httpClientProvider, clock, logger, m)
