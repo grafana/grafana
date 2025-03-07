@@ -89,13 +89,15 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
       // Load the new URL
       const upsert = request.data.resource.upsert as Resource<Dashboard>;
       if (isNew && upsert?.metadata?.name) {
-        navigate(
+        const url = locationUtil.assureBaseUrl(
           getDashboardUrl({
             uid: upsert.metadata.name,
             slug: kbn.slugifyForUrl(upsert.spec.title ?? ''),
-            currentQueryParams: '', // ???
+            currentQueryParams: window.location.search,
           })
         );
+
+        navigate(url);
         return;
       }
 
