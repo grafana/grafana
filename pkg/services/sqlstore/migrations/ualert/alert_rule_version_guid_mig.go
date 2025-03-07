@@ -94,7 +94,7 @@ func (c setRuleGuidMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) er
 		}
 		_, err := sess.Exec(q)
 		if err != nil {
-			mg.Logger.Error("Failed to update alert_rule_version table", "error", err)
+			mg.Logger.Error("Failed to update alert_rule table", "error", err)
 			return err
 		}
 		lastId = util.Pointer(results[len(results)-1])
