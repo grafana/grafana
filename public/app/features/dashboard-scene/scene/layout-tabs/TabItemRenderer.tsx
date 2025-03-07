@@ -2,7 +2,6 @@ import { css, cx } from '@emotion/css';
 import { useLocation } from 'react-router';
 
 import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { clearButtonStyles, useElementSelection, useStyles2 } from '@grafana/ui';
 // eslint-disable-next-line no-restricted-imports
@@ -38,10 +37,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
           className={cx(clearStyles, styles.label, isActive ? styles.labelActive : styles.labelNotActive)}
           role="tab"
           aria-selected={isActive}
-          onPointerDown={(e) => {
-            onSelect?.(e);
-            locationService.push(href);
-          }}
+          onPointerDown={onSelect}
         >
           {titleInterpolated}
         </a>
