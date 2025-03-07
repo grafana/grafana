@@ -64,7 +64,7 @@ export function ConnectionStep({ targetSelectable = true, generateName: generate
       const timestamp = Date.now();
       setValue('repository.title', `instance-${timestamp}`);
     }
-  }, [folderConnected, setValue]);
+  }, [folderConnected, generateName, setValue]);
 
   return (
     <FieldSet label="1. Set up your repository connection details">

@@ -3,39 +3,39 @@ import { ReactNode, useEffect, useState } from 'react';
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import {
+  Alert,
   Card,
+  ConfirmModal,
   EmptySearchResult,
   FilterInput,
   Icon,
   IconName,
   LinkButton,
-  Stack,
-  TextLink,
-  Text,
-  Alert,
-  ConfirmModal,
-  Tab,
-  TabsBar,
-  TabContent,
   Modal,
+  Stack,
+  Tab,
+  TabContent,
+  TabsBar,
+  Text,
+  TextLink,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
+import { ExportToRepository } from './ExportToRepository';
+import { FilesView } from './FilesView';
 import GettingStarted from './GettingStarted/GettingStarted';
 import GettingStartedPage from './GettingStarted/GettingStartedPage';
+import { MigrateToRepository } from './MigrateToRepository';
+import { RepositoryActions } from './RepositoryActions';
+import { RepositoryOverview } from './RepositoryOverview';
+import { RepositoryResources } from './RepositoryResources';
 import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
 import { Repository, ResourceCount, useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from './api';
-import { PROVISIONING_URL, CONNECT_URL } from './constants';
+import { CONNECT_URL, PROVISIONING_URL } from './constants';
 import { useRepositoryList } from './hooks';
 import { checkSyncSettings } from './utils';
-import { RepositoryOverview } from './RepositoryOverview';
-import { RepositoryResources } from './RepositoryResources';
-import { FilesView } from './FilesView';
-import { RepositoryActions } from './RepositoryActions';
-import { ExportToRepository } from './ExportToRepository';
-import { MigrateToRepository } from './MigrateToRepository';
 
 const appEvents = getAppEvents();
 
