@@ -2178,8 +2178,10 @@ var expAlertmanagerConfigFromAPI = `
             "name": "googlechat_test",
             "type": "googlechat",
             "disableResolveMessage": false,
-            "settings": {},
-            "secureFields": {"url": true}
+            "settings": {
+              "url": "http://CHANNEL_ADDR/googlechat_recv/googlechat_test"
+            },
+            "secureFields": {}
           }
         ]
       },
