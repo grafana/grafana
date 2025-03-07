@@ -22,8 +22,7 @@ The Group Attribute Sync API allows you to configure [group attribute sync featu
 > **Note:** Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise) and [Grafana Cloud](https://grafana.com/docs/grafana-cloud/)
 
 {{% admonition type="note" %}}
-This feature is behind the `groupAttributeSync` feature toggle.
-You can enable feature toggles through configuration file or environment variables. See configuration [docs](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles) for details.
+This feature is currently in [private preview](https://grafana.com/docs/release-life-cycle/#private-preview) and behind the `groupAttributeSync` feature toggle. Please contact support to have this feature enabled.
 {{% /admonition %}}
 
 ## List group mappings
