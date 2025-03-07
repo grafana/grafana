@@ -372,6 +372,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 
 	// Validate folder
 	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) && (dash.FolderID != 0 || dash.FolderUID != "") { // nolint:staticcheck
+		dr.log.Info("getting folder", "folderUid", dash.FolderUID, "folderId", dash.FolderID)
 		folder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{
 			OrgID:        dash.OrgID,
 			UID:          &dash.FolderUID,
@@ -407,7 +408,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	if err != nil {
 		return nil, err
 	}
-
+	dr.log.Info("validate dashboard before save", "dashboardUid", dash.UID, "dashboardTitle", dash.Title, "isParentFolderChanged", isParentFolderChanged)
 	if isParentFolderChanged {
 		// Check that the user is allowed to add a dashboard to the folder
 		guardian, err := guardian.NewByDashboard(ctx, dash, dto.OrgID, dto.User)
@@ -425,21 +426,22 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	if validateProvisionedDashboard {
+		dr.log.Info("validating provisioned dashboard", "dashboardUid", dash.UID, "dashboardTitle", dash.Title)
 		provisionedData, err := dr.GetProvisionedDashboardDataByDashboardID(ctx, dash.ID)
 		if err != nil {
 			return nil, err
 		}
-
+		dr.log.Info("provisioned dashboard", "dashboardUid", dash.UID, "dashboardTitle", dash.Title, "provisionedData", provisionedData)
 		if provisionedData != nil {
 			return nil, dashboards.ErrDashboardCannotSaveProvisionedDashboard
 		}
 	}
-
+	dr.log.Info("getting guardian for save permission check", "dashboardUid", dash.UID, "dashboardTitle", dash.Title)
 	guard, err := getGuardianForSavePermissionCheck(ctx, dash, dto.User)
 	if err != nil {
 		return nil, err
 	}
-
+	dr.log.Info("guardian for save permission check", "dashboardUid", dash.UID, "dashboardTitle", dash.Title, "guard", guard)
 	if dash.ID == 0 {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 		// nolint:staticcheck
@@ -457,7 +459,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 			return nil, dashboards.ErrDashboardUpdateAccessDenied
 		}
 	}
-
+	dr.log.Info("can save", "dashboardUid", dash.UID, "dashboardTitle", dash.Title)
 	var userID int64
 	if id, err := identity.UserIdentifier(dto.User.GetID()); err == nil {
 		userID = id
@@ -909,16 +911,20 @@ func (dr *DashboardServiceImpl) ImportDashboard(ctx context.Context, dto *dashbo
 		dto.Dashboard.Data.Set("refresh", dr.cfg.MinRefreshInterval)
 	}
 
+	dr.log.Info("building save dashboard command", "dashboardUid", dto.Dashboard.UID, "dashboardTitle", dto.Dashboard.Title)
 	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, true)
 	if err != nil {
+		dr.log.Error("error building save dashboard command", "error", err)
 		return nil, err
 	}
 
 	dash, err := dr.saveDashboard(ctx, cmd)
 	if err != nil {
+		dr.log.Error("error saving dashboard", "error", err)
 		return nil, err
 	}
 
+	dr.log.Info("saving permissions", "dashboardUid", dto.Dashboard.UID, "dashboardTitle", dto.Dashboard.Title)
 	dr.setDefaultPermissions(ctx, dto, dash, false)
 
 	return dash, nil
@@ -989,12 +995,15 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 	ctx, span := tracer.Start(ctx, "dashboards.service.setDefaultPermissions")
 	defer span.End()
 
+	dr.log.Info("setting default permissions", "dashboardUid", dash.UID, "dashboardTitle", dash.Title)
+
 	resource := "dashboard"
 	if dash.IsFolder {
 		resource = "folder"
 	}
 
 	if !dr.cfg.RBAC.PermissionsOnCreation(resource) {
+		dr.log.Info("permissions not enabled", "resource", resource)
 		return
 	}
 
@@ -1019,10 +1028,12 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 		}...)
 	}
 
+	dr.log.Info("setting permissions", "dashboardUid", dash.UID, "dashboardTitle", dash.Title)
 	svc := dr.getPermissionsService(dash.IsFolder)
 	if _, err := svc.SetPermissions(ctx, dto.OrgID, dash.UID, permissions...); err != nil {
 		dr.log.Error("Could not set default permissions", "dashboard", dash.Title, "error", err)
 	}
+	dr.log.Info("set permissions", "dashboardUid", dash.UID, "dashboardTitle", dash.Title)
 }
 
 func (dr *DashboardServiceImpl) setDefaultFolderPermissions(ctx context.Context, cmd *folder.CreateFolderCommand, f *folder.Folder, provisioned bool) {
@@ -1585,6 +1596,7 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 		return nil, err
 	}
 
+	dr.log.Info("setting plugin id meta", "pluginId", cmd.PluginID)
 	dashboard.SetPluginIDMeta(obj, cmd.PluginID)
 
 	out, err := dr.createOrUpdateDash(ctx, obj, orgID)
@@ -1597,21 +1609,29 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 
 func (dr *DashboardServiceImpl) createOrUpdateDash(ctx context.Context, obj *unstructured.Unstructured, orgID int64) (*dashboards.Dashboard, error) {
 	var out *unstructured.Unstructured
+
+	dr.log.Info("getting dashboard", "dashboardUid", obj.GetName())
 	current, err := dr.k8sclient.Get(ctx, obj.GetName(), orgID, v1.GetOptions{})
 	if current == nil || err != nil {
+		dr.log.Info("creating dashboard", "dashboardUid", obj.GetName())
 		out, err = dr.k8sclient.Create(ctx, obj, orgID)
 		if err != nil {
+			dr.log.Error("error creating dashboard", "error", err)
 			return nil, err
 		}
 	} else {
+		dr.log.Info("updating dashboard", "dashboardUid", obj.GetName())
 		out, err = dr.k8sclient.Update(ctx, obj, orgID)
 		if err != nil {
+			dr.log.Error("error updating dashboard", "error", err)
 			return nil, err
 		}
 	}
 
+	dr.log.Info("converting unstructured to legacy dashboard", "dashboardUid", obj.GetName())
 	finalDash, err := dr.UnstructuredToLegacyDashboard(ctx, out, orgID)
 	if err != nil {
+		dr.log.Error("error converting unstructured to legacy dashboard", "error", err)
 		return nil, err
 	}
 
