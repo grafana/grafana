@@ -15,11 +15,13 @@ import {
 import { t } from 'app/core/internationalization';
 
 import { isInCloneChain } from '../utils/clone';
+import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardAddPane } from './DashboardAddPane';
 import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
 import { ElementSelection } from './ElementSelection';
+import { NewObjectAddedToCanvasEvent } from './shared';
 import { useEditableElement } from './useEditableElement';
 
 export interface DashboardEditPaneState extends SceneObjectState {
@@ -39,6 +41,18 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
         onSelect: (item, multi) => this.selectElement(item, multi),
       },
     });
+
+    this.addActivationHandler(this.onActivate.bind(this));
+  }
+
+  private onActivate() {
+    const dashboard = getDashboardSceneFor(this);
+
+    this._subs.add(
+      dashboard.subscribeToEvent(NewObjectAddedToCanvasEvent, ({ payload }) => {
+        this.newObjectAddedToCanvas(payload);
+      })
+    );
   }
 
   public enableSelection() {
@@ -134,7 +148,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     this.setState({ tab });
   };
 
-  public newObjectAddedToCanvas(obj: SceneObject) {
+  private newObjectAddedToCanvas(obj: SceneObject) {
     this.selectObject(obj, obj.state.key!, false);
 
     if (this.state.tab !== 'configure') {

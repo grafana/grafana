@@ -2,6 +2,7 @@ import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectSt
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
 import { joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getGridItemKeyForPanelId, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
@@ -59,6 +60,8 @@ export class ResponsiveGridLayoutManager
     this.state.layout.setState({
       children: [new ResponsiveGridItem({ body: vizPanel }), ...this.state.layout.state.children],
     });
+
+    this.publishEvent(new NewObjectAddedToCanvasEvent(vizPanel), true);
   }
 
   public removePanel(panel: VizPanel) {
@@ -76,11 +79,13 @@ export class ResponsiveGridLayoutManager
     const newPanelId = dashboardSceneGraph.getNextPanelId(this);
     const grid = this.state.layout;
 
+    const newPanel = panel.clone({
+      key: getVizPanelKeyForPanelId(newPanelId),
+    });
+
     const newGridItem = gridItem.clone({
       key: getGridItemKeyForPanelId(newPanelId),
-      body: panel.clone({
-        key: getVizPanelKeyForPanelId(newPanelId),
-      }),
+      body: newPanel,
     });
 
     const sourceIndex = grid.state.children.indexOf(gridItem);
@@ -90,6 +95,8 @@ export class ResponsiveGridLayoutManager
     newChildren.splice(sourceIndex + 1, 0, newGridItem);
 
     grid.setState({ children: newChildren });
+
+    this.publishEvent(new NewObjectAddedToCanvasEvent(newPanel), true);
   }
 
   public getVizPanels(): VizPanel[] {
