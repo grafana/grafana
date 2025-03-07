@@ -54,13 +54,13 @@ jobs:
 
       - name: Run unit tests
         run: |
-          echo "test backend unit tests with coverpkg"
           make test-go-unit
+          
         env:
           WIRE_TAGS: 'enterprise'
-          GO_UNIT_COVER_PROFILE: "${{ env.TEST_TYPE }}.cov"
-          GO_TEST_OUTPUT: "/tmp/${{ env.TEST_TYPE }}.log"
-          GO_UNIT_TEST_COVERPKG: "github.com/grafana/grafana/..."
+          GO_UNIT_COVER_PROFILE: '${{ env.TEST_TYPE }}.cov'
+          GO_TEST_OUTPUT: '/tmp/${{ env.TEST_TYPE }}.log'
+          GO_UNIT_TEST_COVERPKG: 'github.com/grafana/grafana/...'
 
       - name: Install Grafana Bench
         uses: ./.github/actions/setup-grafana-bench
@@ -81,7 +81,7 @@ jobs:
         uses: ./.github/actions/test-coverage-processor
         with:
           test-type: '${{ env.TEST_TYPE }}'
-          coverage-file: 'unit.cov'
+          coverage-file: '${{ env.TEST_TYPE }}.cov'
           codecov-token: ${{ secrets.CODECOV_TOKEN }}
           codecov-flag: '${{ env.TEST_TYPE }}'
           codecov-name: '${{ env.TEST_TYPE }}'

@@ -48,13 +48,14 @@ jobs:
           WIRE_TAGS: 'oss'
 
       - name: Run unit tests
-        # Instead of using the Makefile command `make test-go-unit`, we need to use the `go test` command directly to inject the `-coverpkg` flag
         run: |
-          echo "test backend unit tests with coverpkg"
-          GO_TEST_FILES=$(./scripts/go-workspace/test-includes.sh)
-          go test -v -race -short -covermode=atomic -coverprofile=${{ env.TEST_TYPE }}.cov -coverpkg=github.com/grafana/grafana/... -timeout=30m ${GO_TEST_FILES}
+          make test-go-unit
+          
         env:
           WIRE_TAGS: 'oss'
+          GO_UNIT_COVER_PROFILE: '${{ env.TEST_TYPE }}.cov'
+          GO_TEST_OUTPUT: '/tmp/${{ env.TEST_TYPE }}.log'
+          GO_UNIT_TEST_COVERPKG: 'github.com/grafana/grafana/...'
 
       - name: Process and upload coverage
         uses: ./.github/actions/test-coverage-processor
