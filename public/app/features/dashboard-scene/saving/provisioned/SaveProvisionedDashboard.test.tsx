@@ -151,6 +151,14 @@ function setup(props: Partial<Props> = {}) {
   };
 }
 
+const mockRequestBase = {
+  isSuccess: true,
+  isError: false,
+  isLoading: false,
+  error: null,
+  data: { resource: { upsert: {} } },
+};
+
 describe('SaveProvisionedDashboard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -187,6 +195,7 @@ describe('SaveProvisionedDashboard', () => {
     // Mock useCreateOrUpdateRepositoryFile
     const mockAction = jest.fn();
     const mockRequest = {
+      ...mockRequestBase,
       isSuccess: true,
       isError: false,
       isLoading: false,
@@ -255,6 +264,7 @@ describe('SaveProvisionedDashboard', () => {
 
     const mockAction = jest.fn();
     const mockRequest = {
+      ...mockRequestBase,
       isSuccess: true,
       isError: false,
       isLoading: false,
@@ -359,6 +369,7 @@ describe('SaveProvisionedDashboard', () => {
 
     const mockAction = jest.fn();
     const mockRequest = {
+      ...mockRequestBase,
       isSuccess: true,
       isError: false,
       isLoading: false,
@@ -416,6 +427,7 @@ describe('SaveProvisionedDashboard', () => {
 
     const mockAction = jest.fn();
     const mockRequest = {
+      ...mockRequestBase,
       isSuccess: false,
       isError: true,
       isLoading: false,
