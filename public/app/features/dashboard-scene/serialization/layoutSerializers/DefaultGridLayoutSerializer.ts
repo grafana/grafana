@@ -248,24 +248,7 @@ function createSceneGridLayoutForItems(layout: GridLayoutKind, elements: Record<
       if (!panel) {
         throw new Error(`Panel with uid ${element.spec.element.name} not found in the dashboard elements`);
       }
-
-      if (panel.kind === 'Panel') {
-        return buildGridItem(element.spec, panel);
-      } else if (panel.kind === 'LibraryPanel') {
-        const libraryPanel = buildLibraryPanel(panel);
-
-        return new DashboardGridItem({
-          key: `grid-item-${panel.spec.id}`,
-          x: element.spec.x,
-          y: element.spec.y,
-          width: element.spec.width,
-          height: element.spec.height,
-          itemHeight: element.spec.height,
-          body: libraryPanel,
-        });
-      } else {
-        throw new Error(`Unknown element kind: ${element.kind}`);
-      }
+      return buildGridItem(element.spec, panel);
     } else if (element.kind === 'GridLayoutRow') {
       const children = element.spec.elements.map((gridElement) => {
         const panel = elements[getOriginalKey(gridElement.spec.element.name)];
