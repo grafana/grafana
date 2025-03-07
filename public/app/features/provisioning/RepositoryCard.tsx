@@ -24,7 +24,7 @@ export function RepositoryCard({ repository }: Props) {
       const branchUrl = branch ? `${url}/tree/${branch}` : url;
 
       meta.push(
-        <TextLink key="link" external style={{ color: 'inherit' }} href={branchUrl}>
+        <TextLink key="link" external href={branchUrl}>
           {branchUrl}
         </TextLink>
       );
@@ -32,14 +32,17 @@ export function RepositoryCard({ repository }: Props) {
       if (status?.webhook?.id) {
         const webhookUrl = `${url}/settings/hooks/${status.webhook.id}`;
         meta.push(
-          <TextLink key="webhook" style={{ color: 'inherit' }} href={webhookUrl}>
-            Webhook <Icon name="check" />
-          </TextLink>
+          <Stack gap={1} direction="row" alignItems="center">
+            <TextLink key="webhook" href={webhookUrl}>
+              Webhook
+            </TextLink>
+            <Icon name="check" className="text-success" />
+          </Stack>
         );
       }
     } else if (spec?.type === 'local') {
       meta.push(
-        <Text element="p" key="path">
+        <Text variant="bodySmall" key="path">
           {spec.local?.path ?? ''}
         </Text>
       );
@@ -55,38 +58,52 @@ export function RepositoryCard({ repository }: Props) {
   return (
     <Card key={name}>
       <Card.Figure>
-        <Icon name={getRepositoryIcon()} width={40} height={40} />
+        <Icon name={getRepositoryIcon()} size="xxl" />
       </Card.Figure>
       <Card.Heading>
-        <Stack>
-          {spec?.title}
+        <Stack gap={2} direction="row" alignItems="center">
+          {spec?.title && <Text variant="h3">{spec.title}</Text>}
           <StatusBadge enabled={Boolean(spec?.sync?.enabled)} state={status?.sync?.state} name={name} />
         </Stack>
       </Card.Heading>
 
       <Card.Description>
-        {spec?.description}
-        {status?.stats?.length && (
-          <Stack>
-            {status.stats.map((stat, index) => (
-              <LinkButton key={index} fill="outline" size="md" href={getListURL(repository, stat)}>
-                {stat.count} {stat.resource}
-              </LinkButton>
-            ))}
-          </Stack>
-        )}
+        <Stack gap={2} direction="column">
+          {spec?.description && <Text>{spec.description}</Text>}
+          {status?.stats?.length && (
+            <Stack gap={1} direction="row" wrap>
+              {status.stats.map((stat, index) => (
+                <LinkButton
+                  key={index}
+                  fill="outline"
+                  size="md"
+                  variant="secondary"
+                  href={getListURL(repository, stat)}
+                >
+                  {stat.count} {stat.resource}
+                </LinkButton>
+              ))}
+            </Stack>
+          )}
+        </Stack>
       </Card.Description>
 
-      <Card.Meta>{getRepositoryMeta()}</Card.Meta>
+      <Card.Meta>
+        <Stack gap={2} direction="row" wrap>
+          {getRepositoryMeta()}
+        </Stack>
+      </Card.Meta>
 
       <Card.Actions>
-        <LinkButton icon="eye" href={`${PROVISIONING_URL}/${name}`} variant="secondary">
-          View
-        </LinkButton>
-        <SyncRepository repository={repository} />
-        <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`}>
-          Settings
-        </LinkButton>
+        <Stack gap={1} direction="row">
+          <LinkButton icon="eye" href={`${PROVISIONING_URL}/${name}`} variant="secondary" size="md">
+            View
+          </LinkButton>
+          <SyncRepository repository={repository} />
+          <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`} size="md">
+            Settings
+          </LinkButton>
+        </Stack>
       </Card.Actions>
       <Card.SecondaryActions>
         <DeleteRepositoryButton name={name} />
