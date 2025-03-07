@@ -108,7 +108,8 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"alertingConversionAPI"},
+			EnableFeatureToggles:  []string{"alertingConversionAPI", "grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
+			EnableRecordingRules:  true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)
@@ -219,7 +220,8 @@ func TestIntegrationConvertPrometheusEndpoints_UpdateRule(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"alertingConversionAPI"},
+			EnableFeatureToggles:  []string{"alertingConversionAPI", "grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
+			EnableRecordingRules:  true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)
@@ -305,7 +307,8 @@ func TestIntegrationConvertPrometheusEndpoints_Conflict(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"alertingConversionAPI"},
+			EnableFeatureToggles:  []string{"alertingConversionAPI", "grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
+			EnableRecordingRules:  true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)
@@ -392,7 +395,8 @@ func TestIntegrationConvertPrometheusEndpoints_CreatePausedRules(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"alertingConversionAPI"},
+			EnableFeatureToggles:  []string{"alertingConversionAPI", "grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
+			EnableRecordingRules:  true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
@@ -507,7 +511,8 @@ func TestIntegrationConvertPrometheusEndpoints_FolderUIDHeader(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"alertingConversionAPI"},
+			EnableFeatureToggles:  []string{"alertingConversionAPI", "grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
+			EnableRecordingRules:  true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
@@ -608,7 +613,8 @@ func TestIntegrationConvertPrometheusEndpoints_Delete(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"alertingConversionAPI"},
+			EnableFeatureToggles:  []string{"alertingConversionAPI", "grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
+			EnableRecordingRules:  true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)

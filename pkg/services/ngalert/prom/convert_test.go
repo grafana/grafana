@@ -198,6 +198,7 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 					require.NotNil(t, grafanaRule.Record)
 					require.Equal(t, grafanaRule.Record.From, queryRefID)
 					require.Equal(t, promRule.Record, grafanaRule.Record.Metric)
+					require.Equal(t, tc.config.DatasourceUID, grafanaRule.Record.TargetDatasourceUID)
 				} else {
 					require.Equal(t, fmt.Sprintf("[%s] %s", tc.promGroup.Name, promRule.Alert), grafanaRule.Title)
 				}
