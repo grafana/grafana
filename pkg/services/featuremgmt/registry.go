@@ -1789,6 +1789,15 @@ var (
 			Owner:       grafanaAlertingSquad,
 			Expression:  "true", // enabled by default
 		},
+		{
+			Name:              "inviteUserExperimental",
+			Description:       "Renders invite user button along the app",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSharingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
+		},
 	}
 )
 
