@@ -13,7 +13,7 @@ weight: 150
 
 You use feature toggles, also known as feature flags, to enable or disable features in Grafana. You can turn on feature toggles to try out new functionality in development or test environments.
 
-This page contains a list of available feature toggles. To learn how to turn on feature toggles, refer to our [Configure Grafana documentation]({{< relref "../_index.md#feature_toggles" >}}). Feature toggles are also available to Grafana Cloud Advanced customers. If you use Grafana Cloud Advanced, you can open a support ticket and specify the feature toggles and stack for which you want them enabled.
+This page contains a list of available feature toggles. To learn how to turn on feature toggles, refer to our [Configure Grafana documentation](../#feature_toggles). Feature toggles are also available to Grafana Cloud Advanced customers. If you use Grafana Cloud Advanced, you can open a support ticket and specify the feature toggles and stack for which you want them enabled.
 
 For more information about feature release stages, refer to [Release life cycle for Grafana Labs](https://grafana.com/docs/release-life-cycle/) and [Manage feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/feature-toggles/#manage-feature-toggles).
 
@@ -64,6 +64,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `groupToNestedTableTransformation`     | Enables the group to nested table transformation                                                                                                                   | Yes                |
 | `newPDFRendering`                      | New implementation for the dashboard-to-PDF rendering                                                                                                              | Yes                |
 | `tlsMemcached`                         | Use TLS-enabled memcached in the enterprise caching feature                                                                                                        | Yes                |
+| `ssoSettingsSAML`                      | Use the new SSO Settings API to configure the SAML connector                                                                                                       | Yes                |
 | `cloudWatchNewLabelParsing`            | Updates CloudWatch label parsing to be more accurate                                                                                                               | Yes                |
 | `accessActionSets`                     | Introduces action sets for resource permissions. Also ensures that all folder editors and admins can create subfolders without needing any additional permissions. | Yes                |
 | `newDashboardSharingComponent`         | Enables the new sharing drawer design                                                                                                                              | Yes                |
@@ -111,7 +112,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `regressionTransformation`            | Enables regression analysis transformation                                                                                                                                                   |
 | `onPremToCloudMigrations`             | Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.          |
 | `alertingSaveStateCompressed`         | Enables the compressed protobuf-based alert state storage                                                                                                                                    |
-| `ssoSettingsSAML`                     | Use the new SSO Settings API to configure the SAML connector                                                                                                                                 |
 | `azureMonitorPrometheusExemplars`     | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                                                                                 |
 | `ssoSettingsLDAP`                     | Use the new SSO Settings API to configure LDAP                                                                                                                                               |
 | `improvedExternalSessionHandling`     | Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.                                                           |
@@ -231,7 +231,7 @@ Experimental features might be changed or removed without prior notice.
 
 ## Development feature toggles
 
-The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be experimental.
+The following toggles require explicitly setting Grafana's [app mode](../#app_mode) to 'development' before you can enable this feature toggle. These features tend to be experimental.
 
 | Feature toggle name                    | Description                                                                   |
 | -------------------------------------- | ----------------------------------------------------------------------------- |
