@@ -492,7 +492,7 @@ func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *contextmodel.ReqContex
 	namespace, identifier := c.SignedInUser.GetNamespacedID()
 	if namespace != identity.NamespaceUser {
 		hs.log.Debug("Requested endpoint only available to users")
-		c.JsonApiErr(http.StatusForbidden, "Endpoint only available for users", nil)
+		c.JsonApiErr(http.StatusNotModified, "Endpoint only available for users", nil)
 		return
 	}
 
@@ -660,7 +660,7 @@ func (hs *HTTPServer) getUserID(c *contextmodel.ReqContext) (int64, *response.No
 	namespace, identifier := c.SignedInUser.GetNamespacedID()
 	if namespace != identity.NamespaceUser {
 		hs.log.Debug("Requested endpoint only available to users")
-		return 0, response.Error(http.StatusForbidden, "Endpoint only available for users", nil)
+		return 0, response.Error(http.StatusNotModified, "Endpoint only available for users", nil)
 	}
 
 	userID, err := identity.IntIdentifier(namespace, identifier)
