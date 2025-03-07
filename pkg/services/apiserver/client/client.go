@@ -48,6 +48,7 @@ type k8sHandler struct {
 	restConfig  func(context.Context) (*rest.Config, error)
 	searcher    resource.ResourceIndexClient
 	userService user.Service
+	log         log.Logger
 }
 
 func NewK8sHandler(dual dualwrite.Service, namespacer request.NamespaceMapper, gvr schema.GroupVersionResource,
@@ -61,6 +62,7 @@ func NewK8sHandler(dual dualwrite.Service, namespacer request.NamespaceMapper, g
 		restConfig:  restConfig,
 		searcher:    searchClient,
 		userService: userSvc,
+		log:         log.New("k8sHandler"),
 	}
 }
 
@@ -73,16 +75,19 @@ func (h *k8sHandler) Get(ctx context.Context, name string, orgID int64, options 
 	// otherwise the context goes through the handlers twice and causes issues
 	newCtx, cancel, err := h.getK8sContext(ctx)
 	if err != nil {
+		h.log.Error("failed to get k8s context", "error", err)
 		return nil, err
 	} else if cancel != nil {
 		defer cancel()
 	}
+	h.log.Info("got k8s context")
 
 	client, err := h.getClient(newCtx, orgID)
 	if err != nil {
+		h.log.Error("failed to get k8s client", "error", err)
 		return nil, err
 	}
-
+	h.log.Info("got k8s client", "client", client)
 	return client.Get(newCtx, name, options, subresource...)
 }
 
