@@ -374,7 +374,7 @@ func (ng *AlertNG) init() error {
 		// Force-disable the feature if the feature toggle is not on - sets us up for feature toggle removal.
 		ng.Cfg.UnifiedAlerting.RecordingRules.Enabled = false
 	}
-	recordingWriter, err := createRecordingWriter(ng.FeatureToggles, ng.Cfg.UnifiedAlerting.RecordingRules, ng.httpClientProvider, clk, ng.Metrics.GetRemoteWriterMetrics())
+	recordingWriter, err := createRecordingWriter(ng.FeatureToggles, ng.Cfg.UnifiedAlerting.RecordingRules, ng.httpClientProvider, ng.DataSourceService, clk, ng.Metrics.GetRemoteWriterMetrics())
 	if err != nil {
 		return fmt.Errorf("failed to initialize recording writer: %w", err)
 	}
@@ -754,11 +754,26 @@ func createRemoteAlertmanager(cfg remote.AlertmanagerConfig, kvstore kvstore.KVS
 	return remote.NewAlertmanager(cfg, notifier.NewFileStore(cfg.OrgID, kvstore), decryptFn, autogenFn, m, tracer)
 }
 
-func createRecordingWriter(featureToggles featuremgmt.FeatureToggles, settings setting.RecordingRuleSettings, httpClientProvider httpclient.Provider, clock clock.Clock, m *metrics.RemoteWriter) (schedule.RecordingWriter, error) {
+func createRecordingWriter(featureToggles featuremgmt.FeatureToggles, settings setting.RecordingRuleSettings, httpClientProvider httpclient.Provider, datasourceService datasources.DataSourceService, clock clock.Clock, m *metrics.RemoteWriter) (schedule.RecordingWriter, error) {
 	logger := log.New("ngalert.writer")
 
 	if settings.Enabled {
-		return writer.NewPrometheusWriterWithSettings(settings, httpClientProvider, clock, logger, m)
+		if featureToggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRulesDatasources) {
+			cfg := writer.DatasourceWriterConfig{
+				Timeout:               settings.Timeout,
+				DefaultDatasourceUID:  settings.DefaultDatasourceUID,
+				RemoteWritePathSuffix: settings.RemoteWritePathSuffix,
+			}
+
+			logger.Info("Setting up remote write using data sources",
+				"timeout", cfg.Timeout, "default_datasource_uid", cfg.DefaultDatasourceUID,
+				"remote_write_path_suffix", cfg.RemoteWritePathSuffix)
+
+			return writer.NewDatasourceWriter(cfg, datasourceService, httpClientProvider, clock, logger, m), nil
+		} else {
+			logger.Info("Setting up remote write using static configuration")
+			return writer.NewPrometheusWriterWithSettings(settings, httpClientProvider, clock, logger, m)
+		}
 	}
 
 	return writer.NoopWriter{}, nil
