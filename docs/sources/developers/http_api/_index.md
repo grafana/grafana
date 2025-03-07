@@ -48,7 +48,7 @@ curl http://admin:admin@localhost:3000/api/org
 ### Service Account Token
 
 To create a service account token, click on **Administration** in the left-side menu, click **Users and access**, then **Service Accounts**.
-For more information on how to use service account tokens, refer to the [Service Accounts]({{< relref "../../administration/service-accounts/" >}}) documentation.
+For more information on how to use service account tokens, refer to the [Service Accounts](../../administration/service-accounts/) documentation.
 
 You use the token in all requests in the `Authorization` header, like this:
 
@@ -78,42 +78,42 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 ## HTTP APIs
 
-- [Admin API]({{< relref "admin/" >}})
+- [Admin API](admin/)
 - [Alerting API (unstable)](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json)
-- [Alerting Provisioning API]({{< relref "alerting_provisioning/" >}})
-- [Annotations API]({{< relref "annotations/" >}})
-- [Correlations API]({{< relref "correlations/" >}})
-- [Dashboard API]({{< relref "dashboard/" >}})
-- [Dashboard Permissions API]({{< relref "dashboard_permissions/" >}})
-- [Dashboard Versions API]({{< relref "dashboard_versions/" >}})
-- [Data source API]({{< relref "data_source/" >}})
-- [Folder API]({{< relref "folder/" >}})
-- [Folder Permissions API]({{< relref "folder_permissions/" >}})
-- [Folder/Dashboard Search API]({{< relref "folder_dashboard_search/" >}})
-- [Library Element API]({{< relref "library_element/" >}})
-- [Organization API]({{< relref "org/" >}})
-- [Other API]({{< relref "other/" >}})
-- [Playlists API]({{< relref "playlist/" >}})
-- [Preferences API]({{< relref "preferences/" >}})
-- [Short URL API]({{< relref "short_url/" >}})
-- [Query history API]({{< relref "query_history/" >}})
-- [Snapshot API]({{< relref "snapshot/" >}})
-- [Team API]({{< relref "team/" >}})
-- [User API]({{< relref "user/" >}})
+- [Alerting Provisioning API](alerting_provisioning/)
+- [Annotations API](annotations/)
+- [Correlations API](correlations/)
+- [Dashboard API](dashboard/)
+- [Dashboard Permissions API](dashboard_permissions/)
+- [Dashboard Versions API](dashboard_versions/)
+- [Data source API](data_source/)
+- [Folder API](folder/)
+- [Folder Permissions API](folder_permissions/)
+- [Folder/Dashboard Search API](folder_dashboard_search/)
+- [Library Element API](library_element/)
+- [Organization API](org/)
+- [Other API](other/)
+- [Playlists API](playlist/)
+- [Preferences API](preferences/)
+- [Short URL API](short_url/)
+- [Query history API](query_history/)
+- [Snapshot API](snapshot/)
+- [Team API](team/)
+- [User API](user/)
 
 ## Deprecated HTTP APIs
 
-- [Alerting Notification Channels API]({{< relref "alerting_notification_channels/" >}})
-- [Alerting API]({{< relref "alerting/" >}})
-- [Authentication API]({{< relref "auth/" >}})
+- [Alerting Notification Channels API](alerting_notification_channels/)
+- [Alerting API](alerting/)
+- [Authentication API](auth/)
 
 ## Grafana Enterprise HTTP APIs
 
 Grafana Enterprise includes all of the Grafana OSS APIs as well as those that follow:
 
-- [Role-based access control API]({{< relref "access_control/" >}})
-- [Data source permissions API]({{< relref "datasource_permissions/" >}})
-- [Team sync API]({{< relref "team_sync/" >}})
-- [License API]({{< relref "licensing/" >}})
-- [Reporting API]({{< relref "reporting/" >}})
-- [Query and resource caching API]({{< relref "query_and_resource_caching/" >}})
+- [Role-based access control API](access_control/)
+- [Data source permissions API](datasource_permissions/)
+- [Team sync API](team_sync/)
+- [License API](licensing/)
+- [Reporting API](reporting/)
+- [Query and resource caching API](query_and_resource_caching/)

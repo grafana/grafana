@@ -10,10 +10,10 @@ weight: 114
 
 # Legacy Grafana alerts
 
-Grafana Alerting is enabled by default for new OSS installations. For older installations, it is still an [opt-in]({{< relref "../alerting/migrating-alerts/opt-in" >}}) feature.
+Grafana Alerting is enabled by default for new OSS installations. For older installations, it is still an [opt-in](../alerting/migrating-alerts/opt-in/) feature.
 
 {{% admonition type="note" %}}
-Legacy dashboard alerts are deprecated and will be removed in Grafana 9. We encourage you to migrate to [Grafana Alerting]({{< relref "../alerting/migrating-alerts" >}}) for all existing installations.
+Legacy dashboard alerts are deprecated and will be removed in Grafana 9. We encourage you to migrate to [Grafana Alerting](../alerting/migrating-alerts/) for all existing installations.
 {{% /admonition %}}
 
 Legacy dashboard alerts have two main components:
@@ -25,9 +25,9 @@ Legacy dashboard alerts have two main components:
 
 You can perform the following tasks for alerts:
 
-- [Create an alert rule]({{< relref "./create-alerts" >}})
-- [View existing alert rules and their current state]({{< relref "./view-alerts" >}})
-- [Test alert rules and troubleshoot]({{< relref "./troubleshoot-alerts" >}})
-- [Add or edit an alert contact point]({{< relref "./notifications" >}})
+- [Create an alert rule](create-alerts/)
+- [View existing alert rules and their current state](view-alerts/)
+- [Test alert rules and troubleshoot](troubleshoot-alerts/)
+- [Add or edit an alert contact point](notifications/)
 
 {{< docs/shared lookup="alerts/grafana-managed-alerts.md" source="grafana" version="<GRAFANA VERSION>" >}}

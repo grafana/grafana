@@ -16,11 +16,11 @@ weight: 15
 
 Explore is a powerful tool for logging and log analysis. It allows you to investigate logs from different data sources including:
 
-- [Loki]({{< relref "../datasources/loki" >}})
-- [Elasticsearch]({{< relref "../datasources/elasticsearch" >}})
-- [Cloudwatch]({{< relref "../datasources/aws-cloudwatch" >}})
-- [InfluxDB]({{< relref "../datasources/influxdb" >}})
-- [Azure Monitor]({{< relref "../datasources/azure-monitor" >}})
+- [Loki](../../datasources/loki/)
+- [Elasticsearch](../../datasources/elasticsearch/)
+- [Cloudwatch](../../datasources/aws-cloudwatch/)
+- [InfluxDB](../../datasources/influxdb/)
+- [Azure Monitor](../../datasources/azure-monitor/)
 
 With Explore, you can efficiently monitor, troubleshoot, and respond to incidents by analyzing your logs and identifying the root causes. It also helps you to correlate logs with other telemetry signals such as metrics, traces or profiles, by viewing them side-by-side.
 
@@ -138,7 +138,7 @@ You can easily copy the content of a selected log line to your clipboard by clic
 
 ### Copy link to log line
 
-Linking of log lines in Grafana allows you to quickly navigate to specific log entries for precise analysis. By clicking the **Copy shortlink** button for a log line, you can generate and copy a [short URL]({{< relref "../developers/http_api/short_url/" >}}) that provides direct access to the exact log entry within an absolute time range. When you open the link, Grafana will automatically scroll to the corresponding log line and highlight it with a blue background, making it easy to identify and focus on the relevant information.
+Linking of log lines in Grafana allows you to quickly navigate to specific log entries for precise analysis. By clicking the **Copy shortlink** button for a log line, you can generate and copy a [short URL](../../developers/http_api/short_url/) that provides direct access to the exact log entry within an absolute time range. When you open the link, Grafana will automatically scroll to the corresponding log line and highlight it with a blue background, making it easy to identify and focus on the relevant information.
 
 > **Note:** This is currently only supported in Loki and other data sources that provide an `id` field.
 

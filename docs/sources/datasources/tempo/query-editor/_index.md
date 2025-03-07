@@ -50,7 +50,7 @@ To learn more about how to query by TraceQL, refer to the [TraceQL documentation
 
 The TraceQL query builder, located on the **Explore** > **Query type** > **Search** in Grafana, provides drop-downs and text fields to help you write a query.
 
-Refer to the [Search using the TraceQL query builder documentation]({{< relref "./traceql-search" >}}) to learn more about creating queries using convenient drop-down menus.
+Refer to the [Search using the TraceQL query builder documentation](traceql-search/) to learn more about creating queries using convenient drop-down menus.
 
 ![The TraceQL query builder](/static/img/docs/tempo/screenshot-traceql-query-type-search-v10.png)
 
@@ -58,7 +58,7 @@ Refer to the [Search using the TraceQL query builder documentation]({{< relref "
 
 The TraceQL query editor, located on the **Explore** > **TraceQL** tab in Grafana, lets you search by trace ID and write TraceQL queries using autocomplete.
 
-Refer to the [TraceQL query editor documentation]({{< relref "./traceql-editor" >}}) to learn more about constructing queries using a code-editor-like experience.
+Refer to the [TraceQL query editor documentation](traceql-editor/) to learn more about constructing queries using a code-editor-like experience.
 
 ![The TraceQL query editor](/static/img/docs/tempo/screenshot-traceql-query-editor-v10.png)
 
@@ -70,7 +70,7 @@ Starting with Grafana v10.2, this query type has been deprecated. It will be rem
 
 Use this to search for traces by service name, span name, duration range, or process-level attributes that are included in your application's instrumentation, such as HTTP status code and customer ID.
 
-To configure Tempo and the Tempo data source for search, refer to [Configure the data source]({{< relref "../#configure-the-data-source" >}}).
+To configure Tempo and the Tempo data source for search, refer to [Configure the data source](../#configure-the-data-source).
 
 To search for traces:
 
@@ -116,7 +116,7 @@ To query a particular trace:
 Starting with Grafana v11.0, the Loki query tab will no longer be available.
 {{< /admonition >}}
 
-To find traces to visualize, you can use the [Loki query editor]({{< relref "../../loki#loki-query-editor" >}}).
-For results, you must configure [derived fields]({{< relref "../../loki#configure-derived-fields" >}}) in the Loki data source that point to this data source.
+To find traces to visualize, you can use the [Loki query editor](../../loki/#loki-query-editor).
+For results, you must configure [derived fields](../../loki/#configure-derived-fields) in the Loki data source that point to this data source.
 
 {{< figure src="/static/img/docs/tempo/query-editor-search.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo query editor showing the Loki Search tab" >}}

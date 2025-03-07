@@ -63,7 +63,7 @@ Each mode is synchronized, so you can switch between them without losing your wo
 When you switch from Code mode to Builder mode with such a query, the editor displays a warning message that explains how you might lose parts of the query if you continue.
 You can then decide whether you still want to switch to Builder mode.
 
-You can also augment queries by using [template variables]({{< relref "./template-variables" >}}).
+You can also augment queries by using [template variables](../template-variables/).
 
 ## Toolbar elements
 
