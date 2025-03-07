@@ -4,10 +4,12 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents, locationService } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema/dist/esm/raw/dashboard/x/dashboard_types.gen';
 import { Alert, Button, Field, Input, RadioButtonGroup, Stack, TextArea } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { useUrlParams } from 'app/core/navigation/hooks';
-import { AnnoKeyManagerIdentity, ManagerKind } from 'app/features/apiserver/types';
+import kbn from 'app/core/utils/kbn';
+import { AnnoKeyManagerIdentity, Resource } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { RepositoryView } from 'app/features/provisioning/api';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
@@ -16,6 +18,7 @@ import { WorkflowOption } from 'app/features/provisioning/types';
 import { validateBranchName } from 'app/features/provisioning/utils/git';
 
 import { DashboardScene } from '../../scene/DashboardScene';
+import { getDashboardUrl } from '../../utils/getDashboardUrl';
 import { SaveDashboardDrawer } from '../SaveDashboardDrawer';
 import { SaveDashboardFormCommonOptions } from '../SaveDashboardForm';
 import { DashboardChangeInfo } from '../shared';
@@ -72,23 +75,36 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
     const appEvents = getAppEvents();
     if (request.isSuccess) {
       dashboard.setState({ isDirty: false });
-      if (isNew) {
-        dashboard.setManager(ManagerKind.Repo, defaultValues.repo);
-      }
       if (workflow === 'branch' && ref !== '' && path !== '') {
         // Redirect to the provisioning preview pages
         navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}`);
-      } else {
-        appEvents.publish({
-          type: AppEvents.alertSuccess.name,
-          payload: ['Dashboard changes saved'],
-        });
-        dashboard.closeModal();
-        locationService.partial({
-          viewPanel: null,
-          editPanel: null,
-        });
+        return;
       }
+
+      appEvents.publish({
+        type: AppEvents.alertSuccess.name,
+        payload: ['Dashboard changes saved'],
+      });
+
+      // Load the new URL
+      const upsert = request.data.resource.upsert as Resource<Dashboard>;
+      if (isNew && upsert?.metadata?.name) {
+        navigate(
+          getDashboardUrl({
+            uid: upsert.metadata.name,
+            slug: kbn.slugifyForUrl(upsert.spec.title ?? ''),
+            currentQueryParams: '', // ???
+          })
+        );
+        return;
+      }
+
+      // Keep the same URL
+      dashboard.closeModal();
+      locationService.partial({
+        viewPanel: null,
+        editPanel: null,
+      });
     } else if (request.isError) {
       appEvents.publish({
         type: AppEvents.alertError.name,
@@ -99,6 +115,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
     request.isSuccess,
     request.isError,
     request.error,
+    request.data,
     dashboard,
     workflow,
     isNew,

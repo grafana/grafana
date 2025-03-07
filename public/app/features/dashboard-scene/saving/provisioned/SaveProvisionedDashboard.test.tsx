@@ -4,7 +4,6 @@ import userEvent from '@testing-library/user-event';
 import { AppEvents } from '@grafana/data';
 import { getAppEvents, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { ManagerKind } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks';
 
@@ -297,8 +296,6 @@ describe('SaveProvisionedDashboard', () => {
       // Check if the action was called
       expect(mockAction).toHaveBeenCalled();
     });
-    // Check if manager was set
-    expect(props.dashboard.setManager).toHaveBeenCalledWith(ManagerKind.Repo, 'test-repo');
 
     // Check if success alert was published
     const appEvents = getAppEvents();
