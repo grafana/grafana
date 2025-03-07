@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1"
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1/fakes"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -353,7 +354,7 @@ func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
 
 	env := helper.GetEnv()
 	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
+	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), serverlock.ProvideService(env.SQLStore, tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 
 	created, err := adminClient.Create(ctx, &v0alpha1.TimeInterval{
@@ -577,7 +578,7 @@ func TestIntegrationTimeIntervalListSelector(t *testing.T) {
 	require.NoError(t, err)
 	env := helper.GetEnv()
 	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
+	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), serverlock.ProvideService(env.SQLStore, tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 	require.NoError(t, db.SetProvenance(ctx, &definitions.MuteTimeInterval{
 		MuteTimeInterval: config.MuteTimeInterval{
@@ -637,7 +638,7 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 	helper := getTestHelper(t)
 	env := helper.GetEnv()
 	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
+	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), serverlock.ProvideService(env.SQLStore, tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 	orgID := helper.Org1.Admin.Identity.GetOrgID()
 

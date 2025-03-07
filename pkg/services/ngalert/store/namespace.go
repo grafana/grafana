@@ -3,11 +3,27 @@ package store
 import (
 	"context"
 	"errors"
+	"fmt"
+	"hash/fnv"
 	"sort"
+	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+)
+
+const (
+	// folderOperationTimeout is the timeout for individual folder operations (get or create)
+	// in the GetOrCreateNamespaceByTitle method. The lock timeout is longer to accommodate
+	// both operations.
+	folderOperationTimeout = 60 * time.Second
+
+	// getOrCreateFolderMaxRetries is the maximum number of retries allowed when
+	// trying to acquire a lock for folder creation. After this many failed attempts,
+	// the operation will fail with a "max retries exceeded" error.
+	getOrCreateFolderMaxRetries = 10
 )
 
 // GetUserVisibleNamespaces returns the folders that are visible to the user
@@ -88,28 +104,102 @@ func (st DBstore) GetNamespaceByTitle(ctx context.Context, title string, orgID i
 	return foundByTitle[0], nil
 }
 
-// GetOrCreateNamespaceByTitle gets or creates a namespace by title in the specified folder.
+// GetOrCreateNamespaceByTitle retrieves a folder with the given title from the specified parent,
+// or creates it if it doesn't exist.
+//
+// This method uses locking to prevent race conditions when multiple
+// requests attempt to create the same folder simultaneously. The lock is based on
+// the combination of parent folder UID, title, and organization ID.
 func (st DBstore) GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.Folder, error) {
-	var f *folder.Folder
-	var err error
+	logger := st.Logger.New("parentUID", parentUID, "title", title, "orgID", orgID)
 
-	f, err = st.GetNamespaceByTitle(ctx, title, orgID, user, parentUID)
-	if err != nil && !errors.Is(err, dashboards.ErrFolderNotFound) {
-		return nil, err
+	// Configure lock retry behavior
+	// Make sure the lock timeout (MaxInterval) is enough for both operations.
+	timeConfig := serverlock.LockTimeConfig{
+		MaxInterval: folderOperationTimeout*2 + 10*time.Second,
+		MinWait:     100 * time.Millisecond,
+		MaxWait:     1 * time.Second,
 	}
 
-	if f == nil {
-		cmd := &folder.CreateFolderCommand{
-			OrgID:        orgID,
-			Title:        title,
-			SignedInUser: user,
-			ParentUID:    parentUID,
+	var folder *folder.Folder
+	var folderErr error
+
+	retryLimiter := func(attempt int) error {
+		if attempt > getOrCreateFolderMaxRetries {
+			return errors.New("unable to lock: max retries exceeded")
 		}
-		f, err = st.FolderService.Create(ctx, cmd)
-		if err != nil {
-			return nil, err
-		}
+		return nil
 	}
 
-	return f, nil
+	// Execute the folder get/create operation with a lock
+	lockName, err := lockName(parentUID, title, orgID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate lock name: %w", err)
+	}
+	logger.Debug("Acquiring lock for folder creation", "lockName", lockName)
+	errLock := st.ServerLockService.LockExecuteAndReleaseWithRetries(ctx, lockName, timeConfig, func(ctx context.Context) {
+		// Try to get the folder
+		logger.Debug("Trying to get existing folder")
+		folder, folderErr = st.getFolder(ctx, title, orgID, user, parentUID, folderOperationTimeout)
+		if folder != nil {
+			return
+		}
+		// If this is not the folder not found error, return
+		if !errors.Is(folderErr, dashboards.ErrFolderNotFound) {
+			return
+		}
+
+		// Folder doesn't exist, create a new one
+		logger.Debug("Folder not found, creating a new one")
+		folder, folderErr = st.createFolder(ctx, title, orgID, user, parentUID, folderOperationTimeout)
+	}, []serverlock.RetryOpt{retryLimiter}...)
+
+	// Handle lock acquisition failures
+	if errLock != nil {
+		logger.Error("Failed to acquire or execute with lock", "error", errLock)
+		return nil, fmt.Errorf("failed to acquire lock: %w", errLock)
+	}
+
+	// Handle folder operation errors
+	if folderErr != nil {
+		return nil, folderErr
+	}
+
+	if folder == nil {
+		// This should never happen if the code is correct
+		logger.Error("Both error and folder are nil after GetOrCreateNamespaceByTitle execution")
+		return nil, fmt.Errorf("unexpected error: could not get or create a folder")
+	}
+
+	return folder, nil
+}
+
+func (st DBstore) getFolder(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string, timeout time.Duration) (*folder.Folder, error) {
+	getCtx, getCancel := context.WithTimeout(ctx, timeout)
+	defer getCancel()
+	return st.GetNamespaceByTitle(getCtx, title, orgID, user, parentUID)
+}
+
+func (st DBstore) createFolder(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string, timeout time.Duration) (*folder.Folder, error) {
+	createCtx, createCancel := context.WithTimeout(ctx, timeout)
+	defer createCancel()
+
+	cmd := &folder.CreateFolderCommand{
+		OrgID:        orgID,
+		Title:        title,
+		SignedInUser: user,
+		ParentUID:    parentUID,
+	}
+
+	return st.FolderService.Create(createCtx, cmd)
+}
+
+func lockName(parentUID, title string, orgID int64) (string, error) {
+	h := fnv.New64a()
+	data := fmt.Sprintf("%s|%s|%d", parentUID, title, orgID)
+	_, err := h.Write([]byte(data))
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("alerting-folder-create-%x", h.Sum64()), nil
 }

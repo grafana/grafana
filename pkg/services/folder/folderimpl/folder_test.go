@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -89,10 +90,11 @@ func TestIntegrationFolderService(t *testing.T) {
 		features := featuremgmt.WithFeatures()
 
 		alertingStore := ngstore.DBstore{
-			SQLStore:      db,
-			Cfg:           cfg.UnifiedAlerting,
-			Logger:        log.New("test-alerting-store"),
-			AccessControl: actest.FakeAccessControl{ExpectedEvaluate: true},
+			SQLStore:          db,
+			Cfg:               cfg.UnifiedAlerting,
+			Logger:            log.New("test-alerting-store"),
+			AccessControl:     actest.FakeAccessControl{ExpectedEvaluate: true},
+			ServerLockService: serverlock.ProvideService(db, tracing.InitializeTracerForTest()),
 		}
 
 		service := &Service{
@@ -502,7 +504,8 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			require.NoError(t, err)
 			dashSrv.RegisterDashboardPermissions(dashboardPermissions)
 
-			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOn, db, serviceWithFlagOn, dashSrv, ac, b)
+			sl := serverlock.ProvideService(db, tracing.InitializeTracerForTest())
+			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOn, db, serviceWithFlagOn, dashSrv, ac, b, sl)
 			require.NoError(t, err)
 
 			elementService := libraryelements.ProvideService(cfg, db, routeRegister, serviceWithFlagOn, featuresFlagOn, ac, dashSrv)
@@ -587,7 +590,8 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				folderPermissions, ac, serviceWithFlagOff, nestedFolderStore, nil, client.MockTestRestConfig{}, nil, quotaService, nil, publicDashboardFakeService, nil, dualwrite.ProvideTestService(), sort.ProvideService())
 			require.NoError(t, err)
 			dashSrv.RegisterDashboardPermissions(dashboardPermissions)
-			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOff, db, serviceWithFlagOff, dashSrv, ac, b)
+			sl := serverlock.ProvideService(db, tracing.InitializeTracerForTest())
+			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOff, db, serviceWithFlagOff, dashSrv, ac, b, sl)
 			require.NoError(t, err)
 
 			elementService := libraryelements.ProvideService(cfg, db, routeRegister, serviceWithFlagOff, featuresFlagOff, ac, dashSrv)
@@ -737,7 +741,8 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				lps, err := librarypanels.ProvideService(cfg, db, routeRegister, elementService, tc.service)
 				require.NoError(t, err)
 
-				alertStore, err := ngstore.ProvideDBStore(cfg, tc.featuresFlag, db, tc.service, dashSrv, ac, b)
+				sl := serverlock.ProvideService(db, tracing.InitializeTracerForTest())
+				alertStore, err := ngstore.ProvideDBStore(cfg, tc.featuresFlag, db, tc.service, dashSrv, ac, b, sl)
 				require.NoError(t, err)
 
 				ancestors := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, tc.depth, tc.prefix, createCmd, true)

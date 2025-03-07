@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/templategroup/v0alpha1"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -381,7 +382,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 
 	env := helper.GetEnv()
 	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
+	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), serverlock.ProvideService(env.SQLStore, tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 
 	created, err := adminClient.Create(ctx, &v0alpha1.TemplateGroup{
@@ -598,7 +599,7 @@ func TestIntegrationListSelector(t *testing.T) {
 	require.NoError(t, err)
 	env := helper.GetEnv()
 	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
+	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), serverlock.ProvideService(env.SQLStore, tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 	require.NoError(t, db.SetProvenance(ctx, &definitions.NotificationTemplate{
 		Name: template2.Spec.Title,

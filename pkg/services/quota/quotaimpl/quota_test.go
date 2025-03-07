@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	pluginfakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -510,7 +511,8 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 	require.NoError(t, err)
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
 
-	ruleStore, err := ngstore.ProvideDBStore(cfg, featuremgmt.WithFeatures(), sqlStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, b)
+	sl := serverlock.ProvideService(sqlStore, tracer)
+	ruleStore, err := ngstore.ProvideDBStore(cfg, featuremgmt.WithFeatures(), sqlStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, b, sl)
 	require.NoError(t, err)
 	cfg.UnifiedAlerting.InitializationTimeout = 30 * time.Second
 	_, err = ngalert.ProvideService(
