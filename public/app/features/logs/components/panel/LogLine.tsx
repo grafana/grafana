@@ -200,21 +200,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
     timestamp: css({
       color: theme.colors.text.secondary,
       display: 'inline-block',
-      '&.level-critical': {
-        color: colors.critical,
-      },
-      '&.level-error': {
-        color: colors.error,
-      },
-      '&.level-info': {
-        color: colors.info,
-      },
-      '&.level-warning': {
-        color: colors.warning,
-      },
-      '&.level-debug': {
-        color: colors.debug,
-      },
     }),
     level: css({
       color: theme.colors.text.secondary,
