@@ -5,13 +5,15 @@ import (
 
 	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
-func NewSearchClient(dual dualwrite.Service, gr schema.GroupResource, unifiedClient ResourceIndexClient, legacyClient ResourceIndexClient) ResourceIndexClient {
-	status, _ := dual.Status(context.Background(), gr)
-	if status.Runtime && dual.ShouldManage(gr) {
+type DualWriter interface {
+	IsEnabled(schema.GroupResource) bool
+	ReadFromUnified(context.Context, schema.GroupResource) (bool, error)
+}
+
+func NewSearchClient(dual DualWriter, gr schema.GroupResource, unifiedClient ResourceIndexClient, legacyClient ResourceIndexClient) ResourceIndexClient {
+	if dual.IsEnabled(gr) {
 		return &searchWrapper{
 			dual:          dual,
 			groupResource: gr,
@@ -19,14 +21,15 @@ func NewSearchClient(dual dualwrite.Service, gr schema.GroupResource, unifiedCli
 			legacyClient:  legacyClient,
 		}
 	}
-	if status.ReadUnified {
+	//nolint:errcheck
+	if ok, _ := dual.ReadFromUnified(context.Background(), gr); ok {
 		return unifiedClient
 	}
 	return legacyClient
 }
 
 type searchWrapper struct {
-	dual          dualwrite.Service
+	dual          DualWriter
 	groupResource schema.GroupResource
 
 	unifiedClient ResourceIndexClient
