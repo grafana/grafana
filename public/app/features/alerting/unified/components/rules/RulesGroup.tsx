@@ -15,7 +15,7 @@ import { useHasRuler } from '../../hooks/useHasRuler';
 import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
 import { makeFolderLink, makeFolderSettingsLink } from '../../utils/misc';
-import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
+import { isFederatedRuleGroup, rulerRuleType } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
 import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
@@ -63,7 +63,8 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   const { currentData: dsFeatures } = useDiscoverDsFeaturesQuery({ rulesSourceName });
 
   const rulerRule = group.rules[0]?.rulerRule;
-  const folderUID = (rulerRule && isGrafanaRulerRule(rulerRule) && rulerRule.grafana_alert.namespace_uid) || undefined;
+  const folderUID =
+    (rulerRule && rulerRuleType.grafana.rule(rulerRule) && rulerRule.grafana_alert.namespace_uid) || undefined;
   const { folder } = useFolder(folderUID);
 
   // group "is deleting" if rules source has ruler, but this group has no rules that are in ruler
@@ -72,7 +73,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
 
   // check if group has provisioned items
   const isProvisioned = group.rules.some((rule) => {
-    return isGrafanaRulerRule(rule.rulerRule) && rule.rulerRule.grafana_alert.provenance;
+    return rulerRuleType.grafana.rule(rule.rulerRule) && rule.rulerRule.grafana_alert.provenance;
   });
 
   // check what view mode we are in
