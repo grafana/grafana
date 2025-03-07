@@ -12,7 +12,7 @@ import { TabsLayoutManager } from './TabsLayoutManager';
 
 export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLayoutManager>) {
   const styles = useStyles2(getStyles);
-  const { tabs, currentTabIndex } = model.useState();
+  const { tabs } = model.useState();
   const currentTab = model.getCurrentTab();
   const { layout } = currentTab.useState();
   const dashboard = getDashboardSceneFor(model);
