@@ -306,7 +306,7 @@ Refresh token fetching and access token expiration check is enabled by default f
 
 {{< admonition type="note" >}}
 The `accessTokenExpirationCheck` feature toggle has been removed in Grafana v10.3.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
-{{ /admonition }}
+{{< /admonition >}}
 
 ### Configure allowed tenants
 
