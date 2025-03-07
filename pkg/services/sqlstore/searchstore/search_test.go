@@ -334,6 +334,7 @@ func TestBuilder_RBAC(t *testing.T) {
 						"",
 						tc.features,
 						recursiveQueriesAreSupported,
+						store.GetDialect(),
 					),
 				},
 				Dialect:  store.GetDialect(),

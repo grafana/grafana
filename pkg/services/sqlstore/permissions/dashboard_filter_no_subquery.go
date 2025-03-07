@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 type accessControlDashboardPermissionFilterNoFolderSubquery struct {
@@ -25,7 +26,7 @@ func (f *accessControlDashboardPermissionFilterNoFolderSubquery) LeftJoin() stri
 	return " dashboard AS folder ON dashboard.org_id = folder.org_id AND dashboard.folder_id = folder.id"
 }
 
-func (f *accessControlDashboardPermissionFilterNoFolderSubquery) buildClauses() {
+func (f *accessControlDashboardPermissionFilterNoFolderSubquery) buildClauses(dialect migrator.Dialect) {
 	if f.user == nil || f.user.IsNil() || len(f.user.GetPermissions()) == 0 {
 		f.where = clause{string: "(1 = 0)"}
 		return
@@ -39,7 +40,7 @@ func (f *accessControlDashboardPermissionFilterNoFolderSubquery) buildClauses() 
 	}
 
 	orgID := f.user.GetOrgID()
-	filter, params := accesscontrol.UserRolesFilter(orgID, userID, f.user.GetTeams(), accesscontrol.GetOrgRoles(f.user))
+	filter, params := accesscontrol.UserRolesFilter(orgID, userID, f.user.GetTeams(), accesscontrol.GetOrgRoles(f.user), dialect)
 	rolesFilter := " AND role_id IN(SELECT id FROM role " + filter + ") "
 	var args []any
 	builder := strings.Builder{}
