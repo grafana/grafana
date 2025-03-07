@@ -447,7 +447,6 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		result.Values = mathexp.Values{
 			mathexp.TableData{Frame: dataFrames[0]},
 		}
-
 		return result, nil
 	}
 
