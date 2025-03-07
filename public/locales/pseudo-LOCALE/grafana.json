@@ -2910,6 +2910,10 @@
     }
   },
   "navigation": {
+    "invite-user": {
+      "invite-button": "Ĩŉvįŧę",
+      "invite-tooltip": "Ĩŉvįŧę ūşęř"
+    },
     "item": {
       "add-bookmark": "Åđđ ŧő ßőőĸmäřĸş",
       "remove-bookmark": "Ŗęmővę ƒřőm ßőőĸmäřĸş"

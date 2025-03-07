@@ -2910,6 +2910,10 @@
     }
   },
   "navigation": {
+    "invite-user": {
+      "invite-button": "Invite",
+      "invite-tooltip": "Invite user"
+    },
     "item": {
       "add-bookmark": "Add to Bookmarks",
       "remove-bookmark": "Remove from Bookmarks"
