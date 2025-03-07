@@ -506,7 +506,7 @@ func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *contextmodel.ReqContex
 
 	if !identity.IsIdentityType(c.SignedInUser.GetID(), identity.TypeUser) {
 		hs.log.Debug("Requested endpoint only available to users")
-		c.JsonApiErr(http.StatusForbidden, "Endpoint only available for users", nil)
+		c.JsonApiErr(http.StatusNotModified, "Endpoint only available for users", nil)
 		return
 	}
 
@@ -632,7 +632,7 @@ func (hs *HTTPServer) ClearHelpFlags(c *contextmodel.ReqContext) response.Respon
 func (hs *HTTPServer) getUserID(c *contextmodel.ReqContext) (int64, *response.NormalResponse) {
 	if !identity.IsIdentityType(c.SignedInUser.GetID(), identity.TypeUser) {
 		hs.log.Debug("Requested endpoint only available to users")
-		return 0, response.Error(http.StatusForbidden, "Endpoint only available for users", nil)
+		return 0, response.Error(http.StatusNotModified, "Endpoint only available for users", nil)
 	}
 
 	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
