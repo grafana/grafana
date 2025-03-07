@@ -503,6 +503,9 @@ const (
 
 	// Usage stats actions
 	ActionUsageStatsRead = "server.usagestats.report:read"
+
+	// Announcement banner
+	ActionBannersWrite = "banners:write"
 )
 
 var (

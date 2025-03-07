@@ -167,6 +167,9 @@ export enum AccessControlAction {
 
   // Migration Assistant
   MigrationAssistantMigrate = 'migrationassistant:migrate',
+
+  // Announcement banner
+  ActionBannersWrite = 'banners:write',
 }
 
 export interface Role {

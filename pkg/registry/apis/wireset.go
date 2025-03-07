@@ -2,6 +2,7 @@ package apiregistry
 
 import (
 	"github.com/google/wire"
+	"github.com/grafana/grafana/pkg/registry/apis/banners"
 
 	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications"
 	dashboardinternal "github.com/grafana/grafana/pkg/registry/apis/dashboard"
@@ -37,4 +38,5 @@ var WireSet = wire.NewSet(
 	query.RegisterAPIService,
 	notifications.RegisterAPIService,
 	userstorage.RegisterAPIService,
+	banners.RegisterAPIService,
 )
