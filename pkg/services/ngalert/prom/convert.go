@@ -191,8 +191,9 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 
 	if isRecordingRule {
 		record = &models.Record{
-			From:   queryRefID,
-			Metric: rule.Record,
+			From:                queryRefID,
+			Metric:              rule.Record,
+			TargetDatasourceUID: p.cfg.DatasourceUID,
 		}
 
 		isPaused = p.cfg.RecordingRules.IsPaused
