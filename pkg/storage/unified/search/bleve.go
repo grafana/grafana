@@ -62,7 +62,7 @@ type bleveBackend struct {
 	features featuremgmt.FeatureToggles
 }
 
-func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgmt.FeatureToggles, indexPath string) (*bleveBackend, error) {
+func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgmt.FeatureToggles) (*bleveBackend, error) {
 	if opts.Root == "" {
 		return nil, fmt.Errorf("bleve backend missing root folder configuration")
 	}
@@ -74,7 +74,7 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgm
 		return nil, fmt.Errorf("bleve root is configured against a file (not folder)")
 	}
 
-	go updateIndexSizeMetric(indexPath)
+	go updateIndexSizeMetric(opts.Root)
 
 	return &bleveBackend{
 		log:      slog.Default().With("logger", "bleve-backend"),
