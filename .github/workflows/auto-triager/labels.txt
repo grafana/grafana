@@ -32,7 +32,6 @@ area/dashboard/tv
 area/dashboard/variable
 area/dashboards/panel
 area/data/export
-area/editor
 area/explore
 area/exploremetrics
 area/expressions
