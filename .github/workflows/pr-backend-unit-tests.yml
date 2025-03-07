@@ -39,6 +39,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential shared-mime-info
+          go install github.com/mfridman/tparse@c1754a1f484ac5cd422697b0fec635177ddc8507 # v0.17.0
 
       - name: Verify code generation
         run: |
@@ -49,7 +50,7 @@ jobs:
         run: make gen-go
 
       - name: Run unit tests
-        run: COVER_OPTS="-coverprofile=be-unit.cov -coverpkg=github.com/grafana/grafana/..." make test-go-unit
+        run: COVER_OPTS="-coverprofile=be-unit.cov -coverpkg=github.com/grafana/grafana/..." GO_TEST_OUTPUT="/tmp/unit.log" make test-go-unit
 
       - name: Process and upload coverage
         uses: ./.github/actions/test-coverage-processor
@@ -60,6 +61,22 @@ jobs:
           codecov-token: ${{ secrets.CODECOV_TOKEN }}
           codecov-flag: 'be-unit'
           codecov-name: 'be-unit'
+
+      - name: Install Grafana Bench
+        # We can't allow forks here, as we need secret access.
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: ./.github/actions/setup-grafana-bench
+
+      - name: Process output for Bench
+        if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          grafana-bench report \
+            --trigger pr-backend-unit-tests-oss \
+            --report-input go \
+            --report-output log \
+            --grafana-version "$(git rev-parse HEAD)" \
+            --suite-name grafana-oss-unit-tests \
+            /tmp/unit.log
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
