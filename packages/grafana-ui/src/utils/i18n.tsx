@@ -34,6 +34,7 @@ function initI18n() {
         new Pseudo({
           languageToPseudo: 'pseudo',
           enabled: true,
+          wrapped: true,
         })
       );
     });
