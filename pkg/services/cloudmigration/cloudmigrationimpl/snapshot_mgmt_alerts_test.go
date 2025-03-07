@@ -22,10 +22,14 @@ import (
 )
 
 func TestGetAlertMuteTimings(t *testing.T) {
+	t.Parallel()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
 	t.Run("it returns the mute timings", func(t *testing.T) {
+		t.Parallel()
+
 		s := setUpServiceTest(t, false).(*Service)
 		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations)
 
@@ -42,10 +46,14 @@ func TestGetAlertMuteTimings(t *testing.T) {
 }
 
 func TestGetNotificationTemplates(t *testing.T) {
+	t.Parallel()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
 	t.Run("it returns the notification templates", func(t *testing.T) {
+		t.Parallel()
+
 		s := setUpServiceTest(t, false).(*Service)
 
 		user := &user.SignedInUser{OrgID: 1}
@@ -61,10 +69,14 @@ func TestGetNotificationTemplates(t *testing.T) {
 }
 
 func TestGetContactPoints(t *testing.T) {
+	t.Parallel()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
 	t.Run("it returns the contact points", func(t *testing.T) {
+		t.Parallel()
+
 		s := setUpServiceTest(t, false).(*Service)
 
 		user := &user.SignedInUser{
@@ -89,10 +101,14 @@ func TestGetContactPoints(t *testing.T) {
 }
 
 func TestGetNotificationPolicies(t *testing.T) {
+	t.Parallel()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
 	t.Run("it returns the contact points", func(t *testing.T) {
+		t.Parallel()
+
 		s := setUpServiceTest(t, false).(*Service)
 
 		user := &user.SignedInUser{OrgID: 1}
@@ -113,10 +129,14 @@ func TestGetNotificationPolicies(t *testing.T) {
 }
 
 func TestGetAlertRules(t *testing.T) {
+	t.Parallel()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
 	t.Run("it returns the alert rules", func(t *testing.T) {
+		t.Parallel()
+
 		s := setUpServiceTest(t, false).(*Service)
 
 		user := &user.SignedInUser{OrgID: 1}
@@ -130,6 +150,8 @@ func TestGetAlertRules(t *testing.T) {
 	})
 
 	t.Run("when the alert_rules_state config is `paused`, then the alert rules are all returned in `paused` state", func(t *testing.T) {
+		t.Parallel()
+
 		alertRulesState := func(c *setting.Cfg) {
 			c.CloudMigration.AlertRulesState = setting.GMSAlertRulesPaused
 		}
@@ -153,10 +175,14 @@ func TestGetAlertRules(t *testing.T) {
 }
 
 func TestGetAlertRuleGroups(t *testing.T) {
+	t.Parallel()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
 	t.Run("it returns the alert rule groups", func(t *testing.T) {
+		t.Parallel()
+
 		s := setUpServiceTest(t, false).(*Service)
 
 		user := &user.SignedInUser{OrgID: 1}
@@ -190,6 +216,8 @@ func TestGetAlertRuleGroups(t *testing.T) {
 	})
 
 	t.Run("with the alert rules state set to paused, it returns the alert rule groups with alert rules paused", func(t *testing.T) {
+		t.Parallel()
+
 		alertRulesState := func(c *setting.Cfg) {
 			c.CloudMigration.AlertRulesState = setting.GMSAlertRulesPaused
 		}
