@@ -1501,30 +1501,106 @@ type usageStats struct {
 }
 
 // SimulateGameServer starts a mock game server that publishes player data to a channel
+type Player struct {
+	ID        string
+	X         float64
+	Y         float64
+	Rotation  float64
+	XVelocity float64
+	YVelocity float64
+}
+
 func (g *GrafanaLive) SimulateGameServer(ctx context.Context) {
-	ticker := time.NewTicker(1 * time.Second)
+	orgs, _ := g.orgService.Search(ctx, &org.SearchOrgsQuery{})
+	orgID := orgs[0].ID // Use the first org ID
+	channel := orgchannel.PrependOrgID(orgID, "plugin/game/players")
+
+	ticker := time.NewTicker(200 * time.Millisecond) // 0.2 seconds = 300 updates per minute
 	defer ticker.Stop()
 
-	orgID := int64(1) // Hardcode org 1; adjust if needed
-	channel := orgchannel.PrependOrgID(orgID, "plugin/game/players")
+	// Initialize players with random starting positions and velocities
+	numPlayers := rand.IntN(5) + 1 // 1 to 5 players
+	players := make([]Player, numPlayers)
+	for i := 0; i < numPlayers; i++ {
+		players[i] = Player{
+			ID:        fmt.Sprintf("player%d", i+1),
+			X:         rand.Float64() * 100, // Start within 0-100
+			Y:         rand.Float64() * 100,
+			Rotation:  rand.Float64() * 360,
+			XVelocity: (rand.Float64()*2 - 1) * 20, // -2 to 2 units per tick
+			YVelocity: (rand.Float64()*2 - 1) * 20,
+		}
+	}
+
+	logger.Info("Starting game server simulation", "orgID", orgID, "channel", channel, "players", numPlayers)
+
+	// Bounds
+	const xMin, xMax = 0.0, 500
+	const yMin, yMax = 0.0, 500
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
+			// Update player positions and handle bouncing
+			for i := range players {
+				p := &players[i]
+				// Update position
+				p.X += p.XVelocity * 0.2 // Scale by tick time (0.2s)
+				p.Y += p.YVelocity * 0.2
+				// Bounce on X boundaries
+				if p.X <= xMin {
+					p.X = xMin
+					p.XVelocity = -p.XVelocity
+				} else if p.X >= xMax {
+					p.X = xMax
+					p.XVelocity = -p.XVelocity
+				}
+				// Bounce on Y boundaries
+				if p.Y <= yMin {
+					p.Y = yMin
+					p.YVelocity = -p.YVelocity
+				} else if p.Y >= yMax {
+					p.Y = yMax
+					p.YVelocity = -p.YVelocity
+				}
+				// Update rotation (optional smooth rotation)
+				p.Rotation += (rand.Float64()*10 - 5) // Small random change
+				if p.Rotation >= 360 {
+					p.Rotation -= 360
+				} else if p.Rotation < 0 {
+					p.Rotation += 360
+				}
+			}
+
+			// Extract latest values into arrays
+			ids := make([]string, numPlayers)
+			x := make([]float64, numPlayers)
+			y := make([]float64, numPlayers)
+			rotation := make([]float64, numPlayers)
+			for i, p := range players {
+				ids[i] = p.ID
+				x[i] = p.X
+				y[i] = p.Y
+				rotation[i] = p.Rotation
+			}
+
+			// Create a Data Frame with one row of arrays
 			frame := data.NewFrame("players",
-				data.NewField("id", nil, []string{"player1", "player2", "player3"}),
-				data.NewField("x", nil, []float64{rand.Float64() * 100, rand.Float64() * 100, rand.Float64() * 100}),
-				data.NewField("y", nil, []float64{rand.Float64() * 100, rand.Float64() * 100, rand.Float64() * 100}),
-				data.NewField("rotation", nil, []float64{rand.Float64() * 360, rand.Float64() * 360, rand.Float64() * 360}),
+				data.NewField("ids", nil, ids),
+				data.NewField("x", nil, x),
+				data.NewField("y", nil, y),
+				data.NewField("rotation", nil, rotation),
 			)
+
+			// Convert to JSON
 			data, err := data.FrameToJSON(frame, data.IncludeAll)
 			if err != nil {
 				logger.Error("Failed to marshal frame data", "error", err)
 				continue
 			}
-			logger.Debug("Preparing to publish", "payload", string(data), "channel", channel)
+			logger.Debug("Preparing to publish", "payload", string(data), "channel", channel, "players", numPlayers)
 			_, err = g.node.Publish(channel, data)
 			if err != nil {
 				logger.Error("Failed to publish to channel", "channel", channel, "error", err)

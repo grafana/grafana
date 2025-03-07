@@ -116,7 +116,7 @@ func (r *Runner) GetManagedChannels(orgID int64) ([]*ManagedChannel, error) {
 		channels = append(channels, &ManagedChannel{
 			Channel:    "plugin/game/players",
 			Data:       gameFrameJSON,
-			MinuteRate: 60, // Publish every second (60 updates per minute)
+			MinuteRate: 600, // Publish every second (60 updates per minute)
 		})
 	} else {
 		logger.Error("Failed to create game players frame", "error", err)
