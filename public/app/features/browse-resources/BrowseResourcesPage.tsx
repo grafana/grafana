@@ -178,7 +178,142 @@ const FoldersPage: React.FC = () => {
     }, 0);
   };
 
+  const hasChildren = (folder: Resource) => {
+    return resources.some(r => r.location === folder.title);
+  };
+
+  const getIndentation = (resource: Resource): number => {
+    if (!resource?.location || resource.location === 'general' || resource.location === '') {
+      return 0;
+    }
+    let level = 1;
+    let currentLocation = resource.location;
+    let maxDepth = 5 // same hardcoded value as in the BE
+    
+    while (currentLocation && maxDepth > 0) {
+      const parent = resources.find(r => r.title === currentLocation);
+      if (!parent?.location || parent.location === 'general' || parent.location === '') {
+        break;
+      }
+      level++;
+      currentLocation = parent.location;
+      maxDepth--;
+    }
+    return level * 20;
+  };
+
+  const handleExpand = (resource: Resource) => {
+    setResources((prevResources) =>
+      prevResources.map((r) => (r.name === resource.name ? { ...r, isExpanded: !r.isExpanded } : r))
+    );
+  };
+
+  const columns: Array<Column<Resource>> = [
+    {
+      id: 'nameWithExpand',
+      header: 'Name',
+      sortType: () => {
+        setTimeout(() => {
+          handleSortChange();
+        }, 0);
+        return 0; // Return value doesn't matter since we're using backend sorting
+      },
+      cell: ({ row: { original } }) => {
+        const indentation = getIndentation(original);
+        const showChevron = original.resource === 'folders' && hasChildren(original);
+
+        return (
+          <div className={styles.nameCell} style={{ paddingLeft: indentation }}>
+            <div className={styles.chevronWrapper}>
+              {showChevron ? (
+                <button onClick={() => handleExpand(original)} className={styles.expandButton}>
+                  <Icon name={original.isExpanded ? 'angle-down' : 'angle-right'} />
+                </button>
+              ) : (
+                <div className={styles.expandButton} /> // Placeholder for consistent spacing
+              )}
+            </div>
+            <Stack direction="row" alignItems="center" gap={1}>
+              <Link
+                aria-label={`open-${original.title}`}
+                href={toURL(original.resource, original.name, original.title)}
+                onClick={onResourceLinkClicked}
+                  >
+                    {original.title}
+              </Link>
+            </Stack>
+          </div>
+        );
+      },
+    },
+    {
+      id: 'type',
+      header: 'Type',
+      cell: ({ row: { original } }) => {
+        const iconName = getIconForResource(original.resource);
+        const displayType = original.resource.slice(0, -1); // Remove last character ('s')
+
+        return (
+          <div className="flex items-center">
+            <Button
+              variant="secondary"
+              aria-label={`open-${original.location}`}
+              className={clearButtonStyle}
+              onClick={() => setSelectedTypes([{label: displayType, value: original.resource as ResourceType}])}
+            >
+            {iconName && <Icon name={iconName} style={{ marginRight: '6px' }}/>}
+            <span className={styles.resourceType}>{displayType}</span>
+            </Button>
+          </div>
+        );
+      },
+    },
+    {
+      id: 'location',
+      header: 'Location',
+      cell: ({ row: { original } }) => {
+        return (
+          <div className="flex items-center">
+            <Icon name={'folder'} style={{ marginRight: '6px' }}/>
+            <Link
+              aria-label={`open-${original.location}`}
+              href={toURL('folder', original.folder, original.location)}
+              onClick={onResourceLinkClicked}
+            >
+            <span>{original.location}</span>
+            </Link>
+          </div>
+        );
+      },
+    },
+    {
+      id: 'tags',
+      header: 'Tags',
+      cell: ({ row: { original } }) => (
+        <div key={original.name} {...original} className={columnStyles.cell}>
+            {original.tags ? <TagList className={columnStyles.tagList} tags={original.tags}
+              onClick={
+                (tag) => setSelectedTags([...selectedTags, tag])
+              } /> : '-'
+            }
+        </div>
+      )
+    },
+  ];
+
   const renderTable = (resources: SearchHit[]) => {
+    // When there's a search term, show all results
+    if (searchTerm) {
+      return (
+        <InteractiveTable
+          data={resources}
+          columns={columns}
+          getRowId={(row) => row.name}
+        />
+      );
+    }
+
+    // Otherwise, show nested structure
     const rootResources = resources.filter(resource => resource.location === "general" || resource.location === "");
     
     // Recursive function to get all children
@@ -198,147 +333,18 @@ const FoldersPage: React.FC = () => {
 
     const tableData = rootResources.reduce((acc: Resource[], resource: Resource) => {
       acc.push(resource);
-      // If this is an expanded folder, add all its children recursively
       if (resource.isExpanded) {
         acc.push(...getAllChildren(resource, resources));
       }
       return acc;
     }, []);
 
-    const hasChildren = (folder: Resource) => {
-      return resources.some(r => r.location === folder.title);
-    };
-
-    const getIndentation = (resource: Resource): number => {
-      if (!resource?.location || resource.location === 'general' || resource.location === '') {
-        return 0;
-      }
-      let level = 1;
-      let currentLocation = resource.location;
-      let maxDepth = 5 // same hardcoded value as in the BE
-      
-      while (currentLocation && maxDepth > 0) {
-        const parent = resources.find(r => r.title === currentLocation);
-        if (!parent?.location || parent.location === 'general' || parent.location === '') {
-          break;
-        }
-        level++;
-        currentLocation = parent.location;
-        maxDepth--;
-      }
-      return level * 20;
-    };
-
-    const columns: Array<Column<Resource>> = [
-          {
-            id: 'nameWithExpand',
-            header: 'Name',
-            cell: ({ row: { original } }) => {
-              const indentation = getIndentation(original);
-              const showChevron = original.resource === 'folders' && hasChildren(original);
-
-              return (
-                <div className={styles.nameCell} style={{ paddingLeft: indentation }}>
-                  <div className={styles.chevronWrapper}>
-                    {showChevron ? (
-                      <button onClick={() => handleExpand(original)} className={styles.expandButton}>
-                        <Icon name={original.isExpanded ? 'angle-down' : 'angle-right'} />
-                      </button>
-                    ) : (
-                      <div className={styles.expandButton} /> // Placeholder for consistent spacing
-                    )}
-                  </div>
-                  <Link
-                    aria-label={`open-${original.title}`}
-                    href={toURL(original.resource, original.name, original.title)}
-                    className="external-link"
-                    onClick={onResourceLinkClicked}
-                  >
-                    {original.title}
-                  </Link>
-                </div>
-              );
-            },
-          },
-          {
-            id: 'type',
-            header: 'Type',
-            cell: ({ row: { original } }) => {
-              const iconName = getIconForResource(original.resource);
-              const displayType = original.resource.slice(0, -1); // Remove last character ('s')
-
-              return (
-                <div className="flex items-center">
-                  <Button
-                    variant="secondary"
-                    aria-label={`open-${original.location}`}
-                    className={clearButtonStyle}
-                    onClick={() => setSelectedTypes([{label: displayType, value: original.resource as ResourceType}])}
-                  >
-                  {iconName && <Icon name={iconName} style={{ marginRight: '6px' }}/>}
-                  <span className={styles.resourceType}>{displayType}</span>
-                  </Button>
-                </div>
-              );
-            },
-          },
-          {
-            id: 'location',
-            header: 'Location',
-            cell: ({ row: { original } }) => {
-              return (
-                <div className="flex items-center">
-                  <Icon name={'folder'} style={{ marginRight: '6px' }}/>
-                  <Link
-                    aria-label={`open-${original.location}`}
-                    href={toURL('folder', original.folder, original.location)}
-                    onClick={onResourceLinkClicked}
-                  >
-                  <span>{original.location}</span>
-                  </Link>
-                </div>
-              );
-            },
-          },
-          {
-            id: 'tags',
-            header: 'Tags',
-            cell: ({ row: { original } }) => (
-              <div key={original.name} {...original} className={columnStyles.cell}>
-                  {original.tags ? <TagList className={columnStyles.tagList} tags={original.tags}
-                    onClick={
-                      (tag) => setSelectedTags([...selectedTags, tag])
-                    } /> : '-'
-                  }
-              </div>
-            )
-          },
-        ];
-        // TODO if we want to drill down into the folders
-
-          // {
-          //   id: 'name',
-          //   header: 'Name',
-          //   cell: ({ row: { original } }) => (
-          //     <div style={{ marginLeft: original.level ? original.level * 20 : 0 }}>
-          //       {original.hasSubfolders && (
-          //         <Icon
-          //           name={original.isExpanded ? 'angle-down' : 'angle-right'}
-          //           onClick={() => handleExpand(original)}
-          //           className={styles.expandIcon}
-          //         />
-          //       )}
-          //       {original.title}
-          //     </div>
-          //   ),
-          // }
-
     return (
-        <InteractiveTable
-          data={resources}
-          columns={columns}
-          getRowId={(row) => row.name}
-        />
+      <InteractiveTable
+        data={tableData}
+        columns={columns}
+        getRowId={(row) => row.name}
+      />
     );
   };
 
