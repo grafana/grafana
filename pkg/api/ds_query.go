@@ -76,7 +76,13 @@ func (hs *HTTPServer) QueryMetricsV2(c *contextmodel.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	resp, err := hs.queryDataService.QueryData(c.Req.Context(), c.SignedInUser, c.SkipDSCache, reqDTO)
+	var resp *backend.QueryDataResponse
+	var err error
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagResponseFramePerPage) {
+		resp, err = hs.queryDataService.QueryDataPaged(c.Req.Context(), c.SignedInUser, c.SkipDSCache, reqDTO)
+	} else {
+		resp, err = hs.queryDataService.QueryData(c.Req.Context(), c.SignedInUser, c.SkipDSCache, reqDTO)
+	}
 	if err != nil {
 		return hs.handleQueryMetricsError(err)
 	}
@@ -97,7 +103,11 @@ func (hs *HTTPServer) toJsonStreamingResponse(ctx context.Context, qdr *backend.
 		requestmeta.WithDownstreamStatusSource(ctx)
 	}
 
-	return response.JSONStreaming(statusCode, qdr)
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagJsonStreamingV2) {
+		return response.JSONStreamingV2(statusCode, qdr)
+	} else {
+		return response.JSONStreaming(statusCode, qdr)
+	}
 }
 
 // swagger:parameters queryMetricsWithExpressions

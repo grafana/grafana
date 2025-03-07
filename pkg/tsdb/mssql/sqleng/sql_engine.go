@@ -152,7 +152,64 @@ func (e *DataSourceHandler) Dispose() {
 	e.log.Debug("DB disposed")
 }
 
+func (e *DataSourceHandler) getQueryRows(ctx context.Context, req *backend.QueryDataRequest) (*sql.Rows, error) {
+	query := req.Queries[0]
+	queryjson := QueryJson{
+		Fill:   false,
+		Format: "time_series",
+	}
+	err := json.Unmarshal(query.JSON, &queryjson)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshal query json: %w", err)
+	}
+	if queryjson.Fill || queryjson.FillInterval != 0.0 || queryjson.FillMode != "" || queryjson.FillValue != 0.0 {
+		return nil, fmt.Errorf("query fill-parameters not supported")
+	}
+	if queryjson.RawSql == "" {
+		return nil, fmt.Errorf("emtpy query")
+	}
+
+	// global substitutions
+	interpolatedQuery := Interpolate(query, query.TimeRange, e.dsInfo.JsonData.TimeInterval, queryjson.RawSql)
+
+	// data source specific substitutions
+	interpolatedQuery, err = e.macroEngine.Interpolate(&query, query.TimeRange, interpolatedQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	return e.db.QueryContext(ctx, interpolatedQuery)
+}
+
+func (e *DataSourceHandler) getFrameGenerator(ctx context.Context, req *backend.QueryDataRequest) backend.FrameGenerator {
+	pageSize := int64(5000)
+	stringConverters := e.queryResultTransformer.GetConverterList()
+	rows, err := e.getQueryRows(ctx, req)
+	return func() (data.Frames, error) {
+		if err != nil {
+			return nil, err
+		}
+		frame, err := sqlutil.FrameFromRowsSubset(rows, pageSize, sqlutil.ToConverters(stringConverters...)...)
+		if err == sqlutil.ErrEOResults {
+			rows.Close()
+			return data.Frames{frame}, backend.ErrFrameGeneratorEOF
+		}
+		return data.Frames{frame}, err
+	}
+}
+
+func (e *DataSourceHandler) queryDataPaged(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	result := backend.NewQueryDataResponseWithFrameGenerator(e.getFrameGenerator(ctx, req))
+	result.Responses = make(map[string]backend.DataResponse)
+	result.Responses[req.Queries[0].RefID] = backend.DataResponse{}
+	return result, nil
+}
+
 func (e *DataSourceHandler) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if req.PagedResponses {
+		return e.queryDataPaged(ctx, req)
+	}
+
 	result := backend.NewQueryDataResponse()
 	ch := make(chan DBDataResponse, len(req.Queries))
 	var wg sync.WaitGroup
