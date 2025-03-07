@@ -958,4 +958,8 @@ const (
 	// FlagAlertRuleRestore
 	// Enables the alert rule restore feature
 	FlagAlertRuleRestore = "alertRuleRestore"
+
+	// FlagAlertingRuleRecoverDeleted
+	// Enables access to recover deleted alert rules
+	FlagAlertingRuleRecoverDeleted = "alertingRuleRecoverDeleted"
 )

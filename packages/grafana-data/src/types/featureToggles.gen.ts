@@ -256,4 +256,5 @@ export interface FeatureToggles {
   rendererDisableAppPluginsPreload?: boolean;
   assetSriChecks?: boolean;
   alertRuleRestore?: boolean;
+  alertingRuleRecoverDeleted?: boolean;
 }

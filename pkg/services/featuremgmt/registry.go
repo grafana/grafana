@@ -1789,6 +1789,16 @@ var (
 			Owner:       grafanaAlertingSquad,
 			Expression:  "true", // enabled by default
 		},
+		{
+			Name:              "alertingRuleRecoverDeleted",
+			Description:       "Enables access to recover deleted alert rules",
+			FrontendOnly:      true,
+			Stage:             FeatureStageGeneralAvailability,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "true", // enabled by default
+		},
 	}
 )
 
