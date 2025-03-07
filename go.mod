@@ -80,7 +80,7 @@ require (
 	github.com/grafana/dataplane/sdata v0.0.9 // @grafana/observability-metrics
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040 // @grafana/grafana-backend-group
 	github.com/grafana/e2e v0.1.1 // @grafana-app-platform-squad
-	github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 // @grafana/sharing-squad
+	github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f // @grafana/sharing-squad
 	github.com/grafana/gomemcache v0.0.0-20240805133030-fdaf6a95408e // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-app-sdk v0.31.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-app-sdk/logging v0.30.0 // @grafana/grafana-app-platform-squad
@@ -131,7 +131,7 @@ require (
 	github.com/openfga/openfga v1.8.6 // @grafana/identity-access-team
 	github.com/openzipkin/zipkin-go v0.4.3 // @grafana/oss-big-tent
 	github.com/patrickmn/go-cache v2.1.0+incompatible // @grafana/alerting-backend
-	github.com/phpdave11/gofpdi v1.0.13 // @grafana/sharing-squad
+	github.com/phpdave11/gofpdi v1.0.14 // @grafana/sharing-squad
 	github.com/prometheus/alertmanager v0.27.0 // @grafana/alerting-backend
 	github.com/prometheus/client_golang v1.21.0 // @grafana/alerting-backend
 	github.com/prometheus/client_model v0.6.1 // @grafana/grafana-backend-group
