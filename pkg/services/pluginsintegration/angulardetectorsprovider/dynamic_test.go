@@ -337,7 +337,7 @@ func TestDynamicAngularDetectorsProviderBackgroundService(t *testing.T) {
 
 	t.Run("background service", func(t *testing.T) {
 		oldBackgroundJobInterval := backgroundJobIntervalOnPrem
-		backgroundJobIntervalOnPrem = time.Millisecond * 500
+		backgroundJobIntervalOnPrem = 10 * time.Millisecond
 		t.Cleanup(func() {
 			backgroundJobIntervalOnPrem = oldBackgroundJobInterval
 		})
@@ -387,7 +387,7 @@ func TestDynamicAngularDetectorsProviderBackgroundService(t *testing.T) {
 
 			lastJobTime := time.Now()
 			var jobCalls counter
-			const jobInterval = time.Millisecond * 500
+			const jobInterval = time.Millisecond * 20
 			done := make(chan struct{})
 			gcom := newDefaultGCOMScenario(func(_ http.ResponseWriter, _ *http.Request) {
 				now := time.Now()
