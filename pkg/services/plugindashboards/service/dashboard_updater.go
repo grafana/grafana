@@ -177,10 +177,7 @@ func (du *DashboardUpdater) autoUpdateAppDashboard(ctx context.Context, pluginDa
 	}
 	du.logger.Info("Auto updating App dashboard", "dashboard", resp.Dashboard.Title, "newRev",
 		pluginDashInfo.Revision, "oldRev", pluginDashInfo.ImportedRevision)
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return err
-	}
+	ctx, user := identity.WithServiceIdentity(ctx, orgID)
 	_, err = du.dashboardImportService.ImportDashboard(ctx, &dashboardimport.ImportDashboardRequest{
 		PluginId:  pluginDashInfo.PluginId,
 		User:      user,
