@@ -7,7 +7,7 @@ import { PostableRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { addRuleAction, updateRuleAction } from '../../reducers/ruler/ruleGroups';
-import { isGrafanaRuleIdentifier, isGrafanaRulerRule } from '../../utils/rules';
+import { isGrafanaRuleIdentifier, rulerRuleType } from '../../utils/rules';
 import { useAsync } from '../useAsync';
 
 import { useDeleteRuleFromGroup } from './useDeleteRuleFromGroup';
@@ -132,7 +132,7 @@ function copyGrafanaUID(ruleIdentifier: EditableRuleIdentifier, ruleDefinition: 
   // by copying over the rule UID the backend will perform an atomic move operation
   // so there is no need for us to manually remove it from the previous group
   return produce(ruleDefinition, (draft) => {
-    const isGrafanaManagedRuleDefinition = isGrafanaRulerRule(draft);
+    const isGrafanaManagedRuleDefinition = rulerRuleType.grafana.rule(draft);
 
     if (isGrafanaManagedRuleIdentifier && isGrafanaManagedRuleDefinition) {
       draft.grafana_alert.uid = ruleIdentifier.uid;
