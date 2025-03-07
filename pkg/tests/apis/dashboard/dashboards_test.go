@@ -444,13 +444,9 @@ func TestIntegrationDashboardsAppV1Alpha1LargeObjects(t *testing.T) {
 		require.True(t, ok)
 		require.Equal(t, "Test empty dashboard", title)
 
-		panels, ok := objj["panels"].(interface{})
+		panelsMap, ok := objj["panels"].([]interface{})
 		require.True(t, ok)
-		panelsMap, ok := panels.([]interface{})
-		require.True(t, ok)
-		data, ok := panelsMap[0].(interface{})
-		require.True(t, ok)
-		tt, ok := data.(map[string]interface{})["title"]
+		tt, ok := panelsMap[0].(map[string]interface{})["title"]
 		require.True(t, ok)
 		require.Equal(t, "Test Panel", tt)
 	})
