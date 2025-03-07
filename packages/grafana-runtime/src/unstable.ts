@@ -9,9 +9,5 @@
  * and be subject to the standard policies
  */
 
-export {
-  ScopesContext,
-  type ScopesContextValueState,
-  type ScopesContextValue,
-  useScopes,
-} from './unstable/ScopesContext';
+// Dummy export to make it a valid module. Remove when we have real exports.
+export const unstable = {};
