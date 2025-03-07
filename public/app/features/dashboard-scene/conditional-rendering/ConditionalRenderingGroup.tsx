@@ -3,9 +3,10 @@ import { Fragment, ReactNode, useMemo } from 'react';
 
 import { dateTime, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
-import { Divider, Dropdown, InlineField, Menu, Select, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Divider, Dropdown, Field, Menu, RadioButtonGroup, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
+import { ConditionHeader } from './ConditionHeader';
 import { ConditionalRenderingAfter } from './ConditionalRenderingAfter';
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
 import { ConditionalRenderingBefore } from './ConditionalRenderingBefore';
@@ -63,6 +64,15 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
   public static createEmpty(): ConditionalRenderingGroup {
     return new ConditionalRenderingGroup({ condition: 'and', value: [] });
   }
+
+  public onDelete() {
+    const rootGroup = this.getRootGroup();
+    if (this === rootGroup) {
+      this.getBehavior().setState({ rootGroup: ConditionalRenderingGroup.createEmpty() });
+    } else {
+      rootGroup.setState({ value: rootGroup.state.value.filter((condition) => condition !== this) });
+    }
+  }
 }
 
 function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<ConditionalRenderingGroup>) {
@@ -71,8 +81,8 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
 
   const conditionsOptions: Array<SelectableValue<'and' | 'or'>> = useMemo(
     () => [
-      { label: t('dashboard.conditional-rendering.group.condition.and', 'And'), value: 'and' },
-      { label: t('dashboard.conditional-rendering.group.condition.or', 'Or'), value: 'or' },
+      { label: t('dashboard.conditional-rendering.group.condition.meet-all', 'Meet all'), value: 'and' },
+      { label: t('dashboard.conditional-rendering.group.condition.meet-any', 'Meet any'), value: 'or' },
     ],
     []
   );
@@ -83,17 +93,18 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
   );
 
   return (
-    <>
-      <InlineField label={t('dashboard.conditional-rendering.group.condition.label', 'Condition')}>
-        <Select
-          isClearable={false}
+    <Stack direction="column">
+      <ConditionHeader title={model.title} onDelete={() => model.onDelete()} />
+      <Field label={t('dashboard.conditional-rendering.group.condition.label', 'Evaluate conditions')}>
+        <RadioButtonGroup
+          fullWidth
           options={conditionsOptions}
-          value={currentConditionOption}
-          onChange={({ value }) => model.changeCondition(value!)}
+          value={currentConditionOption.value}
+          onChange={(value) => model.changeCondition(value!)}
         />
-      </InlineField>
+      </Field>
 
-      <Divider />
+      <Divider spacing={1} />
 
       {value.map((entry) => (
         <Fragment key={entry!.state.key}>
@@ -101,9 +112,9 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
           <entry.Component model={entry as any} />
 
           <div className={styles.entryDivider}>
-            <Divider />
-            <p className={styles.entryDividerText}> {currentConditionOption.label}</p>
-            <Divider />
+            <Divider spacing={1} />
+            <p className={styles.entryDividerText}> {currentConditionOption.value}</p>
+            <Divider spacing={1} />
           </div>
         </Fragment>
       ))}
@@ -125,6 +136,10 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
                 onClick={() => model.addItem(new ConditionalRenderingBefore({ value: dateTime() }))}
               />
               <Menu.Item
+                label={t('dashboard.conditional-rendering.group.add.variable', 'Variable value')}
+                onClick={() => model.addItem(new ConditionalRenderingVariable({ value: { name: '', values: [] } }))}
+              />
+              {/* <Menu.Item
                 label={t('dashboard.conditional-rendering.group.add.between', 'Between')}
                 onClick={() =>
                   model.addItem(
@@ -141,16 +156,16 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
               <Menu.Item
                 label={t('dashboard.conditional-rendering.group.add.group', 'Group')}
                 onClick={() => model.addItem(ConditionalRenderingGroup.createEmpty())}
-              />
+              /> */}
             </Menu>
           }
         >
           <ToolbarButton icon="plus" iconSize="xs" variant="canvas">
-            <Trans i18nKey="dashboard.conditional-rendering.group.add.button">Add</Trans>
+            <Trans i18nKey="dashboard.conditional-rendering.group.add.button">Add condition based on</Trans>
           </ToolbarButton>
         </Dropdown>
       </div>
-    </>
+    </Stack>
   );
 }
 
@@ -163,6 +178,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   entryDividerText: css({
     margin: 0,
     padding: theme.spacing(0, 2),
+    textTransform: 'capitalize',
   }),
   addButtonContainer: css({
     display: 'flex',

@@ -1,9 +1,9 @@
 import { ReactNode } from 'react';
 
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { ControlledCollapse } from '@grafana/ui';
 
 import { ConditionalRendering } from './ConditionalRendering';
+import { ConditionalRenderingGroup } from './ConditionalRenderingGroup';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface ConditionalRenderingBaseState<V = any> extends SceneObjectState {
@@ -20,8 +20,14 @@ export abstract class ConditionalRenderingBase<S extends ConditionalRenderingBas
 
   public abstract render(): ReactNode;
 
+  public abstract onDelete(): void;
+
   public getBehavior(): ConditionalRendering {
     return sceneGraph.getAncestor(this, ConditionalRendering);
+  }
+
+  public getRootGroup(): ConditionalRenderingGroup {
+    return this.getBehavior().state.rootGroup;
   }
 
   public setStateAndNotify(state: Partial<S>) {
@@ -43,11 +49,5 @@ export abstract class ConditionalRenderingBase<S extends ConditionalRenderingBas
 function ConditionalRenderingBaseRenderer({
   model,
 }: SceneComponentProps<ConditionalRenderingBase<ConditionalRenderingBaseState>>) {
-  const { isCollapsed } = model.useState();
-
-  return (
-    <ControlledCollapse label={model.title} isOpen={!isCollapsed} onToggle={() => model.toggleCollapse()}>
-      {model.render()}
-    </ControlledCollapse>
-  );
+  return model.render();
 }

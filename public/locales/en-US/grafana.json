@@ -1022,19 +1022,21 @@
       },
       "group": {
         "add": {
-          "between": "Between",
-          "button": "Add",
+          "button": "Add condition based on",
           "data": "Data",
           "from": "From",
-          "group": "Group",
-          "to": "To"
+          "to": "To",
+          "variable": "Variable value"
         },
         "condition": {
-          "and": "And",
-          "label": "Condition",
-          "or": "Or"
+          "label": "Evaluate conditions",
+          "meet-all": "Meet all",
+          "meet-any": "Meet any"
         },
         "label": "Group"
+      },
+      "shared": {
+        "delete-condition": "Delete Condition"
       },
       "title": "Conditional rendering options",
       "variable": {

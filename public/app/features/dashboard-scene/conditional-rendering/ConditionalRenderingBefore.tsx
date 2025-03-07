@@ -2,10 +2,12 @@ import { ReactNode } from 'react';
 
 import { DateTime } from '@grafana/data';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
-import { DateTimePicker } from '@grafana/ui';
+import { DateTimePicker, Stack } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
+import { ConditionHeader } from './ConditionHeader';
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
+import { handleDeleteNonGroupCondition } from './shared';
 
 interface ConditionalRenderingBeforeState extends ConditionalRenderingBaseState<DateTime> {}
 
@@ -22,10 +24,19 @@ export class ConditionalRenderingBefore extends ConditionalRenderingBase<Conditi
   public render(): ReactNode {
     return <ConditionalRenderingBeforeRenderer model={this} />;
   }
+
+  public onDelete() {
+    handleDeleteNonGroupCondition(this);
+  }
 }
 
 function ConditionalRenderingBeforeRenderer({ model }: SceneComponentProps<ConditionalRenderingBefore>) {
   const { value } = model.useState();
 
-  return <DateTimePicker clearable={false} date={value} onChange={(value) => model.changeValue(value!)} />;
+  return (
+    <Stack direction="column">
+      <ConditionHeader title={model.title} onDelete={() => model.onDelete()} />
+      <DateTimePicker clearable={false} date={value} onChange={(value) => model.changeValue(value!)} />
+    </Stack>
+  );
 }

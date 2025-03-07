@@ -1022,19 +1022,21 @@
       },
       "group": {
         "add": {
-          "between": "ßęŧŵęęŉ",
-          "button": "Åđđ",
+          "button": "Åđđ čőŉđįŧįőŉ þäşęđ őŉ",
           "data": "Đäŧä",
           "from": "Fřőm",
-          "group": "Ğřőūp",
-          "to": "Ŧő"
+          "to": "Ŧő",
+          "variable": "Väřįäþľę väľūę"
         },
         "condition": {
-          "and": "Åŉđ",
-          "label": "Cőŉđįŧįőŉ",
-          "or": "Øř"
+          "label": "Ēväľūäŧę čőŉđįŧįőŉş",
+          "meet-all": "Męęŧ äľľ",
+          "meet-any": "Męęŧ äŉy"
         },
         "label": "Ğřőūp"
+      },
+      "shared": {
+        "delete-condition": "Đęľęŧę Cőŉđįŧįőŉ"
       },
       "title": "Cőŉđįŧįőŉäľ řęŉđęřįŉģ őpŧįőŉş",
       "variable": {
