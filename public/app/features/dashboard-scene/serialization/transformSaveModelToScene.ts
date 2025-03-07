@@ -293,6 +293,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
           intervals: oldModel.timepicker.refresh_intervals,
           withText: true,
         }),
+        hideTimeControls: oldModel.timepicker.hidden,
       }),
     },
     serializerVersion
