@@ -7,7 +7,13 @@ import createMockQuery from '../__mocks__/query';
 import { createTemplateVariables } from '../__mocks__/utils';
 import { multiVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
-import { AzureAPIResponse, AzureMonitorDataSourceInstanceSettings, Location } from '../types';
+import {
+  AzureAPIResponse,
+  AzureMonitorDataSourceInstanceSettings,
+  Location,
+  RawAzureResourceGroupItem,
+  RawAzureResourceItem,
+} from '../types';
 
 // We want replace to just return the value as is in general/
 // We declare this as a function so that we can overwrite it in each test
@@ -754,20 +760,20 @@ describe('AzureMonitorDatasource', () => {
 
     describe('When performing getResourceGroups', () => {
       const response = {
-        value: [{ name: 'grp1' }, { name: 'grp2' }],
+        data: [{ resourceGroupName: 'grp1' }, { resourceGroupName: 'grp2' }],
       };
 
       beforeEach(() => {
-        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockResolvedValue(response);
+        ctx.ds.azureResourceGraphDatasource.postResource = jest.fn().mockResolvedValue(response);
       });
 
       it('should return list of Resource Groups', () => {
-        return ctx.ds.getResourceGroups('subscriptionId').then((results: Array<{ text: string; value: string }>) => {
+        return ctx.ds.getResourceGroups('subscriptionId').then((results: RawAzureResourceGroupItem[]) => {
           expect(results.length).toEqual(2);
-          expect(results[0].text).toEqual('grp1');
-          expect(results[0].value).toEqual('grp1');
-          expect(results[1].text).toEqual('grp2');
-          expect(results[1].value).toEqual('grp2');
+          expect(results[0].resourceGroupName).toEqual('grp1');
+          expect(results[0].resourceGroupName).toEqual('grp1');
+          expect(results[1].resourceGroupName).toEqual('grp2');
+          expect(results[1].resourceGroupName).toEqual('grp2');
         });
       });
     });
@@ -786,11 +792,7 @@ describe('AzureMonitorDatasource', () => {
 
       describe('and there are no special cases', () => {
         const response = {
-          value: [
-            {
-              name: 'Failure Anomalies - nodeapp',
-              type: 'microsoft.insights/alertrules',
-            },
+          data: [
             {
               name: resourceGroup,
               type: metricNamespace,
@@ -799,13 +801,7 @@ describe('AzureMonitorDatasource', () => {
         };
 
         beforeEach(() => {
-          ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-            const basePath = `azuremonitor/subscriptions/${subscription}/resourceGroups`;
-            expect(path).toBe(
-              `${basePath}/${resourceGroup}/resources?api-version=2021-04-01&$filter=resourceType eq '${metricNamespace}'${
-                region ? ` and location eq '${region}'` : ''
-              }`
-            );
+          ctx.ds.azureResourceGraphDatasource.postResource = jest.fn().mockImplementation((path: string) => {
             return Promise.resolve(response);
           });
         });
@@ -813,10 +809,10 @@ describe('AzureMonitorDatasource', () => {
         it('should return list of Resource Names', () => {
           return ctx.ds
             .getResourceNames(subscription, resourceGroup, metricNamespace)
-            .then((results: Array<{ text: string; value: string }>) => {
+            .then((results: RawAzureResourceItem[]) => {
               expect(results.length).toEqual(1);
-              expect(results[0].text).toEqual('nodeapp');
-              expect(results[0].value).toEqual('nodeapp');
+              expect(results[0].name).toEqual('nodeapp');
+              expect(results[0].name).toEqual('nodeapp');
             });
         });
 
@@ -824,10 +820,10 @@ describe('AzureMonitorDatasource', () => {
           metricNamespace = 'microsoft.insights/Components';
           return ctx.ds
             .getResourceNames(subscription, resourceGroup, metricNamespace)
-            .then((results: Array<{ text: string; value: string }>) => {
+            .then((results: RawAzureResourceItem[]) => {
               expect(results.length).toEqual(1);
-              expect(results[0].text).toEqual('nodeapp');
-              expect(results[0].value).toEqual('nodeapp');
+              expect(results[0].name).toEqual('nodeapp');
+              expect(results[0].name).toEqual('nodeapp');
             });
         });
 
@@ -835,10 +831,10 @@ describe('AzureMonitorDatasource', () => {
           region = 'eastus';
           return ctx.ds
             .getResourceNames(subscription, resourceGroup, metricNamespace, region)
-            .then((results: Array<{ text: string; value: string }>) => {
+            .then((results: RawAzureResourceItem[]) => {
               expect(results.length).toEqual(1);
-              expect(results[0].text).toEqual('nodeapp');
-              expect(results[0].value).toEqual('nodeapp');
+              expect(results[0].name).toEqual('nodeapp');
+              expect(results[0].name).toEqual('nodeapp');
             });
         });
 
@@ -869,43 +865,34 @@ describe('AzureMonitorDatasource', () => {
             return target === `$${multiVariable.id}` ? 'foo,bar' : (target ?? '');
           };
           const ds = new AzureMonitorDatasource(ctx.instanceSettings);
-          //ds.azureMonitorDatasource.templateSrv = tsrv;
-          ds.azureMonitorDatasource.getResource = jest
+          ds.azureResourceGraphDatasource.postResource = jest
             .fn()
-            .mockImplementationOnce((path: string) => {
-              expect(path).toMatch('foo');
-              return Promise.resolve(response);
-            })
-            .mockImplementationOnce((path: string) => {
-              expect(path).toMatch('bar');
-              return Promise.resolve({
-                value: [
+            .mockImplementationOnce(() => Promise.resolve(response))
+            .mockImplementationOnce(() =>
+              Promise.resolve({
+                data: [
                   {
                     name: resourceGroup + '2',
                     type: metricNamespace,
                   },
                 ],
-              });
-            });
+              })
+            );
           return ds
             .getResourceNames(subscription, `$${multiVariable.id}`, metricNamespace)
-            .then((results: Array<{ text: string; value: string }>) => {
+            .then((results: RawAzureResourceItem[]) => {
               expect(results.length).toEqual(2);
-              expect(results[0].text).toEqual('nodeapp');
-              expect(results[0].value).toEqual('nodeapp');
-              expect(results[1].text).toEqual('nodeapp2');
-              expect(results[1].value).toEqual('nodeapp2');
+              expect(results[0].name).toEqual('nodeapp');
+              expect(results[0].name).toEqual('nodeapp');
+              expect(results[1].name).toEqual('nodeapp2');
+              expect(results[1].name).toEqual('nodeapp2');
             });
         });
       });
 
       describe('and the metric definition is blobServices', () => {
         const response = {
-          value: [
-            {
-              name: 'Failure Anomalies - nodeapp',
-              type: 'microsoft.insights/alertrules',
-            },
+          data: [
             {
               name: 'storagetest',
               type: 'microsoft.storage/storageaccounts',
@@ -916,78 +903,32 @@ describe('AzureMonitorDatasource', () => {
         it('should return list of Resource Names', () => {
           metricNamespace = 'microsoft.storage/storageaccounts/blobservices';
           const validMetricNamespace = 'microsoft.storage/storageaccounts';
-          ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-            const basePath = `azuremonitor/subscriptions/${subscription}/resourceGroups`;
-            expect(path).toBe(
-              basePath +
-                `/${resourceGroup}/resources?api-version=2021-04-01&$filter=resourceType eq '${validMetricNamespace}'`
-            );
-            return Promise.resolve(response);
-          });
+          ctx.ds.azureResourceGraphDatasource.postResource = jest
+            .fn()
+            .mockImplementation(() => Promise.resolve(response));
           return ctx.ds
             .getResourceNames(subscription, resourceGroup, metricNamespace)
-            .then((results: Array<{ text: string; value: string }>) => {
+            .then((results: RawAzureResourceItem[]) => {
               expect(results.length).toEqual(1);
-              expect(results[0].text).toEqual('storagetest/default');
-              expect(results[0].value).toEqual('storagetest/default');
-              expect(ctx.ds.azureMonitorDatasource.getResource).toHaveBeenCalledWith(
-                `azuremonitor/subscriptions/${subscription}/resourceGroups/${resourceGroup}/resources?api-version=2021-04-01&$filter=resourceType eq '${validMetricNamespace}'`
+              expect(results[0].name).toEqual('storagetest');
+              expect(results[0].name).toEqual('storagetest');
+              expect(ctx.ds.azureResourceGraphDatasource.postResource).toHaveBeenCalledWith(
+                'resourcegraph/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01',
+                {
+                  options: { resultFormat: 'objectArray' },
+                  query: `resources
+        | where id hasprefix \"/subscriptions/${subscription}/resourceGroups/${resourceGroup}/\"
+        | where type == '${validMetricNamespace}'
+        | order by tolower(name) asc`,
+                }
               );
-            });
-        });
-      });
-
-      describe('and there are several pages', () => {
-        const skipToken = 'token';
-        const response1 = {
-          value: [
-            {
-              name: `${resourceGroup}1`,
-              type: metricNamespace,
-            },
-          ],
-          nextLink: `https://management.azure.com/resourceuri?$skiptoken=${skipToken}`,
-        };
-        const response2 = {
-          value: [
-            {
-              name: `${resourceGroup}2`,
-              type: metricNamespace,
-            },
-          ],
-        };
-
-        beforeEach(() => {
-          const fn = jest.fn();
-          ctx.ds.azureMonitorDatasource.getResource = fn;
-          const basePath = `azuremonitor/subscriptions/${subscription}/resourceGroups`;
-          const expectedPath = `${basePath}/${resourceGroup}/resources?api-version=2021-04-01&$filter=resourceType eq '${metricNamespace}'`;
-          // first page
-          fn.mockImplementationOnce((path: string) => {
-            expect(path).toBe(expectedPath);
-            return Promise.resolve(response1);
-          });
-          // second page
-          fn.mockImplementationOnce((path: string) => {
-            expect(path).toBe(`${expectedPath}&$skiptoken=${skipToken}`);
-            return Promise.resolve(response2);
-          });
-        });
-
-        it('should return list of Resource Names', () => {
-          return ctx.ds
-            .getResourceNames(subscription, resourceGroup, metricNamespace)
-            .then((results: Array<{ text: string; value: string }>) => {
-              expect(results.length).toEqual(2);
-              expect(results[0].value).toEqual(`${resourceGroup}1`);
-              expect(results[1].value).toEqual(`${resourceGroup}2`);
             });
         });
       });
 
       describe('without a resource group or a metric definition', () => {
         const response = {
-          value: [
+          data: [
             {
               name: 'Failure Anomalies - nodeapp',
               type: 'microsoft.insights/alertrules',
@@ -1000,15 +941,13 @@ describe('AzureMonitorDatasource', () => {
         };
 
         beforeEach(() => {
-          ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-            const basePath = `azuremonitor/subscriptions/${subscription}/resources?api-version=2021-04-01`;
-            expect(path).toBe(basePath);
+          ctx.ds.azureResourceGraphDatasource.postResource = jest.fn().mockImplementation((path: string) => {
             return Promise.resolve(response);
           });
         });
 
         it('should return list of Resource Names', () => {
-          return ctx.ds.getResourceNames(subscription).then((results: Array<{ text: string; value: string }>) => {
+          return ctx.ds.getResourceNames(subscription).then((results: RawAzureResourceItem[]) => {
             expect(results.length).toEqual(2);
           });
         });
