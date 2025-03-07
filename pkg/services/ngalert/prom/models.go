@@ -33,10 +33,6 @@ func (g *PrometheusRuleGroup) Validate() error {
 		return ErrPrometheusRuleGroupValidationFailed.Errorf("limit is not supported")
 	}
 
-	if len(g.Labels) > 0 {
-		return ErrPrometheusRuleGroupValidationFailed.Errorf("labels are not supported")
-	}
-
 	for _, rule := range g.Rules {
 		if err := rule.Validate(); err != nil {
 			return err
