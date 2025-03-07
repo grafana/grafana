@@ -37,7 +37,7 @@ import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { calculateGridItemDimensions, getVizPanelKeyForPanelId, isLibraryPanel } from '../../utils/utils';
 import { GRID_ROW_HEIGHT } from '../const';
 
-import { buildVizPanel } from './utils';
+import { buildLibraryPanel, buildVizPanel } from './utils';
 
 export class DefaultGridLayoutManagerSerializer implements LayoutManagerSerializer {
   serialize(layoutManager: DefaultGridLayoutManager, isSnapshot?: boolean): DashboardV2Spec['layout'] {
@@ -269,7 +269,7 @@ function createSceneGridLayoutForItems(layout: GridLayoutKind, elements: Record<
     } else if (element.kind === 'GridLayoutRow') {
       const children = element.spec.elements.map((gridElement) => {
         const panel = elements[getOriginalKey(gridElement.spec.element.name)];
-        if (panel.kind === 'Panel') {
+        if (panel.kind === 'Panel' || panel.kind === 'LibraryPanel') {
           return buildGridItem(gridElement.spec, panel, element.spec.y + GRID_ROW_HEIGHT + gridElement.spec.y);
         } else {
           throw new Error(`Unknown element kind: ${gridElement.kind}`);
@@ -295,8 +295,17 @@ function createSceneGridLayoutForItems(layout: GridLayoutKind, elements: Record<
   });
 }
 
-function buildGridItem(gridItem: GridLayoutItemSpec, panel: PanelKind, yOverride?: number): DashboardGridItem {
-  const vizPanel = buildVizPanel(panel);
+function buildGridItem(
+  gridItem: GridLayoutItemSpec,
+  panel: PanelKind | LibraryPanelKind,
+  yOverride?: number
+): DashboardGridItem {
+  let vizPanel: VizPanel;
+  if (panel.kind === 'Panel') {
+    vizPanel = buildVizPanel(panel);
+  } else {
+    vizPanel = buildLibraryPanel(panel);
+  }
   return new DashboardGridItem({
     key: `grid-item-${panel.spec.id}`,
     x: gridItem.x,
@@ -309,48 +318,4 @@ function buildGridItem(gridItem: GridLayoutItemSpec, panel: PanelKind, yOverride
     repeatDirection: gridItem.repeat?.direction,
     maxPerRow: gridItem.repeat?.maxPerRow,
   });
-}
-
-function buildLibraryPanel(panel: LibraryPanelKind): VizPanel {
-  const titleItems: SceneObject[] = [];
-
-  if (config.featureToggles.angularDeprecationUI) {
-    titleItems.push(new AngularDeprecation());
-  }
-
-  titleItems.push(
-    new VizPanelLinks({
-      rawLinks: [],
-      menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
-    })
-  );
-
-  titleItems.push(new PanelNotices());
-
-  const vizPanelState: VizPanelState = {
-    key: getVizPanelKeyForPanelId(panel.spec.id),
-    titleItems,
-    $behaviors: [
-      new LibraryPanelBehavior({
-        uid: panel.spec.libraryPanel.uid,
-        name: panel.spec.libraryPanel.name,
-      }),
-    ],
-    extendPanelContext: setDashboardPanelContext,
-    pluginId: LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID,
-    title: panel.spec.title,
-    options: {},
-    fieldConfig: {
-      defaults: {},
-      overrides: [],
-    },
-  };
-
-  if (!config.publicDashboardAccessToken) {
-    vizPanelState.menu = new VizPanelMenu({
-      $behaviors: [panelMenuBehavior],
-    });
-  }
-
-  return new VizPanel(vizPanelState);
 }
