@@ -69,8 +69,10 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     throw new Error('Method not implemented.');
   }
 
-  public addNewRow() {
-    this.setState({ rows: [...this.state.rows, new RowItem()] });
+  public addNewRow(): RowItem {
+    const row = new RowItem();
+    this.setState({ rows: [...this.state.rows, row] });
+    return row;
   }
 
   public editModeChanged(isEditing: boolean) {

@@ -20,7 +20,7 @@ title: SSO Settings API
 
 # SSO Settings API
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
 {{% admonition type="note" %}}
 Available since Grafana 11. SAML support is in public preview behind the `ssoSettingsSAML` feature flag.
@@ -29,7 +29,7 @@ Available since Grafana 11. SAML support is in public preview behind the `ssoSet
 The API can be used to create, update, delete, get, and list SSO Settings for OAuth2 and SAML.
 
 The settings managed by this API are stored in the database and override
-[settings from other sources]({{< relref "../../setup-grafana/configure-security/configure-authentication" >}})
+[settings from other sources](../../../setup-grafana/configure-security/configure-authentication/)
 (arguments, environment variables, settings file, etc).
 Therefore, every time settings for a specific provider are removed or reset to the default settings at runtime,
 the settings are inherited from the other sources in the reverse order of precedence
@@ -45,7 +45,7 @@ The providers or SSO keys that are not managed by this API are retrieved from th
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#sso-settings" >}}) for an explanation.
+See note in the [introduction](#sso-settings) for an explanation.
 
 | Action          | Scope                        |
 | --------------- | ---------------------------- |
@@ -112,7 +112,7 @@ The SSO keys that are not managed by this API are retrieved from the other sourc
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#sso-settings" >}}) for an explanation.
+See note in the [introduction](#sso-settings) for an explanation.
 
 | Action          | Scope                        |
 | --------------- | ---------------------------- |
@@ -175,7 +175,7 @@ to wait a few minutes for the configuration to propagate to all Grafana instance
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#sso-settings" >}}) for an explanation.
+See note in the [introduction](#sso-settings) for an explanation.
 
 | Action           | Scope                        |
 | ---------------- | ---------------------------- |
@@ -222,7 +222,7 @@ Deletes an existing SSO Settings entry for a provider.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#sso-settings" >}}) for an explanation.
+See note in the [introduction](#sso-settings) for an explanation.
 
 | Action           | Scope                        |
 | ---------------- | ---------------------------- |

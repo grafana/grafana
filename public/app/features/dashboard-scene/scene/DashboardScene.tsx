@@ -488,7 +488,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.onEnterEditMode();
     }
 
+    // Add panel to layout
     this.state.body.addPanel(vizPanel);
+    // Select panel
+    this.state.editPane.newObjectAddedToCanvas(vizPanel);
   }
 
   public createLibraryPanel(panelToReplace: VizPanel, libPanel: LibraryPanel) {
@@ -596,18 +599,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onCreateNewRow() {
-    addNewRowTo(this.state.body);
+    const newRow = addNewRowTo(this.state.body);
+    this.state.editPane.newObjectAddedToCanvas(newRow);
+    return newRow;
   }
 
   public onCreateNewTab() {
-    addNewTabTo(this.state.body);
+    const tab = addNewTabTo(this.state.body);
+    this.state.editPane.newObjectAddedToCanvas(tab);
+    return tab;
   }
 
   public onCreateNewPanel(): VizPanel {
     const vizPanel = getDefaultVizPanel();
-
     this.addPanel(vizPanel);
-
     return vizPanel;
   }
 
@@ -682,12 +687,26 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     saveModel?: Dashboard | DashboardV2Spec,
     meta?: DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
   ): void {
-    this._serializer.initialSaveModel = sortedDeepCloneWithoutNulls(saveModel);
+    this._serializer.initializeMapping(saveModel);
+    const sortedModel = sortedDeepCloneWithoutNulls(saveModel);
+    this._serializer.initialSaveModel = sortedModel;
     this._serializer.metadata = meta;
   }
 
   public getTrackingInformation() {
     return this._serializer.getTrackingInformation(this);
+  }
+
+  public getPanelIdForElement(elementId: string) {
+    return this._serializer.getPanelIdForElement(elementId);
+  }
+
+  public getElementPanelMapping() {
+    return this._serializer.getElementPanelMapping();
+  }
+
+  public getElementIdentifierForPanel(panelId: number) {
+    return this._serializer.getElementIdForPanel(panelId);
   }
 
   public async onDashboardDelete() {

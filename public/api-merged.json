@@ -14240,6 +14240,9 @@
         },
         "state": {
           "$ref": "#/definitions/State"
+        },
+        "subject": {
+          "type": "string"
         }
       }
     },
@@ -19491,6 +19494,9 @@
         },
         "state": {
           "$ref": "#/definitions/State"
+        },
+        "subject": {
+          "type": "string"
         },
         "uid": {
           "type": "string"
