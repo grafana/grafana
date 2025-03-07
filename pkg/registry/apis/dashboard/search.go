@@ -369,6 +369,10 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if result != nil {
+		s.log.Debug("search result hits and cost", "total_hits", result.TotalHits, "query_cost", result.QueryCost)
+	}
+
 	parsedResults, err := dashboardsearch.ParseResults(result, searchRequest.Offset)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
@@ -378,8 +382,8 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	if len(searchRequest.SortBy) == 0 {
 		// default sort by resource descending ( folders then dashboards ) then title
 		sort.Slice(parsedResults.Hits, func(i, j int) bool {
-			return parsedResults.Hits[i].Resource > parsedResults.Hits[j].Resource ||
-				(parsedResults.Hits[i].Resource == parsedResults.Hits[j].Resource && strings.ToLower(parsedResults.Hits[i].Title) < strings.ToLower(parsedResults.Hits[j].Title))
+			// Just sorting by resource for now. The rest should be sorted by search score already
+			return parsedResults.Hits[i].Resource > parsedResults.Hits[j].Resource
 		})
 	}
 
