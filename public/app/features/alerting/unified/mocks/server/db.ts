@@ -21,7 +21,11 @@ import { namespaces } from '../mimirRulerApi';
 
 import { MIMIR_DATASOURCE_UID, PROMETHEUS_DATASOURCE_UID } from './constants';
 
-class PromRuleFactory extends Factory<PromAlertingRuleDTO> {
+interface PromRuleFactoryTransientParams {
+  namePrefix?: string;
+}
+
+class PromRuleFactory extends Factory<PromAlertingRuleDTO, PromRuleFactoryTransientParams> {
   fromRuler(rulerRule: RulerAlertingRuleDTO) {
     return this.params({
       name: rulerRule.alert,
@@ -33,8 +37,8 @@ class PromRuleFactory extends Factory<PromAlertingRuleDTO> {
   }
 }
 
-const prometheusRuleFactory = PromRuleFactory.define(({ sequence, params }) => ({
-  name: `${params.name ?? 'test-rule'}-${sequence}`,
+const prometheusRuleFactory = PromRuleFactory.define(({ sequence, transientParams: { namePrefix } }) => ({
+  name: `${namePrefix ? `${namePrefix}-` : ''}test-rule-${sequence}`,
   query: 'test-query',
   state: PromAlertingRuleState.Inactive,
   type: PromRuleType.Alerting as const,
