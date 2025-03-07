@@ -154,7 +154,7 @@ function getRulerRulesMetadata(rulerRules: RulerRulesConfigDTO) {
 
 export async function isNewUser() {
   try {
-    const { createdAt } = await getBackendSrv().get(`/api/user`);
+    const { createdAt } = await getBackendSrv().get(`/api/user`, undefined, undefined, { showErrorAlert: false });
 
     const limitDateForNewUser = dateTime().subtract(USER_CREATION_MIN_DAYS, 'days');
     const userCreationDate = dateTime(createdAt);
@@ -166,6 +166,20 @@ export async function isNewUser() {
     return true; //if no date is returned, we assume the user is new to prevent tracking actions
   }
 }
+
+export const trackRuleListNavigation = async (
+  props: AlertRuleTrackingProps = {
+    grafana_version: config.buildInfo.version,
+    org_id: contextSrv.user.orgId,
+    user_id: contextSrv.user.id,
+  }
+) => {
+  const isNew = await isNewUser();
+  if (isNew) {
+    return;
+  }
+  reportInteraction('grafana_alerting_navigation', props);
+};
 
 export const trackAlertRuleFormSaved = (props: { formAction: 'create' | 'update'; ruleType?: RuleFormType }) => {
   reportInteraction('grafana_alerting_rule_creation', props);
