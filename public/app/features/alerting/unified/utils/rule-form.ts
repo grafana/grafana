@@ -286,6 +286,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         folder: { title: namespace, uid: ga.namespace_uid },
         isPaused: ga.is_paused,
         metric: ga.record?.metric,
+        target_datasource_uid: ga.record?.target_datasource_uid,
       };
     } else if (rulerRuleType.grafana.rule(rule)) {
       // grafana alerting rule
