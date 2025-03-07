@@ -585,7 +585,7 @@ GET /api/v1/provisioning/alert-rules/:uid/export
 | Name       | Source | Type    | Go type | Required | Default | Description                                                                                                                                  |
 | ---------- | ------ | ------- | ------- | :------: | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | `UID`      | path   | string  | string  |    ✓     |         | Alert rule UID                                                                                                                               |
-| `download` | query  | boolean | bool    |          |         | Whether to initiate a download of the file or not.                                                                                           |
+| `download` | query  | boolean | `bool`  |          |         | Whether to initiate a download of the file or not.                                                                                           |
 | `format`   | query  | string  | string  |          | `yaml`  | Format of the downloaded file, either `yaml`, `json` or `hcl`. Accept header can also be used, but the query parameter will take precedence. |
 
 #### All responses
@@ -661,7 +661,7 @@ GET /api/v1/provisioning/folder/:folderUid/rule-groups/:group/export
 | ----------- | ------ | ------- | ------- | :------: | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | `FolderUID` | path   | string  | string  |    ✓     |         |                                                                                                                                              |
 | `Group`     | path   | string  | string  |    ✓     |         |                                                                                                                                              |
-| `download`  | query  | boolean | bool    |          |         | Whether to initiate a download of the file or not.                                                                                           |
+| `download`  | query  | boolean | `bool`  |          |         | Whether to initiate a download of the file or not.                                                                                           |
 | `format`    | query  | string  | string  |          | `yaml`  | Format of the downloaded file, either `yaml`, `json` or `hcl`. Accept header can also be used, but the query parameter will take precedence. |
 
 #### All responses
@@ -721,7 +721,7 @@ GET /api/v1/provisioning/alert-rules/export
 
 | Name       | Source | Type    | Go type | Required | Default | Description                                                                                                                                  |
 | ---------- | ------ | ------- | ------- | :------: | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `download` | query  | boolean | bool    |          |         | Whether to initiate a download of the file or not.                                                                                           |
+| `download` | query  | boolean | `bool`  |          |         | Whether to initiate a download of the file or not.                                                                                           |
 | `format`   | query  | string  | string  |          | `yaml`  | Format of the downloaded file, either `yaml`, `json` or `hcl`. Accept header can also be used, but the query parameter will take precedence. |
 
 #### All responses
@@ -787,8 +787,8 @@ GET /api/v1/provisioning/contact-points/export
 
 | Name       | Source | Type    | Go type | Required | Default | Description                                                                                                                                                                                     |
 | ---------- | ------ | ------- | ------- | :------: | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `decrypt`  | query  | boolean | bool    |          |         | Whether any contained secure settings should be decrypted or left redacted. Redacted settings will contain RedactedValue instead. Currently, only org admin can view decrypted secure settings. |
-| `download` | query  | boolean | bool    |          |         | Whether to initiate a download of the file or not.                                                                                                                                              |
+| `decrypt`  | query  | boolean | `bool`  |          |         | Whether any contained secure settings should be decrypted or left redacted. Redacted settings will contain RedactedValue instead. Currently, only org admin can view decrypted secure settings. |
+| `download` | query  | boolean | `bool`  |          |         | Whether to initiate a download of the file or not.                                                                                                                                              |
 | `format`   | query  | string  | string  |          | `yaml`  | Format of the downloaded file, either `yaml`, `json` or `hcl`. Accept header can also be used, but the query parameter will take precedence.                                                    |
 | `name`     | query  | string  | string  |          |         | Filter by name                                                                                                                                                                                  |
 
@@ -886,7 +886,7 @@ GET /api/v1/provisioning/mute-timings/export
 
 | Name       | Source | Type    | Go type | Required | Default | Description                                                                                                                                  |
 | ---------- | ------ | ------- | ------- | :------: | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `download` | query  | boolean | bool    |          |         | Whether to initiate a download of the file or not.                                                                                           |
+| `download` | query  | boolean | `bool`  |          |         | Whether to initiate a download of the file or not.                                                                                           |
 | `format`   | query  | string  | string  |          | `yaml`  | Format of the downloaded file, either `yaml`, `json` or `hcl`. Accept header can also be used, but the query parameter will take precedence. |
 
 #### All responses
@@ -927,7 +927,7 @@ GET /api/v1/provisioning/mute-timings/:name/export
 | Name       | Source | Type    | Go type | Required | Default | Description                                                                                                                                  |
 | ---------- | ------ | ------- | ------- | :------: | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | `name`     | path   | string  | string  |    ✓     |         | Mute timing name.                                                                                                                            |
-| `download` | query  | boolean | bool    |          |         | Whether to initiate a download of the file or not.                                                                                           |
+| `download` | query  | boolean | `bool`  |          |         | Whether to initiate a download of the file or not.                                                                                           |
 | `format`   | query  | string  | string  |          | `yaml`  | Format of the downloaded file, either `yaml`, `json` or `hcl`. Accept header can also be used, but the query parameter will take precedence. |
 
 #### All responses
@@ -989,7 +989,7 @@ GET /api/v1/provisioning/policies/export
 
 | Name       | Source | Type    | Go type | Required | Default | Description                                                                                                                                  |
 | ---------- | ------ | ------- | ------- | :------: | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `download` | query  | boolean | bool    |          |         | Whether to initiate a download of the file or not.                                                                                           |
+| `download` | query  | boolean | `bool`  |          |         | Whether to initiate a download of the file or not.                                                                                           |
 | `format`   | query  | string  | string  |          | `yaml`  | Format of the downloaded file, either `yaml`, `json` or `hcl`. Accept header can also be used, but the query parameter will take precedence. |
 
 #### All responses
@@ -1552,7 +1552,7 @@ Status: Accepted
 | `data`         | [][AlertQueryExport](#alert-query-export) | `[]*AlertQueryExport` |          |         |             |         |
 | `execErrState` | string                                    | string                |          |         |             |         |
 | `for`          | [Duration](#duration)                     | Duration              |          |         |             |         |
-| `isPaused`     | boolean                                   | bool                  |          |         |             |         |
+| `isPaused`     | boolean                                   | `bool`                |          |         |             |         |
 | `labels`       | map of string                             | `map[string]string`   |          |         |             |         |
 | `noDataState`  | string                                    | string                |          |         |             |         |
 | `panelId`      | int64 (formatted integer)                 | int64                 |          |         |             |         |
@@ -1639,7 +1639,7 @@ When creating a contact point, the `EmbeddedContactPoint.name` property determin
 
 | Name                    | Type          | Go type | Required | Default | Description                                                                        | Example                 |
 | ----------------------- | ------------- | ------- | :------: | ------- | ---------------------------------------------------------------------------------- | ----------------------- |
-| `disableResolveMessage` | boolean       | bool    |          |         |                                                                                    | false                   |
+| `disableResolveMessage` | boolean       | `bool`  |          |         |                                                                                    | false                   |
 | `name`                  | string        | string  |          |         | `name` groups multiple contact points with the same name in the UI.                | `webhook_1`             |
 | `provenance`            | string        | string  |          |         |                                                                                    |                         |
 | `settings`              | [JSON](#json) | JSON    |    ✓     |         |                                                                                    |                         |
@@ -1786,7 +1786,7 @@ When creating a contact point, the `EmbeddedContactPoint.name` property determin
 | `folderUID`   | string                       | string                    |    ✓     |         |                                                                                                                   | `project_x`                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `for`         | [Duration](#duration)        | [Duration](#duration)     |    ✓     |         |                                                                                                                   |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `id`          | int64 (formatted integer)    | int64                     |          |         |                                                                                                                   |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `isPaused`    | boolean                      | bool                      |          |         |                                                                                                                   | `false`                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `isPaused`    | boolean                      | `bool`                    |          |         |                                                                                                                   | `false`                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `labels`      | map of string                | `map[string]string`       |          |         |                                                                                                                   | `{"team":"sre-team-1"}`                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `noDataState` | string                       | string                    |    ✓     |         |                                                                                                                   |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `orgID`       | int64 (formatted integer)    | `int64                    |    ✓     |         |                                                                                                                   |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -1812,7 +1812,7 @@ When creating a contact point, the `EmbeddedContactPoint.name` property determin
 
 | Name                    | Type                       | Go type    | Required | Default | Description | Example |
 | ----------------------- | -------------------------- | ---------- | :------: | ------- | ----------- | ------- |
-| `disableResolveMessage` | boolean                    | bool       |          |         |             |         |
+| `disableResolveMessage` | boolean                    | `bool`     |          |         |             |         |
 | `settings`              | [RawMessage](#raw-message) | RawMessage |          |         |             |         |
 | `type`                  | string                     | string     |          |         |             |         |
 | `uid`                   | string                     | string     |          |         |             |         |
@@ -1851,7 +1851,7 @@ When creating a contact point, the `EmbeddedContactPoint.name` property determin
 
 | Name                  | Type                               | Go type             | Required | Default | Description                             | Example |
 | --------------------- | ---------------------------------- | ------------------- | :------: | ------- | --------------------------------------- | ------- |
-| `continue`            | boolean                            | bool                |          |         |                                         |         |
+| `continue`            | boolean                            | `bool`              |          |         |                                         |         |
 | `group_by`            | []string                           | `[]string`          |          |         |                                         |         |
 | `group_interval`      | string                             | string              |          |         |                                         |         |
 | `group_wait`          | string                             | string              |          |         |                                         |         |
