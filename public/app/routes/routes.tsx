@@ -525,7 +525,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/explore/metrics/*',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
       ...(config.featureToggles.exploreMetricsUseExternalAppPlugin &&
-      Boolean(appPluginRoutes.find(({ path }) => path === '/a/grafana-metricsdrilldown-app/*'))
+      appPluginRoutes.some(({ path }) => path === '/a/grafana-metricsdrilldown-app/*')
         ? {
             component: SafeDynamicImport(
               () =>
