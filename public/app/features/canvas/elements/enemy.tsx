@@ -17,7 +17,7 @@ import {
 } from '../element';
 import { Align, CanvasElementConfig, CanvasElementData, VAlign } from '../types';
 
-const Player = (props: CanvasElementProps<CanvasElementConfig, CanvasElementData>) => {
+const Enemy = (props: CanvasElementProps<CanvasElementConfig, CanvasElementData>) => {
   const { data } = props;
   const styles = getStyles(config.theme2, data);
   const uniqueId = useRef(uuidv4());
@@ -32,63 +32,32 @@ const Player = (props: CanvasElementProps<CanvasElementConfig, CanvasElementData
         preserveAspectRatio="none"
       >
         <defs>
-          <pattern id={`image-${uniqueId.current}`} patternUnits="userSpaceOnUse" width="200" height="200">
+          <pattern id={`image-${uniqueId}`} patternUnits="userSpaceOnUse" width="200" height="200">
             <image xlinkHref={data?.backgroundImage} x="-50" y="-50" width="300" height="300"></image>
           </pattern>
-          <clipPath id={`triangleClip-${uniqueId.current}`}>
-            <polygon points="100,5 195,195 5,195" />
+          <clipPath id={`triangleClip-${uniqueId}`}>
+            <polygon points="100,0 200,200 0,200" />
           </clipPath>
-          <linearGradient id={`borderGradient-${uniqueId.current}`} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="red">
-              <animate
-                attributeName="stop-color"
-                values="red; blue; green; yellow; red"
-                dur="3s"
-                repeatCount="indefinite"
-              />
-            </stop>
-            <stop offset="50%" stopColor="blue">
-              <animate
-                attributeName="stop-color"
-                values="blue; green; yellow; red; blue"
-                dur="3s"
-                repeatCount="indefinite"
-              />
-            </stop>
-            <stop offset="100%" stopColor="green">
-              <animate
-                attributeName="stop-color"
-                values="green; yellow; red; blue; green"
-                dur="3s"
-                repeatCount="indefinite"
-              />
-            </stop>
-          </linearGradient>
         </defs>
-
         {/* Apply background image within the clipping area */}
         <rect
           x="0"
           y="0"
           width="100%"
           height="100%"
-          clipPath={`url(#triangleClip-${uniqueId.current})`}
+          clipPath={`url(#triangleClip-${uniqueId})`}
           style={{ fill: 'none' }}
         />
         <polygon
-          points="100,5 195,195 5,195"
-          style={{ fill: data?.backgroundImage ? `url(#image-${uniqueId.current})` : data?.backgroundColor }}
+          points="100,0 200,200 0,200"
+          style={{ fill: data?.backgroundImage ? `url(#image-${uniqueId})` : data?.backgroundColor }}
         />
 
-        {/* Animated Border with Wider Stroke */}
+        {/* Border */}
         <polygon
-          points="100,5 195,195 5,195"
-          fill="none"
-          stroke={`url(#borderGradient-${uniqueId.current})`}
-          strokeWidth="24"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-          strokeDasharray="0"
+          points="100,0 200,200 0,200"
+          clipPath={`url(#triangleClip-${uniqueId})`}
+          className={styles.elementBorder}
         />
       </svg>
 
@@ -97,12 +66,12 @@ const Player = (props: CanvasElementProps<CanvasElementConfig, CanvasElementData
   );
 };
 
-export const playerItem: CanvasElementItem = {
-  id: 'player',
-  name: 'Player',
-  description: 'Player',
+export const enemyItem: CanvasElementItem = {
+  id: 'enemy',
+  name: 'Emeny',
+  description: 'Enemy',
 
-  display: Player,
+  display: Enemy,
 
   defaultSize: {
     width: 24,
@@ -160,7 +129,7 @@ export const playerItem: CanvasElementItem = {
   },
 
   registerOptionsUI: (builder) => {
-    const category = ['Player'];
+    const category = ['Enemy'];
     builder
       .addCustomEditor({
         category,

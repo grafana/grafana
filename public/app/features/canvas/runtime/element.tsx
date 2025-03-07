@@ -35,7 +35,7 @@ import { Scene } from './scene';
 
 let counter = 0;
 
-export const SVGElements = new Set<string>(['parallelogram', 'triangle', 'cloud', 'ellipse', 'player']);
+export const SVGElements = new Set<string>(['parallelogram', 'triangle', 'cloud', 'ellipse', 'player', 'enemy']);
 
 export class ElementState implements LayerElement {
   // UID necessary for moveable to work (for now)
@@ -69,7 +69,7 @@ export class ElementState implements LayerElement {
   panelWidth: number = 0;
   panelHeight: number = 0;
   movementInterval: number | null = null;
-  numbersAfterDot = 5;
+  numbersAfterDot = 4;
   decayPrecision = 1 / Math.pow(10, this.numbersAfterDot);
 
   constructor(
