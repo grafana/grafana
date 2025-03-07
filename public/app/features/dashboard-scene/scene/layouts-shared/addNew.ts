@@ -1,14 +1,15 @@
-import { SceneObject } from '@grafana/scenes';
+import { SceneGridRow, SceneObject } from '@grafana/scenes';
 
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
+import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
+import { TabItem } from '../layout-tabs/TabItem';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 
-export function addNewTabTo(sceneObject: SceneObject) {
+export function addNewTabTo(sceneObject: SceneObject): TabItem {
   if (sceneObject instanceof TabsLayoutManager) {
-    sceneObject.addNewTab();
-    return;
+    return sceneObject.addNewTab();
   }
 
   const layoutParent = sceneObject.parent!;
@@ -16,24 +17,24 @@ export function addNewTabTo(sceneObject: SceneObject) {
     throw new Error('Parent layout is not a LayoutParent');
   }
 
-  layoutParent.switchLayout(TabsLayoutManager.createFromLayout(layoutParent.getLayout()));
+  const tabsLayout = TabsLayoutManager.createFromLayout(layoutParent.getLayout());
+  layoutParent.switchLayout(tabsLayout);
+
+  return tabsLayout.state.tabs[0];
 }
 
-export function addNewRowTo(sceneObject: SceneObject) {
+export function addNewRowTo(sceneObject: SceneObject): RowItem | SceneGridRow {
   if (sceneObject instanceof RowsLayoutManager) {
-    sceneObject.addNewRow();
-    return;
+    return sceneObject.addNewRow();
   }
 
   if (sceneObject instanceof DefaultGridLayoutManager) {
-    sceneObject.addNewRow();
-    return;
+    return sceneObject.addNewRow();
   }
 
   if (sceneObject instanceof TabsLayoutManager) {
     const currentTab = sceneObject.getCurrentTab();
-    addNewRowTo(currentTab.state.layout);
-    return;
+    return addNewRowTo(currentTab.state.layout);
   }
 
   const layoutParent = sceneObject.parent!;
@@ -41,5 +42,8 @@ export function addNewRowTo(sceneObject: SceneObject) {
     throw new Error('Parent layout is not a LayoutParent');
   }
 
-  layoutParent.switchLayout(RowsLayoutManager.createFromLayout(layoutParent.getLayout()));
+  const rowsLayout = RowsLayoutManager.createFromLayout(layoutParent.getLayout());
+  layoutParent.switchLayout(rowsLayout);
+
+  return rowsLayout.state.rows[0];
 }

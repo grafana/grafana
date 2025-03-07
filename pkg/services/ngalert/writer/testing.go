@@ -12,7 +12,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const RemoteWriteEndpoint = "/api/v1/write"
+const RemoteWritePrefix = "/api/v1"
+const RemoteWriteSuffix = "/write"
+
+const RemoteWriteEndpoint = RemoteWritePrefix + RemoteWriteSuffix
 
 type TestRemoteWriteTarget struct {
 	srv *httptest.Server
@@ -57,6 +60,10 @@ func NewTestRemoteWriteTarget(t *testing.T) *TestRemoteWriteTarget {
 
 func (s *TestRemoteWriteTarget) Close() {
 	s.srv.Close()
+}
+
+func (s *TestRemoteWriteTarget) DatasourceURL() string {
+	return s.srv.URL + RemoteWritePrefix
 }
 
 func (s *TestRemoteWriteTarget) ClientSettings() setting.RecordingRuleSettings {
