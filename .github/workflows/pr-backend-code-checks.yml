@@ -21,7 +21,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23.7'
+          go-version: '1.23.5'
           cache: true
       
       - name: Validate go.mod
