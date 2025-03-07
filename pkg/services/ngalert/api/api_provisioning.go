@@ -342,12 +342,22 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *contextmodel.ReqContext, ar de
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
-	if upstreamModel.Type() == alerting_models.RuleTypeRecording && !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
-		return ErrResp(
-			http.StatusBadRequest,
-			fmt.Errorf("%w: recording rules cannot be created on this instance", alerting_models.ErrAlertRuleFailedValidation),
-			"",
-		)
+	if upstreamModel.Type() == alerting_models.RuleTypeRecording {
+		if !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
+			return ErrResp(
+				http.StatusBadRequest,
+				fmt.Errorf("%w: recording rules cannot be created on this instance", alerting_models.ErrAlertRuleFailedValidation),
+				"",
+			)
+		}
+		if srv.featureManager.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRulesDatasources) &&
+			upstreamModel.Record.TargetDatasourceUID == "" {
+			return ErrResp(
+				http.StatusBadRequest,
+				fmt.Errorf("%w: recording rules require target data source", alerting_models.ErrAlertRuleFailedValidation),
+				"",
+			)
+		}
 	}
 
 	provenance := determineProvenance(c)
@@ -378,12 +388,22 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *contextmodel.ReqContext, ar def
 		ErrResp(http.StatusBadRequest, err, "")
 	}
 
-	if updated.Type() == alerting_models.RuleTypeRecording && !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
-		return ErrResp(
-			http.StatusBadRequest,
-			fmt.Errorf("%w: recording rules cannot be created on this instance", alerting_models.ErrAlertRuleFailedValidation),
-			"",
-		)
+	if updated.Type() == alerting_models.RuleTypeRecording {
+		if !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
+			return ErrResp(
+				http.StatusBadRequest,
+				fmt.Errorf("%w: recording rules cannot be created on this instance", alerting_models.ErrAlertRuleFailedValidation),
+				"",
+			)
+		}
+		if srv.featureManager.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRulesDatasources) &&
+			updated.Record.TargetDatasourceUID == "" {
+			return ErrResp(
+				http.StatusBadRequest,
+				fmt.Errorf("%w: recording rules require target data source", alerting_models.ErrAlertRuleFailedValidation),
+				"",
+			)
+		}
 	}
 
 	if UID == "" {
