@@ -203,13 +203,13 @@ Override log path using the command line argument `cfg:default.paths.logs`:
 
 #### `plugins`
 
-Directory where Grafana automatically scans and looks for plugins. For information about manually or automatically installing plugins, refer to [Install Grafana plugins]({{< relref "../../administration/plugin-management#install-grafana-plugins" >}}).
+Directory where Grafana automatically scans and looks for plugins. For information about manually or automatically installing plugins, refer to [Install Grafana plugins](../../administration/plugin-management/#install-grafana-plugins).
 
 **macOS:** By default, the Mac plugin location is: `/usr/local/var/lib/grafana/plugins`.
 
 #### `provisioning`
 
-Directory that contains [provisioning]({{< relref "../../administration/provisioning" >}}) configuration files that Grafana applies on startup.
+Directory that contains [provisioning](../../administration/provisioning/) configuration files that Grafana applies on startup.
 Dashboards are reloaded when the JSON files change.
 
 <hr />
@@ -475,7 +475,7 @@ Set to `true` to add metrics and tracing for database queries. The default value
 
 ### `[remote_cache]`
 
-Caches authentication details and session information in the configured database, Redis or Memcached. This setting does not configure [Query Caching in Grafana Enterprise]({{< relref "../../administration/data-source-management#query-and-resource-caching" >}}).
+Caches authentication details and session information in the configured database, Redis or Memcached. This setting does not configure [Query Caching in Grafana Enterprise](../../administration/data-source-management/#query-and-resource-caching).
 
 #### `type`
 
@@ -783,7 +783,7 @@ The following example limits access to the backend of a single plugin:
 #### `angular_support_enabled`
 
 This is set to false by default, meaning that the angular framework and support components aren't be loaded.
-This means that all [plugins]({{< relref "../../developers/angular_deprecation/angular-plugins" >}}) and core features that depend on angular support won't work.
+This means that all [plugins](../../developers/angular_deprecation/angular-plugins/) and core features that depend on angular support won't work.
 
 The core features that depend on angular are:
 
@@ -884,7 +884,7 @@ For SQL data sources (MySql, Postgres, MSSQL) you can override the default maxim
 Set to `false` to prohibit users from being able to sign up or create user accounts.
 Default is `false`.
 A Grafana Admin can still create users.
-For more information about creating a user, refer to [Add a user]({{< relref "../../administration/user-management/server-user-management#add-a-user" >}}).
+For more information about creating a user, refer to [Add a user](../../administration/user-management/server-user-management/#add-a-user).
 
 #### `allow_org_create`
 
@@ -954,7 +954,7 @@ If you manage users externally you can replace the user invite button for organi
 This option is deprecated - assign your viewers as editors, if you are using RBAC assign the data sources explorer role to your users.
 {{< /admonition >}}
 
-Viewers can access and use [Explore]({{< relref "../../explore" >}}) and perform temporary edits on panels in dashboards they have access to. They cannot save their changes. Default is `false`.
+Viewers can access and use [Explore](../../explore/) and perform temporary edits on panels in dashboards they have access to. They cannot save their changes. Default is `false`.
 
 #### `editors_can_admin`
 
@@ -991,7 +991,7 @@ This is a comma-separated list of usernames. Users specified here are hidden in 
 
 ### `[auth]`
 
-Grafana provides many ways to authenticate users. Refer to the Grafana [Authentication overview]({{< relref "../configure-security/configure-authentication" >}}) and other authentication documentation for detailed instructions on how to set up and configure authentication.
+Grafana provides many ways to authenticate users. Refer to the Grafana [Authentication overview](../configure-security/configure-authentication/) and other authentication documentation for detailed instructions on how to set up and configure authentication.
 
 #### `login_cookie_name`
 
@@ -1196,25 +1196,25 @@ This means the plugin can only access data and resources within that specific or
 
 ### `[auth.anonymous]`
 
-Refer to [Anonymous authentication]({{< relref "../configure-security/configure-authentication/grafana#anonymous-authentication" >}}) for detailed instructions.
+Refer to [Anonymous authentication](../configure-security/configure-authentication/grafana/#anonymous-authentication) for detailed instructions.
 
 <hr />
 
 ### `[auth.github]`
 
-Refer to [GitHub OAuth2 authentication]({{< relref "../configure-security/configure-authentication/github" >}}) for detailed instructions.
+Refer to [GitHub OAuth2 authentication](../configure-security/configure-authentication/github/) for detailed instructions.
 
 <hr />
 
 ### `[auth.gitlab]`
 
-Refer to [GitLab OAuth 2.0 authentication]({{< relref "../configure-security/configure-authentication/gitlab" >}}) for detailed instructions.
+Refer to [GitLab OAuth 2.0 authentication](../configure-security/configure-authentication/gitlab/) for detailed instructions.
 
 <hr />
 
 ### `[auth.google]`
 
-Refer to [Google OAuth2 authentication]({{< relref "../configure-security/configure-authentication/google" >}}) for detailed instructions.
+Refer to [Google OAuth2 authentication](../configure-security/configure-authentication/google/) for detailed instructions.
 
 <hr />
 
@@ -1232,37 +1232,37 @@ Legacy key names, still in the configuration file so they work in environment va
 
 ### `[auth.azuread]`
 
-Refer to [Azure AD OAuth2 authentication]({{< relref "../configure-security/configure-authentication/azuread" >}}) for detailed instructions.
+Refer to [Azure AD OAuth2 authentication](../configure-security/configure-authentication/azuread/) for detailed instructions.
 
 <hr />
 
 ### `[auth.okta]`
 
-Refer to [Okta OAuth2 authentication]({{< relref "../configure-security/configure-authentication/okta" >}}) for detailed instructions.
+Refer to [Okta OAuth2 authentication](../configure-security/configure-authentication/okta/) for detailed instructions.
 
 <hr />
 
 ### `[auth.generic_oauth]`
 
-Refer to [Generic OAuth authentication]({{< relref "../configure-security/configure-authentication/generic-oauth" >}}) for detailed instructions.
+Refer to [Generic OAuth authentication](../configure-security/configure-authentication/generic-oauth/) for detailed instructions.
 
 <hr />
 
 ### `[auth.basic]`
 
-Refer to [Basic authentication]({{< relref "../configure-security/configure-authentication#basic-authentication" >}}) for detailed instructions.
+Refer to [Basic authentication](../configure-security/configure-authentication/#basic-authentication) for detailed instructions.
 
 <hr />
 
 ### `[auth.proxy]`
 
-Refer to [Auth proxy authentication]({{< relref "../configure-security/configure-authentication/auth-proxy" >}}) for detailed instructions.
+Refer to [Auth proxy authentication](../configure-security/configure-authentication/auth-proxy/) for detailed instructions.
 
 <hr />
 
 ### `[auth.ldap]`
 
-Refer to [LDAP authentication]({{< relref "../configure-security/configure-authentication/ldap" >}}) for detailed instructions.
+Refer to [LDAP authentication](../configure-security/configure-authentication/ldap/) for detailed instructions.
 
 ### `[aws]`
 
@@ -1421,7 +1421,7 @@ Disabled by default, needs to be explicitly enabled.
 
 ### `[auth.jwt]`
 
-Refer to [JWT authentication]({{< relref "../configure-security/configure-authentication/jwt" >}}) for more information.
+Refer to [JWT authentication](../configure-security/configure-authentication/jwt/) for more information.
 
 <hr />
 
@@ -1726,7 +1726,7 @@ Limit the number of query evaluation results per alert rule. If the condition qu
 
 ### `[unified_alerting]`
 
-For more information about the Grafana alerts, refer to [Grafana Alerting]({{< relref "../../alerting" >}}).
+For more information about the Grafana alerts, refer to [Grafana Alerting](../../alerting/).
 
 #### `enabled`
 
@@ -1858,7 +1858,7 @@ If a rule frequency is lower than this value, then this value is enforced.
 
 ### `[unified_alerting.screenshots]`
 
-For more information about screenshots, refer to [Images in notifications]({{< relref "../../alerting/configure-notifications/template-notifications/images-in-notifications" >}}).
+For more information about screenshots, refer to [Images in notifications](../../alerting/configure-notifications/template-notifications/images-in-notifications/).
 
 #### `capture`
 
@@ -1949,7 +1949,7 @@ Configures max number of API annotations that Grafana keeps. Default value is 0,
 
 ### `[explore]`
 
-For more information about this feature, refer to [Explore]({{< relref "../../explore" >}}).
+For more information about this feature, refer to [Explore](../../explore/).
 
 #### `enabled`
 
@@ -2026,7 +2026,7 @@ Short links without an expiration increase the size of the database and can't be
 
 ### `[metrics]`
 
-For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../set-up-grafana-monitoring" >}}).
+For detailed instructions, refer to [Internal Grafana metrics](../set-up-grafana-monitoring/).
 
 #### `enabled`
 
@@ -2423,7 +2423,7 @@ Set to `true` if you want to test alpha plugins that are not yet ready for gener
 
 Enter a comma-separated list of plugin identifiers to identify plugins to load even if they are unsigned. Plugins with modified signatures are never loaded.
 
-We do _not_ recommend using this option. For more information, refer to [Plugin signatures]({{< relref "../../administration/plugin-management#plugin-signatures" >}}).
+We do _not_ recommend using this option. For more information, refer to [Plugin signatures](../../administration/plugin-management/#plugin-signatures).
 
 #### `plugin_admin_enabled`
 
@@ -2431,7 +2431,7 @@ Available to Grafana administrators only, enables installing, uninstalling, and 
 Set to `true` by default.
 Setting it to `false` hides the controls.
 
-For more information, refer to [Plugin catalog]({{< relref "../../administration/plugin-management#plugin-catalog" >}}).
+For more information, refer to [Plugin catalog](../../administration/plugin-management/#plugin-catalog).
 
 #### `plugin_admin_external_manage_enabled`
 
@@ -2493,7 +2493,7 @@ This option disables all preinstalled plugins. The default is `false`. To disabl
 
 The `max_connections` option specifies the maximum number of connections to the Grafana Live WebSocket endpoint per Grafana server instance. Default is `100`.
 
-Refer to [Grafana Live configuration documentation]({{< relref "../set-up-grafana-live" >}}) if you specify a number higher than default since this can require some operating system and infrastructure tuning.
+Refer to [Grafana Live configuration documentation](../set-up-grafana-live/) if you specify a number higher than default since this can require some operating system and infrastructure tuning.
 
 0 disables Grafana Live, -1 means unlimited connections.
 
@@ -2501,7 +2501,7 @@ Refer to [Grafana Live configuration documentation]({{< relref "../set-up-grafan
 
 The `allowed_origins` option is a comma-separated list of additional origins (`Origin` header of HTTP Upgrade request during WebSocket connection establishment) that is accepted by Grafana Live.
 
-If not set (default), then the origin is matched over [root_url]({{< relref "#root_url" >}}) which should be sufficient for most scenarios.
+If not set (default), then the origin is matched over [root_url](#root_url) which should be sufficient for most scenarios.
 
 Origin patterns support wildcard symbol "\*".
 
@@ -2518,7 +2518,7 @@ allowed_origins = "https://*.example.com"
 
 The high availability (HA) engine name for Grafana Live. By default, it's not set. The only possible value is `redis`.
 
-For more information, refer to the [Configure Grafana Live HA setup]({{< relref "../set-up-grafana-live#configure-grafana-live-ha-setup" >}}).
+For more information, refer to the [Configure Grafana Live HA setup](../set-up-grafana-live/#configure-grafana-live-ha-setup).
 
 #### `ha_engine_address`
 
@@ -2558,7 +2558,7 @@ Experimental. Requires the feature toggle `externalCorePlugins` to be enabled.
 
 ### `[plugin.grafana-image-renderer]`
 
-For more information, refer to [Image rendering]({{< relref "../image-rendering" >}}).
+For more information, refer to [Image rendering](../image-rendering/).
 
 #### `rendering_timezone`
 
@@ -2665,7 +2665,7 @@ Change the listening port of the gRPC server. Default port is `0` and uses a por
 
 ### `[enterprise]`
 
-For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}).
+For more information about Grafana Enterprise, refer to [Grafana Enterprise](../../introduction/grafana-enterprise/).
 
 <hr>
 
@@ -2685,7 +2685,7 @@ Some feature toggles for stable features are on by default. Use this setting to 
 
 The options in this section configure the experimental Feature Toggle Admin Page feature, which is enabled using the `featureToggleAdminPage` feature toggle. Grafana Labs offers support on a best-effort basis, and breaking changes might occur prior to the feature being made generally available.
 
-For more information, refer to [Configure feature toggles]({{< relref "./feature-toggles" >}}).
+For more information, refer to [Configure feature toggles](feature-toggles/).
 
 #### `allow_editing`
 
@@ -2778,7 +2778,7 @@ Set this to `false` to disable loading other custom base maps and hide them in t
 
 ### `[rbac]`
 
-Refer to [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control" >}}) for more information.
+Refer to [Role-based access control](../../administration/roles-and-permissions/access-control/) for more information.
 
 ### `[navigation.app_sections]`
 

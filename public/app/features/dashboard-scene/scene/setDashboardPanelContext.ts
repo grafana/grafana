@@ -11,7 +11,16 @@ import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '
 import { DashboardScene } from './DashboardScene';
 
 export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelContext) {
-  context.app = CoreApp.Dashboard;
+  const dashboard = getDashboardSceneFor(vizPanel);
+  context.app = dashboard.state.isEditing ? CoreApp.PanelEditor : CoreApp.Dashboard;
+
+  dashboard.subscribeToState((state) => {
+    if (state.isEditing) {
+      context.app = CoreApp.PanelEditor;
+    } else {
+      context.app = CoreApp.Dashboard;
+    }
+  });
 
   context.canAddAnnotations = () => {
     const dashboard = getDashboardSceneFor(vizPanel);

@@ -1057,6 +1057,33 @@ describe('transformSceneToSaveModel', () => {
   });
 });
 
+describe('Given a scene with custom quick ranges', () => {
+  it('should save quick ranges to save model', () => {
+    const dashboardWithCustomSettings = {
+      ...dashboard_to_load1,
+      timepicker: {
+        ...dashboard_to_load1.timepicker,
+        quick_ranges: [
+          {
+            display: 'Last 6 hours',
+            from: 'now-6h',
+            to: 'now',
+          },
+          {
+            display: 'Last 3 days',
+            from: 'now-3d',
+            to: 'now',
+          },
+        ],
+      },
+    };
+    const scene = transformSaveModelToScene({ dashboard: dashboardWithCustomSettings as DashboardDataDTO, meta: {} });
+    const saveModel = transformSceneToSaveModel(scene);
+
+    expect(saveModel).toMatchSnapshot();
+  });
+});
+
 export function buildGridItemFromPanelSchema(panel: Partial<Panel>) {
   return buildGridItemForPanel(new PanelModel(panel));
 }

@@ -156,7 +156,18 @@ const SearchTitle = ({ term }) => (
 
 #### How to translate props or attributes
 
-Right now, we only check if a string is wrapped up by the `Trans` tag. We currently do not apply this rule to props, attributes or similar, but we also ask for them to be translated with the `t()` function.
+This rule checks if a string is wrapped up by the `Trans` tag, or if certain props contain untranslated strings.
+We ask for such props to be translated with the `t()` function.
+
+The below props are checked for untranslated strings:
+
+- `label`
+- `description`
+- `placeholder`
+- `aria-label`
+- `title`
+- `text`
+- `tooltip`
 
 ```tsx
 // Bad ❌
@@ -168,3 +179,50 @@ return <input type="value" placeholder={placeholder} />;
 ```
 
 Check more info about how translations work in Grafana in [Internationalization.md](https://github.com/grafana/grafana/blob/main/contribute/internationalization.md)
+
+### `no-translation-top-level`
+
+Ensure that `t()` translation method is not used at the top level of a file, outside of a component of method.
+This is to prevent calling the translation method before it's been instantiated.
+
+This does not cause an error if a file is lazily loaded, but refactors can cause errors, and it can cause problems in tests.
+Fix the
+
+```tsx
+// Bad ❌
+const someTranslatedText = t('some.key', 'Some text');
+const SomeComponent = () => {
+  return <div title={someTranslatedText} />;
+};
+
+// Good ✅
+const SomeComponent = () => {
+  const someTranslatedText = t('some.key', 'Some text');
+  return <div title={someTranslatedText} />;
+};
+
+// Bad ❌
+const someConfigThatHasToBeShared = [{ foo: t('some.key', 'Some text') }];
+const SomeComponent = () => {
+  return (
+    <div>
+      {someConfigThatHasToBeShared.map((cfg) => {
+        return <div>{cfg.foo}</div>;
+      })}
+    </div>
+  );
+};
+
+// Good ✅
+const someConfigThatHasToBeShared = () => [{ foo: t('some.key', 'Some text') }];
+const SomeComponent = () => {
+  const configs = someConfigThatHasToBeShared();
+  return (
+    <div>
+      {configs.map((cfg) => {
+        return <div>{cfg.foo}</div>;
+      })}
+    </div>
+  );
+};
+```
