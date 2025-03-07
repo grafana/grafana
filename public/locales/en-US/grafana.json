@@ -1914,6 +1914,16 @@
       "text-color-swatch": "Text color",
       "transparent-swatch": "Transparent"
     },
+    "page-toolbar": {
+      "go-back": "Go back (Esc)",
+      "search-dashboard-name": "Search dashboard by name",
+      "search-links": "Search links",
+      "search-parent-folder": "Search dashboard in the {{parent}} folder"
+    },
+    "pagination": {
+      "next-page": "next page",
+      "previous-page": "previous page"
+    },
     "secret-form-field": {
       "reset": "Reset"
     },

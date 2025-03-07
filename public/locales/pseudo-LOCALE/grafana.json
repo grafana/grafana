@@ -1914,6 +1914,16 @@
       "text-color-swatch": "Ŧęχŧ čőľőř",
       "transparent-swatch": "Ŧřäŉşpäřęŉŧ"
     },
+    "page-toolbar": {
+      "go-back": "Ğő þäčĸ (Ēşč)",
+      "search-dashboard-name": "Ŝęäřčĥ đäşĥþőäřđ þy ŉämę",
+      "search-links": "Ŝęäřčĥ ľįŉĸş",
+      "search-parent-folder": "Ŝęäřčĥ đäşĥþőäřđ įŉ ŧĥę {{parent}} ƒőľđęř"
+    },
+    "pagination": {
+      "next-page": "ŉęχŧ päģę",
+      "previous-page": "přęvįőūş päģę"
+    },
     "secret-form-field": {
       "reset": "Ŗęşęŧ"
     },
