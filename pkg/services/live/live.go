@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand/v2"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -17,6 +18,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/gobwas/glob"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	jsoniter "github.com/json-iterator/go"
 	"golang.org/x/sync/errgroup"
@@ -417,8 +419,27 @@ type GrafanaLive struct {
 	runStreamManager *runstream.Manager
 	storage          *database.Storage
 
-	usageStatsService usagestats.Service
-	usageStats        usageStats
+	usageStatsService    usagestats.Service
+	usageStats           usageStats
+	customPluginHandlers map[string]model.ChannelHandlerFactory
+}
+
+// NoopChannelHandlerFactory is a simple factory that returns a no-op handler
+type NoopChannelHandlerFactory struct{}
+
+func (f NoopChannelHandlerFactory) GetHandlerForPath(path string) (model.ChannelHandler, error) {
+	return &NoopChannelHandler{}, nil
+}
+
+// NoopChannelHandler does nothing, suitable for channels where publishing is external
+type NoopChannelHandler struct{}
+
+func (h *NoopChannelHandler) OnSubscribe(ctx context.Context, user identity.Requester, e model.SubscribeEvent) (model.SubscribeReply, backend.SubscribeStreamStatus, error) {
+	return model.SubscribeReply{}, backend.SubscribeStreamStatusOK, nil
+}
+
+func (h *NoopChannelHandler) OnPublish(ctx context.Context, user identity.Requester, e model.PublishEvent) (model.PublishReply, backend.PublishStreamStatus, error) {
+	return model.PublishReply{}, backend.PublishStreamStatusOK, nil
 }
 
 // DashboardActivityChannel is a service to advertise dashboard activity
@@ -451,6 +472,12 @@ func (g *GrafanaLive) getStreamPlugin(ctx context.Context, pluginID string) (bac
 func (g *GrafanaLive) Run(ctx context.Context) error {
 	eGroup, eCtx := errgroup.WithContext(ctx)
 
+	if g.customPluginHandlers == nil {
+		g.customPluginHandlers = make(map[string]model.ChannelHandlerFactory)
+		g.customPluginHandlers["game"] = NoopChannelHandlerFactory{}
+		logger.Debug("Registered custom handler for plugin/game namespace")
+	}
+
 	eGroup.Go(func() error {
 		updateStatsTicker := time.NewTicker(time.Minute * 30)
 		defer updateStatsTicker.Stop()
@@ -471,6 +498,12 @@ func (g *GrafanaLive) Run(ctx context.Context) error {
 			return g.runStreamManager.Run(eCtx)
 		})
 	}
+
+	// Start the game server simulation
+	eGroup.Go(func() error {
+		g.SimulateGameServer(eCtx)
+		return nil
+	})
 
 	return eGroup.Wait()
 }
@@ -904,6 +937,11 @@ func (g *GrafanaLive) handleGrafanaScope(_ identity.Requester, namespace string)
 }
 
 func (g *GrafanaLive) handlePluginScope(ctx context.Context, _ identity.Requester, namespace string) (model.ChannelHandlerFactory, error) {
+	if handler, ok := g.customPluginHandlers[namespace]; ok {
+		logger.Debug("Using custom handler for namespace", "namespace", namespace)
+		return handler, nil
+	}
+
 	streamHandler, err := g.getStreamPlugin(ctx, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("can't find stream plugin: %s", namespace)
@@ -1460,4 +1498,119 @@ type usageStats struct {
 	sampleCount    int
 	numNodesMax    int
 	numChannelsMax int
+}
+
+// SimulateGameServer starts a mock game server that publishes player data to a channel
+type Player struct {
+	ID               string
+	X                float64
+	Y                float64
+	Rotation         float64
+	XVelocity        float64
+	YVelocity        float64
+	RotationVelocity float64
+}
+
+func (g *GrafanaLive) SimulateGameServer(ctx context.Context) {
+	orgs, _ := g.orgService.Search(ctx, &org.SearchOrgsQuery{})
+	orgID := orgs[0].ID // Use the first org ID
+	channel := orgchannel.PrependOrgID(orgID, "plugin/game/players")
+	tickS := 0.1
+	ticker := time.NewTicker(100 * time.Millisecond) // 100ms = 0.1s
+	defer ticker.Stop()
+
+	// Bounds
+	const xMin, xMax = 0.0, 500.0
+	const yMin, yMax = 0.0, 500.0
+	const rotMin, rotMax = 0.0, 360.0
+
+	// Initialize players with random starting positions and velocities
+	numPlayers := 100
+	players := make([]Player, numPlayers)
+	for i := 0; i < numPlayers; i++ {
+		players[i] = Player{
+			ID:               fmt.Sprintf("player%d", i+1),
+			X:                rand.Float64() * xMax,
+			Y:                rand.Float64() * xMax,
+			Rotation:         rand.Float64() * rotMax,
+			XVelocity:        (rand.Float64()*2 - 1) * 20, // -20 to 20 units per tick
+			YVelocity:        (rand.Float64()*2 - 1) * 20,
+			RotationVelocity: (rand.Float64()*20 - 10), // -10 to 10 degrees per tick
+		}
+	}
+
+	logger.Info("Starting game server simulation", "orgID", orgID, "channel", channel, "players", numPlayers)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			// Update player positions and rotations
+			for i := range players {
+				p := &players[i]
+				// Update position
+				p.X += p.XVelocity * tickS
+				p.Y += p.YVelocity * tickS
+				// Bounce on X boundaries
+				if p.X <= xMin {
+					p.X = xMin
+					p.XVelocity = -p.XVelocity
+				} else if p.X >= xMax {
+					p.X = xMax
+					p.XVelocity = -p.XVelocity
+				}
+				// Bounce on Y boundaries
+				if p.Y <= yMin {
+					p.Y = yMin
+					p.YVelocity = -p.YVelocity
+				} else if p.Y >= yMax {
+					p.Y = yMax
+					p.YVelocity = -p.YVelocity
+				}
+				// Update rotation smoothly
+				p.Rotation += p.RotationVelocity * tickS
+				// Keep rotation between 0 and 360
+				if p.Rotation >= rotMax {
+					p.Rotation -= rotMax
+				} else if p.Rotation < rotMin {
+					p.Rotation += rotMax
+				}
+			}
+
+			// Extract latest values into arrays
+			ids := make([]string, numPlayers)
+			x := make([]float64, numPlayers)
+			y := make([]float64, numPlayers)
+			rotation := make([]float64, numPlayers)
+			for i, p := range players {
+				ids[i] = p.ID
+				x[i] = p.X
+				y[i] = p.Y
+				rotation[i] = p.Rotation
+			}
+
+			// Create a Data Frame with one row of arrays
+			frame := data.NewFrame("players",
+				data.NewField("ids", nil, ids),
+				data.NewField("x", nil, x),
+				data.NewField("y", nil, y),
+				data.NewField("rotation", nil, rotation),
+			)
+
+			// Convert to JSON
+			data, err := data.FrameToJSON(frame, data.IncludeAll)
+			if err != nil {
+				logger.Error("Failed to marshal frame data", "error", err)
+				continue
+			}
+			logger.Debug("Preparing to publish", "payload", string(data), "channel", channel, "players", numPlayers)
+			_, err = g.node.Publish(channel, data)
+			if err != nil {
+				logger.Error("Failed to publish to channel", "channel", channel, "error", err)
+			} else {
+				logger.Debug("Published player data", "channel", channel)
+			}
+		}
+	}
 }
