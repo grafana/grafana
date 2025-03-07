@@ -508,7 +508,8 @@ func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *contextmodel.ReqContex
 
 	namespace, identifier := c.SignedInUser.GetNamespacedID()
 	if namespace != identity.NamespaceUser {
-		c.JsonApiErr(http.StatusForbidden, "Endpoint only available for users", nil)
+		hs.log.Debug("Requested endpoint only available to users")
+		c.JsonApiErr(http.StatusNotModified, "Endpoint only available for users", nil)
 		return
 	}
 
@@ -631,10 +632,11 @@ func (hs *HTTPServer) ClearHelpFlags(c *contextmodel.ReqContext) response.Respon
 	return response.JSON(http.StatusOK, &util.DynMap{"message": "Help flag set", "helpFlags1": flags})
 }
 
-func getUserID(c *contextmodel.ReqContext) (int64, *response.NormalResponse) {
+func (hs *HTTPServer) getUserID(c *contextmodel.ReqContext) (int64, *response.NormalResponse) {
 	namespace, identifier := c.SignedInUser.GetNamespacedID()
 	if namespace != identity.NamespaceUser {
-		return 0, response.Error(http.StatusForbidden, "Endpoint only available for users", nil)
+		hs.log.Debug("Requested endpoint only available to users")
+		return 0, response.Error(http.StatusNotModified, "Endpoint only available for users", nil)
 	}
 
 	userID, err := identity.IntIdentifier(namespace, identifier)
