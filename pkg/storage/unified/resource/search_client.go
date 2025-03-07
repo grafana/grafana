@@ -14,8 +14,6 @@ type DualWriter interface {
 }
 
 func NewSearchClient(dual DualWriter, gr schema.GroupResource, unifiedClient ResourceIndexClient, legacyClient ResourceIndexClient) ResourceIndexClient {
-	//status, _ := dual.Status(context.Background(), gr)
-	//if status.Runtime && dual.ShouldManage(gr) {
 	if dual.IsEnabled(gr) {
 		return &searchWrapper{
 			dual:          dual,
