@@ -10,7 +10,7 @@ import { Trans } from 'app/core/internationalization';
 import { useDispatch } from 'app/types';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
-import { LogMessages, trackRuleListNavigation } from '../Analytics';
+import { LogMessages } from '../Analytics';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import RulesFilter from '../components/rules/Filter/RulesFilter.v1';
 import { NoRulesSplash } from '../components/rules/NoRulesCTA';
@@ -94,10 +94,6 @@ const RuleListV1 = () => {
       }
     }
   }, [loading, limitAlerts, dispatch]);
-
-  useEffect(() => {
-    trackRuleListNavigation().catch(() => {});
-  }, []);
 
   // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
   useEffect(() => {

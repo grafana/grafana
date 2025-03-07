@@ -167,20 +167,6 @@ export async function isNewUser() {
   }
 }
 
-export const trackRuleListNavigation = async (
-  props: AlertRuleTrackingProps = {
-    grafana_version: config.buildInfo.version,
-    org_id: contextSrv.user.orgId,
-    user_id: contextSrv.user.id,
-  }
-) => {
-  const isNew = await isNewUser();
-  if (isNew) {
-    return;
-  }
-  reportInteraction('grafana_alerting_navigation', props);
-};
-
 export const trackAlertRuleFormSaved = (props: { formAction: 'create' | 'update'; ruleType?: RuleFormType }) => {
   reportInteraction('grafana_alerting_rule_creation', props);
 };
