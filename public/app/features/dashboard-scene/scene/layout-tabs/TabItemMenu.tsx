@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Dropdown, Menu, ToolbarButton, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
+import { Button, Dropdown, Menu, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { TabItem } from './TabItem';
@@ -38,16 +38,16 @@ export function TabItemMenu({ model }: Props) {
           </Menu>
         )}
       >
-        <ToolbarButton
+        <Button
           aria-label={t('dashboard.tabs-layout.tab.menu.add', 'Add tab')}
           title={t('dashboard.tabs-layout.tab.menu.add', 'Add tab')}
           tooltip={t('dashboard.tabs-layout.tab.menu.add', 'Add tab')}
           icon="plus"
-          iconSize="xs"
-          variant="default"
+          variant="secondary"
+          size="sm"
         >
           <Trans i18nKey="grafana-ui.tags-input.add">Add</Trans>
-        </ToolbarButton>
+        </Button>
       </Dropdown>
       <Dropdown
         placement="bottom-end"
@@ -67,13 +67,13 @@ export function TabItemMenu({ model }: Props) {
           </Menu>
         )}
       >
-        <ToolbarButton
+        <Button
           aria-label={t('dashboard.tabs-layout.menu.move-tab', 'Move tab')}
           title={t('dashboard.tabs-layout.menu.move-tab', 'Move tab')}
           tooltip={t('dashboard.tabs-layout.menu.move-tab', 'Move tab')}
           icon="arrows-h"
-          iconSize="md"
-          variant="default"
+          variant="secondary"
+          size="sm"
         />
       </Dropdown>
     </ToolbarButtonRow>
@@ -83,7 +83,7 @@ export function TabItemMenu({ model }: Props) {
 function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
-      gap: theme.spacing(0),
+      gap: theme.spacing(1),
       flexShrink: 0,
     }),
   };
