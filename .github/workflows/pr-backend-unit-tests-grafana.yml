@@ -26,6 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TEST_TYPE: "be-unit-grafana"
+      WIRE_TAGS: 'oss'
 
     steps:
       - name: Checkout code
@@ -44,15 +45,10 @@ jobs:
 
       - name: Generate Go code
         run: make gen-go
-        env:
-          WIRE_TAGS: 'oss'
 
       - name: Run unit tests
-        run: |
-          make test-go-unit
-          
+        run: make test-go-unit
         env:
-          WIRE_TAGS: 'oss'
           GO_UNIT_COVER_PROFILE: '${{ env.TEST_TYPE }}.cov'
           GO_TEST_OUTPUT: '/tmp/${{ env.TEST_TYPE }}.log'
           GO_UNIT_TEST_COVERPKG: 'github.com/grafana/grafana/...'

@@ -25,6 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TEST_TYPE: "be-unit-enterprise"
+      WIRE_TAGS: 'enterprise'
 
     steps:
       - name: Checkout code
@@ -49,15 +50,10 @@ jobs:
 
       - name: Generate Go code
         run: make gen-go
-        env:
-          WIRE_TAGS: 'enterprise'
 
       - name: Run unit tests
-        run: |
-          make test-go-unit
-          
+        run: make test-go-unit
         env:
-          WIRE_TAGS: 'enterprise'
           GO_UNIT_COVER_PROFILE: '${{ env.TEST_TYPE }}.cov'
           GO_TEST_OUTPUT: '/tmp/${{ env.TEST_TYPE }}.log'
           GO_UNIT_TEST_COVERPKG: 'github.com/grafana/grafana/...'
