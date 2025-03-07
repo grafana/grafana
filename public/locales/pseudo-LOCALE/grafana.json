@@ -1038,10 +1038,19 @@
       "shared": {
         "delete-condition": "Đęľęŧę Cőŉđįŧįőŉ"
       },
+      "time-range": {
+        "label": "Ŧįmę řäŉģę"
+      },
       "title": "Cőŉđįŧįőŉäľ řęŉđęřįŉģ őpŧįőŉş",
       "variable": {
         "label": "Väřįäþľę",
-        "placeholder": "Ħęřę įŧ şĥőūľđ þę väřįäþľę ęđįŧőř"
+        "operator": {
+          "equals": "Ēqūäľş",
+          "not-equal": "Ńőŧ ęqūäľ"
+        },
+        "select-operator": "Øpęřäŧőř",
+        "select-variable": "Ŝęľęčŧ väřįäþľę",
+        "value-input": "Väľūę"
       }
     },
     "default-layout": {

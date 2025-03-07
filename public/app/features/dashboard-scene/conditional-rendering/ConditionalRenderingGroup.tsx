@@ -137,7 +137,9 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
               />
               <Menu.Item
                 label={t('dashboard.conditional-rendering.group.add.variable', 'Variable value')}
-                onClick={() => model.addItem(new ConditionalRenderingVariable({ value: { name: '', values: [] } }))}
+                onClick={() =>
+                  model.addItem(new ConditionalRenderingVariable({ value: { name: '', operator: '=', value: '' } }))
+                }
               />
               {/* <Menu.Item
                 label={t('dashboard.conditional-rendering.group.add.between', 'Between')}

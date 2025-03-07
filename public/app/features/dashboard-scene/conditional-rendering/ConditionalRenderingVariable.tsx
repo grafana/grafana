@@ -1,8 +1,9 @@
-import { ReactNode } from 'react';
+import { css } from '@emotion/css';
+import { ReactNode, useMemo } from 'react';
 
-import { SceneComponentProps } from '@grafana/scenes';
-import { Stack } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
+import { Combobox, ComboboxOption, Field, Input, Stack, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { ConditionHeader } from './ConditionHeader';
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
@@ -10,7 +11,8 @@ import { handleDeleteNonGroupCondition } from './shared';
 
 interface Value {
   name: string;
-  values: string[];
+  operator: '=' | '!=';
+  value: string;
 }
 
 interface ConditionalRenderingVariableState extends ConditionalRenderingBaseState<Value> {
@@ -24,11 +26,40 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
 
   // TODO: Implement evaluate method
   public evaluate(): boolean {
-    return true;
+    if (!this.state.value.name) {
+      return true;
+    }
+    const variable = sceneGraph.getVariables(this).state.variables.find((v) => v.state.name === this.state.value.name);
+
+    // name is defined but no variable found - return false
+    if (!variable) {
+      return false;
+    }
+    const value = variable.getValue();
+
+    let hit: boolean;
+
+    if (Array.isArray(value)) {
+      hit = value.includes(this.state.value.value);
+    } else {
+      hit = value === this.state.value.value;
+    }
+
+    if (this.state.value.operator === '!=') {
+      hit = !hit;
+    }
+
+    return hit;
   }
 
   public render(): ReactNode {
     return <ConditionalRenderingVariableRenderer model={this} />;
+  }
+
+  public getVariableOptions(): Array<ComboboxOption<string>> {
+    return sceneGraph
+      .getVariables(this)
+      .state.variables.map((v) => ({ value: v.state.name, label: v.state.label ?? v.state.name }));
   }
 
   public onDelete() {
@@ -37,10 +68,57 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
 }
 
 function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<ConditionalRenderingVariable>) {
+  const variableNames = useMemo(() => model.getVariableOptions(), [model]);
+  const operatorOptions: Array<ComboboxOption<'=' | '!='>> = useMemo(
+    () => [
+      { value: '=', description: t('dashboard.conditional-rendering.variable.operator.equals', 'Equals') },
+      { value: '!=', description: t('dashboard.conditional-rendering.variable.operator.not-equal', 'Not equal') },
+    ],
+    []
+  );
+  const { value } = model.useState();
+
+  const styles = useStyles2(getStyles);
+
   return (
     <Stack direction="column">
       <ConditionHeader title={model.title} onDelete={() => model.onDelete()} />
-      <Trans i18nKey="dashboard.conditional-rendering.variable.placeholder">Here it should be variable editor</Trans>
+      <Stack direction="column">
+        <Stack direction="row" gap={0.5} grow={1}>
+          <Field
+            label={t('dashboard.conditional-rendering.variable.select-variable', 'Select variable')}
+            className={styles.variableNameSelect}
+          >
+            <Combobox
+              options={variableNames}
+              value={value.name}
+              onChange={(option) => model.changeValue({ ...value, name: option.value })}
+            />
+          </Field>
+          <Field
+            label={t('dashboard.conditional-rendering.variable.select-operator', 'Operator')}
+            className={styles.operatorSelect}
+          >
+            <Combobox
+              options={operatorOptions}
+              value={value.operator}
+              onChange={(option) => model.changeValue({ ...value, operator: option.value })}
+            />
+          </Field>
+        </Stack>
+        <Field label={t('dashboard.conditional-rendering.variable.value-input', 'Value')}>
+          <Input value={value.value} onChange={(e) => model.changeValue({ ...value, value: e.currentTarget.value })} />
+        </Field>
+      </Stack>
     </Stack>
   );
 }
+
+const getStyles = () => ({
+  variableNameSelect: css({
+    flexGrow: 1,
+  }),
+  operatorSelect: css({
+    width: '6rem',
+  }),
+});

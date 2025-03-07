@@ -1038,10 +1038,19 @@
       "shared": {
         "delete-condition": "Delete Condition"
       },
+      "time-range": {
+        "label": "Time range"
+      },
       "title": "Conditional rendering options",
       "variable": {
         "label": "Variable",
-        "placeholder": "Here it should be variable editor"
+        "operator": {
+          "equals": "Equals",
+          "not-equal": "Not equal"
+        },
+        "select-operator": "Operator",
+        "select-variable": "Select variable",
+        "value-input": "Value"
       }
     },
     "default-layout": {

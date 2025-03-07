@@ -1,6 +1,5 @@
 import { IconButton, Stack, Text } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
-import {} from 'immutable';
 
 type Props = {
   title: string;
