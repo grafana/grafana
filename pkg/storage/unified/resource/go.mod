@@ -190,7 +190,7 @@ require (
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/open-feature/go-sdk v1.14.1 // indirect
-	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.4 // indirect
+	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.3 // indirect
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.5 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect

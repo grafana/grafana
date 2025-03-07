@@ -1389,8 +1389,8 @@ github.com/onsi/ginkgo v1.7.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+W
 github.com/onsi/gomega v1.4.3/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1CpauHY=
 github.com/open-feature/go-sdk v1.14.1 h1:jcxjCIG5Up3XkgYwWN5Y/WWfc6XobOhqrIwjyDBsoQo=
 github.com/open-feature/go-sdk v1.14.1/go.mod h1:t337k0VB/t/YxJ9S0prT30ISUHwYmUd/jhUZgFcOvGg=
-github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.4 h1:2FmQyDlh/0FocNQDcymAfDr0WZRhP7WDWYSNkXAhwz0=
-github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.4/go.mod h1:dPUHjAIFzg+ci/wt6XxlNiiMkOh5Yw4SGyeRY0AFT0g=
+github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.3 h1:6jpO63NCEZv4xunJj+aNlDuFVuRkVBPMcIuxvFPYRWQ=
+github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.3/go.mod h1:dPUHjAIFzg+ci/wt6XxlNiiMkOh5Yw4SGyeRY0AFT0g=
 github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.5 h1:ZdqlGnNwhWf3luhBQlIpbglvcCzjkcuEgOEhYhr5Emc=
 github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.5/go.mod h1:jrD4UG3ZCzuwImKHlyuIN2iWeYjlOX5+zJ/sX45efuE=
 github.com/opencontainers/go-digest v1.0.0-rc1/go.mod h1:cMLVZDEM3+U2I4VmLI6N8jQYUd2OVphdqWwCJHrFt2s=
