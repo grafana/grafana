@@ -40,7 +40,7 @@ refs:
 
 Grafana includes built-in support for InfluxDB.
 This topic explains options, variables, querying, and other features specific to the InfluxDB data source, which include
-its [feature-rich code editor for queries and visual query builder]({{< relref "./query-editor" >}}).
+its [feature-rich code editor for queries and visual query builder](query-editor/).
 
 For instructions on how to add a data source to Grafana, refer to
 the [administration documentation](ref:data-source-management).
@@ -49,7 +49,7 @@ Administrators can also [configure the data source via YAML](#provision-the-data
 system.
 
 Once you've added the InfluxDB data source, you can [configure it](#configure-the-data-source) so that your Grafana
-instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when
+instance's users can create queries in its [query editor](query-editor/) when
 they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
 
 ## Configure the data source
@@ -248,7 +248,7 @@ datasources:
 The InfluxDB data source's query editor has two modes, InfluxQL and Flux, depending on your choice of query language in
 the [data source configuration](#configure-the-data-source):
 
-For details, refer to the [query editor documentation]({{< relref "./query-editor" >}}).
+For details, refer to the [query editor documentation](query-editor/).
 
 ## Use template variables
 
@@ -257,4 +257,4 @@ Grafana lists these variables in dropdown select boxes at the top of the dashboa
 in your dashboard.
 Grafana refers to such variables as template variables.
 
-For details, see the [template variables documentation]({{< relref "./template-variables" >}}).
+For details, see the [template variables documentation](template-variables/).

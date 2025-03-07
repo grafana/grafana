@@ -16,7 +16,7 @@ weight: 20
 # Plan your RBAC rollout strategy
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud).
+Available in [Grafana Enterprise](../../../../introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
 {{% /admonition %}}
 
 An RBAC rollout strategy helps you determine _how_ you want to implement RBAC prior to assigning RBAC roles to users and teams.
@@ -35,8 +35,8 @@ As a first step in determining your permissions rollout strategy, we recommend t
 
 To learn more about basic roles and fixed roles, refer to the following documentation:
 
-- [Basic role definitions]({{< relref "./rbac-fixed-basic-role-definitions/#basic-role-assignments" >}})
-- [Fixed role definitions]({{< relref "./rbac-fixed-basic-role-definitions/#fixed-role-definitions" >}})
+- [Basic role definitions](../rbac-fixed-basic-role-definitions/#basic-role-assignments)
+- [Fixed role definitions](../rbac-fixed-basic-role-definitions/#fixed-role-definitions)
 
 ## User and team considerations
 
@@ -56,7 +56,7 @@ For example:
 
 1. Map SAML, LDAP, or Oauth roles to Grafana basic roles (viewer, editor, or admin).
 
-2. Use the Grafana Enterprise team sync feature to synchronize teams from your SAML, LDAP, or Oauth provider to Grafana. For more information about team sync, refer to [Team sync]({{< relref "../../../../setup-grafana/configure-security/configure-team-sync/" >}}).
+2. Use the Grafana Enterprise team sync feature to synchronize teams from your SAML, LDAP, or Oauth provider to Grafana. For more information about team sync, refer to [Team sync](../../../../setup-grafana/configure-security/configure-team-sync/).
 
 3. Within Grafana, assign RBAC permissions to users and teams.
 
@@ -67,7 +67,7 @@ Consider the following guidelines when you determine if you should modify basic 
 - **Modify basic roles** when Grafana's definitions of what viewers, editors, and admins can do does not match your definition of these roles. You can add or remove permissions from any basic role.
 
   {{% admonition type="note" %}}
-  Changes that you make to basic roles impact the role definition for all [organizations]({{< relref "../../../organization-management/" >}}) in the Grafana instance. For example, when you add the `fixed:users:writer` role's permissions to the viewer basic role, all viewers in any org in the Grafana instance can create users within that org.
+  Changes that you make to basic roles impact the role definition for all [organizations](../../../organization-management/) in the Grafana instance. For example, when you add the `fixed:users:writer` role's permissions to the viewer basic role, all viewers in any org in the Grafana instance can create users within that org.
   {{% /admonition %}}
 
   {{% admonition type="note" %}}
@@ -97,13 +97,13 @@ If you have a use case that you'd like to share, feel free to contribute to this
 
 1. In Grafana, create a team with the name `Internal employees`.
 1. Assign the `fixed:datasources:explorer` role to the `Internal employees` team.
-1. Add internal employees to the `Internal employees` team, or map them from a SAML, LDAP, or Oauth team using [Team Sync]({{< relref "../../../../setup-grafana/configure-security/configure-team-sync/" >}}).
+1. Add internal employees to the `Internal employees` team, or map them from a SAML, LDAP, or Oauth team using [Team Sync](../../../../setup-grafana/configure-security/configure-team-sync/).
 1. Assign the viewer role to both internal employees and contractors.
 
 ### Limit viewer, editor, or admin permissions
 
 1. Review the list of permissions associated with the basic role.
-1. [Change the permissions of the basic role]({{< relref "./manage-rbac-roles/#update-basic-role-permissions" >}}).
+1. [Change the permissions of the basic role](../manage-rbac-roles/#update-basic-role-permissions).
 
 ### Allow only members of one team to manage Alerts
 
@@ -186,7 +186,7 @@ roles:
         global: true
 ```
 
-- Or add the following permissions to the `basic:editor` role, using provisioning or the [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control/#update-a-role" >}}):
+- Or add the following permissions to the `basic:editor` role, using provisioning or the [RBAC HTTP API](../../../../developers/http_api/access_control/#update-a-role):
 
 | action         | scope                       |
 | -------------- | --------------------------- |
@@ -216,9 +216,9 @@ roles:
         global: true
 ```
 
-> **Note:** The `fixed:reports:writer` role assigns more permissions than just creating reports. For more information about fixed role permission assignments, refer to [Fixed role definitions]({{< relref "./rbac-fixed-basic-role-definitions/#fixed-role-definitions" >}}).
+> **Note:** The `fixed:reports:writer` role assigns more permissions than just creating reports. For more information about fixed role permission assignments, refer to [Fixed role definitions](../rbac-fixed-basic-role-definitions/#fixed-role-definitions).
 
-- Add the following permissions to the `basic:viewer` role, using provisioning or the [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control/#update-a-role" >}}):
+- Add the following permissions to the `basic:viewer` role, using provisioning or the [RBAC HTTP API](../../../../developers/http_api/access_control/#update-a-role):
 
 | Action           | Scope                           |
 | ---------------- | ------------------------------- |
@@ -229,7 +229,7 @@ roles:
 
 ### Prevent a Grafana Admin from creating and inviting users
 
-To prevent a Grafana Admin from creating users and inviting them to join an organization, you must [update a basic role permission]({{< relref "./manage-rbac-roles/#update-basic-role-permissions" >}}).
+To prevent a Grafana Admin from creating users and inviting them to join an organization, you must [update a basic role permission](../manage-rbac-roles/#update-basic-role-permissions).
 The permissions to remove are:
 
 | Action          | Scope     |
@@ -259,12 +259,12 @@ roles:
         state: 'absent'
 ```
 
-- Or use [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control/#update-a-role" >}}).
+- Or use [RBAC HTTP API](../../../../developers/http_api/access_control/#update-a-role).
 
 ### Prevent Viewers from accessing an App Plugin
 
 By default, Viewers, Editors and Admins have access to all App Plugins that their organization role allows them to access.
-To change this default behavior and prevent Viewers from accessing an App plugin, you must [update a basic role's permissions]({{< relref "./manage-rbac-roles/#update-basic-role-permissions" >}}).
+To change this default behavior and prevent Viewers from accessing an App plugin, you must [update a basic role's permissions](../manage-rbac-roles/#update-basic-role-permissions).
 
 In this example, three App plugins have been installed and enabled:
 | Name | ID | Required Org role |
@@ -309,7 +309,7 @@ roles:
         state: 'present'
 ```
 
-- Or use [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control/#update-a-role" >}}).
+- Or use [RBAC HTTP API](../../../../developers/http_api/access_control/#update-a-role).
 
 ### Manage user permissions through teams
 
