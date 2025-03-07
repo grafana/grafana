@@ -83,7 +83,7 @@ export function TabItemMenu({ model }: Props) {
 function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
-      gap: theme.spacing(0),
+      gap: theme.spacing(1),
       flexShrink: 0,
     }),
   };

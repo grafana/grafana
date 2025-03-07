@@ -81,7 +81,7 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       padding: theme.spacing(0.5),
       alignItems: 'center',
-      marginBottom: theme.spacing(0.5),
+      marginBottom: theme.spacing(1),
     }),
     rowTitleButton: css({
       display: 'flex',
@@ -130,6 +130,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 0,
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       minHeight: 'unset',
+
       '.dashboard-row-header': {
         marginBottom: theme.spacing(0),
       },
