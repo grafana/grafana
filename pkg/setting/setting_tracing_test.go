@@ -1,12 +1,11 @@
-package tracing
+package setting
 
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/otel/attribute"
-
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // TODO(zserge) Add proper tests for opentelemetry
@@ -71,7 +70,7 @@ func TestTracingConfig(t *testing.T) {
 		{
 			Name:             "default config uses noop exporter",
 			Cfg:              "",
-			ExpectedExporter: noopExporter,
+			ExpectedExporter: tracing.NoopExporter,
 			ExpectedAttrs:    []attribute.KeyValue{},
 		},
 		{
@@ -80,7 +79,7 @@ func TestTracingConfig(t *testing.T) {
 			[tracing.opentelemetry]
 			custom_attributes = key1:value1,key2:value2
 			`,
-			ExpectedExporter: noopExporter,
+			ExpectedExporter: tracing.NoopExporter,
 			ExpectedAttrs:    []attribute.KeyValue{attribute.String("key1", "value1"), attribute.String("key2", "value2")},
 		},
 		{
@@ -89,7 +88,7 @@ func TestTracingConfig(t *testing.T) {
 			[tracing.opentelemetry.jaeger]
 			address = jaeger.example.com:6831
 			`,
-			ExpectedExporter: jaegerExporter,
+			ExpectedExporter: tracing.JaegerExporter,
 			ExpectedAddress:  "jaeger.example.com:6831",
 			ExpectedAttrs:    []attribute.KeyValue{},
 		},
@@ -99,7 +98,7 @@ func TestTracingConfig(t *testing.T) {
 			[tracing.opentelemetry.otlp]
 			address = otlp.example.com:4317
 			`,
-			ExpectedExporter: otlpExporter,
+			ExpectedExporter: tracing.OTLPExporter,
 			ExpectedAddress:  "otlp.example.com:4317",
 			ExpectedAttrs:    []attribute.KeyValue{},
 		},
@@ -109,7 +108,7 @@ func TestTracingConfig(t *testing.T) {
 			[tracing.jaeger]
 			address = jaeger.example.com:6831
 			`,
-			ExpectedExporter: jaegerExporter,
+			ExpectedExporter: tracing.JaegerExporter,
 			ExpectedAddress:  "jaeger.example.com:6831",
 			ExpectedAttrs:    []attribute.KeyValue{},
 		},
@@ -120,7 +119,7 @@ func TestTracingConfig(t *testing.T) {
 				"JAEGER_AGENT_HOST": "example.com",
 				"JAEGER_AGENT_PORT": "12345",
 			},
-			ExpectedExporter: jaegerExporter,
+			ExpectedExporter: tracing.JaegerExporter,
 			ExpectedAddress:  "example.com:12345",
 			ExpectedAttrs:    []attribute.KeyValue{},
 		},
@@ -137,7 +136,7 @@ func TestTracingConfig(t *testing.T) {
 			[tracing.opentelemetry.jaeger]
 			address = bar.com:6831
 			`,
-			ExpectedExporter:     jaegerExporter,
+			ExpectedExporter:     tracing.JaegerExporter,
 			ExpectedAddress:      "bar.com:6831",
 			ExpectedAttrs:        []attribute.KeyValue{attribute.String("c", "d")},
 			ExpectedSamplerParam: 1.0,
@@ -152,7 +151,7 @@ func TestTracingConfig(t *testing.T) {
 			[tracing.opentelemetry.otlp]
 			address = otlp.example.com:4317
 			`,
-			ExpectedExporter:          otlpExporter,
+			ExpectedExporter:          tracing.OTLPExporter,
 			ExpectedAddress:           "otlp.example.com:4317",
 			ExpectedAttrs:             []attribute.KeyValue{},
 			ExpectedSampler:           "remote",
@@ -168,14 +167,14 @@ func TestTracingConfig(t *testing.T) {
 				}
 			}
 			// parse config sections
-			cfg := setting.NewCfg()
+			cfg := NewCfg()
 			err := cfg.Raw.Append([]byte(test.Cfg))
 			assert.NoError(t, err)
 			// create tracingConfig
 			tracingConfig, err := ProvideTracingConfig(cfg)
 			assert.NoError(t, err)
 			// make sure tracker is properly configured
-			assert.Equal(t, test.ExpectedExporter, tracingConfig.enabled)
+			assert.Equal(t, test.ExpectedExporter, tracingConfig.Enabled)
 			assert.Equal(t, test.ExpectedAddress, tracingConfig.Address)
 			assert.Equal(t, test.ExpectedPropagator, tracingConfig.Propagation)
 			assert.Equal(t, test.ExpectedAttrs, tracingConfig.CustomAttribs)

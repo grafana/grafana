@@ -6,11 +6,13 @@ package log
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -26,7 +28,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/infra/log/term"
 	"github.com/grafana/grafana/pkg/infra/log/text"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -447,7 +448,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 	}
 
 	defaultLevelName, _ := getLogLevelFromConfig("log", "info", cfg)
-	defaultFilters := getFilters(util.SplitString(cfg.Section("log").Key("filters").String()))
+	defaultFilters := getFilters(SplitString(cfg.Section("log").Key("filters").String()))
 
 	configLoggers := make([]logWithFilters, 0, len(modes))
 	for _, mode := range modes {
@@ -460,7 +461,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 
 		// Log level.
 		_, leveloption := getLogLevelFromConfig("log."+mode, defaultLevelName, cfg)
-		modeFilters := getFilters(util.SplitString(sec.Key("filters").String()))
+		modeFilters := getFilters(SplitString(sec.Key("filters").String()))
 
 		format := getLogFormat(sec.Key("format").MustString(""))
 
@@ -555,4 +556,42 @@ func initAppSDKLogger(gkl gokitlog.Logger) {
 	// We need to allow Debug logs here. go-kit/log does not support sharing the level we're using.
 	// TODO: Refactor such that we can pass in a level in a more appropriate manner.
 	logging.DefaultLogger = logging.NewSLogLogger(sloggokit.NewGoKitHandler(gkl, slog.LevelDebug))
+}
+
+var stringListItemMatcher = regexp.MustCompile(`"[^"]+"|[^,\t\n\v\f\r ]+`)
+
+// SplitString splits a string and returns a list of strings. It supports JSON list syntax and strings separated by commas or spaces.
+// It supports quoted strings with spaces, e.g. "foo bar", "baz".
+// It will return an empty list if it fails to parse the string.
+func SplitString(str string) []string {
+	result, _ := SplitStringWithError(str)
+	return result
+}
+
+// SplitStringWithError splits a string and returns a list of strings. It supports JSON list syntax and strings separated by commas or spaces.
+// It supports quoted strings with spaces, e.g. "foo bar", "baz".
+// It returns an error if it cannot parse the string.
+func SplitStringWithError(str string) ([]string, error) {
+	if len(str) == 0 {
+		return []string{}, nil
+	}
+
+	// JSON list syntax support
+	if strings.Index(strings.TrimSpace(str), "[") == 0 {
+		var res []string
+		err := json.Unmarshal([]byte(str), &res)
+		if err != nil {
+			return []string{}, fmt.Errorf("incorrect format: %s", str)
+		}
+		return res, nil
+	}
+
+	matches := stringListItemMatcher.FindAllString(str, -1)
+
+	result := make([]string, len(matches))
+	for i, match := range matches {
+		result[i] = strings.Trim(match, "\"")
+	}
+
+	return result, nil
 }

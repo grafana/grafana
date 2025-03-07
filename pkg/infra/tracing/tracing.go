@@ -33,14 +33,9 @@ import (
 )
 
 const (
-	envJaegerAgentHost = "JAEGER_AGENT_HOST"
-	envJaegerAgentPort = "JAEGER_AGENT_PORT"
-)
-
-const (
-	jaegerExporter string = "jaeger"
-	otlpExporter   string = "otlp"
-	noopExporter   string = "noop"
+	JaegerExporter string = "jaeger"
+	OTLPExporter   string = "otlp"
+	NoopExporter   string = "noop"
 
 	jaegerPropagator string = "jaeger"
 	w3cPropagator    string = "w3c"
@@ -236,13 +231,13 @@ func (ots *TracingService) initNoopTracerProvider() (tracerProvider, error) {
 func (ots *TracingService) initOpentelemetryTracer() error {
 	var tp tracerProvider
 	var err error
-	switch ots.cfg.enabled {
-	case jaegerExporter:
+	switch ots.cfg.Enabled {
+	case JaegerExporter:
 		tp, err = ots.initJaegerTracerProvider()
 		if err != nil {
 			return err
 		}
-	case otlpExporter:
+	case OTLPExporter:
 		tp, err = ots.initOTLPTracerProvider()
 		if err != nil {
 			return err
@@ -261,7 +256,7 @@ func (ots *TracingService) initOpentelemetryTracer() error {
 	// Register our TracerProvider as the global so any imported
 	// instrumentation in the future will default to using it
 	// only if tracing is enabled
-	if ots.cfg.enabled != "" {
+	if ots.cfg.Enabled != "" {
 		otel.SetTracerProvider(tp)
 	}
 
