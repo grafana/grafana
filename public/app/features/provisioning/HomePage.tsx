@@ -59,7 +59,7 @@ const disconnectedTabInfo = [
   { value: TabSelection.GettingStarted, label: 'Getting started', title: 'Getting started' },
 ];
 
-export default function RepositoryListPage() {
+export default function HomePage() {
   const [items, isLoading] = useRepositoryList({ watch: true });
   const settings = useGetFrontendSettingsQuery();
   const [deleteAll, deleteAllResult] = useDeletecollectionRepositoryMutation();
