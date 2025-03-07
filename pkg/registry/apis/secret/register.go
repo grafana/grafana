@@ -110,7 +110,10 @@ func (b *SecretAPIBuilder) GetGroupVersion() schema.GroupVersion {
 
 // InstallSchema is called by the `apiserver` which exposes the defined kinds.
 func (b *SecretAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	secretv0alpha1.AddKnownTypes(scheme, secretv0alpha1.VERSION)
+	err := secretv0alpha1.AddKnownTypes(scheme, secretv0alpha1.VERSION)
+	if err != nil {
+		return err
+	}
 
 	// Link this version to the internal representation.
 	// This is used for server-side-apply (PATCH), and avoids the error:

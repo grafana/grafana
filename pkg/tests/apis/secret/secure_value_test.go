@@ -144,6 +144,43 @@ func TestIntegrationSecureValue(t *testing.T) {
 			require.Error(t, err)
 			require.Nil(t, updatedRaw)
 		})
+
+		t.Run("and listing securevalues with status.phase Pending returns the created secure value", func(t *testing.T) {
+			rawList, err := client.Resource.List(ctx, metav1.ListOptions{
+				FieldSelector: "status.phase=Pending",
+			})
+			require.NoError(t, err)
+			require.NotNil(t, rawList)
+			require.GreaterOrEqual(t, len(rawList.Items), 1)
+			require.Equal(t, secureValue.Name, rawList.Items[0].GetName())
+		})
+
+		t.Run("and listing securevalues with label bb returns the created secure value", func(t *testing.T) {
+			rawList, err := client.Resource.List(ctx, metav1.ListOptions{
+				LabelSelector: "bb=BBB",
+			})
+			require.NoError(t, err)
+			require.NotNil(t, rawList)
+			require.GreaterOrEqual(t, len(rawList.Items), 1)
+			require.Equal(t, secureValue.Name, rawList.Items[0].GetName())
+		})
+
+		t.Run("and listing securevalues with status.phase Failed returns empty", func(t *testing.T) {
+			rawList, err := client.Resource.List(ctx, metav1.ListOptions{
+				FieldSelector: "status.phase=Failed",
+			})
+			require.NoError(t, err)
+			require.NotNil(t, rawList)
+			require.Equal(t, len(rawList.Items), 0)
+		})
+
+		t.Run("and listing securevalues with a not allowed filter returns error", func(t *testing.T) {
+			rawList, err := client.Resource.List(ctx, metav1.ListOptions{
+				FieldSelector: "some.label=something",
+			})
+			require.Error(t, err)
+			require.Nil(t, rawList)
+		})
 	})
 
 	t.Run("creating a secure value with a `value` then updating it to a `ref` returns an error", func(t *testing.T) {
