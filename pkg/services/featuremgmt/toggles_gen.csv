@@ -140,7 +140,7 @@ kubernetesAggregator,experimental,@grafana/grafana-app-platform-squad,false,true
 expressionParser,experimental,@grafana/grafana-app-platform-squad,false,true,false
 groupByVariable,experimental,@grafana/dashboards-squad,false,false,false
 scopeFilters,experimental,@grafana/dashboards-squad,false,false,false
-ssoSettingsSAML,preview,@grafana/identity-access-team,false,false,false
+ssoSettingsSAML,GA,@grafana/identity-access-team,false,false,false
 oauthRequireSubClaim,experimental,@grafana/identity-access-team,false,false,false
 newDashboardWithFiltersAndGroupBy,experimental,@grafana/dashboards-squad,false,false,false
 cloudWatchNewLabelParsing,GA,@grafana/aws-datasources,false,false,false

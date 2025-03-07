@@ -1070,8 +1070,9 @@ var (
 		{
 			Name:           "ssoSettingsSAML",
 			Description:    "Use the new SSO Settings API to configure the SAML connector",
-			Stage:          FeatureStagePublicPreview,
+			Stage:          FeatureStageGeneralAvailability,
 			Owner:          identityAccessTeam,
+			Expression:     "true",
 			AllowSelfServe: true,
 		},
 		{
