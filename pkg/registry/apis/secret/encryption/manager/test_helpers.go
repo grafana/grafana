@@ -2,6 +2,7 @@ package manager
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
@@ -33,7 +34,17 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 			data_keys_cache_cleanup_interval = 1ns`))
 	require.NoError(tb, err)
 
-	cfg := &setting.Cfg{Raw: raw}
+	cfg := &setting.Cfg{
+		Raw: raw,
+		SecretsManagement: setting.SecretsManagerSettings{
+			SecretKey:          defaultKey,
+			EncryptionProvider: "secretKey.v1",
+			AvailableProviders: []string{"secretKey.v1"},
+			Encryption: setting.EncryptionSettings{
+				DataKeysCleanupInterval: time.Nanosecond,
+			},
+		},
+	}
 	store, err := encryptionstorage.ProvideDataKeyStorageStorage(testDB, cfg, features)
 	require.NoError(tb, err)
 

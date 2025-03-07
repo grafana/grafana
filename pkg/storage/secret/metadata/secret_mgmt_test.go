@@ -201,7 +201,16 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 
 	// Initialize data key storage and encrypted value storage with a fake db
 	testDB := db.InitTestDB(t)
-	cfg := &setting.Cfg{Raw: raw}
+	cfg := &setting.Cfg{
+		SecretsManagement: setting.SecretsManagerSettings{
+			SecretKey:          "sdDkslslld",
+			EncryptionProvider: "secretKey.v1",
+			AvailableProviders: []string{"secretKey.v1"},
+		},
+		// TODO: remove this once we no longer have the dependency on legacy envelope encryption
+		Raw: raw,
+	}
+
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
 	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorageStorage(testDB, cfg, features)
