@@ -18,7 +18,7 @@ weight: 700
 # API keys
 
 {{% admonition type="note" %}}
-Deprecated: [Service accounts]({{< relref "../service-accounts/" >}}) have replaced API keys as the primary way to authenticate applications that interact with Grafana.
+Deprecated: [Service accounts](../service-accounts/) have replaced API keys as the primary way to authenticate applications that interact with Grafana.
 {{% /admonition %}}
 
 An API key is a randomly generated string that external systems use to interact with Grafana HTTP APIs.
@@ -26,7 +26,7 @@ An API key is a randomly generated string that external systems use to interact 
 When you create an API key, you specify a **Role** that determines the permissions associated with the API key. Role permissions control that actions the API key can perform on Grafana resources.
 
 {{% admonition type="note" %}}
-If you use Grafana v9.1 or newer, use service accounts instead of API keys. For more information, refer to [Grafana service accounts]({{< relref "../service-accounts/" >}}).
+If you use Grafana v9.1 or newer, use service accounts instead of API keys. For more information, refer to [Grafana service accounts](../service-accounts/).
 {{% /admonition %}}
 
 {{< section >}}
@@ -35,7 +35,7 @@ If you use Grafana v9.1 or newer, use service accounts instead of API keys. For 
 
 Create an API key when you want to manage your computed workload with a user.
 
-This topic shows you how to create an API key using the Grafana UI. You can also create an API key using the Grafana HTTP API. For more information about creating API keys via the API, refer to [Create API key via API]({{< relref "../../developers/http_api/create-api-tokens-for-org/#how-to-create-a-new-organization-and-an-api-token" >}}).
+This topic shows you how to create an API key using the Grafana UI. You can also create an API key using the Grafana HTTP API. For more information about creating API keys via the API, refer to [Create API key via API](../../developers/http_api/create-api-tokens-for-org/#how-to-create-a-new-organization-and-an-api-token).
 
 ### Before you begin
 
@@ -45,7 +45,7 @@ To follow these instructions, you need at least one of the following:
 - Editor permissions
 - Service account writer
 
-- To ensure you have permission to create and edit API keys, follow the instructions in [Roles and permissions]({{< relref "../roles-and-permissions/#" >}}).
+- To ensure you have permission to create and edit API keys, follow the instructions in [Roles and permissions](../roles-and-permissions/#).
 
 ### Steps
 
@@ -67,12 +67,12 @@ To create an API key, complete the following steps:
 
 As an alternative to using API keys for authentication, you can use a service account-based authentication system. When compared to API keys, service accounts have limited scopes that provide more security than using API keys.
 
-For more information about the benefits of service accounts, refer to [Grafana service account benefits]({{< relref "../service-accounts/#service-account-benefits" >}}).
+For more information about the benefits of service accounts, refer to [Grafana service account benefits](../service-accounts/#service-account-benefits).
 
 The service account endpoints generate a machine user for authentication instead of using API keys. When you migrate an API key to a service account, a service account will be created with a service account token.
 
 {{% admonition type="note" %}}
-If you're currently using API keys for authentication, we strongly recommend to use Grafana Service Accounts instead. Rest assured, when migrating to Service Accounts, your existing API keys will continue working as before. To find the migrated API keys, navigate to the Service Accounts section and select the Service Account Tokens tab. For more information, please refer to the [Grafana service account tokens]({{< relref "../service-accounts/#service-account-tokens" >}}) details.
+If you're currently using API keys for authentication, we strongly recommend to use Grafana Service Accounts instead. Rest assured, when migrating to Service Accounts, your existing API keys will continue working as before. To find the migrated API keys, navigate to the Service Accounts section and select the Service Account Tokens tab. For more information, please refer to the [Grafana service account tokens](../service-accounts/#service-account-tokens) details.
 {{% /admonition %}}
 
 ## Ways of migrating API keys to service accounts
@@ -99,7 +99,7 @@ To follow these instructions, you need at least one of the following:
 - Editor permissions
 - Service account writer
 
-For more information about permissions, refer to [Roles and permissions]({{< relref "../roles-and-permissions/#" >}}).
+For more information about permissions, refer to [Roles and permissions](../roles-and-permissions/#).
 
 #### Steps
 
@@ -120,7 +120,7 @@ To migrate a single API key to a service account, complete the following steps:
 
 ### Migrate API keys to Grafana service accounts for API calls
 
-This section shows you how to migrate API keys to Grafana service accounts for Grafana API workflows. For references see: [Grafana Service Accounts for the Grafana API]({{< relref "../../developers/http_api/serviceaccount/#create-service-account" >}}).
+This section shows you how to migrate API keys to Grafana service accounts for Grafana API workflows. For references see: [Grafana Service Accounts for the Grafana API](../../developers/http_api/serviceaccount/#create-service-account).
 
 #### Before you begin
 
