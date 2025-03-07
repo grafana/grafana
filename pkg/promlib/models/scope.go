@@ -75,11 +75,13 @@ func ApplyFiltersAndGroupBy(rawExpr string, scopeFilters, adHocFilters []ScopeFi
 	return expr.String(), nil
 }
 
+// FiltersToMatchers creates matchers based on scope and adhoc filters.
+// The order of the scope filters are respected, with any non-existing adhoc filter being appended afterwards.
 func FiltersToMatchers(scopeFilters, adhocFilters []ScopeFilter) ([]*labels.Matcher, error) {
-	filterMap := make(map[string]*labels.Matcher)
+	matchers := make([]*labels.Matcher, 0, len(scopeFilters))
+	scopeIndexMap := make(map[string]int, len(scopeFilters))
 
-	// scope filters are applied first
-	for _, filter := range scopeFilters {
+	for i, filter := range scopeFilters {
 		matcher, err := filterToMatcher(filter)
 		if err != nil {
 			return nil, err
@@ -87,11 +89,12 @@ func FiltersToMatchers(scopeFilters, adhocFilters []ScopeFilter) ([]*labels.Matc
 
 		// when scopes have the same key, both values should be matched
 		// in prometheus that means using an regex with both values
-		if _, ok := filterMap[filter.Key]; ok {
-			filterMap[filter.Key].Value = filterMap[filter.Key].Value + "|" + matcher.Value
-			filterMap[filter.Key].Type = labels.MatchRegexp
+		if idx, ok := scopeIndexMap[filter.Key]; ok {
+			matchers[idx].Value += "|" + matcher.Value
+			matchers[idx].Type = labels.MatchRegexp
 		} else {
-			filterMap[filter.Key] = matcher
+			matchers = append(matchers, matcher)
+			scopeIndexMap[filter.Key] = i
 		}
 	}
 
@@ -103,12 +106,11 @@ func FiltersToMatchers(scopeFilters, adhocFilters []ScopeFilter) ([]*labels.Matc
 		}
 
 		// when ad hoc filters have the same key, the last one should be used
-		filterMap[filter.Key] = matcher
-	}
-
-	matchers := make([]*labels.Matcher, 0, len(filterMap))
-	for _, matcher := range filterMap {
-		matchers = append(matchers, matcher)
+		if i, ok := scopeIndexMap[filter.Key]; ok {
+			matchers[i] = matcher
+		} else {
+			matchers = append(matchers, matcher)
+		}
 	}
 
 	return matchers, nil

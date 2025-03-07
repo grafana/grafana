@@ -8,8 +8,7 @@ import (
 )
 
 func TestInjectScopesIntoLokiQuery(t *testing.T) {
-	// skipping since its flaky.
-	t.Skip()
+	t.Parallel()
 
 	tests := []struct {
 		name         string
@@ -31,12 +30,25 @@ func TestInjectScopesIntoLokiQuery(t *testing.T) {
 			expectErr: false,
 		},
 		{
-			name:  "scopes with existing filter",
+			name:  "scopes with existing filters",
 			query: `{namespace="default"} |= "an unexpected error"`,
 			scopeFilters: []models.ScopeFilter{
 				{Key: "cluster", Value: "us-central-1", Operator: models.FilterOperatorEquals},
+				{Key: "cluster", Value: "us-central-2", Operator: models.FilterOperatorEquals},
 			},
-			expected:  `{namespace="default", cluster="us-central-1"} |= "an unexpected error"`,
+			expected:  `{namespace="default", cluster=~"us-central-1|us-central-2"} |= "an unexpected error"`,
+			expectErr: false,
+		},
+		{
+			name:  "scopes with existing filters with the same key",
+			query: `{namespace="default"} |= "an unexpected error"`,
+			scopeFilters: []models.ScopeFilter{
+				{Key: "namespace", Value: "another-ns", Operator: models.FilterOperatorEquals},
+				{Key: "cluster", Value: "us-central-1", Operator: models.FilterOperatorEquals},
+			},
+			// This should produce `{namespace=~"default|another-ns", cluster="us-central-1"} |= "an unexpected error"`,
+			// or error out, but it is not supported yet. Once it is implemented, this test case should break.
+			expected:  `{namespace="default", namespace="another-ns", cluster="us-central-1"} |= "an unexpected error"`,
 			expectErr: false,
 		},
 		{
@@ -87,10 +99,20 @@ func TestInjectScopesIntoLokiQuery(t *testing.T) {
 			expected:  `(count_over_time({a="bar", cluster="us-central-1", namespace="default"} |= "error"[1m]) / count_over_time({a="bar", cluster="us-central-1", namespace="default"}[1m]))`,
 			expectErr: false,
 		},
+		{
+			name:  "unknown operator returns an error",
+			query: `count_over_time({a="bar"} |= "error" [1m])/count_over_time({a="bar"} [1m])`,
+			scopeFilters: []models.ScopeFilter{
+				{Key: "cluster", Value: "us-central-1", Operator: "does-not-exist"},
+			},
+			expectErr: true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			expr, err := ApplyScopes(tt.query, tt.scopeFilters)
 
 			if tt.expectErr {
