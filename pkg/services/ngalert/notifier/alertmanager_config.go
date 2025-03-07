@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -223,6 +224,16 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 			Config: cfg.AlertmanagerConfig.Config,
 		},
 	}
+
+	// First we encrypt the secure settings.
+	// This is done to ensure that any secure settings incorrectly stored in Settings are encrypted and moved to
+	// SecureSettings. This can happen if an integration definition is updated to make a field secure.
+	if err := EncryptReceiverConfigSettings(cfg.AlertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
+		return moa.Crypto.Encrypt(ctx, payload, secrets.WithoutScope())
+	}); err != nil {
+		return definitions.GettableUserConfig{}, fmt.Errorf("failed to encrypt receivers: %w", err)
+	}
+
 	for _, recv := range cfg.AlertmanagerConfig.Receivers {
 		receivers := make([]*definitions.GettableGrafanaReceiver, 0, len(recv.PostableGrafanaReceivers.GrafanaManagedReceivers))
 		for _, pr := range recv.PostableGrafanaReceivers.GrafanaManagedReceivers {
