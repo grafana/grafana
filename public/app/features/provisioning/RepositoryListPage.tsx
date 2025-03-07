@@ -51,12 +51,12 @@ const connectedTabInfo = [
   { value: TabSelection.Overview, label: 'Overview', title: 'Repository overview' },
   { value: TabSelection.Resources, label: 'Resources', title: 'Resources saved in grafana database' },
   { value: TabSelection.Files, label: 'Files', title: 'The raw file list from the repository' },
-  { value: TabSelection.GettingStarted, label: 'Features', title: 'Available features' },
+  { value: TabSelection.GettingStarted, label: 'Getting started', title: 'Getting started' },
 ];
 
 const disconnectedTabInfo = [
   { value: TabSelection.Repositories, label: 'Repositories', title: 'List of repositories' },
-  { value: TabSelection.GettingStarted, label: 'Features', title: 'Available features' },
+  { value: TabSelection.GettingStarted, label: 'Getting started', title: 'Getting started' },
 ];
 
 export default function RepositoryListPage() {
