@@ -48,6 +48,7 @@ export class ResponsiveGridLayoutManager
 
     // @ts-ignore
     this.state.layout.getDragClassCancel = () => 'drag-cancel';
+    this.state.layout.isDraggable = () => true;
   }
 
   public addPanel(vizPanel: VizPanel) {
