@@ -231,16 +231,21 @@ func (h *k8sHandler) GetUserFromMeta(ctx context.Context, userMeta string) (*use
 }
 
 func (h *k8sHandler) getClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, error) {
+	h.log.Info("getting client")
 	cfg, err := h.restConfig(ctx)
 	if err != nil {
+		h.log.Info("error getting client", "error", err)
 		return nil, err
 	}
 
+	h.log.Info("creating dynamic client")
 	dyn, err := dynamic.NewForConfig(cfg)
 	if err != nil {
+		h.log.Info("error creating dynamic client", "error", err)
 		return nil, fmt.Errorf("could not create dynamic client: %w", err)
 	}
 
+	h.log.Info("returning dynamic client")
 	return dyn.Resource(h.gvr).Namespace(h.GetNamespace(orgID)), nil
 }
 
