@@ -19,7 +19,7 @@ export function InviteUserButton() {
         fill="solid"
         onClick={() => {
           reportInteraction('invite_user_button_clicked', {
-            placement: 'top_nav_right',
+            placement: 'top_bar_right',
           });
 
           const url = getExternalUserMngLinkUrl('invite-user-top-bar');
