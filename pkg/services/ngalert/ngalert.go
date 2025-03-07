@@ -758,7 +758,7 @@ func createRecordingWriter(featureToggles featuremgmt.FeatureToggles, settings s
 	logger := log.New("ngalert.writer")
 
 	if settings.Enabled {
-		return writer.NewPrometheusWriter(settings, httpClientProvider, clock, logger, m)
+		return writer.NewPrometheusWriterWithSettings(settings, httpClientProvider, clock, logger, m)
 	}
 
 	return writer.NoopWriter{}, nil

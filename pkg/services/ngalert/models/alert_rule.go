@@ -397,19 +397,18 @@ func WithoutInternalLabels() LabelOption {
 }
 
 func (alertRule *AlertRule) ImportedFromPrometheus() bool {
-	if alertRule.Metadata.PrometheusStyleRule == nil {
-		return false
-	}
-
-	return alertRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition != ""
+	_, err := alertRule.PrometheusRuleDefinition()
+	return err == nil
 }
 
-func (alertRule *AlertRule) PrometheusRuleDefinition() string {
-	if !alertRule.ImportedFromPrometheus() {
-		return ""
+func (alertRule *AlertRule) PrometheusRuleDefinition() (string, error) {
+	if alertRule.Metadata.PrometheusStyleRule != nil {
+		if alertRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition != "" {
+			return alertRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition, nil
+		}
 	}
 
-	return alertRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition
+	return "", fmt.Errorf("prometheus rule definition is missing")
 }
 
 // GetLabels returns the labels specified as part of the alert rule.
@@ -1011,6 +1010,8 @@ type Record struct {
 	Metric string
 	// From contains a query RefID, indicating which expression node is the output of the recording rule.
 	From string
+	// TargetDatasourceUID is the data source to write the result of the recording rule.
+	TargetDatasourceUID string
 }
 
 func (r *Record) Fingerprint() data.Fingerprint {
@@ -1025,6 +1026,7 @@ func (r *Record) Fingerprint() data.Fingerprint {
 
 	writeString(r.Metric)
 	writeString(r.From)
+	writeString(r.TargetDatasourceUID)
 	return data.Fingerprint(h.Sum64())
 }
 

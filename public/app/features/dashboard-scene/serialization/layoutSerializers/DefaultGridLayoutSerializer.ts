@@ -32,7 +32,8 @@ import { RowRepeaterBehavior } from '../../scene/layout-default/RowRepeaterBehav
 import { RowActions } from '../../scene/layout-default/row-actions/RowActions';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { DashboardLayoutManager, LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
-import { isClonedKey } from '../../utils/clone';
+import { getOriginalKey, isClonedKey } from '../../utils/clone';
+import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { calculateGridItemDimensions, getVizPanelKeyForPanelId, isLibraryPanel } from '../../utils/utils';
 import { GRID_ROW_HEIGHT } from '../const';
 
@@ -142,8 +143,9 @@ function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, yOverride?: n
   width = gridItem_.state.width ?? 0;
   const repeatVar = gridItem_.state.variableName;
 
-  // FIXME: which name should we use for the element reference, key or something else ?
-  const elementName = gridItem_.state.body.state.key ?? 'DefaultName';
+  // For serialization we should retrieve the original element key
+  let elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(gridItem_.state.body);
+
   elementGridItem = {
     kind: 'GridLayoutItem',
     spec: {
@@ -153,7 +155,7 @@ function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, yOverride?: n
       height: height,
       element: {
         kind: 'ElementReference',
-        name: elementName,
+        name: elementKey,
       },
     },
   };
@@ -266,7 +268,7 @@ function createSceneGridLayoutForItems(layout: GridLayoutKind, elements: Record<
       }
     } else if (element.kind === 'GridLayoutRow') {
       const children = element.spec.elements.map((gridElement) => {
-        const panel = elements[gridElement.spec.element.name];
+        const panel = elements[getOriginalKey(gridElement.spec.element.name)];
         if (panel.kind === 'Panel') {
           return buildGridItem(gridElement.spec, panel, element.spec.y + GRID_ROW_HEIGHT + gridElement.spec.y);
         } else {

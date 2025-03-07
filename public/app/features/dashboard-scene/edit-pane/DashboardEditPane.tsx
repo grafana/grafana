@@ -15,7 +15,6 @@ import {
 import { t } from 'app/core/internationalization';
 
 import { isInCloneChain } from '../utils/clone';
-import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardAddPane } from './DashboardAddPane';
 import { DashboardOutline } from './DashboardOutline';
@@ -72,22 +71,20 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   }
 
   public selectObject(obj: SceneObject, id: string, multi?: boolean) {
-    if (!this.state.selection) {
-      return;
-    }
-
-    const prevItem = this.state.selection.getFirstObject();
+    const prevItem = this.state.selection?.getFirstObject();
     if (prevItem === obj && !multi) {
       this.clearSelection();
       return;
     }
 
-    if (multi && this.state.selection.hasValue(id)) {
+    if (multi && this.state.selection?.hasValue(id)) {
       this.removeMultiSelectedObject(id);
       return;
     }
 
-    const { selection, contextItems: selected } = this.state.selection.getStateWithValue(id, obj, !!multi);
+    const elementSelection = this.state.selection ?? new ElementSelection([[id, obj.getRef()]]);
+
+    const { selection, contextItems: selected } = elementSelection.getStateWithValue(id, obj, !!multi);
 
     this.setState({
       selection: new ElementSelection(selection),
@@ -120,14 +117,12 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   }
 
   public clearSelection() {
-    const dashboard = getDashboardSceneFor(this);
-
-    if (this.state.selection?.getFirstObject() === dashboard) {
+    if (!this.state.selection) {
       return;
     }
 
     this.setState({
-      selection: new ElementSelection([[dashboard.state.uid!, dashboard.getRef()]]),
+      selection: undefined,
       selectionContext: {
         ...this.state.selectionContext,
         selected: [],
@@ -138,6 +133,14 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   public onChangeTab = (tab: EditPaneTab) => {
     this.setState({ tab });
   };
+
+  public newObjectAddedToCanvas(obj: SceneObject) {
+    this.selectObject(obj, obj.state.key!, false);
+
+    if (this.state.tab !== 'configure') {
+      this.onChangeTab('configure');
+    }
+  }
 }
 
 export interface Props {
@@ -153,13 +156,6 @@ export interface Props {
 export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleCollapse, openOverlay }: Props) {
   // Activate the edit pane
   useEffect(() => {
-    if (!editPane.state.selection) {
-      const dashboard = getDashboardSceneFor(editPane);
-      editPane.setState({
-        selection: new ElementSelection([[dashboard.state.uid!, dashboard.getRef()]]),
-      });
-    }
-
     editPane.enableSelection();
 
     return () => {
@@ -168,7 +164,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
   }, [editPane]);
 
   useEffect(() => {
-    if (isCollapsed && editPane.state.selection?.getSelectionEntries().length) {
+    if (isCollapsed) {
       editPane.clearSelection();
     }
   }, [editPane, isCollapsed]);
@@ -176,7 +172,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
   const { selection, tab = 'configure' } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const styles = useStyles2(getStyles);
   const paneRef = useRef<HTMLDivElement>(null);
-  const editableElement = useEditableElement(selection);
+  const editableElement = useEditableElement(selection, editPane);
 
   if (!editableElement) {
     return null;

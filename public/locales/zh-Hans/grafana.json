@@ -1069,25 +1069,13 @@
         }
       },
       "open": "",
-      "panels": {
-        "multi-select": {
-          "selection-number": ""
-        }
-      },
       "row": {
         "header": {
           "hide": "",
           "title": ""
         },
         "multi-select": {
-          "options-header": "",
-          "selection-number": ""
-        }
-      },
-      "tab": {
-        "multi-select": {
-          "options-header": "",
-          "selection-number": ""
+          "title": ""
         }
       }
     },
@@ -1162,6 +1150,16 @@
       "rows": "总行数",
       "table-title": "统计信息"
     },
+    "layout": {
+      "common": {
+        "copy": "",
+        "copy-or-duplicate": "",
+        "delete": "",
+        "duplicate": "",
+        "layout": "",
+        "panels-title": ""
+      }
+    },
     "options": {
       "description": "",
       "title": "",
@@ -1211,6 +1209,15 @@
       "row": {
         "collapse": "",
         "expand": "",
+        "menu": {
+          "add": "",
+          "add-panel": "",
+          "add-row-above": "",
+          "add-row-below": "",
+          "move-down": "",
+          "move-row": "",
+          "move-up": ""
+        },
         "new": "",
         "repeat": {
           "learn-more": "",
@@ -1219,13 +1226,9 @@
       },
       "row-options": {
         "height": {
-          "expand": "",
-          "hide-row-header": "",
-          "min": "",
-          "title": ""
+          "hide-row-header": ""
         },
         "repeat": {
-          "title": "",
           "variable": {
             "title": ""
           }
@@ -1236,8 +1239,23 @@
     },
     "tabs-layout": {
       "description": "",
+      "menu": {
+        "move-tab": ""
+      },
+      "multi-select": {
+        "title": ""
+      },
       "name": "",
       "tab": {
+        "menu": {
+          "add": "",
+          "add-panel": "",
+          "add-tab-above": "",
+          "add-tab-after": "",
+          "add-tab-before": "",
+          "move-left": "",
+          "move-right": ""
+        },
         "new": ""
       },
       "tab-options": {
@@ -1316,6 +1334,8 @@
     "viz-panel": {
       "options": {
         "description": "",
+        "open-edit": "",
+        "plugin-type-image": "",
         "title": "",
         "title-option": "",
         "transparent-background": ""
