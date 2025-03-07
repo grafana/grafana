@@ -1502,53 +1502,56 @@ type usageStats struct {
 
 // SimulateGameServer starts a mock game server that publishes player data to a channel
 type Player struct {
-	ID        string
-	X         float64
-	Y         float64
-	Rotation  float64
-	XVelocity float64
-	YVelocity float64
+	ID               string
+	X                float64
+	Y                float64
+	Rotation         float64
+	XVelocity        float64
+	YVelocity        float64
+	RotationVelocity float64
 }
 
 func (g *GrafanaLive) SimulateGameServer(ctx context.Context) {
 	orgs, _ := g.orgService.Search(ctx, &org.SearchOrgsQuery{})
 	orgID := orgs[0].ID // Use the first org ID
 	channel := orgchannel.PrependOrgID(orgID, "plugin/game/players")
-
-	ticker := time.NewTicker(200 * time.Millisecond) // 0.2 seconds = 300 updates per minute
+	tickS := 0.1
+	ticker := time.NewTicker(100 * time.Millisecond) // 100ms = 0.1s
 	defer ticker.Stop()
 
+	// Bounds
+	const xMin, xMax = 0.0, 500.0
+	const yMin, yMax = 0.0, 500.0
+	const rotMin, rotMax = 0.0, 360.0
+
 	// Initialize players with random starting positions and velocities
-	numPlayers := rand.IntN(5) + 1 // 1 to 5 players
+	numPlayers := 100
 	players := make([]Player, numPlayers)
 	for i := 0; i < numPlayers; i++ {
 		players[i] = Player{
-			ID:        fmt.Sprintf("player%d", i+1),
-			X:         rand.Float64() * 100, // Start within 0-100
-			Y:         rand.Float64() * 100,
-			Rotation:  rand.Float64() * 360,
-			XVelocity: (rand.Float64()*2 - 1) * 20, // -2 to 2 units per tick
-			YVelocity: (rand.Float64()*2 - 1) * 20,
+			ID:               fmt.Sprintf("player%d", i+1),
+			X:                rand.Float64() * xMax,
+			Y:                rand.Float64() * xMax,
+			Rotation:         rand.Float64() * rotMax,
+			XVelocity:        (rand.Float64()*2 - 1) * 20, // -20 to 20 units per tick
+			YVelocity:        (rand.Float64()*2 - 1) * 20,
+			RotationVelocity: (rand.Float64()*20 - 10), // -10 to 10 degrees per tick
 		}
 	}
 
 	logger.Info("Starting game server simulation", "orgID", orgID, "channel", channel, "players", numPlayers)
-
-	// Bounds
-	const xMin, xMax = 0.0, 500
-	const yMin, yMax = 0.0, 500
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			// Update player positions and handle bouncing
+			// Update player positions and rotations
 			for i := range players {
 				p := &players[i]
 				// Update position
-				p.X += p.XVelocity * 0.2 // Scale by tick time (0.2s)
-				p.Y += p.YVelocity * 0.2
+				p.X += p.XVelocity * tickS
+				p.Y += p.YVelocity * tickS
 				// Bounce on X boundaries
 				if p.X <= xMin {
 					p.X = xMin
@@ -1565,12 +1568,13 @@ func (g *GrafanaLive) SimulateGameServer(ctx context.Context) {
 					p.Y = yMax
 					p.YVelocity = -p.YVelocity
 				}
-				// Update rotation (optional smooth rotation)
-				p.Rotation += (rand.Float64()*10 - 5) // Small random change
-				if p.Rotation >= 360 {
-					p.Rotation -= 360
-				} else if p.Rotation < 0 {
-					p.Rotation += 360
+				// Update rotation smoothly
+				p.Rotation += p.RotationVelocity * tickS
+				// Keep rotation between 0 and 360
+				if p.Rotation >= rotMax {
+					p.Rotation -= rotMax
+				} else if p.Rotation < rotMin {
+					p.Rotation += rotMax
 				}
 			}
 
