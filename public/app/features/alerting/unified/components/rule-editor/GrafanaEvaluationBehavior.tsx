@@ -31,7 +31,7 @@ import {
   isGrafanaAlertingRuleByType,
   isGrafanaManagedRuleByType,
   isGrafanaRecordingRuleByType,
-  isGrafanaRulerRule,
+  rulerRuleType,
 } from '../../utils/rules';
 import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
@@ -82,7 +82,9 @@ const namespaceToGroupOptions = (rulerNamespace: RulerRulesConfigDTO, enableProv
 };
 
 const isProvisionedGroup = (group: RulerRuleGroupDTO) => {
-  return group.rules.some((rule) => isGrafanaRulerRule(rule) && Boolean(rule.grafana_alert.provenance) === true);
+  return group.rules.some(
+    (rule) => rulerRuleType.grafana.rule(rule) && Boolean(rule.grafana_alert.provenance) === true
+  );
 };
 
 const sortByLabel = (a: SelectableValue<string>, b: SelectableValue<string>) => {

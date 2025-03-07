@@ -10,7 +10,7 @@ import { PromAlertingRuleState, RulerRuleDTO } from 'app/types/unified-alerting-
 import { AlertRuleAction, useRulerRuleAbility } from '../../hooks/useAbilities';
 import { createShareLink, isLocalDevEnv, isOpenSourceEdition } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
-import { isAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
+import { prometheusRuleType, rulerRuleType } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
 import { DeclareIncidentMenuItem } from '../bridges/DeclareIncidentButton';
 
@@ -76,7 +76,7 @@ const AlertRuleMenu = ({
   // @TODO Migrate "declare incident button" to plugin links extensions
   const shouldShowDeclareIncidentButton =
     (!isOpenSourceEdition() || isLocalDevEnv()) &&
-    isAlertingRule(promRule) &&
+    prometheusRuleType.alertingRule(promRule) &&
     promRule.state === PromAlertingRuleState.Firing;
 
   const shareUrl = createShareLink(identifier);
@@ -86,7 +86,7 @@ const AlertRuleMenu = ({
 
   const menuItems = (
     <>
-      {canPause && isGrafanaRulerRule(rulerRule) && groupIdentifier.groupOrigin === 'grafana' && (
+      {canPause && rulerRuleType.grafana.rule(rulerRule) && groupIdentifier.groupOrigin === 'grafana' && (
         <MenuItemPauseRule rule={rulerRule} groupIdentifier={groupIdentifier} onPauseChange={onPauseChange} />
       )}
       {canSilence && <Menu.Item label="Silence notifications" icon="bell-slash" onClick={handleSilence} />}

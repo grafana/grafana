@@ -14,7 +14,7 @@ import {
   formValuesToRulerRuleDTO,
   recordingRulerRuleToRuleForm,
 } from '../../utils/rule-form';
-import { isAlertingRulerRule, isRecordingRulerRule } from '../../utils/rules';
+import { rulerRuleType } from '../../utils/rules';
 
 interface Props {
   onClose: () => void;
@@ -145,9 +145,9 @@ function YamlContentInfo() {
 }
 
 function rulerRuleToRuleFormValues(rulerRule: RulerRuleDTO): Partial<RuleFormValues> {
-  if (isAlertingRulerRule(rulerRule)) {
+  if (rulerRuleType.dataSource.alertingRule(rulerRule)) {
     return alertingRulerRuleToRuleForm(rulerRule);
-  } else if (isRecordingRulerRule(rulerRule)) {
+  } else if (rulerRuleType.dataSource.recordingRule(rulerRule)) {
     return recordingRulerRuleToRuleForm(rulerRule);
   }
 

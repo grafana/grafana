@@ -21,7 +21,7 @@ import { labelsMatchMatchers } from '../../utils/alertmanager';
 import { Annotation } from '../../utils/constants';
 import { getDatasourceAPIUid, getExternalRulesSources } from '../../utils/datasource';
 import { parseMatcher } from '../../utils/matchers';
-import { isAlertingRule } from '../../utils/rules';
+import { prometheusRuleType } from '../../utils/rules';
 
 import { useGrafanaGroupsGenerator, usePrometheusGroupsGenerator } from './prometheusGroupsGenerator';
 
@@ -168,7 +168,7 @@ function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
   }
 
   if (filterState.ruleState) {
-    if (!isAlertingRule(rule)) {
+    if (!prometheusRuleType.alertingRule(rule)) {
       return false;
     }
     if (rule.state !== filterState.ruleState) {

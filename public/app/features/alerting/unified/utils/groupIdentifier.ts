@@ -1,10 +1,10 @@
 import { CombinedRule, RuleGroupIdentifier, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 
 import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid, getRulesSourceName, isGrafanaRulesSource } from './datasource';
-import { isGrafanaRulerRule } from './rules';
+import { rulerRuleType } from './rules';
 
 function fromCombinedRule(rule: CombinedRule): RuleGroupIdentifierV2 {
-  if (isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulesSource(rule.namespace.rulesSource)) {
+  if (rulerRuleType.grafana.rule(rule.rulerRule) && isGrafanaRulesSource(rule.namespace.rulesSource)) {
     return {
       namespace: { uid: rule.rulerRule.grafana_alert.namespace_uid },
       groupName: rule.group.name,

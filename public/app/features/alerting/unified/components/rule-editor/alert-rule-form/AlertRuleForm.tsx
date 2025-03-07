@@ -16,11 +16,10 @@ import {
   getRuleGroupLocationFromRuleWithLocation,
   isCloudAlertingRuleByType,
   isCloudRecordingRuleByType,
-  isCloudRulerRule,
   isGrafanaManagedRuleByType,
-  isGrafanaRulerRule,
-  isGrafanaRulerRulePaused,
+  isPausedRule,
   isRecordingRuleByType,
+  rulerRuleType,
 } from 'app/features/alerting/unified/utils/rules';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { RuleGroupIdentifier, RuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
@@ -209,7 +208,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
       // Cloud Ruler rules identifier changes on update due to containing rule name and hash components
       // After successful update we need to update the URL to avoid displaying 404 errors
-      if (isCloudRulerRule(ruleDefinition)) {
+      if (rulerRuleType.dataSource.rule(ruleDefinition)) {
         const updatedRuleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, ruleDefinition);
         locationService.replace(`/alerting/${encodeURIComponent(stringifyIdentifier(updatedRuleIdentifier))}/edit`);
       }
@@ -295,7 +294,8 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
     </Stack>
   );
 
-  const isPaused = existing && isGrafanaRulerRule(existing.rule) && isGrafanaRulerRulePaused(existing.rule);
+  const isPaused = rulerRuleType.grafana.alertingRule(existing?.rule) && isPausedRule(existing?.rule);
+
   if (!type) {
     return null;
   }
@@ -369,7 +369,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 function getReturnToUrl(groupId: RuleGroupIdentifier, rule: RulerRuleDTO | PostableRuleGrafanaRuleDTO) {
   const { dataSourceName, namespaceName, groupName } = groupId;
 
-  if (prometheusRulesPrimary && isCloudRulerRule(rule)) {
+  if (prometheusRulesPrimary && rulerRuleType.dataSource.rule(rule)) {
     const ruleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, rule);
     return createViewLinkFromIdentifier(ruleIdentifier);
   }

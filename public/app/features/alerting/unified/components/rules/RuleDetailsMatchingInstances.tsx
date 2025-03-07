@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { countBy, sum } from 'lodash';
-import { useMemo, useState } from 'react';
 import * as React from 'react';
+import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { LinkButton, useStyles2 } from '@grafana/ui';
@@ -18,7 +18,7 @@ import { mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../../utils/datasource';
 import { parsePromQLStyleMatcherLooseSafe } from '../../utils/matchers';
-import { isAlertingRule } from '../../utils/rules';
+import { prometheusRuleType } from '../../utils/rules';
 
 import { AlertInstancesTable } from './AlertInstancesTable';
 import { getComponentsFromStats } from './RuleStats';
@@ -73,13 +73,13 @@ export function RuleDetailsMatchingInstances(props: Props) {
 
   const alerts = useMemo(
     (): Alert[] =>
-      isAlertingRule(promRule) && promRule.alerts?.length
+      prometheusRuleType.alertingRule(promRule) && promRule.alerts?.length
         ? filterAlerts(queryString, alertState, sortAlerts(SortOrder.Importance, promRule.alerts))
         : [],
     [promRule, alertState, queryString]
   );
 
-  if (!isAlertingRule(promRule)) {
+  if (!prometheusRuleType.alertingRule(promRule)) {
     return null;
   }
 
