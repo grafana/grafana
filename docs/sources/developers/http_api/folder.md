@@ -61,14 +61,14 @@ HTTP/1.1 200
 Content-Type: application/json
 {
   "kind": "FolderList",
-  "apiVersion": "folder.grafana.app/v0alpha1",
+  "apiVersion": "folder.grafana.app/v1",
   "metadata": {
     "continue": "org:1/start:1158/folder:"
   },
   "items": [
     {
       "kind": "Folder",
-      "apiVersion": "folder.grafana.app/v0alpha1",
+      "apiVersion": "folder.grafana.app/v1",
       "metadata": {
         "name": "aef30vrzxs3y8d",
         "namespace": "default",
@@ -129,7 +129,7 @@ HTTP/1.1 200
 Content-Type: application/json
 {
   "kind": "Folder",
-  "apiVersion": "folder.grafana.app/v0alpha1",
+  "apiVersion": "folder.grafana.app/v1",
   "metadata": {
     "name": "aef30vrzxs3y8d",
     "namespace": "default",
@@ -211,7 +211,7 @@ HTTP/1.1 200
 Content-Type: application/json
 {
   "kind": "Folder",
-  "apiVersion": "folder.grafana.app/v0alpha1",
+  "apiVersion": "folder.grafana.app/v1",
   "metadata": {
     "name": "eef33r1fprd34d",
     "namespace": "default",
@@ -290,7 +290,7 @@ Content-Type: application/json
 
 {
   "kind": "Folder",
-  "apiVersion": "folder.grafana.app/v0alpha1",
+  "apiVersion": "folder.grafana.app/v1",
   "metadata": {
     "name": "fef30w4jaxla8b",
     "namespace": "default",
@@ -374,7 +374,7 @@ Content-Type: application/json
 
 {
   "kind": "Folder",
-  "apiVersion": "folder.grafana.app/v0alpha1",
+  "apiVersion": "folder.grafana.app/v1",
   "metadata": {
     "name": "fef30w4jaxla8b",
     "namespace": "default",
