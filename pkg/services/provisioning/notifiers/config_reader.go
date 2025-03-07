@@ -2,6 +2,7 @@ package notifiers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -118,41 +119,41 @@ func (cr *configReader) checkOrgIDAndOrgName(ctx context.Context, notifications 
 
 func (cr *configReader) validateRequiredField(notifications []*notificationsAsConfig) error {
 	for i := range notifications {
-		var errStrings []string
+		errs := []error{}
 		for index, notification := range notifications[i].Notifications {
 			if notification.Name == "" {
-				errStrings = append(
-					errStrings,
-					fmt.Sprintf("Added alert notification item %d in configuration doesn't contain required field name", index+1),
+				errs = append(
+					errs,
+					fmt.Errorf("added alert notification item %d in configuration doesn't contain required field name", index+1),
 				)
 			}
 
 			if notification.UID == "" {
-				errStrings = append(
-					errStrings,
-					fmt.Sprintf("Added alert notification item %d in configuration doesn't contain required field uid", index+1),
+				errs = append(
+					errs,
+					fmt.Errorf("added alert notification item %d in configuration doesn't contain required field uid", index+1),
 				)
 			}
 		}
 
 		for index, notification := range notifications[i].DeleteNotifications {
 			if notification.Name == "" {
-				errStrings = append(
-					errStrings,
-					fmt.Sprintf("Deleted alert notification item %d in configuration doesn't contain required field name", index+1),
+				errs = append(
+					errs,
+					fmt.Errorf("deleted alert notification item %d in configuration doesn't contain required field name", index+1),
 				)
 			}
 
 			if notification.UID == "" {
-				errStrings = append(
-					errStrings,
-					fmt.Sprintf("Deleted alert notification item %d in configuration doesn't contain required field uid", index+1),
+				errs = append(
+					errs,
+					fmt.Errorf("deleted alert notification item %d in configuration doesn't contain required field uid", index+1),
 				)
 			}
 		}
 
-		if len(errStrings) != 0 {
-			return fmt.Errorf(strings.Join(errStrings, "\n"))
+		if len(errs) != 0 {
+			return errors.Join(errs...)
 		}
 	}
 

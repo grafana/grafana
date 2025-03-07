@@ -3,10 +3,10 @@
 # to maintain formatting of multiline commands in vscode, add the following to settings.json:
 # "docker.languageserver.formatter.ignoreMultilineInstructions": true
 
-ARG BASE_IMAGE=alpine:3.19.1
+ARG BASE_IMAGE=alpine:3.21
 ARG JS_IMAGE=node:20-alpine
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.22.11-alpine
+ARG GO_IMAGE=golang:1.23.7-alpine
 
 # Default to building locally
 ARG GO_SRC=go-builder

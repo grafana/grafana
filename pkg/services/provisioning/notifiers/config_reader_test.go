@@ -263,10 +263,10 @@ func TestNotificationAsConfig(t *testing.T) {
 			require.NotNil(t, err)
 
 			errString := err.Error()
-			require.Contains(t, errString, "Deleted alert notification item 1 in configuration doesn't contain required field uid")
-			require.Contains(t, errString, "Deleted alert notification item 2 in configuration doesn't contain required field name")
-			require.Contains(t, errString, "Added alert notification item 1 in configuration doesn't contain required field name")
-			require.Contains(t, errString, "Added alert notification item 2 in configuration doesn't contain required field uid")
+			require.Contains(t, errString, "deleted alert notification item 1 in configuration doesn't contain required field uid")
+			require.Contains(t, errString, "deleted alert notification item 2 in configuration doesn't contain required field name")
+			require.Contains(t, errString, "added alert notification item 1 in configuration doesn't contain required field name")
+			require.Contains(t, errString, "added alert notification item 2 in configuration doesn't contain required field uid")
 		})
 
 		t.Run("Empty yaml file", func(t *testing.T) {

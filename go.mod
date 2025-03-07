@@ -1,6 +1,6 @@
 module github.com/grafana/grafana
 
-go 1.22.11
+go 1.23.7
 
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
@@ -52,7 +52,7 @@ require (
 	github.com/google/uuid v1.6.0 // @grafana/backend-platform
 	github.com/google/wire v0.5.0 // @grafana/backend-platform
 	github.com/gorilla/websocket v1.5.3 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20250123202046-ece9bb928fa4 // @grafana/alerting-squad-backend
+	github.com/grafana/alerting v0.0.0-20250228212120-8dc9701ba5f4 // @grafana/alerting-squad-backend
 	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.25.1 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.12.0 // @grafana/partner-datasources
@@ -153,7 +153,7 @@ require (
 	github.com/go-openapi/spec v0.20.14 // indirect
 	github.com/go-openapi/swag v0.22.9 // indirect
 	github.com/go-openapi/validate v0.23.0 // indirect
-	github.com/golang-jwt/jwt/v4 v4.5.0 // @grafana/backend-platform
+	github.com/golang-jwt/jwt/v4 v4.5.1 // @grafana/backend-platform
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang/glog v1.2.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
