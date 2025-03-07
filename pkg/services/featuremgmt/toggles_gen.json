@@ -3848,14 +3848,18 @@
     {
       "metadata": {
         "name": "ssoSettingsSAML",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-03-14T11:04:45Z"
+        "resourceVersion": "1741342789814",
+        "creationTimestamp": "2024-03-14T11:04:45Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-07 10:19:49.814084 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use the new SSO Settings API to configure the SAML connector",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
-        "allowSelfServe": true
+        "allowSelfServe": true,
+        "expression": "true"
       }
     },
     {
