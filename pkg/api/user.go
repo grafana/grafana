@@ -149,7 +149,7 @@ func (hs *HTTPServer) UpdateSignedInUser(c *contextmodel.ReqContext) response.Re
 	cmd.Email = strings.TrimSpace(cmd.Email)
 	cmd.Login = strings.TrimSpace(cmd.Login)
 
-	userID, errResponse := getUserID(c)
+	userID, errResponse := hs.getUserID(c)
 	if errResponse != nil {
 		return errResponse
 	}
@@ -349,7 +349,7 @@ func (hs *HTTPServer) UpdateUserEmail(c *contextmodel.ReqContext) response.Respo
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetSignedInUserOrgList(c *contextmodel.ReqContext) response.Response {
-	userID, errResponse := getUserID(c)
+	userID, errResponse := hs.getUserID(c)
 	if errResponse != nil {
 		return errResponse
 	}
@@ -369,7 +369,7 @@ func (hs *HTTPServer) GetSignedInUserOrgList(c *contextmodel.ReqContext) respons
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetSignedInUserTeamList(c *contextmodel.ReqContext) response.Response {
-	userID, errResponse := getUserID(c)
+	userID, errResponse := hs.getUserID(c)
 	if errResponse != nil {
 		return errResponse
 	}
@@ -479,7 +479,7 @@ func (hs *HTTPServer) UserSetUsingOrg(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	userID, errResponse := getUserID(c)
+	userID, errResponse := hs.getUserID(c)
 	if errResponse != nil {
 		return errResponse
 	}
@@ -504,6 +504,7 @@ func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *contextmodel.ReqContex
 	}
 
 	if !c.SignedInUser.IsIdentityType(claims.TypeUser) {
+		hs.log.Debug("Requested endpoint only available to users")
 		c.JsonApiErr(http.StatusForbidden, "Endpoint only available for users", nil)
 		return
 	}
@@ -548,7 +549,7 @@ func (hs *HTTPServer) ChangeUserPassword(c *contextmodel.ReqContext) response.Re
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	userID, errResponse := getUserID(c)
+	userID, errResponse := hs.getUserID(c)
 	if errResponse != nil {
 		return errResponse
 	}
@@ -584,7 +585,7 @@ func (hs *HTTPServer) SetHelpFlag(c *contextmodel.ReqContext) response.Response 
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	userID, errResponse := getUserID(c)
+	userID, errResponse := hs.getUserID(c)
 	if errResponse != nil {
 		return errResponse
 	}
@@ -614,7 +615,7 @@ func (hs *HTTPServer) SetHelpFlag(c *contextmodel.ReqContext) response.Response 
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) ClearHelpFlags(c *contextmodel.ReqContext) response.Response {
-	userID, errResponse := getUserID(c)
+	userID, errResponse := hs.getUserID(c)
 	if errResponse != nil {
 		return errResponse
 	}
@@ -627,8 +628,9 @@ func (hs *HTTPServer) ClearHelpFlags(c *contextmodel.ReqContext) response.Respon
 	return response.JSON(http.StatusOK, &util.DynMap{"message": "Help flag set", "helpFlags1": flags})
 }
 
-func getUserID(c *contextmodel.ReqContext) (int64, *response.NormalResponse) {
+func (hs *HTTPServer) getUserID(c *contextmodel.ReqContext) (int64, *response.NormalResponse) {
 	if !c.SignedInUser.IsIdentityType(claims.TypeUser) {
+		hs.log.Debug("Requested endpoint only available to users")
 		return 0, response.Error(http.StatusForbidden, "Endpoint only available for users", nil)
 	}
 
