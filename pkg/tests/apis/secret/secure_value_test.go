@@ -145,9 +145,9 @@ func TestIntegrationSecureValue(t *testing.T) {
 			require.Nil(t, updatedRaw)
 		})
 
-		t.Run("and listing securevalues with status.phase Pending returns the created secure value", func(t *testing.T) {
+		t.Run("and listing securevalues with status.phase Succeeded returns the created secure value", func(t *testing.T) {
 			rawList, err := client.Resource.List(ctx, metav1.ListOptions{
-				FieldSelector: "status.phase=Pending",
+				FieldSelector: "status.phase=Succeeded",
 			})
 			require.NoError(t, err)
 			require.NotNil(t, rawList)
