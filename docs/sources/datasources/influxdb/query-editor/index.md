@@ -39,7 +39,7 @@ For general documentation on querying data sources in Grafana, see [Query and tr
 ## Choose a query editing mode
 
 The InfluxDB data source's query editor has two modes depending on your choice of query language in
-the [data source configuration]({{< relref "../#configure-the-data-source" >}}):
+the [data source configuration](../#configure-the-data-source):
 
 - [InfluxQL](#influxql-query-editor)
 - [SQL](#sql-query-editor)
@@ -177,7 +177,7 @@ Examples:
 ## Flux query editor
 
 Grafana supports Flux when running InfluxDB v1.8 and higher.
-If your data source is [configured for Flux]({{< relref "./#configure-the-data-source" >}}), you can use
+If your data source is [configured for Flux](./#configure-the-data-source), you can use
 the [Flux query and scripting language](https://www.influxdata.com/products/flux/) in the query editor, which serves as
 a text editor for raw Flux queries with macro support.
 

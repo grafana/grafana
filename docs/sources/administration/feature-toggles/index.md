@@ -19,7 +19,7 @@ For detailed information about particular features and how they operate, refer t
 ## Manage feature toggles
 
 In the **Administration** page, the **Feature Management** section enables authorized users to view and edit the various features that are active in their Grafana environment.
-Authorized users include administrators, and users with the [fixed roles]({{< relref "../roles-and-permissions/access-control#fixed-roles" >}}) `featuremgmt.read` and `featuremgmt.write`.
+Authorized users include administrators, and users with the [fixed roles](../roles-and-permissions/access-control/#fixed-roles) `featuremgmt.read` and `featuremgmt.write`.
 
 There are different options for visibility and customization depending on the development stage of the feature.
 
