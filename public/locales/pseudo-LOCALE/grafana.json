@@ -504,6 +504,10 @@
       "preview": "Přęvįęŵ",
       "previewCondition": "Přęvįęŵ äľęřŧ řūľę čőŉđįŧįőŉ"
     },
+    "recording-rules": {
+      "description-target-data-source": "Ŧĥę Přőmęŧĥęūş đäŧä şőūřčę ŧő şŧőřę ŧĥę řęčőřđįŉģ řūľę įŉ",
+      "label-target-data-source": "Ŧäřģęŧ đäŧä şőūřčę"
+    },
     "rule-form": {
       "evaluation": {
         "evaluation-group-and-interval": "Ēväľūäŧįőŉ ģřőūp äŉđ įŉŧęřväľ",
