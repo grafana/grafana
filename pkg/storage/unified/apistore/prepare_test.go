@@ -173,7 +173,8 @@ func TestPrepareLargeObjectForStorage(t *testing.T) {
 			},
 		}
 
-		f.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		_, err := f.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		require.Nil(t, err)
 		require.True(t, los.deconstructed)
 	})
 
@@ -190,7 +191,8 @@ func TestPrepareLargeObjectForStorage(t *testing.T) {
 			},
 		}
 
-		f.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		_, err := f.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		require.Nil(t, err)
 		require.False(t, los.deconstructed)
 	})
 }
