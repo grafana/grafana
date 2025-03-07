@@ -2,11 +2,11 @@ package live
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"math/rand/v2"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -100,6 +100,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		usageStatsService: usageStatsService,
 		orgService:        orgService,
 		keyPrefix:         "gf_live",
+		playerDB:          nil, // Initialize as nil
 	}
 
 	if cfg.LiveHAPrefix != "" {
@@ -321,13 +322,29 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		pushPipelineWSHandler.ServeHTTP(ctx.Resp, r)
 	}
 
+	// Register routes
+	logger.Debug("Registering live routes")
 	g.RouteRegister.Group("/api/live", func(group routing.RouteRegister) {
 		group.Get("/ws", g.websocketHandler)
-	}, middleware.ReqSignedIn, requestmeta.SetSLOGroup(requestmeta.SLOGroupNone))
-
-	g.RouteRegister.Group("/api/live", func(group routing.RouteRegister) {
 		group.Get("/push/:streamId", g.pushWebsocketHandler)
 		group.Get("/pipeline/push/*", g.pushPipelineWebsocketHandler)
+
+		// Separate subgroup for player endpoints
+		logger.Debug("Registering player endpoints under /api/live/players")
+		group.Group("/players", func(playerGroup routing.RouteRegister) {
+			playerGroup.Post("/", func(ctx *contextmodel.ReqContext) response.Response {
+				logger.Debug("Handling POST /api/live/players")
+				return g.handleAddPlayer(ctx)
+			})
+			playerGroup.Delete("/:player_id", func(ctx *contextmodel.ReqContext) response.Response {
+				logger.Debug("Handling DELETE /api/live/players/:player_id", "player_id", web.Params(ctx.Req)[":player_id"])
+				return g.handleRemovePlayer(ctx)
+			})
+			playerGroup.Put("/:player_id", func(ctx *contextmodel.ReqContext) response.Response {
+				logger.Debug("Handling PUT /api/live/players/:player_id", "player_id", web.Params(ctx.Req)[":player_id"])
+				return g.handleUpdatePlayer(ctx)
+			})
+		})
 	}, middleware.ReqOrgAdmin, requestmeta.SetSLOGroup(requestmeta.SLOGroupNone))
 
 	g.registerUsageMetrics()
@@ -422,6 +439,7 @@ type GrafanaLive struct {
 	usageStatsService    usagestats.Service
 	usageStats           usageStats
 	customPluginHandlers map[string]model.ChannelHandlerFactory
+	playerDB             *sql.DB // Add this field for SQLite
 }
 
 // NoopChannelHandlerFactory is a simple factory that returns a no-op handler
@@ -1500,7 +1518,7 @@ type usageStats struct {
 	numChannelsMax int
 }
 
-// SimulateGameServer starts a mock game server that publishes player data to a channel
+// Player represents a player's state
 type Player struct {
 	ID               string
 	X                float64
@@ -1511,48 +1529,209 @@ type Player struct {
 	RotationVelocity float64
 }
 
+func (g *GrafanaLive) handleAddPlayer(ctx *contextmodel.ReqContext) response.Response {
+	var req struct {
+		PlayerID string  `json:"player_id"`
+		X        float64 `json:"x"`
+		Y        float64 `json:"y"`
+		Rotation float64 `json:"rotation"`
+	}
+	if err := web.Bind(ctx.Req, &req); err != nil {
+		return response.Error(http.StatusBadRequest, "Invalid request", err)
+	}
+	if g.playerDB == nil {
+		return response.Error(http.StatusServiceUnavailable, "Player database not initialized", nil)
+	}
+	orgID := ctx.SignedInUser.GetOrgID()
+	_, err := g.playerDB.ExecContext(ctx.Req.Context(),
+		"INSERT INTO live_players (org_id, player_id, x, y, rotation, x_velocity, y_velocity, rotation_velocity) VALUES (?, ?, ?, ?, ?, 0, 0, 0)",
+		orgID, req.PlayerID, req.X, req.Y, req.Rotation)
+	if err != nil {
+		if sqliteErr, ok := err.(interface{ SQLiteErrorCode() int }); ok && sqliteErr.SQLiteErrorCode() == 19 {
+			return response.Error(http.StatusConflict, "Player already exists", err)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to add player", err)
+	}
+	logger.Info("Added player", "orgID", orgID, "playerID", req.PlayerID)
+	return response.JSON(http.StatusCreated, map[string]string{"message": "Player added"})
+}
+
+func (g *GrafanaLive) handleRemovePlayer(ctx *contextmodel.ReqContext) response.Response {
+	playerID := web.Params(ctx.Req)[":player_id"]
+	orgID := ctx.SignedInUser.GetOrgID()
+	if g.playerDB == nil {
+		return response.Error(http.StatusServiceUnavailable, "Player database not initialized", nil)
+	}
+	result, err := g.playerDB.ExecContext(ctx.Req.Context(),
+		"DELETE FROM live_players WHERE org_id = ? AND player_id = ?",
+		orgID, playerID)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to remove player", err)
+	}
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		return response.Error(http.StatusNotFound, "Player not found", nil)
+	}
+	logger.Info("Removed player", "orgID", orgID, "playerID", playerID)
+	return response.JSON(http.StatusOK, map[string]string{"message": "Player removed"})
+}
+
+func (g *GrafanaLive) handleUpdatePlayer(ctx *contextmodel.ReqContext) response.Response {
+	playerID := web.Params(ctx.Req)[":player_id"]
+	orgID := ctx.SignedInUser.GetOrgID()
+	if g.playerDB == nil {
+		return response.Error(http.StatusServiceUnavailable, "Player database not initialized", nil)
+	}
+	var req struct {
+		X                *float64 `json:"x,omitempty"`
+		Y                *float64 `json:"y,omitempty"`
+		Rotation         *float64 `json:"rotation,omitempty"`
+		XVelocity        *float64 `json:"x_velocity,omitempty"`
+		YVelocity        *float64 `json:"y_velocity,omitempty"`
+		RotationVelocity *float64 `json:"rotation_velocity,omitempty"`
+	}
+	if err := web.Bind(ctx.Req, &req); err != nil {
+		return response.Error(http.StatusBadRequest, "Invalid request", err)
+	}
+	updates := []string{}
+	args := []interface{}{}
+	if req.X != nil {
+		updates = append(updates, "x = ?")
+		args = append(args, *req.X)
+	}
+	if req.Y != nil {
+		updates = append(updates, "y = ?")
+		args = append(args, *req.Y)
+	}
+	if req.Rotation != nil {
+		updates = append(updates, "rotation = ?")
+		args = append(args, *req.Rotation)
+	}
+	if req.XVelocity != nil {
+		updates = append(updates, "x_velocity = ?")
+		args = append(args, *req.XVelocity)
+	}
+	if req.YVelocity != nil {
+		updates = append(updates, "y_velocity = ?")
+		args = append(args, *req.YVelocity)
+	}
+	if req.RotationVelocity != nil {
+		updates = append(updates, "rotation_velocity = ?")
+		args = append(args, *req.RotationVelocity)
+	}
+	if len(updates) == 0 {
+		return response.Error(http.StatusBadRequest, "No fields to update", nil)
+	}
+	query := "UPDATE live_players SET " + strings.Join(updates, ", ") + " WHERE org_id = ? AND player_id = ?"
+	args = append(args, orgID, playerID)
+	result, err := g.playerDB.ExecContext(ctx.Req.Context(), query, args...)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to update player", err)
+	}
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		return response.Error(http.StatusNotFound, "Player not found", nil)
+	}
+	logger.Info("Updated player", "orgID", orgID, "playerID", playerID)
+	return response.JSON(http.StatusOK, map[string]string{"message": "Player updated"})
+}
+
 func (g *GrafanaLive) SimulateGameServer(ctx context.Context) {
 	orgs, _ := g.orgService.Search(ctx, &org.SearchOrgsQuery{})
-	orgID := orgs[0].ID // Use the first org ID
+	orgID := orgs[0].ID
 	channel := orgchannel.PrependOrgID(orgID, "plugin/game/players")
-	tickS := 0.1
-	ticker := time.NewTicker(100 * time.Millisecond) // 100ms = 0.1s
-	defer ticker.Stop()
 
-	// Bounds
-	const xMin, xMax = 0.0, 500.0
-	const yMin, yMax = 0.0, 500.0
-	const rotMin, rotMax = 0.0, 360.0
+	// Spin up in-memory SQLite database
+	db, err := sql.Open("sqlite", ":memory:")
+	if err != nil {
+		logger.Error("Failed to open SQLite database", "error", err)
+		return
+	}
+	defer db.Close()
 
-	// Initialize players with random starting positions and velocities
-	numPlayers := 100
-	players := make([]Player, numPlayers)
-	for i := 0; i < numPlayers; i++ {
-		players[i] = Player{
-			ID:               fmt.Sprintf("player%d", i+1),
-			X:                rand.Float64() * xMax,
-			Y:                rand.Float64() * xMax,
-			Rotation:         rand.Float64() * rotMax,
-			XVelocity:        (rand.Float64()*2 - 1) * 20, // -20 to 20 units per tick
-			YVelocity:        (rand.Float64()*2 - 1) * 20,
-			RotationVelocity: (rand.Float64()*20 - 10), // -10 to 10 degrees per tick
-		}
+	// Create players table
+	_, err = db.Exec(`
+        CREATE TABLE live_players (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            org_id BIGINT NOT NULL,
+            player_id TEXT NOT NULL,
+            x REAL NOT NULL,
+            y REAL NOT NULL,
+            rotation REAL NOT NULL,
+            x_velocity REAL NOT NULL,
+            y_velocity REAL NOT NULL,
+            rotation_velocity REAL NOT NULL,
+            UNIQUE(org_id, player_id)
+        )`)
+	if err != nil {
+		logger.Error("Failed to create live_players table", "error", err)
+		return
 	}
 
-	logger.Info("Starting game server simulation", "orgID", orgID, "channel", channel, "players", numPlayers)
+	// Assign the database to the struct
+	g.playerDB = db
+
+	// Load initial players
+	var players []Player
+	rows, err := db.QueryContext(ctx,
+		"SELECT player_id, x, y, rotation, x_velocity, y_velocity, rotation_velocity FROM live_players WHERE org_id = ?",
+		orgID)
+	if err != nil {
+		logger.Error("Failed to load players", "orgID", orgID, "error", err)
+	} else {
+		defer rows.Close()
+		for rows.Next() {
+			var p Player
+			if err := rows.Scan(&p.ID, &p.X, &p.Y, &p.Rotation, &p.XVelocity, &p.YVelocity, &p.RotationVelocity); err != nil {
+				logger.Error("Failed to scan player", "error", err)
+				continue
+			}
+			players = append(players, p)
+		}
+	}
+	if len(players) == 0 {
+		logger.Warn("No players found in database, starting empty", "orgID", orgID)
+	}
+
+	logger.Info("Starting game server simulation", "orgID", orgID, "channel", channel, "players", len(players))
+
+	// Bounds
+	const xMin, xMax = 0.0, 100.0
+	const yMin, yMax = 0.0, 100.0
+	const rotMin, rotMax = 0.0, 360.0
+
+	ticker := time.NewTicker(200 * time.Millisecond)
+	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			// Update player positions and rotations
+			// Reload players each tick
+			players = nil
+			rows, err := db.QueryContext(ctx,
+				"SELECT player_id, x, y, rotation, x_velocity, y_velocity, rotation_velocity FROM live_players WHERE org_id = ?",
+				orgID)
+			if err != nil {
+				logger.Error("Failed to reload players", "orgID", orgID, "error", err)
+				continue
+			}
+			defer rows.Close()
+			for rows.Next() {
+				var p Player
+				if err := rows.Scan(&p.ID, &p.X, &p.Y, &p.Rotation, &p.XVelocity, &p.YVelocity, &p.RotationVelocity); err != nil {
+					logger.Error("Failed to scan player", "error", err)
+					continue
+				}
+				players = append(players, p)
+			}
+
+			// Update player states
 			for i := range players {
 				p := &players[i]
-				// Update position
-				p.X += p.XVelocity * tickS
-				p.Y += p.YVelocity * tickS
-				// Bounce on X boundaries
+				p.X += p.XVelocity * 0.2
+				p.Y += p.YVelocity * 0.2
 				if p.X <= xMin {
 					p.X = xMin
 					p.XVelocity = -p.XVelocity
@@ -1560,7 +1739,6 @@ func (g *GrafanaLive) SimulateGameServer(ctx context.Context) {
 					p.X = xMax
 					p.XVelocity = -p.XVelocity
 				}
-				// Bounce on Y boundaries
 				if p.Y <= yMin {
 					p.Y = yMin
 					p.YVelocity = -p.YVelocity
@@ -1568,48 +1746,53 @@ func (g *GrafanaLive) SimulateGameServer(ctx context.Context) {
 					p.Y = yMax
 					p.YVelocity = -p.YVelocity
 				}
-				// Update rotation smoothly
-				p.Rotation += p.RotationVelocity * tickS
-				// Keep rotation between 0 and 360
+				p.Rotation += p.RotationVelocity * 0.2
 				if p.Rotation >= rotMax {
 					p.Rotation -= rotMax
 				} else if p.Rotation < rotMin {
 					p.Rotation += rotMax
 				}
+				_, err := db.ExecContext(ctx,
+					"UPDATE live_players SET x = ?, y = ?, rotation = ?, x_velocity = ?, y_velocity = ?, rotation_velocity = ? WHERE org_id = ? AND player_id = ?",
+					p.X, p.Y, p.Rotation, p.XVelocity, p.YVelocity, p.RotationVelocity, orgID, p.ID)
+				if err != nil {
+					logger.Error("Failed to update player state", "playerID", p.ID, "error", err)
+				}
 			}
 
-			// Extract latest values into arrays
-			ids := make([]string, numPlayers)
-			x := make([]float64, numPlayers)
-			y := make([]float64, numPlayers)
-			rotation := make([]float64, numPlayers)
-			for i, p := range players {
-				ids[i] = p.ID
-				x[i] = p.X
-				y[i] = p.Y
-				rotation[i] = p.Rotation
-			}
-
-			// Create a Data Frame with one row of arrays
-			frame := data.NewFrame("players",
-				data.NewField("ids", nil, ids),
-				data.NewField("x", nil, x),
-				data.NewField("y", nil, y),
-				data.NewField("rotation", nil, rotation),
-			)
-
-			// Convert to JSON
-			data, err := data.FrameToJSON(frame, data.IncludeAll)
-			if err != nil {
-				logger.Error("Failed to marshal frame data", "error", err)
-				continue
-			}
-			logger.Debug("Preparing to publish", "payload", string(data), "channel", channel, "players", numPlayers)
-			_, err = g.node.Publish(channel, data)
-			if err != nil {
-				logger.Error("Failed to publish to channel", "channel", channel, "error", err)
+			// Only publish if there are subscribers
+			subscriberCount := g.node.Hub().NumSubscribers(channel)
+			if subscriberCount > 0 {
+				ids := make([]string, len(players))
+				x := make([]float64, len(players))
+				y := make([]float64, len(players))
+				rotation := make([]float64, len(players))
+				for i, p := range players {
+					ids[i] = p.ID
+					x[i] = p.X
+					y[i] = p.Y
+					rotation[i] = p.Rotation
+				}
+				frame := data.NewFrame("players",
+					data.NewField("ids", nil, ids),
+					data.NewField("x", nil, x),
+					data.NewField("y", nil, y),
+					data.NewField("rotation", nil, rotation),
+				)
+				data, err := data.FrameToJSON(frame, data.IncludeAll)
+				if err != nil {
+					logger.Error("Failed to marshal frame data", "error", err)
+					continue
+				}
+				logger.Debug("Preparing to publish", "payload", string(data), "channel", channel, "players", len(players), "subscribers", subscriberCount)
+				_, err = g.node.Publish(channel, data)
+				if err != nil {
+					logger.Error("Failed to publish to channel", "channel", channel, "error", err)
+				} else {
+					logger.Debug("Published player data", "channel", channel)
+				}
 			} else {
-				logger.Debug("Published player data", "channel", channel)
+				logger.Debug("No subscribers, skipping publish", "channel", channel)
 			}
 		}
 	}
