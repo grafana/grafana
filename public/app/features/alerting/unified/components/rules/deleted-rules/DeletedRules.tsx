@@ -9,7 +9,7 @@ import { alertRuleApi } from '../../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../../api/featureDiscoveryApi';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { isGrafanaRulerRule } from '../../../utils/rules';
-import { UpdatedByUser } from '../../rule-viewer/tabs/components/UpdatedBy';
+import { UpdatedByUser } from '../../rule-viewer/tabs/version-history/UpdatedBy';
 
 import { ConfirmRestoreDeletedRuleModal } from './ConfirmRestoreDeletedRuleModal';
 

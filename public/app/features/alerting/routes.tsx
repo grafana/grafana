@@ -211,7 +211,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/trash/',
-      roles: evaluateAccess([AccessControlAction.AlertingRuleRead]),
+      roles: () => ['Admin'],
       component: importAlertingComponent(
         () =>
           import(
