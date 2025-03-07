@@ -416,7 +416,7 @@ Additionally, Grafana did not support IdP sessions and could not include the `Se
 Starting from Grafana version 11.5, Grafana uses the `NameID` from the SAML assertion to create the logout request. If the `NameID` is not present in the assertion, Grafana defaults to using the user's `Login` attribute. Additionally, Grafana supports including the `SessionIndex` in the logout request if it is provided in the SAML assertion by the IdP.
 
 {{% admonition type="note" %}}
-These improvements are available in public preview behind the `improvedExternalSessionHandling` feature toggle, starting from Grafana v11.5. To enable it, refer to the [Configure feature toggles](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/)
+These improvements are available in public preview behind the `improvedExternalSessionHandlingSAML` feature toggle, starting from Grafana v11.5. To enable it, refer to the [Configure feature toggles](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/)
 {{% /admonition %}}
 
 ### Assertion mapping
