@@ -148,6 +148,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
     manualRouting,
     type,
     metric,
+    target_datasource_uid,
   } = values;
   if (!condition) {
     throw new Error('You cannot create an alert rule without specifying the alert condition');
@@ -196,6 +197,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
         record: {
           metric: metric ?? name,
           from: condition,
+          target_datasource_uid,
         },
       },
       annotations,
