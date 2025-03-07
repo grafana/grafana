@@ -62,6 +62,9 @@ type IndexableDocument struct {
 	// The generic display name
 	Title string `json:"title,omitempty"`
 
+	// internal field for searching title with ngrams
+	TitleNgram string `json:"title_ngram,omitempty"`
+
 	// internal sort field for title ( don't set this directly )
 	TitlePhrase string `json:"title_phrase,omitempty"`
 
@@ -169,7 +172,8 @@ func NewIndexableDocument(key *ResourceKey, rv int64, obj utils.GrafanaMetaAcces
 		Key:         key,
 		RV:          rv,
 		Name:        key.Name,
-		Title:       title,                  // We always want *something* to display
+		Title:       title, // We always want *something* to display
+		TitleNgram:  title,
 		TitlePhrase: strings.ToLower(title), // Lowercase for case-insensitive sorting
 		Labels:      obj.GetLabels(),
 		Folder:      obj.GetFolder(),
@@ -264,6 +268,7 @@ const SEARCH_FIELD_NAMESPACE = "namespace"
 const SEARCH_FIELD_NAME = "name"
 const SEARCH_FIELD_RV = "rv"
 const SEARCH_FIELD_TITLE = "title"
+const SEARCH_FIELD_TITLE_NGRAM = "title_ngram"
 const SEARCH_FIELD_TITLE_PHRASE = "title_phrase" // filtering/sorting on title by full phrase
 const SEARCH_FIELD_DESCRIPTION = "description"
 const SEARCH_FIELD_TAGS = "tags"

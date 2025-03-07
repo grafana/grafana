@@ -1399,17 +1399,13 @@
             "description": "The source folder (or empty) to export",
             "type": "string"
           },
-          "history": {
-            "description": "Preserve history (if possible)",
-            "type": "boolean"
-          },
           "identifier": {
             "description": "Include the identifier in the exported metadata",
             "type": "boolean",
             "default": false
           },
           "prefix": {
-            "description": "Target file prefix",
+            "description": "Prefix in target file system",
             "type": "string"
           }
         }
@@ -1462,7 +1458,7 @@
             "default": false
           },
           "message": {
-            "description": "Summary messages (will be shown to users)",
+            "description": "Summary messages (can be shown to users) Will only be populated when not healthy",
             "type": "array",
             "items": {
               "type": "string",
@@ -1623,20 +1619,21 @@
         ],
         "properties": {
           "action": {
-            "description": "Possible enum values:\n - `\"export\"` Export from grafana into the remote repository\n - `\"pr\"` Update a pull request -- send preview images, links etc\n - `\"sync\"` Sync the remote branch with the grafana instance",
+            "description": "Possible enum values:\n - `\"migrate\"` Migration task -- this will migrate an full instance from SQL \u003e Git\n - `\"pr\"` Process a pull request -- apply comments with preview images, links etc\n - `\"pull\"` Sync the remote branch with the grafana instance\n - `\"push\"` Export from grafana into the remote repository",
             "type": "string",
             "default": "",
             "enum": [
-              "export",
+              "migrate",
               "pr",
-              "sync"
+              "pull",
+              "push"
             ]
           },
-          "export": {
-            "description": "Required when the action is `export`",
+          "migrate": {
+            "description": "Required when the action is `migrate`",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportJobOptions"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.MigrateJobOptions"
               }
             ]
           },
@@ -1648,18 +1645,26 @@
               }
             ]
           },
-          "repository": {
-            "description": "The the repository reference (for now also in labels)",
-            "type": "string",
-            "default": ""
-          },
-          "sync": {
-            "description": "Required when the action is `sync`",
+          "pull": {
+            "description": "Required when the action is `pull`",
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncJobOptions"
               }
             ]
+          },
+          "push": {
+            "description": "Required when the action is `push`",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportJobOptions"
+              }
+            ]
+          },
+          "repository": {
+            "description": "The the repository reference (for now also in labels)",
+            "type": "string",
+            "default": ""
           }
         }
       },
@@ -1713,6 +1718,27 @@
         "type": "object",
         "properties": {
           "path": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.MigrateJobOptions": {
+        "type": "object",
+        "required": [
+          "identifier"
+        ],
+        "properties": {
+          "history": {
+            "description": "Preserve history (if possible)",
+            "type": "boolean"
+          },
+          "identifier": {
+            "description": "Include the identifier in the exported metadata",
+            "type": "boolean",
+            "default": false
+          },
+          "prefix": {
+            "description": "Target file prefix",
             "type": "string"
           }
         }
@@ -2013,7 +2039,7 @@
             "format": "int64"
           },
           "target": {
-            "description": "Where values should be saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository The folder k8s name will be the same as the repository k8s name It will contain a copy of everything from the remote\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
+            "description": "Where values should be saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
             "type": "string",
             "default": "",
             "enum": [
