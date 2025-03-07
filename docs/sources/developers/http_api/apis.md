@@ -33,7 +33,7 @@ The namespace varies depending on your Grafana deployment:
 #### Grafana Cloud
 - Format: `stacks-<stack_id>`
 - The `stack_id` is your instance ID on grafana.com
-- Can be found on grafana.com or is automatically populated in `/swagger`
+- You can find this by clicking on your stack and then your grafana instance details, or by going to the /swagger api endpoint, and seeing what the namespace is automatically populated with
 
 ### Kind
 Represents the core resource you want to interact with, such as:

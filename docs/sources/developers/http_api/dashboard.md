@@ -83,7 +83,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 JSON Body schema:
 - **metadata.name** – Optional [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}).
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the folder under which the dashboard should be created.
-- **spec** – Details on what can be set in the spec can be found [above](#dashboard-schema).
+- **spec** – Details on what can be set in the spec can be found [above]({{< ref "#dashboard-schema" >}}).
 
 **Example Response**:
 
@@ -187,7 +187,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 JSON Body schema:
 - **metadata.name** – The [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}).
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the folder under which the dashboard should be created.
-- **spec** – Details on what can be set in the spec can be found [above](#dashboard-schema).
+- **spec** – Details on what can be set in the spec can be found [above]({{< ref "#dashboard-schema" >}}).
 
 **Example Response**:
 
