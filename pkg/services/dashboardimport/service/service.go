@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
@@ -30,6 +31,7 @@ func ProvideService(routeRegister routing.RouteRegister,
 		dashboardService:       dashboardService,
 		libraryPanelService:    libraryPanelService,
 		folderService:          folderService,
+		logger:                 log.New("dashboardimport"),
 	}
 
 	dashboardImportAPI := api.New(s, quotaService, pluginStore, ac)
@@ -43,6 +45,7 @@ type ImportDashboardService struct {
 	dashboardService       dashboards.DashboardService
 	libraryPanelService    librarypanels.Service
 	folderService          folder.Service
+	logger                 log.Logger
 }
 
 func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error) {
@@ -52,12 +55,14 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 			PluginID:  req.PluginId,
 			Reference: req.Path,
 		}
+		s.logger.Info("loading plugin dashboard", "pluginId", req.PluginId, "path", req.Path)
 		if resp, err := s.pluginDashboardService.LoadPluginDashboard(ctx, loadReq); err != nil {
 			return nil, err
 		} else {
 			draftDashboard = resp.Dashboard
 		}
 	} else {
+		s.logger.Info("loading plugin dashboard from json", "pluginId", req.PluginId, "path", req.Path)
 		draftDashboard = dashboards.NewDashboardFromJson(req.Dashboard)
 	}
 
@@ -87,6 +92,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.DashboardImport).Inc()
 	// here we need to get FolderId from FolderUID if it present in the request, if both exist, FolderUID would overwrite FolderID
 	if req.FolderUid != "" {
+		s.logger.Info("getting folder by uid", "pluginId", req.PluginId, "path", req.Path, "folderUid", req.FolderUid)
 		folder, err := s.folderService.Get(ctx, &folder.GetFolderQuery{
 			OrgID:        req.User.GetOrgID(),
 			UID:          &req.FolderUid,
@@ -98,6 +104,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		// nolint:staticcheck
 		req.FolderId = folder.ID
 	} else {
+		s.logger.Info("getting folder by id", "pluginId", req.PluginId, "path", req.Path, "folderUid", req.FolderId)
 		folder, err := s.folderService.Get(ctx, &folder.GetFolderQuery{
 			ID:           &req.FolderId, // nolint:staticcheck
 			OrgID:        req.User.GetOrgID(),
@@ -131,18 +138,21 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		User:      req.User,
 	}
 
+	s.logger.Info("saving dashboard", "pluginId", req.PluginId)
 	savedDashboard, err := s.dashboardService.ImportDashboard(ctx, dto)
 	if err != nil {
 		return nil, err
 	}
 
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.DashboardImport).Inc()
+	s.logger.Info("saving library panels", "pluginId", req.PluginId)
 	// nolint:staticcheck
 	err = s.libraryPanelService.ImportLibraryPanelsForDashboard(ctx, req.User, libraryElements, generatedDash.Get("panels").MustArray(), req.FolderId, req.FolderUid)
 	if err != nil {
 		return nil, err
 	}
 
+	s.logger.Info("connecting library panels", "pluginId", req.PluginId)
 	err = s.libraryPanelService.ConnectLibraryPanelsForDashboard(ctx, req.User, savedDashboard)
 	if err != nil {
 		return nil, err
