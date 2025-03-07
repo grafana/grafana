@@ -17,7 +17,7 @@ import { memo, Dispatch, SetStateAction, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Switch, useStyles2 } from '@grafana/ui';
-import { getButtonStyles } from '@grafana/ui/src/components/Button';
+import { getButtonStyles } from '@grafana/ui/internal';
 
 import { SearchProps } from '../../../useSearch';
 import { Trace } from '../../types';
