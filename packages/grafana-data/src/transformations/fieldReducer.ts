@@ -131,6 +131,14 @@ export enum ReducerID {
   p99 = 'p99',
 }
 
+export function getFieldTypeForReducer(id: ReducerID, fallback: FieldType): FieldType {
+  return id === ReducerID.count
+    ? FieldType.number
+    : id === ReducerID.allIsNull || id === ReducerID.allIsZero
+      ? FieldType.boolean
+      : fallback;
+}
+
 export function isReducerID(id: string): id is ReducerID {
   return Object.keys(ReducerID).includes(id);
 }
