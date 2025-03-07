@@ -2206,6 +2206,21 @@
     },
     {
       "metadata": {
+        "name": "inviteUserExperimental",
+        "resourceVersion": "1741358664069",
+        "creationTimestamp": "2025-03-07T14:44:24Z"
+      },
+      "spec": {
+        "description": "Renders invite user button along the app",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "jaegerBackendMigration",
         "resourceVersion": "1731599633815",
         "creationTimestamp": "2024-11-15T14:40:20Z"
