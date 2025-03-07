@@ -1593,14 +1593,17 @@
         ],
         "properties": {
           "error": {
+            "description": "The error message from the conversion. Empty if the conversion has not failed.",
             "type": "string",
             "default": ""
           },
           "failed": {
+            "description": "Whether from another version has failed. If true, means that the dashboard is not valid, and the caller should instead fetch the stored version.",
             "type": "boolean",
             "default": false
           },
           "storedVersion": {
+            "description": "The version which was stored when the dashboard was created / updated. Fetching this version should always succeed.",
             "type": "string",
             "default": ""
           }
@@ -1653,7 +1656,12 @@
         "type": "object",
         "properties": {
           "conversion": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.DashboardConversionStatus"
+            "description": "Optional conversion status.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.DashboardConversionStatus"
+              }
+            ]
           }
         }
       },

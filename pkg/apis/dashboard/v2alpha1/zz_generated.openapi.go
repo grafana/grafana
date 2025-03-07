@@ -734,23 +734,26 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardConversionStatus(ref common.Ref
 				Properties: map[string]spec.Schema{
 					"failed": {
 						SchemaProps: spec.SchemaProps{
-							Default: false,
-							Type:    []string{"boolean"},
-							Format:  "",
+							Description: "Whether from another version has failed. If true, means that the dashboard is not valid, and the caller should instead fetch the stored version.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 					"storedVersion": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "The version which was stored when the dashboard was created / updated. Fetching this version should always succeed.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"error": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "The error message from the conversion. Empty if the conversion has not failed.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},
@@ -3553,7 +3556,8 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardStatus(ref common.ReferenceCall
 				Properties: map[string]spec.Schema{
 					"conversion": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardConversionStatus"),
+							Description: "Optional conversion status.",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1.DashboardConversionStatus"),
 						},
 					},
 				},

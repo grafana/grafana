@@ -1,18 +1,6 @@
 package v2alpha1
 
-import (
-	"github.com/grafana/grafana/sdkkinds/dashboard/common"
-)
-
-Dashboard: {
-	schema: {
-		spec:   Spec
-		status: common.DashboardStatus
-	}
-}
-
-// Dashboard specification.
-Spec: {
+DashboardSpec: {
 	// Title of dashboard.
 	annotations: [...AnnotationQueryKind]
 
@@ -132,6 +120,10 @@ DataSourceRef: {
 	uid?: string
 }
 
+// A topic is attached to DataFrame metadata in query results.
+// This specifies where the data should be used.
+DataTopic: "series" | "annotations" | "alertStates" @cog(kind="enum",memberNames="Series|Annotations|AlertStates")
+
 // Transformations allow to manipulate data returned by a query before the system applies a visualization.
 // Using transformations you can: rename fields, join time series data, perform mathematical operations across queries,
 // use the output of one transformation as the input to another transformation, etc.
@@ -143,7 +135,7 @@ DataTransformerConfig: {
 	// Optional frame matcher. When missing it will be applied to all results
 	filter?: MatcherConfig
 	// Where to pull DataFrames from as input to transformation
-	topic?: common.DataTopic
+	topic?: DataTopic
 	// Options to be passed to the transformer
 	// Valid options depend on the transformer id
 	options: _
