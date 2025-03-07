@@ -766,7 +766,11 @@ func (dr *DashboardServiceImpl) ValidateDashboardBeforeSave(ctx context.Context,
 	var err error
 	if dashboard.ID > 0 {
 		// if ID is set and the dashboard is not found, ErrDashboardNotFound will be returned
-		existingById, err = dr.GetDashboard(ctx, &dashboards.GetDashboardQuery{OrgID: dashboard.OrgID, ID: dashboard.ID})
+		existingById, err = dr.GetDashboard(ctx, &dashboards.GetDashboardQuery{
+			OrgID:      dashboard.OrgID,
+			ID:         dashboard.ID,
+			IncludeDTO: true,
+		})
 		if err != nil {
 			return false, err
 		}
@@ -779,7 +783,11 @@ func (dr *DashboardServiceImpl) ValidateDashboardBeforeSave(ctx context.Context,
 
 	var existingByUid *dashboards.Dashboard
 	if dashboard.UID != "" {
-		existingByUid, err = dr.GetDashboard(ctx, &dashboards.GetDashboardQuery{OrgID: dashboard.OrgID, UID: dashboard.UID})
+		existingByUid, err = dr.GetDashboard(ctx, &dashboards.GetDashboardQuery{
+			OrgID:      dashboard.OrgID,
+			UID:        dashboard.UID,
+			IncludeDTO: true,
+		})
 		if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
 			return false, err
 		}
