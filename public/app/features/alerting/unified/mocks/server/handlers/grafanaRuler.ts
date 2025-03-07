@@ -10,7 +10,7 @@ import {
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
 } from '../../../../../../types/unified-alerting-dto';
-import { AlertGroupUpdated } from '../../../api/alertRuleApi';
+import { GrafanaGroupUpdatedResponse } from '../../../api/alertRuleApi';
 import { getHistoryResponse, grafanaRulerRule, rulerTestDb, time_0, time_plus_30 } from '../../grafanaRulerApi';
 import { HandlerOptions } from '../configure';
 export const rulerRulesHandler = () => {
@@ -56,7 +56,7 @@ export const updateRulerRuleNamespaceHandler = (options?: HandlerOptions) =>
       return new HttpResponse(null, { status: 403 });
     }
 
-    return HttpResponse.json<AlertGroupUpdated>({
+    return HttpResponse.json<GrafanaGroupUpdatedResponse>({
       message: 'updated',
       updated: [],
     });
