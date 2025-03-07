@@ -50,3 +50,27 @@ type Service interface {
 	// change the status (finish migration etc)
 	Update(ctx context.Context, status StorageStatus) (StorageStatus, error)
 }
+
+type SearchAdapter struct {
+	Service
+}
+
+func NewSearchAdapter(s Service) *SearchAdapter {
+	return &SearchAdapter{Service: s}
+}
+
+func (d *SearchAdapter) IsEnabled(gr schema.GroupResource) bool {
+	status, err := d.Status(context.Background(), gr)
+	if err != nil {
+		return false
+	}
+	return status.Runtime && d.Service.ShouldManage(gr)
+}
+
+func (d *SearchAdapter) ReadUnified(gr schema.GroupResource) bool {
+	status, err := d.Status(context.Background(), gr)
+	if err != nil {
+		return false
+	}
+	return status.ReadUnified
+}
