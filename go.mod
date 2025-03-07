@@ -5,7 +5,7 @@ go 1.23.7
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
 // github.com/docker/docker@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000
-replace github.com/docker/docker => github.com/moby/moby v23.0.4+incompatible
+replace github.com/docker/docker => github.com/moby/moby v27.5.1+incompatible
 
 // contains openapi encoder fixes. remove ASAP
 replace cuelang.org/go => github.com/grafana/cue v0.0.0-20230926092038-971951014e3f // @grafana/grafana-as-code
@@ -85,9 +85,9 @@ require (
 	github.com/prometheus/prometheus v1.8.2-0.20221021121301-51a44e6657c3 // @grafana/alerting-squad-backend
 	github.com/robfig/cron/v3 v3.0.1 // @grafana/backend-platform
 	github.com/russellhaering/goxmldsig v1.4.0 // @grafana/backend-platform
-	github.com/stretchr/testify v1.9.0 // @grafana/backend-platform
+	github.com/stretchr/testify v1.10.0 // @grafana/backend-platform
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf // @grafana/backend-platform
-	github.com/ua-parser/uap-go v0.0.0-20211112212520-00c877edfe0f // @grafana/backend-platform
+	github.com/ua-parser/uap-go v0.0.0-20250213224047-9c035f085b90 // @grafana/backend-platform
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
 	github.com/urfave/cli/v2 v2.27.1 // @grafana/backend-platform
 	github.com/vectordotdev/go-datemath v0.1.1-0.20220323213446-f3954d0b18ae // @grafana/backend-platform
@@ -98,11 +98,11 @@ require (
 	go.opentelemetry.io/otel/exporters/jaeger v1.17.0 // @grafana/backend-platform
 	go.opentelemetry.io/otel/sdk v1.28.0 // @grafana/backend-platform
 	go.opentelemetry.io/otel/trace v1.28.0 // @grafana/backend-platform
-	golang.org/x/crypto v0.31.0 // @grafana/backend-platform
+	golang.org/x/crypto v0.36.0 // @grafana/backend-platform
 	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa // @grafana/alerting-squad-backend
-	golang.org/x/net v0.28.0 // @grafana/oss-big-tent @grafana/partner-datasources
-	golang.org/x/oauth2 v0.22.0 // @grafana/grafana-authnz-team
-	golang.org/x/sync v0.10.0 // @grafana/alerting-squad-backend
+	golang.org/x/net v0.36.0 // @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/oauth2 v0.28.0 // @grafana/grafana-authnz-team
+	golang.org/x/sync v0.12.0 // @grafana/alerting-squad-backend
 	golang.org/x/time v0.5.0 // @grafana/backend-platform
 	golang.org/x/tools v0.24.0 // @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.12.0 // @grafana/observability-metrics
@@ -155,7 +155,7 @@ require (
 	github.com/go-openapi/validate v0.23.0 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.1 // @grafana/backend-platform
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
-	github.com/golang/glog v1.2.2 // indirect
+	github.com/golang/glog v1.2.4 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.4 // @grafana/backend-platform
 	github.com/google/btree v1.1.2 // indirect
@@ -207,8 +207,8 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.11.0 // @grafana/alerting-squad-backend
 	go.uber.org/goleak v1.3.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
-	golang.org/x/text v0.21.0 // @grafana/backend-platform
+	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/text v0.23.0 // @grafana/backend-platform
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/genproto v0.0.0-20240814211410-ddb44dafa142 // indirect; @grafana/backend-platform
 )
@@ -245,7 +245,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.1 // @grafana/grafana-release-guild
 	github.com/alicebob/miniredis/v2 v2.30.1 // @grafana/alerting-squad-backend
 	github.com/dave/dst v0.27.2 // @grafana/grafana-as-code
-	github.com/go-jose/go-jose/v3 v3.0.3 // @grafana/grafana-authnz-team
+	github.com/go-jose/go-jose/v3 v3.0.4 // @grafana/grafana-authnz-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
 	github.com/grafana/dataplane/sdata v0.0.7 // @grafana/observability-metrics
 	github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482 //  @grafana/grafana-as-code
@@ -373,7 +373,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.28.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
-	golang.org/x/term v0.27.0 // indirect
+	golang.org/x/term v0.30.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240814211410-ddb44dafa142 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240814211410-ddb44dafa142 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
@@ -398,7 +398,7 @@ require (
 
 require (
 	cloud.google.com/go/iam v1.1.12 // indirect
-	filippo.io/age v1.1.1 // @grafana/grafana-authnz-team
+	filippo.io/age v1.2.1 // @grafana/grafana-authnz-team
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.11.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/internal v0.7.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.2 // indirect
@@ -417,7 +417,7 @@ require (
 	github.com/chromedp/cdproto v0.0.0-20230802225258-3cf4e6d46a89 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/dgryski/go-metro v0.0.0-20211217172704-adc40b04c140 // indirect
-	github.com/elazarl/goproxy v0.0.0-20230731152917-f99041a5c027 // indirect
+	github.com/elazarl/goproxy v1.7.1 // indirect
 	github.com/go-logr/logr v1.4.2 // @grafana/grafana-app-platform-squad
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0 // indirect
@@ -457,6 +457,7 @@ require (
 	cloud.google.com/go/auth/oauth2adapt v0.2.3 // indirect
 	cloud.google.com/go/longrunning v0.5.11 // indirect
 	github.com/bufbuild/protocompile v0.4.0 // indirect
+	github.com/docker/docker v27.5.1+incompatible // indirect
 	github.com/gobuffalo/pop/v6 v6.1.1 // indirect
 	github.com/grafana/sqlds/v3 v3.2.0 // indirect
 	github.com/jhump/protoreflect v1.15.1 // indirect
