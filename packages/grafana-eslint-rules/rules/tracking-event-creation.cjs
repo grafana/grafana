@@ -9,6 +9,8 @@ const trackingEventCreation = createRule({
   create(context) {
     // Track what name createEventFactory is imported as
     let createEventFactoryName = 'createEventFactory';
+    // Track if createEventFactory is imported
+    let isCreateEventFactoryImported = false;
     // Track variables that store createEventFactory calls
     const eventFactoryVariables = new Set();
 
@@ -17,9 +19,13 @@ const trackingEventCreation = createRule({
         if (node.imported.type === AST_NODE_TYPES.Identifier && node.imported.name === 'createEventFactory') {
           // Remember what name it was imported as (handles aliased imports)
           createEventFactoryName = node.local.name;
+          isCreateEventFactoryImported = true;
         }
       },
       VariableDeclarator(node) {
+        if (!isCreateEventFactoryImported) {
+          return;
+        }
         // Track variables initialized with createEventFactory calls
         if (
           node.init?.type === AST_NODE_TYPES.CallExpression &&
@@ -43,6 +49,9 @@ const trackingEventCreation = createRule({
         }
       },
       ExportNamedDeclaration(node) {
+        if (!isCreateEventFactoryImported) {
+          return;
+        }
         if (
           node.declaration?.type === AST_NODE_TYPES.VariableDeclaration &&
           node.declaration.declarations[0].init?.type === AST_NODE_TYPES.CallExpression
@@ -61,6 +70,9 @@ const trackingEventCreation = createRule({
         }
       },
       TSInterfaceDeclaration(node) {
+        if (!isCreateEventFactoryImported) {
+          return;
+        }
         // Check if interface extends TrackingEvent
         let extendsTrackingEvent = false;
         if (node.extends && node.extends.length > 0) {
@@ -90,6 +102,9 @@ const trackingEventCreation = createRule({
         }
       },
       TSTypeAliasDeclaration(node) {
+        if (!isCreateEventFactoryImported) {
+          return;
+        }
         // Check if types has comments
         const comments = context.sourceCode.getCommentsBefore(node);
         if (!comments || comments.length === 0) {
