@@ -17,15 +17,6 @@ VARIABLES_MK := 1
 #
 #include .bingo/Variables.mk # Assuming -dir was set to .bingo .
 #
-#command: $(BRA)
-#	@echo "Running bra"
-#	@$(BRA) <flags/args..>
-#
-BRA := $(GOBIN)/bra-v0.0.0-20200517080246-1e3013ecaff8
-$(BRA): $(BINGO_DIR)/bra.mod
-	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/bra-v0.0.0-20200517080246-1e3013ecaff8"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=bra.mod -o=$(GOBIN)/bra-v0.0.0-20200517080246-1e3013ecaff8 "github.com/unknwon/bra"
 
 COG := $(GOBIN)/cog-v0.0.15
 $(COG): $(BINGO_DIR)/cog.mod
