@@ -184,7 +184,8 @@
       "rule-identifier": "Ŗūľę įđęŉŧįƒįęř",
       "rule-type": "Ŗūľę ŧypę",
       "state-error-timeout": "Åľęřŧ şŧäŧę įƒ ęχęčūŧįőŉ ęřřőř őř ŧįmęőūŧ",
-      "state-no-data": "Åľęřŧ şŧäŧę įƒ ŉő đäŧä őř äľľ väľūęş äřę ŉūľľ"
+      "state-no-data": "Åľęřŧ şŧäŧę įƒ ŉő đäŧä őř äľľ väľūęş äřę ŉūľľ",
+      "target-datasource-uid": "Ŧäřģęŧ đäŧä şőūřčę"
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
