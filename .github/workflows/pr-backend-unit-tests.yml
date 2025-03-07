@@ -39,7 +39,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential shared-mime-info
-          go install github.com/mfridman/tparse@latest
+          go install github.com/mfridman/tparse@c1754a1f484ac5cd422697b0fec635177ddc8507 # v0.17.0
 
       - name: Verify code generation
         run: |
