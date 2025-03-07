@@ -3,7 +3,7 @@ import { PureComponent } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { SQLQuery, SqlQueryEditorLazy, applyQueryDefaults } from '@grafana/sql';
-import { InlineFormLabel, LinkButton, Themeable2, withTheme2 } from '@grafana/ui/src';
+import { InlineFormLabel, LinkButton, Themeable2, withTheme2 } from '@grafana/ui';
 
 import InfluxDatasource from '../../../../datasource';
 import { FlightSQLDatasource } from '../../../../fsql/datasource.flightsql';

@@ -10,7 +10,7 @@ import {
 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, UrlSyncContextProvider } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui/';
+import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getClosestScopesFacade, ScopesFacade, ScopesSelector } from 'app/features/scopes';
 
