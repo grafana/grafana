@@ -5,7 +5,6 @@
 package xorm
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"reflect"
@@ -346,8 +345,6 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 		return 0, err
 	}
 
-	var autoincrementID sql.NullInt64
-
 	// If engine has a sequence number generator, use it to produce values for auto-increment columns.
 	if len(table.AutoIncrement) > 0 && session.engine.dialect.DBType() == "spanner" {
 		var found bool
@@ -362,9 +359,6 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 			if err != nil {
 				return 0, fmt.Errorf("failed to generate next value for auto_increment columns: %v", err)
 			}
-
-			autoincrementID.Valid = true
-			autoincrementID.Int64 = seq
 
 			colNames = append(colNames, table.AutoIncrement)
 			args = append(args, seq)
