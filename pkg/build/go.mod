@@ -5,7 +5,7 @@ go 1.23.7
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
 // github.com/docker/docker@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000
-replace github.com/docker/docker => github.com/moby/moby v26.0.0+incompatible
+replace github.com/docker/docker => github.com/moby/moby v27.5.1+incompatible
 
 require (
 	cloud.google.com/go/storage v1.50.0 // @grafana/grafana-backend-group
@@ -28,7 +28,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.34.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/crypto v0.35.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/mod v0.22.0 // @grafana/grafana-backend-group
-	golang.org/x/net v0.35.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/net v0.36.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.27.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.11.0 // indirect; @grafana/alerting-backend
 	golang.org/x/text v0.22.0 // indirect; @grafana/grafana-backend-group

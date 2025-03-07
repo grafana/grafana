@@ -14,7 +14,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const parentLayout = model.getParentLayout();
   const { tabs, currentTabIndex } = parentLayout.useState();
   const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
-  const { isSelected, onSelect } = useElementSelection(key);
+  const { isSelected, onSelect, isSelectable } = useElementSelection(key);
   const myIndex = tabs.findIndex((tab) => tab === model);
   const isActive = myIndex === currentTabIndex;
   const location = useLocation();
@@ -25,9 +25,11 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   return (
     <>
       <div className={cx(styles.container, isSelected && 'dashboard-selected-element')} role="presentation">
-        <span onPointerDown={onSelect}>
-          <Checkbox value={!!isSelected} />
-        </span>
+        {isSelectable && (
+          <div className={styles.checkboxWrapper} onPointerDown={onSelect}>
+            <Checkbox value={!!isSelected} />
+          </div>
+        )}
 
         <a
           href={href}
@@ -50,6 +52,9 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       whiteSpace: 'nowrap',
       alignItems: 'center',
+    }),
+    checkboxWrapper: css({
+      paddingLeft: theme.spacing(1),
     }),
     label: css({
       color: theme.colors.text.secondary,
