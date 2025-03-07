@@ -7,6 +7,7 @@ import { droneFrontItem } from './elements/droneFront';
 import { droneSideItem } from './elements/droneSide';
 import { droneTopItem } from './elements/droneTop';
 import { ellipseItem } from './elements/ellipse';
+import { enemyItem } from './elements/enemy';
 import { iconItem } from './elements/icon';
 import { metricValueItem } from './elements/metricValue';
 import { parallelogramItem } from './elements/parallelogram';
@@ -38,7 +39,7 @@ export const defaultElementItems = [
 
 export const advancedElementItems = [buttonItem, windTurbineItem, droneTopItem, droneFrontItem, droneSideItem];
 
-export const multiplayerElementItems = [playerItem];
+export const multiplayerElementItems = [playerItem, enemyItem];
 
 export const canvasElementRegistry = new Registry<CanvasElementItem>(() => [
   ...defaultElementItems,
