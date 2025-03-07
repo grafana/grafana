@@ -134,7 +134,7 @@ func (h *ExpressionQueryReader) ReadQuery(
 		err = iter.ReadVal(q)
 		if err == nil {
 			eq.Properties = q
-			eq.Command, err = NewSQLCommand(common.RefID, q.Expression)
+			eq.Command, err = NewSQLCommand(common.RefID, q.Expression, q.Format)
 		}
 
 	case QueryTypeThreshold:
