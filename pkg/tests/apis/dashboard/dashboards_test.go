@@ -377,6 +377,7 @@ func TestIntegrationDashboardsAppV1Alpha1LargeObjects(t *testing.T) {
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagUnifiedStorageBigObjectsSupport,
 				featuremgmt.FlagKubernetesClientDashboardsFolders,
+				featuremgmt.FlagUnifiedStorageSearch,
 			},
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {
