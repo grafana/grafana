@@ -105,6 +105,22 @@ func (r *Runner) GetManagedChannels(orgID int64) ([]*ManagedChannel, error) {
 			MinuteRate: 1200,
 		})
 	}
+	// Add custom game players channel
+	gameFrameJSON, err := data.FrameToJSON(data.NewFrame("gameplayers",
+		data.NewField("id", nil, make([]string, 0)),        // Player ID
+		data.NewField("x", nil, make([]float64, 0)),        // X position
+		data.NewField("y", nil, make([]float64, 0)),        // Y position
+		data.NewField("rotation", nil, make([]float64, 0)), // Rotation
+	), data.IncludeSchemaOnly)
+	if err == nil {
+		channels = append(channels, &ManagedChannel{
+			Channel:    "plugin/game/players",
+			Data:       gameFrameJSON,
+			MinuteRate: 60, // Publish every second (60 updates per minute)
+		})
+	} else {
+		logger.Error("Failed to create game players frame", "error", err)
+	}
 
 	sort.Slice(channels, func(i, j int) bool {
 		return channels[i].Channel < channels[j].Channel

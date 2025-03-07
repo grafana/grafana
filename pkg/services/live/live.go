@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand/v2"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -17,6 +18,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/gobwas/glob"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	jsoniter "github.com/json-iterator/go"
 	"golang.org/x/sync/errgroup"
@@ -417,8 +419,27 @@ type GrafanaLive struct {
 	runStreamManager *runstream.Manager
 	storage          *database.Storage
 
-	usageStatsService usagestats.Service
-	usageStats        usageStats
+	usageStatsService    usagestats.Service
+	usageStats           usageStats
+	customPluginHandlers map[string]model.ChannelHandlerFactory
+}
+
+// NoopChannelHandlerFactory is a simple factory that returns a no-op handler
+type NoopChannelHandlerFactory struct{}
+
+func (f NoopChannelHandlerFactory) GetHandlerForPath(path string) (model.ChannelHandler, error) {
+	return &NoopChannelHandler{}, nil
+}
+
+// NoopChannelHandler does nothing, suitable for channels where publishing is external
+type NoopChannelHandler struct{}
+
+func (h *NoopChannelHandler) OnSubscribe(ctx context.Context, user identity.Requester, e model.SubscribeEvent) (model.SubscribeReply, backend.SubscribeStreamStatus, error) {
+	return model.SubscribeReply{}, backend.SubscribeStreamStatusOK, nil
+}
+
+func (h *NoopChannelHandler) OnPublish(ctx context.Context, user identity.Requester, e model.PublishEvent) (model.PublishReply, backend.PublishStreamStatus, error) {
+	return model.PublishReply{}, backend.PublishStreamStatusOK, nil
 }
 
 // DashboardActivityChannel is a service to advertise dashboard activity
@@ -451,6 +472,12 @@ func (g *GrafanaLive) getStreamPlugin(ctx context.Context, pluginID string) (bac
 func (g *GrafanaLive) Run(ctx context.Context) error {
 	eGroup, eCtx := errgroup.WithContext(ctx)
 
+	if g.customPluginHandlers == nil {
+		g.customPluginHandlers = make(map[string]model.ChannelHandlerFactory)
+		g.customPluginHandlers["game"] = NoopChannelHandlerFactory{}
+		logger.Debug("Registered custom handler for plugin/game namespace")
+	}
+
 	eGroup.Go(func() error {
 		updateStatsTicker := time.NewTicker(time.Minute * 30)
 		defer updateStatsTicker.Stop()
@@ -471,6 +498,12 @@ func (g *GrafanaLive) Run(ctx context.Context) error {
 			return g.runStreamManager.Run(eCtx)
 		})
 	}
+
+	// Start the game server simulation
+	eGroup.Go(func() error {
+		g.SimulateGameServer(eCtx)
+		return nil
+	})
 
 	return eGroup.Wait()
 }
@@ -904,6 +937,11 @@ func (g *GrafanaLive) handleGrafanaScope(_ identity.Requester, namespace string)
 }
 
 func (g *GrafanaLive) handlePluginScope(ctx context.Context, _ identity.Requester, namespace string) (model.ChannelHandlerFactory, error) {
+	if handler, ok := g.customPluginHandlers[namespace]; ok {
+		logger.Debug("Using custom handler for namespace", "namespace", namespace)
+		return handler, nil
+	}
+
 	streamHandler, err := g.getStreamPlugin(ctx, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("can't find stream plugin: %s", namespace)
@@ -1460,4 +1498,39 @@ type usageStats struct {
 	sampleCount    int
 	numNodesMax    int
 	numChannelsMax int
+}
+
+// SimulateGameServer starts a mock game server that publishes player data to a channel
+func (g *GrafanaLive) SimulateGameServer(ctx context.Context) {
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	orgID := int64(1) // Hardcode org 1; adjust if needed
+	channel := orgchannel.PrependOrgID(orgID, "plugin/game/players")
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			frame := data.NewFrame("players",
+				data.NewField("id", nil, []string{"player1", "player2", "player3"}),
+				data.NewField("x", nil, []float64{rand.Float64() * 100, rand.Float64() * 100, rand.Float64() * 100}),
+				data.NewField("y", nil, []float64{rand.Float64() * 100, rand.Float64() * 100, rand.Float64() * 100}),
+				data.NewField("rotation", nil, []float64{rand.Float64() * 360, rand.Float64() * 360, rand.Float64() * 360}),
+			)
+			data, err := data.FrameToJSON(frame, data.IncludeAll)
+			if err != nil {
+				logger.Error("Failed to marshal frame data", "error", err)
+				continue
+			}
+			logger.Debug("Preparing to publish", "payload", string(data), "channel", channel)
+			_, err = g.node.Publish(channel, data)
+			if err != nil {
+				logger.Error("Failed to publish to channel", "channel", channel, "error", err)
+			} else {
+				logger.Debug("Published player data", "channel", channel)
+			}
+		}
+	}
 }
