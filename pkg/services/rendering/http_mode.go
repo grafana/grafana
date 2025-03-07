@@ -14,6 +14,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var netTransport = &http.Transport{
@@ -25,7 +27,7 @@ var netTransport = &http.Transport{
 }
 
 var netClient = &http.Client{
-	Transport: netTransport,
+	Transport: otelhttp.NewTransport(netTransport),
 }
 
 const authTokenHeader = "X-Auth-Token" //#nosec G101 -- This is a false positive
