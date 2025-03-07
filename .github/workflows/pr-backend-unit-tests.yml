@@ -76,7 +76,7 @@ jobs:
             --report-output log \
             --grafana-version "$(git rev-parse HEAD)" \
             --suite-name grafana-oss-unit-tests \
-            /tmp/test.log
+            /tmp/unit.log
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
