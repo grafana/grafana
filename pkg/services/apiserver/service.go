@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"path"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -94,10 +95,15 @@ func init() {
 // ProvideService.
 // Any call to GetRestConfig will block until we have a restConfig available
 func GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
-	fmt.Println("Getting rest config")
-	<-ready
-	fmt.Println("Got rest config")
-	return restConfig.GetRestConfig(ctx)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	select {
+	case <-ready:
+		return restConfig.GetRestConfig(ctx)
+	case <-ctx.Done():
+		return nil, fmt.Errorf("timeout waiting for rest config")
+	}
 }
 
 type Service interface {
