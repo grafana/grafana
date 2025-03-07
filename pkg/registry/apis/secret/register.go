@@ -112,13 +112,16 @@ func (b *SecretAPIBuilder) GetGroupVersion() schema.GroupVersion {
 func (b *SecretAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	err := secretv0alpha1.AddKnownTypes(scheme, secretv0alpha1.VERSION)
 	if err != nil {
-		return fmt.Errorf("scheme add known types: %w", err)
+		return err
 	}
 
 	// Link this version to the internal representation.
 	// This is used for server-side-apply (PATCH), and avoids the error:
 	// "no kind is registered for the type"
-	secretv0alpha1.AddKnownTypes(scheme, runtime.APIVersionInternal)
+	err = secretv0alpha1.AddKnownTypes(scheme, runtime.APIVersionInternal)
+	if err != nil {
+		return err
+	}
 
 	// Internal Kubernetes metadata API. Presumably to display the available APIs?
 	// e.g. http://localhost:3000/apis/secret.grafana.app/v0alpha1
