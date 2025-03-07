@@ -202,16 +202,13 @@ const FoldersPage: React.FC = () => {
   const onResourceLinkClicked = () => {}
 
   const renderTable = (resources: SearchHit[]) => {
-    // Get root level resources (location === "general")
     const rootResources = resources.filter(resource => resource.location === "general" || resource.location === "");
     
     // Recursive function to get all children
     const getAllChildren = (parent: Resource, allResources: Resource[]): Resource[] => {
       const result: Resource[] = [];
-      // Get immediate children
       const children = allResources.filter(r => r.location === parent.title);
       
-      // Add each child and recursively get their children if they're expanded folders
       children.forEach(child => {
         result.push(child);
         if (child.isExpanded && child.resource === 'folders') {
@@ -222,7 +219,6 @@ const FoldersPage: React.FC = () => {
       return result;
     };
 
-    // Create the final data array with expanded children
     const tableData = rootResources.reduce((acc: Resource[], resource: Resource) => {
       acc.push(resource);
       // If this is an expanded folder, add all its children recursively
@@ -232,43 +228,60 @@ const FoldersPage: React.FC = () => {
       return acc;
     }, []);
 
-    // Helper to check if a folder has any children (any resource type)
     const hasChildren = (folder: Resource) => {
       return resources.some(r => r.location === folder.title);
     };
 
+    const getIndentation = (resource: Resource): number => {
+      if (!resource?.location || resource.location === 'general' || resource.location === '') {
+        return 0;
+      }
+      let level = 1;
+      let currentLocation = resource.location;
+      let maxDepth = 5 // same hardcoded value as in the BE
+      
+      while (currentLocation && maxDepth > 0) {
+        const parent = resources.find(r => r.title === currentLocation);
+        if (!parent?.location || parent.location === 'general' || parent.location === '') {
+          break;
+        }
+        level++;
+        currentLocation = parent.location;
+        maxDepth--;
+      }
+      return level * 20;
+    };
+
     const columns: Array<Column<Resource>> = [
           {
-            id: 'expand',
-            header: '',
-            cell: ({ row: { original } }) => {
-              if (original.resource === 'folders' && hasChildren(original)) {
-                return (
-                  <div className={styles.expandCell}>
-                    <button onClick={() => handleExpand(original)} className={styles.expandButton}>
-                      <Icon name={original.isExpanded ? 'angle-down' : 'angle-right'} />
-                    </button>
-                  </div>
-                );
-              }
-              return <div className={styles.expandCell} />;
-            },
-          },
-          {
-            id: 'name',
+            id: 'nameWithExpand',
             header: 'Name',
-            cell: ({ row: { original } }) => (
-              <div style={{ marginLeft: original.level ? original.level * 20 : 0 }}>
-                <Link
-                  aria-label={`open-${original.title}`}
-                  href={toURL(original.resource, original.name, original.title)}
-                  className="external-link"
-                  onClick={onResourceLinkClicked}
-                >
-                {original.title}
-                </Link>
-              </div>
-            ),
+            cell: ({ row: { original } }) => {
+              const indentation = getIndentation(original);
+              const showChevron = original.resource === 'folders' && hasChildren(original);
+
+              return (
+                <div className={styles.nameCell} style={{ paddingLeft: indentation }}>
+                  <div className={styles.chevronWrapper}>
+                    {showChevron ? (
+                      <button onClick={() => handleExpand(original)} className={styles.expandButton}>
+                        <Icon name={original.isExpanded ? 'angle-down' : 'angle-right'} />
+                      </button>
+                    ) : (
+                      <div className={styles.expandButton} /> // Placeholder for consistent spacing
+                    )}
+                  </div>
+                  <Link
+                    aria-label={`open-${original.title}`}
+                    href={toURL(original.resource, original.name, original.title)}
+                    className="external-link"
+                    onClick={onResourceLinkClicked}
+                  >
+                    {original.title}
+                  </Link>
+                </div>
+              );
+            },
           },
           {
             id: 'type',
@@ -401,16 +414,20 @@ const getStyles = (theme: GrafanaTheme2) => ({
   resourceType: css({
     textTransform: 'capitalize',
   }),
-  expandCell: css({
-    width: '40px',
+  nameCell: css({
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: theme.spacing(0.5),
+  }),
+  chevronWrapper: css({
+    display: 'flex',
+    alignItems: 'center',
+    width: '24px',
   }),
   expandButton: css({
     background: 'none',
     border: 'none',
-    padding: theme.spacing(0, 1),
+    padding: 0,
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
