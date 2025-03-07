@@ -112,7 +112,7 @@ func (b *SecretAPIBuilder) GetGroupVersion() schema.GroupVersion {
 func (b *SecretAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	err := secretv0alpha1.AddKnownTypes(scheme, secretv0alpha1.VERSION)
 	if err != nil {
-		return err
+		return fmt.Errorf("scheme add known types: %w", err)
 	}
 
 	// Link this version to the internal representation.

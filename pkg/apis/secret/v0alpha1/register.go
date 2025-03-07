@@ -92,6 +92,7 @@ var (
 	AddToScheme        = localSchemeBuilder.AddToScheme
 )
 
+// Adds the status phase to the selectable fields, besides the generic metadata name and namespace.
 func SelectableSecureValueFields(obj *SecureValue) fields.Set {
 	return generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&obj.ObjectMeta, false), fields.Set{
 		"status.phase": string(obj.Status.Phase),
