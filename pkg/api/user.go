@@ -151,7 +151,7 @@ func (hs *HTTPServer) UpdateSignedInUser(c *contextmodel.ReqContext) response.Re
 	cmd.Email = strings.TrimSpace(cmd.Email)
 	cmd.Login = strings.TrimSpace(cmd.Login)
 
-	userID, errResponse := getUserID(c)
+	userID, errResponse := hs.getUserID(c)
 	if errResponse != nil {
 		return errResponse
 	}
