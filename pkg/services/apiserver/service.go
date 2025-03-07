@@ -94,7 +94,9 @@ func init() {
 // ProvideService.
 // Any call to GetRestConfig will block until we have a restConfig available
 func GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
+	fmt.Println("Getting rest config")
 	<-ready
+	fmt.Println("Got rest config")
 	return restConfig.GetRestConfig(ctx)
 }
 
