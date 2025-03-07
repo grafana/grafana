@@ -88,6 +88,7 @@ export enum AlertRuleAction {
   ModifyExport = 'modify-export-rule',
   Pause = 'pause-alert-rule',
   Restore = 'restore-alert-rule',
+  DeletePermanently = 'delete-alert-rule-permanently',
 }
 
 // this enum lists all of the actions we can perform within alerting in general, not linked to a specific
@@ -233,6 +234,10 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
       [AlertRuleAction.ModifyExport]: [isGrafanaManagedAlertRule, exportAllowed],
       [AlertRuleAction.Pause]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
       [AlertRuleAction.Restore]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
+      [AlertRuleAction.DeletePermanently]: [
+        MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule,
+        (isRemovable && isAdmin()) ?? false,
+      ],
     };
 
     return abilities;
@@ -280,6 +285,10 @@ export function useAllRulerRuleAbilities(
       [AlertRuleAction.ModifyExport]: [isGrafanaManagedAlertRule, exportAllowed],
       [AlertRuleAction.Pause]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
       [AlertRuleAction.Restore]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
+      [AlertRuleAction.DeletePermanently]: [
+        MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule,
+        (isRemovable && isAdmin()) ?? false,
+      ],
     };
 
     return abilities;

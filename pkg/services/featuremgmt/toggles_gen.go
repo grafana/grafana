@@ -960,6 +960,6 @@ const (
 	FlagAlertRuleRestore = "alertRuleRestore"
 
 	// FlagAlertingRuleRecoverDeleted
-	// Enables access to recover deleted alert rules
+	// Enables the UI functionality to recover and view deleted alert rules
 	FlagAlertingRuleRecoverDeleted = "alertingRuleRecoverDeleted"
 )

@@ -18,6 +18,7 @@ import { createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { isGrafanaAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
+import { useDeletePermanentlyModal } from '../rule-viewer/DeletePermanentlyModal ';
 
 import { RedirectToCloneRule } from './CloneRule';
 
@@ -42,6 +43,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
 
   const redirectToListView = compact ? false : true;
   const [deleteModal, showDeleteModal] = useDeleteModal(redirectToListView);
+  const [deletePermanentlyModal, showDeletePermanentlyModal] = useDeletePermanentlyModal(redirectToListView);
 
   const [showSilenceDrawer, setShowSilenceDrawer] = useState<boolean>(false);
 
@@ -111,6 +113,12 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
             showDeleteModal(editableRuleIdentifier, groupId);
           }
         }}
+        handleDeletePermanently={() => {
+          if (rule.rulerRule) {
+            const editableRuleIdentifier = ruleId.fromRulerRuleAndGroupIdentifierV2(groupId, rule.rulerRule);
+            showDeletePermanentlyModal(editableRuleIdentifier, groupId);
+          }
+        }}
         handleSilence={() => setShowSilenceDrawer(true)}
         handleDuplicateRule={() => setRedirectToClone({ identifier, isProvisioned })}
         onPauseChange={() => {
@@ -125,6 +133,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
         buttonSize={buttonSize}
       />
       {deleteModal}
+      {deletePermanentlyModal}
       {isGrafanaAlertingRule(rule.rulerRule) && showSilenceDrawer && (
         <SilenceGrafanaRuleDrawer rulerRule={rule.rulerRule} onClose={() => setShowSilenceDrawer(false)} />
       )}

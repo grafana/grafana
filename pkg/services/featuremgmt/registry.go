@@ -1791,7 +1791,7 @@ var (
 		},
 		{
 			Name:              "alertingRuleRecoverDeleted",
-			Description:       "Enables access to recover deleted alert rules",
+			Description:       "Enables the UI functionality to recover and view deleted alert rules",
 			FrontendOnly:      true,
 			Stage:             FeatureStageGeneralAvailability,
 			Owner:             grafanaAlertingSquad,

@@ -9,6 +9,7 @@ import SilenceGrafanaRuleDrawer from 'app/features/alerting/unified/components/s
 import { Rule, RuleGroupIdentifierV2, RuleIdentifier } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { useDeletePermanentlyModal } from '../../components/rule-viewer/DeletePermanentlyModal ';
 import { AlertRuleAction, useRulerRuleAbility } from '../../hooks/useAbilities';
 import * as ruleId from '../../utils/rule-id';
 import { isGrafanaAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
@@ -30,6 +31,7 @@ interface Props {
 export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }: Props) {
   const redirectToListView = compact ? false : true;
   const [deleteModal, showDeleteModal] = useDeleteModal(redirectToListView);
+  const [deletePermanentlyModal, showDeletePermanentlyModal] = useDeletePermanentlyModal(redirectToListView);
 
   const [showSilenceDrawer, setShowSilenceDrawer] = useState<boolean>(false);
 
@@ -70,8 +72,10 @@ export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }:
         handleDelete={() => showDeleteModal(identifier, groupIdentifier)}
         handleSilence={() => setShowSilenceDrawer(true)}
         handleDuplicateRule={() => setRedirectToClone({ identifier, isProvisioned })}
+        handleDeletePermanently={() => showDeletePermanentlyModal(identifier, groupIdentifier)}
       />
       {deleteModal}
+      {deletePermanentlyModal}
       {isGrafanaAlertingRule(rule) && showSilenceDrawer && (
         <SilenceGrafanaRuleDrawer rulerRule={rule} onClose={() => setShowSilenceDrawer(false)} />
       )}
