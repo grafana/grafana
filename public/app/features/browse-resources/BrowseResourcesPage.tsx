@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { t } from 'i18next';
-import React, { useState, useEffect, useMemo } from 'react';
 import { debounce } from 'lodash';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom-v5-compat';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, NavModel, NavModelItem, SelectableValue } from '@grafana/data';
 import {
   EmptyState,
   LoadingPlaceholder,
@@ -21,13 +21,13 @@ import { getAPINamespace } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
 import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { useNavModel } from 'app/core/hooks/useNavModel';
+import { t } from 'app/core/internationalization';
+import kbn from 'app/core/utils/kbn';
 
+import { getColumnStyles } from '../search/page/components/SearchResultsTable';
 import { GrafanaSearcher, SearchQuery } from '../search/service/types';
 import { SearchHit, UnifiedSearcher } from '../search/service/unified';
-import { getColumnStyles } from '../search/page/components/SearchResultsTable';
-import kbn from 'app/core/utils/kbn';
-import { useLocation } from 'react-router-dom-v5-compat';
-import { iconItem } from '../canvas/elements/icon';
+// import { iconItem } from '../canvas/elements/icon';
 interface Resource extends SearchHit {
   isExpanded?: boolean;
   owner?: string;
@@ -60,11 +60,12 @@ const FoldersPage: React.FC = () => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [availableTags, setAvailableTags] = useState<TermCount[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   const styles = useStyles2(getStyles);
 
+  const defaultNavModel = useNavModel('finder');
   const location = useLocation();
-  const [navModel, setNavModel] = useState(useNavModel('finder'));
+  const [navModel, setNavModel] = useState(defaultNavModel);
 
   const columnStyles = useStyles2(getColumnStyles);
 
@@ -84,7 +85,7 @@ const FoldersPage: React.FC = () => {
   };
 
   useEffect(() => {
-    const fetchFolderName = async (folderId: string) => {
+      const fetchFolderName = async (folderId: string) => {
       const folder = await searcher.fetchResults({ kind: ['folder'], uid: [folderId] });
       return folder.hits[0].title;
     };
@@ -165,7 +166,7 @@ const FoldersPage: React.FC = () => {
       case 'dashboards':
         return 'apps';
       case 'folders':
-          return 'folder';  
+          return 'folder';
       case 'alerts':
         return 'bell';
       case 'slos':
@@ -189,7 +190,7 @@ const FoldersPage: React.FC = () => {
       return `/playlists/play/${name}`;
     }
     if (resource.startsWith('alert')) {
-      return `/alerting/grafana/${name}`;
+      return `/alerting/grafana/${name}/view`;
     }
     if (resource.startsWith('slo')) {
       return `/d/grafana_slo_app-${name}`;
@@ -197,7 +198,7 @@ const FoldersPage: React.FC = () => {
     const slug = kbn.slugifyForUrl(title);
     return `/d/${name}/${slug}`;
   }
-  
+
   const onResourceLinkClicked = () => {}
 
   const renderTable = (resources: SearchHit[]) => {
@@ -237,79 +238,104 @@ const FoldersPage: React.FC = () => {
     };
 
     const columns: Array<Column<Resource>> = [
-      {
-        id: 'expand',
-        header: '',
-        cell: ({ row: { original } }) => {
-          if (original.resource === 'folders' && hasChildren(original)) {
-            return (
-              <div className={styles.expandCell}>
-                <button onClick={() => handleExpand(original)} className={styles.expandButton}>
-                  <Icon name={original.isExpanded ? 'angle-down' : 'angle-right'} />
-                </button>
-              </div>
-            );
-          }
-          return <div className={styles.expandCell} />;
-        },
-      },
-      {
-        id: 'name',
-        header: 'Name',
-        cell: ({ row: { original } }) => (
-          <div style={{ marginLeft: original.level ? original.level * 20 : 0 }}>
-            <Link
-              aria-label={`open-${original.title}`}
-              href={toURL(original.resource, original.name, original.title)}
-              className="external-link"
-              onClick={onResourceLinkClicked}
-            >
-              {original.title}
-            </Link>
-          </div>
-        )
-      },
-      {
-        id: 'type',
-        header: 'Type',
-        cell: ({ row: { original } }) => {
-          const iconName = getIconForResource(original.resource);
-          const displayType = original.resource.slice(0, -1); // Remove last character ('s')
-          
-          return (
-            <div className="flex items-center">
-              {iconName && <Icon name={iconName} style={{ marginRight: '6px' }}/>}
-              <span className={styles.resourceType}>{displayType}</span>
-            </div>
-          );
-        },
-      },
-      {
-        id: 'location',
-        header: 'Location',
-        cell: ({ row: { original } }) => {
-          return (
-            <div className="flex items-center">
-              <Icon name={'folder'} style={{ marginRight: '6px' }}/>
-              <span>{original.location}</span>
-            </div>
-          );
-        },
-      },
-      {
-        id: 'tags',
-        header: 'Tags',
-        cell: ({ row: { original } }) => (
-          <div key={original.name} {...original} className={columnStyles.cell}>
-              {original.tags ? <TagList className={columnStyles.tagList} tags={original.tags} 
-                onClick={
-                  (tag) => setSelectedTags([...selectedTags, tag])
-                } /> : '-'
+          {
+            id: 'expand',
+            header: '',
+            cell: ({ row: { original } }) => {
+              if (original.resource === 'folders' && hasChildren(original)) {
+                return (
+                  <div className={styles.expandCell}>
+                    <button onClick={() => handleExpand(original)} className={styles.expandButton}>
+                      <Icon name={original.isExpanded ? 'angle-down' : 'angle-right'} />
+                    </button>
+                  </div>
+                );
               }
-          </div>
-        )
-      },
-    ];
+              return <div className={styles.expandCell} />;
+            },
+          },
+          {
+            id: 'name',
+            header: 'Name',
+            cell: ({ row: { original } }) => (
+              <div style={{ marginLeft: original.level ? original.level * 20 : 0 }}>
+                <Link
+                  aria-label={`open-${original.title}`}
+                  href={toURL(original.resource, original.name, original.title)}
+                  className="external-link"
+                  onClick={onResourceLinkClicked}
+                >
+                {original.title}
+                </Link>
+              </div>
+            ),
+          },
+          {
+            id: 'type',
+            header: 'Type',
+            cell: ({ row: { original } }) => {
+              const iconName = getIconForResource(original.resource);
+              const displayType = original.resource.slice(0, -1); // Remove last character ('s')
+
+              return (
+                <div className="flex items-center">
+                  {iconName && <Icon name={iconName} style={{ marginRight: '6px' }}/>}
+                  <span className={styles.resourceType}>{displayType}</span>
+                </div>
+              );
+            },
+          },
+          {
+            id: 'location',
+            header: 'Location',
+            cell: ({ row: { original } }) => {
+              return (
+                <div className="flex items-center">
+                  <Icon name={'folder'} style={{ marginRight: '6px' }}/>
+                  <Link
+                    aria-label={`open-${original.location}`}
+                    href={toURL('folder', original.folder, original.location)}
+                    className="external-link"
+                    onClick={onResourceLinkClicked}
+                  >
+                  <span>{original.location}</span>
+                  </Link>
+                </div>
+              );
+            },
+          },
+          {
+            id: 'tags',
+            header: 'Tags',
+            cell: ({ row: { original } }) => (
+              <div key={original.name} {...original} className={columnStyles.cell}>
+                  {original.tags ? <TagList className={columnStyles.tagList} tags={original.tags}
+                    onClick={
+                      (tag) => setSelectedTags([...selectedTags, tag])
+                    } /> : '-'
+                  }
+              </div>
+            )
+          },
+        ];
+        // TODO if we want to drill down into the folders
+
+          // {
+          //   id: 'name',
+          //   header: 'Name',
+          //   cell: ({ row: { original } }) => (
+          //     <div style={{ marginLeft: original.level ? original.level * 20 : 0 }}>
+          //       {original.hasSubfolders && (
+          //         <Icon
+          //           name={original.isExpanded ? 'angle-down' : 'angle-right'}
+          //           onClick={() => handleExpand(original)}
+          //           className={styles.expandIcon}
+          //         />
+          //       )}
+          //       {original.title}
+          //     </div>
+          //   ),
+          // }
 
     return (
       <InteractiveTable
@@ -355,7 +381,7 @@ const FoldersPage: React.FC = () => {
         </div>
 
         {isLoading && <LoadingPlaceholder text="Loading folders..." />}
-        
+
         {error && (
           <EmptyState message={error} variant={'call-to-action'} />
         )}
@@ -398,3 +424,95 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 export default FoldersPage;
+
+async function buildNavModel(navModel: NavModel, path: string, searcher: UnifiedSearcher) {
+  if (!path.endsWith('finder')) {
+    const parts = location.pathname.split('/');
+    const folderId = parts[parts.length - 1];
+    const path = await fetchPath(folderId, searcher);
+    if (path.length === 0) {
+      return navModel;
+    }
+
+    let parentNodes = []
+    let node = navModel.node
+    while (true) {
+      if (isPageNode(node)) {
+        parentNodes.unshift(node)
+      }
+      if (node.parentItem) {
+        node = node.parentItem
+      } else {
+        break
+      }
+    }
+    
+    const children = [
+      ...path.map((folder, index) => ({
+        text: folder.title,
+        url: `/finder/${folder.name}`,
+        icon: 'folder',
+        active: index === path.length - 1,
+        parentItem: index === 0 ? null : {
+          text: path[index - 1].title,
+          url: `/finder/${path[index - 1].name}`,
+          icon: 'folder',
+        },
+      })),
+    ];
+
+    // make sure every parent up the tree is set
+    const nodes = [...parentNodes, ...children]
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
+      if (nodes[i - 1]) {
+        node.parentItem = nodes[i - 1]
+        if (node.parentItem.url !==  '/' && node.url !== '/finder') {
+          setParentItem(node as NavModelItem, nodes[i - 1] as NavModelItem)
+        }
+      }
+    }
+  
+    const navModelWithChildren = {
+      ...navModel,
+      main: {
+        ...navModel.main,
+        active: false,
+        children: nodes,
+      },
+      node: nodes[nodes.length - 1],
+    };
+    return navModelWithChildren;
+  }
+  return navModel;
+}
+
+const fetchPath = async (folderId: string, searcher: UnifiedSearcher) => {
+  const path: SearchHit[] = [];
+  const folder = await fetchFolder(folderId, searcher);
+  path.push(folder);
+  if (folder.folder !== undefined && folder.folder !== null && folder.folder.length > 0 && folder.folder !== 'general') {
+    const parentFolder = await fetchFolder(folder.folder, searcher);
+    path.unshift(parentFolder)
+  }
+  return path;
+};
+
+const fetchFolder = async (folderId: string, searcher: UnifiedSearcher) => {
+  const resp = await searcher.fetchResults({ kind: ['folder'], uid: [folderId] });
+  return resp.hits[0];
+};
+
+function isPageNode(node: NavModelItem) {
+  return node.url === '/finder' || node.url === '/';
+}
+
+const setParentItem = (node: NavModelItem, parent: NavModelItem) => {
+  if (node === null || parent === null) {
+    return;
+  }
+  node.parentItem = parent
+  if (parent.parentItem && parent.parentItem.url !== '/' && parent.parentItem.url !== '/finder') {
+    setParentItem(parent, parent.parentItem)
+  }
+}

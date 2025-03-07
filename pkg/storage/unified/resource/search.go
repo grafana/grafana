@@ -696,6 +696,13 @@ func AsResourceKey(ns string, t string) (*ResourceKey, error) {
 			Group:     "playlist.grafana.app",
 			Resource:  "playlists",
 		}, nil
+	// Hack: added for hackathon12/folders
+	case "alert", "alerts":
+		return &ResourceKey{
+			Namespace: ns,
+			Group:     "alert.grafana.app",
+			Resource:  "alerts",
+		}, nil
 	}
 
 	return nil, fmt.Errorf("unknown resource type")
