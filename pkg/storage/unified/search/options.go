@@ -28,13 +28,13 @@ func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tra
 			Root:          root,
 			FileThreshold: int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
 			BatchSize:     cfg.IndexMaxBatchSize,         // This is the batch size for how many objects to add to the index at once
-		}, tracer, features)
+		}, tracer, features, root)
 
 		if err != nil {
 			return resource.SearchOptions{}, err
 		}
 
-		err = reg.Register(resource.NewIndexMetrics(cfg.IndexPath, bleve))
+		err = reg.Register(resource.NewIndexMetrics())
 		if err != nil {
 			slog.Warn("Failed to register indexer metrics", "error", err)
 		}
