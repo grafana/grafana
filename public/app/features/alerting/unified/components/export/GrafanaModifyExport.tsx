@@ -9,7 +9,7 @@ import { useRuleWithLocation } from '../../hooks/useCombinedRule';
 import { formValuesFromExistingRule } from '../../rule-editor/formDefaults';
 import { stringifyErrorLike } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
-import { isGrafanaRulerRule } from '../../utils/rules';
+import { rulerRuleType } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
@@ -58,7 +58,7 @@ function RuleModifyExport({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }
     );
   }
 
-  if (rulerRule && !isGrafanaRulerRule(rulerRule.rule)) {
+  if (rulerRule && !rulerRuleType.grafana.rule(rulerRule.rule)) {
     // alert rule exists but is not a grafana-managed rule
     return (
       <Alert
@@ -69,7 +69,7 @@ function RuleModifyExport({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }
     );
   }
 
-  if (rulerRule && isGrafanaRulerRule(rulerRule.rule)) {
+  if (rulerRule && rulerRuleType.grafana.rule(rulerRule.rule)) {
     return (
       <ModifyExportRuleForm
         ruleForm={formValuesFromExistingRule(rulerRule)}

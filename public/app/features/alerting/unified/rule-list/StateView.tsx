@@ -13,7 +13,7 @@ import { ListSection } from '../rule-list/components/ListSection';
 import { groupIdentifier } from '../utils/groupIdentifier';
 import { createViewLink } from '../utils/misc';
 import { hashRule } from '../utils/rule-id';
-import { getRulePluginOrigin, isAlertingRule, isGrafanaRulerRule } from '../utils/rules';
+import { getRulePluginOrigin, prometheusRuleType, rulerRuleType } from '../utils/rules';
 
 import { AlertRuleListItem } from './components/AlertRuleListItem';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
@@ -41,7 +41,7 @@ export const StateView = ({ namespaces }: Props) => {
           // We might hit edge cases where there type = alerting, but there is no state.
           // In this case, we shouldn't try to group these alerts in the state view
           // Even though we handle this at the API layer, this is a last catch point for any edge cases
-          if (rule.promRule && isAlertingRule(rule.promRule) && rule.promRule.state) {
+          if (prometheusRuleType.alertingRule(rule.promRule) && rule.promRule.state) {
             result.get(rule.promRule.state)?.push(rule);
           }
         })
@@ -97,8 +97,10 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
       {pageItems.map((rule) => {
         const { rulerRule, promRule } = rule;
 
-        const isProvisioned = isGrafanaRulerRule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
-        const instancesCount = isAlertingRule(rule.promRule) ? calculateTotalInstances(rule.instanceTotals) : undefined;
+        const isProvisioned = rulerRuleType.grafana.rule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
+        const instancesCount = prometheusRuleType.alertingRule(rule.promRule)
+          ? calculateTotalInstances(rule.instanceTotals)
+          : undefined;
         const groupId = groupIdentifier.fromCombinedRule(rule);
 
         if (!promRule) {

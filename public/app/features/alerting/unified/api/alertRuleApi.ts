@@ -25,7 +25,7 @@ import { ExportFormats } from '../components/export/providers';
 import { Folder } from '../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid, isGrafanaRulesSource } from '../utils/datasource';
 import { arrayKeyValuesToObject } from '../utils/labels';
-import { isCloudRuleIdentifier, isGrafanaRulerRule, isPrometheusRuleIdentifier } from '../utils/rules';
+import { isCloudRuleIdentifier, isPrometheusRuleIdentifier, rulerRuleType } from '../utils/rules';
 
 import { WithNotificationOptions, alertingApi } from './alertingApi';
 import { GRAFANA_RULER_CONFIG } from './featureDiscoveryApi';
@@ -330,7 +330,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         };
       },
       invalidatesTags: (result, _error, { namespace, payload, rulerConfig }) => {
-        const grafanaRulerRules = payload.rules.filter((rule) => isGrafanaRulerRule(rule));
+        const grafanaRulerRules = payload.rules.filter(rulerRuleType.grafana.rule);
 
         return [
           { type: 'RuleNamespace', id: `${rulerConfig.dataSourceUid}/${namespace}` },

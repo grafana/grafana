@@ -19,7 +19,7 @@ import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { calculateNextEvaluationEstimate } from '../../rule-list/components/util';
 import { Annotation } from '../../utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
-import { getRulePluginOrigin, isGrafanaRulerRule, isGrafanaRulerRulePaused } from '../../utils/rules';
+import { getRulePluginOrigin, isPausedRule, rulerRuleType } from '../../utils/rules';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
 import { ProvisioningBadge } from '../Provisioning';
@@ -219,7 +219,7 @@ function useColumns(
             return <PluginOriginBadge pluginId={originMeta.pluginId} />;
           }
 
-          const isGrafanaManagedRule = isGrafanaRulerRule(rulerRule);
+          const isGrafanaManagedRule = rulerRuleType.grafana.rule(rulerRule);
           if (!isGrafanaManagedRule) {
             return null;
           }
@@ -347,13 +347,13 @@ function useRuleStatus(rule: CombinedRule) {
 
   // If prometheusRulesPrimary is enabled, we don't fetch rules from the Ruler API (except for Grafana managed rules)
   // so there is no way to detect statuses
-  if (prometheusRulesPrimary && !isGrafanaRulerRule(rulerRule)) {
+  if (prometheusRulesPrimary && !rulerRuleType.grafana.rule(rulerRule)) {
     return { isDeleting: false, isCreating: false, isPaused: false };
   }
 
   const isDeleting = Boolean(hasRuler && rulerRulesLoaded && promRule && !rulerRule);
   const isCreating = Boolean(hasRuler && rulerRulesLoaded && rulerRule && !promRule);
-  const isPaused = isGrafanaRulerRule(rulerRule) && isGrafanaRulerRulePaused(rulerRule);
+  const isPaused = rulerRuleType.grafana.alertingRule(rulerRule) && isPausedRule(rulerRule);
 
   return { isDeleting, isCreating, isPaused };
 }

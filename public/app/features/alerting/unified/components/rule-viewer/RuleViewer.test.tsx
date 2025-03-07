@@ -343,21 +343,30 @@ describe('RuleViewer', () => {
     const mockRule = getVanillaPromRule({
       name: 'prom test alert',
       namespace: mockCombinedCloudRuleNamespace({ name: 'prometheus' }, prometheus.name),
-      annotations: { [Annotation.summary]: 'prom summary', [Annotation.runbookURL]: 'https://runbook.example.com' },
+      annotations: {
+        [Annotation.summary]: 'prom summary',
+        [Annotation.runbookURL]: 'https://runbook.example.com',
+      },
       promRule: {
-        ...mockPromAlertingRule(),
+        ...mockPromAlertingRule({
+          annotations: {
+            [Annotation.summary]: 'prom summary',
+            [Annotation.runbookURL]: 'https://runbook.example.com',
+          },
+        }),
         duration: 900, // 15 minutes
       },
     });
 
     const mockRuleIdentifier = ruleId.fromCombinedRule(prometheus.name, mockRule);
 
-    it('should render pending period for vanilla Prometheus alert rule', async () => {
+    it('should render metadata for vanilla Prometheus alert rule', async () => {
       renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.Details);
 
       expect(screen.getByText('prom test alert')).toBeInTheDocument();
 
-      // One summary is rendered by the Title component, and the other by the DetailsTab component
+      // Both summary and runbook are rendered by the Title component, and the DetailsTab component
+      expect(ELEMENTS.metadata.summary(mockRule.annotations[Annotation.runbookURL]).getAll()).toHaveLength(2);
       expect(ELEMENTS.metadata.summary(mockRule.annotations[Annotation.summary]).getAll()).toHaveLength(2);
 
       expect(ELEMENTS.details.pendingPeriod.get()).toHaveTextContent(/15m/i);
