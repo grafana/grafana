@@ -417,7 +417,7 @@ describe('GroupBy transformer', () => {
 
   it('should retain "time" field type when used as aggregation (max, etc)', async () => {
     const testSeries = toDataFrame({
-      name: 'A',
+      refId: 'A',
       fields: [
         { name: 'user', type: FieldType.string, values: ['A', 'B', 'A', 'B'] },
         { name: 'time', type: FieldType.time, values: [7, 2, 1, 5] },
@@ -457,6 +457,7 @@ describe('GroupBy transformer', () => {
         },
       ];
 
+      expect(result[0].refId).toEqual('A');
       expect(result[0].fields).toEqual(expected);
     });
   });
