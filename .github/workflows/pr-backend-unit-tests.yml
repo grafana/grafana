@@ -50,7 +50,7 @@ jobs:
         run: make gen-go
 
       - name: Run unit tests
-        run: COVER_OPTS="-coverprofile=be-unit.cov -coverpkg=github.com/grafana/grafana/..." GO_TEST_FILES="./pkg/services/secrets/..." GO_TEST_OUTPUT="/tmp/unit.log" make test-go-unit
+        run: COVER_OPTS="-coverprofile=be-unit.cov -coverpkg=github.com/grafana/grafana/..." GO_TEST_OUTPUT="/tmp/unit.log" make test-go-unit
 
       - name: Process and upload coverage
         uses: ./.github/actions/test-coverage-processor
@@ -64,11 +64,11 @@ jobs:
 
       - name: Install Grafana Bench
         # We can't allow forks here, as we need secret access.
-        if: ${{ true || github.event_name != 'pull_request' }}
+        if: ${{ github.event_name != 'pull_request' }}
         uses: ./.github/actions/setup-grafana-bench
 
       - name: Process output for Bench
-        if: ${{ true || github.event_name != 'pull_request' }}
+        if: ${{ github.event_name != 'pull_request' }}
         run: |
           grafana-bench report \
             --trigger pr-backend-unit-tests-oss \
