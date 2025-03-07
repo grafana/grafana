@@ -38,7 +38,7 @@ You can configure SAML authentication in Grafana through one of the following me
 The API and Terraform support are available in Public Preview in Grafana v11.1 behind the `ssoSettingsSAML` feature toggle. You must also enable the `ssoSettingsApi` flag.
 {{% /admonition %}}
 
-All methods offer the same configuration options. However, if you want to keep all of Grafana's authentication settings in one place, use the Grafana configuration file or the Terraform provider. If you are a Grafana Cloud user, you do not have access to Grafana configuration file. Instead, configure SAML through the other methods.
+All methods offer the same configuration options. However, if you want to keep all of Grafana authentication settings in one place, use the Grafana configuration file or the Terraform provider. If you are a Grafana Cloud user, you do not have access to Grafana configuration file. Instead, configure SAML through the other methods.
 
 {{% admonition type="note" %}}
 Configuration in the API takes precedence over the configuration in the Grafana configuration file. SAML settings from the API will override any SAML configuration set in the Grafana configuration file.
@@ -138,13 +138,9 @@ For Grafana Cloud instances, please contact Grafana Support to update the `conte
 
 ## Certificate and private key
 
+Commonly, the certificate and key are embedded in the [IDP metadata](#configure-the-saml-toolkit-application-endpoints) and refreshed as needed by Grafana automatically. However, if your IdP expects signed requests, you must supply a certificate and private key.
+
 The SAML SSO standard uses asymmetric encryption to exchange information between the SP (Grafana) and the IdP. To perform such encryption, you need a public part and a private part. In this case, the X.509 certificate provides the public part, while the private key provides the private part. The private key needs to be issued in a [PKCS#8](https://en.wikipedia.org/wiki/PKCS_8) format.
-
-{{% admonition type="note" %}}
-Directly supplying a certificate and private key to Grafana is optional. Commonly, the certificate and key are embedded in the [IDP metadata](#configure-the-saml-toolkit-application-endpoints) and refreshed as needed by Grafana automatically. This can save you the work of manually rotating your certs and keys whenever they expire.
-{{% /admonition %}}
-
-Whether supplying certificate and key directly or via idp_metadata, loading certs into Grafana helps ensure that Grafana connects to a verified endpoint (such as in the case of MITM takeover scenarios).
 
 If you are directly supplying the certificate and key, Grafana supports two ways of specifying both the `certificate` and `private_key`:
 
@@ -171,16 +167,7 @@ Base64-encode the cert.pem and key.pem files:
 $ base64 -w0 key.pem > key.pem.base64
 $ base64 -w0 cert.pem > cert.pem.base64
 ```
-The base64-encoded values (`key.pem.base64, cert.pem.base64` files) are then used for certificate and private_key.
-Run the following command to convert the private key to [PKCS#8](https://en.wikipedia.org/wiki/PKCS_8) format.
-
-```sh
-openssl pkcs8 -topk8 -inform PEM -outform PEM -in myoriginalkey.pem -out myconvertedkey.pem -nocrypt
-```
-
-The base64-encoded values (`myconvertedkey.pem.base64, cert.pem.base64` files) are then used for certificate and private_key.
-
-The generated `key.pem` and `cert.pem` files are then used for certificate and private_key.
+The base64-encoded values (`key.pem.base64, cert.pem.base64` files) are then used for certificate and private key.
 
 The key you provide should look like:
 
