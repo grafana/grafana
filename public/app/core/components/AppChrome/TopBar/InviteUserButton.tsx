@@ -25,7 +25,7 @@ export function InviteUserButton() {
           const url = getExternalUserMngLinkUrl('invite-user-top-bar');
           window.open(url.toString(), '_blank');
         }}
-        tooltip={t('navigation.invite-user.invite-tooltip', 'Invite user')}
+        tooltip={t('navigation.invite-user.invite-tooltip', 'Invite new member')}
       >
         {t('navigation.invite-user.invite-button', 'Invite')}
       </Button>

@@ -2912,7 +2912,7 @@
   "navigation": {
     "invite-user": {
       "invite-button": "Ĩŉvįŧę",
-      "invite-tooltip": "Ĩŉvįŧę ūşęř"
+      "invite-tooltip": "Ĩŉvįŧę ŉęŵ męmþęř"
     },
     "item": {
       "add-bookmark": "Åđđ ŧő ßőőĸmäřĸş",
@@ -3528,7 +3528,6 @@
   "share-dashboard": {
     "menu": {
       "export-json-title": "Ēχpőřŧ äş ĴŜØŃ",
-      "invite-user-title": "Ĩŉvįŧę ŉęŵ męmþęř",
       "share-externally-title": "Ŝĥäřę ęχŧęřŉäľľy",
       "share-internally-title": "Ŝĥäřę įŉŧęřŉäľľy",
       "share-snapshot-title": "Ŝĥäřę şŉäpşĥőŧ"

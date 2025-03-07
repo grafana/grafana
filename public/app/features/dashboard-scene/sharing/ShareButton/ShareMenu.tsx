@@ -1,12 +1,10 @@
-import { css } from '@emotion/css';
 import { useCallback } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
-import { IconName, Menu, useStyles2 } from '@grafana/ui';
+import { IconName, Menu } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
 import { AccessControlAction } from 'app/types';
@@ -42,7 +40,6 @@ export function resetDashboardShareDrawerItems() {
 }
 
 export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardScene; panel?: VizPanel }) {
-  const styles = useStyles2(getStyles);
   const onMenuItemClick = (shareView: string) => {
     locationService.partial({ shareView });
   };
@@ -117,17 +114,3 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
     </Menu>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    inviteUserItem: css({
-      display: 'flex',
-      justifyContent: 'start',
-      flexDirection: 'row',
-      alignItems: 'center',
-    }),
-    inviteUserItemIcon: css({
-      color: theme.colors.text.link,
-    }),
-  };
-};
