@@ -293,7 +293,10 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
     </Stack>
   );
 
-  const isPaused = existing && rulerRuleType.grafanaManaged.pausedRule(existing.rule);
+  const isPaused =
+    rulerRuleType.grafanaManaged.alertingRule(existing?.rule) &&
+    rulerRuleType.grafanaManaged.pausedRule(existing?.rule);
+
   if (!type) {
     return null;
   }

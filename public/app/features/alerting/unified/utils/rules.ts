@@ -63,7 +63,7 @@ function isGrafanaRecordingRule(rule?: RulerRuleDTO): rule is RulerGrafanaRuleDT
   return isGrafanaRulerRule(rule) && 'record' in rule.grafana_alert;
 }
 
-function isGrafanaRulerRulePaused(rule?: RulerRuleDTO) {
+function isGrafanaRulerRulePaused(rule?: RulerGrafanaRuleDTO) {
   return isGrafanaRulerRule(rule) && Boolean(rule.grafana_alert.is_paused);
 }
 

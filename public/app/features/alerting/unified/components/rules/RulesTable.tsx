@@ -353,7 +353,8 @@ function useRuleStatus(rule: CombinedRule) {
 
   const isDeleting = Boolean(hasRuler && rulerRulesLoaded && promRule && !rulerRule);
   const isCreating = Boolean(hasRuler && rulerRulesLoaded && rulerRule && !promRule);
-  const isPaused = rulerRuleType.grafanaManaged.pausedRule(rulerRule);
+  const isPaused =
+    rulerRuleType.grafanaManaged.alertingRule(rulerRule) && rulerRuleType.grafanaManaged.pausedRule(rulerRule);
 
   return { isDeleting, isCreating, isPaused };
 }

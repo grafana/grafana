@@ -61,7 +61,9 @@ export const Details = ({ rule }: DetailsProps) => {
   const hasEvaluationDuration = Number.isFinite(evaluationDuration);
 
   const updated = rulerRuleType.grafanaManaged.rule(rule.rulerRule) ? rule.rulerRule.grafana_alert.updated : undefined;
-  const isPaused = rulerRuleType.grafanaManaged.pausedRule(rule.rulerRule);
+  const isPaused =
+    rulerRuleType.grafanaManaged.alertingRule(rule.rulerRule) &&
+    rulerRuleType.grafanaManaged.pausedRule(rule.rulerRule);
 
   const pausedIcon = (
     <Stack>

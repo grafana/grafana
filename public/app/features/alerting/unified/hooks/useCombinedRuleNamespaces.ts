@@ -242,7 +242,9 @@ export function addRulerGroupsToCombinedNamespace(
 ): void {
   namespace.groups = groups.map((group) => {
     const numRecordingRules = group.rules.filter((rule) => rulerRuleType.any.recordingRule(rule)).length;
-    const numPaused = group.rules.filter((rule) => rulerRuleType.grafanaManaged.pausedRule(rule)).length;
+    const numPaused = group.rules.filter((rule) => {
+      return rulerRuleType.grafanaManaged.alertingRule(rule) && rulerRuleType.grafanaManaged.pausedRule(rule);
+    }).length;
 
     const combinedGroup: CombinedRuleGroup = {
       name: group.name,
