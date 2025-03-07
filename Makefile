@@ -313,9 +313,9 @@ test: test-go test-js ## Run all tests.
 
 ##@ Linting
 .PHONY: golangci-lint
-golangci-lint: $(GOLANGCI_LINT)
+golangci-lint:
 	@echo "lint via golangci-lint"
-	$(GOLANGCI_LINT) run \
+	go tool golangci-lint run \
 		--config .golangci.yml \
 		$(GO_LINT_FILES)
 
@@ -323,13 +323,13 @@ golangci-lint: $(GOLANGCI_LINT)
 lint-go: golangci-lint ## Run all code checks for backend. You can use GO_LINT_FILES to specify exact files to check
 
 .PHONY: lint-go-diff
-lint-go-diff: $(GOLANGCI_LINT)
+lint-go-diff:
 	git diff --name-only $(GIT_BASE) | \
 		grep '\.go$$' | \
 		$(XARGSR) dirname | \
 		sort -u | \
 		sed 's,^,./,' | \
-		$(XARGSR) $(GOLANGCI_LINT) run --config .golangci.toml
+		$(XARGSR) go tool golangci-lint run --config .golangci.toml
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 .PHONY: shellcheck
