@@ -7,8 +7,10 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -177,7 +179,11 @@ func (du *DashboardUpdater) autoUpdateAppDashboard(ctx context.Context, pluginDa
 	}
 	du.logger.Info("Auto updating App dashboard", "dashboard", resp.Dashboard.Title, "newRev",
 		pluginDashInfo.Revision, "oldRev", pluginDashInfo.ImportedRevision)
-	ctx, user := identity.WithServiceIdentity(ctx, orgID)
+	user := accesscontrol.BackgroundUser("dashboard_updater", orgID, org.RoleAdmin, []accesscontrol.Permission{
+		{Action: dashboards.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
+		{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeFoldersAll},
+	})
+	ctx = identity.WithRequester(ctx, user)
 	_, err = du.dashboardImportService.ImportDashboard(ctx, &dashboardimport.ImportDashboardRequest{
 		PluginId:  pluginDashInfo.PluginId,
 		User:      user,
