@@ -18246,6 +18246,7 @@ __metadata:
     i18next: "npm:^24.0.0"
     i18next-browser-languagedetector: "npm:^8.0.0"
     i18next-parser: "npm:9.3.0"
+    i18next-pseudo: "npm:^2.2.1"
     immer: "npm:10.1.1"
     immutable: "npm:5.0.3"
     ini: "npm:^5.0.0"
@@ -18301,7 +18302,6 @@ __metadata:
     postcss-scss: "npm:4.0.9"
     prettier: "npm:3.4.2"
     prismjs: "npm:1.29.0"
-    pseudoizer: "npm:^0.1.0"
     rc-slider: "npm:11.1.8"
     rc-tree: "npm:5.13.0"
     re-resizable: "npm:6.10.3"
@@ -19115,6 +19115,24 @@ __metadata:
   bin:
     i18next: bin/cli.js
   checksum: 10/32b81864aa9cc27b7db41fde6fdf2c686c985e07a9b62a8dd10b4e86c8c0db7fe6ef3e569461a593521932265b31d12c091a6dda461406e54ebb0fc9ff6a55d0
+  languageName: node
+  linkType: hard
+
+"i18next-pseudo@npm:^2.2.1":
+  version: 2.2.1
+  resolution: "i18next-pseudo@npm:2.2.1"
+  dependencies:
+    i18next: "npm:^19.1.0"
+  checksum: 10/4eeec03540c6e9bb823b804cffcb2b95555b0a1d185e0287c74d2deaf7e6bfa206b0223d69db4fbe7b90c66faba451737b06151c85708afd2c5e9502adf817b2
+  languageName: node
+  linkType: hard
+
+"i18next@npm:^19.1.0":
+  version: 19.9.2
+  resolution: "i18next@npm:19.9.2"
+  dependencies:
+    "@babel/runtime": "npm:^7.12.0"
+  checksum: 10/a3b8da898edf74257984821b8eaf11929db4cab2c123dadad05c641af98bfcf94ddddee951d091e45f6f7510db47294f4d67134906b1dd82f144f01534153710
   languageName: node
   linkType: hard
 
@@ -25366,13 +25384,6 @@ __metadata:
   version: 1.1.0
   resolution: "proxy-from-env@npm:1.1.0"
   checksum: 10/f0bb4a87cfd18f77bc2fba23ae49c3b378fb35143af16cc478171c623eebe181678f09439707ad80081d340d1593cd54a33a0113f3ccb3f4bc9451488780ee23
-  languageName: node
-  linkType: hard
-
-"pseudoizer@npm:^0.1.0":
-  version: 0.1.0
-  resolution: "pseudoizer@npm:0.1.0"
-  checksum: 10/fd3fa95ea4f330f268cad2388f3829e4c29249e7ffea970467b9123f1ef2a81334e92425c5cad0c72ab04c320203501b65ae86aa8d88320b63e0e75e944c6e76
   languageName: node
   linkType: hard
 
