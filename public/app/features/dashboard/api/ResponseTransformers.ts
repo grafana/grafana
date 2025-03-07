@@ -298,7 +298,7 @@ function getElementsFromPanels(
 
       const rowElements = [];
 
-      for (const panel of p.panels) {
+      for (const panel of p.panels || []) {
         const [element, name] = buildElement(panel);
         elements[name] = element;
         rowElements.push(buildGridItemKind(panel, name, yOffsetInRows(panel, p.gridPos!.y)));
@@ -375,6 +375,8 @@ function yOffsetInRows(p: Panel, rowY: number): number {
 }
 
 function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
+  const element_identifier = `panel-${p.id}`;
+
   if (p.libraryPanel) {
     // LibraryPanelKind
     const panelKind: LibraryPanelKind = {
@@ -389,7 +391,7 @@ function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
       },
     };
 
-    return [panelKind, `panel-${p.id}`];
+    return [panelKind, element_identifier];
   } else {
     // PanelKind
 
@@ -438,8 +440,7 @@ function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
         },
       },
     };
-
-    return [panelKind, `panel-${p.id}`];
+    return [panelKind, element_identifier];
   }
 }
 
