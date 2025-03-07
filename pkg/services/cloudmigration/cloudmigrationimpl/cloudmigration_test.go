@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -47,6 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	secretsfakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -60,6 +60,8 @@ func Test_NoopServiceDoesNothing(t *testing.T) {
 }
 
 func Test_CreateGetAndDeleteToken(t *testing.T) {
+	t.Parallel()
+
 	s := setUpServiceTest(t, false)
 
 	createResp, err := s.CreateToken(context.Background())
@@ -82,6 +84,8 @@ func Test_CreateGetAndDeleteToken(t *testing.T) {
 }
 
 func Test_GetSnapshotStatusFromGMS(t *testing.T) {
+	t.Parallel()
+
 	setupTest := func(ctx context.Context) (service *Service, snapshotUID string, sessionUID string) {
 		s := setUpServiceTest(t, false).(*Service)
 
@@ -150,6 +154,8 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 	}
 
 	t.Run("test case: gms snapshot initialized", func(t *testing.T) {
+		t.Parallel()
+
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 
@@ -172,6 +178,8 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 	})
 
 	t.Run("test case: gms snapshot processing", func(t *testing.T) {
+		t.Parallel()
+
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 
@@ -194,6 +202,8 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 	})
 
 	t.Run("test case: gms snapshot finished", func(t *testing.T) {
+		t.Parallel()
+
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 
@@ -216,6 +226,8 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 	})
 
 	t.Run("test case: gms snapshot canceled", func(t *testing.T) {
+		t.Parallel()
+
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 
@@ -238,6 +250,8 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 	})
 
 	t.Run("test case: gms snapshot error", func(t *testing.T) {
+		t.Parallel()
+
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 
@@ -260,6 +274,8 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 	})
 
 	t.Run("test case: gms snapshot unknown", func(t *testing.T) {
+		t.Parallel()
+
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 
@@ -292,6 +308,8 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 	})
 
 	t.Run("GMS results applied to local snapshot", func(t *testing.T) {
+		t.Parallel()
+
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 
@@ -335,6 +353,8 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 }
 
 func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
+	t.Parallel()
+
 	s := setUpServiceTest(t, false).(*Service)
 
 	gmsClientMock := &gmsClientMock{
@@ -407,6 +427,8 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 }
 
 func Test_DeletedDashboardsNotMigrated(t *testing.T) {
+	t.Parallel()
+
 	s := setUpServiceTest(t, false).(*Service)
 
 	// modify what the mock returns for just this test case
@@ -454,6 +476,8 @@ func Test_SortFolders(t *testing.T) {
 }
 
 func TestDeleteSession(t *testing.T) {
+	t.Parallel()
+
 	s := setUpServiceTest(t, false).(*Service)
 	user := &user.SignedInUser{UserUID: "user123"}
 
@@ -496,7 +520,11 @@ func TestDeleteSession(t *testing.T) {
 }
 
 func TestReportEvent(t *testing.T) {
+	t.Parallel()
+
 	t.Run("when the session is nil, it does not report the event", func(t *testing.T) {
+		t.Parallel()
+
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 
@@ -513,6 +541,8 @@ func TestReportEvent(t *testing.T) {
 	})
 
 	t.Run("when the session is not nil, it reports the event", func(t *testing.T) {
+		t.Parallel()
+
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 
@@ -530,6 +560,8 @@ func TestReportEvent(t *testing.T) {
 }
 
 func TestGetFolderNamesForFolderUIDs(t *testing.T) {
+	t.Parallel()
+
 	s := setUpServiceTest(t, false).(*Service)
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
@@ -594,6 +626,8 @@ func TestGetFolderNamesForFolderUIDs(t *testing.T) {
 }
 
 func TestGetParentNames(t *testing.T) {
+	t.Parallel()
+
 	s := setUpServiceTest(t, false).(*Service)
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
@@ -654,6 +688,8 @@ func TestGetParentNames(t *testing.T) {
 }
 
 func TestGetLibraryElementsCommands(t *testing.T) {
+	t.Parallel()
+
 	s := setUpServiceTest(t, false).(*Service)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -718,6 +754,8 @@ func TestIsPublicSignatureType(t *testing.T) {
 }
 
 func TestGetPlugins(t *testing.T) {
+	t.Parallel()
+
 	s := setUpServiceTest(t, false).(*Service)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -817,7 +855,6 @@ func TestGetPlugins(t *testing.T) {
 type configOverrides func(c *setting.Cfg)
 
 func setUpServiceTest(t *testing.T, withDashboardMock bool, cfgOverrides ...configOverrides) cloudmigration.Service {
-	sqlStore := db.InitTestDB(t)
 	secretsService := secretsfakes.NewFakeSecretsService()
 	rr := routing.NewRouteRegister()
 	tracer := tracing.InitializeTracerForTest()
@@ -860,6 +897,14 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool, cfgOverrides ...conf
 	featureToggles := featuremgmt.WithFeatures(
 		featuremgmt.FlagOnPremToCloudMigrations,
 		featuremgmt.FlagDashboardRestore, // needed for skipping creating soft-deleted dashboards in the snapshot.
+	)
+
+	sqlStore := sqlstore.NewTestStore(t,
+		sqlstore.WithCfg(cfg),
+		sqlstore.WithFeatureFlags(
+			featuremgmt.FlagOnPremToCloudMigrations,
+			featuremgmt.FlagDashboardRestore, // needed for skipping creating soft-deleted dashboards in the snapshot.
+		),
 	)
 
 	kvStore := kvstore.ProvideService(sqlStore)
