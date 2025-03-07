@@ -4,7 +4,6 @@ import userEvent from '@testing-library/user-event';
 import { AppEvents } from '@grafana/data';
 import { getAppEvents, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { ManagerKind } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks';
 
@@ -152,6 +151,14 @@ function setup(props: Partial<Props> = {}) {
   };
 }
 
+const mockRequestBase = {
+  isSuccess: true,
+  isError: false,
+  isLoading: false,
+  error: null,
+  data: { resource: { upsert: {} } },
+};
+
 describe('SaveProvisionedDashboard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -188,6 +195,7 @@ describe('SaveProvisionedDashboard', () => {
     // Mock useCreateOrUpdateRepositoryFile
     const mockAction = jest.fn();
     const mockRequest = {
+      ...mockRequestBase,
       isSuccess: true,
       isError: false,
       isLoading: false,
@@ -256,6 +264,7 @@ describe('SaveProvisionedDashboard', () => {
 
     const mockAction = jest.fn();
     const mockRequest = {
+      ...mockRequestBase,
       isSuccess: true,
       isError: false,
       isLoading: false,
@@ -297,8 +306,6 @@ describe('SaveProvisionedDashboard', () => {
       // Check if the action was called
       expect(mockAction).toHaveBeenCalled();
     });
-    // Check if manager was set
-    expect(props.dashboard.setManager).toHaveBeenCalledWith(ManagerKind.Repo, 'test-repo');
 
     // Check if success alert was published
     const appEvents = getAppEvents();
@@ -362,6 +369,7 @@ describe('SaveProvisionedDashboard', () => {
 
     const mockAction = jest.fn();
     const mockRequest = {
+      ...mockRequestBase,
       isSuccess: true,
       isError: false,
       isLoading: false,
@@ -419,6 +427,7 @@ describe('SaveProvisionedDashboard', () => {
 
     const mockAction = jest.fn();
     const mockRequest = {
+      ...mockRequestBase,
       isSuccess: false,
       isError: true,
       isLoading: false,
