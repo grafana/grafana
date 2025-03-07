@@ -143,6 +143,7 @@ func TestBuilderAdmission_Admit(t *testing.T) {
 	}
 	gvr := gvk.GroupVersion().WithResource("foos")
 	exampleObj := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo"}, Spec: example.PodSpec{}}
+	exampleObjNoName := &example.Pod{ObjectMeta: metav1.ObjectMeta{}, Spec: example.PodSpec{}}
 	tests := []struct {
 		name       string
 		mutators   map[schema.GroupVersion]builder.APIGroupMutation
@@ -179,6 +180,13 @@ func TestBuilderAdmission_Admit(t *testing.T) {
 			wantSpec:   example.PodSpec{Hostname: "test"},
 		},
 		{
+			name:       "add generate name",
+			mutators:   map[schema.GroupVersion]builder.APIGroupMutation{},
+			attributes: admission.NewAttributesRecord(exampleObjNoName.DeepCopy(), nil, gvk, "default", "", gvr, "", admission.Create, nil, false, nil),
+			wantErr:    false,
+			wantSpec:   exampleObj.Spec,
+		},
+		{
 			name:       "mutator does not exist",
 			mutators:   map[schema.GroupVersion]builder.APIGroupMutation{},
 			attributes: admission.NewAttributesRecord(exampleObj.DeepCopy(), nil, gvk, "default", "foo", gvr, "", admission.Create, nil, false, nil),
@@ -197,6 +205,11 @@ func TestBuilderAdmission_Admit(t *testing.T) {
 				require.NoError(t, err)
 			}
 			require.Equal(t, tt.wantSpec, tt.attributes.GetObject().(*example.Pod).Spec)
+
+			// if the object does not have a name, it should set generate name
+			if tt.attributes.GetObject().(*example.Pod).Name == "" {
+				require.NotEmpty(t, tt.attributes.GetObject().(*example.Pod).GenerateName)
+			}
 		})
 	}
 }
