@@ -32,7 +32,7 @@ import { mergeTransformer } from '@grafana/data/src/transformations/transformers
 import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { DataTransformerConfig } from '@grafana/schema';
 import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
-import { migrateTableDisplayModeToCellOptions } from '@grafana/ui/src/components/Table/utils';
+import { migrateTableDisplayModeToCellOptions } from '@grafana/ui/internal';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 import { config } from 'app/core/config';
 import {

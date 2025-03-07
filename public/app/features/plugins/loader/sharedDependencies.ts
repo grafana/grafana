@@ -54,7 +54,7 @@ export const sharedDependenciesMap = {
   '@grafana/runtime/unstable': () => import('@grafana/runtime/src/unstable'),
   '@grafana/slate-react': () => import('slate-react'),
   '@grafana/ui': grafanaUI,
-  '@grafana/ui/unstable': () => import('@grafana/ui/src/unstable'),
+  '@grafana/ui/unstable': () => import('@grafana/ui/unstable'),
   '@kusto/monaco-kusto': () => import('@kusto/monaco-kusto'),
   'app/core/app_events': {
     default: appEvents,
