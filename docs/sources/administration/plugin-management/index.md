@@ -128,7 +128,7 @@ unzip my-plugin-0.2.0.zip -d YOUR_PLUGIN_DIR/my-plugin
 
 The path to the plugin directory is defined in the configuration file. For more information, refer to [Configuration](../../setup-grafana/configure-grafana/#plugins).
 
-#### Install a plugin using Grafana configuration
+#### Install a plugin using Grafana configuration
 
 {{% admonition type="note" %}}
 This feature requires Grafana 11.5.0 or later.
