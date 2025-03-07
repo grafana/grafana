@@ -42,7 +42,6 @@ export const AnnoKeyFolderId = 'grafana.app/folderId';
 export const AnnoKeyFolderUrl = 'grafana.app/folderUrl';
 export const AnnoKeyMessage = 'grafana.app/message';
 export const AnnoKeySlug = 'grafana.app/slug';
-export const AnnoKeyConversion = 'CONVERSION-0';
 
 export enum ManagerKind {
   Repo = 'repo',
@@ -73,7 +72,6 @@ type GrafanaAnnotations = {
   [AnnoKeyUpdatedBy]?: string;
   [AnnoKeyFolder]?: string;
   [AnnoKeySlug]?: string;
-  [AnnoKeyConversion]?: string;
 
   [AnnoKeyManagerKind]?: ManagerKind;
   [AnnoKeyManagerIdentity]?: string;
