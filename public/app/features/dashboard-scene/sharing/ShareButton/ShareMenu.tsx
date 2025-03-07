@@ -6,14 +6,13 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
-import { Icon, IconName, Menu, useStyles2 } from '@grafana/ui';
+import { IconName, Menu, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
 import { AccessControlAction } from 'app/types';
 
 import { isPublicDashboardsEnabled } from '../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { getTrackingSource, shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
-import { getExternalUserMngLinkUrl } from '../../../users/utils';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
 
@@ -87,24 +86,8 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
 
     customShareDrawerItems.forEach((d) => menuItems.push(d));
 
-    menuItems.push({
-      shareId: shareDashboardType.inviteUser,
-      testId: newShareButtonSelector.inviteUser,
-      icon: 'add-user',
-      label: t('share-dashboard.menu.invite-user-title', 'Invite new member'),
-      renderCondition: !!config.externalUserMngLinkUrl && contextSrv.hasPermission(AccessControlAction.OrgUsersAdd),
-      onClick: () => {
-        const url = getExternalUserMngLinkUrl('share-invite');
-
-        window.open(url.toString(), '_blank');
-      },
-      renderDividerAbove: true,
-      component: () => <Icon name="external-link-alt" className={styles.inviteUserItemIcon} />,
-      className: styles.inviteUserItem,
-    });
-
     return menuItems.filter((item) => item.renderCondition);
-  }, [panel, styles]);
+  }, [panel]);
 
   const onClick = (item: ShareDrawerMenuItem) => {
     DashboardInteractions.sharingCategoryClicked({

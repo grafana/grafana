@@ -22,7 +22,7 @@ export function InviteUserButton() {
             placement: 'top_nav_right',
           });
 
-          const url = getExternalUserMngLinkUrl('share-invite');
+          const url = getExternalUserMngLinkUrl('invite-user-top-bar');
           window.open(url.toString(), '_blank');
         }}
         tooltip={t('navigation.invite-user.invite-tooltip', 'Invite user')}
