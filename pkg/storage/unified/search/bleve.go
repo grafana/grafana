@@ -98,7 +98,7 @@ func (b *bleveBackend) GetIndex(ctx context.Context, key resource.NamespacedReso
 	return nil, nil
 }
 
-// UpdateIndexSizeMetric sets the total size of all file-based indices metric.
+// updateIndexSizeMetric sets the total size of all file-based indices metric.
 func updateIndexSizeMetric(indexPath string) {
 	for {
 		var totalSize int64
