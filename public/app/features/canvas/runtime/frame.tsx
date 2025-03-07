@@ -94,7 +94,6 @@ export class FrameState extends ElementState {
           height: playerSize,
         };
         const newElement = new ElementState(newItem, newElementOptions, this.scene.root);
-        console.log(newElement);
         this.elements.push(newElement);
       } else {
         // Update existing element's placement if it exists
@@ -107,7 +106,6 @@ export class FrameState extends ElementState {
             matchingElementOptions.placement?.left !== x ||
             matchingElementOptions.placement?.rotation !== r)
         ) {
-          console.log(`updating: ${player}`);
           this.elements[matchingElementIndex].onChange({
             ...matchingElementOptions,
             placement: { top: y, left: x, rotation: r, width: playerSize, height: playerSize },
