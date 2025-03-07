@@ -204,8 +204,14 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 		raw, err := ini.Load([]byte(rawCfg))
 		require.NoError(t, err)
 
-		cfg := &setting.Cfg{Raw: raw}
-
+		cfg := &setting.Cfg{
+			Raw: raw,
+			SecretsManagement: setting.SecretsManagerSettings{
+				SecretKey:          "sdDkslslld",
+				EncryptionProvider: "fakeProvider.v1",
+				AvailableProviders: []string{"fakeProvider.v1"},
+			},
+		}
 		encProvider := encryptionprovider.Provider{}
 		usageStats := &usagestats.UsageStatsMock{}
 
@@ -294,7 +300,7 @@ func TestEncryptionService_Run(t *testing.T) {
 	ctx := context.Background()
 	namespace := "test-namespace"
 
-	t.Run("should stop with no error once the context's finished", func(t *testing.T) {
+	t.Run("should stop with no error once the context is finished", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(ctx, time.Millisecond)
 		defer cancel()
 
@@ -518,7 +524,17 @@ func TestIntegration_SecretsService(t *testing.T) {
 				data_keys_cache_cleanup_interval = 1ns`))
 			require.NoError(t, err)
 
-			cfg := &setting.Cfg{Raw: raw}
+			cfg := &setting.Cfg{
+				Raw: raw,
+				SecretsManagement: setting.SecretsManagerSettings{
+					SecretKey:          defaultKey,
+					EncryptionProvider: "secretKey.v1",
+					AvailableProviders: []string{"secretKey.v1"},
+					Encryption: setting.EncryptionSettings{
+						DataKeysCleanupInterval: time.Nanosecond,
+					},
+				},
+			}
 			store, err := encryptionstorage.ProvideDataKeyStorageStorage(testDB, cfg, features)
 			require.NoError(t, err)
 
