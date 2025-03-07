@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -32,97 +33,74 @@ func TestNewCommand(t *testing.T) {
 	}
 }
 
-func TestExecuteWithinLimit(t *testing.T) {
-	cmd, err := NewSQLCommand("a", "select a from foo, bar")
-	if err != nil {
-		t.Fatalf("Failed to create SQL command: %v", err)
-	}
-	cmd.limit = 2
-
-	frame := data.NewFrame("a", data.NewField("a", nil, []string{"1", "2"}))
-	vars := mathexp.Vars{}
-	vars["foo"] = mathexp.Results{
-		Values: mathexp.Values{mathexp.TableData{Frame: frame}},
-	}
-
-	_, err = cmd.Execute(context.Background(), time.Now(), vars, &testTracer{})
-	if err != nil {
-		t.Fatalf("Expected no error, got: %v", err)
-	}
-}
-
-func TestExecuteWithinLimitWithMultipleFrames(t *testing.T) {
-	cmd, err := NewSQLCommand("a", "select a from foo, bar")
-	if err != nil {
-		t.Fatalf("Failed to create SQL command: %v", err)
-	}
-	cmd.limit = 4
-
-	frame1 := data.NewFrame("a", data.NewField("a", nil, []string{"1", "2"}))
-	frame2 := data.NewFrame("b", data.NewField("a", nil, []string{"3", "4"}))
-	vars := mathexp.Vars{}
-	vars["foo"] = mathexp.Results{
-		Values: mathexp.Values{mathexp.TableData{Frame: frame1}},
-	}
-	vars["bar"] = mathexp.Results{
-		Values: mathexp.Values{mathexp.TableData{Frame: frame2}},
-	}
-
-	_, err = cmd.Execute(context.Background(), time.Now(), vars, &testTracer{})
-	if err != nil {
-		t.Fatalf("Expected no error, got: %v", err)
-	}
-}
-
-func TestExecuteExceedsLimit(t *testing.T) {
-	cmd, err := NewSQLCommand("a", "select a from foo, bar")
-	if err != nil {
-		t.Fatalf("Failed to create SQL command: %v", err)
-	}
-	cmd.limit = 1
-
-	frame := data.NewFrame("a", data.NewField("a", nil, []string{"1", "2"}))
-	vars := mathexp.Vars{}
-	vars["foo"] = mathexp.Results{
-		Values: mathexp.Values{mathexp.TableData{Frame: frame}},
+func TestSQLCommandRowLimits(t *testing.T) {
+	tests := []struct {
+		name          string
+		limit         int64
+		frames        []*data.Frame
+		vars          []string
+		expectError   bool
+		errorContains string
+	}{
+		{
+			name:   "single frame within limit",
+			limit:  2,
+			frames: []*data.Frame{data.NewFrame("a", data.NewField("a", nil, []string{"1", "2"}))},
+			vars:   []string{"foo"},
+		},
+		{
+			name:  "multiple frames within limit",
+			limit: 4,
+			frames: []*data.Frame{
+				data.NewFrame("a", data.NewField("a", nil, []string{"1", "2"})),
+				data.NewFrame("b", data.NewField("a", nil, []string{"3", "4"})),
+			},
+			vars: []string{"foo", "bar"},
+		},
+		{
+			name:          "single frame exceeds limit",
+			limit:         1,
+			frames:        []*data.Frame{data.NewFrame("a", data.NewField("a", nil, []string{"1", "2"}))},
+			vars:          []string{"foo"},
+			expectError:   true,
+			errorContains: "exceeds limit",
+		},
+		{
+			name:  "multiple frames exceed limit",
+			limit: 3,
+			frames: []*data.Frame{
+				data.NewFrame("a", data.NewField("a", nil, []string{"1", "2"})),
+				data.NewFrame("b", data.NewField("a", nil, []string{"3", "4"})),
+			},
+			vars:          []string{"foo", "bar"},
+			expectError:   true,
+			errorContains: "exceeds limit",
+		},
 	}
 
-	_, err = cmd.Execute(context.Background(), time.Now(), vars, &testTracer{})
-	if err == nil {
-		t.Fatal("Expected an error when total rows exceeds limit, but got nil")
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cmd, err := NewSQLCommand("a", "select a from foo, bar")
+			require.NoError(t, err, "Failed to create SQL command")
 
-	expectedErrMsg := "exceeds limit"
-	if !strings.Contains(err.Error(), expectedErrMsg) {
-		t.Fatalf("Expected error message to contain '%s', got: '%s'", expectedErrMsg, err.Error())
-	}
-}
+			cmd.limit = tt.limit
+			vars := mathexp.Vars{}
 
-func TestExecuteExceedsLimitWithMultipleFrames(t *testing.T) {
-	cmd, err := NewSQLCommand("a", "select a from foo, bar")
-	if err != nil {
-		t.Fatalf("Failed to create SQL command: %v", err)
-	}
-	cmd.limit = 3
+			for i, frame := range tt.frames {
+				vars[tt.vars[i]] = mathexp.Results{
+					Values: mathexp.Values{mathexp.TableData{Frame: frame}},
+				}
+			}
 
-	frame1 := data.NewFrame("a", data.NewField("a", nil, []string{"1", "2"}))
-	frame2 := data.NewFrame("b", data.NewField("a", nil, []string{"3", "4"}))
-	vars := mathexp.Vars{}
-	vars["foo"] = mathexp.Results{
-		Values: mathexp.Values{mathexp.TableData{Frame: frame1}},
-	}
-	vars["bar"] = mathexp.Results{
-		Values: mathexp.Values{mathexp.TableData{Frame: frame2}},
-	}
+			_, err = cmd.Execute(context.Background(), time.Now(), vars, &testTracer{})
 
-	_, err = cmd.Execute(context.Background(), time.Now(), vars, &testTracer{})
-	if err == nil {
-		t.Fatal("Expected an error when total rows exceeds limit, but got nil")
-	}
-
-	expectedErrMsg := "exceeds limit"
-	if !strings.Contains(err.Error(), expectedErrMsg) {
-		t.Fatalf("Expected error message to contain '%s', got: '%s'", expectedErrMsg, err.Error())
+			if tt.expectError {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.errorContains)
+			} else {
+				require.NoError(t, err)
+			}
+		})
 	}
 }
 
