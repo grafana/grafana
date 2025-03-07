@@ -17,7 +17,7 @@ GO_RACE_FLAG := $(if $(GO_RACE),-race)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 GO_BUILD_FLAGS += $(GO_RACE_FLAG)
-GO_TEST_OUTPUT := $(shell [ -n "$(GO_TEST_OUTPUT)" ] && echo '| tee $(GO_TEST_OUTPUT) | tparse -all')
+GO_TEST_OUTPUT := $(shell [ -n "$(GO_TEST_OUTPUT)" ] && echo '-json | tee $(GO_TEST_OUTPUT) | tparse -all')
 GIT_BASE = remotes/origin/main
 
 # GNU xargs has flag -r, and BSD xargs (e.g. MacOS) has that behaviour by default
