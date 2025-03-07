@@ -145,9 +145,9 @@ function YamlContentInfo() {
 }
 
 function rulerRuleToRuleFormValues(rulerRule: RulerRuleDTO): Partial<RuleFormValues> {
-  if (rulerRuleType.dataSourceManaged.alertingRule(rulerRule)) {
+  if (rulerRuleType.dataSource.alertingRule(rulerRule)) {
     return alertingRulerRuleToRuleForm(rulerRule);
-  } else if (rulerRuleType.dataSourceManaged.recordingRule(rulerRule)) {
+  } else if (rulerRuleType.dataSource.recordingRule(rulerRule)) {
     return recordingRulerRuleToRuleForm(rulerRule);
   }
 

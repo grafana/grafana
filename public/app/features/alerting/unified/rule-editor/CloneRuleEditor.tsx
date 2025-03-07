@@ -45,14 +45,14 @@ export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier
 }
 
 function changeRuleName(rule: RulerRuleDTO, newName: string) {
-  if (rulerRuleType.grafanaManaged.rule(rule)) {
+  if (rulerRuleType.grafana.rule(rule)) {
     rule.grafana_alert.title = newName;
   }
-  if (rulerRuleType.dataSourceManaged.alertingRule(rule)) {
+  if (rulerRuleType.dataSource.alertingRule(rule)) {
     rule.alert = newName;
   }
 
-  if (rulerRuleType.dataSourceManaged.recordingRule(rule)) {
+  if (rulerRuleType.dataSource.recordingRule(rule)) {
     rule.record = newName;
   }
 }
@@ -64,7 +64,7 @@ export function cloneRuleDefinition(rule: RuleWithLocation<RulerRuleDTO>) {
     generateCopiedName(getRuleName(ruleClone.rule), ruleClone.group.rules.map(getRuleName))
   );
 
-  if (rulerRuleType.grafanaManaged.rule(ruleClone.rule)) {
+  if (rulerRuleType.grafana.rule(ruleClone.rule)) {
     ruleClone.rule.grafana_alert.uid = '';
 
     // Provisioned alert rules have provisioned alert group which cannot be used in UI

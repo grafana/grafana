@@ -18,7 +18,7 @@ export function alertRuleToQueries(combinedRule: CombinedRule | undefined | null
   const { namespace, rulerRule } = combinedRule;
   const { rulesSource } = namespace;
 
-  if (rulerRuleType.grafanaManaged.rule(rulerRule)) {
+  if (rulerRuleType.grafana.rule(rulerRule)) {
     const query = rulerRule.grafana_alert.data;
     return widenRelativeTimeRanges(query, rulerRule.for ?? '', combinedRule.group.interval);
   }

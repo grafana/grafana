@@ -72,7 +72,7 @@ export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }:
         handleDuplicateRule={() => setRedirectToClone({ identifier, isProvisioned })}
       />
       {deleteModal}
-      {rulerRuleType.grafanaManaged.alertingRule(rule) && showSilenceDrawer && (
+      {rulerRuleType.grafana.alertingRule(rule) && showSilenceDrawer && (
         <SilenceGrafanaRuleDrawer rulerRule={rule} onClose={() => setShowSilenceDrawer(false)} />
       )}
       {redirectToClone?.identifier && (

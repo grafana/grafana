@@ -7,7 +7,7 @@ import { Trans, t } from 'app/core/internationalization';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { usePendingPeriod } from '../../../hooks/rules/usePendingPeriod';
-import { getAnnotations, rulerRuleType } from '../../../utils/rules';
+import { getAnnotations, isPausedRule, prometheusRuleType, rulerRuleType } from '../../../utils/rules';
 import { isNullDate } from '../../../utils/time';
 import { Tokenize } from '../../Tokenize';
 import { DetailText } from '../../common/DetailText';
@@ -43,27 +43,25 @@ export const Details = ({ rule }: DetailsProps) => {
   const pendingPeriod = usePendingPeriod(rule);
 
   let determinedRuleType: RuleType = RuleType.Unknown;
-  if (rulerRuleType.grafanaManaged.alertingRule(rule.rulerRule)) {
+  if (rulerRuleType.grafana.alertingRule(rule.rulerRule)) {
     determinedRuleType = RuleType.GrafanaManagedAlertRule;
-  } else if (rulerRuleType.grafanaManaged.recordingRule(rule.rulerRule)) {
+  } else if (rulerRuleType.grafana.recordingRule(rule.rulerRule)) {
     determinedRuleType = RuleType.GrafanaManagedRecordingRule;
-  } else if (rulerRuleType.dataSourceManaged.alertingRule(rule.rulerRule)) {
+  } else if (rulerRuleType.dataSource.alertingRule(rule.rulerRule)) {
     determinedRuleType = RuleType.CloudAlertRule;
-  } else if (rulerRuleType.dataSourceManaged.recordingRule(rule.rulerRule)) {
+  } else if (rulerRuleType.dataSource.recordingRule(rule.rulerRule)) {
     determinedRuleType = RuleType.CloudRecordingRule;
   }
 
   const evaluationDuration = rule.promRule?.evaluationTime;
   const evaluationTimestamp = rule.promRule?.lastEvaluation;
 
-  const annotations = getAnnotations(rule.promRule);
+  const annotations = prometheusRuleType.alertingRule(rule.promRule) ? getAnnotations(rule.promRule) : undefined;
 
   const hasEvaluationDuration = Number.isFinite(evaluationDuration);
 
-  const updated = rulerRuleType.grafanaManaged.rule(rule.rulerRule) ? rule.rulerRule.grafana_alert.updated : undefined;
-  const isPaused =
-    rulerRuleType.grafanaManaged.alertingRule(rule.rulerRule) &&
-    rulerRuleType.grafanaManaged.pausedRule(rule.rulerRule);
+  const updated = rulerRuleType.grafana.rule(rule.rulerRule) ? rule.rulerRule.grafana_alert.updated : undefined;
+  const isPaused = rulerRuleType.grafana.alertingRule(rule.rulerRule) && isPausedRule(rule.rulerRule);
 
   const pausedIcon = (
     <Stack>
@@ -79,7 +77,7 @@ export const Details = ({ rule }: DetailsProps) => {
     <div className={styles.metadata}>
       <DetailGroup title={t('alerting.alert.rule', 'Rule')}>
         <DetailText id="rule-type" label={t('alerting.alert.rule-type', 'Rule type')} value={determinedRuleType} />
-        {rulerRuleType.grafanaManaged.rule(rule.rulerRule) && (
+        {rulerRuleType.grafana.rule(rule.rulerRule) && (
           <>
             <DetailText
               id="rule-type"
@@ -141,7 +139,7 @@ export const Details = ({ rule }: DetailsProps) => {
         )}
       </DetailGroup>
 
-      {rulerRuleType.grafanaManaged.rule(rule.rulerRule) &&
+      {rulerRuleType.grafana.rule(rule.rulerRule) &&
         // grafana recording rules don't have these fields
         rule.rulerRule.grafana_alert.no_data_state &&
         rule.rulerRule.grafana_alert.exec_err_state && (

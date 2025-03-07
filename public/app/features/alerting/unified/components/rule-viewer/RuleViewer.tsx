@@ -24,6 +24,7 @@ import {
   RulePluginOrigin,
   getRulePluginOrigin,
   isFederatedRuleGroup,
+  isPausedRule,
   prometheusRuleType,
   rulerRuleType,
 } from '../../utils/rules';
@@ -71,9 +72,8 @@ const RuleViewer = () => {
   const isAlertType = prometheusRuleType.alertingRule(promRule);
 
   const isFederatedRule = isFederatedRuleGroup(rule.group);
-  const isProvisioned = rulerRuleType.grafanaManaged.rule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
-  const isPaused =
-    rulerRuleType.grafanaManaged.alertingRule(rulerRule) && rulerRuleType.grafanaManaged.pausedRule(rulerRule);
+  const isProvisioned = rulerRuleType.grafana.rule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
+  const isPaused = rulerRuleType.grafana.alertingRule(rulerRule) && isPausedRule(rulerRule);
 
   const showError = hasError && !isPaused;
   const ruleOrigin = rulerRule ? getRulePluginOrigin(rulerRule) : getRulePluginOrigin(promRule);
@@ -124,12 +124,12 @@ const RuleViewer = () => {
         <TabContent>
           {activeTab === ActiveTab.Query && <QueryResults rule={rule} />}
           {activeTab === ActiveTab.Instances && <InstancesList rule={rule} />}
-          {activeTab === ActiveTab.History && rulerRuleType.grafanaManaged.rule(rule.rulerRule) && (
+          {activeTab === ActiveTab.History && rulerRuleType.grafana.rule(rule.rulerRule) && (
             <History rule={rule.rulerRule} />
           )}
           {activeTab === ActiveTab.Routing && <Routing />}
           {activeTab === ActiveTab.Details && <Details rule={rule} />}
-          {activeTab === ActiveTab.VersionHistory && rulerRuleType.grafanaManaged.rule(rule.rulerRule) && (
+          {activeTab === ActiveTab.VersionHistory && rulerRuleType.grafana.rule(rule.rulerRule) && (
             <AlertVersionHistory rule={rule.rulerRule} />
           )}
         </TabContent>
@@ -206,7 +206,7 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
       ),
     });
   }
-  if (rulerRuleType.grafanaManaged.recordingRule(rule.rulerRule)) {
+  if (rulerRuleType.grafana.recordingRule(rule.rulerRule)) {
     const metric = rule.rulerRule?.grafana_alert.record?.metric ?? '';
     metadata.push({
       label: 'Metric name',
@@ -342,8 +342,8 @@ function usePageNav(rule: CombinedRule) {
   const namespaceName = decodeGrafanaNamespace(rule.namespace).name;
   const groupName = rule.group.name;
 
-  const isGrafanaAlertRule = rulerRuleType.grafanaManaged.rule(rulerRule) && isAlertType;
-  const grafanaRecordingRule = rulerRuleType.grafanaManaged.recordingRule(rulerRule);
+  const isGrafanaAlertRule = rulerRuleType.grafana.rule(rulerRule) && isAlertType;
+  const grafanaRecordingRule = rulerRuleType.grafana.recordingRule(rulerRule);
   const isRecordingRuleType = prometheusRuleType.recordingRule(promRule);
 
   const pageNav: NavModelItem = {

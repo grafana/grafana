@@ -97,8 +97,7 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
       {pageItems.map((rule) => {
         const { rulerRule, promRule } = rule;
 
-        const isProvisioned =
-          rulerRuleType.grafanaManaged.rule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
+        const isProvisioned = rulerRuleType.grafana.rule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
         const instancesCount = prometheusRuleType.alertingRule(rule.promRule)
           ? calculateTotalInstances(rule.instanceTotals)
           : undefined;

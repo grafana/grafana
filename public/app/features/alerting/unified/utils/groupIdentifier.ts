@@ -4,7 +4,7 @@ import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid, getRulesSourceName, isG
 import { rulerRuleType } from './rules';
 
 function fromCombinedRule(rule: CombinedRule): RuleGroupIdentifierV2 {
-  if (rulerRuleType.grafanaManaged.rule(rule.rulerRule) && isGrafanaRulesSource(rule.namespace.rulesSource)) {
+  if (rulerRuleType.grafana.rule(rule.rulerRule) && isGrafanaRulesSource(rule.namespace.rulesSource)) {
     return {
       namespace: { uid: rule.rulerRule.grafana_alert.namespace_uid },
       groupName: rule.group.name,

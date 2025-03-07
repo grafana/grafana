@@ -103,13 +103,13 @@ const RuleDetailsButtons = ({ rule, rulesSource }: Props) => {
     }
   }
 
-  if (rulerRuleType.grafanaManaged.alertingRule(rule.rulerRule)) {
+  if (rulerRuleType.grafana.alertingRule(rule.rulerRule)) {
     buttons.push(
       <Fragment key="history">
         <Button
           size="sm"
           icon="history"
-          onClick={() => rulerRuleType.grafanaManaged.rule(rule.rulerRule) && showStateHistoryModal(rule.rulerRule)}
+          onClick={() => rulerRuleType.grafana.rule(rule.rulerRule) && showStateHistoryModal(rule.rulerRule)}
         >
           Show state history
         </Button>

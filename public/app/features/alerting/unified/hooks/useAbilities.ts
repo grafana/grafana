@@ -207,9 +207,9 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
 
   const abilities = useMemo<Abilities<AlertRuleAction>>(() => {
     const isProvisioned =
-      rulerRuleType.grafanaManaged.rule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
+      rulerRuleType.grafana.rule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
     const isFederated = isFederatedRuleGroup(rule.group);
-    const isGrafanaManagedAlertRule = rulerRuleType.grafanaManaged.rule(rule.rulerRule);
+    const isGrafanaManagedAlertRule = rulerRuleType.grafana.rule(rule.rulerRule);
     const isPluginProvided = isPluginProvidedRule(rule.rulerRule);
 
     // if a rule is either provisioned, federated or provided by a plugin rule, we don't allow it to be removed or edited
@@ -253,10 +253,10 @@ export function useAllRulerRuleAbilities(
   const canSilence = useCanSilence(rule);
 
   const abilities = useMemo<Abilities<AlertRuleAction>>(() => {
-    const isProvisioned = rulerRuleType.grafanaManaged.rule(rule) && Boolean(rule.grafana_alert.provenance);
+    const isProvisioned = rulerRuleType.grafana.rule(rule) && Boolean(rule.grafana_alert.provenance);
     // const isFederated = isFederatedRuleGroup();
     const isFederated = false;
-    const isGrafanaManagedAlertRule = rulerRuleType.grafanaManaged.rule(rule);
+    const isGrafanaManagedAlertRule = rulerRuleType.grafana.rule(rule);
     const isPluginProvided = isPluginProvidedRule(rule);
 
     // if a rule is either provisioned, federated or provided by a plugin rule, we don't allow it to be removed or edited
@@ -442,11 +442,11 @@ const { useGetGrafanaAlertingConfigurationStatusQuery } = alertmanagerApi;
  * 2. the admin has configured to only send instances to external AMs
  */
 function useCanSilence(rule?: RulerRuleDTO): [boolean, boolean] {
-  const folderUID = rulerRuleType.grafanaManaged.rule(rule) ? rule.grafana_alert.namespace_uid : undefined;
+  const folderUID = rulerRuleType.grafana.rule(rule) ? rule.grafana_alert.namespace_uid : undefined;
   const { loading: folderIsLoading, folder } = useFolder(folderUID);
 
-  const isGrafanaManagedRule = rule && rulerRuleType.grafanaManaged.rule(rule);
-  const isGrafanaRecording = rulerRuleType.grafanaManaged.recordingRule(rule);
+  const isGrafanaManagedRule = rule && rulerRuleType.grafana.rule(rule);
+  const isGrafanaRecording = rulerRuleType.grafana.recordingRule(rule);
 
   const silenceSupported = useGrafanaRulesSilenceSupport();
   const canSilenceInFolder = useCanSilenceInFolder(folderUID);

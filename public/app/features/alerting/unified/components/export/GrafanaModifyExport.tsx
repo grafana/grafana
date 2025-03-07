@@ -58,7 +58,7 @@ function RuleModifyExport({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }
     );
   }
 
-  if (rulerRule && !rulerRuleType.grafanaManaged.rule(rulerRule.rule)) {
+  if (rulerRule && !rulerRuleType.grafana.rule(rulerRule.rule)) {
     // alert rule exists but is not a grafana-managed rule
     return (
       <Alert
@@ -69,7 +69,7 @@ function RuleModifyExport({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }
     );
   }
 
-  if (rulerRule && rulerRuleType.grafanaManaged.rule(rulerRule.rule)) {
+  if (rulerRule && rulerRuleType.grafana.rule(rulerRule.rule)) {
     return (
       <ModifyExportRuleForm
         ruleForm={formValuesFromExistingRule(rulerRule)}

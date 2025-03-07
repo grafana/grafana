@@ -25,7 +25,7 @@ export function RuleDetailsDataSources(props: Props): JSX.Element | null {
       return [{ name: rulesSource.name, icon: rulesSource.meta.info.logos.small }];
     }
 
-    if (rulerRuleType.grafanaManaged.rule(rule.rulerRule)) {
+    if (rulerRuleType.grafana.rule(rule.rulerRule)) {
       const { data } = rule.rulerRule.grafana_alert;
       const unique = data.reduce<Record<string, { name: string; icon?: string }>>((dataSources, query) => {
         const ds = getDataSourceSrv().getInstanceSettings(query.datasourceUid);

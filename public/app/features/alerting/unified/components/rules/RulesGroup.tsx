@@ -64,7 +64,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
 
   const rulerRule = group.rules[0]?.rulerRule;
   const folderUID =
-    (rulerRule && rulerRuleType.grafanaManaged.rule(rulerRule) && rulerRule.grafana_alert.namespace_uid) || undefined;
+    (rulerRule && rulerRuleType.grafana.rule(rulerRule) && rulerRule.grafana_alert.namespace_uid) || undefined;
   const { folder } = useFolder(folderUID);
 
   // group "is deleting" if rules source has ruler, but this group has no rules that are in ruler
@@ -73,7 +73,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
 
   // check if group has provisioned items
   const isProvisioned = group.rules.some((rule) => {
-    return rulerRuleType.grafanaManaged.rule(rule.rulerRule) && rule.rulerRule.grafana_alert.provenance;
+    return rulerRuleType.grafana.rule(rule.rulerRule) && rule.rulerRule.grafana_alert.provenance;
   });
 
   // check what view mode we are in

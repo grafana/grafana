@@ -24,7 +24,7 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
     rulesSourceName,
   });
 
-  const folderUID = rule && rulerRuleType.grafanaManaged.rule(rule) ? rule.grafana_alert.namespace_uid : undefined;
+  const folderUID = rule && rulerRuleType.grafana.rule(rule) ? rule.grafana_alert.namespace_uid : undefined;
 
   const rulePermission = getRulesPermissions(rulesSourceName);
   const { folder, loading } = useFolder(folderUID);
@@ -47,7 +47,7 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
   // Grafana rules can be edited if user can edit the folder they're in
   // When RBAC is disabled access to a folder is the only requirement for managing rules
   // When RBAC is enabled the appropriate alerting permissions need to be met
-  if (rulerRuleType.grafanaManaged.rule(rule)) {
+  if (rulerRuleType.grafana.rule(rule)) {
     if (!folderUID) {
       throw new Error(
         `Rule ${rule.grafana_alert.title} does not have a folder uid, cannot determine if it is editable.`

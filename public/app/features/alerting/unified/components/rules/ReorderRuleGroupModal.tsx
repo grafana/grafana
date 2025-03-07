@@ -192,7 +192,7 @@ const ListItem = ({ provided, rule, isClone = false, isDragging = false }: ListI
           </>
         )}
       </div>
-      {rulerRuleType.dataSourceManaged.alertingRule(rule) && <div className={styles.listItemName}>{rule.alert}</div>}
+      {rulerRuleType.dataSource.alertingRule(rule) && <div className={styles.listItemName}>{rule.alert}</div>}
       <Icon name="draggabledots" />
     </div>
   );

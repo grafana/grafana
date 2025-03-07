@@ -268,7 +268,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
   const defaultFormValues = getDefaultFormValues();
   if (isGrafanaRulesSource(ruleSourceName)) {
     // GRAFANA-MANAGED RULES
-    if (rulerRuleType.grafanaManaged.recordingRule(rule)) {
+    if (rulerRuleType.grafana.recordingRule(rule)) {
       // grafana recording rule
       const ga = rule.grafana_alert;
       return {
@@ -285,7 +285,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         isPaused: ga.is_paused,
         metric: ga.record?.metric,
       };
-    } else if (rulerRuleType.grafanaManaged.rule(rule)) {
+    } else if (rulerRuleType.grafana.rule(rule)) {
       // grafana alerting rule
       const ga = rule.grafana_alert;
       const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
@@ -319,7 +319,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
     }
   } else {
     // DATASOURCE-MANAGED RULES
-    if (rulerRuleType.dataSourceManaged.alertingRule(rule)) {
+    if (rulerRuleType.dataSource.alertingRule(rule)) {
       const datasourceUid = getDataSourceSrv().getInstanceSettings(ruleSourceName)?.uid ?? '';
 
       const defaultQuery = {
@@ -347,7 +347,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         namespace,
         group: group.name,
       };
-    } else if (rulerRuleType.dataSourceManaged.recordingRule(rule)) {
+    } else if (rulerRuleType.dataSource.recordingRule(rule)) {
       const recordingRuleValues = recordingRulerRuleToRuleForm(rule);
 
       return {

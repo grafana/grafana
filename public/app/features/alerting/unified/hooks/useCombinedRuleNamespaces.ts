@@ -32,7 +32,7 @@ import {
   isGrafanaRulesSource,
 } from '../utils/datasource';
 import { hashQuery } from '../utils/rule-id';
-import { getAnnotations, prometheusRuleType, rulerRuleType } from '../utils/rules';
+import { getAnnotations, isPausedRule, prometheusRuleType, rulerRuleType } from '../utils/rules';
 
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
@@ -92,7 +92,7 @@ export function useCombinedRuleNamespaces(
 
           // We need to set the namespace_uid for grafana rules as it's required to obtain the rule's groups
           // All rules from all groups have the same namespace_uid so we're taking the first one.
-          if (rulerRuleType.grafanaManaged.rule(groups[0].rules[0])) {
+          if (rulerRuleType.grafana.rule(groups[0].rules[0])) {
             namespace.uid = groups[0].rules[0].grafana_alert.namespace_uid;
           }
 
@@ -243,7 +243,7 @@ export function addRulerGroupsToCombinedNamespace(
   namespace.groups = groups.map((group) => {
     const numRecordingRules = group.rules.filter((rule) => rulerRuleType.any.recordingRule(rule)).length;
     const numPaused = group.rules.filter((rule) => {
-      return rulerRuleType.grafanaManaged.alertingRule(rule) && rulerRuleType.grafanaManaged.pausedRule(rule);
+      return rulerRuleType.grafana.alertingRule(rule) && isPausedRule(rule);
     }).length;
 
     const combinedGroup: CombinedRuleGroup = {
@@ -380,7 +380,7 @@ function promRuleToCombinedRule(rule: Rule, namespace: CombinedRuleNamespace, gr
     name: rule.name,
     query: rule.query,
     labels: rule.labels || {},
-    annotations: getAnnotations(rule) ?? {},
+    annotations: prometheusRuleType.alertingRule(rule) ? getAnnotations(rule) : {},
     promRule: rule,
     namespace: namespace,
     group,
@@ -394,7 +394,7 @@ function rulerRuleToCombinedRule(
   namespace: CombinedRuleNamespace,
   group: CombinedRuleGroup
 ): CombinedRule {
-  return rulerRuleType.dataSourceManaged.alertingRule(rule)
+  return rulerRuleType.dataSource.alertingRule(rule)
     ? {
         name: rule.alert,
         query: rule.expr,
@@ -406,7 +406,7 @@ function rulerRuleToCombinedRule(
         instanceTotals: {},
         filteredInstanceTotals: {},
       }
-    : rulerRuleType.dataSourceManaged.recordingRule(rule)
+    : rulerRuleType.dataSource.recordingRule(rule)
       ? {
           name: rule.record,
           query: rule.expr,
@@ -471,10 +471,18 @@ function getExistingRuleInGroup(
 }
 
 function isCombinedRuleEqualToPromRule(combinedRule: CombinedRule, rule: Rule, checkQuery = true): boolean {
+  const promRuleAnnotations = prometheusRuleType.alertingRule(rule) ? getAnnotations(rule) : {};
+  const promRuleLabels = rule.labels ?? {};
+  const promQuery = checkQuery ? hashQuery(rule.query) : '';
+
+  const combinedRuleAnnotations = combinedRule.annotations;
+  const combinedRuleLabels = combinedRule.labels;
+  const combinedRuleQuery = checkQuery ? hashQuery(combinedRule.query) : '';
+
   if (combinedRule.name === rule.name) {
     return isEqual(
-      [checkQuery ? hashQuery(combinedRule.query) : '', combinedRule.labels, combinedRule.annotations],
-      [checkQuery ? hashQuery(rule.query) : '', rule.labels || {}, getAnnotations(rule) ?? {}]
+      [combinedRuleQuery, combinedRuleLabels, combinedRuleAnnotations],
+      [promQuery, promRuleLabels, promRuleAnnotations]
     );
   }
   return false;
@@ -552,7 +560,7 @@ export function useCombinedRules(
 
       // We need to set the namespace_uid for grafana rules as it's required to obtain the rule's groups
       // All rules from all groups have the same namespace_uid so we're taking the first one.
-      if (rulerRuleType.grafanaManaged.rule(groups[0].rules[0])) {
+      if (rulerRuleType.grafana.rule(groups[0].rules[0])) {
         namespace.uid = groups[0].rules[0].grafana_alert.namespace_uid;
       }
 

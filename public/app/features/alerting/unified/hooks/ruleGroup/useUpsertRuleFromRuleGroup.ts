@@ -132,7 +132,7 @@ function copyGrafanaUID(ruleIdentifier: EditableRuleIdentifier, ruleDefinition: 
   // by copying over the rule UID the backend will perform an atomic move operation
   // so there is no need for us to manually remove it from the previous group
   return produce(ruleDefinition, (draft) => {
-    const isGrafanaManagedRuleDefinition = rulerRuleType.grafanaManaged.rule(draft);
+    const isGrafanaManagedRuleDefinition = rulerRuleType.grafana.rule(draft);
 
     if (isGrafanaManagedRuleIdentifier && isGrafanaManagedRuleDefinition) {
       draft.grafana_alert.uid = ruleIdentifier.uid;

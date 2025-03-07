@@ -25,7 +25,7 @@ const QueryResults = ({ rule }: Props) => {
   const onRunQueries = useCallback(() => {
     if (queries.length > 0 && allDataSourcesAvailable) {
       let condition;
-      if (rule && rulerRuleType.grafanaManaged.rule(rule.rulerRule)) {
+      if (rule && rulerRuleType.grafana.rule(rule.rulerRule)) {
         condition = rule.rulerRule.grafana_alert.condition;
       }
       runQueries(queries, condition ?? 'A');
@@ -46,7 +46,7 @@ const QueryResults = ({ rule }: Props) => {
 
   return (
     <>
-      {rulerRuleType.grafanaManaged.rule(rule.rulerRule) && !isFederatedRule && (
+      {rulerRuleType.grafana.rule(rule.rulerRule) && !isFederatedRule && (
         <GrafanaRuleQueryViewer
           rule={rule}
           condition={rule.rulerRule.grafana_alert.condition}
@@ -55,7 +55,7 @@ const QueryResults = ({ rule }: Props) => {
         />
       )}
 
-      {!rulerRuleType.grafanaManaged.rule(rule.rulerRule) &&
+      {!rulerRuleType.grafana.rule(rule.rulerRule) &&
         !isFederatedRule &&
         queryPreviewData &&
         Object.keys(queryPreviewData).length > 0 && (

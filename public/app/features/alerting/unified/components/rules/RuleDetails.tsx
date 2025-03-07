@@ -71,7 +71,7 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
   const every = rule.group.interval;
   const lastEvaluation = rule.promRule?.lastEvaluation;
   const lastEvaluationDuration = rule.promRule?.evaluationTime;
-  const metric = rulerRuleType.grafanaManaged.recordingRule(rule.rulerRule)
+  const metric = rulerRuleType.grafana.recordingRule(rule.rulerRule)
     ? rule.rulerRule?.grafana_alert.record?.metric
     : undefined;
 

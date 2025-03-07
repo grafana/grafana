@@ -63,8 +63,8 @@ function isGrafanaRecordingRule(rule?: RulerRuleDTO): rule is RulerGrafanaRuleDT
   return isGrafanaRulerRule(rule) && 'record' in rule.grafana_alert;
 }
 
-function isGrafanaRulerRulePaused(rule?: RulerGrafanaRuleDTO) {
-  return isGrafanaRulerRule(rule) && Boolean(rule.grafana_alert.is_paused);
+export function isPausedRule(rule: RulerGrafanaRuleDTO) {
+  return Boolean(rule.grafana_alert.is_paused);
 }
 
 /* Data source managed rules */
@@ -92,13 +92,12 @@ function isRecordingRule(rule?: Rule): rule is RecordingRule {
 }
 
 export const rulerRuleType = {
-  grafanaManaged: {
+  grafana: {
     rule: isGrafanaRulerRule,
     alertingRule: isGrafanaAlertingRule,
     recordingRule: isGrafanaRecordingRule,
-    pausedRule: isGrafanaRulerRulePaused,
   },
-  dataSourceManaged: {
+  dataSource: {
     rule: isCloudRulerRule,
     alertingRule: isAlertingRulerRule,
     recordingRule: isCloudRecordingRulerRule,
@@ -183,8 +182,8 @@ export function getPendingPeriod(rule: CombinedRule): string | undefined {
   return undefined;
 }
 
-export function getAnnotations(rule?: Rule): Annotations | undefined {
-  return prometheusRuleType.alertingRule(rule) ? (rule.annotations ?? {}) : {};
+export function getAnnotations(rule?: AlertingRule): Annotations {
+  return rule?.annotations ?? {};
 }
 
 export interface RulePluginOrigin {
@@ -316,15 +315,15 @@ export function isFederatedRuleGroup(group: CombinedRuleGroup) {
 }
 
 export function getRuleName(rule: RulerRuleDTO): string {
-  if (rulerRuleType.grafanaManaged.rule(rule)) {
+  if (rulerRuleType.grafana.rule(rule)) {
     return rule.grafana_alert.title;
   }
 
-  if (rulerRuleType.dataSourceManaged.alertingRule(rule)) {
+  if (rulerRuleType.dataSource.alertingRule(rule)) {
     return rule.alert;
   }
 
-  if (rulerRuleType.dataSourceManaged.recordingRule(rule)) {
+  if (rulerRuleType.dataSource.recordingRule(rule)) {
     return rule.record;
   }
 

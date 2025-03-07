@@ -15,7 +15,7 @@ interface RuleConfigStatusProps {
 
 export function RuleConfigStatus({ rule }: RuleConfigStatusProps) {
   const styles = useStyles2(getStyles);
-  const isGrafanaManagedRule = rulerRuleType.grafanaManaged.rule(rule.rulerRule);
+  const isGrafanaManagedRule = rulerRuleType.grafana.rule(rule.rulerRule);
 
   const exceedsLimit = useMemo(() => {
     return isGrafanaManagedRule ? checkEvaluationIntervalGlobalLimit(rule.group.interval).exceedsLimit : false;

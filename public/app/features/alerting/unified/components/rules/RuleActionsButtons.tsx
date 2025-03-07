@@ -52,8 +52,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
   const { namespace, group, rulerRule } = rule;
   const { hasActiveFilters } = useRulesFilter();
 
-  const isProvisioned =
-    rulerRuleType.grafanaManaged.rule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
+  const isProvisioned = rulerRuleType.grafana.rule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
 
   const [editRuleSupported, editRuleAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Update);
 
@@ -126,7 +125,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
         buttonSize={buttonSize}
       />
       {deleteModal}
-      {rulerRuleType.grafanaManaged.alertingRule(rule.rulerRule) && showSilenceDrawer && (
+      {rulerRuleType.grafana.alertingRule(rule.rulerRule) && showSilenceDrawer && (
         <SilenceGrafanaRuleDrawer rulerRule={rule.rulerRule} onClose={() => setShowSilenceDrawer(false)} />
       )}
       {redirectToClone?.identifier && (

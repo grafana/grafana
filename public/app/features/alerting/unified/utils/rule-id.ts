@@ -32,7 +32,7 @@ export function fromRulerRule(
   groupName: string,
   rule: RulerRuleDTO
 ): EditableRuleIdentifier {
-  if (rulerRuleType.grafanaManaged.rule(rule)) {
+  if (rulerRuleType.grafana.rule(rule)) {
     return { uid: rule.grafana_alert.uid!, ruleSourceName: 'grafana' };
   }
   return {
@@ -49,7 +49,7 @@ export function fromRulerRuleAndGroupIdentifierV2(
   rule: RulerRuleDTO
 ): EditableRuleIdentifier {
   if (ruleGroup.groupOrigin === 'grafana') {
-    if (rulerRuleType.grafanaManaged.rule(rule)) {
+    if (rulerRuleType.grafana.rule(rule)) {
       return { uid: rule.grafana_alert.uid, ruleSourceName: 'grafana' };
     }
     logError(new Error('Rule is not a Grafana Ruler rule'));
@@ -258,7 +258,7 @@ export function hash(value: string): number {
 
 // this is used to identify rules, mimir / loki rules do not have a unique identifier
 export function hashRulerRule(rule: RulerRuleDTO): string {
-  if (rulerRuleType.grafanaManaged.rule(rule)) {
+  if (rulerRuleType.grafana.rule(rule)) {
     return rule.grafana_alert.uid;
   }
 
@@ -274,10 +274,10 @@ function getRulerRuleFingerprint(rule: RulerCloudRuleDTO) {
   const queryHash = prometheusRulesPrimary ? '' : hashQuery(rule.expr);
   const labelsHash = hashLabelsOrAnnotations(rule.labels);
 
-  if (rulerRuleType.dataSourceManaged.recordingRule(rule)) {
+  if (rulerRuleType.dataSource.recordingRule(rule)) {
     return [rule.record, PromRuleType.Recording, queryHash, labelsHash];
   }
-  if (rulerRuleType.dataSourceManaged.alertingRule(rule)) {
+  if (rulerRuleType.dataSource.alertingRule(rule)) {
     return [rule.alert, PromRuleType.Alerting, queryHash, hashLabelsOrAnnotations(rule.annotations), labelsHash];
   }
   throw new Error('Only recording and alerting ruler rules can be hashed');

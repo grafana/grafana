@@ -219,7 +219,7 @@ const reduceGroups = (filterState: RulesFilter) => {
       if ('contactPoint' in matchesFilterFor) {
         const contactPoint = filterState.contactPoint;
         const hasContactPoint =
-          rulerRuleType.grafanaManaged.rule(rule.rulerRule) &&
+          rulerRuleType.grafana.rule(rule.rulerRule) &&
           rule.rulerRule.grafana_alert.notification_settings?.receiver === contactPoint;
 
         if (hasContactPoint) {
@@ -228,7 +228,7 @@ const reduceGroups = (filterState: RulesFilter) => {
       }
 
       if ('dataSourceNames' in matchesFilterFor) {
-        if (rulerRuleType.grafanaManaged.rule(rule.rulerRule)) {
+        if (rulerRuleType.grafana.rule(rule.rulerRule)) {
           const doesNotQueryDs = isQueryingDataSource(rule.rulerRule, filterState);
 
           if (doesNotQueryDs) {

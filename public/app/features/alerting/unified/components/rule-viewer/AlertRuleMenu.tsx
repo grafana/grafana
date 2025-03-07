@@ -86,7 +86,7 @@ const AlertRuleMenu = ({
 
   const menuItems = (
     <>
-      {canPause && rulerRuleType.grafanaManaged.rule(rulerRule) && groupIdentifier.groupOrigin === 'grafana' && (
+      {canPause && rulerRuleType.grafana.rule(rulerRule) && groupIdentifier.groupOrigin === 'grafana' && (
         <MenuItemPauseRule rule={rulerRule} groupIdentifier={groupIdentifier} onPauseChange={onPauseChange} />
       )}
       {canSilence && <Menu.Item label="Silence notifications" icon="bell-slash" onClick={handleSilence} />}

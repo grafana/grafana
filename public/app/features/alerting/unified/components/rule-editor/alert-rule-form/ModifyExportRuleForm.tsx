@@ -150,7 +150,7 @@ export const getPayloadToExport = (
     // we have to update the rule in the group in the same position if it exists, otherwise we have to add it at the end
     let alreadyExistsInGroup = false;
     const updatedRules = existingGroup.rules.map((rule: RulerRuleDTO) => {
-      if (rulerRuleType.grafanaManaged.rule(rule) && rule.grafana_alert.uid === ruleUid) {
+      if (rulerRuleType.grafana.rule(rule) && rule.grafana_alert.uid === ruleUid) {
         alreadyExistsInGroup = true;
         return updatedRule;
       } else {

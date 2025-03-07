@@ -330,7 +330,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         };
       },
       invalidatesTags: (result, _error, { namespace, payload, rulerConfig }) => {
-        const grafanaRulerRules = payload.rules.filter((rule) => rulerRuleType.grafanaManaged.rule(rule));
+        const grafanaRulerRules = payload.rules.filter(rulerRuleType.grafana.rule);
 
         return [
           { type: 'RuleNamespace', id: `${rulerConfig.dataSourceUid}/${namespace}` },
