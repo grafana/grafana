@@ -11,7 +11,7 @@ body {
   line-height: $line-height-base;
   color: $text-color;
   background-color: $body-bg;
-  height: 100%;
+  min-height: 100vh;
   width: 100%;
   margin: 0;
   position: absolute;
