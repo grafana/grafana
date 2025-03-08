@@ -190,11 +190,6 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 
 	t.Run("Should use encrypt/decrypt methods of the current encryption provider", func(t *testing.T) {
 		rawCfg := `
-		[secrets_manager]
-		secret_key = sdDkslslld
-		encryption_provider = fakeProvider.v1
-		available_encryption_providers = fakeProvider.v1
-
 		[secrets_manager.encryption.fakeProvider.v1]
 		`
 

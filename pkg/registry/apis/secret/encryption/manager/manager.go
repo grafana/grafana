@@ -100,10 +100,7 @@ func (s *EncryptionManager) InitProviders() (err error) {
 			s.log.Error("Failed to initialize providers", "error", err)
 			return
 		}
-		s.providers = make(map[encryption.ProviderID]encryption.Provider, len(providers))
-		for k, v := range providers {
-			s.providers[encryption.ProviderID(k)] = v
-		}
+		s.providers = providers
 	})
 
 	return

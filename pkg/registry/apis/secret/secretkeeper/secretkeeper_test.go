@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -24,12 +23,13 @@ func TestMain(m *testing.M) {
 }
 
 func Test_OSSKeeperService_GetKeepers(t *testing.T) {
-	cfg := `
-	[secrets_manager]
-	secret_key = sdDkslslld
-	encryption_provider = secretKey.v1
-	available_encryption_providers = secretKey.v1
-	`
+	cfg := &setting.Cfg{
+		SecretsManagement: setting.SecretsManagerSettings{
+			SecretKey:          "sdDkslslld",
+			EncryptionProvider: "secretKey.v1",
+			AvailableProviders: []string{"secretKey.v1"},
+		},
+	}
 	keeperService, err := setupTestService(t, cfg)
 	require.NoError(t, err)
 
@@ -43,13 +43,9 @@ func Test_OSSKeeperService_GetKeepers(t *testing.T) {
 	})
 }
 
-func setupTestService(t *testing.T, config string) (OSSKeeperService, error) {
-	raw, err := ini.Load([]byte(config))
-	require.NoError(t, err)
-
+func setupTestService(t *testing.T, cfg *setting.Cfg) (OSSKeeperService, error) {
 	// Initialize data key storage and encrypted value storage with a fake db
 	testDB := db.InitTestDB(t)
-	cfg := &setting.Cfg{Raw: raw}
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
 	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorageStorage(testDB, cfg, features)

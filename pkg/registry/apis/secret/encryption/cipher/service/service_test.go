@@ -30,7 +30,7 @@ func Test_Service(t *testing.T) {
 	})
 
 	t.Run("encrypt and decrypt with aes-cfb should work", func(t *testing.T) {
-		settings.Raw.Section(securitySection).Key(encryptionAlgorithmKey).SetValue(cipher.AesCfb)
+		settings.SecretsManagement.Encryption.Algorithm = cipher.AesCfb
 
 		encrypted, err := svc.Encrypt(ctx, []byte("grafana"), "1234")
 		require.NoError(t, err)
@@ -54,7 +54,7 @@ func Test_Service(t *testing.T) {
 	})
 
 	t.Run("encrypt with aes-gcm should fail", func(t *testing.T) {
-		settings.Raw.Section(securitySection).Key(encryptionAlgorithmKey).SetValue(cipher.AesGcm)
+		settings.SecretsManagement.Encryption.Algorithm = cipher.AesGcm
 
 		_, err := svc.Encrypt(ctx, []byte("grafana"), "1234")
 		require.Error(t, err)
@@ -71,23 +71,4 @@ func Test_Service(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, []byte("grafana"), decrypted)
 	})
-}
-
-func Test_Service_MissingProvider(t *testing.T) {
-	usageStats := &usagestats.UsageStatsMock{}
-	settings := setting.NewCfg()
-
-	service, err := NewEncryptionService(tracing.InitializeTracerForTest(), usageStats, settings)
-	assert.Nil(t, service)
-	assert.Error(t, err)
-}
-
-type fakeProvider struct{}
-
-func (p fakeProvider) ProvideCiphers() map[string]cipher.Encrypter {
-	return nil
-}
-
-func (p fakeProvider) ProvideDeciphers() map[string]cipher.Decrypter {
-	return nil
 }

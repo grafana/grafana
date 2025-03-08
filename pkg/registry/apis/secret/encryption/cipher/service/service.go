@@ -55,8 +55,7 @@ func NewEncryptionService(
 		cfg:          cfg,
 	}
 
-	algorithm := s.cfg.SectionWithEnvOverrides(securitySection).Key(encryptionAlgorithmKey).
-		MustString(defaultEncryptionAlgorithm)
+	algorithm := s.cfg.SecretsManagement.Encryption.Algorithm
 
 	if err := s.checkEncryptionAlgorithm(algorithm); err != nil {
 		return nil, err
@@ -90,8 +89,7 @@ func (s *Service) checkEncryptionAlgorithm(algorithm string) error {
 
 func (s *Service) registerUsageMetrics() {
 	s.usageMetrics.RegisterMetricsFunc(func(context.Context) (map[string]any, error) {
-		algorithm := s.cfg.SectionWithEnvOverrides(securitySection).Key(encryptionAlgorithmKey).
-			MustString(defaultEncryptionAlgorithm)
+		algorithm := s.cfg.SecretsManagement.Encryption.Algorithm
 
 		return map[string]any{
 			fmt.Sprintf("stats.cipher.%s.count", algorithm): 1,
@@ -185,8 +183,7 @@ func (s *Service) Encrypt(ctx context.Context, payload []byte, secret string) ([
 		}
 	}()
 
-	algorithm := s.cfg.SectionWithEnvOverrides(securitySection).Key(encryptionAlgorithmKey).
-		MustString(defaultEncryptionAlgorithm)
+	algorithm := s.cfg.SecretsManagement.Encryption.Algorithm
 
 	cipher, ok := s.ciphers[algorithm]
 	if !ok {
