@@ -102,24 +102,24 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		keyPrefix:         "gf_live",
 	}
 
-	// Initialize in-memory SQLite database
-	db, err := sql.Open("sqlite3", ":memory:")
+	// Initialize SQLite database
+	db, err := sql.Open("sqlite3", "./players.db")
 	if err != nil {
-		logger.Error("Failed to open in-memory SQLite database", "error", err)
+		logger.Error("Failed to open SQLite database", "error", err)
 		return nil, err
 	}
 
-	// Create table
+	// Create table if it doesn’t exist
 	_, err = db.Exec(`
-        CREATE TABLE live_players (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            org_id BIGINT NOT NULL,
-            player_id TEXT NOT NULL,
-            x REAL NOT NULL,
-            y REAL NOT NULL,
-            rotation REAL NOT NULL,
-            UNIQUE(org_id, player_id)
-        )`)
+		 CREATE TABLE IF NOT EXISTS live_players (
+			 id INTEGER PRIMARY KEY AUTOINCREMENT,
+			 org_id BIGINT NOT NULL,
+			 player_id TEXT NOT NULL,
+			 x REAL NOT NULL,
+			 y REAL NOT NULL,
+			 rotation REAL NOT NULL,
+			 UNIQUE(org_id, player_id)
+		 )`)
 	if err != nil {
 		logger.Error("Failed to create live_players table", "error", err)
 		db.Close()
@@ -1668,7 +1668,7 @@ func (g *GrafanaLive) SimulateGameServer(ctx context.Context) {
 
 	logger.Info("Starting game server simulation", "orgID", orgID, "channel", channel, "players", len(players))
 
-	ticker := time.NewTicker(10 * time.Millisecond)
+	ticker := time.NewTicker(200 * time.Millisecond)
 	defer ticker.Stop()
 
 	for {
