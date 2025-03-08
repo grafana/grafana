@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
-	legacyEncryption "github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
@@ -39,7 +39,7 @@ var (
 type EncryptionManager struct {
 	tracer     tracing.Tracer
 	store      encryptionstorage.DataKeyStorage
-	enc        legacyEncryption.Internal
+	enc        cipher.Encryption
 	cfg        *setting.Cfg
 	usageStats usagestats.Service
 
@@ -59,7 +59,7 @@ func NewEncryptionManager(
 	tracer tracing.Tracer,
 	store encryptionstorage.DataKeyStorage,
 	kmsProvidersService kmsproviders.Service,
-	enc legacyEncryption.Internal,
+	enc cipher.Encryption,
 	cfg *setting.Cfg,
 	usageStats usagestats.Service,
 ) (*EncryptionManager, error) {
