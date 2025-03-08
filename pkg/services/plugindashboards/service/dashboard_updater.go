@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -20,7 +21,6 @@ func ProvideDashboardUpdater(bus bus.Bus, pluginStore pluginstore.Store, pluginD
 	dashboardPluginService dashboards.PluginService, dashboardService dashboards.DashboardService) *DashboardUpdater {
 	du := newDashboardUpdater(bus, pluginStore, pluginDashboardService, dashboardImportService,
 		pluginSettingsService, dashboardPluginService, dashboardService)
-	du.updateAppDashboards()
 	return du
 }
 
@@ -52,7 +52,12 @@ type DashboardUpdater struct {
 	logger                 log.Logger
 }
 
-func (du *DashboardUpdater) updateAppDashboards() {
+func (du *DashboardUpdater) Run(ctx context.Context) error {
+	du.updateAppDashboards(ctx)
+	return nil
+}
+
+func (du *DashboardUpdater) updateAppDashboards(ctx context.Context) {
 	du.logger.Debug("Looking for app dashboard updates")
 
 	pluginSettings, err := du.pluginSettingsService.GetPluginSettings(context.Background(), &pluginsettings.GetArgs{OrgID: 0})
@@ -67,9 +72,10 @@ func (du *DashboardUpdater) updateAppDashboards() {
 			continue
 		}
 
-		if pluginDef, exists := du.pluginStore.Plugin(context.Background(), pluginSetting.PluginID); exists {
+		serviceCtx, _ := identity.WithServiceIdentity(ctx, pluginSetting.OrgID)
+		if pluginDef, exists := du.pluginStore.Plugin(serviceCtx, pluginSetting.PluginID); exists {
 			if pluginDef.Info.Version != pluginSetting.PluginVersion {
-				du.syncPluginDashboards(context.Background(), pluginDef, pluginSetting.OrgID)
+				du.syncPluginDashboards(serviceCtx, pluginDef, pluginSetting.OrgID)
 			}
 		}
 	}
