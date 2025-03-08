@@ -2,6 +2,7 @@ package metadata
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	claims "github.com/grafana/authlib/types"
@@ -300,4 +301,37 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 	return &secretv0alpha1.SecureValueList{
 		Items: secureValues,
 	}, nil
+}
+
+func (s *secureValueMetadataStorage) DecryptersFor(ctx context.Context, namespace xkube.Namespace, names []string) (map[string][]string, error) {
+	rawDecrypters := make(map[string]*string, 0)
+
+	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		err := sess.In("name", names).Where("namespace = ?", namespace).Select("name, decrypters").Find(&rawDecrypters)
+		if err != nil {
+			return fmt.Errorf("find rows: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("db failure: %w", err)
+	}
+
+	decrypters := make(map[string][]string, 0)
+
+	for name, decrypter := range rawDecrypters {
+		if decrypter == nil {
+			decrypters[name] = nil
+			continue
+		}
+
+		parsedDecrypters := make([]string, 0)
+		if err := json.Unmarshal([]byte(*decrypter), &parsedDecrypters); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal decrypter: %w", err)
+		}
+		decrypters[name] = parsedDecrypters
+	}
+
+	return decrypters, nil
 }
