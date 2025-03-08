@@ -114,9 +114,9 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    For more information about data sources, refer to [Data sources](ref:data-sources) for specific guidelines.
 
-1. Write or construct a query in the query language of your data source or add one from the [query library](ref:query-library).
+1. Write or construct a query in the query language of your data source or click **Add query from library** to add one from the [query library](ref:query-library).
 
-   If you've created a query that you want to use again in other dashboards, add it to the query library by clicking the save icon on the query editor.
+   If you've created a query that you want to use again in other dashboards, add it to the query library by clicking the save icon on the query editor. Query library is in [private preview](https://grafana.com/docs/release-life-cycle/).
 
 1. Click **Refresh** to query the data source.
 1. In the visualization list, select a visualization type.
