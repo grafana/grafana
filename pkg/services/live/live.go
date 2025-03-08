@@ -100,8 +100,33 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		usageStatsService: usageStatsService,
 		orgService:        orgService,
 		keyPrefix:         "gf_live",
-		playerDB:          nil, // Initialize as nil
 	}
+
+	// Initialize SQLite database
+	db, err := sql.Open("sqlite3", "./players.db")
+	if err != nil {
+		logger.Error("Failed to open SQLite database", "error", err)
+		return nil, err
+	}
+
+	// Create table if it doesn’t exist
+	_, err = db.Exec(`
+		 CREATE TABLE IF NOT EXISTS live_players (
+			 id INTEGER PRIMARY KEY AUTOINCREMENT,
+			 org_id BIGINT NOT NULL,
+			 player_id TEXT NOT NULL,
+			 x REAL NOT NULL,
+			 y REAL NOT NULL,
+			 rotation REAL NOT NULL,
+			 UNIQUE(org_id, player_id)
+		 )`)
+	if err != nil {
+		logger.Error("Failed to create live_players table", "error", err)
+		db.Close()
+		return nil, err
+	}
+
+	g.playerDB = db
 
 	if cfg.LiveHAPrefix != "" {
 		g.keyPrefix = cfg.LiveHAPrefix + ".gf_live"
@@ -1617,34 +1642,13 @@ func (g *GrafanaLive) SimulateGameServer(ctx context.Context) {
 	orgID := orgs[0].ID
 	channel := orgchannel.PrependOrgID(orgID, "plugin/game/players")
 
-	// Use a persistent file instead of in-memory
-	db, err := sql.Open("sqlite3", "./players.db")
-	if err != nil {
-		logger.Error("Failed to open SQLite database", "error", err)
+	if g.playerDB == nil {
+		logger.Error("Player database not initialized in SimulateGameServer")
 		return
 	}
-	defer db.Close()
-
-	// Ensure table exists
-	_, err = db.Exec(`
-        CREATE TABLE IF NOT EXISTS live_players (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            org_id BIGINT NOT NULL,
-            player_id TEXT NOT NULL,
-            x REAL NOT NULL,
-            y REAL NOT NULL,
-            rotation REAL NOT NULL,
-            UNIQUE(org_id, player_id)
-        )`)
-	if err != nil {
-		logger.Error("Failed to create or verify live_players table", "error", err)
-		return
-	}
-
-	g.playerDB = db
 
 	var players []Player
-	rows, err := db.QueryContext(ctx, "SELECT player_id, x, y, rotation FROM live_players WHERE org_id = ?", orgID)
+	rows, err := g.playerDB.QueryContext(ctx, "SELECT player_id, x, y, rotation FROM live_players WHERE org_id = ?", orgID)
 	if err != nil {
 		logger.Error("Failed to load players", "orgID", orgID, "error", err)
 	} else {
@@ -1664,7 +1668,7 @@ func (g *GrafanaLive) SimulateGameServer(ctx context.Context) {
 
 	logger.Info("Starting game server simulation", "orgID", orgID, "channel", channel, "players", len(players))
 
-	ticker := time.NewTicker(10 * time.Millisecond)
+	ticker := time.NewTicker(200 * time.Millisecond)
 	defer ticker.Stop()
 
 	for {
@@ -1673,7 +1677,7 @@ func (g *GrafanaLive) SimulateGameServer(ctx context.Context) {
 			return
 		case <-ticker.C:
 			players = nil
-			rows, err := db.QueryContext(ctx, "SELECT player_id, x, y, rotation FROM live_players WHERE org_id = ?", orgID)
+			rows, err := g.playerDB.QueryContext(ctx, "SELECT player_id, x, y, rotation FROM live_players WHERE org_id = ?", orgID)
 			if err != nil {
 				logger.Error("Failed to reload players", "orgID", orgID, "error", err)
 				continue
