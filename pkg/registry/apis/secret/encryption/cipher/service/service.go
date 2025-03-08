@@ -43,7 +43,7 @@ func ProvideEncryptionService(
 	usageMetrics usagestats.Service,
 	cfg *setting.Cfg,
 ) (*Service, error) {
-	provider := encryptionprovider.ProvideEncryptionProvider()
+	provider := encryptionprovider.NewEncryptionProvider()
 	s := &Service{
 		tracer: tracer,
 		log:    log.New("encryption"),

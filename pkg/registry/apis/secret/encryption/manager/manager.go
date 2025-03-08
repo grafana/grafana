@@ -54,7 +54,7 @@ type EncryptionManager struct {
 	log log.Logger
 }
 
-func NewEncryptionManager(
+func ProvideEncryptionManager(
 	tracer tracing.Tracer,
 	store encryptionstorage.DataKeyStorage,
 	cfg *setting.Cfg,

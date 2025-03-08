@@ -215,7 +215,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 		encryptionStore, err := encryptionstorage.ProvideDataKeyStorageStorage(testDB, &setting.Cfg{}, features)
 		require.NoError(t, err)
 
-		encryptionManager, err := NewEncryptionManager(
+		encryptionManager, err := ProvideEncryptionManager(
 			tracing.InitializeTracerForTest(),
 			encryptionStore,
 			cfg,
@@ -236,7 +236,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 
 		// encryption manager tries to find a DEK in a cache first before calling provider's decrypt
 		// to bypass the cache, we set up one more secrets service to test decrypting
-		svcDecrypt, err := NewEncryptionManager(
+		svcDecrypt, err := ProvideEncryptionManager(
 			tracing.InitializeTracerForTest(),
 			encryptionStore,
 			cfg,
@@ -509,7 +509,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 
 			usageStats := &usagestats.UsageStatsMock{T: t}
 
-			svc, err := NewEncryptionManager(
+			svc, err := ProvideEncryptionManager(
 				tracing.InitializeTracerForTest(),
 				store,
 				cfg,

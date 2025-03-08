@@ -82,7 +82,7 @@ func setupDecryptTestService(t *testing.T) contracts.DecryptStorage {
 	require.NoError(t, err)
 
 	// Initialize the encryption manager
-	encMgr, err := encryptionmanager.NewEncryptionManager(
+	encMgr, err := encryptionmanager.ProvideEncryptionManager(
 		tracing.InitializeTracerForTest(),
 		dataKeyStore,
 		cfg,

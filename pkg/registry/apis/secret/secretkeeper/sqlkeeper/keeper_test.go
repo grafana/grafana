@@ -160,7 +160,7 @@ func setupTestService(t *testing.T, config string) (*SQLKeeper, error) {
 
 	usageStats := &usagestats.UsageStatsMock{T: t}
 
-	encMgr, err := encryptionmanager.NewEncryptionManager(
+	encMgr, err := encryptionmanager.ProvideEncryptionManager(
 		tracing.InitializeTracerForTest(),
 		dataKeyStore,
 		cfg,

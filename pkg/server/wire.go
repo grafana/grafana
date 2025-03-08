@@ -285,7 +285,7 @@ var wireBasicSet = wire.NewSet(
 	secretmetadata.ProvideDecryptStorage,
 	secretencryption.ProvideDataKeyStorageStorage,
 	secretencryption.ProvideEncryptedValueStorage,
-	manager.NewEncryptionManager,
+	manager.ProvideEncryptionManager,
 	encryptionservice.ProvideEncryptionService,
 	wire.Bind(new(encryption.Internal), new(*encryptionservice.Service)),
 	secretsManager.ProvideSecretsService,

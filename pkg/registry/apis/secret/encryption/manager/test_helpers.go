@@ -47,7 +47,7 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 
 	usageStats := &usagestats.UsageStatsMock{T: tb}
 
-	encMgr, err := NewEncryptionManager(
+	encMgr, err := ProvideEncryptionManager(
 		tracing.InitializeTracerForTest(),
 		store,
 		cfg,
