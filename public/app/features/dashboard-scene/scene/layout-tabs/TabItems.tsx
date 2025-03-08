@@ -1,13 +1,11 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { t } from 'app/core/internationalization';
-import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { EditableDashboardElementInfo } from '../types/EditableDashboardElement';
 import { MultiSelectedEditableDashboardElement } from '../types/MultiSelectedEditableDashboardElement';
 
 import { TabItem } from './TabItem';
-import { getEditOptions } from './TabItemsEditor';
 
 export class TabItems implements MultiSelectedEditableDashboardElement {
   public readonly isMultiSelectedEditableDashboardElement = true;
@@ -21,9 +19,9 @@ export class TabItems implements MultiSelectedEditableDashboardElement {
     return { name: t('dashboard.edit-pane.elements.tabs', 'Tabs'), typeId: 'tabs', icon: 'folder' };
   }
 
-  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-    return getEditOptions(this);
-  }
+  // public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
+  //   return getEditOptions(this);
+  // }
 
   public getTabs(): TabItem[] {
     return this._tabs;
