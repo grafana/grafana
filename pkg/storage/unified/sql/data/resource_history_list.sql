@@ -47,6 +47,15 @@ SELECT
         AND kv.{{ .Ident "name" }}      = {{ .Arg .Request.Options.Key.Name }}
         {{ end }}
     {{ end }}
+    {{ if and .Request.Options .Request.Options.Fields }}
+        {{ range $index, $requirement := .Request.Options.Fields }}
+            {{ if or (eq $requirement.Operator "=") (eq $requirement.Operator "==") }}
+            AND {{ $.JsonExtract "kv" ($.Ident "value") $requirement.Key }} = {{ $.Arg (index $requirement.Values 0) }}
+            {{ else if eq $requirement.Operator "!=" }}
+            AND ({{ $.JsonExtract "kv" ($.Ident "value") $requirement.Key }} != {{ $.Arg (index $requirement.Values 0) }} OR {{ $.JsonExtract "kv" ($.Ident "value") $requirement.Key }} IS NULL)
+            {{ end }}
+        {{ end }}
+    {{ end }}
     ORDER BY kv.{{ .Ident "namespace" }} ASC, kv.{{ .Ident "name" }} ASC
     {{ if (gt .Request.Limit 0) }}
     LIMIT {{ .Arg .Request.Limit }} OFFSET {{ .Arg .Request.Offset }}

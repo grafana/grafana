@@ -27,15 +27,32 @@ type postgresql struct {
 }
 
 func (p postgresql) Ident(s string) (string, error) {
-	// See:
-	//	https://www.postgresql.org/docs/current/sql-syntax-lexical.html
-	if strings.IndexByte(s, 0) != -1 {
-		return "", ErrPostgreSQLUnsupportedIdent
+	if strings.Contains(s, ".") {
+		parts := strings.Split(s, ".")
+		quoted := make([]string, len(parts))
+		for i, part := range parts {
+			q, err := p.standardIdent.Ident(part)
+			if err != nil {
+				return "", err
+			}
+			quoted[i] = q
+		}
+		return strings.Join(quoted, "."), nil
 	}
-
 	return p.standardIdent.Ident(s)
 }
 
 func (postgresql) CurrentEpoch() string {
 	return "(EXTRACT(EPOCH FROM statement_timestamp()) * 1000000)::BIGINT"
+}
+
+// JsonExtract returns the SQL expression to extract a value from a JSON column in PostgreSQL.
+// In PostgreSQL, we use the ->> operator to extract text values from JSON.
+func (postgresql) JsonExtract(tableAlias string, column string, fieldKey string) string {
+	columnRef := column
+	if tableAlias != "" {
+		columnRef = tableAlias + "." + column
+	}
+	// ->> operator in PostgreSQL already extracts as text
+	return columnRef + "->>" + "'" + fieldKey + "'"
 }

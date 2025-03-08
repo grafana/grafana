@@ -99,6 +99,137 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						},
 					},
 				},
+				{
+					Name: "field_selector_equals",
+					Data: &sqlResourceListRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Request: &resource.ListRequest{
+							Options: &resource.ListOptions{
+								Key: &resource.ResourceKey{
+									Group:    "dashboard.grafana.com",
+									Resource: "dashboards",
+								},
+								Fields: []*resource.Requirement{
+									{
+										Key:      "metadata.name",
+										Operator: "=",
+										Values:   []string{"test-dashboard"},
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "field_selector_not_equals",
+					Data: &sqlResourceListRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Request: &resource.ListRequest{
+							Options: &resource.ListOptions{
+								Key: &resource.ResourceKey{
+									Group:    "dashboard.grafana.com",
+									Resource: "dashboards",
+								},
+								Fields: []*resource.Requirement{
+									{
+										Key:      "metadata.name",
+										Operator: "!=",
+										Values:   []string{"test-dashboard"},
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "field_selector_title_not_equals",
+					Data: &sqlResourceListRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Request: &resource.ListRequest{
+							Options: &resource.ListOptions{
+								Key: &resource.ResourceKey{
+									Group:    "dashboard.grafana.com",
+									Resource: "dashboards",
+								},
+								Fields: []*resource.Requirement{
+									{
+										Key:      "spec.title",
+										Operator: "!=",
+										Values:   []string{"Untitled"},
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "field_selector_generation_equals",
+					Data: &sqlResourceListRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Request: &resource.ListRequest{
+							Options: &resource.ListOptions{
+								Key: &resource.ResourceKey{
+									Group:    "dashboard.grafana.com",
+									Resource: "dashboards",
+								},
+								Fields: []*resource.Requirement{
+									{
+										Key:      "metadata.generation",
+										Operator: "=",
+										Values:   []string{"3"},
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "field_selector_generation_not_equals",
+					Data: &sqlResourceListRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Request: &resource.ListRequest{
+							Options: &resource.ListOptions{
+								Key: &resource.ResourceKey{
+									Group:    "dashboard.grafana.com",
+									Resource: "dashboards",
+								},
+								Fields: []*resource.Requirement{
+									{
+										Key:      "metadata.generation",
+										Operator: "!=",
+										Values:   []string{"1"},
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "field_selector_multiple_conditions",
+					Data: &sqlResourceListRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Request: &resource.ListRequest{
+							Options: &resource.ListOptions{
+								Key: &resource.ResourceKey{
+									Group:    "dashboard.grafana.com",
+									Resource: "dashboards",
+								},
+								Fields: []*resource.Requirement{
+									{
+										Key:      "metadata.name",
+										Operator: "=",
+										Values:   []string{"dashboard-1"},
+									},
+									{
+										Key:      "spec.title",
+										Operator: "!=",
+										Values:   []string{"Untitled"},
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 
 			sqlResourceHistoryList: {
@@ -111,6 +242,149 @@ func TestUnifiedStorageQueries(t *testing.T) {
 							Options: &resource.ListOptions{
 								Key: &resource.ResourceKey{
 									Namespace: "ns",
+								},
+							},
+						},
+						Response: new(resource.ResourceWrapper),
+					},
+				},
+				{
+					Name: "field_selector_equals",
+					Data: &sqlResourceHistoryListRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Request: &historyListRequest{
+							ResourceVersion: 12345,
+							Options: &resource.ListOptions{
+								Key: &resource.ResourceKey{
+									Group:    "dashboard.grafana.com",
+									Resource: "dashboards",
+								},
+								Fields: []*resource.Requirement{
+									{
+										Key:      "metadata.name",
+										Operator: "=",
+										Values:   []string{"test-dashboard"},
+									},
+								},
+							},
+						},
+						Response: new(resource.ResourceWrapper),
+					},
+				},
+				{
+					Name: "field_selector_not_equals",
+					Data: &sqlResourceHistoryListRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Request: &historyListRequest{
+							ResourceVersion: 12345,
+							Options: &resource.ListOptions{
+								Key: &resource.ResourceKey{
+									Group:    "dashboard.grafana.com",
+									Resource: "dashboards",
+								},
+								Fields: []*resource.Requirement{
+									{
+										Key:      "metadata.name",
+										Operator: "!=",
+										Values:   []string{"test-dashboard"},
+									},
+								},
+							},
+						},
+						Response: new(resource.ResourceWrapper),
+					},
+				},
+				{
+					Name: "field_selector_title_not_equals",
+					Data: &sqlResourceHistoryListRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Request: &historyListRequest{
+							ResourceVersion: 12345,
+							Options: &resource.ListOptions{
+								Key: &resource.ResourceKey{
+									Group:    "dashboard.grafana.com",
+									Resource: "dashboards",
+								},
+								Fields: []*resource.Requirement{
+									{
+										Key:      "spec.title",
+										Operator: "!=",
+										Values:   []string{"Untitled"},
+									},
+								},
+							},
+						},
+						Response: new(resource.ResourceWrapper),
+					},
+				},
+				{
+					Name: "field_selector_generation_equals",
+					Data: &sqlResourceHistoryListRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Request: &historyListRequest{
+							ResourceVersion: 12345,
+							Options: &resource.ListOptions{
+								Key: &resource.ResourceKey{
+									Group:    "dashboard.grafana.com",
+									Resource: "dashboards",
+								},
+								Fields: []*resource.Requirement{
+									{
+										Key:      "metadata.generation",
+										Operator: "=",
+										Values:   []string{"2"},
+									},
+								},
+							},
+						},
+						Response: new(resource.ResourceWrapper),
+					},
+				},
+				{
+					Name: "field_selector_generation_not_equals",
+					Data: &sqlResourceHistoryListRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Request: &historyListRequest{
+							ResourceVersion: 12345,
+							Options: &resource.ListOptions{
+								Key: &resource.ResourceKey{
+									Group:    "dashboard.grafana.com",
+									Resource: "dashboards",
+								},
+								Fields: []*resource.Requirement{
+									{
+										Key:      "metadata.generation",
+										Operator: "!=",
+										Values:   []string{"1"},
+									},
+								},
+							},
+						},
+						Response: new(resource.ResourceWrapper),
+					},
+				},
+				{
+					Name: "field_selector_multiple_conditions",
+					Data: &sqlResourceHistoryListRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Request: &historyListRequest{
+							ResourceVersion: 12345,
+							Options: &resource.ListOptions{
+								Key: &resource.ResourceKey{
+									Group:    "dashboard.grafana.com",
+									Resource: "dashboards",
+								},
+								Fields: []*resource.Requirement{
+									{
+										Key:      "metadata.name",
+										Operator: "=",
+										Values:   []string{"dashboard-1"},
+									},
+									{
+										Key:      "spec.title",
+										Operator: "!=",
+										Values:   []string{"Untitled"},
+									},
 								},
 							},
 						},

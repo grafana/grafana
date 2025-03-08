@@ -26,14 +26,22 @@ type mysql struct {
 type backtickIdent struct{}
 
 func (backtickIdent) Ident(s string) (string, error) {
-	if strings.ContainsRune(s, '`') {
-		return "", ErrInvalidIdentInput
-	}
 	return escapeIdentity(s, '`', func(s string) string {
-		return s
+		return strings.ReplaceAll(s, "`", "``")
 	})
 }
 
+// CurrentEpoch returns the epoch time in microseconds (current_timestamp(6) * 1000000)
 func (mysql) CurrentEpoch() string {
 	return "CAST(FLOOR(UNIX_TIMESTAMP(NOW(6)) * 1000000) AS SIGNED)"
+}
+
+// JsonExtract returns the SQL expression to extract a value from a JSON column in MySQL.
+func (mysql) JsonExtract(tableAlias string, column string, fieldKey string) string {
+	columnRef := column
+	if tableAlias != "" {
+		columnRef = tableAlias + "." + column
+	}
+	// Use JSON_UNQUOTE to ensure string conversion
+	return "JSON_UNQUOTE(JSON_EXTRACT(" + columnRef + ", '$." + fieldKey + "'))"
 }

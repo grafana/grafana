@@ -3,21 +3,30 @@ package dbutil
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"testing"
 	"text/template"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	sqltemplateMocks "github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/test"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+// Use the Dialect type from sqltemplate
+type Dialect = sqltemplate.Dialect
+
 var (
 	validTestTmpl   = template.Must(template.New("test").Parse("nothing special"))
 	invalidTestTmpl = template.New("no definition should fail to exec")
 	errTest         = errors.New("because of reasons")
+	// Define dialect constants
+	PostgreSQL = sqltemplate.PostgreSQL
+	MySQL      = sqltemplate.MySQL
+	SQLite     = sqltemplate.SQLite
 )
 
 func TestSQLError(t *testing.T) {
@@ -544,4 +553,44 @@ func TestExec(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorAs(t, err, new(SQLError))
 	})
+}
+
+// TestJsonExtract tests the JsonExtract implementation of each dialect
+func TestJsonExtract(t *testing.T) {
+	testCases := []struct {
+		dialect    sqltemplate.Dialect
+		tableAlias string
+		column     string
+		fieldKey   string
+		expected   string
+	}{
+		{
+			dialect:    sqltemplate.PostgreSQL,
+			tableAlias: "t",
+			column:     "data",
+			fieldKey:   "metadata.name",
+			expected:   "t.data->>'metadata.name'",
+		},
+		{
+			dialect:    sqltemplate.MySQL,
+			tableAlias: "t",
+			column:     "data",
+			fieldKey:   "metadata.name",
+			expected:   "JSON_UNQUOTE(JSON_EXTRACT(t.data, '$.metadata.name'))",
+		},
+		{
+			dialect:    sqltemplate.SQLite,
+			tableAlias: "t",
+			column:     "data",
+			fieldKey:   "metadata.name",
+			expected:   "CAST(json_extract(t.data, '$.metadata.name') AS TEXT)",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("%T-%s-%s", tc.dialect, tc.tableAlias, tc.fieldKey), func(t *testing.T) {
+			result := tc.dialect.JsonExtract(tc.tableAlias, tc.column, tc.fieldKey)
+			require.Equal(t, tc.expected, result)
+		})
+	}
 }
