@@ -51,6 +51,49 @@ export const defaultDashboardV2Spec = (): DashboardV2Spec => ({
 	variables: [],
 });
 
+// Resources used to import a dashboard
+export interface ImportableResources {
+	kind: "ImportableResources";
+	spec: {
+		resources: (DashboardKind | LibraryPanelImport)[];
+		requirements: DashboardImportableRequirements[];
+	};
+}
+
+export const defaultImportableResources = (): ImportableResources => ({
+	kind: "ImportableResources",
+	spec: {
+	resources: [],
+	requirements: [],
+},
+});
+
+// DashboardKind - used for importing/exporting dashboards
+export interface DashboardKind {
+	kind: "Dashboard";
+	spec: DashboardV2Spec;
+}
+
+export const defaultDashboardKind = (): DashboardKind => ({
+	kind: "Dashboard",
+	spec: defaultDashboardV2Spec(),
+});
+
+// ImportableDashboard requirements
+export interface DashboardImportableRequirements {
+	type: string;
+	id: string;
+	name: string;
+	version: string;
+}
+
+export const defaultDashboardImportableRequirements = (): DashboardImportableRequirements => ({
+	type: "",
+	id: "",
+	name: "",
+	version: "",
+});
+
 // Supported dashboard elements
 // |* more element types in the future
 export type Element = PanelKind | LibraryPanelKind;
@@ -85,15 +128,32 @@ export const defaultLibraryPanelSpec = (): LibraryPanelSpec => ({
 // When you make a change to a library panel, that change propagates to all instances of where the panel is used.
 // Library panels streamline reuse of panels across multiple dashboards.
 export interface LibraryPanelRef {
-	// Library panel name
 	name: string;
-	// Library panel uid
 	uid: string;
 }
 
 export const defaultLibraryPanelRef = (): LibraryPanelRef => ({
 	name: "",
 	uid: "",
+});
+
+// Portable (can be exported and imported) library panel - we need to load the full model when exporting a dashboard
+export interface LibraryPanelImport {
+	kind: "LibraryPanelImport";
+	spec: {
+		name: string;
+		model: any;
+		uid: string;
+	};
+}
+
+export const defaultLibraryPanelImport = (): LibraryPanelImport => ({
+	kind: "LibraryPanelImport",
+	spec: {
+	name: "",
+	model: {},
+	uid: "",
+},
 });
 
 export interface AnnotationPanelFilter {
