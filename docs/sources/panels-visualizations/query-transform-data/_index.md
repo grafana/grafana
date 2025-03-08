@@ -169,30 +169,9 @@ To view your saved queries, click **Add query from library** from the query edit
 The **Add query from library** button isn't yet available in all instances of the query editor.
 {{< /admonition >}}
 
-### Save a query to the library
+To save queries to the library, click the save query to library icon:
 
-To add a query to the library, follow these steps:
-
-1. Edit the panel to which you're adding a query.
-1. Click the **Query** tab.
-1. Click the **Data source** drop-down menu and select a data source.
-
-   If you're creating a new dashboard, you'll be prompted to select a data source when you add the first panel.
-
-1. Click **Query options** to configure the maximum number of data points you need.
-
-   For more information about query options, refer to [Query options](#query-options).
-
-1. Write or construct a query in the query language of your data source.
-1. Click the save icon in the query editor:
-
-   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-save-query-library-v11.6.png" max-width="750px" alt="" >}}
-
-1. In the **Add query to Query Library** dialog box, add a description to easily identify your query:
-
-   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-query-dialog-box-v11.6.png" max-width="550px" alt="" >}}
-
-1. Click **Save**.
+{{< figure src="/static/img/docs/queries/query-editor-help-7-4.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" alt="Help icon" >}}
 
 ### Add a query from the library
 
@@ -239,6 +218,8 @@ You can:
 |                                                                               Icon                                                                               | Description                                                                                                                                                                                                                                     |
 | :--------------------------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 |     {{< figure src="/static/img/docs/queries/query-editor-help-7-4.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" alt="Help icon" >}}     | Toggles query editor help. If supported by the data source, click this icon to display information on how to use the query editor or provide quick access to common queries.                                                                    |
+|     {{< figure src="/static/img/docs/queries/query-editor-help-7-4.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" alt="Help icon" >}}     | Create recorded queries.                                                                                                                                                                                                                        |
+|     {{< figure src="/static/img/docs/queries/query-editor-help-7-4.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" alt="Help icon" >}}     | Save query to library. Saves the query to the library so it can be reused. Access saved queries by clicking **Add query from library**.                                                                                                         |
 | {{< figure src="/static/img/docs/queries/duplicate-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" alt="Duplicate icon" >}} | Copies a query. Duplicating queries is useful when working with multiple complex queries that are similar and you want to either experiment with different variants or do minor alterations.                                                    |
 |      {{< figure src="/static/img/docs/queries/hide-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" alt="Hide icon" >}}      | Hides a query. Grafana does not send hidden queries to the data source.                                                                                                                                                                         |
 |    {{< figure src="/static/img/docs/queries/remove-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" alt="Remove icon">}}     | Removes a query. Removing a query permanently deletes it, but sometimes you can recover deleted queries by reverting to previously saved versions of the panel.                                                                                 |
