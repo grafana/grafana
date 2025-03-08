@@ -14,7 +14,7 @@ const (
 	Default = "secretKey.v1"
 )
 
-func GetOSSKMSProviders(cfg *setting.Cfg, enc cipher.Encryption) (map[encryption.ProviderID]encryption.Provider, error) {
+func GetOSSKMSProviders(cfg *setting.Cfg, enc cipher.Cipher) (map[encryption.ProviderID]encryption.Provider, error) {
 	if cfg.SecretsManagement.SecretKey == "" {
 		return nil, errors.New("`[secrets_manager]secret_key` is not set")
 	}

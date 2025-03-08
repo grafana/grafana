@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
+	encryptionprovider "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/provider"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -33,16 +34,16 @@ type Service struct {
 	cfg          *setting.Cfg
 	usageMetrics usagestats.Service
 
-	ciphers   map[string]cipher.Cipher
-	deciphers map[string]cipher.Decipher
+	ciphers   map[string]cipher.Encrypter
+	deciphers map[string]cipher.Decrypter
 }
 
 func ProvideEncryptionService(
 	tracer tracing.Tracer,
-	provider cipher.Provider,
 	usageMetrics usagestats.Service,
 	cfg *setting.Cfg,
 ) (*Service, error) {
+	provider := encryptionprovider.ProvideEncryptionProvider()
 	s := &Service{
 		tracer: tracer,
 		log:    log.New("encryption"),

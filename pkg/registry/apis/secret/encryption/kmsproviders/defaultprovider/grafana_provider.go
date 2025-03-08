@@ -9,10 +9,10 @@ import (
 
 type grafanaProvider struct {
 	sk         string
-	encryption cipher.Encryption
+	encryption cipher.Cipher
 }
 
-func New(sk string, encryption cipher.Encryption) secrets.Provider {
+func New(sk string, encryption cipher.Cipher) secrets.Provider {
 	return grafanaProvider{
 		sk:         sk,
 		encryption: encryption,

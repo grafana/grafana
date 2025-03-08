@@ -13,7 +13,7 @@ func (s simpleSecret) Rollback(
 	ctx context.Context,
 	namespace string,
 	secretsSrv *manager.EncryptionManager,
-	encryptionSrv cipher.Encryption,
+	encryptionSrv cipher.Cipher,
 	sqlStore db.DB,
 	secretKey string,
 ) (anyFailure bool) {

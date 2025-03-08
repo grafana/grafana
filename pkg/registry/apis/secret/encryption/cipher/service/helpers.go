@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	encryptionprovider "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/provider"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -15,10 +14,9 @@ func SetupTestService(tb testing.TB) *Service {
 	tb.Helper()
 
 	usMock := &usagestats.UsageStatsMock{T: tb}
-	provider := encryptionprovider.ProvideEncryptionProvider()
 	settings := setting.NewCfg()
 
-	service, err := ProvideEncryptionService(tracing.InitializeTracerForTest(), provider, usMock, settings)
+	service, err := ProvideEncryptionService(tracing.InitializeTracerForTest(), usMock, settings)
 	require.NoError(tb, err)
 
 	return service

@@ -14,27 +14,22 @@ const (
 	AesGcm = "aes-gcm"
 )
 
-// Encryption must not be used for general purpose encryption.
-// This service is used as an internal component for envelope encryption
-// and for very specific few use cases that still require legacy encryption.
-//
-// Unless there is any specific reason, you must use secrets.Service instead.
-type Encryption interface {
-	Cipher
-	Decipher
+type Cipher interface {
+	Encrypter
+	Decrypter
 }
 
-type Cipher interface {
+type Encrypter interface {
 	Encrypt(ctx context.Context, payload []byte, secret string) ([]byte, error)
 }
 
-type Decipher interface {
+type Decrypter interface {
 	Decrypt(ctx context.Context, payload []byte, secret string) ([]byte, error)
 }
 
 type Provider interface {
-	ProvideCiphers() map[string]Cipher
-	ProvideDeciphers() map[string]Decipher
+	ProvideCiphers() map[string]Encrypter
+	ProvideDeciphers() map[string]Decrypter
 }
 
 // KeyToBytes key length needs to be 32 bytes

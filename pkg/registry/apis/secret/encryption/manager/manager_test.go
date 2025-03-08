@@ -14,11 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
-	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
-	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
@@ -212,14 +209,8 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 				AvailableProviders: []string{"fakeProvider.v1"},
 			},
 		}
-		encProvider := encryptionprovider.Provider{}
-		usageStats := &usagestats.UsageStatsMock{}
-
-		encryptionService, err := encryptionservice.ProvideEncryptionService(tracing.InitializeTracerForTest(), encProvider, usageStats, cfg)
-		require.NoError(t, err)
 
 		features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
-		kms := newFakeKMS(osskmsproviders.ProvideService(encryptionService, cfg, features))
 		testDB := db.InitTestDB(t)
 		encryptionStore, err := encryptionstorage.ProvideDataKeyStorageStorage(testDB, &setting.Cfg{}, features)
 		require.NoError(t, err)
@@ -227,34 +218,34 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 		encryptionManager, err := NewEncryptionManager(
 			tracing.InitializeTracerForTest(),
 			encryptionStore,
-			&kms,
-			encryptionService,
 			cfg,
 			&usagestats.UsageStatsMock{T: t},
 		)
 		require.NoError(t, err)
+
+		//override default provider with fake
+		fake := &fakeProvider{}
+		encryptionManager.providers[kmsproviders.Default] = fake
 
 		assert.Equal(t, encryption.ProviderID("fakeProvider.v1"), encryptionManager.currentProviderID)
 		assert.Equal(t, 2, len(encryptionManager.GetProviders()))
 
 		namespace := "test-namespace"
 		encrypted, _ := encryptionManager.Encrypt(context.Background(), namespace, []byte{}, encryption.WithoutScope())
-		assert.True(t, kms.fake.encryptCalled)
+		assert.True(t, fake.encryptCalled)
 
 		// encryption manager tries to find a DEK in a cache first before calling provider's decrypt
 		// to bypass the cache, we set up one more secrets service to test decrypting
 		svcDecrypt, err := NewEncryptionManager(
 			tracing.InitializeTracerForTest(),
 			encryptionStore,
-			&kms,
-			encryptionService,
 			cfg,
 			&usagestats.UsageStatsMock{T: t},
 		)
 		require.NoError(t, err)
 
 		_, _ = svcDecrypt.Decrypt(context.Background(), namespace, encrypted)
-		assert.True(t, kms.fake.decryptCalled, "fake provider's decrypt should be called")
+		assert.True(t, fake.decryptCalled, "fake provider's decrypt should be called")
 	})
 }
 
@@ -271,28 +262,6 @@ func (p *fakeProvider) Encrypt(_ context.Context, _ []byte) ([]byte, error) {
 func (p *fakeProvider) Decrypt(_ context.Context, _ []byte) ([]byte, error) {
 	p.decryptCalled = true
 	return []byte{}, nil
-}
-
-type fakeKMS struct {
-	kms  osskmsproviders.Service
-	fake *fakeProvider
-}
-
-func newFakeKMS(kms osskmsproviders.Service) fakeKMS {
-	return fakeKMS{
-		kms:  kms,
-		fake: &fakeProvider{},
-	}
-}
-
-func (f *fakeKMS) Provide() (map[secrets.ProviderID]secrets.Provider, error) {
-	providers, err := f.kms.Provide()
-	if err != nil {
-		return providers, err
-	}
-
-	providers["fakeProvider.v1"] = f.fake
-	return providers, nil
 }
 
 func TestEncryptionService_Run(t *testing.T) {
@@ -538,17 +507,11 @@ func TestIntegration_SecretsService(t *testing.T) {
 			store, err := encryptionstorage.ProvideDataKeyStorageStorage(testDB, cfg, features)
 			require.NoError(t, err)
 
-			encProvider := encryptionprovider.Provider{}
 			usageStats := &usagestats.UsageStatsMock{T: t}
-
-			enc, err := encryptionservice.ProvideEncryptionService(tracing.InitializeTracerForTest(), encProvider, usageStats, cfg)
-			require.NoError(t, err)
 
 			svc, err := NewEncryptionManager(
 				tracing.InitializeTracerForTest(),
 				store,
-				osskmsproviders.ProvideService(enc, cfg, features),
-				enc,
 				cfg,
 				usageStats,
 			)
