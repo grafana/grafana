@@ -16,7 +16,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
@@ -32,7 +31,6 @@ type ClientV2 struct {
 	grpcplugin.AdmissionClient
 	grpcplugin.ConversionClient
 	pluginextensionv2.RendererPlugin
-	secretsmanagerplugin.SecretsManagerPlugin
 }
 
 func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugin.ClientProtocol) (*ClientV2, error) {
@@ -67,11 +65,6 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 	}
 
 	rawRenderer, err := rpcClient.Dispense("renderer")
-	if err != nil {
-		return nil, err
-	}
-
-	rawSecretsManager, err := rpcClient.Dispense("secretsmanager")
 	if err != nil {
 		return nil, err
 	}
@@ -119,20 +112,8 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 		}
 	}
 
-	if rawSecretsManager != nil {
-		if secretsManagerPlugin, ok := rawSecretsManager.(secretsmanagerplugin.SecretsManagerPlugin); ok {
-			c.SecretsManagerPlugin = secretsManagerPlugin
-		}
-	}
-
 	if descriptor.startRendererFn != nil {
 		if err := descriptor.startRendererFn(descriptor.pluginID, c.RendererPlugin, logger); err != nil {
-			return nil, err
-		}
-	}
-
-	if descriptor.startSecretsManagerFn != nil {
-		if err := descriptor.startSecretsManagerFn(descriptor.pluginID, c.SecretsManagerPlugin, logger); err != nil {
 			return nil, err
 		}
 	}
