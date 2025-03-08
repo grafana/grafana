@@ -9,7 +9,7 @@ import { GraphNG, GraphNGProps, PropDiffFn } from '../GraphNG/GraphNG';
 
 import { preparePlotConfigBuilder } from './utils';
 
-const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options', 'theme'];
+const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options', 'theme', 'scaleDistribution'];
 
 type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'>;
 
