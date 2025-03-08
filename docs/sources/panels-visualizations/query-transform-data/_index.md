@@ -133,7 +133,7 @@ A drawer opens with saved queries:
 You can search by data source name, or query content, and description or filter by data source name and author name.
 Filters use the OR operator.
 From this drawer, you can also edit a query description.
-Once you've found the query you want to use, click **Select query** and it populates in the query editor.
+After you've found the query you want to use, click **Select query** and it populates in the query editor.
 
 {{< admonition type="note" >}}
 The **Add query from library** button isn't yet available in all instances of the query editor.
