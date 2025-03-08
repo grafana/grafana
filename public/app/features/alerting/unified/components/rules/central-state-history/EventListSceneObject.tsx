@@ -8,6 +8,7 @@ import {
   CustomVariable,
   SceneComponentProps,
   SceneObjectBase,
+  SceneObjectState,
   TextBoxVariable,
   VariableDependencyConfig,
   VariableValue,
@@ -490,11 +491,15 @@ export const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
+interface HistoryEventsLisState extends SceneObjectState {
+  fromPanel?: boolean;
+}
+
 /**
  * This is a scene object that displays a list of history events.
  */
 
-export class HistoryEventsListObject extends SceneObjectBase {
+export class HistoryEventsListObject extends SceneObjectBase<HistoryEventsLisState> {
   public static Component = HistoryEventsListObjectRenderer;
 
   protected _variableDependency = new VariableDependencyConfig(this, {
@@ -508,6 +513,8 @@ export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<H
   // This make sure the component is re-rendered when the variables change
   model.useState();
 
+  const fromPanel = model.state.fromPanel ?? false;
+
   const { value: timeRange } = sceneGraph.getTimeRange(model).useState(); // get time range from scene graph
 
   const labelsFiltersVariable = sceneGraph.lookupVariable(LABELS_FILTER, model);
@@ -515,6 +522,9 @@ export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<H
   const stateFromFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_FROM, model);
 
   const addFilter = (key: string, value: string, type: FilterType) => {
+    if (fromPanel) {
+      return;
+    }
     const newFilterToAdd = `${key}=${value}`;
     trackUseCentralHistoryFilterByClicking({ type, key, value });
     if (type === 'stateTo' && stateToFilterVariable instanceof CustomVariable) {
