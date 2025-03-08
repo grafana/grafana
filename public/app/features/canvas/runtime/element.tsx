@@ -29,7 +29,7 @@ import { getConnectionsByTarget, getRowIndex, isConnectionTarget } from 'app/plu
 import { getActions, getActionsDefaultField } from '../../actions/utils';
 import { CanvasElementItem, CanvasElementOptions } from '../element';
 import { canvasElementRegistry } from '../registry';
-import { PlayerPayload } from '../types';
+import { Bounds, PlayerPayload } from '../types';
 
 import { FrameState } from './frame';
 import { RootElement } from './root';
@@ -75,6 +75,8 @@ export class ElementState implements LayerElement {
   movementInterval: number | null = null;
   numbersAfterDot = 4;
   decayPrecision = 1 / Math.pow(10, this.numbersAfterDot);
+
+  user = config.bootData.user;
 
   constructor(
     public item: CanvasElementItem,
@@ -210,15 +212,38 @@ export class ElementState implements LayerElement {
       this.velocity.x = -this.velocity.x;
     }
 
+    // Check for collision with other elements
+    const radius = 12;
+    const bounds: Bounds[] = [];
+    const sceneX = this.getScene()?.div?.getBoundingClientRect().left ?? 0;
+    const sceneY = this.getScene()?.div?.getBoundingClientRect().top ?? 0;
+    this.getScene()?.root.elements.map((element) => {
+      if (this.user.uid !== element.options.name) {
+        const elementBounds = element.div?.getClientRects()[0];
+        bounds.push({
+          minX: (elementBounds?.left ?? 0) - sceneX,
+          minY: (elementBounds?.top ?? 0) - sceneY,
+          maxX: (elementBounds?.right ?? 0) - sceneX,
+          maxY: (elementBounds?.bottom ?? 0) - sceneY,
+        });
+      }
+    });
+
+    const collision = this.isCircleCollidingWithAny(newLeft + radius, newTop + radius, radius, bounds);
+    if (collision) {
+      this.velocity.x = -this.velocity.x;
+      this.velocity.y = -this.velocity.y;
+      this.rotation = (this.rotation + 180) % 360;
+    }
+
     // Limit decimal precision and stop updating when stale
     const roundedTop = this.roundToPrecision(newTop, this.numbersAfterDot);
     const roundedLeft = this.roundToPrecision(newLeft, this.numbersAfterDot);
 
     // Update player position through backend API
-    const user = config.bootData.user;
     const payload: PlayerPayload = {
       action: 'update',
-      player_id: user.uid,
+      player_id: this.user.uid,
       x: roundedLeft,
       y: roundedTop,
       rotation: this.rotation,
@@ -238,8 +263,6 @@ export class ElementState implements LayerElement {
       } catch (err) {
         console.error('Error adding player:', err);
       }
-    } else {
-      console.log('blocked');
     }
 
     if (this.position.top !== roundedTop || this.position.left !== roundedLeft) {
@@ -255,6 +278,30 @@ export class ElementState implements LayerElement {
     const factor = 10 ** precision;
     return Math.round(value * factor) / factor;
   };
+
+  isCircleCollidingWithAny(circleX: number, circleY: number, radius: number, boxes: Bounds[]) {
+    // Loop through each box in the array
+    for (let i = 0; i < boxes.length; i++) {
+      const box = boxes[i];
+
+      // Find closest point on current box to circle center
+      let closestX = Math.max(box.minX, Math.min(circleX, box.maxX));
+      let closestY = Math.max(box.minY, Math.min(circleY, box.maxY));
+
+      // Calculate squared distance
+      let distanceX = circleX - closestX;
+      let distanceY = circleY - closestY;
+      let distanceSquared = distanceX * distanceX + distanceY * distanceY;
+
+      // If collision found, return true immediately
+      if (distanceSquared <= radius * radius) {
+        return true;
+      }
+    }
+
+    // No collisions found after checking all boxes
+    return false;
+  }
 
   private getScene(): Scene | undefined {
     let trav = this.parent;
