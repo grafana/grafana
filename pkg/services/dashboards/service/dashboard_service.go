@@ -279,6 +279,7 @@ func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardID(ctx con
 
 		for _, org := range orgs {
 			res, err := dr.searchProvisionedDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
+				ManagedBy:    utils.ManagerKindClassicFP, // nolint:staticcheck
 				OrgId:        org.ID,
 				DashboardIds: []int64{dashboardID},
 			})
@@ -306,6 +307,7 @@ func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardUID(ctx co
 		}
 
 		res, err := dr.searchProvisionedDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
+			ManagedBy:     utils.ManagerKindClassicFP, // nolint:staticcheck
 			OrgId:         orgID,
 			DashboardUIDs: []string{dashboardUID},
 		})
@@ -569,6 +571,7 @@ func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.
 			ctx, _ := identity.WithServiceIdentity(ctx, org.ID)
 			// find all dashboards in the org that have a file repo set that is not in the given readers list
 			foundDashs, err := dr.searchProvisionedDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
+				ManagedBy:            utils.ManagerKindClassicFP, //nolint:staticcheck
 				ManagerIdentityNotIn: cmd.ReaderNames,
 				OrgId:                org.ID,
 			})
