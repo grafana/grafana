@@ -202,7 +202,6 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 		SecretsManagement: setting.SecretsManagerSettings{
 			SecretKey:          "sdDkslslld",
 			EncryptionProvider: "secretKey.v1",
-			AvailableProviders: []string{"secretKey.v1"},
 		},
 		// TODO: remove this once we no longer have the dependency on legacy envelope encryption
 		Raw: raw,

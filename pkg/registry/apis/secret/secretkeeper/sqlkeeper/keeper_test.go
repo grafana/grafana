@@ -3,6 +3,7 @@ package sqlkeeper
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -34,7 +35,11 @@ func Test_SQLKeeperSetup(t *testing.T) {
 		SecretsManagement: setting.SecretsManagerSettings{
 			SecretKey:          "sdDkslslld",
 			EncryptionProvider: "secretKey.v1",
-			AvailableProviders: []string{"secretKey.v1"},
+			Encryption: setting.EncryptionSettings{
+				DataKeysCacheTTL:        5 * time.Minute,
+				DataKeysCleanupInterval: 1 * time.Nanosecond,
+				Algorithm:               "aes-cfb",
+			},
 		},
 	}
 

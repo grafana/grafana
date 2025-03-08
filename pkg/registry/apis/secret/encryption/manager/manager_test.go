@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -92,15 +91,17 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 	testDB := db.InitTestDB(t)
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 	defaultKey := "SdlklWklckeLS"
-	raw, err := ini.Load([]byte(`
-		[secrets_manager]
-		secret_key = ` + defaultKey + `
-
-		[secrets_manager.encryption]
-		data_keys_cache_ttl = 5m
-		data_keys_cache_cleanup_interval = 1ns`))
-	require.NoError(t, err)
-	cfg := &setting.Cfg{Raw: raw}
+	cfg := &setting.Cfg{
+		SecretsManagement: setting.SecretsManagerSettings{
+			SecretKey:          defaultKey,
+			EncryptionProvider: "secretKey.v1",
+			Encryption: setting.EncryptionSettings{
+				DataKeysCacheTTL:        5 * time.Minute,
+				DataKeysCleanupInterval: 1 * time.Nanosecond,
+				Algorithm:               "aes-cfb",
+			},
+		},
+	}
 	store, err := encryptionstorage.ProvideDataKeyStorageStorage(testDB, cfg, features)
 	require.NoError(t, err)
 
@@ -200,8 +201,10 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 			Raw: raw,
 			SecretsManagement: setting.SecretsManagerSettings{
 				SecretKey:          "sdDkslslld",
-				EncryptionProvider: "fakeProvider.v1",
-				AvailableProviders: []string{"fakeProvider.v1"},
+				EncryptionProvider: "secretKey.v1",
+				Encryption: setting.EncryptionSettings{
+					Algorithm: "aes-cfb",
+				},
 			},
 		}
 
@@ -218,16 +221,15 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		//override default provider with fake
+		//override default provider with fake, and register the fake separately
 		fake := &fakeProvider{}
-		encryptionManager.providers[kmsproviders.Default] = fake
-
-		assert.Equal(t, encryption.ProviderID("fakeProvider.v1"), encryptionManager.currentProviderID)
-		assert.Equal(t, 2, len(encryptionManager.GetProviders()))
+		encryptionManager.providers[encryption.ProviderID("fakeProvider.v1")] = fake
+		encryptionManager.currentProviderID = "fakeProvider.v1"
 
 		namespace := "test-namespace"
 		encrypted, _ := encryptionManager.Encrypt(context.Background(), namespace, []byte{}, encryption.WithoutScope())
 		assert.True(t, fake.encryptCalled)
+		assert.False(t, fake.decryptCalled)
 
 		// encryption manager tries to find a DEK in a cache first before calling provider's decrypt
 		// to bypass the cache, we set up one more secrets service to test decrypting
@@ -238,6 +240,8 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 			&usagestats.UsageStatsMock{T: t},
 		)
 		require.NoError(t, err)
+		svcDecrypt.providers[encryption.ProviderID("fakeProvider.v1")] = fake
+		svcDecrypt.currentProviderID = "fakeProvider.v1"
 
 		_, _ = svcDecrypt.Decrypt(context.Background(), namespace, encrypted)
 		assert.True(t, fake.decryptCalled, "fake provider's decrypt should be called")
@@ -479,23 +483,15 @@ func TestIntegration_SecretsService(t *testing.T) {
 			testDB := db.InitTestDB(t)
 			features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 			defaultKey := "SdlklWklckeLS"
-			raw, err := ini.Load([]byte(`
-				[secrets_manager]
-				secret_key = ` + defaultKey + `
-		
-				[secrets_manager.encryption]
-				data_keys_cache_ttl = 5m
-				data_keys_cache_cleanup_interval = 1ns`))
-			require.NoError(t, err)
 
 			cfg := &setting.Cfg{
-				Raw: raw,
 				SecretsManagement: setting.SecretsManagerSettings{
 					SecretKey:          defaultKey,
 					EncryptionProvider: "secretKey.v1",
-					AvailableProviders: []string{"secretKey.v1"},
 					Encryption: setting.EncryptionSettings{
 						DataKeysCleanupInterval: time.Nanosecond,
+						DataKeysCacheTTL:        5 * time.Minute,
+						Algorithm:               "aes-cfb",
 					},
 				},
 			}

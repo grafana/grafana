@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,7 +18,17 @@ func Test_Service(t *testing.T) {
 	ctx := context.Background()
 
 	usageStats := &usagestats.UsageStatsMock{}
-	settings := setting.NewCfg()
+	settings := &setting.Cfg{
+		SecretsManagement: setting.SecretsManagerSettings{
+			SecretKey:          "SdlklWklckeLS",
+			EncryptionProvider: "secretKey.v1",
+			Encryption: setting.EncryptionSettings{
+				DataKeysCacheTTL:        5 * time.Minute,
+				DataKeysCleanupInterval: 1 * time.Nanosecond,
+				Algorithm:               "aes-cfb",
+			},
+		},
+	}
 
 	svc, err := NewEncryptionService(tracing.InitializeTracerForTest(), usageStats, settings)
 	require.NoError(t, err)
