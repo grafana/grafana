@@ -1,12 +1,11 @@
 import { Stack } from '@grafana/ui';
 
 import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
-import { MultiSelectedEditableDashboardElement } from '../scene/types/MultiSelectedEditableDashboardElement';
 
 import { EditPaneHeader } from './EditPaneHeader';
 
 export interface Props {
-  element: EditableDashboardElement | MultiSelectedEditableDashboardElement;
+  element: EditableDashboardElement;
 }
 
 export function ElementEditPane({ element }: Props) {

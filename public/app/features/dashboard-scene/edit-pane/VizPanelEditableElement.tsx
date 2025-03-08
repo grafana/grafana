@@ -91,6 +91,11 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
     layout.removePanel?.(this.panel);
   }
+
+  public onDuplicate() {
+    const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
+    layout.duplicatePanel?.(this.panel);
+  }
 }
 
 type OpenPanelEditVizProps = {

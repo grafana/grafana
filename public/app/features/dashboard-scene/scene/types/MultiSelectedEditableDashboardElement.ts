@@ -24,7 +24,7 @@ export interface MultiSelectedEditableDashboardElement {
   useEditPaneOptions?(): OptionsPaneCategoryDescriptor[];
 
   /**
-   * Panel Actions
+   * Actions
    **/
   renderActions?(): ReactNode;
 }

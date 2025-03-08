@@ -1,15 +1,14 @@
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 
-import { GrafanaTheme2, textUtil } from '@grafana/data';
-import { Dropdown, Button, IconButton, Menu, Stack, Icon, Box, Text, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, Menu, Stack, Text, useStyles2, ConfirmButton } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
-import { MultiSelectedEditableDashboardElement } from '../scene/types/MultiSelectedEditableDashboardElement';
 
 interface EditPaneHeaderProps {
-  element: EditableDashboardElement | MultiSelectedEditableDashboardElement;
+  element: EditableDashboardElement;
 }
 
 export function EditPaneHeader({ element }: EditPaneHeaderProps) {
@@ -20,8 +19,32 @@ export function EditPaneHeader({ element }: EditPaneHeaderProps) {
   return (
     <div className={styles.wrapper}>
       <Text variant="h5">{capitalize(elementInfo.typeId)}</Text>
+      <Stack direction="row" gap={2}>
+        {/* {element.onDuplicate && <Button size="sm" variant="secondary" onClick={element.onDuplicate} icon="copy" />} */}
+        {element.onDuplicate && (
+          <Button size="sm" variant="secondary" onClick={() => element.onDuplicate!()}>
+            Duplicate
+          </Button>
+        )}
+        {element.onDelete && (
+          <ConfirmButton
+            onConfirm={() => element.onDelete!()}
+            confirmText="Confirm"
+            confirmVariant="destructive"
+            size="sm"
+          >
+            <Button size="sm" variant="destructive" fill="outline">
+              Delete
+            </Button>
+          </ConfirmButton>
+        )}
+      </Stack>
       {/* <Stack alignItems="center">
         {addCopyOrDuplicate ? (
+                // <Button size="sm" variant="destructive" fill="outline" onClick={() => element.onDelete!()}>
+        //   Delete
+        // </Button>
+
           <Dropdown overlay={<MenuItems onCopy={onCopy} onDuplicate={onDuplicate} />}>
             <Button
               tooltip={t('dashboard.layout.common.copy-or-duplicate', 'Copy or Duplicate')}

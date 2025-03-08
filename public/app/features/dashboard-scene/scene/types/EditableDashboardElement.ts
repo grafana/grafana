@@ -29,6 +29,16 @@ export interface EditableDashboardElement {
   renderActions?(): ReactNode;
 
   /**
+   * Supports delete action
+   */
+  onDelete?(): void;
+
+  /**
+   * Supports duplicate action
+   */
+  onDuplicate?(): void;
+
+  /**
    * creates a new multi-selection element from a list of selected items
    */
   createMultiSelectedElement?(items: SceneObject[]): MultiSelectedEditableDashboardElement;

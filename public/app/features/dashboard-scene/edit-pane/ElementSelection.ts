@@ -111,9 +111,9 @@ export class ElementSelection {
   }
 
   public createSelectionElement() {
-    if (this.isMultiSelection) {
-      return this.createMultiSelectedElement();
-    }
+    // if (this.isMultiSelection) {
+    //   return this.createMultiSelectedElement();
+    // }
 
     return this.createSingleSelectedElement();
   }
