@@ -24,6 +24,7 @@ type RulerApi interface {
 	RouteDeleteNamespaceGrafanaRulesConfig(*contextmodel.ReqContext) response.Response
 	RouteDeleteNamespaceRulesConfig(*contextmodel.ReqContext) response.Response
 	RouteDeleteRuleGroupConfig(*contextmodel.ReqContext) response.Response
+	RouteGetAllRules(*contextmodel.ReqContext) response.Response
 	RouteGetGrafanaRuleGroupConfig(*contextmodel.ReqContext) response.Response
 	RouteGetGrafanaRulesConfig(*contextmodel.ReqContext) response.Response
 	RouteGetNamespaceGrafanaRulesConfig(*contextmodel.ReqContext) response.Response
@@ -88,8 +89,10 @@ func (f *RulerApiHandler) RouteGetRuleByUID(ctx *contextmodel.ReqContext) respon
 	return f.handleRouteGetRuleByUID(ctx, ruleUIDParam)
 }
 func (f *RulerApiHandler) RouteGetRuleVersionsByUID(ctx *contextmodel.ReqContext) response.Response {
-	// Parse Path Parameters
 	ruleUIDParam := web.Params(ctx.Req)[":RuleUID"]
+	if ruleUIDParam == "" {
+		return response.Error(http.StatusBadRequest, "rule UID is required", nil)
+	}
 	return f.handleRouteGetRuleVersionsByUID(ctx, ruleUIDParam)
 }
 func (f *RulerApiHandler) RouteGetRulegGroupConfig(ctx *contextmodel.ReqContext) response.Response {
@@ -139,8 +142,24 @@ func (f *RulerApiHandler) RoutePostRulesGroupForExport(ctx *contextmodel.ReqCont
 	return f.handleRoutePostRulesGroupForExport(ctx, conf, namespaceParam)
 }
 
+func (f *RulerApiHandler) RouteGetAllRules(ctx *contextmodel.ReqContext) response.Response {
+	return f.GrafanaRuler.RouteGetAllRules(ctx)
+}
+
 func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
+		group.Get(
+			toMacaronPath("/api/alerting/v1/rules"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodGet, "/api/alerting/v1/rules"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/alerting/v1/rules",
+				api.Hooks.Wrap(srv.RouteGetAllRules),
+				m,
+			),
+		)
 		group.Delete(
 			toMacaronPath("/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),

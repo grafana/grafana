@@ -24,6 +24,41 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("add last_applied column to alert_configuration_history", migrator.NewAddColumnMigration(migrator.Table{Name: "alert_configuration_history"}, &migrator.Column{
 		Name: "last_applied", Type: migrator.DB_Int, Nullable: false, Default: "0",
 	}))
+
+	// Add performance optimization indexes for alert_rule table
+	mg.AddMigration("add performance indexes for alert_rule table", migrator.NewAddIndexMigration(
+		migrator.Table{Name: "alert_rule"},
+		&migrator.Index{
+			Name: "IDX_alert_rule_org_id_for_pagination",
+			Cols: []string{"org_id", "id"},
+		},
+	))
+
+	mg.AddMigration("add index for alert_rule on namespace_uid for filtering", migrator.NewAddIndexMigration(
+		migrator.Table{Name: "alert_rule"},
+		&migrator.Index{
+			Name: "IDX_alert_rule_namespace_uid",
+			Cols: []string{"namespace_uid"},
+		},
+	))
+
+	mg.AddMigration("add index for alert_rule on rule_group for filtering", migrator.NewAddIndexMigration(
+		migrator.Table{Name: "alert_rule"},
+		&migrator.Index{
+			Name: "IDX_alert_rule_rule_group",
+			Cols: []string{"rule_group"},
+		},
+	))
+
+	// Add a composite index to improve ordering performance
+	mg.AddMigration("add composite index for alert_rule ordering by folder and rule group", migrator.NewAddIndexMigration(
+		migrator.Table{Name: "alert_rule"},
+		&migrator.Index{
+			Name: "IDX_alert_rule_namespace_uid_org_id",
+			Cols: []string{"namespace_uid", "org_id", "rule_group"},
+		},
+	))
+
 	// End of migration log, add new migrations above this line.
 }
 
