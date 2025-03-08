@@ -110,7 +110,6 @@ function ScenePanelLinksEditor({ panelLinks }: ScenePanelLinksEditorProps) {
 
 export function PanelFrameTitleInput({ panel }: { panel: VizPanel }) {
   const { title } = panel.useState();
-  console.log(panel.getPanelContext().app);
   let ref = useEditPaneInputAutoFocus({ noAutoFocus: panel.getPanelContext().app === CoreApp.PanelEditor });
 
   return (
