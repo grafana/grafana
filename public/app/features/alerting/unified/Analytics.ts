@@ -154,7 +154,7 @@ function getRulerRulesMetadata(rulerRules: RulerRulesConfigDTO) {
 
 export async function isNewUser() {
   try {
-    const { createdAt } = await getBackendSrv().get(`/api/user`);
+    const { createdAt } = await getBackendSrv().get(`/api/user`, undefined, undefined, { showErrorAlert: false });
 
     const limitDateForNewUser = dateTime().subtract(USER_CREATION_MIN_DAYS, 'days');
     const userCreationDate = dateTime(createdAt);
