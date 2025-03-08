@@ -20,6 +20,7 @@ export interface DashboardChangeInfo {
   hasRefreshChange: boolean;
   isNew?: boolean;
   hasFolderChanges?: boolean;
+  hasMigratedToV2?: boolean;
 }
 
 export function isVersionMismatchError(error?: Error) {
