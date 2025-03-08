@@ -24,21 +24,23 @@ import { Scene, SelectionParams } from 'app/features/canvas/runtime/scene';
 import { AnchorPoint, ConnectionState, LineStyle, StrokeDasharray } from './types';
 
 export function doSelect(scene: Scene, element: ElementState | FrameState) {
-  try {
-    let selection: SelectionParams = { targets: [] };
-    if (element instanceof FrameState) {
-      const targetElements: HTMLDivElement[] = [];
-      targetElements.push(element?.div!);
-      selection.targets = targetElements;
-      selection.frame = element;
-      scene.select(selection);
-    } else {
-      scene.currentLayer = element.parent;
-      selection.targets = [element?.div!];
-      scene.select(selection);
+  if (element.options.type !== 'player') {
+    try {
+      let selection: SelectionParams = { targets: [] };
+      if (element instanceof FrameState) {
+        const targetElements: HTMLDivElement[] = [];
+        targetElements.push(element?.div!);
+        selection.targets = targetElements;
+        selection.frame = element;
+        scene.select(selection);
+      } else {
+        scene.currentLayer = element.parent;
+        selection.targets = [element?.div!];
+        scene.select(selection);
+      }
+    } catch (error) {
+      appEvents.emit(AppEvents.alertError, ['Unable to select element, try selecting element in panel instead']);
     }
-  } catch (error) {
-    appEvents.emit(AppEvents.alertError, ['Unable to select element, try selecting element in panel instead']);
   }
 }
 
@@ -117,6 +119,31 @@ export function onAddItem(sel: SelectableValue<string>, rootLayer: FrameState | 
     rootLayer.elements.push(newElement);
     rootLayer.scene.save();
     rootLayer.reinitializeMoveable();
+
+    if (newElementOptions.type === 'player') {
+      // Add player through backend API
+      const user = config.bootData.user;
+      const payload = {
+        action: 'add',
+        player_id: user.uid,
+        x: newElementOptions.placement?.left,
+        y: newElementOptions.placement?.top,
+        rotation: newElementOptions.placement?.rotation,
+      };
+      console.log(payload);
+      try {
+        fetch('/api/live/players', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+          credentials: 'include', // Include cookies for session auth
+        });
+      } catch (err) {
+        console.error('Error adding player:', err);
+      }
+    }
 
     setTimeout(() => doSelect(rootLayer.scene, newElement));
   }

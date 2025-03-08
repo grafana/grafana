@@ -1,5 +1,6 @@
 import { cloneDeep } from 'lodash';
 
+import { config } from '@grafana/runtime';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
 import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/plugins/panel/canvas/panelcfg.gen';
@@ -76,14 +77,21 @@ export class FrameState extends ElementState {
       const y = ctx.getPanelData()?.series[0].fields[2].values[index];
       const r = ctx.getPanelData()?.series[0].fields[3].values[index];
       if (!currentElementNames.includes(player)) {
-        // TODO check if player UID matches and ignore it
+        let playerType = 'enemy';
+        // check if player UID matches and add it as a player
+        const user = config.bootData.user;
+        const playerIsUser = player === user.uid;
+        if (playerIsUser) {
+          playerType = 'player';
+        }
+
         // add player element
-        const newItem = canvasElementRegistry.getIfExists('enemy') ?? notFoundItem;
+        const newItem = canvasElementRegistry.getIfExists(playerType) ?? notFoundItem;
         const newElementOptions: CanvasElementOptions = {
           ...newItem.getNewOptions(),
           type: newItem.id,
           name: player,
-          config: { color: { fixed: 'red' }, text: { fixed: player } },
+          config: !playerIsUser ? { color: { fixed: 'red' }, text: { fixed: player } } : undefined,
         };
         newElementOptions.placement = {
           ...newElementOptions.placement,

@@ -11,6 +11,7 @@ import {
   OneClickMode,
   ActionModel,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
 import { LayerElement } from 'app/core/components/Layers/types';
 import { t } from 'app/core/internationalization';
@@ -28,12 +29,15 @@ import { getConnectionsByTarget, getRowIndex, isConnectionTarget } from 'app/plu
 import { getActions, getActionsDefaultField } from '../../actions/utils';
 import { CanvasElementItem, CanvasElementOptions } from '../element';
 import { canvasElementRegistry } from '../registry';
+import { PlayerPayload } from '../types';
 
 import { FrameState } from './frame';
 import { RootElement } from './root';
 import { Scene } from './scene';
 
 let counter = 0;
+let lastFetchTime = 0;
+const throttleDelay = 10; // milliseconds
 
 export const SVGElements = new Set<string>(['parallelogram', 'triangle', 'cloud', 'ellipse', 'player', 'enemy']);
 
@@ -61,13 +65,13 @@ export class ElementState implements LayerElement {
   showConfirmation = false;
 
   position: { top: number; left: number } = { top: 0, left: 0 };
-  rotation: number = 0;
+  rotation = 0;
   velocity: { x: number; y: number } = { x: 0, y: 0 };
-  acceleration: number = 0;
-  friction: number = 0;
+  acceleration = 0;
+  friction = 0;
   keysPressed: Set<string> = new Set();
-  panelWidth: number = 0;
-  panelHeight: number = 0;
+  panelWidth = 0;
+  panelHeight = 0;
   movementInterval: number | null = null;
   numbersAfterDot = 4;
   decayPrecision = 1 / Math.pow(10, this.numbersAfterDot);
@@ -209,6 +213,34 @@ export class ElementState implements LayerElement {
     // Limit decimal precision and stop updating when stale
     const roundedTop = this.roundToPrecision(newTop, this.numbersAfterDot);
     const roundedLeft = this.roundToPrecision(newLeft, this.numbersAfterDot);
+
+    // Update player position through backend API
+    const user = config.bootData.user;
+    const payload: PlayerPayload = {
+      action: 'update',
+      player_id: user.uid,
+      x: roundedLeft,
+      y: roundedTop,
+      rotation: this.rotation,
+    };
+    const now = Date.now();
+    if (now - lastFetchTime >= throttleDelay) {
+      try {
+        fetch('/api/live/players', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+          credentials: 'include', // Include cookies for session auth
+        });
+        lastFetchTime = now;
+      } catch (err) {
+        console.error('Error adding player:', err);
+      }
+    } else {
+      console.log('blocked');
+    }
 
     if (this.position.top !== roundedTop || this.position.left !== roundedLeft) {
       this.position = {
