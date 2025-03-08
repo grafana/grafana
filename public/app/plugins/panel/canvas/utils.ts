@@ -114,15 +114,19 @@ export function onAddItem(sel: SelectableValue<string>, rootLayer: FrameState | 
   }
 
   if (rootLayer) {
+    const isPlayerType = newElementOptions.type === 'player';
+    const user = config.bootData.user;
+    if (isPlayerType) {
+      newElementOptions.name = user.uid;
+    }
     const newElement = new ElementState(newItem, newElementOptions, rootLayer);
     newElement.updateData(rootLayer.scene.context);
     rootLayer.elements.push(newElement);
     rootLayer.scene.save();
     rootLayer.reinitializeMoveable();
 
-    if (newElementOptions.type === 'player') {
+    if (isPlayerType) {
       // Add player through backend API
-      const user = config.bootData.user;
       const payload = {
         action: 'add',
         player_id: user.uid,
@@ -130,7 +134,6 @@ export function onAddItem(sel: SelectableValue<string>, rootLayer: FrameState | 
         y: newElementOptions.placement?.top,
         rotation: newElementOptions.placement?.rotation,
       };
-      console.log(payload);
       try {
         fetch('/api/live/players', {
           method: 'POST',
