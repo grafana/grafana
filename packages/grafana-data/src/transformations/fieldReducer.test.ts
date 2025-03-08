@@ -235,47 +235,64 @@ describe('Stats Calculators', () => {
     }
   });
 
-  it('count should ignoreNulls by default', () => {
-    const someNulls = createField('x', [1, null, null, 1]);
-    expect(reduce(someNulls, ReducerID.count)).toEqual(2);
-  });
+  const reducerTestCases = (values: (number | null)[]) => [
+    // Min reducer
+    { values, config: undefined, expected: 1, reducerID: ReducerID.min },
+    { values, config: NullValueMode.Ignore, expected: 1, reducerID: ReducerID.min },
+    { values, config: NullValueMode.Null, expected: 1, reducerID: ReducerID.min },
+    { values, config: NullValueMode.AsZero, expected: 0, reducerID: ReducerID.min },
+    // Mean reducer
+    { values, config: undefined, expected: 2.5, reducerID: ReducerID.mean },
+    { values, config: NullValueMode.Ignore, expected: 2.5, reducerID: ReducerID.mean },
+    { values, config: NullValueMode.Null, expected: 2.5, reducerID: ReducerID.mean },
+    { values, config: NullValueMode.AsZero, expected: 2, reducerID: ReducerID.mean },
+    // Median reducer
+    { values, config: undefined, expected: 2.5, reducerID: ReducerID.median },
+    { values, config: NullValueMode.Ignore, expected: 2.5, reducerID: ReducerID.median },
+    { values, config: NullValueMode.Null, expected: 2, reducerID: ReducerID.median },
+    { values, config: NullValueMode.AsZero, expected: 2, reducerID: ReducerID.median },
+    // Count reducer
+    { values, config: undefined, expected: 4, reducerID: ReducerID.count },
+    { values, config: NullValueMode.Ignore, expected: 4, reducerID: ReducerID.count },
+    { values, config: NullValueMode.Null, expected: 5, reducerID: ReducerID.count },
+    { values, config: NullValueMode.AsZero, expected: 5, reducerID: ReducerID.count },
+    // Range reducer
+    { values, config: undefined, expected: 3, reducerID: ReducerID.range },
+    { values, config: NullValueMode.Ignore, expected: 3, reducerID: ReducerID.range },
+    { values, config: NullValueMode.Null, expected: 3, reducerID: ReducerID.range },
+    { values, config: NullValueMode.AsZero, expected: 4, reducerID: ReducerID.range },
+    // Delta reducer
+    { values, config: undefined, expected: 4, reducerID: ReducerID.delta },
+    { values, config: NullValueMode.Ignore, expected: 4, reducerID: ReducerID.delta },
+    { values, config: NullValueMode.Null, expected: 4, reducerID: ReducerID.delta },
+    { values, config: NullValueMode.AsZero, expected: 6, reducerID: ReducerID.delta },
+    // Distinct count reducer
+    { values, config: undefined, expected: 4, reducerID: ReducerID.distinctCount },
+    { values, config: NullValueMode.Ignore, expected: 4, reducerID: ReducerID.distinctCount },
+    { values, config: NullValueMode.Null, expected: 5, reducerID: ReducerID.distinctCount },
+    { values, config: NullValueMode.AsZero, expected: 5, reducerID: ReducerID.distinctCount },
+    // Step reducer
+    { values, config: undefined, expected: -1, reducerID: ReducerID.step },
+    { values, config: NullValueMode.Ignore, expected: -1, reducerID: ReducerID.step },
+    { values, config: NullValueMode.Null, expected: -1, reducerID: ReducerID.step },
+    { values, config: NullValueMode.AsZero, expected: -3, reducerID: ReducerID.step },
+    // Change count reducer
+    { values, config: undefined, expected: 3, reducerID: ReducerID.changeCount },
+    { values, config: NullValueMode.Ignore, expected: 3, reducerID: ReducerID.changeCount },
+    { values, config: NullValueMode.Null, expected: 4, reducerID: ReducerID.changeCount },
+    { values, config: NullValueMode.AsZero, expected: 4, reducerID: ReducerID.changeCount },
+  ];
 
-  it('count should use fieldConfig nullValueMode.Ignore and not count nulls', () => {
-    const someNulls = createField('x', [1, null, null, 1]);
-    someNulls.config.nullValueMode = NullValueMode.Ignore;
+  // Programmatic testing of reducer functions to be sure they handle count nulls, ignore nulls, and null as zero
+  it.each(reducerTestCases([3, null, 2, 1, 4]))(
+    '$reducerID reducer returns count $expected for fieldConfig $config',
+    ({ config, expected, reducerID, values }) => {
+      const someNulls = createField('x', values);
+      someNulls.config.nullValueMode = config;
 
-    expect(reduce(someNulls, ReducerID.count)).toEqual(2);
-  });
-
-  it('count should use fieldConfig nullValueMode.Null and count nulls', () => {
-    const someNulls = createField('x', [1, null, null, 1]);
-    someNulls.config.nullValueMode = NullValueMode.Null;
-
-    expect(reduce(someNulls, ReducerID.count)).toEqual(4);
-  });
-
-  it('median should ignoreNulls by default', () => {
-    const someNulls = createField('y', [3, null, 2, 1, 4]);
-    expect(reduce(someNulls, ReducerID.median)).toEqual(2.5);
-  });
-
-  it('median should use fieldConfig nullValueMode.Ignore and not count nulls', () => {
-    const someNulls = createField('y', [3, null, 2, 1, 4]);
-    someNulls.config.nullValueMode = NullValueMode.Ignore;
-    expect(reduce(someNulls, ReducerID.median)).toEqual(2.5);
-  });
-
-  it('median should use fieldConfig nullValueMode.Null and count nulls', () => {
-    const someNulls = createField('y', [3, null, 2, 1, 4]);
-    someNulls.config.nullValueMode = NullValueMode.Null;
-    expect(reduce(someNulls, ReducerID.median)).toEqual(2);
-  });
-
-  it('median should use fieldConfig nullValueMode.AsZero and count nulls as zero', () => {
-    const someNulls = createField('y', [3, null, 2, 1, 4]);
-    someNulls.config.nullValueMode = NullValueMode.AsZero;
-    expect(reduce(someNulls, ReducerID.median)).toEqual(2);
-  });
+      expect(reduce(someNulls, reducerID)).toEqual(expected);
+    }
+  );
 
   it('can reduce to percentiles', () => {
     // This `Array.from` will build an array of elements from 1 to 99
