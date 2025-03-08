@@ -2,6 +2,7 @@ package generic
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
@@ -197,7 +198,8 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 		return nil, nil, err
 	}
 	fieldsSet := fields.Set{
-		"metadata.name": accessor.GetName(),
+		"metadata.name":       accessor.GetName(),
+		"metadata.generation": strconv.FormatInt(accessor.GetGeneration(), 10),
 	}
 	return labels.Set(accessor.GetLabels()), fieldsSet, nil
 }

@@ -83,7 +83,7 @@ var (
 )
 
 func init() {
-	localSchemeBuilder.Register(addKnownTypes, addDefaultingFuncs)
+	localSchemeBuilder.Register(addKnownTypes, addDefaultingFuncs, addConversionFuncs)
 }
 
 // Adds the list of known types to the given scheme.
