@@ -85,6 +85,7 @@ func dashboardGuardianResponse(err error) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError
+// 406: notAcceptableError
 // 500: internalServerError
 //
 //nolint:gocyclo
@@ -99,14 +100,10 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		return rsp
 	}
 
-	// V2 values should be read from the k8s API
+	// v2 is not supported in /api
 	if strings.HasPrefix(dash.APIVersion, "v2") {
-		root := hs.Cfg.AppSubURL
-		if !strings.HasSuffix(root, "/") {
-			root += "/"
-		}
-		url := fmt.Sprintf("%sapis/dashboard.grafana.app/%s/namespaces/%s/dashboards/%s", root, dash.APIVersion, hs.namespacer(c.OrgID), dash.UID)
-		return response.Redirect(url)
+		url := fmt.Sprintf("/apis/dashboard.grafana.app/%s/namespaces/%s/dashboards/%s", dash.APIVersion, hs.namespacer(c.SignedInUser.GetOrgID()), dash.UID)
+		return response.Error(http.StatusNotAcceptable, "dashboard api version not supported, use "+url+" instead", nil)
 	}
 
 	var (

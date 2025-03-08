@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 
@@ -692,6 +693,46 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, false, dash.Meta.Provisioned)
+		}, mockSQLStore)
+	})
+
+	t.Run("v2 dashboards should not be returned in api", func(t *testing.T) {
+		mockSQLStore := dbtest.NewFakeDB()
+		dashboardService := dashboards.NewFakeDashboardService(t)
+
+		dataValue, err := simplejson.NewJson([]byte(`{"id": 1, "apiVersion": "v2"}`))
+		require.NoError(t, err)
+		qResult := &dashboards.Dashboard{
+			ID:         1,
+			UID:        "dash",
+			OrgID:      1,
+			APIVersion: "v2",
+			Data:       dataValue,
+		}
+		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
+		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true})
+
+		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", org.RoleEditor, func(sc *scenarioContext) {
+			hs := &HTTPServer{
+				Cfg:                          setting.NewCfg(),
+				LibraryPanelService:          &mockLibraryPanelService{},
+				LibraryElementService:        &libraryelementsfake.LibraryElementService{},
+				SQLStore:                     mockSQLStore,
+				AccessControl:                accesscontrolmock.New(),
+				DashboardService:             dashboardService,
+				Features:                     featuremgmt.WithFeatures(),
+				starService:                  startest.NewStarServiceFake(),
+				tracer:                       tracing.InitializeTracerForTest(),
+				dashboardProvisioningService: mockDashboardProvisioningService{},
+				folderService:                foldertest.NewFakeService(),
+				log:                          log.New("test"),
+				namespacer:                   func(orgID int64) string { return strconv.FormatInt(orgID, 10) },
+			}
+			hs.callGetDashboard(sc)
+
+			assert.Equal(t, http.StatusNotAcceptable, sc.resp.Code)
+			result := sc.ToJSON()
+			assert.Equal(t, "dashboard api version not supported, use /apis/dashboard.grafana.app/v2/namespaces/1/dashboards/dash instead", result.Get("message").MustString())
 		}, mockSQLStore)
 	})
 }
