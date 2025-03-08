@@ -211,7 +211,7 @@ export const getButtonStyles = (props: StyleProps) => {
   const { height, padding, fontSize } = getPropertiesForButtonSize(size, theme);
   const variantStyles = getPropertiesForVariant(theme, variant, fill);
   const disabledStyles = getPropertiesForDisabled(theme, variant, fill);
-  const focusStyle = getFocusStyles(theme);
+  const focusStyle = getFocusStyles(theme, variantStyles.background);
   const paddingMinusBorder = theme.spacing.gridSize * padding - 1;
 
   return {
