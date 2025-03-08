@@ -1,7 +1,7 @@
 import { omit } from 'lodash';
 
 import { AnnotationQuery } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   behaviors,
   dataLayers,
@@ -45,7 +45,13 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
+import {
+  getLibraryPanelBehavior,
+  getPanelIdForVizPanel,
+  getQueryRunnerFor,
+  getVizPanelKeyForPanelId,
+  isLibraryPanel,
+} from '../utils/utils';
 
 import { getLayout } from './layoutSerializers/utils';
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
@@ -61,6 +67,8 @@ type DeepPartial<T> = T extends object
 export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnapshot = false): DashboardV2Spec {
   const sceneDash = scene.state;
   const timeRange = sceneDash.$timeRange!.state;
+
+  const { initialElements } = getInitialModelContext(scene);
 
   const controlsState = sceneDash.controls?.state;
   const refreshPicker = controlsState?.refreshPicker;
@@ -97,7 +105,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF variables
 
     // elements
-    elements: getElements(scene),
+    elements: getElements(scene, initialElements),
     // EOF elements
 
     // annotations
@@ -140,7 +148,7 @@ function getLiveNow(state: DashboardSceneState) {
   return Boolean(liveNow);
 }
 
-function getElements(scene: DashboardScene) {
+function getElements(scene: DashboardScene, initialElements?: Record<string, Element>): Record<string, Element> {
   const panels = scene.state.body.getVizPanels() ?? [];
 
   const panelsArray = panels.map((vizPanel: VizPanel) => {
@@ -194,6 +202,12 @@ function getElements(scene: DashboardScene) {
         defaults,
       };
 
+      const initialPanel = initialElements?.[getVizPanelKeyForPanelId(getPanelIdForVizPanel(vizPanel))];
+
+      if (initialPanel && initialPanel.kind !== 'Panel') {
+        throw new Error('Initial panel is not a Panel');
+      }
+
       const elementSpec: PanelKind = {
         kind: 'Panel',
         spec: {
@@ -204,7 +218,7 @@ function getElements(scene: DashboardScene) {
           data: {
             kind: 'QueryGroup',
             spec: {
-              queries: getVizPanelQueries(vizPanel),
+              queries: getVizPanelQueries(vizPanel, initialPanel),
               transformations: getVizPanelTransformations(vizPanel),
               queryOptions: getVizPanelQueryOptions(vizPanel),
             },
@@ -233,24 +247,46 @@ function getPanelLinks(panel: VizPanel): DataLink[] {
   return [];
 }
 
-function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
+function getVizPanelQueries(vizPanel: VizPanel, initialPanel?: PanelKind): PanelQueryKind[] {
+  const isNewDash = locationService.getLocation().pathname === '/dashboard/new';
   const queries: PanelQueryKind[] = [];
   const queryRunner = getQueryRunnerFor(vizPanel);
   const vizPanelQueries = queryRunner?.state.queries;
   const datasource = queryRunner?.state.datasource ?? getDefaultDataSourceRef();
 
   if (vizPanelQueries) {
-    vizPanelQueries.forEach((query) => {
+    vizPanelQueries.forEach((query, i) => {
+      const initialDatasourceUID = initialPanel?.spec.data.spec.queries[i].spec.datasource?.uid;
+      const initialQuery = initialPanel?.spec.data.spec.queries[i].spec.query;
+      const isNewPanel = !initialPanel;
+
+      if (isNewPanel && initialQuery === undefined) {
+        throw new Error('Initial query needs to be defined for a new panel');
+      } else if (!initialQuery) {
+        throw new Error('Initial query needed to be defined when creating a panel');
+      }
+
+      const updateQueryAndDS = isNewDash || isNewPanel || initialDatasourceUID;
+
       const dataQuery: DataQueryKind = {
-        kind: getDataQueryKind(query),
-        spec: omit(query, 'datasource', 'refId', 'hide'),
+        /* If the datasource wasn't provided when dashboard was created and we are not creating a new dashboard, 
+        then we revert to the original query and datasource */
+        kind: updateQueryAndDS ? getDataQueryKind(query) : initialQuery.kind,
+        spec: updateQueryAndDS ? omit(query, 'datasource', 'refId', 'hide') : initialQuery.spec,
       };
+
       const querySpec: PanelQuerySpec = {
-        datasource: query.datasource ?? datasource,
         query: dataQuery,
         refId: query.refId,
         hidden: Boolean(query.hide),
       };
+
+      // If the datasource has changed and this is not a new dashboard, update the query
+      // Otherwise keep the initial datasource
+      if (updateQueryAndDS) {
+        querySpec.datasource = datasource;
+      }
+
       queries.push({
         kind: 'PanelQuery',
         spec: querySpec,
@@ -432,6 +468,35 @@ export function getDefaultDataSourceRef(): DataSourceRef {
   const ds = dsList[defaultDatasource];
 
   return { type: ds.meta.id, uid: ds.name }; // in the datasource list from bootData "id" is the type
+}
+
+interface InitialModelContext {
+  initialElements?: Record<string, Element>;
+  initialVariables?: Array<
+    | QueryVariableKind
+    | TextVariableKind
+    | IntervalVariableKind
+    | DatasourceVariableKind
+    | CustomVariableKind
+    | ConstantVariableKind
+    | GroupByVariableKind
+    | AdhocVariableKind
+  >;
+  initialAnnotations?: AnnotationQueryKind[];
+}
+
+function getInitialModelContext(scene: DashboardScene): InitialModelContext {
+  const initialModel = scene.getInitialSaveModel();
+
+  if (!initialModel || !('elements' in initialModel)) {
+    return {};
+  }
+
+  return {
+    initialElements: initialModel.elements,
+    initialVariables: initialModel.variables,
+    initialAnnotations: initialModel.annotations,
+  };
 }
 
 // Function to know if the dashboard transformed is a valid DashboardV2Spec
