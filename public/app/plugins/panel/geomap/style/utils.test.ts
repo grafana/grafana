@@ -1,7 +1,7 @@
 import { ResourceDimensionMode } from '@grafana/schema';
 
 import { HorizontalAlign, VerticalAlign, StyleConfig, SymbolAlign } from './types';
-import { getDisplacement, getStyleConfigState } from './utils';
+import { getDisplacement, getRGBValues, getStyleConfigState } from './utils';
 
 describe('style utils', () => {
   it('should fill in default values', async () => {
@@ -73,5 +73,25 @@ describe('style utils', () => {
     const radius = 10;
     const displacement = getDisplacement(symbolAlign, radius);
     expect(displacement).toEqual([0, 0]);
+  });
+  it('should return correct color values for hex default color', async () => {
+    const colorString = '#37872d';
+    const colorValues = getRGBValues(colorString);
+    expect(colorValues).toEqual({ r: 55, g: 135, b: 45 });
+  });
+  it('should return correct color values for rgb color', async () => {
+    const colorString = 'rgb(242, 73, 92)';
+    const colorValues = getRGBValues(colorString);
+    expect(colorValues).toEqual({ r: 242, g: 73, b: 92 });
+  });
+  it('should return correct color values for rgba color', async () => {
+    const colorString = 'rgba(90, 0, 135, 0.5)';
+    const colorValues = getRGBValues(colorString);
+    expect(colorValues).toEqual({ r: 90, g: 0, b: 135, a: 0.5 });
+  });
+  it('should return correct color values for transparent color', async () => {
+    const colorString = 'rgba(0, 0, 0, 0)';
+    const colorValues = getRGBValues(colorString);
+    expect(colorValues).toEqual({ r: 0, g: 0, b: 0, a: 0 });
   });
 });
