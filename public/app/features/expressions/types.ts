@@ -15,6 +15,9 @@ export enum ExpressionQueryType {
   classic = 'classic_conditions',
   threshold = 'threshold',
   sql = 'sql',
+  labelRewrite = 'label_rewrite',
+  merge = 'merge',
+  join = 'join',
 }
 
 export const getExpressionLabel = (type: ExpressionQueryType) => {
@@ -31,6 +34,12 @@ export const getExpressionLabel = (type: ExpressionQueryType) => {
       return 'Threshold';
     case ExpressionQueryType.sql:
       return 'SQL';
+    case ExpressionQueryType.labelRewrite:
+      return 'Rewrite Labels';
+    case ExpressionQueryType.merge:
+      return 'Merge Results';
+    case ExpressionQueryType.join:
+      return 'Join';
   }
 };
 
@@ -67,6 +76,21 @@ export const expressionTypes: Array<SelectableValue<ExpressionQueryType>> = [
     value: ExpressionQueryType.sql,
     label: 'SQL',
     description: 'Transform data using SQL. Supports Aggregate/Analytics functions from DuckDB',
+  },
+  {
+    value: ExpressionQueryType.labelRewrite,
+    label: 'Label Rewrite',
+    description: 'Add, remove and replace labels in the series',
+  },
+  {
+    value: ExpressionQueryType.merge,
+    label: 'Merge Results',
+    description: 'Allows to merge results of other expressions into one set',
+  },
+  {
+    value: ExpressionQueryType.join,
+    label: 'Join',
+    description: 'Allows to join results of other expressions by labels into one set',
   },
 ].filter((expr) => {
   if (expr.value === ExpressionQueryType.sql) {
@@ -149,6 +173,9 @@ export interface ExpressionQuery extends DataQuery {
   upsampler?: string;
   conditions?: ClassicCondition[];
   settings?: ExpressionQuerySettings;
+  labelRewrite?: LabelRewriteSettings;
+  merge?: MergeSettings;
+  join?: JoinSettings;
 }
 
 export interface ThresholdExpressionQuery extends ExpressionQuery {
@@ -194,3 +221,43 @@ export type ReducerType =
   | 'percent_diff'
   | 'percent_diff_abs'
   | 'count_non_null';
+
+export interface LabelRewriteSettings {
+  add?: Record<string, LabelAdd>;
+  remove?: string[];
+  replace?: Record<string, LabelReplace>;
+}
+
+export interface LabelAdd {
+  constant: string | null;
+  template: string | null;
+}
+
+export interface LabelReplace {
+  constant: string | null;
+  regex: string | null;
+  replace: string | null;
+}
+
+export interface MergeSettings {
+  refids: string[];
+  resolution: string;
+}
+
+export interface JoinSettings {
+  joinType: string;
+  leftRefId: string;
+  rightRefId: string;
+  expression: string;
+  labels: string[];
+}
+
+export const defaultJoin = (): JoinSettings => {
+  return {
+    joinType: 'inner',
+    leftRefId: '',
+    rightRefId: '',
+    expression: '',
+    labels: [],
+  };
+};
