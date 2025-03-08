@@ -30,7 +30,7 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 	testCases := []struct {
 		name                 string
 		targetOrgId          int64
-		targerOrgPermissions []accesscontrol.Permission
+		targetOrgPermissions []accesscontrol.Permission
 		orgIDGetter          accesscontrol.OrgIDGetter
 		evaluator            accesscontrol.Evaluator
 		accessControl        accesscontrol.AccessControl
@@ -46,14 +46,14 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			evaluator:            accesscontrol.EvalPermission("users:read", "users:*"),
 			accessControl:        ac,
 			ctxSignedInUser:      &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:read": {"users:*"}}}},
-			targerOrgPermissions: []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
+			targetOrgPermissions: []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
 			teamService:          &teamtest.FakeService{},
 			expectedStatus:       http.StatusOK,
 		},
 		{
 			name:                 "should authorize user with non-global org ID - no fetch",
 			targetOrgId:          1,
-			targerOrgPermissions: []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
+			targetOrgPermissions: []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
 			evaluator:            accesscontrol.EvalPermission("users:read", "users:*"),
 			accessControl:        ac,
 			ctxSignedInUser:      &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:read": {"users:*"}}}},
@@ -63,7 +63,7 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 		{
 			name:                 "should return 403 when user has no permissions for the org",
 			targetOrgId:          1,
-			targerOrgPermissions: []accesscontrol.Permission{},
+			targetOrgPermissions: []accesscontrol.Permission{},
 			evaluator:            accesscontrol.EvalPermission("users:read", "users:*"),
 			accessControl:        ac,
 			ctxSignedInUser:      &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{}},
@@ -73,7 +73,7 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 		{
 			name:                 "should return 200 when user has permissions for a global org",
 			targetOrgId:          accesscontrol.GlobalOrgID,
-			targerOrgPermissions: []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
+			targetOrgPermissions: []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
 			evaluator:            accesscontrol.EvalPermission("users:read", "users:*"),
 			accessControl:        ac,
 			ctxSignedInUser:      &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:read": {"users:*"}}}},
@@ -83,7 +83,7 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 		{
 			name:                 "should return 403 when user has no permissions for a global org",
 			targetOrgId:          accesscontrol.GlobalOrgID,
-			targerOrgPermissions: []accesscontrol.Permission{},
+			targetOrgPermissions: []accesscontrol.Permission{},
 			evaluator:            accesscontrol.EvalPermission("users:read", "users:*"),
 			accessControl:        ac,
 			ctxSignedInUser:      &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:read": {"users:*"}}}},
@@ -93,7 +93,7 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 		{
 			name:                 "should fetch user permissions when org ID doesn't match",
 			targetOrgId:          2,
-			targerOrgPermissions: []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
+			targetOrgPermissions: []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
 			evaluator:            accesscontrol.EvalPermission("users:read", "users:*"),
 			accessControl:        ac,
 			teamService:          &teamtest.FakeService{},
@@ -103,7 +103,7 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 		{
 			name:                 "fails to fetch user permissions when org ID doesn't match",
 			targetOrgId:          2,
-			targerOrgPermissions: []accesscontrol.Permission{},
+			targetOrgPermissions: []accesscontrol.Permission{},
 			evaluator:            accesscontrol.EvalPermission("users:read", "users:*"),
 			accessControl:        ac,
 			teamService:          &teamtest.FakeService{},
@@ -162,7 +162,7 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 				OrgID:       tc.targetOrgId,
 				Permissions: map[int64]map[string][]string{},
 			}
-			expectedIdentity.Permissions[tc.targetOrgId] = accesscontrol.GroupScopesByAction(tc.targerOrgPermissions)
+			expectedIdentity.Permissions[tc.targetOrgId] = accesscontrol.GroupScopesByAction(tc.targetOrgPermissions)
 			var expectedErr error
 			if len(tc.authnErrors) > 0 {
 				expectedErr = tc.authnErrors[0]
