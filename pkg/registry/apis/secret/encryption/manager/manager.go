@@ -63,7 +63,7 @@ func ProvideEncryptionManager(
 	ttl := cfg.SecretsManagement.Encryption.DataKeysCacheTTL
 	currentProviderID := encryption.ProviderID(cfg.SecretsManagement.EncryptionProvider)
 
-	enc, err := service.ProvideEncryptionService(tracer, usageStats, cfg)
+	enc, err := service.NewEncryptionService(tracer, usageStats, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create encryption service: %w", err)
 	}

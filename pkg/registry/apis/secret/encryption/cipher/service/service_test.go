@@ -19,7 +19,7 @@ func Test_Service(t *testing.T) {
 	usageStats := &usagestats.UsageStatsMock{}
 	settings := setting.NewCfg()
 
-	svc, err := ProvideEncryptionService(tracing.InitializeTracerForTest(), usageStats, settings)
+	svc, err := NewEncryptionService(tracing.InitializeTracerForTest(), usageStats, settings)
 	require.NoError(t, err)
 
 	t.Run("decrypt empty payload should return error", func(t *testing.T) {
@@ -77,7 +77,7 @@ func Test_Service_MissingProvider(t *testing.T) {
 	usageStats := &usagestats.UsageStatsMock{}
 	settings := setting.NewCfg()
 
-	service, err := ProvideEncryptionService(tracing.InitializeTracerForTest(), usageStats, settings)
+	service, err := NewEncryptionService(tracing.InitializeTracerForTest(), usageStats, settings)
 	assert.Nil(t, service)
 	assert.Error(t, err)
 }

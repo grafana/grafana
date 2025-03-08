@@ -16,7 +16,7 @@ func SetupTestService(tb testing.TB) *Service {
 	usMock := &usagestats.UsageStatsMock{T: tb}
 	settings := setting.NewCfg()
 
-	service, err := ProvideEncryptionService(tracing.InitializeTracerForTest(), usMock, settings)
+	service, err := NewEncryptionService(tracing.InitializeTracerForTest(), usMock, settings)
 	require.NoError(tb, err)
 
 	return service

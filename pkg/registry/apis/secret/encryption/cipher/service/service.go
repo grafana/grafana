@@ -38,7 +38,7 @@ type Service struct {
 	deciphers map[string]cipher.Decrypter
 }
 
-func ProvideEncryptionService(
+func NewEncryptionService(
 	tracer tracing.Tracer,
 	usageMetrics usagestats.Service,
 	cfg *setting.Cfg,
