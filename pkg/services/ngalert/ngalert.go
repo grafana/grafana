@@ -3,6 +3,7 @@ package ngalert
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"net/url"
 	"time"
 
@@ -80,6 +81,7 @@ func ProvideService(
 	httpClientProvider httpclient.Provider,
 	resourcePermissions accesscontrol.ReceiverPermissionsService,
 	userService user.Service,
+	unified resource.ResourceClient,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                  cfg,
@@ -109,6 +111,7 @@ func ProvideService(
 		httpClientProvider:   httpClientProvider,
 		ResourcePermissions:  resourcePermissions,
 		userService:          userService,
+		unifiedStore:         unified,
 	}
 
 	if ng.IsDisabled() {
@@ -159,6 +162,7 @@ type AlertNG struct {
 	ResourcePermissions  accesscontrol.ReceiverPermissionsService
 	annotationsRepo      annotations.Repository
 	store                *store.DBstore
+	unifiedStore         resource.ResourceClient
 	userService          user.Service
 
 	bus          bus.Bus
@@ -502,6 +506,7 @@ func (ng *AlertNG) init() error {
 		Hooks:                api.NewHooks(ng.Log),
 		Tracer:               ng.tracer,
 		UserService:          ng.userService,
+		UnifiedStorage:       ng.unifiedStore,
 	}
 	ng.Api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
