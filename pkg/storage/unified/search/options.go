@@ -34,7 +34,7 @@ func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tra
 			return resource.SearchOptions{}, err
 		}
 
-		err = reg.Register(resource.NewIndexMetrics(cfg.IndexPath, bleve))
+		err = reg.Register(resource.NewIndexMetrics())
 		if err != nil {
 			slog.Warn("Failed to register indexer metrics", "error", err)
 		}
