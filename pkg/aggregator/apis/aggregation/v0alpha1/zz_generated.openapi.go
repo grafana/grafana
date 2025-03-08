@@ -14,6 +14,7 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
+		"github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1.Backend":                   schema_aggregator_apis_aggregation_v0alpha1_Backend(ref),
 		"github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1.DataPlaneService":          schema_aggregator_apis_aggregation_v0alpha1_DataPlaneService(ref),
 		"github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1.DataPlaneServiceCondition": schema_aggregator_apis_aggregation_v0alpha1_DataPlaneServiceCondition(ref),
 		"github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1.DataPlaneServiceList":      schema_aggregator_apis_aggregation_v0alpha1_DataPlaneServiceList(ref),
@@ -21,6 +22,53 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1.DataPlaneServiceStatus":    schema_aggregator_apis_aggregation_v0alpha1_DataPlaneServiceStatus(ref),
 		"github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1.QueryDataResponse":         schema_aggregator_apis_aggregation_v0alpha1_QueryDataResponse(ref),
 		"github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1.Service":                   schema_aggregator_apis_aggregation_v0alpha1_Service(ref),
+	}
+}
+
+func schema_aggregator_apis_aggregation_v0alpha1_Backend(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Type is the type of backend to use.\n\nPossible enum values:\n - `\"http\"`\n - `\"plugin\"`",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"http", "plugin"},
+						},
+					},
+					"pluginID": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PluginID is the ID of the plugin to use.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"pluginType": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PluginType is the type of plugin to use.\n\nPossible enum values:\n - `\"app\"`\n - `\"datasource\"`",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"app", "datasource"},
+						},
+					},
+					"baseURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "BaseURL is the URL prefix to use with the HTTP reverse proxy backend.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"type"},
+			},
+		},
 	}
 }
 
@@ -175,22 +223,6 @@ func schema_aggregator_apis_aggregation_v0alpha1_DataPlaneServiceSpec(ref common
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"pluginID": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"pluginType": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Possible enum values:\n - `\"app\"`\n - `\"datasource\"`",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-							Enum:        []interface{}{"app", "datasource"},
-						},
-					},
 					"group": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -227,12 +259,19 @@ func schema_aggregator_apis_aggregation_v0alpha1_DataPlaneServiceSpec(ref common
 							},
 						},
 					},
+					"backend": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Backend is the backend to use for the proxied service.",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1.Backend"),
+						},
+					},
 				},
-				Required: []string{"pluginID", "pluginType", "group", "version"},
+				Required: []string{"group", "version", "backend"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1.Service"},
+			"github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1.Backend", "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1.Service"},
 	}
 }
 
@@ -342,7 +381,7 @@ func schema_aggregator_apis_aggregation_v0alpha1_Service(ref common.ReferenceCal
 					},
 					"path": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Path is used by the CustomRouteServiceType and SubResourceServiceType to specify the path to the endpoint.",
+							Description: "Path is used by the RouteServiceType specify the path to the endpoint.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
