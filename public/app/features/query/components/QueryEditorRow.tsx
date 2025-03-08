@@ -415,7 +415,13 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const colour = type === 'warning' ? 'orange' : 'blue';
     const iconName = type === 'warning' ? 'exclamation-triangle' : 'file-landscape-alt';
 
-    const serializedWarnings = uniqueWarnings.map((warning) => warning.text).join('\n');
+    let serializedWarnings;
+    if (uniqueWarnings.length > 1) {
+      let textWarnings = uniqueWarnings.map((warning) => <li>{warning.text}</li>);
+      serializedWarnings = <ul>{textWarnings}</ul>;
+    } else {
+      serializedWarnings = uniqueWarnings[0].text;
+    }
 
     return (
       <Badge
