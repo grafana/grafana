@@ -1214,7 +1214,18 @@
     },
     "rows-layout": {
       "description": "",
+      "item-name": "",
       "name": "",
+      "option": {
+        "height": "",
+        "hide-header": "",
+        "repeat": "",
+        "title": ""
+      },
+      "options": {
+        "height-expand": "",
+        "height-min": ""
+      },
       "row": {
         "collapse": "",
         "expand": "",
@@ -1234,15 +1245,6 @@
         }
       },
       "row-options": {
-        "height": {
-          "hide-row-header": ""
-        },
-        "repeat": {
-          "variable": {
-            "title": ""
-          }
-        },
-        "title": "",
         "title-option": ""
       }
     },
@@ -1911,6 +1913,16 @@
     "named-colors-palette": {
       "text-color-swatch": "",
       "transparent-swatch": ""
+    },
+    "page-toolbar": {
+      "go-back": "",
+      "search-dashboard-name": "",
+      "search-links": "",
+      "search-parent-folder": ""
+    },
+    "pagination": {
+      "next-page": "",
+      "previous-page": ""
     },
     "secret-form-field": {
       "reset": ""
@@ -2908,6 +2920,10 @@
     }
   },
   "navigation": {
+    "invite-user": {
+      "invite-button": "",
+      "invite-tooltip": ""
+    },
     "item": {
       "add-bookmark": "",
       "remove-bookmark": ""
@@ -3522,7 +3538,6 @@
   "share-dashboard": {
     "menu": {
       "export-json-title": "",
-      "invite-user-title": "",
       "share-externally-title": "",
       "share-internally-title": "",
       "share-snapshot-title": ""
