@@ -10,10 +10,16 @@ import {
   VizPanelState,
 } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema/dist/esm/index.gen';
-import { DashboardV2Spec, PanelKind, PanelQueryKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import {
+  DashboardV2Spec,
+  LibraryPanelKind,
+  PanelKind,
+  PanelQueryKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBehaviour';
+import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
@@ -74,6 +80,50 @@ export function buildVizPanel(panel: PanelKind): VizPanel {
       timeFrom: queryOptions.timeFrom,
       timeShift: queryOptions.timeShift,
       hideTimeOverride: queryOptions.hideTimeOverride,
+    });
+  }
+
+  return new VizPanel(vizPanelState);
+}
+
+export function buildLibraryPanel(panel: LibraryPanelKind): VizPanel {
+  const titleItems: SceneObject[] = [];
+
+  if (config.featureToggles.angularDeprecationUI) {
+    titleItems.push(new AngularDeprecation());
+  }
+
+  titleItems.push(
+    new VizPanelLinks({
+      rawLinks: [],
+      menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
+    })
+  );
+
+  titleItems.push(new PanelNotices());
+
+  const vizPanelState: VizPanelState = {
+    key: getVizPanelKeyForPanelId(panel.spec.id),
+    titleItems,
+    $behaviors: [
+      new LibraryPanelBehavior({
+        uid: panel.spec.libraryPanel.uid,
+        name: panel.spec.libraryPanel.name,
+      }),
+    ],
+    extendPanelContext: setDashboardPanelContext,
+    pluginId: LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID,
+    title: panel.spec.title,
+    options: {},
+    fieldConfig: {
+      defaults: {},
+      overrides: [],
+    },
+  };
+
+  if (!config.publicDashboardAccessToken) {
+    vizPanelState.menu = new VizPanelMenu({
+      $behaviors: [panelMenuBehavior],
     });
   }
 
