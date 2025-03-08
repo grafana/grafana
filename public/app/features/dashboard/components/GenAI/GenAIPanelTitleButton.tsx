@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { Dashboard, Panel } from '@grafana/schema';
 
 import { GenAIButton } from './GenAIButton';
@@ -18,9 +20,11 @@ const TITLE_GENERATION_STANDARD_PROMPT =
   `The title should be shorter than ${PANEL_TITLE_CHAR_LIMIT} characters.`;
 
 export const GenAIPanelTitleButton = ({ onGenerate, panel, dashboard }: GenAIPanelTitleButtonProps) => {
+  const messages = useCallback(() => getMessages(panel, dashboard), [panel, dashboard]);
+
   return (
     <GenAIButton
-      messages={() => getMessages(panel, dashboard)}
+      messages={messages}
       onGenerate={onGenerate}
       eventTrackingSrc={EventTrackingSrc.panelTitle}
       toggleTipTitle={'Improve your panel title'}
@@ -33,7 +37,9 @@ function getMessages(panel: Panel, dashboard: Dashboard): Message[] {
 
   return [
     {
-      content: TITLE_GENERATION_STANDARD_PROMPT,
+      content:
+        `${TITLE_GENERATION_STANDARD_PROMPT}\n` +
+        `Disregard the current panel title and come up with one that makes sense given the panel's type and purpose. The panel's type is ${panel.type}`,
       role: Role.system,
     },
     {
