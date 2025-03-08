@@ -65,6 +65,12 @@ type Dialect interface {
 
 	// CurrentEpoch returns the current epoch value for the database in microseconds.
 	CurrentEpoch() string
+
+	// JsonExtract returns the SQL expression to extract a value from a JSON column.
+	// tableAlias: optional table alias (can be empty)
+	// column: column name
+	// fieldKey: the key to extract from JSON (without the $. prefix)
+	JsonExtract(tableAlias string, column string, fieldKey string) string
 }
 
 // RowLockingClause represents a row-locking clause in a SELECT statement.
