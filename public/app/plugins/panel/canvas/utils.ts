@@ -11,7 +11,12 @@ import {
   ConnectionDirection,
 } from 'app/features/canvas/element';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
-import { advancedElementItems, canvasElementRegistry, defaultElementItems } from 'app/features/canvas/registry';
+import {
+  advancedElementItems,
+  canvasElementRegistry,
+  defaultElementItems,
+  multiplayerElementItems,
+} from 'app/features/canvas/registry';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene, SelectionParams } from 'app/features/canvas/runtime/scene';
@@ -19,25 +24,40 @@ import { Scene, SelectionParams } from 'app/features/canvas/runtime/scene';
 import { AnchorPoint, ConnectionState, LineStyle, StrokeDasharray } from './types';
 
 export function doSelect(scene: Scene, element: ElementState | FrameState) {
-  try {
-    let selection: SelectionParams = { targets: [] };
-    if (element instanceof FrameState) {
-      const targetElements: HTMLDivElement[] = [];
-      targetElements.push(element?.div!);
-      selection.targets = targetElements;
-      selection.frame = element;
-      scene.select(selection);
-    } else {
-      scene.currentLayer = element.parent;
-      selection.targets = [element?.div!];
-      scene.select(selection);
+  if (element.options.type !== 'player') {
+    try {
+      let selection: SelectionParams = { targets: [] };
+      if (element instanceof FrameState) {
+        const targetElements: HTMLDivElement[] = [];
+        targetElements.push(element?.div!);
+        selection.targets = targetElements;
+        selection.frame = element;
+        scene.select(selection);
+      } else {
+        scene.currentLayer = element.parent;
+        selection.targets = [element?.div!];
+        scene.select(selection);
+      }
+    } catch (error) {
+      appEvents.emit(AppEvents.alertError, ['Unable to select element, try selecting element in panel instead']);
     }
-  } catch (error) {
-    appEvents.emit(AppEvents.alertError, ['Unable to select element, try selecting element in panel instead']);
   }
 }
 
-export function getElementTypes(shouldShowAdvancedTypes: boolean | undefined, current?: string): RegistrySelectInfo {
+export function getElementTypes(
+  shouldShowAdvancedTypes: boolean | undefined,
+  current?: string,
+  multiplayer?: boolean,
+  existingPlayer?: ElementState | undefined
+): RegistrySelectInfo {
+  if (multiplayer) {
+    const addPlayerOption = getElementTypesOptions([...multiplayerElementItems], current);
+    // This limits the player to only one player element
+    if (existingPlayer) {
+      addPlayerOption.options[0].isDisabled = true;
+    }
+    return addPlayerOption;
+  }
   if (shouldShowAdvancedTypes) {
     return getElementTypesOptions([...defaultElementItems, ...advancedElementItems], current);
   }
@@ -74,7 +94,6 @@ export function getElementTypesOptions(items: CanvasElementItem[], current: stri
   for (const a of alpha) {
     selectables.options.push(a);
   }
-
   return selectables;
 }
 
@@ -95,11 +114,39 @@ export function onAddItem(sel: SelectableValue<string>, rootLayer: FrameState | 
   }
 
   if (rootLayer) {
+    const isPlayerType = newElementOptions.type === 'player';
+    const user = config.bootData.user;
+    if (isPlayerType) {
+      newElementOptions.name = user.uid;
+    }
     const newElement = new ElementState(newItem, newElementOptions, rootLayer);
     newElement.updateData(rootLayer.scene.context);
     rootLayer.elements.push(newElement);
     rootLayer.scene.save();
     rootLayer.reinitializeMoveable();
+
+    if (isPlayerType) {
+      // Add player through backend API
+      const payload = {
+        action: 'add',
+        player_id: user.uid,
+        x: newElementOptions.placement?.left,
+        y: newElementOptions.placement?.top,
+        rotation: newElementOptions.placement?.rotation,
+      };
+      try {
+        fetch('/api/live/players', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+          credentials: 'include', // Include cookies for session auth
+        });
+      } catch (err) {
+        console.error('Error adding player:', err);
+      }
+    }
 
     setTimeout(() => doSelect(rootLayer.scene, newElement));
   }

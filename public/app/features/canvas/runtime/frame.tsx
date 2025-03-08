@@ -1,12 +1,13 @@
 import { cloneDeep } from 'lodash';
 
+import { config } from '@grafana/runtime';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
 import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/plugins/panel/canvas/panelcfg.gen';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
 import { updateConnectionsForSource } from '../../../plugins/panel/canvas/utils';
-import { CanvasElementItem } from '../element';
+import { CanvasElementItem, CanvasElementOptions } from '../element';
 import { CanvasFrameOptions } from '../frame';
 import { canvasElementRegistry } from '../registry';
 
@@ -67,6 +68,60 @@ export class FrameState extends ElementState {
   }
 
   updateData(ctx: DimensionContext) {
+    const currentElementNames = this.elements.map((element) => element.options.name);
+
+    const playerSize = 24;
+    const user = config.bootData.user;
+    // for each player in database, check if already on the map and if position needs to be updated
+    ctx.getPanelData()?.series[0]?.fields[0]?.values.map((player, index) => {
+      const playerIsUser = player === user.uid;
+      const x = ctx.getPanelData()?.series[0].fields[1].values[index];
+      const y = ctx.getPanelData()?.series[0].fields[2].values[index];
+      const r = ctx.getPanelData()?.series[0].fields[3].values[index];
+      if (!currentElementNames.includes(player)) {
+        let playerType = 'enemy';
+        // check if player UID matches and add it as a player
+        if (playerIsUser) {
+          playerType = 'player';
+        }
+
+        // add player element
+        const newItem = canvasElementRegistry.getIfExists(playerType) ?? notFoundItem;
+        const newElementOptions: CanvasElementOptions = {
+          ...newItem.getNewOptions(),
+          type: newItem.id,
+          name: player,
+          config: !playerIsUser ? { color: { fixed: 'red' }, text: { fixed: player } } : undefined,
+        };
+        newElementOptions.placement = {
+          ...newElementOptions.placement,
+          top: y,
+          left: x,
+          rotation: r,
+          width: playerSize,
+          height: playerSize,
+        };
+        const newElement = new ElementState(newItem, newElementOptions, this.scene.root);
+        this.elements.push(newElement);
+      } else if (!playerIsUser) {
+        // Update existing element's placement if it exists
+        const matchingElementIndex = this.elements.findIndex((element) => element.options.name === player);
+        const matchingElement = this.elements[matchingElementIndex];
+        const matchingElementOptions = matchingElement.options;
+        if (
+          matchingElementIndex > -1 &&
+          (matchingElementOptions.placement?.top !== y ||
+            matchingElementOptions.placement?.left !== x ||
+            matchingElementOptions.placement?.rotation !== r)
+        ) {
+          this.elements[matchingElementIndex].onChange({
+            ...matchingElementOptions,
+            placement: { top: y, left: x, rotation: r, width: playerSize, height: playerSize },
+          });
+        }
+      }
+    });
+
     super.updateData(ctx);
     for (const elem of this.elements) {
       elem.updateData(ctx);

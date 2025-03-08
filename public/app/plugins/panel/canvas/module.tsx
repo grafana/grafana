@@ -47,6 +47,12 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
     defaultValue: false,
     showIf: (opts) => config.featureToggles.canvasPanelPanZoom && opts.panZoom,
   });
+  builder.addBooleanSwitch({
+    path: 'multiplayer',
+    name: 'Multiplayer',
+    description: 'Lock this panel and turn it into a multiplayer video game that any user of the instance can join',
+    defaultValue: false,
+  });
 };
 
 export const plugin = new PanelPlugin<Options>(CanvasPanel)

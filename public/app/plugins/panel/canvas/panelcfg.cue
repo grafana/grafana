@@ -98,6 +98,8 @@ composableKinds: PanelCfg: {
 					panZoom: bool | *true
 					// Enable infinite pan
 					infinitePan: bool | *true
+					// Enable multiplayer
+					multiplayer: bool | *false
 					// The root element of canvas (frame), where all canvas elements are nested
 					// TODO: Figure out how to define a default value for this
 					root: {

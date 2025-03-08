@@ -63,10 +63,13 @@ export class CanvasPanel extends Component<Props, State> {
       moveableAction: false,
     };
 
+    // Multiplayer video game toggle
+    const multiplayer = this.props.options.multiplayer;
+
     // TODO: Will need to update this approach for dashboard scenes
     // migration (new dashboard edit experience)
     const dashboard = getDashboardSrv().getCurrent();
-    const allowEditing = this.props.options.inlineEditing && dashboard?.editable;
+    const allowEditing = this.props.options.inlineEditing && dashboard?.editable && !multiplayer;
 
     // Only the initial options are ever used.
     // later changes are all controlled by the scene
@@ -77,7 +80,8 @@ export class CanvasPanel extends Component<Props, State> {
       this.props.options.panZoom,
       this.props.options.infinitePan,
       this.onUpdateScene,
-      this
+      this,
+      multiplayer
     );
     this.scene.updateSize(props.width, props.height);
     this.scene.updateData(props.data);
@@ -257,7 +261,8 @@ export class CanvasPanel extends Component<Props, State> {
         nextProps.options.inlineEditing,
         nextProps.options.showAdvancedTypes,
         nextProps.options.panZoom,
-        nextProps.options.infinitePan
+        nextProps.options.infinitePan,
+        nextProps.options.multiplayer
       );
       this.scene.updateSize(nextProps.width, nextProps.height);
       this.scene.updateData(nextProps.data);
