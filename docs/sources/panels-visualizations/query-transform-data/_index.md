@@ -112,32 +112,48 @@ query_result(max_over_time(<metric>[${__range_s}s]) != <state>)
 
 {{< docs/private-preview product="Query library" >}}
 
-The query library lets you save queries that you've created so you can reuse them later.
-
-When you write or construct a query, you can save that query.
-To add a query to the library, click the save icon in the query editor:
-
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-save-query-library-v11.6.png" max-width="750px" alt="" >}}
-
-This opens a dialog box where you can add a description for your query:
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-query-dialog-box-v11.6.png" max-width="550px" alt="" >}}
-
-To view your saved queries, click **Add query from library** when you're in the query editor:
-
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-query-from-library-v11.6.png" max-width="750px" alt="" >}}
-
-A drawer opens with saved queries:
+The query library lets you save queries that you've created so you can reuse them later:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-query-library-v11.6.png" max-width="550px" alt="" >}}
 
-You can search by data source name, or query content, and description or filter by data source name and author name.
-Filters use the OR operator.
-From this drawer, you can also edit a query description.
-After you've found the query you want to use, click **Select query** and it populates in the query editor.
+In the query library drawer, you can:
+
+- Search for queries by data source name, query content, and description.
+- Filter by data source name and author name (filters use the OR operator).
+- Edit a query description.
+
+To view your saved queries, click **Add query from library** from the query editor:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-query-from-library-v11.6.png" max-width="750px" alt="" >}}
 
 {{< admonition type="note" >}}
 The **Add query from library** button isn't yet available in all instances of the query editor.
 {{< /admonition >}}
+
+#### Save a query to the library
+
+To add a query to the library, follow these steps:
+
+1. Edit the panel to which you're adding a query.
+1. Click the **Query** tab.
+1. Click the **Data source** drop-down menu and select a data source.
+
+   If you're creating a new dashboard, you'll be prompted to select a data source when you add the first panel.
+
+1. Click **Query options** to configure the maximum number of data points you need.
+
+   For more information about query options, refer to [Query options](#query-options).
+
+1. Write or construct a query in the query language of your data source.
+1. Click the save icon in the query editor:
+
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-save-query-library-v11.6.png" max-width="750px" alt="" >}}
+
+1. In the **Add query to Query Library** dialog box, add a description to easily identify your query:
+
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-query-dialog-box-v11.6.png" max-width="550px" alt="" >}}
+
+1. Click **Save**.
 
 #### Known limitations
 
@@ -178,13 +194,43 @@ When you create a panel, Grafana automatically selects the default data source.
 
 1. Click **Query options** to configure the maximum number of data points you need.
    For more information about query options, refer to [Query options](#query-options).
-1. Write or construct a query in the query language of your data source or click **Add query from library** to add one from the [query library](#query-library).
+1. Write or construct a query in the query language of your data source .
 
    If you've created a query that you want to use again in other dashboards, add it to the query library by clicking the save icon on the query editor. Query library is in [private preview](https://grafana.com/docs/release-life-cycle/).
 
 1. Click **Apply**.
 
 Grafana queries the data source and visualizes the data.
+
+## Add a query from the library
+
+To use a query from the library, follow these steps:
+
+1. Edit the panel to which you're adding a query.
+1. Click the **Query** tab.
+1. Click the **Data source** drop-down menu and select a data source.
+
+   If you're creating a new dashboard, you'll be prompted to select a data source when you add the first panel.
+
+1. Click **Query options** to configure the maximum number of data points you need.
+
+   For more information about query options, refer to [Query options](#query-options).
+
+1. Click **Add query from library**.
+1. Search or filter to find the query you want to use.
+1. Click **Select query**.
+
+   The query editor is populated with the query you selected.
+
+1. Click **Apply**.
+
+Grafana queries the data source and visualizes the data.
+
+{{< admonition type="note" >}}
+The **Add query from library** button isn't yet available in all instances of the query editor.
+{{< /admonition >}}
+
+<!-- unclear about this apply step -->
 
 ## Manage queries
 
