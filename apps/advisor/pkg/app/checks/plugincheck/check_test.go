@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -142,7 +143,8 @@ func TestRun(t *testing.T) {
 			}
 			pluginPreinstall := &mockPluginPreinstall{pinned: tt.pluginPreinstalled}
 			managedPlugins := &mockManagedPlugins{managed: tt.pluginManaged}
-			check := New(pluginStore, pluginRepo, pluginPreinstall, managedPlugins)
+			provisionedPlugins := provisionedplugins.NewNoop()
+			check := New(pluginStore, pluginRepo, pluginPreinstall, managedPlugins, provisionedPlugins)
 
 			items, err := check.Items(context.Background())
 			assert.NoError(t, err)
