@@ -274,17 +274,15 @@ func formatName(labels map[string]string, query *lokiQuery) string {
 		return formatNamePrometheusStyle(labels)
 	}
 
-	result := legendFormat.ReplaceAllFunc([]byte(query.LegendFormat), func(in []byte) []byte {
-		labelName := strings.Replace(string(in), "{{", "", 1)
-		labelName = strings.Replace(labelName, "}}", "", 1)
-		labelName = strings.TrimSpace(labelName)
+	result := legendFormat.ReplaceAllStringFunc(query.LegendFormat, func(in string) string {
+		labelName := strings.TrimSuffix(strings.TrimPrefix(in, "{{"), "}}")
 		if val, exists := labels[labelName]; exists {
-			return []byte(val)
+			return val
 		}
-		return []byte{}
+		return ""
 	})
 
-	return string(result)
+	return result
 }
 
 func getFrameLabels(frame *data.Frame) map[string]string {
