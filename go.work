@@ -5,7 +5,7 @@ go 1.24.1
 
 use (
 	. // skip:golangci-lint
-	./.gotools
+	./.citools
 	./apps/advisor
 	./apps/alerting/notifications
 	./apps/investigations
