@@ -157,9 +157,19 @@ func Test_readPluginSettings(t *testing.T) {
 				expected: append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "1.0.1", "https://example.com/plugin1.tar.gz"}),
 			},
 			{
+				name:     "should parse a plugin with version and URL and basic auth",
+				rawInput: "plugin1@1.0.1@https://user:password@example.com/plugin1.tar.gz",
+				expected: append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "1.0.1", "https://user:password@example.com/plugin1.tar.gz"}),
+			},
+			{
 				name:     "should parse a plugin with URL",
 				rawInput: "plugin1@@https://example.com/plugin1.tar.gz",
 				expected: append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "", "https://example.com/plugin1.tar.gz"}),
+			},
+			{
+				name:     "should parse a plugin with URL and basic auth",
+				rawInput: "plugin1@@https://user:password@example.com/plugin1.tar.gz",
+				expected: append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "", "https://user:password@example.com/plugin1.tar.gz"}),
 			},
 		}
 		for _, tc := range tests {
