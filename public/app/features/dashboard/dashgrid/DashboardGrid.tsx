@@ -136,7 +136,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
       if (!panelFilter) {
         layout.push(panelPos);
       } else {
-        if (panelFilter.test(panel.title)) {
+        if (panelFilter.test(panel.title ?? '')) {
           panelPos.isResizable = false;
           panelPos.isDraggable = false;
           panelPos.x = (count % 2) * GRID_COLUMN_COUNT;
@@ -242,7 +242,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
       if (!panelFilter) {
         panelElements.push(p);
       } else {
-        if (panelFilter.test(panel.title)) {
+        if (panelFilter.test(panel.title ?? '')) {
           panelElements.push(p);
         }
       }

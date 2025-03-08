@@ -198,7 +198,7 @@ describe('OptionsPaneOptions', () => {
     const scenario = new OptionsPaneOptionsTestScenario();
     scenario.render();
 
-    const input = screen.getByDisplayValue(scenario.panel.title);
+    const input = screen.getByDisplayValue(scenario.panel.title ?? '');
     fireEvent.change(input, { target: { value: 'New' } });
     fireEvent.blur(input);
 
