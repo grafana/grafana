@@ -14,6 +14,7 @@ import { EditPaneHeader } from '../../edit-pane/EditPaneHeader';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { DashboardLayoutSelector } from '../layouts-shared/DashboardLayoutSelector';
+import { useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
 import { RowItem } from './RowItem';
 
@@ -77,9 +78,11 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
 
 function RowTitleInput({ row }: { row: RowItem }) {
   const { title } = row.useState();
+  const ref = useEditPaneInputAutoFocus();
 
   return (
     <Input
+      ref={ref}
       title={t('dashboard.rows-layout.row-options.title-option', 'Title')}
       value={title}
       onChange={(e) => row.onChangeTitle(e.currentTarget.value)}
