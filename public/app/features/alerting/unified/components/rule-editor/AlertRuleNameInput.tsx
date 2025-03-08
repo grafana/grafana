@@ -1,7 +1,11 @@
-import { useFormContext } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
 
+import { DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { Field, Input, Stack, Text } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { isCloudRecordingRuleByType, isGrafanaRecordingRuleByType, isRecordingRuleByType } from '../../utils/rules';
@@ -21,9 +25,11 @@ const recordingRuleNameValidationPattern = (type: RuleFormType) => ({
  */
 export const AlertRuleNameAndMetric = () => {
   const {
+    control,
     register,
     watch,
     formState: { errors },
+    setValue,
   } = useFormContext<RuleFormValues>();
 
   const ruleFormType = watch('type');
@@ -63,16 +69,51 @@ export const AlertRuleNameAndMetric = () => {
           />
         </Field>
         {isGrafanaRecordingRule && (
-          <Field label="Metric" error={errors?.metric?.message} invalid={!!errors.metric?.message}>
-            <Input
-              id="metric"
-              width={38}
-              {...register('metric', {
-                required: { value: true, message: 'Must enter a metric name' },
-                pattern: recordingRuleNameValidationPattern(RuleFormType.grafanaRecording),
-              })}
-              aria-label="metric"
-              placeholder={`Give the name of the new recorded metric`}
+          <>
+            <Field label="Metric" error={errors?.metric?.message} invalid={!!errors.metric?.message}>
+              <Input
+                id="metric"
+                width={38}
+                {...register('metric', {
+                  required: { value: true, message: 'Must enter a metric name' },
+                  pattern: recordingRuleNameValidationPattern(RuleFormType.grafanaRecording),
+                })}
+                aria-label="metric"
+                placeholder={`Give the name of the new recorded metric`}
+              />
+            </Field>
+          </>
+        )}
+
+        {isGrafanaRecordingRule && config.featureToggles.grafanaManagedRecordingRulesDatasources && (
+          <Field
+            id="target-data-source"
+            label={t('alerting.recording-rules.label-target-data-source', 'Target data source')}
+            description={t(
+              'alerting.recording-rules.description-target-data-source',
+              'The Prometheus data source to store the recording rule in'
+            )}
+            error={errors.target_datasource_uid?.message}
+            invalid={!!errors.target_datasource_uid?.message}
+          >
+            <Controller
+              render={({ field: { onChange, ref, ...field } }) => (
+                <DataSourcePicker
+                  {...field}
+                  current={field.value}
+                  noDefault
+                  // Filter with `filter` prop instead of `type` prop to avoid showing the `-- Grafana --` data source
+                  filter={(ds: DataSourceInstanceSettings) => ds.type === 'prometheus'}
+                  onChange={(ds: DataSourceInstanceSettings) => {
+                    setValue('target_datasource_uid', ds.uid);
+                  }}
+                />
+              )}
+              name="target_datasource_uid"
+              control={control}
+              rules={{
+                required: { value: true, message: 'Please select a data source' },
+              }}
             />
           </Field>
         )}
