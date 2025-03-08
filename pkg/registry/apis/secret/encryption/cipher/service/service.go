@@ -19,10 +19,6 @@ import (
 
 const (
 	encryptionAlgorithmDelimiter = '*'
-
-	securitySection            = "security.encryption"
-	encryptionAlgorithmKey     = "algorithm"
-	defaultEncryptionAlgorithm = cipher.AesCfb
 )
 
 // Service must not be used for cipher.
