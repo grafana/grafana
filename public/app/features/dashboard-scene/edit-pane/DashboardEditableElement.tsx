@@ -26,9 +26,8 @@ export class DashboardEditableElement implements EditableDashboardElement {
 
     const dashboardOptions = useMemo(() => {
       const editPaneHeaderOptions = new OptionsPaneCategoryDescriptor({
-        title: t('dashboard.options.title', 'Dashboard options'),
-        id: 'dashboard-options',
-        isOpenable: false,
+        title: '',
+        id: '',
       })
         .addItem(
           new OptionsPaneItemDescriptor({

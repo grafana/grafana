@@ -20,8 +20,6 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getEditPanelUrl } from '../utils/urlBuilders';
 import { getPanelIdForVizPanel } from '../utils/utils';
 
-import { EditPaneHeader } from './EditPaneHeader';
-
 export class VizPanelEditableElement implements EditableDashboardElement, BulkActionElement {
   public readonly isEditableDashboardElement = true;
   public readonly typeName = 'Panel';
@@ -43,11 +41,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     const panelOptions = useMemo(() => {
       return new OptionsPaneCategoryDescriptor({
         title: ``,
-        id: 'panel-header',
-        isOpenable: false,
-        renderTitle: () => (
-          <EditPaneHeader title={t('dashboard.viz-panel.options.title', 'Panel')} onDelete={() => this.onDelete()} />
-        ),
+        id: '',
       })
         .addItem(
           new OptionsPaneItemDescriptor({

@@ -1,19 +1,26 @@
-import { Dropdown, Button, IconButton, Menu, Stack, Icon } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { capitalize } from 'lodash';
+
+import { GrafanaTheme2, textUtil } from '@grafana/data';
+import { Dropdown, Button, IconButton, Menu, Stack, Icon, Box, Text, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
+import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { MultiSelectedEditableDashboardElement } from '../scene/types/MultiSelectedEditableDashboardElement';
+
 interface EditPaneHeaderProps {
-  title: string;
-  onDelete?: () => void;
-  onCopy?: () => void;
-  onDuplicate?: () => void;
+  element: EditableDashboardElement | MultiSelectedEditableDashboardElement;
 }
 
-export const EditPaneHeader = ({ title, onDelete, onCopy, onDuplicate }: EditPaneHeaderProps) => {
-  const addCopyOrDuplicate = onCopy || onDuplicate;
+export function EditPaneHeader({ element }: EditPaneHeaderProps) {
+  // const addCopyOrDuplicate = onCopy || onDuplicate;
+  const elementInfo = element.getEditableElementInfo();
+  const styles = useStyles2(getStyles);
+
   return (
-    <Stack justifyContent="space-between" alignItems="center" width="100%">
-      <span>{title}</span>
-      <Stack alignItems="center">
+    <div className={styles.wrapper}>
+      <Text variant="h5">{capitalize(elementInfo.typeId)}</Text>
+      {/* <Stack alignItems="center">
         {addCopyOrDuplicate ? (
           <Dropdown overlay={<MenuItems onCopy={onCopy} onDuplicate={onDuplicate} />}>
             <Button
@@ -26,19 +33,31 @@ export const EditPaneHeader = ({ title, onDelete, onCopy, onDuplicate }: EditPan
               <Icon name="copy" /> <Icon name="angle-down" />
             </Button>
           </Dropdown>
-        ) : null}
+        ) : null} */}
 
-        <IconButton
+      {/* <IconButton
           size="md"
           variant="secondary"
           onClick={onDelete}
           name="trash-alt"
           tooltip={t('dashboard.layout.common.delete', 'Delete')}
         />
-      </Stack>
-    </Stack>
+      </Stack> */}
+    </div>
   );
-};
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    wrapper: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: theme.spacing(2),
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
+  };
+}
 
 type MenuItemsProps = {
   onCopy?: () => void;
