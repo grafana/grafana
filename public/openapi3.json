@@ -1641,6 +1641,16 @@
         },
         "description": "(empty)"
       },
+      "notAcceptableError": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponseBody"
+            }
+          }
+        },
+        "description": "NotAcceptableError is returned when the server cannot produce a response matching the accepted formats."
+      },
       "notFoundError": {
         "content": {
           "application/json": {
@@ -16996,6 +17006,9 @@
           },
           "404": {
             "$ref": "#/components/responses/notFoundError"
+          },
+          "406": {
+            "$ref": "#/components/responses/notAcceptableError"
           },
           "500": {
             "$ref": "#/components/responses/internalServerError"
