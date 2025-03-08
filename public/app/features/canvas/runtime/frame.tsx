@@ -71,16 +71,16 @@ export class FrameState extends ElementState {
     const currentElementNames = this.elements.map((element) => element.options.name);
 
     const playerSize = 24;
+    const user = config.bootData.user;
     // for each player in database, check if already on the map and if position needs to be updated
     ctx.getPanelData()?.series[0]?.fields[0]?.values.map((player, index) => {
+      const playerIsUser = player === user.uid;
       const x = ctx.getPanelData()?.series[0].fields[1].values[index];
       const y = ctx.getPanelData()?.series[0].fields[2].values[index];
       const r = ctx.getPanelData()?.series[0].fields[3].values[index];
       if (!currentElementNames.includes(player)) {
         let playerType = 'enemy';
         // check if player UID matches and add it as a player
-        const user = config.bootData.user;
-        const playerIsUser = player === user.uid;
         if (playerIsUser) {
           playerType = 'player';
         }
@@ -103,7 +103,7 @@ export class FrameState extends ElementState {
         };
         const newElement = new ElementState(newItem, newElementOptions, this.scene.root);
         this.elements.push(newElement);
-      } else {
+      } else if (!playerIsUser) {
         // Update existing element's placement if it exists
         const matchingElementIndex = this.elements.findIndex((element) => element.options.name === player);
         const matchingElement = this.elements[matchingElementIndex];
