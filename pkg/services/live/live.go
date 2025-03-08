@@ -1617,15 +1617,17 @@ func (g *GrafanaLive) SimulateGameServer(ctx context.Context) {
 	orgID := orgs[0].ID
 	channel := orgchannel.PrependOrgID(orgID, "plugin/game/players")
 
-	db, err := sql.Open("sqlite", ":memory:")
+	// Use a persistent file instead of in-memory
+	db, err := sql.Open("sqlite3", "./players.db")
 	if err != nil {
 		logger.Error("Failed to open SQLite database", "error", err)
 		return
 	}
 	defer db.Close()
 
+	// Ensure table exists
 	_, err = db.Exec(`
-        CREATE TABLE live_players (
+        CREATE TABLE IF NOT EXISTS live_players (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             org_id BIGINT NOT NULL,
             player_id TEXT NOT NULL,
@@ -1635,7 +1637,7 @@ func (g *GrafanaLive) SimulateGameServer(ctx context.Context) {
             UNIQUE(org_id, player_id)
         )`)
 	if err != nil {
-		logger.Error("Failed to create live_players table", "error", err)
+		logger.Error("Failed to create or verify live_players table", "error", err)
 		return
 	}
 
@@ -1662,7 +1664,7 @@ func (g *GrafanaLive) SimulateGameServer(ctx context.Context) {
 
 	logger.Info("Starting game server simulation", "orgID", orgID, "channel", channel, "players", len(players))
 
-	ticker := time.NewTicker(200 * time.Millisecond)
+	ticker := time.NewTicker(10 * time.Millisecond)
 	defer ticker.Stop()
 
 	for {
