@@ -455,7 +455,9 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			writeSearchStringSQL(query, l.SQLStore, &builder)
 			writeExcludeSQL(query, &builder)
 			writeTypeFilterSQL(typeFilter, &builder)
-			builder.Write(" UNION ")
+			builder.Write(" ")
+			builder.Write(l.SQLStore.GetDialect().UnionDistinct())
+			builder.Write(" ")
 		}
 		builder.Write(selectLibraryElementDTOWithMeta)
 		builder.Write(", le.folder_uid as folder_uid ")
@@ -544,7 +546,9 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			writeSearchStringSQL(query, l.SQLStore, &countBuilder)
 			writeExcludeSQL(query, &countBuilder)
 			writeTypeFilterSQL(typeFilter, &countBuilder)
-			countBuilder.Write(" UNION ")
+			countBuilder.Write(" ")
+			countBuilder.Write(l.SQLStore.GetDialect().UnionDistinct())
+			countBuilder.Write(" ")
 		}
 		countBuilder.Write(selectLibraryElementDTOWithMeta)
 		countBuilder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))

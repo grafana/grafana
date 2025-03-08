@@ -325,3 +325,7 @@ func confToClientOptions(connectorConfig spannerdriver.ConnectorConfig) []option
 	}
 	return opts
 }
+
+func (s *SpannerDialect) UnionDistinct() string {
+	return "UNION DISTINCT"
+}
