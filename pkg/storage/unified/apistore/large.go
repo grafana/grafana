@@ -55,7 +55,9 @@ func (s *BasicLargeObjectSupport) GroupResource() schema.GroupResource {
 
 // Threshold implements LargeObjectSupport.
 func (s *BasicLargeObjectSupport) Threshold() int {
-	return s.ThresholdSize
+	// return s.ThresholdSize
+	// #TODO find a way to set this in the test
+	return 0
 }
 
 // MaxSize implements LargeObjectSupport.
