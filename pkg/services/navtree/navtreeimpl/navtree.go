@@ -100,6 +100,15 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		})
 	}
 
+	treeRoot.AddSection(&navtree.NavLink{
+		Text:       "Finder",
+		Id:         "finder",
+		SubTitle:   "Search and explore your resources",
+		Icon:       "search",
+		Url:        s.cfg.AppSubURL + "/finder",
+		SortWeight: navtree.WeightFolders,
+	})
+
 	if c.IsPublicDashboardView() || hasAccess(ac.EvalAny(
 		ac.EvalPermission(dashboards.ActionFoldersRead), ac.EvalPermission(dashboards.ActionFoldersCreate),
 		ac.EvalPermission(dashboards.ActionDashboardsRead), ac.EvalPermission(dashboards.ActionDashboardsCreate)),
