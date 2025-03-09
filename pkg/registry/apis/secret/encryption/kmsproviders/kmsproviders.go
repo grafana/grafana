@@ -1,8 +1,6 @@
 package kmsproviders
 
 import (
-	"errors"
-
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders/defaultprovider"
@@ -14,12 +12,8 @@ const (
 	Default = "secretKey.v1"
 )
 
-func GetOSSKMSProviders(cfg *setting.Cfg, enc cipher.Cipher) (map[encryption.ProviderID]encryption.Provider, error) {
-	if cfg.SecretsManagement.SecretKey == "" {
-		return nil, errors.New("`[secrets_manager]secret_key` is not set")
-	}
-
-	return map[encryption.ProviderID]encryption.Provider{
+func GetOSSKMSProviders(cfg *setting.Cfg, enc cipher.Cipher) encryption.ProviderMap {
+	return encryption.ProviderMap{
 		Default: defaultprovider.New(cfg.SecretsManagement.SecretKey, enc),
-	}, nil
+	}
 }

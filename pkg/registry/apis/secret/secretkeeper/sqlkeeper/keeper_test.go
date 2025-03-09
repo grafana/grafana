@@ -168,6 +168,7 @@ func setupTestService(t *testing.T, cfg *setting.Cfg) (*SQLKeeper, error) {
 		dataKeyStore,
 		cfg,
 		usageStats,
+		nil,
 	)
 	require.NoError(t, err)
 

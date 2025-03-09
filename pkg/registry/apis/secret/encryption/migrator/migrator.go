@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -41,11 +42,6 @@ func ProvideSecretsMigrator(
 	}
 }
 func (m *SecretsMigrator) ReEncryptSecrets(ctx context.Context) (bool, error) {
-	err := m.initProvidersIfNeeded()
-	if err != nil {
-		return false, err
-	}
-
 	var anyFailure bool
 
 	// TODO
@@ -59,11 +55,6 @@ func (m *SecretsMigrator) ReEncryptSecrets(ctx context.Context) (bool, error) {
 }
 
 func (m *SecretsMigrator) RollBackSecrets(ctx context.Context) (bool, error) {
-	err := m.initProvidersIfNeeded()
-	if err != nil {
-		return false, err
-	}
-
 	var anyFailure bool
 
 	// TODO
@@ -95,7 +86,7 @@ func (m *SecretsMigrator) RollBackSecrets(ctx context.Context) (bool, error) {
 }
 
 func (m *SecretsMigrator) initProvidersIfNeeded() error {
-	if err := m.secretsSrv.InitProviders(); err != nil {
+	if err := m.secretsSrv.InitProviders(encryption.ProvideThirdPartyProviderMap()); err != nil {
 		logger.Error("Envelope encryption providers initialization failed", "error", err)
 		return err
 	}

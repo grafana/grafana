@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
@@ -20,13 +21,21 @@ type OSSKeeperService struct {
 	tracer            tracing.Tracer
 	encryptionManager *manager.EncryptionManager
 	store             encryptionstorage.EncryptedValueStorage
+	usageStats        usagestats.Service
 }
 
-func ProvideService(tracer tracing.Tracer, encryptionManager *manager.EncryptionManager, store encryptionstorage.EncryptedValueStorage) (OSSKeeperService, error) {
+func ProvideService(
+	tracer tracing.Tracer,
+	store encryptionstorage.EncryptedValueStorage,
+	encryptionManager *manager.EncryptionManager,
+	usageStats usagestats.Service,
+) (OSSKeeperService, error) {
+
 	return OSSKeeperService{
 		tracer:            tracer,
 		encryptionManager: encryptionManager,
 		store:             store,
+		usageStats:        usageStats,
 	}, nil
 }
 

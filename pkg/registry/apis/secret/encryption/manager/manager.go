@@ -47,18 +47,20 @@ type EncryptionManager struct {
 	dataKeyCache *dataKeyCache
 
 	pOnce     sync.Once
-	providers map[encryption.ProviderID]encryption.Provider
+	providers encryption.ProviderMap
 
 	currentProviderID encryption.ProviderID
 
 	log log.Logger
 }
 
+// ProvideEncryptionManager returns an EncryptionManager that uses the OSS KMS providers, along with any additional third-party (e.g. Enterprise) KMS providers
 func ProvideEncryptionManager(
 	tracer tracing.Tracer,
 	store encryptionstorage.DataKeyStorage,
 	cfg *setting.Cfg,
 	usageStats usagestats.Service,
+	thirdPartyKMS encryption.ProviderMap,
 ) (*EncryptionManager, error) {
 	ttl := cfg.SecretsManagement.Encryption.DataKeysCacheTTL
 	currentProviderID := encryption.ProviderID(cfg.SecretsManagement.EncryptionProvider)
@@ -79,7 +81,11 @@ func ProvideEncryptionManager(
 		log:               log.New("encryption"),
 	}
 
-	if err := s.InitProviders(); err != nil {
+	if currentProviderID == kmsproviders.Default && cfg.SecretsManagement.SecretKey == "" {
+		return nil, fmt.Errorf("`[secrets_manager]secret_key` is not set")
+	}
+
+	if err := s.InitProviders(thirdPartyKMS); err != nil {
 		return nil, err
 	}
 
@@ -93,15 +99,26 @@ func ProvideEncryptionManager(
 	return s, nil
 }
 
-func (s *EncryptionManager) InitProviders() (err error) {
+func (s *EncryptionManager) InitProviders(extraProviders encryption.ProviderMap) (err error) {
+	done := false
 	s.pOnce.Do(func() {
-		providers, err := kmsproviders.GetOSSKMSProviders(s.cfg, s.enc)
-		if err != nil {
-			s.log.Error("Failed to initialize providers", "error", err)
-			return
+		providers := kmsproviders.GetOSSKMSProviders(s.cfg, s.enc)
+
+		for id, p := range extraProviders {
+			if _, exists := s.providers[id]; exists {
+				err = fmt.Errorf("provider %s already registered", id)
+				return
+			}
+			providers[id] = p
 		}
+
 		s.providers = providers
+		done = true
 	})
+
+	if !done && err == nil {
+		err = fmt.Errorf("providers were already initialized, no action taken")
+	}
 
 	return
 }
@@ -384,7 +401,7 @@ func (s *EncryptionManager) dataKeyById(ctx context.Context, namespace, id strin
 	return decrypted, nil
 }
 
-func (s *EncryptionManager) GetProviders() map[encryption.ProviderID]encryption.Provider {
+func (s *EncryptionManager) GetProviders() encryption.ProviderMap {
 	return s.providers
 }
 

@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
@@ -42,6 +43,7 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 		store,
 		cfg,
 		usageStats,
+		encryption.ProvideThirdPartyProviderMap(),
 	)
 	require.NoError(tb, err)
 

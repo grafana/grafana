@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	encryptionmanager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -59,17 +59,11 @@ func setupTestService(t *testing.T, cfg *setting.Cfg) (OSSKeeperService, error) 
 	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(testDB, cfg, features)
 	require.NoError(t, err)
 
-	// Initialize the encryption manager
-	encMgr, err := encryptionmanager.ProvideEncryptionManager(
-		tracing.InitializeTracerForTest(),
-		dataKeyStore,
-		cfg,
-		&usagestats.UsageStatsMock{T: t},
-	)
+	encryptionManager, err := manager.ProvideEncryptionManager(tracing.InitializeTracerForTest(), dataKeyStore, cfg, &usagestats.UsageStatsMock{T: t}, nil)
 	require.NoError(t, err)
 
 	// Initialize the keeper service
-	keeperService, err := ProvideService(tracing.InitializeTracerForTest(), encMgr, encValueStore)
+	keeperService, err := ProvideService(tracing.InitializeTracerForTest(), encValueStore, encryptionManager, &usagestats.UsageStatsMock{T: t})
 
 	return keeperService, err
 }

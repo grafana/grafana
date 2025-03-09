@@ -218,6 +218,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 			encryptionStore,
 			cfg,
 			&usagestats.UsageStatsMock{T: t},
+			encryption.ProvideThirdPartyProviderMap(),
 		)
 		require.NoError(t, err)
 
@@ -238,6 +239,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 			encryptionStore,
 			cfg,
 			&usagestats.UsageStatsMock{T: t},
+			encryption.ProvideThirdPartyProviderMap(),
 		)
 		require.NoError(t, err)
 		svcDecrypt.providers[encryption.ProviderID("fakeProvider.v1")] = fake
@@ -505,6 +507,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 				store,
 				cfg,
 				usageStats,
+				encryption.ProvideThirdPartyProviderMap(),
 			)
 			require.NoError(t, err)
 
