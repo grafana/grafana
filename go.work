@@ -11,6 +11,7 @@ use (
 	./apps/playlist
 	./pkg/aggregator
 	./pkg/apimachinery
+	./pkg/apis/secret/v0alpha1/decrypt // @grafana/grafana-operator-experience-squad. So external clients can import it.
 	./pkg/apiserver
 	./pkg/build
 	./pkg/build/wire // skip:golangci-lint
