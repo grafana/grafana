@@ -48,10 +48,14 @@ type sqlTx struct {
 	*sql.Tx
 }
 
-func (d sqlTx) QueryContext(ctx context.Context, query string, args ...any) (db.Rows, error) {
-	return d.Tx.QueryContext(ctx, query, args...)
+func (tx sqlTx) QueryContext(ctx context.Context, query string, args ...any) (db.Rows, error) {
+	// // codeql-suppress go/sql-query-built-from-user-controlled-sources "The query comes from a safe template source
+	// and the parameters are passed as arguments."
+	return tx.Tx.QueryContext(ctx, query, args...)
 }
 
-func (d sqlTx) QueryRowContext(ctx context.Context, query string, args ...any) db.Row {
-	return d.Tx.QueryRowContext(ctx, query, args...)
+func (tx sqlTx) QueryRowContext(ctx context.Context, query string, args ...any) db.Row {
+	// // codeql-suppress go/sql-query-built-from-user-controlled-sources "The query comes from a safe template source
+	// and the parameters are passed as arguments."
+	return tx.Tx.QueryRowContext(ctx, query, args...)
 }
