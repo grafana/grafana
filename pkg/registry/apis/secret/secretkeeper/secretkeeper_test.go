@@ -63,7 +63,7 @@ func setupTestService(t *testing.T, cfg *setting.Cfg) (OSSKeeperService, error) 
 	require.NoError(t, err)
 
 	// Initialize the keeper service
-	keeperService, err := ProvideService(tracing.InitializeTracerForTest(), encValueStore, encryptionManager, &usagestats.UsageStatsMock{T: t})
+	keeperService, err := ProvideService(tracing.InitializeTracerForTest(), encValueStore, encryptionManager)
 
 	return keeperService, err
 }
