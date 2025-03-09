@@ -56,6 +56,11 @@ func (t *sqlTemplate) UnmarshalJSON([]byte) error {
 	return ErrSQLTemplateNoSerialize
 }
 
+// JsonExtract returns the dialect-specific SQL for extracting JSON fields
+func (t *sqlTemplate) JsonExtract(tableAlias string, column string, fieldKey string) string {
+	return t.Dialect.JsonExtract(tableAlias, column, fieldKey)
+}
+
 //go:generate mockery --with-expecter --name SQLTemplate
 
 // SQLTemplate can be used as argument in general purpose utilities
@@ -72,6 +77,8 @@ type SQLTemplate interface {
 	// Validate should be implemented to validate a request before executing the
 	// template.
 	Validate() error
+	// JsonExtract returns the SQL expression to extract a value from a JSON column.
+	JsonExtract(tableAlias string, column string, fieldKey string) string
 }
 
 //go:generate mockery --with-expecter --name WithResults
