@@ -1,10 +1,13 @@
 import { isNumber } from 'lodash';
 
+import { config } from '@grafana/runtime';
 import { GrafanaTheme2 } from '../themes/types';
 import { reduceField, ReducerID } from '../transformations/fieldReducer';
 import { Field, FieldConfig, FieldType, NumericRange } from '../types/dataFrame';
+import { PanelData } from '../types/panel';
 import { Threshold } from '../types/thresholds';
 
+import { getDisplayProcessor } from './displayProcessor';
 import { getFieldColorModeForField } from './fieldColor';
 import { getActiveThresholdForValue } from './thresholds';
 
@@ -118,4 +121,19 @@ export function getFieldConfigWithMinMax(field: Field, local?: boolean): FieldCo
   }
 
   return { ...config, ...field.state.range };
+}
+
+export function getGaugePercentRange(data: PanelData) {
+  for (let frame of data.series) {
+    for (let field of frame.fields) {
+      // Set the Min/Max value automatically for percent and percentunit
+      if (field.config.unit === 'percent' || field.config.unit === 'percentunit') {
+        const min = field.config.min ?? 0;
+        const max = field.config.max ?? (field.config.unit === 'percent' ? 100 : 1);
+        field.state = field.state ?? {};
+        field.state.range = { min, max, delta: max - min };
+        field.display = getDisplayProcessor({ field, theme: config.theme2 });
+      }
+    }
+  }
 }

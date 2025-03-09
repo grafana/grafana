@@ -12,6 +12,7 @@ import {
   PanelProps,
   VizOrientation,
 } from '@grafana/data';
+import { getGaugePercentRange } from '@grafana/data/src/field/scale';
 import { BarGaugeSizing } from '@grafana/schema';
 import { BarGauge, DataLinksContextMenu, VizLayout, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
@@ -81,6 +82,7 @@ export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
   getValues = (): FieldDisplay[] => {
     const { data, options, replaceVariables, fieldConfig, timeZone } = this.props;
 
+    getGaugePercentRange(data);
     return getFieldDisplayValues({
       fieldConfig,
       reduceOptions: options.reduceOptions,
