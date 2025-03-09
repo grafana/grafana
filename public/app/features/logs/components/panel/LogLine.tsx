@@ -5,6 +5,7 @@ import tinycolor from 'tinycolor2';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { LogMessageAnsi } from '../LogMessageAnsi';
 
 import { LogLineMenu } from './LogLineMenu';
 import { useLogIsPinned } from './LogListContext';
@@ -72,19 +73,38 @@ interface LogProps {
 const Log = ({ displayedFields, log, showTime, styles }: LogProps) => {
   return (
     <>
-      {showTime && <span className={`${styles.timestamp} level-${log.logLevel} field`}>{log.timestamp}</span>}
-      <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel}</span>
+     {showTime && <span className={`${styles.timestamp} level-${log.logLevel} field`}>{log.timestamp}</span>}
+     <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel}</span>
       {displayedFields.length > 0 ? (
-        displayedFields.map((field) => (
-          <span className="field" title={field} key={field}>
-            {getDisplayedFieldValue(field, log)}
-          </span>
-        ))
+        displayedFields.map((field) =>
+          field === LOG_LINE_BODY_FIELD_NAME ? (
+            <LogLineBody log={log} />
+          ) : (
+            <span className="field" title={field} key={field}>
+              {getDisplayedFieldValue(field, log)}
+            </span>
+          )
+        )
       ) : (
-        <span className="field">{log.body}</span>
+        <LogLineBody log={log} />
       )}
     </>
   );
+};
+
+const LogLineBody = ({ log }: { log: LogListModel }) => {
+  if (log.hasAnsi) {
+    const needsHighlighter =
+      log.searchWords && log.searchWords.length > 0 && log.searchWords[0] && log.searchWords[0].length > 0;
+    const highlight = needsHighlighter ? { searchWords: log.searchWords ?? [], highlightClassName: '' } : undefined;
+    return (
+      <span className="field">
+        <LogMessageAnsi value={log.body} highlight={highlight} />
+      </span>
+    );
+  }
+
+  return <span className="field log-syntax-highlight" dangerouslySetInnerHTML={{ __html: log.highlightedBody }} />;
 };
 
 export function getDisplayedFieldValue(fieldName: string, log: LogListModel): string {
@@ -109,17 +129,19 @@ export function getGridTemplateColumns(dimensions: LogFieldDimension[]) {
 export type LogLineStyles = ReturnType<typeof getStyles>;
 export const getStyles = (theme: GrafanaTheme2) => {
   const colors = {
-    critical: '#B877D9',
-    error: '#FF5286',
+    critical: '#f22f44',
+    error: '#f22f44',
     warning: '#FBAD37',
     debug: '#6CCF8E',
     trace: '#6ed0e0',
     info: '#6E9FFF',
+    metadata:  `rgba(204, 204, 220, 0.9)`,
+    parsedField: `rgba(204, 204, 220, 0.8)`,
   };
 
   return {
     logLine: css({
-      color: theme.colors.text.primary,
+      color: theme.colors.text.secondary,
       display: 'flex',
       gap: theme.spacing(0.5),
       flexDirection: 'row',
@@ -140,6 +162,33 @@ export const getStyles = (theme: GrafanaTheme2) => {
           width: '100%',
         },
       },
+      '& .log-syntax-highlight': {
+        '.token.log-token-timestamp': {
+          color: theme.colors.text.disabled,
+        },
+        '.token.log-token-string': {
+          color: theme.colors.text.secondary,
+
+        },
+        '.token.log-token-number': {
+          color: theme.colors.success.text,
+        },
+        '.token.log-token-size': {
+          color: theme.colors.success.text,
+        },
+        '.token.log-token-key': {
+          color: colors.parsedField,
+          fontWeight: theme.typography.fontWeightMedium,
+        },
+        '.token.log-token-json-key': {
+          color: colors.parsedField,
+          fontWeight: theme.typography.fontWeightMedium,
+        },
+        '.token.log-token-label': {
+          color: colors.metadata,
+          fontWeight: theme.typography.fontWeightBold,
+        },
+      },
     }),
     pinnedLogLine: css({
       backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
@@ -154,28 +203,15 @@ export const getStyles = (theme: GrafanaTheme2) => {
       textAlign: 'center',
     }),
     timestamp: css({
-      color: theme.colors.text.secondary,
+      color: theme.colors.text.disabled,
       display: 'inline-block',
-      '&.level-critical': {
-        color: colors.critical,
-      },
-      '&.level-error': {
-        color: colors.error,
-      },
-      '&.level-info': {
-        color: colors.info,
-      },
-      '&.level-warning': {
-        color: colors.warning,
-      },
-      '&.level-debug': {
-        color: colors.debug,
-      },
     }),
     level: css({
       color: theme.colors.text.secondary,
       fontWeight: theme.typography.fontWeightBold,
+      textTransform:'uppercase',
       display: 'inline-block',
+      textTransform: 'uppercase',
       '&.level-critical': {
         color: colors.critical,
       },
