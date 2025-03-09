@@ -1790,6 +1790,24 @@ var (
 			Owner:       grafanaAlertingSquad,
 			Expression:  "true", // enabled by default
 		},
+		{
+			Name:              "grafanaManagedRecordingRulesDatasources",
+			Description:       "Enables writing to data sources for Grafana-managed recording rules.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			AllowSelfServe:    false,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
+			Name:              "inviteUserExperimental",
+			Description:       "Renders invite user button along the app",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSharingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
+		},
 	}
 )
 
