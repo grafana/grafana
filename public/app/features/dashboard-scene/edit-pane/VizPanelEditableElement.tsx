@@ -18,7 +18,7 @@ import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getEditPanelUrl } from '../utils/urlBuilders';
-import { getPanelIdForVizPanel } from '../utils/utils';
+import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 export class VizPanelEditableElement implements EditableDashboardElement, BulkActionElement {
   public readonly isEditableDashboardElement = true;
@@ -87,15 +87,20 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     return categories;
   }
 
-  public onDelete() {
+  public onDelete = () => {
     const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
     layout.removePanel?.(this.panel);
-  }
+  };
 
-  public onDuplicate() {
+  public onDuplicate = () => {
     const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
     layout.duplicatePanel?.(this.panel);
-  }
+  };
+
+  public onCopy = () => {
+    const dashboard = getDashboardSceneFor(this.panel);
+    dashboard.copyPanel(this.panel);
+  };
 }
 
 type OpenPanelEditVizProps = {

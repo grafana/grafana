@@ -39,6 +39,11 @@ export interface EditableDashboardElement {
   onDuplicate?(): void;
 
   /**
+   * Supports copy action
+   */
+  onCopy?(): void;
+
+  /**
    * creates a new multi-selection element from a list of selected items
    */
   createMultiSelectedElement?(items: SceneObject[]): MultiSelectedEditableDashboardElement;
