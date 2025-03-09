@@ -33,7 +33,7 @@ import {
   MappingType,
 } from '@grafana/schema';
 import { FIXED_UNIT, UPlotConfigBuilder, UPlotConfigPrepFn, VizLegendItem } from '@grafana/ui';
-import { preparePlotData2, getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
+import { preparePlotData2, getStackingGroups } from '@grafana/ui/internal';
 
 import { getConfig, TimelineCoreOptions } from './timeline';
 

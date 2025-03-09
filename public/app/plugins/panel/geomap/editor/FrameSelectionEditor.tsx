@@ -1,11 +1,7 @@
 import { useCallback } from 'react';
 
 import { FrameMatcherID, MatcherConfig, StandardEditorProps } from '@grafana/data';
-import {
-  RefIDMultiPicker,
-  RefIDPicker,
-  stringsToRegexp,
-} from '@grafana/ui/src/components/MatchersUI/FieldsByFrameRefIdMatcher';
+import { RefIDMultiPicker, RefIDPicker, stringsToRegexp } from '@grafana/ui/internal';
 
 type Props = StandardEditorProps<MatcherConfig>;
 

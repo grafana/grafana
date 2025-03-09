@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-import { SkeletonComponent, attachSkeleton } from '@grafana/ui/src/unstable';
+import { SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 
 import { PlaylistCard } from './PlaylistCard';
 import { Playlist } from './types';
