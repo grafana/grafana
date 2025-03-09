@@ -177,7 +177,6 @@ export interface FeatureToggles {
   pluginProxyPreserveTrailingSlash?: boolean;
   azureMonitorPrometheusExemplars?: boolean;
   pinNavItems?: boolean;
-  authZGRPCServer?: boolean;
   ssoSettingsLDAP?: boolean;
   failWrongDSUID?: boolean;
   zanzana?: boolean;
