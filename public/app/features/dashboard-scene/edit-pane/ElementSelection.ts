@@ -134,8 +134,8 @@ export class ElementSelection {
     for (const sceneObject of sceneObjects) {
       const element = getEditableElementFor(sceneObject);
 
-      if (element && isBulkActionElement(sceneObject)) {
-        bulkActionElements.push(sceneObject);
+      if (element && isBulkActionElement(element)) {
+        bulkActionElements.push(element);
       }
     }
 
