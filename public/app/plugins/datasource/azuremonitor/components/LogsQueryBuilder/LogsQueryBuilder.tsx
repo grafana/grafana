@@ -7,6 +7,7 @@ import { BuilderQueryExpression } from '../../dataquery.gen';
 import { selectors } from '../../e2e/selectors';
 import { AzureLogAnalyticsMetadataTable, AzureMonitorQuery, EngineSchema } from '../../types';
 
+import { FilterSection } from './FilterSection';
 import KQLPreview from './KQLPreview';
 import { TableSection } from './TableSection';
 import { DEFAULT_LOGS_BUILDER_QUERY, parseQueryToExpression } from './utils';
@@ -45,12 +46,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
           <Alert severity="warning" title="Resource loaded successfully but without any tables" />
         )}
         <TableSection {...props} tables={tables} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
-        {/* <FilterSection 
-          {...props} 
-          onQueryUpdate={onQueryChange}
-          allColumns={allColumns}  
-          query={query}
-        /> */}
+        <FilterSection {...props} onQueryUpdate={onQueryChange} allColumns={allColumns} query={query} />
         {/* <AggregateSection 
           {...props} 
           selectedTable={selectedTable!} 

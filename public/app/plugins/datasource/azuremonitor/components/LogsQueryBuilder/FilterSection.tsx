@@ -5,36 +5,44 @@ import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
 import { Button, Input, Label, Select, useStyles2 } from '@grafana/ui';
 
-import { AzureLogAnalyticsMetadataColumn } from '../../types';
+import {
+  BuilderQueryEditorExpressionType,
+  BuilderQueryEditorPropertyType,
+  BuilderQueryExpression,
+} from '../../dataquery.gen';
+import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
 
-import { toOperatorOptions, valueToDefinition } from './utils';
+import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
+import { DEFAULT_LOGS_BUILDER_QUERY, toOperatorOptions, valueToDefinition } from './utils';
 
 interface FilterSectionProps {
-  selectedColumns: Array<SelectableValue<string>>;
-  selectedTable: string;
-  columns: AzureLogAnalyticsMetadataColumn[];
-  onQueryUpdate: (params: { filters?: string }) => void;
+  query: AzureMonitorQuery;
+  allColumns: AzureLogAnalyticsMetadataColumn[];
+  onQueryUpdate: (newQuery: AzureMonitorQuery) => void;
 }
 
 export const FilterSection: React.FC<FilterSectionProps> = ({
   onQueryUpdate,
-  selectedTable,
-  selectedColumns,
-  columns,
+  query,
+  allColumns,
 }) => {
   const styles = useStyles2(getStyles);
   const [filters, setFilters] = useState<Array<{ column: string; operator: string; value: string }>>([]);
+  const builderQuery = query.azureLogAnalytics?.builderQuery || DEFAULT_LOGS_BUILDER_QUERY;
 
   const selectableColumns: Array<SelectableValue<string>> = useMemo(
-    () => columns.map((col) => ({ label: col.name, value: col.name })),
-    [columns]
+    () => allColumns.map((col) => ({ label: col.name, value: col.name })),
+    [allColumns]
+  );
+
+  const allColumnsSelectable: Array<SelectableValue<string>> = useMemo(
+    () => (builderQuery?.columns?.columns || []).map((col) => ({ label: col, value: col })),
+    [builderQuery?.columns?.columns]
   );
 
   useEffect(() => {
-    setFilters(() => {
-      return [];
-    });
-  }, [selectedTable]);
+    setFilters([]);
+  }, [builderQuery.from?.property.name]);  
 
   const formatFilters = (filters: Array<{ column: string; operator: string; value: string }>): string => {
     return filters
@@ -46,9 +54,37 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
   const updateFilters = (newFilters: Array<{ column: string; operator: string; value: string }>) => {
     setFilters(newFilters);
 
-    const formattedFilters = formatFilters(newFilters);
-    if (formattedFilters) {
-      onQueryUpdate({ filters: formattedFilters });
+    if (builderQuery) {
+      const updatedBuilderQuery: BuilderQueryExpression = {
+        ...DEFAULT_LOGS_BUILDER_QUERY,
+        from: {
+          property: { name: builderQuery.from?.property.name!, type: BuilderQueryEditorPropertyType.String },
+          type: BuilderQueryEditorExpressionType.Property,
+        },
+      };
+
+      const updatedFilters = newFilters
+        .map((filter) => `${filter.column} ${filter.operator} '${filter.value}'`)
+        .join(' and ');
+
+      const updatedQueryString = AzureMonitorKustoQueryParser.toQuery({
+        selectedTable: builderQuery.from?.property.name!,
+        selectedColumns: [],
+        columns: allColumns,
+        filters: updatedFilters,
+      });
+
+      const formattedFilters = formatFilters(newFilters);
+      if (formattedFilters) {
+        onQueryUpdate({
+          ...query,
+          azureLogAnalytics: {
+            ...query.azureLogAnalytics,
+            builderQuery: updatedBuilderQuery,
+            query: updatedQueryString,
+          },
+        });
+      }
     }
   };
 
@@ -64,7 +100,31 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
     const updatedFilters =
       newFilters.length > 0 ? newFilters.map((f) => `${f.column} ${f.operator} '${f.value}'`).join(' and ') : '';
 
-    onQueryUpdate({ filters: updatedFilters });
+    if (builderQuery) {
+      const updatedBuilderQuery: BuilderQueryExpression = {
+        ...DEFAULT_LOGS_BUILDER_QUERY,
+        from: {
+          property: { name: builderQuery.from?.property.name!, type: BuilderQueryEditorPropertyType.String },
+          type: BuilderQueryEditorExpressionType.Property,
+        },
+      };
+
+      const updatedQueryString = AzureMonitorKustoQueryParser.toQuery({
+        selectedTable: builderQuery.from?.property.name!,
+        selectedColumns: [],
+        columns: allColumns,
+        filters: updatedFilters,
+      });
+
+      onQueryUpdate({
+        ...query,
+        azureLogAnalytics: {
+          ...query.azureLogAnalytics,
+          builderQuery: updatedBuilderQuery,
+          query: updatedQueryString,
+        },
+      });
+    }
   };
 
   return (
@@ -80,7 +140,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
                       aria-label="column"
                       width={30}
                       value={filter.column ? valueToDefinition(filter.column) : null}
-                      options={selectedColumns.length > 0 ? selectedColumns : selectableColumns} // ✅ Updated logic
+                      options={allColumnsSelectable.length > 0 ? allColumnsSelectable : selectableColumns}
                       onChange={(e) => e.value && onChangeFilter(index, 'column', e.value)}
                     />
                     <Select
