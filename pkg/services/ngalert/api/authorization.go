@@ -39,7 +39,8 @@ func (api *API) authorize(method, path string) web.Handler {
 			ac.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
 		)
 	case http.MethodGet + "/api/ruler/grafana/api/v1/rules",
-		http.MethodGet + "/api/ruler/grafana/api/v1/export/rules":
+		http.MethodGet + "/api/ruler/grafana/api/v1/export/rules",
+		http.MethodGet + "/api/alerting/v1/rules":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
 	case http.MethodGet + "/api/ruler/grafana/api/v1/rule/{RuleUID}",
 		http.MethodGet + "/api/ruler/grafana/api/v1/rule/{RuleUID}/versions":
