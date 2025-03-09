@@ -152,19 +152,6 @@ func (s *Service) deriveEncryptionAlgorithm(payload []byte) (string, []byte, err
 		return "", nil, err
 	}
 
-	// For historical reasons, I guess a bug introduced in the past,
-	// the algorithm metadata could be missing at this point.
-	//
-	// Until now, it hasn't failed because we're used to fall back
-	// to the default encryption algorithm.
-	//
-	// Therefore, we want to keep doing the same to be able to
-	// decrypt legacy secrets.
-	if string(algorithm) == "" {
-		s.log.Warn("Encryption algorithm derivation found an empty string", "error", err)
-		return cipher.AesCfb, payload, nil
-	}
-
 	return string(algorithm), payload, nil
 }
 
