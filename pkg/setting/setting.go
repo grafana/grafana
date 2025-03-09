@@ -419,6 +419,9 @@ type Cfg struct {
 	// ExpressionsEnabled specifies whether expressions are enabled.
 	ExpressionsEnabled bool
 
+	// SQLExpressionRowLimit is the maximum number of rows that can be accepted by a SQL expression.
+	SQLExpressionRowLimit int64
+
 	ImageUploadProvider string
 
 	// LiveMaxConnections is a maximum number of WebSocket connections to
@@ -780,6 +783,7 @@ func (cfg *Cfg) readAnnotationSettings() error {
 func (cfg *Cfg) readExpressionsSettings() {
 	expressions := cfg.Raw.Section("expressions")
 	cfg.ExpressionsEnabled = expressions.Key("enabled").MustBool(true)
+	cfg.SQLExpressionRowLimit = expressions.Key("sql_expression_row_limit").MustInt64(100000)
 }
 
 type AnnotationCleanupSettings struct {
