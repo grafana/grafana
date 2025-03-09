@@ -236,6 +236,40 @@ func (st DBstore) GetAlertRuleVersions(ctx context.Context, orgID int64, guid st
 	return alertRules, nil
 }
 
+// ListDeletedRules retrieves a list of deleted alert rules for the specified organization ID from the database.
+// It ensures that only the latest version of each rule is included and filters out invalid or duplicated versions.
+// Returns a slice of *models.AlertRule  or an error if the operation fails.
+func (st DBstore) ListDeletedRules(ctx context.Context, orgID int64) ([]*ngmodels.AlertRule, error) {
+	alertRules := make([]*ngmodels.AlertRule, 0)
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		// take only the latest versions of each rule by GUID
+		rows, err := sess.Table(alertRuleVersion{}).Where("rule_org_id = ? AND rule_uid = ''", orgID).Rows(alertRuleVersion{})
+		if err != nil {
+			return err
+		}
+		// Deserialize each rule separately in case any of them contain invalid JSON.
+		for rows.Next() {
+			rule := new(alertRuleVersion)
+			err = rows.Scan(rule)
+			if err != nil {
+				st.Logger.Error("Invalid rule version found in DB store, ignoring it", "func", "GetAlertRuleVersions", "error", err)
+				continue
+			}
+			converted, err := alertRuleToModelsAlertRule(alertRuleVersionToAlertRule(*rule), st.Logger)
+			if err != nil {
+				st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "GetAlertRuleVersions", "error", err, "version_id", rule.ID)
+				continue
+			}
+			alertRules = append(alertRules, &converted)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return alertRules, nil
+}
+
 // GetRuleByID retrieves models.AlertRule by ID.
 // It returns models.ErrAlertRuleNotFound if no alert rule is found for the provided ID.
 func (st DBstore) GetRuleByID(ctx context.Context, query ngmodels.GetAlertRuleByIDQuery) (result *ngmodels.AlertRule, err error) {
