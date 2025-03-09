@@ -46,13 +46,12 @@ func NewEncryptionService(
 		return nil, fmt.Errorf("`[secrets_manager.encryption]algorithm` is not set")
 	}
 
-	provider := encryptionprovider.NewEncryptionProvider()
 	s := &Service{
 		tracer: tracer,
 		log:    log.New("encryption"),
 
-		ciphers:   provider.ProvideCiphers(),
-		deciphers: provider.ProvideDeciphers(),
+		ciphers:   encryptionprovider.ProvideCiphers(),
+		deciphers: encryptionprovider.ProvideDeciphers(),
 
 		usageMetrics: usageMetrics,
 		cfg:          cfg,
