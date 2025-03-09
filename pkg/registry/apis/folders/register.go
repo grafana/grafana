@@ -156,7 +156,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		cfg:                  b.cfg,
 	}
 
-	opts.StorageOptions(resourceInfo.GroupResource(), apistore.StorageOptions{
+	opts.StorageOptsRegister(resourceInfo.GroupResource(), apistore.StorageOptions{
 		RequireDeprecatedInternalID: true})
 
 	storage[resourceInfo.StoragePath()] = legacyStore
