@@ -19,10 +19,11 @@ type SQLCommand struct {
 	query       string
 	varsToQuery []string
 	refID       string
+	format      string
 }
 
 // NewSQLCommand creates a new SQLCommand.
-func NewSQLCommand(refID, rawSQL string) (*SQLCommand, error) {
+func NewSQLCommand(refID, format, rawSQL string) (*SQLCommand, error) {
 	if rawSQL == "" {
 		return nil, errutil.BadRequest("sql-missing-query",
 			errutil.WithPublicMessage("missing SQL query"))
@@ -44,6 +45,7 @@ func NewSQLCommand(refID, rawSQL string) (*SQLCommand, error) {
 		query:       rawSQL,
 		varsToQuery: tables,
 		refID:       refID,
+		format:      format,
 	}, nil
 }
 
@@ -65,7 +67,13 @@ func UnmarshalSQLCommand(rn *rawNode) (*SQLCommand, error) {
 		return nil, fmt.Errorf("expected sql expression to be type string, but got type %T", expressionRaw)
 	}
 
-	return NewSQLCommand(rn.RefID, expression)
+	formatRaw, _ := rn.Query["format"]
+	format, ok := formatRaw.(string)
+	if !ok {
+		format = ""
+	}
+
+	return NewSQLCommand(rn.RefID, format, expression)
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies
@@ -111,11 +119,26 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 		return rsp, nil
 	}
 
-	rsp.Values = mathexp.Values{
-		mathexp.TableData{Frame: frame},
-	}
+	switch gr.format {
+	case "alerting":
+		numberSet, err := extractNumberSet(frame)
+		if err != nil {
+			rsp.Error = err
+			return rsp, nil
+		}
+		vals := make([]mathexp.Value, 0, len(numberSet))
+		for i := range numberSet {
+			vals = append(vals, numberSet[i])
+		}
+		rsp.Values = vals
 
+	default:
+		rsp.Values = mathexp.Values{
+			mathexp.TableData{Frame: frame},
+		}
+	}
 	return rsp, nil
+
 }
 
 func (gr *SQLCommand) Type() string {
