@@ -188,11 +188,12 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteNamespace(c *contex
 	}
 	logger.Info("Deleting all Prometheus-imported rule groups", "folder_uid", namespace.UID, "folder_title", namespaceTitle)
 
+	provenance := getProvenance(c)
 	filterOpts := &provisioning.FilterOptions{
 		NamespaceUIDs:          []string{namespace.UID},
 		ImportedPrometheusRule: util.Pointer(true),
 	}
-	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, models.ProvenanceConvertedPrometheus, filterOpts)
+	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, provenance, filterOpts)
 	if errors.Is(err, models.ErrAlertRuleGroupNotFound) {
 		return response.Empty(http.StatusNotFound)
 	}
@@ -218,7 +219,8 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteRuleGroup(c *contex
 	}
 	logger.Info("Deleting Prometheus-imported rule group", "folder_uid", folder.UID, "folder_title", namespaceTitle, "group", group)
 
-	err = srv.alertRuleService.DeleteRuleGroup(c.Req.Context(), c.SignedInUser, folder.UID, group, models.ProvenanceConvertedPrometheus)
+	provenance := getProvenance(c)
+	err = srv.alertRuleService.DeleteRuleGroup(c.Req.Context(), c.SignedInUser, folder.UID, group, provenance)
 	if errors.Is(err, models.ErrAlertRuleGroupNotFound) {
 		return response.Empty(http.StatusNotFound)
 	}
@@ -358,7 +360,8 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextm
 		return errorToResponse(err)
 	}
 
-	err = srv.alertRuleService.ReplaceRuleGroup(c.Req.Context(), c.SignedInUser, *group, models.ProvenanceConvertedPrometheus)
+	provenance := getProvenance(c)
+	err = srv.alertRuleService.ReplaceRuleGroup(c.Req.Context(), c.SignedInUser, *group, provenance)
 	if err != nil {
 		logger.Error("Failed to replace rule group", "error", err)
 		return errorToResponse(err)
@@ -536,4 +539,11 @@ func promGroupHasRecordingRules(promGroup apimodels.PrometheusRuleGroup) bool {
 		}
 	}
 	return false
+}
+
+func getProvenance(ctx *contextmodel.ReqContext) models.Provenance {
+	if _, disabled := ctx.Req.Header[disableProvenanceHeaderName]; disabled {
+		return models.ProvenanceNone
+	}
+	return models.ProvenanceConvertedPrometheus
 }
