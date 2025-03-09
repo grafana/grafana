@@ -81,10 +81,6 @@ func ProvideEncryptionManager(
 		log:               log.New("encryption"),
 	}
 
-	if currentProviderID == kmsproviders.Default && cfg.SecretsManagement.SecretKey == "" {
-		return nil, fmt.Errorf("`[secrets_manager]secret_key` is not set")
-	}
-
 	if err := s.InitProviders(thirdPartyKMS); err != nil {
 		return nil, err
 	}

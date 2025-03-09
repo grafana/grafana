@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
-	"errors"
 	"fmt"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -39,6 +38,14 @@ func NewEncryptionService(
 	usageMetrics usagestats.Service,
 	cfg *setting.Cfg,
 ) (*Service, error) {
+	if cfg.SecretsManagement.SecretKey == "" {
+		return nil, fmt.Errorf("`[secrets_manager]secret_key` is not set")
+	}
+
+	if cfg.SecretsManagement.Encryption.Algorithm == "" {
+		return nil, fmt.Errorf("`[secrets_manager.encryption]algorithm` is not set")
+	}
+
 	provider := encryptionprovider.NewEncryptionProvider()
 	s := &Service{
 		tracer: tracer,
@@ -71,12 +78,12 @@ func (s *Service) checkEncryptionAlgorithm(algorithm string) error {
 	}()
 
 	if _, ok := s.ciphers[algorithm]; !ok {
-		err = errors.New("no cipher registered for encryption algorithm configured")
+		err = fmt.Errorf("no cipher registered for encryption algorithm '%s'", algorithm)
 		return err
 	}
 
 	if _, ok := s.deciphers[algorithm]; !ok {
-		err = errors.New("no cipher registered for encryption algorithm configured")
+		err = fmt.Errorf("no decipher registered for encryption algorithm '%s'", algorithm)
 		return err
 	}
 
