@@ -1,9 +1,11 @@
 /**
- * This file is used to share all the internal code that is used by Grafana core.
+ * This file is used to share internal grafana/ui code with Grafana core.
+ * Note that these exports are also used within Enterprise.
+ *
  * Through the exports declared in package.json we can import this code in core Grafana and the grafana/ui
  * package will continue to be able to access all code when it's published to npm as it's private to the package.
  *
- * However during the yarn pack lifecycle we delete the exports[./internal] property
+ * During the yarn pack lifecycle the exports[./internal] property is deleted from the package.json
  * preventing the code from being importable by plugins or other npm packages making it truly "internal".
  *
  */
@@ -31,7 +33,6 @@ export { type TimeRange2, TooltipHoverMode } from '../components/uPlot/plugins/T
 export type { FacetedData, FacetSeries } from '../components/uPlot/types';
 
 export { getResponsiveStyle, type ResponsiveProp } from '../components/Layout/utils/responsiveness';
-export { Text } from '../components/Text/Text';
 export { ColorSwatch } from '../components/ColorPicker/ColorSwatch';
 
 export { FieldNamePicker } from '../components/MatchersUI/FieldNamePicker';
@@ -55,7 +56,13 @@ export { MultiValueRemove, type MultiValueRemoveProps } from '../components/Sele
 export { getSvgSize } from '../components/Icon/utils';
 export { LoadingIndicator } from '../components/PanelChrome/LoadingIndicator';
 export { type ButtonLinkProps, getButtonStyles } from '../components/Button';
-export { type TableSortByFieldState, FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '../components/Table/types';
+export {
+  type TableSortByFieldState,
+  type TableFieldOptions,
+  TableCellDisplayMode,
+  FILTER_FOR_OPERATOR,
+  FILTER_OUT_OPERATOR,
+} from '../components/Table/types';
 export { defaultSparklineCellConfig } from '../components/Table/SparklineCell';
 export { TableCell } from '../components/Table/TableCell';
 export { useTableStyles } from '../components/Table/styles';
@@ -64,7 +71,7 @@ export { type DataLinksContextMenuApi } from '../components/DataLinks/DataLinksC
 export { MenuDivider } from '../components/Menu/MenuDivider';
 export { AbstractList } from '../components/List/AbstractList';
 export type { HttpSettingsBaseProps, AzureAuthSettings } from '../components/DataSourceSettings/types';
-export { TimeZoneOffset } from '../components/DateTimePickers/TimeZonePicker/TimeZoneOffset';
+export { TimeZoneOffset, formatUtcOffset } from '../components/DateTimePickers/TimeZonePicker/TimeZoneOffset';
 export { TimeZoneTitle } from '../components/DateTimePickers/TimeZonePicker/TimeZoneTitle';
 export type { CodeEditorProps } from '../components/Monaco/types';
 export { type Props as InlineFieldProps } from '../components/Forms/InlineField';
