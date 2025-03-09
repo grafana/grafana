@@ -106,5 +106,9 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 
 	runtime.SetFinalizer(engine, close)
 
+	if dialect.DBType() == "spanner" {
+		engine.sequenceGenerator = newSequenceGenerator(db.DB)
+	}
+
 	return engine, nil
 }

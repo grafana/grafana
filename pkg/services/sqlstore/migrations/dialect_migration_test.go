@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -63,6 +65,27 @@ func TestMigrateToSpannerDialect(t *testing.T) {
 
 	var statements []string
 
+	seq := core.NewEmptyTable()
+	seq.Name = "autoincrement_sequences"
+	seq.AddColumn(&core.Column{
+		Name:         "name",
+		SQLType:      core.SQLType{Name: core.Varchar},
+		Length:       128,
+		Nullable:     false,
+		IsPrimaryKey: true,
+	})
+	seq.AddColumn(&core.Column{
+		Name:     "next_value",
+		SQLType:  core.SQLType{Name: core.Int},
+		Nullable: false,
+	})
+
+	tables = append(tables, seq)
+
+	slices.SortFunc(tables, func(a, b *core.Table) int {
+		return strings.Compare(a.Name, b.Name)
+	})
+
 	spannerDialect := migrator.NewSpannerDialect()
 	for _, table := range tables {
 		t := &migrator.Table{
@@ -105,11 +128,16 @@ func TestMigrateToSpannerDialect(t *testing.T) {
 
 		statements = append(statements, spannerDialect.CreateTableSQL(t))
 
+		// Add index statements, sorted.
+		var indexStatements []string
 		for _, nix := range t.Indices {
 			if nix.Name != "PRIMARY_KEY" {
-				statements = append(statements, spannerDialect.CreateIndexSQL(table.Name, nix))
+				indexStatements = append(indexStatements, spannerDialect.CreateIndexSQL(table.Name, nix))
 			}
 		}
+		slices.Sort(indexStatements)
+
+		statements = append(statements, indexStatements...)
 	}
 
 	enc := json.NewEncoder(os.Stdout)
