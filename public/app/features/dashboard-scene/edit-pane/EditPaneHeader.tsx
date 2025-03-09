@@ -18,7 +18,7 @@ export function EditPaneHeader({ element }: EditPaneHeaderProps) {
   return (
     <div className={styles.wrapper}>
       <Text variant="h5">{elementInfo.typeName}</Text>
-      <Stack direction="row" gap={2}>
+      <Stack direction="row" gap={1}>
         {addCopyOrDuplicate ? (
           <Dropdown overlay={<MenuItems onCopy={element.onCopy} onDuplicate={element.onDuplicate} />}>
             <Button
@@ -41,9 +41,13 @@ export function EditPaneHeader({ element }: EditPaneHeaderProps) {
             size="sm"
             closeOnConfirm={true}
           >
-            <Button size="sm" variant="destructive" fill="outline">
-              <Trans i18nKey="dashboard.layout.common.delete">Delete</Trans>
-            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              fill="outline"
+              icon="trash-alt"
+              tooltip={t('dashboard.layout.common.delete', 'Delete')}
+            />
           </ConfirmButton>
         )}
       </Stack>
