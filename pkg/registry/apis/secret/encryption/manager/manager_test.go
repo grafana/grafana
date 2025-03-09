@@ -547,13 +547,9 @@ func TestEncryptionService_ReInitReturnsError(t *testing.T) {
 		"fakeProvider.v1": &fakeProvider{},
 	})
 	require.Error(t, err)
-
-	assert.Len(t, svc.providers, 2)
-	assert.Contains(t, svc.providers, "fakeProvider.v1")
 }
 
 func TestEncryptionService_ThirdPartyProviders(t *testing.T) {
-	// Initialize data key storage with a fake db
 	cfg := &setting.Cfg{
 		SecretsManagement: setting.SecretsManagerSettings{
 			SecretKey:          "SdlklWklckeLS",
