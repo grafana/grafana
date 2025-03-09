@@ -8,34 +8,38 @@
 package v0alpha1
 
 import (
+	commonv0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	common "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 )
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.AnnotationActions":       schema_pkg_apis_dashboard_v0alpha1_AnnotationActions(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.AnnotationPermission":    schema_pkg_apis_dashboard_v0alpha1_AnnotationPermission(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.ConversionStatus":        schema_pkg_apis_dashboard_v0alpha1_ConversionStatus(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.Dashboard":               schema_pkg_apis_dashboard_v0alpha1_Dashboard(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardAccess":         schema_pkg_apis_dashboard_v0alpha1_DashboardAccess(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardHit":            schema_pkg_apis_dashboard_v0alpha1_DashboardHit(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardList":           schema_pkg_apis_dashboard_v0alpha1_DashboardList(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardStatus":         schema_pkg_apis_dashboard_v0alpha1_DashboardStatus(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardVersionInfo":    schema_pkg_apis_dashboard_v0alpha1_DashboardVersionInfo(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardVersionList":    schema_pkg_apis_dashboard_v0alpha1_DashboardVersionList(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardWithAccessInfo": schema_pkg_apis_dashboard_v0alpha1_DashboardWithAccessInfo(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.FacetResult":             schema_pkg_apis_dashboard_v0alpha1_FacetResult(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.LibraryPanel":            schema_pkg_apis_dashboard_v0alpha1_LibraryPanel(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.LibraryPanelList":        schema_pkg_apis_dashboard_v0alpha1_LibraryPanelList(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.LibraryPanelSpec":        schema_pkg_apis_dashboard_v0alpha1_LibraryPanelSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.LibraryPanelStatus":      schema_pkg_apis_dashboard_v0alpha1_LibraryPanelStatus(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SearchResults":           schema_pkg_apis_dashboard_v0alpha1_SearchResults(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SortBy":                  schema_pkg_apis_dashboard_v0alpha1_SortBy(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SortableField":           schema_pkg_apis_dashboard_v0alpha1_SortableField(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SortableFields":          schema_pkg_apis_dashboard_v0alpha1_SortableFields(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.TermFacet":               schema_pkg_apis_dashboard_v0alpha1_TermFacet(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.VersionsQueryOptions":    schema_pkg_apis_dashboard_v0alpha1_VersionsQueryOptions(ref),
+		"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured":    commonv0alpha1.Unstructured{}.OpenAPIDefinition(),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.AnnotationActions":         schema_pkg_apis_dashboard_v0alpha1_AnnotationActions(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.AnnotationPermission":      schema_pkg_apis_dashboard_v0alpha1_AnnotationPermission(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.Dashboard":                 schema_pkg_apis_dashboard_v0alpha1_Dashboard(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardAccess":           schema_pkg_apis_dashboard_v0alpha1_DashboardAccess(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardConversionStatus": schema_pkg_apis_dashboard_v0alpha1_DashboardConversionStatus(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardHit":              schema_pkg_apis_dashboard_v0alpha1_DashboardHit(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardJSONCodec":        schema_pkg_apis_dashboard_v0alpha1_DashboardJSONCodec(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardList":             schema_pkg_apis_dashboard_v0alpha1_DashboardList(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardMetadata":         schema_pkg_apis_dashboard_v0alpha1_DashboardMetadata(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardStatus":           schema_pkg_apis_dashboard_v0alpha1_DashboardStatus(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardVersionInfo":      schema_pkg_apis_dashboard_v0alpha1_DashboardVersionInfo(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardVersionList":      schema_pkg_apis_dashboard_v0alpha1_DashboardVersionList(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardWithAccessInfo":   schema_pkg_apis_dashboard_v0alpha1_DashboardWithAccessInfo(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.FacetResult":               schema_pkg_apis_dashboard_v0alpha1_FacetResult(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.LibraryPanel":              schema_pkg_apis_dashboard_v0alpha1_LibraryPanel(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.LibraryPanelList":          schema_pkg_apis_dashboard_v0alpha1_LibraryPanelList(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.LibraryPanelSpec":          schema_pkg_apis_dashboard_v0alpha1_LibraryPanelSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.LibraryPanelStatus":        schema_pkg_apis_dashboard_v0alpha1_LibraryPanelStatus(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SearchResults":             schema_pkg_apis_dashboard_v0alpha1_SearchResults(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SortBy":                    schema_pkg_apis_dashboard_v0alpha1_SortBy(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SortableField":             schema_pkg_apis_dashboard_v0alpha1_SortableField(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SortableFields":            schema_pkg_apis_dashboard_v0alpha1_SortableFields(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.TermFacet":                 schema_pkg_apis_dashboard_v0alpha1_TermFacet(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.VersionsQueryOptions":      schema_pkg_apis_dashboard_v0alpha1_VersionsQueryOptions(ref),
 	}
 }
 
@@ -100,36 +104,6 @@ func schema_pkg_apis_dashboard_v0alpha1_AnnotationPermission(ref common.Referenc
 	}
 }
 
-func schema_pkg_apis_dashboard_v0alpha1_ConversionStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"failed": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
-					"storedVersion": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"error": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
 func schema_pkg_apis_dashboard_v0alpha1_Dashboard(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -152,25 +126,24 @@ func schema_pkg_apis_dashboard_v0alpha1_Dashboard(ref common.ReferenceCallback) 
 					},
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Standard object's metadata More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
-							Default:     map[string]interface{}{},
-							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The dashboard body (unstructured for now)",
+							Description: "Spec is the spec of the Dashboard",
 							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Optional dashboard status",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardStatus"),
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardStatus"),
 						},
 					},
 				},
-				Required: []string{"spec"},
+				Required: []string{"metadata", "spec", "status"},
 			},
 		},
 		Dependencies: []string{
@@ -182,8 +155,7 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardAccess(ref common.ReferenceCall
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "Information about how the requesting user can use a given dashboard",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
 					"slug": {
 						SchemaProps: spec.SchemaProps{
@@ -245,6 +217,44 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardAccess(ref common.ReferenceCall
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.AnnotationPermission"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v0alpha1_DashboardConversionStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ConversionStatus is the status of the conversion of the dashboard.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"failed": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether from another version has failed. If true, means that the dashboard is not valid, and the caller should instead fetch the stored version.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"storedVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The version which was stored when the dashboard was created / updated. Fetching this version should always succeed.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"error": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The error message from the conversion. Empty if the conversion has not failed.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"failed", "storedVersion", "error"},
+			},
+		},
 	}
 }
 
@@ -328,6 +338,17 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardHit(ref common.ReferenceCallbac
 	}
 }
 
+func schema_pkg_apis_dashboard_v0alpha1_DashboardJSONCodec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "DashboardJSONCodec is an implementation of resource.Codec for kubernetes JSON encoding",
+				Type:        []string{"object"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_dashboard_v0alpha1_DashboardList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -368,10 +389,107 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardList(ref common.ReferenceCallba
 						},
 					},
 				},
+				Required: []string{"metadata", "items"},
 			},
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.Dashboard", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v0alpha1_DashboardMetadata(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "metadata contains embedded CommonMetadata and can be extended with custom string fields without external reference as using the CommonMetadata reference breaks thema codegen.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"updateTimestamp": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "date-time",
+						},
+					},
+					"createdBy": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"uid": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"creationTimestamp": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "date-time",
+						},
+					},
+					"deletionTimestamp": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "date-time",
+						},
+					},
+					"finalizers": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"resourceVersion": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"generation": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+					"updatedBy": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"labels": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"updateTimestamp", "createdBy", "uid", "creationTimestamp", "finalizers", "resourceVersion", "generation", "updatedBy", "labels"},
+			},
+		},
 	}
 }
 
@@ -383,14 +501,15 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardStatus(ref common.ReferenceCall
 				Properties: map[string]spec.Schema{
 					"conversion": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.ConversionStatus"),
+							Description: "Optional conversion status.",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardConversionStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.ConversionStatus"},
+			"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardConversionStatus"},
 	}
 }
 
@@ -514,21 +633,20 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardWithAccessInfo(ref common.Refer
 					},
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Standard object's metadata More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
-							Default:     map[string]interface{}{},
-							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The dashboard body (unstructured for now)",
+							Description: "Spec is the spec of the Dashboard",
 							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Optional dashboard status",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardStatus"),
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardStatus"),
 						},
 					},
 					"access": {
@@ -538,7 +656,7 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardWithAccessInfo(ref common.Refer
 						},
 					},
 				},
-				Required: []string{"spec", "access"},
+				Required: []string{"metadata", "spec", "status", "access"},
 			},
 		},
 		Dependencies: []string{

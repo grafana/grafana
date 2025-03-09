@@ -38,10 +38,7 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 			internalID = int64(id)
 		}
 	case *dashboardV2.Dashboard:
-		if id, ok := v.Spec.Object["id"].(float64); ok {
-			delete(v.Spec.Object, "id")
-			internalID = int64(id)
-		}
+		// Noop for V2
 	default:
 		return fmt.Errorf("mutation error: expected to dashboard, got %T", obj)
 	}
