@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	encryptionmanager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
@@ -214,12 +215,13 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 		tracing.InitializeTracerForTest(),
 		dataKeyStore,
 		cfg,
-		&usagestats.UsageStatsMock{T: t},
+		&usagestats.UsageStatsMock{},
+		encryption.ProviderMap{},
 	)
 	require.NoError(t, err)
 
 	// Initialize the keeper service
-	keeperService, err := secretkeeper.ProvideService(tracing.InitializeTracerForTest(), encMgr, encValueStore)
+	keeperService, err := secretkeeper.ProvideService(tracing.InitializeTracerForTest(), encValueStore, encMgr)
 	require.NoError(t, err)
 
 	// Initialize access client + access control
