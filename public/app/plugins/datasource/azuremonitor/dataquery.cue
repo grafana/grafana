@@ -128,6 +128,10 @@ composableKinds: DataQuery: {
 					basicLogsQuery?: bool
 					// Workspace ID. This was removed in Grafana 8, but remains for backwards compat.
 					workspace?: string
+					// Denotes if logs query editor is in builder mode
+					mode?: #LogsEditorMode
+					// Builder query to be executed.
+					builderQuery?: #BuilderQueryExpression
 
 					// @deprecated Use resources instead 
 					resource?: string
@@ -161,6 +165,93 @@ composableKinds: DataQuery: {
 				} @cuetsy(kind="interface")
 
 				#ResultFormat: "table" | "time_series" | "trace" | "logs" @cuetsy(kind="enum", memberNames="Table|TimeSeries|Trace|Logs")
+				#LogsEditorMode: "builder" | "raw" @cuetsy(kind="enum", memberNames="Builder|Raw")
+
+				#BuilderQueryEditorExpressionType: "property" | "operator" | "reduce" | "function_parameter" | "group_by" | "or" | "and" @cuetsy(kind="enum", memberNames:"Property|Operator|Reduce|FunctionParameter|GroupBy|Or|And")
+				#BuilderQueryEditorPropertyType: "number" | "string" | "boolean" | "datetime" | "time_span" | "function" | "interval" @cuetsy(kind="enum", memberNames:"Number|String|Boolean|Datetime|TimeSpan|Function|Interval")
+
+				#BuilderQueryEditorProperty: {
+					type: #BuilderQueryEditorPropertyType
+					name: string
+				} @cuetsy(kind="interface")
+
+				#BuilderQueryEditorPropertyExpression: {
+					property: #BuilderQueryEditorProperty
+					type: #BuilderQueryEditorExpressionType
+				} @cuetsy(kind="interface")
+
+				#BuilderQueryEditorColumnsExpression: {
+					columns?: [...string]
+					type: #BuilderQueryEditorExpressionType
+				} @cuetsy(kind="interface")
+
+				#SelectableValue: {
+					label: string
+					value: string
+				} @cuetsy(kind="interface")
+
+				#BuilderQueryEditorOperatorType: string | bool | number | #SelectableValue @cuetsy(kind="type")
+
+				#BuilderQueryEditorOperator: {
+					name: string
+					value: #BuilderQueryEditorOperatorType
+					labelValue?: string
+				} @cuetsy(kind="interface")
+
+				#BuilderQueryEditorOperatorExpression: {
+					property: #BuilderQueryEditorProperty
+					operator: #BuilderQueryEditorOperator
+					type: #BuilderQueryEditorExpressionType
+				} @cuetsy(kind="interface")
+
+				#BuilderQueryEditorWhereExpression: {
+					expressions: [...#BuilderQueryEditorOperatorExpression]
+					type: #BuilderQueryEditorExpressionType
+				}
+
+				#BuilderQueryEditorWhereArrayExpression: {
+					expressions: [...(#BuilderQueryEditorOperatorExpression | #BuilderQueryEditorWhereExpression)] 
+					type: #BuilderQueryEditorExpressionType
+				} @cuetsy(kind="interface")
+
+				#BuilderQueryEditorFunctionParameterExpression: {
+					value: string
+					fieldType: #BuilderQueryEditorPropertyType
+					type: #BuilderQueryEditorExpressionType
+				} @cuetsy(kind="interface")
+
+				#BuilderQueryEditorReduceExpression: {
+					property: #BuilderQueryEditorProperty
+					reduce: #BuilderQueryEditorProperty
+					parameters?: [...#BuilderQueryEditorFunctionParameterExpression]
+					focus?: bool
+				} @cuetsy(kind="interface")
+
+				#BuilderQueryEditorReduceExpressionArray: {
+					expressions: [...#BuilderQueryEditorReduceExpression]
+					type: #BuilderQueryEditorExpressionType
+				} @cuetsy(kind="interface")
+
+				#BuilderQueryEditorGroupByExpression: {
+					property: #BuilderQueryEditorProperty
+					interval?: #BuilderQueryEditorProperty
+					focus?: bool
+					type: #BuilderQueryEditorExpressionType
+				} @cuetsy(kind="interface")
+
+				#BuilderQueryEditorGroupByExpressionArray: {
+					expressions: [...#BuilderQueryEditorGroupByExpression]
+					type: #BuilderQueryEditorExpressionType
+				} @cuetsy(kind="interface")
+
+				#BuilderQueryExpression: {
+					from?: #BuilderQueryEditorPropertyExpression
+					columns?: #BuilderQueryEditorColumnsExpression
+					where?: #BuilderQueryEditorWhereArrayExpression
+					reduce?: #BuilderQueryEditorReduceExpressionArray
+					groupBy?: #BuilderQueryEditorGroupByExpressionArray
+					limit?: int
+				} @cuetsy(kind="interface")
 
 				#AzureResourceGraphQuery: {
 					// Azure Resource Graph KQL query to be executed.
