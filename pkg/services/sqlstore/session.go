@@ -11,6 +11,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
+
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -140,14 +141,18 @@ func (sess *DBSession) InsertId(bean any, dialect migrator.Dialect) error {
 }
 
 func (sess *DBSession) WithReturningID(driverName string, query string, args []any) (int64, error) {
-	supported := driverName != migrator.Postgres
 	var id int64
-	if !supported {
+	if driverName == migrator.Postgres {
 		query = fmt.Sprintf("%s RETURNING id", query)
 		if _, err := sess.SQL(query, args...).Get(&id); err != nil {
 			return id, err
 		}
 	} else {
+		if driverName == migrator.Spanner {
+			// Only works with INSERT statements.
+			query = fmt.Sprintf("%s THEN RETURN id", query)
+		}
+
 		sqlOrArgs := append([]any{query}, args...)
 		res, err := sess.Exec(sqlOrArgs...)
 		if err != nil {
