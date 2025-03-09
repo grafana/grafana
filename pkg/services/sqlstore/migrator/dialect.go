@@ -32,6 +32,8 @@ type Dialect interface {
 	BooleanStr(bool) string
 	DateTimeFunc(string) string
 	BatchSize() int
+	UnionDistinct() string // this is the default UNION type
+	UnionAll() string
 
 	OrderBy(order string) string
 
@@ -466,4 +468,12 @@ func (b *BaseDialect) Update(ctx context.Context, tx *session.SessionTx, tableNa
 
 func (b *BaseDialect) Concat(strs ...string) string {
 	return fmt.Sprintf("CONCAT(%s)", strings.Join(strs, ", "))
+}
+
+func (b *BaseDialect) UnionDistinct() string {
+	return "UNION"
+}
+
+func (b *BaseDialect) UnionAll() string {
+	return "UNION ALL"
 }

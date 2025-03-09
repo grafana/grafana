@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 var sqlIDAcceptList = map[string]struct{}{
@@ -127,7 +128,7 @@ func SetAcceptListForTest(list map[string]struct{}) func() {
 	}
 }
 
-func UserRolesFilter(orgID, userID int64, teamIDs []int64, roles []string) (string, []any) {
+func UserRolesFilter(orgID, userID int64, teamIDs []int64, roles []string, dialect migrator.Dialect) (string, []any) {
 	var params []any
 	builder := strings.Builder{}
 
@@ -145,7 +146,7 @@ func UserRolesFilter(orgID, userID int64, teamIDs []int64, roles []string) (stri
 
 	if len(teamIDs) > 0 {
 		if builder.Len() > 0 {
-			builder.WriteString("UNION")
+			builder.WriteString(dialect.UnionDistinct())
 		}
 		builder.WriteString(`
 			SELECT tr.role_id FROM team_role as tr
@@ -160,7 +161,7 @@ func UserRolesFilter(orgID, userID int64, teamIDs []int64, roles []string) (stri
 
 	if len(roles) != 0 {
 		if builder.Len() > 0 {
-			builder.WriteString("UNION")
+			builder.WriteString(dialect.UnionDistinct())
 		}
 
 		builder.WriteString(`
