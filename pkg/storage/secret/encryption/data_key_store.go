@@ -28,7 +28,7 @@ type DataKeyStorage interface {
 	DisableDataKeys(ctx context.Context, namespace string) error
 	DeleteDataKey(ctx context.Context, namespace, uid string) error
 
-	ReEncryptDataKeys(ctx context.Context, namespace string, providers map[encryption.ProviderID]encryption.Provider, currProvider encryption.ProviderID) error
+	ReEncryptDataKeys(ctx context.Context, namespace string, providers encryption.ProviderMap, currProvider encryption.ProviderID) error
 }
 
 // encryptionStoreImpl is the actual implementation of the data key storage.
@@ -168,7 +168,7 @@ func (ss *encryptionStoreImpl) DeleteDataKey(ctx context.Context, namespace, uid
 func (ss *encryptionStoreImpl) ReEncryptDataKeys(
 	ctx context.Context,
 	namespace string,
-	providers map[encryption.ProviderID]encryption.Provider,
+	providers encryption.ProviderMap,
 	currProvider encryption.ProviderID,
 ) error {
 	keys := make([]*SecretDataKey, 0)

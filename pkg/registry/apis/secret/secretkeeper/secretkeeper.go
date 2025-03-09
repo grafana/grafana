@@ -22,7 +22,11 @@ type OSSKeeperService struct {
 	store             encryptionstorage.EncryptedValueStorage
 }
 
-func ProvideService(tracer tracing.Tracer, encryptionManager *manager.EncryptionManager, store encryptionstorage.EncryptedValueStorage) (OSSKeeperService, error) {
+func ProvideService(
+	tracer tracing.Tracer,
+	store encryptionstorage.EncryptedValueStorage,
+	encryptionManager *manager.EncryptionManager,
+) (OSSKeeperService, error) {
 	return OSSKeeperService{
 		tracer:            tracer,
 		encryptionManager: encryptionManager,
