@@ -4,40 +4,19 @@
 
 package v0alpha1
 
-import (
-	aggregationv0alpha1 "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
-)
-
 // DataPlaneServiceSpecApplyConfiguration represents a declarative configuration of the DataPlaneServiceSpec type for use
 // with apply.
 type DataPlaneServiceSpecApplyConfiguration struct {
-	PluginID   *string                         `json:"pluginID,omitempty"`
-	PluginType *aggregationv0alpha1.PluginType `json:"pluginType,omitempty"`
-	Group      *string                         `json:"group,omitempty"`
-	Version    *string                         `json:"version,omitempty"`
-	Services   []ServiceApplyConfiguration     `json:"services,omitempty"`
+	Group    *string                     `json:"group,omitempty"`
+	Version  *string                     `json:"version,omitempty"`
+	Services []ServiceApplyConfiguration `json:"services,omitempty"`
+	Backend  *BackendApplyConfiguration  `json:"backend,omitempty"`
 }
 
 // DataPlaneServiceSpecApplyConfiguration constructs a declarative configuration of the DataPlaneServiceSpec type for use with
 // apply.
 func DataPlaneServiceSpec() *DataPlaneServiceSpecApplyConfiguration {
 	return &DataPlaneServiceSpecApplyConfiguration{}
-}
-
-// WithPluginID sets the PluginID field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the PluginID field is set to the value of the last call.
-func (b *DataPlaneServiceSpecApplyConfiguration) WithPluginID(value string) *DataPlaneServiceSpecApplyConfiguration {
-	b.PluginID = &value
-	return b
-}
-
-// WithPluginType sets the PluginType field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the PluginType field is set to the value of the last call.
-func (b *DataPlaneServiceSpecApplyConfiguration) WithPluginType(value aggregationv0alpha1.PluginType) *DataPlaneServiceSpecApplyConfiguration {
-	b.PluginType = &value
-	return b
 }
 
 // WithGroup sets the Group field in the declarative configuration to the given value
@@ -66,5 +45,13 @@ func (b *DataPlaneServiceSpecApplyConfiguration) WithServices(values ...*Service
 		}
 		b.Services = append(b.Services, *values[i])
 	}
+	return b
+}
+
+// WithBackend sets the Backend field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Backend field is set to the value of the last call.
+func (b *DataPlaneServiceSpecApplyConfiguration) WithBackend(value *BackendApplyConfiguration) *DataPlaneServiceSpecApplyConfiguration {
+	b.Backend = value
 	return b
 }

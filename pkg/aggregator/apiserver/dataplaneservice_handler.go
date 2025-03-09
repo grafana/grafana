@@ -11,6 +11,7 @@ import (
 	"k8s.io/component-base/tracing"
 
 	aggregationv0alpha1 "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
+	httpHandler "github.com/grafana/grafana/pkg/aggregator/apiserver/http"
 	"github.com/grafana/grafana/pkg/aggregator/apiserver/plugin"
 )
 
@@ -20,6 +21,7 @@ type dataPlaneServiceHandler struct {
 	client                plugin.PluginClient
 	pluginContextProvider plugin.PluginContextProvider
 	handlingInfo          atomic.Value
+	tracerProvider        tracing.TracerProvider
 }
 
 type handlingInfo struct {
@@ -54,14 +56,22 @@ func (r *dataPlaneServiceHandler) updateDataPlaneService(dataplaneService *aggre
 	newInfo := handlingInfo{
 		name: dataplaneService.Name,
 	}
+	newInfo.handler = r.localDelegate
 
-	// currently only plugin handlers are supported
-	newInfo.handler = plugin.NewPluginHandler(
-		r.client,
-		*dataplaneService,
-		r.pluginContextProvider,
-		r.localDelegate,
-	)
+	if dataplaneService.Spec.Backend.Type == aggregationv0alpha1.BackendTypePlugin {
+		newInfo.handler = plugin.NewPluginHandler(
+			r.client,
+			*dataplaneService,
+			r.pluginContextProvider,
+			r.localDelegate,
+		)
+	} else if dataplaneService.Spec.Backend.Type == aggregationv0alpha1.BackendTypeHTTP {
+		newInfo.handler = httpHandler.NewHTTPHandler(
+			r.tracerProvider,
+			*dataplaneService,
+			r.localDelegate,
+		)
+	}
 
 	r.handlingInfo.Store(newInfo)
 }
