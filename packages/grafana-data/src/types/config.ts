@@ -216,7 +216,6 @@ export interface GrafanaConfig {
   unifiedAlerting: UnifiedAlertingConfig;
   angularSupportEnabled: boolean;
   feedbackLinksEnabled: boolean;
-  secretsManagerPluginEnabled: boolean;
   supportBundlesEnabled: boolean;
   secureSocksDSProxyEnabled: boolean;
   googleAnalyticsId: string | undefined;
