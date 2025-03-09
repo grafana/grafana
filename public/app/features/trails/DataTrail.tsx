@@ -31,7 +31,6 @@ import {
   VariableValueSelectors,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
-import { getSelectedScopes } from 'app/features/scopes';
 
 import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory } from './DataTrailsHistory';
@@ -426,7 +425,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
     if (timeRange) {
       const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
       const otelTargets = await totalOtelResources(datasourceUid, timeRange);
-      const deploymentEnvironments = await getDeploymentEnvironments(datasourceUid, timeRange, getSelectedScopes());
+      const deploymentEnvironments = await getDeploymentEnvironments(
+        datasourceUid,
+        timeRange,
+        sceneGraph.getScopesBridge(trail)?.getValue() ?? []
+      );
       const hasOtelResources = otelTargets.jobs.length > 0 && otelTargets.instances.length > 0;
       // loading from the url with otel resources selected will result in turning on OTel experience
       const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_AND_METRIC_FILTERS, this);
