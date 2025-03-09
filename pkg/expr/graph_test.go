@@ -284,6 +284,32 @@ func TestGetCommandsFromPipeline(t *testing.T) {
 	})
 }
 
+func TestIsGroupingSupportedDataSource(t *testing.T) {
+	tests := []struct {
+		name     string
+		dsType   string
+		expected bool
+	}{
+		{
+			name:     "supported datasource should return true",
+			dsType:   "cloudwatch",
+			expected: true,
+		},
+		{
+			name:     "unsupported datasource should return false",
+			dsType:   "prometheus",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := isGroupByDSSupported(tt.dsType)
+			require.Equal(t, tt.expected, result)
+		})
+	}
+}
+
 func getRefIDOrder(nodes []Node) []string {
 	ids := make([]string, 0, len(nodes))
 	for _, n := range nodes {
