@@ -125,15 +125,23 @@ function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
   let datasource: DataSourceRef | undefined = undefined;
   let isMixedDatasource = false;
 
-  panel.spec.data.spec.queries.forEach((query) => {
+  panel.spec.data.spec.queries.forEach(async (query) => {
     if (!datasource) {
-      datasource = query.spec.datasource;
+      if (!query.spec.datasource?.uid) {
+        const defaultDatasource = config.bootData.settings.defaultDatasource;
+        const dsList = config.bootData.settings.datasources;
+        // this is look up by type
+        const bestGuess = Object.values(dsList).find((ds) => ds.meta.id === query.spec.query.kind);
+        datasource = bestGuess ? { uid: bestGuess.uid, type: bestGuess.meta.id } : dsList[defaultDatasource];
+      } else {
+        datasource = query.spec.datasource;
+      }
     } else if (datasource.uid !== query.spec.datasource?.uid || datasource.type !== query.spec.datasource?.type) {
       isMixedDatasource = true;
     }
   });
 
-  return isMixedDatasource ? { type: 'mixed', uid: MIXED_DATASOURCE_NAME } : undefined;
+  return isMixedDatasource ? { type: 'mixed', uid: MIXED_DATASOURCE_NAME } : datasource;
 }
 
 function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
