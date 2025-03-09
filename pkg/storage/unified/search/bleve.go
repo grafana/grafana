@@ -74,6 +74,8 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgm
 		return nil, fmt.Errorf("bleve root is configured against a file (not folder)")
 	}
 
+	go updateIndexSizeMetric(opts.Root)
+
 	return &bleveBackend{
 		log:      slog.Default().With("logger", "bleve-backend"),
 		tracer:   tracer,
@@ -94,6 +96,33 @@ func (b *bleveBackend) GetIndex(ctx context.Context, key resource.NamespacedReso
 		return idx, nil
 	}
 	return nil, nil
+}
+
+// updateIndexSizeMetric sets the total size of all file-based indices metric.
+func updateIndexSizeMetric(indexPath string) {
+	for {
+		var totalSize int64
+
+		err := filepath.WalkDir(indexPath, func(path string, info os.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if !info.IsDir() {
+				fileInfo, err := info.Info()
+				if err != nil {
+					return err
+				}
+				totalSize += fileInfo.Size()
+			}
+			return nil
+		})
+
+		if err == nil {
+			resource.IndexMetrics.IndexSize.Set(float64(totalSize))
+		}
+
+		time.Sleep(5 * time.Second)
+	}
 }
 
 // Build an index from scratch

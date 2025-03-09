@@ -361,7 +361,7 @@ func newTestDashboardsIndex(t *testing.T) resource.ResourceIndex {
 	require.NoError(t, err)
 
 	// AVOID NPE in test
-	resource.NewIndexMetrics(backend.opts.Root, backend)
+	resource.NewIndexMetrics()
 
 	rv := int64(10)
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
