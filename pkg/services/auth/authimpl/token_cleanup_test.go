@@ -17,7 +17,7 @@ func TestIntegrationUserAuthTokenCleanup(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	setup := func() *testContext {
+	setup := func(t *testing.T) *testContext {
 		ctx := createTestContext(t)
 		maxInactiveLifetime, _ := time.ParseDuration("168h")
 		maxLifetime, _ := time.ParseDuration("720h")
@@ -40,7 +40,7 @@ func TestIntegrationUserAuthTokenCleanup(t *testing.T) {
 	getTime = func() time.Time { return now }
 
 	t.Run("should delete tokens where token rotation age is older than or equal 7 days", func(t *testing.T) {
-		ctx := setup()
+		ctx := setup(t)
 		from := now.Add(-168 * time.Hour)
 
 		// insert three old tokens that should be deleted
@@ -60,7 +60,7 @@ func TestIntegrationUserAuthTokenCleanup(t *testing.T) {
 	})
 
 	t.Run("should delete tokens where token age is older than or equal 30 days", func(t *testing.T) {
-		ctx := setup()
+		ctx := setup(t)
 		from := now.Add(-30 * 24 * time.Hour)
 		fromRotate := now.Add(-time.Second)
 
@@ -86,7 +86,7 @@ func TestIntegrationOrphanedExternalSessionsCleanup(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	setup := func() *testContext {
+	setup := func(t *testing.T) *testContext {
 		ctx := createTestContext(t)
 		return ctx
 	}
@@ -112,7 +112,7 @@ func TestIntegrationOrphanedExternalSessionsCleanup(t *testing.T) {
 	}
 
 	t.Run("should delete orphaned external sessions", func(t *testing.T) {
-		ctx := setup()
+		ctx := setup(t)
 
 		// insert three external sessions
 		for i := int64(1); i <= 3; i++ {
