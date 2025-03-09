@@ -35,7 +35,13 @@ export function EditPaneHeader({ element }: EditPaneHeaderProps) {
         ) : null}
 
         {element.onDelete && (
-          <ConfirmButton onConfirm={element.onDelete} confirmText="Confirm" confirmVariant="destructive" size="sm">
+          <ConfirmButton
+            onConfirm={element.onDelete}
+            confirmText="Confirm"
+            confirmVariant="destructive"
+            size="sm"
+            closeOnConfirm={true}
+          >
             <Button size="sm" variant="destructive" fill="outline">
               <Trans i18nKey="dashboard.layout.common.delete" />
             </Button>

@@ -1,18 +1,17 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { VizPanel } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
-import { EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
-import { MultiSelectedEditableDashboardElement } from '../scene/types/MultiSelectedEditableDashboardElement';
-import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
-export class MultiSelectedVizPanelsEditableElement implements MultiSelectedEditableDashboardElement {
-  public readonly isMultiSelectedEditableDashboardElement = true;
+import { VizPanelEditableElement } from './VizPanelEditableElement';
+
+export class MultiSelectedVizPanelsEditableElement implements EditableDashboardElement {
+  public readonly isEditableDashboardElement = true;
   public readonly key: string;
 
-  constructor(private _panels: VizPanel[]) {
+  constructor(private _panels: VizPanelEditableElement[]) {
     this.key = uuidv4();
   }
 
@@ -29,10 +28,9 @@ export class MultiSelectedVizPanelsEditableElement implements MultiSelectedEdita
     return [header];
   }
 
-  public onDelete() {
+  public onDelete = () => {
     this._panels.forEach((panel) => {
-      const layout = dashboardSceneGraph.getLayoutManagerFor(panel);
-      layout.removePanel?.(panel);
+      panel.onDelete();
     });
-  }
+  };
 }

@@ -1,33 +1,28 @@
-import { v4 as uuidv4 } from 'uuid';
-
 import { t } from 'app/core/internationalization';
+import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
-import { EditableDashboardElementInfo } from '../types/EditableDashboardElement';
-import { MultiSelectedEditableDashboardElement } from '../types/MultiSelectedEditableDashboardElement';
+import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
 
 import { TabItem } from './TabItem';
 
-export class TabItems implements MultiSelectedEditableDashboardElement {
-  public readonly isMultiSelectedEditableDashboardElement = true;
-  public readonly key: string;
+export class TabItems implements EditableDashboardElement {
+  public readonly isEditableDashboardElement = true;
 
-  public constructor(private _tabs: TabItem[]) {
-    this.key = uuidv4();
-  }
+  public constructor(private _tabs: TabItem[]) {}
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return { name: t('dashboard.edit-pane.elements.tabs', 'Tabs'), typeId: 'tabs', icon: 'folder' };
   }
 
-  // public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-  //   return getEditOptions(this);
-  // }
+  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
+    return [];
+  }
 
   public getTabs(): TabItem[] {
     return this._tabs;
   }
 
-  public onDelete() {
+  public onDelete = () => {
     this._tabs.forEach((tab) => tab.onDelete());
-  }
+  };
 }

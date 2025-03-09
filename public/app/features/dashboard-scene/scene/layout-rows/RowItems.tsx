@@ -1,21 +1,15 @@
-import { v4 as uuidv4 } from 'uuid';
-
 import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
-import { EditableDashboardElementInfo } from '../types/EditableDashboardElement';
-import { MultiSelectedEditableDashboardElement } from '../types/MultiSelectedEditableDashboardElement';
+import { EditableDashboardElementInfo, EditableDashboardElement } from '../types/EditableDashboardElement';
 
 import { RowItem } from './RowItem';
 import { getEditOptions } from './RowItemsEditor';
 
-export class RowItems implements MultiSelectedEditableDashboardElement {
-  public readonly isMultiSelectedEditableDashboardElement = true;
-  public readonly key: string;
+export class RowItems implements EditableDashboardElement {
+  public readonly isEditableDashboardElement = true;
 
-  public constructor(private _rows: RowItem[]) {
-    this.key = uuidv4();
-  }
+  public constructor(private _rows: RowItem[]) {}
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return { name: t('dashboard.edit-pane.elements.rows', 'Rows'), typeId: 'rows', icon: 'folder' };
@@ -29,13 +23,11 @@ export class RowItems implements MultiSelectedEditableDashboardElement {
     return this._rows;
   }
 
-  public onDelete() {
+  public onDelete = () => {
     this._rows.forEach((row) => row.onDelete());
-  }
+  };
 
   public onHeaderHiddenToggle(value: boolean, indeterminate: boolean) {
     this._rows.forEach((row) => row.onHeaderHiddenToggle(indeterminate ? true : !value));
   }
-
-  public getNumberOfRowsSelected = () => this._rows.length;
 }

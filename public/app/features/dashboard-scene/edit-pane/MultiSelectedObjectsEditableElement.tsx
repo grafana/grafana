@@ -1,19 +1,19 @@
 import { ReactNode } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import { Stack, Text, Button } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
+import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { BulkActionElement } from '../scene/types/BulkActionElement';
-import { EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
-import { MultiSelectedEditableDashboardElement } from '../scene/types/MultiSelectedEditableDashboardElement';
+import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
-export class MultiSelectedObjectsEditableElement implements MultiSelectedEditableDashboardElement {
-  public readonly isMultiSelectedEditableDashboardElement = true;
-  public readonly key: string;
+export class MultiSelectedObjectsEditableElement implements EditableDashboardElement {
+  public readonly isEditableDashboardElement = true;
 
-  constructor(private _elements: BulkActionElement[]) {
-    this.key = uuidv4();
+  constructor(private _elements: BulkActionElement[]) {}
+
+  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
+    return [];
   }
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
@@ -39,7 +39,7 @@ export class MultiSelectedObjectsEditableElement implements MultiSelectedEditabl
     );
   }
 
-  public onDelete() {
+  public onDelete = () => {
     this._elements.forEach((item) => item.onDelete());
-  }
+  };
 }

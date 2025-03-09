@@ -20,6 +20,8 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getEditPanelUrl } from '../utils/urlBuilders';
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
+import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
+
 export class VizPanelEditableElement implements EditableDashboardElement, BulkActionElement {
   public readonly isEditableDashboardElement = true;
   public readonly typeName = 'Panel';
@@ -101,6 +103,10 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     const dashboard = getDashboardSceneFor(this.panel);
     dashboard.copyPanel(this.panel);
   };
+
+  public createMultiSelectedElement(items: VizPanelEditableElement[]) {
+    return new MultiSelectedVizPanelsEditableElement(items);
+  }
 }
 
 type OpenPanelEditVizProps = {
