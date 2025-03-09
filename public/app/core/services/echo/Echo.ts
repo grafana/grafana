@@ -1,4 +1,5 @@
 import { EchoBackend, EchoMeta, EchoEvent, EchoSrv } from '@grafana/runtime';
+import { getMegaMenuDockedState, MenuDockState } from 'app/core/components/AppChrome/menuPreference';
 
 import { contextSrv } from '../context_srv';
 
@@ -67,6 +68,14 @@ export class Echo implements EchoSrv {
   };
 
   getMeta = (): EchoMeta => {
+    const menuState = getMegaMenuDockedState();
+    const menuStateString =
+      menuState === MenuDockState.Undocked
+        ? 'undocked'
+        : menuState === MenuDockState.AutoDocked
+          ? 'autoDocked'
+          : 'docked';
+
     return {
       sessionId: '',
       userId: contextSrv.user.id,
@@ -87,6 +96,7 @@ export class Echo implements EchoSrv {
       timeSinceNavigationStart: performance.now(),
       path: window.location.pathname,
       url: window.location.href,
+      dockedMegaMenu: menuStateString, // todo: add to type
     };
   };
 }
