@@ -602,7 +602,7 @@ export class BackendSrv implements BackendService {
     // NOTE: When this is removed, we can also remove most instances of:
     // jest.mock('app/features/live/dashboard/dashboardWatcher
     deprecationWarning('backend_srv', 'getDashboardByUid(uid)', 'getDashboardAPI().getDashboardDTO(uid)');
-    return getDashboardAPI().getDashboardDTO(uid);
+    return getDashboardAPI('v1').getDashboardDTO(uid);
   }
 
   validateDashboard(dashboard: DashboardModel): Promise<ValidateDashboardResponse> {

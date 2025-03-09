@@ -18,7 +18,7 @@ import { DashboardDataDTO, DashboardDTO, SaveDashboardResponseDTO } from 'app/ty
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
-import { DashboardAPI, DashboardWithAccessInfo } from './types';
+import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo } from './types';
 
 export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
   private client: ResourceClient<DashboardDataDTO>;
@@ -95,6 +95,11 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
   async getDashboardDTO(uid: string) {
     try {
       const dash = await this.client.subresource<DashboardWithAccessInfo<DashboardDataDTO>>(uid, 'dto');
+
+      // This could come as conversion error from v0 or v2 to V1.
+      if (dash.status?.conversion?.failed) {
+        throw new DashboardVersionError(dash.status.conversion.storedVersion, dash.status.conversion.error);
+      }
 
       const result: DashboardDTO = {
         meta: {
