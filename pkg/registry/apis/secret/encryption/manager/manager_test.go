@@ -541,6 +541,46 @@ func TestIntegration_SecretsService(t *testing.T) {
 	}
 }
 
+func TestEncryptionService_ReInitReturnsError(t *testing.T) {
+	svc := setupTestService(t)
+	err := svc.InitProviders(encryption.ProviderMap{
+		"fakeProvider.v1": &fakeProvider{},
+	})
+	require.Error(t, err)
+
+	assert.Len(t, svc.providers, 2)
+	assert.Contains(t, svc.providers, "fakeProvider.v1")
+}
+
+func TestEncryptionService_ThirdPartyProviders(t *testing.T) {
+	// Initialize data key storage with a fake db
+	cfg := &setting.Cfg{
+		SecretsManagement: setting.SecretsManagerSettings{
+			SecretKey:          "SdlklWklckeLS",
+			EncryptionProvider: "secretKey.v1",
+			Encryption: setting.EncryptionSettings{
+				DataKeysCleanupInterval: time.Nanosecond,
+				DataKeysCacheTTL:        5 * time.Minute,
+				Algorithm:               "aes-cfb",
+			},
+		},
+	}
+
+	encMgr, err := ProvideEncryptionManager(
+		nil,
+		nil,
+		cfg,
+		&usagestats.UsageStatsMock{},
+		encryption.ProviderMap{
+			"fakeProvider.v1": &fakeProvider{},
+		},
+	)
+	require.NoError(t, err)
+
+	require.Len(t, encMgr.providers, 2)
+	require.Contains(t, encMgr.providers, encryption.ProviderID("fakeProvider.v1"))
+}
+
 // Use this function at the beginning of those tests
 // that manipulates 'now', so it'll leave it in a
 // correct state once test execution finishes.
