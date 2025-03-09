@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -83,15 +82,6 @@ func (m *SecretsMigrator) RollBackSecrets(ctx context.Context) (bool, error) {
 	// }
 
 	return !anyFailure, nil
-}
-
-func (m *SecretsMigrator) initProvidersIfNeeded() error {
-	if err := m.secretsSrv.InitProviders(encryption.ProvideThirdPartyProviderMap()); err != nil {
-		logger.Error("Envelope encryption providers initialization failed", "error", err)
-		return err
-	}
-
-	return nil
 }
 
 // Keeping this here as a reference for when we do this in our new scheme

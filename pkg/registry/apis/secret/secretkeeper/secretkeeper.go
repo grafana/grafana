@@ -27,7 +27,6 @@ func ProvideService(
 	store encryptionstorage.EncryptedValueStorage,
 	encryptionManager *manager.EncryptionManager,
 ) (OSSKeeperService, error) {
-
 	return OSSKeeperService{
 		tracer:            tracer,
 		encryptionManager: encryptionManager,
