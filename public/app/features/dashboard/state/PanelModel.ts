@@ -130,7 +130,6 @@ const defaults: any = {
     defaults: {},
     overrides: [],
   },
-  title: '',
 };
 
 export const explicitlyControlledMigrationPanels = [
@@ -160,7 +159,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   id!: number;
   gridPos!: GridPos;
   type!: string;
-  title!: string;
+  title?: string;
   alert?: any;
   scopedVars?: ScopedVars;
   repeat?: string;
@@ -684,7 +683,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
    * If you need the raw title without interpolation use title property instead.
    * */
   getDisplayTitle(): string {
-    return this.replaceVariables(this.title, undefined, 'text');
+    return this.replaceVariables(this.title ?? '', undefined, 'text');
   }
 
   initLibraryPanel(libPanel: LibraryPanel) {

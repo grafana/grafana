@@ -128,7 +128,7 @@ export class UnthemedDashboardRow extends Component<DashboardRowProps> {
         {canEdit && (
           <div className={styles.actions}>
             <RowOptionsButton
-              title={this.props.panel.title}
+              title={this.props.panel.title ?? ''}
               repeat={this.props.panel.repeat}
               onUpdate={this.onUpdate}
               warning={this.getWarning()}
