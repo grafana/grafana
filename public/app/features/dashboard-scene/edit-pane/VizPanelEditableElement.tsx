@@ -122,7 +122,7 @@ const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
   return (
     <Stack alignItems="center" width="100%">
       {plugin ? (
-        <Tooltip content={t('dashboard.viz-panel.options.open-edit', 'Open Panel Edit')}>
+        <Tooltip content={t('dashboard.viz-panel.options.open-edit', 'Open panel editor')}>
           <a
             href={textUtil.sanitizeUrl(getEditPanelUrl(getPanelIdForVizPanel(panel)))}
             className={cx(styles.pluginDescriptionWrapper)}
@@ -149,12 +149,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     columnGap: theme.spacing(1),
     rowGap: theme.spacing(0.5),
     minHeight: theme.spacing(4),
-    backgroundColor: theme.components.input.background,
-    border: `1px solid ${theme.colors.border.strong}`,
+    backgroundColor: theme.colors.secondary.main,
+    border: `1px solid ${theme.colors.secondary.border}`,
     borderRadius: theme.shape.radius.default,
     paddingInline: theme.spacing(1),
     paddingBlock: theme.spacing(0.5),
     flexGrow: 1,
+    '&:hover': {
+      backgroundColor: theme.colors.secondary.shade,
+    },
   }),
   panelVizImg: css({
     width: '16px',

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Menu, Stack, Text, useStyles2, ConfirmButton, Dropdown, Icon } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { t } from 'app/core/internationalization';
 
 import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
 

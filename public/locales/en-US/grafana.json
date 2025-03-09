@@ -1339,7 +1339,7 @@
     "viz-panel": {
       "options": {
         "description": "Description",
-        "open-edit": "Open Panel Edit",
+        "open-edit": "Open panel editor",
         "plugin-type-image": "Image of plugin type",
         "title-option": "Title",
         "transparent-background": "Transparent background"
