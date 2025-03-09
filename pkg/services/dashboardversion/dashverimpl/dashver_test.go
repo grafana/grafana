@@ -7,8 +7,10 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -113,6 +115,23 @@ func TestDashboardVersionService(t *testing.T) {
 			CreatedBy:     2,
 			Data:          simplejson.NewFromAny(map[string]any{"uid": "uid", "version": int64(11)}),
 		})
+	})
+
+	t.Run("should dashboard not found error when k8s returns not found", func(t *testing.T) {
+		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
+		mockCli := new(client.MockK8sHandler)
+		dashboardVersionService.k8sclient = mockCli
+		dashboardVersionService.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders)
+		dashboardService.On("GetDashboardUIDByID", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardRefByIDQuery")).Return(&dashboards.DashboardRef{UID: "uid"}, nil)
+		mockCli.On("Get", mock.Anything, "uid", int64(1), v1.GetOptions{ResourceVersion: "10"}, mock.Anything).Return(nil, apierrors.NewNotFound(schema.GroupResource{Group: "dashboards.dashboard.grafana.app", Resource: "dashboard"}, "uid"))
+
+		_, err := dashboardVersionService.Get(context.Background(), &dashver.GetDashboardVersionQuery{
+			DashboardID: 42,
+			OrgID:       1,
+			Version:     10,
+		})
+		require.ErrorIs(t, err, dashboards.ErrDashboardNotFound)
 	})
 }
 
@@ -265,6 +284,21 @@ func TestListDashboardVersions(t *testing.T) {
 				DashboardUID:  "uid",
 				Data:          simplejson.NewFromAny(map[string]any{"uid": "uid", "version": int64(5)}),
 			}}}, res)
+	})
+
+	t.Run("should return dashboard not found error when k8s client says not found", func(t *testing.T) {
+		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
+		mockCli := new(client.MockK8sHandler)
+		dashboardVersionService.k8sclient = mockCli
+		dashboardVersionService.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders)
+		dashboardService.On("GetDashboardUIDByID", mock.Anything,
+			mock.AnythingOfType("*dashboards.GetDashboardRefByIDQuery")).
+			Return(&dashboards.DashboardRef{UID: "uid"}, nil)
+		mockCli.On("List", mock.Anything, mock.Anything, mock.Anything).Return(nil, apierrors.NewNotFound(schema.GroupResource{Group: "dashboards.dashboard.grafana.app", Resource: "dashboard"}, "uid"))
+		query := dashver.ListDashboardVersionsQuery{DashboardID: 42}
+		_, err := dashboardVersionService.List(context.Background(), &query)
+		require.ErrorIs(t, dashboards.ErrDashboardNotFound, err)
 	})
 }
 
