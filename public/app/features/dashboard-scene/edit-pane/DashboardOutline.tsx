@@ -65,7 +65,7 @@ function DashboardOutlineNode({ sceneObject, expandable }: { sceneObject: SceneO
           onPointerDown={(evt) => onSelect?.(evt)}
         >
           <Icon name={elementInfo.icon} />
-          <span>{elementInfo.name}</span>
+          <span>{elementInfo.instanceName}</span>
         </button>
       </Stack>
       {expandable && isExpanded && (

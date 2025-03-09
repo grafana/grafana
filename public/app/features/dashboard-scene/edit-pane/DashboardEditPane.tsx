@@ -178,7 +178,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
     return null;
   }
 
-  const { typeId } = editableElement.getEditableElementInfo();
+  const { typeName: typeId } = editableElement.getEditableElementInfo();
 
   if (isCollapsed) {
     return (
@@ -250,7 +250,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     tabsbar: css({
       padding: theme.spacing(0, 1),
-      margin: theme.spacing(0.5, 1),
+      margin: theme.spacing(0.5, 0),
     }),
     expandOptionsWrapper: css({
       display: 'flex',

@@ -1,44 +1,71 @@
-import { Dropdown, Button, IconButton, Menu, Stack, Icon } from '@grafana/ui';
+import { css } from '@emotion/css';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, Menu, Stack, Text, useStyles2, ConfirmButton, Dropdown, Icon } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
+import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+
 interface EditPaneHeaderProps {
-  title: string;
-  onDelete?: () => void;
-  onCopy?: () => void;
-  onDuplicate?: () => void;
+  element: EditableDashboardElement;
 }
 
-export const EditPaneHeader = ({ title, onDelete, onCopy, onDuplicate }: EditPaneHeaderProps) => {
-  const addCopyOrDuplicate = onCopy || onDuplicate;
+export function EditPaneHeader({ element }: EditPaneHeaderProps) {
+  const addCopyOrDuplicate = element.onCopy || element.onDuplicate;
+  const elementInfo = element.getEditableElementInfo();
+  const styles = useStyles2(getStyles);
+
   return (
-    <Stack justifyContent="space-between" alignItems="center" width="100%">
-      <span>{title}</span>
-      <Stack alignItems="center">
+    <div className={styles.wrapper}>
+      <Text variant="h5">{elementInfo.typeName}</Text>
+      <Stack direction="row" gap={1}>
         {addCopyOrDuplicate ? (
-          <Dropdown overlay={<MenuItems onCopy={onCopy} onDuplicate={onDuplicate} />}>
+          <Dropdown overlay={<MenuItems onCopy={element.onCopy} onDuplicate={element.onDuplicate} />}>
             <Button
               tooltip={t('dashboard.layout.common.copy-or-duplicate', 'Copy or Duplicate')}
               tooltipPlacement="bottom"
               variant="secondary"
-              fill="text"
-              size="md"
+              size="sm"
+              icon="copy"
             >
-              <Icon name="copy" /> <Icon name="angle-down" />
+              <Icon name="angle-down" />
             </Button>
           </Dropdown>
         ) : null}
 
-        <IconButton
-          size="md"
-          variant="secondary"
-          onClick={onDelete}
-          name="trash-alt"
-          tooltip={t('dashboard.layout.common.delete', 'Delete')}
-        />
+        {element.onDelete && (
+          <ConfirmButton
+            onConfirm={element.onDelete}
+            confirmText="Confirm"
+            confirmVariant="destructive"
+            size="sm"
+            closeOnConfirm={true}
+          >
+            <Button
+              size="sm"
+              variant="destructive"
+              fill="outline"
+              icon="trash-alt"
+              tooltip={t('dashboard.layout.common.delete', 'Delete')}
+            />
+          </ConfirmButton>
+        )}
       </Stack>
-    </Stack>
+    </div>
   );
-};
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    wrapper: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: theme.spacing(2),
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
+  };
+}
 
 type MenuItemsProps = {
   onCopy?: () => void;
@@ -48,9 +75,13 @@ type MenuItemsProps = {
 const MenuItems = ({ onCopy, onDuplicate }: MenuItemsProps) => {
   return (
     <Menu>
-      {onCopy ? <Menu.Item label={t('dashboard.layout.common.copy', 'Copy')} onClick={onCopy} /> : null}
+      {onCopy ? <Menu.Item icon="copy" label={t('dashboard.layout.common.copy', 'Copy')} onClick={onCopy} /> : null}
       {onDuplicate ? (
-        <Menu.Item label={t('dashboard.layout.common.duplicate', 'Duplicate')} onClick={onDuplicate} />
+        <Menu.Item
+          icon="file-copy-alt"
+          label={t('dashboard.layout.common.duplicate', 'Duplicate')}
+          onClick={onDuplicate}
+        />
       ) : null}
     </Menu>
   );
