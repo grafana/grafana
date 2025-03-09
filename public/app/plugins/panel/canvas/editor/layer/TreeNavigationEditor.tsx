@@ -125,7 +125,11 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
     }
   };
 
-  const typeOptions = getElementTypes(settings.scene.shouldShowAdvancedTypes).options;
+  const typeOptions = getElementTypes(
+    settings.scene.shouldShowAdvancedTypes,
+    undefined,
+    settings.scene.multiplayer
+  ).options;
 
   return (
     <>
