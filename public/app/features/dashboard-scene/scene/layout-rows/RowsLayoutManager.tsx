@@ -1,6 +1,7 @@
 import { SceneGridItemLike, SceneGridRow, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 
+import { NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
 import { isClonedKey } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
@@ -96,10 +97,14 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   }
 
   public addRowAbove(row: RowItem) {
-    const rows = this.state.rows;
-    const index = rows.indexOf(row);
-    rows.splice(index, 0, new RowItem());
-    this.setState({ rows });
+    const index = this.state.rows.indexOf(row);
+    const newRow = new RowItem();
+    const newRows = [...this.state.rows];
+
+    newRows.splice(index, 0, newRow);
+
+    this.setState({ rows: newRows });
+    this.publishEvent(new NewObjectAddedToCanvasEvent(newRow), true);
   }
 
   public addRowBelow(row: RowItem) {
@@ -111,8 +116,13 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       index = index + 1;
     }
 
-    rows.splice(index + 1, 0, new RowItem());
-    this.setState({ rows });
+    const newRow = new RowItem();
+    const newRows = [...this.state.rows];
+
+    newRows.splice(index + 1, 0, newRow);
+
+    this.setState({ rows: newRows });
+    this.publishEvent(new NewObjectAddedToCanvasEvent(newRow), true);
   }
 
   public removeRow(row: RowItem) {
