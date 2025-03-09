@@ -11,8 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
-	gmsEncryption "github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
-	encryptionManager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/registry/usagestatssvcs"
@@ -54,8 +52,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
-	secretencryption "github.com/grafana/grafana/pkg/storage/secret/encryption"
-	secretmetadata "github.com/grafana/grafana/pkg/storage/secret/metadata"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
@@ -128,13 +124,6 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Struct(new(unified.Options), "*"),
 	unified.ProvideUnifiedStorageClient,
 	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
-	secretencryption.ProvideDataKeyStorageStorage,
-	secretencryption.ProvideEncryptedValueStorage,
-	secretmetadata.ProvideSecureValueMetadataStorage,
-	secretmetadata.ProvideKeeperMetadataStorage,
-	secretmetadata.ProvideDecryptStorage,
-	encryptionManager.ProvideEncryptionManager,
-	gmsEncryption.ProvideThirdPartyProviderMap,
 )
 
 var wireExtsSet = wire.NewSet(
