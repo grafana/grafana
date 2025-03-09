@@ -7,6 +7,7 @@ import {
   PluginDependencies,
   PluginErrorCode,
   WithAccessControlMetadata,
+  PluginDependencyInfo,
 } from '@grafana/data';
 import { IconName } from '@grafana/ui';
 import { StoreState, PluginsState } from 'app/types';
@@ -71,12 +72,10 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
 export interface CatalogPluginDetails {
   readme?: string;
   versions?: Version[];
-  links: Array<{
-    name: string;
-    url: string;
-  }>;
+  links: Rel[];
   grafanaDependency?: string;
   pluginDependencies?: PluginDependencies['plugins'];
+  dependantPlugins?: PluginDependencyInfo[];
   statusContext?: string;
   iam?: IdentityAccessManagement;
   changelog?: string;
