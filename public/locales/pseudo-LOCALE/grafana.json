@@ -1068,8 +1068,11 @@
       "elements": {
         "dashboard": "Đäşĥþőäřđ",
         "objects": "Øþĵęčŧş",
+        "panel": "Päŉęľ",
         "panels": "Päŉęľş",
+        "row": "Ŗőŵ",
         "rows": "Ŗőŵş",
+        "tab": "Ŧäþ",
         "tabs": "Ŧäþş"
       },
       "objects": {
@@ -1082,9 +1085,6 @@
         "header": {
           "hide": "Ħįđę",
           "title": "Ŗőŵ ĥęäđęř"
-        },
-        "multi-select": {
-          "title": "{{length}} řőŵş şęľęčŧęđ"
         }
       }
     },
@@ -1165,13 +1165,11 @@
         "copy-or-duplicate": "Cőpy őř Đūpľįčäŧę",
         "delete": "Đęľęŧę",
         "duplicate": "Đūpľįčäŧę",
-        "layout": "Ŀäyőūŧ",
-        "panels-title": "{{length}} päŉęľş şęľęčŧęđ"
+        "layout": "Ŀäyőūŧ"
       }
     },
     "options": {
       "description": "Đęşčřįpŧįőŉ",
-      "title": "Đäşĥþőäřđ őpŧįőŉş",
       "title-option": "Ŧįŧľę"
     },
     "outline": {
@@ -1253,9 +1251,6 @@
       "menu": {
         "move-tab": "Mővę ŧäþ"
       },
-      "multi-select": {
-        "title": "{{length}} ŧäþş şęľęčŧęđ"
-      },
       "name": "Ŧäþş",
       "tab": {
         "menu": {
@@ -1270,7 +1265,6 @@
         "new": "Ńęŵ ŧäþ"
       },
       "tab-options": {
-        "title": "Ŧäþ",
         "title-option": "Ŧįŧľę"
       }
     },
@@ -1347,7 +1341,6 @@
         "description": "Đęşčřįpŧįőŉ",
         "open-edit": "Øpęŉ Päŉęľ Ēđįŧ",
         "plugin-type-image": "Ĩmäģę őƒ pľūģįŉ ŧypę",
-        "title": "Päŉęľ",
         "title-option": "Ŧįŧľę",
         "transparent-background": "Ŧřäŉşpäřęŉŧ þäčĸģřőūŉđ"
       }

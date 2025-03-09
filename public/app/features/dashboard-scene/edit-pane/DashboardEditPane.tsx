@@ -178,7 +178,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
     return null;
   }
 
-  const { typeId } = editableElement.getEditableElementInfo();
+  const { typeName: typeId } = editableElement.getEditableElementInfo();
 
   if (isCollapsed) {
     return (

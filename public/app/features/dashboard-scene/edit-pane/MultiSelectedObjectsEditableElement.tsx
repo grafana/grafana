@@ -17,7 +17,7 @@ export class MultiSelectedObjectsEditableElement implements EditableDashboardEle
   }
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
-    return { name: t('dashboard.edit-pane.elements.objects', 'Objects'), typeId: 'objects', icon: 'folder' };
+    return { typeName: t('dashboard.edit-pane.elements.objects', 'Objects'), icon: 'folder', instanceName: '' };
   }
 
   public renderActions(): ReactNode {

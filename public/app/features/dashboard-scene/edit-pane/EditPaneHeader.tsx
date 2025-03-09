@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { capitalize } from 'lodash';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Menu, Stack, Text, useStyles2, ConfirmButton, Dropdown, Icon } from '@grafana/ui';
@@ -18,7 +17,7 @@ export function EditPaneHeader({ element }: EditPaneHeaderProps) {
 
   return (
     <div className={styles.wrapper}>
-      <Text variant="h5">{capitalize(elementInfo.typeId)}</Text>
+      <Text variant="h5">{elementInfo.typeName}</Text>
       <Stack direction="row" gap={2}>
         {addCopyOrDuplicate ? (
           <Dropdown overlay={<MenuItems onCopy={element.onCopy} onDuplicate={element.onDuplicate} />}>
@@ -43,7 +42,7 @@ export function EditPaneHeader({ element }: EditPaneHeaderProps) {
             closeOnConfirm={true}
           >
             <Button size="sm" variant="destructive" fill="outline">
-              <Trans i18nKey="dashboard.layout.common.delete" />
+              <Trans i18nKey="dashboard.layout.common.delete">Delete</Trans>
             </Button>
           </ConfirmButton>
         )}

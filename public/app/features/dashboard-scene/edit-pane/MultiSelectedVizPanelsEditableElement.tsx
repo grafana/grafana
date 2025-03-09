@@ -16,7 +16,7 @@ export class MultiSelectedVizPanelsEditableElement implements EditableDashboardE
   }
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
-    return { name: t('dashboard.edit-pane.elements.panels', 'Panels'), typeId: 'panels', icon: 'folder' };
+    return { typeName: t('dashboard.edit-pane.elements.panels', 'Panels'), icon: 'folder', instanceName: '' };
   }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {

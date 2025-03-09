@@ -30,9 +30,9 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
-      typeId: 'panel',
+      typeName: t('dashboard.edit-pane.elements.panel', 'Panel'),
       icon: 'chart-line',
-      name: sceneGraph.interpolate(this.panel, this.panel.state.title, undefined, 'text'),
+      instanceName: sceneGraph.interpolate(this.panel, this.panel.state.title, undefined, 'text'),
     };
   }
 

@@ -47,8 +47,8 @@ export interface EditableDashboardElement {
 }
 
 export interface EditableDashboardElementInfo {
-  name: string;
-  typeId: string;
+  instanceName: string;
+  typeName: string;
   icon: IconName;
 }
 

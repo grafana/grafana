@@ -11,7 +11,7 @@ export class TabItems implements EditableDashboardElement {
   public constructor(private _tabs: TabItem[]) {}
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
-    return { name: t('dashboard.edit-pane.elements.tabs', 'Tabs'), typeId: 'tabs', icon: 'folder' };
+    return { typeName: t('dashboard.edit-pane.elements.tabs', 'Tabs'), icon: 'folder', instanceName: '' };
   }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
