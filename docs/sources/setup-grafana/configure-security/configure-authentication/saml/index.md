@@ -62,7 +62,7 @@ Grafana supports the following SAML 2.0 bindings:
 
 ### Security
 
-Grafana supports signed and encrypted assertions, and does _not_ support signed or encrypted requests.
+Grafana supports signed and encrypted assertions, and does _not_ support encrypted requests.
 
 ### Initiation
 
