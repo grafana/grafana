@@ -328,10 +328,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // No need to listen to changes anymore
     this._changeTracker.stopTrackingChanges();
 
+    const initialTimeZone = this._initialState?.$timeRange?.state.timeZone;
+    const currentTimeZone = this.state.$timeRange!.state.timeZone ?? initialTimeZone;
+
     // We are updating url and removing editview and editPanel.
     // The initial url may be including edit view, edit panel or inspect query params if the user pasted the url,
     // hence we need to cleanup those query params to get back to the dashboard view. Otherwise url sync can trigger overlays.
     const url = locationUtil.getUrlForPartial(this._initialUrlState!, {
+      timezone: restoreInitialState ? initialTimeZone : currentTimeZone,
       editPanel: null,
       editview: null,
       inspect: null,
