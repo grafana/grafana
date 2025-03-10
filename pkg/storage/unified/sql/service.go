@@ -133,7 +133,7 @@ func (s *service) start(ctx context.Context) error {
 	resource.RegisterResourceStoreServer(srv, server)
 	resource.RegisterBulkStoreServer(srv, server)
 	resource.RegisterResourceIndexServer(srv, server)
-	resource.RegisterRepositoryIndexServer(srv, server)
+	resource.RegisterManagedObjectIndexServer(srv, server)
 	resource.RegisterBlobStoreServer(srv, server)
 	resource.RegisterDiagnosticsServer(srv, server)
 	grpc_health_v1.RegisterHealthServer(srv, healthService)

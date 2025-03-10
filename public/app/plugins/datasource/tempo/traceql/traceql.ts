@@ -62,6 +62,10 @@ const aggregatorFunctions = ['avg', 'count', 'max', 'min', 'sum'];
 const functions = aggregatorFunctions.concat([
   'by',
   'count_over_time',
+  'min_over_time',
+  'max_over_time',
+  'avg_over_time',
+  'sum_over_time',
   'histogram_over_time',
   'quantile_over_time',
   'rate',
