@@ -1,12 +1,11 @@
 package xorm
 
 import (
+	"encoding/json"
 	"testing"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 func TestBasicOperationsWithSqlite(t *testing.T) {
@@ -38,7 +37,8 @@ func testBasicOperations(t *testing.T, eng *Engine) {
 		require.NoError(t, err)
 		require.NotZero(t, obj.Id)
 
-		obj.Json = simplejson.MustJson([]byte(`{"test": "test", "key": null}`))
+		err = json.Unmarshal([]byte(`{"test": "test", "key": null}`), &obj.Json)
+		require.NoError(t, err)
 		_, err = sess.Update(obj)
 		require.NoError(t, err)
 	})
@@ -47,5 +47,5 @@ func testBasicOperations(t *testing.T, eng *Engine) {
 type TestStruct struct {
 	Id      int64
 	Comment string
-	Json    *simplejson.Json
+	Json    json.RawMessage
 }
