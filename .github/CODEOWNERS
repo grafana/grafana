@@ -638,6 +638,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /scripts/codemods/explicit-barrel-imports.cjs @grafana/frontend-ops
 
 /scripts/**/generate-transformations* @grafana/dataviz-squad
+/scripts/**/generateTeamTestCoverage* @grafana/dataviz-squad
 /scripts/webpack/ @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
 .pa11yci.conf.js @grafana/grafana-frontend-platform
