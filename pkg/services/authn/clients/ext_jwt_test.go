@@ -11,10 +11,11 @@ import (
 
 	"github.com/go-jose/go-jose/v3"
 	"github.com/go-jose/go-jose/v3/jwt"
-	authnlib "github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	authnlib "github.com/grafana/authlib/authn"
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/setting"
@@ -283,7 +284,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			},
 		},
 		{
-			name:        "should authenticate as user using wildcard namespace for access token",
+			name:        "should authenticate as user in the user namespace",
 			accessToken: &validAccessTokenClaimsWildcard,
 			idToken:     &validIDTokenClaims,
 			orgID:       1,
@@ -293,7 +294,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				OrgID:             1,
 				AccessTokenClaims: &validAccessTokenClaimsWildcard,
 				IDTokenClaims:     &validIDTokenClaims,
-				Namespace:         "*",
+				Namespace:         "default",
 				AuthenticatedBy:   "extendedjwt",
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{

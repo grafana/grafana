@@ -27,6 +27,9 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
+// Declare respModel at the function level
+var respModel apimodels.UpdateRuleGroupResponse
+
 func TestIntegrationPrometheusRules(t *testing.T) {
 	testinfra.SQLiteIntegrationTest(t)
 
@@ -157,7 +160,6 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
-		var respModel apimodels.UpdateRuleGroupResponse
 		require.NoError(t, json.Unmarshal(b, &respModel))
 		require.Len(t, respModel.Created, len(rules.Rules))
 	}
@@ -235,18 +237,21 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
-		require.JSONEq(t, `
+		require.JSONEq(t, fmt.Sprintf(`
 {
 	"status": "success",
 	"data": {
 		"groups": [{
 			"name": "arulegroup",
 			"file": "default",
+			"folderUid": "default",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
 				"duration": 10,
+				"folderUid": "default",
+				"uid": "%s",
 				"annotations": {
 					"annotation1": "val1"
 				},
@@ -261,6 +266,8 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 				"state": "inactive",
 				"name": "AlwaysFiringButSilenced",
 				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"folderUid": "default",
+				"uid": "%s",
 				"health": "ok",
 				"type": "alerting",
 				"lastEvaluation": "0001-01-01T00:00:00Z",
@@ -277,7 +284,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 			"inactive": 2
 		}
 	}
-}`, string(b))
+}`, respModel.Created[0], respModel.Created[1]), string(b))
 	}
 
 	{
@@ -293,18 +300,21 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 			b, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 			require.Equal(t, 200, resp.StatusCode)
-			require.JSONEq(t, `
+			require.JSONEq(t, fmt.Sprintf(`
 {
 	"status": "success",
 	"data": {
 		"groups": [{
 			"name": "arulegroup",
 			"file": "default",
+			"folderUid": "default",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
 				"duration": 10,
+				"folderUid": "default",
+				"uid": "%s",
 				"annotations": {
 					"annotation1": "val1"
 				},
@@ -319,6 +329,8 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 				"state": "inactive",
 				"name": "AlwaysFiringButSilenced",
 				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"folderUid": "default",
+				"uid": "%s",
 				"health": "ok",
 				"type": "alerting",
 				"lastEvaluation": "0001-01-01T00:00:00Z",
@@ -335,7 +347,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 			"inactive": 2
 		}
 	}
-}`, string(b))
+}`, respModel.Created[0], respModel.Created[1]), string(b))
 			return true
 		}, 18*time.Second, 2*time.Second)
 	}
@@ -441,7 +453,6 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
-		var respModel apimodels.UpdateRuleGroupResponse
 		require.NoError(t, json.Unmarshal(b, &respModel))
 		require.Len(t, respModel.Created, len(rules.Rules))
 	}
@@ -453,9 +464,12 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 		"groups": [{
 			"name": "anotherrulegroup",
 			"file": "default",
+			"folderUid": "default",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
+				"uid": "%s",
+				"folderUid": "default",
 				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
 				"duration": 10,
 				"annotations": {
@@ -469,6 +483,8 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 			}, {
 				"state": "inactive",
 				"name": "AlwaysFiringButSilenced",
+				"uid": "%s",
+				"folderUid": "default",
 				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
 				"health": "ok",
 				"type": "alerting",
@@ -486,7 +502,7 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 			"inactive": 2
 		}
 	}
-}`, dashboardUID)
+}`, respModel.Created[0], dashboardUID, respModel.Created[1])
 	expectedFilteredByJSON := fmt.Sprintf(`
 {
 	"status": "success",
@@ -494,9 +510,12 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 		"groups": [{
 			"name": "anotherrulegroup",
 			"file": "default",
+			"folderUid": "default",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
+				"uid": "%s",
+				"folderUid": "default",
 				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
 				"duration": 10,
 				"annotations": {
@@ -519,7 +538,7 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 			"inactive": 1
 		}
 	}
-}`, dashboardUID)
+}`, respModel.Created[0], dashboardUID)
 	expectedNoneJSON := `
 {
 	"status": "success",

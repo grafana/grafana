@@ -11,6 +11,7 @@ import {
   getPrometheusTime,
   getRangeSnapInterval,
   parseSelector,
+  processLabels,
   toPromLikeQuery,
   truncateResult,
 } from './language_utils';
@@ -90,7 +91,7 @@ describe('parseSelector()', () => {
 describe('fixSummariesMetadata', () => {
   const synthetics = {
     ALERTS: {
-      type: 'counter',
+      type: 'gauge',
       help: 'Time series showing pending and firing alerts. The sample value is set to 1 as long as the alert is in the indicated active (pending or firing) state.',
     },
   };
@@ -563,5 +564,56 @@ describe('truncateResult', () => {
     expect(array.length).toBe(1000);
     expect(array[0]).toBe(0);
     expect(array[999]).toBe(999);
+  });
+});
+
+describe('processLabels', () => {
+  it('export abstract query to expr', () => {
+    const labels: Array<{ [key: string]: string }> = [
+      { label1: 'value1' },
+      { label2: 'value2' },
+      { label3: 'value3' },
+      { label1: 'value1' },
+      { label1: 'value1b' },
+    ];
+
+    expect(processLabels(labels)).toEqual({
+      keys: ['label1', 'label2', 'label3'],
+      values: { label1: ['value1', 'value1b'], label2: ['value2'], label3: ['value3'] },
+    });
+  });
+
+  it('dont wrap utf8 label values with quotes', () => {
+    const labels: Array<{ [key: string]: string }> = [
+      { label1: 'value1' },
+      { label2: 'value2' },
+      { label3: 'value3 with space' },
+      { label4: 'value4.with.dot' },
+    ];
+
+    expect(processLabels(labels)).toEqual({
+      keys: ['label1', 'label2', 'label3', 'label4'],
+      values: {
+        label1: ['value1'],
+        label2: ['value2'],
+        label3: [`value3 with space`],
+        label4: [`value4.with.dot`],
+      },
+    });
+  });
+
+  it('dont wrap utf8 labels with quotes', () => {
+    const labels: Array<{ [key: string]: string }> = [
+      { 'label1 with space': 'value1' },
+      { 'label2.with.dot': 'value2' },
+    ];
+
+    expect(processLabels(labels)).toEqual({
+      keys: ['label1 with space', 'label2.with.dot'],
+      values: {
+        'label1 with space': ['value1'],
+        'label2.with.dot': ['value2'],
+      },
+    });
   });
 });

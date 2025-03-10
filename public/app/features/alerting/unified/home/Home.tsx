@@ -5,12 +5,13 @@ import { Box, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { isLocalDevEnv } from '../utils/misc';
+import { withPageErrorBoundary } from '../withPageErrorBoundary';
 
 import GettingStarted, { WelcomeHeader } from './GettingStarted';
 import { getInsightsScenes, insightsIsAvailable } from './Insights';
 import { PluginIntegrations } from './PluginIntegrations';
 
-export default function Home() {
+function Home() {
   const insightsEnabled = (insightsIsAvailable() || isLocalDevEnv()) && Boolean(config.featureToggles.alertingInsights);
 
   const [activeTab, setActiveTab] = useState<'insights' | 'overview'>(insightsEnabled ? 'insights' : 'overview');
@@ -51,3 +52,5 @@ export default function Home() {
     </AlertingPageWrapper>
   );
 }
+
+export default withPageErrorBoundary(Home);

@@ -4,6 +4,7 @@ export enum UnaryOperationID {
   Abs = 'abs',
   Exp = 'exp',
   Ln = 'ln',
+  Round = 'round',
   Floor = 'floor',
   Ceil = 'ceil',
 }
@@ -34,6 +35,12 @@ export const unaryOperators = new Registry<UnaryOperatorInfo>(() => {
       name: 'Natural logarithm',
       operation: (value: number) => Math.log(value),
       unaryOperationID: UnaryOperationID.Ln,
+    },
+    {
+      id: UnaryOperationID.Round,
+      name: 'Round',
+      operation: (value: number) => Math.round(value),
+      unaryOperationID: UnaryOperationID.Round,
     },
     {
       id: UnaryOperationID.Floor,

@@ -1,8 +1,9 @@
-import { SceneObjectState, SceneObjectBase, SceneComponentProps, VizPanel, SceneQueryRunner } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
-import { AddToExplorationButton } from '../../MetricSelect/AddToExplorationsButton';
+import { PanelMenu } from '../../Menu/PanelMenu';
+import { getMetricDescription } from '../../helpers/MetricDatasourceHelper';
 import { MDP_METRIC_OVERVIEW, trailDS } from '../../shared';
-import { getMetricSceneFor } from '../../utils';
+import { getMetricSceneFor, getTrailFor } from '../../utils';
 import { AutoQueryDef } from '../types';
 
 import { AutoVizPanelQuerySelector } from './AutoVizPanelQuerySelector';
@@ -23,7 +24,12 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
     if (!this.state.panel) {
       const { autoQuery, metric } = getMetricSceneFor(this).state;
 
-      this.setState({ panel: this.getVizPanelFor(autoQuery.main, metric), metric });
+      this.getVizPanelFor(autoQuery.main, metric).then((panel) =>
+        this.setState({
+          panel,
+          metric,
+        })
+      );
     }
   }
 
@@ -32,11 +38,15 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
 
     const def = metricScene.state.autoQuery.variants.find((q) => q.variant === variant)!;
 
-    this.setState({ panel: this.getVizPanelFor(def) });
+    this.getVizPanelFor(def).then((panel) => this.setState({ panel }));
     metricScene.setState({ queryDef: def });
   };
 
-  private getVizPanelFor(def: AutoQueryDef, metric?: string) {
+  private async getVizPanelFor(def: AutoQueryDef, metric?: string) {
+    const trail = getTrailFor(this);
+    const metadata = await trail.getMetricMetadata(metric);
+    const description = getMetricDescription(metadata);
+
     return def
       .vizBuilder()
       .setData(
@@ -46,10 +56,10 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
           queries: def.queries,
         })
       )
-      .setHeaderActions([
-        new AutoVizPanelQuerySelector({ queryDef: def, onChangeQuery: this.onChangeQuery }),
-        new AddToExplorationButton({ labelName: metric ?? this.state.metric }),
-      ])
+      .setDescription(description)
+      .setHeaderActions([new AutoVizPanelQuerySelector({ queryDef: def, onChangeQuery: this.onChangeQuery })])
+      .setShowMenuAlways(true)
+      .setMenu(new PanelMenu({ labelName: metric ?? this.state.metric }))
       .build();
   }
 

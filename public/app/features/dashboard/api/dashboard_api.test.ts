@@ -2,7 +2,7 @@ import { config } from '@grafana/runtime';
 
 import { getDashboardAPI, setDashboardAPI } from './dashboard_api';
 import { LegacyDashboardAPI } from './legacy';
-import { K8sDashboardAPI } from './v0';
+import { K8sDashboardAPI } from './v1';
 import { K8sDashboardV2API } from './v2';
 
 describe('DashboardApi', () => {
@@ -29,7 +29,7 @@ describe('DashboardApi', () => {
       expect(getDashboardAPI()).toBeInstanceOf(LegacyDashboardAPI);
     });
 
-    it('should use v0 api when and kubernetesDashboards toggle is enabled', () => {
+    it('should use v1 api when and kubernetesDashboards toggle is enabled', () => {
       config.featureToggles.kubernetesDashboards = true;
       expect(getDashboardAPI()).toBeInstanceOf(K8sDashboardAPI);
     });
@@ -55,12 +55,12 @@ describe('DashboardApi', () => {
       expect(getDashboardAPI()).toBeInstanceOf(LegacyDashboardAPI);
     });
 
-    it('should use v0 api when kubernetesDashboards toggle is enabled', () => {
+    it('should use v1 api when kubernetesDashboards toggle is enabled', () => {
       config.featureToggles.kubernetesDashboards = true;
       expect(getDashboardAPI()).toBeInstanceOf(K8sDashboardAPI);
     });
 
-    it('should use v0 api when kubernetesDashboards and useV2DashboardsAPI toggle is enabled', () => {
+    it('should use v1 api when kubernetesDashboards and useV2DashboardsAPI toggle is enabled', () => {
       config.featureToggles.useV2DashboardsAPI = true;
       config.featureToggles.kubernetesDashboards = true;
       expect(getDashboardAPI()).toBeInstanceOf(K8sDashboardAPI);

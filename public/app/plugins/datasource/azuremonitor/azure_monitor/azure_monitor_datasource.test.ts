@@ -1,12 +1,18 @@
 import { get, set } from 'lodash';
 
+import { ScopedVars } from '@grafana/data';
+import { VariableInterpolation } from '@grafana/runtime';
+
 import createMockQuery from '../__mocks__/query';
 import { createTemplateVariables } from '../__mocks__/utils';
 import { multiVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
 import { AzureAPIResponse, AzureMonitorDataSourceInstanceSettings, Location } from '../types';
 
-let replace = () => '';
+// We want replace to just return the value as is in general/
+// We declare this as a function so that we can overwrite it in each test
+// without affecting the rest of the @grafana/runtime module.
+let replace = (val: string) => val;
 
 jest.mock('@grafana/runtime', () => {
   return {
@@ -135,11 +141,22 @@ describe('AzureMonitorDatasource', () => {
     it('expand template variables in resource groups and names', () => {
       const resourceGroup = '$rg';
       const resourceName = '$rn';
-      replace = (target?: string) => {
+      replace = (
+        target?: string,
+        _scopedVars?: ScopedVars,
+        _format?: string | Function,
+        interpolated?: VariableInterpolation[]
+      ) => {
         if (target?.includes('$rg')) {
+          if (interpolated) {
+            interpolated.push({ value: 'rg1,rg2', match: '$rg', variableName: 'rg' });
+          }
           return 'rg1,rg2';
         }
         if (target?.includes('$rn')) {
+          if (interpolated) {
+            interpolated.push({ value: 'rn1,rn2', match: '$rn', variableName: 'rn' });
+          }
           return 'rn1,rn2';
         }
         return target || '';
@@ -158,6 +175,48 @@ describe('AzureMonitorDatasource', () => {
             { resourceGroup: 'rg2', resourceName: 'rn1' },
             { resourceGroup: 'rg1', resourceName: 'rn2' },
             { resourceGroup: 'rg2', resourceName: 'rn2' },
+          ],
+        },
+      });
+    });
+
+    it('expand template variables in more complex resource groups and names', () => {
+      const resourceGroup = 'test-$rg-testGroup';
+      const resourceName = 'test-$rn-testResource';
+      replace = (
+        target?: string,
+        _scopedVars?: ScopedVars,
+        _format?: string | Function,
+        interpolated?: VariableInterpolation[]
+      ) => {
+        if (target?.includes('$rg')) {
+          if (interpolated) {
+            interpolated.push({ value: 'rg1,rg2', match: '$rg', variableName: 'rg' });
+          }
+          return 'rg1,rg2';
+        }
+        if (target?.includes('$rn')) {
+          if (interpolated) {
+            interpolated.push({ value: 'rn1,rn2', match: '$rn', variableName: 'rn' });
+          }
+          return 'rn1,rn2';
+        }
+        return target || '';
+      };
+      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
+      const query = createMockQuery({
+        azureMonitor: {
+          resources: [{ resourceGroup, resourceName }],
+        },
+      });
+      const templatedQuery = ctx.ds.azureMonitorDatasource.applyTemplateVariables(query, {});
+      expect(templatedQuery).toMatchObject({
+        azureMonitor: {
+          resources: [
+            { resourceGroup: 'test-rg1-testGroup', resourceName: 'test-rn1-testResource' },
+            { resourceGroup: 'test-rg2-testGroup', resourceName: 'test-rn1-testResource' },
+            { resourceGroup: 'test-rg1-testGroup', resourceName: 'test-rn2-testResource' },
+            { resourceGroup: 'test-rg2-testGroup', resourceName: 'test-rn2-testResource' },
           ],
         },
       });
@@ -251,8 +310,8 @@ describe('AzureMonitorDatasource', () => {
         const basePath = 'azuremonitor/subscriptions/mock-subscription-id/resourceGroups/nodeapp';
         const expected =
           basePath +
-          '/providers/microsoft.insights/components/resource1' +
-          '/providers/microsoft.insights/metricNamespaces?api-version=2017-12-01-preview&region=global';
+          '/providers/microsoft.insights/components/resource1/providers/microsoft.insights/metricNamespaces?api-version=2017-12-01-preview' +
+          (path.includes('&region=global') ? '&region=global' : '');
         expect(path).toBe(expected);
         return Promise.resolve(response);
       });
@@ -293,6 +352,24 @@ describe('AzureMonitorDatasource', () => {
           expect(consoleError.mock.calls[0][0]).toContain(
             'Failed to get metric namespaces: failed to retrieve due to timeout'
           );
+        });
+    });
+
+    it('when custom is specified will only return custom namespaces', () => {
+      return ctx.ds.azureMonitorDatasource
+        .getMetricNamespaces(
+          {
+            resourceUri:
+              '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1',
+          },
+          false,
+          undefined,
+          true
+        )
+        .then((results: Array<{ text: string; value: string }>) => {
+          expect(results.length).toEqual(1);
+          expect(results[0].text).toEqual('Azure.ApplicationInsights');
+          expect(results[0].value).toEqual('Azure.ApplicationInsights');
         });
     });
   });
@@ -766,9 +843,28 @@ describe('AzureMonitorDatasource', () => {
         });
 
         it('should return multiple resources from a template variable', () => {
-          replace = (target?: string) => {
+          replace = (
+            target?: string,
+            _scopedVars?: ScopedVars,
+            _format?: string | Function,
+            interpolated?: VariableInterpolation[]
+          ) => {
             if (target?.includes('$reg')) {
+              if (interpolated) {
+                interpolated.push({ value: 'eastus', match: '$reg', variableName: 'reg' });
+              }
               return 'eastus';
+            }
+
+            if (target === `$${multiVariable.id}`) {
+              if (interpolated) {
+                interpolated.push({ value: 'foo,bar', match: `$${multiVariable.id}`!, variableName: 'target' });
+              }
+              return 'foo,bar';
+            }
+
+            if (interpolated) {
+              interpolated.push({ value: target ?? '', match: `$${target}`!, variableName: 'target' });
             }
             return target === `$${multiVariable.id}` ? 'foo,bar' : (target ?? '');
           };

@@ -1,6 +1,6 @@
 import { ChangeEvent, useEffect, useState } from 'react';
 import * as React from 'react';
-import { identity, of, OperatorFunction } from 'rxjs';
+import { of, OperatorFunction } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import {
@@ -81,10 +81,8 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
   }, [input, configuredOptions]);
 
   const getVariableNames = (): OperatorFunction<string[], string[]> => {
-    if (!cfg.featureToggles.transformationsVariableSupport) {
-      return identity;
-    }
     const templateSrv = getTemplateSrv();
+
     return (source) =>
       source.pipe(
         map((input) => {

@@ -2,16 +2,16 @@ package grpc
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 
-	"github.com/grafana/authlib/authn"
-	authClaims "github.com/grafana/authlib/claims"
-
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 const (
@@ -27,10 +27,13 @@ const (
 // var _ interceptors.Authenticator = (*Authenticator)(nil)
 
 type Authenticator struct {
-	IDTokenVerifier authn.Verifier[authn.IDTokenClaims]
+	Tracer tracing.Tracer
 }
 
 func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, error) {
+	ctx, span := f.Tracer.Start(ctx, "legacy.grpc.Authenticator.Authenticate")
+	defer span.End()
+
 	r, err := identity.GetRequester(ctx)
 	if err == nil && r != nil {
 		return ctx, nil // noop, requester exists
@@ -38,16 +41,19 @@ func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, erro
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("no metadata found")
+		err := status.Error(codes.Unauthenticated, "no metadata found in grpc context")
+		span.RecordError(err)
+		return nil, err
 	}
-	user, err := f.decodeMetadata(ctx, md)
+	user, err := f.decodeMetadata(md)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 	return identity.WithRequester(ctx, user), nil
 }
 
-func (f *Authenticator) decodeMetadata(ctx context.Context, meta metadata.MD) (identity.Requester, error) {
+func (f *Authenticator) decodeMetadata(meta metadata.MD) (identity.Requester, error) {
 	// Avoid NPE/panic with getting keys
 	getter := func(key string) string {
 		v := meta.Get(key)
@@ -57,57 +63,47 @@ func (f *Authenticator) decodeMetadata(ctx context.Context, meta metadata.MD) (i
 		return ""
 	}
 
-	// First try the token
-	token := getter(mdToken)
-	if token != "" && f.IDTokenVerifier != nil {
-		claims, err := f.IDTokenVerifier.Verify(ctx, token)
-		if err != nil {
-			return nil, err
-		}
-		fmt.Printf("TODO, convert CLAIMS to an identity %+v\n", claims)
-	}
-
 	user := &identity.StaticRequester{}
 	user.Login = getter(mdLogin)
 	if user.Login == "" {
-		return nil, fmt.Errorf("no login found in grpc metadata")
+		return nil, status.Error(codes.Unauthenticated, "no login found in grpc metadata")
 	}
 
 	// The namespaced versions have a "-" in the key
 	// TODO, remove after this has been deployed to unified storage
 	if getter(mdUserID) == "" {
 		var err error
-		user.Type = authClaims.TypeUser
+		user.Type = types.TypeUser
 		user.UserID, err = strconv.ParseInt(getter("grafana-userid"), 10, 64)
 		if err != nil {
-			return nil, fmt.Errorf("invalid user id: %w", err)
+			return nil, status.Error(codes.Unauthenticated, "invalid user id")
 		}
 		user.OrgID, err = strconv.ParseInt(getter("grafana-orgid"), 10, 64)
 		if err != nil {
-			return nil, fmt.Errorf("invalid org id: %w", err)
+			return nil, status.Error(codes.Unauthenticated, "invalid org id")
 		}
 		return user, nil
 	}
 
-	typ, id, err := authClaims.ParseTypeID(getter(mdUserID))
+	typ, id, err := types.ParseTypeID(getter(mdUserID))
 	if err != nil {
-		return nil, fmt.Errorf("invalid user id: %w", err)
+		return nil, status.Error(codes.Unauthenticated, "invalid user id")
 	}
 	user.Type = typ
 	user.UserID, err = strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		return nil, fmt.Errorf("invalid user id: %w", err)
+		return nil, status.Error(codes.Unauthenticated, "invalid user id")
 	}
 
-	_, id, err = authClaims.ParseTypeID(getter(mdUserUID))
+	_, uid, err := types.ParseTypeID(getter(mdUserUID))
 	if err != nil {
-		return nil, fmt.Errorf("invalid user id: %w", err)
+		return nil, status.Error(codes.Unauthenticated, "invalid user uid")
 	}
-	user.UserUID = id
+	user.UserUID = uid
 
 	user.OrgID, err = strconv.ParseInt(getter(mdOrgID), 10, 64)
 	if err != nil {
-		return nil, fmt.Errorf("invalid org id: %w", err)
+		return nil, status.Error(codes.Unauthenticated, "invalid org id")
 	}
 	user.OrgRole = identity.RoleType(getter(mdOrgRole))
 	return user, nil

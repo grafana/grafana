@@ -1,11 +1,8 @@
-import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { EditorField, EditorFieldGroup, InputGroup } from '@grafana/experimental';
-import { Button, ComponentSize, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
-import { Combobox, ComboboxOption } from '@grafana/ui/src/components/Combobox/Combobox';
-import { getPropertiesForButtonSize } from '@grafana/ui/src/components/Forms/commonStyles';
+import { SelectableValue } from '@grafana/data';
+import { EditorField, EditorFieldGroup, InputGroup } from '@grafana/plugin-ui';
+import { Button, InlineField, InlineFieldRow, Combobox, ComboboxOption } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import { regexifyLabelValuesQueryString } from '../parsingUtils';
@@ -25,9 +22,6 @@ export interface MetricComboboxProps {
   onBlur?: () => void;
   variableEditor?: boolean;
 }
-
-const INLINE_FIELD_WIDTH = 20;
-const BUTTON_SIZE: ComponentSize = 'md';
 
 export function MetricCombobox({
   datasource,
@@ -88,8 +82,6 @@ export function MetricCombobox({
     return metrics;
   }, [onGetMetrics]);
 
-  const styles = useStyles2(getMectricComboboxStyles);
-
   const asyncSelect = () => {
     return (
       <InputGroup>
@@ -103,7 +95,6 @@ export function MetricCombobox({
           createCustomValue
         />
         <Button
-          size={BUTTON_SIZE}
           tooltip="Open metrics explorer"
           aria-label="Open metrics explorer"
           variant="secondary"
@@ -130,23 +121,19 @@ export function MetricCombobox({
         />
       )}
       {variableEditor ? (
-        <span className={styles.adaptToParentVariableEditor}>
-          <InlineFieldRow>
-            <InlineField
-              label="Metric"
-              labelWidth={INLINE_FIELD_WIDTH}
-              tooltip={<div>Optional: returns a list of label values for the label name in the specified metric.</div>}
-            >
-              {asyncSelect()}
-            </InlineField>
-          </InlineFieldRow>
-        </span>
+        <InlineFieldRow>
+          <InlineField
+            label="Metric"
+            labelWidth={20}
+            tooltip={<div>Optional: returns a list of label values for the label name in the specified metric.</div>}
+          >
+            {asyncSelect()}
+          </InlineField>
+        </InlineFieldRow>
       ) : (
-        <span className={styles.adaptToParentQueryEditor}>
-          <EditorFieldGroup>
-            <EditorField label="Metric">{asyncSelect()}</EditorField>
-          </EditorFieldGroup>
-        </span>
+        <EditorFieldGroup>
+          <EditorField label="Metric">{asyncSelect()}</EditorField>
+        </EditorFieldGroup>
       )}
     </>
   );
@@ -174,29 +161,4 @@ const formatKeyValueStringsForLabelValuesQuery = (query: string, labelsFilters?:
   const queryString = regexifyLabelValuesQueryString(query);
 
   return formatPrometheusLabelFiltersToString(queryString, labelsFilters);
-};
-
-const getMectricComboboxStyles = (theme: GrafanaTheme2) => {
-  const { height } = getPropertiesForButtonSize(BUTTON_SIZE, theme);
-  const buttonSpace = parseInt(theme.spacing(height), 10);
-  const inlineFieldSpace = parseInt(theme.spacing(INLINE_FIELD_WIDTH), 10);
-  const widthToSubstract = inlineFieldSpace + buttonSpace;
-  return {
-    adaptToParentQueryEditor: css({
-      // Take metrics explorer button into account
-      maxWidth: `calc(100% - ${buttonSpace}px)`,
-    }),
-    adaptToParentVariableEditor: css({
-      maxWidth: '100%',
-      display: 'flex',
-      '[class*="InlineFieldRow"]': {
-        '> div': {
-          'label + div': {
-            // Take label and the metrics explorer button into account
-            maxWidth: `calc(100% - ${widthToSubstract}px)`,
-          },
-        },
-      },
-    }),
-  };
 };

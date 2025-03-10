@@ -36,36 +36,36 @@ func TestPlaylistConversion(t *testing.T) {
 	// fmt.Printf("%s", string(out))
 	require.JSONEq(t, `{
 		"metadata": {
-		  "name": "abc",
-		  "namespace": "org-3",
-		  "uid": "f0zxjm7ApxOafsn6DLQZ4Ezp78WRUsZqSc4taOSHq1gX",
-		  "resourceVersion": "54321",
-		  "creationTimestamp": "1970-01-01T00:00:12Z",
-		  "annotations": {
-			"grafana.app/repoPath": "123",
-			"grafana.app/repoName": "SQL",
-			"grafana.app/repoTimestamp":"1970-01-01T00:00:12Z",
-			"grafana.app/updatedTimestamp": "1970-01-01T00:00:54Z"
-		  }
+			"name": "abc",
+			"namespace": "org-3",
+			"uid": "f0zxjm7ApxOafsn6DLQZ4Ezp78WRUsZqSc4taOSHq1gX",
+			"resourceVersion": "54321",
+			"creationTimestamp": "1970-01-01T00:00:12Z",
+			"labels": {
+				"grafana.app/deprecatedInternalID": "123"
+			},
+			"annotations": {
+				"grafana.app/updatedTimestamp": "1970-01-01T00:00:54Z"
+			}
 		},
 		"spec": {
-		  "title": "MyPlaylists",
-		  "interval": "10s",
-		  "items": [
-			{
-			  "type": "dashboard_by_uid",
-			  "value": "UID0"
-			},
-			{
-			  "type": "dashboard_by_tag",
-			  "value": "tagA"
-			},
-			{
-			  "type": "dashboard_by_id",
-			  "value": "123"
-			}
-		  ]
+			"title": "MyPlaylists",
+			"interval": "10s",
+			"items": [
+				{
+					"type": "dashboard_by_uid",
+					"value": "UID0"
+				},
+				{
+					"type": "dashboard_by_tag",
+					"value": "tagA"
+				},
+				{
+					"type": "dashboard_by_id",
+					"value": "123"
+				}
+			]
 		},
 		"status": {}
-	  }`, string(out))
+	}`, string(out))
 }

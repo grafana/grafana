@@ -1,7 +1,7 @@
 import { FetchError, isFetchError } from '@grafana/runtime';
 
 import { GRAFANA_ONCALL_INTEGRATION_TYPE } from '../components/receivers/grafanaAppReceivers/onCall/onCall';
-import { SupportedPlugin } from '../types/pluginBridges';
+import { getIrmIfPresentOrOnCallPluginId } from '../utils/config';
 
 import { alertingApi } from './alertingApi';
 
@@ -38,7 +38,9 @@ export interface OnCallConfigChecks {
   is_integration_chatops_connected: boolean;
 }
 
-const getProxyApiUrl = (path: string) => `/api/plugins/${SupportedPlugin.OnCall}/resources${path}`;
+export function getProxyApiUrl(path: string) {
+  return `/api/plugins/${getIrmIfPresentOrOnCallPluginId()}/resources${path}`;
+}
 
 export const onCallApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({

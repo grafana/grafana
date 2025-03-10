@@ -9,6 +9,7 @@ import {
   PluginExtensionExposedComponentConfig,
   PluginExtensionAddedComponentConfig,
   PluginExtensionAddedLinkConfig,
+  PluginExtensionAddedFunctionConfig,
 } from './pluginExtensions';
 
 /**
@@ -60,6 +61,7 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
   private _exposedComponentConfigs: PluginExtensionExposedComponentConfig[] = [];
   private _addedComponentConfigs: PluginExtensionAddedComponentConfig[] = [];
   private _addedLinkConfigs: PluginExtensionAddedLinkConfig[] = [];
+  private _addedFunctionConfigs: PluginExtensionAddedFunctionConfig[] = [];
 
   // Content under: /a/${plugin-id}/*
   root?: ComponentType<AppRootProps<T>>;
@@ -113,6 +115,10 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     return this._addedLinkConfigs;
   }
 
+  get addedFunctionConfigs() {
+    return this._addedFunctionConfigs;
+  }
+
   addLink<Context extends object>(linkConfig: PluginExtensionAddedLinkConfig<Context>) {
     this._addedLinkConfigs.push(linkConfig as PluginExtensionAddedLinkConfig);
 
@@ -121,6 +127,12 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
 
   addComponent<Props = {}>(addedComponentConfig: PluginExtensionAddedComponentConfig<Props>) {
     this._addedComponentConfigs.push(addedComponentConfig as PluginExtensionAddedComponentConfig);
+
+    return this;
+  }
+
+  addFunction<Signature>(addedFunctionConfig: PluginExtensionAddedFunctionConfig<Signature>) {
+    this._addedFunctionConfigs.push(addedFunctionConfig);
 
     return this;
   }
@@ -167,4 +179,6 @@ export enum FeatureState {
   privatePreview = 'private preview',
   /** used to mark features that are in public preview with low/medium risk, or as a shared badge for public and private previews */
   preview = 'preview',
+  /** used to mark new GA features */
+  new = 'new',
 }

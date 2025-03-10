@@ -13,7 +13,7 @@ import {
 import { memo, useState } from 'react';
 
 import { GrafanaTheme2, renderMarkdown } from '@grafana/data';
-import { FlexItem } from '@grafana/experimental';
+import { FlexItem } from '@grafana/plugin-ui';
 import { Button, Portal, useStyles2 } from '@grafana/ui';
 
 import { QueryBuilderOperation, QueryBuilderOperationDef } from './types';
@@ -94,8 +94,8 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     docBox: css({
       overflow: 'hidden',
-      background: theme.colors.background.primary,
-      border: `1px solid ${theme.colors.border.strong}`,
+      background: theme.colors.background.elevated,
+      border: `1px solid ${theme.colors.border.weak}`,
       boxShadow: theme.shadows.z3,
       maxWidth: '600px',
       padding: theme.spacing(1),

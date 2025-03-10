@@ -182,7 +182,8 @@ describe('Plugin details page', () => {
 
     it('should display the installed version if a plugin is installed', async () => {
       const installedVersion = '1.3.443';
-      const { queryByText } = renderPluginDetails({ id, installedVersion });
+      const isInstalled = true;
+      const { queryByText } = renderPluginDetails({ id, isInstalled, installedVersion });
 
       expect(await queryByText(`${installedVersion}`)).toBeInTheDocument();
     });
@@ -200,7 +201,7 @@ describe('Plugin details page', () => {
       };
 
       const { findByText, queryByText } = renderPluginDetails({ id, details });
-      expect(await findByText('1.1.1')).toBeInTheDocument();
+      expect(await findByText('4.2.2')).toBeInTheDocument();
       expect(queryByText(/>=8.0.0/i)).toBeInTheDocument();
     });
 
@@ -388,31 +389,6 @@ describe('Plugin details page', () => {
 
       expect(await queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
       expect(await queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument();
-    });
-
-    it('should display install link with `config.pluginAdminExternalManageEnabled` set to true', async () => {
-      config.pluginAdminExternalManageEnabled = true;
-
-      const { queryByRole } = renderPluginDetails({ id, isInstalled: false });
-
-      expect(await queryByRole('link', { name: /install via grafana.com/i })).toBeInTheDocument();
-    });
-
-    it('should display uninstall link for an installed plugin with `config.pluginAdminExternalManageEnabled` set to true', async () => {
-      config.pluginAdminExternalManageEnabled = true;
-
-      const { queryByRole } = renderPluginDetails({ id, isInstalled: true });
-
-      expect(await queryByRole('link', { name: /uninstall via grafana.com/i })).toBeInTheDocument();
-    });
-
-    it('should display update and uninstall links for a plugin with an available update and `config.pluginAdminExternalManageEnabled` set to true', async () => {
-      config.pluginAdminExternalManageEnabled = true;
-
-      const { queryByRole } = renderPluginDetails({ id, isInstalled: true, hasUpdate: true });
-
-      expect(await queryByRole('link', { name: /update via grafana.com/i })).toBeInTheDocument();
-      expect(queryByRole('link', { name: /uninstall via grafana.com/i })).toBeInTheDocument();
     });
 
     it('should display alert with information about why the plugin is disabled', async () => {

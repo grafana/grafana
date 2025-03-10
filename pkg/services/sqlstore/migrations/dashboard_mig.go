@@ -1,6 +1,10 @@
 package migrations
 
 import (
+	"fmt"
+
+	"xorm.io/xorm"
+
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -244,4 +248,60 @@ func addDashboardMigration(mg *Migrator) {
 		Cols: []string{"deleted"},
 		Type: IndexType,
 	}))
+
+	mg.AddMigration("Add column dashboard_uid in dashboard_tag", NewAddColumnMigration(dashboardTagV1, &Column{
+		Name: "dashboard_uid", Type: DB_NVarchar, Length: 40, Nullable: true,
+	}))
+	mg.AddMigration("Add column org_id in dashboard_tag", NewAddColumnMigration(dashboardTagV1, &Column{
+		Name: "org_id", Type: DB_BigInt, Nullable: true, Default: "1",
+	}))
+
+	mg.AddMigration("Add missing dashboard_uid and org_id to dashboard_tag", &FillDashbordUIDAndOrgIDMigration{})
+
+	mg.AddMigration("Add apiVersion for dashboard", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "api_version", Type: DB_Varchar, Length: 16, Nullable: true,
+	}))
+}
+
+type FillDashbordUIDAndOrgIDMigration struct {
+	MigrationBase
+}
+
+func (m *FillDashbordUIDAndOrgIDMigration) SQL(dialect Dialect) string {
+	return "code migration"
+}
+
+func (m *FillDashbordUIDAndOrgIDMigration) Exec(sess *xorm.Session, mg *Migrator) error {
+	return RunDashboardTagMigrations(sess, mg.Dialect.DriverName())
+}
+
+func RunDashboardTagMigrations(sess *xorm.Session, driverName string) error {
+	// sqlite
+	sql := `UPDATE dashboard_tag
+	SET 
+    	dashboard_uid = (SELECT uid FROM dashboard WHERE dashboard.id = dashboard_tag.dashboard_id),
+    	org_id = (SELECT org_id FROM dashboard WHERE dashboard.id = dashboard_tag.dashboard_id)
+	WHERE 
+    	(dashboard_uid IS NULL OR org_id IS NULL)
+    	AND EXISTS (SELECT 1 FROM dashboard WHERE dashboard.id = dashboard_tag.dashboard_id);`
+	if driverName == Postgres {
+		sql = `UPDATE dashboard_tag 
+		SET dashboard_uid = dashboard.uid, 
+			org_id = dashboard.org_id
+		FROM dashboard 
+		WHERE dashboard_tag.dashboard_id = dashboard.id
+			AND (dashboard_tag.dashboard_uid IS NULL OR dashboard_tag.org_id IS NULL);`
+	} else if driverName == MySQL {
+		sql = `UPDATE dashboard_tag 
+		LEFT JOIN dashboard ON dashboard_tag.dashboard_id = dashboard.id 
+		SET dashboard_tag.dashboard_uid = dashboard.uid, 
+			dashboard_tag.org_id = dashboard.org_id
+		WHERE dashboard_tag.dashboard_uid IS NULL OR dashboard_tag.org_id IS NULL;`
+	}
+
+	if _, err := sess.Exec(sql); err != nil {
+		return fmt.Errorf("failed to set dashboard_uid and org_id in dashboard_tag: %w", err)
+	}
+
+	return nil
 }

@@ -11,6 +11,10 @@
 import * as common from '@grafana/schema';
 
 export interface TempoQuery extends common.DataQuery {
+  /**
+   * For metric queries, how many exemplars to request, 0 means no exemplars
+   */
+  exemplars?: number;
   filters: Array<TraceqlFilter>;
   /**
    * Defines the maximum number of traces that are returned from Tempo
@@ -20,6 +24,10 @@ export interface TempoQuery extends common.DataQuery {
    * @deprecated Define the maximum duration to select traces. Use duration format, for example: 1.2s, 100ms
    */
   maxDuration?: string;
+  /**
+   * For metric queries, whether to run instant or range queries
+   */
+  metricsQueryType?: MetricsQueryType;
   /**
    * @deprecated Define the minimum duration to select traces. Use duration format, for example: 1.2s, 100ms
    */
@@ -67,6 +75,11 @@ export const defaultTempoQuery: Partial<TempoQuery> = {
 };
 
 export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'serviceMap' | 'upload' | 'nativeSearch' | 'traceId' | 'clear');
+
+export enum MetricsQueryType {
+  Instant = 'instant',
+  Range = 'range',
+}
 
 /**
  * The state of the TraceQL streaming search query

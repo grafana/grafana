@@ -29,7 +29,7 @@ export type TraceProcess = {
 };
 
 export type TraceSpanReference = {
-  refType: 'CHILD_OF' | 'FOLLOWS_FROM';
+  refType: 'CHILD_OF' | 'FOLLOWS_FROM' | 'EXTERNAL';
   // eslint-disable-next-line no-use-before-define
   span?: TraceSpan | null | undefined;
   spanID: string;

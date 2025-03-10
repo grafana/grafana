@@ -83,15 +83,6 @@ func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest
 	return callResponse, err
 }
 
-func (r *Resource) DetectVersion(ctx context.Context, req *backend.CallResourceRequest) (*backend.CallResourceResponse, error) {
-	newReq := &backend.CallResourceRequest{
-		PluginContext: req.PluginContext,
-		Path:          "/api/v1/status/buildinfo",
-	}
-
-	return r.Execute(ctx, newReq)
-}
-
 func getSelectors(expr string) ([]string, error) {
 	parsed, err := parser.ParseExpr(expr)
 	if err != nil {

@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -214,6 +215,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		RudderstackConfigUrl:                hs.Cfg.RudderstackConfigURL,
 		RudderstackIntegrationsUrl:          hs.Cfg.RudderstackIntegrationsURL,
 		AnalyticsConsoleReporting:           hs.Cfg.FrontendAnalyticsConsoleReporting,
+		DashboardPerformanceMetrics:         hs.Cfg.DashboardPerformanceMetrics,
 		FeedbackLinksEnabled:                hs.Cfg.FeedbackLinksEnabled,
 		ApplicationInsightsConnectionString: hs.Cfg.ApplicationInsightsConnectionString,
 		ApplicationInsightsEndpointUrl:      hs.Cfg.ApplicationInsightsEndpointUrl,
@@ -224,6 +226,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ExternalUserMngInfo:                 hs.Cfg.ExternalUserMngInfo,
 		ExternalUserMngLinkUrl:              hs.Cfg.ExternalUserMngLinkUrl,
 		ExternalUserMngLinkName:             hs.Cfg.ExternalUserMngLinkName,
+		ExternalUserMngAnalytics:            hs.Cfg.ExternalUserMngAnalytics,
+		ExternalUserMngAnalyticsParams:      hs.Cfg.ExternalUserMngAnalyticsParams,
 		ViewersCanEdit:                      hs.Cfg.ViewersCanEdit,
 		AngularSupportEnabled:               hs.Cfg.AngularSupportEnabled,
 		EditorsCanAdmin:                     hs.Cfg.EditorsCanAdmin,
@@ -243,6 +247,9 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		LocalFileSystemAvailable:            hs.Cfg.LocalFileSystemAvailable,
 		ReportingStaticContext:              hs.Cfg.ReportingStaticContext,
 		ExploreDefaultTimeOffset:            hs.Cfg.ExploreDefaultTimeOffset,
+		ExploreHideLogsDownload:             hs.Cfg.ExploreHideLogsDownload,
+
+		DefaultDatasourceManageAlertsUIToggle: hs.Cfg.DefaultDatasourceManageAlertsUIToggle,
 
 		BuildInfo: dtos.FrontendSettingsBuildInfoDTO{
 			HideVersion:   hideVersion,
@@ -360,7 +367,24 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		OktaSkipOrgRoleSync:           parseSkipOrgRoleSyncEnabled(oauthProviders[social.OktaProviderName]),
 		DisableLogin:                  hs.Cfg.DisableLogin,
 		BasicAuthStrongPasswordPolicy: hs.Cfg.BasicAuthStrongPasswordPolicy,
-		PasswordlessEnabled:           hs.Cfg.PasswordlessMagicLinkAuth.Enabled && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagPasswordlessMagicLinkAuthentication),
+	}
+
+	if hs.Cfg.PasswordlessMagicLinkAuth.Enabled && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
+		hasEnabledProviders := hs.samlEnabled() || hs.authnService.IsClientEnabled(authn.ClientLDAP)
+
+		if !hasEnabledProviders {
+			oauthInfos := hs.SocialService.GetOAuthInfoProviders()
+			for _, provider := range oauthInfos {
+				if provider.Enabled {
+					hasEnabledProviders = true
+					break
+				}
+			}
+		}
+
+		if !hasEnabledProviders {
+			frontendSettings.Auth.PasswordlessEnabled = true
+		}
 	}
 
 	if hs.pluginsCDNService != nil && hs.pluginsCDNService.IsEnabled() {

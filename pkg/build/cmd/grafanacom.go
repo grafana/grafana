@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/build/gcloud/storage"
 	"github.com/grafana/grafana/pkg/build/gcom"
 	"github.com/grafana/grafana/pkg/build/packaging"
+	"github.com/grafana/grafana/pkg/build/versions"
 )
 
 const grafanaAPI = "https://grafana.com/api"
@@ -45,6 +46,7 @@ func GrafanaCom(c *cli.Context) error {
 	}
 
 	version := metadata.GrafanaVersion
+	semver := versions.ParseSemver(version)
 	if releaseMode.Mode == config.Cronjob {
 		gcs, err := storage.New()
 		if err != nil {
@@ -69,7 +71,13 @@ func GrafanaCom(c *cli.Context) error {
 	if grafanaAPIKey == "" {
 		return cli.Exit("the environment variable GRAFANA_COM_API_KEY must be set", 1)
 	}
-	whatsNewURL, releaseNotesURL, err := getReleaseURLs()
+
+	pkgjson, err := getPackageJSON()
+	if err != nil {
+		return cli.Exit(err.Error(), 1)
+	}
+
+	whatsNewURL, releaseNotesURL, err := getReleaseURLs(semver, pkgjson)
 	if err != nil {
 		return cli.Exit(err.Error(), 1)
 	}
@@ -97,25 +105,32 @@ func GrafanaCom(c *cli.Context) error {
 	return nil
 }
 
-func getReleaseURLs() (string, string, error) {
-	type grafanaConf struct {
-		WhatsNewURL     string `json:"whatsNewUrl"`
-		ReleaseNotesURL string `json:"releaseNotesUrl"`
-	}
-	type packageConf struct {
-		Grafana grafanaConf `json:"grafana"`
-	}
+type grafanaConf struct {
+	WhatsNewURL     string `json:"whatsNewUrl"`
+	ReleaseNotesURL string `json:"releaseNotesUrl"`
+}
 
+type packageConf struct {
+	Grafana grafanaConf `json:"grafana"`
+}
+
+func getPackageJSON() (*packageConf, error) {
 	pkgB, err := os.ReadFile("package.json")
 	if err != nil {
-		return "", "", fmt.Errorf("failed to read package.json: %w", err)
+		return nil, fmt.Errorf("failed to read package.json: %w", err)
 	}
 
 	var pconf packageConf
 	if err := json.Unmarshal(pkgB, &pconf); err != nil {
-		return "", "", fmt.Errorf("failed to decode package.json: %w", err)
+		return nil, fmt.Errorf("failed to decode package.json: %w", err)
 	}
-	if _, err := url.ParseRequestURI(pconf.Grafana.WhatsNewURL); err != nil {
+
+	return &pconf, nil
+}
+
+func getReleaseURLs(semver versions.Semver, pconf *packageConf) (string, string, error) {
+	u := fmt.Sprintf(pconf.Grafana.WhatsNewURL, semver.Major, semver.Minor, semver.Patch)
+	if _, err := url.ParseRequestURI(u); err != nil {
 		return "", "", fmt.Errorf("grafana.whatsNewUrl is invalid in package.json: %q", pconf.Grafana.WhatsNewURL)
 	}
 	if _, err := url.ParseRequestURI(pconf.Grafana.ReleaseNotesURL); err != nil {
@@ -123,7 +138,7 @@ func getReleaseURLs() (string, string, error) {
 			pconf.Grafana.ReleaseNotesURL)
 	}
 
-	return pconf.Grafana.WhatsNewURL, pconf.Grafana.ReleaseNotesURL, nil
+	return u, pconf.Grafana.ReleaseNotesURL, nil
 }
 
 func Builds(baseURL *url.URL, grafana, version string, packages []packaging.BuildArtifact) ([]GCOMPackage, error) {

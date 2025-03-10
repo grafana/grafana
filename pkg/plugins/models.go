@@ -63,6 +63,7 @@ type ExtensionsV2 struct {
 	AddedComponents   []AddedComponent   `json:"addedComponents"`
 	ExposedComponents []ExposedComponent `json:"exposedComponents"`
 	ExtensionPoints   []ExtensionPoint   `json:"extensionPoints"`
+	AddedFunctions    []AddedFunction    `json:"addedFunctions"`
 }
 
 type Extensions ExtensionsV2
@@ -76,6 +77,7 @@ func (e *Extensions) UnmarshalJSON(data []byte) error {
 		e.AddedLinks = extensionsV2.AddedLinks
 		e.ExposedComponents = extensionsV2.ExposedComponents
 		e.ExtensionPoints = extensionsV2.ExtensionPoints
+		e.AddedFunctions = extensionsV2.AddedFunctions
 
 		return nil
 	}
@@ -121,6 +123,11 @@ type AddedComponent struct {
 	Targets     []string `json:"targets"`
 	Title       string   `json:"title"`
 	Description string   `json:"description"`
+}
+
+type AddedFunction struct {
+	Targets []string `json:"targets"`
+	Title   string   `json:"title"`
 }
 
 type ExposedComponent struct {
@@ -267,6 +274,7 @@ type PluginMetaDTO struct {
 	Angular                   AngularMeta     `json:"angular"`
 	MultiValueFilterOperators bool            `json:"multiValueFilterOperators"`
 	LoadingStrategy           LoadingStrategy `json:"loadingStrategy"`
+	Extensions                Extensions      `json:"extensions"`
 }
 
 type DataSourceDTO struct {

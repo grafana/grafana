@@ -115,11 +115,20 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 				if azureSettings.UserIdentityTokenEndpoint.TokenUrl != "" {
 					m[azsettings.UserIdentityTokenURL] = azureSettings.UserIdentityTokenEndpoint.TokenUrl
 				}
+				if azureSettings.UserIdentityTokenEndpoint.ClientAuthentication != "" {
+					m[azsettings.UserIdentityClientAuthentication] = azureSettings.UserIdentityTokenEndpoint.ClientAuthentication
+				}
 				if azureSettings.UserIdentityTokenEndpoint.ClientId != "" {
 					m[azsettings.UserIdentityClientID] = azureSettings.UserIdentityTokenEndpoint.ClientId
 				}
 				if azureSettings.UserIdentityTokenEndpoint.ClientSecret != "" {
 					m[azsettings.UserIdentityClientSecret] = azureSettings.UserIdentityTokenEndpoint.ClientSecret
+				}
+				if azureSettings.UserIdentityTokenEndpoint.ManagedIdentityClientId != "" {
+					m[azsettings.UserIdentityManagedIdentityClientID] = azureSettings.UserIdentityTokenEndpoint.ManagedIdentityClientId
+				}
+				if azureSettings.UserIdentityTokenEndpoint.FederatedCredentialAudience != "" {
+					m[azsettings.UserIdentityFederatedCredentialAudience] = azureSettings.UserIdentityTokenEndpoint.FederatedCredentialAudience
 				}
 				if azureSettings.UserIdentityTokenEndpoint.UsernameAssertion {
 					m[azsettings.UserIdentityAssertion] = "username"

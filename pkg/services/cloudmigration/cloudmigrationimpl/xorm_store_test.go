@@ -155,7 +155,7 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.Equal(t, *snapshot, snapshots[0])
 
 		// delete snapshot
-		err = s.deleteSnapshot(ctx, 1, snapshotUid)
+		err = s.deleteSnapshot(ctx, snapshotUid)
 		require.NoError(t, err)
 
 		// now we expect not to find the snapshot
@@ -174,16 +174,25 @@ func Test_SnapshotResources(t *testing.T) {
 		resources, err := s.getSnapshotResources(ctx, "poiuy", 0, 100)
 		assert.NoError(t, err)
 		assert.Len(t, resources, 3)
+		for _, r := range resources {
+			if r.RefID == "ejcx4d" {
+				assert.Equal(t, cloudmigration.ItemStatusError, r.Status)
+				break
+			}
+		}
 
-		// create a new resource and update an existing resource
-		err = s.createUpdateSnapshotResources(ctx, "poiuy", []cloudmigration.CloudMigrationResource{
+		// create a new resource
+		err = s.CreateSnapshotResources(ctx, "poiuy", []cloudmigration.CloudMigrationResource{
 			{
 				Type:   cloudmigration.DatasourceDataType,
 				RefID:  "mi39fj",
 				Status: cloudmigration.ItemStatusOK,
 			},
+		})
+		assert.NoError(t, err)
+		err = s.UpdateSnapshotResources(ctx, "poiuy", []cloudmigration.CloudMigrationResource{
 			{
-				UID:    "qwerty",
+				RefID:  "ejcx4d",
 				Status: cloudmigration.ItemStatusOK,
 			},
 		})
@@ -193,16 +202,16 @@ func Test_SnapshotResources(t *testing.T) {
 		resources, err = s.getSnapshotResources(ctx, "poiuy", 0, 100)
 		assert.NoError(t, err)
 		assert.Len(t, resources, 4)
-		// ensure existing resource was updated
+		// ensure existing resource was updated from ERROR
 		for _, r := range resources {
-			if r.UID == "querty" {
+			if r.RefID == "ejcx4d" {
 				assert.Equal(t, cloudmigration.ItemStatusOK, r.Status)
 				break
 			}
 		}
 		// ensure a new one was made
 		for _, r := range resources {
-			if r.UID == "mi39fj" {
+			if r.RefID == "mi39fj" {
 				assert.Equal(t, cloudmigration.ItemStatusOK, r.Status)
 				break
 			}

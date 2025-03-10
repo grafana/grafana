@@ -64,7 +64,7 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
     });
   }
 
-  if (dashboard.state.id && dashboard.state.meta.canSave) {
+  if (dashboard.state.uid && dashboard.state.meta.canSave) {
     pageNav.children!.push({
       text: t('dashboard-settings.versions.title', 'Versions'),
       url: locationUtil.getUrlForPartial(location, { editview: 'versions', editIndex: null }),
@@ -72,7 +72,7 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
     });
   }
 
-  if (dashboard.state.id && dashboard.state.meta.canAdmin) {
+  if (dashboard.state.uid && dashboard.state.meta.canAdmin) {
     if (contextSrv.hasPermission(AccessControlAction.DashboardsPermissionsRead)) {
       pageNav.children!.push({
         text: t('dashboard-settings.permissions.title', 'Permissions'),

@@ -24,7 +24,13 @@ import { usePanelContext } from '../PanelChrome';
 import { ExpandedRow, getExpandedRowHeight } from './ExpandedRow';
 import { TableCell } from './TableCell';
 import { TableStyles } from './styles';
-import { CellColors, GetActionsFunction, TableFieldOptions, TableFilterActionCallback } from './types';
+import {
+  CellColors,
+  GetActionsFunction,
+  TableFieldOptions,
+  TableFilterActionCallback,
+  TableInspectCellCallback,
+} from './types';
 import {
   calculateAroundPointThreshold,
   getCellColors,
@@ -57,6 +63,7 @@ interface RowsListProps {
   textWrapField?: Field;
   getActions?: GetActionsFunction;
   replaceVariables?: InterpolateFunction;
+  setInspectCell?: TableInspectCellCallback;
 }
 
 export const RowsList = (props: RowsListProps) => {
@@ -85,6 +92,7 @@ export const RowsList = (props: RowsListProps) => {
     textWrapField,
     getActions,
     replaceVariables,
+    setInspectCell,
   } = props;
 
   const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(initialRowIndex);
@@ -346,6 +354,7 @@ export const RowsList = (props: RowsListProps) => {
               height={Number(style.height)}
               getActions={getActions}
               replaceVariables={replaceVariables}
+              setInspectCell={setInspectCell}
             />
           ))}
         </div>
@@ -374,6 +383,7 @@ export const RowsList = (props: RowsListProps) => {
       timeRange,
       getActions,
       replaceVariables,
+      setInspectCell,
     ]
   );
 

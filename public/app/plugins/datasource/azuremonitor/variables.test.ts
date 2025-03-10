@@ -543,4 +543,88 @@ describe('VariableSupport', () => {
       expect(result.data[0].fields[0].values).toEqual(expectedResults);
     });
   });
+
+  it('can fetch custom namespaces', async () => {
+    const expectedResults = ['test-custom/namespace'];
+    const variableSupport = new VariableSupport(
+      createMockDatasource({
+        getMetricNamespaces: jest.fn().mockResolvedValueOnce(expectedResults),
+      })
+    );
+    const mockRequest = {
+      targets: [
+        {
+          refId: 'A',
+          queryType: AzureQueryType.CustomNamespacesQuery,
+          subscription: 'sub',
+          resourceGroup: 'rg',
+          namespace: 'ns',
+          resource: 'rn',
+        } as AzureMonitorQuery,
+      ],
+    } as DataQueryRequest<AzureMonitorQuery>;
+    const result = await lastValueFrom(variableSupport.query(mockRequest));
+    expect(result.data[0].fields[0].values).toEqual(expectedResults);
+  });
+
+  it('returns no data if calling custom namespaces but the subscription is a template variable with no value', async () => {
+    const variableSupport = new VariableSupport(createMockDatasource());
+    const mockRequest = {
+      targets: [
+        {
+          refId: 'A',
+          queryType: AzureQueryType.CustomNamespacesQuery,
+          subscription: '$sub',
+          resourceGroup: 'rg',
+          namespace: 'ns',
+          resource: 'rn',
+        } as AzureMonitorQuery,
+      ],
+    } as DataQueryRequest<AzureMonitorQuery>;
+    const result = await lastValueFrom(variableSupport.query(mockRequest));
+    expect(result.data).toEqual([]);
+  });
+
+  it('can fetch custom metric names', async () => {
+    const expectedResults = ['test-custom-metric'];
+    const variableSupport = new VariableSupport(
+      createMockDatasource({
+        getMetricNames: jest.fn().mockResolvedValueOnce(expectedResults),
+      })
+    );
+    const mockRequest = {
+      targets: [
+        {
+          refId: 'A',
+          queryType: AzureQueryType.CustomMetricNamesQuery,
+          subscription: 'sub',
+          resourceGroup: 'rg',
+          namespace: 'ns',
+          resource: 'rn',
+          customNamespace: 'test-custom/namespace',
+        } as AzureMonitorQuery,
+      ],
+    } as DataQueryRequest<AzureMonitorQuery>;
+    const result = await lastValueFrom(variableSupport.query(mockRequest));
+    expect(result.data[0].fields[0].values).toEqual(expectedResults);
+  });
+
+  it('returns no data if calling custom metric names but the subscription is a template variable with no value', async () => {
+    const variableSupport = new VariableSupport(createMockDatasource());
+    const mockRequest = {
+      targets: [
+        {
+          refId: 'A',
+          queryType: AzureQueryType.CustomMetricNamesQuery,
+          subscription: '$sub',
+          resourceGroup: 'rg',
+          namespace: 'ns',
+          resource: 'rn',
+          customNamespace: 'test-custom/namespace',
+        } as AzureMonitorQuery,
+      ],
+    } as DataQueryRequest<AzureMonitorQuery>;
+    const result = await lastValueFrom(variableSupport.query(mockRequest));
+    expect(result.data).toEqual([]);
+  });
 });

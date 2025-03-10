@@ -23,6 +23,7 @@ import { createWorker } from '../saving/createDetectChangesWorker';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { historySrv } from '../settings/version-history/HistorySrv';
+import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { findVizPanelByKey, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
@@ -33,7 +34,7 @@ import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { PanelTimeRange } from './PanelTimeRange';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-import { RowActions } from './row-actions/RowActions';
+import { RowActions } from './layout-default/row-actions/RowActions';
 
 jest.mock('../settings/version-history/HistorySrv');
 jest.mock('../serialization/transformSaveModelToScene');
@@ -107,27 +108,6 @@ describe('DashboardScene', () => {
 
         // @ts-expect-error it is a private property
         expect(scene._changesWorker).toBeUndefined();
-      });
-    });
-
-    describe('Given new dashboard in edit mode', () => {
-      it('when saving it should clear isNew state', () => {
-        const scene = buildTestScene({
-          meta: { isNew: true },
-        });
-
-        scene.activate();
-        scene.onEnterEditMode();
-        scene.saveCompleted({} as Dashboard, {
-          id: 1,
-          slug: 'slug',
-          uid: 'dash-1',
-          url: 'sss',
-          version: 2,
-          status: 'aaa',
-        });
-
-        expect(scene.state.meta.isNew).toBeFalsy();
       });
     });
 
@@ -472,6 +452,21 @@ describe('DashboardScene', () => {
         expect(panel.state.key).toBe('panel-7');
       });
 
+      it('Should select new panel', () => {
+        const panel = scene.onCreateNewPanel();
+        expect(scene.state.editPane.state.selection?.getFirstObject()).toBe(panel);
+      });
+
+      it('Should select new row', () => {
+        const row = scene.onCreateNewRow();
+        expect(scene.state.editPane.state.selection?.getFirstObject()).toBe(row);
+      });
+
+      it('Should select new tab', () => {
+        const tab = scene.onCreateNewTab();
+        expect(scene.state.editPane.state.selection?.getFirstObject()).toBe(tab);
+      });
+
       it('Should fail to copy a panel if it does not have a grid item parent', () => {
         const vizPanel = new VizPanel({
           title: 'Panel Title',
@@ -489,7 +484,7 @@ describe('DashboardScene', () => {
           title: 'Library Panel',
           pluginId: 'table',
           key: 'panel-4',
-          $behaviors: [new LibraryPanelBehavior({ title: 'Library Panel', name: 'libraryPanel', uid: 'uid' })],
+          $behaviors: [new LibraryPanelBehavior({ name: 'libraryPanel', uid: 'uid' })],
         });
 
         scene.copyPanel(libVizPanel);
@@ -544,7 +539,7 @@ describe('DashboardScene', () => {
               title: 'Library Panel',
               pluginId: 'table',
               key: 'panel-4',
-              $behaviors: [new LibraryPanelBehavior({ title: 'Library Panel', name: 'libraryPanel', uid: 'uid' })],
+              $behaviors: [new LibraryPanelBehavior({ name: 'libraryPanel', uid: 'uid' })],
             }),
           })
         );
@@ -563,7 +558,7 @@ describe('DashboardScene', () => {
         const libPanel = new VizPanel({
           title: 'Panel B',
           pluginId: 'table',
-          $behaviors: [new LibraryPanelBehavior({ title: 'title', name: 'lib panel', uid: 'abc', isLoaded: true })],
+          $behaviors: [new LibraryPanelBehavior({ name: 'lib panel', uid: 'abc', isLoaded: true })],
         });
 
         const scene = buildTestScene({
@@ -663,7 +658,7 @@ describe('DashboardScene', () => {
 
     it('Should hash the key of the cloned panels and set it as panelId', () => {
       const queryRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner2')!;
-      const expectedPanelId = djb2Hash('panel-2-clone-1');
+      const expectedPanelId = djb2Hash(getCloneKey('panel-2', 1));
       expect(scene.enrichDataRequest(queryRunner).panelId).toEqual(expectedPanelId);
     });
   });
@@ -928,7 +923,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
                   title: 'Library Panel',
                   pluginId: 'table',
                   key: 'panel-5',
-                  $behaviors: [new LibraryPanelBehavior({ title: 'Library Panel', name: 'libraryPanel', uid: 'uid' })],
+                  $behaviors: [new LibraryPanelBehavior({ name: 'libraryPanel', uid: 'uid' })],
                 }),
               }),
             ],
@@ -936,7 +931,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
           new DashboardGridItem({
             body: new VizPanel({
               title: 'Panel B',
-              key: 'panel-2-clone-1',
+              key: getCloneKey('panel-2', 1),
               pluginId: 'table',
               $data: new SceneQueryRunner({ key: 'data-query-runner2', queries: [{ refId: 'A' }] }),
             }),
@@ -946,7 +941,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
               title: 'Library Panel',
               pluginId: 'table',
               key: 'panel-6',
-              $behaviors: [new LibraryPanelBehavior({ title: 'Library Panel', name: 'libraryPanel', uid: 'uid' })],
+              $behaviors: [new LibraryPanelBehavior({ name: 'libraryPanel', uid: 'uid' })],
             }),
           }),
         ],

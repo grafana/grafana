@@ -14,10 +14,8 @@ var (
 	sqlTemplatesFS embed.FS
 	sqlTemplates   = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `*.sql`))
 
-	sqlUserPerms       = mustTemplate("permission_query.sql")
 	sqlQueryBasicRoles = mustTemplate("basic_role_query.sql")
 	sqlUserIdentifiers = mustTemplate("user_identifier_query.sql")
-	sqlFolders         = mustTemplate("folder_query.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -64,31 +62,6 @@ func newGetBasicRoles(sql *legacysql.LegacyDatabaseHelper, q *BasicRoleQuery) ge
 		Query:        q,
 		UserTable:    sql.Table("user"),
 		OrgUserTable: sql.Table("org_user"),
-	}
-}
-
-type getPermissionsQuery struct {
-	sqltemplate.SQLTemplate
-	Query *PermissionsQuery
-
-	PermissionTable  string
-	UserRoleTable    string
-	TeamRoleTable    string
-	BuiltinRoleTable string
-}
-
-func (r getPermissionsQuery) Validate() error {
-	return nil
-}
-
-func newGetPermissions(sql *legacysql.LegacyDatabaseHelper, q *PermissionsQuery) getPermissionsQuery {
-	return getPermissionsQuery{
-		SQLTemplate:      sqltemplate.New(sql.DialectForDriver()),
-		Query:            q,
-		PermissionTable:  sql.Table("permission"),
-		UserRoleTable:    sql.Table("user_role"),
-		TeamRoleTable:    sql.Table("team_role"),
-		BuiltinRoleTable: sql.Table("builtin_role"),
 	}
 }
 

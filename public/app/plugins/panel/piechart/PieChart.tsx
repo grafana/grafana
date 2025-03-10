@@ -321,8 +321,12 @@ function getTooltipData(
   if (tooltipOptions.mode === 'multi') {
     return pie.arcs
       .filter((pa) => {
-        const field = pa.data.field;
-        return field && !field.custom?.hideFrom?.tooltip && !field.custom?.hideFrom?.viz;
+        if (tooltipOptions.hideZeros && pa.value === 0) {
+          return false;
+        }
+
+        const customConfig = pa.data.field.custom;
+        return !customConfig?.hideFrom?.tooltip && !customConfig?.hideFrom?.viz;
       })
       .map((pieArc) => {
         return {

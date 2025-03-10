@@ -2,7 +2,7 @@ import uFuzzy from '@leeoniya/ufuzzy';
 
 import { PluginSignatureStatus, dateTimeParse, PluginError, PluginType, PluginErrorCode } from '@grafana/data';
 import { config, featureEnabled } from '@grafana/runtime';
-import configCore, { Settings } from 'app/core/config';
+import { Settings } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { AccessControlAction } from 'app/types';
@@ -63,7 +63,7 @@ export function mergeLocalsAndRemotes({
       const catalogPlugin = mergeLocalAndRemote(localCounterpart, remotePlugin, error);
 
       // for managed instances, check if plugin is installed, but not yet present in the current instance
-      if (configCore.featureToggles.managedPluginsInstall && config.pluginAdminExternalManageEnabled) {
+      if (config.pluginAdminExternalManageEnabled) {
         catalogPlugin.isFullyInstalled = catalogPlugin.isCore
           ? true
           : (instancesMap.has(remotePlugin.slug) || provisionedSet.has(remotePlugin.slug)) && catalogPlugin.isInstalled;
@@ -121,6 +121,8 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     signatureType,
     versionSignatureType,
     versionSignedByOrgName,
+    url,
+    raiseAnIssueUrl,
   } = plugin;
 
   const isDisabled = !!error || isDisabledSecretsPlugin(typeCode);
@@ -158,6 +160,8 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     angularDetected,
     isFullyInstalled: isDisabled,
     latestVersion: plugin.version,
+    url,
+    raiseAnIssueUrl,
   };
 }
 
@@ -174,6 +178,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     hasUpdate,
     accessControl,
     angularDetected,
+    raiseAnIssueUrl,
   } = plugin;
 
   const isDisabled = !!error || isDisabledSecretsPlugin(type);
@@ -208,6 +213,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     isFullyInstalled: true,
     iam: plugin.iam,
     latestVersion: plugin.latestVersion,
+    raiseAnIssueUrl,
   };
 }
 
@@ -271,6 +277,8 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     isFullyInstalled: Boolean(local) || isDisabled,
     iam: local?.iam,
     latestVersion: local?.latestVersion || remote?.version || '',
+    url: remote?.url || '',
+    raiseAnIssueUrl: remote?.raiseAnIssueUrl || local?.raiseAnIssueUrl,
   };
 }
 
@@ -431,29 +439,27 @@ export function filterByKeyword(plugins: CatalogPlugin[], query: string) {
   return idxs.map((id) => getId(dataArray[id]));
 }
 
-export function isPluginUpdateable(plugin: CatalogPlugin) {
+function isPluginModifiable(plugin: CatalogPlugin) {
+  if (
+    plugin.isProvisioned || //provisioned plugins cannot be modified
+    plugin.isCore || //core plugins cannot be modified
+    plugin.type === PluginType.renderer || // currently renderer plugins are not supported by the catalog due to complications related to installation / update / uninstall
+    plugin.isPreinstalled.withVersion || // Preinstalled plugins (with specified version) cannot be modified
+    plugin.isManaged // Managed plugins cannot be modified
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+export function isPluginUpdatable(plugin: CatalogPlugin) {
+  if (!isPluginModifiable(plugin)) {
+    return false;
+  }
+
   // If there is no update available, the plugin cannot be updated
   if (!plugin.hasUpdate) {
-    return false;
-  }
-
-  // Provisioned plugins cannot be updated
-  if (plugin.isProvisioned) {
-    return false;
-  }
-
-  // Core plugins cannot be updated
-  if (plugin.isCore) {
-    return false;
-  }
-
-  // Currently renderer plugins are not supported by the catalog due to complications related to installation / update / uninstall.
-  if (plugin.type === PluginType.renderer) {
-    return false;
-  }
-
-  // Preinstalled plugins (with specified version) cannot be updated
-  if (plugin.isPreinstalled.withVersion) {
     return false;
   }
 
@@ -462,10 +468,20 @@ export function isPluginUpdateable(plugin: CatalogPlugin) {
     return false;
   }
 
-  // Managed plugins cannot be updated
-  if (plugin.isManaged) {
-    return false;
+  return true;
+}
+
+export function shouldDisablePluginInstall(plugin: CatalogPlugin) {
+  if (
+    !isPluginModifiable(plugin) ||
+    plugin.type === PluginType.secretsmanager ||
+    (plugin.isEnterprise && !featureEnabled('enterprise.plugins')) ||
+    !plugin.isPublished ||
+    plugin.isDisabled ||
+    !isInstallControlsEnabled()
+  ) {
+    return true;
   }
 
-  return true;
+  return false;
 }

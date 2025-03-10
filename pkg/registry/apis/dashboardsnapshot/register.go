@@ -18,7 +18,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -350,10 +350,5 @@ func (b *SnapshotsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 	// Hide the invalid endpoint to list all snapshots for all orgs
 	delete(oas.Paths.Paths, "/apis/dashboardsnapshot.grafana.app/v0alpha1/dashboardsnapshots")
 
-	// The root API discovery list
-	sub = oas.Paths.Paths["/apis/dashboardsnapshot.grafana.app/v0alpha1/"]
-	if sub != nil && sub.Get != nil {
-		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
-	}
 	return oas, nil
 }

@@ -195,19 +195,16 @@ func (lps LibraryPanelService) CountInFolders(ctx context.Context, orgID int64, 
 	if len(folderUIDs) == 0 {
 		return 0, nil
 	}
+
 	var count int64
 	return count, lps.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryPanels).Inc()
-		// the sequential IDs for the respective entries of dashboard and folder tables are different,
-		// so we need to get the folder ID from the dashboard table
-		// TODO: In the future, we should consider adding a folder UID column to the library_element table
-		// and use that instead of the folder ID.
-		s := fmt.Sprintf(`SELECT COUNT(*) FROM library_element
-			WHERE org_id = ? AND folder_id IN (SELECT id FROM dashboard WHERE org_id = ? AND uid IN (%s)) AND kind = ?`, strings.Repeat("?,", len(folderUIDs)-1)+"?")
+		s := fmt.Sprintf(`SELECT COUNT(*) FROM library_element WHERE org_id = ? AND folder_uid IN (%s) AND kind = ?`, strings.Repeat("?,", len(folderUIDs)-1)+"?")
+
 		args := make([]interface{}, 0, len(folderUIDs)+2)
-		args = append(args, orgID, orgID)
-		for _, folderUID := range folderUIDs {
-			args = append(args, folderUID)
+		args = append(args, orgID)
+		for _, uid := range folderUIDs {
+			args = append(args, uid)
 		}
 		args = append(args, int64(model.PanelElement))
 		_, err := sess.SQL(s, args...).Get(&count)

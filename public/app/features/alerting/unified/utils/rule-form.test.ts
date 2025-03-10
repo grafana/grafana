@@ -1,20 +1,17 @@
 import { PromQuery } from '@grafana/prometheus';
-import { config } from '@grafana/runtime';
 import { GrafanaAlertStateDecision, GrafanaRuleDefinition, RulerAlertingRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { getDefaultFormValues } from '../rule-editor/formDefaults';
 import { AlertManagerManualRouting, RuleFormType, RuleFormValues } from '../types/rule-form';
 
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import {
-  MANUAL_ROUTING_KEY,
   alertingRulerRuleToRuleForm,
   cleanAnnotations,
   cleanLabels,
   formValuesToRulerGrafanaRuleDTO,
   formValuesToRulerRuleDTO,
   getContactPointsFromDTO,
-  getDefaultFormValues,
-  getDefautManualRouting,
   getNotificationSettingsForDTO,
 } from './rule-form';
 
@@ -109,6 +106,7 @@ describe('getContactPointsFromDTO', () => {
   it('should return undefined if notification_settings is not defined', () => {
     const ga: GrafanaRuleDefinition = {
       uid: '123',
+      version: 1,
       title: 'myalert',
       namespace_uid: '123',
       rule_group: 'my-group',
@@ -133,6 +131,7 @@ describe('getContactPointsFromDTO', () => {
   it('should return routingSettings with correct props if notification_settings is defined', () => {
     const ga: GrafanaRuleDefinition = {
       uid: '123',
+      version: 1,
       title: 'myalert',
       namespace_uid: '123',
       rule_group: 'my-group',
@@ -224,36 +223,6 @@ describe('getNotificationSettingsForDTO', () => {
       group_interval: 'group_interval',
       repeat_interval: 'repeat_interval',
     });
-  });
-});
-
-describe('getDefautManualRouting', () => {
-  afterEach(() => {
-    window.localStorage.clear();
-  });
-
-  it('returns false if the feature toggle is not enabled', () => {
-    config.featureToggles.alertingSimplifiedRouting = false;
-    expect(getDefautManualRouting()).toBe(false);
-  });
-
-  it('returns true if the feature toggle is enabled and localStorage is not set', () => {
-    config.featureToggles.alertingSimplifiedRouting = true;
-    expect(getDefautManualRouting()).toBe(true);
-  });
-
-  it('returns false if the feature toggle is enabled and localStorage is set to "false"', () => {
-    config.featureToggles.alertingSimplifiedRouting = true;
-    localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
-    expect(getDefautManualRouting()).toBe(false);
-  });
-
-  it('returns true if the feature toggle is enabled and localStorage is set to any value other than "false"', () => {
-    config.featureToggles.alertingSimplifiedRouting = true;
-    localStorage.setItem(MANUAL_ROUTING_KEY, 'true');
-    expect(getDefautManualRouting()).toBe(true);
-    localStorage.removeItem(MANUAL_ROUTING_KEY);
-    expect(getDefautManualRouting()).toBe(true);
   });
 });
 

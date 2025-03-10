@@ -120,3 +120,12 @@ update: ## Fetch the latest version of this Makefile and the `make-docs` script 
 	curl -s -LO https://raw.githubusercontent.com/grafana/writers-toolkit/main/docs/docs.mk
 	curl -s -LO https://raw.githubusercontent.com/grafana/writers-toolkit/main/docs/make-docs
 	chmod +x make-docs
+
+# ls static/templates/ | sed 's/-template\.md//' | xargs
+TOPIC_TYPES := concept multiple-tasks reference section task tutorial visualization
+.PHONY: $(patsubst %,topic/%,$(TOPIC_TYPES))
+topic/%: ## Create a topic from the Writers' Toolkit template. Specify the topic type as the target, for example, `make topic/task TOPIC_PATH=sources/my-new-topic.md`.
+topic/%:
+	$(if $(TOPIC_PATH),,$(error "You must set the TOPIC_PATH variable to the path where the $(@F) topic will be created. For example: make $(@) TOPIC_PATH=sources/my-new-topic.md"))
+	mkdir -p $(dir $(TOPIC_PATH))
+	curl -s -o $(TOPIC_PATH) https://raw.githubusercontent.com/grafana/writers-toolkit/refs/heads/main/docs/static/templates/$(@F)-template.md

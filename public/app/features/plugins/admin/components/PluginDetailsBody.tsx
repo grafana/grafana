@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { AppPlugin, GrafanaTheme2, PluginContextProvider, UrlQueryMap } from '@grafana/data';
+import { AppPlugin, GrafanaTheme2, PluginContextProvider, UrlQueryMap, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { PageInfoItem } from '@grafana/runtime/src/components/PluginPage';
 import { CellProps, Column, InteractiveTable, Stack, useStyles2 } from '@grafana/ui';
@@ -9,10 +9,12 @@ import { CellProps, Column, InteractiveTable, Stack, useStyles2 } from '@grafana
 import { Changelog } from '../components/Changelog';
 import { PluginDetailsPanel } from '../components/PluginDetailsPanel';
 import { VersionList } from '../components/VersionList';
+import { shouldDisablePluginInstall } from '../helpers';
 import { usePluginConfig } from '../hooks/usePluginConfig';
 import { CatalogPlugin, Permission, PluginTabIds } from '../types';
 
 import { AppConfigCtrlWrapper } from './AppConfigWrapper';
+import Connections from './ConnectionsTab';
 import { PluginDashboards } from './PluginDashboards';
 import { PluginUsage } from './PluginUsage';
 
@@ -29,7 +31,6 @@ type Cell<T extends keyof Permission = keyof Permission> = CellProps<Permission,
 export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetails }: Props): JSX.Element {
   const styles = useStyles2(getStyles);
   const { value: pluginConfig } = usePluginConfig(plugin);
-
   const columns: Array<Column<Permission>> = useMemo(
     () => [
       {
@@ -64,6 +65,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
           pluginId={plugin.id}
           versions={plugin.details?.versions}
           installedVersion={plugin.installedVersion}
+          disableInstallation={shouldDisablePluginInstall(plugin)}
         />
       </div>
     );
@@ -85,6 +87,18 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
     return (
       <div>
         <PluginDetailsPanel pluginExtentionsInfo={info} plugin={plugin} width={'auto'} />
+      </div>
+    );
+  }
+
+  if (
+    config.featureToggles.datasourceConnectionsTab &&
+    pageId === PluginTabIds.DATASOURCE_CONNECTIONS &&
+    plugin.type === PluginType.datasource
+  ) {
+    return (
+      <div>
+        <Connections plugin={plugin} />
       </div>
     );
   }

@@ -14,6 +14,8 @@ import {
   getDataSourceSrv as getDataSourceService,
   getLegacyAngularInjector,
   getTemplateSrv,
+  RuntimeDataSourceRegistration,
+  RuntimeDataSource,
   TemplateSrv,
 } from '@grafana/runtime';
 import { ExpressionDatasourceRef, isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
@@ -32,6 +34,7 @@ export class DatasourceSrv implements DataSourceService {
   private settingsMapByName: Record<string, DataSourceInstanceSettings> = {};
   private settingsMapByUid: Record<string, DataSourceInstanceSettings> = {};
   private settingsMapById: Record<string, DataSourceInstanceSettings> = {};
+  private runtimeDataSources: Record<string, RuntimeDataSource> = {}; //
   private defaultName = ''; // actually UID
 
   constructor(private templateSrv: TemplateSrv = getTemplateSrv()) {}
@@ -51,11 +54,29 @@ export class DatasourceSrv implements DataSourceService {
       this.settingsMapById[dsSettings.id] = dsSettings;
     }
 
+    for (const ds of Object.values(this.runtimeDataSources)) {
+      this.datasources[ds.uid] = ds;
+      this.settingsMapByUid[ds.uid] = ds.instanceSettings;
+    }
+
     // Preload expressions
     this.datasources[ExpressionDatasourceRef.type] = expressionDatasource as any;
     this.datasources[ExpressionDatasourceUID] = expressionDatasource as any;
     this.settingsMapByUid[ExpressionDatasourceRef.uid] = expressionInstanceSettings;
     this.settingsMapByUid[ExpressionDatasourceUID] = expressionInstanceSettings;
+  }
+
+  registerRuntimeDataSource(entry: RuntimeDataSourceRegistration): void {
+    if (this.runtimeDataSources[entry.dataSource.uid]) {
+      throw new Error(`A runtime data source with uid ${entry.dataSource.uid} has already been registered`);
+    }
+    if (this.settingsMapByUid[entry.dataSource.uid]) {
+      throw new Error(`A data source with uid ${entry.dataSource.uid} has already been registered`);
+    }
+
+    this.runtimeDataSources[entry.dataSource.uid] = entry.dataSource;
+    this.datasources[entry.dataSource.uid] = entry.dataSource;
+    this.settingsMapByUid[entry.dataSource.uid] = entry.dataSource.instanceSettings;
   }
 
   getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined {

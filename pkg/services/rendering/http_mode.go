@@ -102,6 +102,8 @@ func (rs *RenderingService) generateImageRendererURL(renderType RenderType, opts
 }
 
 func (rs *RenderingService) doRequestAndWriteToFile(ctx context.Context, renderType RenderType, rendererURL *url.URL, timeoutOpts TimeoutOpts, headers map[string][]string) (*Result, error) {
+	logger := rs.log.FromContext(ctx)
+
 	filePath, err := rs.getNewFilePath(renderType)
 	if err != nil {
 		return nil, err
@@ -118,13 +120,13 @@ func (rs *RenderingService) doRequestAndWriteToFile(ctx context.Context, renderT
 
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			rs.log.Warn("Failed to close response body", "err", err)
+			logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
 	// if we didn't get a 200 response, something went wrong.
 	if resp.StatusCode != http.StatusOK {
-		rs.log.Error("Remote rendering request failed", "error", resp.Status, "url", rendererURL.Query().Get("url"))
+		logger.Error("Remote rendering request failed", "error", resp.Status, "url", rendererURL.Query().Get("url"))
 		return nil, fmt.Errorf("remote rendering request failed, status code: %d, status: %s", resp.StatusCode,
 			resp.Status)
 	}
@@ -148,6 +150,8 @@ func (rs *RenderingService) doRequestAndWriteToFile(ctx context.Context, renderT
 }
 
 func (rs *RenderingService) doRequest(ctx context.Context, u *url.URL, headers map[string][]string) (*http.Response, error) {
+	logger := rs.log.FromContext(ctx)
+
 	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
 	if err != nil {
 		return nil, err
@@ -159,12 +163,12 @@ func (rs *RenderingService) doRequest(ctx context.Context, u *url.URL, headers m
 		req.Header[k] = v
 	}
 
-	rs.log.Debug("calling remote rendering service", "url", u)
+	logger.Debug("calling remote rendering service", "url", u)
 
 	// make request to renderer server
 	resp, err := netClient.Do(req)
 	if err != nil {
-		rs.log.Error("Failed to send request to remote rendering service", "error", err)
+		logger.Error("Failed to send request to remote rendering service", "error", err)
 		var urlErr *url.Error
 		if errors.As(err, &urlErr) {
 			if urlErr.Timeout() {
@@ -178,9 +182,11 @@ func (rs *RenderingService) doRequest(ctx context.Context, u *url.URL, headers m
 }
 
 func (rs *RenderingService) writeResponseToFile(ctx context.Context, resp *http.Response, filePath string) error {
+	logger := rs.log.FromContext(ctx)
+
 	// check for timeout first
 	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-		rs.log.Info("Rendering timed out")
+		logger.Error("Rendering timed out")
 		return ErrTimeout
 	}
 
@@ -193,7 +199,7 @@ func (rs *RenderingService) writeResponseToFile(ctx context.Context, resp *http.
 	defer func() {
 		if err := out.Close(); err != nil && !errors.Is(err, fs.ErrClosed) {
 			// We already close the file explicitly in the non-error path, so shouldn't be a problem
-			rs.log.Warn("Failed to close file", "path", filePath, "err", err)
+			logger.Warn("Failed to close file", "path", filePath, "err", err)
 		}
 	}()
 
@@ -201,11 +207,11 @@ func (rs *RenderingService) writeResponseToFile(ctx context.Context, resp *http.
 	if err != nil {
 		// check that we didn't timeout while receiving the response.
 		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-			rs.log.Info("Rendering timed out")
+			logger.Error("Rendering timed out")
 			return ErrTimeout
 		}
 
-		rs.log.Error("Remote rendering request failed", "error", err)
+		logger.Error("Remote rendering request failed", "error", err)
 		return fmt.Errorf("remote rendering request failed: %w", err)
 	}
 	if err := out.Close(); err != nil {

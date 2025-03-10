@@ -4,7 +4,7 @@ import { Controller, FieldErrors, UseFormReturn } from 'react-hook-form';
 import { selectors } from '@grafana/e2e-selectors';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { Button, Field, FormFieldErrors, FormsOnSubmit, Stack, Input, Legend } from '@grafana/ui';
-import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
+import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import {
@@ -21,7 +21,6 @@ import { ImportDashboardLibraryPanelsList } from './ImportDashboardLibraryPanels
 interface Props extends Pick<UseFormReturn<ImportDashboardDTO>, 'register' | 'control' | 'getValues' | 'watch'> {
   uidReset: boolean;
   inputs: DashboardInputs;
-  initialFolderUid: string;
   errors: FieldErrors<ImportDashboardDTO>;
   onCancel: () => void;
   onUidReset: () => void;
@@ -35,7 +34,6 @@ export const ImportDashboardForm = ({
   getValues,
   uidReset,
   inputs,
-  initialFolderUid,
   onUidReset,
   onCancel,
   onSubmit,
@@ -72,8 +70,8 @@ export const ImportDashboardForm = ({
       </Field>
       <Field label="Folder">
         <Controller
-          render={({ field: { ref, ...field } }) => (
-            <OldFolderPicker {...field} enableCreateNew initialFolderUid={initialFolderUid} />
+          render={({ field: { ref, value, onChange, ...field } }) => (
+            <FolderPicker {...field} onChange={(uid, title) => onChange({ uid, title })} value={value.uid} />
           )}
           name="folder"
           control={control}

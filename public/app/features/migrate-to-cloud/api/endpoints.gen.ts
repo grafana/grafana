@@ -182,7 +182,6 @@ export type MigrateDataResponseItemDto = {
     | 'RESOURCE_CONFLICT'
     | 'UNEXPECTED_STATUS_CODE'
     | 'INTERNAL_SERVICE_ERROR'
-    | 'ONLY_CORE_DATA_SOURCES'
     | 'GENERIC_ERROR';
   message?: string;
   name?: string;
@@ -195,10 +194,12 @@ export type MigrateDataResponseItemDto = {
     | 'FOLDER'
     | 'LIBRARY_ELEMENT'
     | 'ALERT_RULE'
+    | 'ALERT_RULE_GROUP'
     | 'CONTACT_POINT'
     | 'NOTIFICATION_POLICY'
     | 'NOTIFICATION_TEMPLATE'
-    | 'MUTE_TIMING';
+    | 'MUTE_TIMING'
+    | 'PLUGIN';
 };
 export type SnapshotResourceStats = {
   statuses?: {
@@ -271,6 +272,7 @@ export type AnnotationPermission = {
 };
 export type DashboardMeta = {
   annotationsPermissions?: AnnotationPermission;
+  apiVersion?: string;
   canAdmin?: boolean;
   canDelete?: boolean;
   canEdit?: boolean;
@@ -302,7 +304,7 @@ export type DashboardFullWithMeta = {
   dashboard?: Json;
   meta?: DashboardMeta;
 };
-export type LibraryElementDtoMetaUserDefinesModelForLibraryElementDtoMetaUser = {
+export type LibraryElementDtoMetaUser = {
   avatarUrl?: string;
   id?: number;
   name?: string;
@@ -310,11 +312,11 @@ export type LibraryElementDtoMetaUserDefinesModelForLibraryElementDtoMetaUser = 
 export type LibraryElementDtoMetaIsTheMetaInformationForLibraryElementDto = {
   connectedDashboards?: number;
   created?: string;
-  createdBy?: LibraryElementDtoMetaUserDefinesModelForLibraryElementDtoMetaUser;
+  createdBy?: LibraryElementDtoMetaUser;
   folderName?: string;
   folderUid?: string;
   updated?: string;
-  updatedBy?: LibraryElementDtoMetaUserDefinesModelForLibraryElementDtoMetaUser;
+  updatedBy?: LibraryElementDtoMetaUser;
 };
 export type LibraryElementDtoIsTheFrontendDtoForEntities = {
   description?: string;

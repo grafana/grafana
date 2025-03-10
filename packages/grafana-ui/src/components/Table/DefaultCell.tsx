@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import { ReactElement, useState } from 'react';
+import { ReactElement } from 'react';
 import * as React from 'react';
 
 import { DisplayValue, formattedValueToString } from '@grafana/data';
@@ -17,8 +17,7 @@ import { TableCellProps, CustomCellRendererProps, TableCellOptions } from './typ
 import { getCellColors, getCellOptions } from './utils';
 
 export const DefaultCell = (props: TableCellProps) => {
-  const { field, cell, tableStyles, row, cellProps, frame, rowStyled, rowExpanded, textWrapped, height, actions } =
-    props;
+  const { field, cell, tableStyles, row, cellProps, frame, rowStyled, rowExpanded, textWrapped, height } = props;
   const inspectEnabled = Boolean(field.config.custom?.inspect);
   const displayValue = field.display!(cell.value);
 
@@ -26,19 +25,10 @@ export const DefaultCell = (props: TableCellProps) => {
   const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
   const cellOptions = getCellOptions(field);
   const hasLinks = Boolean(getCellLinks(field, row)?.length);
-  const hasActions = Boolean(actions?.length);
   const clearButtonStyle = useStyles2(clearLinkButtonStyles);
-  const [hover, setHover] = useState(false);
   let value: string | ReactElement;
 
   const OG_TWEET_LENGTH = 140; // 🙏
-
-  const onMouseLeave = () => {
-    setHover(false);
-  };
-  const onMouseEnter = () => {
-    setHover(true);
-  };
 
   if (cellOptions.type === TableCellDisplayMode.Custom) {
     const CustomCellComponent: React.ComponentType<CustomCellRendererProps> = cellOptions.cellComponent;
@@ -88,15 +78,9 @@ export const DefaultCell = (props: TableCellProps) => {
   const { key, ...rest } = cellProps;
 
   return (
-    <div
-      key={key}
-      {...rest}
-      onMouseEnter={showActions ? onMouseEnter : undefined}
-      onMouseLeave={showActions ? onMouseLeave : undefined}
-      className={cellStyle}
-    >
-      {hasLinks || hasActions ? (
-        <DataLinksContextMenu links={() => getCellLinks(field, row) || []} actions={actions}>
+    <div key={key} {...rest} className={cellStyle}>
+      {hasLinks ? (
+        <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
           {(api) => {
             if (api.openMenu) {
               return (
@@ -118,9 +102,7 @@ export const DefaultCell = (props: TableCellProps) => {
         <div className={tableStyles.cellText}>{value}</div>
       )}
 
-      {hover && showActions && (
-        <CellActions {...props} previewMode={TableCellInspectorMode.text} showFilters={showFilters} />
-      )}
+      {showActions && <CellActions {...props} previewMode={TableCellInspectorMode.text} showFilters={showFilters} />}
     </div>
   );
 };

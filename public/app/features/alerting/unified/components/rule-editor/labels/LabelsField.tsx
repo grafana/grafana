@@ -4,7 +4,7 @@ import { Controller, FormProvider, useFieldArray, useForm, useFormContext } from
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, Field, InlineLabel, Input, LoadingPlaceholder, Space, Stack, Text, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { labelsApi } from '../../../api/labelsApi';
 import { usePluginBridge } from '../../../hooks/usePluginBridge';
@@ -88,7 +88,7 @@ export function LabelsSubForm({ dataSourceName, onClose, initialLabels }: Labels
             <Space v={1} />
             <div className={styles.confirmButton}>
               <Button type="button" variant="secondary" onClick={onCancel}>
-                Cancel
+                <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
               </Button>
               <Button type="submit">Save</Button>
             </div>

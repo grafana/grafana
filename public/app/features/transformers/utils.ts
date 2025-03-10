@@ -1,7 +1,15 @@
 import { useMemo } from 'react';
 
-import { DataFrame, getFieldDisplayName, TransformerCategory, SelectableValue, getTimeZones } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import {
+  DataFrame,
+  getFieldDisplayName,
+  TransformerCategory,
+  SelectableValue,
+  getTimeZones,
+  VariableOrigin,
+  VariableSuggestion,
+} from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 
 export function useAllFieldNamesFromDataFrames(input: DataFrame[]): string[] {
   return useMemo(() => {
@@ -56,7 +64,7 @@ export const numberOrVariableValidator = (value: string | number) => {
   if (!Number.isNaN(Number(value))) {
     return true;
   }
-  if (/^\$[A-Za-z0-9_]+$/.test(value) && config.featureToggles.transformationsVariableSupport) {
+  if (/^\$[A-Za-z0-9_]+$/.test(value)) {
     return true;
   }
   return false;
@@ -80,4 +88,10 @@ export function getTimezoneOptions(includeInternal: boolean) {
   }
 
   return timeZoneOptions;
+}
+
+export function getVariableSuggestions(): VariableSuggestion[] {
+  return getTemplateSrv()
+    .getVariables()
+    .map((v) => ({ value: v.name, label: v.label || v.name, origin: VariableOrigin.Template }));
 }

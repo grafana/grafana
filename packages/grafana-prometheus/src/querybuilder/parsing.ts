@@ -12,6 +12,7 @@ import {
   GroupingLabels,
   Identifier,
   LabelName,
+  QuotedLabelName,
   MatchingModifierClause,
   MatchOp,
   NumberDurationLiteral,
@@ -19,6 +20,7 @@ import {
   ParenExpr,
   parser,
   StringLiteral,
+  QuotedLabelMatcher,
   UnquotedLabelMatcher,
   VectorSelector,
   Without,
@@ -145,9 +147,33 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       break;
     }
 
+    case QuotedLabelName: {
+      // Usually we got the metric name above in the Identifier case.
+      // If we didn't get the name that's potentially we have it in curly braces as quoted string.
+      // It must be quoted because that's how utf8 metric names should be defined
+      // See proposal https://github.com/prometheus/proposals/blob/main/proposals/2023-08-21-utf8.md
+      if (visQuery.metric === '') {
+        const strLiteral = node.getChild(StringLiteral);
+        const quotedMetric = getString(expr, strLiteral);
+        visQuery.metric = quotedMetric.slice(1, -1);
+      }
+      break;
+    }
+
+    case QuotedLabelMatcher: {
+      const quotedLabel = getLabel(expr, node, QuotedLabelName);
+      quotedLabel.label = quotedLabel.label.slice(1, -1);
+      visQuery.labels.push(quotedLabel);
+      const err = node.getChild(ErrorId);
+      if (err) {
+        context.errors.push(makeError(expr, err));
+      }
+      break;
+    }
+
     case UnquotedLabelMatcher: {
       // Same as MetricIdentifier should be just one per query.
-      visQuery.labels.push(getLabel(expr, node));
+      visQuery.labels.push(getLabel(expr, node, LabelName));
       const err = node.getChild(ErrorId);
       if (err) {
         context.errors.push(makeError(expr, err));
@@ -202,8 +228,12 @@ function isIntervalVariableError(node: SyntaxNode) {
   return node.prevSibling?.firstChild?.type.id === VectorSelector;
 }
 
-function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
-  const label = getString(expr, node.getChild(LabelName));
+function getLabel(
+  expr: string,
+  node: SyntaxNode,
+  labelType: typeof LabelName | typeof QuotedLabelName
+): QueryBuilderLabelFilter {
+  const label = getString(expr, node.getChild(labelType));
   const op = getString(expr, node.getChild(MatchOp));
   const value = getString(expr, node.getChild(StringLiteral)).replace(/^["'`]|["'`]$/g, '');
   return {
@@ -281,7 +311,7 @@ function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
       funcName = `__${funcName}_without`;
     }
 
-    labels.push(...getAllByType(expr, modifier, LabelName));
+    labels.push(...getAllByType(expr, modifier, LabelName), ...getAllByType(expr, modifier, QuotedLabelName));
   }
 
   const body = node.getChild(FunctionCallBody);

@@ -379,7 +379,8 @@ To configure single logout in Grafana:
 
 1. Enable the `single_logout` option in your configuration.
 2. Ensure the `name_id_format` matches the format your IdP expects (e.g., `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`).
-3. Enable the `improvedExternalSessionHandling` feature toggle for complete NameID and SessionIndex support (Grafana v11.5+).
+3. Enable the `improvedExternalSessionHandlingSAML` feature toggle for complete NameID and SessionIndex support (Grafana v11.5+).
+4. After enabling the feature, users may need to log in again to establish a new session.
 
 #### `NameID` and `SessionIndex` changes in Grafana v11.5
 

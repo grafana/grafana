@@ -268,13 +268,12 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 func (s *ServiceImpl) hasAccessToInclude(c *contextmodel.ReqContext, pluginID string) func(include *plugins.Includes) bool {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	return func(include *plugins.Includes) bool {
-		useRBAC := s.features.IsEnabledGlobally(featuremgmt.FlagAccessControlOnCall) && include.RequiresRBACAction()
-		if useRBAC && !hasAccess(pluginaccesscontrol.GetPluginRouteEvaluator(pluginID, include.Action)) {
+		if include.RequiresRBACAction() && !hasAccess(pluginaccesscontrol.GetPluginRouteEvaluator(pluginID, include.Action)) {
 			s.log.Debug("plugin include is covered by RBAC, user doesn't have access",
 				"plugin", pluginID,
 				"include", include.Name)
 			return false
-		} else if !useRBAC && !c.HasUserRole(include.Role) {
+		} else if !include.RequiresRBACAction() && !c.HasUserRole(include.Role) {
 			return false
 		}
 		return true
@@ -286,9 +285,9 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-k8s-app":                  {SectionID: navtree.NavIDInfrastructure, SortWeight: 1, Text: "Kubernetes"},
 		"grafana-dbo11y-app":               {SectionID: navtree.NavIDInfrastructure, SortWeight: 2, Text: "Databases"},
 		"grafana-app-observability-app":    {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApplication, Text: "Application", Icon: "graph-bar"},
-		"grafana-lokiexplore-app":          {SectionID: navtree.NavIDExplore, SortWeight: 1, Text: "Logs"},
-		"grafana-exploretraces-app":        {SectionID: navtree.NavIDExplore, SortWeight: 2, Text: "Traces"},
-		"grafana-pyroscope-app":            {SectionID: navtree.NavIDExplore, SortWeight: 3, Text: "Profiles"},
+		"grafana-lokiexplore-app":          {SectionID: navtree.NavIDDrilldown, SortWeight: 2, Text: "Logs"},
+		"grafana-exploretraces-app":        {SectionID: navtree.NavIDDrilldown, SortWeight: 3, Text: "Traces"},
+		"grafana-pyroscope-app":            {SectionID: navtree.NavIDDrilldown, SortWeight: 4, Text: "Profiles"},
 		"grafana-kowalski-app":             {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightFrontend, Text: "Frontend", Icon: "frontend-observability"},
 		"grafana-synthetic-monitoring-app": {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 2, Text: "Synthetics"},
 		"grafana-irm-app":                  {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 1, Text: "IRM"},
@@ -307,6 +306,14 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"k6-app":                           {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 1, Text: "Performance"},
 		"grafana-asserts-app":              {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAsserts, Icon: "asserts"},
 		"grafana-csp-app":                  {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightCloudServiceProviders, Icon: "cloud"},
+	}
+
+	if s.features.IsEnabledGlobally(featuremgmt.FlagExploreMetricsUseExternalAppPlugin) {
+		s.navigationAppConfig["grafana-metricsdrilldown-app"] = NavigationAppConfig{SectionID: navtree.NavIDDrilldown, SortWeight: 1, Text: "Metrics"}
+	}
+
+	if s.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) {
+		s.navigationAppConfig["grafana-advisor-app"] = NavigationAppConfig{SectionID: navtree.NavIDCfg, Text: "Advisor"}
 	}
 
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{

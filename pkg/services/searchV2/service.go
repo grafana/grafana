@@ -102,7 +102,6 @@ func ProvideService(cfg *setting.Cfg, sql db.DB, entityEventStore store.EntityEv
 			newSQLDashboardLoader(sql, tracer, cfg.Search),
 			entityEventStore,
 			extender.GetDocumentExtender(),
-			newFolderIDLookup(sql),
 			tracer,
 			features,
 			cfg.Search,

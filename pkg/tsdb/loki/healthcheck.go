@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -40,7 +39,7 @@ func healthcheck(ctx context.Context, req *backend.CheckHealthRequest, s *Servic
 	step := "1s"
 	qt := "instant"
 	qm := dataquery.LokiDataQuery{
-		Expr:      util.Pointer("vector(1)+vector(1)"),
+		Expr:      "vector(1)+vector(1)",
 		Step:      &step,
 		QueryType: &qt,
 	}

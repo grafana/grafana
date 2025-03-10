@@ -13,6 +13,7 @@ import { AccessControlAction } from 'app/types';
 
 import { isPublicDashboardsEnabled } from '../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { getTrackingSource, shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
+import { getExternalUserMngLinkUrl } from '../../../users/utils';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
 
@@ -93,7 +94,9 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       label: t('share-dashboard.menu.invite-user-title', 'Invite new member'),
       renderCondition: !!config.externalUserMngLinkUrl && contextSrv.hasPermission(AccessControlAction.OrgUsersAdd),
       onClick: () => {
-        window.open(config.externalUserMngLinkUrl, '_blank');
+        const url = getExternalUserMngLinkUrl('share-invite');
+
+        window.open(url.toString(), '_blank');
       },
       renderDividerAbove: true,
       component: () => <Icon name="external-link-alt" className={styles.inviteUserItemIcon} />,

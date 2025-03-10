@@ -1,17 +1,11 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Icon, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
-import {
-  GrafanaRulesSourceSymbol,
-  Rule,
-  RuleGroupIdentifierV2,
-  RuleHealth,
-  RulesSourceIdentifier,
-} from 'app/types/unified-alerting';
+import { Rule, RuleGroupIdentifierV2, RuleHealth, RulesSourceIdentifier } from 'app/types/unified-alerting';
 import { Labels, PromAlertingRuleState, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../../Analytics';
@@ -19,6 +13,7 @@ import { MetaText } from '../../components/MetaText';
 import { ProvisioningBadge } from '../../components/Provisioning';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { getGroupOriginName } from '../../utils/groupIdentifier';
 import { labelsSize } from '../../utils/labels';
 import { createContactPointSearchLink } from '../../utils/misc';
 import { RulePluginOrigin } from '../../utils/rules';
@@ -266,15 +261,17 @@ interface UnknownRuleListItemProps {
 
 export const UnknownRuleListItem = ({ rule, groupIdentifier }: UnknownRuleListItemProps) => {
   const styles = useStyles2(getStyles);
-  const { rulesSource, namespace, groupName } = groupIdentifier;
 
-  const ruleContext = {
-    name: rule.name,
-    groupName,
-    namespace: JSON.stringify(namespace),
-    rulesSource: rulesSource.uid === GrafanaRulesSourceSymbol ? GRAFANA_RULES_SOURCE_NAME : rulesSource.uid,
-  };
-  logError(new Error('unknown rule type'), ruleContext);
+  useEffect(() => {
+    const { namespace, groupName } = groupIdentifier;
+    const ruleContext = {
+      name: rule.name,
+      groupName,
+      namespace: JSON.stringify(namespace),
+      rulesSource: getGroupOriginName(groupIdentifier),
+    };
+    logError(new Error('unknown rule type'), ruleContext);
+  }, [rule, groupIdentifier]);
 
   return (
     <Alert title={'Unknown rule type'} className={styles.resetMargin}>

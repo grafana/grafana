@@ -53,7 +53,7 @@ func (s *Service) Add(ctx context.Context, username, IPAddress string) error {
 
 	_, err := s.store.CreateLoginAttempt(ctx, CreateLoginAttemptCommand{
 		Username:  strings.ToLower(username),
-		IpAddress: IPAddress,
+		IPAddress: IPAddress,
 	})
 	return err
 }
@@ -73,6 +73,28 @@ func (s *Service) Validate(ctx context.Context, username string) (bool, error) {
 	}
 
 	count, err := s.store.GetUserLoginAttemptCount(ctx, loginAttemptCountQuery)
+	if err != nil {
+		return false, err
+	}
+
+	if count >= s.cfg.BruteForceLoginProtectionMaxAttempts {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func (s *Service) ValidateIPAddress(ctx context.Context, IPAddress string) (bool, error) {
+	if s.cfg.DisableIPAddressLoginProtection {
+		return true, nil
+	}
+
+	loginAttemptCountQuery := GetIPLoginAttemptCountQuery{
+		IPAddress: IPAddress,
+		Since:     time.Now().Add(-loginAttemptsWindow),
+	}
+
+	count, err := s.store.GetIPLoginAttemptCount(ctx, loginAttemptCountQuery)
 	if err != nil {
 		return false, err
 	}

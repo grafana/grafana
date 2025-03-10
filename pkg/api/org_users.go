@@ -339,9 +339,8 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 	for i := range filteredUsers {
 		filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserID)]
 		if module, ok := modules[filteredUsers[i].UserID]; ok {
-			oauthInfo := hs.SocialService.GetOAuthInfoProvider(module)
 			filteredUsers[i].AuthLabels = []string{login.GetAuthProviderLabel(module)}
-			filteredUsers[i].IsExternallySynced = login.IsExternallySynced(hs.Cfg, module, oauthInfo)
+			filteredUsers[i].IsExternallySynced = hs.isExternallySynced(hs.Cfg, module)
 		}
 	}
 
@@ -428,8 +427,7 @@ func (hs *HTTPServer) updateOrgUserHelper(c *contextmodel.ReqContext, cmd org.Up
 		}
 	}
 	if authInfo != nil && authInfo.AuthModule != "" {
-		oauthInfo := hs.SocialService.GetOAuthInfoProvider(authInfo.AuthModule)
-		if login.IsExternallySynced(hs.Cfg, authInfo.AuthModule, oauthInfo) {
+		if hs.isExternallySynced(hs.Cfg, authInfo.AuthModule) {
 			return response.Err(org.ErrCannotChangeRoleForExternallySyncedUser.Errorf("Cannot change role for externally synced user"))
 		}
 	}
@@ -542,6 +540,16 @@ type AddOrgUserParams struct {
 	// in:path
 	// required:true
 	OrgID int64 `json:"org_id"`
+}
+
+// swagger:parameters getOrgUsersForCurrentOrg
+type GetOrgUsersForCurrentOrgParams struct {
+	// in:query
+	// required:false
+	Query string `json:"query"`
+	// in:query
+	// required:false
+	Limit int `json:"limit"`
 }
 
 // swagger:parameters getOrgUsersForCurrentOrgLookup

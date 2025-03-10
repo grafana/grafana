@@ -87,9 +87,11 @@ function countEslintErrors() {
 
     lintResults.forEach(({ messages, filePath }) => {
       const file = fileTestResult.addFile(filePath, '');
-      messages.forEach((message, index) => {
-        file.addIssue(0, 0, message.message, `${index}`);
-      });
+      messages
+        .sort((a, b) => (a.message > b.message ? 1 : -1))
+        .forEach((message, index) => {
+          file.addIssue(0, 0, message.message, `${index}`);
+        });
     });
   });
 }

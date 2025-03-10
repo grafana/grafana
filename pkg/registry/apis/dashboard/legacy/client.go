@@ -42,11 +42,6 @@ func (d *directResourceClient) GetStats(ctx context.Context, in *resource.Resour
 	return d.server.GetStats(ctx, in)
 }
 
-// History implements ResourceClient.
-func (d *directResourceClient) History(ctx context.Context, in *resource.HistoryRequest, opts ...grpc.CallOption) (*resource.HistoryResponse, error) {
-	return d.server.History(ctx, in)
-}
-
 // IsHealthy implements ResourceClient.
 func (d *directResourceClient) IsHealthy(ctx context.Context, in *resource.HealthCheckRequest, opts ...grpc.CallOption) (*resource.HealthCheckResponse, error) {
 	return d.server.IsHealthy(ctx, in)
@@ -57,9 +52,12 @@ func (d *directResourceClient) List(ctx context.Context, in *resource.ListReques
 	return d.server.List(ctx, in)
 }
 
-// Origin implements ResourceClient.
-func (d *directResourceClient) Origin(ctx context.Context, in *resource.OriginRequest, opts ...grpc.CallOption) (*resource.OriginResponse, error) {
-	return d.server.Origin(ctx, in)
+func (d *directResourceClient) ListRepositoryObjects(ctx context.Context, in *resource.ListRepositoryObjectsRequest, opts ...grpc.CallOption) (*resource.ListRepositoryObjectsResponse, error) {
+	return d.server.ListRepositoryObjects(ctx, in)
+}
+
+func (d *directResourceClient) CountRepositoryObjects(ctx context.Context, in *resource.CountRepositoryObjectsRequest, opts ...grpc.CallOption) (*resource.CountRepositoryObjectsResponse, error) {
+	return d.server.CountRepositoryObjects(ctx, in)
 }
 
 // PutBlob implements ResourceClient.
@@ -89,5 +87,10 @@ func (d *directResourceClient) Update(ctx context.Context, in *resource.UpdateRe
 
 // Watch implements ResourceClient.
 func (d *directResourceClient) Watch(ctx context.Context, in *resource.WatchRequest, opts ...grpc.CallOption) (resource.ResourceStore_WatchClient, error) {
-	return nil, fmt.Errorf("watch not yet supported with direct resource client")
+	return nil, fmt.Errorf("watch not supported with direct resource client")
+}
+
+// BulkProcess implements resource.ResourceClient.
+func (d *directResourceClient) BulkProcess(ctx context.Context, opts ...grpc.CallOption) (resource.BulkStore_BulkProcessClient, error) {
+	return nil, fmt.Errorf("BulkProcess not supported with direct resource client")
 }

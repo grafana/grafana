@@ -80,6 +80,7 @@ function transposeDataFrame(options: TransposeTransformerOptions, data: DataFram
       ...frame,
       fields: newFields,
       length: Math.max(...newFields.map((field) => field.values.length)),
+      refId: `${DataTransformerID.transpose}-${frame.refId}`,
     };
   });
 }

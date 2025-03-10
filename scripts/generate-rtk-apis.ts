@@ -2,15 +2,16 @@
 import type { ConfigFile } from '@rtk-query/codegen-openapi';
 
 const config: ConfigFile = {
-  schemaFile: '../public/openapi3.json',
+  schemaFile: '', // leave this empty, and instead populate the outputFiles object below
   apiFile: '', // leave this empty, and instead populate the outputFiles object below
-  hooks: true,
   exportName: 'generatedAPI',
 
   outputFiles: {
     '../public/app/features/migrate-to-cloud/api/endpoints.gen.ts': {
+      schemaFile: '../public/openapi3.json',
       apiFile: '../public/app/features/migrate-to-cloud/api/baseAPI.ts',
       apiImport: 'baseAPI',
+      hooks: true,
       filterEndpoints: [
         'getSessionList',
         'getSession',
@@ -32,9 +33,20 @@ const config: ConfigFile = {
       ],
     },
     '../public/app/features/preferences/api/user/endpoints.gen.ts': {
+      schemaFile: '../public/openapi3.json',
+      hooks: true,
       apiFile: '../public/app/features/preferences/api/user/baseAPI.ts',
       apiImport: 'baseAPI',
       filterEndpoints: ['getUserPreferences', 'updateUserPreferences', 'patchUserPreferences'],
+    },
+    '../public/app/features/iam/api/endpoints.gen.ts': {
+      schemaFile: '../data/openapi/iam.grafana.app-v0alpha1.json',
+      apiFile: '../public/app/features/iam/api/api.ts',
+      apiImport: 'iamApi',
+      filterEndpoints: ['getDisplayMapping'],
+      exportName: 'generatedIamApi',
+      flattenArg: false,
+      tag: true,
     },
   },
 };

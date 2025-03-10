@@ -1,0 +1,463 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "custom": {
+//          "resultType": "vector"
+//      },
+//      "notices": [
+//          {
+//              "severity": "info",
+//              "text": "info 1"
+//          },
+//          {
+//              "severity": "info",
+//              "text": "info 2"
+//          }
+//      ]
+//  }
+//  Name: 
+//  Dimensions: 2 Fields by 1 Rows
+//  +-----------------------------------+--------------------------------------------------------------+
+//  | Name: Time                        | Name: Value                                                  |
+//  | Labels:                           | Labels: __name__=up, instance=localhost:9090, job=prometheus |
+//  | Type: []time.Time                 | Type: []float64                                              |
+//  +-----------------------------------+--------------------------------------------------------------+
+//  | 2015-07-01 20:10:51.781 +0000 UTC | 1                                                            |
+//  +-----------------------------------+--------------------------------------------------------------+
+//  
+//  
+//  
+//  Frame[1] {
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "custom": {
+//          "resultType": "vector"
+//      },
+//      "notices": [
+//          {
+//              "severity": "info",
+//              "text": "info 1"
+//          },
+//          {
+//              "severity": "info",
+//              "text": "info 2"
+//          }
+//      ]
+//  }
+//  Name: 
+//  Dimensions: 2 Fields by 1 Rows
+//  +-----------------------------------+--------------------------------------------------------+
+//  | Name: Time                        | Name: Value                                            |
+//  | Labels:                           | Labels: __name__=up, instance=localhost:9100, job=node |
+//  | Type: []time.Time                 | Type: []float64                                        |
+//  +-----------------------------------+--------------------------------------------------------+
+//  | 2015-07-01 20:10:51.781 +0000 UTC | 0                                                      |
+//  +-----------------------------------+--------------------------------------------------------+
+//  
+//  
+//  
+//  Frame[2] {
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "custom": {
+//          "resultType": "vector"
+//      },
+//      "notices": [
+//          {
+//              "severity": "info",
+//              "text": "info 1"
+//          },
+//          {
+//              "severity": "info",
+//              "text": "info 2"
+//          }
+//      ]
+//  }
+//  Name: 
+//  Dimensions: 2 Fields by 1 Rows
+//  +-------------------------------+------------------------------------+
+//  | Name: Time                    | Name: Value                        |
+//  | Labels:                       | Labels: level=error, location=moon |
+//  | Type: []time.Time             | Type: []float64                    |
+//  +-------------------------------+------------------------------------+
+//  | 2022-02-16 16:41:39 +0000 UTC | +Inf                               |
+//  +-------------------------------+------------------------------------+
+//  
+//  
+//  
+//  Frame[3] {
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "custom": {
+//          "resultType": "vector"
+//      },
+//      "notices": [
+//          {
+//              "severity": "info",
+//              "text": "info 1"
+//          },
+//          {
+//              "severity": "info",
+//              "text": "info 2"
+//          }
+//      ]
+//  }
+//  Name: 
+//  Dimensions: 2 Fields by 1 Rows
+//  +-------------------------------+-----------------------------------+
+//  | Name: Time                    | Name: Value                       |
+//  | Labels:                       | Labels: level=info, location=moon |
+//  | Type: []time.Time             | Type: []float64                   |
+//  +-------------------------------+-----------------------------------+
+//  | 2022-02-16 16:41:39 +0000 UTC | -Inf                              |
+//  +-------------------------------+-----------------------------------+
+//  
+//  
+//  
+//  Frame[4] {
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "custom": {
+//          "resultType": "vector"
+//      },
+//      "notices": [
+//          {
+//              "severity": "info",
+//              "text": "info 1"
+//          },
+//          {
+//              "severity": "info",
+//              "text": "info 2"
+//          }
+//      ]
+//  }
+//  Name: 
+//  Dimensions: 2 Fields by 1 Rows
+//  +-------------------------------+------------------------------------+
+//  | Name: Time                    | Name: Value                        |
+//  | Labels:                       | Labels: level=debug, location=moon |
+//  | Type: []time.Time             | Type: []float64                    |
+//  +-------------------------------+------------------------------------+
+//  | 2022-02-16 16:41:39 +0000 UTC | NaN                                |
+//  +-------------------------------+------------------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "meta": {
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
+          "custom": {
+            "resultType": "vector"
+          },
+          "notices": [
+            {
+              "severity": "info",
+              "text": "info 1"
+            },
+            {
+              "severity": "info",
+              "text": "info 2"
+            }
+          ]
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            },
+            "labels": {
+              "__name__": "up",
+              "instance": "localhost:9090",
+              "job": "prometheus"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1435781451781
+          ],
+          [
+            1
+          ]
+        ]
+      }
+    },
+    {
+      "schema": {
+        "meta": {
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
+          "custom": {
+            "resultType": "vector"
+          },
+          "notices": [
+            {
+              "severity": "info",
+              "text": "info 1"
+            },
+            {
+              "severity": "info",
+              "text": "info 2"
+            }
+          ]
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            },
+            "labels": {
+              "__name__": "up",
+              "instance": "localhost:9100",
+              "job": "node"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1435781451781
+          ],
+          [
+            0
+          ]
+        ]
+      }
+    },
+    {
+      "schema": {
+        "meta": {
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
+          "custom": {
+            "resultType": "vector"
+          },
+          "notices": [
+            {
+              "severity": "info",
+              "text": "info 1"
+            },
+            {
+              "severity": "info",
+              "text": "info 2"
+            }
+          ]
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            },
+            "labels": {
+              "level": "error",
+              "location": "moon"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1645029699000
+          ],
+          [
+            null
+          ]
+        ],
+        "entities": [
+          null,
+          {
+            "Inf": [
+              0
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schema": {
+        "meta": {
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
+          "custom": {
+            "resultType": "vector"
+          },
+          "notices": [
+            {
+              "severity": "info",
+              "text": "info 1"
+            },
+            {
+              "severity": "info",
+              "text": "info 2"
+            }
+          ]
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            },
+            "labels": {
+              "level": "info",
+              "location": "moon"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1645029699000
+          ],
+          [
+            null
+          ]
+        ],
+        "entities": [
+          null,
+          {
+            "NegInf": [
+              0
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schema": {
+        "meta": {
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
+          "custom": {
+            "resultType": "vector"
+          },
+          "notices": [
+            {
+              "severity": "info",
+              "text": "info 1"
+            },
+            {
+              "severity": "info",
+              "text": "info 2"
+            }
+          ]
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            },
+            "labels": {
+              "level": "debug",
+              "location": "moon"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1645029699000
+          ],
+          [
+            null
+          ]
+        ],
+        "entities": [
+          null,
+          {
+            "NaN": [
+              0
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

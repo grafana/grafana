@@ -9,21 +9,23 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister, folderService folder.Service, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl) *LibraryElementService {
+func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister, folderService folder.Service, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, dashboardsService dashboards.DashboardService) *LibraryElementService {
 	l := &LibraryElementService{
-		Cfg:           cfg,
-		SQLStore:      sqlStore,
-		RouteRegister: routeRegister,
-		folderService: folderService,
-		log:           log.New("library-elements"),
-		features:      features,
-		AccessControl: ac,
+		Cfg:               cfg,
+		SQLStore:          sqlStore,
+		RouteRegister:     routeRegister,
+		folderService:     folderService,
+		dashboardsService: dashboardsService,
+		log:               log.New("library-elements"),
+		features:          features,
+		AccessControl:     ac,
 	}
 
 	l.registerAPIEndpoints()
@@ -45,13 +47,14 @@ type Service interface {
 
 // LibraryElementService is the service for the Library Element feature.
 type LibraryElementService struct {
-	Cfg           *setting.Cfg
-	SQLStore      db.DB
-	RouteRegister routing.RouteRegister
-	folderService folder.Service
-	log           log.Logger
-	features      featuremgmt.FeatureToggles
-	AccessControl accesscontrol.AccessControl
+	Cfg               *setting.Cfg
+	SQLStore          db.DB
+	RouteRegister     routing.RouteRegister
+	folderService     folder.Service
+	dashboardsService dashboards.DashboardService
+	log               log.Logger
+	features          featuremgmt.FeatureToggles
+	AccessControl     accesscontrol.AccessControl
 }
 
 var _ Service = (*LibraryElementService)(nil)

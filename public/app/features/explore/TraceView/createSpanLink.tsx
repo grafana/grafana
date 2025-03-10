@@ -29,6 +29,7 @@ import { ExploreFieldLinkModel, getFieldLinksForExplore, getVariableUsageInfo } 
 
 import { SpanLinkDef, SpanLinkFunc, Trace, TraceSpan } from './components';
 import { SpanLinkType } from './components/types/links';
+import { TraceSpanReference } from './components/types/trace';
 
 /**
  * This is a factory for the link creator. It returns the function mainly so it can return undefined in which case
@@ -323,11 +324,12 @@ function legacyCreateSpanLinkFactory(
         }
 
         const link = createFocusSpanLink(reference.traceID, reference.spanID);
+        const title = getReferenceTitle(reference);
 
         links!.push({
           href: link.href,
-          title: reference.span ? reference.span.operationName : 'View linked span',
-          content: <Icon name="link" title="View linked span" />,
+          title,
+          content: <Icon name="link" title={title} />,
           onClick: link.onClick,
           field: link.origin,
           type: SpanLinkType.Traces,
@@ -338,11 +340,12 @@ function legacyCreateSpanLinkFactory(
     if (span.subsidiarilyReferencedBy && createFocusSpanLink) {
       for (const reference of span.subsidiarilyReferencedBy) {
         const link = createFocusSpanLink(reference.traceID, reference.spanID);
+        const title = getReferenceTitle(reference);
 
         links!.push({
           href: link.href,
-          title: reference.span ? reference.span.operationName : 'View linked span',
-          content: <Icon name="link" title="View linked span" />,
+          title,
+          content: <Icon name="link" title={title} />,
           onClick: link.onClick,
           field: link.origin,
           type: SpanLinkType.Traces,
@@ -365,6 +368,14 @@ function legacyCreateSpanLinkFactory(
     return links;
   };
 }
+
+const getReferenceTitle = (reference: TraceSpanReference) => {
+  let title = reference.span ? reference.span.operationName : 'View linked span';
+  if (reference.refType === 'EXTERNAL') {
+    title = 'View linked span';
+  }
+  return title;
+};
 
 function getQueryForLoki(
   span: TraceSpan,
