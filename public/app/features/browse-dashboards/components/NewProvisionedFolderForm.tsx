@@ -1,22 +1,20 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
-import { getAppEvents, locationService } from '@grafana/runtime';
+import { getAppEvents } from '@grafana/runtime';
 import { Alert, Button, Field, Input, RadioButtonGroup, Spinner, Stack, TextArea } from '@grafana/ui';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
-import {
-  RepositorySpec,
-  useCreateRepositoryFilesWithPathMutation,
-  useGetRepositoryQuery,
-} from 'app/features/provisioning/api';
+import { useCreateRepositoryFilesWithPathMutation, useGetRepositoryQuery } from 'app/features/provisioning/api';
+import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { usePullRequestParam } from 'app/features/provisioning/hooks';
 import { WorkflowOption } from 'app/features/provisioning/types';
 import { validateBranchName } from 'app/features/provisioning/utils/git';
 
 import { FolderDTO } from '../../../types';
-import { AnnoKeySourcePath } from '../../apiserver/types';
+import { AnnoKeySourcePath, Resource } from '../../apiserver/types';
 import { getDefaultWorkflow, getWorkflowOptions } from '../../dashboard-scene/saving/provisioned/defaults';
 import { useGetFolderQuery } from '../../folders/api';
 
@@ -45,6 +43,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
   const repositoryName = parentFolder.repository?.name;
   const query = useGetRepositoryQuery(repositoryName ? { name: repositoryName } : skipToken);
   const prURL = usePullRequestParam();
+  const navigate = useNavigate();
   const [create, request] = useCreateRepositoryFilesWithPathMutation();
 
   // Get k8s folder data, necessary to get parent folder path
@@ -67,7 +66,6 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
   } = useForm<FormData>({ defaultValues: { ...initialFormValues, workflow: getDefaultWorkflow(repositoryConfig) } });
 
   const [workflow, ref] = watch(['workflow', 'ref']);
-  const prLink = getPRLink(repositoryConfig, ref);
 
   useEffect(() => {
     setValue('workflow', getDefaultWorkflow(repositoryConfig));
@@ -77,21 +75,40 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
     const appEvents = getAppEvents();
     if (request.isSuccess) {
       onSubmit();
-      if (workflow === 'branch' && prLink) {
-        locationService.partial({ prLink });
-      } else {
-        appEvents.publish({
-          type: AppEvents.alertSuccess.name,
-          payload: ['Folder created successfully'],
-        });
+
+      appEvents.publish({
+        type: AppEvents.alertSuccess.name,
+        payload: ['Folder created successfully'],
+      });
+
+      const folder = request.data.resource?.upsert as Resource;
+      if (folder?.metadata?.name) {
+        navigate(`/dashboards/f/${folder?.metadata?.name}/`);
+        return;
       }
+
+      let url = `${PROVISIONING_URL}/${repositoryName}/file/${request.data.path}`;
+      if (request.data.ref?.length) {
+        url += '?ref=' + request.data.ref;
+      }
+      navigate(url);
     } else if (request.isError) {
       appEvents.publish({
         type: AppEvents.alertError.name,
         payload: ['Error creating folder', request.error],
       });
     }
-  }, [request.isSuccess, request.isError, request.error, onSubmit, ref, prLink, workflow]);
+  }, [
+    request.isSuccess,
+    request.isError,
+    request.error,
+    onSubmit,
+    ref,
+    request.data,
+    workflow,
+    navigate,
+    repositoryName,
+  ]);
 
   if (query.isLoading || folderQuery.isLoading) {
     return <Spinner />;
@@ -229,11 +246,3 @@ const BranchValidationError = () => {
     </>
   );
 };
-
-function getPRLink(spec?: RepositorySpec, ref?: string) {
-  const githubSpec = spec?.type === 'github' ? spec.github : undefined;
-  if (!githubSpec || !spec?.workflows.includes('branch')) {
-    return '';
-  }
-  return `${githubSpec.url}/compare/${githubSpec.branch}...${ref}?quick_pull=1&labels=grafana`;
-}
