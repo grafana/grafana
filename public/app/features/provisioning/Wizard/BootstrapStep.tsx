@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Box, Field, Input, Stack, FieldSet, Card, Alert, Text } from '@grafana/ui';
+import { Box, Field, Input, Stack, FieldSet, Card, Alert, Text, LoadingPlaceholder } from '@grafana/ui';
 
 import { useGetFrontendSettingsQuery, useGetRepositoryFilesQuery } from '../api';
 import { checkSyncSettings } from '../utils';
@@ -59,6 +59,7 @@ export function BootstrapStep({ onOptionSelect }: Props) {
   const [dashboardCount, setDashboardCount] = useState<number>(0);
   const [folderCount, setFolderCount] = useState<number>(0);
   const [fileCount, setFileCount] = useState<number>(0);
+  const [isLoadingCounts, setIsLoadingCounts] = useState(true);
 
   // Get repository files count
   const { data: filesData } = useGetRepositoryFilesQuery({ name: currentRepoName || '' }, { skip: !currentRepoName });
@@ -87,6 +88,7 @@ export function BootstrapStep({ onOptionSelect }: Props) {
   // Fetch dashboard and folder counts
   useEffect(() => {
     const fetchCounts = async () => {
+      setIsLoadingCounts(true);
       try {
         // TODO: How to do this in the right way?
         // Get dashboard count using v0alpha1 API
@@ -104,6 +106,8 @@ export function BootstrapStep({ onOptionSelect }: Props) {
         setFolderCount(folderData.totalHits || 0);
       } catch (error) {
         console.error('Error fetching counts:', error);
+      } finally {
+        setIsLoadingCounts(false);
       }
     };
 
@@ -113,10 +117,6 @@ export function BootstrapStep({ onOptionSelect }: Props) {
   // Get available options and disabled state logic
   const availableOptions = useMemo(() => {
     const isOptionDisabled = (option: ModeOption) => {
-      // If this is the selected option, it's not disabled
-      if (selectedOption?.value === option.value && selectedOption?.operation === option.operation) {
-        return false;
-      }
       // Disable pull instance option if using legacy storage
       if (option.value === 'instance' && option.operation === 'pull' && settingsQuery.data?.legacyStorage) {
         return true;
@@ -138,7 +138,6 @@ export function BootstrapStep({ onOptionSelect }: Props) {
 
     return modeOptions.filter((option) => !isOptionDisabled(option));
   }, [
-    selectedOption,
     settingsQuery.data?.legacyStorage,
     dashboardCount,
     folderCount,
@@ -219,40 +218,52 @@ export function BootstrapStep({ onOptionSelect }: Props) {
                 <Text variant="h4" color="secondary">
                   Grafana
                 </Text>
-                <Stack direction="row" gap={2}>
-                  <Text variant="h3">{dashboardCount} dashboards</Text>
-                  <Text variant="h3">{folderCount} folders</Text>
-                </Stack>
+                {isLoadingCounts ? (
+                  <LoadingPlaceholder text="Loading counts..." />
+                ) : (
+                  <Stack direction="row" gap={2}>
+                    <Text variant="h3">{dashboardCount} dashboards</Text>
+                    <Text variant="h3">{folderCount} folders</Text>
+                  </Stack>
+                )}
               </Stack>
               <Stack direction="column" gap={1} alignItems="center">
                 <Text variant="h4" color="secondary">
                   Repository
                 </Text>
-                <Text variant="h3">{fileCount} files</Text>
+                {isLoadingCounts ? (
+                  <LoadingPlaceholder text="Loading counts..." />
+                ) : (
+                  <Text variant="h3">{fileCount} files</Text>
+                )}
               </Stack>
             </Stack>
           </Box>
 
-          <Controller
-            name="repository.sync.target"
-            control={control}
-            render={({ field: { value } }) => (
-              <>
-                {availableOptions.map((option) => (
-                  <Card
-                    key={`${option.value}-${option.operation}`}
-                    isSelected={
-                      selectedOption?.value === option.value && selectedOption?.operation === option.operation
-                    }
-                    onClick={() => handleOptionSelect(option)}
-                  >
-                    <Card.Heading>{option.label}</Card.Heading>
-                    <Card.Description>{option.description}</Card.Description>
-                  </Card>
-                ))}
-              </>
-            )}
-          />
+          {isLoadingCounts ? (
+            <LoadingPlaceholder text="Loading options..." />
+          ) : (
+            <Controller
+              name="repository.sync.target"
+              control={control}
+              render={({ field: { value } }) => (
+                <>
+                  {availableOptions.map((option) => (
+                    <Card
+                      key={`${option.value}-${option.operation}`}
+                      isSelected={
+                        selectedOption?.value === option.value && selectedOption?.operation === option.operation
+                      }
+                      onClick={() => handleOptionSelect(option)}
+                    >
+                      <Card.Heading>{option.label}</Card.Heading>
+                      <Card.Description>{option.description}</Card.Description>
+                    </Card>
+                  ))}
+                </>
+              )}
+            />
+          )}
           {/* Only show title field if not instance sync */}
           {selectedTarget === 'folder' && (
             <Field
