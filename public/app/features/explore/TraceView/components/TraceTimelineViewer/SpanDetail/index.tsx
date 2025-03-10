@@ -291,7 +291,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     });
   }
 
-  const { profileLinkButtons, logLinkButton, sessionLinkButton } = getSpanDetailLinkButtons({
+  const linksComponent = getSpanDetailLinkButtons({
     span,
     createSpanLink,
     datasourceType,
@@ -311,11 +311,7 @@ export default function SpanDetail(props: SpanDetailProps) {
           <LabeledList className={styles.list} divider={true} items={overviewItems} />
         </div>
       </div>
-      <div className={styles.linkList}>
-        {logLinkButton}
-        {profileLinkButtons}
-        {sessionLinkButton}
-      </div>
+      <div className={styles.linkList}>{linksComponent}</div>
       <Divider spacing={1} />
       <div>
         <div>
