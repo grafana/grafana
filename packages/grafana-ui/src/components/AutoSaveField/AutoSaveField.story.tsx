@@ -1,10 +1,10 @@
 import { StoryFn, Meta } from '@storybook/react';
 import { useState } from 'react';
 
+import { Combobox } from '../Combobox/Combobox';
 import { Checkbox } from '../Forms/Checkbox';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Input } from '../Input/Input';
-import { Select } from '../Select/Select';
 import { Switch } from '../Switch/Switch';
 import { TextArea } from '../TextArea/TextArea';
 
@@ -102,6 +102,7 @@ export const AllComponents: StoryFn = (args) => {
   const [textAreaValue, setTextAreaValue] = useState('');
   const [inputTextValue, setInputTextValue] = useState('');
   const [switchTest, setSwitchTest] = useState(false);
+  const [comboboxSelected, setComboboxSelected] = useState('');
 
   return (
     <div>
@@ -117,13 +118,14 @@ export const AllComponents: StoryFn = (args) => {
           />
         )}
       </AutoSaveField>
-      <AutoSaveField onFinishChange={args.inputSuccessful ? getSuccess : getError} label="Select as child" {...args}>
+      <AutoSaveField onFinishChange={args.inputSuccessful ? getSuccess : getError} label="Combobox as child" {...args}>
         {(onChange) => (
-          <Select
+          <Combobox
             options={themeOptions}
-            value={args.weekPickerValue}
+            value={comboboxSelected}
             onChange={(v) => {
               onChange(v.value);
+              setComboboxSelected(v.value);
             }}
           />
         )}

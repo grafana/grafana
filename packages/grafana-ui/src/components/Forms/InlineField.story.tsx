@@ -1,8 +1,8 @@
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
 
+import { Combobox } from '../Combobox/Combobox';
 import { Input } from '../Input/Input';
-import { Select } from '../Select/Select';
 
 import { InlineField } from './InlineField';
 import mdx from './InlineField.mdx';
@@ -75,10 +75,10 @@ grow.args = {
   grow: true,
 };
 
-export const withSelect: StoryFn<typeof InlineField> = (args) => {
+export const withCombobox: StoryFn<typeof InlineField> = (args) => {
   return (
     <InlineField {...args}>
-      <Select
+      <Combobox
         width={16}
         onChange={action('item selected')}
         options={[
@@ -90,7 +90,7 @@ export const withSelect: StoryFn<typeof InlineField> = (args) => {
   );
 };
 
-withSelect.args = {
+withCombobox.args = {
   ...basic.args,
   label: 'Select option',
 };
