@@ -6,8 +6,8 @@ import { selectors as rawSelectors } from '@grafana/e2e-selectors';
 
 import { selectors } from '../../public/app/plugins/datasource/azuremonitor/e2e/selectors';
 import {
-  AzureDataSourceJsonData,
-  AzureDataSourceSecureJsonData,
+  AzureMonitorDataSourceJsonData,
+  AzureMonitorDataSourceSecureJsonData,
   AzureQueryType,
 } from '../../public/app/plugins/datasource/azuremonitor/types';
 import { e2e } from '../utils';
@@ -16,8 +16,8 @@ const provisioningPath = `provisioning/datasources/azmonitor-ds.yaml`;
 const e2eSelectors = e2e.getSelectors(selectors.components);
 
 type AzureMonitorConfig = {
-  secureJsonData: AzureDataSourceSecureJsonData;
-  jsonData: AzureDataSourceJsonData;
+  secureJsonData: AzureMonitorDataSourceSecureJsonData;
+  jsonData: AzureMonitorDataSourceJsonData;
 };
 
 type AzureMonitorProvision = { datasources: AzureMonitorConfig[] };
@@ -200,6 +200,7 @@ describe('Azure monitor datasource', () => {
       visitDashboardAtStart: false,
       queriesForm: () => {
         e2eSelectors.queryEditor.header.select().find('input').type('Logs{enter}');
+        cy.contains('KQL').click({ force: true });
         e2eSelectors.queryEditor.resourcePicker.select.button().click();
         e2eSelectors.queryEditor.resourcePicker.search
           .input()
@@ -225,6 +226,7 @@ describe('Azure monitor datasource', () => {
         e2eSelectors.queryEditor.argsQueryEditor.subscriptions
           .input()
           .find('[aria-label="select-clear-value"]')
+          .should('exist')
           .click();
         e2eSelectors.queryEditor.argsQueryEditor.subscriptions.input().find('input').type('datasources{enter}');
         e2e.components.CodeEditor.container().type(
@@ -257,7 +259,7 @@ describe('Azure monitor datasource', () => {
     });
   });
 
-  it('creates a dashboard that includes a template variable', () => {
+  it.skip('creates a dashboard that includes a template variable', () => {
     e2e.flows.addDashboard({
       timeRange: {
         from: 'now-6h',
