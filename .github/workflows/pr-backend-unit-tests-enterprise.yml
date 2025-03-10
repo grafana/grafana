@@ -60,10 +60,10 @@ jobs:
           
           # Run a specific package's tests twice
           echo "First run of project tests:"
-          go test -v ./pkg/api
+          GODEBUG=gocacheverify=1,gocachehash=1 go test -v ./pkg/bus
           
           echo "Second run of project tests (should be cached):"
-          go test -v ./pkg/api
+          GODEBUG=gocacheverify=1,gocachehash=1 go test -v ./pkg/bus
           
       # - name: Verify test caching with explicit cache control
       #   run: |
