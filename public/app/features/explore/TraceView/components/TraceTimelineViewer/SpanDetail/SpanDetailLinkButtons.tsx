@@ -44,7 +44,7 @@ export const getSpanDetailLinkButtons = (props: Props) => {
   let linkToProfiles: SpanLinkDef | undefined;
 
   if (createSpanLink) {
-    const links = createSpanLink(span)
+    const links = (createSpanLink(span) || [])
       // Linked spans are shown in a separate section
       .filter((link) => link.type !== SpanLinkType.Traces)
       .map((link) => {
