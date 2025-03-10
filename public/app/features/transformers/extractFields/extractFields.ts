@@ -1,4 +1,4 @@
-import { isString, get } from 'lodash';
+import { isString, get, isNumber } from 'lodash';
 import { map } from 'rxjs/operators';
 
 import {
@@ -79,7 +79,7 @@ export function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptio
       if (filteredPaths.length > 0) {
         filteredPaths.forEach((path: JSONPath) => {
           const key = path.alias && path.alias.length > 0 ? path.alias : path.path;
-          newObj[key] = get(obj, path.path) ?? 'Not Found';
+          newObj[key] = get(obj, path.path) ?? (isNumber(obj) || isString(obj) ? obj : 'Not Found');
         });
 
         obj = newObj;
