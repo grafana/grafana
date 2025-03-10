@@ -309,6 +309,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
             datasource={datasource}
             onChange={metricsLabelsChange}
             variableEditor={true}
+            timeRange={range ?? getDefaultTimeRange()}
           />
         </>
       )}
