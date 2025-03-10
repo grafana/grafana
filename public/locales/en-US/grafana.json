@@ -1075,11 +1075,6 @@
         "tab": "Tab",
         "tabs": "Tabs"
       },
-      "objects": {
-        "multi-select": {
-          "selection-number": "No. of objects selected: {{length}}"
-        }
-      },
       "open": "Open options pane",
       "row": {
         "header": {
