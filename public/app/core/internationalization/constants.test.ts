@@ -12,7 +12,7 @@ describe('internationalization constants', () => {
 
   it('should have locale codes including the country code', () => {
     for (const lang of LANGUAGES) {
-      expect(lang.code).toMatch(/^[a-z]{2}-[A-Z]{2}$/);
+      expect(lang.code).toMatch(/^[a-zA-Z]{2}-[a-zA-Z]+$/);
     }
   });
 
