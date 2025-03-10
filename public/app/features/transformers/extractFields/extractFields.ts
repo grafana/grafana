@@ -48,7 +48,7 @@ export function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptio
 
   const ext = fieldExtractors.getIfExists(options.format ?? FieldExtractorID.Auto);
   if (!ext) {
-    throw new Error('unkonwn extractor');
+    throw new Error('unknown extractor');
   }
 
   const count = frame.length;
