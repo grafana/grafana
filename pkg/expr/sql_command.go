@@ -19,6 +19,7 @@ type SQLCommand struct {
 	query       string
 	varsToQuery []string
 	refID       string
+	limit       int64
 }
 
 // NewSQLCommand creates a new SQLCommand.
@@ -40,6 +41,7 @@ func NewSQLCommand(refID, rawSQL string) (*SQLCommand, error) {
 	if tables != nil {
 		logger.Debug("REF tables", "tables", tables, "sql", rawSQL)
 	}
+
 	return &SQLCommand{
 		query:       rawSQL,
 		varsToQuery: tables,
@@ -70,18 +72,18 @@ func UnmarshalSQLCommand(rn *rawNode) (*SQLCommand, error) {
 
 // NeedsVars returns the variable names (refIds) that are dependencies
 // to execute the command and allows the command to fulfill the Command interface.
-func (gr *SQLCommand) NeedsVars() []string {
-	return gr.varsToQuery
+func (cmd *SQLCommand) NeedsVars() []string {
+	return cmd.varsToQuery
 }
 
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
-func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error) {
+func (cmd *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error) {
 	_, span := tracer.Start(ctx, "SSE.ExecuteSQL")
 	defer span.End()
 
 	allFrames := []*data.Frame{}
-	for _, ref := range gr.varsToQuery {
+	for _, ref := range cmd.varsToQuery {
 		results, ok := vars[ref]
 		if !ok {
 			logger.Warn("no results found for", "ref", ref)
@@ -91,18 +93,29 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 		allFrames = append(allFrames, frames...)
 	}
 
-	rsp := mathexp.Results{}
+	totalRows := totalRows(allFrames)
+	// limit of 0 or less means no limit (following convention)
+	if cmd.limit > 0 && totalRows > cmd.limit {
+		return mathexp.Results{},
+			fmt.Errorf(
+				"SQL expression: total row count across all input tables exceeds limit of %d. Total rows: %d",
+				cmd.limit,
+				totalRows,
+			)
+	}
+
+	logger.Debug("Executing query", "query", cmd.query, "frames", len(allFrames))
 
 	db := sql.DB{}
+	frame, err := db.QueryFrames(ctx, cmd.refID, cmd.query, allFrames)
 
-	logger.Debug("Executing query", "query", gr.query, "frames", len(allFrames))
-	frame, err := db.QueryFrames(ctx, gr.refID, gr.query, allFrames)
+	rsp := mathexp.Results{}
 	if err != nil {
 		logger.Error("Failed to query frames", "error", err.Error())
 		rsp.Error = err
 		return rsp, nil
 	}
-	logger.Debug("Done Executing query", "query", gr.query, "rows", frame.Rows())
+	logger.Debug("Done Executing query", "query", cmd.query, "rows", frame.Rows())
 
 	if frame.Rows() == 0 {
 		rsp.Values = mathexp.Values{
@@ -118,6 +131,16 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	return rsp, nil
 }
 
-func (gr *SQLCommand) Type() string {
+func (cmd *SQLCommand) Type() string {
 	return TypeSQL.String()
+}
+
+func totalRows(frames []*data.Frame) int64 {
+	total := 0
+	for _, frame := range frames {
+		if frame != nil {
+			total += frame.Rows()
+		}
+	}
+	return int64(total)
 }

@@ -1,6 +1,7 @@
 package expr
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type expectedError struct{}
@@ -162,6 +164,56 @@ func TestCheckIfSeriesNeedToBeFixed(t *testing.T) {
 					require.Equal(t, tc.expectedName, getLabelName(fixer))
 				}
 			}
+		})
+	}
+}
+
+func TestCMDNodeExecute_SQLRowLimitFromConfig(t *testing.T) {
+	tests := []struct {
+		name           string
+		configRowLimit int64
+		wantRowLimit   int64
+	}{
+		{
+			name:           "should set SQL command row limit from service config",
+			configRowLimit: 42,
+			wantRowLimit:   42,
+		},
+		{
+			name:           "should set SQL command row limit to 0 when config is 0",
+			configRowLimit: 0,
+			wantRowLimit:   0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cmd, err := NewSQLCommand("B", "SELECT 1")
+			require.NoError(t, err)
+
+			node := &CMDNode{
+				baseNode: baseNode{
+					id:    1,
+					refID: "B",
+				},
+				CMDType: TypeSQL,
+				Command: cmd,
+			}
+
+			svc := &Service{
+				cfg: &setting.Cfg{
+					SQLExpressionRowLimit: tt.configRowLimit,
+				},
+				tracer: &testTracer{},
+			}
+
+			// Execute node to trigger the row limit configuration
+			_, err = node.Execute(context.Background(), time.Now(), mathexp.Vars{}, svc)
+			require.NoError(t, err)
+
+			// Verify the SQL command received the correct row limit from config
+			sqlCmd := node.Command.(*SQLCommand)
+			require.Equal(t, tt.wantRowLimit, sqlCmd.limit)
 		})
 	}
 }

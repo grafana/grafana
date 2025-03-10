@@ -103,6 +103,10 @@ func (gn *CMDNode) NeedsVars() []string {
 // other nodes they must have already been executed and their results must
 // already by in vars.
 func (gn *CMDNode) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, s *Service) (mathexp.Results, error) {
+	// If this is a SQL command, pass the row limit from service config
+	if sqlCmd, ok := gn.Command.(*SQLCommand); ok {
+		sqlCmd.limit = s.cfg.SQLExpressionRowLimit
+	}
 	return gn.Command.Execute(ctx, now, vars, s.tracer)
 }
 

@@ -191,8 +191,8 @@ func getReferenceVar(exp string, refId string) (string, error) {
 	return exp, nil
 }
 
-func enableSqlExpressions(h *ExpressionQueryReader) bool {
-	enabled := !h.features.IsEnabledGlobally(featuremgmt.FlagSqlExpressions)
+func enableSqlExpressions(eqr *ExpressionQueryReader) bool {
+	enabled := !eqr.features.IsEnabledGlobally(featuremgmt.FlagSqlExpressions)
 	if enabled {
 		return false
 	}
