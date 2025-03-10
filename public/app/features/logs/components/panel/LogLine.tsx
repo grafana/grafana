@@ -73,8 +73,8 @@ interface LogProps {
 const Log = ({ displayedFields, log, showTime, styles }: LogProps) => {
   return (
     <>
-     {showTime && <span className={`${styles.timestamp} level-${log.logLevel} field`}>{log.timestamp}</span>}
-     <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel}</span>
+      {showTime && <span className={`${styles.timestamp} level-${log.logLevel} field`}>{log.timestamp}</span>}
+      <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel}</span>
       {displayedFields.length > 0 ? (
         displayedFields.map((field) =>
           field === LOG_LINE_BODY_FIELD_NAME ? (
@@ -135,7 +135,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     debug: '#6CCF8E',
     trace: '#6ed0e0',
     info: '#6E9FFF',
-    metadata:  `rgba(204, 204, 220, 0.9)`,
+    metadata: `rgba(204, 204, 220, 0.9)`,
     parsedField: `rgba(204, 204, 220, 0.8)`,
   };
 
@@ -208,7 +208,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     level: css({
       color: theme.colors.text.secondary,
       fontWeight: theme.typography.fontWeightBold,
-      textTransform:'uppercase',
+      textTransform: 'uppercase',
       display: 'inline-block',
       '&.level-critical': {
         color: colors.critical,
