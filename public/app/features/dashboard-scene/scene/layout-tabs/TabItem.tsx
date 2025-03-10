@@ -59,10 +59,10 @@ export class TabItem
     return getEditOptions(this);
   }
 
-  public onDelete() {
+  public onDelete = () => {
     const layout = sceneGraph.getAncestor(this, TabsLayoutManager);
     layout.removeTab(this);
-  }
+  };
 
   public createMultiSelectedElement(items: SceneObject[]): TabItems {
     return new TabItems(items.filter((item) => item instanceof TabItem));
