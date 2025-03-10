@@ -20,6 +20,7 @@ import { InfiniteScroll } from './InfiniteScroll';
 import { getGridTemplateColumns } from './LogLine';
 import { GetRowContextQueryFn } from './LogLineMenu';
 import { LogListContext } from './LogListContext';
+import { LogListNavigation } from './LogListNavigation';
 import { preProcessLogs, LogListModel } from './processing';
 import {
   calculateFieldDimensions,
@@ -150,40 +151,43 @@ export const LogList = ({
 
   return (
     <LogListContext.Provider value={logListContext}>
-      <InfiniteScroll
-        displayedFields={displayedFields}
-        handleOverflow={handleOverflow}
-        logs={processedLogs}
-        loadMore={loadMore}
-        scrollElement={scrollRef.current}
-        showTime={showTime}
-        sortOrder={sortOrder}
-        timeRange={timeRange}
-        timeZone={timeZone}
-        setInitialScrollPosition={handleScrollPosition}
-        wrapLogMessage={wrapLogMessage}
-      >
-        {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
-          <VariableSizeList
-            className={styles.logList}
-            height={listHeight}
-            itemCount={itemCount}
-            itemSize={getLogLineSize.bind(null, processedLogs, containerElement, displayedFields, {
-              wrap: wrapLogMessage,
-              showTime,
-            })}
-            itemKey={getItemKey}
-            layout="vertical"
-            onItemsRendered={onItemsRendered}
-            outerRef={scrollRef}
-            ref={listRef}
-            style={{ overflowY: 'scroll' }}
-            width="100%"
-          >
-            {Renderer}
-          </VariableSizeList>
-        )}
-      </InfiniteScroll>
+      <div className={styles.logListContainer}>
+        <InfiniteScroll
+          displayedFields={displayedFields}
+          handleOverflow={handleOverflow}
+          logs={processedLogs}
+          loadMore={loadMore}
+          scrollElement={scrollRef.current}
+          showTime={showTime}
+          sortOrder={sortOrder}
+          timeRange={timeRange}
+          timeZone={timeZone}
+          setInitialScrollPosition={handleScrollPosition}
+          wrapLogMessage={wrapLogMessage}
+        >
+          {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
+            <VariableSizeList
+              className={styles.logList}
+              height={listHeight}
+              itemCount={itemCount}
+              itemSize={getLogLineSize.bind(null, processedLogs, containerElement, displayedFields, {
+                wrap: wrapLogMessage,
+                showTime,
+              })}
+              itemKey={getItemKey}
+              layout="vertical"
+              onItemsRendered={onItemsRendered}
+              outerRef={scrollRef}
+              ref={listRef}
+              style={{ overflowY: 'scroll' }}
+              width="100%"
+            >
+              {Renderer}
+            </VariableSizeList>
+          )}
+        </InfiniteScroll>
+        <LogListNavigation eventBus={eventBus} />
+      </div>
     </LogListContext.Provider>
   );
 };
@@ -196,6 +200,9 @@ function getStyles(dimensions: LogFieldDimension[], { showTime }: { showTime: bo
         display: 'grid',
         gridTemplateColumns: getGridTemplateColumns(columns),
       },
+    }),
+    logListContainer: css({
+      display: 'flex',
     }),
   };
 }

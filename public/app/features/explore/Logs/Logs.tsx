@@ -713,24 +713,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     topLogsRef.current?.scrollIntoView();
   }, [eventBus]);
 
-  const scrollToBottomLogs = useCallback(() => {
-    if (config.featureToggles.newLogsPanel) {
-      eventBus.publish(
-        new ScrollToLogsEvent({
-          scrollTo: 'bottom',
-        })
-      );
-    } else if (config.featureToggles.logsInfiniteScrolling) {
-      if (logsContainerRef.current) {
-        logsContainerRef.current.scroll({
-          behavior: 'auto',
-          top: logsContainerRef.current.scrollHeight,
-        });
-      }
-    }
-    topLogsRef.current?.scrollTo(0, topLogsRef.current.scrollHeight);
-  }, [eventBus]);
-
   const onPinToContentOutlineClick = useCallback(
     (row: LogRowModel, allowUnPin = true) => {
       if (getPinnedLogsCount() === PINNED_LOGS_LIMIT && !allowUnPin) {
@@ -1069,48 +1051,33 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             </>
           )}
           {visualisationType === 'logs' && hasData && config.featureToggles.newLogsPanel && (
-            <>
-              <div data-testid="logRows" ref={logsContainerRef} className={styles.logRowsWrapper}>
-                {logsContainerRef.current && (
-                  <LogList
-                    app={CoreApp.Explore}
-                    logSupportsContext={showContextToggle}
-                    containerElement={logsContainerRef.current}
-                    displayedFields={displayedFields}
-                    eventBus={eventBus}
-                    forceEscape={forceEscape}
-                    getFieldLinks={getFieldLinks}
-                    getRowContextQuery={getRowContextQuery}
-                    loadMore={loadMoreLogs}
-                    logs={dedupedRows}
-                    onOpenContext={onOpenContext}
-                    onPermalinkClick={onPermalinkClick}
-                    onPinLine={onPinToContentOutlineClick}
-                    onUnpinLine={onPinToContentOutlineClick}
-                    pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
-                    pinnedLogs={pinnedLogs}
-                    showTime={showTime}
-                    sortOrder={logsSortOrder}
-                    timeRange={props.range}
-                    timeZone={timeZone}
-                    wrapLogMessage={wrapLogMessage}
-                  />
-                )}
-              </div>
-              <LogsNavigation
-                logsSortOrder={logsSortOrder}
-                visibleRange={navigationRange ?? absoluteRange}
-                absoluteRange={absoluteRange}
-                timeZone={timeZone}
-                onChangeTime={onChangeTime}
-                loading={loading}
-                queries={logsQueries ?? []}
-                scrollToTopLogs={scrollToTopLogs}
-                scrollToBottomLogs={scrollToBottomLogs}
-                addResultsToCache={addResultsToCache}
-                clearCache={clearCache}
-              />
-            </>
+            <div data-testid="logRows" ref={logsContainerRef} className={styles.logRowsWrapper}>
+              {logsContainerRef.current && (
+                <LogList
+                  app={CoreApp.Explore}
+                  logSupportsContext={showContextToggle}
+                  containerElement={logsContainerRef.current}
+                  displayedFields={displayedFields}
+                  eventBus={eventBus}
+                  forceEscape={forceEscape}
+                  getFieldLinks={getFieldLinks}
+                  getRowContextQuery={getRowContextQuery}
+                  loadMore={loadMoreLogs}
+                  logs={dedupedRows}
+                  onOpenContext={onOpenContext}
+                  onPermalinkClick={onPermalinkClick}
+                  onPinLine={onPinToContentOutlineClick}
+                  onUnpinLine={onPinToContentOutlineClick}
+                  pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
+                  pinnedLogs={pinnedLogs}
+                  showTime={showTime}
+                  sortOrder={logsSortOrder}
+                  timeRange={props.range}
+                  timeZone={timeZone}
+                  wrapLogMessage={wrapLogMessage}
+                />
+              )}
+            </div>
           )}
           {!loading && !hasData && !scanning && (
             <div className={styles.noDataWrapper}>
