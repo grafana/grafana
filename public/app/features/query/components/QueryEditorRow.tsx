@@ -675,19 +675,26 @@ function MaybeQueryLibrarySaveButton(props: { query: DataQuery }) {
 }
 
 function AdaptiveTelemetryQueryActions({ query }: { query: DataQuery }) {
-  const { isLoading, components } = usePluginComponents<PluginExtensionAdaptiveTelemetryQueryActionsV1Context>({
-    extensionPointId: PluginExtensionPoints.AdaptiveTelemetryQueryActionsV1,
-  });
+  try {
+    const { isLoading, components } = usePluginComponents<PluginExtensionAdaptiveTelemetryQueryActionsV1Context>({
+      extensionPointId: PluginExtensionPoints.AdaptiveTelemetryQueryActionsV1,
+    });
 
-  if (isLoading || !components.length) {
+    if (isLoading || !components.length) {
+      return null;
+    }
+
+    const actions = components
+      .filter(({ meta }) => meta.pluginId.startsWith('grafana-adaptive'))
+      .map((Component) => {
+        const { meta } = Component;
+        return <Component key={meta.id} query={query} contextHints={['queryeditorrow', 'header']} />;
+      });
+    return <>{actions}</>;
+  } catch (error) {
+    // If `usePluginComponents` isn't properly resolved, tests will fail with 'setPluginComponentsHook(options) can only be used after the Grafana instance has started.'
+    // This will be resolved in https://github.com/grafana/grafana/pull/92983
+    // In this case, Return `null` as if there are no extensions.
     return null;
   }
-
-  const actions = components
-    .filter(({ meta }) => meta.pluginId.startsWith('grafana-adaptive'))
-    .map((Component) => {
-      const { meta } = Component;
-      return <Component key={meta.id} query={query} contextHints={['queryeditorrow', 'header']} />;
-    });
-  return <>{actions}</>;
 }
