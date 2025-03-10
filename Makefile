@@ -131,14 +131,12 @@ else
 i18n-extract-enterprise:
 	@echo "Extracting i18n strings for Enterprise"
 	yarn run i18next --config public/locales/i18next-parser-enterprise.config.cjs
-	node ./public/locales/pseudo.mjs --mode enterprise
 endif
 
 .PHONY: i18n-extract
 i18n-extract: i18n-extract-enterprise
 	@echo "Extracting i18n strings for OSS"
 	yarn run i18next --config public/locales/i18next-parser.config.cjs
-	node ./public/locales/pseudo.mjs --mode oss
 
 ##@ Building
 .PHONY: gen-cue
