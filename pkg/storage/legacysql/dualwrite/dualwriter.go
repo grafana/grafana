@@ -82,13 +82,13 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 	createdFromLegacy, err := d.legacy.Create(ctx, in, createValidation, options)
 	if err != nil {
 		log.Error("unable to create object in legacy storage", "err", err)
-		return createdFromLegacy, err
+		return nil, err
 	}
 
 	createdCopy := createdFromLegacy.DeepCopyObject()
 	accCreated, err := meta.Accessor(createdCopy)
 	if err != nil {
-		return createdFromLegacy, err
+		return nil, err
 	}
 	accCreated.SetResourceVersion("")
 	accCreated.SetUID("")
@@ -105,13 +105,13 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 		if err != nil {
 			log.Error("unable to cleanup object in legacy storage", "err", err)
 		}
-		return storageObj, errObjectSt
+		return nil, errObjectSt
 	}
 
 	if d.readUnified {
-		return storageObj, errObjectSt
+		return storageObj, nil
 	}
-	return createdFromLegacy, err
+	return createdFromLegacy, nil
 }
 
 func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
@@ -123,19 +123,19 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 	// as they would not be able to see the object in unistore anymore.
 	objFromLegacy, asyncLegacy, err := d.legacy.Delete(ctx, name, deleteValidation, options)
 	if err != nil && (!d.readUnified || !d.errorIsOK && !apierrors.IsNotFound(err)) {
-		return objFromLegacy, asyncLegacy, err
+		return nil, false, err
 	}
 
 	objFromStorage, asyncStorage, err := d.unified.Delete(ctx, name, deleteValidation, options)
-	if err != nil && apierrors.IsNotFound(err) || d.errorIsOK {
-		err = nil // clear the error
+	if err != nil && !apierrors.IsNotFound(err) && !d.errorIsOK {
+		return nil, false, err
 	}
 
 	if d.readUnified {
-		return objFromStorage, asyncStorage, err
+		return objFromStorage, asyncStorage, nil
 	}
 
-	return objFromLegacy, asyncLegacy, err
+	return objFromLegacy, asyncLegacy, nil
 }
 
 // Update overrides the behavior of the generic DualWriter and writes first to Storage and then to LegacyStorage.
@@ -155,7 +155,7 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 	objFromLegacy, createdLegacy, err := d.legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	if err != nil {
 		log.With("object", objFromLegacy).Error("could not update in legacy storage", "err", err)
-		return objFromLegacy, createdLegacy, err
+		return nil, false, err
 	}
 
 	objFromStorage, created, err := d.unified.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
@@ -164,13 +164,14 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 		if d.errorIsOK {
 			return objFromLegacy, createdLegacy, nil
 		}
+		return nil, false, err
 	}
 
 	if d.readUnified {
-		return objFromStorage, created, err
+		return objFromStorage, created, nil
 	}
 
-	return objFromLegacy, createdLegacy, err
+	return objFromLegacy, createdLegacy, nil
 }
 
 // DeleteCollection overrides the behavior of the generic DualWriter and deletes from both LegacyStorage and Storage.
@@ -186,7 +187,7 @@ func (d *dualWriter) DeleteCollection(ctx context.Context, deleteValidation rest
 	deletedLegacy, err := d.legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	if err != nil {
 		log.With("deleted", deletedLegacy).Error("failed to delete collection successfully from legacy storage", "err", err)
-		return deletedLegacy, err
+		return nil, err
 	}
 
 	deletedStorage, err := d.unified.DeleteCollection(ctx, deleteValidation, options, listOptions)
@@ -195,13 +196,14 @@ func (d *dualWriter) DeleteCollection(ctx context.Context, deleteValidation rest
 		if d.errorIsOK {
 			return deletedLegacy, nil
 		}
+		return nil, err
 	}
 
 	if d.readUnified {
-		return deletedStorage, err
+		return deletedStorage, nil
 	}
 
-	return deletedLegacy, err
+	return deletedLegacy, nil
 }
 
 func (d *dualWriter) Destroy() {
