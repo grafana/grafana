@@ -4,7 +4,8 @@ import (
 	"context"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
+
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 )
@@ -49,7 +50,7 @@ func (storage *SimSecureValueStorage) SecretMetadataHasPendingStatus(ctx context
 	return reply.isPending, reply.err
 }
 
-func (storage *SimSecureValueStorage) SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, externalID types.ExternalID) error {
+func (storage *SimSecureValueStorage) SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, externalID contracts.ExternalID) error {
 	panic("TODO")
 }
 

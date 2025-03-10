@@ -7,7 +7,7 @@ import (
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
+
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
@@ -15,8 +15,8 @@ type Worker struct {
 	config                     Config
 	transactionManager         contracts.TransactionManager
 	outboxQueue                contracts.OutboxQueue
-	secureValueMetadataStorage contracts.SecureValueStorage
-	keepers                    map[keepertypes.KeeperType]keepertypes.Keeper
+	secureValueMetadataStorage contracts.SecureValueMetadataStorage
+	keepers                    map[contracts.KeeperType]contracts.Keeper
 }
 
 type Config struct {
@@ -30,8 +30,8 @@ func NewWorker(
 	config Config,
 	transactionManager contracts.TransactionManager,
 	outboxQueue contracts.OutboxQueue,
-	secureValueMetadataStorage contracts.SecureValueStorage,
-	keepers map[keepertypes.KeeperType]keepertypes.Keeper,
+	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
+	keepers map[contracts.KeeperType]contracts.Keeper,
 ) *Worker {
 	return &Worker{
 		config:                     config,
@@ -79,9 +79,9 @@ func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMes
 	// 	// TODO: fetch this
 	var cfg secretv0alpha1.KeeperConfig
 
-	keeper := w.keepers[keepertypes.KeeperType(message.Keeper)]
+	keeper := w.keepers[message.KeeperType]
 	if keeper == nil {
-		return fmt.Errorf("worker doesn't have access to keeper, did you forget to pass it to the worker in NewWorker?: %+v", message.Keeper)
+		return fmt.Errorf("worker doesn't have access to keeper, did you forget to pass it to the worker in NewWorker?: %+v", message.KeeperType)
 	}
 
 	switch message.Type {

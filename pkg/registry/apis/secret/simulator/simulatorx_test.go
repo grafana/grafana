@@ -10,8 +10,9 @@ import (
 	"time"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/coro"
-	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
+
 	"github.com/grafana/grafana/pkg/registry/apis/secret/services"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/worker"
 	"github.com/stretchr/testify/require"
@@ -22,30 +23,41 @@ type Action string
 
 // IMPORTANT: Add new actions to the slice in enabledActions.
 const (
-	ActionCreateSecret    Action = "CreateSecret"
-	ActionResumeCoroutine Action = "ResumeCoroutine"
+	ActionCreateSecret      Action = "CreateSecret"
+	ActionResumeCoroutine   Action = "ResumeCoroutine"
+	ActionStartOutboxWorker Action = "StartOutboxWorker"
 )
 
 type Simulator struct {
 	// A seeded prng.
 	rng                *rand.Rand
+	config             SimulatorConfig
 	runtime            *coro.Runtime
 	activityLog        *ActivityLog
 	simNetwork         *SimNetwork
 	simDatabase        *SimDatabase
 	secureValueStorage *SimSecureValueStorage
 	secureValueService *services.CreateSecureValue
+	metrics            SimulationMetrics
 }
 
-func NewSimulator(rng *rand.Rand, runtime *coro.Runtime, activityLog *ActivityLog, simNetwork *SimNetwork, simDatabase *SimDatabase, secureValueStorage *SimSecureValueStorage, secureValueService *services.CreateSecureValue) *Simulator {
+type SimulationMetrics struct {
+	// The number of workers running at the moment.
+	// The max number of workers is defined in SimulatorConfig.
+	NumWorkersStarted uint
+}
+
+func NewSimulator(rng *rand.Rand, config SimulatorConfig, runtime *coro.Runtime, activityLog *ActivityLog, simNetwork *SimNetwork, simDatabase *SimDatabase, secureValueStorage *SimSecureValueStorage, secureValueService *services.CreateSecureValue) *Simulator {
 	return &Simulator{
 		rng:                rng,
+		config:             config,
 		runtime:            runtime,
 		activityLog:        activityLog,
 		simNetwork:         simNetwork,
 		simDatabase:        simDatabase,
 		secureValueStorage: secureValueStorage,
 		secureValueService: secureValueService,
+		metrics:            SimulationMetrics{},
 	}
 }
 
@@ -57,7 +69,7 @@ func (sim *Simulator) enabledActions() []Action {
 
 	// For each action, check if it would make sense to execute the action
 	// given the state of system, if so, add it to `enabled`.
-	for _, action := range []Action{ActionCreateSecret, ActionResumeCoroutine} {
+	for _, action := range []Action{ActionCreateSecret, ActionResumeCoroutine, ActionStartOutboxWorker} {
 		switch action {
 		case ActionCreateSecret:
 			// It always makes sense to try to create a secret, no matter the state of system.
@@ -65,6 +77,11 @@ func (sim *Simulator) enabledActions() []Action {
 
 		case ActionResumeCoroutine:
 			if sim.runtime.HasCoroutinesReady() {
+				enabled = append(enabled, action)
+			}
+
+		case ActionStartOutboxWorker:
+			if sim.metrics.NumWorkersStarted < sim.config.NumWorkers {
 				enabled = append(enabled, action)
 			}
 
@@ -113,7 +130,6 @@ func (sim *Simulator) execute(action Action) {
 		coroutine.Resume(nil)
 
 	case ActionResumeCoroutine:
-		sim.activityLog.Record("[SIM] ResumeCoroutine")
 		// Choose a random coroutine
 		i := sim.rng.Intn(len(sim.runtime.ReadySet))
 		ready := sim.runtime.ReadySet[i]
@@ -121,6 +137,23 @@ func (sim *Simulator) execute(action Action) {
 		sim.runtime.ReadySet = append(sim.runtime.ReadySet[:i], sim.runtime.ReadySet[i+1:]...)
 		// Resume the coroutine
 		ready.Coroutine.Resume(ready.Payload)
+
+	case ActionStartOutboxWorker:
+		sim.metrics.NumWorkersStarted += 1
+
+		coroutine := sim.runtime.Spawn(func() {
+			worker := worker.NewWorker(worker.Config{
+				// Generate a number between 1 and 100
+				BatchSize: uint(1 + rng.Intn(100)),
+				// Generate a number between 1 and 100
+				ReceiveTimeout: time.Duration(1+rng.Intn(100)) * time.Millisecond,
+			}, simTransactionManager, simOutboxQueue, simSecureValueStorage, keepers)
+
+			if err := worker.ControlLoop(context.Background()); err != nil {
+				panic(fmt.Sprintf("worker panicked: %+v", err))
+			}
+		})
+		coroutine.Resume(nil)
 
 	default:
 		panic(fmt.Sprintf("unhandled action: %+v", action))
@@ -130,6 +163,8 @@ func (sim *Simulator) execute(action Action) {
 type SimulatorConfig struct {
 	Seed  int64
 	Steps int64
+	// The number of outbox queue workers to start
+	NumWorkers uint
 }
 
 func int64FromEnv(key string) (bool, int64) {
@@ -165,6 +200,8 @@ func getSimulatorConfigOrDefault() SimulatorConfig {
 	return SimulatorConfig{
 		Seed:  seed,
 		Steps: steps,
+		// TODO: random number of workers
+		NumWorkers: 1,
 	}
 }
 
@@ -195,8 +232,8 @@ func TestSimulate(t *testing.T) {
 
 	simOutboxQueue := NewSimOutboxQueue(simNetwork, simDatabase)
 
-	keepers := map[keepertypes.KeeperType]keepertypes.Keeper{
-		keepertypes.SQLKeeperType: fakes.,
+	keepers := map[contracts.KeeperType]contracts.Keeper{
+		// keepertypes.SQLKeeperType: fakes.,
 	}
 
 	worker := worker.NewWorker(worker.Config{

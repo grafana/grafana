@@ -12,13 +12,13 @@ import (
 
 type CreateSecureValue struct {
 	transactionManager         contracts.TransactionManager
-	secureValueMetadataStorage contracts.SecureValueStorage
+	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	outboxQueue                contracts.OutboxQueue
 }
 
 func NewCreateSecureValue(
 	tx contracts.TransactionManager,
-	secureValueMetadataStorage contracts.SecureValueStorage,
+	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	outboxQueue contracts.OutboxQueue,
 ) *CreateSecureValue {
 	return &CreateSecureValue{tx, secureValueMetadataStorage, outboxQueue}

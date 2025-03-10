@@ -35,7 +35,7 @@ type OutboxMessage struct {
 	Name            string
 	Namespace       string
 	EncryptedSecret secretv0alpha1.ExposedSecureValue
-	Keeper          string
+	KeeperType      KeeperType
 	ExternalID      *string
 }
 

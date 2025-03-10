@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
+
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 )
@@ -24,5 +24,5 @@ type SecureValueMetadataStorage interface {
 
 	SecretMetadataHasPendingStatus(ctx context.Context, namespace xkube.Namespace, name string) (bool, error)
 	SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error
-	SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, externalID types.ExternalID) error
+	SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, externalID ExternalID) error
 }
