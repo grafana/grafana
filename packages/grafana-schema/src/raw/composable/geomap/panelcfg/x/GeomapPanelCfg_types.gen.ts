@@ -26,6 +26,7 @@ export const defaultOptions: Partial<Options> = {
 
 export interface MapViewConfig {
   allLayers?: boolean;
+  dashboardVariable?: boolean;
   id: string;
   lastOnly?: boolean;
   lat?: number;
