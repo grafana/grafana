@@ -27,10 +27,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
   built-in-core-data-sources:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#data-source-plugins
@@ -126,12 +122,12 @@ In the query library drawer, you can:
 - Filter by data source name and author name (filters use the OR operator).
 - Edit a query description.
 
-To view your saved queries, click **Add query from library** from the query editor:
+To view your saved queries, click **+ Add query from library** from the query editor:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-query-from-library-v11.6.png" max-width="750px" alt="" >}}
 
 {{< admonition type="note" >}}
-The query library isn't accessible from all instances of the query editor yet, so the **Add query from library** button doesn't appear in all instances of it.
+The query library isn't accessible from all instances of the query editor yet, so the **+ Add query from library** button doesn't appear in all instances of it.
 {{< /admonition >}}
 
 To add a query you've created to the library, click the save query to library icon:
@@ -182,7 +178,7 @@ When you create a panel, Grafana automatically selects the default data source.
 1. Do one of the following:
 
    - Write or construct a query in the query language of your data source.
-   - Click **Add query from library**, search or filter for the query you want to use, and click **Select query** (Grafana Enterprise and Cloud only).
+   - Click **+ Add query from library**, search or filter for the query you want to use, and click **Select query** (Grafana Enterprise and Cloud only).
 
 1. Click **Apply**.
 
@@ -201,7 +197,7 @@ You can:
 | :---------------------------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 |                    {{< figure src="/static/img/docs/queries/query-editor-help-7-4.png" max-width="30px" max-height="30px" alt="Help icon" >}}                     | Toggles query editor help. If supported by the data source, click this icon to display information on how to use the query editor or provide quick access to common queries.                                                                    |
 | {{< figure src="/media/docs/grafana/panels-visualizations/create-recorded-query-icon.png" max-width="30px" max-height="30px" alt="Create recorded query icon" >}} | Create recorded queries.                                                                                                                                                                                                                        |
-|     {{< figure src="/media/docs/grafana/panels-visualizations/save-to-query-icon.png" max-width="30px" max-height="30px" alt="Save to query library icon" >}}     | Save query to library. Saves the query to the library so it can be reused. Access saved queries by clicking **Add query from library**.                                                                                                         |
+|     {{< figure src="/media/docs/grafana/panels-visualizations/save-to-query-icon.png" max-width="30px" max-height="30px" alt="Save to query library icon" >}}     | Save query to library. Saves the query to the library so it can be reused. Access saved queries by clicking **+ Add query from library**.                                                                                                       |
 |                {{< figure src="/static/img/docs/queries/duplicate-query-icon-7-0.png" max-width="30px" max-height="30px" alt="Duplicate icon" >}}                 | Copies a query. Duplicating queries is useful when working with multiple complex queries that are similar and you want to either experiment with different variants or do minor alterations.                                                    |
 |                     {{< figure src="/static/img/docs/queries/hide-query-icon-7-0.png" max-width="30px" max-height="30px" alt="Hide icon" >}}                      | Hides a query. Grafana does not send hidden queries to the data source.                                                                                                                                                                         |
 |                    {{< figure src="/static/img/docs/queries/remove-query-icon-7-0.png" max-width="30px" max-height="30px" alt="Remove icon">}}                    | Removes a query. Removing a query permanently deletes it, but sometimes you can recover deleted queries by reverting to previously saved versions of the panel.                                                                                 |
