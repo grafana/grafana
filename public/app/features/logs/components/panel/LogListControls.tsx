@@ -12,11 +12,11 @@ type Props = {
   eventBus: EventBus;
 };
 
-export const LogListNavigation = ({ eventBus }: Props) => {
+export const LogListControls = ({ eventBus }: Props) => {
   const styles = useStyles2(getStyles);
 
   const onScrollToTopClick = useCallback(() => {
-    reportInteraction('log_list_navigation_scroll_top_clicked');
+    reportInteraction('log_list_controls_scroll_top_clicked');
     eventBus.publish(
       new ScrollToLogsEvent({
         scrollTo: 'top',
@@ -25,7 +25,7 @@ export const LogListNavigation = ({ eventBus }: Props) => {
   }, [eventBus]);
 
   const onScrollToBottomClick = useCallback(() => {
-    reportInteraction('log_list_navigation_scroll_bottom_clicked');
+    reportInteraction('log_list_controls_scroll_bottom_clicked');
     eventBus.publish(
       new ScrollToLogsEvent({
         scrollTo: 'bottom',
@@ -40,7 +40,7 @@ export const LogListNavigation = ({ eventBus }: Props) => {
         className={styles.scrollToBottomButton}
         variant="secondary"
         onClick={onScrollToBottomClick}
-        title={t('logs.logs-navigation.scroll-bottom', 'Scroll to bottom')}
+        title={t('logs.logs-controls.scroll-bottom', 'Scroll to bottom')}
       >
         <Icon name="arrow-down" size="lg" />
       </Button>
@@ -49,7 +49,7 @@ export const LogListNavigation = ({ eventBus }: Props) => {
         className={styles.scrollToTopButton}
         variant="secondary"
         onClick={onScrollToTopClick}
-        title={t('logs.logs-navigation.scroll-top', 'Scroll to top')}
+        title={t('logs.logs-controls.scroll-top', 'Scroll to top')}
       >
         <Icon name="arrow-up" size="lg" />
       </Button>
