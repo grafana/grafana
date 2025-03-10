@@ -1,5 +1,5 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/monaco-query-field/MonacoQueryFieldProps.ts
-import { HistoryItem } from '@grafana/data';
+import { HistoryItem, TimeRange } from '@grafana/data';
 
 import { PrometheusDatasource } from '../../datasource';
 import type PromQlLanguageProvider from '../../language_provider';
@@ -17,4 +17,5 @@ export type Props = {
   onRunQuery: (value: string) => void;
   onBlur: (value: string) => void;
   datasource: PrometheusDatasource;
+  timeRange: TimeRange;
 };
