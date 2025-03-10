@@ -811,21 +811,20 @@ type GetAlertRulesGroupByRuleUIDQuery struct {
 
 // ListAlertRulesQuery is the query for listing alert rules
 type ListAlertRulesQuery struct {
-	OrgID         int64
-	RuleUIDs      []string
-	NamespaceUIDs []string
-	ExcludeOrgs   []int64
-	RuleGroups    []string
-
-	// DashboardUID and PanelID are optional and allow filtering rules
-	// to return just those for a dashboard and panel.
-	DashboardUID string
-	PanelID      int64
-
-	ReceiverName     string
-	TimeIntervalName string
-
+	OrgID                  int64
+	RuleUIDs               []string
+	NamespaceUIDs          []string
+	ExcludeOrgs            []int64
+	RuleGroups             []string
+	DashboardUID           string
+	PanelID                int64
+	ReceiverName           string
+	TimeIntervalName       string
 	ImportedPrometheusRule *bool
+
+	// Cursor-based pagination parameters
+	Cursor string // Base64 encoded cursor for the next page
+	Limit  int64  // Maximum number of items to return
 }
 
 // CountAlertRulesQuery is the query for counting alert rules
@@ -1041,3 +1040,30 @@ type RuleStatus struct {
 	EvaluationTimestamp time.Time
 	EvaluationDuration  time.Duration
 }
+
+// LightweightAlertRule is a memory-efficient version of AlertRule that excludes large data fields
+// It's used for listing operations where the full rule data isn't needed
+type LightweightAlertRule struct {
+	ID              int64 `xorm:"pk autoincr 'id'"`
+	OrgID           int64 `xorm:"org_id"`
+	Title           string
+	Condition       string
+	Updated         time.Time
+	IntervalSeconds int64
+	Version         int64
+	UID             string `xorm:"uid"`
+	NamespaceUID    string `xorm:"namespace_uid"`
+	RuleGroup       string
+	NoDataState     NoDataState
+	ExecErrState    ExecutionErrorState
+	IsPaused        bool
+	RuleGroupIndex  int `xorm:"rule_group_idx"`
+	// Annotations and Labels are kept as they're often needed for display
+	Annotations map[string]string
+	Labels      map[string]string
+	// Provenance indicates how this rule was added to the system
+	Provenance Provenance
+}
+
+// LightweightRulesGroup is a slice of LightweightAlertRule pointers
+type LightweightRulesGroup []*LightweightAlertRule
