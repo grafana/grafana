@@ -190,7 +190,7 @@ Learn the [limitations of Azure AD SAML] (https://learn.microsoft.com/en-us/entr
 
 Configure SAML integration with Azure AD, [creating an Enterprise Application](#add-microsoft-entra-saml-toolkit-from-the-gallery) inside the Azure AD organization first and then [enable single sign-on](#configure-the-saml-toolkit-application-endpoints).
 
-If you have users that belong to more than 150 groups, configure a registered application to provide an Azure Graph API to retrieve the groups. Refer to [Setup Azure AD Graph API applications](#set-up-saml-with-azure-ad).
+If you have users that belong to more than 150 groups, configure a registered application to provide an Azure Graph API to retrieve the groups. Refer to [Setup Azure AD Graph API applications](#configure-a-graph-api-application-in-azure-ad).
 
 ### Generate self-signed certificates
 
