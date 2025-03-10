@@ -146,9 +146,9 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 // start a job and run it
 func (r *SyncWorker) createJob(ctx context.Context, repo repository.ReaderWriter, progress jobs.JobProgressRecorder) (*syncJob, error) {
 	cfg := repo.Config()
-	if !cfg.Spec.Sync.Enabled {
-		return nil, errors.New("sync is not enabled")
-	}
+	// if !cfg.Spec.Sync.Enabled {
+	// 	return nil, errors.New("sync is not enabled")
+	// }
 
 	parser, err := r.parsers.GetParser(ctx, repo)
 	if err != nil {
