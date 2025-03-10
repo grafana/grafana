@@ -184,7 +184,8 @@
       "rule-identifier": "Rule identifier",
       "rule-type": "Rule type",
       "state-error-timeout": "Alert state if execution error or timeout",
-      "state-no-data": "Alert state if no data or all values are null"
+      "state-no-data": "Alert state if no data or all values are null",
+      "target-datasource-uid": "Target data source"
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -503,6 +504,10 @@
       },
       "preview": "Preview",
       "previewCondition": "Preview alert rule condition"
+    },
+    "recording-rules": {
+      "description-target-data-source": "The Prometheus data source to store the recording rule in",
+      "label-target-data-source": "Target data source"
     },
     "rule-form": {
       "evaluation": {

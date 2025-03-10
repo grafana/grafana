@@ -148,6 +148,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
     manualRouting,
     type,
     metric,
+    targetDatasourceUid,
   } = values;
   if (!condition) {
     throw new Error('You cannot create an alert rule without specifying the alert condition');
@@ -196,6 +197,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
         record: {
           metric: metric ?? name,
           from: condition,
+          target_datasource_uid: targetDatasourceUid,
         },
       },
       annotations,
@@ -284,6 +286,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         folder: { title: namespace, uid: ga.namespace_uid },
         isPaused: ga.is_paused,
         metric: ga.record?.metric,
+        targetDatasourceUid: ga.record?.target_datasource_uid,
       };
     } else if (rulerRuleType.grafana.rule(rule)) {
       // grafana alerting rule

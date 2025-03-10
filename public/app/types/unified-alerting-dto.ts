@@ -262,6 +262,7 @@ export interface PostableGrafanaRuleDefinition {
   record?: {
     metric: string;
     from: string;
+    target_datasource_uid?: string;
   };
   intervalSeconds?: number;
 }
