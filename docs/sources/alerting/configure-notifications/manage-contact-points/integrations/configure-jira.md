@@ -1,5 +1,5 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/configure-jira-service-management/
+canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/configure-jira/
 description: Configure the Jira Service Management integration to receive notifications when your alerts are firing
 keywords:
   - grafana
@@ -37,8 +37,10 @@ To create a contact point with a Jira integration, complete the following steps:
 2. Click **+ Add contact point**.
 3. Enter a name for the contact point.
 4. From the **Integration** list, select **Jira**.
-5. Set up the required [settings](#jira-settings) for your Jira configuration.
+5. Set up the required [settings](#required-settings) for your Jira configuration.
 6. Click **Save contact point**.
+
+For more details on contact points, including how to test them and enable notifications, refer to [Configure contact points](/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/).
 
 ### Required Settings
 
