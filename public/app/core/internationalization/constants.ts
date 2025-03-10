@@ -79,7 +79,9 @@ if (process.env.NODE_ENV === 'development') {
     code: PSEUDO_LOCALE,
     name: 'Pseudo-locale',
     loader: {
-      grafana: () => import('../../../locales/pseudo-LOCALE/grafana.json'),
+      // Load the English locale as the pseudo-locale,
+      // as it will be post-processed by i18next-pseudo library
+      grafana: () => import('../../../locales/en-US/grafana.json'),
     },
   });
 }
