@@ -69,20 +69,18 @@ export const AlertRuleNameAndMetric = () => {
           />
         </Field>
         {isGrafanaRecordingRule && (
-          <>
-            <Field label="Metric" error={errors?.metric?.message} invalid={!!errors.metric?.message}>
-              <Input
-                id="metric"
-                width={38}
-                {...register('metric', {
-                  required: { value: true, message: 'Must enter a metric name' },
-                  pattern: recordingRuleNameValidationPattern(RuleFormType.grafanaRecording),
-                })}
-                aria-label="metric"
-                placeholder={`Give the name of the new recorded metric`}
-              />
-            </Field>
-          </>
+          <Field label="Metric" error={errors?.metric?.message} invalid={!!errors.metric?.message}>
+            <Input
+              id="metric"
+              width={38}
+              {...register('metric', {
+                required: { value: true, message: 'Must enter a metric name' },
+                pattern: recordingRuleNameValidationPattern(RuleFormType.grafanaRecording),
+              })}
+              aria-label="metric"
+              placeholder={`Give the name of the new recorded metric`}
+            />
+          </Field>
         )}
 
         {isGrafanaRecordingRule && config.featureToggles.grafanaManagedRecordingRulesDatasources && (
@@ -93,8 +91,8 @@ export const AlertRuleNameAndMetric = () => {
               'alerting.recording-rules.description-target-data-source',
               'The Prometheus data source to store the recording rule in'
             )}
-            error={errors.target_datasource_uid?.message}
-            invalid={!!errors.target_datasource_uid?.message}
+            error={errors.targetDatasourceUid?.message}
+            invalid={!!errors.targetDatasourceUid?.message}
           >
             <Controller
               render={({ field: { onChange, ref, ...field } }) => (
@@ -105,11 +103,11 @@ export const AlertRuleNameAndMetric = () => {
                   // Filter with `filter` prop instead of `type` prop to avoid showing the `-- Grafana --` data source
                   filter={(ds: DataSourceInstanceSettings) => ds.type === 'prometheus'}
                   onChange={(ds: DataSourceInstanceSettings) => {
-                    setValue('target_datasource_uid', ds.uid);
+                    setValue('targetDatasourceUid', ds.uid);
                   }}
                 />
               )}
-              name="target_datasource_uid"
+              name="targetDatasourceUid"
               control={control}
               rules={{
                 required: { value: true, message: 'Please select a data source' },
