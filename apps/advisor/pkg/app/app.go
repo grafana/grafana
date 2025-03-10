@@ -67,9 +67,12 @@ func New(cfg app.Config) (app.App, error) {
 				},
 				Watcher: &simple.Watcher{
 					AddFunc: func(ctx context.Context, obj resource.Object) error {
+						log.Debug("Adding check", "namespace", obj.GetNamespace())
 						if obj.GetNamespace() != namespace {
 							log.Debug("Skipping check in namespace", "namespace", obj.GetNamespace())
 							return nil
+						} else {
+							log.Debug("Processing check in namespace", "namespace", obj.GetNamespace())
 						}
 						check, err := getCheck(obj, checkMap)
 						if err != nil {
