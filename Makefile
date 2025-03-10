@@ -314,7 +314,7 @@ test: test-go test-js ## Run all tests.
 .PHONY: golangci-lint
 golangci-lint: $(GOLANGCI_LINT)
 	@echo "lint via golangci-lint"
-	$(GOLANGCI_LINT) run \
+	$(GO) tool golangci-lint run \
 		--config .golangci.yml \
 		$(GO_LINT_FILES)
 
