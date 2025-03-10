@@ -30,13 +30,13 @@ func TestDocumentMapping(t *testing.T) {
 			Kind:     utils.ManagerKindRepo,
 			Identity: "rrr",
 		},
-		ManagedBy: "x:y",
 		Source: &utils.SourceProperties{
 			Path:            "ppp",
 			Checksum:        "ooo",
 			TimestampMillis: 1234,
 		},
 	}
+	data.UpdateCopyFields()
 
 	doc := document.NewDocument("id")
 	err = mappings.MapDocument(doc, data)

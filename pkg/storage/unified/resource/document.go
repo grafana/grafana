@@ -114,6 +114,15 @@ type IndexableDocument struct {
 	Source *utils.SourceProperties `json:"source,omitempty"`
 }
 
+func (m *IndexableDocument) UpdateCopyFields() *IndexableDocument {
+	m.TitleNgram = m.Title
+	m.TitlePhrase = strings.ToLower(m.Title) // Lowercase for case-insensitive sorting ?? in the analyzer?
+	if m.Manager != nil {
+		m.ManagedBy = fmt.Sprintf("%s:%s", m.Manager.Kind, m.Manager.Identity)
+	}
+	return m
+}
+
 func (m *IndexableDocument) Type() string {
 	return m.Key.Resource
 }
@@ -172,16 +181,14 @@ func NewIndexableDocument(key *ResourceKey, rv int64, obj utils.GrafanaMetaAcces
 		}
 	}
 	doc := &IndexableDocument{
-		Key:         key,
-		RV:          rv,
-		Name:        key.Name,
-		Title:       title, // We always want *something* to display
-		TitleNgram:  title,
-		TitlePhrase: strings.ToLower(title), // Lowercase for case-insensitive sorting
-		Labels:      obj.GetLabels(),
-		Folder:      obj.GetFolder(),
-		CreatedBy:   obj.GetCreatedBy(),
-		UpdatedBy:   obj.GetUpdatedBy(),
+		Key:       key,
+		RV:        rv,
+		Name:      key.Name,
+		Title:     title, // We always want *something* to display
+		Labels:    obj.GetLabels(),
+		Folder:    obj.GetFolder(),
+		CreatedBy: obj.GetCreatedBy(),
+		UpdatedBy: obj.GetUpdatedBy(),
 	}
 	m, ok := obj.GetManagerProperties()
 	if ok {
@@ -200,7 +207,7 @@ func NewIndexableDocument(key *ResourceKey, rv int64, obj utils.GrafanaMetaAcces
 	if err != nil && tt != nil {
 		doc.Updated = tt.UnixMilli()
 	}
-	return doc
+	return doc.UpdateCopyFields()
 }
 
 func StandardDocumentBuilder() DocumentBuilder {

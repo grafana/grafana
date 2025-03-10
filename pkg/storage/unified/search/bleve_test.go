@@ -76,9 +76,8 @@ func TestBleveBackend(t *testing.T) {
 					Group:     "dashboard.grafana.app",
 					Resource:  "dashboards",
 				},
-				Title:       "aaa (dash)",
-				TitlePhrase: "aaa (dash)",
-				Folder:      "xxx",
+				Title:  "aaa (dash)",
+				Folder: "xxx",
 				Fields: map[string]any{
 					DASHBOARD_PANEL_TYPES:       []string{"timeseries", "table"},
 					DASHBOARD_ERRORS_TODAY:      25,
@@ -107,9 +106,8 @@ func TestBleveBackend(t *testing.T) {
 					Group:     "dashboard.grafana.app",
 					Resource:  "dashboards",
 				},
-				Title:       "bbb (dash)",
-				TitlePhrase: "bbb (dash)",
-				Folder:      "xxx",
+				Title:  "bbb (dash)",
+				Folder: "xxx",
 				Fields: map[string]any{
 					DASHBOARD_PANEL_TYPES:       []string{"timeseries"},
 					DASHBOARD_ERRORS_TODAY:      40,
@@ -138,10 +136,9 @@ func TestBleveBackend(t *testing.T) {
 					Group:     "dashboard.grafana.app",
 					Resource:  "dashboards",
 				},
-				Name:        "ccc",
-				Title:       "ccc (dash)",
-				TitlePhrase: "ccc (dash)",
-				Folder:      "zzz",
+				Name:   "ccc",
+				Title:  "ccc (dash)",
+				Folder: "zzz",
 				Manager: &utils.ManagerProperties{
 					Kind:     utils.ManagerKindRepo,
 					Identity: "repo2",
@@ -310,13 +307,15 @@ func TestBleveBackend(t *testing.T) {
 		fmt.Printf("%s\n", string(jj))
 		require.JSONEq(t, `[
 			{
-				"repository": "repo-1",
+				"kind": "repo",
+				"id": "repo-1",
 				"group": "dashboard.grafana.app",
 				"resource": "dashboards",
 				"count": 2
 			},
 			{
-				"repository": "repo2",
+				"kind": "repo",
+				"id": "repo2",
 				"group": "dashboard.grafana.app",
 				"resource": "dashboards",
 				"count": 1
@@ -341,8 +340,7 @@ func TestBleveBackend(t *testing.T) {
 					Group:     "folder.grafana.app",
 					Resource:  "folders",
 				},
-				Title:       "zzz (folder)",
-				TitlePhrase: "zzz (folder)",
+				Title: "zzz (folder)",
 				Manager: &utils.ManagerProperties{
 					Kind:     utils.ManagerKindRepo,
 					Identity: "repo-1",
@@ -361,8 +359,7 @@ func TestBleveBackend(t *testing.T) {
 					Group:     "folder.grafana.app",
 					Resource:  "folders",
 				},
-				Title:       "yyy (folder)",
-				TitlePhrase: "yyy (folder)",
+				Title: "yyy (folder)",
 				Labels: map[string]string{
 					"region": "west",
 				},

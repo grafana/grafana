@@ -34,7 +34,7 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 	// for searching by title - uses an edge ngram token filter
 	titleSearchMapping := bleve.NewTextFieldMapping()
 	titleSearchMapping.Analyzer = TITLE_ANALYZER
-	titleSearchMapping.Store = true
+	titleSearchMapping.Store = false // already stored in title
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE_NGRAM, titleSearchMapping)
 
 	// mapping for title to search on words/tokens larger than the ngram size
@@ -45,6 +45,7 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 
 	// for filtering/sorting by title full phrase
 	titlePhraseMapping := bleve.NewKeywordFieldMapping()
+	titleSearchMapping.Store = false // already stored in title
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE_PHRASE, titlePhraseMapping)
 
 	descriptionMapping := &mapping.FieldMapping{
