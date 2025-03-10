@@ -156,7 +156,7 @@ To add a query you've created to the library, click the save query to library ic
 Grafana also includes three special data sources: **Grafana**, **Mixed**, and **Dashboard**.
 For details, refer to [Data sources](ref:data-sources)
 
-## Navigate the Query tab
+## Navigate the Queries tab {#navigate-the-query-tab}
 
 A panel's **Queries** tab consists of the following elements:
 
@@ -177,8 +177,9 @@ When you create a panel, Grafana automatically selects the default data source.
 
 To add a query, follow these steps:
 
-1. Edit the panel to which you're adding a query.
-1. Click the **Query** tab.
+1. In the panel to which you're adding a query, hover over any part of the panel you want to work on to display the menu on the top right corner.
+1. Click the menu and select **Edit**.
+1. In the panel editor, click the **Queries** tab.
 1. Click the **Data source** drop-down menu and select a data source.
 
    If you're creating a new dashboard, you'll be prompted to select a data source when you add the first panel.
