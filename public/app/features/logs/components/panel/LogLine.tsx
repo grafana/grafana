@@ -135,8 +135,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
     debug: '#6CCF8E',
     trace: '#6ed0e0',
     info: '#6E9FFF',
-    metadata: `rgba(204, 204, 220, 0.9)`,
-    parsedField: `rgba(204, 204, 220, 0.8)`,
+    metadata: theme.colors.text.primary,
+    parsedField: theme.colors.text.primary,
   };
 
   return {
@@ -180,14 +180,17 @@ export const getStyles = (theme: GrafanaTheme2) => {
         },
         '.token.log-token-key': {
           color: colors.parsedField,
+          opacity: 0.8,
           fontWeight: theme.typography.fontWeightMedium,
         },
         '.token.log-token-json-key': {
           color: colors.parsedField,
+          opacity: 0.8,
           fontWeight: theme.typography.fontWeightMedium,
         },
         '.token.log-token-label': {
           color: colors.metadata,
+          opacity: 0.9,
           fontWeight: theme.typography.fontWeightBold,
         },
       },
