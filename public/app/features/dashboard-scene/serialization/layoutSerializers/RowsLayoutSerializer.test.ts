@@ -3,7 +3,7 @@ import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alp
 
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { ResponsiveGridLayoutManager } from '../../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
-import { SceneCSSGridLayout } from '../../scene/layout-responsive-grid/SceneCSSGridLayout';
+import { ResponsiveGridLayout } from '../../scene/layout-responsive-grid/ResponsiveGridLayout';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowItemRepeaterBehavior } from '../../scene/layout-rows/RowItemRepeaterBehavior';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
@@ -233,7 +233,7 @@ describe('serialization', () => {
           title: 'Row 1',
           isCollapsed: false,
           layout: new ResponsiveGridLayoutManager({
-            layout: new SceneCSSGridLayout({
+            layout: new ResponsiveGridLayout({
               children: [],
               templateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
               autoRows: 'minmax(min-content, max-content)',

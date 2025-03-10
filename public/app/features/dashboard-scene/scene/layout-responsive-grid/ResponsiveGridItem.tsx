@@ -1,8 +1,7 @@
 import { isEqual } from 'lodash';
-import { CSSProperties } from 'react';
+import React, { CSSProperties } from 'react';
 
 import {
-  SceneComponentProps,
   SceneObject,
   CustomVariable,
   LocalValueVariable,
@@ -20,11 +19,13 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 
 import { getCloneKey } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
-import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
+import { closestOfType, Point, Rect } from '../layout-manager/utils';
+import { DashboardLayoutItem, IntermediateLayoutItem } from '../types/DashboardLayoutItem';
 import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
 import { getOptions } from './ResponsiveGridItemEditor';
 import { ResponsiveGridItemRenderer } from './ResponsiveGridItemRenderer';
+import { ResponsiveGridLayout } from './ResponsiveGridLayout';
 
 export interface ResponsiveGridItemStatePlacement {
   /**
@@ -37,13 +38,10 @@ export interface ResponsiveGridItemStatePlacement {
 export interface ResponsiveGridItemState extends SceneObjectState {
   body: VizPanel;
   hideWhenNoData?: boolean;
-  gridColumn?: CSSProperties['gridColumn'];
-  gridRow?: CSSProperties['gridRow'];
   repeatedPanels?: VizPanel[];
   variableName?: string;
+  isHidden?: boolean;
 }
-
-export interface ResponsiveGridItemRenderProps<T> extends SceneComponentProps<T> {}
 
 export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState> implements DashboardLayoutItem {
   public static Component = ResponsiveGridItemRenderer;
@@ -58,6 +56,8 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
     super(state);
     this.addActivationHandler(() => this._activationHandler());
   }
+
+  public containerRef = React.createRef<HTMLDivElement>();
 
   private _activationHandler() {
     if (this.state.variableName) {
@@ -156,6 +156,71 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
     this.setState(stateUpdate);
     this.performRepeat();
   }
+
+  public cachedBoundingBox: Rect | undefined;
+  public computeBoundingBox(): Rect {
+    const itemContainer = this.containerRef.current;
+    if (!itemContainer || this.state.isHidden) {
+      // We can't actually calculate the dimensions of the rendered grid item :(
+      throw new Error('Unable to compute bounding box.');
+    }
+
+    return itemContainer.getBoundingClientRect();
+  }
+
+  public distanceToPoint(point: Point): number {
+    if (!this.cachedBoundingBox) {
+      try {
+        this.cachedBoundingBox = this.computeBoundingBox();
+      } catch (err) {
+        // If we can't actually calculate the dimensions and position of the
+        // rendered grid item, it might as well be infinitely far away.
+        return Number.POSITIVE_INFINITY;
+      }
+    }
+
+    const { top, left, bottom, right } = this.cachedBoundingBox;
+    const corners: Point[] = [
+      { x: left, y: top },
+      { x: left, y: bottom },
+      { x: right, y: top },
+      { x: right, y: bottom },
+    ];
+
+    // const { scrollTop } = closestScroll(itemContainer);
+    const { distance } = closestPoint(point, ...corners);
+    return distance;
+  }
+
+  toIntermediate(): IntermediateLayoutItem {
+    const gridItem = this.containerRef.current;
+
+    if (!gridItem) {
+      throw new Error('Grid item not found. Unable to convert to intermediate representation');
+    }
+
+    const layout = closestOfType(this, (o) => o instanceof ResponsiveGridLayout);
+
+    if (!layout) {
+      console.warn('Unable to find parent layout');
+    }
+
+    // calculate origin and bounding box of layout item
+    const rect = gridItem.getBoundingClientRect();
+    const dataOrder = gridItem.getAttribute('data-order');
+    const order = Number.parseInt(dataOrder ?? '-1', 10);
+
+    return {
+      body: this.state.body,
+      origin: {
+        x: rect.left,
+        y: rect.top,
+      },
+      width: rect.width,
+      height: rect.height,
+      order,
+    };
+  }
 }
 
 // function getStyles(theme: GrafanaTheme2, state: ResponsiveGridItemState) {
@@ -167,3 +232,43 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
 //     }),
 //   };
 // }
+
+export function closestScroll(el?: HTMLElement | null): {
+  scrollTop: number;
+  scrollTopMax: number;
+  wrapper?: HTMLElement | null;
+} {
+  if (el && canScroll(el)) {
+    return { scrollTop: el.scrollTop, scrollTopMax: el.scrollHeight - el.clientHeight - 5, wrapper: el };
+  }
+
+  return el ? closestScroll(el.parentElement) : { scrollTop: 0, scrollTopMax: 0, wrapper: el };
+}
+
+function canScroll(el: HTMLElement) {
+  const oldScroll = el.scrollTop;
+  el.scrollTop = Number.MAX_SAFE_INTEGER;
+  const newScroll = el.scrollTop;
+  el.scrollTop = oldScroll;
+
+  return newScroll > 0;
+}
+
+function euclideanDistance(a: Point, b: Point): number {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+// todo@kay: tests
+function closestPoint(referencePoint: Point, ...points: Point[]): { point: Point; distance: number } {
+  let minDistance = Number.POSITIVE_INFINITY;
+  let closestPoint = points[0];
+  for (const currentPoint of points) {
+    const distance = euclideanDistance(referencePoint, currentPoint);
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestPoint = currentPoint;
+    }
+  }
+
+  return { point: closestPoint, distance: minDistance };
+}

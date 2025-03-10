@@ -19,10 +19,10 @@ import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
 import { getEditOptions } from './ResponsiveGridLayoutManagerEditor';
-import { SceneCSSGridLayout } from './SceneCSSGridLayout';
+import { ResponsiveGridLayout } from './ResponsiveGridLayout';
 
 interface ResponsiveGridLayoutManagerState extends SceneObjectState {
-  layout: SceneCSSGridLayout;
+  layout: ResponsiveGridLayout;
 }
 
 export class ResponsiveGridLayoutManager
@@ -199,7 +199,7 @@ export class ResponsiveGridLayoutManager
 
   public static createEmpty(): ResponsiveGridLayoutManager {
     return new ResponsiveGridLayoutManager({
-      layout: new SceneCSSGridLayout({
+      layout: new ResponsiveGridLayout({
         children: [],
         templateColumns: ResponsiveGridLayoutManager.defaultCSS.templateColumns,
         autoRows: ResponsiveGridLayoutManager.defaultCSS.autoRows,

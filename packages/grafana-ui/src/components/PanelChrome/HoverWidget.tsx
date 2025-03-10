@@ -16,10 +16,11 @@ interface Props {
   title?: string;
   offset?: number;
   dragClass?: string;
+  dragFor?: string;
   onOpenMenu?: () => void;
 }
 
-export function HoverWidget({ menu, title, dragClass, children, offset = -32, onOpenMenu }: Props) {
+export function HoverWidget({ menu, title, dragClass, dragFor, children, offset = -32, onOpenMenu }: Props) {
   const styles = useStyles2(getStyles);
   const draggableRef = useRef<HTMLDivElement>(null);
   const selectors = e2eSelectors.components.Panels.Panel.HoverWidget;
@@ -45,6 +46,7 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32, on
           onPointerUp={onPointerUp}
           ref={draggableRef}
           data-testid={selectors.dragIcon}
+          data-drag-for={dragFor}
         >
           <Icon name="expand-arrows" className={styles.draggableIcon} />
         </div>

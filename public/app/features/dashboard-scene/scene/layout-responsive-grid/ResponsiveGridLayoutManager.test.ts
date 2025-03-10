@@ -5,7 +5,7 @@ import { DashboardScene } from '../DashboardScene';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
 import { ResponsiveGridLayoutManager } from './ResponsiveGridLayoutManager';
-import { SceneCSSGridLayout } from './SceneCSSGridLayout';
+import { ResponsiveGridLayout } from './ResponsiveGridLayout';
 
 describe('ResponsiveGridLayoutManager', () => {
   it('Should clone the layout', () => {
@@ -46,7 +46,7 @@ function setup() {
     }),
   ];
 
-  const manager = new ResponsiveGridLayoutManager({ layout: new SceneCSSGridLayout({ children: gridItems }) });
+  const manager = new ResponsiveGridLayoutManager({ layout: new ResponsiveGridLayout({ children: gridItems }) });
 
   new DashboardScene({ body: manager });
 

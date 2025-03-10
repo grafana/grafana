@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import classNames from 'classnames';
 import { CSSProperties, PointerEvent, ReactElement, ReactNode, useId, useRef } from 'react';
 import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
@@ -27,6 +28,7 @@ import { TitleItem } from './TitleItem';
 export type PanelChromeProps = (AutoSize | FixedDimensions) & (Collapsible | HoverHeader);
 
 interface BaseProps {
+  dragFor?: string;
   padding?: PanelPadding;
   title?: string | React.ReactElement;
   description?: string | (() => string);
@@ -121,6 +123,7 @@ export function PanelChrome({
   children,
   padding = 'md',
   title = '',
+  dragFor,
   description = '',
   displayMode = 'default',
   titleItems,
@@ -297,6 +300,7 @@ export function PanelChrome({
             title={typeof title === 'string' ? title : undefined}
             offset={hoverHeaderOffset}
             dragClass={dragClass}
+            dragFor={dragFor}
             onOpenMenu={onOpenMenu}
           >
             {headerContent}
@@ -312,9 +316,10 @@ export function PanelChrome({
 
       {hasHeader && (
         <div
-          className={cx(styles.headerContainer, dragClass)}
+          className={classNames(styles.headerContainer, dragClass)}
           style={headerStyles}
           data-testid="header-container"
+          data-drag-for={dragFor}
           onPointerDown={(evt) => {
             evt.stopPropagation();
             pointerDownEvt.current = evt;

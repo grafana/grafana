@@ -5,30 +5,11 @@ import { forwardRef } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-interface DropZonePlaceholderProps {
-  width: number;
-  height: number;
-  left: number;
-  top: number;
-}
+export const DropZonePlaceholder = forwardRef<HTMLDivElement>((_, ref) => {
+  const styles = useStyles2(getStyles);
 
-export const DropZonePlaceholder = forwardRef<HTMLDivElement, DropZonePlaceholderProps>(
-  ({ width, height, left, top }, ref) => {
-    const styles = useStyles2(getStyles);
-
-    return (
-      <div
-        className={classNames('react-grid-item', 'react-grid-placeholder', styles.placeholder)}
-        style={{
-          width: `${width}px`,
-          height: `${height}px`,
-          translate: `${left}px ${top}px`,
-        }}
-        ref={ref}
-      ></div>
-    );
-  }
-);
+  return <div className={classNames('react-grid-item', 'react-grid-placeholder', styles.placeholder)} ref={ref}></div>;
+});
 
 const getStyles = (theme: GrafanaTheme2) => ({
   placeholder: css({

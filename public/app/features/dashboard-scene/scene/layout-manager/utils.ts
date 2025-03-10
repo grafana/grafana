@@ -1,29 +1,33 @@
-import { sceneGraph, SceneLayout, SceneObject } from '@grafana/scenes';
+import { SceneLayout, SceneObject } from '@grafana/scenes';
 
-import { DropZone } from './DragManager';
-
-export interface Rect {
-  top: number;
-  left: number;
-  bottom: number;
-  right: number;
-  rowIndex: number;
-  columnIndex: number;
-  order: number;
-}
+import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
 
 export interface Point {
   x: number;
   y: number;
 }
 
-export interface SceneLayout2 extends SceneLayout {
-  getDropZones: () => Rect[];
+export interface Rect {
+  top: number;
+  left: number;
+  bottom: number;
+  right: number;
 }
 
-// Not the most robust interface check. todo?
+export interface DropZone extends Rect {
+  /* The two-dimensional euclidean distance, in pixels, between the drop zone and some reference point (usually cursor position) */
+  distance: number;
+}
+
+export interface SceneLayout2 extends SceneLayout {
+  closestDropZone(cursorPosition: Point): DropZone;
+  importLayoutItem(layoutItem: DashboardLayoutItem): void;
+  removeLayoutItem(layoutItem: DashboardLayoutItem): void;
+}
+
+// todo@kay: Not the most robust interface check, should make more robust.
 export function isSceneLayout(o: SceneObject): o is SceneLayout2 {
-  return typeof (o as any).isDraggable === 'function' && typeof (o as any).getDropZones === 'function';
+  return typeof (o as any).isDraggable === 'function' && typeof (o as any).closestDropZone === 'function';
 }
 
 /** Walks up the scene graph, returning the first non-undefined result of `extract` */
@@ -39,49 +43,21 @@ export function getClosest<T>(sceneObject: SceneObject, extract: (s: SceneObject
   return extracted;
 }
 
-/** Given an array of rectangles and a point, calculate the rectangle closest to the point */
-export function closestCell(root: SceneObject, rects: DropZone[], point: Point) {
-  const scrollTopMap: Record<string, number> = {};
-  for (const rect of rects) {
-    const layout = sceneGraph.findByKey(root, rect.layoutKey) as SceneLayout2 | undefined;
-    if (layout && 'getContainer' in layout && typeof layout['getContainer'] === 'function') {
-      scrollTopMap[rect.layoutKey] = closestScroll(layout.getContainer());
-    }
+/** Walks up the scene graph, returning the first non-undefined result of `extract` */
+export function closestOfType<T extends SceneObject>(
+  sceneObject: SceneObject,
+  predicate: (s: SceneObject) => s is T
+): T | undefined {
+  let curSceneObject: SceneObject | undefined = sceneObject;
+
+  while (curSceneObject && !predicate(curSceneObject)) {
+    curSceneObject = curSceneObject.parent;
   }
 
-  let closest = rects[0];
-  let shortestDistance = Number.MAX_SAFE_INTEGER;
-  let offset: Point = { x: 0, y: 0 };
-  let scrollTop = 0;
-  let from = 'top';
-  for (const rect of rects) {
-    const topLeft = { x: rect.left, y: rect.top };
-    const topRight = { x: rect.right, y: rect.top };
-    const bottomLeft = { x: rect.left, y: rect.bottom };
-    const bottomRight = { x: rect.right, y: rect.bottom };
-    const lines: Array<{ points: [Point, Point]; id: string }> = [
-      { points: [topLeft, topRight], id: 'top' },
-      { points: [topLeft, bottomLeft], id: 'left' },
-      { points: [bottomLeft, bottomRight], id: 'bottom' },
-      { points: [topRight, bottomRight], id: 'right' },
-    ];
-
-    for (const line of lines) {
-      const distance = shortestDistanceToLine({ x: point.x, y: point.y + scrollTopMap[rect.layoutKey] }, line.points);
-      if (distance < shortestDistance) {
-        shortestDistance = distance;
-        closest = rect;
-        scrollTop = scrollTopMap[rect.layoutKey];
-        from = line.id;
-        offset = { x: topLeft.x - point.x, y: topLeft.y - point.y - scrollTopMap[rect.layoutKey] };
-      }
-    }
-  }
-
-  return { closest, offset, scrollTop, from };
+  return curSceneObject;
 }
 
-function closestScroll(el?: HTMLElement | null): number {
+export function closestScroll(el?: HTMLElement | null): number {
   if (el && el.scrollTop > 0) {
     return el.scrollTop;
   }
@@ -89,7 +65,7 @@ function closestScroll(el?: HTMLElement | null): number {
   return el ? closestScroll(el.parentElement) : 0;
 }
 
-function shortestDistanceToLine(point: Point, line: [Point, Point]) {
+export function shortestDistanceToLine(point: Point, line: [Point, Point]) {
   const [{ x: x1, y: y1 }, { x: x2, y: y2 }] = line;
   const { x, y } = point;
   const dx = x2 - x1;

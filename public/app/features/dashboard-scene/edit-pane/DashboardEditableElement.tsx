@@ -29,6 +29,9 @@ export class DashboardEditableElement implements EditableDashboardElement {
       return [];
     }
 
+    //todo@kay need to rethink layout orchestrator...
+    const { manager } = layoutOrchestrator.useState();
+
     const dashboardOptions = useMemo(() => {
       return new OptionsPaneCategoryDescriptor({
         title: t('dashboard.options.title', 'Dashboard options'),
@@ -50,10 +53,10 @@ export class DashboardEditableElement implements EditableDashboardElement {
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.layout.common.layout', 'Layout'),
-            render: () => <DashboardLayoutSelector layoutManager={layoutOrchestrator} />,
+            render: () => <DashboardLayoutSelector layoutManager={manager} />,
           })
         );
-    }, [layoutOrchestrator, dashboard]);
+    }, [manager, dashboard]);
 
     return [dashboardOptions];
   }

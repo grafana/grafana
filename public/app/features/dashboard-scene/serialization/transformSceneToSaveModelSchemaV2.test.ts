@@ -42,7 +42,7 @@ import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior
 import { LayoutOrchestrator } from '../scene/layout-manager/LayoutOrchestrator';
 import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
 import { ResponsiveGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
-import { SceneCSSGridLayout } from '../scene/layout-responsive-grid/SceneCSSGridLayout';
+import { ResponsiveGridLayout } from '../scene/layout-responsive-grid/ResponsiveGridLayout';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../scene/layout-tabs/TabItem';
@@ -465,7 +465,7 @@ describe('dynamic layouts', () => {
           rows: [
             new RowItem({
               layout: new ResponsiveGridLayoutManager({
-                layout: new SceneCSSGridLayout({
+                layout: new ResponsiveGridLayout({
                   children: [
                     new ResponsiveGridItem({
                       body: new VizPanel({}),
@@ -510,7 +510,7 @@ describe('dynamic layouts', () => {
     const scene = setupDashboardScene(
       getMinimalSceneState(
         new ResponsiveGridLayoutManager({
-          layout: new SceneCSSGridLayout({
+          layout: new ResponsiveGridLayout({
             autoRows: 'rowString',
             templateColumns: 'colString',
             children: [

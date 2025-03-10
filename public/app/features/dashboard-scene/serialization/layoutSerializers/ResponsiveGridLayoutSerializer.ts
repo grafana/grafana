@@ -2,7 +2,7 @@ import { DashboardV2Spec, ResponsiveGridLayoutItemKind } from '@grafana/schema/d
 
 import { ResponsiveGridItem } from '../../scene/layout-responsive-grid/ResponsiveGridItem';
 import { ResponsiveGridLayoutManager } from '../../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
-import { SceneCSSGridLayout } from '../../scene/layout-responsive-grid/SceneCSSGridLayout';
+import { ResponsiveGridLayout } from '../../scene/layout-responsive-grid/ResponsiveGridLayout';
 import { DashboardLayoutManager, LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
 import { getGridItemKeyForPanelId } from '../../utils/utils';
 
@@ -65,7 +65,7 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
     });
 
     return new ResponsiveGridLayoutManager({
-      layout: new SceneCSSGridLayout({
+      layout: new ResponsiveGridLayout({
         templateColumns: layout.spec.col,
         autoRows: layout.spec.row,
         children,
