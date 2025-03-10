@@ -50,7 +50,7 @@ const RuleViewer = (): JSX.Element => {
   if (loading) {
     return (
       <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list" isLoading={true}>
-        <></>
+        {null}
       </AlertingPageWrapper>
     );
   }
@@ -73,7 +73,7 @@ const RuleViewer = (): JSX.Element => {
   }
 
   // we should never get to this state
-  return <></>;
+  return <>{null}</>;
 };
 
 export const defaultPageNav: NavModelItem = {
