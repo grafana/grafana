@@ -250,7 +250,7 @@ class PromQueryFieldClass extends PureComponent<PromQueryFieldProps, PromQueryFi
                     initialValue={query.expr ?? ''}
                     placeholder="Enter a PromQL query…"
                     datasource={datasource}
-                    timeRage={this.props.range ?? getDefaultTimeRange()}
+                    timeRange={this.props.range ?? getDefaultTimeRange()}
                   />
                 </div>
               </div>

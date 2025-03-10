@@ -17,5 +17,5 @@ export type Props = {
   onRunQuery: (value: string) => void;
   onBlur: (value: string) => void;
   datasource: PrometheusDatasource;
-  timeRage: TimeRange;
+  timeRange: TimeRange;
 };
