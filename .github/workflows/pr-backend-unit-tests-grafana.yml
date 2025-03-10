@@ -1,0 +1,69 @@
+name: Backend Unit Tests - Grafana
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - 'release-**'
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  backend-unit-testing-coverage:
+    # Run this workflow only for PRs from forks; if it gets merged into `main` or `release-*`, 
+    # the `pr-backend-unit-tests-enterprise` workflow will run instead
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
+    name: Backend Unit Testing & Coverage
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    env:
+      TEST_TYPE: 'be-unit-grafana'
+      WIRE_TAGS: 'oss'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+          
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential shared-mime-info
+
+      - name: Generate Go code
+        run: make gen-go
+
+      - name: Run unit tests
+        run: make test-go-unit
+        env:
+          GO_UNIT_COVER_PROFILE: '${{ env.TEST_TYPE }}.cov'
+          GO_TEST_OUTPUT: '/tmp/${{ env.TEST_TYPE }}.log'
+          GO_UNIT_TEST_COVERPKG: 'github.com/grafana/grafana/...'
+
+      - name: Process and upload coverage
+        uses: ./.github/actions/test-coverage-processor
+        with:
+          test-type: '${{ env.TEST_TYPE }}'
+          coverage-file: '${{ env.TEST_TYPE }}.cov'
+          codecov-token: ${{ secrets.CODECOV_TOKEN }}
+          codecov-flag: '${{ env.TEST_TYPE }}'
+          codecov-name: '${{ env.TEST_TYPE }}'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
