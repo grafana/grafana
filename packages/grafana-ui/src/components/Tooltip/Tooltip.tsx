@@ -32,10 +32,11 @@ export interface TooltipProps {
    * Set to true if you want the tooltip to stay long enough so the user can move mouse over content to select text or click a link
    */
   interactive?: boolean;
+  interactiveDelay?: number;
 }
 
 export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
-  ({ children, theme, interactive, show, placement, content }, forwardedRef) => {
+  ({ children, theme, interactive, show, placement, content, interactiveDelay = 100 }, forwardedRef) => {
     const arrowRef = useRef(null);
     const [controlledVisible, setControlledVisible] = useState(show);
     const isOpen = show ?? controlledVisible;
@@ -68,7 +69,7 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
 
     const hover = useHover(context, {
       delay: {
-        close: interactive ? 100 : 0,
+        close: interactive ? interactiveDelay : 0,
       },
       move: false,
     });
