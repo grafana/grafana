@@ -211,7 +211,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
       fontWeight: theme.typography.fontWeightBold,
       textTransform:'uppercase',
       display: 'inline-block',
-      textTransform: 'uppercase',
       '&.level-critical': {
         color: colors.critical,
       },
