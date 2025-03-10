@@ -4,40 +4,39 @@ import { SelectableValue } from '@grafana/data';
 import { AccessoryButton, InputGroup } from '@grafana/plugin-ui';
 import { Select } from '@grafana/ui';
 
-import { QueryEditorPropertyType } from '../../types';
+import { BuilderQueryEditorReduceExpression, BuilderQueryEditorPropertyType } from '../../dataquery.gen';
 
-import { QueryEditorExpressionType, QueryEditorReduceExpression } from './expressions';
 import { valueToDefinition } from './utils';
 
 interface AggregateItemProps {
-  aggregate: Partial<QueryEditorReduceExpression>;
+  aggregate: Partial<BuilderQueryEditorReduceExpression>;
   columns: Array<SelectableValue<string>>;
-  onChange: (item: QueryEditorReduceExpression) => void;
+  onChange: (item: BuilderQueryEditorReduceExpression) => void;
   onDelete: () => void;
 }
 
 export const AggregateItem: React.FC<AggregateItemProps> = ({ aggregate, onChange, onDelete, columns }) => {
   const selectedColumn = columns.find((c) => c.value === aggregate.property?.name);
 
-  const mapColumnType = (type: string): QueryEditorPropertyType => {
+  const mapColumnType = (type: string): BuilderQueryEditorPropertyType => {
     switch (type.toLowerCase()) {
       case 'number':
       case 'int':
       case 'float':
       case 'double':
-        return QueryEditorPropertyType.Number;
+        return BuilderQueryEditorPropertyType.Number;
       case 'string':
       case 'text':
-        return QueryEditorPropertyType.String;
+        return BuilderQueryEditorPropertyType.String;
       case 'datetime':
       case 'timestamp':
-        return QueryEditorPropertyType.DateTime;
+        return BuilderQueryEditorPropertyType.Datetime;
       default:
-        return QueryEditorPropertyType.String;
+        return BuilderQueryEditorPropertyType.String;
     }
   };
 
-  const columnType = selectedColumn ? mapColumnType(selectedColumn.type || '') : QueryEditorPropertyType.String;
+  const columnType = selectedColumn ? mapColumnType(selectedColumn.type || '') : BuilderQueryEditorPropertyType.String;
 
   const availableAggregates: Array<SelectableValue<string>> = useMemo(() => {
     const allAggregates = [
@@ -59,13 +58,13 @@ export const AggregateItem: React.FC<AggregateItemProps> = ({ aggregate, onChang
 
     return allAggregates.filter((agg) => {
       const aggValue = agg.value;
-      if (columnType === QueryEditorPropertyType.Number) {
+      if (columnType === BuilderQueryEditorPropertyType.Number) {
         return ['sum', 'avg', 'min', 'max', 'percentile'].includes(aggValue);
       }
-      if (columnType === QueryEditorPropertyType.String) {
+      if (columnType === BuilderQueryEditorPropertyType.String) {
         return ['count', 'dcount', 'make_set', 'make_list'].includes(aggValue);
       }
-      if (columnType === QueryEditorPropertyType.DateTime) {
+      if (columnType === BuilderQueryEditorPropertyType.Datetime) {
         return ['min', 'max', 'bin'].includes(aggValue);
       }
       return true;
@@ -84,8 +83,7 @@ export const AggregateItem: React.FC<AggregateItemProps> = ({ aggregate, onChang
           onChange({
             ...aggregate,
             property: { name: e.value!, type: columnType },
-            reduce: aggregate.reduce ?? { name: '', type: QueryEditorPropertyType.Function },
-            type: aggregate.type ?? QueryEditorExpressionType.Reduce,
+            reduce: aggregate.reduce ?? { name: '', type: BuilderQueryEditorPropertyType.Function },
           })
         }
       />
@@ -98,9 +96,8 @@ export const AggregateItem: React.FC<AggregateItemProps> = ({ aggregate, onChang
         onChange={(e) =>
           onChange({
             ...aggregate,
-            property: aggregate.property ?? { name: '', type: QueryEditorPropertyType.String },
-            reduce: { name: e.value!, type: QueryEditorPropertyType.Function },
-            type: aggregate.type ?? QueryEditorExpressionType.Reduce,
+            property: aggregate.property ?? { name: '', type: BuilderQueryEditorPropertyType.String },
+            reduce: { name: e.value!, type: BuilderQueryEditorPropertyType.Function },
           })
         }
       />

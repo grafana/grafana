@@ -11,6 +11,7 @@ import {
 import { selectors } from '../../e2e/selectors';
 import { AzureLogAnalyticsMetadataTable, AzureMonitorQuery, EngineSchema } from '../../types';
 
+import { AggregateSection } from './AggregationSection';
 import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
 import { FilterSection } from './FilterSection';
 import KQLPreview from './KQLPreview';
@@ -84,14 +85,13 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
         )}
         <TableSection {...props} tables={tables} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
         <FilterSection {...props} onQueryUpdate={onQueryChange} allColumns={allColumns} query={query} />
-        {/* <AggregateSection 
+        <AggregateSection 
           {...props} 
-          selectedTable={selectedTable!} 
-          columns={columns} 
-          selectedColumns={selectedColumns} 
+          allColumns={allColumns} 
+          query={query}
           onQueryUpdate={onQueryChange} 
         />
-        <GroupBySection 
+        {/* <GroupBySection 
           {...props} 
           columns={columns} 
           selectedTable={selectedTable!} 
