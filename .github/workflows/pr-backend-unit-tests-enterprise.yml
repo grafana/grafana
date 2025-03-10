@@ -105,7 +105,6 @@ jobs:
           # GO_TEST_OUTPUT: ''
           # GO_UNIT_TEST_COVERPKG: 'github.com/grafana/grafana/...'
           GO_UNIT_COVERAGE: false
-          GODEBUG: "testcacheverify=1"
 
       # Run Grafana Bench only on pushes to `main` or `release-*`
       - name: Install Grafana Bench
