@@ -848,6 +848,8 @@ export type GitHubRepositoryConfig = {
   encryptedToken?: string;
   /** Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews). */
   generateDashboardPreviews?: boolean;
+  /** The prefix for the Grafana data. If specified, Grafana will ignore anything that is outside this prefix. This is usually something like `grafana/`. Trailing and leading slash are not required. The path is relative to the root of the repository, regardless of the leading slash. */
+  prefix?: string;
   /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
   token?: string;
   /** The repository URL (e.g. `https://github.com/example/test`). */

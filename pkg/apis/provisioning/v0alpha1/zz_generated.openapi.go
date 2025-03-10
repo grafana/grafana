@@ -273,6 +273,13 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 							Format:      "",
 						},
 					},
+					"prefix": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The prefix for the Grafana data. If specified, Grafana will ignore anything that is outside this prefix. This is usually something like `grafana/`. Trailing and leading slash are not required. The path is relative to the root of the repository, regardless of the leading slash.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"branch"},
 			},

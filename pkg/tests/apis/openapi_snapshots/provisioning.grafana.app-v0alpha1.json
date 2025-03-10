@@ -2644,6 +2644,10 @@
             "description": "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",
             "type": "boolean"
           },
+          "prefix": {
+            "description": "The prefix for the Grafana data. If specified, Grafana will ignore anything that is outside this prefix. This is usually something like `grafana/`. Trailing and leading slash are not required. The path is relative to the root of the repository, regardless of the leading slash.",
+            "type": "string"
+          },
           "token": {
             "description": "Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.",
             "type": "string"

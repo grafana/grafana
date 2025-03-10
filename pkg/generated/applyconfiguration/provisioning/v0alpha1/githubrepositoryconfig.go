@@ -12,6 +12,7 @@ type GitHubRepositoryConfigApplyConfiguration struct {
 	Token                     *string `json:"token,omitempty"`
 	EncryptedToken            []byte  `json:"encryptedToken,omitempty"`
 	GenerateDashboardPreviews *bool   `json:"generateDashboardPreviews,omitempty"`
+	Prefix                    *string `json:"prefix,omitempty"`
 }
 
 // GitHubRepositoryConfigApplyConfiguration constructs a declarative configuration of the GitHubRepositoryConfig type for use with
@@ -59,5 +60,13 @@ func (b *GitHubRepositoryConfigApplyConfiguration) WithEncryptedToken(values ...
 // If called multiple times, the GenerateDashboardPreviews field is set to the value of the last call.
 func (b *GitHubRepositoryConfigApplyConfiguration) WithGenerateDashboardPreviews(value bool) *GitHubRepositoryConfigApplyConfiguration {
 	b.GenerateDashboardPreviews = &value
+	return b
+}
+
+// WithPrefix sets the Prefix field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Prefix field is set to the value of the last call.
+func (b *GitHubRepositoryConfigApplyConfiguration) WithPrefix(value string) *GitHubRepositoryConfigApplyConfiguration {
+	b.Prefix = &value
 	return b
 }
