@@ -1,5 +1,5 @@
+import { ComboboxOption } from '../../../grafana-ui/src/components/Combobox/types';
 import { PluginState } from '../types/plugin';
-import { SelectableValue } from '../types/select';
 
 export interface RegistryItem {
   id: string; // Unique Key -- saved in configs
@@ -32,8 +32,8 @@ export interface RegistryItemWithOptions<TOptions = any> extends RegistryItem {
 }
 
 interface RegistrySelectInfo {
-  options: Array<SelectableValue<string>>;
-  current: Array<SelectableValue<string>>;
+  options: Array<ComboboxOption<string>>;
+  current: Array<ComboboxOption<string>>;
 }
 
 export class Registry<T extends RegistryItem> {
@@ -92,10 +92,10 @@ export class Registry<T extends RegistryItem> {
       current: [],
     };
 
-    const currentOptions: Record<string, SelectableValue<string>> = {};
+    const currentOptions: Record<string, ComboboxOption<string>> = {};
     if (current) {
       for (const id of current) {
-        currentOptions[id] = {};
+        currentOptions[id] = { value: currentOptions[id].value };
       }
     }
 
