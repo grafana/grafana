@@ -538,6 +538,8 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 				Key: key,
 			},
 		}, func(iter ListIterator) error {
+			flushThreshold := 10000
+			itemCount := 0
 			for iter.Next() {
 				if err = iter.Error(); err != nil {
 					return err
@@ -558,6 +560,15 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 				if err = index.Write(doc); err != nil {
 					return err
 				}
+				// Flush the index every so often, to avoid memory issues.
+				if itemCount > flushThreshold {
+					s.log.Debug("flushing index during build", "resource", key.Resource)
+					if err := index.Flush(); err != nil {
+						return err
+					}
+					itemCount = 0
+				}
+				itemCount++
 			}
 			return err
 		})
