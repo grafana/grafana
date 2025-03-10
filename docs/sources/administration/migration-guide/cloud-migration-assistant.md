@@ -147,6 +147,12 @@ Your data sources, including credentials, are migrated securely and seamlessly t
 
 The migration assistant supports any plugins found in the plugins catalog. As long as the plugin is signed or is a core plugin built into Grafana, it is eligible for migration. Due to security reasons, unsigned plugins are not supported in Grafana Cloud. If you are using any unsigned private plugins, Grafana recommends you seek an alternative plugin for the catalog or work on a strategy to deprecate certain functionality from your self-managed instance.
 
+Upgrade any plugins you intend to migrate before using the migration assistant as any migrated plugins will be configured on the Grafana Cloud instance as the latest version of that plugin.
+
+{{< admonition type="caution">}}
+If you want to migrate Enterprise plugins, check what type of plan your Grafana Cloud instance is on and whether or not this plan requires an Enterprise plugin add-on.
+{{< /admonition >}}
+
 ### Grafana Alerting resources
 
 The migration assistant can migrate the majority of Grafana Alerting resources to your Grafana Cloud instance. These include:
