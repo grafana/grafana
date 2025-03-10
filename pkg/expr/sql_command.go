@@ -96,7 +96,8 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	}
 
 	totalRows := totalRows(allFrames)
-	if totalRows > gr.limit {
+	// limit of 0 or less means no limit (following convention)
+	if gr.limit > 0 && totalRows > gr.limit {
 		return mathexp.Results{},
 			fmt.Errorf(
 				"SQL expression: total row count across all input tables exceeds limit of %d. Total rows: %d",
