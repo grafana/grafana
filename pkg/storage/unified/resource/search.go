@@ -10,13 +10,14 @@ import (
 	"sync"
 	"time"
 
-	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
-	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 
 	"github.com/grafana/authlib/types"
 )
@@ -685,7 +686,7 @@ func AsResourceKey(ns string, t string) (*ResourceKey, error) {
 		return &ResourceKey{
 			Namespace: ns,
 			Group:     dashboardv0alpha1.GROUP,
-			Resource:  dashboardv0alpha1.RESOURCE,
+			Resource:  dashboardv0alpha1.DASHBOARD_RESOURCE,
 		}, nil
 
 	// NOT really supported in the dashboard search UI, but useful for manual testing
