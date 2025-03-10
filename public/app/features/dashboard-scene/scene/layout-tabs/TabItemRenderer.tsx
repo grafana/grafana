@@ -4,8 +4,7 @@ import { useLocation } from 'react-router';
 import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { clearButtonStyles, useElementSelection, useStyles2 } from '@grafana/ui';
-// eslint-disable-next-line no-restricted-imports
-import { getFocusStyles } from '@grafana/ui/src/themes/mixins';
+import { getFocusStyles } from '@grafana/ui/internal';
 
 import { TabItem } from './TabItem';
 

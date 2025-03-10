@@ -2,7 +2,7 @@ import { forwardRef, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Input, IconButton } from '@grafana/ui';
-import { Props as InputProps } from '@grafana/ui/src/components/Input/Input';
+import { InputProps } from '@grafana/ui/internal';
 
 interface Props extends Omit<InputProps, 'type'> {}
 

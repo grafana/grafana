@@ -11,8 +11,7 @@ import {
   VizLegendOptions,
 } from '@grafana/schema';
 import { measureText } from '@grafana/ui';
-import { timeUnitSize } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
-import { StackingGroup, preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
+import { timeUnitSize, StackingGroup, preparePlotData2 } from '@grafana/ui/internal';
 
 const intervals = systemDateFormats.interval;
 
