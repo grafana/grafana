@@ -46,7 +46,7 @@ jobs:
           go-version-file: go.mod
           cache: true
       - run: sudo apt-get update -yq && sudo apt-get install mariadb-client
-      - run: cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h mysql -P 3306 -u root -prootpass --disable-ssl-verify-server-cert
+      - run: cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h 127.0.0.1 -P 3306 -u root -prootpass --disable-ssl-verify-server-cert
       - run: go clean -testcache
       - run: go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)
   postgres:
@@ -73,6 +73,6 @@ jobs:
           POSTGRES_HOST: postgres
         run: |
           sudo apt-get update -yq && sudo apt-get install postgresql-client
-          psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+          psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
           go clean -testcache
           go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)
