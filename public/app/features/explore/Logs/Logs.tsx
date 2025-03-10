@@ -75,7 +75,7 @@ import {
 import { useContentOutlineContext } from '../ContentOutline/ContentOutlineContext';
 import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 import { changePanelState } from '../state/explorePane';
-import { changeQueries } from '../state/query';
+import { changeQueries, runQueries } from '../state/query';
 
 import { LogsFeedback } from './LogsFeedback';
 import { LogsMetaRow } from './LogsMetaRow';
@@ -478,12 +478,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           if (query.datasource?.type !== 'loki' || !isLokiQuery(query)) {
             return query;
           }
-          hasLokiQueries = true;
-
           if (query.direction === LokiQueryDirection.Scan) {
             // Don't override Scan. When the direction is Scan it means that the user specifically assigned this direction to the query.
             return query;
           }
+          hasLokiQueries = true;
           const newDirection =
             newSortOrder === LogsSortOrder.Ascending ? LokiQueryDirection.Forward : LokiQueryDirection.Backward;
           if (newDirection !== query.direction) {
@@ -494,6 +493,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
         if (hasLokiQueries) {
           dispatch(changeQueries({ exploreId, queries: newQueries }));
+          dispatch(runQueries({ exploreId }));
         }
       }
 
@@ -1063,18 +1063,30 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               />
             </>
           )}
-          {visualisationType === 'logs' && config.featureToggles.newLogsPanel && (
+          {visualisationType === 'logs' && hasData && config.featureToggles.newLogsPanel && (
             <>
-              <div data-testid="logRows" ref={logsContainerRef} className={styles.logRows}>
+              <div data-testid="logRows" ref={logsContainerRef} className={styles.logRowsWrapper}>
                 {logsContainerRef.current && (
                   <LogList
                     app={CoreApp.Explore}
+                    logSupportsContext={showContextToggle}
                     containerElement={logsContainerRef.current}
+                    displayedFields={displayedFields}
                     eventBus={eventBus}
                     forceEscape={forceEscape}
+                    getFieldLinks={getFieldLinks}
+                    getRowContextQuery={getRowContextQuery}
+                    loadMore={loadMoreLogs}
                     logs={dedupedRows}
+                    onOpenContext={onOpenContext}
+                    onPermalinkClick={onPermalinkClick}
+                    onPinLine={onPinToContentOutlineClick}
+                    onUnpinLine={onPinToContentOutlineClick}
+                    pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
+                    pinnedLogs={pinnedLogs}
                     showTime={showTime}
                     sortOrder={logsSortOrder}
+                    timeRange={props.range}
                     timeZone={timeZone}
                     wrapLogMessage={wrapLogMessage}
                   />
@@ -1179,6 +1191,9 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
     logRows: css({
       overflowX: `${wrapLogMessage ? 'unset' : 'scroll'}`,
       overflowY: 'visible',
+      width: '100%',
+    }),
+    logRowsWrapper: css({
       width: '100%',
     }),
     visualisationType: css({

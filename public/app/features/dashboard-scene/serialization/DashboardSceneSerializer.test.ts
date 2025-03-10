@@ -12,6 +12,7 @@ import {
   defaultDashboardV2Spec,
   defaultPanelSpec,
   defaultTimeSettingsSpec,
+  GridLayoutKind,
   PanelSpec,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
@@ -34,6 +35,26 @@ jest.mock('@grafana/runtime', () => ({
     return {
       getInstanceSettings: jest.fn(),
     };
+  },
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    bootData: {
+      settings: {
+        defaultDatasource: '-- Grafana --',
+        datasources: {
+          '-- Grafana --': {
+            name: 'Grafana',
+            meta: { id: 'grafana' },
+            type: 'datasource',
+          },
+          prometheus: {
+            name: 'prometheus',
+            meta: { id: 'prometheus' },
+            type: 'datasource',
+          },
+        },
+      },
+    },
   },
 }));
 
@@ -356,6 +377,82 @@ describe('DashboardSceneSerializer', () => {
 
       expect(serializer.getSnapshotUrl()).toBe('originalUrl/snapshot');
     });
+
+    describe('panel mapping methods', () => {
+      let serializer: V1DashboardSerializer;
+
+      beforeEach(() => {
+        serializer = new V1DashboardSerializer();
+      });
+
+      it('should initialize panel mapping correctly', () => {
+        const saveModel: Dashboard = {
+          title: 'hello',
+          uid: 'my-uid',
+          schemaVersion: 30,
+          panels: [
+            { id: 1, title: 'Panel 1', type: 'text' },
+            { id: 2, title: 'Panel 2', type: 'text' },
+          ],
+        };
+
+        serializer.initializeMapping(saveModel);
+        const mapping = serializer.getElementPanelMapping();
+
+        expect(mapping.size).toBe(2);
+        expect(mapping.get('panel-1')).toBe(1);
+        expect(mapping.get('panel-2')).toBe(2);
+      });
+
+      it('should handle empty or undefined panels in initializeMapping', () => {
+        serializer.initializeMapping(undefined);
+        expect(serializer.getElementPanelMapping().size).toBe(0);
+
+        serializer.initializeMapping({
+          title: 'hello',
+          uid: 'my-uid',
+          schemaVersion: 30,
+          panels: undefined,
+        });
+        expect(serializer.getElementPanelMapping().size).toBe(0);
+      });
+
+      it('should get panel id for element correctly', () => {
+        const saveModel: Dashboard = {
+          title: 'hello',
+          uid: 'my-uid',
+          schemaVersion: 30,
+          panels: [
+            { id: 1, title: 'Panel 1', type: 'text' },
+            { id: 2, title: 'Panel 2', type: 'text' },
+          ],
+        };
+
+        serializer.initializeMapping(saveModel);
+
+        expect(serializer.getPanelIdForElement('panel-1')).toBe(1);
+        expect(serializer.getPanelIdForElement('panel-2')).toBe(2);
+        expect(serializer.getPanelIdForElement('non-existent')).toBeUndefined();
+      });
+
+      it('should get element id for panel correctly', () => {
+        const saveModel: Dashboard = {
+          title: 'hello',
+          uid: 'my-uid',
+          schemaVersion: 30,
+          panels: [
+            { id: 1, title: 'Panel 1', type: 'text' },
+            { id: 2, title: 'Panel 2', type: 'text' },
+          ],
+        };
+        serializer.initializeMapping(saveModel);
+
+        expect(serializer.getElementIdForPanel(1)).toBe('panel-1');
+        expect(serializer.getElementIdForPanel(2)).toBe('panel-2');
+        // Should return default panel key for non-existent panel
+        expect(serializer.getElementIdForPanel(3)).toBe('panel-3');
+      });
+    });
   });
 
   describe('v2 schema', () => {
@@ -583,9 +680,7 @@ describe('DashboardSceneSerializer', () => {
             to: '',
             autoRefresh: '',
             autoRefreshIntervals: [],
-            quickRanges: [],
             hideTimepicker: false,
-            weekStart: '',
             fiscalYearStartMonth: 0,
             timezone: '',
           },
@@ -646,10 +741,8 @@ describe('DashboardSceneSerializer', () => {
           from: 'now-1h',
           hideTimepicker: false,
           nowDelay: undefined,
-          quickRanges: [],
           timezone: 'browser',
           to: 'now',
-          weekStart: '',
         });
       });
 
@@ -736,7 +829,8 @@ describe('DashboardSceneSerializer', () => {
         const saveAsModel = serializer.getSaveAsModel(emptyDashboard, baseOptions);
 
         expect(saveAsModel.elements).toEqual({});
-        expect(saveAsModel.layout.spec.items).toEqual([]);
+        expect(saveAsModel.layout.kind).toBe('GridLayout');
+        expect((saveAsModel.layout as GridLayoutKind).spec.items).toEqual([]);
         expect(saveAsModel.variables).toEqual([]);
       });
 
@@ -779,6 +873,95 @@ describe('DashboardSceneSerializer', () => {
             pluginVersion: '1.0.0',
           },
         });
+      });
+    });
+
+    describe('panel mapping methods', () => {
+      let serializer: V2DashboardSerializer;
+      let saveModel: DashboardV2Spec;
+
+      beforeEach(() => {
+        serializer = new V2DashboardSerializer();
+        saveModel = {
+          ...defaultDashboardV2Spec(),
+          elements: {
+            'element-panel-a': {
+              kind: 'Panel',
+              spec: { ...defaultPanelSpec(), id: 1, title: 'Panel A' },
+            },
+            'element-panel-b': {
+              kind: 'Panel',
+              spec: { ...defaultPanelSpec(), id: 2, title: 'Panel B' },
+            },
+          },
+          layout: {
+            kind: 'GridLayout',
+            spec: {
+              items: [
+                {
+                  kind: 'GridLayoutItem',
+                  spec: {
+                    x: 0,
+                    y: 0,
+                    width: 12,
+                    height: 8,
+                    element: {
+                      kind: 'ElementReference',
+                      name: 'element-panel-a',
+                    },
+                  },
+                },
+                {
+                  kind: 'GridLayoutItem',
+                  spec: {
+                    x: 0,
+                    y: 0,
+                    width: 12,
+                    height: 8,
+                    element: {
+                      kind: 'ElementReference',
+                      name: 'element-panel-b',
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        };
+      });
+
+      it('should initialize panel mapping correctly', () => {
+        serializer.initializeMapping(saveModel);
+        const mapping = serializer.getElementPanelMapping();
+
+        expect(mapping.size).toBe(2);
+        expect(mapping.get('element-panel-a')).toBe(1);
+        expect(mapping.get('element-panel-b')).toBe(2);
+      });
+
+      it('should handle empty or undefined elements in initializeMapping', () => {
+        serializer.initializeMapping({} as DashboardV2Spec);
+        expect(serializer.getElementPanelMapping().size).toBe(0);
+
+        serializer.initializeMapping({ elements: {} } as DashboardV2Spec);
+        expect(serializer.getElementPanelMapping().size).toBe(0);
+      });
+
+      it('should get panel id for element correctly', () => {
+        serializer.initializeMapping(saveModel);
+
+        expect(serializer.getPanelIdForElement('element-panel-a')).toBe(1);
+        expect(serializer.getPanelIdForElement('element-panel-b')).toBe(2);
+        expect(serializer.getPanelIdForElement('non-existent')).toBeUndefined();
+      });
+
+      it('should get element id for panel correctly', () => {
+        serializer.initializeMapping(saveModel);
+
+        expect(serializer.getElementIdForPanel(1)).toBe('element-panel-a');
+        expect(serializer.getElementIdForPanel(2)).toBe('element-panel-b');
+        // Should return default panel key for non-existent panel
+        expect(serializer.getElementIdForPanel(3)).toBe('panel-3');
       });
     });
   });

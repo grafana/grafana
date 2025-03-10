@@ -1,5 +1,5 @@
 run:
-  timeout: 10m
+  timeout: 15m
   concurrency: 10
   allow-parallel-runners: true
 linters-settings:
@@ -191,10 +191,10 @@ linters-settings:
         allow: []
         deny:
           - pkg: github.com/grafana/grafana/pkg
-            desc: apps/investigation is not allowed to import grafana core
+            desc: apps/investigations is not allowed to import grafana core
         files:
-          - ./apps/investigation/*
-          - ./apps/investigation/**/*
+          - ./apps/investigations/*
+          - ./apps/investigations/**/*
   gocritic:
     enabled-checks:
       - ruleguard

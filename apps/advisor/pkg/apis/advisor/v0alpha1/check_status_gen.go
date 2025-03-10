@@ -3,18 +3,33 @@
 package v0alpha1
 
 // +k8s:openapi-gen=true
-type CheckReportError struct {
-	// Severity of the error
-	Severity CheckReportErrorSeverity `json:"severity"`
-	// Human readable reason for the error
-	Reason string `json:"reason"`
-	// Action to take to resolve the error
-	Action string `json:"action"`
+type CheckErrorLink struct {
+	// URL to a page with more information about the error
+	Url string `json:"url"`
+	// Human readable error message
+	Message string `json:"message"`
 }
 
-// NewCheckReportError creates a new CheckReportError object.
-func NewCheckReportError() *CheckReportError {
-	return &CheckReportError{}
+// NewCheckErrorLink creates a new CheckErrorLink object.
+func NewCheckErrorLink() *CheckErrorLink {
+	return &CheckErrorLink{}
+}
+
+// +k8s:openapi-gen=true
+type CheckReportFailure struct {
+	// Severity of the failure
+	Severity CheckReportFailureSeverity `json:"severity"`
+	// Step ID that the failure is associated with
+	StepID string `json:"stepID"`
+	// Human readable identifier of the item that failed
+	Item string `json:"item"`
+	// Links to actions that can be taken to resolve the failure
+	Links []CheckErrorLink `json:"links"`
+}
+
+// NewCheckReportFailure creates a new CheckReportFailure object.
+func NewCheckReportFailure() *CheckReportFailure {
+	return &CheckReportFailure{}
 }
 
 // +k8s:openapi-gen=true
@@ -53,11 +68,11 @@ func NewCheckStatus() *CheckStatus {
 }
 
 // +k8s:openapi-gen=true
-type CheckReportErrorSeverity string
+type CheckReportFailureSeverity string
 
 const (
-	CheckReportErrorSeverityHigh CheckReportErrorSeverity = "high"
-	CheckReportErrorSeverityLow  CheckReportErrorSeverity = "low"
+	CheckReportFailureSeverityHigh CheckReportFailureSeverity = "high"
+	CheckReportFailureSeverityLow  CheckReportFailureSeverity = "low"
 )
 
 // +k8s:openapi-gen=true
@@ -73,8 +88,8 @@ const (
 type CheckV0alpha1StatusReport struct {
 	// Number of elements analyzed
 	Count int64 `json:"count"`
-	// List of errors
-	Errors []CheckReportError `json:"errors"`
+	// List of failures
+	Failures []CheckReportFailure `json:"failures"`
 }
 
 // NewCheckV0alpha1StatusReport creates a new CheckV0alpha1StatusReport object.

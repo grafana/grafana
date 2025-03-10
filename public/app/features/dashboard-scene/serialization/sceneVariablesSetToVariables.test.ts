@@ -775,7 +775,12 @@ describe('sceneVariablesSetToVariables', () => {
         "multi": true,
         "name": "test",
         "options": [],
-        "query": "query",
+        "query": {
+          "kind": "fake-std",
+          "spec": {
+            "__legacyStringValue": "query",
+          },
+        },
         "refresh": "onDashboardLoad",
         "regex": "",
         "skipUrlSync": false,

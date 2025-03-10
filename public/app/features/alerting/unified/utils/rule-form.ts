@@ -58,14 +58,7 @@ import {
   isGrafanaRulesSource,
 } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
-import {
-  isAlertingRulerRule,
-  isGrafanaAlertingRuleByType,
-  isGrafanaRecordingRule,
-  isGrafanaRecordingRuleByType,
-  isGrafanaRulerRule,
-  isRecordingRulerRule,
-} from './rules';
+import { isGrafanaAlertingRuleByType, isGrafanaRecordingRuleByType, rulerRuleType } from './rules';
 import { parseInterval } from './time';
 
 export type PromOrLokiQuery = PromQuery | LokiQuery;
@@ -275,7 +268,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
   const defaultFormValues = getDefaultFormValues();
   if (isGrafanaRulesSource(ruleSourceName)) {
     // GRAFANA-MANAGED RULES
-    if (isGrafanaRecordingRule(rule)) {
+    if (rulerRuleType.grafana.recordingRule(rule)) {
       // grafana recording rule
       const ga = rule.grafana_alert;
       return {
@@ -292,7 +285,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         isPaused: ga.is_paused,
         metric: ga.record?.metric,
       };
-    } else if (isGrafanaRulerRule(rule)) {
+    } else if (rulerRuleType.grafana.rule(rule)) {
       // grafana alerting rule
       const ga = rule.grafana_alert;
       const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
@@ -326,7 +319,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
     }
   } else {
     // DATASOURCE-MANAGED RULES
-    if (isAlertingRulerRule(rule)) {
+    if (rulerRuleType.dataSource.alertingRule(rule)) {
       const datasourceUid = getDataSourceSrv().getInstanceSettings(ruleSourceName)?.uid ?? '';
 
       const defaultQuery = {
@@ -354,7 +347,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         namespace,
         group: group.name,
       };
-    } else if (isRecordingRulerRule(rule)) {
+    } else if (rulerRuleType.dataSource.recordingRule(rule)) {
       const recordingRuleValues = recordingRulerRuleToRuleForm(rule);
 
       return {

@@ -104,6 +104,51 @@ describe('RowItemRepeaterBehavior', () => {
     });
   });
 
+  describe('Given scene with variable with 15 values', () => {
+    let scene: DashboardScene, layout: RowsLayoutManager;
+    let layoutStateUpdates: unknown[];
+
+    beforeEach(async () => {
+      ({ scene, layout } = buildScene({ variableQueryTime: 0 }, [
+        { label: 'A', value: 'A1' },
+        { label: 'B', value: 'B1' },
+        { label: 'C', value: 'C1' },
+        { label: 'D', value: 'D1' },
+        { label: 'E', value: 'E1' },
+        { label: 'F', value: 'F1' },
+        { label: 'G', value: 'G1' },
+        { label: 'H', value: 'H1' },
+        { label: 'I', value: 'I1' },
+        { label: 'J', value: 'J1' },
+        { label: 'K', value: 'K1' },
+        { label: 'L', value: 'L1' },
+        { label: 'M', value: 'M1' },
+        { label: 'N', value: 'N1' },
+        { label: 'O', value: 'O1' },
+      ]));
+
+      layoutStateUpdates = [];
+      layout.subscribeToState((state) => layoutStateUpdates.push(state));
+
+      activateFullSceneTree(scene);
+      await new Promise((r) => setTimeout(r, 1));
+    });
+
+    it('Should handle second repeat cycle and update remove old repeats', async () => {
+      // should have 15 repeated rows (and the panel above)
+      expect(layout.state.rows.length).toBe(16);
+
+      // trigger another repeat cycle by changing the variable
+      const variable = scene.state.$variables!.state.variables[0] as TestVariable;
+      variable.changeValueTo(['B1', 'C1']);
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      // should now only have 2 repeated rows (and the panel above)
+      expect(layout.state.rows.length).toBe(3);
+    });
+  });
+
   describe('Given a scene with empty variable', () => {
     it('Should preserve repeat row', async () => {
       const { scene, layout } = buildScene({ variableQueryTime: 0 }, []);
@@ -141,7 +186,7 @@ function buildScene(
       $behaviors: [repeatBehavior],
       layout: DefaultGridLayoutManager.fromGridItems([
         new DashboardGridItem({
-          key: 'griditem-1',
+          key: 'grid-item-1',
           x: 0,
           y: 11,
           width: 24,
@@ -155,13 +200,13 @@ function buildScene(
       title: 'Row at the bottom',
       layout: DefaultGridLayoutManager.fromGridItems([
         new DashboardGridItem({
-          key: 'griditem-2',
+          key: 'grid-item-2',
           x: 0,
           y: 17,
           body: buildTextPanel('text-2', 'Panel inside row, server = $server'),
         }),
         new DashboardGridItem({
-          key: 'griditem-3',
+          key: 'grid-item-3',
           x: 0,
           y: 25,
           body: buildTextPanel('text-3', 'Panel inside row, server = $server'),

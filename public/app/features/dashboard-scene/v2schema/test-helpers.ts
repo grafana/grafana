@@ -53,7 +53,7 @@ export function validateVariable<
   }
   if (sceneVariable instanceof QueryVariable && variableKind.kind === 'QueryVariable') {
     expect(sceneVariable?.state.datasource).toBe(variableKind.spec.datasource);
-    expect(sceneVariable?.state.query).toBe(variableKind.spec.query);
+    expect(sceneVariable?.state.query).toEqual(variableKind.spec.query.spec);
   }
   if (sceneVariable instanceof CustomVariable && variableKind.kind === 'CustomVariable') {
     expect(sceneVariable?.state.query).toBe(variableKind.spec.query);

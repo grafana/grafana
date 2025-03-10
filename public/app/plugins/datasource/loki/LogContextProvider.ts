@@ -14,6 +14,7 @@ import {
   LogRowContextQueryDirection,
   LogRowContextOptions,
   dateTime,
+  ScopedVars,
 } from '@grafana/data';
 import { LabelParser, LabelFilter, LineFilters, PipelineStage, Logfmt, Json } from '@grafana/lezer-logql';
 
@@ -79,6 +80,9 @@ export class LogContextProvider {
     origQuery?: LokiQuery,
     cacheFilters = true
   ): Promise<LokiQuery> => {
+    if (origQuery && options?.scopedVars) {
+      origQuery = this.datasource.applyTemplateVariables(origQuery, options?.scopedVars);
+    }
     const { query } = await this.getQueryAndRange(row, options, origQuery, cacheFilters);
 
     if (!cacheFilters) {
@@ -94,6 +98,9 @@ export class LogContextProvider {
     options?: LogRowContextOptions,
     origQuery?: LokiQuery
   ): Promise<{ data: DataFrame[] }> => {
+    if (origQuery && options?.scopedVars) {
+      origQuery = this.datasource.applyTemplateVariables(origQuery, options?.scopedVars);
+    }
     const direction = (options && options.direction) || LogRowContextQueryDirection.Backward;
     const { query, range } = await this.getQueryAndRange(row, options, origQuery);
 
@@ -185,7 +192,15 @@ export class LogContextProvider {
     };
   }
 
-  getLogRowContextUi(row: LogRowModel, runContextQuery?: () => void, origQuery?: LokiQuery): React.ReactNode {
+  getLogRowContextUi(
+    row: LogRowModel,
+    runContextQuery?: () => void,
+    origQuery?: LokiQuery,
+    scopedVars?: ScopedVars
+  ): React.ReactNode {
+    if (origQuery && scopedVars) {
+      origQuery = this.datasource.applyTemplateVariables(origQuery, scopedVars);
+    }
     const updateFilter = (contextFilters: ContextFilter[]) => {
       this.cachedContextFilters = contextFilters;
 

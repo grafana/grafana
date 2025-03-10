@@ -156,6 +156,7 @@ type Cfg struct {
 	DisableInitAdminCreation             bool
 	DisableBruteForceLoginProtection     bool
 	BruteForceLoginProtectionMaxAttempts int64
+	DisableIPAddressLoginProtection      bool
 	CookieSecure                         bool
 	CookieSameSiteDisabled               bool
 	CookieSameSiteMode                   http.SameSite
@@ -293,8 +294,8 @@ type Cfg struct {
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheSettings
 
-	ViewersCanEdit  bool
-	EditorsCanAdmin bool
+	ViewersCanEdit  bool // Deprecated: no longer used
+	EditorsCanAdmin bool // Deprecated: no longer used
 
 	ApiKeyMaxSecondsToLive int64
 
@@ -1527,6 +1528,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 
 	cfg.DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
 	cfg.BruteForceLoginProtectionMaxAttempts = security.Key("brute_force_login_protection_max_attempts").MustInt64(5)
+	cfg.DisableIPAddressLoginProtection = security.Key("disable_ip_address_login_protection").MustBool(true)
 
 	// Ensure at least one login attempt can be performed.
 	if cfg.BruteForceLoginProtectionMaxAttempts <= 0 {
@@ -1727,8 +1729,16 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.ExternalUserMngAnalytics = users.Key("external_manage_analytics").MustBool(false)
 	cfg.ExternalUserMngAnalyticsParams = valueAsString(users, "external_manage_analytics_params", "")
 
+	// Deprecated
 	cfg.ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
+	if cfg.ViewersCanEdit {
+		cfg.Logger.Warn("[Deprecated] The viewers_can_edit configuration setting is deprecated. Please upgrade viewers to editors.")
+	}
+	// Deprecated
 	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)
+	if cfg.EditorsCanAdmin {
+		cfg.Logger.Warn("[Deprecated] The editors_can_admin configuration setting is deprecated. Please upgrade editors to admin.")
+	}
 
 	userInviteMaxLifetimeVal := valueAsString(users, "user_invite_max_lifetime_duration", "24h")
 	userInviteMaxLifetimeDuration, err := gtime.ParseDuration(userInviteMaxLifetimeVal)

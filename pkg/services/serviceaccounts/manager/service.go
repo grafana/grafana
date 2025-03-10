@@ -265,6 +265,7 @@ func (sa *ServiceAccountsService) UpdateServiceAccount(ctx context.Context, orgI
 	if err := validServiceAccountID(serviceAccountID); err != nil {
 		return nil, err
 	}
+
 	return sa.store.UpdateServiceAccount(ctx, orgID, serviceAccountID, saForm)
 }
 

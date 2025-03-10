@@ -231,6 +231,8 @@ function ResourceIcon({ resource }: { resource: ResourceTableItem }) {
       return <Icon size="xl" name="bell" />;
     case 'ALERT_RULE':
       return <Icon size="xl" name="bell" />;
+    case 'ALERT_RULE_GROUP':
+      return <Icon size="xl" name="bell" />;
     case 'PLUGIN':
       if (pluginLogo) {
         return <img className={styles.icon} src={pluginLogo} alt="" />;

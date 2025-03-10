@@ -167,6 +167,7 @@ import (
 //     Responses:
 //       202: RuleGroupConfigResponse
 //       403: ForbiddenError
+//		 404: NotFound
 
 // swagger:route Get /ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetRulegGroupConfig
 //
@@ -532,6 +533,10 @@ type Record struct {
 	// required: true
 	// example: A
 	From string `json:"from" yaml:"from"`
+	// Which data source should be used to write the output of the recording rule, specified by UID.
+	// required: false
+	// example: my-prom
+	TargetDatasourceUID string `json:"target_datasource_uid,omitempty" yaml:"target_datasource_uid,omitempty"`
 }
 
 // swagger:model
@@ -550,8 +555,6 @@ type PostableGrafanaRule struct {
 
 // swagger:model
 type GettableGrafanaRule struct {
-	ID                   int64                          `json:"id" yaml:"id"`
-	OrgID                int64                          `json:"orgId" yaml:"orgId"`
 	Title                string                         `json:"title" yaml:"title"`
 	Condition            string                         `json:"condition" yaml:"condition"`
 	Data                 []AlertQuery                   `json:"data" yaml:"data"`

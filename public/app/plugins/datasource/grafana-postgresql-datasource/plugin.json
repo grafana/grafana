@@ -14,7 +14,8 @@
     "logos": {
       "small": "img/postgresql_logo.svg",
       "large": "img/postgresql_logo.svg"
-    }
+    },
+    "version": "%VERSION%"
   },
 
   "alerting": true,

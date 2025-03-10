@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { CoreApp, LogSortOrderChangeEvent, LogsSortOrder, store } from '@grafana/data';
@@ -122,33 +122,11 @@ describe('LokiQueryBuilderOptions', () => {
   });
 
   it('shows correct options for metric query', async () => {
-    setup({ expr: 'rate({foo="bar"}[5m]', step: '1m', resolution: 2 });
+    setup({ expr: 'rate({foo="bar"}[5m]', step: '1m' });
     expect(screen.queryByText('Line limit: 20')).not.toBeInTheDocument();
     expect(screen.getByText('Type: Range')).toBeInTheDocument();
     expect(screen.getByText('Step: 1m')).toBeInTheDocument();
-    expect(screen.getByText('Resolution: 1/2')).toBeInTheDocument();
     expect(screen.queryByText(/Direction/)).not.toBeInTheDocument();
-  });
-
-  it('does not show resolution field if resolution is not set', async () => {
-    setup({ expr: 'rate({foo="bar"}[5m]' });
-    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
-    expect(screen.queryByText('Resolution')).not.toBeInTheDocument();
-  });
-
-  it('does not show resolution field if resolution is set to default value 1', async () => {
-    setup({ expr: 'rate({foo="bar"}[5m]', resolution: 1 });
-    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
-    expect(screen.queryByText('Resolution')).not.toBeInTheDocument();
-  });
-
-  it('does shows resolution field with warning if resolution is set to non-default value', async () => {
-    setup({ expr: 'rate({foo="bar"}[5m]', resolution: 2 });
-    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
-    expect(screen.getByText('Resolution')).toBeInTheDocument();
-    expect(
-      screen.getByText("The 'Resolution' is deprecated. Use 'Step' editor instead to change step parameter.")
-    ).toBeInTheDocument();
   });
 
   it.each(['abc', 10])('shows correct options for metric query with invalid step', async (step: string | number) => {
@@ -214,42 +192,42 @@ describe('LokiQueryBuilderOptions', () => {
   });
 
   describe('Query direction', () => {
-    it("initializes query direction when it's empty", async () => {
+    it("initializes query direction when it's empty in Explore or Dashboards", () => {
       const onChange = jest.fn();
-      setup({ expr: '{foo="bar"}' }, onChange);
-      await waitFor(() =>
-        expect(onChange).toHaveBeenCalledWith({
-          expr: '{foo="bar"}',
-          refId: 'A',
-          direction: LokiQueryDirection.Backward,
-        })
-      );
+      setup({ expr: '{foo="bar"}' }, onChange, { app: CoreApp.Explore });
+      expect(onChange).toHaveBeenCalledWith({
+        expr: '{foo="bar"}',
+        refId: 'A',
+        direction: LokiQueryDirection.Backward,
+      });
     });
 
-    it('uses backward as default in Explore with no previous stored preference', async () => {
+    it('does not change direction on initialization elsewhere', () => {
+      const onChange = jest.fn();
+      setup({ expr: '{foo="bar"}' }, onChange, { app: undefined });
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('uses backward as default in Explore with no previous stored preference', () => {
       const onChange = jest.fn();
       store.delete('grafana.explore.logs.sortOrder');
       setup({ expr: '{foo="bar"}' }, onChange, { app: CoreApp.Explore });
-      await waitFor(() =>
-        expect(onChange).toHaveBeenCalledWith({
-          expr: '{foo="bar"}',
-          refId: 'A',
-          direction: LokiQueryDirection.Backward,
-        })
-      );
+      expect(onChange).toHaveBeenCalledWith({
+        expr: '{foo="bar"}',
+        refId: 'A',
+        direction: LokiQueryDirection.Backward,
+      });
     });
 
-    it('uses the stored sorting option to determine direction in Explore', async () => {
+    it('uses the stored sorting option to determine direction in Explore', () => {
       store.set('grafana.explore.logs.sortOrder', LogsSortOrder.Ascending);
       const onChange = jest.fn();
       setup({ expr: '{foo="bar"}' }, onChange, { app: CoreApp.Explore });
-      await waitFor(() =>
-        expect(onChange).toHaveBeenCalledWith({
-          expr: '{foo="bar"}',
-          refId: 'A',
-          direction: LokiQueryDirection.Forward,
-        })
-      );
+      expect(onChange).toHaveBeenCalledWith({
+        expr: '{foo="bar"}',
+        refId: 'A',
+        direction: LokiQueryDirection.Forward,
+      });
       store.delete('grafana.explore.logs.sortOrder');
     });
 

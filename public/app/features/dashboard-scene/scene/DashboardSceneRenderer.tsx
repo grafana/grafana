@@ -5,7 +5,6 @@ import { PageLayoutType } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
-import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
 import { useSelector } from 'app/types';
 
 import { DashboardEditPaneSplitter } from '../edit-pane/DashboardEditPaneSplitter';
@@ -15,7 +14,7 @@ import { PanelSearchLayout } from './PanelSearchLayout';
 import { DashboardAngularDeprecationBanner } from './angular/DashboardAngularDeprecationBanner';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, overlay, editview, editPanel, isEmpty, viewPanelScene, panelSearch, panelsPerRow, isEditing } =
+  const { controls, overlay, editview, editPanel, viewPanelScene, panelSearch, panelsPerRow, isEditing } =
     model.useState();
   const { type } = useParams();
   const location = useLocation();
@@ -56,9 +55,6 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     return (
       <>
         <DashboardAngularDeprecationBanner dashboard={model} key="angular-deprecation-banner" />
-        {isEmpty && (
-          <DashboardEmpty dashboard={model} canCreate={!!model.state.meta.canEdit} key="dashboard-empty-state" />
-        )}
         <bodyToRender.Component model={bodyToRender} />
       </>
     );

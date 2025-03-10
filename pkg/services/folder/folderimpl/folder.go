@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/dskit/concurrency"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	dashboardalpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
@@ -27,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -35,13 +37,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -56,7 +61,8 @@ type Service struct {
 	dashboardFolderStore   folder.FolderStore
 	features               featuremgmt.FeatureToggles
 	accessControl          accesscontrol.AccessControl
-	k8sclient              folderK8sHandler
+	k8sclient              client.K8sHandler
+	dashboardK8sClient     client.K8sHandler
 	publicDashboardService publicdashboards.ServiceWrapper
 	// bus is currently used to publish event in case of folder full path change.
 	// For example when a folder is moved to another folder or when a folder is renamed.
@@ -82,6 +88,9 @@ func ProvideService(
 	cfg *setting.Cfg,
 	r prometheus.Registerer,
 	tracer tracing.Tracer,
+	resourceClient resource.ResourceClient,
+	dual dualwrite.Service,
+	sorter sort.Service,
 ) *Service {
 	srv := &Service{
 		log:                    slog.Default().With("logger", "folder-service"),
@@ -104,19 +113,36 @@ func ProvideService(
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, srv))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(srv))
 
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
-		k8sHandler := &foldk8sHandler{
-			gvr:                    v0alpha1.FolderResourceInfo.GroupVersionResource(),
-			namespacer:             request.GetNamespaceMapper(cfg),
-			cfg:                    cfg,
-			restConfigProvider:     apiserver.GetRestConfig,
-			recourceClientProvider: unified.GetResourceClient,
-		}
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
+		k8sHandler := client.NewK8sHandler(
+			dual,
+			request.GetNamespaceMapper(cfg),
+			v0alpha1.FolderResourceInfo.GroupVersionResource(),
+			apiserver.GetRestConfig,
+			dashboardStore,
+			userService,
+			resourceClient,
+			sorter,
+		)
 
 		unifiedStore := ProvideUnifiedStore(k8sHandler, userService)
 
 		srv.unifiedStore = unifiedStore
 		srv.k8sclient = k8sHandler
+	}
+
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
+		dashHandler := client.NewK8sHandler(
+			dual,
+			request.GetNamespaceMapper(cfg),
+			dashboardalpha1.DashboardResourceInfo.GroupVersionResource(),
+			apiserver.GetRestConfig,
+			dashboardStore,
+			userService,
+			resourceClient,
+			sorter,
+		)
+		srv.dashboardK8sClient = dashHandler
 	}
 
 	return srv
@@ -169,7 +195,7 @@ func (s *Service) DBMigration(db db.DB) {
 }
 
 func (s *Service) SearchFolders(ctx context.Context, q folder.SearchFoldersQuery) (model.HitList, error) {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		// TODO:
 		// - implement filtering by alerting folders and k6 folders (see the dashboards store `FindDashboards` method for reference)
 		// - implement fallback on search client in unistore to go to legacy store (will need to read from dashboard store)
@@ -180,7 +206,7 @@ func (s *Service) SearchFolders(ctx context.Context, q folder.SearchFoldersQuery
 }
 
 func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return s.getFoldersFromApiServer(ctx, q)
 	}
 	return s.GetFoldersLegacy(ctx, q)
@@ -239,7 +265,7 @@ func (s *Service) GetFoldersLegacy(ctx context.Context, q folder.GetFoldersQuery
 }
 
 func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return s.getFromApiServer(ctx, q)
 	}
 	return s.GetLegacy(ctx, q)
@@ -380,7 +406,7 @@ func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, user identi
 }
 
 func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return s.getChildrenFromApiServer(ctx, q)
 	}
 	return s.GetChildrenLegacy(ctx, q)
@@ -650,7 +676,7 @@ func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*fo
 }
 
 func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return s.getParentsFromApiServer(ctx, q)
 	}
 	return s.GetParentsLegacy(ctx, q)
@@ -683,7 +709,7 @@ func (s *Service) getFolderByTitle(ctx context.Context, orgID int64, title strin
 }
 
 func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return s.createOnApiServer(ctx, cmd)
 	}
 	return s.CreateLegacy(ctx, cmd)
@@ -802,7 +828,7 @@ func (s *Service) CreateLegacy(ctx context.Context, cmd *folder.CreateFolderComm
 }
 
 func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return s.updateOnApiServer(ctx, cmd)
 	}
 	return s.UpdateLegacy(ctx, cmd)
@@ -941,7 +967,7 @@ func prepareForUpdate(dashFolder *dashboards.Dashboard, orgId int64, userId int6
 }
 
 func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return s.deleteFromApiServer(ctx, cmd)
 	}
 	return s.DeleteLegacy(ctx, cmd)
@@ -1028,7 +1054,12 @@ func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderComm
 	// if dashboard restore is on we don't delete public dashboards, the hard delete will take care of it later
 	if !s.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
 		// We need a list of dashboard uids inside the folder to delete related public dashboards
-		dashes, err := s.dashboardStore.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{SignedInUser: cmd.SignedInUser, FolderUIDs: folderUIDs, OrgId: cmd.OrgID})
+		dashes, err := s.dashboardStore.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{
+			SignedInUser: cmd.SignedInUser,
+			FolderUIDs:   folderUIDs,
+			OrgId:        cmd.OrgID,
+			Type:         searchstore.TypeDashboard,
+		})
 		if err != nil {
 			return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
 		}
@@ -1059,7 +1090,7 @@ func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderComm
 }
 
 func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return s.moveOnApiServer(ctx, cmd)
 	}
 	return s.MoveLegacy(ctx, cmd)
@@ -1286,7 +1317,7 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 }
 
 func (s *Service) GetDescendantCounts(ctx context.Context, q *folder.GetDescendantCountsQuery) (folder.DescendantCounts, error) {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return s.getDescendantCountsFromApiServer(ctx, q)
 	}
 

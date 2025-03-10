@@ -194,6 +194,7 @@ export type MigrateDataResponseItemDto = {
     | 'FOLDER'
     | 'LIBRARY_ELEMENT'
     | 'ALERT_RULE'
+    | 'ALERT_RULE_GROUP'
     | 'CONTACT_POINT'
     | 'NOTIFICATION_POLICY'
     | 'NOTIFICATION_TEMPLATE'
@@ -271,6 +272,7 @@ export type AnnotationPermission = {
 };
 export type DashboardMeta = {
   annotationsPermissions?: AnnotationPermission;
+  apiVersion?: string;
   canAdmin?: boolean;
   canDelete?: boolean;
   canEdit?: boolean;

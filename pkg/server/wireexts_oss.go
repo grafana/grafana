@@ -7,8 +7,6 @@ package server
 import (
 	"github.com/google/wire"
 
-	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
-
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager"
@@ -21,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
 	"github.com/grafana/grafana/pkg/services/anonymous/validator"
+	builder "github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
@@ -52,6 +51,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
 var wireExtsBasicSet = wire.NewSet(
@@ -116,6 +118,9 @@ var wireExtsBasicSet = wire.NewSet(
 	search2.ProvideDocumentBuilders,
 	sandbox.ProvideService,
 	wire.Bind(new(sandbox.Sandbox), new(*sandbox.Service)),
+	wire.Struct(new(unified.Options), "*"),
+	unified.ProvideUnifiedStorageClient,
+	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
 )
 
 var wireExtsSet = wire.NewSet(
@@ -142,6 +147,7 @@ var wireExtsBaseCLISet = wire.NewSet(
 	metrics.WireSet,
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
+	featuremgmt.ProvideOpenFeatureService,
 	hooks.ProvideService,
 	setting.ProvideProvider, wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
 	licensing.ProvideService, wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)),
@@ -151,6 +157,8 @@ var wireExtsBaseCLISet = wire.NewSet(
 var wireExtsModuleServerSet = wire.NewSet(
 	NewModule,
 	wireExtsBaseCLISet,
+	// Unified storage
+	resource.ProvideStorageMetrics,
 )
 
 var wireExtsStandaloneAPIServerSet = wire.NewSet(

@@ -1,4 +1,5 @@
 import { RegistryItem } from '@grafana/data';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
 import { DashboardLayoutManager } from './DashboardLayoutManager';
 
@@ -17,4 +18,9 @@ export interface LayoutRegistryItem<S = {}> extends RegistryItem {
    * @param saveModel
    */
   createFromSaveModel?(saveModel: S): void;
+
+  /**
+   * Schema kind of layout
+   */
+  kind?: DashboardV2Spec['layout']['kind'];
 }

@@ -15,10 +15,21 @@ export const handyTestingSchema: DashboardV2Spec = {
     from: 'now-1h',
     hideTimepicker: false,
     nowDelay: '1m',
-    quickRanges: [],
     timezone: 'UTC',
     to: 'now',
     weekStart: 'monday',
+    quickRanges: [
+      {
+        display: 'Last 6 hours',
+        from: 'now-6h',
+        to: 'now',
+      },
+      {
+        display: 'Last 3 days',
+        from: 'now-3d',
+        to: 'now',
+      },
+    ],
   },
   annotations: [
     {
@@ -344,7 +355,13 @@ export const handyTestingSchema: DashboardV2Spec = {
         multi: true,
         name: 'queryVar',
         options: [],
-        query: 'query1',
+        query: {
+          kind: 'prometheus',
+          spec: {
+            expr: 'test-query',
+            refId: 'A',
+          },
+        },
         refresh: 'onDashboardLoad',
         regex: 'regex1',
         skipUrlSync: false,
