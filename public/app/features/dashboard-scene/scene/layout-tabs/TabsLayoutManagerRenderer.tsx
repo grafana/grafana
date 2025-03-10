@@ -60,12 +60,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflowX: 'auto',
     overflowY: 'hidden',
     paddingInline: theme.spacing(0.125),
+    paddingTop: '1px',
   }),
   tabContentContainer: css({
     backgroundColor: 'transparent',
     display: 'flex',
     flex: 1,
     minHeight: 0,
-    padding: '2px 2px 0 2px',
+    paddingTop: theme.spacing(1),
   }),
 });
