@@ -196,7 +196,7 @@ export const LANGUAGES: LanguageDefinition[] = [
   },
 ] satisfies Array<LanguageDefinition<'grafana'>>;
 
-if (config.featureToggles.extraLanguages) {
+if (config.featureToggles?.extraLanguages) {
   LANGUAGES.push(...EXTRA_LANGUAGES);
 }
 
