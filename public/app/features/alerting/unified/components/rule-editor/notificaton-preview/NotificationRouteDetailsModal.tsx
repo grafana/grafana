@@ -81,13 +81,11 @@ export function NotificationRouteDetailsModal({
           {isDefault && <div className={styles.textMuted}>Default policy</div>}
           <div className={styles.separator(1)} />
           {!isDefault && (
-            <>
-              <PolicyPath
-                route={route}
-                routesByIdMap={routesByIdMap}
-                matcherFormatter={getAmMatcherFormatter(alertManagerSourceName)}
-              />
-            </>
+            <PolicyPath
+              route={route}
+              routesByIdMap={routesByIdMap}
+              matcherFormatter={getAmMatcherFormatter(alertManagerSourceName)}
+            />
           )}
           <div className={styles.separator(4)} />
           <div className={styles.contactPoint}>

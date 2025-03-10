@@ -114,16 +114,14 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
         </Stack>
       )}
       {isEmpty(frameSubset) ? (
-        <>
-          <div className={styles.emptyState}>
-            {emptyStateMessage}
-            {totalRecordsCount > 0 && (
-              <Button variant="secondary" type="button" onClick={onFilterCleared}>
-                Clear filters
-              </Button>
-            )}
-          </div>
-        </>
+        <div className={styles.emptyState}>
+          {emptyStateMessage}
+          {totalRecordsCount > 0 && (
+            <Button variant="secondary" type="button" onClick={onFilterCleared}>
+              Clear filters
+            </Button>
+          )}
+        </div>
       ) : (
         <>
           <div className={styles.graphWrapper}>
