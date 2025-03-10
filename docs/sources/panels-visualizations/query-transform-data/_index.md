@@ -110,6 +110,10 @@ query_result(max_over_time(<metric>[${__range_s}s]) != <state>)
 
 ### Query library
 
+{{< admonition type="note" >}}
+This feature is only available on Grafana Enterprise and Grafana Cloud.
+{{< /admonition >}}
+
 {{< docs/private-preview product="Query library" >}}
 
 The query library lets you save queries that you've created so you can reuse them later:
@@ -178,9 +182,11 @@ When you create a panel, Grafana automatically selects the default data source.
 1. Do one of the following:
 
    - Write or construct a query in the query language of your data source.
-   - Click **Add query from library**, search or filter for the query you want to use, and click **Select query**.
+   - Click **Add query from library**, search or filter for the query you want to use, and click **Select query** (Grafana Enterprise and Cloud only).
 
 1. Click **Apply**.
+
+<!-- check on this last step -->
 
 Grafana queries the data source and visualizes the data.
 
