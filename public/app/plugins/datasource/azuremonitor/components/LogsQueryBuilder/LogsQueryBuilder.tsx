@@ -1,12 +1,17 @@
 import React, { useMemo, useState } from 'react';
 
-import { EditorRows } from '@grafana/plugin-ui';
-import { Alert } from '@grafana/ui';
+import { EditorField, EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
+import { Alert, Input } from '@grafana/ui';
 
-import { BuilderQueryExpression } from '../../dataquery.gen';
+import {
+  BuilderQueryEditorExpressionType,
+  BuilderQueryEditorPropertyType,
+  BuilderQueryExpression,
+} from '../../dataquery.gen';
 import { selectors } from '../../e2e/selectors';
 import { AzureLogAnalyticsMetadataTable, AzureMonitorQuery, EngineSchema } from '../../types';
 
+import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
 import { FilterSection } from './FilterSection';
 import KQLPreview from './KQLPreview';
 import { TableSection } from './TableSection';
@@ -22,6 +27,7 @@ interface LogsQueryBuilderProps {
 export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
   const { query, onQueryChange, schema } = props;
   const [isKQLPreviewHidden, setIsKQLPreviewHidden] = useState<boolean>(true);
+  const [limit, setLimit] = useState<number | undefined>(undefined);
 
   const tables: AzureLogAnalyticsMetadataTable[] = useMemo(() => {
     return schema?.database?.tables || [];
@@ -38,6 +44,37 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
     const selectedTable = tables.find((table) => table.name === builderQuery!.from?.property.name);
     return selectedTable?.columns || [];
   }, [builderQuery, tables]);
+
+  const handleQueryLimitUpdate = (limit: number) => {
+    const updatedBuilderQuery: BuilderQueryExpression = {
+      ...query.azureLogAnalytics?.builderQuery,
+      reduce: query.azureLogAnalytics?.builderQuery?.reduce,
+      from: {
+        property: {
+          name: query.azureLogAnalytics?.builderQuery?.from?.property.name!,
+          type: BuilderQueryEditorPropertyType.String,
+        },
+        type: BuilderQueryEditorExpressionType.Property,
+      },
+      limit: limit,
+    };
+
+    const updatedQueryString = AzureMonitorKustoQueryParser.toQuery({
+      selectedTable: updatedBuilderQuery.from?.property.name!,
+      selectedColumns: query.azureLogAnalytics?.builderQuery?.columns?.columns || [],
+      columns: allColumns,
+      limit: limit,
+    });
+
+    onQueryChange({
+      ...query,
+      azureLogAnalytics: {
+        ...query.azureLogAnalytics,
+        builderQuery: updatedBuilderQuery,
+        query: updatedQueryString,
+      },
+    });
+  };
 
   return (
     <span data-testid={selectors.components.queryEditor.logsQueryEditor.container.input}>
@@ -60,7 +97,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
           selectedTable={selectedTable!} 
           selectedColumns={selectedColumns} 
           onQueryUpdate={onQueryChange} 
-        />
+        /> */}
         <EditorRow>
           <EditorFieldGroup>
             <EditorField label="Limit">
@@ -72,12 +109,12 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   const newValue = e.target.value.replace(/[^0-9]/g, '');
                   setLimit(newValue ? Number(newValue) : undefined);
-                  handleQueryUpdate({ limit: Number(newValue) });
+                  handleQueryLimitUpdate(Number(newValue));
                 }}
               />
             </EditorField>
           </EditorFieldGroup>
-        </EditorRow> */}
+        </EditorRow>
         <KQLPreview
           query={query.azureLogAnalytics?.query || ''}
           hidden={isKQLPreviewHidden}

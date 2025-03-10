@@ -21,11 +21,7 @@ interface FilterSectionProps {
   onQueryUpdate: (newQuery: AzureMonitorQuery) => void;
 }
 
-export const FilterSection: React.FC<FilterSectionProps> = ({
-  onQueryUpdate,
-  query,
-  allColumns,
-}) => {
+export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, query, allColumns }) => {
   const styles = useStyles2(getStyles);
   const [filters, setFilters] = useState<Array<{ column: string; operator: string; value: string }>>([]);
   const builderQuery = query.azureLogAnalytics?.builderQuery || DEFAULT_LOGS_BUILDER_QUERY;
@@ -42,7 +38,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
 
   useEffect(() => {
     setFilters([]);
-  }, [builderQuery.from?.property.name]);  
+  }, [builderQuery.from?.property.name]);
 
   const formatFilters = (filters: Array<{ column: string; operator: string; value: string }>): string => {
     return filters
