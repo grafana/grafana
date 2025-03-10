@@ -23,9 +23,9 @@ export class RowItems implements EditableDashboardElement {
     return this._rows;
   }
 
-  public onDelete = () => {
+  public onDelete() {
     this._rows.forEach((row) => row.onDelete());
-  };
+  }
 
   public onHeaderHiddenToggle(value: boolean, indeterminate: boolean) {
     this._rows.forEach((row) => row.onHeaderHiddenToggle(indeterminate ? true : !value));

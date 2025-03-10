@@ -89,20 +89,20 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     return categories;
   }
 
-  public onDelete = () => {
+  public onDelete() {
     const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
     layout.removePanel?.(this.panel);
-  };
+  }
 
-  public onDuplicate = () => {
+  public onDuplicate() {
     const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
     layout.duplicatePanel?.(this.panel);
-  };
+  }
 
-  public onCopy = () => {
+  public onCopy() {
     const dashboard = getDashboardSceneFor(this.panel);
     dashboard.copyPanel(this.panel);
-  };
+  }
 
   public createMultiSelectedElement(items: VizPanelEditableElement[]) {
     return new MultiSelectedVizPanelsEditableElement(items);

@@ -39,7 +39,7 @@ export class MultiSelectedObjectsEditableElement implements EditableDashboardEle
     );
   }
 
-  public onDelete = () => {
+  public onDelete() {
     this._elements.forEach((item) => item.onDelete());
-  };
+  }
 }

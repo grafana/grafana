@@ -22,7 +22,7 @@ export class TabItems implements EditableDashboardElement {
     return this._tabs;
   }
 
-  public onDelete = () => {
+  public onDelete() {
     this._tabs.forEach((tab) => tab.onDelete());
-  };
+  }
 }

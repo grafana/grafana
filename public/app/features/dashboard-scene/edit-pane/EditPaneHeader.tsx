@@ -11,16 +11,34 @@ interface EditPaneHeaderProps {
 }
 
 export function EditPaneHeader({ element }: EditPaneHeaderProps) {
-  const addCopyOrDuplicate = element.onCopy || element.onDuplicate;
   const elementInfo = element.getEditableElementInfo();
   const styles = useStyles2(getStyles);
+
+  const onCopy = element.onCopy?.bind(element);
+  const onDuplicate = element.onDuplicate?.bind(element);
+  const onDelete = element.onDelete?.bind(element);
 
   return (
     <div className={styles.wrapper}>
       <Text variant="h5">{elementInfo.typeName}</Text>
       <Stack direction="row" gap={1}>
-        {addCopyOrDuplicate ? (
-          <Dropdown overlay={<MenuItems onCopy={element.onCopy} onDuplicate={element.onDuplicate} />}>
+        {(onCopy || onDelete) && (
+          <Dropdown
+            overlay={
+              <Menu>
+                {onCopy ? (
+                  <Menu.Item icon="copy" label={t('dashboard.layout.common.copy', 'Copy')} onClick={onCopy} />
+                ) : null}
+                {onDuplicate ? (
+                  <Menu.Item
+                    icon="file-copy-alt"
+                    label={t('dashboard.layout.common.duplicate', 'Duplicate')}
+                    onClick={onDuplicate}
+                  />
+                ) : null}
+              </Menu>
+            }
+          >
             <Button
               tooltip={t('dashboard.layout.common.copy-or-duplicate', 'Copy or Duplicate')}
               tooltipPlacement="bottom"
@@ -31,11 +49,11 @@ export function EditPaneHeader({ element }: EditPaneHeaderProps) {
               <Icon name="angle-down" />
             </Button>
           </Dropdown>
-        ) : null}
+        )}
 
-        {element.onDelete && (
+        {onDelete && (
           <ConfirmButton
-            onConfirm={element.onDelete}
+            onConfirm={onDelete}
             confirmText="Confirm"
             confirmVariant="destructive"
             size="sm"
@@ -66,23 +84,3 @@ function getStyles(theme: GrafanaTheme2) {
     }),
   };
 }
-
-type MenuItemsProps = {
-  onCopy?: () => void;
-  onDuplicate?: () => void;
-};
-
-const MenuItems = ({ onCopy, onDuplicate }: MenuItemsProps) => {
-  return (
-    <Menu>
-      {onCopy ? <Menu.Item icon="copy" label={t('dashboard.layout.common.copy', 'Copy')} onClick={onCopy} /> : null}
-      {onDuplicate ? (
-        <Menu.Item
-          icon="file-copy-alt"
-          label={t('dashboard.layout.common.duplicate', 'Duplicate')}
-          onClick={onDuplicate}
-        />
-      ) : null}
-    </Menu>
-  );
-};

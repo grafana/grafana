@@ -63,9 +63,9 @@ export class RowItem
     return getEditOptions(this);
   }
 
-  public onDelete = () => {
+  public onDelete() {
     this._getParentLayout().removeRow(this);
-  };
+  }
 
   public createMultiSelectedElement(items: SceneObject[]): RowItems {
     return new RowItems(items.filter((item) => item instanceof RowItem));

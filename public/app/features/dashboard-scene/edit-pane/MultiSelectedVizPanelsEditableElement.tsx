@@ -28,9 +28,9 @@ export class MultiSelectedVizPanelsEditableElement implements EditableDashboardE
     return [header];
   }
 
-  public onDelete = () => {
+  public onDelete() {
     this._panels.forEach((panel) => {
       panel.onDelete();
     });
-  };
+  }
 }
