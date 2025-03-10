@@ -52,6 +52,7 @@ type service struct {
 	log            log.Logger
 	reg            prometheus.Registerer
 	storageMetrics *resource.StorageMetrics
+	indexMetrics   *resource.BleveIndexMetrics
 
 	docBuilders resource.DocumentBuilderSupplier
 }
@@ -64,6 +65,7 @@ func ProvideUnifiedStorageGrpcService(
 	reg prometheus.Registerer,
 	docBuilders resource.DocumentBuilderSupplier,
 	storageMetrics *resource.StorageMetrics,
+	indexMetrics *resource.BleveIndexMetrics,
 ) (UnifiedStorageGrpcService, error) {
 	tracingCfg, err := tracing.ProvideTracingConfig(cfg)
 	if err != nil {
@@ -96,6 +98,7 @@ func ProvideUnifiedStorageGrpcService(
 		reg:            reg,
 		docBuilders:    docBuilders,
 		storageMetrics: storageMetrics,
+		indexMetrics:   indexMetrics,
 	}
 
 	// This will be used when running as a dskit service
@@ -110,12 +113,12 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.tracing, s.docBuilders, s.reg)
+	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.tracing, s.docBuilders, s.indexMetrics)
 	if err != nil {
 		return err
 	}
 
-	server, err := NewResourceServer(s.db, s.cfg, s.tracing, s.reg, authzClient, searchOptions, s.storageMetrics)
+	server, err := NewResourceServer(s.db, s.cfg, s.tracing, s.reg, authzClient, searchOptions, s.storageMetrics, s.indexMetrics)
 	if err != nil {
 		return err
 	}

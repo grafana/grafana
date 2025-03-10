@@ -59,10 +59,11 @@ type bleveBackend struct {
 	cache   map[resource.NamespacedResource]*bleveIndex
 	cacheMu sync.RWMutex
 
-	features featuremgmt.FeatureToggles
+	features     featuremgmt.FeatureToggles
+	indexMetrics *resource.BleveIndexMetrics
 }
 
-func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgmt.FeatureToggles) (*bleveBackend, error) {
+func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgmt.FeatureToggles, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
 	if opts.Root == "" {
 		return nil, fmt.Errorf("bleve backend missing root folder configuration")
 	}
@@ -74,13 +75,16 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgm
 		return nil, fmt.Errorf("bleve root is configured against a file (not folder)")
 	}
 
+	go updateIndexSizeMetric(opts.Root, indexMetrics)
+
 	return &bleveBackend{
-		log:      slog.Default().With("logger", "bleve-backend"),
-		tracer:   tracer,
-		cache:    make(map[resource.NamespacedResource]*bleveIndex),
-		opts:     opts,
-		start:    time.Now(),
-		features: features,
+		log:          slog.Default().With("logger", "bleve-backend"),
+		tracer:       tracer,
+		cache:        make(map[resource.NamespacedResource]*bleveIndex),
+		opts:         opts,
+		start:        time.Now(),
+		features:     features,
+		indexMetrics: indexMetrics,
 	}, nil
 }
 
@@ -94,6 +98,37 @@ func (b *bleveBackend) GetIndex(ctx context.Context, key resource.NamespacedReso
 		return idx, nil
 	}
 	return nil, nil
+}
+
+// updateIndexSizeMetric sets the total size of all file-based indices metric.
+func updateIndexSizeMetric(indexPath string, indexMetrics *resource.BleveIndexMetrics) {
+	if indexMetrics == nil {
+		return
+	}
+
+	for {
+		var totalSize int64
+
+		err := filepath.WalkDir(indexPath, func(path string, info os.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if !info.IsDir() {
+				fileInfo, err := info.Info()
+				if err != nil {
+					return err
+				}
+				totalSize += fileInfo.Size()
+			}
+			return nil
+		})
+
+		if err == nil {
+			indexMetrics.IndexSize.Set(float64(totalSize))
+		}
+
+		time.Sleep(5 * time.Second)
+	}
 }
 
 // Build an index from scratch
@@ -166,10 +201,14 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 		if index != nil && err == nil {
 			go b.cleanOldIndexes(resourceDir, fname)
 		}
-		resource.IndexMetrics.IndexTenants.WithLabelValues("file").Inc()
+		if b.indexMetrics != nil {
+			b.indexMetrics.IndexTenants.WithLabelValues("file").Inc()
+		}
 	} else {
 		index, err = bleve.NewMemOnly(mapper)
-		resource.IndexMetrics.IndexTenants.WithLabelValues("memory").Inc()
+		if b.indexMetrics != nil {
+			b.indexMetrics.IndexTenants.WithLabelValues("memory").Inc()
+		}
 	}
 	if err != nil {
 		return nil, err
