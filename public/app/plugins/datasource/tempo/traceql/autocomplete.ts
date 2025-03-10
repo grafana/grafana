@@ -225,6 +225,30 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       documentation: 'Counts the number of spans over time.',
     },
     {
+      label: 'min_over_time',
+      insertText: 'min_over_time()$0',
+      detail: 'Minimum value of attribute over time',
+      documentation: 'Minimum value for the specified attribute across all matching spans over time.',
+    },
+    {
+      label: 'max_over_time',
+      insertText: 'max_over_time()$0',
+      detail: 'Maximum value of attribute over time',
+      documentation: 'Maximum value for the specified attribute across all matching spans over time.',
+    },
+    {
+      label: 'avg_over_time',
+      insertText: 'avg_over_time()$0',
+      detail: 'Average value of attribute over time',
+      documentation: 'Average value for the specified attribute across all matching spans over time.',
+    },
+    {
+      label: 'sum_over_time',
+      insertText: 'sum_over_time()$0',
+      detail: 'Summation value of attribute over time',
+      documentation: 'Sum of the values for the specified attribute across all matching spans over time.',
+    },
+    {
       label: 'histogram_over_time',
       insertText: 'histogram_over_time($0)',
       detail: 'Histogram of attribute over time',

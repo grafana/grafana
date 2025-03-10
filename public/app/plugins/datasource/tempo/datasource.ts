@@ -312,7 +312,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   isTraceQlMetricsQuery(query: string): boolean {
     // Check whether this is a metrics query by checking if it contains a metrics function
     const metricsFnRegex =
-      /\|\s*(rate|count_over_time|avg_over_time|max_over_time|min_over_time|quantile_over_time|histogram_over_time|compare)\s*\(/;
+      /\|\s*(rate|count_over_time|avg_over_time|max_over_time|min_over_time|sum_over_time|quantile_over_time|histogram_over_time|compare)\s*\(/;
     return !!query.trim().match(metricsFnRegex);
   }
 
