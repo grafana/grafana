@@ -54,6 +54,7 @@ jobs:
           GO_UNIT_COVER_PROFILE: '${{ env.TEST_TYPE }}.cov'
           GO_TEST_OUTPUT: '/tmp/${{ env.TEST_TYPE }}.log'
           GO_UNIT_TEST_COVERPKG: 'github.com/grafana/grafana/...'
+          GO_UNIT_COVERAGE: false
 
       - name: Process and upload coverage
         uses: ./.github/actions/test-coverage-processor
