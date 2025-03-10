@@ -28,6 +28,7 @@ import usersReducers from 'app/features/users/state/reducers';
 import templatingReducers from 'app/features/variables/state/keyedVariablesReducer';
 
 import { alertingApi } from '../../features/alerting/unified/api/alertingApi';
+import { folderAPI } from '../../features/folders/api';
 import { iamApi } from '../../features/iam/api/api';
 import { userPreferencesAPI } from '../../features/preferences/api';
 import { cleanUpAction } from '../actions/cleanUp';
@@ -61,6 +62,8 @@ const rootReducers = {
   [cloudMigrationAPI.reducerPath]: cloudMigrationAPI.reducer,
   [iamApi.reducerPath]: iamApi.reducer,
   [userPreferencesAPI.reducerPath]: userPreferencesAPI.reducer,
+  [provisioningAPI.reducerPath]: provisioningAPI.reducer,
+  [folderAPI.reducerPath]: folderAPI.reducer,
 };
 
 const addedReducers = {};
