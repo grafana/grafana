@@ -244,7 +244,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     },
     {
       label: 'sum_over_time',
-      insertText: 'avg_over_time()$0',
+      insertText: 'sum_over_time()$0',
       detail: 'Summation value of attribute over time',
       documentation: 'Sum of the values for the specified attribute across all matching spans over time.',
     },
