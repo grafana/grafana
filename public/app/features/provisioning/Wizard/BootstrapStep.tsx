@@ -134,25 +134,24 @@ export function BootstrapStep({ onOptionSelect }: Props) {
     );
   };
 
+  // Get available options
+  const availableOptions = useMemo(() => {
+    return modeOptions.filter((option) => !isOptionDisabled(option));
+  }, [
+    dashboardCount,
+    folderCount,
+    fileCount,
+    otherInstanceConnected,
+    otherFolderConnected,
+    settingsQuery.data?.legacyStorage,
+  ]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Select first available option by default
   useEffect(() => {
-    if (!selectedOption) {
-      // Find first option that doesn't have a connection of its type
-      const firstAvailableOption = modeOptions.find((option) => {
-        if (option.value === 'instance') {
-          return !otherInstanceConnected;
-        }
-        if (option.value === 'folder') {
-          return !otherFolderConnected;
-        }
-        return true;
-      });
-
-      if (firstAvailableOption) {
-        handleOptionSelect(firstAvailableOption);
-      }
+    if (!selectedOption && availableOptions.length > 0) {
+      handleOptionSelect(availableOptions[0]);
     }
-  }, [otherInstanceConnected, otherFolderConnected]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [availableOptions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Watch for target changes and update title accordingly
   useEffect(() => {
@@ -238,20 +237,18 @@ export function BootstrapStep({ onOptionSelect }: Props) {
             control={control}
             render={({ field: { value } }) => (
               <>
-                {modeOptions
-                  .filter((option) => !isOptionDisabled(option))
-                  .map((option) => (
-                    <Card
-                      key={`${option.value}-${option.operation}`}
-                      isSelected={
-                        selectedOption?.value === option.value && selectedOption?.operation === option.operation
-                      }
-                      onClick={() => handleOptionSelect(option)}
-                    >
-                      <Card.Heading>{option.label}</Card.Heading>
-                      <Card.Description>{option.description}</Card.Description>
-                    </Card>
-                  ))}
+                {availableOptions.map((option) => (
+                  <Card
+                    key={`${option.value}-${option.operation}`}
+                    isSelected={
+                      selectedOption?.value === option.value && selectedOption?.operation === option.operation
+                    }
+                    onClick={() => handleOptionSelect(option)}
+                  >
+                    <Card.Heading>{option.label}</Card.Heading>
+                    <Card.Description>{option.description}</Card.Description>
+                  </Card>
+                ))}
               </>
             )}
           />
