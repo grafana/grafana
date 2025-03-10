@@ -208,7 +208,7 @@ function WizardContent({
         setValue('repositoryName', saveRequest.data.metadata.name);
         appEvents.publish({
           type: AppEvents.alertSuccess.name,
-          payload: ['Repository connected successfully'],
+          payload: ['Repository saved'],
         });
       }
     } else if (saveRequest.isError) {
