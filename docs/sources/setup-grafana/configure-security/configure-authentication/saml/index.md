@@ -164,8 +164,8 @@ Base64-encode the cert.pem and key.pem files:
 (-w0 switch is not needed on Mac, only for Linux)
 
 ```sh
-$ base64 -w0 key.pem > key.pem.base64
-$ base64 -w0 cert.pem > cert.pem.base64
+$ base64 -i key.pem -o key.pem.base64
+$ base64 -i cert.pem -o cert.pem.base64
 ```
 The base64-encoded values (`key.pem.base64, cert.pem.base64` files) are then used for certificate and private key.
 
