@@ -266,7 +266,9 @@ func NewUserUID(requester interface{ GetIdentifier() string }) *UserUID {
 
 // AlertRule is the model for alert rules in unified alerting.
 type AlertRule struct {
-	ID              int64
+	ID int64
+	// Uniquely identifies alert rule across all organizations and time
+	GUID            string
 	OrgID           int64
 	Title           string
 	Condition       string
@@ -395,19 +397,18 @@ func WithoutInternalLabels() LabelOption {
 }
 
 func (alertRule *AlertRule) ImportedFromPrometheus() bool {
-	if alertRule.Metadata.PrometheusStyleRule == nil {
-		return false
-	}
-
-	return alertRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition != ""
+	_, err := alertRule.PrometheusRuleDefinition()
+	return err == nil
 }
 
-func (alertRule *AlertRule) PrometheusRuleDefinition() string {
-	if !alertRule.ImportedFromPrometheus() {
-		return ""
+func (alertRule *AlertRule) PrometheusRuleDefinition() (string, error) {
+	if alertRule.Metadata.PrometheusStyleRule != nil {
+		if alertRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition != "" {
+			return alertRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition, nil
+		}
 	}
 
-	return alertRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition
+	return "", fmt.Errorf("prometheus rule definition is missing")
 }
 
 // GetLabels returns the labels specified as part of the alert rule.
@@ -708,6 +709,7 @@ func (alertRule *AlertRule) Copy() *AlertRule {
 	}
 	result := AlertRule{
 		ID:              alertRule.ID,
+		GUID:            alertRule.GUID,
 		OrgID:           alertRule.OrgID,
 		Title:           alertRule.Title,
 		Condition:       alertRule.Condition,
@@ -940,6 +942,10 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOp
 	if !ruleToPatch.HasEditorSettings {
 		ruleToPatch.Metadata.EditorSettings = existingRule.Metadata.EditorSettings
 	}
+
+	if ruleToPatch.GUID == "" {
+		ruleToPatch.GUID = existingRule.GUID
+	}
 }
 
 func ValidateRuleGroupInterval(intervalSeconds, baseIntervalSeconds int64) error {
@@ -1004,6 +1010,8 @@ type Record struct {
 	Metric string
 	// From contains a query RefID, indicating which expression node is the output of the recording rule.
 	From string
+	// TargetDatasourceUID is the data source to write the result of the recording rule.
+	TargetDatasourceUID string
 }
 
 func (r *Record) Fingerprint() data.Fingerprint {
@@ -1018,6 +1026,7 @@ func (r *Record) Fingerprint() data.Fingerprint {
 
 	writeString(r.Metric)
 	writeString(r.From)
+	writeString(r.TargetDatasourceUID)
 	return data.Fingerprint(h.Sum64())
 }
 

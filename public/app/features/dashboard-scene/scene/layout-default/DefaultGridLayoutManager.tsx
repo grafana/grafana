@@ -15,6 +15,7 @@ import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
 
+import { NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
 import { isClonedKey, joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import {
@@ -26,7 +27,6 @@ import {
   getGridItemKeyForPanelId,
   getDashboardSceneFor,
 } from '../../utils/utils';
-import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -48,10 +48,10 @@ export class DefaultGridLayoutManager
 
   public static readonly descriptor: LayoutRegistryItem = {
     get name() {
-      return t('dashboard.default-layout.name', 'Default grid');
+      return t('dashboard.default-layout.name', 'Custom');
     },
     get description() {
-      return t('dashboard.default-layout.description', 'The default grid layout');
+      return t('dashboard.default-layout.description', 'Manually size and position panels');
     },
     id: 'default-grid',
     createFromLayout: DefaultGridLayoutManager.createFromLayout,
@@ -78,6 +78,8 @@ export class DefaultGridLayoutManager
     this.state.grid.setState({
       children: [newGridItem, ...this.state.grid.state.children],
     });
+
+    this.publishEvent(new NewObjectAddedToCanvasEvent(vizPanel), true);
   }
 
   public removePanel(panel: VizPanel) {
@@ -133,6 +135,8 @@ export class DefaultGridLayoutManager
     // when we duplicate a panel we don't want to clone the alert state
     delete panelData.state.data?.alertState;
 
+    const newPanel = new VizPanel({ ...panelState, $data: panelData, key: getVizPanelKeyForPanelId(newPanelId) });
+
     newGridItem = new DashboardGridItem({
       x: gridItem.state.x,
       y: gridItem.state.y,
@@ -143,19 +147,20 @@ export class DefaultGridLayoutManager
       repeatDirection: gridItem.state.repeatDirection,
       maxPerRow: gridItem.state.maxPerRow,
       key: getGridItemKeyForPanelId(newPanelId),
-      body: new VizPanel({ ...panelState, $data: panelData, key: getVizPanelKeyForPanelId(newPanelId) }),
+      body: newPanel,
     });
 
     if (gridItem.parent instanceof SceneGridRow) {
       const row = gridItem.parent;
 
       row.setState({ children: [...row.state.children, newGridItem] });
-
       grid.forceRender();
       return;
     }
 
     grid.setState({ children: [...grid.state.children, newGridItem] });
+
+    this.publishEvent(new NewObjectAddedToCanvasEvent(newPanel), true);
   }
 
   public getVizPanels(): VizPanel[] {
@@ -178,22 +183,6 @@ export class DefaultGridLayoutManager
     });
 
     return panels;
-  }
-
-  public hasVizPanels(): boolean {
-    for (const child of this.state.grid.state.children) {
-      if (child instanceof DashboardGridItem) {
-        return true;
-      } else if (child instanceof SceneGridRow) {
-        for (const rowChild of child.state.children) {
-          if (rowChild instanceof DashboardGridItem) {
-            return true;
-          }
-        }
-      }
-    }
-
-    return false;
   }
 
   public addNewRow(): SceneGridRow {
@@ -222,17 +211,6 @@ export class DefaultGridLayoutManager
     sceneGridLayout.setState({ children: [row, ...sceneGridLayout.state.children] });
 
     return row;
-  }
-
-  public addNewTab() {
-    const shouldAddTab = this.hasVizPanels();
-    const tabsLayout = TabsLayoutManager.createFromLayout(this);
-
-    if (shouldAddTab) {
-      tabsLayout.addNewTab();
-    }
-
-    getDashboardSceneFor(this).switchLayout(tabsLayout);
   }
 
   public editModeChanged(isEditing: boolean) {
