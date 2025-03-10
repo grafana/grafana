@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -90,11 +89,14 @@ func TestBleveBackend(t *testing.T) {
 					utils.LabelKeyDeprecatedInternalID: "10", // nolint:staticcheck
 				},
 				Tags: []string{"aa", "bb"},
-				RepoInfo: &utils.ResourceRepositoryInfo{
-					Name:      "repo-1",
-					Path:      "path/to/aaa.json",
-					Hash:      "xyz",
-					Timestamp: asTimePointer(1609462800000), // 2021
+				Manager: &utils.ManagerProperties{
+					Kind:     utils.ManagerKindRepo,
+					Identity: "repo-1",
+				},
+				Source: &utils.SourceProperties{
+					Path:            "path/to/aaa.json",
+					Checksum:        "xyz",
+					TimestampMillis: 1609462800000, // 2021
 				},
 			})
 			rv++
@@ -120,11 +122,14 @@ func TestBleveBackend(t *testing.T) {
 					"region":                           "east",
 					utils.LabelKeyDeprecatedInternalID: "11", // nolint:staticcheck
 				},
-				RepoInfo: &utils.ResourceRepositoryInfo{
-					Name:      "repo-1",
-					Path:      "path/to/bbb.json",
-					Hash:      "hijk",
-					Timestamp: asTimePointer(1640998800000), // 2022
+				Manager: &utils.ManagerProperties{
+					Kind:     utils.ManagerKindRepo,
+					Identity: "repo-1",
+				},
+				Source: &utils.SourceProperties{
+					Path:            "path/to/bbb.json",
+					Checksum:        "hijk",
+					TimestampMillis: 1640998800000, // 2022
 				},
 			})
 			rv++
@@ -140,8 +145,11 @@ func TestBleveBackend(t *testing.T) {
 				Title:       "ccc (dash)",
 				TitlePhrase: "ccc (dash)",
 				Folder:      "zzz",
-				RepoInfo: &utils.ResourceRepositoryInfo{
-					Name: "repo2",
+				Manager: &utils.ManagerProperties{
+					Kind:     utils.ManagerKindRepo,
+					Identity: "repo2",
+				},
+				Source: &utils.SourceProperties{
 					Path: "path/in/repo2.yaml",
 				},
 				Fields: map[string]any{},
@@ -266,6 +274,7 @@ func TestBleveBackend(t *testing.T) {
 		jj, err := json.MarshalIndent(found, "", "  ")
 		require.NoError(t, err)
 		fmt.Printf("%s\n", string(jj))
+		// NOTE "hash" -> "checksum" requires changing the protobuf
 		require.JSONEq(t, `{
 			"items": [
 				{
@@ -337,11 +346,14 @@ func TestBleveBackend(t *testing.T) {
 				},
 				Title:       "zzz (folder)",
 				TitlePhrase: "zzz (folder)",
-				RepoInfo: &utils.ResourceRepositoryInfo{
-					Name:      "repo-1",
-					Path:      "path/to/folder.json",
-					Hash:      "xxxx",
-					Timestamp: asTimePointer(300),
+				Manager: &utils.ManagerProperties{
+					Kind:     utils.ManagerKindRepo,
+					Identity: "repo-1",
+				},
+				Source: &utils.SourceProperties{
+					Path:            "path/to/folder.json",
+					Checksum:        "xxxx",
+					TimestampMillis: 300,
 				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
@@ -562,14 +574,6 @@ func TestGetSortFields(t *testing.T) {
 	})
 }
 
-func asTimePointer(milli int64) *time.Time {
-	if milli > 0 {
-		t := time.UnixMilli(milli)
-		return &t
-	}
-	return nil
-}
-
 var _ authlib.AccessClient = (*StubAccessClient)(nil)
 
 func NewStubAccessClient(permissions map[string]bool) *StubAccessClient {
@@ -585,7 +589,7 @@ func (nc *StubAccessClient) Check(ctx context.Context, id authlib.AuthInfo, req 
 }
 
 func (nc *StubAccessClient) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, error) {
-	return func(namespace string, name, folder string) bool {
+	return func(name, folder string) bool {
 		return nc.resourceResponses[req.Resource]
 	}, nil
 }

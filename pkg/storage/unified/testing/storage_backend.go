@@ -51,7 +51,7 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		fn   func(*testing.T, resource.StorageBackend)
 	}{
 		{TestHappyPath, runTestIntegrationBackendHappyPath},
-		{TestWatchWriteEvents, runTestIntegrationBackendWatchWriteEventsFromLastest},
+		{TestWatchWriteEvents, runTestIntegrationBackendWatchWriteEvents},
 		{TestList, runTestIntegrationBackendList},
 		{TestBlobSupport, runTestIntegrationBlobSupport},
 		{TestGetResourceStats, runTestIntegrationBackendGetResourceStats},
@@ -272,7 +272,7 @@ func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.St
 	})
 }
 
-func runTestIntegrationBackendWatchWriteEventsFromLastest(t *testing.T, backend resource.StorageBackend) {
+func runTestIntegrationBackendWatchWriteEvents(t *testing.T, backend resource.StorageBackend) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 
 	// Create a few resources before initing the watch
@@ -287,6 +287,12 @@ func runTestIntegrationBackendWatchWriteEventsFromLastest(t *testing.T, backend 
 	_, err = writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED)
 	require.NoError(t, err)
 	require.Equal(t, "item2", (<-stream).Key.Name)
+
+	// Should close the stream
+	ctx.Cancel()
+
+	_, ok := <-stream
+	require.False(t, ok)
 }
 
 func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend) {
@@ -563,6 +569,34 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		found, err = store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: b2.Uid}, true)
 		require.NoError(t, err)
 		require.Equal(t, []byte("hello 22222"), found.Value)
+
+		// Save a resource with annotation
+		obj := &unstructured.Unstructured{}
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		meta.SetBlob(&utils.BlobInfo{UID: b2.Uid, Hash: b1.Hash})
+		meta.SetName(key.Name)
+		meta.SetNamespace(key.Namespace)
+		obj.SetAPIVersion(key.Group + "/v1")
+		obj.SetKind("Test")
+		val, err := obj.MarshalJSON()
+		require.NoError(t, err)
+		out, err := server.Create(ctx, &resource.CreateRequest{Key: key, Value: val})
+		require.NoError(t, err)
+		require.Nil(t, out.Error)
+		require.True(t, out.ResourceVersion > 0)
+
+		// The server (not store!) will lookup the saved annotation and return the correct payload
+		res, err := server.GetBlob(ctx, &resource.GetBlobRequest{Resource: key})
+		require.NoError(t, err)
+		require.Nil(t, out.Error)
+		require.Equal(t, "hello 22222", string(res.Value))
+
+		// But we can still get an older version with an explicit UID
+		res, err = server.GetBlob(ctx, &resource.GetBlobRequest{Resource: key, Uid: b1.Uid})
+		require.NoError(t, err)
+		require.Nil(t, out.Error)
+		require.Equal(t, "hello 11111", string(res.Value))
 	})
 }
 

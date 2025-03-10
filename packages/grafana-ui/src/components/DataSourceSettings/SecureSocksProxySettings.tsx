@@ -1,7 +1,7 @@
 import { DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data';
 
 import { InlineSwitch } from '../../components/Switch/Switch';
-import { Trans } from '../../utils/i18n';
+import { t, Trans } from '../../utils/i18n';
 import { InlineField } from '../Forms/InlineField';
 
 export interface Props<T extends DataSourceJsonData>
@@ -25,8 +25,11 @@ export function SecureSocksProxySettings<T extends SecureSocksProxyConfig>({
           <div className="gf-form">
             <InlineField
               labelWidth={26}
-              label="Enabled"
-              tooltip="Connect to this datasource via the secure socks proxy."
+              label={t('grafana-ui.data-source-settings.secure-socks-label', 'Enabled')}
+              tooltip={t(
+                'grafana-ui.data-source-settings.secure-socks-tooltip',
+                'Connect to this datasource via the secure socks proxy.'
+              )}
             >
               <InlineSwitch
                 value={options.jsonData.enableSecureSocksProxy ?? false}

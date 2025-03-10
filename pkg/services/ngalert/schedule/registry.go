@@ -87,11 +87,6 @@ func (r *ruleRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 	return definitionsIDs
 }
 
-type RuleVersionAndPauseStatus struct {
-	Fingerprint fingerprint
-	IsPaused    bool
-}
-
 type Evaluation struct {
 	scheduledAt time.Time
 	rule        *models.AlertRule

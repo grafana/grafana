@@ -3356,6 +3356,9 @@
           "404": {
             "$ref": "#/responses/notFoundError"
           },
+          "406": {
+            "$ref": "#/responses/notAcceptableError"
+          },
           "500": {
             "$ref": "#/responses/internalServerError"
           }
@@ -6457,6 +6460,19 @@
         ],
         "summary": "Get all users within the current organization.",
         "operationId": "getOrgUsersForCurrentOrg",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "query",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/getOrgUsersForCurrentOrgResponse"
@@ -14227,6 +14243,9 @@
         },
         "state": {
           "$ref": "#/definitions/State"
+        },
+        "subject": {
+          "type": "string"
         }
       }
     },
@@ -14516,6 +14535,9 @@
       "properties": {
         "annotationsPermissions": {
           "$ref": "#/definitions/AnnotationPermission"
+        },
+        "apiVersion": {
+          "type": "string"
         },
         "canAdmin": {
           "type": "boolean"
@@ -15498,6 +15520,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "managedBy": {
+          "$ref": "#/definitions/ManagerKind"
+        },
         "orgId": {
           "type": "integer",
           "format": "int64"
@@ -15512,10 +15537,6 @@
           "items": {
             "$ref": "#/definitions/Folder"
           }
-        },
-        "repository": {
-          "description": "When the folder belongs to a repository\nNOTE: this is only populated when folders are managed by unified storage",
-          "type": "string"
         },
         "title": {
           "type": "string"
@@ -15546,11 +15567,10 @@
           "type": "integer",
           "format": "int64"
         },
-        "parentUid": {
-          "type": "string"
+        "managedBy": {
+          "$ref": "#/definitions/ManagerKind"
         },
-        "repository": {
-          "description": "When the folder belongs to a repository\nNOTE: this is only populated when folders are managed by unified storage",
+        "parentUid": {
           "type": "string"
         },
         "title": {
@@ -17030,6 +17050,11 @@
           "type": "string"
         }
       }
+    },
+    "ManagerKind": {
+      "description": "It can be a user or a tool or a generic API client.\n+enum",
+      "type": "string",
+      "title": "ManagerKind is the type of manager, which is responsible for managing the resource."
     },
     "MassDeleteAnnotationsCmd": {
       "type": "object",
@@ -19472,6 +19497,9 @@
         },
         "state": {
           "$ref": "#/definitions/State"
+        },
+        "subject": {
+          "type": "string"
         },
         "uid": {
           "type": "string"
@@ -22771,6 +22799,7 @@
       }
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "type": "object",
@@ -24412,6 +24441,12 @@
       "description": "(empty)",
       "schema": {
         "type": "object"
+      }
+    },
+    "notAcceptableError": {
+      "description": "NotAcceptableError is returned when the server cannot produce a response matching the accepted formats.",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
       }
     },
     "notFoundError": {

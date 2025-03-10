@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { t } from '../../utils/i18n';
 
 import { ColorSwatch } from './ColorSwatch';
 import NamedColorsGroup from './NamedColorsGroup';
@@ -28,13 +29,13 @@ export const NamedColorsPalette = ({ color, onChange }: NamedColorsPaletteProps)
         <ColorSwatch
           isSelected={color === 'transparent'}
           color={'rgba(0,0,0,0)'}
-          label="Transparent"
+          label={t('grafana-ui.named-colors-palette.transparent-swatch', 'Transparent')}
           onClick={() => onChange('transparent')}
         />
         <ColorSwatch
           isSelected={color === 'text'}
           color={theme.colors.text.primary}
-          label="Text color"
+          label={t('grafana-ui.named-colors-palette.text-color-swatch', 'Text color')}
           onClick={() => onChange('text')}
         />
       </div>
