@@ -8,6 +8,7 @@ import { ValidationResult } from './types';
 export interface Step<T> {
   id: T;
   name: string;
+  submitOnNext?: boolean;
 }
 
 export interface Props<T extends string | number> {
