@@ -3984,6 +3984,10 @@
         "shortcut": "alt+select to enable again"
       }
     },
+    "logs-controls": {
+      "scroll-bottom": "Scroll to bottom",
+      "scroll-top": "Scroll to top"
+    },
     "logs-navigation": {
       "newer-logs": "Newer logs",
       "older-logs": "Older logs",

@@ -17,7 +17,7 @@ export interface Options {
   enableInfiniteScrolling?: boolean;
   enableLogDetails: boolean;
   onNewLogsReceived?: unknown;
-  showNavigation: boolean;
+  showControls: boolean;
   showTime: boolean;
   sortOrder: common.LogsSortOrder;
   wrapLogMessage: boolean;

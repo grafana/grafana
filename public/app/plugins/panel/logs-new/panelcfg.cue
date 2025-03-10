@@ -26,7 +26,7 @@ composableKinds: PanelCfg: {
 			version: [0, 0]
 			schema: {
 				Options: {
-					showNavigation:           bool
+					showControls:             bool
 					showTime:                 bool
 					wrapLogMessage:           bool
 					enableLogDetails:         bool

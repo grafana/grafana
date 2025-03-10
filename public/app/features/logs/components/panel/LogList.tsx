@@ -20,7 +20,7 @@ import { InfiniteScroll } from './InfiniteScroll';
 import { getGridTemplateColumns } from './LogLine';
 import { GetRowContextQueryFn } from './LogLineMenu';
 import { LogListContext } from './LogListContext';
-import { LogListNavigation } from './LogListNavigation';
+import { LogListControls } from './LogListControls';
 import { preProcessLogs, LogListModel } from './processing';
 import {
   calculateFieldDimensions,
@@ -52,7 +52,7 @@ interface Props {
   onUnpinLine?: (row: LogRowModel) => void;
   pinLineButtonTooltipTitle?: PopoverContent;
   pinnedLogs?: string[];
-  showNavigation: boolean;
+  showControls: boolean;
   showTime: boolean;
   sortOrder: LogsSortOrder;
   timeRange: TimeRange;
@@ -70,7 +70,7 @@ export const LogList = ({
   initialScrollPosition = 'top',
   loadMore,
   logs,
-  showNavigation,
+  showControls,
   showTime,
   sortOrder,
   timeRange,
@@ -134,6 +134,7 @@ export const LogList = ({
 
   const handleOverflow = useCallback(
     (index: number, id: string, height: number) => {
+      console.log('overflow');
       if (containerElement) {
         storeLogLineSize(id, containerElement, height);
         listRef.current?.resetAfterIndex(index);
@@ -174,6 +175,7 @@ export const LogList = ({
               itemCount={itemCount}
               itemSize={getLogLineSize.bind(null, processedLogs, containerElement, displayedFields, {
                 wrap: wrapLogMessage,
+                showControls,
                 showTime,
               })}
               itemKey={getItemKey}
@@ -188,7 +190,7 @@ export const LogList = ({
             </VariableSizeList>
           )}
         </InfiniteScroll>
-        {showNavigation && <LogListNavigation eventBus={eventBus} />}
+        {showControls && <LogListControls eventBus={eventBus} />}
       </div>
     </LogListContext.Provider>
   );
