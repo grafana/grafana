@@ -95,7 +95,7 @@ export class Registry<T extends RegistryItem> {
     const currentOptions: Record<string, ComboboxOption<string>> = {};
     if (current) {
       for (const id of current) {
-        currentOptions[id] = { value: currentOptions[id].value };
+        currentOptions[id] = { value: id };
       }
     }
 
