@@ -3,7 +3,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { Field, Input, Stack, FieldSet, Card, Alert, Text } from '@grafana/ui';
 
-import { useGetFrontendSettingsQuery } from '../api';
+import { useGetFrontendSettingsQuery, useGetRepositoryFilesQuery } from '../api';
 import { checkSyncSettings } from '../utils';
 
 import { WizardFormData } from './types';
@@ -58,6 +58,16 @@ export function BootstrapStep({ onOptionSelect }: Props) {
   const [selectedOption, setSelectedOption] = useState<ModeOption | null>(null);
   const [dashboardCount, setDashboardCount] = useState<number>(0);
   const [folderCount, setFolderCount] = useState<number>(0);
+  const [fileCount, setFileCount] = useState<number>(0);
+
+  // Get repository files count
+  const { data: filesData } = useGetRepositoryFilesQuery({ name: currentRepoName || '' }, { skip: !currentRepoName });
+
+  useEffect(() => {
+    if (filesData?.items) {
+      setFileCount(filesData.items.length);
+    }
+  }, [filesData]);
 
   // Check for other repositories excluding the current one
   const [otherInstanceConnected, otherFolderConnected] = useMemo(() => {
@@ -106,6 +116,11 @@ export function BootstrapStep({ onOptionSelect }: Props) {
     }
     // Disable pull instance option if there are existing dashboards or folders
     if (option.value === 'instance' && option.operation === 'pull' && (dashboardCount > 0 || folderCount > 0)) {
+      return true;
+    }
+
+    // Disable migrate option if there are existing files
+    if (option.operation === 'migrate' && fileCount > 0) {
       return true;
     }
     // Otherwise, check if there's another connection of the same type
@@ -178,17 +193,26 @@ export function BootstrapStep({ onOptionSelect }: Props) {
               storage to use this feature.
             </Alert>
           )}
-          {dashboardCount > 0 || folderCount > 0 ? (
-            <Alert severity="info" title="Pull from Repository to Instance is disabled">
-              <Stack direction="column" gap={1}>
-                <Text>Pulling from repository to instance is disabled because you have existing resources:</Text>
-                <Text>Please migrate your existing resources to the repository first.</Text>
-              </Stack>
+          {dashboardCount > 0 ||
+            (folderCount > 0 && (
+              <Alert severity="info" title="Pull from Repository to Instance is disabled">
+                <Stack direction="column" gap={1}>
+                  <Text>Pulling from repository to instance is disabled because you have existing resources:</Text>
+                  <Text>Please migrate your existing resources to the repository first.</Text>
+                </Stack>
+              </Alert>
+            ))}
+          {fileCount > 0 && (
+            <Alert severity="info" title="Migrate to Repository is disabled">
+              Migrating to repository is disabled because you have existing files in the repository. You must delete
+              your existing files before migrating.
             </Alert>
-          ) : null}
+          )}
+
           <Stack direction="row" gap={2}>
             <Text>{dashboardCount} dashboards</Text>
             <Text>{folderCount} folders</Text>
+            <Text>{fileCount} files</Text>
           </Stack>
           <Controller
             name="repository.sync.target"
