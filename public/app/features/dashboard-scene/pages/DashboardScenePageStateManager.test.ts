@@ -22,6 +22,22 @@ jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   getDashboardAPI: jest.fn(),
 }));
 
+const setupDashboardAPI = (
+  d: DashboardWithAccessInfo<DashboardV2Spec> | undefined,
+  spy: jest.Mock,
+  effect?: () => void
+) => {
+  (getDashboardAPI as jest.Mock).mockImplementation(() => ({
+    getDashboardDTO: async () => {
+      spy();
+      effect?.();
+      return d;
+    },
+    deleteDashboard: jest.fn(),
+    saveDashboard: jest.fn(),
+  }));
+};
+
 describe('DashboardScenePageStateManager v1', () => {
   afterEach(() => {
     store.delete(DASHBOARD_FROM_LS_KEY);
@@ -645,22 +661,6 @@ describe('UnifiedDashboardScenePageStateManager', () => {
   });
 
   describe('when fetching/loading a dashboard', () => {
-    const setupDashboardAPI = (
-      d: DashboardWithAccessInfo<DashboardV2Spec> | undefined,
-      spy: jest.Mock,
-      effect?: () => void
-    ) => {
-      (getDashboardAPI as jest.Mock).mockImplementation(() => ({
-        getDashboardDTO: async () => {
-          spy();
-          effect?.();
-          return d;
-        },
-        deleteDashboard: jest.fn(),
-        saveDashboard: jest.fn(),
-      }));
-    };
-
     it('should use v1 manager by default and handle v1 dashboards', async () => {
       const loadDashboardMock = setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', editable: true }, meta: {} });
 
