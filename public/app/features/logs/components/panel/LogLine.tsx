@@ -172,6 +172,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
         '.token.log-token-number': {
           color: theme.colors.success.text,
         },
+        '.token.log-token-duration': {
+          color: theme.colors.success.text,
+        },
         '.token.log-token-size': {
           color: theme.colors.success.text,
         },
