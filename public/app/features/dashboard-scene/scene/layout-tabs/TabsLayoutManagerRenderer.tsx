@@ -19,8 +19,8 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const { isEditing } = dashboard.useState();
 
   return (
-    <>
-      <TabsBar className={styles.tabsWrapper}>
+    <div className={styles.tabLayoutContainer}>
+      <TabsBar className={styles.tabsBar}>
         <div className={styles.tabsRow}>
           <div className={styles.tabsContainer}>
             {tabs.map((tab) => (
@@ -35,12 +35,17 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
       <TabContent className={styles.tabContentContainer}>
         {currentTab && <layout.Component model={layout} />}
       </TabContent>
-    </>
+    </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  tabsWrapper: css({
+  tabLayoutContainer: css({
+    display: 'flex',
+    flexDirection: 'column',
+    flex: '1 1 auto',
+  }),
+  tabsBar: css({
     overflow: 'hidden',
   }),
   tabsRow: css({
@@ -60,9 +65,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     backgroundColor: 'transparent',
     display: 'flex',
     flex: 1,
-    height: '100%',
-    overflow: 'auto',
-    scrollbarWidth: 'thin',
+    minHeight: 0,
     padding: '2px 2px 0 2px',
   }),
 });
