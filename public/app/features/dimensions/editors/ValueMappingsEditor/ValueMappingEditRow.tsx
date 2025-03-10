@@ -212,6 +212,7 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
                   folderName={ResourceFolderName.Icon}
                   mediaType={MediaType.Icon}
                   color={result.color}
+                  maxFiles={1500}
                 />
                 {result.icon && (
                   <IconButton name="times" onClick={onClearIcon} tooltip="Remove icon" tooltipPlacement="top" />
