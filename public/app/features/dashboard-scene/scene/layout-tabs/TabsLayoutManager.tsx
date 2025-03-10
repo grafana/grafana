@@ -56,7 +56,12 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
       return;
     }
     if (typeof values.tab === 'string') {
-      this.setState({ currentTabIndex: parseInt(values.tab, 10) });
+      const tabIndex = parseInt(values.tab, 10);
+      if (this.state.tabs[tabIndex]) {
+        this.setState({ currentTabIndex: tabIndex });
+      } else {
+        this.setState({ currentTabIndex: 0 });
+      }
     }
   }
 
