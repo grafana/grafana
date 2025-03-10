@@ -8,7 +8,7 @@ export const logsGrammar: Grammar = {
   'log-token-json-key': /"(\b|\B)[\w-]+"(?=\s*:)/gi,
   'log-token-key': /(\b|\B)[\w_]+(?=\s*=)/gi,
   'log-token-size': /"\d+\.{0,1}\d*\s*[kKmMGgtTPp]*[bB]{1}"/g,
-  'log-token-string': /"(?!:)(\\?[^'"])*?"(?!:)/g,
+  'log-token-string': /"(?!:)([^'"])*?"(?!:)/g,
   'log-token-number': /\b-?(0x[\dA-Fa-f]+|\d*\.?\d+([Ee]-?\d+)?)\b/g,
 };
 
