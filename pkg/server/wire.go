@@ -36,7 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
-	gmsEncryption "github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
+	gsmEncryption "github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	encryptionManager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -410,7 +410,7 @@ var wireBasicSet = wire.NewSet(
 	secretencryption.ProvideDataKeyStorageStorage,
 	secretencryption.ProvideEncryptedValueStorage,
 	encryptionManager.ProvideEncryptionManager,
-	gmsEncryption.ProvideThirdPartyProviderMap,
+	gsmEncryption.ProvideThirdPartyProviderMap,
 	authz.WireSet,
 	// Unified storage
 	resource.ProvideStorageMetrics,
