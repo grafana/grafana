@@ -998,7 +998,7 @@ var (
 		},
 		{
 			Name:         "sqlExpressions",
-			Description:  "Enables using SQL and DuckDB functions as Expressions.",
+			Description:  "Enables the SQL Expression type: to execute SQL queries on datasource results.",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaDatasourcesCoreServicesSquad,
