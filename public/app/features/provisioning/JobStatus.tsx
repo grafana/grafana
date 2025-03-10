@@ -1,7 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useRef, useMemo } from 'react';
 
-import { Stack, Text, TextLink, InteractiveTable, Spinner, ControlledCollapse, Alert } from '@grafana/ui';
+import { Stack, Text, TextLink, InteractiveTable, Spinner, ControlledCollapse, Alert, LinkButton } from '@grafana/ui';
 
 import ProgressBar from './ProgressBar';
 import { useGetRepositoryQuery, useListJobQuery } from './api';
@@ -150,12 +150,12 @@ function RepositoryLink({ name }: RepositoryLinkProps) {
     <Stack direction="column" gap={1}>
       <Text>Grafana and your repository are now in sync.</Text>
       <Stack direction="row" gap={2}>
-        <TextLink external href={repoHref} icon="external-link-alt">
+        <LinkButton fill="outline" href={repoHref} icon="external-link-alt" target="_blank" rel="noopener noreferrer">
           View repository
-        </TextLink>
-        <TextLink external href={folderHref} icon="folder-open">
+        </LinkButton>
+        <LinkButton fill="outline" href={folderHref} icon="folder-open">
           View folder
-        </TextLink>
+        </LinkButton>
       </Stack>
     </Stack>
   );
