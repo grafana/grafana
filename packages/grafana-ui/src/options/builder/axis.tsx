@@ -1,10 +1,6 @@
-import {
-  FieldConfigEditorBuilder,
-  FieldType,
-  identityOverrideProcessor,
-  SelectableValue,
-  StandardEditorProps,
-} from '@grafana/data';
+import { ComboboxOption } from 'src/components';
+
+import { FieldConfigEditorBuilder, FieldType, identityOverrideProcessor, StandardEditorProps } from '@grafana/data';
 import { AxisColorMode, AxisConfig, AxisPlacement, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
 
 import { Combobox } from '../../components/Combobox/Combobox';
@@ -115,7 +111,7 @@ export function addAxisConfig(builder: FieldConfigEditorBuilder<AxisConfig>, def
     });
 }
 
-const DISTRIBUTION_OPTIONS: Array<SelectableValue<ScaleDistribution>> = [
+const DISTRIBUTION_OPTIONS: Array<ComboboxOption<ScaleDistribution>> = [
   {
     label: 'Linear',
     value: ScaleDistribution.Linear,
@@ -130,7 +126,7 @@ const DISTRIBUTION_OPTIONS: Array<SelectableValue<ScaleDistribution>> = [
   },
 ];
 
-const LOG_DISTRIBUTION_OPTIONS: Array<Required<Pick<SelectableValue<number>, 'label' | 'value'>>> = [
+const LOG_DISTRIBUTION_OPTIONS: Array<Required<Pick<ComboboxOption<number>, 'label' | 'value'>>> = [
   {
     label: '2',
     value: 2,
