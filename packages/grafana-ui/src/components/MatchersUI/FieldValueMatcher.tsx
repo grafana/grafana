@@ -8,14 +8,14 @@ import {
   FieldValueMatcherConfig,
   fieldReducers,
   ReducerID,
-  SelectableValue,
   GrafanaTheme2,
 } from '@grafana/data';
 import { ComparisonOperation } from '@grafana/schema';
 
 import { useStyles2 } from '../../themes';
+import { Combobox } from '../Combobox/Combobox';
+import { ComboboxOption } from '../Combobox/types';
 import { Input } from '../Input/Input';
-import { Select } from '../Select/Select';
 
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
 
@@ -40,14 +40,14 @@ export const FieldValueMatcherEditor = ({ options, onChange }: Props) => {
   const reducer = useMemo(() => fieldReducers.selectOptions([options?.reducer]), [options?.reducer]);
 
   const onSetReducer = useCallback(
-    (selection: SelectableValue<string>) => {
+    (selection: ComboboxOption<string>) => {
       return onChange({ ...options, reducer: selection.value! as ReducerID });
     },
     [options, onChange]
   );
 
   const onChangeOp = useCallback(
-    (v: SelectableValue<ComparisonOperation>) => {
+    (v: ComboboxOption<ComparisonOperation>) => {
       return onChange({ ...options, op: v.value! });
     },
     [options, onChange]
@@ -66,15 +66,15 @@ export const FieldValueMatcherEditor = ({ options, onChange }: Props) => {
 
   return (
     <div className={styles.spot}>
-      <Select
-        value={reducer.current}
+      <Combobox
+        value={reducer.current[0]?.value}
         options={reducer.options}
         onChange={onSetReducer}
         placeholder="Select field reducer"
       />
       {opts.reducer && !isBool && (
         <>
-          <Select
+          <Combobox
             value={comparisonOperationOptions.find((v) => v.value === opts.op)}
             options={comparisonOperationOptions}
             onChange={onChangeOp}
