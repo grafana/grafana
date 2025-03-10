@@ -32,6 +32,9 @@ export interface TooltipProps {
    * Set to true if you want the tooltip to stay long enough so the user can move mouse over content to select text or click a link
    */
   interactive?: boolean;
+  /**
+   * Delay in milliseconds before the tooltip is closed after the mouse has left the tooltip trigger (interactive mode only)
+   */
   interactiveDelay?: number;
 }
 
