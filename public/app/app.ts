@@ -38,6 +38,7 @@ import {
   setCurrentUser,
   setChromeHeaderHeightHook,
   setPluginLinksHook,
+  setFolderPicker,
   setCorrelationsService,
   setPluginFunctionsHook,
 } from '@grafana/runtime';
@@ -52,6 +53,7 @@ import getDefaultMonacoLanguages from '../lib/monaco-languages';
 import { AppWrapper } from './AppWrapper';
 import appEvents from './core/app_events';
 import { AppChromeService } from './core/components/AppChrome/AppChromeService';
+import { LazyFolderPicker } from './core/components/NestedFolderPicker/LazyFolderPicker';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { PluginPage } from './core/components/Page/PluginPage';
 import { GrafanaContextType, useChromeHeaderHeight, useReturnToPreviousInternal } from './core/context/GrafanaContext';
@@ -134,6 +136,7 @@ export class GrafanaApp {
       setWeekStart(config.bootData.user.weekStart);
       setPanelRenderer(PanelRenderer);
       setPluginPage(PluginPage);
+      setFolderPicker(LazyFolderPicker);
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
       setCorrelationsService(new CorrelationsService());
