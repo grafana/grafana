@@ -1,18 +1,20 @@
-import { config } from '@grafana/runtime';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from 'app/core/navigation/types';
 import { DashboardRoutes } from 'app/types';
 
-import { requiredFeatureToggles } from '../Setup/types';
-import { PROVISIONING_URL } from '../constants';
+import { checkRequiredFeatures } from '../GettingStarted/features';
+import { PROVISIONING_URL, CONNECT_URL, MIGRATE_URL, GETTING_STARTED_URL } from '../constants';
 
 export function getProvisioningRoutes(): RouteDescriptor[] {
-  if (!requiredFeatureToggles.every((toggle) => config.featureToggles[toggle])) {
+  if (!checkRequiredFeatures()) {
     return [
       {
         path: PROVISIONING_URL,
         component: SafeDynamicImport(
-          () => import(/* webpackChunkName: "SetupPage"*/ 'app/features/provisioning/Setup/SetupPage')
+          () =>
+            import(
+              /* webpackChunkName: "GettingStartedPage"*/ 'app/features/provisioning/GettingStarted/GettingStartedPage'
+            )
         ),
       },
     ];
@@ -26,24 +28,24 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: PROVISIONING_URL + '/setup',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "SetupPage"*/ 'app/features/provisioning/Setup/SetupPage')
-      ),
-    },
-    {
-      path: PROVISIONING_URL + '/migrate',
+      path: GETTING_STARTED_URL,
       component: SafeDynamicImport(
         () =>
           import(
-            /* webpackChunkName: "ProvisioningWizardPage"*/ 'app/features/provisioning/Wizard/MigrateToProvisioningPage'
+            /* webpackChunkName: "GettingStartedPage"*/ 'app/features/provisioning/GettingStarted/GettingStartedPage'
           )
       ),
     },
     {
-      path: PROVISIONING_URL + '/new',
+      path: CONNECT_URL,
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "NewRepositoryPage"*/ 'app/features/provisioning/NewRepositoryPage')
+        () => import(/* webpackChunkName: "ProvisioningWizardPage"*/ 'app/features/provisioning/Wizard/ConnectPage')
+      ),
+    },
+    {
+      path: MIGRATE_URL,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "ProvisioningWizardPage"*/ 'app/features/provisioning/Wizard/MigratePage')
       ),
     },
     {

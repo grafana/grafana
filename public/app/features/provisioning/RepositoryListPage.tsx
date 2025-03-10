@@ -5,7 +5,6 @@ import { getAppEvents } from '@grafana/runtime';
 import {
   Card,
   EmptySearchResult,
-  EmptyState,
   FilterInput,
   Icon,
   IconName,
@@ -15,16 +14,21 @@ import {
   Text,
   Alert,
   ConfirmModal,
+  Tab,
+  TabsBar,
+  TagList,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
-import OnboardingPage from './OnboardingPage';
+import GettingStarted from './GettingStarted/GettingStarted';
+import GettingStartedPage from './GettingStarted/GettingStartedPage';
 import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
 import { Repository, ResourceCount, useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from './api';
-import { NEW_URL, PROVISIONING_URL } from './constants';
+import { PROVISIONING_URL, CONNECT_URL } from './constants';
 import { useRepositoryList } from './hooks';
+import { checkSyncSettings } from './utils';
 
 const appEvents = getAppEvents();
 
@@ -33,6 +37,7 @@ export default function RepositoryListPage() {
   const settings = useGetFrontendSettingsQuery();
   const [deleteAll, deleteAllResult] = useDeletecollectionRepositoryMutation();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('repositories');
 
   useEffect(() => {
     if (deleteAllResult.isSuccess) {
@@ -44,12 +49,23 @@ export default function RepositoryListPage() {
   }, [deleteAllResult.isSuccess]);
 
   if (!items?.length && !isLoading) {
-    return <OnboardingPage legacyStorage={settings.data?.legacyStorage} />;
+    return <GettingStartedPage />;
   }
 
   const onConfirmDelete = () => {
-    deleteAll({ deleteOptions: {} });
+    deleteAll({});
     setShowDeleteModal(false);
+  };
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'repositories':
+        return <RepositoryListPageContent items={items ?? []} />;
+      case 'getting-started':
+        return <GettingStarted />;
+      default:
+        return null;
+    }
   };
 
   return (
@@ -67,7 +83,6 @@ export default function RepositoryListPage() {
             Configured repositories will not work while running legacy storage.
           </Alert>
         )}
-        <RepositoryListPageContent items={items} />
         <ConfirmModal
           isOpen={showDeleteModal}
           title="Delete all configured repositories"
@@ -76,36 +91,41 @@ export default function RepositoryListPage() {
           onConfirm={onConfirmDelete}
           onDismiss={() => setShowDeleteModal(false)}
         />
+        <Stack direction="column" gap={2}>
+          <TabsBar>
+            <Tab
+              label="Repositories"
+              active={activeTab === 'repositories'}
+              onChangeTab={() => setActiveTab('repositories')}
+            />
+            <Tab
+              label="Getting started"
+              active={activeTab === 'getting-started'}
+              onChangeTab={() => setActiveTab('getting-started')}
+            />
+          </TabsBar>
+          {renderTabContent()}
+        </Stack>
       </Page.Contents>
     </Page>
   );
 }
 
-function RepositoryListPageContent({ items }: { items?: Repository[] }) {
+function RepositoryListPageContent({ items }: { items: Repository[] }) {
   const [query, setQuery] = useState('');
-  if (!items?.length) {
-    return (
-      <EmptyState
-        variant="call-to-action"
-        message="You haven't created any repository configs yet"
-        button={
-          <LinkButton icon="plus" href={NEW_URL} size="lg">
-            Create repository config
-          </LinkButton>
-        }
-      />
-    );
-  }
-
   const filteredItems = items.filter((item) => item.metadata?.name?.includes(query));
+  const settings = useGetFrontendSettingsQuery();
+  const [instanceConnected] = checkSyncSettings(settings.data);
 
   return (
     <Stack direction={'column'} gap={3}>
       <Stack gap={2}>
         <FilterInput placeholder="Search" value={query} onChange={setQuery} />
-        <LinkButton href={NEW_URL} variant="primary" icon={'plus'}>
-          Add repository config
-        </LinkButton>
+        {!instanceConnected && (
+          <LinkButton href={CONNECT_URL} variant="primary" icon={'plus'}>
+            Connect to repository
+          </LinkButton>
+        )}
       </Stack>
       <Stack direction={'column'}>
         {!!filteredItems.length ? (
@@ -161,6 +181,7 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                       state={item.status?.sync?.state}
                       name={name}
                     />
+                    <TagList tags={[item.spec?.sync?.target ?? '']} />
                   </Stack>
                 </Card.Heading>
                 <Card.Description>

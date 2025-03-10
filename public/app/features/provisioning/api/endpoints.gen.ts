@@ -71,7 +71,6 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/repositories`,
           method: 'DELETE',
-          body: queryArg.deleteOptions,
           params: {
             pretty: queryArg.pretty,
             continue: queryArg['continue'],
@@ -118,7 +117,6 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}`,
           method: 'DELETE',
-          body: queryArg.deleteOptions,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -439,7 +437,6 @@ export type DeletecollectionRepositoryArg = {
   sendInitialEvents?: boolean;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
-  deleteOptions: DeleteOptions;
 };
 export type GetRepositoryResponse = /** status 200 OK */ Repository;
 export type GetRepositoryArg = {
@@ -478,7 +475,6 @@ export type DeleteRepositoryArg = {
   orphanDependents?: boolean;
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
-  deleteOptions: DeleteOptions;
 };
 export type CreateRepositoryExportResponse = /** status 200 OK */ Job;
 export type CreateRepositoryExportArg = {
@@ -738,16 +734,6 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
-export type ExportJobOptions = {
-  /** Target branch for export (only git) */
-  branch?: string;
-  /** The source folder (or empty) to export */
-  folder?: string;
-  /** Include the identifier in the exported metadata */
-  identifier: boolean;
-  /** Prefix in target file system */
-  prefix?: string;
-};
 export type MigrateJobOptions = {
   /** Preserve history (if possible) */
   history?: boolean;
@@ -769,23 +755,33 @@ export type SyncJobOptions = {
   /** Incremental synchronization for versioned repositories */
   incremental: boolean;
 };
+export type ExportJobOptions = {
+  /** Target branch for export (only git) */
+  branch?: string;
+  /** The source folder (or empty) to export */
+  folder?: string;
+  /** Include the identifier in the exported metadata */
+  identifier: boolean;
+  /** Prefix in target file system */
+  prefix?: string;
+};
 export type JobSpec = {
   /** Possible enum values:
-     - `"export"` Export from grafana into the remote repository
      - `"migrate"` Migration task -- this will migrate an full instance from SQL > Git
-     - `"pr"` Update a pull request -- send preview images, links etc
-     - `"sync"` Sync the remote branch with the grafana instance */
-  action: 'export' | 'migrate' | 'pr' | 'sync';
-  /** Required when the action is `export` */
-  export?: ExportJobOptions;
+     - `"pr"` Process a pull request -- apply comments with preview images, links etc
+     - `"pull"` Sync the remote branch with the grafana instance
+     - `"push"` Export from grafana into the remote repository */
+  action: 'migrate' | 'pr' | 'pull' | 'push';
   /** Required when the action is `migrate` */
   migrate?: MigrateJobOptions;
   /** Pull request options */
   pr?: PullRequestJobOptions;
+  /** Required when the action is `pull` */
+  pull?: SyncJobOptions;
+  /** Required when the action is `push` */
+  push?: ExportJobOptions;
   /** The the repository reference (for now also in labels) */
   repository: string;
-  /** Required when the action is `sync` */
-  sync?: SyncJobOptions;
 };
 export type JobResourceSummary = {
   create?: number;
@@ -1010,29 +1006,19 @@ export type Status = {
   /** Status of the operation. One of: "Success" or "Failure". More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status */
   status?: string;
 };
-export type Preconditions = {
-  /** Specifies the target ResourceVersion */
-  resourceVersion?: string;
-  /** Specifies the target UID. */
-  uid?: string;
-};
-export type DeleteOptions = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
-  dryRun?: string[];
-  /** The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately. */
-  gracePeriodSeconds?: number;
-  /** if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it */
-  ignoreStoreReadErrorWithClusterBreakingPotential?: boolean;
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  /** Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the "orphan" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both. */
-  orphanDependents?: boolean;
-  /** Must be fulfilled before a deletion is carried out. If not possible, a 409 Conflict status will be returned. */
-  preconditions?: Preconditions;
-  /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
-  propagationPolicy?: string;
+export type ResourceRepositoryInfo = {
+  /** The name (identifier) */
+  name: string;
+  /** The namespace this belongs to */
+  namespace: string;
+  /** The display name for this repository */
+  title: string;
+  /** The repository type
+    
+    Possible enum values:
+     - `"github"`
+     - `"local"` */
+  type: 'github' | 'local';
 };
 export type Unstructured = {
   [key: string]: any;
@@ -1067,6 +1053,18 @@ export type ResourceObjects = {
   file?: Unstructured;
   /** The identified type for this object */
   type: ResourceType;
+  /** For write events, this will return the value that was added or updated */
+  upsert?: Unstructured;
+};
+export type ResourceUrLs = {
+  /** Compare this version to the target branch */
+  compareURL?: string;
+  /** A URL that will create a new pull requeset for this branch */
+  newPullRequestURL?: string;
+  /** A URL pointing to the repository this lives in */
+  repositoryURL?: string;
+  /** A URL pointing to the this file in the repository */
+  sourceURL?: string;
 };
 export type ResourceWrapper = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1079,12 +1077,16 @@ export type ResourceWrapper = {
   kind?: string;
   /** Path to the remote file */
   path?: string;
-  /** The commit hash (if exists) */
+  /** The request ref (or branch if exists) */
   ref?: string;
+  /** Basic repository info */
+  repository: ResourceRepositoryInfo;
   /** Different flavors of the same object */
   resource: ResourceObjects;
   /** The modified time in the remote file system */
   timestamp?: Time;
+  /** Typed links for this file (only supported by external systems, github etc) */
+  urls?: ResourceUrLs;
 };
 export type ResourceListItem = {
   folder?: string;

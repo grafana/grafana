@@ -1075,8 +1075,7 @@
           "title": ""
         },
         "multi-select": {
-          "options-header": "",
-          "selection-number": ""
+          "title": ""
         }
       }
     },
@@ -1206,10 +1205,30 @@
     },
     "rows-layout": {
       "description": "",
+      "item-name": "",
       "name": "",
+      "option": {
+        "height": "",
+        "hide-header": "",
+        "repeat": "",
+        "title": ""
+      },
+      "options": {
+        "height-expand": "",
+        "height-min": ""
+      },
       "row": {
         "collapse": "",
         "expand": "",
+        "menu": {
+          "add": "",
+          "add-panel": "",
+          "add-row-above": "",
+          "add-row-below": "",
+          "move-down": "",
+          "move-row": "",
+          "move-up": ""
+        },
         "new": "",
         "repeat": {
           "learn-more": "",
@@ -1217,19 +1236,6 @@
         }
       },
       "row-options": {
-        "height": {
-          "expand": "",
-          "hide-row-header": "",
-          "min": "",
-          "title": ""
-        },
-        "repeat": {
-          "title": "",
-          "variable": {
-            "title": ""
-          }
-        },
-        "title": "",
         "title-option": ""
       }
     },
@@ -1898,6 +1904,16 @@
     "named-colors-palette": {
       "text-color-swatch": "",
       "transparent-swatch": ""
+    },
+    "page-toolbar": {
+      "go-back": "",
+      "search-dashboard-name": "",
+      "search-links": "",
+      "search-parent-folder": ""
+    },
+    "pagination": {
+      "next-page": "",
+      "previous-page": ""
     },
     "secret-form-field": {
       "reset": ""
@@ -2894,6 +2910,10 @@
     }
   },
   "navigation": {
+    "invite-user": {
+      "invite-button": "",
+      "invite-tooltip": ""
+    },
     "item": {
       "add-bookmark": "",
       "remove-bookmark": ""
@@ -3504,7 +3524,6 @@
   "share-dashboard": {
     "menu": {
       "export-json-title": "",
-      "invite-user-title": "",
       "share-externally-title": "",
       "share-internally-title": "",
       "share-snapshot-title": ""

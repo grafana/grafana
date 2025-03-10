@@ -38,11 +38,12 @@ type githubRepository struct {
 }
 
 var (
-	_ Repository = (*githubRepository)(nil)
-	_ Hooks      = (*githubRepository)(nil)
-	_ Versioned  = (*githubRepository)(nil)
-	_ Writer     = (*githubRepository)(nil)
-	_ Reader     = (*githubRepository)(nil)
+	_ Repository         = (*githubRepository)(nil)
+	_ Hooks              = (*githubRepository)(nil)
+	_ Versioned          = (*githubRepository)(nil)
+	_ Writer             = (*githubRepository)(nil)
+	_ Reader             = (*githubRepository)(nil)
+	_ RepositoryWithURLs = (*githubRepository)(nil)
 )
 
 func NewGitHub(
@@ -561,7 +562,7 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 		Job: &provisioning.JobSpec{
 			Repository: r.Config().GetName(),
 			Action:     provisioning.JobActionSync,
-			Sync: &provisioning.SyncJobOptions{
+			Pull: &provisioning.SyncJobOptions{
 				Incremental: true,
 			},
 		},
@@ -707,6 +708,33 @@ func (r *githubRepository) CommentPullRequestFile(ctx context.Context, prNumber 
 	// FIXME: comment with Grafana Logo
 	// FIXME: comment author should be written by Grafana and not the user
 	return r.gh.CreatePullRequestFileComment(ctx, r.owner, r.repo, prNumber, fileComment)
+}
+
+// ResourceURLs implements RepositoryWithURLs.
+func (r *githubRepository) ResourceURLs(ctx context.Context, file *FileInfo) (*provisioning.ResourceURLs, error) {
+	cfg := r.config.Spec.GitHub
+	if file.Path == "" || cfg == nil {
+		return nil, nil
+	}
+
+	ref := file.Ref
+	if ref == "" {
+		ref = cfg.Branch
+	}
+
+	urls := &provisioning.ResourceURLs{
+		RepositoryURL: cfg.URL,
+		SourceURL:     fmt.Sprintf("%s/blob/%s/%s", cfg.URL, ref, file.Path),
+	}
+
+	if ref != cfg.Branch {
+		urls.CompareURL = fmt.Sprintf("%s/compare/%s...%s", cfg.URL, cfg.Branch, ref)
+
+		// Create a new pull request
+		urls.NewPullRequestURL = fmt.Sprintf("%s?quick_pull=1&labels=grafana", urls.CompareURL)
+	}
+
+	return urls, nil
 }
 
 func (r *githubRepository) createWebhook(ctx context.Context) (pgh.WebhookConfig, error) {

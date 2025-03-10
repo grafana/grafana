@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -97,10 +96,8 @@ spec:
 		require.NoError(t, err)
 
 		parser := &Parser{
-			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test",
-				},
+			repo: provisioning.ResourceRepositoryInfo{
+				Name: "test",
 			},
 			client: &DynamicClient{},
 			kinds:  &StaticKindsLookup{},

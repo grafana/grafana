@@ -26,14 +26,14 @@ type JobList struct {
 type JobAction string
 
 const (
-	// Update a pull request -- send preview images, links etc
-	JobActionPullRequest JobAction = "pr"
-
 	// Sync the remote branch with the grafana instance
 	JobActionSync JobAction = "pull"
 
 	// Export from grafana into the remote repository
 	JobActionExport JobAction = "push"
+
+	// Process a pull request -- apply comments with preview images, links etc
+	JobActionPullRequest JobAction = "pr"
 
 	// Migration task -- this will migrate an full instance from SQL > Git
 	JobActionMigrate JobAction = "migrate"
@@ -69,11 +69,11 @@ type JobSpec struct {
 	// Pull request options
 	PullRequest *PullRequestJobOptions `json:"pr,omitempty"`
 
-	// Required when the action is `export`
-	Export *ExportJobOptions `json:"export,omitempty"`
+	// Required when the action is `push`
+	Push *ExportJobOptions `json:"push,omitempty"`
 
-	// Required when the action is `sync`
-	Sync *SyncJobOptions `json:"sync,omitempty"`
+	// Required when the action is `pull`
+	Pull *SyncJobOptions `json:"pull,omitempty"`
 
 	// Required when the action is `migrate`
 	Migrate *MigrateJobOptions `json:"migrate,omitempty"`

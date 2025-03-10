@@ -101,7 +101,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		return fmt.Errorf("failed to create sync job: %w", err)
 	}
 
-	syncError := syncJob.run(ctx, *job.Spec.Sync)
+	syncError := syncJob.run(ctx, *job.Spec.Pull)
 	jobStatus := progress.Complete(ctx, syncError)
 	syncStatus = jobStatus.ToSyncStatus(job.Name)
 
