@@ -1,6 +1,13 @@
 import uFuzzy from '@leeoniya/ufuzzy';
 
-import { PluginSignatureStatus, dateTimeParse, PluginError, PluginType, PluginErrorCode } from '@grafana/data';
+import {
+  PluginSignatureStatus,
+  dateTimeParse,
+  PluginError,
+  PluginType,
+  PluginErrorCode,
+  PluginDependencyInfo,
+} from '@grafana/data';
 import { config, featureEnabled } from '@grafana/runtime';
 import { Settings } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
@@ -399,6 +406,22 @@ export function isManagedPlugin(id: string) {
   const { pluginCatalogManagedPlugins }: { pluginCatalogManagedPlugins: string[] } = config;
 
   return pluginCatalogManagedPlugins?.includes(id);
+}
+
+export function dependantPlugins(id: string): PluginDependencyInfo[] {
+  const { pluginDependants } = config;
+  if (!pluginDependants) {
+    return [];
+  }
+
+  const dependants: PluginDependencyInfo[] = [];
+  if (pluginDependants[id]) {
+    for (let dependant of pluginDependants[id]) {
+      dependants.push(dependant);
+    }
+  }
+
+  return dependants;
 }
 
 export function isPreinstalledPlugin(id: string): { found: boolean; withVersion: boolean } {
