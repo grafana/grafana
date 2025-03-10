@@ -3,7 +3,6 @@ package authorizer
 import (
 	"context"
 
-	orgsvc "github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8suser "k8s.io/apiserver/pkg/authentication/user"
@@ -19,17 +18,21 @@ type GrafanaAuthorizer struct {
 	auth authorizer.Authorizer
 }
 
-func NewGrafanaAuthorizer(cfg *setting.Cfg, orgService orgsvc.Service) *GrafanaAuthorizer {
+// NewGrafanaAuthorizer returns an authorizer configured for a grafana instance.
+// This authorizer is a chain of smaller authorizers that together form the decision if
+// access should be granted.
+//  1. We deny all impersonate request.
+//  2. We allow all identities that belongs to `system:masters` group, regular grafana identities cannot
+//     be part of this group
+//  3. We check that identity is allowed to make a request for namespace.
+//  4. We check authorizer that is configured speficially for an api.
+//  5. As a last fallback we check Role, this will only happen if an api have not configured
+//     an authorizer or return authorizer.DecisionNoOpinion
+func NewGrafanaAuthorizer(cfg *setting.Cfg) *GrafanaAuthorizer {
 	authorizers := []authorizer.Authorizer{
-		&impersonationAuthorizer{},
+		newImpersonationAuthorizer(),
 		authorizerfactory.NewPrivilegedGroups(k8suser.SystemPrivilegedGroup),
-	}
-
-	// In Hosted grafana, the StackID replaces the orgID as a valid namespace
-	if cfg.StackID != "" {
-		authorizers = append(authorizers, newStackIDAuthorizer(cfg))
-	} else {
-		authorizers = append(authorizers, newOrgIDAuthorizer(orgService))
+		newNamespaceAuthorizer(),
 	}
 
 	// Individual services may have explicit implementations
@@ -38,7 +41,7 @@ func NewGrafanaAuthorizer(cfg *setting.Cfg, orgService orgsvc.Service) *GrafanaA
 
 	// org role is last -- and will return allow for verbs that match expectations
 	// The apiVersion flavors will run first and can return early when FGAC has appropriate rules
-	authorizers = append(authorizers, newOrgRoleAuthorizer(orgService))
+	authorizers = append(authorizers, newRoleAuthorizer())
 	return &GrafanaAuthorizer{
 		apis: apis,
 		auth: union.New(authorizers...),

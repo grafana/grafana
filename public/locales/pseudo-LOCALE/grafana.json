@@ -1914,6 +1914,16 @@
       "text-color-swatch": "Ŧęχŧ čőľőř",
       "transparent-swatch": "Ŧřäŉşpäřęŉŧ"
     },
+    "page-toolbar": {
+      "go-back": "Ğő þäčĸ (Ēşč)",
+      "search-dashboard-name": "Ŝęäřčĥ đäşĥþőäřđ þy ŉämę",
+      "search-links": "Ŝęäřčĥ ľįŉĸş",
+      "search-parent-folder": "Ŝęäřčĥ đäşĥþőäřđ įŉ ŧĥę {{parent}} ƒőľđęř"
+    },
+    "pagination": {
+      "next-page": "ŉęχŧ päģę",
+      "previous-page": "přęvįőūş päģę"
+    },
     "secret-form-field": {
       "reset": "Ŗęşęŧ"
     },
@@ -2910,6 +2920,10 @@
     }
   },
   "navigation": {
+    "invite-user": {
+      "invite-button": "Ĩŉvįŧę",
+      "invite-tooltip": "Ĩŉvįŧę ŉęŵ męmþęř"
+    },
     "item": {
       "add-bookmark": "Åđđ ŧő ßőőĸmäřĸş",
       "remove-bookmark": "Ŗęmővę ƒřőm ßőőĸmäřĸş"
@@ -3524,7 +3538,6 @@
   "share-dashboard": {
     "menu": {
       "export-json-title": "Ēχpőřŧ äş ĴŜØŃ",
-      "invite-user-title": "Ĩŉvįŧę ŉęŵ męmþęř",
       "share-externally-title": "Ŝĥäřę ęχŧęřŉäľľy",
       "share-internally-title": "Ŝĥäřę įŉŧęřŉäľľy",
       "share-snapshot-title": "Ŝĥäřę şŉäpşĥőŧ"

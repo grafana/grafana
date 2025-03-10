@@ -47,7 +47,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -161,7 +160,6 @@ func ProvideService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	rr routing.RouteRegister,
-	orgService org.Service,
 	tracing *tracing.TracingService,
 	serverLockService *serverlock.ServerLockService,
 	db db.DB,
@@ -181,7 +179,7 @@ func ProvideService(
 		rr:                                rr,
 		stopCh:                            make(chan struct{}),
 		builders:                          []builder.APIGroupBuilder{},
-		authorizer:                        authorizer.NewGrafanaAuthorizer(cfg, orgService),
+		authorizer:                        authorizer.NewGrafanaAuthorizer(cfg),
 		tracing:                           tracing,
 		db:                                db, // For Unified storage
 		metrics:                           metrics.ProvideRegisterer(),
