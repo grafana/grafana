@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"path"
 	"strings"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,9 +15,12 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 type filesConnector struct {
@@ -200,19 +202,14 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 		return nil, apierrors.NewBadRequest("repository does not support read-writing")
 	}
 
+	parser, err := s.parsers.GetParser(ctx, writer)
+	if err != nil {
+		return nil, err
+	}
+
 	defer func() { _ = req.Body.Close() }()
 	if strings.HasSuffix(path, "/") {
-		if err := writer.Create(ctx, path, ref, nil, message); err != nil {
-			return nil, fmt.Errorf("failed to create folder: %w", err)
-		}
-		return &provisioning.ResourceWrapper{
-			Path:      path,
-			Ref:       ref,
-			Timestamp: &metav1.Time{Time: time.Now()},
-			// TODO: should we return something here?
-			// TypeMeta:  metav1.TypeMeta{},
-			// Resource: provisioning.ResourceObjects{},
-		}, nil
+		return s.doCreateFolder(ctx, writer, path, ref, message, parser)
 	}
 
 	data, err := io.ReadAll(req.Body)
@@ -224,11 +221,6 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 		Data: data,
 		Path: path,
 		Ref:  ref,
-	}
-
-	parser, err := s.parsers.GetParser(ctx, writer)
-	if err != nil {
-		return nil, err
 	}
 
 	parsed, err := parser.Parse(ctx, info, true)
@@ -280,6 +272,45 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 	}
 
 	return parsed.AsResourceWrapper(), err
+}
+
+func (s *filesConnector) doCreateFolder(ctx context.Context, repo repository.Writer, path string, ref string, message string, parser *resources.Parser) (*provisioning.ResourceWrapper, error) {
+	filePath, err := safepath.Join(path, "dummy.json")
+	if err != nil {
+		return nil, err
+	}
+
+	manager := &resources.FolderManager{
+		Repo:   repo,
+		Client: parser.Client().Resource(folder.SchemeGroupVersion.WithResource(folder.RESOURCE)),
+	}
+
+	// Now actually create the folder
+	if err := repo.Create(ctx, path, ref, nil, message); err != nil {
+		return nil, fmt.Errorf("failed to create folder: %w", err)
+	}
+
+	wrap := &provisioning.ResourceWrapper{
+		Path: path,
+		Ref:  ref,
+	}
+
+	if ref == "" {
+		folderName, err := manager.EnsureFolderPathExist(ctx, filePath)
+		if err != nil {
+			return nil, err
+		}
+
+		current, err := manager.Client.Get(ctx, folderName, metav1.GetOptions{})
+		if err != nil && !apierrors.IsNotFound(err) {
+			return nil, err // unable to check if the folder exists
+		}
+		wrap.Resource.Upsert = v0alpha1.Unstructured{
+			Object: current.Object,
+		}
+	}
+
+	return wrap, nil
 }
 
 func (s *filesConnector) doDelete(ctx context.Context, repo repository.Repository, path string, ref string, message string) (*provisioning.ResourceWrapper, error) {
