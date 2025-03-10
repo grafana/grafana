@@ -2566,7 +2566,7 @@ __metadata:
     immer: "npm:10.1.1"
     lodash: "npm:4.17.21"
     monaco-editor: "npm:0.34.1"
-    prismjs: "npm:1.29.0"
+    prismjs: "npm:1.30.0"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-select: "npm:5.10.0"
@@ -2638,7 +2638,7 @@ __metadata:
     jest: "npm:29.7.0"
     lodash: "npm:4.17.21"
     monaco-editor: "npm:0.34.1"
-    prismjs: "npm:1.29.0"
+    prismjs: "npm:1.30.0"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-use: "npm:17.6.0"
@@ -2858,7 +2858,7 @@ __metadata:
     immer: "npm:10.1.1"
     lodash: "npm:4.17.21"
     monaco-editor: "npm:0.34.1"
-    prismjs: "npm:1.29.0"
+    prismjs: "npm:1.30.0"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-select: "npm:5.10.0"
@@ -2914,7 +2914,7 @@ __metadata:
     lodash: "npm:4.17.21"
     lru-cache: "npm:11.0.2"
     monaco-editor: "npm:0.34.1"
-    prismjs: "npm:1.29.0"
+    prismjs: "npm:1.30.0"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-select: "npm:5.10.0"
@@ -3476,7 +3476,7 @@ __metadata:
     moment-timezone: "npm:0.5.47"
     monaco-promql: "npm:1.7.4"
     pluralize: "npm:8.0.0"
-    prismjs: "npm:1.29.0"
+    prismjs: "npm:1.30.0"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-highlight-words: "npm:0.21.0"
@@ -3889,7 +3889,7 @@ __metadata:
     moment: "npm:2.30.1"
     monaco-editor: "npm:0.34.1"
     ol: "npm:7.4.0"
-    prismjs: "npm:1.29.0"
+    prismjs: "npm:1.30.0"
     process: "npm:^0.11.10"
     rc-cascader: "npm:3.33.0"
     rc-drawer: "npm:7.2.0"
@@ -18301,7 +18301,7 @@ __metadata:
     postcss-reporter: "npm:7.1.0"
     postcss-scss: "npm:4.0.9"
     prettier: "npm:3.4.2"
-    prismjs: "npm:1.29.0"
+    prismjs: "npm:1.30.0"
     rc-slider: "npm:11.1.8"
     rc-tree: "npm:5.13.0"
     re-resizable: "npm:6.10.3"
@@ -25194,10 +25194,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prismjs@npm:1.29.0, prismjs@npm:^1.27.0, prismjs@npm:^1.29.0":
+"prismjs@npm:1.29.0":
   version: 1.29.0
   resolution: "prismjs@npm:1.29.0"
   checksum: 10/2080db382c2dde0cfc7693769e89b501ef1bfc8ff4f8d25c07fd4c37ca31bc443f6133d5b7c145a73309dc396e829ddb7cc18560026d862a887ae08864ef6b07
+  languageName: node
+  linkType: hard
+
+"prismjs@npm:1.30.0, prismjs@npm:^1.27.0, prismjs@npm:^1.29.0":
+  version: 1.30.0
+  resolution: "prismjs@npm:1.30.0"
+  checksum: 10/6b48a2439a82e5c6882f48ebc1564c3890e16463ba17ac10c3ad4f62d98dea5b5c915b172b63b83023a70ad4f5d7be3e8a60304420db34a161fae69dd4e3e2da
   languageName: node
   linkType: hard
 
