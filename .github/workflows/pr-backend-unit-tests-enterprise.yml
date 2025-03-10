@@ -54,13 +54,13 @@ jobs:
         run: make gen-go
 
       - name: Run unit tests
-        run: make test-go-unit
+        run: GODEBUG=testcacheverify=1 make test-go-unit
         env:
           # GO_UNIT_COVER_PROFILE: '${{ env.TEST_TYPE }}.cov'
           # GO_TEST_OUTPUT: ''
           # GO_UNIT_TEST_COVERPKG: 'github.com/grafana/grafana/...'
           GO_UNIT_COVERAGE: false
-          GODEBUG: "testcacheverify=1"
+          # GODEBUG: "testcacheverify=1"
 
       # Run Grafana Bench only on pushes to `main` or `release-*`
       - name: Install Grafana Bench
