@@ -53,15 +53,34 @@ jobs:
       - name: Generate Go code
         run: make gen-go
   
-      - name: Verify test caching
+      - name: Verify test caching with explicit cache control
         run: |
-          # First run with a subset of tests
-          echo "First test run:"
-          go test -v -short ./pkg/api/...
+          # Clear the test cache
+          go clean -testcache
           
-          # Second run - should use cached results
-          echo "Second test run (should use cache):"
-          go test -v -short ./pkg/api/...
+          # First run with a simple test
+          mkdir -p /tmp/testcache
+          cat > /tmp/testcache/simple_test.go << 'EOF'
+          package testcache
+          
+          import "testing"
+          
+          func TestSimple(t *testing.T) {
+              t.Log("Running simple test")
+          }
+          EOF
+          
+          # Run the test twice
+          cd /tmp/testcache
+          echo "First run:"
+          go test -v ./...
+          echo "Second run (should be cached):"
+          go test -v ./...
+          
+          # Check GOCACHE location
+          echo "Go test cache location:"
+          go env GOCACHE
+          
       # - name: Run unit tests
       #   run: GODEBUG=testcacheverify=1 make test-go-unit make test-go-unit
       #   env:
