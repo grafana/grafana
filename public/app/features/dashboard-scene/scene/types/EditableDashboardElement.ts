@@ -1,5 +1,3 @@
-import { ReactNode } from 'react';
-
 import { IconName } from '@grafana/data';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
@@ -19,11 +17,6 @@ export interface EditableDashboardElement {
    * Hook that returns edit pane options
    */
   useEditPaneOptions(): OptionsPaneCategoryDescriptor[];
-
-  /**
-   * Panel Actions
-   **/
-  renderActions?(): ReactNode;
 
   /**
    * Supports delete action
