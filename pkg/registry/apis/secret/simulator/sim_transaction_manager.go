@@ -2,9 +2,6 @@ package simulator
 
 import (
 	"context"
-	"database/sql"
-
-	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
 
 type SimTransactionManager struct {
@@ -15,6 +12,18 @@ func NewSimTransactionManager(simNetwork *SimNetwork) *SimTransactionManager {
 	return &SimTransactionManager{simNetwork}
 }
 
-func (tx *SimTransactionManager) BeginTx(ctx context.Context, opts *sql.TxOptions, cb func(tx contracts.Tx, err error)) {
-	tx.simNetwork.Send(simDatabaseBeginTxQuery{ctx, opts, cb})
+func (manager *SimTransactionManager) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
+	reply := manager.simNetwork.Send(SendInput{
+		Debug: "BeginTx",
+		Execute: func() any {
+			return simDatabaseBeginTxQuery{ctx: ctx, opts: nil}
+		}}).(simDatabaseBeginTxResponse)
+
+	// If an error happened when starting the transaction
+	if reply.err != nil {
+		return reply.err
+	}
+	// Run the function with the transaction in the context
+	// TOOD: add tx to context
+	return fn(ctx)
 }

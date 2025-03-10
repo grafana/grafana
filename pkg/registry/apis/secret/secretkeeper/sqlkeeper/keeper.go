@@ -46,6 +46,11 @@ func (s *SQLKeeper) Store(ctx context.Context, cfg secretv0alpha1.KeeperConfig, 
 	return keepertypes.ExternalID(encryptedVal.UID), nil
 }
 
+func (s *SQLKeeper) Store2(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, exposedValueOrRef string, cb func(keepertypes.ExternalID, error)) {
+	externalID, err := s.Store(ctx, cfg, namespace, exposedValueOrRef)
+	cb(externalID, err)
+}
+
 func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID keepertypes.ExternalID) (secretv0alpha1.ExposedSecureValue, error) {
 	ctx, span := s.tracer.Start(ctx, "sqlKeeper.Expose")
 	defer span.End()

@@ -19,7 +19,6 @@ type SimDatabase struct {
 	outboxQueue []*secretv0alpha1.SecureValue
 	// Map of namespace -> secret name -> secure value
 	secretMetadata map[Namespace]map[SecureValueName]secretv0alpha1.SecureValue
-	simNetwork     *SimNetwork
 
 	txBuffer map[TransactionID]*transaction
 
@@ -38,10 +37,9 @@ func newTransaction() *transaction {
 	}
 }
 
-func NewSimDatabase(simNetwork *SimNetwork) *SimDatabase {
+func NewSimDatabase() *SimDatabase {
 	return &SimDatabase{
 		secretMetadata:    make(map[string]map[string]secretv0alpha1.SecureValue),
-		simNetwork:        simNetwork,
 		txBuffer:          make(map[TransactionID]*transaction),
 		nextTransactionId: 1,
 	}
@@ -54,44 +52,44 @@ func (db *SimDatabase) getNextTransactionId() uint64 {
 }
 
 // When a query is received by the database
-func (db *SimDatabase) onQuery(query Message) {
+func (db *SimDatabase) onQuery(query any) any {
 	switch query := query.(type) {
 	case simDatabaseAppendQuery:
 		// TODO: maybe error
-		simTx := query.tx.(*simTx)
-		transaction := db.txBuffer[simTx.transactionID]
+		transaction := db.txBuffer[query.transactionID]
 		transaction.outboxQueue = append(transaction.outboxQueue, query.secureValue)
 
 		// Query executed with no errors
-		db.simNetwork.Send(simDatabaseAppendResponse{
-			cb:  query.cb,
+		return simDatabaseAppendResponse{
 			err: nil,
-		})
+		}
 
 	case simDatabaseSecretMetadataHasPendingStatusQuery:
 		ns, ok := db.secretMetadata[query.namespace.String()]
 		if !ok {
 			// Namespace doesn't exist
-			query.cb(false, nil)
-			return
+			return simDatabaseSecretMetadataHasPendingStatusResponse{
+				isPending: false,
+				err:       nil,
+			}
 		}
 
 		secureValue, ok := ns[query.name]
 		if !ok {
 			// Secret doesn't exist
-			query.cb(false, nil)
-			return
+			return simDatabaseSecretMetadataHasPendingStatusResponse{
+				isPending: false,
+				err:       nil,
+			}
 		}
 
-		db.simNetwork.Send(simDatabaseSecretMetadataHasPendingStatusResponse{
-			cb:        query.cb,
+		return simDatabaseSecretMetadataHasPendingStatusResponse{
 			isPending: secureValue.Status.Phase == "Pending",
 			err:       nil,
-		})
+		}
 
 	case simDatabaseCreateSecureValueMetadataQuery:
-		simTx := query.tx.(*simTx)
-		transaction := db.txBuffer[simTx.transactionID]
+		transaction := db.txBuffer[query.transactionID]
 
 		v := *query.sv
 		v.SetUID(types.UID(uuid.NewString()))
@@ -103,15 +101,14 @@ func (db *SimDatabase) onQuery(query Message) {
 		if ok {
 			if _, ok := ns[query.sv.Name]; ok {
 				// Return error if it exists
-				db.simNetwork.Send(simDatabaseCreateSecureValueMetadataResponse{
-					cb:  query.cb,
+				return simDatabaseCreateSecureValueMetadataResponse{
 					sv:  &v,
 					err: fmt.Errorf("securevalue %v already exists", query.sv.Name),
-				})
-				return
+				}
 			}
 		}
 
+		fmt.Printf("\n\naaaaaaa query.sv %+v\n\n", query.sv)
 		if _, ok := transaction.secretMetadata[query.sv.Namespace]; !ok {
 			transaction.secretMetadata[query.sv.Namespace] = make(map[SecureValueName]secretv0alpha1.SecureValue)
 		}
@@ -119,26 +116,22 @@ func (db *SimDatabase) onQuery(query Message) {
 		// Store the secure value metadata in the set of pending changes
 		transaction.secretMetadata[query.sv.Namespace][query.sv.Name] = v
 
-		db.simNetwork.Send(simDatabaseCreateSecureValueMetadataResponse{
-			cb:  query.cb,
+		return simDatabaseCreateSecureValueMetadataResponse{
 			sv:  &v,
 			err: nil,
-		})
+		}
 
 	case simDatabaseBeginTxQuery:
 		transactionId := db.getNextTransactionId()
 		db.txBuffer[transactionId] = newTransaction()
 
-		// TODO: begin tx
-		db.simNetwork.Send(simDatabaseBeginTxResponse{
-			cb:  query.cb,
-			tx:  newSimTx(transactionId, db.simNetwork),
-			err: nil,
-		})
+		return simDatabaseBeginTxResponse{
+			transactionID: transactionId,
+			err:           nil,
+		}
 
 	case simDatabaseCommit:
-		simTx := query.tx.(*simTx)
-		transaction := db.txBuffer[simTx.transactionID]
+		transaction := db.txBuffer[query.transactionID]
 		db.outboxQueue = append(db.outboxQueue, transaction.outboxQueue...)
 		for namespace, changes := range transaction.secretMetadata {
 			for secureValueName, secureValue := range changes {
@@ -149,29 +142,14 @@ func (db *SimDatabase) onQuery(query Message) {
 				db.secretMetadata[namespace][secureValueName] = secureValue
 			}
 		}
-		delete(db.txBuffer, simTx.transactionID)
+		delete(db.txBuffer, query.transactionID)
+		return simDatabaseCommitResponse{err: nil}
 
 	case simDatabaseRollback:
-		simTx := query.tx.(*simTx)
-		delete(db.txBuffer, simTx.transactionID)
+		delete(db.txBuffer, query.transactionID)
+		return simDatabaseRollbackResponse{err: nil}
 
 	default:
 		panic(fmt.Sprintf("unhandled query: %T %+v", query, query))
 	}
-}
-
-type simTx struct {
-	transactionID TransactionID
-	network       *SimNetwork
-}
-
-func newSimTx(transactionID TransactionID, network *SimNetwork) *simTx {
-	return &simTx{transactionID: transactionID, network: network}
-}
-
-func (tx *simTx) Commit(func(error)) {
-	tx.network.Send(simDatabaseCommit{tx: tx})
-}
-func (tx *simTx) Rollback(func(error)) {
-	tx.network.Send(simDatabaseRollback{tx: tx})
 }

@@ -9,32 +9,36 @@ import (
 	"testing"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/coro"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/services"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type Action string
 
 // IMPORTANT: Add new actions to the slice in enabledActions.
 const (
-	ActionCreateSecret Action = "CreateSecret"
-	ActionNetworkTick  Action = "ActionNetworkTick"
+	ActionCreateSecret    Action = "CreateSecret"
+	ActionResumeCoroutine Action = "ResumeCoroutine"
 )
 
 type Simulator struct {
 	// A seeded prng.
 	rng                *rand.Rand
+	runtime            *coro.Runtime
+	activityLog        *ActivityLog
 	simNetwork         *SimNetwork
 	simDatabase        *SimDatabase
 	secureValueStorage *SimSecureValueStorage
 	secureValueService *services.CreateSecureValue
 }
 
-func NewSimulator(rng *rand.Rand, simNetwork *SimNetwork, simDatabase *SimDatabase, secureValueStorage *SimSecureValueStorage, secureValueService *services.CreateSecureValue) *Simulator {
+func NewSimulator(rng *rand.Rand, runtime *coro.Runtime, activityLog *ActivityLog, simNetwork *SimNetwork, simDatabase *SimDatabase, secureValueStorage *SimSecureValueStorage, secureValueService *services.CreateSecureValue) *Simulator {
 	return &Simulator{
 		rng:                rng,
+		runtime:            runtime,
+		activityLog:        activityLog,
 		simNetwork:         simNetwork,
 		simDatabase:        simDatabase,
 		secureValueStorage: secureValueStorage,
@@ -50,14 +54,14 @@ func (sim *Simulator) enabledActions() []Action {
 
 	// For each action, check if it would make sense to execute the action
 	// given the state of system, if so, add it to `enabled`.
-	for _, action := range []Action{ActionCreateSecret, ActionNetworkTick} {
+	for _, action := range []Action{ActionCreateSecret, ActionResumeCoroutine} {
 		switch action {
 		case ActionCreateSecret:
 			// It always makes sense to try to create a secret, no matter the state of system.
 			enabled = append(enabled, action)
 
-		case ActionNetworkTick:
-			if sim.simNetwork.HasWork() {
+		case ActionResumeCoroutine:
+			if sim.runtime.HasCoroutinesReady() {
 				enabled = append(enabled, action)
 			}
 
@@ -80,63 +84,103 @@ func (sim *Simulator) step() {
 
 	switch action {
 	case ActionCreateSecret:
-		sim.secureValueService.Handle(context.Background(), &secretv0alpha1.SecureValue{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "sv-1",
-			},
-			Spec: secretv0alpha1.SecureValueSpec{
-				Title: "foo",
-				Value: secretv0alpha1.NewExposedSecureValue("value1"),
-			},
-			Status: secretv0alpha1.SecureValueStatus{
-				Phase: secretv0alpha1.SecureValuePhasePending,
-			},
-		},
-			func(o runtime.Object, err error) {
-				fmt.Printf("\n\naaaaaaa o %+v err %+v\n\n", o, err)
-			},
-		)
+		sim.activityLog.Record("[SIM] CreateSecret")
+		// Spawn a coroutine to make the request resumable
+		coroutine := sim.runtime.Spawn(func() {
+			// TODO: call secure_value_rest.Create
+			object, err := sim.secureValueService.Handle(context.Background(), &secretv0alpha1.SecureValue{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "sv-1",
+				},
+				Spec: secretv0alpha1.SecureValueSpec{
+					Title: "foo",
+					Value: secretv0alpha1.NewExposedSecureValue("value1"),
+				},
+				Status: secretv0alpha1.SecureValueStatus{
+					Phase: secretv0alpha1.SecureValuePhasePending,
+				},
+			})
+			// TODO: handle error
+			fmt.Printf("\n\naaaaaaa secureValueService.Handle object %+v err %+v\n\n", object, err)
+		})
+		// Resume once so action can make progress
+		coroutine.Resume(nil)
 
-	case ActionNetworkTick:
-		sim.simNetwork.Tick()
+	case ActionResumeCoroutine:
+		sim.activityLog.Record("[SIM] ResumeCoroutine")
+		// Choose a random coroutine
+		i := sim.rng.Intn(len(sim.runtime.ReadySet))
+		ready := sim.runtime.ReadySet[i]
+		// Remove the coroutine from the set of coroutines waiting to be resumed
+		sim.runtime.ReadySet = append(sim.runtime.ReadySet[:i], sim.runtime.ReadySet[i+1:]...)
+		// Resume the coroutine
+		ready.Coroutine.Resume(ready.Payload)
 
 	default:
 		panic(fmt.Sprintf("unhandled action: %+v", action))
 	}
 }
 
-func getSeedFromEnvOrRandom() int64 {
-	if seed := os.Getenv("SEED"); seed != "" {
-		n, err := strconv.ParseInt(seed, 10, 64)
+type SimulatorConfig struct {
+	Seed  int64
+	Steps int64
+}
+
+func int64FromEnv(key string) (bool, int64) {
+	if v := os.Getenv("SEED"); v != "" {
+		n, err := strconv.ParseInt(v, 10, 64)
 		if err != nil {
-			panic(fmt.Sprintf("SEED must be an integer, got=%+v err=%+v", seed, err))
+			panic(fmt.Sprintf("%s must be an integer, got=%+v err=%+v", key, v, err))
 		}
 
-		return n
+		return true, n
 	}
 
-	return rand.Int63()
+	return false, 0
+}
+
+func getSimulatorConfigOrDefault() SimulatorConfig {
+	var seed int64
+	found, v := int64FromEnv("SEED")
+	if found {
+		seed = v
+	} else {
+		seed = rand.Int63()
+	}
+
+	var steps int64
+	found, v = int64FromEnv("STEPS")
+	if found {
+		steps = v
+	} else {
+		steps = 100
+	}
+
+	return SimulatorConfig{
+		Seed:  seed,
+		Steps: steps,
+	}
 }
 
 func TestSimulate(t *testing.T) {
 	t.Parallel()
 
-	seed := getSeedFromEnvOrRandom() //int64(490660684584332)
-	rng := rand.New(rand.NewSource(seed))
+	simulatorConfig := getSimulatorConfigOrDefault()
+	rng := rand.New(rand.NewSource(simulatorConfig.Seed))
+	activityLog := NewActivityLog()
 
 	t.Cleanup(func() {
 		if t.Failed() {
-			fmt.Printf("SEED=%+v\n", seed)
+			fmt.Println(activityLog.String())
+			fmt.Printf("SEED=%+v\n", simulatorConfig.Seed)
 		}
 	})
 
 	simNetworkConfig := SimNetworkConfig{errProbability: 0.2, rng: rng}
 
-	simDatabase := NewSimDatabase(nil)
+	simDatabase := NewSimDatabase()
 
 	simNetwork := NewSimNetwork(simNetworkConfig, simDatabase)
-
-	simDatabase.simNetwork = simNetwork
 
 	simTransactionManager := NewSimTransactionManager(simNetwork)
 
@@ -146,9 +190,11 @@ func TestSimulate(t *testing.T) {
 
 	secureValueService := services.NewCreateSecureValue(simTransactionManager, simSecureValueStorage, simOutboxQueue)
 
-	simulator := NewSimulator(rng, simNetwork, simDatabase, simSecureValueStorage, secureValueService)
+	runtime := coro.NewRuntime()
 
-	for range 100 {
+	simulator := NewSimulator(rng, runtime, activityLog, simNetwork, simDatabase, simSecureValueStorage, secureValueService)
+
+	for range simulatorConfig.Steps {
 		simulator.step()
 
 		invOnlyOneOperationPerSecureValueInTheQueueAtATime(t, simDatabase)
@@ -160,7 +206,7 @@ func TestSimulate(t *testing.T) {
 func invOnlyOneOperationPerSecureValueInTheQueueAtATime(t *testing.T, simDatabase *SimDatabase) {
 	uniqueSecretName := make(map[string]struct{}, 0)
 	for _, sv := range simDatabase.outboxQueue {
-		secureValueName := sv.(*secretv0alpha1.SecureValue).Name
+		secureValueName := sv.Name
 
 		require.NotContains(t, uniqueSecretName, secureValueName, fmt.Sprintf("Current SecureValues: %v", uniqueSecretName))
 
@@ -171,9 +217,7 @@ func invOnlyOneOperationPerSecureValueInTheQueueAtATime(t *testing.T, simDatabas
 // TLA+ inv: SecretMetadataHasPendingStatusWhenTheresAnOperationInTheQueue
 func invSecretMetadataHasPendingStatusWhenTheresAnOperationInTheQueue(t *testing.T, simDatabase *SimDatabase) {
 	secureValuesInQueue := make(map[string]map[string]struct{}, 0)
-	for _, rawSV := range simDatabase.outboxQueue {
-		sv := rawSV.(*secretv0alpha1.SecureValue)
-
+	for _, sv := range simDatabase.outboxQueue {
 		if _, ok := secureValuesInQueue[sv.Namespace]; !ok {
 			secureValuesInQueue[sv.Namespace] = make(map[string]struct{})
 		}

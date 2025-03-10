@@ -2,111 +2,100 @@ package worker
 
 import (
 	"context"
-	"errors"
 
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
 type Worker struct {
+	// Cancel the context to stop the worker
+	ctx                        context.Context
 	transactionManager         contracts.TransactionManager
 	outboxQueue                contracts.OutboxQueue
-	keeperSvc                  secretkeeper.Service
+	keepers                    map[types.KeeperType]types.Keeper
 	secureValueMetadataStorage contracts.SecureValueStorage
 }
 
 func NewWorker(
+	ctx context.Context,
 	transactionManager contracts.TransactionManager,
 	outboxQueue contracts.OutboxQueue,
-	keeperSvc secretkeeper.Service,
+	keepers map[types.KeeperType]types.Keeper,
 	secureValueMetadataStorage contracts.SecureValueStorage,
 ) *Worker {
-	return &Worker{transactionManager, outboxQueue, keeperSvc, secureValueMetadataStorage}
+	return &Worker{ctx: ctx, transactionManager: transactionManager, outboxQueue: outboxQueue, keepers: keepers, secureValueMetadataStorage: secureValueMetadataStorage}
 }
 
-func (w *Worker) Work(ctx context.Context) {
-	var cfg secretv0alpha1.KeeperConfig
+func (w *Worker) ReceiveAndProcessMessages(ctx context.Context, keepers map[types.KeeperType]types.Keeper) {
 
-	for {
-		// TODO: this executing all the time is not good because it goes to the db
-		keepers, err := w.keeperSvc.GetKeepers()
-		if err != nil {
-			panic(err)
-		}
-
-		w.transactionManager.BeginTx(ctx, nil, func(tx contracts.Tx, err error) {
-			onError := func(err error) {
-				tx.Rollback(func(txErr error) {
-					panic(errors.Join(err, txErr)) // TODO: log, increment and send to DLQ
-				})
-			}
-			if err != nil {
-				onError(err)
-				return
-			}
-
-			w.outboxQueue.ReceiveN(ctx, tx, 1, func(messages []contracts.OutboxMessage, err error) {
-				if err != nil {
-					onError(err)
-					return
-				}
-
-				for _, message := range messages {
-					//StoreSecretValue
-					keeperType := keepers[types.KeeperType(message.Keeper)]
-
-					// TODO: DECRYPT HERE
-					rawSecret := message.EncryptedSecret
-
-					if message.ExternalID != nil {
-						// TODO: PASS TX + CB
-						err := keeperType.Update(ctx, cfg, message.Namespace, types.ExternalID(*message.ExternalID), rawSecret)
-						if err != nil {
-							onError(err)
-							return
-						}
-					} else {
-						// TODO: PASS TX + CB
-						externalID, err := keeperType.Store(ctx, cfg, message.Namespace, rawSecret)
-						if err != nil {
-							onError(err)
-							return
-						}
-
-						w.secureValueMetadataStorage.SetExternalID(ctx, tx, xkube.Namespace(message.Namespace), message.Name, externalID, func(err error) {
-							if err != nil {
-								onError(err)
-								return
-							}
-						})
-					}
-
-					// DeleteMsgFromQueue
-					w.outboxQueue.Delete(ctx, tx, xkube.Namespace(message.Namespace), message.Name, func(err error) {
-						if err != nil {
-							onError(err)
-							return
-						}
-
-						w.secureValueMetadataStorage.SetStatusSucceeded(ctx, tx, xkube.Namespace(message.Namespace), message.Name, func(err error) {
-							if err != nil {
-								onError(err)
-								return
-							}
-
-							tx.Commit(func(err error) {
-								if err != nil {
-									onError(err)
-									return
-								}
-							})
-						})
-					})
-				}
-			})
-		})
-	}
+	panic("TODO: Worker.ReceiveAndProcessMessages")
 }
+
+// func (w *Worker) onMessagesReceived(messages []contracts.OutboxMessage, err error) {
+// 	if err != nil {
+// 		// TODO
+// 		return
+// 	}
+
+// 	for _, message := range messages {
+// 		w.processMessage(w.ctx, message)
+// 	}
+// }
+
+// func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMessage) {
+// 	keeper := w.keepers[types.KeeperType(message.Keeper)]
+
+// 	// TODO: DECRYPT HERE
+// 	rawSecret := message.EncryptedSecret
+
+// 	// TODO: fetch this
+// 	var cfg secretv0alpha1.KeeperConfig
+
+// 	switch message.Type {
+// 	case contracts.CreateSecretOutboxMessage:
+
+// 		// TODO: PASS TX + CB
+// 		keeper.Store2(ctx, cfg, message.Namespace, rawSecret, w.onKeeperStoreResponse)
+
+// 	case contracts.UpdateSecretOutboxMessage:
+// 		// TODO: PASS TX + CB
+// 		err := keeper.Update(ctx, cfg, message.Namespace, types.ExternalID(*message.ExternalID), rawSecret)
+// 		if err != nil {
+// 			// TODO
+// 		}
+
+// 	case contracts.DeleteSecretOutboxMessage:
+// 		panic("TODO")
+
+// 	default:
+// 		panic(fmt.Sprintf("unhandled message type: %s", message.Type))
+// 	}
+
+// 	w.secureValueMetadataStorage.SetStatusSucceeded(ctx, xkube.Namespace(message.Namespace), message.Name, func(err error) {
+// 		if err != nil {
+// 			onError(err)
+// 			return
+// 		}
+
+// 		w.outboxQueue.Delete(ctx, xkube.Namespace(message.Namespace), message.Name, func(err error) {
+// 			if err != nil {
+// 				onError(err)
+// 				return
+// 			}
+// 		})
+// 	})
+// }
+
+// func (w *Worker) onKeeperStoreResponse(externalID types.ExternalID, err error) {
+// 	if err != nil {
+// 		// TODO
+// 		return
+// 	}
+
+// 	w.secureValueMetadataStorage.SetExternalID(ctx, xkube.Namespace(message.Namespace), message.Name, externalID, func(err error) {
+// 		if err != nil {
+// 			onError(err)
+// 			return
+// 		}
+// 	})
+// }

@@ -1,8 +1,22 @@
 package simulator
 
 import (
+	"context"
+	"database/sql"
+	"fmt"
 	"math/rand"
+
+	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/coro"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
+
+type SendInput struct {
+	// A description of the action
+	Debug string
+	// The function that will be called
+	Execute func() any
+}
 
 type SimNetworkConfig struct {
 	errProbability float64 // [0,1]
@@ -13,54 +27,93 @@ type SimNetworkConfig struct {
 type SimNetwork struct {
 	config SimNetworkConfig
 
-	// The set of messages in flgith
-	messages    []Message
-	simDatabase *SimDatabase
+	simDatabase   *SimDatabase
+	nextMessageID uint64
 }
 
 func NewSimNetwork(config SimNetworkConfig, simDatabase *SimDatabase) *SimNetwork {
 	return &SimNetwork{config: config, simDatabase: simDatabase}
 }
 
-// Returns true when there are messages in flight.
-func (network *SimNetwork) HasWork() bool {
-	return len(network.messages) > 0
+func (network *SimNetwork) getNextMessageID() uint64 {
+	id := network.nextMessageID
+	network.nextMessageID += 1
+	return id
 }
 
-// Processes one of the messages in flight by delivering it to the target.
-func (network *SimNetwork) Tick() {
-	// TODO: inject errors: partitions, timeouts, asymmetry
+func (network *SimNetwork) Send(input SendInput) any {
 
-	// Choose any in flight message
-	i := network.config.rng.Intn(len(network.messages))
-	message := network.messages[i]
-	// Remove the message from in flight messages
-	network.messages = append(network.messages[:i], network.messages[i+1:]...)
-
-	// Are we going to have an error? Let's roll the dice
-	if network.config.errProbability > network.config.rng.Float64() {
-		return
+	// Yield before executing the action to simulate a message in flight
+	if v := coro.Yield(); v != nil {
+		panic(fmt.Sprintf("network.Send resumed with non-nil value, it should always be nil: %+v", v))
 	}
 
-	// Deliver the message
-	switch msg := message.(type) {
-	case simDatabaseAppendResponse:
-		msg.cb(msg.err)
+	reply := input.Execute()
 
-	case simDatabaseSecretMetadataHasPendingStatusResponse:
-		msg.cb(msg.isPending, msg.err)
-
-	case simDatabaseCreateSecureValueMetadataResponse:
-		msg.cb(msg.sv, msg.err)
-
-	case simDatabaseBeginTxResponse:
-		msg.cb(msg.tx, msg.err)
-
-	default:
-		network.simDatabase.onQuery(message)
+	// Yield before executing the action to simulate a reply message in flight
+	if v := coro.Yield(); v != nil {
+		panic(fmt.Sprintf("network.Send resumed with non-nil value, it should always be nil: %+v", v))
 	}
+
+	return reply
 }
 
-func (network *SimNetwork) Send(msg Message) {
-	network.messages = append(network.messages, msg)
+/*** Request ***/
+type simDatabaseAppendQuery struct {
+	ctx           context.Context
+	transactionID TransactionID
+	secureValue   *secretv0alpha1.SecureValue
+}
+
+type simDatabaseSecretMetadataHasPendingStatusQuery struct {
+	ctx       context.Context
+	namespace xkube.Namespace
+	name      string
+}
+
+type simDatabaseCreateSecureValueMetadataQuery struct {
+	ctx           context.Context
+	transactionID TransactionID
+	sv            *secretv0alpha1.SecureValue
+}
+
+type simDatabaseBeginTxQuery struct {
+	ctx  context.Context
+	opts *sql.TxOptions
+}
+
+/*** Response ***/
+type simDatabaseAppendResponse struct {
+	err error
+}
+
+type simDatabaseSecretMetadataHasPendingStatusResponse struct {
+	isPending bool
+	err       error
+}
+
+type simDatabaseCreateSecureValueMetadataResponse struct {
+	sv  *secretv0alpha1.SecureValue
+	err error
+}
+
+type simDatabaseBeginTxResponse struct {
+	transactionID TransactionID
+	err           error
+}
+
+type simDatabaseCommit struct {
+	transactionID TransactionID
+}
+
+type simDatabaseCommitResponse struct {
+	err error
+}
+
+type simDatabaseRollback struct {
+	transactionID TransactionID
+}
+
+type simDatabaseRollbackResponse struct {
+	err error
 }

@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
@@ -25,51 +24,35 @@ func NewCreateSecureValue(
 	return &CreateSecureValue{tx, secureValueMetadataStorage, outboxQueue}
 }
 
-func (s *CreateSecureValue) Handle(ctx context.Context, sv *secretv0alpha1.SecureValue, cb func(runtime.Object, error)) {
-	s.transactionManager.BeginTx(ctx, nil, func(tx contracts.Tx, err error) {
-		onError := func(err error) {
-			tx.Rollback(func(txErr error) {
-				cb(nil, errors.Join(err, txErr))
-			})
-		}
+func (s *CreateSecureValue) Handle(ctx context.Context, sv *secretv0alpha1.SecureValue) (runtime.Object, error) {
+	// Modified inside the transaction callback.
+	var object runtime.Object
+
+	err := s.transactionManager.InTransaction(ctx, func(ctx context.Context) error {
+		isPending, err := s.secureValueMetadataStorage.SecretMetadataHasPendingStatus(ctx, xkube.Namespace(sv.Namespace), sv.Name)
 		if err != nil {
-			onError(err)
-			return
+			return fmt.Errorf("failed to create secure value: %w", err)
 		}
 
-		s.secureValueMetadataStorage.SecretMetadataHasPendingStatus(ctx, tx, xkube.Namespace(sv.Namespace), sv.Name,
-			func(isPending bool, err error) {
-				if err != nil {
-					onError(fmt.Errorf("failed to create secure value: %w", err))
-					return
-				}
+		if isPending {
+			return fmt.Errorf("already pending")
+		}
 
-				if isPending {
-					onError(fmt.Errorf("already pending"))
-					return
-				}
+		// TODO: Consume sv.rawSecret and encrypt value here before storing!
+		// TODO: handle REF vs VALUE
+		_ = sv.Spec.Value.DangerouslyExposeAndConsumeValue()
 
-				// TODO: Consume sv.rawSecret and encrypt value here before storing!
-				// TODO: handle REF vs VALUE
-				_ = sv.Spec.Value.DangerouslyExposeAndConsumeValue()
+		createdSecureValue, err := s.secureValueMetadataStorage.Create(ctx, sv)
+		if err != nil {
+			return fmt.Errorf("failed to create securevalue: %w", err)
+		}
 
-				s.secureValueMetadataStorage.Create(ctx, tx, sv, func(createdSecureValue *secretv0alpha1.SecureValue, err error) {
-					if err != nil {
-						onError(fmt.Errorf("failed to create securevalue: %w", err))
-						return
-					}
+		if err := s.outboxQueue.Append(ctx, createdSecureValue); err != nil {
+			return fmt.Errorf("failed to append to queue: %w", err)
+		}
 
-					s.outboxQueue.Append(ctx, tx, createdSecureValue, func(err error) {
-						if err != nil {
-							onError(fmt.Errorf("failed to append to queue: %w", err))
-							return
-						}
-
-						tx.Commit(func(err error) {
-							cb(createdSecureValue, err)
-						})
-					})
-				})
-			})
+		return nil
 	})
+
+	return object, err
 }

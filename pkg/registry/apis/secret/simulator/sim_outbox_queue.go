@@ -5,6 +5,7 @@ import (
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
 // Simulation version of contracts.OutboxQueue
@@ -18,6 +19,20 @@ func NewSimOutboxQueue(simNetwork *SimNetwork) *SimOutboxQueue {
 }
 
 // Sends a query to the database to append to the outbox queue.
-func (queue *SimOutboxQueue) Append(ctx context.Context, tx contracts.Tx, secureValue *secretv0alpha1.SecureValue, cb func(error)) {
-	queue.simNetwork.Send(simDatabaseAppendQuery{ctx: ctx, tx: tx, secureValue: secureValue, cb: cb})
+func (queue *SimOutboxQueue) Append(ctx context.Context, secureValue *secretv0alpha1.SecureValue) error {
+	reply := queue.simNetwork.Send(SendInput{
+		Debug: "AppendQuery",
+		Execute: func() any {
+			return simDatabaseAppendQuery{ctx: ctx, secureValue: secureValue}
+		}}).(simDatabaseAppendResponse)
+
+	return reply.err
+}
+
+func (queue *SimOutboxQueue) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
+	panic("TODO")
+}
+
+func (queue *SimOutboxQueue) ReceiveN(ctx context.Context, n int) (messages []contracts.OutboxMessage, err error) {
+	panic("TODO")
 }

@@ -2,12 +2,35 @@ package contracts
 
 import (
 	"context"
+	"fmt"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
+type OutboxMessageType int
+
+const (
+	CreateSecretOutboxMessage OutboxMessageType = iota
+	UpdateSecretOutboxMessage
+	DeleteSecretOutboxMessage
+)
+
+func (self OutboxMessageType) String() string {
+	switch self {
+	case CreateSecretOutboxMessage:
+		return "CreateSecret"
+	case UpdateSecretOutboxMessage:
+		return "UpdateSecret"
+	case DeleteSecretOutboxMessage:
+		return "DeleteSecret"
+	default:
+		panic(fmt.Sprintf("unhandled OutboxMessageType: %d", self))
+	}
+}
+
 type OutboxMessage struct {
+	Type            OutboxMessageType
 	MessageID       string
 	Name            string
 	Namespace       string
@@ -17,7 +40,7 @@ type OutboxMessage struct {
 }
 
 type OutboxQueue interface {
-	Append(ctx context.Context, tx Tx, secureValue *secretv0alpha1.SecureValue, cb func(error))
-	ReceiveN(ctx context.Context, tx Tx, n int, cb func(messages []OutboxMessage, err error))
-	Delete(ctx context.Context, tx Tx, namespace xkube.Namespace, name string, cb func(err error))
+	Append(ctx context.Context, secureValue *secretv0alpha1.SecureValue) error
+	ReceiveN(ctx context.Context, n int) ([]OutboxMessage, error)
+	Delete(ctx context.Context, namespace xkube.Namespace, name string) error
 }

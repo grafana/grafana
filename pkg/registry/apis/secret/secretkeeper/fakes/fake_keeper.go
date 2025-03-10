@@ -36,6 +36,11 @@ func (s *FakeKeeper) Store(ctx context.Context, cfg secretv0alpha1.KeeperConfig,
 	return keepertypes.ExternalID(uid), nil
 }
 
+func (s *FakeKeeper) Store2(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, exposedValueOrRef string, cb func(keepertypes.ExternalID, error)) {
+	externalID, err := s.Store(ctx, cfg, namespace, exposedValueOrRef)
+	cb(externalID, err)
+}
+
 func (s *FakeKeeper) Expose(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID keepertypes.ExternalID) (secretv0alpha1.ExposedSecureValue, error) {
 	ns, ok := s.values[namespace]
 	if !ok {

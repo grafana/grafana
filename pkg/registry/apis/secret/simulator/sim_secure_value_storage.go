@@ -4,7 +4,7 @@ import (
 	"context"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 )
@@ -18,8 +18,9 @@ func NewSimSecureValueStorage(simNetwork *SimNetwork) *SimSecureValueStorage {
 	return &SimSecureValueStorage{simNetwork: simNetwork}
 }
 
-func (storage *SimSecureValueStorage) Create(ctx context.Context, tx contracts.Tx, sv *secretv0alpha1.SecureValue, cb func(*secretv0alpha1.SecureValue, error)) {
-	storage.simNetwork.Send(simDatabaseCreateSecureValueMetadataQuery{ctx: ctx, tx: tx, sv: sv, cb: cb})
+func (storage *SimSecureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+	reply := storage.simNetwork.Send(ctx, simDatabaseCreateSecureValueMetadataQuery{ctx: ctx, sv: sv}).(simDatabaseCreateSecureValueMetadataResponse)
+	return reply.sv, reply.err
 }
 func (storage *SimSecureValueStorage) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
 	panic("TODO")
@@ -34,6 +35,15 @@ func (storage *SimSecureValueStorage) List(ctx context.Context, namespace xkube.
 	panic("TODO")
 }
 
-func (storage *SimSecureValueStorage) SecretMetadataHasPendingStatus(ctx context.Context, tx contracts.Tx, namespace xkube.Namespace, name string, cb func(bool, error)) {
-	storage.simNetwork.Send(simDatabaseSecretMetadataHasPendingStatusQuery{ctx: ctx, tx: tx, namespace: namespace, name: name, cb: cb})
+func (storage *SimSecureValueStorage) SecretMetadataHasPendingStatus(ctx context.Context, namespace xkube.Namespace, name string) (bool, error) {
+	reply := storage.simNetwork.Send(ctx, simDatabaseSecretMetadataHasPendingStatusQuery{ctx: ctx, namespace: namespace, name: name}).(simDatabaseSecretMetadataHasPendingStatusResponse)
+	return reply.isPending, reply.err
+}
+
+func (storage *SimSecureValueStorage) SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, externalID types.ExternalID) error {
+	panic("TODO")
+}
+
+func (storage *SimSecureValueStorage) SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error {
+	panic("TODO")
 }

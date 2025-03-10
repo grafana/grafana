@@ -126,21 +126,7 @@ func (s *SecureValueRest) Create(
 		return nil, err
 	}
 
-	var createdObj runtime.Object
-	var errCb error
-
-	doneChan := make(chan struct{})
-
-	s.createSecureValueSvc.Handle(ctx, sv, func(o runtime.Object, err error) {
-		createdObj = o
-		errCb = err
-
-		doneChan <- struct{}{}
-	})
-
-	<-doneChan
-
-	return createdObj, errCb
+	return s.createSecureValueSvc.Handle(ctx, sv)
 }
 
 // Update a `securevalue`'s `value`. The second return parameter indicates whether the resource was newly created.
