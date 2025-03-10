@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"net/http"
@@ -257,6 +258,101 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 	}
 
 	return response.JSON(http.StatusAccepted, result)
+}
+
+// return list of rule groups paginated
+func (srv RulerSrv) RouteGetAlertRuleGroups(c *contextmodel.ReqContext) response.Response {
+	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.SignedInUser.GetOrgID(), c.SignedInUser)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")
+	}
+
+	result := apimodels.NamespaceListResponse{
+		RuleGroups: make([]apimodels.RuleGroupSummary, 0),
+	}
+
+	if len(namespaceMap) == 0 {
+		srv.log.Debug("User has no access to any namespaces")
+		return response.JSON(http.StatusOK, result)
+	}
+
+	namespaceUIDs := make([]string, len(namespaceMap))
+	for k := range namespaceMap {
+		namespaceUIDs = append(namespaceUIDs, k)
+	}
+
+	const defaultPageSize = -1
+	var namespaceListParams apimodels.NamespaceListParams
+	namespaceListParams.NextToken = c.Query("group_next_token")
+	if namespaceListParams.NextToken != "" {
+		// make sure it base64 decodes
+		if _, err := base64.URLEncoding.DecodeString(namespaceListParams.NextToken); err != nil {
+			return ErrResp(http.StatusBadRequest, err, "invalid next_token")
+		}
+	}
+	namespaceListParams.PageSize = c.QueryIntWithDefault("group_limit", defaultPageSize)
+
+	// NOTE: can probably use HasAccessInFolder in the inner loop to avoid fetching all rules
+	// TODO: clean this to ignore the rule bits and make sure it's returned sorted
+	configs, _, err := srv.searchAuthorizedAlertRules(c.Req.Context(), authorizedRuleGroupQuery{
+		User:          c.SignedInUser,
+		NamespaceUIDs: namespaceUIDs,
+	})
+	keys := make([]ngmodels.AlertRuleGroupKeyWithFolderFullpath, 0, len(configs))
+	// in-place sort by folder path and ruleGroup
+	for config := range configs {
+		folder, ok := namespaceMap[config.NamespaceUID]
+		if !ok {
+			id, _ := c.SignedInUser.GetInternalID()
+			userNamespace := c.SignedInUser.GetIdentityType()
+			srv.log.Error("Namespace not visible to the user", "user", id, "userNamespace", userNamespace, "namespace", config.NamespaceUID)
+			continue
+		}
+
+		fullConfig := ngmodels.AlertRuleGroupKeyWithFolderFullpath{
+			AlertRuleGroupKey: config,
+			FolderFullpath:    folder.Fullpath,
+		}
+		keys = append(keys, fullConfig)
+		i := sort.Search(len(keys)-1, func(i int) bool {
+			existing := keys[i]
+			nsComp := strings.Compare(existing.FolderFullpath, fullConfig.FolderFullpath)
+			if nsComp != 0 {
+				return nsComp > 0
+			}
+			return strings.Compare(existing.RuleGroup, fullConfig.RuleGroup) > 0
+		})
+		copy(keys[i+1:], keys[i:])
+		keys[i] = fullConfig
+	}
+
+	if err != nil {
+		return errorToResponse(err)
+	}
+
+	for _, key := range keys {
+		if namespaceListParams.NextToken != "" {
+			// skip until we find the next group
+			if !TokenGreaterThanOrEqual(GetRuleGroupNextToken(key.FolderFullpath, key.RuleGroup), namespaceListParams.NextToken) {
+				continue
+			}
+			namespaceListParams.NextToken = ""
+		}
+		if len(result.RuleGroups) == namespaceListParams.PageSize {
+			// hash the last group name and namespace uid for the next token
+			result.NextToken = GetRuleGroupNextToken(key.FolderFullpath, key.RuleGroup)
+			break
+		}
+
+		ruleGroupSummary := apimodels.RuleGroupSummary{
+			Name:      key.RuleGroup,
+			File:      key.FolderFullpath,
+			FolderUID: key.NamespaceUID,
+		}
+
+		result.RuleGroups = append(result.RuleGroups, ruleGroupSummary)
+	}
+	return response.JSON(http.StatusOK, result)
 }
 
 // RouteGetRulesConfig returns all alert rules that are available to the current user
