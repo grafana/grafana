@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - 'release-**'
     paths-ignore:
       - 'docs/**'
       - '**/*.md'
@@ -19,7 +20,7 @@ permissions:
 
 jobs:
   backend-unit-testing-coverage:
-    # Run this workflow only for PRs from forks; if it gets merged into `main`, 
+    # Run this workflow only for PRs from forks; if it gets merged into `main` or `release-*`, 
     # the `pr-backend-unit-tests-enterprise` workflow will run instead
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
     name: Backend Unit Testing & Coverage
