@@ -1068,23 +1068,18 @@
       "elements": {
         "dashboard": "Dashboard",
         "objects": "Objects",
+        "panel": "Panel",
         "panels": "Panels",
+        "row": "Row",
         "rows": "Rows",
+        "tab": "Tab",
         "tabs": "Tabs"
-      },
-      "objects": {
-        "multi-select": {
-          "selection-number": "No. of objects selected: {{length}}"
-        }
       },
       "open": "Open options pane",
       "row": {
         "header": {
           "hide": "Hide",
           "title": "Row header"
-        },
-        "multi-select": {
-          "title": "{{length}} rows selected"
         }
       }
     },
@@ -1165,13 +1160,11 @@
         "copy-or-duplicate": "Copy or Duplicate",
         "delete": "Delete",
         "duplicate": "Duplicate",
-        "layout": "Layout",
-        "panels-title": "{{length}} panels selected"
+        "layout": "Layout"
       }
     },
     "options": {
       "description": "Description",
-      "title": "Dashboard options",
       "title-option": "Title"
     },
     "outline": {
@@ -1214,7 +1207,6 @@
     },
     "rows-layout": {
       "description": "Rows layout",
-      "item-name": "Row",
       "name": "Rows",
       "option": {
         "height": "Height",
@@ -1253,9 +1245,6 @@
       "menu": {
         "move-tab": "Move tab"
       },
-      "multi-select": {
-        "title": "{{length}} tabs selected"
-      },
       "name": "Tabs",
       "tab": {
         "menu": {
@@ -1270,7 +1259,6 @@
         "new": "New tab"
       },
       "tab-options": {
-        "title": "Tab",
         "title-option": "Title"
       }
     },
@@ -1345,9 +1333,8 @@
     "viz-panel": {
       "options": {
         "description": "Description",
-        "open-edit": "Open Panel Edit",
+        "open-edit": "Open panel editor",
         "plugin-type-image": "Image of plugin type",
-        "title": "Panel",
         "title-option": "Title",
         "transparent-background": "Transparent background"
       }

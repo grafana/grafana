@@ -44,7 +44,11 @@ export class RowItem
   }
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
-    return { typeId: 'row', icon: 'line-alt', name: sceneGraph.interpolate(this, this.state.title, undefined, 'text') };
+    return {
+      typeName: t('dashboard.edit-pane.elements.row', 'Row'),
+      instanceName: sceneGraph.interpolate(this, this.state.title, undefined, 'text'),
+      icon: 'line-alt',
+    };
   }
 
   public getLayout(): DashboardLayoutManager {
