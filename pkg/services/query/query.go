@@ -64,6 +64,7 @@ func ProvideService(
 type Service interface {
 	Run(ctx context.Context) error
 	QueryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error)
+	QueryDataPaged(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error)
 }
 
 // Gives us compile time error if the service does not adhere to the contract of the interface
@@ -86,6 +87,21 @@ func (s *ServiceImpl) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
+func (s *ServiceImpl) QueryDataPaged(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+	// Parse the request into parsed queries grouped by datasource uid
+	parsedReq, err := s.parseMetricRequest(ctx, user, skipDSCache, reqDTO)
+	if err != nil {
+		return nil, err
+	}
+
+	// Only handle single queries without expressions.
+	if parsedReq.hasExpression || len(parsedReq.parsedQueries) > 1 {
+		return s.queryData(ctx, user, skipDSCache, reqDTO, parsedReq)
+	}
+
+	return s.handleQuerySingleDatasource(ctx, user, parsedReq, true)
+}
+
 // QueryData processes queries and returns query responses. It handles queries to single or mixed datasources, as well as expressions.
 func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
 	// Parse the request into parsed queries grouped by datasource uid
@@ -94,13 +110,17 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, sk
 		return nil, err
 	}
 
+	return s.queryData(ctx, user, skipDSCache, reqDTO, parsedReq)
+}
+
+func (s *ServiceImpl) queryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	// If there are expressions, handle them and return
 	if parsedReq.hasExpression {
 		return s.handleExpressions(ctx, user, parsedReq)
 	}
 	// If there is only one datasource, query it and return
 	if len(parsedReq.parsedQueries) == 1 {
-		return s.handleQuerySingleDatasource(ctx, user, parsedReq)
+		return s.handleQuerySingleDatasource(ctx, user, parsedReq, false)
 	}
 	// If there are multiple datasources, handle their queries concurrently and return the aggregate result
 	return s.executeConcurrentQueries(ctx, user, skipDSCache, reqDTO, parsedReq.parsedQueries)
@@ -241,7 +261,7 @@ func (s *ServiceImpl) handleExpressions(ctx context.Context, user identity.Reque
 }
 
 // handleQuerySingleDatasource handles one or more queries to a single datasource
-func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user identity.Requester, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
+func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user identity.Requester, parsedReq *parsedRequest, pagedResponse bool) (*backend.QueryDataResponse, error) {
 	queries := parsedReq.getFlattenedQueries()
 	ds := queries[0].datasource
 	if err := s.dataSourceRequestValidator.Validate(ds, nil); err != nil {
@@ -260,9 +280,10 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 		return nil, err
 	}
 	req := &backend.QueryDataRequest{
-		PluginContext: pCtx,
-		Headers:       map[string]string{},
-		Queries:       []backend.DataQuery{},
+		PluginContext:  pCtx,
+		Headers:        map[string]string{},
+		Queries:        []backend.DataQuery{},
+		PagedResponses: pagedResponse,
 	}
 
 	for _, q := range queries {
