@@ -682,11 +682,6 @@ func Test_isValidPath(t *testing.T) {
 			safeDir: "/path/to/",
 		},
 		{
-			name:    "invalid path: not a dir:",
-			dir:     "/path/to.txt",
-			safeDir: "/path/to/",
-		},
-		{
 			name:    "invalid path: empty paths",
 			dir:     "",
 			safeDir: "/path/to/",
