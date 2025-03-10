@@ -51,7 +51,11 @@ export const AmRootRouteForm = ({ actionButtons, alertManagerSourceName, onSubmi
   });
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <Field label="Default contact point" invalid={!!errors.receiver} error={errors.receiver?.message}>
+      <Field
+        label="Default contact point"
+        invalid={Boolean(errors.receiver) ? true : undefined}
+        error={errors.receiver?.message}
+      >
         <div className={styles.container} data-testid="am-receiver-select">
           <Controller
             render={({ field: { onChange, ref, value, ...field } }) => (
