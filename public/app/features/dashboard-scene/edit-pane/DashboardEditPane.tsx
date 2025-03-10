@@ -263,7 +263,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     tabsbar: css({
       padding: theme.spacing(0, 1),
-      margin: theme.spacing(0.5, 1),
+      margin: theme.spacing(0.5, 0),
     }),
     expandOptionsWrapper: css({
       display: 'flex',

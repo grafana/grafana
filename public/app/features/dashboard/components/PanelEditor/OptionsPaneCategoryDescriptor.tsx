@@ -16,7 +16,6 @@ export interface OptionsPaneCategoryDescriptorProps {
   itemsCount?: number;
   customRender?: () => React.ReactNode;
   sandboxId?: string;
-  isOpenable?: boolean;
 }
 
 /**
@@ -60,8 +59,12 @@ export class OptionsPaneCategoryDescriptor {
       return this.props.customRender();
     }
 
-    if (this.props.id === '') {
-      return <Box padding={2}>{this.items.map((item) => item.render(searchQuery))}</Box>;
+    if (this.props.title === '') {
+      return (
+        <Box padding={2} key={this.props.title}>
+          {this.items.map((item) => item.render(searchQuery))}
+        </Box>
+      );
     }
 
     return (

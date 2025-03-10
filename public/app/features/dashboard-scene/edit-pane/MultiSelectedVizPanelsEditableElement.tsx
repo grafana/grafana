@@ -1,40 +1,28 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { VizPanel } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
-import { EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
-import { MultiSelectedEditableDashboardElement } from '../scene/types/MultiSelectedEditableDashboardElement';
-import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
-import { EditPaneHeader } from './EditPaneHeader';
+import { VizPanelEditableElement } from './VizPanelEditableElement';
 
-export class MultiSelectedVizPanelsEditableElement implements MultiSelectedEditableDashboardElement {
-  public readonly isMultiSelectedEditableDashboardElement = true;
+export class MultiSelectedVizPanelsEditableElement implements EditableDashboardElement {
+  public readonly isEditableDashboardElement = true;
   public readonly key: string;
 
-  constructor(private _panels: VizPanel[]) {
+  constructor(private _panels: VizPanelEditableElement[]) {
     this.key = uuidv4();
   }
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
-    return { name: t('dashboard.edit-pane.elements.panels', 'Panels'), typeId: 'panels', icon: 'folder' };
+    return { typeName: t('dashboard.edit-pane.elements.panels', 'Panels'), icon: 'folder', instanceName: '' };
   }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
     const header = new OptionsPaneCategoryDescriptor({
       title: ``,
-      id: 'panel-header',
-      isOpenable: false,
-      renderTitle: () => (
-        <EditPaneHeader
-          title={t('dashboard.layout.common.panels-title', '{{length}} panels selected', {
-            length: this._panels.length,
-          })}
-          onDelete={() => this.onDelete()}
-        />
-      ),
+      id: '',
     });
 
     return [header];
@@ -42,8 +30,7 @@ export class MultiSelectedVizPanelsEditableElement implements MultiSelectedEdita
 
   public onDelete() {
     this._panels.forEach((panel) => {
-      const layout = dashboardSceneGraph.getLayoutManagerFor(panel);
-      layout.removePanel?.(panel);
+      panel.onDelete();
     });
   }
 }

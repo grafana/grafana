@@ -18,9 +18,9 @@ import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getEditPanelUrl } from '../utils/urlBuilders';
-import { getPanelIdForVizPanel } from '../utils/utils';
+import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
-import { EditPaneHeader } from './EditPaneHeader';
+import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
 
 export class VizPanelEditableElement implements EditableDashboardElement, BulkActionElement {
   public readonly isEditableDashboardElement = true;
@@ -30,9 +30,9 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
-      typeId: 'panel',
+      typeName: t('dashboard.edit-pane.elements.panel', 'Panel'),
       icon: 'chart-line',
-      name: sceneGraph.interpolate(this.panel, this.panel.state.title, undefined, 'text'),
+      instanceName: sceneGraph.interpolate(this.panel, this.panel.state.title, undefined, 'text'),
     };
   }
 
@@ -41,14 +41,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     const layoutElement = panel.parent!;
 
     const panelOptions = useMemo(() => {
-      return new OptionsPaneCategoryDescriptor({
-        title: ``,
-        id: 'panel-header',
-        isOpenable: false,
-        renderTitle: () => (
-          <EditPaneHeader title={t('dashboard.viz-panel.options.title', 'Panel')} onDelete={() => this.onDelete()} />
-        ),
-      })
+      return new OptionsPaneCategoryDescriptor({ title: '', id: 'panel-options' })
         .addItem(
           new OptionsPaneItemDescriptor({
             title: '',
@@ -97,6 +90,20 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
     layout.removePanel?.(this.panel);
   }
+
+  public onDuplicate() {
+    const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
+    layout.duplicatePanel?.(this.panel);
+  }
+
+  public onCopy() {
+    const dashboard = getDashboardSceneFor(this.panel);
+    dashboard.copyPanel(this.panel);
+  }
+
+  public createMultiSelectedElement(items: VizPanelEditableElement[]) {
+    return new MultiSelectedVizPanelsEditableElement(items);
+  }
 }
 
 type OpenPanelEditVizProps = {
@@ -112,7 +119,7 @@ const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
   return (
     <Stack alignItems="center" width="100%">
       {plugin ? (
-        <Tooltip content={t('dashboard.viz-panel.options.open-edit', 'Open Panel Edit')}>
+        <Tooltip content={t('dashboard.viz-panel.options.open-edit', 'Open panel editor')}>
           <a
             href={textUtil.sanitizeUrl(getEditPanelUrl(getPanelIdForVizPanel(panel)))}
             className={cx(styles.pluginDescriptionWrapper)}
@@ -139,12 +146,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     columnGap: theme.spacing(1),
     rowGap: theme.spacing(0.5),
     minHeight: theme.spacing(4),
-    backgroundColor: theme.components.input.background,
-    border: `1px solid ${theme.colors.border.strong}`,
+    backgroundColor: theme.colors.secondary.main,
+    border: `1px solid ${theme.colors.secondary.border}`,
     borderRadius: theme.shape.radius.default,
     paddingInline: theme.spacing(1),
     paddingBlock: theme.spacing(0.5),
     flexGrow: 1,
+    '&:hover': {
+      backgroundColor: theme.colors.secondary.shade,
+    },
   }),
   panelVizImg: css({
     width: '16px',
