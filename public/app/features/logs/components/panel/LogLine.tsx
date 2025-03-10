@@ -241,8 +241,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
       paddingBottom: theme.spacing(0.75),
     }),
     wrappedLogLine: css({
-      whiteSpace: 'pre-wrap',
+      alignSelf: 'flex-start',
       paddingBottom: theme.spacing(0.75),
+      whiteSpace: 'pre-wrap',
       '& .field': {
         marginRight: theme.spacing(FIELD_GAP_MULTIPLIER),
       },
