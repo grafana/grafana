@@ -160,6 +160,7 @@ An example of how to generate a self-signed certificate and private key that's v
 ```sh
 $ openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes​
 ```
+
 Base64-encode the cert.pem and key.pem files:
 (-w0 switch is not needed on Mac, only for Linux)
 
@@ -167,6 +168,7 @@ Base64-encode the cert.pem and key.pem files:
 $ base64 -i key.pem -o key.pem.base64
 $ base64 -i cert.pem -o cert.pem.base64
 ```
+
 The base64-encoded values (`key.pem.base64, cert.pem.base64` files) are then used for certificate and private key.
 
 The key you provide should look like:
@@ -451,7 +453,7 @@ To use SAML group synchronization, set [`assertion_attribute_groups`](/docs/graf
 Then Grafana will use attribute values extracted from SAML assertion to add user to Grafana teams and grant them roles.
 
 {{% admonition type="note" %}}
-Team sync allows you sync users from SAML to Grafana teams, but you must create teams in Grafana before you can use this feature. It does not automatically create teams in Grafana. 
+Team sync allows you sync users from SAML to Grafana teams, but you must create teams in Grafana before you can use this feature. It does not automatically create teams in Grafana.
 {{% /admonition %}}
 
 Given the following partial SAML assertion:
