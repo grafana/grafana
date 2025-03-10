@@ -182,9 +182,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   private _serializer: DashboardSceneSerializerLike<
     Dashboard | DashboardV2Spec,
     DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
-  > = getDashboardSceneSerializer();
+  >;
 
-  public constructor(state: Partial<DashboardSceneState>) {
+  public constructor(state: Partial<DashboardSceneState>, serializerVersion: 'v1' | 'v2' = 'v1') {
     super({
       title: 'Dashboard',
       meta: {},
@@ -195,6 +195,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       ...state,
       editPane: new DashboardEditPane(),
     });
+
+    this._serializer =
+      serializerVersion === 'v2' ? getDashboardSceneSerializer('v2') : getDashboardSceneSerializer('v1');
 
     this._scopesFacade = getClosestScopesFacade(this);
 

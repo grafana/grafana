@@ -206,7 +206,6 @@ reportingUseRawTimeRange,GA,@grafana/sharing-squad,false,false,false
 alertingUIOptimizeReducer,GA,@grafana/alerting-squad,false,false,true
 azureMonitorEnableUserAuth,GA,@grafana/partner-datasources,false,false,false
 alertingNotificationsStepMode,GA,@grafana/alerting-squad,false,false,true
-useV2DashboardsAPI,experimental,@grafana/dashboards-squad,false,true,false
 feedbackButton,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 unifiedStorageSearchUI,experimental,@grafana/search-and-storage,false,false,false
 elasticsearchCrossClusterSearch,preview,@grafana/aws-datasources,false,false,false

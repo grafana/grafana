@@ -1,4 +1,4 @@
-import { locationUtil, UrlQueryMap } from '@grafana/data';
+import { locationUtil } from '@grafana/data';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
@@ -21,15 +21,14 @@ import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
-import { ResponseTransformers } from './ResponseTransformers';
-import { DashboardAPI, DashboardWithAccessInfo } from './types';
+import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo } from './types';
 
 export class K8sDashboardV2API
   implements DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO, DashboardV2Spec>
 {
   private client: ResourceClient<DashboardV2Spec>;
 
-  constructor(private convertToV1: boolean) {
+  constructor() {
     this.client = new ScopedResourceClient<DashboardV2Spec>({
       group: 'dashboard.grafana.app',
       version: 'v2alpha1',
@@ -37,40 +36,32 @@ export class K8sDashboardV2API
     });
   }
 
-  async getDashboardDTO(uid: string, params?: UrlQueryMap) {
+  async getDashboardDTO(uid: string) {
     try {
       const dashboard = await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto');
 
-      let result: DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO | undefined;
-
-      // TODO: For dev purposes only, the conversion should and will happen in the API. This is just to stub v2 api responses.
-      result = ResponseTransformers.ensureV2Response(dashboard);
+      if (dashboard.status?.conversion?.failed) {
+        throw new DashboardVersionError(dashboard.status.conversion.storedVersion, dashboard.status.conversion.error);
+      }
 
       // load folder info if available
-      if (result.metadata.annotations && result.metadata.annotations[AnnoKeyFolder]) {
+      if (dashboard.metadata.annotations && dashboard.metadata.annotations[AnnoKeyFolder]) {
         try {
-          const folder = await backendSrv.getFolderByUid(result.metadata.annotations[AnnoKeyFolder]);
-          result.metadata.annotations[AnnoKeyFolderTitle] = folder.title;
-          result.metadata.annotations[AnnoKeyFolderUrl] = folder.url;
-          result.metadata.annotations[AnnoKeyFolderId] = folder.id;
+          const folder = await backendSrv.getFolderByUid(dashboard.metadata.annotations[AnnoKeyFolder]);
+          dashboard.metadata.annotations[AnnoKeyFolderTitle] = folder.title;
+          dashboard.metadata.annotations[AnnoKeyFolderUrl] = folder.url;
+          dashboard.metadata.annotations[AnnoKeyFolderId] = folder.id;
         } catch (e) {
           throw new Error('Failed to load folder');
         }
-      } else if (result.metadata.annotations && !result.metadata.annotations[AnnoKeyFolder]) {
+      } else if (dashboard.metadata.annotations && !dashboard.metadata.annotations[AnnoKeyFolder]) {
         // Set AnnoKeyFolder to empty string for top-level dashboards
         // This ensures NestedFolderPicker correctly identifies it as being in the "Dashboard" root folder
         // AnnoKeyFolder undefined -> top-level dashboard -> empty string
-        result.metadata.annotations[AnnoKeyFolder] = '';
+        dashboard.metadata.annotations[AnnoKeyFolder] = '';
       }
 
-      // Depending on the ui components readiness, we might need to convert the response to v1
-      if (this.convertToV1) {
-        // Always return V1 format
-        result = ResponseTransformers.ensureV1Response(result);
-        return result;
-      }
-      // return the v2 response
-      return result;
+      return dashboard;
     } catch (e) {
       const status = getStatusFromError(e);
       const message = getMessageFromError(e);
