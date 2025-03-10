@@ -11,6 +11,7 @@ import {
   OneClickMode,
   ActionModel,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
 import { LayerElement } from 'app/core/components/Layers/types';
 import { t } from 'app/core/internationalization';
@@ -28,14 +29,17 @@ import { getConnectionsByTarget, getRowIndex, isConnectionTarget } from 'app/plu
 import { getActions, getActionsDefaultField } from '../../actions/utils';
 import { CanvasElementItem, CanvasElementOptions } from '../element';
 import { canvasElementRegistry } from '../registry';
+import { Bounds, PlayerPayload } from '../types';
 
 import { FrameState } from './frame';
 import { RootElement } from './root';
 import { Scene } from './scene';
 
 let counter = 0;
+let lastFetchTime = 0;
+const throttleDelay = 10; // milliseconds
 
-export const SVGElements = new Set<string>(['parallelogram', 'triangle', 'cloud', 'ellipse']);
+export const SVGElements = new Set<string>(['parallelogram', 'triangle', 'cloud', 'ellipse', 'player', 'enemy']);
 
 export class ElementState implements LayerElement {
   // UID necessary for moveable to work (for now)
@@ -59,6 +63,20 @@ export class ElementState implements LayerElement {
   // cached for tooltips/mousemove
   oneClickMode = OneClickMode.Off;
   showConfirmation = false;
+
+  position: { top: number; left: number } = { top: 0, left: 0 };
+  rotation = 0;
+  velocity: { x: number; y: number } = { x: 0, y: 0 };
+  acceleration = 0;
+  friction = 0;
+  keysPressed: Set<string> = new Set();
+  panelWidth = 0;
+  panelHeight = 0;
+  movementInterval: number | null = null;
+  numbersAfterDot = 4;
+  decayPrecision = 1 / Math.pow(10, this.numbersAfterDot);
+
+  user = config.bootData.user;
 
   constructor(
     public item: CanvasElementItem,
@@ -84,6 +102,205 @@ export class ElementState implements LayerElement {
       options.name = newName ?? fallbackName;
     }
     scene?.byName.set(options.name, this);
+
+    if (item.id === 'player') {
+      const { top = 0, left = 0 } = this.options.placement ?? { top: 0, left: 0 };
+      this.position = { top, left };
+      this.rotation = 0;
+      this.velocity = { x: 0, y: 0 };
+
+      this.acceleration = 0.1;
+      this.friction = 0.98;
+      this.keysPressed = new Set();
+      this.panelWidth = scene?.width ?? 0;
+      this.panelHeight = scene?.height ?? 0;
+      this.movementInterval = null;
+
+      this.initEventListeners();
+    }
+  }
+
+  initEventListeners() {
+    window.addEventListener('keydown', (e) => {
+      this.keysPressed.add(e.key);
+      // start movement loop if it's not already running
+      if (!this.movementInterval) {
+        this.startMovementLoop();
+      }
+    });
+    window.addEventListener('keyup', (e) => {
+      this.keysPressed.delete(e.key);
+    });
+  }
+
+  startMovementLoop() {
+    this.movementInterval = window.setInterval(() => {
+      if (this.shouldStopMovement()) {
+        this.stopMovementLoop();
+      }
+
+      this.updateMovement();
+      this.applyFriction();
+      this.moveElement();
+
+      if (this.options.placement) {
+        this.options.placement.top = this.position.top;
+        this.options.placement.left = this.position.left;
+        this.options.placement.rotation = this.rotation;
+      }
+
+      this.onChange(this.options);
+    }, 16);
+  }
+
+  stopMovementLoop() {
+    if (this.movementInterval !== null) {
+      clearInterval(this.movementInterval);
+      this.movementInterval = null;
+    }
+  }
+
+  shouldStopMovement() {
+    // Stop movement if velocity is very low and no keys are pressed
+    return (
+      Math.abs(this.velocity.x) < this.decayPrecision &&
+      Math.abs(this.velocity.y) < this.decayPrecision &&
+      !this.keysPressed.size
+    );
+  }
+
+  updateMovement() {
+    let newVelocity = { ...this.velocity };
+    const angle = ((this.rotation + 90) * Math.PI) / 180;
+    const ax = Math.cos(angle) * this.acceleration;
+    const ay = Math.sin(angle) * this.acceleration;
+
+    if (this.keysPressed.has('ArrowUp')) {
+      newVelocity.x -= ax;
+      newVelocity.y -= ay;
+    }
+    if (this.keysPressed.has('ArrowDown')) {
+      newVelocity.x += ax;
+      newVelocity.y += ay;
+    }
+    if (this.keysPressed.has('ArrowLeft')) {
+      this.rotation -= 3;
+    }
+    if (this.keysPressed.has('ArrowRight')) {
+      this.rotation += 3;
+    }
+
+    this.velocity = newVelocity;
+  }
+
+  applyFriction() {
+    this.velocity.x *= this.friction;
+    this.velocity.y *= this.friction;
+  }
+
+  moveElement() {
+    let newTop = this.position.top + this.velocity.y;
+    let newLeft = this.position.left + this.velocity.x;
+
+    // Collision detection and reflection
+    if (newTop <= 0 || newTop >= this.panelHeight) {
+      newTop = Math.max(0, Math.min(this.panelHeight, newTop));
+      this.velocity.y = -this.velocity.y;
+    }
+    if (newLeft <= 0 || newLeft >= this.panelWidth) {
+      newLeft = Math.max(0, Math.min(this.panelWidth, newLeft));
+      this.velocity.x = -this.velocity.x;
+    }
+
+    // Check for collision with other elements
+    const radius = 12;
+    const bounds: Bounds[] = [];
+    const sceneX = this.getScene()?.div?.getBoundingClientRect().left ?? 0;
+    const sceneY = this.getScene()?.div?.getBoundingClientRect().top ?? 0;
+    this.getScene()?.root.elements.map((element) => {
+      if (this.user.uid !== element.options.name) {
+        const elementBounds = element.div?.getClientRects()[0];
+        bounds.push({
+          minX: (elementBounds?.left ?? 0) - sceneX,
+          minY: (elementBounds?.top ?? 0) - sceneY,
+          maxX: (elementBounds?.right ?? 0) - sceneX,
+          maxY: (elementBounds?.bottom ?? 0) - sceneY,
+        });
+      }
+    });
+
+    const collision = this.isCircleCollidingWithAny(newLeft + radius, newTop + radius, radius, bounds);
+    if (collision) {
+      this.velocity.x = -this.velocity.x;
+      this.velocity.y = -this.velocity.y;
+      this.rotation = (this.rotation + 180) % 360;
+    }
+
+    // Limit decimal precision and stop updating when stale
+    const roundedTop = this.roundToPrecision(newTop, this.numbersAfterDot);
+    const roundedLeft = this.roundToPrecision(newLeft, this.numbersAfterDot);
+
+    // Update player position through backend API
+    const payload: PlayerPayload = {
+      action: 'update',
+      player_id: this.user.uid,
+      x: roundedLeft,
+      y: roundedTop,
+      rotation: this.rotation,
+    };
+    const now = Date.now();
+    if (now - lastFetchTime >= throttleDelay) {
+      try {
+        fetch('/api/live/players', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+          credentials: 'include', // Include cookies for session auth
+        });
+        lastFetchTime = now;
+      } catch (err) {
+        console.error('Error adding player:', err);
+      }
+    }
+
+    if (this.position.top !== roundedTop || this.position.left !== roundedLeft) {
+      this.position = {
+        top: roundedTop,
+        left: roundedLeft,
+      };
+    }
+  }
+
+  roundToPrecision = (value: number, precision: number) => {
+    // TODO: toFixed() may be expensive, so round() may be a better option
+    const factor = 10 ** precision;
+    return Math.round(value * factor) / factor;
+  };
+
+  isCircleCollidingWithAny(circleX: number, circleY: number, radius: number, boxes: Bounds[]) {
+    // Loop through each box in the array
+    for (let i = 0; i < boxes.length; i++) {
+      const box = boxes[i];
+
+      // Find closest point on current box to circle center
+      let closestX = Math.max(box.minX, Math.min(circleX, box.maxX));
+      let closestY = Math.max(box.minY, Math.min(circleY, box.maxY));
+
+      // Calculate squared distance
+      let distanceX = circleX - closestX;
+      let distanceY = circleY - closestY;
+      let distanceSquared = distanceX * distanceX + distanceY * distanceY;
+
+      // If collision found, return true immediately
+      if (distanceSquared <= radius * radius) {
+        return true;
+      }
+    }
+
+    // No collisions found after checking all boxes
+    return false;
   }
 
   private getScene(): Scene | undefined {
@@ -113,7 +330,11 @@ export class ElementState implements LayerElement {
     const { vertical, horizontal } = constraint ?? {};
     const placement: Placement = this.options.placement ?? {};
 
-    const editingEnabled = this.getScene()?.isEditingEnabled;
+    const scene = this.getScene();
+    const editingEnabled = scene?.isEditingEnabled;
+
+    this.panelWidth = scene?.width ?? 0;
+    this.panelHeight = scene?.height ?? 0;
 
     const style: React.CSSProperties = {
       cursor: editingEnabled ? 'grab' : 'auto',
@@ -382,7 +603,10 @@ export class ElementState implements LayerElement {
   updateData(ctx: DimensionContext) {
     if (this.item.prepareData) {
       this.data = this.item.prepareData(ctx, this.options);
-      this.revId++; // rerender
+      // Don't re-render local player on data update
+      if (this.item.id !== 'player') {
+        this.revId++; // rerender
+      }
     }
 
     const scene = this.getScene();

@@ -56,10 +56,12 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
   useEffect(() => {
     if (scene.selecto) {
       scene.selecto.getSelectableElements().forEach((element) => {
-        element.addEventListener('contextmenu', handleContextMenu);
+        if (!scene.multiplayer) {
+          element.addEventListener('contextmenu', handleContextMenu);
+        }
       });
     }
-  }, [handleContextMenu, scene.selecto]);
+  }, [handleContextMenu, scene]);
 
   useEffect(() => {
     if (scene.div) {
@@ -74,7 +76,7 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
 
   const renderMenuItems = () => {
     // This is disabled when panel is in edit mode because opening inline editor over panel editor is not ideal UX
-    const openCloseEditorMenuItem = !scene.isPanelEditing && (
+    const openCloseEditorMenuItem = !scene.isPanelEditing && !scene.multiplayer && (
       <MenuItem
         label={inlineEditorOpen ? 'Close Editor' : 'Open Editor'}
         onClick={() => {
@@ -92,7 +94,7 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
     );
 
     const editElementMenuItem = () => {
-      if (selectedElements?.length === 1) {
+      if (selectedElements?.length === 1 && !scene.multiplayer) {
         const onClickEditElementMenuItem = () => {
           scene.editModeEnabled.next(true);
           closeContextMenu();
@@ -109,7 +111,16 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
       return null;
     };
 
-    const typeOptions = getElementTypes(scene.shouldShowAdvancedTypes).options;
+    // Check if player element exists
+    const existingPlayer = scene.currentLayer?.elements.find((element) => {
+      return element.item.id === 'player';
+    });
+    const typeOptions = getElementTypes(
+      scene.shouldShowAdvancedTypes,
+      undefined,
+      scene.multiplayer,
+      existingPlayer
+    ).options;
 
     const getTypeOptionsSubmenu = () => {
       const submenuItems: Array<
@@ -135,7 +146,13 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
 
       typeOptions.map((option) => {
         submenuItems.push(
-          <MenuItem key={option.value} label={option.label ?? 'Canvas item'} onClick={() => onClickItem(option)} />
+          // Disable the menu item to limit number of player elements to 1
+          <MenuItem
+            key={option.value}
+            label={option.label ?? 'Canvas item'}
+            onClick={() => onClickItem(option)}
+            disabled={option.isDisabled}
+          />
         );
       });
 
@@ -151,7 +168,7 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
       />
     );
 
-    const setBackgroundMenuItem = (
+    const setBackgroundMenuItem = !scene.multiplayer && (
       <MenuItem
         label={'Set background'}
         onClick={() => {
@@ -164,7 +181,7 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
       />
     );
 
-    if (selectedElements && selectedElements.length >= 1) {
+    if (selectedElements && selectedElements.length >= 1 && !scene.multiplayer) {
       return (
         <>
           {editElementMenuItem()}
