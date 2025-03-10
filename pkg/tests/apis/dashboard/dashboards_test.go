@@ -68,7 +68,9 @@ func runDashboardTest(t *testing.T, helper *apis.K8sTestHelper, gvr schema.Group
 
 		wrap, err := utils.MetaAccessor(obj)
 		require.NoError(t, err)
-		require.Empty(t, wrap.GetRepositoryName()) // no SQL repo stub
+
+		m, _ := wrap.GetManagerProperties()
+		require.Empty(t, m.Identity) // no SQL repo stub
 		require.Equal(t, helper.Org1.Admin.Identity.GetUID(), wrap.GetCreatedBy())
 
 		// Commented out because the dynamic client does not like lists as sub-resource
@@ -332,10 +334,10 @@ func TestIntegrationLegacySupport(t *testing.T) {
 	require.Equal(t, 200, rsp.Response.StatusCode)
 	require.Equal(t, "v1alpha1", rsp.Result.Meta.APIVersion)
 
-	// V2 should send a redirect
+	// V2 should send a not acceptable
 	rsp = apis.DoRequest(helper, apis.RequestParams{
 		User: helper.Org1.Admin,
 		Path: "/api/dashboards/uid/test-v2",
 	}, &dtos.DashboardFullWithMeta{})
-	require.Equal(t, 302, rsp.Response.StatusCode) // redirect
+	require.Equal(t, 406, rsp.Response.StatusCode) // not acceptable
 }

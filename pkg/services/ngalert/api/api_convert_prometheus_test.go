@@ -12,16 +12,19 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsfakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -44,6 +47,13 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 				For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
 				Labels: map[string]string{
 					"severity": "critical",
+				},
+			},
+			{
+				Record: "recorded-metric",
+				Expr:   "vector(1)",
+				Labels: map[string]string{
+					"severity": "warning",
 				},
 			},
 		},
@@ -102,18 +112,39 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		response := srv.RouteConvertPrometheusPostRuleGroup(rc, fldr.Title, simpleGroup)
 		require.Equal(t, http.StatusAccepted, response.Status())
 
-		// Get the updated rule
+		// Get the rules
 		remaining, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
 			OrgID: 1,
 		})
 		require.NoError(t, err)
-		require.Len(t, remaining, 1)
+		require.Len(t, remaining, 2)
 
-		require.Equal(t, simpleGroup.Name, remaining[0].RuleGroup)
-		require.Equal(t, fmt.Sprintf("[%s] %s", simpleGroup.Name, simpleGroup.Rules[0].Alert), remaining[0].Title)
-		promRuleYAML, err := yaml.Marshal(simpleGroup.Rules[0])
-		require.NoError(t, err)
-		require.Equal(t, string(promRuleYAML), remaining[0].PrometheusRuleDefinition())
+		// Create a map of rule titles to their expected definitions
+		expectedRules := make(map[string]string)
+		for _, rule := range simpleGroup.Rules {
+			if rule.Alert != "" {
+				title := fmt.Sprintf("[%s] %s", simpleGroup.Name, rule.Alert)
+				promRuleYAML, err := yaml.Marshal(rule)
+				require.NoError(t, err)
+				expectedRules[title] = string(promRuleYAML)
+			} else if rule.Record != "" {
+				title := fmt.Sprintf("[%s] %s", simpleGroup.Name, rule.Record)
+				promRuleYAML, err := yaml.Marshal(rule)
+				require.NoError(t, err)
+				expectedRules[title] = string(promRuleYAML)
+			}
+		}
+
+		// Verify each rule matches its expected definition
+		for _, r := range remaining {
+			require.Equal(t, simpleGroup.Name, r.RuleGroup)
+			expectedDef, exists := expectedRules[r.Title]
+			require.True(t, exists, "unexpected rule title: %s", r.Title)
+
+			promDefinition, err := r.PrometheusRuleDefinition()
+			require.NoError(t, err)
+			require.Equal(t, expectedDef, promDefinition)
+		}
 	})
 
 	t.Run("should fail to replace a provisioned rule group", func(t *testing.T) {
@@ -149,6 +180,32 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.NotNil(t, remaining)
+	})
+
+	t.Run("with no access to the datasource should return 403", func(t *testing.T) {
+		acFake := &acfakes.FakeRuleService{}
+		srv, _, _, _ := createConvertPrometheusSrv(t, withFakeAccessControlRuleService(acFake))
+
+		acFake.AuthorizeRuleChangesFunc = func(context.Context, identity.Requester, *store.GroupDelta) error {
+			return datasources.ErrDataSourceAccessDenied
+		}
+
+		rc := createRequestCtx()
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "folder", simpleGroup)
+		require.Equal(t, http.StatusForbidden, response.Status())
+		require.Contains(t, string(response.Body()), "data source access denied")
+	})
+
+	t.Run("when alert rule quota limit exceeded", func(t *testing.T) {
+		quotas := &provisioning.MockQuotaChecker{}
+		quotas.EXPECT().LimitExceeded()
+
+		srv, _, _, _ := createConvertPrometheusSrv(t, withQuotaChecker(quotas))
+
+		rc := createRequestCtx()
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "folder", simpleGroup)
+		require.Equal(t, http.StatusForbidden, response.Status())
+		require.Contains(t, string(response.Body()), "quota has been exceeded")
 	})
 
 	t.Run("with valid pause header values should return 202", func(t *testing.T) {
@@ -231,6 +288,58 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 
 		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
 		require.Equal(t, http.StatusAccepted, response.Status())
+	})
+
+	t.Run("with disabled recording rules", func(t *testing.T) {
+		testCases := []struct {
+			name                   string
+			recordingRules         bool
+			recordingRulesTargetDS bool
+			expectedStatus         int
+		}{
+			{
+				name:                   "when recording rules are enabled",
+				recordingRules:         true,
+				recordingRulesTargetDS: true,
+				expectedStatus:         http.StatusAccepted,
+			},
+			{
+				name:                   "when recording rules are disabled",
+				recordingRules:         false,
+				recordingRulesTargetDS: true,
+				expectedStatus:         http.StatusBadRequest,
+			},
+			{
+				name:                   "when target datasources for recording rules are disabled",
+				recordingRules:         true,
+				recordingRulesTargetDS: false,
+				expectedStatus:         http.StatusBadRequest,
+			},
+			{
+				name:                   "when both recording rules and target datasources are disabled",
+				recordingRules:         false,
+				recordingRulesTargetDS: false,
+				expectedStatus:         http.StatusBadRequest,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				var features featuremgmt.FeatureToggles
+				if tc.recordingRulesTargetDS {
+					features = featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRulesDatasources)
+				} else {
+					features = featuremgmt.WithFeatures()
+				}
+
+				srv, _, _, _ := createConvertPrometheusSrv(t, withFeatureToggles(features))
+				srv.cfg.RecordingRules.Enabled = tc.recordingRules
+				rc := createRequestCtx()
+
+				response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+				require.Equal(t, tc.expectedStatus, response.Status())
+			})
+		}
 	})
 }
 
@@ -749,7 +858,10 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 }
 
 type convertPrometheusSrvOptions struct {
-	provenanceStore provisioning.ProvisioningStore
+	provenanceStore              provisioning.ProvisioningStore
+	fakeAccessControlRuleService *acfakes.FakeRuleService
+	quotaChecker                 *provisioning.MockQuotaChecker
+	featureToggles               featuremgmt.FeatureToggles
 }
 
 type convertPrometheusSrvOptionsFunc func(*convertPrometheusSrvOptions)
@@ -760,11 +872,36 @@ func withProvenanceStore(store provisioning.ProvisioningStore) convertPrometheus
 	}
 }
 
+func withFakeAccessControlRuleService(service *acfakes.FakeRuleService) convertPrometheusSrvOptionsFunc {
+	return func(opts *convertPrometheusSrvOptions) {
+		opts.fakeAccessControlRuleService = service
+	}
+}
+
+func withQuotaChecker(checker *provisioning.MockQuotaChecker) convertPrometheusSrvOptionsFunc {
+	return func(opts *convertPrometheusSrvOptions) {
+		opts.quotaChecker = checker
+	}
+}
+
+func withFeatureToggles(toggles featuremgmt.FeatureToggles) convertPrometheusSrvOptionsFunc {
+	return func(opts *convertPrometheusSrvOptions) {
+		opts.featureToggles = toggles
+	}
+}
+
 func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOptionsFunc) (*ConvertPrometheusSrv, datasources.CacheService, *fakes.RuleStore, *foldertest.FakeService) {
 	t.Helper()
 
+	// By default the quota checker will allow the operation
+	quotas := &provisioning.MockQuotaChecker{}
+	quotas.EXPECT().LimitOK()
+
 	options := convertPrometheusSrvOptions{
-		provenanceStore: fakes.NewFakeProvisioningStore(),
+		provenanceStore:              fakes.NewFakeProvisioningStore(),
+		fakeAccessControlRuleService: &acfakes.FakeRuleService{},
+		quotaChecker:                 quotas,
+		featureToggles:               featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRulesDatasources),
 	}
 
 	for _, opt := range opts {
@@ -782,30 +919,30 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 	}
 	dsCache.DataSources = append(dsCache.DataSources, ds)
 
-	quotas := &provisioning.MockQuotaChecker{}
-	quotas.EXPECT().LimitOK()
-
 	folderService := foldertest.NewFakeService()
 
 	alertRuleService := provisioning.NewAlertRuleService(
 		ruleStore,
 		options.provenanceStore,
 		folderService,
-		quotas,
+		options.quotaChecker,
 		&provisioning.NopTransactionManager{},
 		60,
 		10,
 		100,
 		log.New("test"),
 		&provisioning.NotificationSettingsValidatorProviderFake{},
-		&acfakes.FakeRuleService{},
+		options.fakeAccessControlRuleService,
 	)
 
 	cfg := &setting.UnifiedAlertingSettings{
 		DefaultRuleEvaluationInterval: 1 * time.Minute,
+		RecordingRules: setting.RecordingRuleSettings{
+			Enabled: true,
+		},
 	}
 
-	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService)
+	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService, options.featureToggles)
 
 	return srv, dsCache, ruleStore, folderService
 }
