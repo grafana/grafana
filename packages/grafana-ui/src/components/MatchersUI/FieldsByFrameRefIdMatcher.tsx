@@ -1,23 +1,18 @@
 import { useMemo, useState, useCallback } from 'react';
 
-import {
-  DataFrame,
-  getFrameDisplayName,
-  FieldMatcherID,
-  fieldMatchers,
-  SelectableValue,
-  toOption,
-} from '@grafana/data';
+import { DataFrame, getFrameDisplayName, FieldMatcherID, fieldMatchers } from '@grafana/data';
 
-import { MultiSelect, Select } from '../Select/Select';
+import { Combobox } from '../Combobox/Combobox';
+import { MultiCombobox } from '../Combobox/MultiCombobox';
+import { ComboboxOption } from '../Combobox/types';
 
 import { FieldMatcherUIRegistryItem, MatcherUIProps } from './types';
 
 const recoverRefIdMissing = (
-  newRefIds: SelectableValue[],
-  oldRefIds: SelectableValue[],
+  newRefIds: ComboboxOption[],
+  oldRefIds: ComboboxOption[],
   previousValue: string | undefined
-): SelectableValue | undefined => {
+): ComboboxOption | undefined => {
   if (!previousValue) {
     return;
   }
@@ -47,7 +42,7 @@ export function RefIDPicker({ value, data, onChange, placeholder }: Props) {
   const listOfRefIds = useMemo(() => getListOfQueryRefIds(data), [data]);
 
   const [priorSelectionState, updatePriorSelectionState] = useState<{
-    refIds: SelectableValue[];
+    refIds: ComboboxOption[];
     value: string | undefined;
   }>({
     refIds: [],
@@ -62,8 +57,8 @@ export function RefIDPicker({ value, data, onChange, placeholder }: Props) {
   }, [value, listOfRefIds, priorSelectionState]);
 
   const onFilterChange = useCallback(
-    (v: SelectableValue<string>) => {
-      onChange(v?.value!);
+    (v: ComboboxOption<string> | null) => {
+      v ? onChange(v.value!) : onChange('');
     },
     [onChange]
   );
@@ -75,7 +70,7 @@ export function RefIDPicker({ value, data, onChange, placeholder }: Props) {
     });
   }
   return (
-    <Select
+    <Combobox
       options={listOfRefIds}
       onChange={onFilterChange}
       isClearable={true}
@@ -86,10 +81,10 @@ export function RefIDPicker({ value, data, onChange, placeholder }: Props) {
 }
 
 const recoverMultiRefIdMissing = (
-  newRefIds: Array<SelectableValue<string>>,
-  oldRefIds: Array<SelectableValue<string>>,
-  previousValue: Array<SelectableValue<string>> | undefined
-): Array<SelectableValue<string>> | undefined => {
+  newRefIds: Array<ComboboxOption<string>>,
+  oldRefIds: Array<ComboboxOption<string>>,
+  previousValue: Array<ComboboxOption<string>> | undefined
+): Array<ComboboxOption<string>> | undefined => {
   if (!previousValue || !previousValue.length) {
     return;
   }
@@ -119,8 +114,8 @@ export function RefIDMultiPicker({ value, data, onChange, placeholder }: MultiPr
   const listOfRefIds = useMemo(() => getListOfQueryRefIds(data), [data]);
 
   const [priorSelectionState, updatePriorSelectionState] = useState<{
-    refIds: SelectableValue[];
-    value: Array<SelectableValue<string>> | undefined;
+    refIds: ComboboxOption[];
+    value: Array<ComboboxOption<string>> | undefined;
   }>({
     refIds: [],
     value: undefined,
@@ -149,6 +144,7 @@ export function RefIDMultiPicker({ value, data, onChange, placeholder }: MultiPr
     if (matchedRefIds.length) {
       return matchedRefIds;
     }
+    const toOption = (value: string): ComboboxOption<string> => ({ label: value, value });
 
     const newRefIds = [...extractedRefIds].map(toOption);
 
@@ -156,7 +152,7 @@ export function RefIDMultiPicker({ value, data, onChange, placeholder }: MultiPr
   }, [value, listOfRefIds, priorSelectionState]);
 
   const onFilterChange = useCallback(
-    (v: Array<SelectableValue<string>>) => {
+    (v: Array<ComboboxOption<string>>) => {
       onChange(v.map((v) => v.value!));
     },
     [onChange]
@@ -169,7 +165,7 @@ export function RefIDMultiPicker({ value, data, onChange, placeholder }: MultiPr
     });
   }
   return (
-    <MultiSelect
+    <MultiCombobox
       options={listOfRefIds}
       onChange={onFilterChange}
       isClearable={true}
@@ -179,7 +175,7 @@ export function RefIDMultiPicker({ value, data, onChange, placeholder }: MultiPr
   );
 }
 
-function getListOfQueryRefIds(data: DataFrame[]): Array<SelectableValue<string>> {
+function getListOfQueryRefIds(data: DataFrame[]): Array<ComboboxOption<string>> {
   const queries = new Map<string, DataFrame[]>();
 
   for (const frame of data) {
@@ -193,7 +189,7 @@ function getListOfQueryRefIds(data: DataFrame[]): Array<SelectableValue<string>>
     frames.push(frame);
   }
 
-  const values: Array<SelectableValue<string>> = [];
+  const values: Array<ComboboxOption<string>> = [];
 
   for (const [refId, frames] of queries.entries()) {
     values.push({
