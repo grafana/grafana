@@ -271,8 +271,12 @@ export class V2DashboardSerializer
   }
 
   getTrackingInformation(s: DashboardScene): DashboardTrackingInfo | undefined {
+    if (!this.initialSaveModel) {
+      return undefined;
+    }
+
     const panelPluginIds =
-      'elements' in this.initialSaveModel!
+      'elements' in this.initialSaveModel
         ? Object.values(this.initialSaveModel.elements)
             .filter((e) => e.kind === 'Panel')
             .map((p) => p.spec.vizConfig.kind)
@@ -281,20 +285,16 @@ export class V2DashboardSerializer
     const variables =
       'variables' in this.initialSaveModel! ? getV2SchemaVariables(this.initialSaveModel.variables) : [];
 
-    if (this.initialSaveModel) {
-      return {
-        schemaVersion: DASHBOARD_SCHEMA_VERSION,
-        uid: s.state.uid,
-        title: this.initialSaveModel.title,
-        panels_count: panelPluginIds.length || 0,
-        settings_nowdelay: undefined,
-        settings_livenow: !!this.initialSaveModel.liveNow,
-        ...panels,
-        ...variables,
-      };
-    }
-
-    return undefined;
+    return {
+      schemaVersion: DASHBOARD_SCHEMA_VERSION,
+      uid: s.state.uid,
+      title: this.initialSaveModel.title,
+      panels_count: panelPluginIds.length || 0,
+      settings_nowdelay: undefined,
+      settings_livenow: !!this.initialSaveModel.liveNow,
+      ...panels,
+      ...variables,
+    };
   }
 
   getSnapshotUrl() {
