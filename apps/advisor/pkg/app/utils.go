@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -69,12 +70,15 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 	if err != nil {
 		return err
 	}
-	ctx = identity.WithRequester(ctx, &user.SignedInUser{
+	l := log.New("advisor.processCheck")
+	l.Info("processing check", "check", c.GetName(), "uid", uid, "type", typ)
+	checkContext := identity.WithRequester(context.Background(), &user.SignedInUser{
 		UserUID:      uid,
 		FallbackType: typ,
 	})
 	// Get the items to check
-	items, err := check.Items(ctx)
+	items, err := check.Items(checkContext)
+	l.Info("got items", "items", items)
 	if err != nil {
 		setErr := setStatusAnnotation(ctx, client, obj, "error")
 		if setErr != nil {
@@ -84,7 +88,7 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 	}
 	// Run the steps
 	steps := check.Steps()
-	failures, err := runStepsInParallel(ctx, &c.Spec, steps, items)
+	failures, err := runStepsInParallel(checkContext, &c.Spec, steps, items)
 	if err != nil {
 		setErr := setStatusAnnotation(ctx, client, obj, "error")
 		if setErr != nil {
