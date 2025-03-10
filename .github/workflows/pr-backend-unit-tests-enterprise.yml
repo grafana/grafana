@@ -53,17 +53,17 @@ jobs:
       - name: Generate Go code
         run: make gen-go
   
-      - name: Verify project test caching
-        run: |
-          # Clear the test cache
-          go clean -testcache
+      # - name: Verify project test caching
+      #   run: |
+      #     # Clear the test cache
+      #     go clean -testcache
           
-          # Run a specific package's tests twice
-          echo "First run of project tests:"
-          GODEBUG=gocacheverify=1,gocachehash=1 go test -v ./pkg/bus
+      #     # Run a specific package's tests twice
+      #     echo "First run of project tests:"
+      #     GODEBUG=gocacheverify=1,gocachehash=1 go test -v ./pkg/bus
           
-          echo "Second run of project tests (should be cached):"
-          GODEBUG=gocacheverify=1,gocachehash=1 go test -v ./pkg/bus
+      #     echo "Second run of project tests (should be cached):"
+      #     GODEBUG=gocacheverify=1,gocachehash=1 go test -v ./pkg/bus
           
       # - name: Verify test caching with explicit cache control
       #   run: |
@@ -98,14 +98,14 @@ jobs:
       #     echo "Go test cache location:"
       #     go env GOCACHE
 
-      # - name: Run unit tests
-      #   run: GODEBUG=testcacheverify=1 make test-go-unit make test-go-unit
-      #   env:
-      #     # GO_UNIT_COVER_PROFILE: '${{ env.TEST_TYPE }}.cov'
-      #     # GO_TEST_OUTPUT: ''
-      #     # GO_UNIT_TEST_COVERPKG: 'github.com/grafana/grafana/...'
-      #     GO_UNIT_COVERAGE: false
-      #     GODEBUG: "testcacheverify=1"
+      - name: Run unit tests
+        run: make test-go-unit
+        env:
+          # GO_UNIT_COVER_PROFILE: '${{ env.TEST_TYPE }}.cov'
+          # GO_TEST_OUTPUT: ''
+          # GO_UNIT_TEST_COVERPKG: 'github.com/grafana/grafana/...'
+          GO_UNIT_COVERAGE: false
+          GODEBUG: "testcacheverify=1"
 
       # Run Grafana Bench only on pushes to `main` or `release-*`
       - name: Install Grafana Bench
