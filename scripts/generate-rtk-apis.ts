@@ -48,7 +48,31 @@ const config: ConfigFile = {
       flattenArg: false,
       tag: true,
     },
+    '../public/app/features/provisioning/api/endpoints.gen.ts': {
+      apiFile: '../public/app/features/provisioning/api/baseAPI.ts',
+      schemaFile: '../data/openapi/provisioning.grafana.app-v0alpha1.json',
+      apiImport: 'baseAPI',
+      filterEndpoints,
+      argSuffix: 'Arg',
+      responseSuffix: 'Response',
+      tag: true,
+      hooks: true,
+    },
+    '../public/app/features/folders/api/endpoints.gen.ts': {
+      apiFile: '../public/app/features/folders/api/baseAPI.ts',
+      schemaFile: '../data/openapi/folder.grafana.app-v0alpha1.json',
+      apiImport: 'baseAPI',
+      filterEndpoints: ['getFolder'],
+      argSuffix: 'Arg',
+      responseSuffix: 'Response',
+      tag: true,
+      hooks: true,
+    },
   },
 };
+
+function filterEndpoints(name: string) {
+  return !name.toLowerCase().includes('getapiresources') && !name.toLowerCase().includes('update');
+}
 
 export default config;
