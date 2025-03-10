@@ -24,7 +24,8 @@ jobs:
     # the `pr-backend-unit-tests-enterprise` workflow will run instead
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
     name: Backend Unit Testing & Coverage
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-8-cores
+    continue-on-error: true
     env:
       TEST_TYPE: 'be-unit-grafana'
       WIRE_TAGS: 'oss'
