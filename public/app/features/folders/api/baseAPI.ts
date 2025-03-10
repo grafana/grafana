@@ -1,9 +1,9 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
-import { config } from '@grafana/runtime';
 import { createBaseQuery } from 'app/api/createBaseQuery';
+import { getAPIBaseURL } from 'app/api/utils';
 
-export const BASE_URL = `apis/folder.grafana.app/v0alpha1/namespaces/${config.namespace}`;
+export const BASE_URL = getAPIBaseURL('folder.grafana.app', 'v0alpha1');
 
 export const baseAPI = createApi({
   reducerPath: 'folderAPI',
