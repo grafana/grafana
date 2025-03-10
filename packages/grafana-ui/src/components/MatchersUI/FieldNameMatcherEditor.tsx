@@ -1,8 +1,9 @@
 import { memo, useCallback } from 'react';
 
-import { FieldMatcherID, fieldMatchers, SelectableValue } from '@grafana/data';
+import { FieldMatcherID, fieldMatchers } from '@grafana/data';
 
-import { Select } from '../Select/Select';
+import { Combobox } from '../Combobox/Combobox';
+import { ComboboxOption } from '../Combobox/types';
 
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
 import { useFieldDisplayNames, useSelectOptions, frameHasName } from './utils';
@@ -10,10 +11,13 @@ import { useFieldDisplayNames, useSelectOptions, frameHasName } from './utils';
 export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>((props) => {
   const { data, options, onChange: onChangeFromProps, id } = props;
   const names = useFieldDisplayNames(data);
-  const selectOptions = useSelectOptions(names, options);
+  const selectOptions: Array<ComboboxOption<string>> = useSelectOptions(names, options).map((option) => ({
+    ...option,
+    value: option.value || '',
+  }));
 
   const onChange = useCallback(
-    (selection: SelectableValue<string>) => {
+    (selection: ComboboxOption<string>) => {
       if (!frameHasName(selection.value, names)) {
         return;
       }
@@ -23,7 +27,7 @@ export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>((props) => {
   );
 
   const selectedOption = selectOptions.find((v) => v.value === options);
-  return <Select value={selectedOption} options={selectOptions} onChange={onChange} inputId={id} />;
+  return <Combobox value={selectedOption?.value} options={selectOptions} onChange={onChange} id={id} />;
 });
 FieldNameMatcherEditor.displayName = 'FieldNameMatcherEditor';
 
