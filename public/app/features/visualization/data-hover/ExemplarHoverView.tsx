@@ -11,10 +11,11 @@ export interface Props {
   displayValues: DisplayValue[];
   links?: LinkModel[];
   header?: string;
+  maxHeight?: number;
 }
 
-export const ExemplarHoverView = ({ displayValues, links, header = 'Exemplar' }: Props) => {
-  const styles = useStyles2(getStyles);
+export const ExemplarHoverView = ({ displayValues, links, header = 'Exemplar', maxHeight }: Props) => {
+  const styles = useStyles2(getStyles, 0, maxHeight);
 
   const time = displayValues.find((val) => val.name === 'Time');
   displayValues = displayValues.filter((val) => val.name !== 'Time'); // time?
@@ -49,7 +50,7 @@ export const ExemplarHoverView = ({ displayValues, links, header = 'Exemplar' }:
   );
 };
 
-const getStyles = (theme: GrafanaTheme2, padding = 0) => {
+const getStyles = (theme: GrafanaTheme2, padding = 0, maxHeight?: number) => {
   return {
     exemplarWrapper: css({
       display: 'flex',
@@ -79,6 +80,8 @@ const getStyles = (theme: GrafanaTheme2, padding = 0) => {
       gap: 4,
       borderTop: `1px solid ${theme.colors.border.medium}`,
       padding: theme.spacing(1),
+      overflowY: 'auto',
+      maxHeight: maxHeight,
     }),
     exemplarFooter: css({
       display: 'flex',

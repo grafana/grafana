@@ -6,6 +6,7 @@ import {
   DataSourceApi,
   DataSourceJsonData,
   DataSourceRef,
+  getDefaultTimeRange,
   LoadingState,
   PanelData,
 } from '@grafana/data';
@@ -592,6 +593,68 @@ describe('DashboardDatasourceBehaviour', () => {
 
       expect(spy).toHaveBeenCalled();
     });
+  });
+
+  it('Should re-run query after transformations reprocess', async () => {
+    const sourcePanel = new VizPanel({
+      title: 'Panel A',
+      pluginId: 'table',
+      key: 'panel-1',
+      $data: new SceneDataTransformer({
+        transformations: [{ id: 'transformA', options: {} }],
+        $data: new SceneQueryRunner({
+          datasource: { uid: 'grafana' },
+          queries: [{ refId: 'A', queryType: 'randomWalk' }],
+        }),
+      }),
+    });
+
+    const dashboardDSPanel = new VizPanel({
+      title: 'Panel B',
+      pluginId: 'table',
+      key: 'panel-2',
+      $data: new SceneDataTransformer({
+        transformations: [],
+        $data: new SceneQueryRunner({
+          datasource: { uid: MIXED_DATASOURCE_NAME },
+          queries: [
+            {
+              datasource: { uid: SHARED_DASHBOARD_QUERY },
+              refId: 'B',
+              panelId: 1,
+            },
+          ],
+          $behaviors: [new DashboardDatasourceBehaviour({})],
+        }),
+      }),
+    });
+
+    const scene = new DashboardScene({
+      title: 'hello',
+      uid: 'dash-1',
+      meta: {
+        canEdit: true,
+      },
+      body: DefaultGridLayoutManager.fromVizPanels([sourcePanel, dashboardDSPanel]),
+    });
+
+    activateFullSceneTree(scene);
+
+    await new Promise((r) => setTimeout(r, 1));
+
+    // spy on runQueries that will be called by the behaviour
+    const spy = jest
+      .spyOn(dashboardDSPanel.state.$data!.state.$data as SceneQueryRunner, 'runQueries')
+      .mockImplementation();
+
+    // transformations are reprocessed (e.g. variable change) and data is updated so
+    // we re-run the queries in the dashboardDS panel because we lose the subscription
+    // in mixed DS scenario
+    (sourcePanel.state.$data as SceneDataTransformer).setState({
+      data: { state: LoadingState.Done, series: [], timeRange: getDefaultTimeRange() },
+    });
+
+    expect(spy).toHaveBeenCalled();
   });
 });
 

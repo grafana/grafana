@@ -13,8 +13,9 @@ import (
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.Check":                        schema_pkg_apis_advisor_v0alpha1_Check(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckErrorLink":               schema_pkg_apis_advisor_v0alpha1_CheckErrorLink(ref),
 		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckList":                    schema_pkg_apis_advisor_v0alpha1_CheckList(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckReportError":             schema_pkg_apis_advisor_v0alpha1_CheckReportError(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckReportFailure":           schema_pkg_apis_advisor_v0alpha1_CheckReportFailure(ref),
 		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckSpec":                    schema_pkg_apis_advisor_v0alpha1_CheckSpec(ref),
 		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckStatus":                  schema_pkg_apis_advisor_v0alpha1_CheckStatus(ref),
 		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckType":                    schema_pkg_apis_advisor_v0alpha1_CheckType(ref),
@@ -75,6 +76,35 @@ func schema_pkg_apis_advisor_v0alpha1_Check(ref common.ReferenceCallback) common
 	}
 }
 
+func schema_pkg_apis_advisor_v0alpha1_CheckErrorLink(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "URL to a page with more information about the error",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Human readable error message",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"url", "message"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_advisor_v0alpha1_CheckList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -123,7 +153,7 @@ func schema_pkg_apis_advisor_v0alpha1_CheckList(ref common.ReferenceCallback) co
 	}
 }
 
-func schema_pkg_apis_advisor_v0alpha1_CheckReportError(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_advisor_v0alpha1_CheckReportFailure(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -131,23 +161,7 @@ func schema_pkg_apis_advisor_v0alpha1_CheckReportError(ref common.ReferenceCallb
 				Properties: map[string]spec.Schema{
 					"severity": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Severity of the error",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"reason": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Human readable reason for the error",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"action": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Action to take to resolve the error",
+							Description: "Severity of the failure",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -155,24 +169,40 @@ func schema_pkg_apis_advisor_v0alpha1_CheckReportError(ref common.ReferenceCallb
 					},
 					"stepID": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Step ID that the error is associated with",
+							Description: "Step ID that the failure is associated with",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"itemID": {
+					"item": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Item ID that the error is associated with",
+							Description: "Human readable identifier of the item that failed",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
+						},
+					},
+					"links": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Links to actions that can be taken to resolve the failure",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckErrorLink"),
+									},
+								},
+							},
 						},
 					},
 				},
-				Required: []string{"severity", "reason", "action", "stepID", "itemID"},
+				Required: []string{"severity", "stepID", "item", "links"},
 			},
 		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckErrorLink"},
 	}
 }
 
@@ -456,8 +486,15 @@ func schema_pkg_apis_advisor_v0alpha1_CheckTypeStep(ref common.ReferenceCallback
 							Format:  "",
 						},
 					},
+					"resolution": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 				},
-				Required: []string{"title", "description", "stepID"},
+				Required: []string{"title", "description", "stepID", "resolution"},
 			},
 		},
 	}
@@ -528,26 +565,26 @@ func schema_pkg_apis_advisor_v0alpha1_CheckV0alpha1StatusReport(ref common.Refer
 							Format:      "int64",
 						},
 					},
-					"errors": {
+					"failures": {
 						SchemaProps: spec.SchemaProps{
-							Description: "List of errors",
+							Description: "List of failures",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckReportError"),
+										Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckReportFailure"),
 									},
 								},
 							},
 						},
 					},
 				},
-				Required: []string{"count", "errors"},
+				Required: []string{"count", "failures"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckReportError"},
+			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckReportFailure"},
 	}
 }
 

@@ -28,6 +28,7 @@ const victorianTheme: NewThemeOptions = {
       canvas: '#1F1510',
       primary: '#2C1A13',
       secondary: '#402A21',
+      elevated: '#402A21',
     },
     action: {
       hover: '#3A2C22',

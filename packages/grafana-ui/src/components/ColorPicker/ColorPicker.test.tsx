@@ -16,8 +16,11 @@ describe('ColorPicker', () => {
     mainButton.forEach((button) => expect(button).toHaveAttribute('type', 'button'));
     await userEvent.click(mainButton[0]);
     const buttons = screen.getAllByRole('button');
-    expect(buttons.length).toBe(35);
+    expect(buttons.length).toBe(33);
     buttons.forEach((button) => expect(button).toHaveAttribute('type', 'button'));
+
+    const tabs = screen.getAllByRole('tab');
+    expect(tabs.length).toBe(2);
   });
 
   it('renders custom trigger when supplied', () => {

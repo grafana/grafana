@@ -8,8 +8,9 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -86,7 +87,10 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 	if a.subscribers != nil {
 		go func() {
 			write := &resource.WrittenEvent{
-				WriteEvent: event,
+				Type:       event.Type,
+				Key:        event.Key,
+				PreviousRV: event.PreviousRV,
+				Value:      event.Value,
 
 				Timestamp:       time.Now().UnixMilli(),
 				ResourceVersion: rv,
@@ -258,11 +262,11 @@ func (a *dashboardSqlAccess) Search(ctx context.Context, req *resource.ResourceS
 	return a.dashboardSearchClient.Search(ctx, req)
 }
 
-func (a *dashboardSqlAccess) ListRepositoryObjects(ctx context.Context, req *resource.ListRepositoryObjectsRequest) (*resource.ListRepositoryObjectsResponse, error) {
+func (a *dashboardSqlAccess) ListManagedObjects(ctx context.Context, req *resource.ListManagedObjectsRequest) (*resource.ListManagedObjectsResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (a *dashboardSqlAccess) CountRepositoryObjects(context.Context, *resource.CountRepositoryObjectsRequest) (*resource.CountRepositoryObjectsResponse, error) {
+func (a *dashboardSqlAccess) CountManagedObjects(context.Context, *resource.CountManagedObjectsRequest) (*resource.CountManagedObjectsResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 

@@ -10,13 +10,14 @@ import (
 	"sync"
 	"time"
 
-	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
-	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 
 	"github.com/grafana/authlib/types"
 )
@@ -47,10 +48,10 @@ type ResourceIndex interface {
 	Search(ctx context.Context, access types.AccessClient, req *ResourceSearchRequest, federate []ResourceIndex) (*ResourceSearchResponse, error)
 
 	// List within an response
-	ListRepositoryObjects(ctx context.Context, req *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error)
+	ListManagedObjects(ctx context.Context, req *ListManagedObjectsRequest) (*ListManagedObjectsResponse, error)
 
 	// Counts the values in a repo
-	CountRepositoryObjects(ctx context.Context) ([]*CountRepositoryObjectsResponse_ResourceCount, error)
+	CountManagedObjects(ctx context.Context) ([]*CountManagedObjectsResponse_ResourceCount, error)
 
 	// Get the number of documents in the index
 	DocCount(ctx context.Context, folder string) (int64, error)
@@ -98,14 +99,17 @@ type searchSupport struct {
 }
 
 var (
-	_ ResourceIndexServer   = (*searchSupport)(nil)
-	_ RepositoryIndexServer = (*searchSupport)(nil)
+	_ ResourceIndexServer      = (*searchSupport)(nil)
+	_ ManagedObjectIndexServer = (*searchSupport)(nil)
 )
 
 func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, tracer trace.Tracer) (support *searchSupport, err error) {
 	// No backend search support
 	if opts.Backend == nil {
 		return nil, nil
+	}
+	if tracer == nil {
+		return nil, fmt.Errorf("missing tracer")
 	}
 
 	if opts.WorkerThreads < 1 {
@@ -135,14 +139,14 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 	return support, err
 }
 
-func (s *searchSupport) ListRepositoryObjects(ctx context.Context, req *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error) {
+func (s *searchSupport) ListManagedObjects(ctx context.Context, req *ListManagedObjectsRequest) (*ListManagedObjectsResponse, error) {
 	if req.NextPageToken != "" {
-		return &ListRepositoryObjectsResponse{
+		return &ListManagedObjectsResponse{
 			Error: NewBadRequestError("multiple pages not yet supported"),
 		}, nil
 	}
 
-	rsp := &ListRepositoryObjectsResponse{}
+	rsp := &ListManagedObjectsResponse{}
 	stats, err := s.storage.GetResourceStats(ctx, req.Namespace, 0)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
@@ -160,7 +164,7 @@ func (s *searchSupport) ListRepositoryObjects(ctx context.Context, req *ListRepo
 			return rsp, nil
 		}
 
-		kind, err := idx.ListRepositoryObjects(ctx, req)
+		kind, err := idx.ListManagedObjects(ctx, req)
 		if err != nil {
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
@@ -175,15 +179,15 @@ func (s *searchSupport) ListRepositoryObjects(ctx context.Context, req *ListRepo
 	}
 
 	// Sort based on path
-	slices.SortFunc(rsp.Items, func(a, b *ListRepositoryObjectsResponse_Item) int {
+	slices.SortFunc(rsp.Items, func(a, b *ListManagedObjectsResponse_Item) int {
 		return cmp.Compare(a.Path, b.Path)
 	})
 
 	return rsp, nil
 }
 
-func (s *searchSupport) CountRepositoryObjects(ctx context.Context, req *CountRepositoryObjectsRequest) (*CountRepositoryObjectsResponse, error) {
-	rsp := &CountRepositoryObjectsResponse{}
+func (s *searchSupport) CountManagedObjects(ctx context.Context, req *CountManagedObjectsRequest) (*CountManagedObjectsResponse, error) {
+	rsp := &CountManagedObjectsResponse{}
 	stats, err := s.storage.GetResourceStats(ctx, req.Namespace, 0)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
@@ -201,27 +205,27 @@ func (s *searchSupport) CountRepositoryObjects(ctx context.Context, req *CountRe
 			return rsp, nil
 		}
 
-		counts, err := idx.CountRepositoryObjects(ctx)
+		counts, err := idx.CountManagedObjects(ctx)
 		if err != nil {
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
 		}
-		if req.Name == "" {
+		if req.Id == "" {
 			rsp.Items = append(rsp.Items, counts...)
 		} else {
 			for _, k := range counts {
-				if k.Repository == req.Name {
-					k.Repository = "" // avoid duplicate response metadata
+				if k.Id == req.Id {
 					rsp.Items = append(rsp.Items, k)
 				}
 			}
 		}
 	}
 
-	// Sort based on repo/group/resource
-	slices.SortFunc(rsp.Items, func(a, b *CountRepositoryObjectsResponse_ResourceCount) int {
+	// Sort based on manager/group/resource
+	slices.SortFunc(rsp.Items, func(a, b *CountManagedObjectsResponse_ResourceCount) int {
 		return cmp.Or(
-			cmp.Compare(a.Repository, b.Repository),
+			cmp.Compare(a.Kind, b.Kind),
+			cmp.Compare(a.Id, b.Id),
 			cmp.Compare(a.Group, b.Group),
 			cmp.Compare(a.Resource, b.Resource),
 		)
@@ -384,6 +388,11 @@ func (s *searchSupport) init(ctx context.Context) error {
 		for {
 			v := <-events
 
+			// Skip events during batch updates
+			if v.PreviousRV < 0 {
+				continue
+			}
+
 			s.handleEvent(watchctx, v)
 		}
 	}()
@@ -431,15 +440,19 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 		return
 	}
 
+	_, buildDocSpan := s.tracer.Start(ctx, tracingPrexfixSearch+"BuildDocument")
 	doc, err := builder.BuildDocument(ctx, evt.Key, evt.ResourceVersion, evt.Value)
 	if err != nil {
 		s.log.Warn("error building document watch event", "error", err)
 		return
 	}
+	buildDocSpan.End()
 
 	switch evt.Type {
 	case WatchEvent_ADDED, WatchEvent_MODIFIED:
+		_, writeSpan := s.tracer.Start(ctx, tracingPrexfixSearch+"WriteDocument")
 		err = index.Write(doc)
+		writeSpan.End()
 		if err != nil {
 			s.log.Warn("error writing document watch event", "error", err)
 			return
@@ -448,7 +461,9 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 			IndexMetrics.IndexedKinds.WithLabelValues(evt.Key.Resource).Inc()
 		}
 	case WatchEvent_DELETED:
+		_, deleteSpan := s.tracer.Start(ctx, tracingPrexfixSearch+"DeleteDocument")
 		err = index.Delete(evt.Key)
+		deleteSpan.End()
 		if err != nil {
 			s.log.Warn("error deleting document watch event", "error", err)
 			return
@@ -490,7 +505,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 	if idx == nil {
 		idx, _, err = s.build(ctx, key, 10, 0) // unknown size and RV
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error building search index, %w", err)
 		}
 		if idx == nil {
 			return nil, fmt.Errorf("nil index after build")
@@ -535,7 +550,8 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 				// Convert it to an indexable document
 				doc, err := builder.BuildDocument(ctx, key, iter.ResourceVersion(), iter.Value())
 				if err != nil {
-					return err
+					s.log.Error("error building search document", "key", key.SearchID(), "err", err)
+					continue
 				}
 
 				// And finally write it to the index
@@ -670,7 +686,7 @@ func AsResourceKey(ns string, t string) (*ResourceKey, error) {
 		return &ResourceKey{
 			Namespace: ns,
 			Group:     dashboardv0alpha1.GROUP,
-			Resource:  dashboardv0alpha1.RESOURCE,
+			Resource:  dashboardv0alpha1.DASHBOARD_RESOURCE,
 		}, nil
 
 	// NOT really supported in the dashboard search UI, but useful for manual testing

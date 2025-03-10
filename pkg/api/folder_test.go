@@ -625,7 +625,7 @@ func TestGetFolderLegacyAndUnifiedStorage(t *testing.T) {
 
 				featuresArr := []any{featuremgmt.FlagNestedFolders}
 				if tc.unifiedStorageEnabled {
-					featuresArr = append(featuresArr, featuremgmt.FlagKubernetesFoldersServiceV2)
+					featuresArr = append(featuresArr, featuremgmt.FlagKubernetesClientDashboardsFolders)
 				}
 
 				server := SetupAPITestServer(t, func(hs *HTTPServer) {

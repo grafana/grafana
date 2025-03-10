@@ -1,52 +1,36 @@
-import { ReactNode } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
-import { SceneObject, VizPanel } from '@grafana/scenes';
-import { Button, Stack, Text } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
-import { MultiSelectedEditableDashboardElement } from '../scene/types/MultiSelectedEditableDashboardElement';
-import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
-export class MultiSelectedVizPanelsEditableElement implements MultiSelectedEditableDashboardElement {
-  public readonly isMultiSelectedEditableDashboardElement = true;
-  public readonly typeName = 'Panels';
+import { VizPanelEditableElement } from './VizPanelEditableElement';
 
-  private items?: VizPanel[];
+export class MultiSelectedVizPanelsEditableElement implements EditableDashboardElement {
+  public readonly isEditableDashboardElement = true;
+  public readonly key: string;
 
-  constructor(items: SceneObject[]) {
-    this.items = [];
-
-    for (const item of items) {
-      if (item instanceof VizPanel) {
-        this.items.push(item);
-      }
-    }
+  constructor(private _panels: VizPanelEditableElement[]) {
+    this.key = uuidv4();
   }
 
-  useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-    return [];
+  public getEditableElementInfo(): EditableDashboardElementInfo {
+    return { typeName: t('dashboard.edit-pane.elements.panels', 'Panels'), icon: 'folder', instanceName: '' };
   }
 
-  public onDelete = () => {
-    for (const panel of this.items || []) {
-      const layout = dashboardSceneGraph.getLayoutManagerFor(panel);
-      layout.removePanel(panel);
-    }
-  };
+  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
+    const header = new OptionsPaneCategoryDescriptor({
+      title: ``,
+      id: '',
+    });
 
-  renderActions(): ReactNode {
-    return (
-      <Stack direction="column">
-        <Text>
-          <Trans i18nKey="dashboard.edit-pane.panels.multi-select.selection-number">No. of panels selected: </Trans>
-          {this.items?.length}
-        </Text>
-        <Stack direction="row">
-          <Button size="sm" variant="secondary" icon="copy" />
-          <Button size="sm" variant="destructive" fill="outline" onClick={this.onDelete} icon="trash-alt" />
-        </Stack>
-      </Stack>
-    );
+    return [header];
+  }
+
+  public onDelete() {
+    this._panels.forEach((panel) => {
+      panel.onDelete();
+    });
   }
 }

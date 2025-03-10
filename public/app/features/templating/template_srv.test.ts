@@ -1,5 +1,5 @@
 import { dateTime, QueryVariableModel, TimeRange, TypedVariableModel } from '@grafana/data';
-import { setDataSourceSrv, VariableInterpolation } from '@grafana/runtime';
+import { VariableInterpolation } from '@grafana/runtime';
 import {
   ConstantVariable,
   CustomVariable,
@@ -13,10 +13,11 @@ import {
   TestVariable,
 } from '@grafana/scenes';
 import { VariableFormatID } from '@grafana/schema';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 
 import { silenceConsoleOutput } from '../../../test/core/utils/silenceConsoleOutput';
 import { initTemplateSrv } from '../../../test/helpers/initTemplateSrv';
-import { mockDataSource, MockDataSourceSrv } from '../alerting/unified/mocks';
+import { mockDataSource } from '../alerting/unified/mocks';
 import { VariableAdapter, variableAdapters } from '../variables/adapters';
 import { createAdHocVariableAdapter } from '../variables/adhoc/adapter';
 import { createQueryVariableAdapter } from '../variables/query/adapter';
@@ -218,16 +219,14 @@ describe('templateSrv', () => {
         { type: 'adhoc', name: 'test', datasource: { uid: 'oogle' }, filters: [1] },
         { type: 'adhoc', name: 'test2', datasource: { uid: '$ds' }, filters: [2] },
       ]);
-      setDataSourceSrv(
-        new MockDataSourceSrv({
-          oogle: mockDataSource({
-            name: 'oogle',
-            uid: 'oogle',
-          }),
-          logstash: mockDataSource({
-            name: 'logstash',
-            uid: 'logstash-id',
-          }),
+      setupDataSources(
+        mockDataSource({
+          name: 'oogle',
+          uid: 'oogle',
+        }),
+        mockDataSource({
+          name: 'logstash',
+          uid: 'logstash-id',
         })
       );
     });

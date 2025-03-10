@@ -51,4 +51,11 @@ describe('NativeHistogramBanner', () => {
     fireEvent.click(histogramButton);
     expect(mockTrail.publishEvent).toHaveBeenCalledWith(new MetricSelectedEvent('histogram1'), true);
   });
+
+  test('Set that the banner has been shown in local storage when a user closes the banner', () => {
+    render(<NativeHistogramBanner {...mockProps} />);
+    // click the button with aria label "Close alert"
+    fireEvent.click(screen.getByLabelText('Close alert'));
+    expect(localStorage.getItem('nativeHistogramBanner')).toBe('true');
+  });
 });

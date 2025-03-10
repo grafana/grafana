@@ -41,7 +41,7 @@ func TestSources_List(t *testing.T) {
 			filepath.Join(testdata, "app", "plugins", "datasource"),
 			filepath.Join(testdata, "app", "plugins", "panel"),
 		})
-		sig, exists := srcs[0].DefaultSignature(ctx)
+		sig, exists := srcs[0].DefaultSignature(ctx, "")
 		require.True(t, exists)
 		require.Equal(t, plugins.SignatureStatusInternal, sig.Status)
 		require.Equal(t, plugins.SignatureType(""), sig.Type)
@@ -51,7 +51,7 @@ func TestSources_List(t *testing.T) {
 		require.Equal(t, srcs[1].PluginURIs(ctx), []string{
 			filepath.Join(testdata, "pluginRootWithDist", "datasource"),
 		})
-		sig, exists = srcs[1].DefaultSignature(ctx)
+		sig, exists = srcs[1].DefaultSignature(ctx, "")
 		require.False(t, exists)
 		require.Equal(t, plugins.Signature{}, sig)
 
@@ -59,7 +59,7 @@ func TestSources_List(t *testing.T) {
 		require.Equal(t, srcs[2].PluginURIs(ctx), []string{
 			filepath.Join(testdata, "pluginRootWithDist", "dist"),
 		})
-		sig, exists = srcs[2].DefaultSignature(ctx)
+		sig, exists = srcs[2].DefaultSignature(ctx, "")
 		require.False(t, exists)
 		require.Equal(t, plugins.Signature{}, sig)
 
@@ -67,7 +67,7 @@ func TestSources_List(t *testing.T) {
 		require.Equal(t, srcs[3].PluginURIs(ctx), []string{
 			filepath.Join(testdata, "pluginRootWithDist", "panel"),
 		})
-		sig, exists = srcs[3].DefaultSignature(ctx)
+		sig, exists = srcs[3].DefaultSignature(ctx, "")
 		require.False(t, exists)
 		require.Equal(t, plugins.Signature{}, sig)
 	})

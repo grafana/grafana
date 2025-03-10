@@ -71,8 +71,10 @@ func (s *Service) runTraceQlQueryMetrics(ctx context.Context, pCtx backend.Plugi
 
 	resp, responseBody, err := s.performMetricsQuery(ctx, dsInfo, tempoQuery, backendQuery, span)
 	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			ctxLogger.Error("Failed to close response body", "error", err, "function", logEntrypoint())
+		if resp != nil && resp.Body != nil {
+			if err := resp.Body.Close(); err != nil {
+				ctxLogger.Error("Failed to close response body", "error", err, "function", logEntrypoint())
+			}
 		}
 	}()
 	if err != nil {
@@ -105,7 +107,7 @@ func (s *Service) runTraceQlQueryMetrics(ctx context.Context, pCtx backend.Plugi
 			return res, err
 		}
 
-		frames := traceql.TransformMetricsResponse(tempoQuery, queryResponse)
+		frames := traceql.TransformMetricsResponse(*tempoQuery.Query, queryResponse)
 		result.Frames = frames
 	}
 
@@ -126,7 +128,6 @@ func handleConversionError(ctxLogger log.Logger, span trace.Span, err error) (*b
 func (s *Service) performMetricsQuery(ctx context.Context, dsInfo *Datasource, model *dataquery.TempoQuery, query backend.DataQuery, span trace.Span) (*http.Response, []byte, error) {
 	ctxLogger := s.logger.FromContext(ctx)
 	request, err := s.createMetricsQuery(ctx, dsInfo, model, query.TimeRange.From.Unix(), query.TimeRange.To.Unix())
-
 	if err != nil {
 		ctxLogger.Error("Failed to create request", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
@@ -200,6 +201,6 @@ func isInstantQuery(metricQueryType *dataquery.MetricsQueryType) bool {
 }
 
 func isMetricsQuery(query string) bool {
-	match, _ := regexp.MatchString("\\|\\s*(rate|count_over_time|avg_over_time|max_over_time|min_over_time|quantile_over_time|histogram_over_time|compare)\\s*\\(", query)
+	match, _ := regexp.MatchString("\\|\\s*(rate|count_over_time|avg_over_time|sum_over_time|max_over_time|min_over_time|quantile_over_time|histogram_over_time|compare)\\s*\\(", query)
 	return match
 }

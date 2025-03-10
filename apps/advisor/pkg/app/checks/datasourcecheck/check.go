@@ -2,17 +2,18 @@ package datasourcecheck
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/util"
-	"k8s.io/klog/v2"
 )
 
 type check struct {
@@ -20,6 +21,7 @@ type check struct {
 	PluginStore           pluginstore.Store
 	PluginContextProvider pluginContextProvider
 	PluginClient          plugins.Client
+	log                   log.Logger
 }
 
 func New(
@@ -33,6 +35,7 @@ func New(
 		PluginStore:           pluginStore,
 		PluginContextProvider: pluginContextProvider,
 		PluginClient:          pluginClient,
+		log:                   log.New("advisor.datasourcecheck"),
 	}
 }
 
@@ -58,6 +61,7 @@ func (c *check) Steps() []checks.Step {
 		&healthCheckStep{
 			PluginContextProvider: c.PluginContextProvider,
 			PluginClient:          c.PluginClient,
+			log:                   c.log,
 		},
 	}
 }
@@ -73,34 +77,36 @@ func (s *uidValidationStep) Title() string {
 }
 
 func (s *uidValidationStep) Description() string {
-	return "Check if the UID of each data source is valid."
+	return "Checks if the UID of a data source is valid."
 }
 
-func (s *uidValidationStep) Run(ctx context.Context, obj *advisor.CheckSpec, items []any) ([]advisor.CheckReportError, error) {
-	dsErrs := []advisor.CheckReportError{}
-	for _, i := range items {
-		ds, ok := i.(*datasources.DataSource)
-		if !ok {
-			return nil, fmt.Errorf("invalid item type %T", i)
-		}
-		// Data source UID validation
-		err := util.ValidateUID(ds.UID)
-		if err != nil {
-			dsErrs = append(dsErrs, checks.NewCheckReportError(
-				advisor.CheckReportErrorSeverityLow,
-				fmt.Sprintf("Invalid UID '%s' for data source %s", ds.UID, ds.Name),
-				"Check the <a href='https://grafana.com/docs/grafana/latest/upgrade-guide/upgrade-v11.2/#grafana-data-source-uid-format-enforcement' target=_blank>documentation</a> for more information.",
-				s.ID(),
-				ds.UID,
-			))
-		}
+func (s *uidValidationStep) Resolution() string {
+	return "Check the <a href='https://grafana.com/docs/grafana/latest/upgrade-guide/upgrade-v11.2/#grafana-data-source-uid-format-enforcement'" +
+		"target=_blank>documentation</a> for more information or delete the data source and create a new one."
+}
+
+func (s *uidValidationStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
+	ds, ok := i.(*datasources.DataSource)
+	if !ok {
+		return nil, fmt.Errorf("invalid item type %T", i)
 	}
-	return dsErrs, nil
+	// Data source UID validation
+	err := util.ValidateUID(ds.UID)
+	if err != nil {
+		return checks.NewCheckReportFailure(
+			advisor.CheckReportFailureSeverityLow,
+			s.ID(),
+			fmt.Sprintf("%s (%s)", ds.Name, ds.UID),
+			[]advisor.CheckErrorLink{},
+		), nil
+	}
+	return nil, nil
 }
 
 type healthCheckStep struct {
 	PluginContextProvider pluginContextProvider
 	PluginClient          plugins.Client
+	log                   log.Logger
 }
 
 func (s *healthCheckStep) Title() string {
@@ -108,53 +114,62 @@ func (s *healthCheckStep) Title() string {
 }
 
 func (s *healthCheckStep) Description() string {
-	return "Check if all data sources are healthy."
+	return "Checks if a data sources is healthy."
+}
+
+func (s *healthCheckStep) Resolution() string {
+	return "Go to the data source configuration page and address the issues reported."
 }
 
 func (s *healthCheckStep) ID() string {
 	return "health-check"
 }
 
-func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, items []any) ([]advisor.CheckReportError, error) {
-	dsErrs := []advisor.CheckReportError{}
-	for _, i := range items {
-		ds, ok := i.(*datasources.DataSource)
-		if !ok {
-			return nil, fmt.Errorf("invalid item type %T", i)
-		}
-
-		// Health check execution
-		requester, err := identity.GetRequester(ctx)
-		if err != nil {
-			return nil, err
-		}
-		pCtx, err := s.PluginContextProvider.GetWithDataSource(ctx, ds.Type, requester, ds)
-		if err != nil {
-			klog.ErrorS(err, "Error creating plugin context", "datasource", ds.Name)
-			continue
-		}
-		req := &backend.CheckHealthRequest{
-			PluginContext: pCtx,
-			Headers:       map[string]string{},
-		}
-		resp, err := s.PluginClient.CheckHealth(ctx, req)
-		if err != nil {
-			fmt.Println("Error checking health", err)
-			continue
-		}
-		if resp.Status != backend.HealthStatusOk {
-			dsErrs = append(dsErrs, checks.NewCheckReportError(
-				advisor.CheckReportErrorSeverityHigh,
-				fmt.Sprintf("Health check failed for %s", ds.Name),
-				fmt.Sprintf(
-					"Go to the <a href='/connections/datasources/edit/%s'>data source configuration</a>"+
-						" and address the issues reported.", ds.UID),
-				s.ID(),
-				ds.UID,
-			))
-		}
+func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
+	ds, ok := i.(*datasources.DataSource)
+	if !ok {
+		return nil, fmt.Errorf("invalid item type %T", i)
 	}
-	return dsErrs, nil
+
+	// Health check execution
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	pCtx, err := s.PluginContextProvider.GetWithDataSource(ctx, ds.Type, requester, ds)
+	if err != nil {
+		// Unable to check health check
+		s.log.Error("Failed to get plugin context", "datasource_uid", ds.UID, "error", err)
+		return nil, nil
+	}
+	req := &backend.CheckHealthRequest{
+		PluginContext: pCtx,
+		Headers:       map[string]string{},
+	}
+	resp, err := s.PluginClient.CheckHealth(ctx, req)
+	if err != nil || resp.Status != backend.HealthStatusOk {
+		if err != nil {
+			s.log.Debug("Failed to check health", "datasource_uid", ds.UID, "error", err)
+			if errors.Is(err, plugins.ErrMethodNotImplemented) || errors.Is(err, plugins.ErrPluginUnavailable) {
+				// The plugin does not support backend health checks
+				return nil, nil
+			}
+		} else {
+			s.log.Debug("Failed to check health", "datasource_uid", ds.UID, "status", resp.Status, "message", resp.Message)
+		}
+		return checks.NewCheckReportFailure(
+			advisor.CheckReportFailureSeverityHigh,
+			s.ID(),
+			ds.Name,
+			[]advisor.CheckErrorLink{
+				{
+					Message: "Fix me",
+					Url:     fmt.Sprintf("/connections/datasources/edit/%s", ds.UID),
+				},
+			},
+		), nil
+	}
+	return nil, nil
 }
 
 type pluginContextProvider interface {

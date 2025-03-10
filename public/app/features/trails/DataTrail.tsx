@@ -650,10 +650,9 @@ function getVariableSet(
         addFilterButtonText: 'Select resource attributes',
         datasource: trailDS,
         hide: VariableHide.hideVariable,
-        layout: 'vertical',
+        layout: 'combobox',
         defaultKeys: [],
         applyMode: 'manual',
-        supportsMultiValueOperators: true,
         allowCustomValue: true,
       }),
       new AdHocFiltersVariable({
@@ -662,13 +661,16 @@ function getVariableSet(
         datasource: trailDS,
         // default to use var filters and have otel off
         hide: VariableHide.hideLabel,
-        layout: 'vertical',
+        layout: 'combobox',
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),
         applyMode: 'manual',
-        // since we only support prometheus datasources, this is always true
-        supportsMultiValueOperators: true,
         allowCustomValue: true,
+        expressionBuilder: (filters: AdHocVariableFilter[]) => {
+          return [...getBaseFiltersForMetric(metric), ...filters]
+            .map((filter) => `${filter.key}${filter.operator}"${filter.value}"`)
+            .join(',');
+        },
       }),
       ...getVariablesWithOtelJoinQueryConstant(otelJoinQuery ?? ''),
       new ConstantVariable({
@@ -686,12 +688,10 @@ function getVariableSet(
         addFilterButtonText: 'Filter',
         datasource: trailDS,
         hide: VariableHide.hideVariable,
-        layout: 'vertical',
+        layout: 'combobox',
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),
         applyMode: 'manual',
-        // since we only support prometheus datasources, this is always true
-        supportsMultiValueOperators: true,
         allowCustomValue: true,
         // skipUrlSync: true
       }),

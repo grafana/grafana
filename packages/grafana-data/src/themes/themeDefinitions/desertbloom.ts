@@ -39,9 +39,6 @@ const desertBloomTheme: NewThemeOptions = {
     info: {
       main: '#1A82E2',
     },
-    error: {
-      main: '#FF6B6B',
-    },
     success: {
       main: '#4CAF50',
     },
@@ -52,6 +49,7 @@ const desertBloomTheme: NewThemeOptions = {
       canvas: '#FFF8F0',
       primary: '#FFFFFF',
       secondary: '#f9f3e8',
+      elevated: '#FFFFFF',
     },
     action: {
       hover: 'rgba(168, 156, 134, 0.12)',
