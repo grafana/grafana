@@ -7,7 +7,8 @@ export const logsGrammar: Grammar = {
   'log-token-timestamp': /\b\d{4}-\d{2}-\d{2}[T|\s]{1}\d{1,2}:\d{2}:\d{2}(?:[\.]{0,1}\d{0,9})?(?:Z|\+\d{2}:\d{2}|\b)\b/,
   'log-token-json-key': /"(\b|\B)[\w-]+"(?=\s*:)/gi,
   'log-token-key': /(\b|\B)[\w_]+(?=\s*=)/gi,
-  'log-token-size': /"\d+\.{0,1}\d*\s*[kKmMGgtTPp]*[bB]{1}"/g,
+  'log-token-size': /(?:\b|")\d+\.{0,1}\d*\s*[kKmMGgtTPp]*[bB]{1}(?:"|\b)/g,
+  'log-token-duration': /(?:\b|")\d+(\.\d+)?(ns|µs|ms|s|m|h|d)(?:\b|")/g,
   'log-token-string': /"(?!:)([^'"])*?"(?!:)/g,
   'log-token-number': /\b-?(0x[\dA-Fa-f]+|\d*\.?\d+([Ee]-?\d+)?)\b/g,
 };
