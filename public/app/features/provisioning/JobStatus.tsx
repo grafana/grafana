@@ -26,9 +26,11 @@ export function JobStatus({ name, onStatusChange }: JobStatusProps) {
 
   if (jobQuery.isLoading || !job) {
     return (
-      <Stack direction="column" alignItems="center" gap={2}>
-        <Spinner />
-        <Text>Starting...</Text>
+      <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
+        <Spinner size={24} />
+        <Text element="h4" weight="bold">
+          Starting...
+        </Text>
       </Stack>
     );
   }
@@ -45,9 +47,9 @@ export function JobStatus({ name, onStatusChange }: JobStatusProps) {
         );
     }
     return (
-      <Stack direction="row">
-        <Spinner />
-        <Text element="p" weight="medium">
+      <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
+        <Spinner size={24} />
+        <Text element="h4" color="secondary">
           {job.status?.message ?? job.status?.state!}
         </Text>
       </Stack>
