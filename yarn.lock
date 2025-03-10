@@ -10100,12 +10100,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/ol-ext@npm:@siedlerchr/types-ol-ext@3.3.0":
-  version: 3.3.0
-  resolution: "@siedlerchr/types-ol-ext@npm:3.3.0"
+"@types/ol-ext@npm:@siedlerchr/types-ol-ext@3.6.1":
+  version: 3.6.1
+  resolution: "@siedlerchr/types-ol-ext@npm:3.6.1"
   peerDependencies:
-    jspdf: ^2.5.1
-  checksum: 10/48d19f708e304a9a3c527ae4d49eebfadce965f159d2de4ed4f49f500d25b35194b56c7f87fa7283e6256f00c40342651c6f5039015cef66884195501c7ce53a
+    jspdf: ^2.5.2
+  checksum: 10/d4833632b89bed24ca59e41a7830ad4e9e06d5f94c810c94e316b1b25cdd7e3fb695c1a88b819e9a765e1bcf910032801027bca7a5daf84913b8d1cbfebc9013
   languageName: node
   linkType: hard
 
@@ -18144,7 +18144,7 @@ __metadata:
     "@types/lucene": "npm:^2"
     "@types/node": "npm:22.12.0"
     "@types/node-forge": "npm:^1"
-    "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.3.0"
+    "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.6.1"
     "@types/pluralize": "npm:^0.0.33"
     "@types/prismjs": "npm:1.26.5"
     "@types/react": "npm:18.3.18"
