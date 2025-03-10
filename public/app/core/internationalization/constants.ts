@@ -50,14 +50,6 @@ const EXTRA_LANGUAGES: LanguageDefinition[] = [
   },
 
   {
-    code: BRAZILIAN_PORTUGUESE,
-    name: 'Português Brasileiro',
-    loader: {
-      grafana: () => import('../../../locales/pt-BR/grafana.json'),
-    },
-  },
-
-  {
     code: ITALIAN_ITALY,
     name: 'Italiano',
     loader: {
@@ -184,6 +176,14 @@ export const LANGUAGES: LanguageDefinition[] = [
     name: 'Deutsch',
     loader: {
       grafana: () => import('../../../locales/de-DE/grafana.json'),
+    },
+  },
+
+  {
+    code: BRAZILIAN_PORTUGUESE,
+    name: 'Português Brasileiro',
+    loader: {
+      grafana: () => import('../../../locales/pt-BR/grafana.json'),
     },
   },
 
