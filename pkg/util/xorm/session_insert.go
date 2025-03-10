@@ -346,7 +346,7 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 	}
 
 	// If engine has a sequence number generator, use it to produce values for auto-increment columns.
-	if len(table.AutoIncrement) > 0 && session.engine.dialect.DBType() == "spanner" {
+	if len(table.AutoIncrement) > 0 && session.engine.sequenceGenerator != nil {
 		var found bool
 		for _, col := range colNames {
 			if col == table.AutoIncrement {
