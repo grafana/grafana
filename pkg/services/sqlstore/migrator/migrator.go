@@ -240,19 +240,19 @@ func (mg *Migrator) run(ctx context.Context) (err error) {
 
 	migrationLogExists, err := mg.DBEngine.IsTableExist(mg.tableName)
 	if err != nil {
-		return fmt.Errorf("%v: %w", "failed to check table existence", err)
+		return fmt.Errorf("failed to check table existence: %w", err)
 	}
 
 	if !migrationLogExists {
 		// Check if dialect can initialize database from a snapshot.
 		err := mg.Dialect.CreateDatabaseFromSnapshot(ctx, mg.DBEngine, mg.tableName)
 		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to create database from snapshot", err)
+			return fmt.Errorf("failed to create database from snapshot: %w", err)
 		}
 
 		migrationLogExists, err = mg.DBEngine.IsTableExist(mg.tableName)
 		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to check table existence after applying snapshot", err)
+			return fmt.Errorf("failed to check table existence after applying snapshot: %w", err)
 		}
 	}
 
