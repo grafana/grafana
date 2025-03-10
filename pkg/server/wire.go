@@ -403,6 +403,7 @@ var wireBasicSet = wire.NewSet(
 	authz.WireSet,
 	// Unified storage
 	resource.ProvideStorageMetrics,
+	resource.ProvideIndexMetrics,
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,
