@@ -88,15 +88,20 @@ export function BootstrapStep({ onOptionSelect }: Props) {
   useEffect(() => {
     const fetchCounts = async () => {
       try {
-        // Get dashboard count
-        const dashboardResponse = await fetch('/api/dashboards/count');
+        // TODO: How to do this in the right way?
+        // Get dashboard count using v0alpha1 API
+        const dashboardResponse = await fetch(
+          '/apis/dashboard.grafana.app/v0alpha1/namespaces/default/search?query=*&limit=0&type=dashboard'
+        );
         const dashboardData = await dashboardResponse.json();
-        setDashboardCount(dashboardData.count || 0);
+        setDashboardCount(dashboardData.totalHits || 0);
 
-        // Get folder count
-        const folderResponse = await fetch('/api/folders/count');
+        // Get folder count using v0alpha1 API
+        const folderResponse = await fetch(
+          '/apis/dashboard.grafana.app/v0alpha1/namespaces/default/search?query=*&limit=0&type=folder'
+        );
         const folderData = await folderResponse.json();
-        setFolderCount(folderData.count || 0);
+        setFolderCount(folderData.totalHits || 0);
       } catch (error) {
         console.error('Error fetching counts:', error);
       }
