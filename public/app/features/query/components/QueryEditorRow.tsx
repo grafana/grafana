@@ -21,9 +21,17 @@ import {
   TimeRange,
   getDataSourceRef,
   toLegacyResponseData,
+  PluginExtensionPoints,
 } from '@grafana/data';
+import { PluginExtensionAdaptiveTelemetryQueryActionsV1Context } from '@grafana/data/src/types/pluginExtensions';
 import { selectors } from '@grafana/e2e-selectors';
-import { AngularComponent, getAngularLoader, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import {
+  AngularComponent,
+  getAngularLoader,
+  getDataSourceSrv,
+  reportInteraction,
+  usePluginComponents,
+} from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Badge, ErrorBoundaryAlert } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
@@ -458,6 +466,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
     extraActions.push(this.renderWarnings('info'));
     extraActions.push(this.renderWarnings('warning'));
+    extraActions.push(<AdaptiveTelemetryQueryActions key="adaptive-telemetry-actions" query={query} />);
 
     return extraActions;
   };
@@ -556,7 +565,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const DatasourceCheatsheet = datasource.components?.QueryEditorHelp;
 
     return (
-      <div data-testid="query-editor-row" aria-label={selectors.components.QueryEditorRows.rows}>
+      <div data-testid="query-editor-row">
         <QueryOperationRow
           id={this.id}
           draggable={!hideActionButtons}
@@ -663,4 +672,29 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
 function MaybeQueryLibrarySaveButton(props: { query: DataQuery }) {
   const { renderSaveQueryButton } = useQueryLibraryContext();
   return renderSaveQueryButton(props.query);
+}
+
+function AdaptiveTelemetryQueryActions({ query }: { query: DataQuery }) {
+  try {
+    const { isLoading, components } = usePluginComponents<PluginExtensionAdaptiveTelemetryQueryActionsV1Context>({
+      extensionPointId: PluginExtensionPoints.AdaptiveTelemetryQueryActionsV1,
+    });
+
+    if (isLoading || !components.length) {
+      return null;
+    }
+
+    const actions = components
+      .filter(({ meta }) => meta.pluginId.startsWith('grafana-adaptive'))
+      .map((Component) => {
+        const { meta } = Component;
+        return <Component key={meta.id} query={query} contextHints={['queryeditorrow', 'header']} />;
+      });
+    return <>{actions}</>;
+  } catch (error) {
+    // If `usePluginComponents` isn't properly resolved, tests will fail with 'setPluginComponentsHook(options) can only be used after the Grafana instance has started.'
+    // This will be resolved in https://github.com/grafana/grafana/pull/92983
+    // In this case, Return `null` as if there are no extensions.
+    return null;
+  }
 }
