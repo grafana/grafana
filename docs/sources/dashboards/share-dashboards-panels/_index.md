@@ -205,7 +205,7 @@ In addition to sharing dashboards as links, reports, and snapshots, you can expo
 ### Export a dashboard as PDF
 
 {{< admonition type="note" >}}
-This feature is only available on Grafana Enterprise and Cloud.
+This feature is only available on Grafana Enterprise.
 {{< /admonition >}}
 
 To export a dashboard in its current state as a PDF, follow these steps:
