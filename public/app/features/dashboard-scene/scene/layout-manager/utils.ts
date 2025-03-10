@@ -16,7 +16,7 @@ export interface Rect {
 
 export interface DropZone extends Rect {
   /* The two-dimensional euclidean distance, in pixels, between the drop zone and some reference point (usually cursor position) */
-  distance: number;
+  distanceToPoint: number;
 }
 
 export interface SceneLayout2 extends SceneLayout {

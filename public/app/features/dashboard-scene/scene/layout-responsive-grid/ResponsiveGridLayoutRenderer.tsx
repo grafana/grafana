@@ -39,6 +39,13 @@ export function ResponsiveGridRenderer({ model }: SceneComponentProps<Responsive
 
   return (
     <div className={styles.container} ref={containerRef}>
+      {currentLayoutIsActive && activeOrder && (
+        <div
+          style={{
+            order: activeOrder,
+          }}
+        ></div>
+      )}
       {children.map((item, i) => {
         const Component = item.Component as ComponentType<ResponsiveGridItemProps>;
         // const Wrapper = isLazy ? LazyLoader : 'div';
@@ -55,13 +62,6 @@ export function ResponsiveGridRenderer({ model }: SceneComponentProps<Responsive
           // </Wrapper>
         );
       })}
-      {currentLayoutIsActive && activeOrder && (
-        <div
-          style={{
-            order: activeOrder,
-          }}
-        ></div>
-      )}
     </div>
   );
 }

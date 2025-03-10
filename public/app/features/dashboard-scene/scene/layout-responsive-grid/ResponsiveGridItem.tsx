@@ -165,7 +165,14 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
       throw new Error('Unable to compute bounding box.');
     }
 
-    return itemContainer.getBoundingClientRect();
+    const { top, left, bottom, right } = itemContainer.getBoundingClientRect();
+
+    return {
+      top,
+      left,
+      bottom,
+      right,
+    };
   }
 
   public distanceToPoint(point: Point): number {

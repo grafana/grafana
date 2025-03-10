@@ -23,9 +23,12 @@ export function ResponsiveGridItemRenderer({ model, order }: ResponsiveGridItemP
   const isDragging = model === activeLayoutItem;
 
   useLayoutEffect(() => {
+    console.log(`Storing bounding box for grid item ${model.state.key}`);
     // Compute and cache the grid item's bounding box.
-    // Used for drag and drop.
-    model.cachedBoundingBox = model.computeBoundingBox();
+    // Don't re-calculate while an item is being dragged.
+    if (!activeLayoutItem) {
+      model.cachedBoundingBox = model.computeBoundingBox();
+    }
   });
 
   const dragStyles =

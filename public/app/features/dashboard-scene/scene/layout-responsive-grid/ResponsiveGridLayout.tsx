@@ -144,7 +144,7 @@ export class ResponsiveGridLayout extends SceneObjectBase<ResponsiveGridLayoutSt
       });
     }
 
-    return { ...closestRect, distance: minDistance };
+    return { ...closestRect, distanceToPoint: minDistance };
   }
 
   // public calculateDropZones() {

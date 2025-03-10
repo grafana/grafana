@@ -8,7 +8,6 @@ import {
   VizPanel,
   SceneComponentProps,
 } from '@grafana/scenes';
-import { Portal } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { DropZonePlaceholder } from '../layout-default/DropZonePlaceholder';
@@ -21,6 +20,7 @@ import { closestOfType, DropZone, isSceneLayout, Point, SceneLayout2 } from './u
 interface LayoutOrchestratorState extends SceneObjectState {
   manager: DashboardLayoutManager;
   activeLayoutItemRef?: SceneObjectRef<DashboardLayoutItem>;
+  placeholderSize?: { width: number; height: number; top: number; left: number };
 }
 
 export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState> implements DashboardLayoutManager {
@@ -72,7 +72,21 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
     layoutItemContainer.style.transform = `translate(${cursorPos.x}px,${cursorPos.y}px)`;
     const closestDropZone = this.findClosestDropZone(cursorPos);
     if (!dropZonesAreEqual(this.activeDropZone, closestDropZone)) {
+      console.log('Entered new drop zone!');
+      console.log(closestDropZone);
       this.activeDropZone = closestDropZone;
+      // update placeholder width/height
+      if (this.activeDropZone && this.placeholderRef.current) {
+        console.log('Updating placeholder dimensions');
+        this.setState({
+          placeholderSize: {
+            top: this.activeDropZone.top,
+            left: this.activeDropZone.left,
+            width: this.activeDropZone.right - this.activeDropZone.left,
+            height: this.activeDropZone.bottom - this.activeDropZone.top,
+          },
+        });
+      }
     }
   };
 
@@ -89,7 +103,15 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
     const activeLayoutItem = this.state.activeLayoutItemRef?.resolve();
     const targetLayout = this.activeDropZone?.layout.resolve();
 
-    this.setState({ activeLayoutItemRef: undefined });
+    this.setState({
+      activeLayoutItemRef: undefined,
+      placeholderSize: {
+        width: 0,
+        height: 0,
+        top: 0,
+        left: 0,
+      },
+    });
     this.activeDropZone = undefined;
 
     if (!activeLayoutItem) {
@@ -109,9 +131,9 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
     let closestDistance = Number.MAX_VALUE;
     for (const layout of sceneLayouts) {
       const curClosestDropZone = layout.closestDropZone(p);
-      if (curClosestDropZone.distance < closestDistance) {
+      if (curClosestDropZone.distanceToPoint < closestDistance) {
         closestDropZone = { ...curClosestDropZone, layout: layout.getRef() };
-        closestDistance = curClosestDropZone.distance;
+        closestDistance = curClosestDropZone.distanceToPoint;
       }
     }
 
@@ -168,12 +190,12 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
   }
 
   public static Component = ({ model }: SceneComponentProps<LayoutOrchestrator>) => {
-    const { manager, activeLayoutItemRef: activeLayoutItem } = model.useState();
-    const activeItem = activeLayoutItem?.resolve();
+    const { manager, placeholderSize } = model.useState();
+    const { width, height, top, left } = placeholderSize ?? { width: 0, height: 0, top: 0, left: 0 };
 
     return (
       <>
-        <Portal>{activeItem && <DropZonePlaceholder ref={model.placeholderRef} />}</Portal>
+        <DropZonePlaceholder ref={model.placeholderRef} width={width} height={height} top={top} left={left} />
         <model.state.manager.Component model={manager} />
       </>
     );
@@ -181,7 +203,8 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
 }
 
 function dropZonesAreEqual(a?: DropZone, b?: DropZone) {
-  return a && b && Object.entries(a).every(([key, val]) => b[key as keyof DropZone] === val);
+  const dims: Array<keyof DropZone> = ['top', 'left', 'bottom', 'right'];
+  return a && b && dims.every((dim) => b[dim] === a[dim]);
 }
 
 /** Moves layoutItem from its current layout to targetLayout.
