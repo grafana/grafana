@@ -1,6 +1,4 @@
 import { AnyAction } from '@reduxjs/toolkit';
-import { cloneDeep } from 'lodash';
-import { useMemo } from 'react';
 import * as React from 'react';
 
 import {
@@ -10,8 +8,10 @@ import {
   PluginExtensionPoints,
   PluginExtensionDataSourceConfigContext,
   DataSourceUpdatedSuccessfully,
+  PluginExtensionComponent,
+  DataSourceJsonData,
 } from '@grafana/data';
-import { getDataSourceSrv, usePluginComponents, UsePluginComponentsResult } from '@grafana/runtime';
+import { getDataSourceSrv, usePluginComponentExtensions } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { DataSourceSettingsState, useDispatch } from 'app/types';
@@ -117,7 +117,6 @@ export function EditDataSourceView({
   const { plugin, loadError, testingStatus, loading } = dataSourceSettings;
   const { readOnly, hasWriteRights, hasDeleteRights } = dataSourceRights;
   const hasDataSource = dataSource.id > 0;
-  const { components, isLoading } = useDataSourceConfigPluginExtensions();
 
   const dsi = getDataSourceSrv()?.getInstanceSettings(dataSource.uid);
 
@@ -137,6 +136,17 @@ export function EditDataSourceView({
     onTest();
   };
 
+  const extensionPointId = PluginExtensionPoints.DataSourceConfig;
+  usePluginComponentExtensions<{
+    context: PluginExtensionDataSourceConfigContext<DataSourceJsonData>;
+  }>({ extensionPointId });
+
+  const allowedExtensions: Array<
+    PluginExtensionComponent<{
+      context: PluginExtensionDataSourceConfigContext<DataSourceJsonData>;
+    }>
+  > = [];
+
   if (loadError) {
     return (
       <DataSourceLoadError
@@ -149,7 +159,7 @@ export function EditDataSourceView({
     );
   }
 
-  if (loading || isLoading) {
+  if (loading) {
     return <PageLoader />;
   }
 
@@ -194,12 +204,12 @@ export function EditDataSourceView({
       )}
 
       {/* Extension point */}
-      {components.map((Component) => {
+      {allowedExtensions.map((extension) => {
         return (
-          <div key={Component.meta.id}>
-            <Component
+          <div key={extension.id}>
+            <extension.component
               context={{
-                dataSource: cloneDeep(dataSource),
+                dataSource: dataSource,
                 dataSourceMeta: dataSourceMeta,
                 testingStatus,
                 setJsonData: (jsonData) =>
@@ -235,28 +245,4 @@ export function EditDataSourceView({
       />
     </form>
   );
-}
-
-type DataSourceConfigPluginExtensionProps = {
-  context: PluginExtensionDataSourceConfigContext;
-};
-
-function useDataSourceConfigPluginExtensions(): UsePluginComponentsResult<DataSourceConfigPluginExtensionProps> {
-  const { components, isLoading } = usePluginComponents<DataSourceConfigPluginExtensionProps>({
-    extensionPointId: PluginExtensionPoints.DataSourceConfig,
-  });
-
-  return useMemo(() => {
-    const allowedComponents = components.filter((component) => {
-      switch (component.meta.pluginId) {
-        case 'grafana-pdc-app':
-        case 'grafana-auth-app':
-          return true;
-        default:
-          return false;
-      }
-    });
-
-    return { components: allowedComponents, isLoading };
-  }, [components, isLoading]);
 }
