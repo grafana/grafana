@@ -59,7 +59,7 @@ export class OptionsPaneCategoryDescriptor {
       return this.props.customRender();
     }
 
-    if (this.props.id === '') {
+    if (this.props.title === '') {
       return <Box padding={2}>{this.items.map((item) => item.render(searchQuery))}</Box>;
     }
 

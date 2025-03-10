@@ -12,10 +12,7 @@ import { TabItem } from './TabItem';
 
 export function getEditOptions(model: TabItem): OptionsPaneCategoryDescriptor[] {
   const tabOptions = useMemo(() => {
-    return new OptionsPaneCategoryDescriptor({
-      title: '',
-      id: '',
-    }).addItem(
+    return new OptionsPaneCategoryDescriptor({ title: '', id: 'tab-item-options' }).addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.tabs-layout.tab-options.title-option', 'Title'),
         render: () => <TabTitleInput tab={model} />,

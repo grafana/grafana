@@ -41,10 +41,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     const layoutElement = panel.parent!;
 
     const panelOptions = useMemo(() => {
-      return new OptionsPaneCategoryDescriptor({
-        title: ``,
-        id: '',
-      })
+      return new OptionsPaneCategoryDescriptor({ title: '', id: 'panel-options' })
         .addItem(
           new OptionsPaneItemDescriptor({
             title: '',

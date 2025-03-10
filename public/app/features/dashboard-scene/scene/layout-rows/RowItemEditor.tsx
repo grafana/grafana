@@ -22,10 +22,7 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
   const rowOptions = useMemo(() => {
     const dashboard = getDashboardSceneFor(model);
 
-    const editPaneHeaderOptions = new OptionsPaneCategoryDescriptor({
-      title: t('dashboard.rows-layout.item-name', 'Row'),
-      id: '',
-    })
+    const editPaneHeaderOptions = new OptionsPaneCategoryDescriptor({ title: '', id: 'row-options' })
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.rows-layout.option.title', 'Title'),
