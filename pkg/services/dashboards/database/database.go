@@ -486,6 +486,7 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 		CreatedBy:     dash.UpdatedBy,
 		Message:       cmd.Message,
 		Data:          dash.Data,
+		APIVersion:    cmd.APIVersion,
 	}
 
 	// insert version entry
@@ -1001,7 +1002,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	}
 
 	if !query.SkipAccessControlFilter {
-		filters = append(filters, permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported))
+		filters = append(filters, permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported, d.store.GetDialect()))
 	}
 
 	filters = append(filters, searchstore.DeletedFilter{Deleted: query.IsDeleted})

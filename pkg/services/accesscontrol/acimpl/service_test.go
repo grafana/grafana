@@ -970,3 +970,38 @@ func TestService_DeleteExternalServiceRole(t *testing.T) {
 		})
 	}
 }
+
+func TestService_GetRoleByName(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	t.Run("when the role does not exists, it returns an error", func(t *testing.T) {
+		t.Parallel()
+
+		ac := setupTestEnv(t)
+		ac.registrations = accesscontrol.RegistrationList{}
+
+		role, err := ac.GetRoleByName(ctx, 0, "not-found-role")
+		require.ErrorIs(t, err, accesscontrol.ErrRoleNotFound)
+		require.Nil(t, role)
+	})
+
+	t.Run("when the role exists, it is returned", func(t *testing.T) {
+		t.Parallel()
+
+		roleName := "fixed:test:test"
+
+		ac := setupTestEnv(t)
+		ac.registrations = accesscontrol.RegistrationList{}
+		ac.registrations.Append(accesscontrol.RoleRegistration{
+			Role:   accesscontrol.RoleDTO{Name: roleName},
+			Grants: []string{"Admin"},
+		})
+
+		role, err := ac.GetRoleByName(ctx, 0, roleName)
+		require.NoError(t, err)
+		require.NotNil(t, role)
+		require.Equal(t, roleName, role.Name)
+	})
+}

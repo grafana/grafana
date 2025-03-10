@@ -151,14 +151,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:              "vizActions",
-			Description:       "Allow actions in visualizations",
-			Stage:             FeatureStageExperimental,
-			FrontendOnly:      true,
-			Owner:             grafanaDatavizSquad,
-			HideFromAdminPage: true,
-		},
-		{
 			Name:            "disableSecretsCompatibility",
 			Description:     "Disable duplicated secret storage in legacy tables",
 			Stage:           FeatureStageExperimental,
@@ -1078,8 +1070,9 @@ var (
 		{
 			Name:           "ssoSettingsSAML",
 			Description:    "Use the new SSO Settings API to configure the SAML connector",
-			Stage:          FeatureStagePublicPreview,
+			Stage:          FeatureStageGeneralAvailability,
 			Owner:          identityAccessTeam,
+			Expression:     "true",
 			AllowSelfServe: true,
 		},
 		{
@@ -1760,10 +1753,11 @@ var (
 			Name:              "alertingRuleVersionHistoryRestore",
 			Description:       "Enables the alert rule version history restore feature",
 			FrontendOnly:      true,
-			Stage:             FeatureStageExperimental,
+			Stage:             FeatureStageGeneralAvailability,
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
+			Expression:        "true", // enabled by default
 		},
 		{
 			Name:              "newShareReportDrawer",
@@ -1776,6 +1770,38 @@ var (
 		{
 			Name:              "rendererDisableAppPluginsPreload",
 			Description:       "Disable pre-loading app plugins when the request is coming from the renderer",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSharingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
+		},
+		{
+			Name:         "assetSriChecks",
+			Description:  "Enables SRI checks for Grafana JavaScript assets",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendOpsWG,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "alertRuleRestore",
+			Description: "Enables the alert rule restore feature",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaAlertingSquad,
+			Expression:  "true", // enabled by default
+		},
+		{
+			Name:              "grafanaManagedRecordingRulesDatasources",
+			Description:       "Enables writing to data sources for Grafana-managed recording rules.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			AllowSelfServe:    false,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
+			Name:              "inviteUserExperimental",
+			Description:       "Renders invite user button along the app",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaSharingSquad,
 			HideFromAdminPage: true,

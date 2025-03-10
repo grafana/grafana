@@ -4,7 +4,7 @@ import (
 	"golang.org/x/net/context"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 )
 

@@ -25,7 +25,7 @@ type ResourceClient interface {
 	ResourceStoreClient
 	ResourceIndexClient
 	RepositoryIndexClient
-	BatchStoreClient
+	BulkStoreClient
 	BlobStoreClient
 	DiagnosticsClient
 }
@@ -35,7 +35,7 @@ type resourceClient struct {
 	ResourceStoreClient
 	ResourceIndexClient
 	RepositoryIndexClient
-	BatchStoreClient
+	BulkStoreClient
 	BlobStoreClient
 	DiagnosticsClient
 }
@@ -46,7 +46,7 @@ func NewLegacyResourceClient(channel *grpc.ClientConn) ResourceClient {
 		ResourceStoreClient:   NewResourceStoreClient(cc),
 		ResourceIndexClient:   NewResourceIndexClient(cc),
 		RepositoryIndexClient: NewRepositoryIndexClient(cc),
-		BatchStoreClient:      NewBatchStoreClient(cc),
+		BulkStoreClient:       NewBulkStoreClient(cc),
 		BlobStoreClient:       NewBlobStoreClient(cc),
 		DiagnosticsClient:     NewDiagnosticsClient(cc),
 	}
@@ -62,7 +62,7 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 		&ResourceIndex_ServiceDesc,
 		&RepositoryIndex_ServiceDesc,
 		&BlobStore_ServiceDesc,
-		&BatchStore_ServiceDesc,
+		&BulkStore_ServiceDesc,
 		&Diagnostics_ServiceDesc,
 	} {
 		channel.RegisterService(
@@ -85,7 +85,7 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 		ResourceStoreClient:   NewResourceStoreClient(cc),
 		ResourceIndexClient:   NewResourceIndexClient(cc),
 		RepositoryIndexClient: NewRepositoryIndexClient(cc),
-		BatchStoreClient:      NewBatchStoreClient(cc),
+		BulkStoreClient:       NewBulkStoreClient(cc),
 		BlobStoreClient:       NewBlobStoreClient(cc),
 		DiagnosticsClient:     NewDiagnosticsClient(cc),
 	}
@@ -127,7 +127,7 @@ func NewRemoteResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg R
 		ResourceStoreClient:   NewResourceStoreClient(cc),
 		ResourceIndexClient:   NewResourceIndexClient(cc),
 		BlobStoreClient:       NewBlobStoreClient(cc),
-		BatchStoreClient:      NewBatchStoreClient(cc),
+		BulkStoreClient:       NewBulkStoreClient(cc),
 		RepositoryIndexClient: NewRepositoryIndexClient(cc),
 		DiagnosticsClient:     NewDiagnosticsClient(cc),
 	}, nil

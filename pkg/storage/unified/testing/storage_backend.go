@@ -569,6 +569,34 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		found, err = store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: b2.Uid}, true)
 		require.NoError(t, err)
 		require.Equal(t, []byte("hello 22222"), found.Value)
+
+		// Save a resource with annotation
+		obj := &unstructured.Unstructured{}
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		meta.SetBlob(&utils.BlobInfo{UID: b2.Uid, Hash: b1.Hash})
+		meta.SetName(key.Name)
+		meta.SetNamespace(key.Namespace)
+		obj.SetAPIVersion(key.Group + "/v1")
+		obj.SetKind("Test")
+		val, err := obj.MarshalJSON()
+		require.NoError(t, err)
+		out, err := server.Create(ctx, &resource.CreateRequest{Key: key, Value: val})
+		require.NoError(t, err)
+		require.Nil(t, out.Error)
+		require.True(t, out.ResourceVersion > 0)
+
+		// The server (not store!) will lookup the saved annotation and return the correct payload
+		res, err := server.GetBlob(ctx, &resource.GetBlobRequest{Resource: key})
+		require.NoError(t, err)
+		require.Nil(t, out.Error)
+		require.Equal(t, "hello 22222", string(res.Value))
+
+		// But we can still get an older version with an explicit UID
+		res, err = server.GetBlob(ctx, &resource.GetBlobRequest{Resource: key, Uid: b1.Uid})
+		require.NoError(t, err)
+		require.Nil(t, out.Error)
+		require.Equal(t, "hello 11111", string(res.Value))
 	})
 }
 
