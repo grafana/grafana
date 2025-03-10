@@ -618,3 +618,71 @@ func TestPrometheusRulesToGrafana_UID(t *testing.T) {
 		})
 	})
 }
+
+func TestPrometheusRulesToGrafana_KeepOriginalRuleDefinition(t *testing.T) {
+	orgID := int64(1)
+	namespace := "namespace"
+
+	promGroup := PrometheusRuleGroup{
+		Name: "test-group",
+		Rules: []PrometheusRule{
+			{
+				Alert: "test-alert",
+				Expr:  "up == 0",
+			},
+		},
+	}
+
+	testCases := []struct {
+		name                       string
+		keepOriginalRuleDefinition *bool
+		expectDefinition           bool
+	}{
+		{
+			name:                       "keep original rule definition is true",
+			keepOriginalRuleDefinition: util.Pointer(true),
+			expectDefinition:           true,
+		},
+		{
+			name:                       "keep original rule definition is false",
+			keepOriginalRuleDefinition: util.Pointer(false),
+			expectDefinition:           false,
+		},
+		{
+			name:                       "keep original rule definition is nil (should use default)",
+			keepOriginalRuleDefinition: nil,
+			expectDefinition:           true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := Config{
+				DatasourceUID:              "datasource-uid",
+				DatasourceType:             datasources.DS_PROMETHEUS,
+				DefaultInterval:            1 * time.Minute,
+				KeepOriginalRuleDefinition: tc.keepOriginalRuleDefinition,
+			}
+
+			converter, err := NewConverter(cfg)
+			require.NoError(t, err)
+
+			// Convert the Prometheus rule to Grafana
+			grafanaGroup, err := converter.PrometheusRulesToGrafana(orgID, namespace, promGroup)
+			require.NoError(t, err)
+			require.Len(t, grafanaGroup.Rules, 1)
+
+			if tc.expectDefinition {
+				originalRuleDefinition, err := yaml.Marshal(promGroup.Rules[0])
+				require.NoError(t, err)
+				require.Equal(
+					t,
+					string(originalRuleDefinition),
+					grafanaGroup.Rules[0].Metadata.PrometheusStyleRule.OriginalRuleDefinition,
+				)
+			} else {
+				require.Nil(t, grafanaGroup.Rules[0].Metadata.PrometheusStyleRule)
+			}
+		})
+	}
+}
