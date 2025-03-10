@@ -36,7 +36,7 @@ export function JobStatus({ name, onStatusChange }: JobStatusProps) {
   const status = () => {
     switch (job.status?.state) {
       case 'success':
-        return <Alert severity="success" title="Migration succesful" />;
+        return <Alert severity="success" title="Job completed successfully" />;
       case 'error':
         return (
           <Alert severity="error" title="error running job">
@@ -62,7 +62,7 @@ export function JobStatus({ name, onStatusChange }: JobStatusProps) {
 
           <ProgressBar progress={job.status.progress} />
 
-          {job.status.summary && <MigrationSummaryTable summary={job.status.summary} />}
+          {job.status.summary && <SummaryTable summary={job.status.summary} />}
 
           {job.status.state === 'success' ? (
             <RepositoryLink name={job.metadata?.labels?.repository} />
@@ -86,7 +86,7 @@ interface SummaryRow {
   total: number;
 }
 
-interface MigrationSummaryTableProps {
+interface SummaryTableProps {
   summary: Array<{
     resource?: string;
     group?: string;
@@ -96,7 +96,7 @@ interface MigrationSummaryTableProps {
   }>;
 }
 
-function MigrationSummaryTable({ summary }: MigrationSummaryTableProps) {
+function SummaryTable({ summary }: SummaryTableProps) {
   const summaryData = useMemo(() => {
     return summary.map((item) => ({
       resource: item.resource || '',
@@ -121,7 +121,7 @@ function MigrationSummaryTable({ summary }: MigrationSummaryTableProps) {
 
   return (
     <Stack direction="column" gap={2}>
-      <Text variant="h6">Migration Summary</Text>
+      <Text variant="h6">Summary</Text>
       <InteractiveTable columns={columns} data={summaryData} getRowId={(row: SummaryRow) => row.resource} />
     </Stack>
   );
@@ -139,17 +139,24 @@ function RepositoryLink({ name }: RepositoryLinkProps) {
     return null;
   }
 
-  const href = getRemoteURL(repo);
+  const repoHref = getRemoteURL(repo);
+  const folderHref = repo.spec?.sync.target === 'folder' ? `/dashboards/f/${repo.metadata?.name}` : '/dashboards';
 
-  if (!href) {
+  if (!repoHref) {
     return null;
   }
+
   return (
-    <Stack direction={'column'}>
-      <Text>Your dashboards and folders are now in your repository.</Text>
-      <TextLink external href={href}>
-        View repository
-      </TextLink>
+    <Stack direction="column" gap={1}>
+      <Text>Grafana and your repository are now in sync.</Text>
+      <Stack direction="row" gap={2}>
+        <TextLink external href={repoHref} icon="external-link-alt">
+          View repository
+        </TextLink>
+        <TextLink external href={folderHref} icon="folder-open">
+          View folder
+        </TextLink>
+      </Stack>
     </Stack>
   );
 }
