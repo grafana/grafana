@@ -107,12 +107,12 @@ cleanup-old-git-hooks:
 	./scripts/cleanup-husky.sh
 
 .PHONY: lefthook-install
-lefthook-install: cleanup-old-git-hooks $(LEFTHOOK) # install lefthook for pre-commit hooks
-	$(LEFTHOOK) install -f
+lefthook-install: cleanup-old-git-hooks # install lefthook for pre-commit hooks
+	$(GO) tool lefthook install -f
 
 .PHONY: lefthook-uninstall
-lefthook-uninstall: $(LEFTHOOK)
-	$(LEFTHOOK) uninstall
+lefthook-uninstall:
+	$(GO) tool lefthook uninstall
 
 ##@ OpenAPI 3
 OAPI_SPEC_TARGET = public/openapi3.json
