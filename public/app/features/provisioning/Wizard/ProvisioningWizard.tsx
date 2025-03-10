@@ -41,6 +41,9 @@ export function ProvisioningWizard() {
 
   // Disable sync at the start of the wizard
   values.sync.enabled = false;
+  // HACK: Set folder as default for now as instance will block
+  values.sync.target = 'folder';
+
   const methods = useForm<WizardFormData>({
     defaultValues: {
       repository: values,

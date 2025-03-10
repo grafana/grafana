@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Box, Field, Input, Stack, FieldSet, Card, Alert, Text, LoadingPlaceholder } from '@grafana/ui';
@@ -130,28 +130,38 @@ export function BootstrapStep({ onOptionSelect }: Props) {
       if (option.operation === 'migrate' && fileCount > 0) {
         return true;
       }
-      // Otherwise, check if there's another connection of the same type
-      return (
-        (option.value === 'instance' && otherInstanceConnected) || (option.value === 'folder' && otherFolderConnected)
-      );
+
+      if (option.value === 'instance' && (otherInstanceConnected || otherFolderConnected)) {
+        return true;
+      }
+
+      return false;
     };
 
     return modeOptions.filter((option) => !isOptionDisabled(option));
-  }, [
-    settingsQuery.data?.legacyStorage,
-    dashboardCount,
-    folderCount,
-    fileCount,
-    otherInstanceConnected,
-    otherFolderConnected,
-  ]);
+  }, [settingsQuery, dashboardCount, folderCount, fileCount, otherInstanceConnected, otherFolderConnected]);
+
+  const handleOptionSelect = useCallback(
+    (option: ModeOption) => {
+      // If clicking the same option, do nothing (no deselection allowed)
+      if (selectedOption?.value === option.value && selectedOption?.operation === option.operation) {
+        return;
+      }
+
+      // Select the new option
+      setSelectedOption(option);
+      setValue('repository.sync.target', option.value);
+      onOptionSelect(option.operation === 'migrate');
+    },
+    [selectedOption, setValue, onOptionSelect]
+  );
 
   // Select first available option by default
   useEffect(() => {
-    if (!selectedOption && availableOptions.length > 0) {
+    if (!isLoadingCounts && !selectedOption && availableOptions.length > 0) {
       handleOptionSelect(availableOptions[0]);
     }
-  }, [availableOptions]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [availableOptions, isLoadingCounts, selectedOption, handleOptionSelect]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Watch for target changes and update title accordingly
   useEffect(() => {
@@ -162,18 +172,6 @@ export function BootstrapStep({ onOptionSelect }: Props) {
       setValue('repository.title', '');
     }
   }, [selectedTarget, setValue]);
-
-  const handleOptionSelect = (option: ModeOption) => {
-    // If clicking the same option, do nothing (no deselection allowed)
-    if (selectedOption?.value === option.value && selectedOption?.operation === option.operation) {
-      return;
-    }
-
-    // Select the new option
-    setSelectedOption(option);
-    setValue('repository.sync.target', option.value);
-    onOptionSelect(option.operation === 'migrate');
-  };
 
   const isLoading = settingsQuery.isLoading || isLoadingCounts;
 
