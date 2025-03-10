@@ -1325,6 +1325,13 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Required:     true,
 				},
 				{
+					Label:        "Add group key to topic",
+					Element:      ElementTypeCheckbox,
+					Description:  "If set, the group key will be appended to the topic.",
+					PropertyName: "addGroupKeyToTopic",
+					Required:     false,
+				},
+				{
 					Label:   "Message format",
 					Element: ElementTypeSelect,
 					SelectOptions: []SelectOption{
