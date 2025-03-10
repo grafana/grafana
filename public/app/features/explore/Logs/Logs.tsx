@@ -1065,6 +1065,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   onUnpinLine={onPinToContentOutlineClick}
                   pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
                   pinnedLogs={pinnedLogs}
+                  showNavigation
                   showTime={showTime}
                   sortOrder={logsSortOrder}
                   timeRange={props.range}
