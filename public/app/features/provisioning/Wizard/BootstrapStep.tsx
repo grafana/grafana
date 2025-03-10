@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Field, Input, Stack, FieldSet, Card, Alert } from '@grafana/ui';
+import { Field, Input, Stack, FieldSet, Card, Alert, Text } from '@grafana/ui';
 
 import { useGetFrontendSettingsQuery } from '../api';
 import { checkSyncSettings } from '../utils';
@@ -56,6 +56,8 @@ export function BootstrapStep({ onOptionSelect }: Props) {
   const currentRepoName = watch('repositoryName');
   const selectedTarget = watch('repository.sync.target');
   const [selectedOption, setSelectedOption] = useState<ModeOption | null>(null);
+  const [dashboardCount, setDashboardCount] = useState<number>(0);
+  const [folderCount, setFolderCount] = useState<number>(0);
 
   // Check for other repositories excluding the current one
   const [otherInstanceConnected, otherFolderConnected] = useMemo(() => {
@@ -72,6 +74,27 @@ export function BootstrapStep({ onOptionSelect }: Props) {
     return checkSyncSettings({ ...settingsQuery.data, items: otherRepos });
   }, [settingsQuery.data, currentRepoName]);
 
+  // Fetch dashboard and folder counts
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        // Get dashboard count
+        const dashboardResponse = await fetch('/api/dashboards/count');
+        const dashboardData = await dashboardResponse.json();
+        setDashboardCount(dashboardData.count || 0);
+
+        // Get folder count
+        const folderResponse = await fetch('/api/folders/count');
+        const folderData = await folderResponse.json();
+        setFolderCount(folderData.count || 0);
+      } catch (error) {
+        console.error('Error fetching counts:', error);
+      }
+    };
+
+    fetchCounts();
+  }, []);
+
   const isOptionDisabled = (option: ModeOption) => {
     // If this is the selected option, it's not disabled
     if (selectedOption?.value === option.value && selectedOption?.operation === option.operation) {
@@ -79,6 +102,10 @@ export function BootstrapStep({ onOptionSelect }: Props) {
     }
     // Disable pull instance option if using legacy storage
     if (option.value === 'instance' && option.operation === 'pull' && settingsQuery.data?.legacyStorage) {
+      return true;
+    }
+    // Disable pull instance option if there are existing dashboards or folders
+    if (option.value === 'instance' && option.operation === 'pull' && (dashboardCount > 0 || folderCount > 0)) {
       return true;
     }
     // Otherwise, check if there's another connection of the same type
@@ -151,6 +178,18 @@ export function BootstrapStep({ onOptionSelect }: Props) {
               storage to use this feature.
             </Alert>
           )}
+          {dashboardCount > 0 || folderCount > 0 ? (
+            <Alert severity="info" title="Pull from Repository to Instance is disabled">
+              <Stack direction="column" gap={1}>
+                <Text>Pulling from repository to instance is disabled because you have existing resources:</Text>
+                <Text>Please migrate your existing resources to the repository first.</Text>
+              </Stack>
+            </Alert>
+          ) : null}
+          <Stack direction="row" gap={2}>
+            <Text>{dashboardCount} dashboards</Text>
+            <Text>{folderCount} folders</Text>
+          </Stack>
           <Controller
             name="repository.sync.target"
             control={control}
