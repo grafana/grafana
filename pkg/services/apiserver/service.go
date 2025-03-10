@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"path"
-	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -152,8 +151,6 @@ type service struct {
 	unified         resource.ResourceClient
 
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
-
-	mu sync.Mutex
 }
 
 func ProvideService(
@@ -357,7 +354,6 @@ func (s *service) start(ctx context.Context) error {
 		serverConfig.Config.RESTOptionsGetter = getter
 	}
 
-	s.mu.Lock()
 	// Add OpenAPI specs for each group+version
 	err = builder.SetupConfig(
 		Scheme,
@@ -372,8 +368,6 @@ func (s *service) start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
-	s.mu.Unlock()
 
 	notFoundHandler := notfoundhandler.New(Codecs, genericapifilters.NoMuxAndDiscoveryIncompleteKey)
 
