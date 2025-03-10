@@ -262,11 +262,11 @@ func (a *dashboardSqlAccess) Search(ctx context.Context, req *resource.ResourceS
 	return a.dashboardSearchClient.Search(ctx, req)
 }
 
-func (a *dashboardSqlAccess) ListRepositoryObjects(ctx context.Context, req *resource.ListRepositoryObjectsRequest) (*resource.ListRepositoryObjectsResponse, error) {
+func (a *dashboardSqlAccess) ListManagedObjects(ctx context.Context, req *resource.ListManagedObjectsRequest) (*resource.ListManagedObjectsResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (a *dashboardSqlAccess) CountRepositoryObjects(context.Context, *resource.CountRepositoryObjectsRequest) (*resource.CountRepositoryObjectsResponse, error) {
+func (a *dashboardSqlAccess) CountManagedObjects(context.Context, *resource.CountManagedObjectsRequest) (*resource.CountManagedObjectsResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 

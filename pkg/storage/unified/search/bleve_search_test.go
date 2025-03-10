@@ -8,13 +8,14 @@ import (
 	"testing"
 
 	"github.com/blevesearch/bleve/v2"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/stretchr/testify/require"
 )
 
 func TestCanSearchByTitle(t *testing.T) {
@@ -35,9 +36,7 @@ func TestCanSearchByTitle(t *testing.T) {
 				Group:     key.Group,
 				Resource:  key.Resource,
 			},
-			Title:       "bbb",
-			TitleNgram:  "bbb",
-			TitlePhrase: "bbb",
+			Title: "bbb",
 		})
 		require.NoError(t, err)
 		err = index.Write(&resource.IndexableDocument{
@@ -49,9 +48,7 @@ func TestCanSearchByTitle(t *testing.T) {
 				Group:     key.Group,
 				Resource:  key.Resource,
 			},
-			Title:       "aaa",
-			TitleNgram:  "aaa",
-			TitlePhrase: "aaa",
+			Title: "aaa",
 		})
 		require.NoError(t, err)
 
@@ -74,9 +71,7 @@ func TestCanSearchByTitle(t *testing.T) {
 				Group:     key.Group,
 				Resource:  key.Resource,
 			},
-			Title:       "I want to say a hello",
-			TitleNgram:  "I want to say a hello",
-			TitlePhrase: "I want to say a hello",
+			Title: "I want to say a hello",
 		})
 		require.NoError(t, err)
 		err = index.Write(&resource.IndexableDocument{
@@ -88,9 +83,7 @@ func TestCanSearchByTitle(t *testing.T) {
 				Group:     key.Group,
 				Resource:  key.Resource,
 			},
-			Title:       "we want hello",
-			TitleNgram:  "we want hello",
-			TitlePhrase: "we want hello",
+			Title: "we want hello",
 		})
 		require.NoError(t, err)
 
@@ -113,9 +106,7 @@ func TestCanSearchByTitle(t *testing.T) {
 				Group:     key.Group,
 				Resource:  key.Resource,
 			},
-			Title:       "Asserts Dashboards",
-			TitleNgram:  "Asserts Dashboards",
-			TitlePhrase: "Asserts Dashboards",
+			Title: "Asserts Dashboards",
 		})
 		require.NoError(t, err)
 		err = index.Write(&resource.IndexableDocument{
@@ -127,9 +118,7 @@ func TestCanSearchByTitle(t *testing.T) {
 				Group:     key.Group,
 				Resource:  key.Resource,
 			},
-			Title:       "New dashboard 10",
-			TitleNgram:  "New dashboard 10",
-			TitlePhrase: "New dashboard 10",
+			Title: "New dashboard 10",
 		})
 		require.NoError(t, err)
 
@@ -151,9 +140,7 @@ func TestCanSearchByTitle(t *testing.T) {
 				Group:     key.Group,
 				Resource:  key.Resource,
 			},
-			Title:       "we want hello pls",
-			TitleNgram:  "we want hello pls",
-			TitlePhrase: "we want hello pls",
+			Title: "we want hello pls",
 		})
 		require.NoError(t, err)
 		err = index.Write(&resource.IndexableDocument{
@@ -165,9 +152,7 @@ func TestCanSearchByTitle(t *testing.T) {
 				Group:     key.Group,
 				Resource:  key.Resource,
 			},
-			Title:       "we want hello",
-			TitleNgram:  "we want hello",
-			TitlePhrase: "we want hello",
+			Title: "we want hello",
 		})
 		require.NoError(t, err)
 
@@ -190,8 +175,7 @@ func TestCanSearchByTitle(t *testing.T) {
 				Group:     key.Group,
 				Resource:  key.Resource,
 			},
-			Title:      "A123456",
-			TitleNgram: "A123456",
+			Title: "A123456",
 		})
 		require.NoError(t, err)
 
@@ -219,9 +203,7 @@ func TestCanSearchByTitle(t *testing.T) {
 				Group:     key.Group,
 				Resource:  key.Resource,
 			},
-			Title:       "I want to say a wonderfully Hello to the WORLD! Hello-world",
-			TitleNgram:  "I want to say a wonderfully Hello to the WORLD! Hello-world",
-			TitlePhrase: "I want to say a wonderfully Hello to the WORLD! Hello-world",
+			Title: "I want to say a wonderfully Hello to the WORLD! Hello-world",
 		})
 		require.NoError(t, err)
 
@@ -279,8 +261,7 @@ func TestCanSearchByTitle(t *testing.T) {
 				Group:     key.Group,
 				Resource:  key.Resource,
 			},
-			Title:      "I want to say a wonderful Hello to the WORLD! Hello-world",
-			TitleNgram: "I want to say a wonderful Hello to the WORLD! Hello-world",
+			Title: "I want to say a wonderful Hello to the WORLD! Hello-world",
 		})
 		require.NoError(t, err)
 		err = index.Write(&resource.IndexableDocument{
@@ -292,8 +273,7 @@ func TestCanSearchByTitle(t *testing.T) {
 				Group:     key.Group,
 				Resource:  key.Resource,
 			},
-			Title:      "A0456",
-			TitleNgram: "A0456",
+			Title: "A0456",
 		})
 		require.NoError(t, err)
 		err = index.Write(&resource.IndexableDocument{
@@ -305,9 +285,7 @@ func TestCanSearchByTitle(t *testing.T) {
 				Group:     key.Group,
 				Resource:  key.Resource,
 			},
-			Title:       "mash-A02382-10",
-			TitleNgram:  "mash-A02382-10",
-			TitlePhrase: "mash-A02382-10",
+			Title: "mash-A02382-10",
 		})
 		require.NoError(t, err)
 
