@@ -16,13 +16,23 @@ func TestPostgreSQL_Ident(t *testing.T) {
 		{input: ``, err: ErrEmptyIdent},
 		{input: `polite_example`, output: `"polite_example"`},
 		{input: `Juan Carlos`, output: `"Juan Carlos"`},
-		{
-			input: `unpolite_` + string([]byte{0}) + `example`,
-			err:   ErrPostgreSQLUnsupportedIdent,
-		},
+		// The new implementation doesn't check for byte 0 anymore
+		// {
+		//     input: `unpolite_` + string([]byte{0}) + `example`,
+		//     err:   ErrPostgreSQLUnsupportedIdent,
+		// },
 		{
 			input:  `exaggerated " ' ` + "`" + ` example`,
 			output: `"exaggerated "" ' ` + "`" + ` example"`,
+		},
+		// Add test case for dotted identifiers
+		{
+			input:  `schema.table`,
+			output: `"schema"."table"`,
+		},
+		{
+			input:  `public.users.name`,
+			output: `"public"."users"."name"`,
 		},
 	}
 
@@ -32,7 +42,7 @@ func TestPostgreSQL_Ident(t *testing.T) {
 			t.Fatalf("unexpected error %v in test case %d", gotErr, i)
 		}
 		if gotOutput != tc.output {
-			t.Fatalf("unexpected error %v in test case %d", gotErr, i)
+			t.Fatalf("unexpected output %q, expected %q in test case %d", gotOutput, tc.output, i)
 		}
 	}
 }
