@@ -8,7 +8,7 @@ import { getAppEvents } from '@grafana/runtime';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { getDefaultValues } from '../ConfigForm';
-import { useGetFrontendSettingsQuery } from '../api';
+import { useDeleteRepositoryMutation, useGetFrontendSettingsQuery } from '../api';
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks';
 import { dataToSpec } from '../utils/data';
@@ -159,6 +159,7 @@ function WizardContent({
   onOptionSelect: (requiresMigration: boolean) => void;
 }) {
   const { watch, setValue, getValues, trigger } = useFormContext<WizardFormData>();
+  const navigate = useNavigate();
 
   const repoName = watch('repositoryName');
   const [submitData, saveRequest] = useCreateOrUpdateRepository(repoName);
@@ -182,6 +183,7 @@ function WizardContent({
         await submitData(spec);
         // Only proceed if submission was successful
         if (!saveRequest.isError) {
+          handleStatusChange(true);
           handleNext();
         }
       } catch (error) {
@@ -191,6 +193,7 @@ function WizardContent({
         setIsSubmitting(false);
       }
     } else {
+      handleStatusChange(true);
       handleNext();
     }
   };
@@ -236,23 +239,50 @@ function WizardContent({
       </div>
 
       <Stack gap={2} justifyContent="flex-end">
-        {activeStep !== 'connection' && (
-          <Button variant="secondary" onClick={handleBack} disabled={isSubmitting}>
-            Back
+        {saveRequest.isError ? (
+          <Button
+            variant="destructive"
+            onClick={() => {
+              if (activeStep === 'connection') {
+                // Just cancel if we're on the first step
+                handleBack();
+              } else {
+                // Delete repository if we're on a later step
+                if (repoName) {
+                  const [deleteRepository] = useDeleteRepositoryMutation();
+                  deleteRepository({ name: repoName });
+                }
+                handleBack();
+              }
+            }}
+            disabled={isSubmitting}
+          >
+            Abort
           </Button>
+        ) : (
+          <>
+            {activeStep !== 'connection' ? (
+              <Button variant="secondary" onClick={handleBack} disabled={isSubmitting}>
+                Back
+              </Button>
+            ) : (
+              <Button variant="secondary" onClick={() => navigate(PROVISIONING_URL)} disabled={isSubmitting}>
+                Cancel
+              </Button>
+            )}
+            <Button
+              onClick={handleNextWithSubmit}
+              disabled={
+                isSubmitting ||
+                (activeStep === 'migrate' && !saveRequest.isSuccess) ||
+                (activeStep === 'pull' && !saveRequest.isSuccess) ||
+                (activeStep === 'finish' && !saveRequest.isSuccess)
+              }
+            >
+              {isSubmitting ? 'Submitting...' : getNextButtonText(activeStep)}
+            </Button>
+          </>
         )}
-        <Button
-          onClick={handleNextWithSubmit}
-          disabled={
-            isSubmitting ||
-            (activeStep === 'repository' && !saveRequest.isSuccess) ||
-            (activeStep === 'migrate' && !saveRequest.isSuccess) ||
-            (activeStep === 'pull' && !saveRequest.isSuccess) ||
-            (activeStep === 'finish' && !saveRequest.isSuccess)
-          }
-        >
-          {isSubmitting ? 'Submitting...' : getNextButtonText(activeStep)}
-        </Button>
       </Stack>
     </form>
   );
