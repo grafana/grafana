@@ -89,7 +89,7 @@ describe('PromQueryBuilder', () => {
   it('tries to load metrics without labels', async () => {
     const { languageProvider, container } = setup();
     await openMetricSelect(container);
-    await waitFor(() => expect(languageProvider.getLabelValues).toHaveBeenCalledWith('__name__'));
+    await waitFor(() => expect((languageProvider.getLabelValues as jest.Mock).mock.calls[0][1]).toEqual('__name__'));
   });
 
   it('tries to load metrics with labels', async () => {
@@ -98,7 +98,10 @@ describe('PromQueryBuilder', () => {
       labels: [{ label: 'label_name', op: '=', value: 'label_value' }],
     });
     await openMetricSelect(container);
-    await waitFor(() => expect(languageProvider.getSeries).toHaveBeenCalledWith('{label_name="label_value"}', true));
+    await waitFor(() =>
+      expect((languageProvider.getSeries as jest.Mock).mock.calls[0][1]).toEqual('{label_name="label_value"}')
+    );
+    await waitFor(() => expect((languageProvider.getSeries as jest.Mock).mock.calls[0][2]).toEqual(true));
   });
 
   it('tries to load variables in metric field', async () => {
@@ -113,7 +116,9 @@ describe('PromQueryBuilder', () => {
     const { languageProvider } = setup();
     await openLabelNameSelect();
     await waitFor(() =>
-      expect(languageProvider.fetchLabelsWithMatch).toHaveBeenCalledWith('{__name__="random_metric"}')
+      expect((languageProvider.fetchLabelsWithMatch as jest.Mock).mock.calls[0][1]).toEqual(
+        '{__name__="random_metric"}'
+      )
     );
   });
 
@@ -134,7 +139,7 @@ describe('PromQueryBuilder', () => {
     });
     await openLabelNameSelect(1);
     await waitFor(() =>
-      expect(languageProvider.fetchLabelsWithMatch).toHaveBeenCalledWith(
+      expect((languageProvider.fetchLabelsWithMatch as jest.Mock).mock.calls[0][1]).toEqual(
         '{label_name="label_value", __name__="random_metric"}'
       )
     );
@@ -273,7 +278,9 @@ describe('PromQueryBuilder', () => {
     });
     await openLabelNameSelect();
     await waitFor(() =>
-      expect(languageProvider.fetchLabelsWithMatch).toHaveBeenCalledWith('{__name__="random_metric"}')
+      expect((languageProvider.fetchLabelsWithMatch as jest.Mock).mock.calls[0][1]).toEqual(
+        '{__name__="random_metric"}'
+      )
     );
   });
 
@@ -300,7 +307,7 @@ describe('PromQueryBuilder', () => {
     );
     await openLabelNameSelect(1);
     await waitFor(() =>
-      expect(languageProvider.fetchLabelsWithMatch).toHaveBeenCalledWith(
+      expect((languageProvider.fetchLabelsWithMatch as jest.Mock).mock.calls[0][1]).toEqual(
         '{label_name="label_value", __name__="random_metric"}'
       )
     );
