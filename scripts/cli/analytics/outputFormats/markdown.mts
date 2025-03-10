@@ -1,4 +1,5 @@
 import type { Event } from '../types.mts';
+import prettier from 'prettier';
 
 function makeMarkdownTable(properties: Array<Record<string, string | undefined>>): string {
   const keys = Object.keys(properties[0]);
@@ -30,33 +31,46 @@ export function formatEventAsMarkdown(event: Event): string {
 
   const propertiesTable = event.properties ? makeMarkdownTable(preparedProperties) : '';
 
-  let eventMarkdown = `
-### ${event.fullEventName}
+  const markdownRows = [
+    `#### ${event.fullEventName}`,
+    event.description,
+    event.owner ? `**Owner:** ${event.owner}` : undefined,
+    ...(event.properties ? [`##### Properties`, propertiesTable] : []),
+  ].filter(Boolean);
 
-${event.description}
-`;
-
-  if (event.properties) {
-    eventMarkdown += `
-
-#### Properties
-
-${propertiesTable}
-`;
-  }
-  return eventMarkdown;
+  return markdownRows.join('\n\n');
 }
 
-export function formatEventsAsMarkdown(events: Event[]): string {
-  const markdownPerEvent = events.map(formatEventAsMarkdown).join('\n');
+export async function formatEventsAsMarkdown(events: Event[]): Promise<string> {
+  const byFeature: Record<string, Event[]> = {};
 
-  return `
+  for (const event of events) {
+    const feature = event.eventFeature;
+    byFeature[feature] = byFeature[feature] ?? [];
+    byFeature[feature].push(event);
+  }
+
+  const markdownPerFeature = Object.entries(byFeature)
+    .map(([feature, events]) => {
+      const markdownPerEvent = events.map(formatEventAsMarkdown).join('\n');
+
+      return `
+### ${feature}
+
+${markdownPerEvent}
+`;
+    })
+    .join('\n');
+
+  const markdown = `
 # Analytics report
 
 This report contains all the analytics events that are defined in the project.
 
 ## Events
 
-${markdownPerEvent}
+${markdownPerFeature}
 `;
+
+  return prettier.format(markdown, { parser: 'markdown' });
 }

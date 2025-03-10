@@ -87,6 +87,7 @@ module.exports = [
     rules: {
       'no-duplicate-case': 'error',
       '@grafana/no-border-radius-literal': 'error',
+      '@grafana/tracking-event-creation': 'error',
       '@grafana/no-unreduced-motion': 'error',
       'react/prop-types': 'off',
       // need to ignore emotion's `css` prop, see https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-unknown-property.md#rule-options

@@ -4,27 +4,29 @@ import { createEventFactory, TrackingEventProps } from 'app/core/services/echo/E
 //in short term, we could add 'templateVariables' for example
 type SubEntryTypes = 'timeRange';
 
-//Whether the user opens or closes the `HistoryDrawer`
+//
 type UnifiedHistoryDrawerActions = 'open' | 'close';
 
 interface UnifiedHistoryEntryClicked extends TrackingEventProps {
-  //We will also work with the current URL but we will get this from Rudderstack data
-  //URL to return to
+  /** We will also work with the current URL but we will get this from Rudderstack data
+   *  URL to return to
+   */
   entryURL: string;
-  //In the case we want to go back to a specific query param, currently just a specific time range
+  /** In the case we want to go back to a specific query param, currently just a specific time range */
   subEntry?: SubEntryTypes;
 }
 
 interface UnifiedHistoryEntryDuplicated extends TrackingEventProps {
-  // Common name of the history entries
+  /** Common name of the history entries */
   entryName: string;
-  // URL of the last entry
+  /** URL of the last entry */
   lastEntryURL: string;
-  // URL of the new entry
+  /** URL of the new entry */
   newEntryURL: string;
 }
 
 interface UnifiedHistoryDrawerInteraction extends TrackingEventProps {
+  /** Whether the user opens or closes the HistoryDrawer */
   type: UnifiedHistoryDrawerActions;
 }
 
