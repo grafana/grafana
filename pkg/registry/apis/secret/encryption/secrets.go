@@ -43,6 +43,13 @@ func KeyLabel(scope string, providerID ProviderID) string {
 	return fmt.Sprintf("%s/%s@%s", time.Now().Format("2006-01-02"), scope, providerID)
 }
 
+type ProviderMap map[ProviderID]Provider
+
+// ProvideThirdPartyProviderMap fulfills the wire dependency needed by the encryption manager in OSS
+func ProvideThirdPartyProviderMap() ProviderMap {
+	return ProviderMap{}
+}
+
 // BackgroundProvider should be implemented for a provider that has a task that needs to be run in the background.
 type BackgroundProvider interface {
 	Run(ctx context.Context) error

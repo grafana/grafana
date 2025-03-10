@@ -20,7 +20,11 @@ type SQLKeeper struct {
 
 var _ contracts.Keeper = (*SQLKeeper)(nil)
 
-func NewSQLKeeper(tracer tracing.Tracer, encryptionManager *manager.EncryptionManager, store encryptionstorage.EncryptedValueStorage) (*SQLKeeper, error) {
+func NewSQLKeeper(
+	tracer tracing.Tracer,
+	encryptionManager *manager.EncryptionManager,
+	store encryptionstorage.EncryptedValueStorage,
+) (*SQLKeeper, error) {
 	return &SQLKeeper{
 		tracer:            tracer,
 		encryptionManager: encryptionManager,
