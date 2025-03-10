@@ -2,6 +2,8 @@ package reststorage
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 	"testing"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
@@ -249,7 +251,8 @@ func TestValidateSecureValue(t *testing.T) {
 	})
 
 	t.Run("when set, the `decrypters` must be one of the allowed in the allow list", func(t *testing.T) {
-		allowList := []string{"my.app.one/allowed", "my.app.two/allowed"}
+		allowList := map[string]struct{}{"my.app.one/allowed": {}, "my.app.two/allowed": {}}
+		decrypters := slices.Collect(maps.Keys(allowList))
 
 		t.Run("no matches, returns an error", func(t *testing.T) {
 			sv := &secretv0alpha1.SecureValue{
@@ -282,7 +285,7 @@ func TestValidateSecureValue(t *testing.T) {
 				Spec: secretv0alpha1.SecureValueSpec{
 					Title: "title", Keeper: "keeper", Ref: "ref",
 
-					Decrypters: []string{allowList[0]},
+					Decrypters: []string{decrypters[0]},
 				},
 			}
 
@@ -295,7 +298,7 @@ func TestValidateSecureValue(t *testing.T) {
 				Spec: secretv0alpha1.SecureValueSpec{
 					Title: "title", Keeper: "keeper", Ref: "ref",
 
-					Decrypters: allowList,
+					Decrypters: decrypters,
 				},
 			}
 
