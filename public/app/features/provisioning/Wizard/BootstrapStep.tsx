@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Field, Input, Stack, FieldSet, Card, Alert } from '@grafana/ui';
@@ -53,17 +53,34 @@ export function BootstrapStep({ onOptionSelect }: Props) {
   } = useFormContext<WizardFormData>();
 
   const settingsQuery = useGetFrontendSettingsQuery();
-  const [instanceConnected, folderConnected] = checkSyncSettings(settingsQuery.data);
+  const currentRepoName = watch('repositoryName');
   const selectedTarget = watch('repository.sync.target');
   const [selectedOption, setSelectedOption] = useState<ModeOption | null>(null);
+
+  // Check for other repositories excluding the current one
+  const [otherInstanceConnected, otherFolderConnected] = useMemo(() => {
+    if (!settingsQuery.data) {
+      return [false, false];
+    }
+
+    const repositories = settingsQuery.data.items || [];
+    // Filter out the current repository if it exists
+    const otherRepos = repositories.filter((repo) => {
+      return repo.name !== currentRepoName;
+    });
+
+    return checkSyncSettings({ ...settingsQuery.data, items: otherRepos });
+  }, [settingsQuery.data, currentRepoName]);
 
   const isOptionDisabled = (option: ModeOption) => {
     // If this is the selected option, it's not disabled
     if (selectedOption?.value === option.value && selectedOption?.operation === option.operation) {
       return false;
     }
-    // Otherwise, check if there's a connection of the same type
-    return (option.value === 'instance' && instanceConnected) || (option.value === 'folder' && folderConnected);
+    // Otherwise, check if there's another connection of the same type
+    return (
+      (option.value === 'instance' && otherInstanceConnected) || (option.value === 'folder' && otherFolderConnected)
+    );
   };
 
   // Select first available option by default
@@ -72,10 +89,10 @@ export function BootstrapStep({ onOptionSelect }: Props) {
       // Find first option that doesn't have a connection of its type
       const firstAvailableOption = modeOptions.find((option) => {
         if (option.value === 'instance') {
-          return !instanceConnected;
+          return !otherInstanceConnected;
         }
         if (option.value === 'folder') {
-          return !folderConnected;
+          return !otherFolderConnected;
         }
         return true;
       });
@@ -84,7 +101,7 @@ export function BootstrapStep({ onOptionSelect }: Props) {
         handleOptionSelect(firstAvailableOption);
       }
     }
-  }, [instanceConnected, folderConnected]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [otherInstanceConnected, otherFolderConnected]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Watch for target changes and update title accordingly
   useEffect(() => {
@@ -112,7 +129,7 @@ export function BootstrapStep({ onOptionSelect }: Props) {
     <FieldSet label="2. Bootstrap your repository">
       <Stack direction="column" gap={2}>
         <Stack direction="column" gap={2}>
-          {folderConnected && (
+          {otherFolderConnected && (
             <Alert severity="info" title="Connect your entire Grafana instance is disabled">
               Instance-wide connection is disabled because you have folders connected to repositories. You must
               disconnect all folder repositories to use it.
