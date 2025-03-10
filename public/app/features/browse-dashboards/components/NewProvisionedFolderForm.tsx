@@ -4,7 +4,7 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents, locationService } from '@grafana/runtime';
-import { Alert, Button, Field, Input, RadioButtonGroup, Stack, TextArea } from '@grafana/ui';
+import { Alert, Button, Field, Input, RadioButtonGroup, Spinner, Stack, TextArea } from '@grafana/ui';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import {
   RepositorySpec,
@@ -45,6 +45,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
   const repositoryName = parentFolder.repository?.name;
   const query = useGetRepositoryQuery(repositoryName ? { name: repositoryName } : skipToken);
   const prURL = usePullRequestParam();
+  const [create, request] = useCreateRepositoryFilesWithPathMutation();
 
   // Get k8s folder data, necessary to get parent folder path
   const folderQuery = useGetFolderQuery({ name: parentFolder.uid });
@@ -56,7 +57,6 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
   const repositoryConfig = query.data?.spec;
   const isGitHub = Boolean(repositoryConfig?.github);
 
-  const [create, request] = useCreateRepositoryFilesWithPathMutation();
   const {
     register,
     handleSubmit,
@@ -67,12 +67,12 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
   } = useForm<FormData>({ defaultValues: { ...initialFormValues, workflow: getDefaultWorkflow(repositoryConfig) } });
 
   const [workflow, ref] = watch(['workflow', 'ref']);
+  const prLink = getPRLink(repositoryConfig, ref);
 
   useEffect(() => {
     setValue('workflow', getDefaultWorkflow(repositoryConfig));
   }, [repositoryConfig, setValue]);
 
-  const prLink = getPRLink(repositoryConfig, ref);
   useEffect(() => {
     const appEvents = getAppEvents();
     if (request.isSuccess) {
@@ -85,6 +85,10 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
       });
     }
   }, [request.isSuccess, request.isError, request.error, onSubmit, ref, prLink]);
+
+  if (query.isLoading || folderQuery.isLoading) {
+    return <Spinner />;
+  }
 
   const validateFolderName = async (folderName: string) => {
     try {

@@ -160,7 +160,7 @@ const BrowseDashboardsPage = memo(() => {
         {prLink && (
           <Alert
             severity={'success'}
-            title={'This folder is loaded from a a branch in GitHub.'}
+            title={'This folder is loaded from a branch in GitHub.'}
             buttonContent={
               <Stack alignItems="center">
                 <span>Open pull request in GitHub</span>
