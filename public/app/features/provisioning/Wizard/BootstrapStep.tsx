@@ -243,13 +243,17 @@ export function BootstrapStep({ onOptionSelect }: Props) {
                 control={control}
                 render={({ field: { value } }) => (
                   <>
-                    {availableOptions.map((option) => (
+                    {availableOptions.map((option, index) => (
                       <Card
                         key={`${option.value}-${option.operation}`}
                         isSelected={
                           selectedOption?.value === option.value && selectedOption?.operation === option.operation
                         }
                         onClick={() => handleOptionSelect(option)}
+                        tabIndex={0}
+                        // Auto-focus the first available option if multiple options exist
+                        // or if it's the only option
+                        autoFocus={index === 0 && availableOptions.length > 0}
                       >
                         <Card.Heading>{option.label}</Card.Heading>
                         <Card.Description>{option.description}</Card.Description>
@@ -269,6 +273,8 @@ export function BootstrapStep({ onOptionSelect }: Props) {
                   <Input
                     {...register('repository.title', { required: 'This field is required.' })}
                     placeholder="My repository connection"
+                    // Auto-focus the title field if it's the only available option
+                    autoFocus={availableOptions.length === 1 && availableOptions[0].value === 'folder'}
                   />
                 </Field>
               )}
