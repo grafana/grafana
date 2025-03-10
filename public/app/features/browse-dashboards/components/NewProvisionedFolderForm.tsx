@@ -170,7 +170,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
                 control={control}
                 name="workflow"
                 render={({ field: { ref, ...field } }) => (
-                  <RadioButtonGroup {...field} options={getWorkflowOptions(repositoryConfig)} />
+                  <RadioButtonGroup {...field} options={getWorkflowOptions(repositoryConfig)} id={'folder-workflow'} />
                 )}
               />
             </Field>
