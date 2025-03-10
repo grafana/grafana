@@ -77,6 +77,10 @@ export function BootstrapStep({ onOptionSelect }: Props) {
     if (selectedOption?.value === option.value && selectedOption?.operation === option.operation) {
       return false;
     }
+    // Disable pull instance option if using legacy storage
+    if (option.value === 'instance' && option.operation === 'pull' && settingsQuery.data?.legacyStorage) {
+      return true;
+    }
     // Otherwise, check if there's another connection of the same type
     return (
       (option.value === 'instance' && otherInstanceConnected) || (option.value === 'folder' && otherFolderConnected)
@@ -133,6 +137,18 @@ export function BootstrapStep({ onOptionSelect }: Props) {
             <Alert severity="info" title="Connect your entire Grafana instance is disabled">
               Instance-wide connection is disabled because you have folders connected to repositories. You must
               disconnect all folder repositories to use it.
+            </Alert>
+          )}
+          {otherInstanceConnected && (
+            <Alert severity="info" title="Connect your entire Grafana instance is disabled">
+              Instance-wide connection is disabled because you have another instance connected to this repository. You
+              must disconnect the other instance to use it.
+            </Alert>
+          )}
+          {settingsQuery.data?.legacyStorage && (
+            <Alert severity="info" title="Pull from Repository to Instance is disabled">
+              Pulling from repository to instance is not supported when using legacy storage. Please migrate to unified
+              storage to use this feature.
             </Alert>
           )}
           <Controller
