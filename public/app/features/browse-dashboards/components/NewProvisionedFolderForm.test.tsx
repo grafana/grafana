@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { AppEvents } from '@grafana/data';
-import { getAppEvents, locationService } from '@grafana/runtime';
+import { getAppEvents } from '@grafana/runtime';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { useCreateRepositoryFilesWithPathMutation, useGetRepositoryQuery } from 'app/features/provisioning/api';
 import { usePullRequestParam } from 'app/features/provisioning/hooks';
