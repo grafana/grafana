@@ -175,108 +175,106 @@ export function BootstrapStep({ onOptionSelect }: Props) {
     onOptionSelect(option.operation === 'migrate');
   };
 
+  const isLoading = settingsQuery.isLoading || isLoadingCounts;
+
   return (
     <FieldSet label="2. Bootstrap your repository">
       <Stack direction="column" gap={2}>
         <Stack direction="column" gap={2}>
-          {otherFolderConnected && (
-            <Alert severity="info" title="Connect your entire Grafana instance is disabled">
-              Instance-wide connection is disabled because you have folders connected to repositories. You must
-              disconnect all folder repositories to use it.
-            </Alert>
-          )}
-          {otherInstanceConnected && (
-            <Alert severity="info" title="Connect your entire Grafana instance is disabled">
-              Instance-wide connection is disabled because you have another instance connected to this repository. You
-              must disconnect the other instance to use it.
-            </Alert>
-          )}
-          {settingsQuery.data?.legacyStorage && (
-            <Alert severity="info" title="Pull from Repository to Instance is disabled">
-              Pulling from repository to instance is not supported when using legacy storage. Please migrate to unified
-              storage to use this feature.
-            </Alert>
-          )}
-          {dashboardCount > 0 ||
-            (folderCount > 0 && (
-              <Alert severity="info" title="Pull from Repository to Instance is disabled">
-                <Stack direction="column" gap={1}>
-                  <Text>Pulling from repository to instance is disabled because you have existing resources:</Text>
-                  <Text>Please migrate your existing resources to the repository first.</Text>
-                </Stack>
-              </Alert>
-            ))}
-          {fileCount > 0 && (
-            <Alert severity="info" title="Migrate to Repository is disabled">
-              Migrating to repository is disabled because you have existing files in the repository. You must delete
-              your existing files before migrating.
-            </Alert>
-          )}
-          <Box alignItems="center" padding={4}>
-            <Stack direction="row" gap={4} alignItems="flex-start" justifyContent="center">
-              <Stack direction="column" gap={1} alignItems="center">
-                <Text variant="h4" color="secondary">
-                  Grafana
-                </Text>
-                {isLoadingCounts ? (
-                  <LoadingPlaceholder text="Loading counts..." />
-                ) : (
-                  <Stack direction="row" gap={2}>
-                    <Text variant="h3">{dashboardCount} dashboards</Text>
-                    <Text variant="h3">{folderCount} folders</Text>
-                  </Stack>
-                )}
-              </Stack>
-              <Stack direction="column" gap={1} alignItems="center">
-                <Text variant="h4" color="secondary">
-                  Repository
-                </Text>
-                {isLoadingCounts ? (
-                  <LoadingPlaceholder text="Loading counts..." />
-                ) : (
-                  <Text variant="h3">{fileCount} files</Text>
-                )}
-              </Stack>
-            </Stack>
-          </Box>
-
-          {isLoadingCounts ? (
-            <LoadingPlaceholder text="Loading options..." />
+          {isLoading ? (
+            <Box padding={4}>
+              <LoadingPlaceholder text="Loading repository settings..." />
+            </Box>
           ) : (
-            <Controller
-              name="repository.sync.target"
-              control={control}
-              render={({ field: { value } }) => (
-                <>
-                  {availableOptions.map((option) => (
-                    <Card
-                      key={`${option.value}-${option.operation}`}
-                      isSelected={
-                        selectedOption?.value === option.value && selectedOption?.operation === option.operation
-                      }
-                      onClick={() => handleOptionSelect(option)}
-                    >
-                      <Card.Heading>{option.label}</Card.Heading>
-                      <Card.Description>{option.description}</Card.Description>
-                    </Card>
-                  ))}
-                </>
+            <>
+              {otherFolderConnected && (
+                <Alert severity="info" title="Connect your entire Grafana instance is disabled">
+                  Instance-wide connection is disabled because you have folders connected to repositories. You must
+                  disconnect all folder repositories to use it.
+                </Alert>
               )}
-            />
-          )}
-          {/* Only show title field if not instance sync */}
-          {selectedTarget === 'folder' && (
-            <Field
-              label="Display name"
-              description="Add a clear name for this repository connection"
-              error={errors.repository?.title?.message}
-              invalid={!!errors.repository?.title}
-            >
-              <Input
-                {...register('repository.title', { required: 'This field is required.' })}
-                placeholder="My repository connection"
+              {otherInstanceConnected && (
+                <Alert severity="info" title="Connect your entire Grafana instance is disabled">
+                  Instance-wide connection is disabled because you have another instance connected to this repository.
+                  You must disconnect the other instance to use it.
+                </Alert>
+              )}
+              {settingsQuery.data?.legacyStorage && (
+                <Alert severity="info" title="Pull from Repository to Instance is disabled">
+                  Pulling from repository to instance is not supported when using legacy storage. Please migrate to
+                  unified storage to use this feature.
+                </Alert>
+              )}
+              {dashboardCount > 0 ||
+                (folderCount > 0 && (
+                  <Alert severity="info" title="Pull from Repository to Instance is disabled">
+                    <Stack direction="column" gap={1}>
+                      <Text>Pulling from repository to instance is disabled because you have existing resources:</Text>
+                      <Text>Please migrate your existing resources to the repository first.</Text>
+                    </Stack>
+                  </Alert>
+                ))}
+              {fileCount > 0 && (
+                <Alert severity="info" title="Migrate to Repository is disabled">
+                  Migrating to repository is disabled because you have existing files in the repository. You must delete
+                  your existing files before migrating.
+                </Alert>
+              )}
+              <Box alignItems="center" padding={4}>
+                <Stack direction="row" gap={4} alignItems="flex-start" justifyContent="center">
+                  <Stack direction="column" gap={1} alignItems="center">
+                    <Text variant="h4" color="secondary">
+                      Grafana
+                    </Text>
+                    <Stack direction="row" gap={2}>
+                      <Text variant="h3">{dashboardCount} dashboards</Text>
+                      <Text variant="h3">{folderCount} folders</Text>
+                    </Stack>
+                  </Stack>
+                  <Stack direction="column" gap={1} alignItems="center">
+                    <Text variant="h4" color="secondary">
+                      Repository
+                    </Text>
+                    <Text variant="h3">{fileCount} files</Text>
+                  </Stack>
+                </Stack>
+              </Box>
+
+              <Controller
+                name="repository.sync.target"
+                control={control}
+                render={({ field: { value } }) => (
+                  <>
+                    {availableOptions.map((option) => (
+                      <Card
+                        key={`${option.value}-${option.operation}`}
+                        isSelected={
+                          selectedOption?.value === option.value && selectedOption?.operation === option.operation
+                        }
+                        onClick={() => handleOptionSelect(option)}
+                      >
+                        <Card.Heading>{option.label}</Card.Heading>
+                        <Card.Description>{option.description}</Card.Description>
+                      </Card>
+                    ))}
+                  </>
+                )}
               />
-            </Field>
+              {/* Only show title field if not instance sync */}
+              {selectedTarget === 'folder' && (
+                <Field
+                  label="Display name"
+                  description="Add a clear name for this repository connection"
+                  error={errors.repository?.title?.message}
+                  invalid={!!errors.repository?.title}
+                >
+                  <Input
+                    {...register('repository.title', { required: 'This field is required.' })}
+                    placeholder="My repository connection"
+                  />
+                </Field>
+              )}
+            </>
           )}
         </Stack>
       </Stack>
