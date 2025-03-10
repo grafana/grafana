@@ -247,6 +247,14 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 							Format:      "",
 						},
 					},
+					"folder": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optional folder prefix within the repo. When configured, files outside this folder will be ignored",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"token": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.",
@@ -274,7 +282,7 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 						},
 					},
 				},
-				Required: []string{"branch"},
+				Required: []string{"branch", "folder"},
 			},
 		},
 	}
