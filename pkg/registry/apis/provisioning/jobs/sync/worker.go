@@ -159,14 +159,11 @@ func (r *SyncWorker) createJob(ctx context.Context, repo repository.ReaderWriter
 		progress:   progress,
 		parser:     parser,
 		lister:     r.lister,
-		folders: &resources.FolderManager{
-			Repo: repo,
-			Client: dynamicClient.Resource(schema.GroupVersionResource{
-				Group:    folders.GROUP,
-				Version:  folders.VERSION,
-				Resource: folders.RESOURCE,
-			}),
-		},
+		folders: resources.NewFolderManager(repo, dynamicClient.Resource(schema.GroupVersionResource{
+			Group:    folders.GROUP,
+			Version:  folders.VERSION,
+			Resource: folders.RESOURCE,
+		})),
 		dashboards: dynamicClient.Resource(schema.GroupVersionResource{
 			Group:    dashboard.GROUP,
 			Version:  "v1alpha1",

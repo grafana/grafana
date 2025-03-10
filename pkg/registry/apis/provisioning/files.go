@@ -280,10 +280,7 @@ func (s *filesConnector) doCreateFolder(ctx context.Context, repo repository.Wri
 		return nil, err
 	}
 
-	manager := &resources.FolderManager{
-		Repo:   repo,
-		Client: parser.Client().Resource(folder.SchemeGroupVersion.WithResource(folder.RESOURCE)),
-	}
+	manager := resources.NewFolderManager(repo, parser.Client().Resource(folder.SchemeGroupVersion.WithResource(folder.RESOURCE)))
 
 	// Now actually create the folder
 	if err := repo.Create(ctx, path, ref, nil, message); err != nil {
@@ -311,7 +308,7 @@ func (s *filesConnector) doCreateFolder(ctx context.Context, repo repository.Wri
 			return nil, err
 		}
 
-		current, err := manager.Client.Get(ctx, folderName, metav1.GetOptions{})
+		current, err := manager.GetFolder(ctx, folderName)
 		if err != nil && !apierrors.IsNotFound(err) {
 			return nil, err // unable to check if the folder exists
 		}

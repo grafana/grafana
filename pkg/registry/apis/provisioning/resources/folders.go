@@ -17,9 +17,17 @@ import (
 )
 
 type FolderManager struct {
-	Repo   repository.Repository
-	Lookup *FolderTree
-	Client dynamic.ResourceInterface
+	repo   repository.Repository
+	lookup *FolderTree
+	client dynamic.ResourceInterface
+}
+
+func NewFolderManager(repo repository.Repository, client dynamic.ResourceInterface) *FolderManager {
+	return &FolderManager{
+		repo:   repo,
+		lookup: NewEmptyFolderTree(),
+		client: client,
+	}
 }
 
 // EnsureFoldersExist creates the folder structure in the cluster.
@@ -28,7 +36,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		return "", fmt.Errorf("invald initial path")
 	}
 
-	cfg := fm.Repo.Config()
+	cfg := fm.repo.Config()
 	parent = RootFolder(cfg)
 
 	dir := filePath
@@ -39,12 +47,8 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		return parent, nil
 	}
 
-	if fm.Lookup == nil {
-		fm.Lookup = NewEmptyFolderTree()
-	}
-
 	f := ParseFolder(dir, cfg.Name)
-	if fm.Lookup.In(f.ID) {
+	if fm.lookup.In(f.ID) {
 		return f.ID, nil
 	}
 
@@ -60,7 +64,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		}
 
 		f := ParseFolder(traverse, cfg.GetName())
-		if fm.Lookup.In(f.ID) {
+		if fm.lookup.In(f.ID) {
 			parent = f.ID
 			continue
 		}
@@ -68,19 +72,19 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		if err := fm.EnsureFolderExists(ctx, f, parent); err != nil {
 			return "", fmt.Errorf("ensure folder exists: %w", err)
 		}
-		fm.Lookup.Add(f, parent)
+		fm.lookup.Add(f, parent)
 		parent = f.ID
 	}
 
 	return f.ID, err
 }
 
-// ensureFolderExists creates the folder if it doesn't exist.
+// EnsureFolderExists creates the folder if it doesn't exist.
 // If the folder already exists:
 // - it will error if the folder is not owned by this repository
 func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, parent string) error {
-	cfg := fm.Repo.Config()
-	obj, err := fm.Client.Get(ctx, folder.ID, metav1.GetOptions{})
+	cfg := fm.repo.Config()
+	obj, err := fm.client.Get(ctx, folder.ID, metav1.GetOptions{})
 	if err == nil {
 		current, ok := obj.GetAnnotations()[utils.AnnoKeyManagerIdentity]
 		if !ok {
@@ -120,8 +124,12 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 		Path: folder.Path,
 	})
 
-	if _, err := fm.Client.Create(ctx, obj, metav1.CreateOptions{}); err != nil {
+	if _, err := fm.client.Create(ctx, obj, metav1.CreateOptions{}); err != nil {
 		return fmt.Errorf("failed to create folder: %w", err)
 	}
 	return nil
+}
+
+func (fm *FolderManager) GetFolder(ctx context.Context, name string) (*unstructured.Unstructured, error) {
+	return fm.client.Get(ctx, name, metav1.GetOptions{})
 }
