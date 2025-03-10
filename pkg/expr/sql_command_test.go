@@ -71,6 +71,15 @@ func TestSQLCommandRowLimits(t *testing.T) {
 			expectError:   true,
 			errorContains: "exceeds limit",
 		},
+		{
+			name:  "limit of 0 means no limit: allow multiple large frames",
+			limit: 0,
+			frames: []*data.Frame{
+				createFrameWithRows(100000),
+				createFrameWithRows(100000),
+			},
+			vars: []string{"foo", "bar"},
+		},
 	}
 
 	for _, tt := range tests {
