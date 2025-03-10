@@ -16,10 +16,6 @@ var (
 )
 
 type BleveIndexMetrics struct {
-	IndexDir string
-	Backend  SearchBackend
-
-	// metrics
 	IndexLatency      *prometheus.HistogramVec
 	IndexSize         prometheus.Gauge
 	IndexedKinds      *prometheus.GaugeVec
