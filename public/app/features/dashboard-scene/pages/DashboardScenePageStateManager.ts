@@ -62,8 +62,8 @@ interface DashboardCacheEntry<T> {
 export interface LoadDashboardOptions {
   uid: string;
   route: DashboardRoutes;
-  type?: string;
   slug?: string;
+  type?: string;
   urlFolderUid?: string;
   params?: {
     version: number;
@@ -312,6 +312,9 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           }
 
           break;
+        case DashboardRoutes.Provisioning: {
+          return await dashboardLoaderSrv.loadDashboard('provisioning', slug, uid);
+        }
         case DashboardRoutes.Public: {
           return await dashboardLoaderSrv.loadDashboard('public', '', uid);
         }
