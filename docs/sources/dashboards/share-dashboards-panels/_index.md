@@ -81,8 +81,6 @@ Grafana enables you to share dashboards and panels with other users within your 
 - Reports
 - Library panels
 
-You can also invite new members to your organization from the **Share** menu. For more information, refer to [Invite new members](#invite-new-members).
-
 You must have an authorized viewer permission to see an image rendered by a direct link. The same permission is also required to view embedded links unless you have anonymous access permission enabled for your Grafana instance.
 
 {{< admonition type="note" >}}
