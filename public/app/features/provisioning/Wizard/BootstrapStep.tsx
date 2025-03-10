@@ -219,19 +219,20 @@ export function BootstrapStep({ onOptionSelect }: Props) {
             control={control}
             render={({ field: { value } }) => (
               <>
-                {modeOptions.map((option) => (
-                  <Card
-                    key={`${option.value}-${option.operation}`}
-                    isSelected={
-                      selectedOption?.value === option.value && selectedOption?.operation === option.operation
-                    }
-                    onClick={() => handleOptionSelect(option)}
-                    disabled={isOptionDisabled(option)}
-                  >
-                    <Card.Heading>{option.label}</Card.Heading>
-                    <Card.Description>{option.description}</Card.Description>
-                  </Card>
-                ))}
+                {modeOptions
+                  .filter((option) => !isOptionDisabled(option))
+                  .map((option) => (
+                    <Card
+                      key={`${option.value}-${option.operation}`}
+                      isSelected={
+                        selectedOption?.value === option.value && selectedOption?.operation === option.operation
+                      }
+                      onClick={() => handleOptionSelect(option)}
+                    >
+                      <Card.Heading>{option.label}</Card.Heading>
+                      <Card.Description>{option.description}</Card.Description>
+                    </Card>
+                  ))}
               </>
             )}
           />
