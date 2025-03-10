@@ -54,7 +54,7 @@ export interface RuleFormValues {
   contactPoints?: AlertManagerManualRouting;
   editorSettings?: SimplifiedEditor;
   metric?: string;
-
+  targetDatasourceUid?: string;
   // cortex / loki rules
   namespace: string;
   forTime: number;

@@ -28,6 +28,7 @@ exports[`formValuesToRulerGrafanaRuleDTO should correctly convert rule form valu
     "record": {
       "from": "A",
       "metric": "",
+      "target_datasource_uid": undefined,
     },
     "title": "",
   },
