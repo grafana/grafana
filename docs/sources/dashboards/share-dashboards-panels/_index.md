@@ -260,7 +260,7 @@ To share a personalized, direct link to your panel within your organization, fol
 1. Select the theme for the dashboard. Choose from **Current**, **Dark**, or **Light**.
 1. Click **Copy link**.
 1. Send the copied link to a Grafana user with authorization to view it.
-1. (Optional) To [generate an image of the panel as a PNG file](ref:image-rendering), customize the image settings:
+1. (Optional) To [generate an image of the panel as a PNG file](ref:image-rendering) in Grafana [Enterprise](../../introduction/grafana-enterprise/) or [Cloud](/docs/grafana-cloud/), customize the image settings:
 
    - **Width** - In pixels. The default is 1000.
    - **Height** - In pixels. The default is 500.
@@ -369,23 +369,3 @@ To delete existing snapshots, follow these steps:
 1. Click the red **x** next to the snapshot URL that you want to delete.
 
 The snapshot is immediately deleted. You may need to clear your browser cache or use a private or incognito browser to confirm this.
-
-## Invite new members
-
-{{< admonition type="note" >}}
-This feature is only available on Grafana Cloud.
-{{< /admonition >}}
-
-You can invite new members to your organization using the **Share** drop-down menu. You must have the `OrgUsersAdd` permission to use this feature.
-
-To invite a new member to your organization, follow these steps:
-
-1. Click **Dashboards** in the main menu and open any dashboard.
-1. Click the **Share** drop-down list in the top-right corner and select **Invite new member**.
-
-   The **Members** page of your Grafana Cloud Portal opens.
-
-1. Enter the email address of the new member in the provided field.
-1. Make a selection in the **Role** drop-down list.
-1. (Optional) Select the **Receive billing emails** checkbox, if applicable.
-1. Click **Invite**.
