@@ -14,20 +14,23 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func NewFakeSecureValueStore(latency time.Duration) contracts.SecureValueStorage {
-	panic("TODO")
-	// return &fakeSecureValueStorage{
-	// 	values:  make(map[string]map[string]secretv0alpha1.SecureValue),
-	// 	latency: latency,
-	// }
+func NewFakeSecureValueMetadataStore(latency time.Duration) contracts.SecureValueMetadataStorage {
+	return &fakeSecureValueMetadataStorage{
+		values:  make(map[string]map[string]secretv0alpha1.SecureValue),
+		latency: latency,
+	}
 }
 
-type fakeSecureValueStorage struct {
+type fakeSecureValueMetadataStorage struct {
 	values  map[string]map[string]secretv0alpha1.SecureValue
 	latency time.Duration
 }
 
-func (s *fakeSecureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+func (s *fakeSecureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+	// TODO: Remove once the outbox is implemented
+	sv.Status.Phase = secretv0alpha1.SecureValuePhaseSucceeded
+	sv.Status.Message = ""
+
 	v := *sv
 	v.SetUID(types.UID(uuid.NewString()))
 	v.ObjectMeta.SetResourceVersion(strconv.FormatInt(metav1.Now().UnixMicro(), 10))
@@ -44,7 +47,7 @@ func (s *fakeSecureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.
 	return &v, nil
 }
 
-func (s *fakeSecureValueStorage) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
+func (s *fakeSecureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
 	ns, ok := s.values[namespace.String()]
 	if !ok {
 		return nil, contracts.ErrSecureValueNotFound
@@ -57,7 +60,11 @@ func (s *fakeSecureValueStorage) Read(ctx context.Context, namespace xkube.Names
 	return &v, nil
 }
 
-func (s *fakeSecureValueStorage) Update(ctx context.Context, nsv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+func (s *fakeSecureValueMetadataStorage) Update(ctx context.Context, nsv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+	// TODO: Remove once the outbox is implemented
+	nsv.Status.Phase = secretv0alpha1.SecureValuePhaseSucceeded
+	nsv.Status.Message = ""
+
 	v := *nsv
 	v.Spec.Value = ""
 	v.SetResourceVersion(strconv.FormatInt(metav1.Now().UnixMicro(), 10))
@@ -76,7 +83,7 @@ func (s *fakeSecureValueStorage) Update(ctx context.Context, nsv *secretv0alpha1
 	return &v, nil
 }
 
-func (s *fakeSecureValueStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
+func (s *fakeSecureValueMetadataStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
 	ns, ok := s.values[namespace.String()]
 	if !ok {
 		return contracts.ErrSecureValueNotFound
@@ -92,7 +99,7 @@ func (s *fakeSecureValueStorage) Delete(ctx context.Context, namespace xkube.Nam
 	return nil
 }
 
-func (s *fakeSecureValueStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
+func (s *fakeSecureValueMetadataStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
 	ns, ok := s.values[namespace.String()]
 	if !ok {
 		ns = make(map[string]secretv0alpha1.SecureValue)

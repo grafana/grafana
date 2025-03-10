@@ -1392,9 +1392,15 @@ func TestIntegrationCRUD(t *testing.T) {
 		t.Run("should return secrets in secureFields but not settings", func(t *testing.T) {
 			for _, integration := range get.Spec.Integrations {
 				t.Run(integration.Type, func(t *testing.T) {
+					expected := notify.AllKnownConfigsForTesting[strings.ToLower(integration.Type)]
+					var fields map[string]any
+					require.NoError(t, json.Unmarshal([]byte(expected.Config), &fields))
 					secretFields, err := channels_config.GetSecretKeysForContactPointType(integration.Type)
 					require.NoError(t, err)
 					for _, field := range secretFields {
+						if _, ok := fields[field]; !ok { // skip field that is not in the original setting
+							continue
+						}
 						assert.Contains(t, integration.SecureFields, field)
 						assert.Truef(t, integration.SecureFields[field], "secure field should be always true")
 

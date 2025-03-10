@@ -334,10 +334,9 @@ func getRestoreVersion(msg string) (int, error) {
 		return 0, nil
 	}
 
-	ver, err := strconv.ParseInt(parts[1], 10, 64)
+	ver, err := strconv.Atoi(parts[1])
 	if err != nil {
 		return 0, err
 	}
-
-	return int(ver), nil
+	return ver, nil
 }

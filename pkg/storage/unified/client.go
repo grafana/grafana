@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"time"
 
 	otgrpc "github.com/opentracing-contrib/go-grpc"
 	"github.com/opentracing/opentracing-go"
@@ -14,7 +15,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/flagext"
 	"github.com/grafana/dskit/grpcclient"
@@ -47,10 +47,11 @@ type Options struct {
 
 type clientMetrics struct {
 	requestDuration *prometheus.HistogramVec
+	requestRetries  *prometheus.CounterVec
 }
 
 // This adds a UnifiedStorage client into the wire dependency tree
-func ProvideUnifiedStorageClient(opts *Options) (resource.ResourceClient, error) {
+func ProvideUnifiedStorageClient(opts *Options, storageMetrics *resource.StorageMetrics) (resource.ResourceClient, error) {
 	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	client, err := newClient(options.StorageOptions{
@@ -58,7 +59,7 @@ func ProvideUnifiedStorageClient(opts *Options) (resource.ResourceClient, error)
 		DataPath:     apiserverCfg.Key("storage_path").MustString(filepath.Join(opts.Cfg.DataPath, "grafana-apiserver")),
 		Address:      apiserverCfg.Key("address").MustString(""), // client address
 		BlobStoreURL: apiserverCfg.Key("blob_url").MustString(""),
-	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs)
+	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics)
 	if err == nil {
 		// Used to get the folder stats
 		client = federated.NewFederatedClient(
@@ -78,6 +79,7 @@ func newClient(opts options.StorageOptions,
 	reg prometheus.Registerer,
 	authzc types.AccessClient,
 	docs resource.DocumentBuilderSupplier,
+	storageMetrics *resource.StorageMetrics,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 	switch opts.StorageType {
@@ -115,7 +117,7 @@ func newClient(opts options.StorageOptions,
 		}
 
 		// Create a connection to the gRPC server.
-		conn, err := grpcConn(opts.Address, reg)
+		conn, err := GrpcConn(opts.Address, reg)
 		if err != nil {
 			return nil, err
 		}
@@ -133,7 +135,7 @@ func newClient(opts options.StorageOptions,
 		if err != nil {
 			return nil, err
 		}
-		server, err := sql.NewResourceServer(db, cfg, tracer, reg, authzc, searchOptions)
+		server, err := sql.NewResourceServer(db, cfg, tracer, reg, authzc, searchOptions, storageMetrics)
 		if err != nil {
 			return nil, err
 		}
@@ -141,28 +143,24 @@ func newClient(opts options.StorageOptions,
 	}
 }
 
-func clientCfgMapping(clientCfg *grpcutils.GrpcClientConfig) authnlib.GrpcClientConfig {
-	return authnlib.GrpcClientConfig{
-		TokenClientConfig: &authnlib.TokenExchangeConfig{
-			Token:            clientCfg.Token,
-			TokenExchangeURL: clientCfg.TokenExchangeURL,
-		},
-		TokenRequest: &authnlib.TokenExchangeRequest{
-			Namespace: clientCfg.TokenNamespace,
-			Audiences: []string{resourceStoreAudience},
-		},
-	}
-}
-
 func newResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (resource.ResourceClient, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
 		return resource.NewLegacyResourceClient(conn), nil
 	}
-	return resource.NewRemoteResourceClient(tracer, conn, clientCfgMapping(grpcutils.ReadGrpcClientConfig(cfg)), cfg.Env == setting.Dev)
+
+	clientCfg := grpcutils.ReadGrpcClientConfig(cfg)
+
+	return resource.NewRemoteResourceClient(tracer, conn, resource.RemoteResourceClientConfig{
+		Token:            clientCfg.Token,
+		TokenExchangeURL: clientCfg.TokenExchangeURL,
+		Audiences:        []string{resourceStoreAudience},
+		Namespace:        clientCfg.TokenNamespace,
+		AllowInsecure:    cfg.Env == setting.Dev,
+	})
 }
 
-// grpcConn creates a new gRPC connection to the provided address.
-func grpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, error) {
+// GrpcConn creates a new gRPC connection to the provided address.
+func GrpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, error) {
 	// This works for now as the Provide function is only called once during startup.
 	// We might eventually want to tight this factory to a struct for more runtime control.
 	metrics := clientMetrics{
@@ -171,10 +169,24 @@ func grpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, erro
 			Help:    "Time spent executing requests to the resource server.",
 			Buckets: prometheus.ExponentialBuckets(0.008, 4, 7),
 		}, []string{"operation", "status_code"}),
+		requestRetries: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "resource_server_client_request_retries_total",
+			Help: "Total number of retries for requests to the resource server.",
+		}, []string{"operation"}),
 	}
 
 	// Report gRPC status code errors as labels.
 	unary, stream := instrument(metrics.requestDuration, middleware.ReportGRPCStatusOption)
+
+	// Add middleware to retry on transient connection issues. Note that
+	// we do not implement it for streams, as we don't currently use streams.
+	retryCfg := retryConfig{
+		Max:           3,
+		Backoff:       time.Second,
+		BackoffJitter: 0.5,
+	}
+	unary = append(unary, unaryRetryInterceptor(retryCfg))
+	unary = append(unary, unaryRetryInstrument(metrics.requestRetries))
 
 	cfg := grpcclient.Config{}
 	// Set the defaults that are normally set by Config.RegisterFlags.

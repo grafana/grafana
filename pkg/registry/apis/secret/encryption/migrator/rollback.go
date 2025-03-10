@@ -5,15 +5,15 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
-	legacyEncryption "github.com/grafana/grafana/pkg/services/encryption"
 )
 
 func (s simpleSecret) Rollback(
 	ctx context.Context,
 	namespace string,
 	secretsSrv *manager.EncryptionManager,
-	encryptionSrv legacyEncryption.Internal,
+	encryptionSrv cipher.Cipher,
 	sqlStore db.DB,
 	secretKey string,
 ) (anyFailure bool) {

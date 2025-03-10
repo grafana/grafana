@@ -156,7 +156,7 @@ type resourceClientMock struct {
 	resource.ResourceStoreClient
 	resource.ResourceIndexClient
 	resource.RepositoryIndexClient
-	resource.BatchStoreClient
+	resource.BulkStoreClient
 	resource.BlobStoreClient
 	resource.DiagnosticsClient
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -22,7 +23,7 @@ import (
 )
 
 func NewInProcGrpcAuthenticator() interceptors.Authenticator {
-	return newAuthenticator(
+	return NewAuthenticatorInterceptor(
 		authn.NewDefaultAuthenticator(
 			authn.NewUnsafeAccessTokenVerifier(authn.VerifierConfig{}),
 			authn.NewUnsafeIDTokenVerifier(authn.VerifierConfig{}),
@@ -46,7 +47,7 @@ func NewAuthenticator(cfg *GrpcServerConfig, tracer tracing.Tracer) interceptors
 		authn.NewIDTokenVerifier(authn.VerifierConfig{}, kr),
 	)
 
-	return newAuthenticator(auth, tracer)
+	return NewAuthenticatorInterceptor(auth, tracer)
 }
 
 func NewAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, tracer tracing.Tracer, fallback interceptors.Authenticator) interceptors.Authenticator {
@@ -64,7 +65,7 @@ func NewAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, t
 	}
 }
 
-func newAuthenticator(auth authn.Authenticator, tracer tracing.Tracer) interceptors.Authenticator {
+func NewAuthenticatorInterceptor(auth authn.Authenticator, tracer trace.Tracer) interceptors.Authenticator {
 	return interceptors.AuthenticatorFunc(func(ctx context.Context) (context.Context, error) {
 		ctx, span := tracer.Start(ctx, "grpcutils.Authenticate")
 		defer span.End()

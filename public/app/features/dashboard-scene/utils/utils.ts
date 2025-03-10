@@ -263,7 +263,7 @@ export function getCurrentValueForOldIntervalModel(variable: IntervalVariableMod
   const selectedInterval = Array.isArray(variable.current.value) ? variable.current.value[0] : variable.current.value;
 
   // If the interval is the old auto format, return the new auto interval from scenes.
-  if (selectedInterval.startsWith('$__auto_interval_')) {
+  if (selectedInterval.startsWith('$__auto_interval_') || selectedInterval === '$__auto') {
     return '$__auto';
   }
 

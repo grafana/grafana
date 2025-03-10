@@ -68,7 +68,7 @@ func ProvideService(
 		lock,
 	)
 
-	api.NewAccessControlAPI(routeRegister, accessControl, service, userService, features).RegisterAPIEndpoints()
+	api.NewAccessControlAPI(routeRegister, accessControl, service, userService).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
 		return nil, err
 	}
@@ -472,13 +472,8 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 // DeclarePluginRoles allow the caller to declare, to the service, plugin roles and their assignments
 // to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs []plugins.RoleRegistration) error {
-	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.DeclarePluginRoles")
+	_, span := tracer.Start(ctx, "accesscontrol.acimpl.DeclarePluginRoles")
 	defer span.End()
-
-	// Protect behind feature toggle
-	if !s.features.IsEnabled(ctx, featuremgmt.FlagAccessControlOnCall) {
-		return nil
-	}
 
 	acRegs := pluginutils.ToRegistrations(ID, name, regs)
 	for _, r := range acRegs {

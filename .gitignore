@@ -113,6 +113,7 @@ profile.cov
 /pkg/extensions/*
 !/pkg/extensions/.keep
 !/pkg/extensions/main.go
+!/pkg/extensions/enterprise_imports.go
 /public/app/extensions
 !/public/app/extensions/.keep
 
@@ -147,6 +148,7 @@ pkg/services/quota/quotaimpl/storage/storage.json
 # Ignoring frontend packages specifics
 /packages/grafana-ui/.yarn/.cache
 /packages/grafana-ui/.storybook/static
+/packages/grafana-ui/unstable
 /packages/**/dist
 /packages/**/compiled
 /packages/**/.rpt2_cache

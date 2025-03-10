@@ -8,7 +8,7 @@ import { CombinedRule } from 'app/types/unified-alerting';
 import { GrafanaRuleQueryViewer, QueryPreview } from '../../../GrafanaRuleQueryViewer';
 import { useAlertQueriesStatus } from '../../../hooks/useAlertQueriesStatus';
 import { alertRuleToQueries } from '../../../utils/query';
-import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../../utils/rules';
+import { isFederatedRuleGroup, rulerRuleType } from '../../../utils/rules';
 import { useAlertQueryRunner } from '../../rule-editor/query-and-alert-condition/useAlertQueryRunner';
 
 interface Props {
@@ -25,7 +25,7 @@ const QueryResults = ({ rule }: Props) => {
   const onRunQueries = useCallback(() => {
     if (queries.length > 0 && allDataSourcesAvailable) {
       let condition;
-      if (rule && isGrafanaRulerRule(rule.rulerRule)) {
+      if (rule && rulerRuleType.grafana.rule(rule.rulerRule)) {
         condition = rule.rulerRule.grafana_alert.condition;
       }
       runQueries(queries, condition ?? 'A');
@@ -46,7 +46,7 @@ const QueryResults = ({ rule }: Props) => {
 
   return (
     <>
-      {isGrafanaRulerRule(rule.rulerRule) && !isFederatedRule && (
+      {rulerRuleType.grafana.rule(rule.rulerRule) && !isFederatedRule && (
         <GrafanaRuleQueryViewer
           rule={rule}
           condition={rule.rulerRule.grafana_alert.condition}
@@ -55,7 +55,7 @@ const QueryResults = ({ rule }: Props) => {
         />
       )}
 
-      {!isGrafanaRulerRule(rule.rulerRule) &&
+      {!rulerRuleType.grafana.rule(rule.rulerRule) &&
         !isFederatedRule &&
         queryPreviewData &&
         Object.keys(queryPreviewData).length > 0 && (
