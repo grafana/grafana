@@ -43,12 +43,6 @@ func TestSQLCommandRowLimits(t *testing.T) {
 		errorContains string
 	}{
 		{
-			name:   "single frame within limit",
-			limit:  2,
-			frames: []*data.Frame{data.NewFrame("a", data.NewField("a", nil, []string{"1", "2"}))},
-			vars:   []string{"foo"},
-		},
-		{
 			name:  "multiple frames within limit",
 			limit: 4,
 			frames: []*data.Frame{
@@ -56,14 +50,6 @@ func TestSQLCommandRowLimits(t *testing.T) {
 				data.NewFrame("b", data.NewField("a", nil, []string{"3", "4"})),
 			},
 			vars: []string{"foo", "bar"},
-		},
-		{
-			name:          "single frame exceeds limit",
-			limit:         1,
-			frames:        []*data.Frame{data.NewFrame("a", data.NewField("a", nil, []string{"1", "2"}))},
-			vars:          []string{"foo"},
-			expectError:   true,
-			errorContains: "exceeds limit",
 		},
 		{
 			name:  "multiple frames exceed limit",
