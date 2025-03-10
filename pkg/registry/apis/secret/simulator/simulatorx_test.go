@@ -7,10 +7,13 @@ import (
 	"os"
 	"strconv"
 	"testing"
+	"time"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/coro"
+	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/services"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/worker"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -156,7 +159,7 @@ func getSimulatorConfigOrDefault() SimulatorConfig {
 	if found {
 		steps = v
 	} else {
-		steps = 1000
+		steps = 10_000
 	}
 
 	return SimulatorConfig{
@@ -169,7 +172,7 @@ func TestSimulate(t *testing.T) {
 	t.Parallel()
 
 	simulatorConfig := getSimulatorConfigOrDefault()
-	rng := rand.New(rand.NewSource(5450474658197867724))
+	rng := rand.New(rand.NewSource(simulatorConfig.Seed))
 	activityLog := NewActivityLog()
 
 	defer func() {
@@ -182,17 +185,26 @@ func TestSimulate(t *testing.T) {
 		}
 	}()
 
-	simNetworkConfig := SimNetworkConfig{errProbability: 0.2, rng: rng}
-
 	simDatabase := NewSimDatabase()
 
-	simNetwork := NewSimNetwork(simNetworkConfig, activityLog, simDatabase)
+	simNetwork := NewSimNetwork(SimNetworkConfig{rng: rng}, activityLog, simDatabase)
 
 	simTransactionManager := NewSimTransactionManager(simNetwork, simDatabase)
 
 	simSecureValueStorage := NewSimSecureValueStorage(simNetwork, simDatabase)
 
 	simOutboxQueue := NewSimOutboxQueue(simNetwork, simDatabase)
+
+	keepers := map[keepertypes.KeeperType]keepertypes.Keeper{
+		keepertypes.SQLKeeperType: fakes.,
+	}
+
+	worker := worker.NewWorker(worker.Config{
+		// Generate a number between 1 and 100
+		BatchSize: uint(1 + rng.Intn(100)),
+		// Generate a number between 1 and 100
+		ReceiveTimeout: time.Duration(1+rng.Intn(100)) * time.Millisecond,
+	}, simTransactionManager, simOutboxQueue, simSecureValueStorage, keepers)
 
 	secureValueService := services.NewCreateSecureValue(simTransactionManager, simSecureValueStorage, simOutboxQueue)
 

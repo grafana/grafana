@@ -111,7 +111,6 @@ func (db *SimDatabase) onQuery(query any) any {
 			}
 		}
 
-		fmt.Printf("\n\naaaaaaa query.sv tx=%+v %+v\n\n", transaction, query.sv)
 		if _, ok := transaction.secretMetadata[query.sv.Namespace]; !ok {
 			transaction.secretMetadata[query.sv.Namespace] = make(map[SecureValueName]secretv0alpha1.SecureValue)
 		}

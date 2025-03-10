@@ -33,6 +33,6 @@ func (queue *SimOutboxQueue) Delete(ctx context.Context, namespace xkube.Namespa
 	panic("TODO")
 }
 
-func (queue *SimOutboxQueue) ReceiveN(ctx context.Context, n int) (messages []contracts.OutboxMessage, err error) {
+func (queue *SimOutboxQueue) ReceiveN(ctx context.Context, n uint) (messages []contracts.OutboxMessage, err error) {
 	panic("TODO")
 }

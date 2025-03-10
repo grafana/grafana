@@ -19,8 +19,7 @@ type SendInput struct {
 }
 
 type SimNetworkConfig struct {
-	errProbability float64 // [0,1]
-	rng            *rand.Rand
+	rng *rand.Rand
 }
 
 // Simulation version of the network which requests go through.
@@ -46,6 +45,8 @@ func (network *SimNetwork) Send(input SendInput) any {
 	if v := coro.Yield(); v != nil {
 		panic(fmt.Sprintf("network.Send resumed with non-nil value, it should always be nil: %+v", v))
 	}
+
+	// TODO: inject errors
 
 	// Execute the action
 	reply := input.Execute()
