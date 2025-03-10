@@ -3,10 +3,10 @@ package metadata
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/ini.v1"
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
@@ -15,15 +15,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	encryptionmanager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
-	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/setting"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -184,15 +182,6 @@ func Test_SecretMgmt_GetKeeperConfig(t *testing.T) {
 }
 
 func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
-	config := `
-	[secrets_manager]
-	secret_key = sdDkslslld
-	encryption_provider = secretKey.v1
-	available_encryption_providers = secretKey.v1
-	`
-	raw, err := ini.Load([]byte(config))
-	require.NoError(t, err)
-
 	ctx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
 		Claims: jwt.Claims{
 			Subject: "testuser",
@@ -201,7 +190,18 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 
 	// Initialize data key storage and encrypted value storage with a fake db
 	testDB := db.InitTestDB(t)
-	cfg := &setting.Cfg{Raw: raw}
+	cfg := &setting.Cfg{
+		SecretsManagement: setting.SecretsManagerSettings{
+			SecretKey:          "sdDkslslld",
+			EncryptionProvider: "secretKey.v1",
+			Encryption: setting.EncryptionSettings{
+				DataKeysCacheTTL:        5 * time.Minute,
+				DataKeysCleanupInterval: 1 * time.Nanosecond,
+				Algorithm:               "aes-cfb",
+			},
+		},
+	}
+
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
 	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorageStorage(testDB, cfg, features)
@@ -211,23 +211,17 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 	require.NoError(t, err)
 
 	// Initialize the encryption manager
-	encProvider := encryptionprovider.Provider{}
-	usageStats := &usagestats.UsageStatsMock{T: t}
-	encryption, err := encryptionservice.ProvideEncryptionService(tracing.InitializeTracerForTest(), encProvider, usageStats, cfg)
-	require.NoError(t, err)
-
-	encMgr, err := encryptionmanager.NewEncryptionManager(
+	encMgr, err := encryptionmanager.ProvideEncryptionManager(
 		tracing.InitializeTracerForTest(),
 		dataKeyStore,
-		osskmsproviders.ProvideService(encryption, cfg, features),
-		encryption,
 		cfg,
-		usageStats,
+		&usagestats.UsageStatsMock{},
+		encryption.ProviderMap{},
 	)
 	require.NoError(t, err)
 
 	// Initialize the keeper service
-	keeperService, err := secretkeeper.ProvideService(tracing.InitializeTracerForTest(), encMgr, encValueStore)
+	keeperService, err := secretkeeper.ProvideService(tracing.InitializeTracerForTest(), encValueStore, encMgr)
 	require.NoError(t, err)
 
 	// Initialize access client + access control

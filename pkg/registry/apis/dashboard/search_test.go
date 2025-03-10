@@ -276,7 +276,7 @@ func TestSearchHandler(t *testing.T) {
 		}
 	})
 
-	t.Run("Sort - default sort by resource then title", func(t *testing.T) {
+	t.Run("Sort - default sort by resource", func(t *testing.T) {
 		rows := make([]*resource.ResourceTableRow, len(mockResults))
 		for i, r := range mockResults {
 			rows[i] = &resource.ResourceTableRow{
@@ -334,7 +334,7 @@ func TestSearchHandler(t *testing.T) {
 		err := json.NewDecoder(resp.Body).Decode(p)
 		require.NoError(t, err)
 		assert.Equal(t, len(mockResults), len(p.Hits))
-		assert.Equal(t, mockResults[3].Value, p.Hits[0].Title)
+		assert.Equal(t, mockResults[2].Value, p.Hits[0].Title)
 		assert.Equal(t, mockResults[1].Value, p.Hits[3].Title)
 	})
 }
@@ -647,14 +647,14 @@ var mockResults = []MockResult{
 		Value:    "Dashboard 2",
 	},
 	{
-		Name:     "f2",
-		Resource: "folder",
-		Value:    "Folder 2",
-	},
-	{
 		Name:     "f1",
 		Resource: "folder",
 		Value:    "Folder 1",
+	},
+	{
+		Name:     "f2",
+		Resource: "folder",
+		Value:    "Folder 2",
 	},
 }
 

@@ -18,9 +18,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
-	legacyEncryption "github.com/grafana/grafana/pkg/services/encryption"
-	"github.com/grafana/grafana/pkg/services/kmsproviders"
-	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/setting"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/util"
@@ -39,50 +39,49 @@ var (
 type EncryptionManager struct {
 	tracer     tracing.Tracer
 	store      encryptionstorage.DataKeyStorage
-	enc        legacyEncryption.Internal
+	enc        cipher.Cipher
 	cfg        *setting.Cfg
 	usageStats usagestats.Service
 
 	mtx          sync.Mutex
 	dataKeyCache *dataKeyCache
 
-	pOnce               sync.Once
-	providers           map[encryption.ProviderID]encryption.Provider
-	kmsProvidersService kmsproviders.Service
+	pOnce     sync.Once
+	providers encryption.ProviderMap
 
 	currentProviderID encryption.ProviderID
 
 	log log.Logger
 }
 
-func NewEncryptionManager(
+// ProvideEncryptionManager returns an EncryptionManager that uses the OSS KMS providers, along with any additional third-party (e.g. Enterprise) KMS providers
+func ProvideEncryptionManager(
 	tracer tracing.Tracer,
 	store encryptionstorage.DataKeyStorage,
-	kmsProvidersService kmsproviders.Service,
-	enc legacyEncryption.Internal,
 	cfg *setting.Cfg,
 	usageStats usagestats.Service,
+	thirdPartyKMS encryption.ProviderMap,
 ) (*EncryptionManager, error) {
-	ttl := cfg.SectionWithEnvOverrides("secrets_manager.encryption").Key("data_keys_cache_ttl").MustDuration(15 * time.Minute)
+	ttl := cfg.SecretsManagement.Encryption.DataKeysCacheTTL
+	currentProviderID := encryption.ProviderID(cfg.SecretsManagement.EncryptionProvider)
 
-	currentProviderID := encryption.ProviderID(
-		kmsproviders.NormalizeProviderID(secrets.ProviderID(
-			cfg.SectionWithEnvOverrides("secrets_manager").Key("encryption_provider").MustString(kmsproviders.Default),
-		)))
-
-	s := &EncryptionManager{
-		tracer:              tracer,
-		store:               store,
-		enc:                 enc,
-		cfg:                 cfg,
-		usageStats:          usageStats,
-		kmsProvidersService: kmsProvidersService,
-		dataKeyCache:        newMTDataKeyCache(ttl),
-		currentProviderID:   currentProviderID,
-		log:                 log.New("encryption"),
+	enc, err := service.NewEncryptionService(tracer, usageStats, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create encryption service: %w", err)
 	}
 
-	if err := s.InitProviders(); err != nil {
+	s := &EncryptionManager{
+		tracer:            tracer,
+		store:             store,
+		cfg:               cfg,
+		usageStats:        usageStats,
+		enc:               enc,
+		dataKeyCache:      newMTDataKeyCache(ttl),
+		currentProviderID: currentProviderID,
+		log:               log.New("encryption"),
+	}
+
+	if err := s.InitProviders(thirdPartyKMS); err != nil {
 		return nil, err
 	}
 
@@ -96,14 +95,26 @@ func NewEncryptionManager(
 	return s, nil
 }
 
-func (s *EncryptionManager) InitProviders() (err error) {
+func (s *EncryptionManager) InitProviders(extraProviders encryption.ProviderMap) (err error) {
+	done := false
 	s.pOnce.Do(func() {
-		providers, _ := s.kmsProvidersService.Provide()
-		s.providers = make(map[encryption.ProviderID]encryption.Provider, len(providers))
-		for k, v := range providers {
-			s.providers[encryption.ProviderID(k)] = v
+		providers := kmsproviders.GetOSSKMSProviders(s.cfg, s.enc)
+
+		for id, p := range extraProviders {
+			if _, exists := s.providers[id]; exists {
+				err = fmt.Errorf("provider %s already registered", id)
+				return
+			}
+			providers[id] = p
 		}
+
+		s.providers = providers
+		done = true
 	})
+
+	if !done && err == nil {
+		err = fmt.Errorf("providers were already initialized, no action taken")
+	}
 
 	return
 }
@@ -227,7 +238,7 @@ func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label
 	}
 
 	// 2.1 Find the encryption provider.
-	provider, exists := s.providers[encryption.ProviderID(kmsproviders.NormalizeProviderID(secrets.ProviderID(dataKey.Provider)))]
+	provider, exists := s.providers[dataKey.Provider]
 	if !exists {
 		return "", nil, fmt.Errorf("could not find encryption provider '%s'", dataKey.Provider)
 	}
@@ -386,7 +397,7 @@ func (s *EncryptionManager) dataKeyById(ctx context.Context, namespace, id strin
 	return decrypted, nil
 }
 
-func (s *EncryptionManager) GetProviders() map[encryption.ProviderID]encryption.Provider {
+func (s *EncryptionManager) GetProviders() encryption.ProviderMap {
 	return s.providers
 }
 
@@ -424,10 +435,7 @@ func (s *EncryptionManager) ReEncryptDataKeys(ctx context.Context, namespace str
 }
 
 func (s *EncryptionManager) Run(ctx context.Context) error {
-	gc := time.NewTicker(
-		s.cfg.SectionWithEnvOverrides("secrets_manager.encryption").Key("data_keys_cache_cleanup_interval").
-			MustDuration(time.Minute),
-	)
+	gc := time.NewTicker(s.cfg.SecretsManagement.Encryption.DataKeysCleanupInterval)
 
 	grp, gCtx := errgroup.WithContext(ctx)
 
