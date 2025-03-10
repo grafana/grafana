@@ -33,6 +33,15 @@ func TestNewCommand(t *testing.T) {
 	}
 }
 
+// Helper functions for creating test data
+func createFrameWithRows(rows int) *data.Frame {
+	values := make([]string, rows)
+	for i := range values {
+		values[i] = "dummy"
+	}
+	return data.NewFrame("dummy", data.NewField("dummy", nil, values))
+}
+
 func TestSQLCommandRowLimits(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -46,8 +55,8 @@ func TestSQLCommandRowLimits(t *testing.T) {
 			name:  "multiple frames within limit",
 			limit: 4,
 			frames: []*data.Frame{
-				data.NewFrame("a", data.NewField("a", nil, []string{"1", "2"})),
-				data.NewFrame("b", data.NewField("a", nil, []string{"3", "4"})),
+				createFrameWithRows(2),
+				createFrameWithRows(2),
 			},
 			vars: []string{"foo", "bar"},
 		},
@@ -55,8 +64,8 @@ func TestSQLCommandRowLimits(t *testing.T) {
 			name:  "multiple frames exceed limit",
 			limit: 3,
 			frames: []*data.Frame{
-				data.NewFrame("a", data.NewField("a", nil, []string{"1", "2"})),
-				data.NewFrame("b", data.NewField("a", nil, []string{"3", "4"})),
+				createFrameWithRows(2),
+				createFrameWithRows(2),
 			},
 			vars:          []string{"foo", "bar"},
 			expectError:   true,
