@@ -320,7 +320,11 @@ func (statement *Statement) buildUpdates(bean any,
 				if err != nil {
 					engine.logger.Error(err)
 				} else {
-					val = data
+					if col.SQLType.IsText() {
+						val = string(data)
+					} else {
+						val = data
+					}
 				}
 				goto APPEND
 			}
@@ -331,7 +335,11 @@ func (statement *Statement) buildUpdates(bean any,
 			if err != nil {
 				engine.logger.Error(err)
 			} else {
-				val = data
+				if col.SQLType.IsText() {
+					val = string(data)
+				} else {
+					val = data
+				}
 			}
 			goto APPEND
 		}
