@@ -140,7 +140,7 @@ Learn how to configure and manage externally shared dashboards in [Externally sh
 ### Schedule a report
 
 {{< admonition type="note" >}}
-This feature is only available in Grafana Enterprise.
+This feature is only available on Grafana Enterprise.
 {{< /admonition >}}
 
 To share your dashboard as a report, follow these steps:
@@ -203,6 +203,10 @@ The snapshot is immediately deleted. You might need to clear your browser cache 
 In addition to sharing dashboards as links, reports, and snapshots, you can export them as PDFs or JSON files.
 
 ### Export a dashboard as PDF
+
+{{< admonition type="note" >}}
+This feature is only available on Grafana Enterprise and Cloud.
+{{< /admonition >}}
 
 To export a dashboard in its current state as a PDF, follow these steps:
 
