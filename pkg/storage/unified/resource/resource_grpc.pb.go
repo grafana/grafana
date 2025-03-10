@@ -650,136 +650,136 @@ var ResourceIndex_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	RepositoryIndex_CountRepositoryObjects_FullMethodName = "/resource.RepositoryIndex/CountRepositoryObjects"
-	RepositoryIndex_ListRepositoryObjects_FullMethodName  = "/resource.RepositoryIndex/ListRepositoryObjects"
+	ManagedObjectIndex_CountManagedObjects_FullMethodName = "/resource.ManagedObjectIndex/CountManagedObjects"
+	ManagedObjectIndex_ListManagedObjects_FullMethodName  = "/resource.ManagedObjectIndex/ListManagedObjects"
 )
 
-// RepositoryIndexClient is the client API for RepositoryIndex service.
+// ManagedObjectIndexClient is the client API for ManagedObjectIndex service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// Query repository info from the search index.
+// Query managed objects
 // Results access control is based on access to the repository *not* the items
-type RepositoryIndexClient interface {
+type ManagedObjectIndexClient interface {
 	// Describe how many resources of each type exist within a repository
-	CountRepositoryObjects(ctx context.Context, in *CountRepositoryObjectsRequest, opts ...grpc.CallOption) (*CountRepositoryObjectsResponse, error)
+	CountManagedObjects(ctx context.Context, in *CountManagedObjectsRequest, opts ...grpc.CallOption) (*CountManagedObjectsResponse, error)
 	// List the resources of a specific kind within a repository
-	ListRepositoryObjects(ctx context.Context, in *ListRepositoryObjectsRequest, opts ...grpc.CallOption) (*ListRepositoryObjectsResponse, error)
+	ListManagedObjects(ctx context.Context, in *ListManagedObjectsRequest, opts ...grpc.CallOption) (*ListManagedObjectsResponse, error)
 }
 
-type repositoryIndexClient struct {
+type managedObjectIndexClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewRepositoryIndexClient(cc grpc.ClientConnInterface) RepositoryIndexClient {
-	return &repositoryIndexClient{cc}
+func NewManagedObjectIndexClient(cc grpc.ClientConnInterface) ManagedObjectIndexClient {
+	return &managedObjectIndexClient{cc}
 }
 
-func (c *repositoryIndexClient) CountRepositoryObjects(ctx context.Context, in *CountRepositoryObjectsRequest, opts ...grpc.CallOption) (*CountRepositoryObjectsResponse, error) {
+func (c *managedObjectIndexClient) CountManagedObjects(ctx context.Context, in *CountManagedObjectsRequest, opts ...grpc.CallOption) (*CountManagedObjectsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CountRepositoryObjectsResponse)
-	err := c.cc.Invoke(ctx, RepositoryIndex_CountRepositoryObjects_FullMethodName, in, out, cOpts...)
+	out := new(CountManagedObjectsResponse)
+	err := c.cc.Invoke(ctx, ManagedObjectIndex_CountManagedObjects_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *repositoryIndexClient) ListRepositoryObjects(ctx context.Context, in *ListRepositoryObjectsRequest, opts ...grpc.CallOption) (*ListRepositoryObjectsResponse, error) {
+func (c *managedObjectIndexClient) ListManagedObjects(ctx context.Context, in *ListManagedObjectsRequest, opts ...grpc.CallOption) (*ListManagedObjectsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListRepositoryObjectsResponse)
-	err := c.cc.Invoke(ctx, RepositoryIndex_ListRepositoryObjects_FullMethodName, in, out, cOpts...)
+	out := new(ListManagedObjectsResponse)
+	err := c.cc.Invoke(ctx, ManagedObjectIndex_ListManagedObjects_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// RepositoryIndexServer is the server API for RepositoryIndex service.
-// All implementations should embed UnimplementedRepositoryIndexServer
+// ManagedObjectIndexServer is the server API for ManagedObjectIndex service.
+// All implementations should embed UnimplementedManagedObjectIndexServer
 // for forward compatibility
 //
-// Query repository info from the search index.
+// Query managed objects
 // Results access control is based on access to the repository *not* the items
-type RepositoryIndexServer interface {
+type ManagedObjectIndexServer interface {
 	// Describe how many resources of each type exist within a repository
-	CountRepositoryObjects(context.Context, *CountRepositoryObjectsRequest) (*CountRepositoryObjectsResponse, error)
+	CountManagedObjects(context.Context, *CountManagedObjectsRequest) (*CountManagedObjectsResponse, error)
 	// List the resources of a specific kind within a repository
-	ListRepositoryObjects(context.Context, *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error)
+	ListManagedObjects(context.Context, *ListManagedObjectsRequest) (*ListManagedObjectsResponse, error)
 }
 
-// UnimplementedRepositoryIndexServer should be embedded to have forward compatible implementations.
-type UnimplementedRepositoryIndexServer struct {
+// UnimplementedManagedObjectIndexServer should be embedded to have forward compatible implementations.
+type UnimplementedManagedObjectIndexServer struct {
 }
 
-func (UnimplementedRepositoryIndexServer) CountRepositoryObjects(context.Context, *CountRepositoryObjectsRequest) (*CountRepositoryObjectsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CountRepositoryObjects not implemented")
+func (UnimplementedManagedObjectIndexServer) CountManagedObjects(context.Context, *CountManagedObjectsRequest) (*CountManagedObjectsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CountManagedObjects not implemented")
 }
-func (UnimplementedRepositoryIndexServer) ListRepositoryObjects(context.Context, *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListRepositoryObjects not implemented")
+func (UnimplementedManagedObjectIndexServer) ListManagedObjects(context.Context, *ListManagedObjectsRequest) (*ListManagedObjectsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListManagedObjects not implemented")
 }
 
-// UnsafeRepositoryIndexServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to RepositoryIndexServer will
+// UnsafeManagedObjectIndexServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ManagedObjectIndexServer will
 // result in compilation errors.
-type UnsafeRepositoryIndexServer interface {
-	mustEmbedUnimplementedRepositoryIndexServer()
+type UnsafeManagedObjectIndexServer interface {
+	mustEmbedUnimplementedManagedObjectIndexServer()
 }
 
-func RegisterRepositoryIndexServer(s grpc.ServiceRegistrar, srv RepositoryIndexServer) {
-	s.RegisterService(&RepositoryIndex_ServiceDesc, srv)
+func RegisterManagedObjectIndexServer(s grpc.ServiceRegistrar, srv ManagedObjectIndexServer) {
+	s.RegisterService(&ManagedObjectIndex_ServiceDesc, srv)
 }
 
-func _RepositoryIndex_CountRepositoryObjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CountRepositoryObjectsRequest)
+func _ManagedObjectIndex_CountManagedObjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CountManagedObjectsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RepositoryIndexServer).CountRepositoryObjects(ctx, in)
+		return srv.(ManagedObjectIndexServer).CountManagedObjects(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RepositoryIndex_CountRepositoryObjects_FullMethodName,
+		FullMethod: ManagedObjectIndex_CountManagedObjects_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RepositoryIndexServer).CountRepositoryObjects(ctx, req.(*CountRepositoryObjectsRequest))
+		return srv.(ManagedObjectIndexServer).CountManagedObjects(ctx, req.(*CountManagedObjectsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _RepositoryIndex_ListRepositoryObjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListRepositoryObjectsRequest)
+func _ManagedObjectIndex_ListManagedObjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListManagedObjectsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RepositoryIndexServer).ListRepositoryObjects(ctx, in)
+		return srv.(ManagedObjectIndexServer).ListManagedObjects(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RepositoryIndex_ListRepositoryObjects_FullMethodName,
+		FullMethod: ManagedObjectIndex_ListManagedObjects_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RepositoryIndexServer).ListRepositoryObjects(ctx, req.(*ListRepositoryObjectsRequest))
+		return srv.(ManagedObjectIndexServer).ListManagedObjects(ctx, req.(*ListManagedObjectsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// RepositoryIndex_ServiceDesc is the grpc.ServiceDesc for RepositoryIndex service.
+// ManagedObjectIndex_ServiceDesc is the grpc.ServiceDesc for ManagedObjectIndex service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var RepositoryIndex_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "resource.RepositoryIndex",
-	HandlerType: (*RepositoryIndexServer)(nil),
+var ManagedObjectIndex_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "resource.ManagedObjectIndex",
+	HandlerType: (*ManagedObjectIndexServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "CountRepositoryObjects",
-			Handler:    _RepositoryIndex_CountRepositoryObjects_Handler,
+			MethodName: "CountManagedObjects",
+			Handler:    _ManagedObjectIndex_CountManagedObjects_Handler,
 		},
 		{
-			MethodName: "ListRepositoryObjects",
-			Handler:    _RepositoryIndex_ListRepositoryObjects_Handler,
+			MethodName: "ListManagedObjects",
+			Handler:    _ManagedObjectIndex_ListManagedObjects_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -24,7 +24,7 @@ import (
 type ResourceClient interface {
 	ResourceStoreClient
 	ResourceIndexClient
-	RepositoryIndexClient
+	ManagedObjectIndexClient
 	BulkStoreClient
 	BlobStoreClient
 	DiagnosticsClient
@@ -34,7 +34,7 @@ type ResourceClient interface {
 type resourceClient struct {
 	ResourceStoreClient
 	ResourceIndexClient
-	RepositoryIndexClient
+	ManagedObjectIndexClient
 	BulkStoreClient
 	BlobStoreClient
 	DiagnosticsClient
@@ -43,12 +43,12 @@ type resourceClient struct {
 func NewLegacyResourceClient(channel *grpc.ClientConn) ResourceClient {
 	cc := grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
 	return &resourceClient{
-		ResourceStoreClient:   NewResourceStoreClient(cc),
-		ResourceIndexClient:   NewResourceIndexClient(cc),
-		RepositoryIndexClient: NewRepositoryIndexClient(cc),
-		BulkStoreClient:       NewBulkStoreClient(cc),
-		BlobStoreClient:       NewBlobStoreClient(cc),
-		DiagnosticsClient:     NewDiagnosticsClient(cc),
+		ResourceStoreClient:      NewResourceStoreClient(cc),
+		ResourceIndexClient:      NewResourceIndexClient(cc),
+		ManagedObjectIndexClient: NewManagedObjectIndexClient(cc),
+		BulkStoreClient:          NewBulkStoreClient(cc),
+		BlobStoreClient:          NewBlobStoreClient(cc),
+		DiagnosticsClient:        NewDiagnosticsClient(cc),
 	}
 }
 
@@ -60,7 +60,7 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	for _, desc := range []*grpc.ServiceDesc{
 		&ResourceStore_ServiceDesc,
 		&ResourceIndex_ServiceDesc,
-		&RepositoryIndex_ServiceDesc,
+		&ManagedObjectIndex_ServiceDesc,
 		&BlobStore_ServiceDesc,
 		&BulkStore_ServiceDesc,
 		&Diagnostics_ServiceDesc,
@@ -82,12 +82,12 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 
 	cc := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 	return &resourceClient{
-		ResourceStoreClient:   NewResourceStoreClient(cc),
-		ResourceIndexClient:   NewResourceIndexClient(cc),
-		RepositoryIndexClient: NewRepositoryIndexClient(cc),
-		BulkStoreClient:       NewBulkStoreClient(cc),
-		BlobStoreClient:       NewBlobStoreClient(cc),
-		DiagnosticsClient:     NewDiagnosticsClient(cc),
+		ResourceStoreClient:      NewResourceStoreClient(cc),
+		ResourceIndexClient:      NewResourceIndexClient(cc),
+		ManagedObjectIndexClient: NewManagedObjectIndexClient(cc),
+		BulkStoreClient:          NewBulkStoreClient(cc),
+		BlobStoreClient:          NewBlobStoreClient(cc),
+		DiagnosticsClient:        NewDiagnosticsClient(cc),
 	}
 }
 
@@ -124,12 +124,12 @@ func NewRemoteResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg R
 
 	cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 	return &resourceClient{
-		ResourceStoreClient:   NewResourceStoreClient(cc),
-		ResourceIndexClient:   NewResourceIndexClient(cc),
-		BlobStoreClient:       NewBlobStoreClient(cc),
-		BulkStoreClient:       NewBulkStoreClient(cc),
-		RepositoryIndexClient: NewRepositoryIndexClient(cc),
-		DiagnosticsClient:     NewDiagnosticsClient(cc),
+		ResourceStoreClient:      NewResourceStoreClient(cc),
+		ResourceIndexClient:      NewResourceIndexClient(cc),
+		BlobStoreClient:          NewBlobStoreClient(cc),
+		BulkStoreClient:          NewBulkStoreClient(cc),
+		ManagedObjectIndexClient: NewManagedObjectIndexClient(cc),
+		DiagnosticsClient:        NewDiagnosticsClient(cc),
 	}, nil
 }
 

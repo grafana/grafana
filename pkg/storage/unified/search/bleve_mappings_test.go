@@ -36,6 +36,7 @@ func TestDocumentMapping(t *testing.T) {
 			TimestampMillis: 1234,
 		},
 	}
+	data.UpdateCopyFields()
 
 	doc := document.NewDocument("id")
 	err = mappings.MapDocument(doc, data)
@@ -47,5 +48,5 @@ func TestDocumentMapping(t *testing.T) {
 
 	fmt.Printf("DOC: fields %d\n", len(doc.Fields))
 	fmt.Printf("DOC: size %d\n", doc.Size())
-	require.Equal(t, 15, len(doc.Fields))
+	require.Equal(t, 16, len(doc.Fields))
 }

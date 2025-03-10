@@ -107,8 +107,20 @@ type IndexableDocument struct {
 	// When the resource is managed by an upstream repository
 	Manager *utils.ManagerProperties `json:"manager,omitempty"`
 
+	// indexed only field for faceting manager info
+	ManagedBy string `json:"managedBy,omitempty"`
+
 	// When the manager knows about file paths
 	Source *utils.SourceProperties `json:"source,omitempty"`
+}
+
+func (m *IndexableDocument) UpdateCopyFields() *IndexableDocument {
+	m.TitleNgram = m.Title
+	m.TitlePhrase = strings.ToLower(m.Title) // Lowercase for case-insensitive sorting ?? in the analyzer?
+	if m.Manager != nil {
+		m.ManagedBy = fmt.Sprintf("%s:%s", m.Manager.Kind, m.Manager.Identity)
+	}
+	return m
 }
 
 func (m *IndexableDocument) Type() string {
@@ -169,20 +181,19 @@ func NewIndexableDocument(key *ResourceKey, rv int64, obj utils.GrafanaMetaAcces
 		}
 	}
 	doc := &IndexableDocument{
-		Key:         key,
-		RV:          rv,
-		Name:        key.Name,
-		Title:       title, // We always want *something* to display
-		TitleNgram:  title,
-		TitlePhrase: strings.ToLower(title), // Lowercase for case-insensitive sorting
-		Labels:      obj.GetLabels(),
-		Folder:      obj.GetFolder(),
-		CreatedBy:   obj.GetCreatedBy(),
-		UpdatedBy:   obj.GetUpdatedBy(),
+		Key:       key,
+		RV:        rv,
+		Name:      key.Name,
+		Title:     title, // We always want *something* to display
+		Labels:    obj.GetLabels(),
+		Folder:    obj.GetFolder(),
+		CreatedBy: obj.GetCreatedBy(),
+		UpdatedBy: obj.GetUpdatedBy(),
 	}
 	m, ok := obj.GetManagerProperties()
 	if ok {
 		doc.Manager = &m
+		doc.ManagedBy = fmt.Sprintf("%s:%s", m.Kind, m.Identity)
 	}
 	s, ok := obj.GetSourceProperties()
 	if ok {
@@ -196,7 +207,7 @@ func NewIndexableDocument(key *ResourceKey, rv int64, obj utils.GrafanaMetaAcces
 	if err != nil && tt != nil {
 		doc.Updated = tt.UnixMilli()
 	}
-	return doc
+	return doc.UpdateCopyFields()
 }
 
 func StandardDocumentBuilder() DocumentBuilder {
@@ -280,6 +291,7 @@ const SEARCH_FIELD_CREATED_BY = "createdBy"
 const SEARCH_FIELD_UPDATED = "updated"
 const SEARCH_FIELD_UPDATED_BY = "updatedBy"
 
+const SEARCH_FIELD_MANAGED_BY = "managedBy" // {kind}:{id}
 const SEARCH_FIELD_MANAGER_KIND = "manager.kind"
 const SEARCH_FIELD_MANAGER_ID = "manager.id"
 const SEARCH_FIELD_SOURCE_PATH = "source.path"
