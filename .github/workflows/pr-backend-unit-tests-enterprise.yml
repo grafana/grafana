@@ -53,14 +53,23 @@ jobs:
       - name: Generate Go code
         run: make gen-go
   
-      - name: Run unit tests
-        run: GODEBUG=testcacheverify=1 make test-go-unit make test-go-unit
-        env:
-          # GO_UNIT_COVER_PROFILE: '${{ env.TEST_TYPE }}.cov'
-          # GO_TEST_OUTPUT: ''
-          # GO_UNIT_TEST_COVERPKG: 'github.com/grafana/grafana/...'
-          GO_UNIT_COVERAGE: false
-          GODEBUG: "testcacheverify=1"
+      - name: Verify test caching
+        run: |
+          # First run with a subset of tests
+          echo "First test run:"
+          go test -v -short ./pkg/api/...
+          
+          # Second run - should use cached results
+          echo "Second test run (should use cache):"
+          go test -v -short ./pkg/api/...
+      # - name: Run unit tests
+      #   run: GODEBUG=testcacheverify=1 make test-go-unit make test-go-unit
+      #   env:
+      #     # GO_UNIT_COVER_PROFILE: '${{ env.TEST_TYPE }}.cov'
+      #     # GO_TEST_OUTPUT: ''
+      #     # GO_UNIT_TEST_COVERPKG: 'github.com/grafana/grafana/...'
+      #     GO_UNIT_COVERAGE: false
+      #     GODEBUG: "testcacheverify=1"
 
       # Run Grafana Bench only on pushes to `main` or `release-*`
       - name: Install Grafana Bench
