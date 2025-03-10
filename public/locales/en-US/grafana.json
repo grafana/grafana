@@ -184,7 +184,8 @@
       "rule-identifier": "Rule identifier",
       "rule-type": "Rule type",
       "state-error-timeout": "Alert state if execution error or timeout",
-      "state-no-data": "Alert state if no data or all values are null"
+      "state-no-data": "Alert state if no data or all values are null",
+      "target-datasource-uid": "Target data source"
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -503,6 +504,10 @@
       },
       "preview": "Preview",
       "previewCondition": "Preview alert rule condition"
+    },
+    "recording-rules": {
+      "description-target-data-source": "The Prometheus data source to store the recording rule in",
+      "label-target-data-source": "Target data source"
     },
     "rule-form": {
       "evaluation": {
@@ -1068,23 +1073,18 @@
       "elements": {
         "dashboard": "Dashboard",
         "objects": "Objects",
+        "panel": "Panel",
         "panels": "Panels",
+        "row": "Row",
         "rows": "Rows",
+        "tab": "Tab",
         "tabs": "Tabs"
-      },
-      "objects": {
-        "multi-select": {
-          "selection-number": "No. of objects selected: {{length}}"
-        }
       },
       "open": "Open options pane",
       "row": {
         "header": {
           "hide": "Hide",
           "title": "Row header"
-        },
-        "multi-select": {
-          "title": "{{length}} rows selected"
         }
       }
     },
@@ -1165,13 +1165,11 @@
         "copy-or-duplicate": "Copy or Duplicate",
         "delete": "Delete",
         "duplicate": "Duplicate",
-        "layout": "Layout",
-        "panels-title": "{{length}} panels selected"
+        "layout": "Layout"
       }
     },
     "options": {
       "description": "Description",
-      "title": "Dashboard options",
       "title-option": "Title"
     },
     "outline": {
@@ -1214,7 +1212,6 @@
     },
     "rows-layout": {
       "description": "Rows layout",
-      "item-name": "Row",
       "name": "Rows",
       "option": {
         "height": "Height",
@@ -1253,9 +1250,6 @@
       "menu": {
         "move-tab": "Move tab"
       },
-      "multi-select": {
-        "title": "{{length}} tabs selected"
-      },
       "name": "Tabs",
       "tab": {
         "menu": {
@@ -1270,7 +1264,6 @@
         "new": "New tab"
       },
       "tab-options": {
-        "title": "Tab",
         "title-option": "Title"
       }
     },
@@ -1345,9 +1338,8 @@
     "viz-panel": {
       "options": {
         "description": "Description",
-        "open-edit": "Open Panel Edit",
+        "open-edit": "Open panel editor",
         "plugin-type-image": "Image of plugin type",
-        "title": "Panel",
         "title-option": "Title",
         "transparent-background": "Transparent background"
       }
