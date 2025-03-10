@@ -32,7 +32,7 @@ type Props = {
   generateName?: boolean;
 };
 
-export function ConnectionStep({ targetSelectable = true, generateName: generateName = false }: Props) {
+export function ConnectionStep({ targetSelectable = true, generateName = false }: Props) {
   const {
     register,
     control,
