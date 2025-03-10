@@ -19,13 +19,15 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-      - run: go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)
+      - run: |
+          make gen-go
+          go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
   mysql:
     name: MySQL
     runs-on: ubuntu-latest
     env:
       GRAFANA_TEST_DB: mysql
-      MYSQL_HOST: mysql
+      MYSQL_HOST: 127.0.0.1
     services:
       mysql:
         image: mysql:8.0.32
@@ -34,7 +36,7 @@ jobs:
           MYSQL_DATABASE: grafana_tests
           MYSQL_USER: grafana
           MYSQL_PASSWORD: password
-        options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=3"
+        options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=3
         ports:
           - 3306:3306
     steps:
@@ -45,10 +47,12 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-      - run: sudo apt-get update -yq && sudo apt-get install mariadb-client
-      - run: cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h mysql -P 3306 -u root -prootpass --disable-ssl-verify-server-cert
-      - run: go clean -testcache
-      - run: go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)
+      - run: |
+          sudo apt-get update -yq && sudo apt-get install mariadb-client
+          cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h 127.0.0.1 -P 3306 -u root -prootpass --disable-ssl-verify-server-cert
+          go clean -testcache
+          make gen-go
+          go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
   postgres:
     name: Postgres
     runs-on: ubuntu-latest
@@ -59,6 +63,8 @@ jobs:
           POSTGRES_USER: grafanatest
           POSTGRES_PASSWORD: grafanatest
           POSTGRES_DB: grafanatest
+        ports:
+          - 5432:5432
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -70,9 +76,10 @@ jobs:
       - env:
           GRAFANA_TEST_DB: postgres
           PGPASSWORD: grafanatest
-          POSTGRES_HOST: postgres
+          POSTGRES_HOST: 127.0.0.1
         run: |
           sudo apt-get update -yq && sudo apt-get install postgresql-client
-          psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+          psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
           go clean -testcache
-          go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)
+          make gen-go
+          go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
