@@ -131,9 +131,7 @@ const getRadioButtonStyles = (theme: GrafanaTheme2, size: RadioButtonSize, fullW
       lineHeight: `${labelHeight}px`,
       color: textColor,
       padding: theme.spacing(0, padding),
-      borderRadius: getInternalRadius(theme, {
-        offset: RADIO_GROUP_PADDING,
-      }),
+      borderRadius: getInternalRadius(theme, RADIO_GROUP_PADDING),
       background: theme.colors.background.primary,
       cursor: 'pointer',
       userSelect: 'none',

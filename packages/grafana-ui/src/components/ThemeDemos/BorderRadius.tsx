@@ -68,8 +68,7 @@ const getStyles = (
   internalContainer: css({
     backgroundColor: theme.colors.background.primary,
     border: `${borderWidth}px solid ${theme.colors.primary.main}`,
-    borderRadius: getInternalRadius(theme, {
-      offset,
+    borderRadius: getInternalRadius(theme, offset, {
       parentBorderRadius: referenceBorderRadius,
       parentBorderWidth: referenceBorderWidth,
     }),
@@ -77,8 +76,7 @@ const getStyles = (
   }),
   externalContainer: css({
     border: `${borderWidth}px solid ${theme.colors.primary.main}`,
-    borderRadius: getExternalRadius(theme, {
-      offset,
+    borderRadius: getExternalRadius(theme, offset, {
       childBorderRadius: referenceBorderRadius,
       selfBorderWidth: borderWidth,
     }),
