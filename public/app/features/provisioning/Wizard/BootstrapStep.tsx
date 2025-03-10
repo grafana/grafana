@@ -110,41 +110,42 @@ export function BootstrapStep({ onOptionSelect }: Props) {
     fetchCounts();
   }, []);
 
-  const isOptionDisabled = (option: ModeOption) => {
-    // If this is the selected option, it's not disabled
-    if (selectedOption?.value === option.value && selectedOption?.operation === option.operation) {
-      return false;
-    }
-    // Disable pull instance option if using legacy storage
-    if (option.value === 'instance' && option.operation === 'pull' && settingsQuery.data?.legacyStorage) {
-      return true;
-    }
-    // Disable pull instance option if there are existing dashboards or folders
-    if (option.value === 'instance' && option.operation === 'pull' && (dashboardCount > 0 || folderCount > 0)) {
-      return true;
-    }
-
-    // Disable migrate option if there are existing files
-    if (option.operation === 'migrate' && fileCount > 0) {
-      return true;
-    }
-    // Otherwise, check if there's another connection of the same type
-    return (
-      (option.value === 'instance' && otherInstanceConnected) || (option.value === 'folder' && otherFolderConnected)
-    );
-  };
-
-  // Get available options
+  // Get available options and disabled state logic
   const availableOptions = useMemo(() => {
+    const isOptionDisabled = (option: ModeOption) => {
+      // If this is the selected option, it's not disabled
+      if (selectedOption?.value === option.value && selectedOption?.operation === option.operation) {
+        return false;
+      }
+      // Disable pull instance option if using legacy storage
+      if (option.value === 'instance' && option.operation === 'pull' && settingsQuery.data?.legacyStorage) {
+        return true;
+      }
+      // Disable pull instance option if there are existing dashboards or folders
+      if (option.value === 'instance' && option.operation === 'pull' && (dashboardCount > 0 || folderCount > 0)) {
+        return true;
+      }
+
+      // Disable migrate option if there are existing files
+      if (option.operation === 'migrate' && fileCount > 0) {
+        return true;
+      }
+      // Otherwise, check if there's another connection of the same type
+      return (
+        (option.value === 'instance' && otherInstanceConnected) || (option.value === 'folder' && otherFolderConnected)
+      );
+    };
+
     return modeOptions.filter((option) => !isOptionDisabled(option));
   }, [
+    selectedOption,
+    settingsQuery.data?.legacyStorage,
     dashboardCount,
     folderCount,
     fileCount,
     otherInstanceConnected,
     otherFolderConnected,
-    settingsQuery.data?.legacyStorage,
-  ]); // eslint-disable-line react-hooks/exhaustive-deps
+  ]);
 
   // Select first available option by default
   useEffect(() => {
@@ -212,22 +213,22 @@ export function BootstrapStep({ onOptionSelect }: Props) {
               your existing files before migrating.
             </Alert>
           )}
-          <Box alignItems="center">
+          <Box alignItems="center" padding={4}>
             <Stack direction="row" gap={4} alignItems="flex-start" justifyContent="center">
               <Stack direction="column" gap={1} alignItems="center">
-                <Text variant="bodySmall" color="secondary">
+                <Text variant="h4" color="secondary">
                   Grafana
                 </Text>
                 <Stack direction="row" gap={2}>
-                  <Text>{dashboardCount} dashboards</Text>
-                  <Text>{folderCount} folders</Text>
+                  <Text variant="h3">{dashboardCount} dashboards</Text>
+                  <Text variant="h3">{folderCount} folders</Text>
                 </Stack>
               </Stack>
               <Stack direction="column" gap={1} alignItems="center">
-                <Text variant="bodySmall" color="secondary">
+                <Text variant="h4" color="secondary">
                   Repository
                 </Text>
-                <Text>{fileCount} files</Text>
+                <Text variant="h3">{fileCount} files</Text>
               </Stack>
             </Stack>
           </Box>
