@@ -183,6 +183,7 @@ export const SilencesEditor = ({ silence, alertManagerSourceName }: Props) => {
 
   const userLogged = Boolean(config.bootData.user.isSignedIn && config.bootData.user.name);
 
+// LOGZ.IO CHANGES :: DEV-48338 , line 242
   return (
     <FormProvider {...formAPI}>
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -238,7 +239,7 @@ export const SilencesEditor = ({ silence, alertManagerSourceName }: Props) => {
               />
             </Field>
           )}
-          <SilencedInstancesPreview amSourceName={alertManagerSourceName} matchers={matchersForPreview} />
+          <SilencedInstancesPreview amSourceName={alertManagerSourceName} matchers={matcherFields} />
         </FieldSet>
         <div className={styles.flexRow}>
           {loading && (
