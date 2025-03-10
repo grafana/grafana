@@ -15,6 +15,12 @@ labels:
 menuTitle: Jira Service Management
 title: Configure Jira Service Management for Alerting
 weight: 121
+refs:
+  configure-contact-points:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/
 ---
 
 # Configure Jira Service Management for Alerting
