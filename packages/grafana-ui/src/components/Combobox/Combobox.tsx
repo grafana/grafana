@@ -56,6 +56,8 @@ export interface ComboboxBaseProps<T extends string | number>
    * */
   width?: number | 'auto';
 
+  ['data-testid']?: string;
+
   /**
    * Called when the input loses focus.
    */
@@ -119,6 +121,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     minWidth,
     maxWidth,
     'aria-labelledby': ariaLabelledBy,
+    'data-testid': dataTestId,
     autoFocus,
     onBlur,
     disabled,
@@ -326,6 +329,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
           onChange: noop,
           'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
           placeholder,
+          'data-testid': dataTestId,
         })}
       />
       <Portal>
