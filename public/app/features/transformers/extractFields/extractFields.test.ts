@@ -197,6 +197,58 @@ describe('Fields from JSON', () => {
     `);
   });
 
+  it('Will still pass along simple values', () => {
+    const testFieldJSONWithNumber: Field = {
+      config: {},
+      name: 'JSON',
+      type: FieldType.frame,
+      values: [
+        JSON.stringify({
+          value: 6,
+        }),
+        0,
+        true,
+        JSON.stringify({
+          badPath: 23,
+        }),
+      ],
+    };
+
+    const testDataFrameWithNumber: DataFrame = {
+      fields: [testFieldTime, testFieldJSONWithNumber],
+      length: 4,
+    };
+
+    const cfg: ExtractFieldsOptions = {
+      replace: true,
+      source: 'JSON',
+      format: FieldExtractorID.JSON,
+      jsonPaths: [{ path: 'value' }],
+    };
+    const ctx = { interpolate: (v: string) => v };
+
+    const frames = extractFieldsTransformer.transformer(cfg, ctx)([testDataFrameWithNumber]);
+    expect(frames.length).toEqual(1);
+    expect(frames[0]).toMatchInlineSnapshot(`
+      {
+        "fields": [
+          {
+            "config": {},
+            "name": "value",
+            "type": "number",
+            "values": [
+              6,
+              0,
+              true,
+              "Not Found",
+            ],
+          },
+        ],
+        "length": 4,
+      }
+    `);
+  });
+
   it('skips null values', async () => {
     const cfg: ExtractFieldsOptions = {
       source: 'line',
