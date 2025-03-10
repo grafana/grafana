@@ -48,6 +48,8 @@ type TempoQuery struct {
 	// Defines the maximum number of spans per spanset that are returned from Tempo
 	Spss    *int64          `json:"spss,omitempty"`
 	Filters []TraceqlFilter `json:"filters"`
+	// deprecated Filters that are used to query the metrics summary
+	GroupBy []TraceqlFilter `json:"groupBy,omitempty"`
 	// The type of the table that is used to display the search results
 	TableType *SearchTableType `json:"tableType,omitempty"`
 	// For metric queries, the step size to use

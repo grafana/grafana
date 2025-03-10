@@ -47,6 +47,8 @@ composableKinds: DataQuery: {
 					// Defines the maximum number of spans per spanset that are returned from Tempo
 					spss?: int64
 					filters: [...#TraceqlFilter]
+					// deprecated Filters that are used to query the metrics summary	
+					groupBy?: [...#TraceqlFilter]
 					// The type of the table that is used to display the search results
 					tableType?: #SearchTableType
 					// For metric queries, the step size to use
