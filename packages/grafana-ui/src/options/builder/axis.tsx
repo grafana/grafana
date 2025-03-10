@@ -7,11 +7,11 @@ import {
 } from '@grafana/data';
 import { AxisColorMode, AxisConfig, AxisPlacement, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
 
+import { Combobox } from '../../components/Combobox/Combobox';
 import { Field } from '../../components/Forms/Field';
 import { RadioButtonGroup } from '../../components/Forms/RadioButtonGroup/RadioButtonGroup';
 import { Input } from '../../components/Input/Input';
 import { Stack } from '../../components/Layout/Stack/Stack';
-import { Select } from '../../components/Select/Select';
 import { graphFieldOptions } from '../../components/uPlot/config';
 
 const category = ['Axis'];
@@ -130,7 +130,7 @@ const DISTRIBUTION_OPTIONS: Array<SelectableValue<ScaleDistribution>> = [
   },
 ];
 
-const LOG_DISTRIBUTION_OPTIONS: Array<SelectableValue<number>> = [
+const LOG_DISTRIBUTION_OPTIONS: Array<Required<Pick<SelectableValue<number>, 'label' | 'value'>>> = [
   {
     label: '2',
     value: 2,
@@ -163,7 +163,7 @@ export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps
       />
       {(type === ScaleDistribution.Log || type === ScaleDistribution.Symlog) && (
         <Field label="Log base">
-          <Select
+          <Combobox
             options={LOG_DISTRIBUTION_OPTIONS}
             value={log}
             onChange={(v) => {
