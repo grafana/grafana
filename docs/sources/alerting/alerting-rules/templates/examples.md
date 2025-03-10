@@ -209,9 +209,7 @@ In this example, the `severity` label is determined by the query value:
 
 You can then use the `severity` label to control how alerts are handled. For instance, you could send `critical` alerts immediately, while routing `low` severity alerts to a team for further investigation.
 
-{{% admonition type="note" %}}
-You should avoid displaying query values in labels, as this may create many alert instances—one for each distinct label value. Instead, use annotations to convey query values.
-{{% /admonition %}}
+{{< docs/shared lookup="alerts/note-dynamic-labels.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### Based on query label
 
