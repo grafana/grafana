@@ -783,7 +783,7 @@ func (cfg *Cfg) readAnnotationSettings() error {
 func (cfg *Cfg) readExpressionsSettings() {
 	expressions := cfg.Raw.Section("expressions")
 	cfg.ExpressionsEnabled = expressions.Key("enabled").MustBool(true)
-	cfg.SQLExpressionRowLimit = expressions.Key("sql_expression_row_limit").MustInt64(100000)
+	cfg.SQLExpressionRowLimit = expressions.Key("sql_expression_row_limit").MustInt64(20000)
 }
 
 type AnnotationCleanupSettings struct {
