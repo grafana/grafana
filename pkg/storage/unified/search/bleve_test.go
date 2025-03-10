@@ -263,8 +263,9 @@ func TestBleveBackend(t *testing.T) {
 		require.Equal(t, 0, len(rsp.Results.Rows))
 
 		// Now look for repositories
-		found, err := index.ListRepositoryObjects(ctx, &resource.ListRepositoryObjectsRequest{
-			Name: "repo-1",
+		found, err := index.ListManagedObjects(ctx, &resource.ListManagedObjectsRequest{
+			Kind: "repo",
+			Id:   "repo-1",
 		})
 		require.NoError(t, err)
 		jj, err := json.MarshalIndent(found, "", "  ")
@@ -302,7 +303,7 @@ func TestBleveBackend(t *testing.T) {
 			]
 		}`, string(jj))
 
-		counts, err := index.CountRepositoryObjects(ctx)
+		counts, err := index.CountManagedObjects(ctx)
 		require.NoError(t, err)
 		jj, err = json.MarshalIndent(counts, "", "  ")
 		require.NoError(t, err)

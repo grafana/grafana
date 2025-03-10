@@ -30,6 +30,7 @@ func TestDocumentMapping(t *testing.T) {
 			Kind:     utils.ManagerKindRepo,
 			Identity: "rrr",
 		},
+		ManagedBy: "x:y",
 		Source: &utils.SourceProperties{
 			Path:            "ppp",
 			Checksum:        "ooo",
@@ -47,5 +48,5 @@ func TestDocumentMapping(t *testing.T) {
 
 	fmt.Printf("DOC: fields %d\n", len(doc.Fields))
 	fmt.Printf("DOC: size %d\n", doc.Size())
-	require.Equal(t, 15, len(doc.Fields))
+	require.Equal(t, 16, len(doc.Fields))
 }

@@ -124,8 +124,17 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 	})
 	source.AddFieldMappingsAt("timestampMillis", mapping.NewNumericFieldMapping())
 
-	mapper.AddSubDocumentMapping("manager", manager)
 	mapper.AddSubDocumentMapping("source", source)
+	mapper.AddSubDocumentMapping("manager", manager)
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_MANAGED_BY, &mapping.FieldMapping{
+		Name:               "managedBy",
+		Type:               "text",
+		Analyzer:           keyword.Name,
+		Index:              true, // only used for faceting
+		Store:              false,
+		IncludeTermVectors: false,
+		IncludeInAll:       false,
+	})
 
 	labelMapper := bleve.NewDocumentMapping()
 	mapper.AddSubDocumentMapping(resource.SEARCH_FIELD_LABELS, labelMapper)

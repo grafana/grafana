@@ -107,6 +107,9 @@ type IndexableDocument struct {
 	// When the resource is managed by an upstream repository
 	Manager *utils.ManagerProperties `json:"manager,omitempty"`
 
+	// indexed only field for faceting manager info
+	ManagedBy string `json:"managedBy,omitempty"`
+
 	// When the manager knows about file paths
 	Source *utils.SourceProperties `json:"source,omitempty"`
 }
@@ -183,6 +186,7 @@ func NewIndexableDocument(key *ResourceKey, rv int64, obj utils.GrafanaMetaAcces
 	m, ok := obj.GetManagerProperties()
 	if ok {
 		doc.Manager = &m
+		doc.ManagedBy = fmt.Sprintf("%s:%s", m.Kind, m.Identity)
 	}
 	s, ok := obj.GetSourceProperties()
 	if ok {
@@ -280,6 +284,7 @@ const SEARCH_FIELD_CREATED_BY = "createdBy"
 const SEARCH_FIELD_UPDATED = "updated"
 const SEARCH_FIELD_UPDATED_BY = "updatedBy"
 
+const SEARCH_FIELD_MANAGED_BY = "managedBy" // {kind}:{id}
 const SEARCH_FIELD_MANAGER_KIND = "manager.kind"
 const SEARCH_FIELD_MANAGER_ID = "manager.id"
 const SEARCH_FIELD_SOURCE_PATH = "source.path"
