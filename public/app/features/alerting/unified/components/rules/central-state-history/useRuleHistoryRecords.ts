@@ -3,8 +3,6 @@ import { useMemo } from 'react';
 import { DataFrameJSON } from '@grafana/data';
 import { mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
-import { labelsMatchMatchers } from '../../../utils/alertmanager';
-import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
 import { LogRecord } from '../state-history/common';
 import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
 
@@ -29,13 +27,11 @@ export function useRuleHistoryRecords(stateHistory?: DataFrameJSON, filters = em
 }
 
 export function ruleHistoryToRecords(stateHistory?: DataFrameJSON, filters = emptyFilters) {
-  const { labels, stateFrom, stateTo } = filters;
+  const { stateFrom, stateTo } = filters;
 
   if (!stateHistory?.data) {
     return { historyRecords: [] };
   }
-
-  const filterMatchers = labels ? parsePromQLStyleMatcherLooseSafe(labels) : [];
 
   const [tsValues, lines] = stateHistory.data.values;
   const timestamps = isNumbers(tsValues) ? tsValues : [];
@@ -47,12 +43,11 @@ export function ruleHistoryToRecords(stateHistory?: DataFrameJSON, filters = emp
       return acc;
     }
     // values property can be undefined for some instance states (e.g. NoData)
-    const filterMatch = line.labels && labelsMatchMatchers(line.labels, filterMatchers);
     const baseStateTo = mapStateWithReasonToBaseState(line.current);
     const baseStateFrom = mapStateWithReasonToBaseState(line.previous);
     const stateToMatch = stateTo !== StateFilterValues.all ? stateTo === baseStateTo : true;
     const stateFromMatch = stateFrom !== StateFilterValues.all ? stateFrom === baseStateFrom : true;
-    if (filterMatch && stateToMatch && stateFromMatch) {
+    if (stateToMatch && stateFromMatch) {
       acc.push({ timestamp, line });
     }
 
