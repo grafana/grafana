@@ -1,27 +1,19 @@
 import { css } from '@emotion/css';
 import { Fragment, ReactNode, useMemo } from 'react';
 
-import { dateTime, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Divider, Dropdown, Field, Menu, RadioButtonGroup, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { ConditionHeader } from './ConditionHeader';
-import { ConditionalRenderingAfter } from './ConditionalRenderingAfter';
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
-import { ConditionalRenderingBefore } from './ConditionalRenderingBefore';
 import { ConditionalRenderingData } from './ConditionalRenderingData';
+import { ConditionalRenderingInterval } from './ConditionalRenderingInterval';
 import { ConditionalRenderingVariable } from './ConditionalRenderingVariable';
+import { ConditionsRenderingConditions } from './shared';
 
-type Value = Array<
-  | ConditionalRenderingData
-  | ConditionalRenderingAfter
-  | ConditionalRenderingBefore
-  | ConditionalRenderingVariable
-  | ConditionalRenderingGroup
->;
-
-export interface ConditionalRenderingGroupState extends ConditionalRenderingBaseState<Value> {
+export interface ConditionalRenderingGroupState extends ConditionalRenderingBaseState<ConditionsRenderingConditions[]> {
   condition: 'and' | 'or';
 }
 
@@ -50,14 +42,7 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
     this.setStateAndNotify({ condition });
   }
 
-  public addItem(
-    item:
-      | ConditionalRenderingData
-      | ConditionalRenderingAfter
-      | ConditionalRenderingBefore
-      | ConditionalRenderingVariable
-      | ConditionalRenderingGroup
-  ) {
+  public addItem(item: ConditionsRenderingConditions) {
     this.changeValue([...this.state.value, item]);
   }
 
@@ -128,12 +113,8 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
                 onClick={() => model.addItem(new ConditionalRenderingData({ value: true }))}
               />
               <Menu.Item
-                label={t('dashboard.conditional-rendering.group.add.from', 'From')}
-                onClick={() => model.addItem(new ConditionalRenderingAfter({ value: dateTime() }))}
-              />
-              <Menu.Item
-                label={t('dashboard.conditional-rendering.group.add.to', 'To')}
-                onClick={() => model.addItem(new ConditionalRenderingBefore({ value: dateTime() }))}
+                label={t('dashboard.conditional-rendering.group.add.interval', 'Interval')}
+                onClick={() => model.addItem(new ConditionalRenderingInterval({ value: '7d' }))}
               />
               <Menu.Item
                 label={t('dashboard.conditional-rendering.group.add.variable', 'Variable value')}
@@ -141,24 +122,6 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
                   model.addItem(new ConditionalRenderingVariable({ value: { name: '', operator: '=', value: '' } }))
                 }
               />
-              {/* <Menu.Item
-                label={t('dashboard.conditional-rendering.group.add.between', 'Between')}
-                onClick={() =>
-                  model.addItem(
-                    new ConditionalRenderingGroup({
-                      condition: 'and',
-                      value: [
-                        new ConditionalRenderingAfter({ value: dateTime() }),
-                        new ConditionalRenderingBefore({ value: dateTime() }),
-                      ],
-                    })
-                  )
-                }
-              />
-              <Menu.Item
-                label={t('dashboard.conditional-rendering.group.add.group', 'Group')}
-                onClick={() => model.addItem(ConditionalRenderingGroup.createEmpty())}
-              /> */}
             </Menu>
           }
         >

@@ -1024,8 +1024,7 @@
         "add": {
           "button": "Add condition based on",
           "data": "Data",
-          "from": "From",
-          "to": "To",
+          "interval": "Interval",
           "variable": "Variable value"
         },
         "condition": {
@@ -1035,11 +1034,13 @@
         },
         "label": "Group"
       },
+      "interval": {
+        "input-label": "Value",
+        "invalid-message": "Invalid interval",
+        "label": "Time range interval"
+      },
       "shared": {
         "delete-condition": "Delete Condition"
-      },
-      "time-range": {
-        "label": "Time range"
       },
       "title": "Conditional rendering options",
       "variable": {

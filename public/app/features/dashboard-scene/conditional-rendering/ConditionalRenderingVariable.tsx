@@ -24,7 +24,6 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
     return t('dashboard.conditional-rendering.variable.label', 'Variable');
   }
 
-  // TODO: Implement evaluate method
   public evaluate(): boolean {
     if (!this.state.value.name) {
       return true;

@@ -1024,8 +1024,7 @@
         "add": {
           "button": "Åđđ čőŉđįŧįőŉ þäşęđ őŉ",
           "data": "Đäŧä",
-          "from": "Fřőm",
-          "to": "Ŧő",
+          "interval": "Ĩŉŧęřväľ",
           "variable": "Väřįäþľę väľūę"
         },
         "condition": {
@@ -1035,11 +1034,13 @@
         },
         "label": "Ğřőūp"
       },
+      "interval": {
+        "input-label": "Väľūę",
+        "invalid-message": "Ĩŉväľįđ įŉŧęřväľ",
+        "label": "Ŧįmę řäŉģę įŉŧęřväľ"
+      },
       "shared": {
         "delete-condition": "Đęľęŧę Cőŉđįŧįőŉ"
-      },
-      "time-range": {
-        "label": "Ŧįmę řäŉģę"
       },
       "title": "Cőŉđįŧįőŉäľ řęŉđęřįŉģ őpŧįőŉş",
       "variable": {

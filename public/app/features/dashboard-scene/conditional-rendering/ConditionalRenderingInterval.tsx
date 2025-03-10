@@ -1,0 +1,70 @@
+import { ReactNode, useState } from 'react';
+
+import { rangeUtil } from '@grafana/data';
+import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
+import { Field, Input, Stack } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
+
+import { ConditionHeader } from './ConditionHeader';
+import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
+import { handleDeleteNonGroupCondition } from './shared';
+
+interface ConditionalRenderingIntervalState extends ConditionalRenderingBaseState<string> {
+  value: string;
+}
+
+export class ConditionalRenderingInterval extends ConditionalRenderingBase<ConditionalRenderingIntervalState> {
+  public get title(): string {
+    return t('dashboard.conditional-rendering.interval.label', 'Time range interval');
+  }
+
+  public evaluate(): boolean {
+    try {
+      const interval = rangeUtil.intervalToSeconds(this.state.value);
+
+      const timeRange = sceneGraph.getTimeRange(this);
+
+      if (timeRange.state.value.to.unix() - timeRange.state.value.from.unix() <= interval) {
+        return true;
+      }
+    } catch {
+      return false;
+    }
+
+    return false;
+  }
+
+  public render(): ReactNode {
+    return <ConditionalRenderingIntervalRenderer model={this} />;
+  }
+
+  public onDelete() {
+    handleDeleteNonGroupCondition(this);
+  }
+}
+
+function ConditionalRenderingIntervalRenderer({ model }: SceneComponentProps<ConditionalRenderingInterval>) {
+  const { value } = model.useState();
+  const [isValid, setIsValid] = useState(validateIntervalRegex.test(value));
+
+  return (
+    <Stack direction="column">
+      <ConditionHeader title={model.title} onDelete={() => model.onDelete()} />
+      <Field
+        invalid={!isValid}
+        error={t('dashboard.conditional-rendering.interval.invalid-message', 'Invalid interval')}
+        label={t('dashboard.conditional-rendering.interval.input-label', 'Value')}
+      >
+        <Input
+          value={value}
+          onChange={(e) => {
+            setIsValid(validateIntervalRegex.test(e.currentTarget.value));
+            model.changeValue(e.currentTarget.value);
+          }}
+        />
+      </Field>
+    </Stack>
+  );
+}
+
+export const validateIntervalRegex = /^(-?\d+(?:\.\d+)?)(ms|[Mwdhmsy])?$/;
