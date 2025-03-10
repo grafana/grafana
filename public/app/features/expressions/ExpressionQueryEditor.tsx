@@ -4,12 +4,15 @@ import { DataSourceApi, QueryEditorProps, SelectableValue } from '@grafana/data'
 import { InlineField, Select } from '@grafana/ui';
 
 import { ClassicConditions } from './components/ClassicConditions';
+import Join from './components/Join';
+import LabelRewrite from './components/LabelRewrite';
 import { Math } from './components/Math';
+import Merge from './components/Merge';
 import { Reduce } from './components/Reduce';
 import { Resample } from './components/Resample';
 import { SqlExpr } from './components/SqlExpr';
 import { Threshold } from './components/Threshold';
-import { ExpressionQuery, ExpressionQueryType, expressionTypes } from './types';
+import { defaultJoin, ExpressionQuery, ExpressionQueryType, expressionTypes } from './types';
 import { getDefaults } from './utils/expressionTypes';
 
 type Props = QueryEditorProps<DataSourceApi<ExpressionQuery>, ExpressionQuery>;
@@ -29,6 +32,9 @@ function useExpressionsCache() {
       case ExpressionQueryType.resample:
       case ExpressionQueryType.threshold:
       case ExpressionQueryType.sql:
+      case ExpressionQueryType.labelRewrite:
+      case ExpressionQueryType.merge:
+      case ExpressionQueryType.join:
         return expressionCache.current[queryType];
       case ExpressionQueryType.classic:
         return undefined;
@@ -96,6 +102,23 @@ export function ExpressionQueryEditor(props: Props) {
 
       case ExpressionQueryType.sql:
         return <SqlExpr onChange={onChange} query={query} refIds={refIds} />;
+
+      case ExpressionQueryType.labelRewrite:
+        return <LabelRewrite refIds={refIds} expression={query} onChange={onChange} />;
+      case ExpressionQueryType.merge:
+        return <Merge refIds={refIds} expression={query} onChange={onChange} />;
+      case ExpressionQueryType.join:
+        return (
+          <Join
+            refIds={refIds}
+            expression={query.join ?? defaultJoin()}
+            onChange={(e) => {
+              onChange({ ...query, join: e });
+            }}
+            onRunQuery={onRunQuery}
+            labelWidth={labelWidth}
+          />
+        );
     }
   };
 
