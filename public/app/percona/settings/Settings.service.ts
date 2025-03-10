@@ -28,20 +28,24 @@ export const SettingsService = {
     });
     return toReadonlyModel(settings);
   },
-  async setSettings(body: Partial<SettingsAPIChangePayload>, token?: CancelToken): Promise<Settings | undefined> {
+  async setSettings(
+    body: Partial<SettingsAPIChangePayload>,
+    token?: CancelToken,
+    disableNotifications = false
+  ): Promise<Settings | undefined> {
     let response;
     try {
       const { settings } = await api.put<SettingsAPIResponse, Partial<SettingsAPIChangePayload>>(
         '/v1/server/settings',
         body,
-        false,
+        disableNotifications,
         token
       );
       response = toModel(settings);
     } catch (e) {
       logger.error(e);
+      throw e;
     }
-
     return response;
   },
 };
