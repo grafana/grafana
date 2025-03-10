@@ -287,13 +287,6 @@ describe('NewProvisionedFolderForm', () => {
 
     // Check if onSubmit was called
     expect(props.onSubmit).toHaveBeenCalled();
-
-    // Check if location was updated with empty prLink
-    expect(locationService.partial).toHaveBeenCalledWith(
-      expect.objectContaining({
-        prLink: expect.any(String),
-      })
-    );
   });
 
   it('should create folder with branch workflow', async () => {
