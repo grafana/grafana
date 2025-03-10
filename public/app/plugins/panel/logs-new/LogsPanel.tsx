@@ -32,7 +32,7 @@ export const LogsPanel = ({
     dedupStrategy,
     enableInfiniteScrolling,
     onNewLogsReceived,
-    showNavigation,
+    showControls,
     showTime,
     sortOrder,
     wrapLogMessage,
@@ -115,7 +115,7 @@ export const LogsPanel = ({
           initialScrollPosition={initialScrollPosition}
           logs={logs}
           loadMore={enableInfiniteScrolling ? loadMoreLogs : undefined}
-          showNavigation={showNavigation}
+          showControls={showControls}
           showTime={showTime}
           sortOrder={sortOrder}
           timeRange={data.timeRange}
