@@ -494,13 +494,21 @@ func NotificationSettingsFromAlertRuleNotificationSettings(ns *definitions.Alert
 	}
 }
 
+func pointerOmitEmpty(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
+}
+
 func AlertRuleRecordExportFromRecord(r *models.Record) *definitions.AlertRuleRecordExport {
 	if r == nil {
 		return nil
 	}
 	return &definitions.AlertRuleRecordExport{
-		Metric: r.Metric,
-		From:   r.From,
+		Metric:              r.Metric,
+		From:                r.From,
+		TargetDatasourceUID: pointerOmitEmpty(r.TargetDatasourceUID),
 	}
 }
 
@@ -509,8 +517,9 @@ func ModelRecordFromApiRecord(r *definitions.Record) *models.Record {
 		return nil
 	}
 	return &models.Record{
-		Metric: r.Metric,
-		From:   r.From,
+		Metric:              r.Metric,
+		From:                r.From,
+		TargetDatasourceUID: r.TargetDatasourceUID,
 	}
 }
 
@@ -519,8 +528,9 @@ func ApiRecordFromModelRecord(r *models.Record) *definitions.Record {
 		return nil
 	}
 	return &definitions.Record{
-		Metric: r.Metric,
-		From:   r.From,
+		Metric:              r.Metric,
+		From:                r.From,
+		TargetDatasourceUID: r.TargetDatasourceUID,
 	}
 }
 
