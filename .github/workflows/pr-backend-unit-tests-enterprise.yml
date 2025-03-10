@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - 'release-**'
     paths-ignore:
       - 'docs/**'
       - '**/*.md'
@@ -19,12 +20,12 @@ permissions:
 
 jobs:
   backend-unit-testing-coverage:
-    # Run this workflow for non-PR events (like pushes to `main`) OR for internal PRs (PRs not from forks)
+    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     name: Backend Unit Testing & Coverage
     runs-on: ubuntu-latest
     env:
-      TEST_TYPE: "be-unit-enterprise"
+      TEST_TYPE: 'be-unit-enterprise'
       WIRE_TAGS: 'enterprise'
 
     steps:
@@ -58,12 +59,15 @@ jobs:
           GO_TEST_OUTPUT: '/tmp/${{ env.TEST_TYPE }}.log'
           GO_UNIT_TEST_COVERPKG: 'github.com/grafana/grafana/...'
 
+      # Run Grafana Bench only on pushes to `main` or `release-*`
       - name: Install Grafana Bench
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release-'))
         uses: ./.github/actions/setup-grafana-bench
         with:
           github-app-name: 'grafana-ci-bot'
 
       - name: Process output for Bench
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release-'))
         run: |
           grafana-bench report \
             --trigger pr-backend-unit-tests-oss \

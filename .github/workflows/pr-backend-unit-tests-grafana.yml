@@ -25,7 +25,7 @@ jobs:
     name: Backend Unit Testing & Coverage
     runs-on: ubuntu-latest
     env:
-      TEST_TYPE: "be-unit-grafana"
+      TEST_TYPE: 'be-unit-grafana'
       WIRE_TAGS: 'oss'
 
     steps:
