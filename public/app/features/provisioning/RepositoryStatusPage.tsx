@@ -1,48 +1,22 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useLocation } from 'react-router';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { SelectableValue, urlUtil } from '@grafana/data';
-import {
-  Alert,
-  Button,
-  CellProps,
-  Column,
-  ConfirmModal,
-  EmptyState,
-  FilterInput,
-  InteractiveTable,
-  LinkButton,
-  Spinner,
-  Stack,
-  Tab,
-  TabContent,
-  TabsBar,
-  Text,
-  TextLink,
-  Modal,
-} from '@grafana/ui';
+import { Alert, EmptyState, Modal, Tab, TabContent, TabsBar, Text, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { isNotFoundError } from '../alerting/unified/api/util';
 
 import { ExportToRepository } from './ExportToRepository';
+import { FilesView } from './FilesView';
 import { MigrateToRepository } from './MigrateToRepository';
+import { RepositoryActions } from './RepositoryActions';
 import { RepositoryOverview } from './RepositoryOverview';
 import { RepositoryResources } from './RepositoryResources';
-import { StatusBadge } from './StatusBadge';
-import { SyncRepository } from './SyncRepository';
-import {
-  useGetRepositoryFilesQuery,
-  Repository,
-  useListRepositoryQuery,
-  useDeleteRepositoryFilesWithPathMutation,
-  useGetFrontendSettingsQuery,
-} from './api';
-import { FileDetails } from './api/types';
+import { useGetFrontendSettingsQuery, useListRepositoryQuery } from './api';
 import { PROVISIONING_URL } from './constants';
-import { getRemoteURL } from './utils/git';
 
 enum TabSelection {
   Overview = 'overview',
@@ -70,9 +44,9 @@ export default function RepositoryStatusPage() {
   const [queryParams] = useQueryParams();
   const settings = useGetFrontendSettingsQuery();
   const tab = queryParams['tab'] ?? TabSelection.Overview;
-  const remoteURL = data ? getRemoteURL(data) : undefined;
 
   const notFound = query.isError && isNotFoundError(query.error);
+
   return (
     <Page
       navId="provisioning"
@@ -82,27 +56,12 @@ export default function RepositoryStatusPage() {
       }}
       actions={
         data && (
-          <Stack>
-            <StatusBadge enabled={Boolean(data.spec?.sync?.enabled)} state={data.status?.sync?.state} name={name} />
-            {remoteURL && (
-              <Button variant="secondary" icon="github" onClick={() => window.open(remoteURL, '_blank')}>
-                Source Code
-              </Button>
-            )}
-            <SyncRepository repository={data} />
-            {settings.data?.legacyStorage ? (
-              <Button variant="secondary" icon="cloud-upload" onClick={() => setShowMigrateModal(true)}>
-                Migrate
-              </Button>
-            ) : (
-              <Button variant="secondary" icon="cloud-upload" onClick={() => setShowExportModal(true)}>
-                Push
-              </Button>
-            )}
-            <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`}>
-              Settings
-            </LinkButton>
-          </Stack>
+          <RepositoryActions
+            repository={data}
+            showMigrateButton={settings.data?.legacyStorage}
+            onExportClick={() => setShowExportModal(true)}
+            onMigrateClick={() => setShowMigrateModal(true)}
+          />
         )
       }
     >
@@ -156,101 +115,5 @@ export default function RepositoryStatusPage() {
         )}
       </Page.Contents>
     </Page>
-  );
-}
-interface RepoProps {
-  repo: Repository;
-}
-
-type FileCell<T extends keyof FileDetails = keyof FileDetails> = CellProps<FileDetails, FileDetails[T]>;
-
-function FilesView({ repo }: RepoProps) {
-  const name = repo.metadata?.name ?? '';
-  const query = useGetRepositoryFilesQuery({ name });
-  const [deleteFile, deleteFileStatus] = useDeleteRepositoryFilesWithPathMutation();
-
-  const [searchQuery, setSearchQuery] = useState('');
-  const [pathToDelete, setPathToDelete] = useState<string>();
-  const data = [...(query.data?.items ?? [])].filter((file) =>
-    file.path.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  const columns: Array<Column<FileDetails>> = useMemo(
-    () => [
-      {
-        id: 'path',
-        header: 'Path',
-        sortType: 'string',
-        cell: ({ row: { original } }: FileCell<'path'>) => {
-          const { path } = original;
-          return <a href={`${PROVISIONING_URL}/${name}/file/${path}`}>{path}</a>;
-        },
-      },
-      {
-        id: 'size',
-        header: 'Size (KB)',
-        cell: ({ row: { original } }: FileCell<'size'>) => {
-          const { size } = original;
-          return (parseInt(size, 10) / 1024).toFixed(2);
-        },
-        sortType: 'number',
-      },
-      {
-        id: 'hash',
-        header: 'Hash',
-        sortType: 'string',
-      },
-      {
-        id: 'actions',
-        header: '',
-        cell: ({ row: { original } }: FileCell<'path'>) => {
-          const { path } = original;
-          return (
-            <Stack>
-              {(path.endsWith('.json') || path.endsWith('.yaml') || path.endsWith('.yml')) && (
-                <LinkButton href={`${PROVISIONING_URL}/${name}/file/${path}`}>View</LinkButton>
-              )}
-              <LinkButton href={`${PROVISIONING_URL}/${name}/history/${path}`}>History</LinkButton>
-              <Button variant="destructive" onClick={() => setPathToDelete(path)}>
-                Delete
-              </Button>
-            </Stack>
-          );
-        },
-      },
-    ],
-    [name]
-  );
-
-  if (query.isLoading) {
-    return (
-      <Stack justifyContent={'center'} alignItems={'center'}>
-        <Spinner />
-      </Stack>
-    );
-  }
-
-  return (
-    <Stack grow={1} direction={'column'} gap={2}>
-      <ConfirmModal
-        isOpen={Boolean(pathToDelete?.length) || deleteFileStatus.isLoading}
-        title="Delete file in repository?"
-        body={deleteFileStatus.isLoading ? 'Deleting file...' : pathToDelete}
-        confirmText="Delete"
-        icon={deleteFileStatus.isLoading ? `spinner` : `exclamation-triangle`}
-        onConfirm={() => {
-          deleteFile({
-            name: name,
-            path: pathToDelete!,
-            message: `Deleted from repo test UI`,
-          });
-          setPathToDelete('');
-        }}
-        onDismiss={() => setPathToDelete('')}
-      />
-      <Stack gap={2}>
-        <FilterInput placeholder="Search" autoFocus={true} value={searchQuery} onChange={setSearchQuery} />
-      </Stack>
-      <InteractiveTable columns={columns} data={data} pageSize={25} getRowId={(f: FileDetails) => String(f.path)} />
-    </Stack>
   );
 }

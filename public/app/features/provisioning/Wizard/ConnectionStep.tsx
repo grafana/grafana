@@ -29,9 +29,10 @@ const modeOptions = [
 
 type Props = {
   targetSelectable?: boolean;
+  generateName?: boolean;
 };
 
-export function ConnectionStep({ targetSelectable = true }: Props) {
+export function ConnectionStep({ targetSelectable = true, generateName = false }: Props) {
   const {
     register,
     control,
@@ -58,7 +59,12 @@ export function ConnectionStep({ targetSelectable = true }: Props) {
     if (folderConnected) {
       setValue('repository.sync.target', folderConnected ? 'folder' : 'instance');
     }
-  }, [folderConnected, setValue]);
+    if (generateName) {
+      // Generate a unique title with timestamp to ensure uniqueness
+      const timestamp = Date.now();
+      setValue('repository.title', `instance-${timestamp}`);
+    }
+  }, [folderConnected, generateName, setValue]);
 
   return (
     <FieldSet label="1. Set up your repository connection details">
@@ -88,17 +94,20 @@ export function ConnectionStep({ targetSelectable = true }: Props) {
             )}
           />
         </Field>
-        <Field
-          label="Display name"
-          description="Add a clear name for this repository connection"
-          error={errors.repository?.title?.message}
-          invalid={!!errors.repository?.title}
-        >
-          <Input
-            {...register('repository.title', { required: 'This field is required.' })}
-            placeholder="My repository connection"
-          />
-        </Field>
+        {/* Only show title field if not instance sync */}
+        {!generateName && (
+          <Field
+            label="Display name"
+            description="Add a clear name for this repository connection"
+            error={errors.repository?.title?.message}
+            invalid={!!errors.repository?.title}
+          >
+            <Input
+              {...register('repository.title', { required: 'This field is required.' })}
+              placeholder="My repository connection"
+            />
+          </Field>
+        )}
 
         <Stack direction="column" gap={2}>
           {folderConnected && (
