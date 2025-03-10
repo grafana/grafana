@@ -53,38 +53,50 @@ jobs:
       - name: Generate Go code
         run: make gen-go
   
-      - name: Verify test caching with explicit cache control
+      - name: Verify project test caching
         run: |
           # Clear the test cache
           go clean -testcache
           
-          # Create a simple test module
-          mkdir -p /tmp/testcache
-          cd /tmp/testcache
+          # Run a specific package's tests twice
+          echo "First run of project tests:"
+          go test -v ./pkg/api
           
-          # Initialize a Go module
-          go mod init testcache
+          echo "Second run of project tests (should be cached):"
+          go test -v ./pkg/api
           
-          # Create a simple test file
-          cat > simple_test.go << 'EOF'
-          package testcache
+      # - name: Verify test caching with explicit cache control
+      #   run: |
+      #     # Clear the test cache
+      #     go clean -testcache
           
-          import "testing"
+      #     # Create a simple test module
+      #     mkdir -p /tmp/testcache
+      #     cd /tmp/testcache
           
-          func TestSimple(t *testing.T) {
-              t.Log("Running simple test")
-          }
-          EOF
+      #     # Initialize a Go module
+      #     go mod init testcache
           
-          # Run the test twice
-          echo "First run:"
-          go test -v ./...
-          echo "Second run (should be cached):"
-          go test -v ./...
+      #     # Create a simple test file
+      #     cat > simple_test.go << 'EOF'
+      #     package testcache
           
-          # Check GOCACHE location
-          echo "Go test cache location:"
-          go env GOCACHE
+      #     import "testing"
+          
+      #     func TestSimple(t *testing.T) {
+      #         t.Log("Running simple test")
+      #     }
+      #     EOF
+          
+      #     # Run the test twice
+      #     echo "First run:"
+      #     go test -v ./...
+      #     echo "Second run (should be cached):"
+      #     go test -v ./...
+          
+      #     # Check GOCACHE location
+      #     echo "Go test cache location:"
+      #     go env GOCACHE
 
       # - name: Run unit tests
       #   run: GODEBUG=testcacheverify=1 make test-go-unit make test-go-unit
