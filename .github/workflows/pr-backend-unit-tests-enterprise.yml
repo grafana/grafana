@@ -58,9 +58,15 @@ jobs:
           # Clear the test cache
           go clean -testcache
           
-          # First run with a simple test
+          # Create a simple test module
           mkdir -p /tmp/testcache
-          cat > /tmp/testcache/simple_test.go << 'EOF'
+          cd /tmp/testcache
+          
+          # Initialize a Go module
+          go mod init testcache
+          
+          # Create a simple test file
+          cat > simple_test.go << 'EOF'
           package testcache
           
           import "testing"
@@ -71,7 +77,6 @@ jobs:
           EOF
           
           # Run the test twice
-          cd /tmp/testcache
           echo "First run:"
           go test -v ./...
           echo "Second run (should be cached):"
@@ -80,7 +85,7 @@ jobs:
           # Check GOCACHE location
           echo "Go test cache location:"
           go env GOCACHE
-          
+
       # - name: Run unit tests
       #   run: GODEBUG=testcacheverify=1 make test-go-unit make test-go-unit
       #   env:
