@@ -10,6 +10,7 @@ import {
   useFocus,
   useHover,
   useInteractions,
+  safePolygon,
 } from '@floating-ui/react';
 import { forwardRef, cloneElement, isValidElement, useCallback, useId, useRef, useState } from 'react';
 
@@ -32,14 +33,10 @@ export interface TooltipProps {
    * Set to true if you want the tooltip to stay long enough so the user can move mouse over content to select text or click a link
    */
   interactive?: boolean;
-  /**
-   * Delay in milliseconds before the tooltip is closed after the mouse has left the tooltip trigger (interactive mode only)
-   */
-  interactiveDelay?: number;
 }
 
 export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
-  ({ children, theme, interactive, show, placement, content, interactiveDelay = 100 }, forwardedRef) => {
+  ({ children, theme, interactive, show, placement, content }, forwardedRef) => {
     const arrowRef = useRef(null);
     const [controlledVisible, setControlledVisible] = useState(show);
     const isOpen = show ?? controlledVisible;
@@ -71,9 +68,7 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
     const tooltipId = useId();
 
     const hover = useHover(context, {
-      delay: {
-        close: interactive ? interactiveDelay : 0,
-      },
+      ...(interactive ? { handleClose: safePolygon() } : {}),
       move: false,
     });
     const focus = useFocus(context);
