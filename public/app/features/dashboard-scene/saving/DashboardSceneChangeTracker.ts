@@ -22,7 +22,6 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
-import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { isSceneVariableInstance } from '../settings/variables/utils';
 
 import { DashboardChangeInfo } from './shared';
@@ -122,7 +121,7 @@ export class DashboardSceneChangeTracker {
   }
 
   private detectSaveModelChanges() {
-    const changedDashboard = transformSceneToSaveModel(this._dashboard);
+    const changedDashboard = this._dashboard.getSaveModel();
     const initialDashboard = this._dashboard.getInitialSaveModel();
 
     // Objects must be stringify to ensure they are clonable, so they don't contain functions
