@@ -6,6 +6,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
+import { useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
 import { TabItem } from './TabItem';
 
@@ -30,6 +31,7 @@ export function getEditOptions(model: TabItem): OptionsPaneCategoryDescriptor[] 
 
 function TabTitleInput({ tab }: { tab: TabItem }) {
   const { title } = tab.useState();
+  const ref = useEditPaneInputAutoFocus();
 
-  return <Input value={title} onChange={(e) => tab.onChangeTitle(e.currentTarget.value)} />;
+  return <Input ref={ref} value={title} onChange={(e) => tab.onChangeTitle(e.currentTarget.value)} />;
 }
