@@ -78,7 +78,7 @@ const Log = ({ displayedFields, log, showTime, styles }: LogProps) => {
       {displayedFields.length > 0 ? (
         displayedFields.map((field) =>
           field === LOG_LINE_BODY_FIELD_NAME ? (
-            <LogLineBody log={log} />
+            <LogLineBody log={log} key={field} />
           ) : (
             <span className="field" title={field} key={field}>
               {getDisplayedFieldValue(field, log)}
