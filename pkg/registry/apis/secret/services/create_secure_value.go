@@ -50,9 +50,11 @@ func (s *CreateSecureValue) Handle(ctx context.Context, sv *secretv0alpha1.Secur
 		if err := s.outboxQueue.Append(ctx, createdSecureValue); err != nil {
 			return fmt.Errorf("failed to append to queue: %w", err)
 		}
+		fmt.Printf("\n\naaaaaaa after outboxQueue.Append\n\n")
 
 		return nil
 	})
+	fmt.Printf("\n\naaaaaaa Handle: err %+v\n\n", err)
 
 	return object, err
 }

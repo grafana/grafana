@@ -1,6 +1,9 @@
 package simulator
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 // Maintains a list of actions taken per simulation to make debugging easier.
 type ActivityLog struct {
@@ -11,8 +14,13 @@ func NewActivityLog() *ActivityLog {
 	return &ActivityLog{}
 }
 
-func (log *ActivityLog) Record(msg string) {
-	log.events = append(log.events, msg)
+func (log *ActivityLog) Record(msg string, args ...any) {
+	if len(args) > 0 {
+		log.events = append(log.events, fmt.Sprintf(msg, args...))
+	} else {
+		log.events = append(log.events, msg)
+	}
+
 }
 
 func (log *ActivityLog) String() string {

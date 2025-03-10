@@ -25,14 +25,14 @@ type SimNetworkConfig struct {
 
 // Simulation version of the network which requests go through.
 type SimNetwork struct {
-	config SimNetworkConfig
-
+	config        SimNetworkConfig
+	activityLog   *ActivityLog
 	simDatabase   *SimDatabase
 	nextMessageID uint64
 }
 
-func NewSimNetwork(config SimNetworkConfig, simDatabase *SimDatabase) *SimNetwork {
-	return &SimNetwork{config: config, simDatabase: simDatabase}
+func NewSimNetwork(config SimNetworkConfig, activityLog *ActivityLog, simDatabase *SimDatabase) *SimNetwork {
+	return &SimNetwork{config: config, activityLog: activityLog, simDatabase: simDatabase}
 }
 
 func (network *SimNetwork) getNextMessageID() uint64 {
@@ -42,18 +42,24 @@ func (network *SimNetwork) getNextMessageID() uint64 {
 }
 
 func (network *SimNetwork) Send(input SendInput) any {
-
 	// Yield before executing the action to simulate a message in flight
 	if v := coro.Yield(); v != nil {
 		panic(fmt.Sprintf("network.Send resumed with non-nil value, it should always be nil: %+v", v))
 	}
 
+	// Execute the action
 	reply := input.Execute()
 
-	// Yield before executing the action to simulate a reply message in flight
+	// Log that the message was delivered to the destination
+	network.activityLog.Record("[NETWORK] ->%s", input.Debug)
+
+	// Yield before returning the reply to simulate a reply message in flight
 	if v := coro.Yield(); v != nil {
 		panic(fmt.Sprintf("network.Send resumed with non-nil value, it should always be nil: %+v", v))
 	}
+
+	// Log that the reply was delivered to the source
+	network.activityLog.Record("[NETWORK] <-%s(%T%+v)", input.Debug, reply, reply)
 
 	return reply
 }

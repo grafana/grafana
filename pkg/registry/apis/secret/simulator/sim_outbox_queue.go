@@ -14,8 +14,8 @@ type SimOutboxQueue struct {
 	simDatabase *SimDatabase
 }
 
-func NewSimOutboxQueue(simNetwork *SimNetwork) *SimOutboxQueue {
-	return &SimOutboxQueue{simNetwork: simNetwork}
+func NewSimOutboxQueue(simNetwork *SimNetwork, simDatabase *SimDatabase) *SimOutboxQueue {
+	return &SimOutboxQueue{simNetwork: simNetwork, simDatabase: simDatabase}
 }
 
 // Sends a query to the database to append to the outbox queue.
@@ -23,7 +23,7 @@ func (queue *SimOutboxQueue) Append(ctx context.Context, secureValue *secretv0al
 	reply := queue.simNetwork.Send(SendInput{
 		Debug: "AppendQuery",
 		Execute: func() any {
-			return simDatabaseAppendQuery{ctx: ctx, secureValue: secureValue}
+			return queue.simDatabase.onQuery(simDatabaseAppendQuery{ctx: ctx, secureValue: secureValue, transactionID: transactionIDFromContext(ctx)})
 		}}).(simDatabaseAppendResponse)
 
 	return reply.err

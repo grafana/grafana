@@ -81,7 +81,10 @@ func (sim *Simulator) nextAction() Action {
 
 func (sim *Simulator) step() {
 	action := sim.nextAction()
+	sim.execute(action)
+}
 
+func (sim *Simulator) execute(action Action) {
 	switch action {
 	case ActionCreateSecret:
 		sim.activityLog.Record("[SIM] CreateSecret")
@@ -103,7 +106,7 @@ func (sim *Simulator) step() {
 			// TODO: handle error
 			fmt.Printf("\n\naaaaaaa secureValueService.Handle object %+v err %+v\n\n", object, err)
 		})
-		// Resume once so action can make progress
+		// Resume once so action can make progress at least once
 		coroutine.Resume(nil)
 
 	case ActionResumeCoroutine:
@@ -153,7 +156,7 @@ func getSimulatorConfigOrDefault() SimulatorConfig {
 	if found {
 		steps = v
 	} else {
-		steps = 100
+		steps = 1000
 	}
 
 	return SimulatorConfig{
@@ -166,27 +169,30 @@ func TestSimulate(t *testing.T) {
 	t.Parallel()
 
 	simulatorConfig := getSimulatorConfigOrDefault()
-	rng := rand.New(rand.NewSource(simulatorConfig.Seed))
+	rng := rand.New(rand.NewSource(5450474658197867724))
 	activityLog := NewActivityLog()
 
-	t.Cleanup(func() {
-		if t.Failed() {
+	defer func() {
+		if err := recover(); err != nil || t.Failed() {
 			fmt.Println(activityLog.String())
-			fmt.Printf("SEED=%+v\n", simulatorConfig.Seed)
+			fmt.Printf("SEED=%+v", simulatorConfig.Seed)
+			if err != nil {
+				panic(err)
+			}
 		}
-	})
+	}()
 
 	simNetworkConfig := SimNetworkConfig{errProbability: 0.2, rng: rng}
 
 	simDatabase := NewSimDatabase()
 
-	simNetwork := NewSimNetwork(simNetworkConfig, simDatabase)
+	simNetwork := NewSimNetwork(simNetworkConfig, activityLog, simDatabase)
 
-	simTransactionManager := NewSimTransactionManager(simNetwork)
+	simTransactionManager := NewSimTransactionManager(simNetwork, simDatabase)
 
-	simSecureValueStorage := NewSimSecureValueStorage(simNetwork)
+	simSecureValueStorage := NewSimSecureValueStorage(simNetwork, simDatabase)
 
-	simOutboxQueue := NewSimOutboxQueue(simNetwork)
+	simOutboxQueue := NewSimOutboxQueue(simNetwork, simDatabase)
 
 	secureValueService := services.NewCreateSecureValue(simTransactionManager, simSecureValueStorage, simOutboxQueue)
 

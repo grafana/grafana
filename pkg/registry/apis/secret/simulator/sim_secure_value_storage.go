@@ -11,15 +11,20 @@ import (
 
 // Simulation version of contracts.SecureValueStorage
 type SimSecureValueStorage struct {
-	simNetwork *SimNetwork
+	simNetwork  *SimNetwork
+	simDatabase *SimDatabase
 }
 
-func NewSimSecureValueStorage(simNetwork *SimNetwork) *SimSecureValueStorage {
-	return &SimSecureValueStorage{simNetwork: simNetwork}
+func NewSimSecureValueStorage(simNetwork *SimNetwork, simDatabase *SimDatabase) *SimSecureValueStorage {
+	return &SimSecureValueStorage{simNetwork: simNetwork, simDatabase: simDatabase}
 }
 
 func (storage *SimSecureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
-	reply := storage.simNetwork.Send(ctx, simDatabaseCreateSecureValueMetadataQuery{ctx: ctx, sv: sv}).(simDatabaseCreateSecureValueMetadataResponse)
+	reply := storage.simNetwork.Send(SendInput{
+		Debug: "DatabaseCreateSecureValueMetadataQuery",
+		Execute: func() any {
+			return storage.simDatabase.onQuery(simDatabaseCreateSecureValueMetadataQuery{ctx: ctx, sv: sv, transactionID: transactionIDFromContext(ctx)})
+		}}).(simDatabaseCreateSecureValueMetadataResponse)
 	return reply.sv, reply.err
 }
 func (storage *SimSecureValueStorage) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
@@ -36,7 +41,11 @@ func (storage *SimSecureValueStorage) List(ctx context.Context, namespace xkube.
 }
 
 func (storage *SimSecureValueStorage) SecretMetadataHasPendingStatus(ctx context.Context, namespace xkube.Namespace, name string) (bool, error) {
-	reply := storage.simNetwork.Send(ctx, simDatabaseSecretMetadataHasPendingStatusQuery{ctx: ctx, namespace: namespace, name: name}).(simDatabaseSecretMetadataHasPendingStatusResponse)
+	reply := storage.simNetwork.Send(SendInput{
+		Debug: "DatabaseSecretMetadataHasPendingStatusQuery",
+		Execute: func() any {
+			return storage.simDatabase.onQuery(simDatabaseSecretMetadataHasPendingStatusQuery{ctx: ctx, namespace: namespace, name: name})
+		}}).(simDatabaseSecretMetadataHasPendingStatusResponse)
 	return reply.isPending, reply.err
 }
 

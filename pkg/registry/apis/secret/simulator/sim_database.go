@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/simulator/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -55,8 +56,9 @@ func (db *SimDatabase) getNextTransactionId() uint64 {
 func (db *SimDatabase) onQuery(query any) any {
 	switch query := query.(type) {
 	case simDatabaseAppendQuery:
-		// TODO: maybe error
+		// TODO: inject errors
 		transaction := db.txBuffer[query.transactionID]
+		assert.True(transaction != nil, "transaction not found: query=%T%+v", query, query)
 		transaction.outboxQueue = append(transaction.outboxQueue, query.secureValue)
 
 		// Query executed with no errors
@@ -89,6 +91,7 @@ func (db *SimDatabase) onQuery(query any) any {
 		}
 
 	case simDatabaseCreateSecureValueMetadataQuery:
+		assert.True(query.transactionID > 0, "transaction id is missing: transactionID=%+v", query.transactionID)
 		transaction := db.txBuffer[query.transactionID]
 
 		v := *query.sv
@@ -108,7 +111,7 @@ func (db *SimDatabase) onQuery(query any) any {
 			}
 		}
 
-		fmt.Printf("\n\naaaaaaa query.sv %+v\n\n", query.sv)
+		fmt.Printf("\n\naaaaaaa query.sv tx=%+v %+v\n\n", transaction, query.sv)
 		if _, ok := transaction.secretMetadata[query.sv.Namespace]; !ok {
 			transaction.secretMetadata[query.sv.Namespace] = make(map[SecureValueName]secretv0alpha1.SecureValue)
 		}
