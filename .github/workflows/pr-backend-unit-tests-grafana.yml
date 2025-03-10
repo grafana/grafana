@@ -52,7 +52,7 @@ jobs:
         run: make test-go-unit
         env:
           GO_UNIT_COVER_PROFILE: '${{ env.TEST_TYPE }}.cov'
-          GO_TEST_OUTPUT: '/tmp/${{ env.TEST_TYPE }}.log'
+          GO_TEST_OUTPUT: ''
           GO_UNIT_TEST_COVERPKG: 'github.com/grafana/grafana/...'
           GO_UNIT_COVERAGE: false
 
