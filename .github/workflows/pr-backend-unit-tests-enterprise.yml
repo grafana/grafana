@@ -23,7 +23,7 @@ jobs:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     name: Backend Unit Testing & Coverage
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-latest-16-cores
     continue-on-error: true
     env:
       TEST_TYPE: 'be-unit-enterprise'
