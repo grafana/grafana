@@ -30,7 +30,7 @@ enum TabSelection {
 
 const connectedTabInfo = [
   { value: TabSelection.Overview, label: 'Overview', title: 'Repository overview' },
-  { value: TabSelection.Resources, label: 'Resources', title: 'Resources saved in grafana database' },
+  { value: TabSelection.Resources, label: 'Resources', title: 'Resources saved in Grafana database' },
   { value: TabSelection.Files, label: 'Files', title: 'The raw file list from the repository' },
   { value: TabSelection.GettingStarted, label: 'Getting started', title: 'Getting started' },
 ];
@@ -87,8 +87,11 @@ export default function HomePage() {
       }
     }
 
-    // At this point we know items exists and has length > 0
-    const repo = items![0];
+    const repo = items?.[0];
+    if (!repo) {
+      return null;
+    }
+
     switch (activeTab) {
       case TabSelection.Overview:
         return <RepositoryOverview repo={repo} />;
@@ -156,7 +159,7 @@ export default function HomePage() {
                 key={t.value}
                 label={t.label}
                 active={activeTab === t.value}
-                onChangeTab={() => setActiveTab(t.value as TabSelection)}
+                onChangeTab={() => setActiveTab(t.value)}
                 title={t.title}
               />
             ))}
