@@ -58,6 +58,16 @@ const config: ConfigFile = {
       tag: true,
       hooks: true,
     },
+    '../public/app/features/folders/api/endpoints.gen.ts': {
+      apiFile: '../public/app/features/folders/api/baseAPI.ts',
+      schemaFile: '../data/openapi/folder.grafana.app-v0alpha1.json',
+      apiImport: 'baseAPI',
+      filterEndpoints: ['getFolder'],
+      argSuffix: 'Arg',
+      responseSuffix: 'Response',
+      tag: true,
+      hooks: true,
+    },
   },
 };
 
