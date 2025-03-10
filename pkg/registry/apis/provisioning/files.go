@@ -290,9 +290,19 @@ func (s *filesConnector) doCreateFolder(ctx context.Context, repo repository.Wri
 		return nil, fmt.Errorf("failed to create folder: %w", err)
 	}
 
+	cfg := repo.Config()
 	wrap := &provisioning.ResourceWrapper{
 		Path: path,
 		Ref:  ref,
+		Repository: provisioning.ResourceRepositoryInfo{
+			Type:      cfg.Spec.Type,
+			Namespace: cfg.Namespace,
+			Name:      cfg.Name,
+			Title:     cfg.Spec.Title,
+		},
+		Resource: provisioning.ResourceObjects{
+			Action: provisioning.ResourceActionCreate,
+		},
 	}
 
 	if ref == "" {
