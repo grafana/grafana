@@ -42,12 +42,10 @@ func NewSQLCommand(refID, rawSQL string) (*SQLCommand, error) {
 		logger.Debug("REF tables", "tables", tables, "sql", rawSQL)
 	}
 
-	defaultLimit := int64(20)
 	return &SQLCommand{
 		query:       rawSQL,
 		varsToQuery: tables,
 		refID:       refID,
-		limit:       defaultLimit,
 	}, nil
 }
 
