@@ -54,7 +54,7 @@ func ProvideService(
 	cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, userService user.Service, actionResolver accesscontrol.ActionResolver,
 	features featuremgmt.FeatureToggles, tracer tracing.Tracer, permRegistry permreg.PermissionRegistry,
-	lock *serverlock.ServerLockService, folderService folder.Service,
+	lock *serverlock.ServerLockService,
 ) (*Service, error) {
 	service := ProvideOSSService(
 		cfg,
@@ -66,10 +66,9 @@ func ProvideService(
 		db,
 		permRegistry,
 		lock,
-		folderService,
 	)
 
-	api.NewAccessControlAPI(routeRegister, accessControl, service, userService, features).RegisterAPIEndpoints()
+	api.NewAccessControlAPI(routeRegister, accessControl, service, userService).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
 		return nil, err
 	}
@@ -89,7 +88,6 @@ func ProvideOSSService(
 	cfg *setting.Cfg, store accesscontrol.Store, actionResolver accesscontrol.ActionResolver,
 	cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
 	db db.DB, permRegistry permreg.PermissionRegistry, lock *serverlock.ServerLockService,
-	folderService folder.Service,
 ) *Service {
 	s := &Service{
 		actionResolver: actionResolver,
@@ -474,13 +472,8 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 // DeclarePluginRoles allow the caller to declare, to the service, plugin roles and their assignments
 // to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs []plugins.RoleRegistration) error {
-	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.DeclarePluginRoles")
+	_, span := tracer.Start(ctx, "accesscontrol.acimpl.DeclarePluginRoles")
 	defer span.End()
-
-	// Protect behind feature toggle
-	if !s.features.IsEnabled(ctx, featuremgmt.FlagAccessControlOnCall) {
-		return nil
-	}
 
 	acRegs := pluginutils.ToRegistrations(ID, name, regs)
 	for _, r := range acRegs {

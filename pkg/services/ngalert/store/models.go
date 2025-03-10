@@ -4,8 +4,9 @@ import "time"
 
 // alertRule represents a record in alert_rule table
 type alertRule struct {
-	ID                   int64 `xorm:"pk autoincr 'id'"`
-	OrgID                int64 `xorm:"org_id"`
+	ID                   int64  `xorm:"pk autoincr 'id'"`
+	GUID                 string `xorm:"guid"`
+	OrgID                int64  `xorm:"org_id"`
 	Title                string
 	Condition            string
 	Data                 string
@@ -38,6 +39,7 @@ func (a alertRule) TableName() string {
 type alertRuleVersion struct {
 	ID               int64  `xorm:"pk autoincr 'id'"`
 	RuleOrgID        int64  `xorm:"rule_org_id"`
+	RuleGUID         string `xorm:"rule_guid"`
 	RuleUID          string `xorm:"rule_uid"`
 	RuleNamespaceUID string `xorm:"rule_namespace_uid"`
 	RuleGroup        string
@@ -69,6 +71,7 @@ type alertRuleVersion struct {
 // The comparison is very basic and can produce false-negative. Fields excluded: ID, ParentVersion, RestoredFrom, Version, Created and CreatedBy
 func (a alertRuleVersion) EqualSpec(b alertRuleVersion) bool {
 	return a.RuleOrgID == b.RuleOrgID &&
+		a.RuleGUID == b.RuleGUID &&
 		a.RuleUID == b.RuleUID &&
 		a.RuleNamespaceUID == b.RuleNamespaceUID &&
 		a.RuleGroup == b.RuleGroup &&

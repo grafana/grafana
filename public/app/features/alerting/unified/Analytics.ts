@@ -8,6 +8,7 @@ import { contextSrv } from 'app/core/core';
 import { RuleNamespace } from '../../../types/unified-alerting';
 import { RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
 
+import { Origin } from './components/rule-viewer/tabs/version-history/ConfirmVersionRestoreModal';
 import { FilterType } from './components/rules/central-state-history/EventListSceneObject';
 import { RulesFilter, getSearchFilterFromQuery } from './search/rulesSearchParser';
 import { RuleFormType } from './types/rule-form';
@@ -28,6 +29,7 @@ export const LogMessages = {
   grafanaRecording: 'creating Grafana recording rule from scratch',
   loadedCentralAlertStateHistory: 'loaded central alert state history',
   exportNewGrafanaRule: 'exporting new Grafana rule',
+  noAlertRuleVersionsFound: 'no alert rule versions found',
 };
 
 const { logInfo, logError, logMeasurement, logWarning } = createMonitoringLogger('features.alerting', {
@@ -193,8 +195,12 @@ export const trackAlertRuleFormError = (
   reportInteraction('grafana_alerting_rule_form_error', props);
 };
 
-export const trackNewGrafanaAlertRuleFormSavedSuccess = () => {
-  reportInteraction('grafana_alerting_grafana_rule_creation_new_success');
+export const trackNewGrafanaAlertRuleFormSavedSuccess = (payload: {
+  simplifiedQueryEditor: boolean;
+  simplifiedNotificationEditor: boolean;
+  canBeTransformedToSimpleQuery: boolean;
+}) => {
+  reportInteraction('grafana_alerting_grafana_rule_creation_new_success', payload);
 };
 
 export const trackNewGrafanaAlertRuleFormCancelled = () => {
@@ -212,6 +218,26 @@ export const trackInsightsFeedback = async (props: { useful: boolean; panel: str
     user_id: contextSrv.user.id,
   };
   reportInteraction('grafana_alerting_insights', { ...defaults, ...props });
+};
+
+interface RuleVersionComparisonProps {
+  latest: boolean;
+  oldVersion: number;
+  newVersion: number;
+}
+
+export const trackRuleVersionsComparisonClick = async (payload: RuleVersionComparisonProps) => {
+  reportInteraction('grafana_alerting_rule_versions_comparison_click', { ...payload });
+};
+
+export const trackRuleVersionsRestoreSuccess = async (payload: RuleVersionComparisonProps & { origin: Origin }) => {
+  reportInteraction('grafana_alerting_rule_versions_restore_success', { ...payload });
+};
+
+export const trackRuleVersionsRestoreFail = async (
+  payload: RuleVersionComparisonProps & { origin: Origin; error: Error }
+) => {
+  reportInteraction('grafana_alerting_rule_versions_restore_error', { ...payload });
 };
 
 interface RulesSearchInteractionPayload {

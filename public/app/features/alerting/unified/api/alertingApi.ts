@@ -120,6 +120,7 @@ export const alertingApi = createApi({
     'GrafanaLabels',
     'CombinedAlertRule',
     'GrafanaRulerRule',
+    'GrafanaRulerRuleVersion',
     'GrafanaSlo',
     'RuleGroup',
     'RuleNamespace',

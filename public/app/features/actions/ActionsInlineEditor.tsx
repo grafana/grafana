@@ -9,7 +9,12 @@ type DataLinksInlineEditorProps = Omit<DataLinksInlineEditorBaseProps<Action>, '
   getSuggestions: () => VariableSuggestion[];
 };
 
-export const ActionsInlineEditor = ({ actions, getSuggestions, showOneClick, ...rest }: DataLinksInlineEditorProps) => (
+export const ActionsInlineEditor = ({
+  actions,
+  getSuggestions,
+  showOneClick = false,
+  ...rest
+}: DataLinksInlineEditorProps) => (
   <DataLinksInlineEditorBase<Action> type="action" items={actions} {...rest}>
     {(item, index, onSave, onCancel) => (
       <ActionEditorModalContent
@@ -19,7 +24,7 @@ export const ActionsInlineEditor = ({ actions, getSuggestions, showOneClick, ...
         onSave={onSave}
         onCancel={onCancel}
         getSuggestions={getSuggestions}
-        showOneClick={showOneClick ?? false}
+        showOneClick={showOneClick}
       />
     )}
   </DataLinksInlineEditorBase>

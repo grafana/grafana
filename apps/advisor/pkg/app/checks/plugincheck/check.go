@@ -74,6 +74,11 @@ func (s *deprecationStep) Description() string {
 	return "Check if any installed plugins are deprecated."
 }
 
+func (s *deprecationStep) Resolution() string {
+	return "Check the <a href='https://grafana.com/legal/plugin-deprecation/#a-plugin-i-use-is-deprecated-what-should-i-do'" +
+		"target=_blank>documentation</a> for recommended steps or delete the plugin."
+}
+
 func (s *deprecationStep) ID() string {
 	return "deprecation"
 }
@@ -98,10 +103,14 @@ func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec, it any)
 	if i.Status == "deprecated" {
 		return checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityHigh,
-			fmt.Sprintf("Plugin deprecated: %s", p.ID),
-			"Check the <a href='https://grafana.com/legal/plugin-deprecation/#a-plugin-i-use-is-deprecated-what-should-i-do' target=_blank>documentation</a> for recommended steps.",
 			s.ID(),
 			p.ID,
+			[]advisor.CheckErrorLink{
+				{
+					Message: "Admin",
+					Url:     fmt.Sprintf("/plugins/%s", p.ID),
+				},
+			},
 		), nil
 	}
 	return nil, nil
@@ -118,7 +127,11 @@ func (s *updateStep) Title() string {
 }
 
 func (s *updateStep) Description() string {
-	return "Check if any installed plugins have a newer version available."
+	return "Checks if an installed plugins has a newer version available."
+}
+
+func (s *updateStep) Resolution() string {
+	return "Go to the plugin admin page and upgrade to the latest version."
 }
 
 func (s *updateStep) ID() string {
@@ -151,12 +164,14 @@ func (s *updateStep) Run(ctx context.Context, _ *advisor.CheckSpec, i any) (*adv
 	if hasUpdate(p, info) {
 		return checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityLow,
-			fmt.Sprintf("New version available for %s", p.ID),
-			fmt.Sprintf(
-				"Go to the <a href='/plugins/%s?page=version-history'>plugin admin page</a>"+
-					" and upgrade to the latest version.", p.ID),
 			s.ID(),
 			p.ID,
+			[]advisor.CheckErrorLink{
+				{
+					Message: "Upgrade",
+					Url:     fmt.Sprintf("/plugins/%s?page=version-history", p.ID),
+				},
+			},
 		), nil
 	}
 

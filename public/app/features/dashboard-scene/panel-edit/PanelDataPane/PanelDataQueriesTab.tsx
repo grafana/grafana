@@ -13,7 +13,7 @@ import {
 } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { Button, Stack, Tab } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { Trans } from 'app/core/internationalization';
 import { addQuery } from 'app/core/utils/query';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
@@ -25,8 +25,10 @@ import { updateQueries } from 'app/features/query/state/updateQueries';
 import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runSharedRequest';
 import { QueryGroupOptions } from 'app/types';
 
+import { MIXED_DATASOURCE_NAME } from '../../../../plugins/datasource/mixed/MixedDataSource';
 import { useQueryLibraryContext } from '../../../explore/QueryLibrary/QueryLibraryContext';
-import { QueryActionButtonProps } from '../../../explore/QueryLibrary/types';
+import { ExpressionDatasourceUID } from '../../../expressions/types';
+import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 import { PanelTimeRange } from '../../scene/PanelTimeRange';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../../utils/utils';
 import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
@@ -315,13 +317,35 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
     return null;
   }
   const showAddButton = !isSharedDashboardQuery(dsSettings.name);
-
-  // Make the final query library action button by injecting actual addQuery functionality into the button.
-  const addQueryActionButton = makeQueryActionButton((queries) => {
-    for (const query of queries) {
-      model.onQueriesChange(addQuery(model.getQueries(), query));
+  const onSelectQueryFromLibrary = async (query: DataQuery) => {
+    // ensure all queries explicitly define a datasource
+    const enrichedQueries = queries.map((q) =>
+      q.datasource
+        ? q
+        : {
+            ...q,
+            datasource: datasource.getRef(),
+          }
+    );
+    const newQueries = addQuery(enrichedQueries, query);
+    model.onQueriesChange(newQueries);
+    if (query.datasource?.uid) {
+      const uniqueDatasources = new Set(
+        newQueries.map((q) => q.datasource?.uid).filter((uid) => uid !== ExpressionDatasourceUID)
+      );
+      const isMixed = uniqueDatasources.size > 1;
+      const newDatasourceRef = {
+        uid: isMixed ? MIXED_DATASOURCE_NAME : query.datasource.uid,
+      };
+      const shouldChangeDatasource = datasource.uid !== newDatasourceRef.uid;
+      if (shouldChangeDatasource) {
+        const newDatasource = getDatasourceSrv().getInstanceSettings(newDatasourceRef);
+        if (newDatasource) {
+          await model.onChangeDataSource(newDatasource);
+        }
+      }
     }
-  });
+  };
 
   return (
     <div data-testid={selectors.components.QueryTab.content}>
@@ -358,9 +382,9 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
             {queryLibraryEnabled && (
               <Button
                 icon="plus"
-                onClick={() => {
-                  openQueryLibraryDrawer(getDatasourceNames(datasource, queries), addQueryActionButton);
-                }}
+                onClick={() =>
+                  openQueryLibraryDrawer(getDatasourceNames(datasource, queries), onSelectQueryFromLibrary)
+                }
                 variant="secondary"
                 data-testid={selectors.components.QueryTab.addQuery}
               >
@@ -383,28 +407,6 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
       </Stack>
     </div>
   );
-}
-
-/**
- * Creates a button component that will be used in query library as action next to each query.
- * @param addQueries
- */
-function makeQueryActionButton(addQueries: (queries: DataQuery[]) => void) {
-  return function AddQueryFromLibraryButton(props: QueryActionButtonProps) {
-    const label = t('dashboards.query-library.add-query-button', 'Add query');
-    return (
-      <Button
-        variant={'primary'}
-        aria-label={label}
-        onClick={() => {
-          addQueries(props.queries);
-          props.onClick();
-        }}
-      >
-        {label}
-      </Button>
-    );
-  };
 }
 
 function getDatasourceNames(datasource: DataSourceApi, queries: DataQuery[]): string[] {

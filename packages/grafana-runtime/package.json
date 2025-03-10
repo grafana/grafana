@@ -17,9 +17,9 @@
   "main": "src/index.ts",
   "types": "src/index.ts",
   "publishConfig": {
-    "main": "dist/index.js",
-    "module": "dist/esm/index.js",
-    "types": "dist/index.d.ts",
+    "main": "./dist/cjs/index.cjs",
+    "module": "./dist/esm/index.mjs",
+    "types": "./dist/cjs/index.d.cts",
     "access": "public"
   },
   "files": [
@@ -31,10 +31,10 @@
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
     "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
-    "clean": "rimraf ./dist ./compiled ./package.tgz",
+    "clean": "rimraf ./dist ./compiled ./unstable ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
-    "postpack": "mv package.json.bak package.json"
+    "prepack": "cp package.json package.json.bak && ALIAS_PACKAGE_NAME=unstable node ../../scripts/prepare-npm-package.js",
+    "postpack": "mv package.json.bak package.json && rimraf ./unstable"
   },
   "dependencies": {
     "@grafana/data": "11.6.0-pre",
@@ -44,6 +44,7 @@
     "@grafana/ui": "11.6.0-pre",
     "history": "4.10.1",
     "lodash": "4.17.21",
+    "react-loading-skeleton": "3.5.0",
     "react-use": "17.6.0",
     "rxjs": "7.8.1",
     "tslib": "2.8.1"

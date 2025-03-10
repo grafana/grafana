@@ -28,7 +28,7 @@ func TestQueryFrames(t *testing.T) {
 			expected: data.NewFrame(
 				"sqlExpressionRefId",
 				data.NewField("n", nil, []string{"1"}),
-			),
+			).SetRefID("sqlExpressionRefId"),
 		},
 		{
 			name:         "valid query with no input frames, one row two columns",
@@ -38,7 +38,7 @@ func TestQueryFrames(t *testing.T) {
 				"sqlExpressionRefId",
 				data.NewField("name", nil, []string{"sam"}),
 				data.NewField("age", nil, []int8{40}),
-			),
+			).SetRefID("sqlExpressionRefId"),
 		},
 		{
 			// TODO: Also ORDER BY to ensure the order is preserved
@@ -54,7 +54,7 @@ func TestQueryFrames(t *testing.T) {
 			expected: data.NewFrame(
 				"sqlExpressionRefId",
 				data.NewField("OSS Projects with Typos", nil, []string{"Garfana"}),
-			),
+			).SetRefID("sqlExpressionRefId"),
 		},
 	}
 
@@ -62,13 +62,9 @@ func TestQueryFrames(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			frame, err := db.QueryFrames(context.Background(), "sqlExpressionRefId", tt.query, tt.input_frames)
 			require.NoError(t, err)
-			require.NotNil(t, frame.Fields)
 
-			require.Equal(t, tt.expected.Name, frame.RefID)
-			require.Equal(t, len(tt.expected.Fields), len(frame.Fields))
-			for i := range tt.expected.Fields {
-				require.Equal(t, tt.expected.Fields[i].Name, frame.Fields[i].Name)
-				require.Equal(t, tt.expected.Fields[i].At(0), frame.Fields[i].At(0))
+			if diff := cmp.Diff(tt.expected, frame, data.FrameTestCompareOptions()...); diff != "" {
+				require.FailNowf(t, "Result mismatch (-want +got):%s\n", diff)
 			}
 		})
 	}
@@ -79,20 +75,47 @@ func TestQueryFramesInOut(t *testing.T) {
 		RefID: "a",
 		Name:  "a",
 		Fields: []*data.Field{
-			data.NewField("time", nil, []time.Time{time.Now(), time.Now()}),
-			data.NewField("time_nullable", nil, []*time.Time{p(time.Now()), nil}),
+			data.NewField("time", nil, []time.Time{time.Date(2025, 1, 2, 3, 4, 5, 0, time.UTC), time.Date(2025, 1, 2, 3, 4, 5, 0, time.UTC)}),
+			data.NewField("time_nullable", nil, []*time.Time{p(time.Date(2025, 1, 2, 3, 4, 5, 0, time.UTC)), nil}),
 
 			data.NewField("string", nil, []string{"cat", "dog"}),
 			data.NewField("null_nullable", nil, []*string{p("cat"), nil}),
 
+			data.NewField("bool", nil, []bool{true, false}),
+			data.NewField("bool_nullable", nil, []*bool{p(true), nil}),
+
+			// Floats
+			data.NewField("float32", nil, []float32{1, 3}),
+			data.NewField("float32_nullable", nil, []*float32{p(float32(2.0)), nil}),
+
 			data.NewField("float64", nil, []float64{1, 3}),
-			data.NewField("float64_nullable", nil, []*float64{p(2.0), nil}),
+			data.NewField("float64_nullable", nil, []*float64{p(float64(2.0)), nil}),
+
+			// Ints
+			data.NewField("int8", nil, []int8{1, 3}),
+			data.NewField("int8_nullable", nil, []*int8{p(int8(2)), nil}),
+
+			data.NewField("int16", nil, []int16{1, 3}),
+			data.NewField("int16_nullable", nil, []*int16{p(int16(2)), nil}),
+
+			data.NewField("int32", nil, []int32{1, 3}),
+			data.NewField("int32_nullable", nil, []*int32{p(int32(2)), nil}),
 
 			data.NewField("int64", nil, []int64{1, 3}),
 			data.NewField("int64_nullable", nil, []*int64{p(int64(2)), nil}),
 
-			data.NewField("bool", nil, []bool{true, false}),
-			data.NewField("bool_nullable", nil, []*bool{p(true), nil}),
+			// Unsigned Ints
+			data.NewField("uint8", nil, []uint8{1, 3}),
+			data.NewField("uint8_nullable", nil, []*uint8{p(uint8(2)), nil}),
+
+			data.NewField("uint16", nil, []uint16{1, 3}),
+			data.NewField("uint16_nullable", nil, []*uint16{p(uint16(2)), nil}),
+
+			data.NewField("uint32", nil, []uint32{1, 3}),
+			data.NewField("uint32_nullable", nil, []*uint32{p(uint32(2)), nil}),
+
+			data.NewField("uint64", nil, []uint64{1, 3}),
+			data.NewField("uint64_nullable", nil, []*uint64{p(uint64(2)), nil}),
 		},
 	}
 

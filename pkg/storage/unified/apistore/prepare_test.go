@@ -6,15 +6,21 @@ import (
 	"time"
 
 	"github.com/bwmarrin/snowflake"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/rand"
 	"k8s.io/apimachinery/pkg/api/apitesting"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/storage"
+
+	authtypes "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 )
+
+var scheme = runtime.NewScheme()
+var codecs = serializer.NewCodecFactory(scheme)
 
 func TestPrepareObjectForStorage(t *testing.T) {
 	_ = v0alpha1.AddToScheme(scheme)
@@ -27,12 +33,13 @@ func TestPrepareObjectForStorage(t *testing.T) {
 			LargeObjectSupport: nil,
 		},
 	}
-	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, UserUID: "user-uid"})
 
-	t.Run("Error getting requester from context", func(t *testing.T) {
+	ctx := authtypes.WithAuthInfo(context.Background(), &identity.StaticRequester{UserID: 1, UserUID: "user-uid", Type: authtypes.TypeUser})
+
+	t.Run("Error getting auth info from context", func(t *testing.T) {
 		_, err := s.prepareObjectForStorage(context.Background(), nil)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "a Requester was not found in the context")
+		require.Contains(t, err.Error(), "missing auth info")
 	})
 
 	t.Run("Error on missing name", func(t *testing.T) {
@@ -81,11 +88,14 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		meta, err := utils.MetaAccessor(obj)
 		require.NoError(t, err)
 		now := time.Now()
-		meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-			Name:      "test-repo",
-			Path:      "test/path",
-			Hash:      "hash",
-			Timestamp: &now,
+		meta.SetManagerProperties(utils.ManagerProperties{
+			Kind:     utils.ManagerKindRepo,
+			Identity: "test-repo",
+		})
+		meta.SetSourceProperties(utils.SourceProperties{
+			Path:            "test/path",
+			Checksum:        "hash",
+			TimestampMillis: now.UnixMilli(),
 		})
 
 		encodedData, err := s.prepareObjectForStorage(ctx, obj)
@@ -95,14 +105,16 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.NoError(t, err)
 		meta, err = utils.MetaAccessor(newObject)
 		require.NoError(t, err)
-		require.Equal(t, meta.GetRepositoryHash(), "hash")
-		require.Equal(t, meta.GetRepositoryName(), "test-repo")
-		require.Equal(t, meta.GetRepositoryPath(), "test/path")
-		ts, err := meta.GetRepositoryTimestamp()
-		require.NoError(t, err)
-		parsed, err := time.Parse(time.RFC3339, now.UTC().Format(time.RFC3339))
-		require.NoError(t, err)
-		require.Equal(t, ts, &parsed)
+
+		m, ok := meta.GetManagerProperties()
+		require.True(t, ok)
+		s, ok := meta.GetSourceProperties()
+		require.True(t, ok)
+
+		require.Equal(t, m.Identity, "test-repo")
+		require.Equal(t, s.Checksum, "hash")
+		require.Equal(t, s.Path, "test/path")
+		require.Equal(t, s.TimestampMillis, now.UnixMilli())
 	})
 
 	s.opts.RequireDeprecatedInternalID = true

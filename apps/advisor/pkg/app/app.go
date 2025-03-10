@@ -13,16 +13,24 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkscheduler"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checktyperegisterer"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog/v2"
 )
 
 func New(cfg app.Config) (app.App, error) {
 	// Read config
-	checkRegistry, ok := cfg.SpecificConfig.(checkregistry.CheckService)
+	specificConfig, ok := cfg.SpecificConfig.(checkregistry.AdvisorAppConfig)
 	if !ok {
 		return nil, fmt.Errorf("invalid config type")
 	}
+	checkRegistry := specificConfig.CheckRegistry
+	stackID := specificConfig.StackID
+	namespace, err := checks.GetNamespace(stackID)
+	if err != nil {
+		return nil, err
+	}
+	log := log.New("advisor.app")
 
 	// Prepare storage client
 	clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.ClientConfig{})
@@ -59,6 +67,13 @@ func New(cfg app.Config) (app.App, error) {
 				},
 				Watcher: &simple.Watcher{
 					AddFunc: func(ctx context.Context, obj resource.Object) error {
+						log.Debug("Adding check", "namespace", obj.GetNamespace())
+						if obj.GetNamespace() != namespace {
+							log.Debug("Skipping check in namespace", "namespace", obj.GetNamespace())
+							return nil
+						} else {
+							log.Debug("Processing check in namespace", "namespace", obj.GetNamespace())
+						}
 						check, err := getCheck(obj, checkMap)
 						if err != nil {
 							return err

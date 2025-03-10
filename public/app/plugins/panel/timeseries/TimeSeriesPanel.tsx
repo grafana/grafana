@@ -106,8 +106,8 @@ export const TimeSeriesPanel = ({
                 clientZoom={true}
                 syncMode={cursorSync}
                 syncScope={eventsScope}
-                getDataLinks={(seriesIdx: number, dataIdx: number) =>
-                  alignedFrame.fields[seriesIdx]!.getLinks?.({ valueRowIndex: dataIdx }) ?? []
+                getDataLinks={(seriesIdx, dataIdx) =>
+                  alignedFrame.fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
                 }
                 render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync, dataLinks) => {
                   if (enableAnnotationCreation && timeRange2 != null) {
@@ -159,6 +159,7 @@ export const TimeSeriesPanel = ({
                     config={uplotConfig}
                     exemplars={data.annotations}
                     timeZone={timeZone}
+                    maxHeight={options.tooltip.maxHeight}
                   />
                 )}
                 {((canEditThresholds && onThresholdsChange) || showThresholds) && (

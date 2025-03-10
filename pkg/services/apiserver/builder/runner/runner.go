@@ -12,7 +12,7 @@ import (
 )
 
 type RunnerConfig struct {
-	RestConfigGetter func(context.Context) *rest.Config
+	RestConfigGetter func(context.Context) (*rest.Config, error)
 	APIRegistrar     builder.APIRegistrar
 }
 
@@ -49,9 +49,9 @@ func (r *APIGroupRunner) Run(ctx context.Context) error {
 
 func (r *APIGroupRunner) Init(ctx context.Context) error {
 	defer close(r.initialized)
-	restConfig := r.config.RestConfigGetter(ctx)
-	if restConfig == nil {
-		return fmt.Errorf("rest config is nil")
+	restConfig, err := r.config.RestConfigGetter(ctx)
+	if err != nil {
+		return err
 	}
 	for i := range r.groups {
 		appConfig := app.Config{

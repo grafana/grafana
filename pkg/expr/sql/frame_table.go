@@ -3,10 +3,12 @@
 package sql
 
 import (
+	"fmt"
 	"io"
 	"strings"
 
 	mysql "github.com/dolthub/go-mysql-server/sql"
+	"github.com/dolthub/go-mysql-server/sql/types"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
@@ -123,4 +125,39 @@ type partition []byte
 
 func (p partition) Key() []byte {
 	return p
+}
+
+// Helper function to convert data.FieldType to types.Type
+func convertDataType(fieldType data.FieldType) mysql.Type {
+	switch fieldType {
+	case data.FieldTypeInt8, data.FieldTypeNullableInt8:
+		return types.Int8
+	case data.FieldTypeUint8, data.FieldTypeNullableUint8:
+		return types.Uint8
+	case data.FieldTypeInt16, data.FieldTypeNullableInt16:
+		return types.Int16
+	case data.FieldTypeUint16, data.FieldTypeNullableUint16:
+		return types.Uint16
+	case data.FieldTypeInt32, data.FieldTypeNullableInt32:
+		return types.Int32
+	case data.FieldTypeUint32, data.FieldTypeNullableUint32:
+		return types.Uint32
+	case data.FieldTypeInt64, data.FieldTypeNullableInt64:
+		return types.Int64
+	case data.FieldTypeUint64, data.FieldTypeNullableUint64:
+		return types.Uint64
+	case data.FieldTypeFloat32, data.FieldTypeNullableFloat32:
+		return types.Float32
+	case data.FieldTypeFloat64, data.FieldTypeNullableFloat64:
+		return types.Float64
+	case data.FieldTypeString, data.FieldTypeNullableString:
+		return types.Text
+	case data.FieldTypeBool, data.FieldTypeNullableBool:
+		return types.Boolean
+	case data.FieldTypeTime, data.FieldTypeNullableTime:
+		return types.Timestamp
+	default:
+		fmt.Printf("------- Unsupported field type: %v", fieldType)
+		return types.JSON
+	}
 }
