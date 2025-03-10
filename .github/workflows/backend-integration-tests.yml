@@ -20,8 +20,8 @@ jobs:
           go-version-file: go.mod
           cache: true
       - run: |
-        make gen-go
-        go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
+          make gen-go
+          go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
   mysql:
     name: MySQL
     runs-on: ubuntu-latest
@@ -48,11 +48,11 @@ jobs:
           go-version-file: go.mod
           cache: true
       - run: |
-        sudo apt-get update -yq && sudo apt-get install mariadb-client
-        cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h 127.0.0.1 -P 3306 -u root -prootpass --disable-ssl-verify-server-cert
-        go clean -testcache
-        make gen-go
-        go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
+          sudo apt-get update -yq && sudo apt-get install mariadb-client
+          cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h 127.0.0.1 -P 3306 -u root -prootpass --disable-ssl-verify-server-cert
+          go clean -testcache
+          make gen-go
+          go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
   postgres:
     name: Postgres
     runs-on: ubuntu-latest
