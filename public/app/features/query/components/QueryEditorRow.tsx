@@ -673,7 +673,7 @@ function MaybeQueryLibrarySaveButton(props: { query: DataQuery }) {
 }
 
 function AdaptiveTelemetryQueryActions({ query }: { query: DataQuery }) {
-  const extensionPointId = 'grafana/adaptivetelemetry/query/action';
+  const extensionPointId = 'grafana/adaptivetelemetry/query/action/v1';
 
   type AdaptiveTelemetryQueryActionProps = {
     /** An ordered list of lower-case [a-z]+ string identifiers to provide context clues of where this component is being embedded and how we might want to consider displaying it */
@@ -681,22 +681,17 @@ function AdaptiveTelemetryQueryActions({ query }: { query: DataQuery }) {
     query?: DataQuery;
   };
 
-  try {
-    const { isLoading, components } = usePluginComponents<AdaptiveTelemetryQueryActionProps>({ extensionPointId });
+  const { isLoading, components } = usePluginComponents<AdaptiveTelemetryQueryActionProps>({ extensionPointId });
 
-    if (isLoading || !components.length) {
-      return null;
-    }
-
-    const actions = components
-      .filter(({ meta }) => meta.pluginId.startsWith('grafana-adaptive'))
-      .map((Component) => {
-        const { meta } = Component;
-        return <Component key={meta.id} query={query} contextHints={['queryeditorrow', 'header']} />;
-      });
-    return <>{actions}</>;
-  } catch (err) {
-    // `usePluginComponents` will fail in test environments due to the instance not being set
+  if (isLoading || !components.length) {
     return null;
   }
+
+  const actions = components
+    .filter(({ meta }) => meta.pluginId.startsWith('grafana-adaptive'))
+    .map((Component) => {
+      const { meta } = Component;
+      return <Component key={meta.id} query={query} contextHints={['queryeditorrow', 'header']} />;
+    });
+  return <>{actions}</>;
 }
