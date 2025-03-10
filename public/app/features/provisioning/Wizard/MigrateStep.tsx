@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { Alert, Button, FieldSet, Stack, Text, Switch, Field } from '@grafana/ui';
+import { Alert, FieldSet, Stack, Text } from '@grafana/ui';
 
 import { JobStatus } from '../JobStatus';
 import { useCreateRepositoryMigrateMutation } from '../api';
@@ -16,27 +16,31 @@ export interface MigrateStepProps {
 export function MigrateStep({ onStatusChange }: MigrateStepProps) {
   const [migrateRepo, migrateQuery] = useCreateRepositoryMigrateMutation();
   const [showMigrateStatus, setShowMigrateStatus] = useState(false);
-  const { watch, register } = useFormContext<WizardFormData>();
-  const [repositoryName, history, identifier] = watch(['repositoryName', 'migrate.history', 'migrate.identifier']);
+  const { watch } = useFormContext<WizardFormData>();
+  const repositoryName = watch('repositoryName');
   const migrateName = migrateQuery.data?.metadata?.name;
 
-  const handleMigrate = async () => {
-    if (!repositoryName) {
-      return;
-    }
-    setShowMigrateStatus(true);
-    const response = await migrateRepo({
-      name: repositoryName,
-      body: {
-        identifier,
-        history,
-      },
-    });
-    if ('error' in response) {
-      onStatusChange(false);
-      setShowMigrateStatus(false);
-    }
-  };
+  useEffect(() => {
+    const startMigrate = async () => {
+      if (!repositoryName) {
+        return;
+      }
+      setShowMigrateStatus(true);
+      const response = await migrateRepo({
+        name: repositoryName,
+        body: {
+          identifier: true,
+          history: true,
+        },
+      });
+      if ('error' in response) {
+        onStatusChange(false);
+        setShowMigrateStatus(false);
+      }
+    };
+
+    startMigrate();
+  }, [repositoryName, migrateRepo, onStatusChange]);
 
   if (showMigrateStatus && migrateName) {
     return (
@@ -50,8 +54,8 @@ export function MigrateStep({ onStatusChange }: MigrateStepProps) {
     <FieldSet label="3. Migrate dashboards">
       <Stack direction="column" gap={2}>
         <Text color="secondary">
-          Migrate all dashboards from this instance to your repository. After this one-time migration, all future
-          updates will be automatically saved to the repository.
+          Migrating all dashboards from this instance to your repository, including their identifiers and complete
+          history. After this one-time migration, all future updates will be automatically saved to the repository.
         </Text>
 
         {!repositoryName && (
@@ -65,28 +69,7 @@ export function MigrateStep({ onStatusChange }: MigrateStepProps) {
           Dashboards will be unavailable while running this process.
         </Alert>
 
-        <FieldSet>
-          <Field
-            label="Identifier (final name still TBD)"
-            description="Include the current identifier in exported metadata"
-          >
-            <Switch {...register('migrate.identifier')} />
-          </Field>
-
-          <Field label="History" description="Include commits for each historical value">
-            <Switch {...register('migrate.history')} />
-          </Field>
-        </FieldSet>
-
-        <Stack alignItems="flex-start">
-          <Button
-            onClick={handleMigrate}
-            disabled={migrateQuery.isLoading || !repositoryName}
-            icon={migrateQuery.isLoading ? 'spinner' : undefined}
-          >
-            {migrateQuery.isLoading ? 'Migrating...' : 'Start migration'}
-          </Button>
-        </Stack>
+        {migrateQuery.isLoading && <Text>Migrating dashboards to repository...</Text>}
       </Stack>
     </FieldSet>
   );
