@@ -21,7 +21,9 @@ import {
   TimeRange,
   getDataSourceRef,
   toLegacyResponseData,
+  PluginExtensionPoints,
 } from '@grafana/data';
+import { PluginExtensionAdaptiveTelemetryQueryActionsV1Context } from '@grafana/data/src/types/pluginExtensions';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   AngularComponent,
@@ -563,7 +565,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const DatasourceCheatsheet = datasource.components?.QueryEditorHelp;
 
     return (
-      <div data-testid="query-editor-row" aria-label={selectors.components.QueryEditorRows.rows}>
+      <div data-testid="query-editor-row">
         <QueryOperationRow
           id={this.id}
           draggable={!hideActionButtons}
@@ -673,15 +675,9 @@ function MaybeQueryLibrarySaveButton(props: { query: DataQuery }) {
 }
 
 function AdaptiveTelemetryQueryActions({ query }: { query: DataQuery }) {
-  const extensionPointId = 'grafana/adaptivetelemetry/query/action/v1';
-
-  type AdaptiveTelemetryQueryActionProps = {
-    /** An ordered list of lower-case [a-z]+ string identifiers to provide context clues of where this component is being embedded and how we might want to consider displaying it */
-    contextHints?: string[];
-    query?: DataQuery;
-  };
-
-  const { isLoading, components } = usePluginComponents<AdaptiveTelemetryQueryActionProps>({ extensionPointId });
+  const { isLoading, components } = usePluginComponents<PluginExtensionAdaptiveTelemetryQueryActionsV1Context>({
+    extensionPointId: PluginExtensionPoints.AdaptiveTelemetryQueryActionsV1,
+  });
 
   if (isLoading || !components.length) {
     return null;
