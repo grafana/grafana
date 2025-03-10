@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Field, FieldSet, Input, MultiCombobox, Stack, Switch } from '@grafana/ui';
@@ -21,6 +22,14 @@ export function FinishStep({ onStatusChange }: FinishStepProps) {
 
   const type = watch('repository.type');
   const isGithub = type === 'github';
+  // Enable sync by default
+  const { setValue } = useFormContext<WizardFormData>();
+
+  // Set sync enabled by default
+  useEffect(() => {
+    setValue('repository.sync.enabled', true);
+    onStatusChange(true); // Indicate success
+  }, [setValue, onStatusChange]);
 
   return (
     <FieldSet label="3. Finish">

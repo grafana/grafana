@@ -158,7 +158,7 @@ function WizardContent({
   styles: any;
   onOptionSelect: (requiresMigration: boolean) => void;
 }) {
-  const { watch, setValue, getValues } = useFormContext<WizardFormData>();
+  const { watch, setValue, getValues, trigger } = useFormContext<WizardFormData>();
 
   const repoName = watch('repositoryName');
   const [submitData, saveRequest] = useCreateOrUpdateRepository(repoName);
@@ -167,6 +167,14 @@ function WizardContent({
   const handleNextWithSubmit = async () => {
     const currentStep = availableSteps.find((s) => s.id === activeStep);
     if (currentStep?.submitOnNext) {
+      // Validate form data before proceeding
+      if (activeStep === 'connection' || activeStep === 'bootstrap') {
+        const isValid = await trigger(['repository', 'repository.title']);
+        if (!isValid) {
+          return;
+        }
+      }
+
       setIsSubmitting(true);
       try {
         const formData = getValues();
@@ -238,7 +246,6 @@ function WizardContent({
           disabled={
             isSubmitting ||
             (activeStep === 'repository' && !saveRequest.isSuccess) ||
-            (activeStep === 'bootstrap' && !saveRequest.isSuccess) ||
             (activeStep === 'migrate' && !saveRequest.isSuccess) ||
             (activeStep === 'pull' && !saveRequest.isSuccess) ||
             (activeStep === 'finish' && !saveRequest.isSuccess)
