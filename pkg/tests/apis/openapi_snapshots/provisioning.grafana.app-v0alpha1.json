@@ -2626,7 +2626,8 @@
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.GitHubRepositoryConfig": {
         "type": "object",
         "required": [
-          "branch"
+          "branch",
+          "folder"
         ],
         "properties": {
           "branch": {
@@ -2639,6 +2640,11 @@
             "type": "string",
             "format": "byte",
             "x-kubernetes-list-type": "atomic"
+          },
+          "folder": {
+            "description": "Optional folder prefix within the repo. When configured, files outside this folder will be ignored",
+            "type": "string",
+            "default": ""
           },
           "generateDashboardPreviews": {
             "description": "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",

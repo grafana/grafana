@@ -40,8 +40,14 @@ type GitHubRepositoryConfig struct {
 
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
+
+	// Optional folder prefix within the repo.
+	// When configured, files outside this folder will be ignored
+	Folder string `json:"folder"`
+
 	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
 	Token string `json:"token,omitempty"`
+
 	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
 	// +listType=atomic
 	EncryptedToken []byte `json:"encryptedToken,omitempty"`

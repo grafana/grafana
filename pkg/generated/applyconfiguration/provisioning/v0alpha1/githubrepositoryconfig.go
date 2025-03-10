@@ -9,6 +9,7 @@ package v0alpha1
 type GitHubRepositoryConfigApplyConfiguration struct {
 	URL                       *string `json:"url,omitempty"`
 	Branch                    *string `json:"branch,omitempty"`
+	Folder                    *string `json:"folder,omitempty"`
 	Token                     *string `json:"token,omitempty"`
 	EncryptedToken            []byte  `json:"encryptedToken,omitempty"`
 	GenerateDashboardPreviews *bool   `json:"generateDashboardPreviews,omitempty"`
@@ -33,6 +34,14 @@ func (b *GitHubRepositoryConfigApplyConfiguration) WithURL(value string) *GitHub
 // If called multiple times, the Branch field is set to the value of the last call.
 func (b *GitHubRepositoryConfigApplyConfiguration) WithBranch(value string) *GitHubRepositoryConfigApplyConfiguration {
 	b.Branch = &value
+	return b
+}
+
+// WithFolder sets the Folder field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Folder field is set to the value of the last call.
+func (b *GitHubRepositoryConfigApplyConfiguration) WithFolder(value string) *GitHubRepositoryConfigApplyConfiguration {
+	b.Folder = &value
 	return b
 }
 
