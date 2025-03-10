@@ -6,6 +6,7 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
+// +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type SearchResults struct {
 	metav1.TypeMeta `json:",inline"`
@@ -32,11 +33,13 @@ type SearchResults struct {
 	Facets map[string]FacetResult `json:"facets,omitempty"`
 }
 
+// +k8s:deepcopy-gen=true
 type SortBy struct {
 	Field      string `json:"field"`
 	Descending bool   `json:"desc,omitempty"`
 }
 
+// +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type SortableFields struct {
 	metav1.TypeMeta `json:",inline"`
@@ -45,12 +48,14 @@ type SortableFields struct {
 	Fields []SortableField `json:"fields"`
 }
 
+// +k8s:deepcopy-gen=true
 type SortableField struct {
 	Field   string `json:"string,omitempty"`
 	Display string `json:"display,omitempty"`
 	Type    string `json:"type,omitempty"` // string or number
 }
 
+// +k8s:deepcopy-gen=true
 type DashboardHit struct {
 	// Dashboard or folder
 	Resource string `json:"resource"` // dashboards | folders
@@ -70,6 +75,7 @@ type DashboardHit struct {
 	Explain *common.Unstructured `json:"explain,omitempty"`
 }
 
+// +k8s:deepcopy-gen=true
 type FacetResult struct {
 	Field string `json:"field,omitempty"`
 	// The distinct terms
@@ -80,6 +86,7 @@ type FacetResult struct {
 	Terms []TermFacet `json:"terms,omitempty"`
 }
 
+// +k8s:deepcopy-gen=true
 type TermFacet struct {
 	Term  string `json:"term,omitempty"`
 	Count int64  `json:"count,omitempty"`

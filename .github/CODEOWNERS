@@ -71,6 +71,7 @@
 /pkg/registry/apis/provisioning @grafana/grafana-git-ui-sync-team
 
 /apps/alerting/ @grafana/alerting-backend
+/apps/dashboard/ @grafana/grafana-app-platform-squad @grafana/dashboards-squad
 /apps/playlist/ @grafana/grafana-app-platform-squad
 /apps/investigations/ @fcjack @matryer @svennergr
 /apps/advisor/ @grafana/plugins-platform-backend

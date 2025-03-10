@@ -1490,24 +1490,12 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.ConversionStatus": {
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "string"
-          },
-          "failed": {
-            "type": "boolean"
-          },
-          "storedVersion": {
-            "type": "string"
-          }
-        }
-      },
       "com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard": {
         "type": "object",
         "required": [
-          "spec"
+          "metadata",
+          "spec",
+          "status"
         ],
         "properties": {
           "apiVersion": {
@@ -1519,7 +1507,6 @@
             "type": "string"
           },
           "metadata": {
-            "description": "Standard object's metadata More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
             "default": {},
             "allOf": [
               {
@@ -1528,7 +1515,7 @@
             ]
           },
           "spec": {
-            "description": "The dashboard body (unstructured for now)",
+            "description": "Spec is the spec of the Dashboard",
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
@@ -1536,7 +1523,7 @@
             ]
           },
           "status": {
-            "description": "Optional dashboard status",
+            "default": {},
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.DashboardStatus"
@@ -1553,7 +1540,6 @@
         ]
       },
       "com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.DashboardAccess": {
-        "description": "Information about how the requesting user can use a given dashboard",
         "type": "object",
         "required": [
           "canSave",
@@ -1597,8 +1583,38 @@
           }
         }
       },
+      "com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.DashboardConversionStatus": {
+        "description": "ConversionStatus is the status of the conversion of the dashboard.",
+        "type": "object",
+        "required": [
+          "failed",
+          "storedVersion",
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "description": "The error message from the conversion. Empty if the conversion has not failed.",
+            "type": "string",
+            "default": ""
+          },
+          "failed": {
+            "description": "Whether from another version has failed. If true, means that the dashboard is not valid, and the caller should instead fetch the stored version.",
+            "type": "boolean",
+            "default": false
+          },
+          "storedVersion": {
+            "description": "The version which was stored when the dashboard was created / updated. Fetching this version should always succeed.",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
       "com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.DashboardList": {
         "type": "object",
+        "required": [
+          "metadata",
+          "items"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -1640,7 +1656,12 @@
         "type": "object",
         "properties": {
           "conversion": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.ConversionStatus"
+            "description": "Optional conversion status.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.DashboardConversionStatus"
+              }
+            ]
           }
         }
       },
@@ -1648,7 +1669,9 @@
         "description": "This is like the legacy DTO where access and metadata are all returned in a single call",
         "type": "object",
         "required": [
+          "metadata",
           "spec",
+          "status",
           "access"
         ],
         "properties": {
@@ -1669,7 +1692,6 @@
             "type": "string"
           },
           "metadata": {
-            "description": "Standard object's metadata More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
             "default": {},
             "allOf": [
               {
@@ -1678,7 +1700,7 @@
             ]
           },
           "spec": {
-            "description": "The dashboard body (unstructured for now)",
+            "description": "Spec is the spec of the Dashboard",
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
@@ -1686,7 +1708,7 @@
             ]
           },
           "status": {
-            "description": "Optional dashboard status",
+            "default": {},
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.DashboardStatus"
