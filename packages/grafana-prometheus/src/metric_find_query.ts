@@ -35,7 +35,7 @@ export class PrometheusMetricFindQuery {
 
     if (labelNamesMatchQuery) {
       const selector = `{__name__=~".*${labelNamesMatchQuery[1]}.*"}`;
-      return this.datasource.languageProvider.getSeriesLabels(selector, []).then((results) =>
+      return this.datasource.languageProvider.getSeriesLabels(timeRange, selector, []).then((results) =>
         results.map((result) => ({
           text: result,
         }))
