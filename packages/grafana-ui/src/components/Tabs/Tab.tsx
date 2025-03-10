@@ -114,7 +114,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         position: 'absolute',
         left: 0,
         right: 0,
-        height: '4px',
+        height: '2px',
         borderRadius: theme.shape.radius.default,
         bottom: 0,
       },
