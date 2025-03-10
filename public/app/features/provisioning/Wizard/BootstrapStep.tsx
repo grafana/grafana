@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Field, Input, Stack, FieldSet, Card, Alert, Text } from '@grafana/ui';
+import { Box, Field, Input, Stack, FieldSet, Card, Alert, Text } from '@grafana/ui';
 
 import { useGetFrontendSettingsQuery, useGetRepositoryFilesQuery } from '../api';
 import { checkSyncSettings } from '../utils';
@@ -208,12 +208,26 @@ export function BootstrapStep({ onOptionSelect }: Props) {
               your existing files before migrating.
             </Alert>
           )}
+          <Box alignItems="center">
+            <Stack direction="row" gap={4} alignItems="flex-start" justifyContent="center">
+              <Stack direction="column" gap={1} alignItems="center">
+                <Text variant="bodySmall" color="secondary">
+                  Grafana
+                </Text>
+                <Stack direction="row" gap={2}>
+                  <Text>{dashboardCount} dashboards</Text>
+                  <Text>{folderCount} folders</Text>
+                </Stack>
+              </Stack>
+              <Stack direction="column" gap={1} alignItems="center">
+                <Text variant="bodySmall" color="secondary">
+                  Repository
+                </Text>
+                <Text>{fileCount} files</Text>
+              </Stack>
+            </Stack>
+          </Box>
 
-          <Stack direction="row" gap={2}>
-            <Text>{dashboardCount} dashboards</Text>
-            <Text>{folderCount} folders</Text>
-            <Text>{fileCount} files</Text>
-          </Stack>
           <Controller
             name="repository.sync.target"
             control={control}
