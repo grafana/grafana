@@ -14,6 +14,7 @@ const (
 	WeightHome = (iota - 20) * 100
 	WeightBookmarks
 	WeightSavedItems
+	WeightFolders
 	WeightDashboard
 	WeightExplore
 	WeightDrilldown

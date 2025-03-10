@@ -270,7 +270,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 // CSS for columns from react table
-const getColumnStyles = (theme: GrafanaTheme2) => {
+export const getColumnStyles = (theme: GrafanaTheme2) => {
   return {
     cell: css({
       padding: theme.spacing(1),
