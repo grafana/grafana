@@ -28,7 +28,15 @@ export const LogsPanel = ({
   data,
   timeZone,
   fieldConfig,
-  options: { dedupStrategy, enableInfiniteScrolling, onNewLogsReceived, showTime, sortOrder, wrapLogMessage },
+  options: {
+    dedupStrategy,
+    enableInfiniteScrolling,
+    onNewLogsReceived,
+    showNavigation,
+    showTime,
+    sortOrder,
+    wrapLogMessage,
+  },
   id,
 }: LogsPanelProps) => {
   const style = useStyles2(getStyles);
@@ -107,6 +115,7 @@ export const LogsPanel = ({
           initialScrollPosition={initialScrollPosition}
           logs={logs}
           loadMore={enableInfiniteScrolling ? loadMoreLogs : undefined}
+          showNavigation={showNavigation}
           showTime={showTime}
           sortOrder={sortOrder}
           timeRange={data.timeRange}

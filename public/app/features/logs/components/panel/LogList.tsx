@@ -52,6 +52,7 @@ interface Props {
   onUnpinLine?: (row: LogRowModel) => void;
   pinLineButtonTooltipTitle?: PopoverContent;
   pinnedLogs?: string[];
+  showNavigation: boolean;
   showTime: boolean;
   sortOrder: LogsSortOrder;
   timeRange: TimeRange;
@@ -69,6 +70,7 @@ export const LogList = ({
   initialScrollPosition = 'top',
   loadMore,
   logs,
+  showNavigation,
   showTime,
   sortOrder,
   timeRange,
@@ -186,7 +188,7 @@ export const LogList = ({
             </VariableSizeList>
           )}
         </InfiniteScroll>
-        <LogListNavigation eventBus={eventBus} />
+        {showNavigation && <LogListNavigation eventBus={eventBus} />}
       </div>
     </LogListContext.Provider>
   );
