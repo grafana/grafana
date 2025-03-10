@@ -44,6 +44,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
         userPreferencesAPI.middleware,
         provisioningAPI.middleware,
         iamApi.middleware,
+        provisioningAPI.middleware,
         folderAPI.middleware,
         ...extraMiddleware
       ),
