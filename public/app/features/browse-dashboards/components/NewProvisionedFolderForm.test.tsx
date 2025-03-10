@@ -257,7 +257,6 @@ describe('NewProvisionedFolderForm', () => {
 
     const { user, props } = setup();
 
-    // Fill form
     const folderNameInput = screen.getByRole('textbox', { name: /folder name/i });
     const commentInput = screen.getByRole('textbox', { name: /comment/i });
 

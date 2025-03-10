@@ -77,14 +77,21 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
     const appEvents = getAppEvents();
     if (request.isSuccess) {
       onSubmit();
-      locationService.partial({ prLink });
+      if (workflow === 'branch' && prLink) {
+        locationService.partial({ prLink });
+      } else {
+        appEvents.publish({
+          type: AppEvents.alertSuccess.name,
+          payload: ['Folder created successfully'],
+        });
+      }
     } else if (request.isError) {
       appEvents.publish({
         type: AppEvents.alertError.name,
         payload: ['Error creating folder', request.error],
       });
     }
-  }, [request.isSuccess, request.isError, request.error, onSubmit, ref, prLink]);
+  }, [request.isSuccess, request.isError, request.error, onSubmit, ref, prLink, workflow]);
 
   if (query.isLoading || folderQuery.isLoading) {
     return <Spinner />;
