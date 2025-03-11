@@ -966,4 +966,8 @@ const (
 	// FlagInviteUserExperimental
 	// Renders invite user button along the app
 	FlagInviteUserExperimental = "inviteUserExperimental"
+
+	// FlagExtraLanguages
+	// Enables additional languages
+	FlagExtraLanguages = "extraLanguages"
 )

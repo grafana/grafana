@@ -258,4 +258,5 @@ export interface FeatureToggles {
   alertRuleRestore?: boolean;
   grafanaManagedRecordingRulesDatasources?: boolean;
   inviteUserExperimental?: boolean;
+  extraLanguages?: boolean;
 }
