@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState, useCallback, useId } from 'react';
+import { useState, useCallback, useId, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -25,24 +25,16 @@ import { SecureSocksProxySettings } from './SecureSocksProxySettings';
 import { TLSAuthSettings } from './TLSAuthSettings';
 import { HttpSettingsProps } from './types';
 
-const ACCESS_OPTIONS: Array<SelectableValue<string>> = [
-  {
-    label: t('grafana-ui.data-source-http-settings.server-mode-label', 'Server (default)'),
-    value: 'proxy',
-  },
-  {
-    label: t('grafana-ui.data-source-http-settings.browser-mode-label', 'Browser'),
-    value: 'direct',
-  },
-];
-
-const DEFAULT_ACCESS_OPTION = ACCESS_OPTIONS[0];
-
 const ACCESS_HELP_ID = 'grafana-http-access-help';
 
 const HttpAccessHelp = () => {
   return (
-    <Alert severity="info" title="" topSpacing={3} id={ACCESS_HELP_ID}>
+    <Alert
+      severity="info"
+      title={t('grafana-ui.data-source-http-settings.access-help-title', 'Access help')}
+      topSpacing={3}
+      id={ACCESS_HELP_ID}
+    >
       <p>
         <Trans i18nKey="grafana-ui.data-source-http-settings.access-help-details">
           Access mode controls how requests to the data source will be handled.
@@ -95,6 +87,22 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
     urlLabel,
     urlDocs,
   } = props;
+
+  const ACCESS_OPTIONS: Array<SelectableValue<string>> = useMemo(
+    () => [
+      {
+        label: t('grafana-ui.data-source-http-settings.server-mode-label', 'Server (default)'),
+        value: 'proxy',
+      },
+      {
+        label: t('grafana-ui.data-source-http-settings.browser-mode-label', 'Browser'),
+        value: 'direct',
+      },
+    ],
+    []
+  );
+
+  const DEFAULT_ACCESS_OPTION = useMemo(() => ACCESS_OPTIONS[0], [ACCESS_OPTIONS]);
 
   const [isAccessHelpVisible, setIsAccessHelpVisible] = useState(false);
   const [azureAuthEnabled, setAzureAuthEnabled] = useState(false);
@@ -200,10 +208,13 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
 
         {showAccessOptions && (
           <>
-            <Field label="Access" disabled={dataSourceConfig.readOnly}>
+            <Field
+              label={t('grafana-ui.data-source-http-settings.access-label', 'Access')}
+              disabled={dataSourceConfig.readOnly}
+            >
               <Stack direction="row" gap={0.5}>
                 <RadioButtonGroup
-                  aria-label="Access"
+                  aria-label={t('grafana-ui.data-source-http-settings.access-label', 'Access')}
                   options={ACCESS_OPTIONS}
                   value={
                     ACCESS_OPTIONS.find((o) => o.value === dataSourceConfig.access)?.value ||
@@ -250,11 +261,18 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
               />
             </Field>
 
-            <Field label="Timeout" description="HTTP request timeout in seconds" disabled={dataSourceConfig.readOnly}>
+            <Field
+              label={t('grafana-ui.data-source-http-settings.timeout-label', 'Timeout')}
+              description={t(
+                'grafana-ui.data-source-http-settings.timeout-description',
+                'HTTP request timeout in seconds'
+              )}
+              disabled={dataSourceConfig.readOnly}
+            >
               <Input
                 type="number"
                 width={40}
-                placeholder="Timeout in seconds"
+                placeholder={t('grafana-ui.data-source-http-settings.timeout-placeholder', 'Timeout in seconds')}
                 value={dataSourceConfig.jsonData.timeout}
                 onChange={(event) => {
                   onSettingsChange({
@@ -274,7 +292,11 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
         <Stack direction="column" gap={4}>
           <div>
             <div className={gridLayout}>
-              <InlineField label="Basic auth" labelWidth={LABEL_WIDTH} disabled={dataSourceConfig.readOnly}>
+              <InlineField
+                label={t('grafana-ui.data-source-http-settings.basic-auth-label', 'Basic auth')}
+                labelWidth={LABEL_WIDTH}
+                disabled={dataSourceConfig.readOnly}
+              >
                 <InlineSwitch
                   id="http-settings-basic-auth"
                   value={dataSourceConfig.basicAuth}
@@ -285,8 +307,11 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
               </InlineField>
 
               <InlineField
-                label="With Credentials"
-                tooltip="Whether credentials such as cookies or auth headers should be sent with cross-site requests."
+                label={t('grafana-ui.data-source-http-settings.with-credentials-label', 'With Credentials')}
+                tooltip={t(
+                  'grafana-ui.data-source-http-settings.with-credentials-tooltip',
+                  'Whether credentials such as cookies or auth headers should be sent with cross-site requests.'
+                )}
                 labelWidth={LABEL_WIDTH}
                 disabled={dataSourceConfig.readOnly}
               >
@@ -301,8 +326,11 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
 
               {azureAuthSettings?.azureAuthSupported && (
                 <InlineField
-                  label="Azure Authentication"
-                  tooltip="Use Azure authentication for Azure endpoint."
+                  label={t('grafana-ui.data-source-http-settings.azure-auth-label', 'Azure Authentication')}
+                  tooltip={t(
+                    'grafana-ui.data-source-http-settings.azure-auth-tooltip',
+                    'Use Azure authentication for Azure endpoint.'
+                  )}
                   labelWidth={LABEL_WIDTH}
                   disabled={dataSourceConfig.readOnly}
                 >
@@ -319,7 +347,11 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
               )}
 
               {sigV4AuthToggleEnabled && (
-                <InlineField label="SigV4 auth" labelWidth={LABEL_WIDTH} disabled={dataSourceConfig.readOnly}>
+                <InlineField
+                  label={t('grafana-ui.data-source-http-settings.sigv4-auth-label', 'SigV4 auth')}
+                  labelWidth={LABEL_WIDTH}
+                  disabled={dataSourceConfig.readOnly}
+                >
                   <InlineSwitch
                     id="http-settings-sigv4-auth"
                     value={dataSourceConfig.jsonData.sigV4Auth || false}
