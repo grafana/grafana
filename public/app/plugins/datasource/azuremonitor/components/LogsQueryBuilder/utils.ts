@@ -102,7 +102,7 @@ export const toPropertyType = (kustoType: string): QueryEditorPropertyType => {
   }
 };
 
-export const parseQueryToExpression = (query: string): BuilderQueryExpression => {
+export const parseQueryToBuilder = (query: string): BuilderQueryExpression => {
   const expression: BuilderQueryExpression = {
     columns: { columns: [], type: BuilderQueryEditorExpressionType.Property },
     from: undefined,

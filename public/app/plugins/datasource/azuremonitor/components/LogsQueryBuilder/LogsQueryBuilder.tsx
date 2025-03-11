@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { EditorField, EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { Alert, Input } from '@grafana/ui';
@@ -16,7 +16,7 @@ import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
 import { FilterSection } from './FilterSection';
 import KQLPreview from './KQLPreview';
 import { TableSection } from './TableSection';
-import { DEFAULT_LOGS_BUILDER_QUERY, parseQueryToExpression } from './utils';
+import { DEFAULT_LOGS_BUILDER_QUERY, parseQueryToBuilder } from './utils';
 
 interface LogsQueryBuilderProps {
   query: AzureMonitorQuery;
@@ -35,8 +35,23 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
   }, [schema?.database]);
 
   const builderQuery: BuilderQueryExpression = query.azureLogAnalytics?.query
-    ? parseQueryToExpression(query.azureLogAnalytics.query)
+    ? parseQueryToBuilder(query.azureLogAnalytics?.query)
     : DEFAULT_LOGS_BUILDER_QUERY;
+
+  const updatedBuilderQuery = { ...builderQuery };
+
+  const isBuilderQueryChanged =
+    JSON.stringify(updatedBuilderQuery) !== JSON.stringify(query.azureLogAnalytics?.builderQuery);
+
+  if (isBuilderQueryChanged) {
+    onQueryChange({
+      ...query,
+      azureLogAnalytics: {
+        ...query.azureLogAnalytics,
+        builderQuery: updatedBuilderQuery,
+      },
+    });
+  }
 
   const allColumns = useMemo(() => {
     if (!builderQuery.from?.property.name || !tables) {
@@ -60,12 +75,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
       limit: limit,
     };
 
-    const updatedQueryString = AzureMonitorKustoQueryParser.toQuery({
-      selectedTable: updatedBuilderQuery.from?.property.name!,
-      selectedColumns: query.azureLogAnalytics?.builderQuery?.columns?.columns || [],
-      columns: allColumns,
-      limit: limit,
-    });
+    const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(updatedBuilderQuery, allColumns);
 
     onQueryChange({
       ...query,

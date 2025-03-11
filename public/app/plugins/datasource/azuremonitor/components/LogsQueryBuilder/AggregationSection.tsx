@@ -78,12 +78,7 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
       },
     };
 
-    const updatedQueryString = AzureMonitorKustoQueryParser.toQuery({
-      selectedTable: builderQuery.from?.property.name!,
-      selectedColumns: [],
-      columns: allColumns,
-      aggregation,
-    });
+    const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(updatedBuilderQuery, allColumns, aggregation);
 
     onQueryUpdate({
       ...query,

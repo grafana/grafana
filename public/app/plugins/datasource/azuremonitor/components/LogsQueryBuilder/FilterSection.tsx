@@ -44,6 +44,20 @@ export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, que
     setFilters([]);
   }, [builderQuery.from?.property.name]);
 
+  const getAggregationString = (reduceExpressions: any[] = [], allColumns: AzureLogAnalyticsMetadataColumn[]) => {
+    return reduceExpressions
+      .map((agg) => {
+        if (agg.reduce?.name === 'count') {
+          // If it's a 'count' aggregation, check if a property exists
+          return agg.property?.name ? `count(${agg.property.name})` : 'count()';
+        }
+
+        // For other types of aggregation, return the standard format
+        return `${agg.reduce.name}(${agg.property?.name})`;
+      })
+      .join(', ');
+  };
+
   const formatFilters = (filters: Array<{ column: string; operator: string; value: string }>): string => {
     return filters
       .filter((f) => f.column && f.operator && f.value.trim() !== '')
@@ -67,12 +81,13 @@ export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, que
         .map((filter) => `${filter.column} ${filter.operator} '${filter.value}'`)
         .join(' and ');
 
-      const updatedQueryString = AzureMonitorKustoQueryParser.toQuery({
-        selectedTable: builderQuery.from?.property.name!,
-        selectedColumns: [],
-        columns: allColumns,
-        filters: updatedFilters,
-      });
+      const aggregation = getAggregationString(builderQuery.reduce?.expressions, allColumns);
+      const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(
+        updatedBuilderQuery,
+        allColumns,
+        aggregation,
+        updatedFilters
+      );
 
       const formattedFilters = formatFilters(newFilters);
       if (formattedFilters) {
@@ -109,12 +124,13 @@ export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, que
         },
       };
 
-      const updatedQueryString = AzureMonitorKustoQueryParser.toQuery({
-        selectedTable: builderQuery.from?.property.name!,
-        selectedColumns: [],
-        columns: allColumns,
-        filters: updatedFilters,
-      });
+      const aggregation = getAggregationString(builderQuery.reduce?.expressions, allColumns);
+      const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(
+        updatedBuilderQuery,
+        allColumns,
+        aggregation,
+        updatedFilters
+      );
 
       onQueryUpdate({
         ...query,

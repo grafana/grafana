@@ -1,32 +1,46 @@
+import { BuilderQueryExpression } from '../../dataquery.gen';
 import { AzureLogAnalyticsMetadataColumn } from '../../types';
 
 export class AzureMonitorKustoQueryParser {
   constructor() {}
 
-  static toQuery(params: {
-    selectedTable: string;
-    selectedColumns: string[];
-    columns: AzureLogAnalyticsMetadataColumn[];
-    filters?: string;
-    aggregation?: string;
-    groupBy?: string[];
-    limit?: number;
-  }): string {
-    const { selectedTable, selectedColumns, columns, filters, aggregation, groupBy, limit } = params;
+  static toQuery(
+    builderQuery: BuilderQueryExpression,
+    allColumns: AzureLogAnalyticsMetadataColumn[],
+    aggregation?: string,
+    filters?: string
+  ): string {
+    const { from, columns, groupBy, limit } = builderQuery;
 
-    if (!selectedTable) {
-      return '';
+    if (!from || !from.property.name) {
+      return ''; // If no table is specified, return an empty string.
     }
 
+    const selectedTable = from.property.name;
+    const selectedColumns = columns?.columns || [];
     const parts: string[] = [];
-    const datetimeColumn = this.getDatetimeColumn(columns);
+    const datetimeColumn = this.getDatetimeColumn(allColumns);
     const shouldApplyTimeFilter = this.shouldApplyTimeFilter(selectedColumns, datetimeColumn);
 
+    // Append the table source
     this.appendFrom(selectedTable, parts);
-    this.appendWhere(selectedColumns, filters, datetimeColumn, shouldApplyTimeFilter, columns, parts);
-    this.appendSummarize(selectedColumns, aggregation, groupBy, datetimeColumn, parts);
+
+    // Append where conditions
+    this.appendWhere(selectedColumns, filters, datetimeColumn, shouldApplyTimeFilter, allColumns, parts);
+
+    // Extract groupBy expressions if available
+    const groupByStrings = groupBy?.expressions?.map((expression) => expression.property.name) || [];
+
+    // Append aggregation (if applicable)
+    this.appendSummarize(selectedColumns, aggregation, groupByStrings, datetimeColumn, parts);
+
+    // Append selected columns if any
     this.appendProject(selectedColumns, parts);
-    this.appendOrderBy(datetimeColumn, selectedColumns, groupBy, shouldApplyTimeFilter, parts);
+
+    // Append order by if necessary
+    this.appendOrderBy(datetimeColumn, selectedColumns, groupByStrings, shouldApplyTimeFilter, parts);
+
+    // Append limit if applicable
     this.appendLimit(limit, parts);
 
     return parts.join('\n| ');
@@ -81,7 +95,6 @@ export class AzureMonitorKustoQueryParser {
     datetimeColumn: string,
     parts: string[]
   ) {
-    const groupByParts = new Set<string>();
     const hasValidAggregation = !!(aggregation && aggregation.trim());
 
     if (hasValidAggregation) {
@@ -97,7 +110,8 @@ export class AzureMonitorKustoQueryParser {
       }
     }
 
-    if (groupBy) {
+    if (groupBy && groupBy.length > 0) {
+      const groupByParts = new Set<string>();
       groupBy.forEach((col) => groupByParts.add(col));
       if (selectedColumns.includes(datetimeColumn)) {
         groupByParts.add(`bin(${datetimeColumn}, 1h)`);
@@ -122,11 +136,10 @@ export class AzureMonitorKustoQueryParser {
     shouldApplyTimeFilter: boolean,
     parts: string[]
   ) {
-    if (
-      shouldApplyTimeFilter &&
-      !groupBy?.some((col) => col.startsWith('bin(')) &&
-      !selectedColumns.includes(datetimeColumn)
-    ) {
+    // If the datetime column is selected and it's not part of groupBy, add the order by
+    if (selectedColumns.includes(datetimeColumn) && !groupBy?.some((col) => col.startsWith('bin('))) {
+      parts.push(`order by ${datetimeColumn} asc`);
+    } else if (shouldApplyTimeFilter && !groupBy?.some((col) => col.startsWith('bin('))) {
       parts.push(`order by ${datetimeColumn} asc`);
     }
   }
