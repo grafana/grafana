@@ -134,23 +134,20 @@ export function shouldTextOverflow(
   defaultRowHeight: number,
   padding: number,
   textWrap: boolean,
-  cellInspect: boolean
+  cellInspect: boolean,
+  cellType: TableCellDisplayMode
 ): boolean {
-  if (textWrap || cellInspect) {
+  // Tech debt: Technically image cells are of type string, which is misleading
+  // so we need to ensure we don't apply overflow hover states fo type image
+  if (textWrap || cellInspect || cellType === TableCellDisplayMode.Image || !isTextCell(key, columnTypes)) {
     return false;
   }
 
-  if (isTextCell(key, columnTypes)) {
-    const cellWidth = headerCellRefs.current[key].offsetWidth;
-    const cellText = row[key];
-    const newCellHeight = getCellHeight(cellText, cellWidth, osContext, lineHeight, defaultRowHeight, padding);
+  const cellWidth = headerCellRefs.current[key].offsetWidth;
+  const cellText = row[key];
+  const newCellHeight = getCellHeight(cellText, cellWidth, osContext, lineHeight, defaultRowHeight, padding);
 
-    if (newCellHeight > defaultRowHeight) {
-      return true;
-    }
-  }
-
-  return false;
+  return newCellHeight > defaultRowHeight;
 }
 
 export interface TableFooterCalc {
