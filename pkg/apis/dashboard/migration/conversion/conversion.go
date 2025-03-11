@@ -47,79 +47,127 @@ func RegisterConversions(s *runtime.Scheme) error {
 
 func Convert_V0_to_V1(in *dashboardV0.Dashboard, out *dashboardV1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
-	out.Spec = in.Spec
-	out.Status = &dashboardV1.DashboardStatus{
-		ConversionStatus: &dashboardV1.ConversionStatus{
+
+	out.Spec.Object = in.Spec.Object
+
+	out.Status = dashboardV1.DashboardStatus{
+		Conversion: &dashboardV1.DashboardConversionStatus{
 			StoredVersion: dashboardV0.VERSION,
 		},
 	}
-	err := migration.Migrate(out.Spec.Object, schemaversion.LATEST_VERSION)
-	if err != nil {
-		out.Status.ConversionStatus.Failed = true
-		out.Status.ConversionStatus.Error = err.Error()
+
+	if err := migration.Migrate(out.Spec.Object, schemaversion.LATEST_VERSION); err != nil {
+		out.Status.Conversion.Failed = true
+		out.Status.Conversion.Error = err.Error()
 	}
+
 	return nil
 }
 
 func Convert_V0_to_V2(in *dashboardV0.Dashboard, out *dashboardV2.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
-	out.Spec = in.Spec
-	out.Status = &dashboardV2.DashboardStatus{
-		ConversionStatus: &dashboardV2.ConversionStatus{
+
+	// TODO (@radiohead): implement V0 to V2 conversion
+	// This is the bare minimum conversion that is needed to make the dashboard servable.
+
+	if v, ok := in.Spec.Object["title"]; ok {
+		if title, ok := v.(string); ok {
+			out.Spec.Title = title
+		}
+	}
+
+	// We need to make sure the layout is set to some value, otherwise the JSON marshaling will fail.
+	out.Spec.Layout = dashboardV2.DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind{
+		GridLayoutKind: &dashboardV2.DashboardGridLayoutKind{
+			Kind: "GridLayout",
+			Spec: dashboardV2.DashboardGridLayoutSpec{},
+		},
+	}
+
+	out.Status = dashboardV2.DashboardStatus{
+		Conversion: &dashboardV2.DashboardConversionStatus{
 			StoredVersion: dashboardV0.VERSION,
 			Failed:        true,
 			Error:         "backend conversion not yet implemented",
 		},
 	}
+
 	return nil
 }
 
 func Convert_V1_to_V0(in *dashboardV1.Dashboard, out *dashboardV0.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
-	out.Spec = in.Spec
-	out.Status = &dashboardV0.DashboardStatus{
-		ConversionStatus: &dashboardV0.ConversionStatus{
+
+	out.Spec.Object = in.Spec.Object
+
+	out.Status = dashboardV0.DashboardStatus{
+		Conversion: &dashboardV0.DashboardConversionStatus{
 			StoredVersion: dashboardV1.VERSION,
 		},
 	}
+
 	return nil
 }
 
 func Convert_V1_to_V2(in *dashboardV1.Dashboard, out *dashboardV2.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
-	out.Spec = in.Spec
-	out.Status = &dashboardV2.DashboardStatus{
-		ConversionStatus: &dashboardV2.ConversionStatus{
+
+	// TODO (@radiohead): implement V1 to V2 conversion
+	// This is the bare minimum conversion that is needed to make the dashboard servable.
+
+	if v, ok := in.Spec.Object["title"]; ok {
+		if title, ok := v.(string); ok {
+			out.Spec.Title = title
+		}
+	}
+
+	// We need to make sure the layout is set to some value, otherwise the JSON marshaling will fail.
+	out.Spec.Layout = dashboardV2.DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind{
+		GridLayoutKind: &dashboardV2.DashboardGridLayoutKind{
+			Kind: "GridLayout",
+			Spec: dashboardV2.DashboardGridLayoutSpec{},
+		},
+	}
+
+	out.Status = dashboardV2.DashboardStatus{
+		Conversion: &dashboardV2.DashboardConversionStatus{
 			StoredVersion: dashboardV1.VERSION,
 			Failed:        true,
 			Error:         "backend conversion not yet implemented",
 		},
 	}
+
 	return nil
 }
 
 func Convert_V2_to_V0(in *dashboardV2.Dashboard, out *dashboardV0.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
-	out.Spec = in.Spec
-	out.Status = &dashboardV0.DashboardStatus{
-		ConversionStatus: &dashboardV0.ConversionStatus{
+
+	// TODO: implement V2 to V0 conversion
+
+	out.Status = dashboardV0.DashboardStatus{
+		Conversion: &dashboardV0.DashboardConversionStatus{
 			StoredVersion: dashboardV2.VERSION,
 			Failed:        true,
 			Error:         "backend conversion not yet implemented",
 		},
 	}
+
 	return nil
 }
 
 func Convert_V2_to_V1(in *dashboardV2.Dashboard, out *dashboardV1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
-	out.Spec = in.Spec
-	out.Status = &dashboardV1.DashboardStatus{
-		ConversionStatus: &dashboardV1.ConversionStatus{
+
+	// TODO: implement V2 to V1 conversion
+
+	out.Status = dashboardV1.DashboardStatus{
+		Conversion: &dashboardV1.DashboardConversionStatus{
 			StoredVersion: dashboardV2.VERSION,
 			Failed:        true,
 			Error:         "backend conversion not yet implemented",
 		},
 	}
+
 	return nil
 }

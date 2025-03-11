@@ -5,6 +5,12 @@
 //
 exports[`better eslint`] = {
   value: `{
+    "apps/dashboard/tshack/v0alpha1_spec_gen.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "apps/dashboard/tshack/v1alpha1_spec_gen.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
     "e2e/old-arch/utils/support/types.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],

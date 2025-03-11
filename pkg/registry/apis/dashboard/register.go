@@ -109,6 +109,16 @@ func RegisterAPIService(
 }
 
 func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
+	if featuremgmt.AnyEnabled(b.features, featuremgmt.FlagUseV2DashboardsAPI) {
+		// If dashboards v2 is enabled, we want to use v2alpha1 as the default API version.
+		return []schema.GroupVersion{
+			dashboardv2alpha1.DashboardResourceInfo.GroupVersion(),
+			dashboardv0alpha1.DashboardResourceInfo.GroupVersion(),
+			dashboardv1alpha1.DashboardResourceInfo.GroupVersion(),
+		}
+	}
+
+	// TODO (@radiohead): should we switch to v1alpha1 by default?
 	return []schema.GroupVersion{
 		dashboardv0alpha1.DashboardResourceInfo.GroupVersion(),
 		dashboardv1alpha1.DashboardResourceInfo.GroupVersion(),
