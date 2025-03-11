@@ -299,21 +299,23 @@ export function BootstrapStep({ onOptionSelect }: Props) {
                       selectedOption?.value === option.value && selectedOption?.operation === option.operation;
 
                     return optionState.isDisabled ? (
-                      <Tooltip content={optionState.disabledReason || ''} placement="top">
-                        <div style={{ pointerEvents: 'auto' }}>
-                          <div style={{ pointerEvents: 'none' }}>
-                            <Card key={`${option.value}-${option.operation}`} disabled={true} tabIndex={-1}>
-                              <Card.Heading>
-                                <Stack direction="row" alignItems="center" gap={2}>
-                                  <Text color="secondary">{option.label}</Text>
-                                  <Badge color="blue" text="Not available" icon="info" />
-                                </Stack>
-                              </Card.Heading>
-                              <Card.Description>{option.description}</Card.Description>
-                            </Card>
+                      <Box paddingLeft={2} paddingRight={2}>
+                        <Tooltip content={optionState.disabledReason || ''} placement="top">
+                          <div style={{ pointerEvents: 'auto' }}>
+                            <div style={{ pointerEvents: 'none' }}>
+                              <Card key={`${option.value}-${option.operation}`} disabled={true} tabIndex={-1}>
+                                <Card.Heading>
+                                  <Stack direction="row" alignItems="center" gap={2}>
+                                    <Text color="secondary">{option.label}</Text>
+                                    <Badge color="blue" text="Not available" icon="info" />
+                                  </Stack>
+                                </Card.Heading>
+                                <Card.Description>{option.description}</Card.Description>
+                              </Card>
+                            </div>
                           </div>
-                        </div>
-                      </Tooltip>
+                        </Tooltip>
+                      </Box>
                     ) : (
                       <Card
                         key={`${option.value}-${option.operation}`}
