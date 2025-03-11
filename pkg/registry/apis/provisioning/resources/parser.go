@@ -12,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -20,16 +21,28 @@ import (
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 )
 
 var ErrNamespaceMismatch = errors.New("the file namespace does not match target namespace")
 
 type ParserFactory struct {
-	Client *ClientFactory
+	configProvider apiserver.RestConfigProvider
 }
 
 func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Reader) (*Parser, error) {
 	config := repo.Config()
+
+	restConfig, err := f.configProvider.GetRestConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	client, kinds, err := f.Client.New(config.Namespace) // As system user
 	if err != nil {
 		return nil, err
@@ -59,8 +72,10 @@ type Parser struct {
 	urls repository.RepositoryWithURLs
 
 	// client helper (for this namespace?)
-	client *DynamicClient
-	kinds  KindsLookup
+	discovery *discovery.DiscoveryClient
+
+	// ResourceInterface cache for this context + namespace
+	client map[schema.GroupVersionKind]dynamic.ResourceInterface
 }
 
 type ParsedResource struct {
@@ -103,10 +118,6 @@ type ParsedResource struct {
 
 	// If we got some Errors
 	Errors []error
-}
-
-func (r *Parser) Client() *DynamicClient {
-	return r.client
 }
 
 func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate bool) (parsed *ParsedResource, err error) {
