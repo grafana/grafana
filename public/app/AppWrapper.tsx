@@ -24,6 +24,7 @@ import { ThemeProvider } from './core/utils/ConfigProvider';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import { ExtensionRegistriesProvider } from './features/plugins/extensions/ExtensionRegistriesContext';
 import { pluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
+import { ScopesContextProvider } from './features/scopes/ScopesContextProvider';
 import { ExperimentalSplitPaneRouterWrapper, RouterWrapper } from './routes/RoutesWrapper';
 
 interface AppWrapperProps {
@@ -123,17 +124,19 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                   <GlobalStyles />
                   <MaybeTimeRangeProvider>
                     <SidecarContext_EXPERIMENTAL.Provider value={sidecarServiceSingleton_EXPERIMENTAL}>
-                      <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
-                        <div className="grafana-app">
-                          {config.featureToggles.appSidecar ? (
-                            <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
-                          ) : (
-                            <RouterWrapper {...routerWrapperProps} />
-                          )}
-                          <LiveConnectionWarning />
-                          <PortalContainer />
-                        </div>
-                      </ExtensionRegistriesProvider>
+                      <ScopesContextProvider>
+                        <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
+                          <div className="grafana-app">
+                            {config.featureToggles.appSidecar ? (
+                              <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
+                            ) : (
+                              <RouterWrapper {...routerWrapperProps} />
+                            )}
+                            <LiveConnectionWarning />
+                            <PortalContainer />
+                          </div>
+                        </ExtensionRegistriesProvider>
+                      </ScopesContextProvider>
                     </SidecarContext_EXPERIMENTAL.Provider>
                   </MaybeTimeRangeProvider>
                 </KBarProvider>
