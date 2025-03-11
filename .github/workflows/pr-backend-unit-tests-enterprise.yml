@@ -34,10 +34,11 @@ jobs:
         uses: actions/checkout@v4
         
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: kminehart/setup-go@main
         with:
           go-version-file: go.mod
           cache: true
+          always-cache: true
           
       - name: Install dependencies
         run: |
