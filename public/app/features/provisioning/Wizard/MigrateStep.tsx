@@ -11,9 +11,10 @@ import { WizardFormData } from './types';
 
 export interface MigrateStepProps {
   onStatusChange: (success: boolean) => void;
+  onRunningChange: (isRunning: boolean) => void;
 }
 
-export function MigrateStep({ onStatusChange }: MigrateStepProps) {
+export function MigrateStep({ onStatusChange, onRunningChange }: MigrateStepProps) {
   const [migrateRepo, migrateQuery] = useCreateRepositoryMigrateMutation();
   const [showMigrateStatus, setShowMigrateStatus] = useState(false);
   const { watch } = useFormContext<WizardFormData>();
@@ -21,6 +22,11 @@ export function MigrateStep({ onStatusChange }: MigrateStepProps) {
   const migrateName = migrateQuery.data?.metadata?.name;
   const identifier = watch('migrate.identifier');
   const history = watch('migrate.history');
+
+  // Update running state
+  useEffect(() => {
+    onRunningChange(showMigrateStatus);
+  }, [showMigrateStatus, onRunningChange]);
 
   useEffect(() => {
     const startMigrate = async () => {
@@ -47,7 +53,15 @@ export function MigrateStep({ onStatusChange }: MigrateStepProps) {
   if (showMigrateStatus && migrateName) {
     return (
       <Stack direction="column" gap={2}>
-        <JobStatus name={migrateName} onStatusChange={onStatusChange} />
+        <JobStatus
+          name={migrateName}
+          onStatusChange={(success) => {
+            onStatusChange(success);
+            if (!success) {
+              setShowMigrateStatus(false);
+            }
+          }}
+        />
       </Stack>
     );
   }

@@ -122,6 +122,7 @@ export function ProvisioningWizard() {
         getNextButtonText={getNextButtonText}
         styles={styles}
         onOptionSelect={setRequiresMigration}
+        stepSuccess={stepSuccess}
       />
     </FormProvider>
   );
@@ -137,6 +138,7 @@ function WizardContent({
   getNextButtonText,
   styles,
   onOptionSelect,
+  stepSuccess,
 }: {
   activeStep: WizardStep;
   completedSteps: WizardStep[];
@@ -147,6 +149,7 @@ function WizardContent({
   getNextButtonText: (step: WizardStep) => string;
   styles: any;
   onOptionSelect: (requiresMigration: boolean) => void;
+  stepSuccess: boolean;
 }) {
   const { watch, setValue, getValues, trigger } = useFormContext<WizardFormData>();
   const navigate = useNavigate();
@@ -157,6 +160,17 @@ function WizardContent({
   const [deleteRepository] = useDeleteRepositoryMutation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isJobRunning, setIsJobRunning] = useState(false);
+  const [hasError, setHasError] = useState(false);
+
+  const handleJobRunningChange = (isRunning: boolean) => {
+    setIsJobRunning(isRunning);
+  };
+
+  const handleJobStatusChange = (success: boolean) => {
+    handleStatusChange(success);
+    setHasError(!success);
+  };
 
   const handleCancel = async () => {
     if (activeStep === 'connection') {
@@ -263,25 +277,24 @@ function WizardContent({
       <div className={styles.content}>
         {activeStep === 'connection' && <ConnectStep />}
         {activeStep === 'bootstrap' && <BootstrapStep onOptionSelect={onOptionSelect} />}
-        {activeStep === 'migrate' && requiresMigration && <MigrateStep onStatusChange={handleStatusChange} />}
-        {activeStep === 'pull' && !requiresMigration && <PullStep onStatusChange={handleStatusChange} />}
-        {activeStep === 'finish' && <FinishStep onStatusChange={handleStatusChange} />}
+        {activeStep === 'migrate' && requiresMigration && (
+          <MigrateStep onStatusChange={handleJobStatusChange} onRunningChange={handleJobRunningChange} />
+        )}
+        {activeStep === 'pull' && !requiresMigration && (
+          <PullStep onStatusChange={handleJobStatusChange} onRunningChange={handleJobRunningChange} />
+        )}
+        {activeStep === 'finish' && <FinishStep />}
       </div>
 
       <Stack gap={2} justifyContent="flex-end">
-        <Button variant="secondary" onClick={handleCancel} disabled={isSubmitting || isCancelling}>
+        <Button
+          variant={hasError ? 'primary' : 'secondary'}
+          onClick={handleCancel}
+          disabled={isSubmitting || isCancelling}
+        >
           {isCancelling ? 'Cancelling...' : 'Cancel'}
         </Button>
-        <Button
-          onClick={handleNextWithSubmit}
-          disabled={
-            isSubmitting ||
-            isCancelling ||
-            (activeStep === 'migrate' && !saveRequest.isSuccess) ||
-            (activeStep === 'pull' && !saveRequest.isSuccess) ||
-            (activeStep === 'finish' && !saveRequest.isSuccess)
-          }
-        >
+        <Button onClick={handleNextWithSubmit} disabled={isSubmitting || isCancelling || isJobRunning || !stepSuccess}>
           {isSubmitting ? 'Submitting...' : getNextButtonText(activeStep)}
         </Button>
       </Stack>

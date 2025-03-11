@@ -10,11 +10,7 @@ import { GETTING_STARTED_URL } from '../constants';
 
 import { WizardFormData } from './types';
 
-interface FinishStepProps {
-  onStatusChange: (success: boolean) => void;
-}
-
-export function FinishStep({ onStatusChange }: FinishStepProps) {
+export function FinishStep() {
   const {
     register,
     watch,
@@ -33,8 +29,7 @@ export function FinishStep({ onStatusChange }: FinishStepProps) {
   // Set sync enabled by default
   useEffect(() => {
     setValue('repository.sync.enabled', true);
-    onStatusChange(true); // Indicate success
-  }, [setValue, onStatusChange]);
+  }, [setValue]);
 
   return (
     <Stack direction="column">
