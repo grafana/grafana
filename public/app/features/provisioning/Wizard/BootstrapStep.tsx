@@ -246,8 +246,7 @@ export function BootstrapStep({ onOptionSelect }: Props) {
                       Grafana
                     </Text>
                     <Stack direction="row" gap={2}>
-                      <Text variant="h3">{dashboardCount} dashboards</Text>
-                      <Text variant="h3">{folderCount} folders</Text>
+                      <Text variant="h3">{dashboardCount + folderCount} resources</Text>
                     </Stack>
                   </Stack>
                   <Stack direction="column" gap={1} alignItems="center">
