@@ -44,7 +44,7 @@ const LINKS_ORDER = [
 ];
 
 /**
- * Maximium number of links to show before moving them to a dropdown
+ * Maximum number of links to show before moving them to a dropdown
  */
 const MAX_LINKS = 3;
 
