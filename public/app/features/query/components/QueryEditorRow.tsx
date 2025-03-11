@@ -11,6 +11,7 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourcePluginContextProvider,
+  PluginExtensionAdaptiveTelemetryQueryActionsV1Context,
   EventBusExtended,
   EventBusSrv,
   HistoryItem,
@@ -23,7 +24,6 @@ import {
   toLegacyResponseData,
   PluginExtensionPoints,
 } from '@grafana/data';
-import { PluginExtensionAdaptiveTelemetryQueryActionsV1Context } from '@grafana/data/src/types/pluginExtensions';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   AngularComponent,
@@ -565,7 +565,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const DatasourceCheatsheet = datasource.components?.QueryEditorHelp;
 
     return (
-      <div data-testid="query-editor-row">
+      <div data-testid="query-editor-row" aria-label={selectors.components.QueryEditorRows.rows}>
         <QueryOperationRow
           id={this.id}
           draggable={!hideActionButtons}
@@ -694,7 +694,7 @@ function AdaptiveTelemetryQueryActions({ query }: { query: DataQuery }) {
   } catch (error) {
     // If `usePluginComponents` isn't properly resolved, tests will fail with 'setPluginComponentsHook(options) can only be used after the Grafana instance has started.'
     // This will be resolved in https://github.com/grafana/grafana/pull/92983
-    // In this case, Return `null` as if there are no extensions.
+    // In this case, Return `null` like when there are no extensions.
     return null;
   }
 }
