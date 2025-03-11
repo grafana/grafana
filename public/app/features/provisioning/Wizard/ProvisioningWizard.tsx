@@ -236,9 +236,16 @@ function WizardContent({
       } finally {
         setIsSubmitting(false);
       }
-    } else if (!isJobStep(activeStep)) {
-      // Only auto-proceed for non-job steps
-      handleNext();
+    } else {
+      // For job steps, only proceed if the job was successful
+      if (isJobStep(activeStep)) {
+        if (stepSuccess && !isJobRunning) {
+          handleNext();
+        }
+      } else {
+        // For other non-submit steps, proceed normally
+        handleNext();
+      }
     }
   };
 
