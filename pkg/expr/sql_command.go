@@ -135,8 +135,7 @@ func (gr *SQLCommand) Type() string {
 	return TypeSQL.String()
 }
 
-func totalCells(frames []*data.Frame) int64 {
-	total := int64(0)
+func totalCells(frames []*data.Frame) (total int64) {
 	for _, frame := range frames {
 		if frame != nil {
 			// Calculate cells as rows × columns
@@ -145,5 +144,5 @@ func totalCells(frames []*data.Frame) int64 {
 			total += rows * cols
 		}
 	}
-	return total
+	return
 }
