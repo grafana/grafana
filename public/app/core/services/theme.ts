@@ -50,7 +50,7 @@ export async function changeTheme(themeId: string, runtimeOnly?: boolean) {
 
   await service.update({
     ...currentPref,
-    theme: newTheme.colors.mode,
+    theme: themeId,
   });
 }
 
