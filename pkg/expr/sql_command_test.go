@@ -40,9 +40,6 @@ func createFrameWithRowsAndCols(rows int, cols int) *data.Frame {
 
 	for c := 0; c < cols; c++ {
 		values := make([]string, rows)
-		for i := range values {
-			values[i] = "dummy"
-		}
 		frame.Fields = append(frame.Fields, data.NewField(fmt.Sprintf("col%d", c), nil, values))
 	}
 
