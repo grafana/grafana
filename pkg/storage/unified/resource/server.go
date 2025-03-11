@@ -28,7 +28,7 @@ type ResourceServer interface {
 	ResourceStoreServer
 	BulkStoreServer
 	ResourceIndexServer
-	RepositoryIndexServer
+	ManagedObjectIndexServer
 	BlobStoreServer
 	DiagnosticsServer
 }
@@ -1105,12 +1105,12 @@ func (s *server) GetStats(ctx context.Context, req *ResourceStatsRequest) (*Reso
 	return s.search.GetStats(ctx, req)
 }
 
-func (s *server) ListRepositoryObjects(ctx context.Context, req *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error) {
-	return s.search.ListRepositoryObjects(ctx, req)
+func (s *server) ListManagedObjects(ctx context.Context, req *ListManagedObjectsRequest) (*ListManagedObjectsResponse, error) {
+	return s.search.ListManagedObjects(ctx, req)
 }
 
-func (s *server) CountRepositoryObjects(ctx context.Context, req *CountRepositoryObjectsRequest) (*CountRepositoryObjectsResponse, error) {
-	return s.search.CountRepositoryObjects(ctx, req)
+func (s *server) CountManagedObjects(ctx context.Context, req *CountManagedObjectsRequest) (*CountManagedObjectsResponse, error) {
+	return s.search.CountManagedObjects(ctx, req)
 }
 
 // IsHealthy implements ResourceServer.
