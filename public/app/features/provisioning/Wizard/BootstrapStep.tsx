@@ -54,6 +54,9 @@ const modeOptions: ModeOption[] = [
 
 type Props = {
   onOptionSelect: (requiresMigration: boolean) => void;
+  onStatusChange: (success: boolean) => void;
+  onRunningChange: (isRunning: boolean) => void;
+  onErrorChange: (error: string | null) => void;
 };
 
 interface OptionState {
@@ -61,7 +64,7 @@ interface OptionState {
   disabledReason?: string;
 }
 
-export function BootstrapStep({ onOptionSelect }: Props) {
+export function BootstrapStep({ onOptionSelect, onStatusChange, onRunningChange, onErrorChange }: Props) {
   const {
     register,
     control,
@@ -108,35 +111,56 @@ export function BootstrapStep({ onOptionSelect }: Props) {
     return checkSyncSettings({ ...settingsQuery.data, items: otherRepos });
   }, [settingsQuery.data, currentRepoName]);
 
-  // Fetch dashboard and folder counts
+  // Add a ref to track if we've loaded counts
+  const hasLoadedCountsRef = useRef(false);
+
+  // Modify the fetch counts effect
   useEffect(() => {
+    // Skip if we've already loaded counts
+    if (hasLoadedCountsRef.current) {
+      return;
+    }
+
     const fetchCounts = async () => {
       setIsLoadingCounts(true);
+      onRunningChange(true);
       try {
-        // TODO: How to do this in the right way?
-        // Get dashboard count using v0alpha1 API
         const dashboardResponse = await fetch(
           '/apis/dashboard.grafana.app/v0alpha1/namespaces/default/search?query=*&limit=0&type=dashboard'
         );
+        if (!dashboardResponse.ok) {
+          throw new Error(`Failed to fetch dashboard count: ${dashboardResponse.statusText}`);
+        }
         const dashboardData = await dashboardResponse.json();
         setDashboardCount(dashboardData.totalHits || 0);
 
-        // Get folder count using v0alpha1 API
         const folderResponse = await fetch(
           '/apis/dashboard.grafana.app/v0alpha1/namespaces/default/search?query=*&limit=0&type=folder'
         );
+        if (!folderResponse.ok) {
+          throw new Error(`Failed to fetch folder count: ${folderResponse.statusText}`);
+        }
         const folderData = await folderResponse.json();
         setFolderCount(folderData.totalHits || 0);
+
+        onStatusChange(true);
+        onErrorChange(null);
       } catch (error) {
         console.error('Error fetching counts:', error);
+        onErrorChange(error instanceof Error ? error.message : 'Failed to fetch resource counts');
+        onStatusChange(false);
+        setDashboardCount(0);
+        setFolderCount(0);
       } finally {
         setIsLoadingCounts(false);
         setHasLoadedCounts(true);
+        onRunningChange(false);
+        hasLoadedCountsRef.current = true;
       }
     };
 
     fetchCounts();
-  }, []);
+  }, []); // Empty dependency array since we're using the ref to control execution
 
   // Get available options and disabled state logic
   const getOptionState = useCallback(

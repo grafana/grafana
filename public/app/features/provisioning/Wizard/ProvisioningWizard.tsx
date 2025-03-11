@@ -310,7 +310,14 @@ function WizardContent({
       <RequestErrorAlert request={saveRequest} title="Repository verification failed" />
       <div className={styles.content}>
         {activeStep === 'connection' && <ConnectStep />}
-        {activeStep === 'bootstrap' && <BootstrapStep onOptionSelect={onOptionSelect} />}
+        {activeStep === 'bootstrap' && (
+          <BootstrapStep
+            onOptionSelect={onOptionSelect}
+            onStatusChange={handleJobStatusChange}
+            onRunningChange={handleJobRunningChange}
+            onErrorChange={handleJobErrorChange}
+          />
+        )}
         {activeStep === 'migrate' && requiresMigration && (
           <MigrateStep
             onStatusChange={handleJobStatusChange}
