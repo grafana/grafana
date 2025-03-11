@@ -7,3 +7,49 @@ on:
       - 'docs/**'
       - 'packages/**/*.md'
       - 'latest.json'
+
+jobs:
+  docs:
+    name: Build & Verify Docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: 'package.json'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --immutable || yarn install --immutable
+
+      - name: Lint docs
+        run: yarn run prettier:checkDocs
+        env:
+          NODE_OPTIONS: --max_old_space_size=8192
+
+      - name: Build docs website
+        uses: docker://grafana/docs-base:latest
+        with:
+          entrypoint: /bin/sh
+          args: |
+            -c "mkdir -p /github/workspace/hugo/content/docs/grafana/latest && \
+            echo -e '---\\nredirectURL: /docs/grafana/latest/\\ntype: redirect\\nversioned: true\\n---\\n' > /github/workspace/hugo/content/docs/grafana/_index.md && \
+            cp -r /github/workspace/docs/sources/* /github/workspace/hugo/content/docs/grafana/latest/ && \
+            cd /github/workspace/hugo && make prod"
+        
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.1'
+
+      - name: Verify generated CUE code
+        run: |
+          make gen-cue
+          if [ -n "$(git diff)" ]; then
+            echo "Generated CUE code is not in sync with its inputs. Please run 'make gen-cue' and commit the changes."
+            git diff
+            exit 1
+          fi
