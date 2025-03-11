@@ -110,16 +110,6 @@ export function ProvisioningWizard() {
     }
   };
 
-  const handleBack = () => {
-    const currentStepIndex = availableSteps.findIndex((s) => s.id === activeStep);
-    if (currentStepIndex > 0) {
-      setActiveStep(availableSteps[currentStepIndex - 1].id);
-      setStepSuccess(true);
-      // Remove the last completed step when going back
-      setCompletedSteps((prev) => prev.slice(0, -1));
-    }
-  };
-
   return (
     <FormProvider {...methods}>
       <WizardContent
@@ -129,7 +119,6 @@ export function ProvisioningWizard() {
         requiresMigration={requiresMigration}
         handleStatusChange={handleStatusChange}
         handleNext={handleNext}
-        handleBack={handleBack}
         getNextButtonText={getNextButtonText}
         styles={styles}
         onOptionSelect={setRequiresMigration}
@@ -145,7 +134,6 @@ function WizardContent({
   requiresMigration,
   handleStatusChange,
   handleNext,
-  handleBack,
   getNextButtonText,
   styles,
   onOptionSelect,
@@ -156,7 +144,6 @@ function WizardContent({
   requiresMigration: boolean;
   handleStatusChange: (success: boolean) => void;
   handleNext: () => void;
-  handleBack: () => void;
   getNextButtonText: (step: WizardStep) => string;
   styles: any;
   onOptionSelect: (requiresMigration: boolean) => void;
@@ -166,7 +153,16 @@ function WizardContent({
 
   const repoName = watch('repositoryName');
   const [submitData, saveRequest] = useCreateOrUpdateRepository(repoName);
+  const [deleteRepository] = useDeleteRepositoryMutation();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleCancel = async () => {
+    if (activeStep !== 'connection' && repoName) {
+      // Delete repository if we're past the first step
+      await deleteRepository({ name: repoName });
+    }
+    navigate(PROVISIONING_URL);
+  };
 
   const handleNextWithSubmit = async () => {
     const currentStep = availableSteps.find((s) => s.id === activeStep);
@@ -247,36 +243,14 @@ function WizardContent({
 
       <Stack gap={2} justifyContent="flex-end">
         {saveRequest.isError ? (
-          <Button
-            variant="destructive"
-            onClick={() => {
-              if (activeStep === 'connection') {
-                // Just cancel if we're on the first step
-                handleBack();
-              } else {
-                // Delete repository if we're on a later step
-                if (repoName) {
-                  const [deleteRepository] = useDeleteRepositoryMutation();
-                  deleteRepository({ name: repoName });
-                }
-                handleBack();
-              }
-            }}
-            disabled={isSubmitting}
-          >
+          <Button variant="destructive" onClick={handleCancel} disabled={isSubmitting}>
             Abort
           </Button>
         ) : (
           <>
-            {activeStep !== 'connection' ? (
-              <Button variant="secondary" onClick={handleBack} disabled={isSubmitting}>
-                Back
-              </Button>
-            ) : (
-              <Button variant="secondary" onClick={() => navigate(PROVISIONING_URL)} disabled={isSubmitting}>
-                Cancel
-              </Button>
-            )}
+            <Button variant="secondary" onClick={handleCancel} disabled={isSubmitting}>
+              Cancel
+            </Button>
             <Button
               onClick={handleNextWithSubmit}
               disabled={
