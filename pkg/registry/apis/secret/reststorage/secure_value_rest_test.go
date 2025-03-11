@@ -6,9 +6,10 @@ import (
 	"slices"
 	"testing"
 
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/admission"
+
+	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 )
 
 func TestValidateSecureValue(t *testing.T) {
@@ -18,7 +19,7 @@ func TestValidateSecureValue(t *testing.T) {
 				Title:      "title",
 				Value:      "value",
 				Keeper:     "keeper",
-				Decrypters: []string{"group1/*", "group2/name"},
+				Decrypters: []string{"actor_app1", "actor_app2"},
 			},
 		}
 
@@ -169,40 +170,20 @@ func TestValidateSecureValue(t *testing.T) {
 	})
 
 	t.Run("`decrypters` must have unique items", func(t *testing.T) {
-		t.Run("with regular group-names", func(t *testing.T) {
-			sv := &secretv0alpha1.SecureValue{
-				Spec: secretv0alpha1.SecureValueSpec{
-					Title: "title", Keeper: "keeper", Ref: "ref",
+		sv := &secretv0alpha1.SecureValue{
+			Spec: secretv0alpha1.SecureValueSpec{
+				Title: "title", Keeper: "keeper", Ref: "ref",
 
-					Decrypters: []string{
-						"my.grafana.app/app-1",
-						"my.grafana.app/app-1",
-						"my.grafana.app/app-2",
-					},
+				Decrypters: []string{
+					"actor_app1",
+					"actor_app1",
 				},
-			}
+			},
+		}
 
-			errs := ValidateSecureValue(sv, nil, admission.Create, nil)
-			require.Len(t, errs, 1)
-			require.Equal(t, "spec.decrypters.[1]", errs[0].Field)
-		})
-
-		t.Run("with the wildcard name", func(t *testing.T) {
-			sv := &secretv0alpha1.SecureValue{
-				Spec: secretv0alpha1.SecureValueSpec{
-					Title: "title", Keeper: "keeper", Ref: "ref",
-
-					Decrypters: []string{
-						"my.grafana.app/*",
-						"my.grafana.app/*",
-					},
-				},
-			}
-
-			errs := ValidateSecureValue(sv, nil, admission.Create, nil)
-			require.Len(t, errs, 1)
-			require.Equal(t, "spec.decrypters.[1]", errs[0].Field)
-		})
+		errs := ValidateSecureValue(sv, nil, admission.Create, nil)
+		require.Len(t, errs, 1)
+		require.Equal(t, "spec.decrypters.[1]", errs[0].Field)
 	})
 
 	t.Run("`decrypters` must match the expected format", func(t *testing.T) {
@@ -211,47 +192,26 @@ func TestValidateSecureValue(t *testing.T) {
 				Title: "title", Keeper: "keeper", Ref: "ref",
 
 				Decrypters: []string{
-					"/app-name",       // Missing Group
-					"my.grafana.app/", // Missing Name
-					"my.grafana.app",  // Missing Name + /
+					"app1",
+					"_app1",
+					"actr_app1",
+					"actor_ ",
+					"actor_",
 				},
 			},
 		}
 
 		errs := ValidateSecureValue(sv, nil, admission.Create, nil)
-		require.Len(t, errs, 3)
+		require.Len(t, errs, len(sv.Spec.Decrypters))
 
 		for i, err := range errs {
 			require.Equal(t, fmt.Sprintf("spec.decrypters.[%d]", i), err.Field)
+			require.Contains(t, err.Error(), "a decrypter must have the format `actor_{name}`")
 		}
-	})
-
-	t.Run("`decrypters` with redundant group-names are reported", func(t *testing.T) {
-		sv := &secretv0alpha1.SecureValue{
-			Spec: secretv0alpha1.SecureValueSpec{
-				Title: "title", Keeper: "keeper", Ref: "ref",
-
-				Decrypters: []string{
-					// "app-1" and "app-2" lines are not needed as "*" takes precedence for the whole group.
-					"my.grafana.app/app-1",
-					"my.grafana.app/*",
-					"my.grafana.app/app-2",
-				},
-			},
-		}
-
-		errs := ValidateSecureValue(sv, nil, admission.Create, nil)
-		require.Len(t, errs, 2)
-
-		actualBadValues := make([]string, 0, 2)
-		for _, err := range errs {
-			actualBadValues = append(actualBadValues, err.BadValue.(string))
-		}
-		require.ElementsMatch(t, []string{"my.grafana.app/app-1", "my.grafana.app/app-2"}, actualBadValues)
 	})
 
 	t.Run("when set, the `decrypters` must be one of the allowed in the allow list", func(t *testing.T) {
-		allowList := map[string]struct{}{"my.app.one/allowed": {}, "my.app.two/allowed": {}}
+		allowList := map[string]struct{}{"actor_app1": {}, "actor_app2": {}}
 		decrypters := slices.Collect(maps.Keys(allowList))
 
 		t.Run("no matches, returns an error", func(t *testing.T) {
@@ -259,7 +219,7 @@ func TestValidateSecureValue(t *testing.T) {
 				Spec: secretv0alpha1.SecureValueSpec{
 					Title: "title", Keeper: "keeper", Ref: "ref",
 
-					Decrypters: []string{"my.grafana.app/app-1"},
+					Decrypters: []string{"actor_app3"},
 				},
 			}
 
