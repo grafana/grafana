@@ -106,6 +106,8 @@ type backend struct {
 
 	// testing
 	simulatedNetworkLatency time.Duration
+
+	historyPruner *historyPruner
 }
 
 func (b *backend) Init(ctx context.Context) error {
@@ -116,13 +118,18 @@ func (b *backend) Init(ctx context.Context) error {
 }
 
 func (b *backend) initLocked(ctx context.Context) error {
-	db, err := b.dbProvider.Init(ctx)
+	dbConn, err := b.dbProvider.Init(ctx)
 	if err != nil {
 		return fmt.Errorf("initialize resource DB: %w", err)
 	}
-	b.db = db
 
-	driverName := db.DriverName()
+	if err := b.db.PingContext(ctx); err != nil {
+		return fmt.Errorf("ping resource DB: %w", err)
+	}
+
+	b.db = dbConn
+
+	driverName := dbConn.DriverName()
 	b.dialect = sqltemplate.DialectForDriver(driverName)
 	if b.dialect == nil {
 		return fmt.Errorf("no dialect for driver %q", driverName)
@@ -146,7 +153,31 @@ func (b *backend) initLocked(ctx context.Context) error {
 	}
 	b.notifier = notifier
 
-	return b.db.PingContext(ctx)
+	b.historyPruner = newHistoryPruner(&historyPrunerCfg{
+		metrics: b.storageMetrics,
+
+		bufferSize: 100,
+		minWait:    10 * time.Second,
+		maxWait:    time.Minute,
+
+		keyFunc: func(key *resource.ResourceKey) string {
+			return key.Namespace + ":" + key.Group + ":" + key.Resource
+		},
+	})
+	b.historyPruner.startWorker(ctx, func(ctx context.Context, key *resource.ResourceKey) error {
+		return dbConn.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
+			_, err := dbutil.Exec(ctx, tx, sqlResourceHistoryPrune, &sqlPruneHistoryRequest{
+				SQLTemplate: sqltemplate.New(b.dialect),
+				Key:         key,
+			})
+			if err != nil {
+				return fmt.Errorf("failed to prune history: %w", err)
+			}
+			return nil
+		})
+	})
+
+	return nil
 }
 
 func (b *backend) IsHealthy(ctx context.Context, r *resource.HealthCheckRequest) (*resource.HealthCheckResponse, error) {
@@ -246,6 +277,7 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
 		}
+		_ = b.historyPruner.Prune(event.Key.Namespace, event.Key.Group, event.Key.Resource)
 		if b.simulatedNetworkLatency > 0 {
 			time.Sleep(b.simulatedNetworkLatency)
 		}
@@ -299,6 +331,7 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
 		}
+		_ = b.historyPruner.Prune(event.Key.Namespace, event.Key.Group, event.Key.Resource)
 		return guid, nil
 	})
 
@@ -346,6 +379,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
 		}
+		_ = b.historyPruner.Prune(event.Key.Namespace, event.Key.Group, event.Key.Resource)
 		return guid, nil
 	})
 
@@ -394,6 +428,7 @@ func (b *backend) restore(ctx context.Context, event resource.WriteEvent) (int64
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
 		}
+		_ = b.historyPruner.Prune(event.Key.Namespace, event.Key.Group, event.Key.Resource)
 
 		// 3. Update all resource history entries with the new UID
 		// Note: we do not update any history entries that have a deletion timestamp included. This will become
