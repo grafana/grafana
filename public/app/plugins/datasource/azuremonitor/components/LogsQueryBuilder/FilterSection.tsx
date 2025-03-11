@@ -30,19 +30,24 @@ export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, que
     return;
   }
 
-  const selectableColumns: Array<SelectableValue<string>> = useMemo(
-    () => allColumns.map((col) => ({ label: col.name, value: col.name })),
-    [allColumns]
-  );
-
-  const allColumnsSelectable: Array<SelectableValue<string>> = useMemo(
-    () => (builderQuery?.columns?.columns || []).map((col) => ({ label: col, value: col })),
-    [builderQuery?.columns?.columns]
-  );
-
-  useEffect(() => {
-    setFilters([]);
-  }, [builderQuery.from?.property.name]);
+const availableColumns: Array<SelectableValue<string>> = [];
+  const columns = builderQuery.columns?.columns ?? [];
+  
+  if (columns.length > 0) {
+    availableColumns.push(
+      ...columns.map((col) => ({
+        label: col,
+        value: col,
+      }))
+    );
+  } else {
+    availableColumns.push(
+      ...allColumns.map((col) => ({
+        label: col.name,
+        value: col.name,
+      }))
+    );
+  }
 
   const formatFilters = (filters: Array<{ column: string; operator: string; value: string }>): string => {
     return filters
@@ -142,7 +147,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, que
                       aria-label="column"
                       width={30}
                       value={filter.column ? valueToDefinition(filter.column) : null}
-                      options={allColumnsSelectable.length > 0 ? allColumnsSelectable : selectableColumns}
+                      options={availableColumns}
                       onChange={(e) => e.value && onChangeFilter(index, 'column', e.value)}
                     />
                     <Select

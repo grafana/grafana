@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorList, EditorRow } from '@grafana/plugin-ui';
@@ -33,28 +33,25 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
   if (!builderQuery) {
     return;
   }
-
-  const availableColumns: Array<SelectableValue<string>> = useMemo(() => {
-    const columns = builderQuery.columns?.columns ?? [];
-
-    if (columns.length > 0) {
-      return columns.map((col) => ({
+  
+  const availableColumns: Array<SelectableValue<string>> = [];
+  const columns = builderQuery.columns?.columns ?? [];
+  
+  if (columns.length > 0) {
+    availableColumns.push(
+      ...columns.map((col) => ({
         label: col,
         value: col,
-      }));
-    }
-
-    return allColumns.map((col) => ({
-      label: col.name,
-      value: col.name,
-    }));
-  }, [builderQuery.columns?.columns, allColumns]);
-
-  useEffect(() => {
-    setAggregates(() => {
-      return [];
-    });
-  }, [builderQuery.from?.property.name]);
+      }))
+    );
+  } else {
+    availableColumns.push(
+      ...allColumns.map((col) => ({
+        label: col.name,
+        value: col.name,
+      }))
+    );
+  }
 
   const onDeleteAggregate = (aggregateToDelete: Partial<BuilderQueryEditorReduceExpression>) => {
     setAggregates((prevAggregates) => {
