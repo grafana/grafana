@@ -19,6 +19,8 @@ export function MigrateStep({ onStatusChange }: MigrateStepProps) {
   const { watch } = useFormContext<WizardFormData>();
   const repositoryName = watch('repositoryName');
   const migrateName = migrateQuery.data?.metadata?.name;
+  const identifier = watch('migrate.identifier');
+  const history = watch('migrate.history');
 
   useEffect(() => {
     const startMigrate = async () => {
@@ -29,8 +31,8 @@ export function MigrateStep({ onStatusChange }: MigrateStepProps) {
       const response = await migrateRepo({
         name: repositoryName,
         body: {
-          identifier: true,
-          history: true,
+          identifier,
+          history,
         },
       });
       if ('error' in response) {
@@ -40,7 +42,7 @@ export function MigrateStep({ onStatusChange }: MigrateStepProps) {
     };
 
     startMigrate();
-  }, [repositoryName, migrateRepo, onStatusChange]);
+  }, [repositoryName, migrateRepo, onStatusChange, identifier, history]);
 
   if (showMigrateStatus && migrateName) {
     return (

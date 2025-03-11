@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Alert, Badge, Box, Card, Field, Input, LoadingPlaceholder, Stack, Text, Tooltip, Icon } from '@grafana/ui';
+import { Badge, Box, Card, Field, Icon, Input, LoadingPlaceholder, Stack, Switch, Text, Tooltip } from '@grafana/ui';
 
 import { useGetFrontendSettingsQuery, useGetRepositoryFilesQuery } from '../api';
 import { checkSyncSettings } from '../utils';
@@ -204,6 +204,15 @@ export function BootstrapStep({ onOptionSelect }: Props) {
     [selectedOption, setValue, onOptionSelect, getOptionState]
   );
 
+  // Add this after handleOptionSelect
+  useEffect(() => {
+    // Set default values for migration options when instance migration is selected
+    if (selectedOption?.operation === 'migrate') {
+      setValue('migrate.history', true);
+      setValue('migrate.identifier', true);
+    }
+  }, [selectedOption, setValue]);
+
   const isLoading = settingsQuery.isLoading || isLoadingCounts;
 
   // Select first available option by default
@@ -312,7 +321,35 @@ export function BootstrapStep({ onOptionSelect }: Props) {
                 </>
               )}
             />
-            {/* Only show title field if not instance sync */}
+
+            {/* Add migration options */}
+            {selectedOption?.operation === 'migrate' && (
+              <Stack direction="column" gap={2}>
+                <Field label="Migration options">
+                  <Stack direction="column" gap={2}>
+                    <Stack direction="row" gap={2} alignItems="center">
+                      <Switch {...register('migrate.identifier')} defaultChecked={true} />
+                      <Text>Include identifiers</Text>
+                      <Tooltip
+                        content="Include unique identifiers for each dashboard to maintain references"
+                        placement="top"
+                      >
+                        <Icon name="info-circle" />
+                      </Tooltip>
+                    </Stack>
+                    <Stack direction="row" gap={2} alignItems="center">
+                      <Switch {...register('migrate.history')} defaultChecked={true} />
+                      <Text>Include history</Text>
+                      <Tooltip content="Include complete dashboard version history" placement="top">
+                        <Icon name="info-circle" />
+                      </Tooltip>
+                    </Stack>
+                  </Stack>
+                </Field>
+              </Stack>
+            )}
+
+            {/* Only show title field if folder sync */}
             {selectedTarget === 'folder' && (
               <Field
                 label="Display name"
