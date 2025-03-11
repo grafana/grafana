@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/singleflight"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/authlib/authn"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -225,11 +226,10 @@ func TestService_getUserTeams(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
 			s := setupService()
-
 			ns := types.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 
 			userIdentifiers := &store.UserIdentifiers{UID: "test-uid"}
-			identityStore := &fakeIdentityStore{teams: tc.teams, err: tc.expectedError}
+			identityStore := &fakeIdentityStore{teams: tc.teams, err: tc.expectedError, disableNsCheck: true}
 			s.identityStore = identityStore
 
 			if tc.cacheHit {
@@ -305,7 +305,7 @@ func TestService_getUserBasicRole(t *testing.T) {
 			ns := types.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 
 			userIdentifiers := &store.UserIdentifiers{UID: "test-uid", ID: 1}
-			store := &fakeStore{basicRole: &tc.basicRole, err: tc.expectedError}
+			store := &fakeStore{basicRole: &tc.basicRole, err: tc.expectedError, disableNsCheck: true}
 			s.store = store
 			s.permissionStore = store
 
@@ -367,9 +367,9 @@ func TestService_getUserPermissions(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
 			s := setupService()
+			ns := types.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 
 			userID := &store.UserIdentifiers{UID: "test-uid", ID: 112}
-			ns := types.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 			action := "dashboards:read"
 
 			if tc.cacheHit {
@@ -380,10 +380,11 @@ func TestService_getUserPermissions(t *testing.T) {
 				userID:          userID,
 				basicRole:       &store.BasicRole{Role: "viewer", IsAdmin: false},
 				userPermissions: tc.permissions,
+				disableNsCheck:  true,
 			}
 			s.store = store
 			s.permissionStore = store
-			s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
+			s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}, disableNsCheck: true}
 
 			perms, err := s.getIdentityPermissions(ctx, ns, types.TypeUser, userID.UID, action)
 			require.NoError(t, err)
@@ -737,7 +738,7 @@ func TestService_Check(t *testing.T) {
 				}
 				s.store = store
 				s.permissionStore = store
-				s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
+				s.identityStore = &fakeIdentityStore{}
 
 				_, err := s.Check(ctx, tc.req)
 				require.Error(t, err)
@@ -785,7 +786,7 @@ func TestService_Check(t *testing.T) {
 				}
 				s.store = store
 				s.permissionStore = store
-				s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
+				s.identityStore = &fakeIdentityStore{}
 
 				resp, err := s.Check(ctx, tc.req)
 				require.NoError(t, err)
@@ -838,7 +839,7 @@ func TestService_Check(t *testing.T) {
 				store := &fakeStore{userPermissions: tc.permissions}
 				s.store = store
 				s.permissionStore = store
-				s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
+				s.identityStore = &fakeIdentityStore{}
 
 				resp, err := s.Check(ctx, tc.req)
 				require.NoError(t, err)
@@ -897,6 +898,299 @@ func TestService_Check(t *testing.T) {
 	})
 }
 
+func TestService_List(t *testing.T) {
+	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Claims: jwt.Claims{
+			Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
+			Audience: []string{"authzservice"},
+		},
+		Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+	})
+
+	type testCase struct {
+		name        string
+		req         *authzv1.ListRequest
+		permissions []accesscontrol.Permission
+		expected    *authzv1.ListResponse
+		expectErr   bool
+	}
+
+	t.Run("Require auth info", func(t *testing.T) {
+		s := setupService()
+		ctx := context.Background()
+		_, err := s.List(ctx, &authzv1.ListRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+			Verb:      "get",
+		})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "could not get auth info")
+	})
+
+	testCases := []testCase{
+		{
+			name: "should error if no namespace is provided",
+			req: &authzv1.ListRequest{
+				Namespace: "",
+				Subject:   "user:test-uid",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+			},
+			expectErr: true,
+		},
+		{
+			name: "should error if caller namespace does not match request namespace",
+			req: &authzv1.ListRequest{
+				Namespace: "org-13",
+				Subject:   "user:test-uid",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+			},
+			expectErr: true,
+		},
+		{
+			name: "should error if no subject is provided",
+			req: &authzv1.ListRequest{
+				Namespace: "org-12",
+				Subject:   "",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+			},
+			expectErr: true,
+		},
+		{
+			name: "should error if an unsupported subject type is provided",
+			req: &authzv1.ListRequest{
+				Namespace: "org-12",
+				Subject:   "api-key:12",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+			},
+			expectErr: true,
+		},
+		{
+			name: "should error if an invalid subject is provided",
+			req: &authzv1.ListRequest{
+				Namespace: "org-12",
+				Subject:   "invalid:12",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+			},
+			expectErr: true,
+		},
+		{
+			name: "should error if an unknown group is provided",
+			req: &authzv1.ListRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "unknown.grafana.app",
+				Resource:  "unknown",
+				Verb:      "get",
+			},
+			expectErr: true,
+		},
+		{
+			name: "should error if an unknown verb is provided",
+			req: &authzv1.ListRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "unknown",
+			},
+			expectErr: true,
+		},
+	}
+	t.Run("Request validation", func(t *testing.T) {
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				s := setupService()
+				ctx := types.WithAuthInfo(context.Background(), callingService)
+				userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+				store := &fakeStore{
+					userID:          userID,
+					userPermissions: tc.permissions,
+				}
+				s.store = store
+				s.permissionStore = store
+				s.identityStore = &fakeIdentityStore{}
+
+				_, err := s.List(ctx, tc.req)
+				require.Error(t, err)
+			})
+		}
+	})
+
+	testCases = []testCase{
+		{
+			name: "should list permissions for user with permission",
+			req: &authzv1.ListRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:dash1"},
+				{Action: "dashboards:read", Scope: "dashboards:uid:dash2"},
+				{Action: "dashboards:read", Scope: "folders:uid:fold1"},
+			},
+			expected: &authzv1.ListResponse{
+				Items:   []string{"dash1", "dash2"},
+				Folders: []string{"fold1"},
+			},
+		},
+		{
+			name: "should return empty list for user without permission",
+			req: &authzv1.ListRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+			},
+			permissions: []accesscontrol.Permission{},
+			expected:    &authzv1.ListResponse{},
+		},
+	}
+	t.Run("User permission list", func(t *testing.T) {
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				s := setupService()
+				ctx := types.WithAuthInfo(context.Background(), callingService)
+				userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+				store := &fakeStore{
+					userID:          userID,
+					userPermissions: tc.permissions,
+				}
+				s.store = store
+				s.permissionStore = store
+				s.identityStore = &fakeIdentityStore{}
+
+				resp, err := s.List(ctx, tc.req)
+				require.NoError(t, err)
+				require.ElementsMatch(t, resp.Items, tc.expected.Items)
+				require.ElementsMatch(t, resp.Folders, tc.expected.Folders)
+
+				// Check cache
+				id, ok := s.idCache.Get(ctx, userIdentifierCacheKey("org-12", "test-uid"))
+				require.True(t, ok)
+				require.Equal(t, id.UID, "test-uid")
+				perms, ok := s.permCache.Get(ctx, userPermCacheKey("org-12", "test-uid", "dashboards:read"))
+				require.True(t, ok)
+				require.Len(t, perms, len(tc.expected.Items)+len(tc.expected.Folders))
+			})
+		}
+	})
+
+	testCases = []testCase{
+		{
+			name: "should list permissions for anonymous with permission",
+			req: &authzv1.ListRequest{
+				Namespace: "org-12",
+				Subject:   "anonymous:0",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:dash1"},
+				{Action: "dashboards:read", Scope: "dashboards:uid:dash2"},
+				{Action: "dashboards:read", Scope: "folders:uid:fold1"},
+			},
+			expected: &authzv1.ListResponse{
+				Items:   []string{"dash1", "dash2"},
+				Folders: []string{"fold1"},
+			},
+		},
+		{
+			name: "should return empty list for anonymous without permission",
+			req: &authzv1.ListRequest{
+				Namespace: "org-12",
+				Subject:   "anonymous:0",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+			},
+			permissions: []accesscontrol.Permission{},
+			expected:    &authzv1.ListResponse{},
+		},
+	}
+	t.Run("Anonymous permission list", func(t *testing.T) {
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				s := setupService()
+				ctx := types.WithAuthInfo(context.Background(), callingService)
+				store := &fakeStore{userPermissions: tc.permissions}
+				s.store = store
+				s.permissionStore = store
+				s.identityStore = &fakeIdentityStore{}
+
+				resp, err := s.List(ctx, tc.req)
+				require.NoError(t, err)
+				require.ElementsMatch(t, resp.Items, tc.expected.Items)
+				require.ElementsMatch(t, resp.Folders, tc.expected.Folders)
+
+				// Check cache
+				perms, ok := s.permCache.Get(ctx, anonymousPermCacheKey("org-12", "dashboards:read"))
+				require.True(t, ok)
+				require.Len(t, perms, len(tc.expected.Items)+len(tc.expected.Folders))
+			})
+		}
+	})
+
+	testCases = []testCase{
+		{
+			name: "should list permissions for rendering",
+			req: &authzv1.ListRequest{
+				Namespace: "org-12",
+				Subject:   "render:0",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+			},
+			expected: &authzv1.ListResponse{
+				All: true,
+			},
+		},
+		{
+			name: "should deny rendering access to another app resources",
+			req: &authzv1.ListRequest{
+				Namespace: "org-12",
+				Subject:   "render:0",
+				Group:     "another.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+			},
+			expectErr: true,
+		},
+	}
+	t.Run("Rendering permission list", func(t *testing.T) {
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				s := setupService()
+				ctx := types.WithAuthInfo(context.Background(), callingService)
+
+				resp, err := s.List(ctx, tc.req)
+				if tc.expectErr {
+					require.Error(t, err)
+					return
+				}
+				require.NoError(t, err)
+				assert.Equal(t, tc.expected.All, resp.All)
+			})
+		}
+	})
+}
+
 func setupService() *Service {
 	cache := cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 5 * time.Minute})
 	logger := log.New("authz-rbac-service")
@@ -925,6 +1219,8 @@ func strPtr(s string) *string {
 
 type fakeStore struct {
 	store.Store
+	// The namespace has to be set in the handlers for the correct organization to be picked up.
+	disableNsCheck  bool
 	folders         []store.Folder
 	basicRole       *store.BasicRole
 	userID          *store.UserIdentifiers
@@ -934,6 +1230,9 @@ type fakeStore struct {
 }
 
 func (f *fakeStore) GetBasicRoles(ctx context.Context, namespace types.NamespaceInfo, query store.BasicRoleQuery) (*store.BasicRole, error) {
+	if ns, ok := request.NamespaceFrom(ctx); !f.disableNsCheck && (!ok || ns != namespace.Value) {
+		return nil, fmt.Errorf("namespace mismatch")
+	}
 	f.calls++
 	if f.err {
 		return nil, fmt.Errorf("store error")
@@ -942,6 +1241,9 @@ func (f *fakeStore) GetBasicRoles(ctx context.Context, namespace types.Namespace
 }
 
 func (f *fakeStore) GetUserIdentifiers(ctx context.Context, query store.UserIdentifierQuery) (*store.UserIdentifiers, error) {
+	if _, ok := request.NamespaceFrom(ctx); !f.disableNsCheck && !ok {
+		return nil, fmt.Errorf("namespace not found")
+	}
 	f.calls++
 	if f.err {
 		return nil, fmt.Errorf("store error")
@@ -950,6 +1252,9 @@ func (f *fakeStore) GetUserIdentifiers(ctx context.Context, query store.UserIden
 }
 
 func (f *fakeStore) GetUserPermissions(ctx context.Context, namespace types.NamespaceInfo, query store.PermissionsQuery) ([]accesscontrol.Permission, error) {
+	if ns, ok := request.NamespaceFrom(ctx); !f.disableNsCheck && (!ok || ns != namespace.Value) {
+		return nil, fmt.Errorf("namespace mismatch")
+	}
 	f.calls++
 	if f.err {
 		return nil, fmt.Errorf("store error")
@@ -958,6 +1263,9 @@ func (f *fakeStore) GetUserPermissions(ctx context.Context, namespace types.Name
 }
 
 func (f *fakeStore) ListFolders(ctx context.Context, namespace types.NamespaceInfo) ([]store.Folder, error) {
+	if ns, ok := request.NamespaceFrom(ctx); !f.disableNsCheck && (!ok || ns != namespace.Value) {
+		return nil, fmt.Errorf("namespace mismatch")
+	}
 	f.calls++
 	if f.err {
 		return nil, fmt.Errorf("store error")
@@ -967,12 +1275,16 @@ func (f *fakeStore) ListFolders(ctx context.Context, namespace types.NamespaceIn
 
 type fakeIdentityStore struct {
 	legacy.LegacyIdentityStore
-	teams []int64
-	err   bool
-	calls int
+	teams          []int64
+	disableNsCheck bool
+	err            bool
+	calls          int
 }
 
 func (f *fakeIdentityStore) ListUserTeams(ctx context.Context, namespace types.NamespaceInfo, query legacy.ListUserTeamsQuery) (*legacy.ListUserTeamsResult, error) {
+	if ns, ok := request.NamespaceFrom(ctx); !f.disableNsCheck && (!ok || ns != namespace.Value) {
+		return nil, fmt.Errorf("namespace mismatch")
+	}
 	f.calls++
 	if f.err {
 		return nil, fmt.Errorf("identity store error")
