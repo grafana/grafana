@@ -5,7 +5,6 @@ keywords:
   - grafana
   - alerting
   - Jira
-  - Jira Service Management
   - integration
 labels:
   products:
