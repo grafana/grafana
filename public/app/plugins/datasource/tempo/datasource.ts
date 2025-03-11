@@ -1,6 +1,6 @@
 import { groupBy } from 'lodash';
 import { EMPTY, forkJoin, from, lastValueFrom, merge, Observable, of } from 'rxjs';
-import { catchError, concatMap, map, mergeMap, toArray } from 'rxjs/operators';
+import { catchError, concatMap, finalize, map, mergeMap, toArray } from 'rxjs/operators';
 import semver from 'semver';
 
 import {
@@ -95,6 +95,16 @@ interface ServiceMapQueryResponseWithRates {
   rates: Array<DataFrame | DataFrameDTO>;
   nodes: DataFrame;
   edges: DataFrame;
+}
+
+interface TempoQueryMetrics {
+  success: boolean;
+  streaming?: boolean;
+  latencyMs: number;
+  query?: string;
+  error?: string;
+  statusCode?: number;
+  statusText?: string;
 }
 
 export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJsonData> {
@@ -363,8 +373,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             grafana_version: config.buildInfo.version,
             hasQuery: queryValue !== '' ? true : false,
           });
-
-          subQueries.push(this.handleTraceIdQuery(options, targets.traceql));
+          subQueries.push(this.handleTraceIdQuery(options, targets.traceql, queryValue));
         } else {
           if (this.isTraceQlMetricsQuery(queryValue)) {
             reportInteraction('grafana_traces_traceql_metrics_queried', {
@@ -377,7 +386,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             if (this.isStreamingMetricsEnabled()) {
               subQueries.push(this.handleMetricsStreamingQuery(options, targets.traceql, queryValue));
             } else {
-              subQueries.push(this.handleTraceQlMetricsQuery(options, targets.traceql));
+              subQueries.push(this.handleTraceQlMetricsQuery(options, targets.traceql, queryValue));
             }
           } else {
             reportInteraction('grafana_traces_traceql_queried', {
@@ -424,6 +433,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           if (this.isStreamingSearchEnabled()) {
             subQueries.push(this.handleStreamingQuery(options, traceqlSearchTargets, queryFromFilters));
           } else {
+            const startTime = performance.now();
             subQueries.push(
               this._request('/api/search', {
                 q: queryFromFilters,
@@ -433,6 +443,12 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
                 end: options.range.to.unix(),
               }).pipe(
                 map((response) => {
+                  reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
+                    success: true,
+                    streaming: false,
+                    latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+                    query: queryFromFilters ?? '',
+                  });
                   return {
                     data: formatTraceQLResponse(
                       response.data.traces,
@@ -442,6 +458,15 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
                   };
                 }),
                 catchError((err) => {
+                  reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
+                    success: false,
+                    streaming: false,
+                    latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+                    query: queryFromFilters ?? '',
+                    error: getErrorMessage(err.message),
+                    statusCode: err.status,
+                    statusText: err.statusText,
+                  });
                   return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
                 })
               )
@@ -569,7 +594,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
    * @param targets
    * @private
    */
-  handleTraceIdQuery(options: DataQueryRequest<TempoQuery>, targets: TempoQuery[]): Observable<DataQueryResponse> {
+  handleTraceIdQuery(
+    options: DataQueryRequest<TempoQuery>,
+    targets: TempoQuery[],
+    query: string
+  ): Observable<DataQueryResponse> {
     const validTargets = targets
       .filter((t) => t.query)
       .map((t): TempoQuery => ({ ...t, query: t.query?.trim(), queryType: 'traceId' }));
@@ -577,13 +606,41 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       return EMPTY;
     }
 
+    const startTime = performance.now();
     const request = this.makeTraceIdRequest(options, validTargets);
     return super.query(request).pipe(
       map((response) => {
         if (response.error) {
+          reportTempoQueryMetrics('grafana_traces_traceID_response', options, {
+            success: false,
+            streaming: false,
+            latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+            query: query ?? '',
+            error: getErrorMessage(response.error.message),
+            statusCode: response.error.status,
+            statusText: response.error.statusText,
+          });
           return response;
         }
+        reportTempoQueryMetrics('grafana_traces_traceID_response', options, {
+          success: true,
+          streaming: false,
+          latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+          query: query ?? '',
+        });
         return transformTrace(response, this.instanceSettings, this.nodeGraph?.enabled);
+      }),
+      catchError((error) => {
+        reportTempoQueryMetrics('grafana_traces_traceID_response', options, {
+          success: false,
+          streaming: false,
+          latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+          query: query ?? '',
+          error: getErrorMessage(error.message),
+          statusCode: error.status,
+          statusText: error.statusText,
+        });
+        throw error;
       })
     );
   }
@@ -595,6 +652,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     },
     queryValue: string
   ): Observable<DataQueryResponse> => {
+    const startTime = performance.now();
     if (this.isStreamingSearchEnabled()) {
       return this.handleStreamingQuery(options, targets.traceql, queryValue);
     } else {
@@ -606,11 +664,26 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         end: options.range.to.unix(),
       }).pipe(
         map((response) => {
+          reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
+            success: true,
+            streaming: false,
+            latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+            query: queryValue ?? '',
+          });
           return {
             data: formatTraceQLResponse(response.data.traces, this.instanceSettings, targets.traceql[0].tableType),
           };
         }),
         catchError((err) => {
+          reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
+            success: false,
+            streaming: false,
+            latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+            query: queryValue ?? '',
+            error: getErrorMessage(err.message),
+            statusCode: err.status,
+            statusText: err.statusText,
+          });
           return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
         })
       );
@@ -619,7 +692,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
   handleTraceQlMetricsQuery(
     options: DataQueryRequest<TempoQuery>,
-    targets: TempoQuery[]
+    targets: TempoQuery[],
+    query: string
   ): Observable<DataQueryResponse> {
     const validTargets = targets
       .filter((t) => t.query)
@@ -630,12 +704,28 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       return EMPTY;
     }
 
+    const startTime = performance.now();
     const request = { ...options, targets: validTargets };
     return super.query(request).pipe(
       map((response) => {
+        reportTempoQueryMetrics('grafana_traces_traceql_metrics_response', options, {
+          success: true,
+          streaming: false,
+          latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+          query: query ?? '',
+        });
         return enhanceTraceQlMetricsResponse(response, this.instanceSettings);
       }),
       catchError((err) => {
+        reportTempoQueryMetrics('grafana_traces_traceql_metrics_response', options, {
+          success: false,
+          streaming: false,
+          latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+          query: query ?? '',
+          error: getErrorMessage(err.data.message),
+          statusCode: err.status,
+          statusText: err.statusText,
+        });
         return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
       })
     );
@@ -659,6 +749,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       });
     }
 
+    const startTime = performance.now();
     const groupBy = target.groupBy ? this.formatGroupBy(target.groupBy) : '';
     return this._request('/api/metrics/summary', {
       q: query,
@@ -668,6 +759,13 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }).pipe(
       map((response) => {
         if (!response.data.summaries) {
+          reportTempoQueryMetrics('grafana_traces_metrics_summary_response', options, {
+            success: false,
+            streaming: false,
+            latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+            query: query ?? '',
+            error: getErrorMessage(`No summary data for '${groupBy}'.`),
+          });
           return {
             error: {
               message: getErrorMessage(`No summary data for '${groupBy}'.`),
@@ -678,6 +776,13 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         // Check if any of the results have series data as older versions of Tempo placed the series data in a different structure
         const hasSeries = response.data.summaries.some((summary: MetricsSummary) => summary.series.length > 0);
         if (!hasSeries) {
+          reportTempoQueryMetrics('grafana_traces_metrics_summary_response', options, {
+            success: false,
+            streaming: false,
+            latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+            query: query ?? '',
+            error: getErrorMessage(`No series data. Ensure you are using an up to date version of Tempo`),
+          });
           return {
             error: {
               message: getErrorMessage(`No series data. Ensure you are using an up to date version of Tempo`),
@@ -685,11 +790,26 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             data: emptyResponse,
           };
         }
+        reportTempoQueryMetrics('grafana_traces_metrics_summary_response', options, {
+          success: true,
+          streaming: false,
+          latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+          query: query ?? '',
+        });
         return {
           data: createTableFrameFromMetricsSummaryQuery(response.data.summaries, query, this.instanceSettings),
         };
       }),
       catchError((error) => {
+        reportTempoQueryMetrics('grafana_traces_metrics_summary_response', options, {
+          success: false,
+          streaming: false,
+          latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+          query: query ?? '',
+          error: getErrorMessage(error.data.message),
+          statusCode: error.status,
+          statusText: error.statusText,
+        });
         return of({
           error: { message: getErrorMessage(error.data.message) },
           data: emptyResponse,
@@ -709,6 +829,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       return EMPTY;
     }
 
+    const startTime = performance.now();
     return merge(
       ...targets.map((target) =>
         doTempoSearchStreaming(
@@ -718,6 +839,28 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           this.instanceSettings
         )
       )
+    ).pipe(
+      catchError((error) => {
+        reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
+          success: false,
+          streaming: true,
+          latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+          query: query ?? '',
+          error: getErrorMessage(error.data.message),
+          statusCode: error.status,
+          statusText: error.statusText,
+        });
+        // Re-throw the error to maintain the error chain
+        throw error;
+      }),
+      finalize(() => {
+        reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
+          success: true,
+          streaming: true,
+          query: query ?? '',
+          latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+        });
+      })
     );
   }
 
@@ -732,6 +875,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       return EMPTY;
     }
 
+    const startTime = performance.now();
     return merge(
       ...targets.map((target) =>
         doTempoMetricsStreaming(
@@ -740,6 +884,28 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           options
         )
       )
+    ).pipe(
+      catchError((error) => {
+        reportTempoQueryMetrics('grafana_traces_traceql_metrics_response', options, {
+          success: false,
+          streaming: true,
+          latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+          query: query ?? '',
+          error: getErrorMessage(error.data.message),
+          statusCode: error.status,
+          statusText: error.statusText,
+        });
+        // Re-throw the error to maintain the error chain
+        throw error;
+      }),
+      finalize(() => {
+        reportTempoQueryMetrics('grafana_traces_traceql_metrics_response', options, {
+          success: true,
+          streaming: true,
+          query: query ?? '',
+          latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+        });
+      })
     );
   }
 
@@ -1440,6 +1606,44 @@ function getServiceGraphViewDataFrames(
   }
 
   return df;
+}
+
+/**
+ * Reports metrics for Tempo query interactions.
+ *
+ * @param options - The data query request options containing app and other context
+ * @param metrics - Object containing metrics to report:
+ *   - success: Whether the query was successful
+ *   - streaming: (optional) Whether streaming was used
+ *   - latencyMs: Query execution time in milliseconds
+ *   - query: (optional) The query string that was executed
+ *   - error: (optional) Error message if query failed
+ *   - statusCode: (optional) HTTP status code if query failed
+ *   - statusText: (optional) HTTP status text if query failed
+ * @param interactionName - (optional) Name of the interaction to report.
+ *                         Defaults to 'grafana_traces_traceql_response'
+ *
+ * @example
+ * ```typescript
+ * reportTempoQueryMetrics(options, {
+ *   success: true,
+ *   streaming: true,
+ *   latencyMs: Math.round(performance.now() - startTime),
+ *   query: 'my query'
+ * });
+ * ```
+ */
+function reportTempoQueryMetrics(
+  interactionName: string,
+  options: DataQueryRequest<TempoQuery>,
+  metrics: TempoQueryMetrics
+) {
+  reportInteraction(interactionName, {
+    datasourceType: 'tempo',
+    app: options.app ?? '',
+    grafana_version: config.buildInfo.version,
+    ...metrics,
+  });
 }
 
 export function buildExpr(
