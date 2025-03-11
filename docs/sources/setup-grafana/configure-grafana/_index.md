@@ -2753,6 +2753,10 @@ Set the default start of the week, valid values are: `saturday`, `sunday`, `mond
 
 Set this to `false` to disable expressions and hide them in the Grafana UI. Default is `true`.
 
+#### `sql_expression_cell_limit`
+
+Set the maximum number of cells that can be passed to a SQL expression. Default is `100000`.
+
 ### `[geomap]`
 
 This section controls the defaults settings for **Geomap Plugin**.
