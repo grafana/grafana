@@ -101,19 +101,20 @@ func (gtx *SessionTx) ExecWithReturningId(ctx context.Context, query string, arg
 }
 
 func execWithReturningId(ctx context.Context, driverName string, query string, sess Session, args ...any) (int64, error) {
-	supported := false
 	var id int64
 	if driverName == "postgres" {
 		query = fmt.Sprintf("%s RETURNING id", query)
-		supported = true
-	}
-	if supported {
 		err := sess.Get(ctx, &id, query, args...)
 		if err != nil {
 			return id, err
 		}
 		return id, nil
 	} else {
+		if driverName == "spanner" {
+			// LastInsertId requires THEN RETURN directive.
+			query = fmt.Sprintf("%s THEN RETURN id", query)
+		}
+
 		res, err := sess.Exec(ctx, query, args...)
 		if err != nil {
 			return id, err
