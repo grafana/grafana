@@ -146,6 +146,71 @@ func TestDSQueryError(t *testing.T) {
 	require.Equal(t, fp(42), res.Responses["C"].Frames[0].Fields[0].At(0))
 }
 
+func TestSQLExpressionCellLimitFromConfig(t *testing.T) {
+	tests := []struct {
+		name            string
+		configCellLimit int64
+		expectedLimit   int64
+	}{
+		{
+			name:            "should pass default cell limit (0) to SQL command",
+			configCellLimit: 0,
+			expectedLimit:   0,
+		},
+		{
+			name:            "should pass custom cell limit to SQL command",
+			configCellLimit: 5000,
+			expectedLimit:   5000,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a request with an SQL expression
+			sqlQuery := Query{
+				RefID:      "A",
+				DataSource: dataSourceModel(),
+				JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "sql", "expression": "SELECT 1 AS n" }`),
+				TimeRange: AbsoluteTimeRange{
+					From: time.Time{},
+					To:   time.Time{},
+				},
+			}
+
+			queries := []Query{sqlQuery}
+
+			// Create service with specified cell limit
+			cfg := setting.NewCfg()
+			cfg.ExpressionsEnabled = true
+			cfg.SQLExpressionCellLimit = tt.configCellLimit
+
+			features := featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
+
+			// Create service with our configured limit
+			s := &Service{
+				cfg:      cfg,
+				features: features,
+				converter: &ResultConverter{
+					Features: features,
+				},
+			}
+
+			req := &Request{Queries: queries, User: &user.SignedInUser{}}
+
+			// Build the pipeline
+			pipeline, err := s.BuildPipeline(req)
+			require.NoError(t, err)
+
+			node := pipeline[0]
+			cmdNode := node.(*CMDNode)
+			sqlCmd := cmdNode.Command.(*SQLCommand)
+
+			// Verify the SQL command has the correct limit
+			require.Equal(t, tt.expectedLimit, sqlCmd.limit, "SQL command has incorrect cell limit")
+		})
+	}
+}
+
 func fp(f float64) *float64 {
 	return &f
 }
