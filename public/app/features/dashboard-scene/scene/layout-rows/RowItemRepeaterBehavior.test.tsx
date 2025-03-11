@@ -12,7 +12,6 @@ import {
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { TextMode } from 'app/plugins/panel/text/panelcfg.gen';
 
-import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { getCloneKey, isInCloneChain, joinCloneKeys } from '../../utils/clone';
 import { activateFullSceneTree } from '../../utils/test-utils';
 import { DashboardScene } from '../DashboardScene';
@@ -53,7 +52,7 @@ describe('RowItemRepeaterBehavior', () => {
       // Verify that first row still has repeat behavior
       const row1 = layout.state.rows[0];
       expect(row1.state.key).toBe(getCloneKey('row-1', 0));
-      expect(row1.state.$behaviors?.[1]).toBeInstanceOf(RowItemRepeaterBehavior);
+      expect(row1.state.$behaviors?.[0]).toBeInstanceOf(RowItemRepeaterBehavior);
       expect(row1.state.$variables!.state.variables[0].getValue()).toBe('A1');
 
       const row1Children = getRowChildren(row1);
@@ -158,7 +157,7 @@ describe('RowItemRepeaterBehavior', () => {
 
       // Should have 2 rows, one without repeat and one with the dummy row
       expect(layout.state.rows.length).toBe(2);
-      expect(layout.state.rows[0].state.$behaviors?.[1]).toBeInstanceOf(RowItemRepeaterBehavior);
+      expect(layout.state.rows[0].state.$behaviors?.[0]).toBeInstanceOf(RowItemRepeaterBehavior);
     });
   });
 });
@@ -184,7 +183,7 @@ function buildScene(
   const rows = [
     new RowItem({
       key: 'row-1',
-      $behaviors: [ConditionalRendering.createEmpty(), repeatBehavior],
+      $behaviors: [repeatBehavior],
       layout: DefaultGridLayoutManager.fromGridItems([
         new DashboardGridItem({
           key: 'grid-item-1',
@@ -199,7 +198,6 @@ function buildScene(
     new RowItem({
       key: 'row-2',
       title: 'Row at the bottom',
-      $behaviors: [ConditionalRendering.createEmpty()],
       layout: DefaultGridLayoutManager.fromGridItems([
         new DashboardGridItem({
           key: 'grid-item-2',

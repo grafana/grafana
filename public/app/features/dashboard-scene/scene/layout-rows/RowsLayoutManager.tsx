@@ -1,7 +1,6 @@
 import { SceneGridItemLike, SceneGridRow, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 
-import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
 import { isClonedKey } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
@@ -72,9 +71,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   }
 
   public addNewRow(): RowItem {
-    const row = new RowItem({
-      $behaviors: [ConditionalRendering.createEmpty()],
-    });
+    const row = new RowItem();
     this.setState({ rows: [...this.state.rows, row] });
     return row;
   }
@@ -130,16 +127,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
   public removeRow(row: RowItem) {
     const rows = this.state.rows.filter((r) => r !== row);
-    this.setState({
-      rows:
-        rows.length === 0
-          ? [
-              new RowItem({
-                $behaviors: [ConditionalRendering.createEmpty()],
-              }),
-            ]
-          : rows,
-    });
+    this.setState({ rows: rows.length === 0 ? [new RowItem()] : rows });
   }
 
   public moveRowUp(row: RowItem) {
@@ -193,13 +181,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   }
 
   public static createEmpty(): RowsLayoutManager {
-    return new RowsLayoutManager({
-      rows: [
-        new RowItem({
-          $behaviors: [ConditionalRendering.createEmpty()],
-        }),
-      ],
-    });
+    return new RowsLayoutManager({ rows: [new RowItem()] });
   }
 
   public static createFromLayout(layout: DashboardLayoutManager): RowsLayoutManager {
@@ -257,27 +239,16 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
               rowConfig.isDraggable,
               rowConfig.isResizable
             ),
-            $behaviors: rowConfig.repeat
-              ? [ConditionalRendering.createEmpty(), new RowItemRepeaterBehavior({ variableName: rowConfig.repeat })]
-              : [ConditionalRendering.createEmpty()],
+            $behaviors: rowConfig.repeat ? [new RowItemRepeaterBehavior({ variableName: rowConfig.repeat })] : [],
           })
       );
     } else {
-      rows = [
-        new RowItem({
-          layout: layout.clone(),
-          $behaviors: [ConditionalRendering.createEmpty()],
-        }),
-      ];
+      rows = [new RowItem({ layout: layout.clone() })];
     }
 
     // Ensure we always get at least one row
     if (rows.length === 0) {
-      rows = [
-        new RowItem({
-          $behaviors: [ConditionalRendering.createEmpty()],
-        }),
-      ];
+      rows = [new RowItem()];
     }
 
     return new RowsLayoutManager({ rows });
