@@ -379,6 +379,8 @@
     "list-view": {
       "empty": {
         "new-alert-rule": "New alert rule",
+        "new-ds-managed-recording-rule": "New data source-managed recording rule",
+        "new-grafana-recording-rule": "New Grafana-managed recording rule",
         "new-recording-rule": "New recording rule",
         "provisioning": "You can also define rules through file provisioning or Terraform. <2>Learn more</2>"
       },
@@ -3123,7 +3125,8 @@
       "old-password-required": "Old password is required",
       "passwords-must-match": "Passwords must match",
       "strong-password-validation-register": "Password does not comply with the strong password policy"
-    }
+    },
+    "change-theme": "Change theme"
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
