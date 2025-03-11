@@ -40,7 +40,8 @@ export interface LanguageDefinition<Namespace extends string = string> {
   loader: Record<Namespace, LocaleFileLoader>;
 }
 
-const EXTRA_LANGUAGES: LanguageDefinition[] = [
+// New languages added recently without translations available yet
+const NEW_LANGUAGES: LanguageDefinition[] = [
   {
     code: CHINESE_TRADITIONAL,
     name: '中文（繁體）',
@@ -180,24 +181,24 @@ export const LANGUAGES: LanguageDefinition[] = [
   },
 
   {
-    code: BRAZILIAN_PORTUGUESE,
-    name: 'Português Brasileiro',
-    loader: {
-      grafana: () => import('../../../locales/pt-BR/grafana.json'),
-    },
-  },
-
-  {
     code: CHINESE_SIMPLIFIED,
     name: '中文（简体）',
     loader: {
       grafana: () => import('../../../locales/zh-Hans/grafana.json'),
     },
   },
+
+  {
+    code: BRAZILIAN_PORTUGUESE,
+    name: 'Português Brasileiro',
+    loader: {
+      grafana: () => import('../../../locales/pt-BR/grafana.json'),
+    },
+  },
 ] satisfies Array<LanguageDefinition<'grafana'>>;
 
 if (config.featureToggles?.extraLanguages) {
-  LANGUAGES.push(...EXTRA_LANGUAGES);
+  LANGUAGES.push(...NEW_LANGUAGES);
 }
 
 if (process.env.NODE_ENV === 'development') {
