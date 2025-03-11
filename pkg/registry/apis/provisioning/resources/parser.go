@@ -180,6 +180,10 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 		return parsed, nil
 	}
 
+	if r.clients == nil {
+		return parsed, fmt.Errorf("no client configured")
+	}
+
 	client, gvr, err := r.clients.ForKind(*parsed.GVK)
 	if err != nil {
 		return nil, err // does not map to a resour e
