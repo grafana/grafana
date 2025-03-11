@@ -4743,6 +4743,99 @@ func TestIntegrationRuleSoftDelete(t *testing.T) {
 	})
 }
 
+func TestIntegrationRulePermanentlyDelete(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
+	// Setup Grafana and its Database
+	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		EnableQuota:           true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+		EnableFeatureToggles:  []string{featuremgmt.FlagAlertRuleRestore},
+	})
+
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
+
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "admin",
+		Login:          "admin",
+	})
+
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
+		Password:       "password",
+		Login:          "editor",
+	})
+
+	adminClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
+	editorClient := newAlertingApiClient(grafanaListedAddr, "editor", "password")
+
+	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1-post.json"))
+	require.NoError(t, err)
+	var group1 apimodels.PostableRuleGroupConfig
+	require.NoError(t, json.Unmarshal(postGroupRaw, &group1))
+	require.Greaterf(t, len(group1.Rules), 1, "group should contain at least 2 rules")
+
+	// Create the namespace we'll save our alerts to.
+	adminClient.CreateFolder(t, "folder1", "folder1")
+	// Create rule under folder1
+	response := adminClient.PostRulesGroup(t, "folder1", &group1, false)
+	require.NotEmptyf(t, response.Created, "Expected created to be set")
+
+	deleted, status, raw := adminClient.GetDeletedRulesWithStatus(t)
+	requireStatusCode(t, http.StatusOK, status, raw)
+	require.Emptyf(t, deleted, "Expected empty list of deleted rules, got %v", deleted)
+
+	t.Run("delete rule in group permanently", func(t *testing.T) {
+		group1Before, _ := adminClient.GetRulesGroup(t, "folder1", group1.Name)
+		group1 = convertGettableRuleGroupToPostable(group1Before.GettableRuleGroupConfig)
+		group1.Rules = group1.Rules[:1] // remove one rule
+
+		t.Run("denied to non-admin", func(t *testing.T) {
+			_, status, raw := editorClient.PostRulesGroupWithStatus(t, "folder1", &group1, true)
+			require.Equalf(t, http.StatusForbidden, status, "got unexpected response: %s", raw)
+			g, _ := editorClient.GetRulesGroup(t, "folder1", group1.Name)
+			require.Len(t, g.Rules, len(group1Before.Rules))
+		})
+
+		t.Run("allowed to admin", func(t *testing.T) {
+			_, status, raw := adminClient.PostRulesGroupWithStatus(t, "folder1", &group1, true)
+			require.Equalf(t, http.StatusAccepted, status, "got unexpected response: %s", raw)
+			g, _ := adminClient.GetRulesGroup(t, "folder1", group1.Name)
+			require.Len(t, g.Rules, len(group1.Rules))
+
+			deleted, status, raw := adminClient.GetDeletedRulesWithStatus(t)
+			requireStatusCode(t, http.StatusOK, status, raw)
+			require.Emptyf(t, deleted, "Expected empty list of deleted rules, got %v", deleted)
+		})
+	})
+
+	t.Run("delete group permanently", func(t *testing.T) {
+		group1, status, raw := adminClient.GetRulesGroupWithStatus(t, "folder1", group1.Name)
+		require.Equalf(t, http.StatusAccepted, status, "got unexpected response: %s", raw)
+
+		t.Run("denied to non-admin", func(t *testing.T) {
+			status, raw := editorClient.DeleteRulesGroup(t, "folder1", group1.Name, true)
+			require.Equalf(t, http.StatusForbidden, status, "got unexpected response: %s", raw)
+			g, _ := editorClient.GetRulesGroup(t, "folder1", group1.Name)
+			require.Len(t, g.Rules, len(group1.Rules))
+		})
+		t.Run("allowed to admin", func(t *testing.T) {
+			status, raw := adminClient.DeleteRulesGroup(t, "folder1", group1.Name, true)
+			require.Equalf(t, http.StatusAccepted, status, "got unexpected response: %s", raw)
+			_, status, rawb := adminClient.GetRulesGroupWithStatus(t, "folder1", group1.Name)
+			require.Equalf(t, http.StatusNotFound, status, "got unexpected response: %s", string(rawb))
+
+			deleted, status, raw := adminClient.GetDeletedRulesWithStatus(t)
+			requireStatusCode(t, http.StatusOK, status, raw)
+			require.Emptyf(t, deleted, "Expected empty list of deleted rules, got %v", deleted)
+		})
+	})
+}
+
 func newTestingRuleConfig(t *testing.T) apimodels.PostableRuleGroupConfig {
 	interval, err := model.ParseDuration("1m")
 	require.NoError(t, err)
