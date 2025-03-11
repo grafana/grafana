@@ -155,8 +155,8 @@ func TestDeleteWithSuggestionAndConflict(t *testing.T) {
 type resourceClientMock struct {
 	resource.ResourceStoreClient
 	resource.ResourceIndexClient
-	resource.RepositoryIndexClient
-	resource.BatchStoreClient
+	resource.ManagedObjectIndexClient
+	resource.BulkStoreClient
 	resource.BlobStoreClient
 	resource.DiagnosticsClient
 }

@@ -15,10 +15,11 @@ interface Props {
   onClick: (event: MouseEvent<SVGElement>, link: EdgeDatumLayout) => void;
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;
+  processedNodesLength: number;
 }
 
 export const Edge = memo(function Edge(props: Props) {
-  const { edge, onClick, onMouseEnter, onMouseLeave, hovering, svgIdNamespace } = props;
+  const { edge, onClick, onMouseEnter, onMouseLeave, hovering, svgIdNamespace, processedNodesLength } = props;
 
   // Not great typing but after we do layout these properties are full objects not just references
   const { source, target, sourceNodeRadius, targetNodeRadius } = edge as {
@@ -56,6 +57,7 @@ export const Edge = memo(function Edge(props: Props) {
       <EdgeArrowMarker id={markerId} fill={edgeColor} headHeight={arrowHeadHeight} />
       <EdgeArrowMarker id={coloredMarkerId} fill={highlightedEdgeColor} headHeight={arrowHeadHeight} />
       <g
+        key={`${edge.id}-${edge.source.y ?? ''}-${processedNodesLength}-g`}
         onClick={(event) => onClick(event, edge)}
         style={{ cursor: 'pointer' }}
         aria-label={`Edge from: ${source.id} to: ${target.id}`}

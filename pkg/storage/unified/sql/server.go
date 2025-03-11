@@ -18,7 +18,7 @@ import (
 
 // Creates a new ResourceServer
 func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
-	tracer tracing.Tracer, reg prometheus.Registerer, ac types.AccessClient, searchOptions resource.SearchOptions) (resource.ResourceServer, error) {
+	tracer tracing.Tracer, reg prometheus.Registerer, ac types.AccessClient, searchOptions resource.SearchOptions, storageMetrics *resource.StorageMetrics) (resource.ResourceServer, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	opts := resource.ResourceServerOptions{
 		Tracer: tracer,
@@ -45,16 +45,9 @@ func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
 		return nil, err
 	}
 
-	dbCfg := cfg.SectionWithEnvOverrides("database")
-	// Check in the config if HA is enabled by default we always assume a HA setup.
-	isHA := dbCfg.Key("high_availability").MustBool(true)
-	// SQLite is not possible to run in HA, so we set it to false.
-	databaseType := dbCfg.Key("type").MustString(migrator.SQLite)
-	if databaseType == migrator.SQLite {
-		isHA = false
-	}
+	isHA := isHighAvailabilityEnabled(cfg.SectionWithEnvOverrides("database"))
 
-	store, err := NewBackend(BackendOptions{DBProvider: eDB, Tracer: tracer, IsHA: isHA})
+	store, err := NewBackend(BackendOptions{DBProvider: eDB, Tracer: tracer, IsHA: isHA, storageMetrics: storageMetrics})
 	if err != nil {
 		return nil, err
 	}
@@ -69,4 +62,20 @@ func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
 	}
 
 	return rs, nil
+}
+
+// isHighAvailabilityEnabled determines if high availability mode should
+// be enabled based on database configuration. High availability is enabled
+// by default except for SQLite databases.
+func isHighAvailabilityEnabled(dbCfg *setting.DynamicSection) bool {
+	// Check in the config if HA is enabled - by default we always assume a HA setup.
+	isHA := dbCfg.Key("high_availability").MustBool(true)
+
+	// SQLite is not possible to run in HA, so we force it to false.
+	databaseType := dbCfg.Key("type").String()
+	if databaseType == migrator.SQLite {
+		isHA = false
+	}
+
+	return isHA
 }

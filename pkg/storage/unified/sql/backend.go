@@ -40,6 +40,10 @@ type BackendOptions struct {
 	PollingInterval time.Duration
 	WatchBufferSize int
 	IsHA            bool
+	storageMetrics  *resource.StorageMetrics
+
+	// testing
+	SimulatedNetworkLatency time.Duration // slows down the create transactions by a fixed amount
 }
 
 func NewBackend(opts BackendOptions) (Backend, error) {
@@ -58,15 +62,17 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		opts.WatchBufferSize = defaultWatchBufferSize
 	}
 	return &backend{
-		isHA:            opts.IsHA,
-		done:            ctx.Done(),
-		cancel:          cancel,
-		log:             log.New("sql-resource-server"),
-		tracer:          opts.Tracer,
-		dbProvider:      opts.DBProvider,
-		pollingInterval: opts.PollingInterval,
-		watchBufferSize: opts.WatchBufferSize,
-		batchLock:       &batchLock{running: make(map[string]bool)},
+		isHA:                    opts.IsHA,
+		done:                    ctx.Done(),
+		cancel:                  cancel,
+		log:                     log.New("sql-resource-server"),
+		tracer:                  opts.Tracer,
+		dbProvider:              opts.DBProvider,
+		pollingInterval:         opts.PollingInterval,
+		watchBufferSize:         opts.WatchBufferSize,
+		storageMetrics:          opts.storageMetrics,
+		bulkLock:                &bulkLock{running: make(map[string]bool)},
+		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
 	}, nil
 }
 
@@ -81,20 +87,24 @@ type backend struct {
 	initErr  error
 
 	// o11y
-	log    log.Logger
-	tracer trace.Tracer
+	log            log.Logger
+	tracer         trace.Tracer
+	storageMetrics *resource.StorageMetrics
 
 	// database
 	dbProvider db.DBProvider
 	db         db.DB
 	dialect    sqltemplate.Dialect
-	batchLock  *batchLock
+	bulkLock   *bulkLock
 
 	// watch streaming
 	//stream chan *resource.WatchEvent
 	pollingInterval time.Duration
 	watchBufferSize int
 	notifier        eventNotifier
+
+	// testing
+	simulatedNetworkLatency time.Duration
 }
 
 func (b *backend) Init(ctx context.Context) error {
@@ -249,7 +259,9 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 			return fmt.Errorf("update resource rv: %w", err)
 		}
 		newVersion = rv
-
+		if b.simulatedNetworkLatency > 0 {
+			time.Sleep(b.simulatedNetworkLatency)
+		}
 		return nil
 	})
 
@@ -588,11 +600,11 @@ type listIter struct {
 
 // ContinueToken implements resource.ListIterator.
 func (l *listIter) ContinueToken() string {
-	return ContinueToken{ResourceVersion: l.listRV, StartOffset: l.offset}.String()
+	return resource.ContinueToken{ResourceVersion: l.listRV, StartOffset: l.offset}.String()
 }
 
 func (l *listIter) ContinueTokenWithCurrentRV() string {
-	return ContinueToken{ResourceVersion: l.rv, StartOffset: l.offset}.String()
+	return resource.ContinueToken{ResourceVersion: l.rv, StartOffset: l.offset}.String()
 }
 
 func (l *listIter) Error() error {
@@ -679,7 +691,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 	// Get the RV
 	iter := &listIter{listRV: req.ResourceVersion}
 	if req.NextPageToken != "" {
-		continueToken, err := GetContinueToken(req.NextPageToken)
+		continueToken, err := resource.GetContinueToken(req.NextPageToken)
 		if err != nil {
 			return 0, fmt.Errorf("get continue token: %w", err)
 		}
@@ -737,7 +749,7 @@ func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb 
 
 	iter := &listIter{}
 	if req.NextPageToken != "" {
-		continueToken, err := GetContinueToken(req.NextPageToken)
+		continueToken, err := resource.GetContinueToken(req.NextPageToken)
 		if err != nil {
 			return 0, fmt.Errorf("get continue token: %w", err)
 		}
