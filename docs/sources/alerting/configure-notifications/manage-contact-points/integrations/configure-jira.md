@@ -12,7 +12,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Jira Service Management
+menuTitle: Jira
 title: Configure Jira for Alerting
 weight: 121
 refs:
