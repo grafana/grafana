@@ -445,13 +445,6 @@ describe('given dashboard with repeated panels', () => {
     expect(require).not.toBe(undefined);
   });
 
-  it.skip('should add graph panel to required', () => {
-    const require = find(exported.__requires, { name: 'Graph' });
-    expect(require.name).toBe('Graph');
-    expect(require.id).toBe('graph');
-    expect(require.version).toBe('1.1.0');
-  });
-
   it('should add table panel to required', () => {
     const require = find(exported.__requires, { name: 'Table' });
     expect(require.name).toBe('Table');

@@ -168,33 +168,12 @@ describe('DashboardModel', () => {
       expect(model.templating.list[0].name).toBe('server');
     });
 
-    it.skip('graphite panel should change name too graph', () => {
-      expect(graph.type).toBe('graph');
-    });
-
-    it.skip('singlestat panel should be mapped to stat panel', () => {
-      expect(singlestat.type).toBe('stat');
-      expect(singlestat.fieldConfig.defaults.thresholds.steps[2].value).toBe(30);
-      expect(singlestat.fieldConfig.defaults.thresholds.steps[0].color).toBe('#FF0000');
-    });
-
-    it.skip('singlestat panel should be mapped to gauge panel', () => {
-      expect(singlestatGauge.type).toBe('gauge');
-      expect(singlestatGauge.options.showThresholdMarkers).toBe(true);
-      expect(singlestatGauge.options.showThresholdLabels).toBe(false);
-    });
-
     it('queries without refId should get it', () => {
       expect(graph.targets[1].refId).toBe('B');
     });
 
     it('update legend setting', () => {
       expect(graph.legend.show).toBe(true);
-    });
-
-    it.skip('move aliasYAxis to series override', () => {
-      expect(graph.seriesOverrides[0].alias).toBe('test');
-      expect(graph.seriesOverrides[0].yaxis).toBe(2);
     });
 
     it('should move pulldowns to new schema', () => {
@@ -212,55 +191,8 @@ describe('DashboardModel', () => {
       expect(table.type).toBe('table-old');
     });
 
-    it.skip('graph grid to yaxes options', () => {
-      expect(graph.yaxes[0].min).toBe(1);
-      expect(graph.yaxes[0].max).toBe(10);
-      expect(graph.yaxes[0].format).toBe('kbyte');
-      expect(graph.yaxes[0].label).toBe('left label');
-      expect(graph.yaxes[0].logBase).toBe(1);
-      expect(graph.yaxes[1].min).toBe(5);
-      expect(graph.yaxes[1].max).toBe(15);
-      expect(graph.yaxes[1].format).toBe('ms');
-      expect(graph.yaxes[1].logBase).toBe(2);
-
-      expect(graph.grid.rightMax).toBe(undefined);
-      expect(graph.grid.rightLogBase).toBe(undefined);
-      expect(graph.y_formats).toBe(undefined);
-    });
-
     it('dashboard schema version should be set to latest', () => {
       expect(model.schemaVersion).toBe(DASHBOARD_SCHEMA_VERSION);
-    });
-
-    it.skip('graph thresholds should be migrated', () => {
-      expect(graph.thresholds.length).toBe(2);
-      expect(graph.thresholds[0].op).toBe('gt');
-      expect(graph.thresholds[0].value).toBe(200);
-      expect(graph.thresholds[0].fillColor).toBe('yellow');
-      expect(graph.thresholds[1].value).toBe(400);
-      expect(graph.thresholds[1].fillColor).toBe('red');
-    });
-
-    it.skip('graph thresholds should be migrated onto specified thresholds', () => {
-      model = new DashboardModel({
-        panels: [
-          {
-            type: 'graph',
-            // @ts-expect-error
-            y_formats: ['kbyte', 'ms'],
-            grid: {
-              threshold1: 200,
-              threshold2: 400,
-            },
-            thresholds: [{ value: 100 }],
-          },
-        ],
-      });
-      graph = model.panels[0];
-      expect(graph.thresholds.length).toBe(3);
-      expect(graph.thresholds[0].value).toBe(100);
-      expect(graph.thresholds[1].value).toBe(200);
-      expect(graph.thresholds[2].value).toBe(400);
     });
 
     it('Shoud ignore repeated panels', () => {
