@@ -133,13 +133,10 @@ export const getUnscopedTags = (scopes: Scope[]) => {
 };
 
 export const getIntrinsicTags = (scopes: Scope[]) => {
-  let tags = uniq(
-    scopes
-      .map((scope: Scope) =>
-        scope.name && scope.name === TraceqlSearchScope.Intrinsic && scope.tags ? scope.tags : []
-      )
-      .flat()
-  );
+  let tags = scopes
+    .map((scope: Scope) => (scope.name && scope.name === TraceqlSearchScope.Intrinsic && scope.tags ? scope.tags : []))
+    .flat();
+
   // Add the default intrinsic tags to the list of tags.
   // This is needed because the /api/v2/search/tags API
   // may not always return all the default intrinsic tags
