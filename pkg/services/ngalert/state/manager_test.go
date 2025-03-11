@@ -1906,7 +1906,7 @@ func TestStaleResults(t *testing.T) {
 	st := state.NewManager(cfg, state.NewNoopPersister())
 
 	gen := models.RuleGen
-	rule := gen.With(gen.WithFor(0)).GenerateRef()
+	rule := gen.With(gen.WithFor(0), gen.WithMissingSeriesEvalsToResolve(2)).GenerateRef()
 
 	initResults := eval.Results{
 		eval.ResultGen(eval.WithState(eval.Alerting), eval.WithEvaluatedAt(clk.Now()))(),
