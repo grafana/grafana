@@ -2,8 +2,10 @@ import { css } from '@emotion/css';
 import { formatDistanceToNowStrict } from 'date-fns';
 
 import { GrafanaTheme2, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
-import { Icon, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Icon, Link, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
+import { useDatasource } from 'app/features/datasources/hooks';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { usePendingPeriod } from '../../../hooks/rules/usePendingPeriod';
@@ -53,6 +55,17 @@ export const Details = ({ rule }: DetailsProps) => {
     determinedRuleType = RuleType.CloudRecordingRule;
   }
 
+  const targetDatasourceUid = rulerRuleType.grafana.recordingRule(rule.rulerRule)
+    ? rule.rulerRule.grafana_alert.record?.target_datasource_uid
+    : null;
+
+  const datasource = useDatasource(targetDatasourceUid);
+
+  const showTargetDatasource =
+    config.featureToggles.grafanaManagedRecordingRulesDatasources &&
+    targetDatasourceUid &&
+    targetDatasourceUid !== 'grafana';
+
   const evaluationDuration = rule.promRule?.evaluationTime;
   const evaluationTimestamp = rule.promRule?.lastEvaluation;
 
@@ -100,6 +113,20 @@ export const Details = ({ rule }: DetailsProps) => {
               />
             )}
           </>
+        )}
+        {showTargetDatasource && (
+          <DetailText
+            id="target-datasource-uid"
+            label={t('alerting.alert.target-datasource-uid', 'Target data source')}
+            value={
+              <Link href={`/connections/datasources/edit/${datasource?.uid}`}>
+                <Stack direction="row" gap={1}>
+                  <img style={{ width: '16px' }} src={datasource?.meta.info.logos.small} alt="datasource logo" />
+                  {datasource?.name}
+                </Stack>
+              </Link>
+            }
+          />
         )}
       </DetailGroup>
 

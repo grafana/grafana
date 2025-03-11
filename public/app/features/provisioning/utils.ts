@@ -1,6 +1,6 @@
 import { RepositoryViewList } from './api';
 
-export function checkSyncSettings(settings: RepositoryViewList | undefined): [boolean, boolean] {
+export function checkSyncSettings(settings?: RepositoryViewList): [boolean, boolean] {
   if (!settings?.items?.length) {
     return [false, false];
   }

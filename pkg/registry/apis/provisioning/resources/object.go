@@ -3,7 +3,12 @@ package resources
 import (
 	"context"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -14,20 +19,32 @@ type ResourceLister interface {
 }
 
 type ResourceListerFromSearch struct {
-	index resource.RepositoryIndexClient
+	managed        resource.ManagedObjectIndexClient
+	index          resource.ResourceIndexClient
+	legacyMigrator legacy.LegacyMigrator
+	storageStatus  dualwrite.Service
 }
 
-func NewResourceLister(index resource.RepositoryIndexClient) ResourceLister {
+func NewResourceLister(
+	managed resource.ManagedObjectIndexClient,
+	index resource.ResourceIndexClient,
+	legacyMigrator legacy.LegacyMigrator,
+	storageStatus dualwrite.Service,
+) ResourceLister {
 	return &ResourceListerFromSearch{
-		index: index,
+		index:          index,
+		managed:        managed,
+		legacyMigrator: legacyMigrator,
+		storageStatus:  storageStatus,
 	}
 }
 
 // List implements ResourceLister.
 func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, repository string) (*provisioning.ResourceList, error) {
-	objects, err := o.index.ListRepositoryObjects(ctx, &resource.ListRepositoryObjectsRequest{
+	objects, err := o.managed.ListManagedObjects(ctx, &resource.ListManagedObjectsRequest{
 		Namespace: namespace,
-		Name:      repository,
+		Kind:      string(utils.ManagerKindRepo),
+		Id:        repository,
 	})
 	if err != nil {
 		return nil, err
@@ -54,10 +71,15 @@ func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, reposito
 
 // Stats implements ResourceLister.
 func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, repository string) (*provisioning.ResourceStats, error) {
-	counts, err := o.index.CountRepositoryObjects(ctx, &resource.CountRepositoryObjectsRequest{
+	req := &resource.CountManagedObjectsRequest{
 		Namespace: namespace,
-		Name:      repository,
-	})
+	}
+	if repository != "" {
+		req.Kind = string(utils.ManagerKindRepo)
+		req.Id = repository
+	}
+
+	counts, err := o.managed.CountManagedObjects(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -65,13 +87,69 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 		return nil, resource.GetError(counts.Error)
 	}
 
-	stats := &provisioning.ResourceStats{}
+	lookup := make(map[string]*provisioning.ManagerStats)
 	for _, v := range counts.Items {
-		stats.Items = append(stats.Items, provisioning.ResourceCount{
-			Repository: v.Repository,
-			Group:      v.Group,
-			Resource:   v.Resource,
-			Count:      v.Count,
+		key := v.Kind + ":" + v.Id
+		m := lookup[key]
+		if m == nil {
+			m = &provisioning.ManagerStats{
+				Kind:     utils.ManagerKind(v.Kind),
+				Identity: v.Id,
+			}
+			lookup[key] = m
+		}
+		m.Stats = append(m.Stats, provisioning.ResourceCount{
+			Group:    v.Group,
+			Resource: v.Resource,
+			Count:    v.Count,
+		})
+	}
+	stats := &provisioning.ResourceStats{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: provisioning.SchemeGroupVersion.String(),
+			Kind:       "ResourceStats",
+		},
+	}
+	for _, v := range lookup {
+		stats.Managed = append(stats.Managed, *v)
+	}
+
+	// When selecting an explicit repository, do not fetch global stats
+	if repository != "" {
+		return stats, nil
+	}
+
+	// Get the stats based on what a migration could support
+	if dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, o.storageStatus) {
+		rsp, err := o.legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
+			Namespace:   namespace,
+			WithHistory: false,
+			OnlyCount:   true,
+		})
+		if err != nil {
+			return nil, err
+		}
+		for _, v := range rsp.Summary {
+			stats.Instance = append(stats.Instance, provisioning.ResourceCount{
+				Group:    v.Group,
+				Resource: v.Resource,
+				Count:    v.Count,
+			})
+		}
+	}
+
+	// Get full instance stats
+	info, err := o.index.GetStats(ctx, &resource.ResourceStatsRequest{
+		Namespace: namespace,
+	})
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range info.Stats {
+		stats.Instance = append(stats.Instance, provisioning.ResourceCount{
+			Group:    v.Group,
+			Resource: v.Resource,
+			Count:    v.Count,
 		})
 	}
 	return stats, nil
