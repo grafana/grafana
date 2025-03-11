@@ -56,7 +56,6 @@ var (
 )
 
 const (
-	tracingPrefix           = "sql.rvmanager."
 	defaultMaxBatchSize     = 25
 	defaultMaxBatchWaitTime = 100 * time.Millisecond
 	defaultBatchTimeout     = 5 * time.Second
@@ -143,7 +142,7 @@ func (m *resourceVersionManager) ExecWithRV(ctx context.Context, key *resource.R
 	}))
 	defer timer.ObserveDuration()
 
-	ctx, span := m.tracer.Start(ctx, tracingPrefix+"ExecWithRV")
+	ctx, span := m.tracer.Start(ctx, "sql.rvmanager.ExecWithRV")
 	defer span.End()
 
 	span.SetAttributes(
@@ -218,7 +217,7 @@ func (m *resourceVersionManager) startBatchProcessor(group, resource string) {
 }
 
 func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource string, batch []writeOp) {
-	ctx, span := m.tracer.Start(ctx, tracingPrefix+"execBatch")
+	ctx, span := m.tracer.Start(ctx, "sql.rvmanager.execBatch")
 	defer span.End()
 
 	// Add batch size attribute
