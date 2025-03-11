@@ -18,22 +18,22 @@ export interface ScopesTreeSearchProps {
 export function ScopesTreeSearch({ anyChildExpanded, nodePath, query, onNodeUpdate }: ScopesTreeSearchProps) {
   const styles = useStyles2(getStyles);
 
-  const [inputState, setInputState] = useState<{ value: string; isDirty: boolean }>({ value: query, isDirty: false });
+  const [inputState, setInputState] = useState<{ value: string; dirty: boolean }>({ value: query, dirty: false });
 
   useEffect(() => {
-    if (!inputState.isDirty && inputState.value !== query) {
-      setInputState({ value: query, isDirty: false });
+    if (!inputState.dirty && inputState.value !== query) {
+      setInputState({ value: query, dirty: false });
     }
   }, [inputState, query]);
 
   useDebounce(
     () => {
-      if (inputState.isDirty) {
+      if (inputState.dirty) {
         onNodeUpdate(nodePath, true, inputState.value);
       }
     },
     500,
-    [inputState.isDirty, inputState.value]
+    [inputState.dirty, inputState.value]
   );
 
   if (anyChildExpanded) {
@@ -48,7 +48,7 @@ export function ScopesTreeSearch({ anyChildExpanded, nodePath, query, onNodeUpda
       data-testid="scopes-tree-search"
       escapeRegex={false}
       onChange={(value) => {
-        setInputState({ value, isDirty: true });
+        setInputState({ value, dirty: true });
       }}
     />
   );
