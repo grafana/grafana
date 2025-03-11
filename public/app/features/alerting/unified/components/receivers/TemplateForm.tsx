@@ -317,18 +317,16 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                 </div>
                 {/* preview column – full height and half-width */}
                 {isGrafanaAlertManager && (
-                  <>
-                    <div {...rowSplitter.secondaryProps}>
-                      <div {...rowSplitter.splitterProps} />
-                      <TemplatePreview
-                        payload={payload}
-                        templateName={watch('title')}
-                        setPayloadFormatError={setPayloadFormatError}
-                        payloadFormatError={payloadFormatError}
-                        className={cx(styles.templatePreview, styles.minEditorSize)}
-                      />
-                    </div>
-                  </>
+                  <div {...rowSplitter.secondaryProps}>
+                    <div {...rowSplitter.splitterProps} />
+                    <TemplatePreview
+                      payload={payload}
+                      templateName={watch('title')}
+                      setPayloadFormatError={setPayloadFormatError}
+                      payloadFormatError={payloadFormatError}
+                      className={cx(styles.templatePreview, styles.minEditorSize)}
+                    />
+                  </div>
                 )}
               </div>
             </Stack>

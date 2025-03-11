@@ -176,24 +176,22 @@ export function getInsightsScenes() {
         component: SectionSubheader,
         props: {
           children: (
-            <>
-              <Text>
-                Monitor the status of your system{' '}
-                <Tooltip
-                  content={
-                    <div>
-                      Alerting insights provides pre-built dashboards to monitor your alerting data.
-                      <br />
-                      <br />
-                      You can identify patterns in why things go wrong and discover trends in alerting performance
-                      within your organization.
-                    </div>
-                  }
-                >
-                  <Icon name="info-circle" size="sm" />
-                </Tooltip>
-              </Text>
-            </>
+            <Text>
+              Monitor the status of your system{' '}
+              <Tooltip
+                content={
+                  <div>
+                    Alerting insights provides pre-built dashboards to monitor your alerting data.
+                    <br />
+                    <br />
+                    You can identify patterns in why things go wrong and discover trends in alerting performance within
+                    your organization.
+                  </div>
+                }
+              >
+                <Icon name="info-circle" size="sm" />
+              </Tooltip>
+            </Text>
           ),
         },
       }),

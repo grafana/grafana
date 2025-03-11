@@ -262,6 +262,7 @@ module.exports = [
       'prefer-const': 'error',
       'react/no-unused-prop-types': 'error',
       'react/self-closing-comp': 'error',
+      'react/jsx-no-useless-fragment': ['error', { allowExpressions: true }],
       'unicorn/no-unused-properties': 'error',
     },
   },
