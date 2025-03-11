@@ -30,6 +30,11 @@ export type Props = {
   app: CoreApp;
 };
 
+/**
+ * Order in which known link types are shown in the span details
+ * This was added in https://github.com/grafana/grafana/pull/101881 to preserve the order of links
+ * customers might have been used to. This will be revisted in https://github.com/grafana/grafana/issues/101925
+ */
 const LINKS_ORDER = [
   SpanLinkType.Metrics,
   SpanLinkType.Logs,
@@ -37,6 +42,11 @@ const LINKS_ORDER = [
   SpanLinkType.ProfilesDrilldown,
   SpanLinkType.Session,
 ];
+
+/**
+ * Maximium number of links to show before moving them to a dropdown
+ */
+const MAX_LINKS = 3;
 
 export const getSpanDetailLinkButtons = (props: Props) => {
   const { span, createSpanLink, traceToProfilesOptions, timeRange, datasourceType, app } = props;
@@ -69,6 +79,7 @@ export const getSpanDetailLinkButtons = (props: Props) => {
 
     // if in explore, use the plugin extension point to get the link
     // note: plugin extension point links are not currently supported in panel plugins
+    // TODO: create SpnaLinkDef in createSpanLink (https://github.com/grafana/grafana/issues/101925)
     if (linkToProfiles && app === CoreApp.Explore) {
       // ensure we have a profile link
       const profilesDrilldownPluginId = 'grafana-pyroscope-app';
@@ -98,7 +109,7 @@ export const getSpanDetailLinkButtons = (props: Props) => {
       return aValue - bValue;
     });
 
-    if (links.length > 3) {
+    if (links.length > MAX_LINKS) {
       return <DropDownMenu links={links}></DropDownMenu>;
     } else {
       return (
