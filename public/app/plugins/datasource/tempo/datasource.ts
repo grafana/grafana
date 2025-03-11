@@ -395,6 +395,16 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     if (targets.traceqlSearch?.length) {
+      if (targets.traceqlSearch[0].groupBy) {
+        return of({
+          error: {
+            message:
+              'The aggregate by query is deprecated. Please create a new panel with a TraceQL metrics query instead. Alternatively, you can use Traces Drilldown.',
+          },
+          data: [],
+        });
+      }
+
       try {
         const traceqlSearchTargets = targets.traceqlSearch;
         if (traceqlSearchTargets.length > 0) {
