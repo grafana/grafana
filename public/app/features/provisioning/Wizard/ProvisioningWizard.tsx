@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { Button, Stack, useStyles2, Text } from '@grafana/ui';
+import { Button, Stack, useStyles2, Text, Box } from '@grafana/ui';
 
 import { getDefaultValues } from '../ConfigForm';
 import { useDeleteRepositoryMutation, useGetFrontendSettingsQuery } from '../api';
@@ -230,13 +230,14 @@ function WizardContent({
           finish: { valid: true },
         }}
       />
-      <RequestErrorAlert request={saveRequest} title="Repository verification failed" />
-
-      <div className={styles.content}>
+      <Box marginBottom={2}>
         <Text element="h2">
           {availableSteps.findIndex((step) => step.id === activeStep) + 1}.{' '}
           {availableSteps.find((step) => step.id === activeStep)?.title}
         </Text>
+      </Box>
+      <RequestErrorAlert request={saveRequest} title="Repository verification failed" />
+      <div className={styles.content}>
         {activeStep === 'connection' && <ConnectStep />}
         {activeStep === 'bootstrap' && <BootstrapStep onOptionSelect={onOptionSelect} />}
         {activeStep === 'migrate' && requiresMigration && <MigrateStep onStatusChange={handleStatusChange} />}
