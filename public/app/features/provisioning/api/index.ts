@@ -34,6 +34,23 @@ export const provisioningAPI = generatedAPI.enhanceEndpoints({
         RepositoryList
       >('repositories');
     },
+    updateRepository(endpoint) {
+      endpoint.query = (queryArg) => ({
+        url: `/repositories/${queryArg.name}`,
+        method: 'PATCH',
+        headers: {
+          'Content-Type': `application/json-patch+json`, // Or merge-patch
+        },
+        body: JSON.stringify(queryArg.patch),
+        params: {
+          pretty: queryArg.pretty,
+          dryRun: queryArg.dryRun,
+          fieldManager: queryArg.fieldManager,
+          fieldValidation: queryArg.fieldValidation,
+          force: queryArg.force,
+        },
+      });
+    },
   },
 });
 

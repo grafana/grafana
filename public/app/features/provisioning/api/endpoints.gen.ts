@@ -132,10 +132,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}`,
           method: 'PATCH',
-          headers: {
-            'Content-Type': `application/json-patch+json`, // Or merge-patch
-          },
-          body: JSON.stringify(queryArg.patch), // backendSrv does not know to convert
+          body: queryArg.patch,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
