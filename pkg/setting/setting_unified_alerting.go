@@ -129,6 +129,9 @@ type UnifiedAlertingSettings struct {
 	// should be stored in the database for each alert_rule in an organization including the current one.
 	// 0 value means no limit
 	RuleVersionRecordLimit int
+
+	// DeletedRuleRetention defines the maximum duration to retain deleted alerting rules before permanent removal.
+	DeletedRuleRetention time.Duration
 }
 
 type RecordingRuleSettings struct {
@@ -475,6 +478,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.RuleVersionRecordLimit = ua.Key("rule_version_record_limit").MustInt(0)
 	if uaCfg.RuleVersionRecordLimit < 0 {
 		return fmt.Errorf("setting 'rule_version_record_limit' is invalid, only 0 or a positive integer are allowed")
+	}
+
+	uaCfg.DeletedRuleRetention = ua.Key("deleted_rule_retention").MustDuration(30 * 24 * time.Hour)
+	if uaCfg.DeletedRuleRetention < 0 {
+		return fmt.Errorf("setting 'deleted_rule_retention' is invalid, only 0 or a positive duration are allowed")
 	}
 
 	cfg.UnifiedAlerting = uaCfg
