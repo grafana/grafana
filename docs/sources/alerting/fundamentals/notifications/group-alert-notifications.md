@@ -99,7 +99,7 @@ flowchart LR
 
 Group wait is the duration Grafana waits before sending the first notification for a new group of alerts.
 
-The longer the group wait, the more time other alerts have to be included in the initial notification of the new group. The shorter the group wait, the earlier the first notification is sent, but at the risk of not including some alerts.
+This option helps reduce the number of notifications sent for related alerts occurring within a short time frame. The longer the group wait, the more time other alerts have to be included in the initial notification of the new group. The shorter the group wait, the earlier the first notification is sent, but at the risk of not including some alerts.
 
 If an alert is resolved before the duration elapses, no notification is sent for that alert. This reduces noise from flapping alerts.
 
