@@ -237,8 +237,8 @@ function WizardContent({
         const formData = getValues();
         const spec = dataToSpec(formData.repository);
         await submitData(spec);
-        // Only proceed if submission was successful
-        if (!saveRequest.isError) {
+        // Only proceed if submission was successful and there's no error
+        if (!saveRequest.isError && saveRequest.isSuccess) {
           handleStatusChange(true);
           handleNext();
         }
