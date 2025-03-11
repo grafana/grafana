@@ -267,30 +267,34 @@ export function BootstrapStep({ onOptionSelect }: Props) {
                     const isSelected =
                       selectedOption?.value === option.value && selectedOption?.operation === option.operation;
 
-                    return (
+                    return optionState.isDisabled ? (
+                      <Tooltip content={optionState.disabledReason || ''} placement="top">
+                        <div style={{ pointerEvents: 'auto' }}>
+                          <div style={{ pointerEvents: 'none' }}>
+                            <Card key={`${option.value}-${option.operation}`} disabled={true} tabIndex={-1}>
+                              <Card.Heading>
+                                <Stack direction="row" alignItems="center" gap={2}>
+                                  <Text color="secondary">{option.label}</Text>
+                                  <Badge color="blue" text="Not available" icon="info" />
+                                </Stack>
+                              </Card.Heading>
+                              <Card.Description>{option.description}</Card.Description>
+                            </Card>
+                          </div>
+                        </div>
+                      </Tooltip>
+                    ) : (
                       <Card
                         key={`${option.value}-${option.operation}`}
-                        // Only pass isSelected if the option is enabled
-                        {...(!optionState.isDisabled && { isSelected })}
-                        onClick={() => !optionState.isDisabled && handleOptionSelect(option)}
-                        disabled={optionState.isDisabled}
-                        tabIndex={optionState.isDisabled ? -1 : 0}
-                        // Auto-focus the first available option
-                        autoFocus={index === 0 && !optionState.isDisabled}
+                        isSelected={isSelected}
+                        onClick={() => handleOptionSelect(option)}
+                        tabIndex={0}
+                        autoFocus={index === 0}
                       >
                         <Card.Heading>
-                          <Text color={optionState.isDisabled ? 'secondary' : 'primary'}>{option.label}</Text>
-                          {optionState.isDisabled && optionState.disabledReason && (
-                            <Tooltip content={optionState.disabledReason}>
-                              <Badge color="blue" text="Not available" icon="info" />
-                            </Tooltip>
-                          )}
+                          <Text color="primary">{option.label}</Text>
                         </Card.Heading>
-                        <Card.Description>
-                          <Stack direction="row" alignItems="center" gap={1}>
-                            {option.description}
-                          </Stack>
-                        </Card.Description>
+                        <Card.Description>{option.description}</Card.Description>
                       </Card>
                     );
                   })}
