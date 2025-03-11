@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, ThemeContext, ThemeRegistryItem } from '@grafana/data';
+import { GrafanaTheme2, ThemeRegistryItem } from '@grafana/data';
 import { Drawer, RadioButtonDot, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { changeTheme } from 'app/core/services/theme';
@@ -36,7 +36,7 @@ export function ThemeSelectorDrawer({ onClose }: Props) {
   );
 
   return (
-    <Drawer title="Change theme" onClose={onClose} size="md" subtitle={subTitle}>
+    <Drawer title={t('profile.change-theme', 'Change theme')} onClose={onClose} size="md" subtitle={subTitle}>
       <div className={styles.grid} role="radiogroup">
         {themes.map((themeOption) => (
           <ThemeCard
