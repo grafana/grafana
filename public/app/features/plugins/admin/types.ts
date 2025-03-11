@@ -65,7 +65,6 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   iam?: IdentityAccessManagement;
   isProvisioned?: boolean;
   url?: string;
-  raiseAnIssueUrl?: string;
 }
 
 export interface CatalogPluginDetails {
@@ -83,6 +82,7 @@ export interface CatalogPluginDetails {
   lastCommitDate?: string;
   licenseUrl?: string;
   documentationUrl?: string;
+  raiseAnIssueUrl?: string;
   signatureType?: PluginSignatureType;
   signature?: PluginSignatureStatus;
 }
@@ -197,7 +197,6 @@ export type LocalPlugin = WithAccessControlMetadata & {
   dependencies: PluginDependencies;
   angularDetected: boolean;
   iam?: IdentityAccessManagement;
-  raiseAnIssueUrl?: string;
 };
 
 interface IdentityAccessManagement {
