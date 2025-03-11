@@ -1,5 +1,7 @@
 import { config } from '@grafana/runtime';
 
+import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
+
 import {
   clearNotFound,
   expandDashboardFolder,
@@ -21,7 +23,18 @@ import {
   expectNoDashboardsNoScopes,
   expectNoDashboardsSearch,
 } from './utils/assertions';
-import { fetchDashboardsSpy, getDatasource, getInstanceSettings, getMock } from './utils/mocks';
+import {
+  alternativeDashboardWithRootFolder,
+  alternativeDashboardWithTwoFolders,
+  dashboardWithOneFolder,
+  dashboardWithoutFolder,
+  dashboardWithRootFolder,
+  dashboardWithRootFolderAndOtherFolder,
+  dashboardWithTwoFolders,
+  getDatasource,
+  getInstanceSettings,
+  getMock,
+} from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 
 jest.mock('@grafana/runtime', () => ({
@@ -34,17 +47,20 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('Dashboards list', () => {
+  let fetchDashboardsSpy: jest.SpyInstance;
+
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
     config.featureToggles.groupByVariable = true;
   });
 
-  beforeEach(() => {
-    renderDashboard();
+  beforeEach(async () => {
+    await renderDashboard();
+    fetchDashboardsSpy = jest.spyOn(ScopesDashboardsService.instance!, 'fetchDashboardsApi');
   });
 
   afterEach(async () => {
-    await resetScenes();
+    await resetScenes([fetchDashboardsSpy]);
   });
 
   it('Opens container and fetches dashboards list when a scope is selected', async () => {
@@ -244,14 +260,13 @@ describe('Dashboards list', () => {
   });
 
   it('Does not show the input when there are no dashboards found for scope', async () => {
-    await toggleDashboards();
     await updateScopes(['cloud']);
+    await toggleDashboards();
     expectNoDashboardsForScope();
     expectNoDashboardsSearch();
   });
 
   it('Shows the input and a message when there are no dashboards found for filter', async () => {
-    await toggleDashboards();
     await updateScopes(['mimir']);
     await searchDashboards('unknown');
     expectDashboardsSearch();
@@ -259,5 +274,360 @@ describe('Dashboards list', () => {
 
     await clearNotFound();
     expectDashboardSearchValue('');
+  });
+
+  describe('groupDashboards', () => {
+    it('Assigns dashboards without groups to root folder', () => {
+      expect(ScopesDashboardsService.instance?.groupDashboards([dashboardWithoutFolder])).toEqual({
+        '': {
+          title: '',
+          expanded: true,
+          folders: {},
+          dashboards: {
+            [dashboardWithoutFolder.spec.dashboard]: {
+              dashboard: dashboardWithoutFolder.spec.dashboard,
+              dashboardTitle: dashboardWithoutFolder.status.dashboardTitle,
+              items: [dashboardWithoutFolder],
+            },
+          },
+        },
+      });
+    });
+
+    it('Assigns dashboards with root group to root folder', () => {
+      expect(ScopesDashboardsService.instance?.groupDashboards([dashboardWithRootFolder])).toEqual({
+        '': {
+          title: '',
+          expanded: true,
+          folders: {},
+          dashboards: {
+            [dashboardWithRootFolder.spec.dashboard]: {
+              dashboard: dashboardWithRootFolder.spec.dashboard,
+              dashboardTitle: dashboardWithRootFolder.status.dashboardTitle,
+              items: [dashboardWithRootFolder],
+            },
+          },
+        },
+      });
+    });
+
+    it('Merges folders from multiple dashboards', () => {
+      expect(
+        ScopesDashboardsService.instance?.groupDashboards([dashboardWithOneFolder, dashboardWithTwoFolders])
+      ).toEqual({
+        '': {
+          title: '',
+          expanded: true,
+          folders: {
+            'Folder 1': {
+              title: 'Folder 1',
+              expanded: false,
+              folders: {},
+              dashboards: {
+                [dashboardWithOneFolder.spec.dashboard]: {
+                  dashboard: dashboardWithOneFolder.spec.dashboard,
+                  dashboardTitle: dashboardWithOneFolder.status.dashboardTitle,
+                  items: [dashboardWithOneFolder],
+                },
+                [dashboardWithTwoFolders.spec.dashboard]: {
+                  dashboard: dashboardWithTwoFolders.spec.dashboard,
+                  dashboardTitle: dashboardWithTwoFolders.status.dashboardTitle,
+                  items: [dashboardWithTwoFolders],
+                },
+              },
+            },
+            'Folder 2': {
+              title: 'Folder 2',
+              expanded: false,
+              folders: {},
+              dashboards: {
+                [dashboardWithTwoFolders.spec.dashboard]: {
+                  dashboard: dashboardWithTwoFolders.spec.dashboard,
+                  dashboardTitle: dashboardWithTwoFolders.status.dashboardTitle,
+                  items: [dashboardWithTwoFolders],
+                },
+              },
+            },
+          },
+          dashboards: {},
+        },
+      });
+    });
+
+    it('Merges scopes from multiple dashboards', () => {
+      expect(
+        ScopesDashboardsService.instance?.groupDashboards([dashboardWithTwoFolders, alternativeDashboardWithTwoFolders])
+      ).toEqual({
+        '': {
+          title: '',
+          expanded: true,
+          folders: {
+            'Folder 1': {
+              title: 'Folder 1',
+              expanded: false,
+              folders: {},
+              dashboards: {
+                [dashboardWithTwoFolders.spec.dashboard]: {
+                  dashboard: dashboardWithTwoFolders.spec.dashboard,
+                  dashboardTitle: dashboardWithTwoFolders.status.dashboardTitle,
+                  items: [dashboardWithTwoFolders, alternativeDashboardWithTwoFolders],
+                },
+              },
+            },
+            'Folder 2': {
+              title: 'Folder 2',
+              expanded: false,
+              folders: {},
+              dashboards: {
+                [dashboardWithTwoFolders.spec.dashboard]: {
+                  dashboard: dashboardWithTwoFolders.spec.dashboard,
+                  dashboardTitle: dashboardWithTwoFolders.status.dashboardTitle,
+                  items: [dashboardWithTwoFolders, alternativeDashboardWithTwoFolders],
+                },
+              },
+            },
+          },
+          dashboards: {},
+        },
+      });
+    });
+
+    it('Matches snapshot', () => {
+      expect(
+        ScopesDashboardsService.instance?.groupDashboards([
+          dashboardWithoutFolder,
+          dashboardWithOneFolder,
+          dashboardWithTwoFolders,
+          alternativeDashboardWithTwoFolders,
+          dashboardWithRootFolder,
+          alternativeDashboardWithRootFolder,
+          dashboardWithRootFolderAndOtherFolder,
+        ])
+      ).toEqual({
+        '': {
+          dashboards: {
+            [dashboardWithRootFolderAndOtherFolder.spec.dashboard]: {
+              dashboard: dashboardWithRootFolderAndOtherFolder.spec.dashboard,
+              dashboardTitle: dashboardWithRootFolderAndOtherFolder.status.dashboardTitle,
+              items: [dashboardWithRootFolderAndOtherFolder],
+            },
+            [dashboardWithRootFolder.spec.dashboard]: {
+              dashboard: dashboardWithRootFolder.spec.dashboard,
+              dashboardTitle: dashboardWithRootFolder.status.dashboardTitle,
+              items: [dashboardWithRootFolder, alternativeDashboardWithRootFolder],
+            },
+            [dashboardWithoutFolder.spec.dashboard]: {
+              dashboard: dashboardWithoutFolder.spec.dashboard,
+              dashboardTitle: dashboardWithoutFolder.status.dashboardTitle,
+              items: [dashboardWithoutFolder],
+            },
+          },
+          folders: {
+            'Folder 1': {
+              dashboards: {
+                [dashboardWithOneFolder.spec.dashboard]: {
+                  dashboard: dashboardWithOneFolder.spec.dashboard,
+                  dashboardTitle: dashboardWithOneFolder.status.dashboardTitle,
+                  items: [dashboardWithOneFolder],
+                },
+                [dashboardWithTwoFolders.spec.dashboard]: {
+                  dashboard: dashboardWithTwoFolders.spec.dashboard,
+                  dashboardTitle: dashboardWithTwoFolders.status.dashboardTitle,
+                  items: [dashboardWithTwoFolders, alternativeDashboardWithTwoFolders],
+                },
+              },
+              folders: {},
+              expanded: false,
+              title: 'Folder 1',
+            },
+            'Folder 2': {
+              dashboards: {
+                [dashboardWithTwoFolders.spec.dashboard]: {
+                  dashboard: dashboardWithTwoFolders.spec.dashboard,
+                  dashboardTitle: dashboardWithTwoFolders.status.dashboardTitle,
+                  items: [dashboardWithTwoFolders, alternativeDashboardWithTwoFolders],
+                },
+              },
+              folders: {},
+              expanded: false,
+              title: 'Folder 2',
+            },
+            'Folder 3': {
+              dashboards: {
+                [dashboardWithRootFolderAndOtherFolder.spec.dashboard]: {
+                  dashboard: dashboardWithRootFolderAndOtherFolder.spec.dashboard,
+                  dashboardTitle: dashboardWithRootFolderAndOtherFolder.status.dashboardTitle,
+                  items: [dashboardWithRootFolderAndOtherFolder],
+                },
+              },
+              folders: {},
+              expanded: false,
+              title: 'Folder 3',
+            },
+          },
+          expanded: true,
+          title: '',
+        },
+      });
+    });
+  });
+
+  describe('filterFolders', () => {
+    it('Shows folders matching criteria', () => {
+      expect(
+        ScopesDashboardsService.instance?.filterFolders(
+          {
+            '': {
+              title: '',
+              expanded: true,
+              folders: {
+                'Folder 1': {
+                  title: 'Folder 1',
+                  expanded: false,
+                  folders: {},
+                  dashboards: {
+                    'Dashboard ID': {
+                      dashboard: 'Dashboard ID',
+                      dashboardTitle: 'Dashboard Title',
+                      items: [],
+                    },
+                  },
+                },
+                'Folder 2': {
+                  title: 'Folder 2',
+                  expanded: true,
+                  folders: {},
+                  dashboards: {
+                    'Dashboard ID': {
+                      dashboard: 'Dashboard ID',
+                      dashboardTitle: 'Dashboard Title',
+                      items: [],
+                    },
+                  },
+                },
+              },
+              dashboards: {
+                'Dashboard ID': {
+                  dashboard: 'Dashboard ID',
+                  dashboardTitle: 'Dashboard Title',
+                  items: [],
+                },
+              },
+            },
+          },
+          'Folder'
+        )
+      ).toEqual({
+        '': {
+          title: '',
+          expanded: true,
+          folders: {
+            'Folder 1': {
+              title: 'Folder 1',
+              expanded: true,
+              folders: {},
+              dashboards: {
+                'Dashboard ID': {
+                  dashboard: 'Dashboard ID',
+                  dashboardTitle: 'Dashboard Title',
+                  items: [],
+                },
+              },
+            },
+            'Folder 2': {
+              title: 'Folder 2',
+              expanded: true,
+              folders: {},
+              dashboards: {
+                'Dashboard ID': {
+                  dashboard: 'Dashboard ID',
+                  dashboardTitle: 'Dashboard Title',
+                  items: [],
+                },
+              },
+            },
+          },
+          dashboards: {},
+        },
+      });
+    });
+
+    it('Shows dashboards matching criteria', () => {
+      expect(
+        ScopesDashboardsService.instance?.filterFolders(
+          {
+            '': {
+              title: '',
+              expanded: true,
+              folders: {
+                'Folder 1': {
+                  title: 'Folder 1',
+                  expanded: false,
+                  folders: {},
+                  dashboards: {
+                    'Dashboard ID': {
+                      dashboard: 'Dashboard ID',
+                      dashboardTitle: 'Dashboard Title',
+                      items: [],
+                    },
+                  },
+                },
+                'Folder 2': {
+                  title: 'Folder 2',
+                  expanded: true,
+                  folders: {},
+                  dashboards: {
+                    'Random ID': {
+                      dashboard: 'Random ID',
+                      dashboardTitle: 'Random Title',
+                      items: [],
+                    },
+                  },
+                },
+              },
+              dashboards: {
+                'Dashboard ID': {
+                  dashboard: 'Dashboard ID',
+                  dashboardTitle: 'Dashboard Title',
+                  items: [],
+                },
+                'Random ID': {
+                  dashboard: 'Random ID',
+                  dashboardTitle: 'Random Title',
+                  items: [],
+                },
+              },
+            },
+          },
+          'dash'
+        )
+      ).toEqual({
+        '': {
+          title: '',
+          expanded: true,
+          folders: {
+            'Folder 1': {
+              title: 'Folder 1',
+              expanded: true,
+              folders: {},
+              dashboards: {
+                'Dashboard ID': {
+                  dashboard: 'Dashboard ID',
+                  dashboardTitle: 'Dashboard Title',
+                  items: [],
+                },
+              },
+            },
+          },
+          dashboards: {
+            'Dashboard ID': {
+              dashboard: 'Dashboard ID',
+              dashboardTitle: 'Dashboard Title',
+              items: [],
+            },
+          },
+        },
+      });
+    });
   });
 });

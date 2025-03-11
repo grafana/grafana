@@ -27,11 +27,11 @@ export function ScopesTree({
   const nodeId = nodePath[nodePath.length - 1];
   const node = nodes[nodeId];
   const childNodes = Object.values(node.nodes);
-  const isNodeLoading = loadingNodeName === nodeId;
+  const nodeLoading = loadingNodeName === nodeId;
   const scopeNames = scopes.map(({ scopeName }) => scopeName);
-  const anyChildExpanded = childNodes.some(({ isExpanded }) => isExpanded);
+  const anyChildExpanded = childNodes.some(({ expanded }) => expanded);
   const groupedNodes: Dictionary<Node[]> = useMemo(() => groupBy(childNodes, 'reason'), [childNodes]);
-  const isLastExpandedNode = !anyChildExpanded && node.isExpanded;
+  const lastExpandedNode = !anyChildExpanded && node.expanded;
 
   return (
     <>
@@ -42,11 +42,11 @@ export function ScopesTree({
         onNodeUpdate={onNodeUpdate}
       />
 
-      <ScopesTreeLoading isNodeLoading={isNodeLoading}>
+      <ScopesTreeLoading nodeLoading={nodeLoading}>
         <ScopesTreeItem
           anyChildExpanded={anyChildExpanded}
           groupedNodes={groupedNodes}
-          isLastExpandedNode={isLastExpandedNode}
+          lastExpandedNode={lastExpandedNode}
           loadingNodeName={loadingNodeName}
           node={node}
           nodePath={nodePath}
@@ -67,7 +67,7 @@ export function ScopesTree({
         <ScopesTreeItem
           anyChildExpanded={anyChildExpanded}
           groupedNodes={groupedNodes}
-          isLastExpandedNode={isLastExpandedNode}
+          lastExpandedNode={lastExpandedNode}
           loadingNodeName={loadingNodeName}
           node={node}
           nodePath={nodePath}

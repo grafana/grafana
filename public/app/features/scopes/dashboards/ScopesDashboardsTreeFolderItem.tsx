@@ -23,23 +23,23 @@ export function ScopesDashboardsTreeFolderItem({
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.container} role="treeitem" aria-selected={folder.isExpanded}>
+    <div className={styles.container} role="treeitem" aria-selected={folder.expanded}>
       <button
         className={styles.expand}
         data-testid={`scopes-dashboards-${folder.title}-expand`}
         aria-label={
-          folder.isExpanded ? t('scopes.dashboards.collapse', 'Collapse') : t('scopes.dashboards.expand', 'Expand')
+          folder.expanded ? t('scopes.dashboards.collapse', 'Collapse') : t('scopes.dashboards.expand', 'Expand')
         }
         onClick={() => {
-          onFolderUpdate(folderPath, !folder.isExpanded);
+          onFolderUpdate(folderPath, !folder.expanded);
         }}
       >
-        <Icon name={!folder.isExpanded ? 'angle-right' : 'angle-down'} className={styles.icon} />
+        <Icon name={!folder.expanded ? 'angle-right' : 'angle-down'} className={styles.icon} />
 
         {folder.title}
       </button>
 
-      {folder.isExpanded && (
+      {folder.expanded && (
         <div className={styles.children}>
           <ScopesDashboardsTree folders={folders} folderPath={folderPath} onFolderUpdate={onFolderUpdate} />
         </div>

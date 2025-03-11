@@ -1,6 +1,7 @@
 import { screen } from '@testing-library/react';
 
-import { scopesSelectorScene } from '../../instance';
+import { ScopesService } from '../../ScopesService';
+import { ScopesSelectorService } from '../../selector/ScopesSelectorService';
 
 const selectors = {
   tree: {
@@ -33,14 +34,12 @@ const selectors = {
 };
 
 export const getSelectorInput = () => screen.getByTestId<HTMLInputElement>(selectors.selector.input);
-export const querySelectorInput = () => screen.queryByTestId<HTMLInputElement>(selectors.selector.input);
 export const querySelectorApply = () => screen.queryByTestId(selectors.selector.apply);
 export const getSelectorApply = () => screen.getByTestId(selectors.selector.apply);
 export const getSelectorCancel = () => screen.getByTestId(selectors.selector.cancel);
 
 export const getDashboardsExpand = () => screen.getByTestId(selectors.dashboards.expand);
 export const getDashboardsContainer = () => screen.getByTestId(selectors.dashboards.container);
-export const queryDashboardsExpand = () => screen.queryByTestId(selectors.dashboards.expand);
 export const queryDashboardsContainer = () => screen.queryByTestId(selectors.dashboards.container);
 export const queryDashboardsSearch = () => screen.queryByTestId(selectors.dashboards.search);
 export const getDashboardsSearch = () => screen.getByTestId<HTMLInputElement>(selectors.dashboards.search);
@@ -88,8 +87,9 @@ export const getResultCloudDevRadio = () =>
 export const getResultCloudOpsRadio = () =>
   screen.getByTestId<HTMLInputElement>(selectors.tree.radio('cloud-ops', 'result'));
 
-export const getListOfSelectedScopes = () => scopesSelectorScene?.state.scopes;
-export const getListOfTreeScopes = () => scopesSelectorScene?.state.treeScopes;
+export const getListOfScopes = () => ScopesService.instance?.state.value;
+export const getListOfSelectedScopes = () => ScopesSelectorService.instance?.state.selectedScopes;
+export const getListOfTreeScopes = () => ScopesSelectorService.instance?.state.treeScopes;
 export const getSelectedScope = (name: string) =>
   getListOfSelectedScopes()?.find((selectedScope) => selectedScope.scope.metadata.name === name);
 export const getTreeScope = (name: string) => getListOfTreeScopes()?.find((treeScope) => treeScope.scopeName === name);
