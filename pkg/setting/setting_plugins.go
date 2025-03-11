@@ -26,19 +26,13 @@ func extractPluginSettings(sections []*ini.Section) PluginSettings {
 	return psMap
 }
 
-func getDefaultPreinstallPlugins(isFeatureToggleEnabled func(key string) bool) map[string]InstallPlugin {
-	plugins := map[string]InstallPlugin{
+var (
+	defaultPreinstallPlugins = map[string]InstallPlugin{
 		// Default preinstalled plugins
 		"grafana-lokiexplore-app": {"grafana-lokiexplore-app", "", ""},
 		"grafana-pyroscope-app":   {"grafana-pyroscope-app", "", ""},
 	}
-
-	if isFeatureToggleEnabled("exploreMetricsUseExternalAppPlugin") {
-		plugins["grafana-metricsdrilldown-app"] = InstallPlugin{"grafana-metricsdrilldown-app", "", ""}
-	}
-
-	return plugins
-}
+)
 
 func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	pluginsSection := iniFile.Section("plugins")
@@ -58,11 +52,14 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		rawInstallPlugins := util.SplitString(pluginsSection.Key("preinstall").MustString(""))
 		preinstallPlugins := make(map[string]InstallPlugin)
 		// Add the default preinstalled plugins
-		for _, plugin := range getDefaultPreinstallPlugins(cfg.IsFeatureToggleEnabled) {
+		for _, plugin := range defaultPreinstallPlugins {
 			preinstallPlugins[plugin.ID] = plugin
 		}
 		if cfg.IsFeatureToggleEnabled("grafanaAdvisor") { // Use literal string to avoid circular dependency
 			preinstallPlugins["grafana-advisor-app"] = InstallPlugin{"grafana-advisor-app", "", ""}
+		}
+		if cfg.IsFeatureToggleEnabled("exploreMetricsUseExternalAppPlugin") { // Use literal string to avoid circular dependency
+			preinstallPlugins["grafana-metricsdrilldown-app"] = InstallPlugin{"grafana-metricsdrilldown-app", "", ""}
 		}
 		// Add the plugins defined in the configuration
 		for _, plugin := range rawInstallPlugins {
