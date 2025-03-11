@@ -195,9 +195,15 @@ export function BootstrapStep({ onOptionSelect }: Props) {
     [selectedOption, setValue, onOptionSelect, getOptionState]
   );
 
+  const isLoading = settingsQuery.isLoading || isLoadingCounts;
+
   // Select first available option by default
   useEffect(() => {
-    if (!isLoadingCounts && !selectedOption) {
+    // Only try to select when we have all the data needed to make the decision
+    const canSelectOption =
+      !isLoading && settingsQuery.data !== undefined && filesData !== undefined && !selectedOption; // Only try to select if no option is currently selected
+
+    if (canSelectOption) {
       // Find first enabled option
       const firstAvailableOption = modeOptions.find((option) => {
         const state = getOptionState(option);
@@ -211,7 +217,7 @@ export function BootstrapStep({ onOptionSelect }: Props) {
         onOptionSelect(firstAvailableOption.operation === 'migrate');
       }
     }
-  }, [isLoadingCounts, selectedOption, setValue, onOptionSelect, getOptionState]);
+  }, [isLoading, settingsQuery.data, filesData, selectedOption, getOptionState, setValue, onOptionSelect]);
 
   // Watch for target changes and update title accordingly
   useEffect(() => {
@@ -222,8 +228,6 @@ export function BootstrapStep({ onOptionSelect }: Props) {
       setValue('repository.title', '');
     }
   }, [selectedTarget, setValue]);
-
-  const isLoading = settingsQuery.isLoading || isLoadingCounts;
 
   return (
     <FieldSet label="2. Bootstrap your repository">
