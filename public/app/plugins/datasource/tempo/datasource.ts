@@ -594,7 +594,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
    * @param targets
    * @private
    */
-  handleTraceIdQuery(options: DataQueryRequest<TempoQuery>, targets: TempoQuery[], query: string): Observable<DataQueryResponse> {
+  handleTraceIdQuery(
+    options: DataQueryRequest<TempoQuery>,
+    targets: TempoQuery[],
+    query: string
+  ): Observable<DataQueryResponse> {
     const validTargets = targets
       .filter((t) => t.query)
       .map((t): TempoQuery => ({ ...t, query: t.query?.trim(), queryType: 'traceId' }));
@@ -1632,7 +1636,7 @@ function getServiceGraphViewDataFrames(
 function reportTempoQueryMetrics(
   interactionName: string,
   options: DataQueryRequest<TempoQuery>,
-  metrics: TempoQueryMetrics,
+  metrics: TempoQueryMetrics
 ) {
   reportInteraction(interactionName, {
     datasourceType: 'tempo',
