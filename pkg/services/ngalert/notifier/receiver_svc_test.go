@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -585,6 +584,44 @@ func TestReceiverService_Update(t *testing.T) {
 			expectedProvenances: map[string]models.Provenance{slackIntegration.UID: models.ProvenanceNone},
 		},
 		{
+			name: "encrypts previously unencrypted secure fields",
+			user: writer,
+			receiver: models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
+				models.CopyIntegrationWith(slackIntegration, im.AddSetting("token", "unencryptedValue"))),
+			),
+			existing: util.Pointer(models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
+				models.CopyIntegrationWith(slackIntegration,
+					im.AddSetting("token", "unencryptedValue"), // This will get encrypted.
+				),
+			))),
+			expectedUpdate: models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
+				models.CopyIntegrationWith(slackIntegration,
+					im.AddSecureSetting("token", "dW5lbmNyeXB0ZWRWYWx1ZQ==")),
+			), rm.Encrypted(models.Base64Enrypt)),
+			expectedProvenances: map[string]models.Provenance{slackIntegration.UID: models.ProvenanceNone},
+		},
+		{
+			// This test is important for covering the rare case when an existing field is marked as secure.
+			// The UI will receive the field as secure and, if unchanged, will pass it back on update as a secureField instead of a Setting.
+			name: "encrypts previously unencrypted secure fields when passed in as secureFields",
+			user: writer,
+			receiver: models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
+				models.CopyIntegrationWith(slackIntegration, im.AddSetting("newField", "newValue"))),
+			),
+			secureFields: map[string][]string{slackIntegration.UID: {"token"}},
+			existing: util.Pointer(models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
+				models.CopyIntegrationWith(slackIntegration,
+					im.AddSetting("token", "unencryptedValue"), // This will get encrypted.
+				),
+			))),
+			expectedUpdate: models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
+				models.CopyIntegrationWith(slackIntegration,
+					im.AddSetting("newField", "newValue"),
+					im.AddSecureSetting("token", "dW5lbmNyeXB0ZWRWYWx1ZQ==")),
+			), rm.Encrypted(models.Base64Enrypt)),
+			expectedProvenances: map[string]models.Provenance{slackIntegration.UID: models.ProvenanceNone},
+		},
+		{
 			name: "doesn't copy existing unsecure fields",
 			user: writer,
 			receiver: models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
@@ -685,8 +722,22 @@ func TestReceiverService_Update(t *testing.T) {
 			sut := createReceiverServiceSut(t, &secretsService)
 
 			if tc.existing != nil {
-				created, err := sut.CreateReceiver(context.Background(), tc.existing, tc.user.GetOrgID(), tc.user)
+				// Create route after receivers as they will be referenced.
+				revision, err := sut.cfgStore.Get(context.Background(), tc.user.GetOrgID())
 				require.NoError(t, err)
+				result, err := revision.CreateReceiver(tc.existing)
+				require.NoError(t, err)
+
+				created, err := PostableApiReceiverToReceiver(result, tc.existing.Provenance)
+				require.NoError(t, err)
+				err = sut.cfgStore.Save(context.Background(), revision, tc.user.GetOrgID())
+				require.NoError(t, err)
+
+				for _, integration := range created.Integrations {
+					target := definitions.EmbeddedContactPoint{UID: integration.UID}
+					err = sut.provisioningStore.SetProvenance(context.Background(), &target, tc.user.GetOrgID(), created.Provenance)
+					require.NoError(t, err)
+				}
 
 				if tc.version == "" {
 					tc.version = created.Version
@@ -968,7 +1019,7 @@ func TestReceiverServiceAC_Read(t *testing.T) {
 				}
 				return false
 			}
-			sut.authz = ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()), true)
+			sut.authz = ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), true)
 			for _, recv := range allReceivers() {
 				response, err := sut.GetReceiver(context.Background(), singleQ(orgId, recv.Name), usr)
 				if isVisibleInProvisioning(recv.UID) {
@@ -1477,7 +1528,7 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secretService) *ReceiverS
 	provisioningStore := fakes.NewFakeProvisioningStore()
 
 	return NewReceiverService(
-		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()), false),
+		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), false),
 		legacy_storage.NewAlertmanagerConfigStore(store),
 		provisioningStore,
 		&fakeAlertRuleNotificationStore{},

@@ -18,6 +18,7 @@ export interface DashboardUrlOptions {
   timeZone?: string;
   // Check if we are on the home dashboard
   isHomeDashboard?: boolean;
+  isSnapshot?: boolean;
 }
 
 export function getDashboardUrl(options: DashboardUrlOptions) {
@@ -25,6 +26,10 @@ export function getDashboardUrl(options: DashboardUrlOptions) {
 
   if (!options.uid) {
     path = '/dashboard/new';
+  }
+
+  if (options.isSnapshot) {
+    path = `/dashboard/snapshot/${options.uid}`;
   }
 
   if (options.soloRoute) {

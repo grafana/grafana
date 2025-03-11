@@ -1,7 +1,7 @@
 package common
 
 import (
-	"fmt"
+	"strings"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -10,8 +10,6 @@ import (
 	dashboardalpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
-
-const ClusterNamespace = "cluster"
 
 const (
 	TypeUser           string = "user"
@@ -29,6 +27,12 @@ const (
 )
 
 const (
+	TypeFolderPrefix       string = TypeFolder + ":"
+	TypeResourcePrefix     string = TypeResource + ":"
+	TypeGroupResoucePrefix string = TypeGroupResouce + ":"
+)
+
+const (
 	RelationTeamMember string = "member"
 	RelationTeamAdmin  string = "admin"
 	RelationParent     string = "parent"
@@ -43,14 +47,19 @@ const (
 	RelationCreate string = "create"
 	RelationDelete string = "delete"
 
+	RelationGetPermissions string = "get_permissions"
+	RelationSetPermissions string = "set_permissions"
+
 	RelationFolderResourceSetView  string = "resource_" + RelationSetView
 	RelationFolderResourceSetEdit  string = "resource_" + RelationSetEdit
 	RelationFolderResourceSetAdmin string = "resource_" + RelationSetAdmin
 
-	RelationFolderResourceGet    string = "resource_" + RelationGet
-	RelationFolderResourceUpdate string = "resource_" + RelationUpdate
-	RelationFolderResourceCreate string = "resource_" + RelationCreate
-	RelationFolderResourceDelete string = "resource_" + RelationDelete
+	RelationFolderResourceGet            string = "resource_" + RelationGet
+	RelationFolderResourceUpdate         string = "resource_" + RelationUpdate
+	RelationFolderResourceCreate         string = "resource_" + RelationCreate
+	RelationFolderResourceDelete         string = "resource_" + RelationDelete
+	RelationFolderResourceGetPermissions string = "resource_" + RelationGetPermissions
+	RelationFolderResourceSetPermissions string = "resource_" + RelationSetPermissions
 )
 
 // RelationsGroupResource are relations that can be added on type "group_resource".
@@ -59,6 +68,8 @@ var RelationsGroupResource = []string{
 	RelationUpdate,
 	RelationCreate,
 	RelationDelete,
+	RelationGetPermissions,
+	RelationSetPermissions,
 }
 
 // RelationsResource are relations that can be added on type "resource".
@@ -66,6 +77,8 @@ var RelationsResource = []string{
 	RelationGet,
 	RelationUpdate,
 	RelationDelete,
+	RelationGetPermissions,
+	RelationSetPermissions,
 }
 
 // RelationsFolderResource are relations that can be added on type "folder" for child resources.
@@ -74,6 +87,8 @@ var RelationsFolderResource = []string{
 	RelationFolderResourceUpdate,
 	RelationFolderResourceCreate,
 	RelationFolderResourceDelete,
+	RelationFolderResourceGetPermissions,
+	RelationFolderResourceSetPermissions,
 }
 
 // RelationsFolder are relations that can be added on type "folder".
@@ -83,6 +98,8 @@ var RelationsFolder = append(
 	RelationUpdate,
 	RelationCreate,
 	RelationDelete,
+	RelationGetPermissions,
+	RelationSetPermissions,
 )
 
 // VerbMapping is mapping a k8s verb to a zanzana relation.
@@ -95,14 +112,18 @@ var VerbMapping = map[string]string{
 	utils.VerbPatch:            RelationUpdate,
 	utils.VerbDelete:           RelationDelete,
 	utils.VerbDeleteCollection: RelationDelete,
+	utils.VerbGetPermissions:   RelationGetPermissions,
+	utils.VerbSetPermissions:   RelationSetPermissions,
 }
 
 // RelationToVerbMapping is mapping a zanzana relation to k8s verb.
 var RelationToVerbMapping = map[string]string{
-	RelationGet:    utils.VerbGet,
-	RelationCreate: utils.VerbCreate,
-	RelationUpdate: utils.VerbUpdate,
-	RelationDelete: utils.VerbDelete,
+	RelationGet:            utils.VerbGet,
+	RelationCreate:         utils.VerbCreate,
+	RelationUpdate:         utils.VerbUpdate,
+	RelationDelete:         utils.VerbDelete,
+	RelationGetPermissions: utils.VerbGetPermissions,
+	RelationSetPermissions: utils.VerbSetPermissions,
 }
 
 func IsGroupResourceRelation(relation string) bool {
@@ -123,31 +144,37 @@ func isValidRelation(relation string, valid []string) bool {
 }
 
 func FolderResourceRelation(relation string) string {
-	return fmt.Sprintf("%s_%s", TypeResource, relation)
+	return TypeResource + "_" + relation
 }
 
 func NewTypedIdent(typ string, name string) string {
-	return fmt.Sprintf("%s:%s", typ, name)
+	return typ + ":" + name
 }
 
 func NewResourceIdent(group, resource, subresource, name string) string {
-	return fmt.Sprintf("%s:%s/%s", TypeResource, FormatGroupResource(group, resource, subresource), name)
+	return TypeResourcePrefix + FormatGroupResource(group, resource, subresource) + "/" + name
 }
 
 func NewFolderIdent(name string) string {
-	return fmt.Sprintf("%s:%s", TypeFolder, name)
+	return TypeFolderPrefix + name
 }
 
 func NewGroupResourceIdent(group, resource, subresource string) string {
-	return fmt.Sprintf("%s:%s", TypeGroupResouce, FormatGroupResource(group, resource, subresource))
+	return TypeGroupResoucePrefix + FormatGroupResource(group, resource, subresource)
 }
 
 func FormatGroupResource(group, resource, subresource string) string {
+	b := strings.Builder{}
+	b.WriteString(group)
+	b.WriteRune('/')
+	b.WriteString(resource)
+
 	if subresource != "" {
-		return fmt.Sprintf("%s/%s/%s", group, resource, subresource)
+		b.WriteRune('/')
+		b.WriteString(subresource)
 	}
 
-	return fmt.Sprintf("%s/%s", group, resource)
+	return b.String()
 }
 
 func NewResourceTuple(subject, relation, group, resource, subresource, name string) *openfgav1.TupleKey {

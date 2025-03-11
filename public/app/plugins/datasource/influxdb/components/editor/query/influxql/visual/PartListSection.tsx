@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { Fragment, useMemo } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { AccessoryButton } from '@grafana/experimental';
+import { AccessoryButton } from '@grafana/plugin-ui';
 import { useTheme2 } from '@grafana/ui';
 
 import { toSelectableValue } from '../utils/toSelectableValue';

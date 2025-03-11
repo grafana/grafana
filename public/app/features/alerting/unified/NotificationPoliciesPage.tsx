@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
-import { Tab, TabContent, TabsBar, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useMuteTimings } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
 import { NotificationPoliciesList } from 'app/features/alerting/unified/components/notification-policies/NotificationPoliciesList';
@@ -12,6 +12,7 @@ import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
 import { MuteTimingsTable } from './components/mute-timings/MuteTimingsTable';
 import { useAlertmanager } from './state/AlertmanagerContext';
+import { withPageErrorBoundary } from './withPageErrorBoundary';
 
 enum ActiveTab {
   NotificationPolicies = 'notification_policies',
@@ -104,10 +105,12 @@ function getActiveTabFromUrl(queryParams: UrlQueryMap, defaultTab: ActiveTab): Q
   };
 }
 
-const NotificationPoliciesPage = () => (
-  <AlertmanagerPageWrapper navId="am-routes" accessType="notification">
-    <NotificationPoliciesTabs />
-  </AlertmanagerPageWrapper>
-);
+function NotificationPoliciesPage() {
+  return (
+    <AlertmanagerPageWrapper navId="am-routes" accessType="notification">
+      <NotificationPoliciesTabs />
+    </AlertmanagerPageWrapper>
+  );
+}
 
-export default withErrorBoundary(NotificationPoliciesPage, { style: 'page' });
+export default withPageErrorBoundary(NotificationPoliciesPage);

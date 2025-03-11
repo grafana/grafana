@@ -18,6 +18,7 @@ describe('useExplorePageTitle', () => {
     ];
 
     setDataSourceSrv({
+      registerRuntimeDataSource: jest.fn(),
       get(datasource?: string | DataSourceRef | null) {
         let ds;
         if (!datasource) {
@@ -72,6 +73,7 @@ describe('useExplorePageTitle', () => {
     ];
 
     setDataSourceSrv({
+      registerRuntimeDataSource: jest.fn(),
       get(datasource?: string | DataSourceRef | null) {
         let ds;
         if (!datasource) {

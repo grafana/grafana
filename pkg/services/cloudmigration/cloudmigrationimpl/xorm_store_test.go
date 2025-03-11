@@ -6,21 +6,17 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	fakeSecrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func Test_GetAllCloudMigrationSessions(t *testing.T) {
+	t.Parallel()
+
 	_, s := setUpTest(t)
 	ctx := context.Background()
 
@@ -47,6 +43,8 @@ func Test_GetAllCloudMigrationSessions(t *testing.T) {
 }
 
 func Test_CreateMigrationSession(t *testing.T) {
+	t.Parallel()
+
 	_, s := setUpTest(t)
 	ctx := context.Background()
 
@@ -77,8 +75,11 @@ func Test_CreateMigrationSession(t *testing.T) {
 }
 
 func Test_GetMigrationSessionByUID(t *testing.T) {
+	t.Parallel()
+
 	_, s := setUpTest(t)
 	ctx := context.Background()
+
 	t.Run("find session by uid", func(t *testing.T) {
 		uid := "qwerty"
 		orgId := int64(1)
@@ -114,6 +115,8 @@ func Test_DeleteMigrationSession(t *testing.T) {
 */
 
 func Test_SnapshotManagement(t *testing.T) {
+	t.Parallel()
+
 	_, s := setUpTest(t)
 	ctx := context.Background()
 
@@ -155,7 +158,7 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.Equal(t, *snapshot, snapshots[0])
 
 		// delete snapshot
-		err = s.deleteSnapshot(ctx, 1, snapshotUid)
+		err = s.deleteSnapshot(ctx, snapshotUid)
 		require.NoError(t, err)
 
 		// now we expect not to find the snapshot
@@ -166,6 +169,8 @@ func Test_SnapshotManagement(t *testing.T) {
 }
 
 func Test_SnapshotResources(t *testing.T) {
+	t.Parallel()
+
 	_, s := setUpTest(t)
 	ctx := context.Background()
 
@@ -174,16 +179,25 @@ func Test_SnapshotResources(t *testing.T) {
 		resources, err := s.getSnapshotResources(ctx, "poiuy", 0, 100)
 		assert.NoError(t, err)
 		assert.Len(t, resources, 3)
+		for _, r := range resources {
+			if r.RefID == "ejcx4d" {
+				assert.Equal(t, cloudmigration.ItemStatusError, r.Status)
+				break
+			}
+		}
 
-		// create a new resource and update an existing resource
-		err = s.createUpdateSnapshotResources(ctx, "poiuy", []cloudmigration.CloudMigrationResource{
+		// create a new resource
+		err = s.CreateSnapshotResources(ctx, "poiuy", []cloudmigration.CloudMigrationResource{
 			{
 				Type:   cloudmigration.DatasourceDataType,
 				RefID:  "mi39fj",
 				Status: cloudmigration.ItemStatusOK,
 			},
+		})
+		assert.NoError(t, err)
+		err = s.UpdateSnapshotResources(ctx, "poiuy", []cloudmigration.CloudMigrationResource{
 			{
-				UID:    "qwerty",
+				RefID:  "ejcx4d",
 				Status: cloudmigration.ItemStatusOK,
 			},
 		})
@@ -193,16 +207,16 @@ func Test_SnapshotResources(t *testing.T) {
 		resources, err = s.getSnapshotResources(ctx, "poiuy", 0, 100)
 		assert.NoError(t, err)
 		assert.Len(t, resources, 4)
-		// ensure existing resource was updated
+		// ensure existing resource was updated from ERROR
 		for _, r := range resources {
-			if r.UID == "querty" {
+			if r.RefID == "ejcx4d" {
 				assert.Equal(t, cloudmigration.ItemStatusOK, r.Status)
 				break
 			}
 		}
 		// ensure a new one was made
 		for _, r := range resources {
-			if r.UID == "mi39fj" {
+			if r.RefID == "mi39fj" {
 				assert.Equal(t, cloudmigration.ItemStatusOK, r.Status)
 				break
 			}
@@ -233,6 +247,8 @@ func Test_SnapshotResources(t *testing.T) {
 }
 
 func TestGetSnapshotList(t *testing.T) {
+	t.Parallel()
+
 	_, s := setUpTest(t)
 	// Taken from setUpTest
 	sessionUID := "qwerty"
@@ -358,7 +374,8 @@ func TestDecryptToken(t *testing.T) {
 }
 
 func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
-	testDB := db.InitTestDB(t)
+	testDB := sqlstore.NewTestStore(t)
+
 	s := &sqlStore{
 		db:             testDB,
 		secretsService: fakeSecrets.FakeSecretsService{},

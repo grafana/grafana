@@ -25,7 +25,7 @@ import {
   SceneVariableSet,
   VariableDependencyConfig,
 } from '@grafana/scenes';
-import { Alert, Field, Icon, IconButton, InlineSwitch, Input, Select, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Badge, Field, Icon, IconButton, InlineSwitch, Input, Select, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { getSelectedScopes } from 'app/features/scopes';
 
@@ -45,7 +45,6 @@ import {
 } from '../shared';
 import { getFilters, getTrailFor, isSceneTimeRangeState } from '../utils';
 
-import { AddToExplorationButton } from './AddToExplorationsButton';
 import { SelectMetricAction } from './SelectMetricAction';
 import { getMetricNames } from './api';
 import { getPreviewPanelFor } from './previewPanel';
@@ -69,6 +68,7 @@ export interface MetricSelectSceneState extends SceneObjectState {
   metricNamesLoading?: boolean;
   metricNamesError?: string;
   metricNamesWarning?: string;
+  missingOtelTargets?: boolean;
 }
 
 const ROW_PREVIEW_HEIGHT = '175px';
@@ -290,10 +290,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
         metricNamesWarning = undefined;
       }
 
-      if (response.missingOtelTargets) {
-        metricNamesWarning = `${metricNamesWarning ?? ''} The list of metrics is not complete. Select more OTel resource attributes to see a full list of metrics.`;
-      }
-
       let bodyLayout = this.state.body;
 
       // generate groups based on the search metrics input
@@ -306,6 +302,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
         metricNamesLoading: false,
         metricNamesWarning,
         metricNamesError: response.error,
+        missingOtelTargets: response.missingOtelTargets,
       });
     } catch (err: unknown) {
       let error = 'Unknown error';
@@ -424,7 +421,9 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
           children.push(metric.itemRef.resolve());
           continue;
         }
-        const panel = getPreviewPanelFor(metric.name, index, currentFilterCount, description);
+        // refactor this into the query generator in future
+        const isNative = trail.isNativeHistogram(metric.name);
+        const panel = getPreviewPanelFor(metric.name, index, currentFilterCount, description, isNative, true);
 
         metric.itemRef = panel.getRef();
         metric.isPanel = true;
@@ -486,21 +485,39 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
   public onToggleOtelExperience = () => {
     const trail = getTrailFor(this);
     const useOtelExperience = trail.state.useOtelExperience;
-
+    // set the startButtonClicked to null as we have gone past the owrkflow this is needed for
+    let startButtonClicked = false;
+    let resettingOtel = true;
+    if (useOtelExperience) {
+      reportExploreMetrics('otel_experience_toggled', { value: 'off' });
+      // if turning off OTel
+      resettingOtel = false;
+      trail.resetOtelExperience();
+    } else {
+      reportExploreMetrics('otel_experience_toggled', { value: 'on' });
+    }
     setOtelExperienceToggleState(!useOtelExperience);
-    trail.setState({ useOtelExperience: !useOtelExperience });
+    trail.setState({ useOtelExperience: !useOtelExperience, resettingOtel, startButtonClicked });
   };
 
   public static Component = ({ model }: SceneComponentProps<MetricSelectScene>) => {
-    const { body, metricNames, metricNamesError, metricNamesLoading, metricNamesWarning, rootGroup, metricPrefix } =
-      model.useState();
+    const {
+      body,
+      metricNames,
+      metricNamesError,
+      metricNamesLoading,
+      metricNamesWarning,
+      rootGroup,
+      metricPrefix,
+      missingOtelTargets,
+    } = model.useState();
     const { children } = body.useState();
     const trail = getTrailFor(model);
     const styles = useStyles2(getStyles);
 
     const [warningDismissed, dismissWarning] = useReducer(() => true, false);
 
-    const { metricSearch, useOtelExperience, hasOtelResources, isStandardOtel } = trail.useState();
+    const { metricSearch, useOtelExperience, hasOtelResources, isStandardOtel, metric } = trail.useState();
 
     const tooStrict = children.length === 0 && metricSearch;
     const noMetrics = !metricNamesLoading && metricNames && metricNames.length === 0;
@@ -509,9 +526,11 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
 
     const blockingMessage = isLoading
       ? undefined
-      : (noMetrics && 'There are no results found. Try a different time range or a different data source.') ||
-        (tooStrict && 'There are no results found. Try adjusting your search or filters.') ||
-        undefined;
+      : missingOtelTargets
+        ? 'There are no metrics found. Please adjust your filters based on your OTel resource attributes.'
+        : (noMetrics && 'There are no results found. Try a different time range or a different data source.') ||
+          (tooStrict && 'There are no results found. Try adjusting your search or filters.') ||
+          undefined;
 
     const metricNamesWarningIcon = metricNamesWarning ? (
       <Tooltip
@@ -559,24 +578,34 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
                 },
                 ...Array.from(rootGroup?.groups.keys() ?? []).map((g) => ({ label: `${g}_`, value: g })),
               ]}
+              className="metrics-drilldown-metric-prefix-select"
             />
           </Field>
-          {hasOtelResources && (
+          {!metric && hasOtelResources && (
             <Field
               label={
-                <div className={styles.displayOptionTooltip}>
-                  <Trans i18nKey="trails.metric-select.filter-by">Filter by</Trans>
-                  <IconButton
-                    name={'info-circle'}
-                    size="sm"
-                    variant={'secondary'}
-                    tooltip={
-                      <Trans i18nKey="trails.metric-select.otel-switch">
-                        This switch enables filtering by OTel resources for OTel native data sources.
-                      </Trans>
-                    }
-                  />
-                </div>
+                <>
+                  <div className={styles.displayOptionTooltip}>
+                    <Trans i18nKey="trails.metric-select.filter-by">Filter by</Trans>
+                    <IconButton
+                      name={'info-circle'}
+                      size="sm"
+                      variant={'secondary'}
+                      tooltip={
+                        <Trans i18nKey="trails.metric-select.otel-switch">
+                          This switch enables filtering by OTel resources for OTel native data sources.
+                        </Trans>
+                      }
+                    />
+                    <div>
+                      <Badge
+                        text={<Trans i18nKey="trails.metric-select.new-badge">New</Trans>}
+                        color={'blue'}
+                        className={styles.badgeStyle}
+                      ></Badge>
+                    </div>
+                  </div>
+                </>
               }
               className={styles.displayOption}
             >
@@ -588,7 +617,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
                 <InlineSwitch
                   disabled={!isStandardOtel}
                   showLabel={true}
-                  label="Otel experience"
+                  label="OTel experience"
                   value={useOtelExperience}
                   onChange={model.onToggleOtelExperience}
                 />
@@ -625,10 +654,7 @@ function getCardPanelFor(metric: string, description?: string) {
   return PanelBuilders.text()
     .setTitle(metric)
     .setDescription(description)
-    .setHeaderActions([
-      new SelectMetricAction({ metric, title: 'Select' }),
-      new AddToExplorationButton({ labelName: metric }),
-    ])
+    .setHeaderActions([new SelectMetricAction({ metric, title: 'Select' })])
     .setOption('content', '')
     .build();
 }
@@ -667,6 +693,17 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     warningIcon: css({
       color: theme.colors.warning.main,
+    }),
+    badgeStyle: css({
+      display: 'flex',
+      height: '1rem',
+      padding: '0rem 0.25rem 0 0.30rem',
+      alignItems: 'center',
+      borderRadius: theme.shape.radius.pill,
+      border: `1px solid ${theme.colors.info.text}`,
+      background: theme.colors.info.transparent,
+      marginTop: '4px',
+      marginLeft: '-3px',
     }),
   };
 }

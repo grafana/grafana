@@ -51,7 +51,7 @@ refs:
 # Traces
 
 Traces visualizations let you follow a request as it traverses the services in your infrastructure.
-The traces visualization displays traces data in a diagram that allows you to easily interpret it.
+The traces visualization displays traces data in a diagram that allows you to easily interpret it. Traces visualizations currently render one trace traversal based on the traceID used in TraceQL or using a variable.
 
 For more information about traces and how to use them, refer to the following documentation:
 
@@ -59,7 +59,7 @@ For more information about traces and how to use them, refer to the following do
 - [Tempo data source](ref:tempo-data-source)
 - [Getting started with Tempo](/docs/tempo/latest/getting-started)
 
-{{< figure src="/static/img/docs/explore/trace-view-9-4.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the trace view" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-traces-visualization-11.5.png" max-width= "700px" alt="Screenshot of the trace view" >}}
 
 {{< docs/play title="Traces Panel" url="https://play.grafana.org/d/edodkfmj0tce8f/" >}}
 
@@ -77,7 +77,7 @@ To use this procedure, you need:
 - A Grafana instance
 - A [Tempo data source](ref:tempo-data-source) connected to your Grafana instance
 
-### Add the traces visualization query {#add-the-traces-panel-query}
+### Steps {#add-the-traces-panel-query}
 
 To view and analyze traces data in a dashboard, you need to add the traces visualization to your dashboard and define a query using the panel editor.
 The query determines the data that is displayed in the visualization.
@@ -100,19 +100,19 @@ This procedure uses dashboard variables and templates to allow you to enter trac
 1. In the query editor, click the **TraceQL** query type tab.
 1. Enter `${traceId}` in the TraceQL query field to create a dashboard variable. This variable is used as the template query.
 
-   {{< figure src="/static/img/docs/panels/traces/screenshot-traces-template-query.png" caption="Add a template query" >}}
+   {{< figure src="/static/img/docs/panels/traces/screenshot-traces-template-query.png" alt="Add a template query" >}}
 
 1. Click **Back to dashboard**.
 1. Click **Settings** and go to the **Variables** tab.
 1. Add a new variable called `traceId`, of variable type **Custom**, giving it a label if required.
 
-   {{< figure  src="/media/docs/grafana/dashboards/screenshot-traces-custom-variable-11.2.png" max-width="50%" caption="Add a Custom variable" >}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-traces-custom-variable-v11.5.png" max-width="400px" alt="Add a template query" >}}
 
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.
 1. Verify that the panel works by using a valid trace ID for the data source used for the trace panel and editing the ID in the dashboard variable.
 
-   {{< figure src="/static/img/docs/panels/traces/screenshot-traces-traceid-panel.png" caption="Results of query in trace panel" >}}
+   {{< figure src="/static/img/docs/panels/traces/screenshot-traces-traceid-panel.png" alt="Results of query in trace panel" >}}
 
 ## Add TraceQL with table visualizations
 
@@ -127,14 +127,14 @@ It’s more useful to instead be able to use TraceQL queries to search for speci
 1. Under the **Panel options**, enter a **Title** for your trace panel or have Grafana create one using [generative AI features](ref:generative-ai-features).
 1. Add an appropriate TraceQL query to search for traces that you would like to visualize in the dashboard. This example uses a simple, static query. You can write the TraceQL query as a template query to take advantage of other dashboard variables, if they exist. This lets you create dynamic queries based on these variables.
 
-   {{< figure src="/static/img/docs/panels/traces/screenshot-traces-dynamic-query.png" caption="Create a dynamic query" >}}
+   {{< figure src="/static/img/docs/panels/traces/screenshot-traces-dynamic-query.png" alt="Create a dynamic query" >}}
 
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.
 
 When results are returned from a query, the results are rendered in the panel’s table.
 
-{{< figure src="/static/img/docs/panels/traces/screenshot-traces-returned-query.png" caption="Results of a returned query in the panel table" >}}
+{{< figure src="/static/img/docs/panels/traces/screenshot-traces-returned-query.png" alt="Results of a returned query in the panel table" >}}
 
 ### Use a variable to add other links to traces
 
@@ -146,12 +146,12 @@ To create a set of data links in the panel, use the following steps:
 1. Add a **Title** for the data link.
 1. Find the UUID of the dashboard by looking in your browser’s address bar when the full dashboard is being rendered. Because this is a link to a dashboard in the same Grafana stack, only the path of the dashboard is required.
 
-   {{< figure src="/static/img/docs/panels/traces/screensnot-traces-uuid-url.png" caption="Unique identifier for the dashboard" >}}
+   {{< figure src="/static/img/docs/panels/traces/screensnot-traces-uuid-url.png" alt="Unique identifier for the dashboard" >}}
 
 1. In the **URL** field, make a self-reference to the dashboard that contains both of the panels. This self-reference uses the value of the selected trace in the table to fill in the dashboard variable. Use the path for the dashboard from the previous step and then fill in the value of `traceId` using the selected results from the TraceQL table.
    The trace ID is exposed using the `traceID` data field in the returned results, so use that as the value for the dashboard variable.
 
-   {{< figure src="/static/img/docs/panels/traces/screenshot-traces-edit-link.png" caption="Edit link and add the Trace link" >}}
+   {{< figure src="/static/img/docs/panels/traces/screenshot-traces-edit-link.png" alt="Edit link and add the Trace link" >}}
 
 1. Select **Save** to save the data link.
 1. Click **Save dashboard**.
@@ -159,10 +159,35 @@ To create a set of data links in the panel, use the following steps:
 
 You should now see a list of matching traces in the table visualization. While selecting the **TraceID** or **SpanID** fields will give you the option to either open the **Explore** page to visualize the trace or following the data link, selecting any other field (such as **Start time**, **Name** or **Duration**) automatically follows the data link, filling in the `traceId` dashboard variable, and then shows the relevant trace in the trace panel.
 
-{{< figure src="/static/img/docs/panels/traces/screenshot-traces-trace-link.png" caption="Selecting the trace link" >}}
+{{< figure src="/static/img/docs/panels/traces/screenshot-traces-trace-link.png" alt="Selecting the trace link" >}}
 
 {{< figure src="/static/img/docs/panels/traces/screenshot-traces-trace-link-follow.png" caption="Follow the trace link populates the trace ID and displays the traces view" >}}
 
-## Panel options
+## Configuration options
+
+{{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Span filters options
+
+The **Span filters** options control the initial state of the span filters when the visualization loads, allowing you to customize your trace analysis view.
+
+The following options support variable interpolation, where you can set the service name to a variable `$var` and the visualization will replace it with the value for the variable named `$var` in the span filters: **Service name**, **Span name**, **Min duration**, **Max duration**, and **Tags**.
+
+<!-- prettier-ignore-start -->
+
+| Option | Description |
+| ------ | ----------- |
+| Find in trace | Set the initial value to focus on spans relevant to your query. |
+| Show matches only | Toggle the switch on to display only spans that match the defined filter criteria. This helps simplify trace interpretation. |
+| Show critical path only | Toggle the switch on to highlight only the spans in the critical path, which helps identify performance bottlenecks and their impact on overall latency. |
+| Service name | Along with the **Service name operator**, define a specific service or pattern to narrow analysis to spans related to particular services. |
+| Span name | Along with the **Span name operator**, filter spans by name or pattern to focus on specific span types or processes. |
+| Min duration | Set the minimum duration threshold to exclude spans outside the desired time range. |
+| Max duration | Set the maximum duration threshold to exclude spans outside the desired time range. |
+| Tags | Add one or more tags to further refine the filtering criteria so only relevant spans are displayed. |
+
+<!-- prettier-ignore-end -->

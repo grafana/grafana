@@ -3,43 +3,21 @@ package client
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
-	testdata "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 )
 
 type testdataDummy struct{}
 
-var _ data.QueryDataClient = (*testdataDummy)(nil)
 var _ query.DataSourceApiServerRegistry = (*testdataDummy)(nil)
-
-// NewTestDataClient creates a runner that only works with testdata
-func NewTestDataClient() data.QueryDataClient {
-	return &testdataDummy{}
-}
 
 // NewTestDataRegistry returns a registry that only knows about testdata
 func NewTestDataRegistry() query.DataSourceApiServerRegistry {
 	return &testdataDummy{}
-}
-
-// ExecuteQueryData implements QueryHelper.
-func (d *testdataDummy) QueryData(ctx context.Context, req data.QueryDataRequest) (int, *backend.QueryDataResponse, error) {
-	queries, _, err := data.ToDataSourceQueries(req)
-	if err != nil {
-		return http.StatusBadRequest, nil, err
-	}
-
-	qdr := &backend.QueryDataRequest{Queries: queries}
-	rsp, err := testdata.ProvideService().QueryData(ctx, qdr)
-	return query.GetResponseCode(rsp), rsp, err
 }
 
 // GetDatasourceAPI implements DataSourceRegistry.

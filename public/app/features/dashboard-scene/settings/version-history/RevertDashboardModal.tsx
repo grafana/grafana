@@ -1,5 +1,6 @@
 import { ConfirmModal } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { DecoratedRevisionModel } from '../VersionsEditView';
 
@@ -17,6 +18,7 @@ export const RevertDashboardModal = ({ hideModal, onRestore, version }: RevertDa
 
     if (success) {
       notifyApp.success('Dashboard restored', `Restored from version ${version.version}`);
+      DashboardInteractions.versionRestoreClicked({ version: version.version, confirm: true });
     } else {
       notifyApp.error('Dashboard restore failed', `Failed to restore from version ${version.version}`);
     }

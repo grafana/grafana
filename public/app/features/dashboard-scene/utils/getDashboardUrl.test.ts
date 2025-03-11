@@ -17,6 +17,16 @@ describe('dashboard utils', () => {
     expect(url).toBe('/d/dash-1/panel-edit/2?orgId=1&filter=A');
   });
 
+  it('Can getUrl for a snapshot', () => {
+    const url = getDashboardUrl({
+      uid: 'dash-1',
+      isSnapshot: true,
+      currentQueryParams: '?orgId=1&filter=A',
+    });
+
+    expect(url).toBe('/dashboard/snapshot/dash-1?orgId=1&filter=A');
+  });
+
   it('Can getUrl with slug', () => {
     const url = getDashboardUrl({
       uid: 'dash-1',

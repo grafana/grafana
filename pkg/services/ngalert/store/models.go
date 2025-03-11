@@ -4,12 +4,14 @@ import "time"
 
 // alertRule represents a record in alert_rule table
 type alertRule struct {
-	ID                   int64 `xorm:"pk autoincr 'id'"`
-	OrgID                int64 `xorm:"org_id"`
+	ID                   int64  `xorm:"pk autoincr 'id'"`
+	GUID                 string `xorm:"guid"`
+	OrgID                int64  `xorm:"org_id"`
 	Title                string
 	Condition            string
 	Data                 string
 	Updated              time.Time
+	UpdatedBy            *string `xorm:"updated_by"`
 	IntervalSeconds      int64
 	Version              int64   `xorm:"version"` // this tag makes xorm add optimistic lock (see https://xorm.io/docs/chapter-06/1.lock/)
 	UID                  string  `xorm:"uid"`
@@ -37,6 +39,7 @@ func (a alertRule) TableName() string {
 type alertRuleVersion struct {
 	ID               int64  `xorm:"pk autoincr 'id'"`
 	RuleOrgID        int64  `xorm:"rule_org_id"`
+	RuleGUID         string `xorm:"rule_guid"`
 	RuleUID          string `xorm:"rule_uid"`
 	RuleNamespaceUID string `xorm:"rule_namespace_uid"`
 	RuleGroup        string
@@ -46,6 +49,7 @@ type alertRuleVersion struct {
 	Version          int64
 
 	Created         time.Time
+	CreatedBy       *string `xorm:"created_by"`
 	Title           string
 	Condition       string
 	Data            string
@@ -61,6 +65,30 @@ type alertRuleVersion struct {
 	IsPaused             bool
 	NotificationSettings string `xorm:"notification_settings"`
 	Metadata             string `xorm:"metadata"`
+}
+
+// EqualSpec compares two alertRuleVersion objects for equality based on their specifications and returns true if they match.
+// The comparison is very basic and can produce false-negative. Fields excluded: ID, ParentVersion, RestoredFrom, Version, Created and CreatedBy
+func (a alertRuleVersion) EqualSpec(b alertRuleVersion) bool {
+	return a.RuleOrgID == b.RuleOrgID &&
+		a.RuleGUID == b.RuleGUID &&
+		a.RuleUID == b.RuleUID &&
+		a.RuleNamespaceUID == b.RuleNamespaceUID &&
+		a.RuleGroup == b.RuleGroup &&
+		a.RuleGroupIndex == b.RuleGroupIndex &&
+		a.Title == b.Title &&
+		a.Condition == b.Condition &&
+		a.Data == b.Data &&
+		a.IntervalSeconds == b.IntervalSeconds &&
+		a.Record == b.Record &&
+		a.NoDataState == b.NoDataState &&
+		a.ExecErrState == b.ExecErrState &&
+		a.For == b.For &&
+		a.Annotations == b.Annotations &&
+		a.Labels == b.Labels &&
+		a.IsPaused == b.IsPaused &&
+		a.NotificationSettings == b.NotificationSettings &&
+		a.Metadata == b.Metadata
 }
 
 func (a alertRuleVersion) TableName() string {

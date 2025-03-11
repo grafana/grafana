@@ -143,81 +143,6 @@ func expandAnnotationsAndLabels(ctx context.Context, log log.Logger, alertRule *
 	return lbs, annotations
 }
 
-func (c *cache) create(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) *State {
-	lbs, annotations := expandAnnotationsAndLabels(ctx, log, alertRule, result, extraLabels, externalURL)
-
-	cacheID := lbs.Fingerprint()
-	// For new states, we set StartsAt & EndsAt to EvaluatedAt as this is the
-	// expected value for a Normal state during state transition.
-	newState := State{
-		OrgID:                alertRule.OrgID,
-		AlertRuleUID:         alertRule.UID,
-		CacheID:              cacheID,
-		State:                eval.Normal,
-		StateReason:          "",
-		ResultFingerprint:    result.Instance.Fingerprint(), // remember original result fingerprint
-		LatestResult:         nil,
-		Error:                nil,
-		Image:                nil,
-		Annotations:          annotations,
-		Labels:               lbs,
-		Values:               nil,
-		StartsAt:             result.EvaluatedAt,
-		EndsAt:               result.EvaluatedAt,
-		ResolvedAt:           nil,
-		LastSentAt:           nil,
-		LastEvaluationString: "",
-		LastEvaluationTime:   result.EvaluatedAt,
-		EvaluationDuration:   result.EvaluationDuration,
-	}
-
-	existingState := c.get(alertRule.OrgID, alertRule.UID, cacheID)
-	if existingState == nil {
-		return &newState
-	}
-	// if there is existing state, copy over the current values that may be needed to determine the final state.
-	// TODO remove some unnecessary assignments below because they are overridden in setNextState
-	newState.State = existingState.State
-	newState.StateReason = existingState.StateReason
-	newState.Image = existingState.Image
-	newState.LatestResult = existingState.LatestResult
-	newState.Error = existingState.Error
-	newState.Values = existingState.Values
-	newState.LastEvaluationString = existingState.LastEvaluationString
-	newState.StartsAt = existingState.StartsAt
-	newState.EndsAt = existingState.EndsAt
-	newState.ResolvedAt = existingState.ResolvedAt
-	newState.LastSentAt = existingState.LastSentAt
-	// Annotations can change over time, however we also want to maintain
-	// certain annotations across evaluations
-	for key := range ngModels.InternalAnnotationNameSet { // Changing in
-		value, ok := existingState.Annotations[key]
-		if !ok {
-			continue
-		}
-		// If the annotation is not present then it should be copied from
-		// the current state to the new state
-		if _, ok = newState.Annotations[key]; !ok {
-			newState.Annotations[key] = value
-		}
-	}
-
-	// if the current state is "data source error" then it may have additional labels that may not exist in the new state.
-	// See https://github.com/grafana/grafana/blob/c7fdf8ce706c2c9d438f5e6eabd6e580bac4946b/pkg/services/ngalert/state/state.go#L161-L163
-	// copy known labels over to the new instance, it can help reduce flapping
-	// TODO fix this?
-	if existingState.State == eval.Error && result.State == eval.Error {
-		setIfExist := func(lbl string) {
-			if v, ok := existingState.Labels[lbl]; ok {
-				newState.Labels[lbl] = v
-			}
-		}
-		setIfExist("datasource_uid")
-		setIfExist("ref_id")
-	}
-	return &newState
-}
-
 // expand returns the expanded templates of all annotations or labels for the template data.
 // If a template cannot be expanded due to an error in the template the original template is
 // maintained and an error is added to the multierror. All errors in the multierror are
@@ -297,22 +222,19 @@ func (c *cache) get(orgID int64, alertRuleUID string, stateId data.Fingerprint) 
 	return nil
 }
 
-func (c *cache) getAll(orgID int64, skipNormalState bool) []*State {
+func (c *cache) getAll(orgID int64) []*State {
 	var states []*State
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
 	for _, v1 := range c.states[orgID] {
 		for _, v2 := range v1.states {
-			if skipNormalState && IsNormalStateWithNoReason(v2) {
-				continue
-			}
 			states = append(states, v2)
 		}
 	}
 	return states
 }
 
-func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string, skipNormalState bool) []*State {
+func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
 	orgRules, ok := c.states[orgID]
@@ -325,9 +247,6 @@ func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string, skipNormal
 	}
 	result := make([]*State, 0, len(rs.states))
 	for _, state := range rs.states {
-		if skipNormalState && IsNormalStateWithNoReason(state) {
-			continue
-		}
 		result = append(result, state)
 	}
 	return result
@@ -357,16 +276,13 @@ func (c *cache) removeByRuleUID(orgID int64, uid string) []*State {
 }
 
 // GetAlertInstances returns the whole content of the cache as a slice of AlertInstance.
-func (c *cache) GetAlertInstances(skipNormalState bool) []ngModels.AlertInstance {
+func (c *cache) GetAlertInstances() []ngModels.AlertInstance {
 	var states []ngModels.AlertInstance
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
 	for _, orgStates := range c.states {
 		for _, v1 := range orgStates {
 			for _, v2 := range v1.states {
-				if skipNormalState && IsNormalStateWithNoReason(v2) {
-					continue
-				}
 				key, err := v2.GetAlertInstanceKey()
 				if err != nil {
 					continue

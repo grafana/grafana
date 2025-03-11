@@ -88,10 +88,17 @@ type keySetJWKS struct {
 }
 
 func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialAzureAD {
+	s := newSocialBase(social.AzureADProviderName, orgRoleMapper, info, features, cfg)
+
+	allowedOrganizations, err := util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid auth configuration setting", "config", allowedOrganizationsKey, "provider", social.AzureADProviderName, "error", err)
+	}
+
 	provider := &SocialAzureAD{
-		SocialBase:           newSocialBase(social.AzureADProviderName, orgRoleMapper, info, features, cfg),
+		SocialBase:           s,
 		cache:                cache,
-		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
+		allowedOrganizations: allowedOrganizations,
 		forceUseGraphAPI:     MustBool(info.Extra[forceUseGraphAPIKey], ExtraAzureADSettingKeys[forceUseGraphAPIKey].DefaultValue.(bool)),
 	}
 
@@ -198,9 +205,8 @@ func (s *SocialAzureAD) Exchange(ctx context.Context, code string, authOptions .
 
 	case social.ClientSecretPost:
 		// Default behavior for ClientSecretPost, no additional setup needed
-
 	default:
-		return nil, fmt.Errorf("invalid client authentication method: %s", s.info.ClientAuthentication)
+		s.log.Debug("ClientAuthentication is not set. Using default client authentication method: none")
 	}
 
 	// Default token exchange
@@ -237,7 +243,7 @@ func (s *SocialAzureAD) managedIdentityCallback(ctx context.Context) (string, er
 }
 
 func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
-	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	newInfo, err := CreateOAuthInfoFromKeyValuesWithLogging(s.log, social.AzureADProviderName, settings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
@@ -251,7 +257,12 @@ func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettin
 		appendUniqueScope(s.Config, social.OfflineAccessScope)
 	}
 
-	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
+	allowedOrganizations, err := util.SplitStringWithError(newInfo.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid auth configuration setting", "config", allowedOrganizationsKey, "provider", social.AzureADProviderName, "error", err)
+	}
+
+	s.allowedOrganizations = allowedOrganizations
 	s.forceUseGraphAPI = MustBool(newInfo.Extra[forceUseGraphAPIKey], false)
 
 	return nil
@@ -374,10 +385,13 @@ func validateClientAuthentication(info *social.OAuthInfo, requester identity.Req
 		}
 		return nil
 
-	case social.ClientSecretPost:
+	case social.ClientSecretPost, "":
 		if info.ClientSecret == "" {
 			return ssosettings.ErrInvalidOAuthConfig("Client secret is required for Client secret authentication.")
 		}
+		return nil
+
+	case social.None:
 		return nil
 
 	default:

@@ -1,7 +1,6 @@
 import { Meta, StoryFn } from '@storybook/react';
 
-import { TextArea } from '@grafana/ui';
-
+import { TextArea } from './TextArea';
 import mdx from './TextArea.mdx';
 
 const meta: Meta = {

@@ -92,13 +92,11 @@ export function dedupLogRows(rows: LogRowModel[], strategy?: LogsDedupStrategy):
   }
 
   return rows.reduce((result: LogRowModel[], row: LogRowModel, index) => {
-    const rowCopy = { ...row };
     const previous = result[result.length - 1];
     if (index > 0 && isDuplicateRow(row, previous, strategy)) {
       previous.duplicates!++;
     } else {
-      rowCopy.duplicates = 0;
-      result.push(rowCopy);
+      result.push({ ...row, duplicates: 0 });
     }
     return result;
   }, []);

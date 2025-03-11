@@ -6,10 +6,12 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Collapse, useStyles2, Text } from '@grafana/ui';
 import { flattenTokens } from '@grafana/ui/src/slate-plugins/slate-prism';
 
+import { trackSampleQuerySelection } from '../../tracking';
 import { CloudWatchLogsQuery, CloudWatchQuery, LogsQueryLanguage } from '../../types';
 
 import * as sampleQueries from './sampleQueries';
 import { cwliTokenizer, pplTokenizer, sqlTokenizer } from './tokenizer';
+
 interface QueryExample {
   category: string;
   examples: sampleQueries.SampleQuery[];
@@ -89,10 +91,25 @@ type Props = {
   query: CloudWatchQuery;
 };
 const isLogsQuery = (query: CloudWatchQuery): query is CloudWatchLogsQuery => query.queryMode === 'Logs';
+
 const LogsCheatSheet = (props: Props) => {
   const styles = useStyles2(getStyles);
-  const queryLanugage: LogsQueryLanguage =
+  const queryLanguage: LogsQueryLanguage =
     (isLogsQuery(props.query) && props.query.queryLanguage) || LogsQueryLanguage.CWLI;
+
+  const onClickExample = (query: sampleQueries.SampleQuery, queryCategory: string) => {
+    props.onClickExample({
+      ...props.query,
+      refId: props.query.refId ?? 'A',
+      expression: query.expr[queryLanguage],
+      queryMode: 'Logs',
+      region: props.query.region,
+      id: props.query.refId ?? 'A',
+      logGroupNames: 'logGroupNames' in props.query ? props.query.logGroupNames : [],
+      logGroups: 'logGroups' in props.query ? props.query.logGroups : [],
+    });
+    trackSampleQuerySelection({ queryLanguage, queryCategory });
+  };
 
   return (
     <div>
@@ -106,7 +123,7 @@ const LogsCheatSheet = (props: Props) => {
           <div key={`cat-${i}`}>
             {query.examples.map((item, j) => (
               <>
-                {item.expr[queryLanugage] && (
+                {item.expr[queryLanguage] && (
                   <>
                     <Text variant="h6" weight="bold">
                       {item.title}
@@ -114,21 +131,10 @@ const LogsCheatSheet = (props: Props) => {
                     <button
                       type="button"
                       className={styles.cheatSheetExample}
-                      key={item.expr[queryLanugage]}
-                      onClick={() =>
-                        props.onClickExample({
-                          ...props.query,
-                          refId: props.query.refId ?? 'A',
-                          expression: item.expr[queryLanugage],
-                          queryMode: 'Logs',
-                          region: props.query.region,
-                          id: props.query.refId ?? 'A',
-                          logGroupNames: 'logGroupNames' in props.query ? props.query.logGroupNames : [],
-                          logGroups: 'logGroups' in props.query ? props.query.logGroups : [],
-                        })
-                      }
+                      key={item.expr[queryLanguage]}
+                      onClick={() => onClickExample(item, query.category)}
                     >
-                      <pre>{renderHighlightedMarkup(item.expr[queryLanugage], `item-${j}`, queryLanugage)}</pre>
+                      <pre>{renderHighlightedMarkup(item.expr[queryLanguage], `item-${j}`, queryLanguage)}</pre>
                     </button>
                   </>
                 )}

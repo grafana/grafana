@@ -8,7 +8,7 @@ import {
   ConnectionSettings,
   DataSourceDescription,
   convertLegacyAuthProps,
-} from '@grafana/experimental';
+} from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Divider, SecureSocksProxySettings, Stack, useStyles2 } from '@grafana/ui';
 

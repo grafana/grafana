@@ -2,7 +2,7 @@ import {
   QueryBuilderOperation,
   QueryBuilderOperationDefinition,
   QueryBuilderOperationParamDef,
-} from '@grafana/experimental';
+} from '@grafana/plugin-ui';
 
 import { defaultAddOperationHandler } from './operationUtils';
 import { LokiOperationId, LokiVisualQueryOperationCategory } from './types';

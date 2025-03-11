@@ -8,8 +8,8 @@ import {
   defaultGroupByVariableSpec,
   defaultTimeSettingsSpec,
   GroupByVariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
-import { AnnoKeyDashboardIsNew, AnnoKeyFolder } from 'app/features/apiserver/types';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { DashboardDTO } from 'app/types';
@@ -129,7 +129,6 @@ export async function buildNewDashboardSaveModelV2(
       creationTimestamp: '0',
       annotations: {
         [AnnoKeyFolder]: '',
-        [AnnoKeyDashboardIsNew]: true,
       },
     },
   };

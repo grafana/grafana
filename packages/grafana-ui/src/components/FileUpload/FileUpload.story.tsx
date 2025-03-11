@@ -1,7 +1,6 @@
 import { Meta, StoryFn } from '@storybook/react';
 
-import { FileUpload } from '@grafana/ui';
-
+import { FileUpload } from './FileUpload';
 import mdx from './FileUpload.mdx';
 
 const meta: Meta<typeof FileUpload> = {

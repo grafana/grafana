@@ -3,6 +3,8 @@ package database
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -10,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -256,7 +257,7 @@ func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDas
 	return affectedRows, err
 }
 
-// Deletes a public dashboard
+// Delete deletes a public dashboard
 func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, uid string) (int64, error) {
 	dashboard := &PublicDashboard{Uid: uid}
 	var affectedRows int64
@@ -270,17 +271,28 @@ func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, uid string) (int6
 	return affectedRows, err
 }
 
-func (d *PublicDashboardStoreImpl) FindByFolder(ctx context.Context, orgId int64, folderUid string) ([]*PublicDashboard, error) {
-	var pubdashes []*PublicDashboard
-
-	err := d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		return sess.SQL("SELECT * from dashboard_public WHERE (dashboard_uid, org_id) IN (SELECT uid, org_id FROM dashboard WHERE org_id = ? AND folder_uid = ?)", orgId, folderUid).Find(&pubdashes)
-	})
-	if err != nil {
-		return nil, err
+// DeleteByDashboardUIDs deletes public dashboards by dashboard uids
+func (d *PublicDashboardStoreImpl) DeleteByDashboardUIDs(ctx context.Context, orgId int64, dashboardUIDs []string) error {
+	if len(dashboardUIDs) == 0 {
+		return nil
 	}
 
-	return pubdashes, nil
+	return d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		s := strings.Builder{}
+		s.WriteString("DELETE FROM dashboard_public WHERE org_id = ? AND ")
+		s.WriteString(fmt.Sprintf("dashboard_uid IN (%s)", strings.Repeat("?,", len(dashboardUIDs)-1)+"?"))
+		sql := s.String()
+		args := make([]any, 0, len(dashboardUIDs)+2)
+		args = append(args, sql)
+		args = append(args, orgId)
+		for _, dashboardUID := range dashboardUIDs {
+			args = append(args, dashboardUID)
+		}
+
+		_, err := sess.Exec(args...)
+
+		return err
+	})
 }
 
 func (d *PublicDashboardStoreImpl) GetMetrics(ctx context.Context) (*Metrics, error) {

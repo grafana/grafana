@@ -9,7 +9,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	authnClients "github.com/grafana/grafana/pkg/services/authn/clients"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
@@ -26,11 +26,10 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, authenticator authn.Authenticator, features featuremgmt.FeatureToggles,
+func ProvideService(cfg *setting.Cfg, authenticator authn.Authenticator, features featuremgmt.FeatureToggles,
 ) *ContextHandler {
 	return &ContextHandler{
-		Cfg:           cfg,
-		tracer:        tracer,
+		cfg:           cfg,
 		authenticator: authenticator,
 		features:      features,
 	}
@@ -38,8 +37,7 @@ func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, authenticator authn
 
 // ContextHandler is a middleware.
 type ContextHandler struct {
-	Cfg           *setting.Cfg
-	tracer        tracing.Tracer
+	cfg           *setting.Cfg
 	authenticator authn.Authenticator
 	features      featuremgmt.FeatureToggles
 }
@@ -88,7 +86,8 @@ func CopyWithReqContext(ctx context.Context) context.Context {
 func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		_, span := h.tracer.Start(ctx, "Auth - Middleware")
+		// Don't modify context so that the auth middleware span doesn't get propagated as a parent elsewhere
+		_, span := tracing.Start(ctx, "Auth - Middleware")
 
 		reqContext := &contextmodel.ReqContext{
 			Context: web.FromContext(ctx),
@@ -105,7 +104,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		// inject ReqContext in the context
 		ctx = context.WithValue(ctx, reqContextKey{}, reqContext)
 		// store list of possible auth header in context
-		ctx = WithAuthHTTPHeaders(ctx, h.Cfg)
+		ctx = WithAuthHTTPHeaders(ctx, h.cfg)
 		// Set the context for the http.Request.Context
 		// This modifies both r and reqContext.Req since they point to the same value
 		*reqContext.Req = *reqContext.Req.WithContext(ctx)
@@ -138,7 +137,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			attribute.Int64("userId", reqContext.UserID),
 		))
 
-		if h.Cfg.IDResponseHeaderEnabled && reqContext.SignedInUser != nil {
+		if h.cfg.IDResponseHeaderEnabled && reqContext.SignedInUser != nil {
 			reqContext.Resp.Before(h.addIDHeaderEndOfRequestFunc(reqContext.SignedInUser))
 		}
 
@@ -168,11 +167,11 @@ func (h *ContextHandler) addIDHeaderEndOfRequestFunc(ident identity.Requester) w
 			return
 		}
 
-		if _, ok := h.Cfg.IDResponseHeaderNamespaces[string(ident.GetIdentityType())]; !ok {
+		if _, ok := h.cfg.IDResponseHeaderNamespaces[string(ident.GetIdentityType())]; !ok {
 			return
 		}
 
-		headerName := fmt.Sprintf("%s-Identity-Id", h.Cfg.IDResponseHeaderPrefix)
+		headerName := fmt.Sprintf("%s-Identity-Id", h.cfg.IDResponseHeaderPrefix)
 		w.Header().Add(headerName, ident.GetID())
 	}
 }

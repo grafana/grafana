@@ -11,14 +11,45 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 )
 
 type configReader struct {
-	path       string
-	log        log.Logger
-	orgService org.Service
+	path      string
+	log       log.Logger
+	orgExists utils.OrgExists
+}
+
+func ReadDashboardConfig(dir string) ([]*DashboardProvisioning, error) {
+	var cfg []*DashboardProvisioning
+
+	cr := &configReader{
+		path: dir,
+	}
+
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, file := range files {
+		if !strings.HasSuffix(file.Name(), ".yaml") && !strings.HasSuffix(file.Name(), ".yml") {
+			continue
+		}
+
+		parsedDashboards, err := cr.parseConfigs(file)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse provisioning config file: %s error: %v", file.Name(), err)
+		}
+
+		for _, config := range parsedDashboards {
+			cfg = append(cfg, &DashboardProvisioning{
+				config: *config,
+			})
+		}
+	}
+
+	return cfg, nil
 }
 
 func (cr *configReader) parseConfigs(file fs.DirEntry) ([]*config, error) {
@@ -96,7 +127,7 @@ func (cr *configReader) readConfig(ctx context.Context) ([]*config, error) {
 			dashboard.OrgID = 1
 		}
 
-		if err := utils.CheckOrgExists(ctx, cr.orgService, dashboard.OrgID); err != nil {
+		if err := cr.orgExists(ctx, dashboard.OrgID); err != nil {
 			return nil, fmt.Errorf("failed to provision dashboards with %q reader: %w", dashboard.Name, err)
 		}
 

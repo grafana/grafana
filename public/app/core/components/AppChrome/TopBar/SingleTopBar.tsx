@@ -16,10 +16,11 @@ import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
 import { HistoryContainer } from '../History/HistoryContainer';
 import { enrichHelpItem } from '../MegaMenu/utils';
-import { NewsContainer } from '../News/NewsContainer';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
 import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
+import { InviteUserButton } from './InviteUserButton';
+import { ProfileButton } from './ProfileButton';
 import { SignInLink } from './SignInLink';
 import { TopNavBarMenu } from './TopNavBarMenu';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
@@ -80,7 +81,6 @@ export const SingleTopBar = memo(function SingleTopBar({
             <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
           </Dropdown>
         )}
-        {config.newsFeedEnabled && <NewsContainer />}
         <ToolbarButton
           icon="monitor"
           className={styles.kioskToggle}
@@ -88,16 +88,8 @@ export const SingleTopBar = memo(function SingleTopBar({
           tooltip="Enable kiosk mode"
         />
         {!contextSrv.user.isSignedIn && <SignInLink />}
-        {profileNode && (
-          <Dropdown overlay={() => <TopNavBarMenu node={profileNode} />} placement="bottom-end">
-            <ToolbarButton
-              className={styles.profileButton}
-              imgSrc={contextSrv.user.gravatarUrl}
-              imgAlt="User avatar"
-              aria-label="Profile"
-            />
-          </Dropdown>
-        )}
+        {config.featureToggles.inviteUserExperimental && <InviteUserButton />}
+        {profileNode && <ProfileButton profileNode={profileNode} />}
       </Stack>
     </div>
   );
@@ -131,15 +123,6 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
     alignSelf: 'center',
     height: theme.spacing(3),
     width: theme.spacing(3),
-  }),
-  profileButton: css({
-    padding: theme.spacing(0, 0.5),
-    img: {
-      borderRadius: theme.shape.radius.circle,
-      height: '24px',
-      marginRight: 0,
-      width: '24px',
-    },
   }),
   kioskToggle: css({
     [theme.breakpoints.down('lg')]: {

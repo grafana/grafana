@@ -81,7 +81,7 @@ type PanelSchemeUpgradeHandler = (panel: PanelModel) => PanelModel;
  * kinds/dashboard/dashboard_kind.cue
  * Example PR: #87712
  */
-export const DASHBOARD_SCHEMA_VERSION = 40;
+export const DASHBOARD_SCHEMA_VERSION = 41;
 export class DashboardMigrator {
   dashboard: DashboardModel;
 
@@ -905,9 +905,17 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 40) {
-      // In old ashboards refresh property can be a boolean
+      // In old dashboards refresh property can be a boolean
       if (typeof this.dashboard.refresh !== 'string') {
         this.dashboard.refresh = '';
+      }
+    }
+
+    if (oldVersion < 41) {
+      // time_options is a legacy property that was not used since grafana version 5
+      //  therefore deprecating this property from the schema
+      if ('time_options' in this.dashboard.timepicker) {
+        delete this.dashboard.timepicker.time_options;
       }
     }
 

@@ -14,9 +14,10 @@ interface Props {
   pluginId: string;
   versions?: Version[];
   installedVersion?: string;
+  disableInstallation: boolean;
 }
 
-export const VersionList = ({ pluginId, versions = [], installedVersion }: Props) => {
+export const VersionList = ({ pluginId, versions = [], installedVersion, disableInstallation }: Props) => {
   const styles = useStyles2(getStyles);
   const latestCompatibleVersion = getLatestCompatibleVersion(versions);
 
@@ -58,6 +59,10 @@ export const VersionList = ({ pluginId, versions = [], installedVersion }: Props
             tooltip = 'This plugin version is not compatible with the current Grafana version';
           }
 
+          if (disableInstallation) {
+            tooltip = `This plugin can't be managed through the Plugin Catalog`;
+          }
+
           return (
             <tr key={version.version}>
               {/* Version number */}
@@ -77,14 +82,21 @@ export const VersionList = ({ pluginId, versions = [], installedVersion }: Props
                   latestCompatibleVersion={latestCompatibleVersion?.version}
                   installedVersion={installedVersion}
                   onConfirmInstallation={onInstallClick}
-                  disabled={isInstalledVersion || isInstalling || !canInstall || !version.isCompatible || !canInstall}
+                  disabled={
+                    isInstalledVersion ||
+                    isInstalling ||
+                    !canInstall ||
+                    !version.isCompatible ||
+                    !canInstall ||
+                    disableInstallation
+                  }
                   tooltip={tooltip}
                 />
               </td>
 
               {/* Last updated */}
               <td className={isInstalledVersion ? styles.currentVersion : ''}>
-                {dateTimeFormatTimeAgo(version.createdAt)}
+                {dateTimeFormatTimeAgo(version.updatedAt || version.createdAt)}
               </td>
               {/* Dependency */}
               <td className={isInstalledVersion ? styles.currentVersion : ''}>{version.grafanaDependency || 'N/A'}</td>

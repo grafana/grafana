@@ -75,7 +75,7 @@ export const OptionsPaneCategory = React.memo(
       );
       setSavedState({ isExpanded: !isExpanded });
       setIsExpanded(!isExpanded);
-    }, [setSavedState, setIsExpanded, updateQueryParams, isExpanded, id]);
+    }, [updateQueryParams, isExpanded, id, setSavedState]);
 
     if (!renderTitle) {
       renderTitle = function defaultTitle(isExpanded: boolean) {
@@ -123,6 +123,7 @@ export const OptionsPaneCategory = React.memo(
           <h6 id={`button-${id}`} className={styles.title}>
             {renderTitle(isExpanded)}
           </h6>
+
           <Button
             data-testid={selectors.components.OptionsGroup.toggle(id)}
             type="button"
@@ -131,7 +132,7 @@ export const OptionsPaneCategory = React.memo(
             variant="secondary"
             aria-expanded={isExpanded}
             className={styles.toggleButton}
-            icon={isExpanded ? 'angle-down' : 'angle-up'}
+            icon={isExpanded ? 'angle-up' : 'angle-down'}
             onClick={onToggle}
           />
         </div>
@@ -161,15 +162,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontSize: '1rem',
     fontWeight: theme.typography.fontWeightMedium,
     margin: 0,
+    height: theme.spacing(4),
+    display: 'flex',
+    alignItems: 'center',
   }),
   header: css({
     display: 'flex',
-    cursor: 'pointer',
     alignItems: 'center',
     padding: theme.spacing(0.5, 1.5),
     color: theme.colors.text.primary,
     fontWeight: theme.typography.fontWeightMedium,
-
+    cursor: 'pointer',
     '&:hover': {
       background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
     },

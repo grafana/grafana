@@ -13,8 +13,6 @@ type Interactions = {
     cause: (
       // By clicking the "select" button on that label's breakdown panel
       | 'breakdown_panel'
-      // By clicking the label link on the overview
-      | 'overview_link'
       // By clicking on the label selector at the top of the breakdown
       | 'selector'
     );
@@ -25,6 +23,7 @@ type Interactions = {
     label: string;
     action: 'added' | 'removed' | 'changed';
     cause: 'breakdown' | 'adhoc_filter';
+    otel_resource_attribute?: boolean;
   };
   // User changed the breakdown layout
   breakdown_layout_changed: { layout: BreakdownLayoutType };
@@ -126,6 +125,15 @@ type Interactions = {
   missing_otel_labels_by_truncating_job_and_instance: {
     metric?: string;
   },
+  deployment_environment_migrated: {},
+  otel_experience_used: {},
+  otel_experience_toggled: {
+    value: ('on'| 'off')
+  },
+  native_histogram_examples_closed: {},
+  native_histogram_example_clicked: {
+    metric: string;
+  },
 };
 
 const PREFIX = 'grafana_explore_metrics_';
@@ -135,7 +143,11 @@ export function reportExploreMetrics<E extends keyof Interactions, P extends Int
 }
 
 /** Detect the single change in filters and report the event, assuming it came from manipulating the adhoc filter */
-export function reportChangeInLabelFilters(newFilters: AdHocVariableFilter[], oldFilters: AdHocVariableFilter[]) {
+export function reportChangeInLabelFilters(
+  newFilters: AdHocVariableFilter[],
+  oldFilters: AdHocVariableFilter[],
+  otel?: boolean
+) {
   if (newFilters.length === oldFilters.length) {
     for (const oldFilter of oldFilters) {
       for (const newFilter of newFilters) {
@@ -145,6 +157,7 @@ export function reportChangeInLabelFilters(newFilters: AdHocVariableFilter[], ol
               label: oldFilter.key,
               action: 'changed',
               cause: 'adhoc_filter',
+              otel_resource_attribute: otel ?? false,
             });
           }
         }

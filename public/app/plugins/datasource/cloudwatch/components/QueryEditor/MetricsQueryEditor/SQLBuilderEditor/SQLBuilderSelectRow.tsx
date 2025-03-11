@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { EditorField, EditorFieldGroup, EditorSwitch } from '@grafana/experimental';
+import { EditorField, EditorFieldGroup, EditorSwitch } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Select } from '@grafana/ui';
 
@@ -53,10 +53,7 @@ const SQLBuilderSelectRow = ({ datasource, query, onQueryChange }: SQLBuilderSel
   const metricOptions = useMetrics(datasource, {
     region: query.region,
     namespace,
-    ...(config.featureToggles.cloudWatchCrossAccountQuerying &&
-    config.featureToggles.cloudwatchMetricInsightsCrossAccount
-      ? { accountId: query.accountId }
-      : {}),
+    ...(config.featureToggles.cloudWatchCrossAccountQuerying && { accountId: query.accountId }),
   });
   const existingFilters = useMemo(() => stringArrayToDimensions(schemaLabels ?? []), [schemaLabels]);
   const unusedDimensionKeys = useDimensionKeys(datasource, {
@@ -64,10 +61,7 @@ const SQLBuilderSelectRow = ({ datasource, query, onQueryChange }: SQLBuilderSel
     namespace,
     metricName,
     dimensionFilters: existingFilters,
-    ...(config.featureToggles.cloudWatchCrossAccountQuerying &&
-    config.featureToggles.cloudwatchMetricInsightsCrossAccount
-      ? { accountId: query.accountId }
-      : {}),
+    ...(config.featureToggles.cloudWatchCrossAccountQuerying && { accountId: query.accountId }),
   });
   const dimensionKeys = useMemo(
     () => (schemaLabels?.length ? [...unusedDimensionKeys, ...schemaLabels.map(toOption)] : unusedDimensionKeys),
@@ -93,19 +87,18 @@ const SQLBuilderSelectRow = ({ datasource, query, onQueryChange }: SQLBuilderSel
   return (
     <>
       <EditorFieldGroup>
-        {config.featureToggles.cloudWatchCrossAccountQuerying &&
-          config.featureToggles.cloudwatchMetricInsightsCrossAccount && (
-            <Account
-              accountId={query.accountId}
-              accountOptions={accountState.value || []}
-              onChange={(accountId) => {
-                onQueryChange({
-                  ...query,
-                  accountId,
-                });
-              }}
-            />
-          )}
+        {config.featureToggles.cloudWatchCrossAccountQuerying && (
+          <Account
+            accountId={query.accountId}
+            accountOptions={accountState.value || []}
+            onChange={(accountId) => {
+              onQueryChange({
+                ...query,
+                accountId,
+              });
+            }}
+          />
+        )}
         <EditorField label="Namespace" width={16}>
           <Select
             aria-label="Namespace"

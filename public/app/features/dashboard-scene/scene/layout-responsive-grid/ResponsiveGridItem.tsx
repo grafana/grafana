@@ -1,89 +1,134 @@
-import { css, cx } from '@emotion/css';
+import { isEqual } from 'lodash';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { SceneObjectState, VizPanel, SceneObjectBase, SceneObject, SceneComponentProps } from '@grafana/scenes';
-import { Switch, useStyles2 } from '@grafana/ui';
+import {
+  SceneObjectState,
+  VizPanel,
+  SceneObjectBase,
+  sceneGraph,
+  CustomVariable,
+  MultiValueVariable,
+  VariableValueSingle,
+  VizPanelState,
+  SceneVariableSet,
+  LocalValueVariable,
+  VariableDependencyConfig,
+} from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
-import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { DashboardLayoutItem } from '../types';
+import { getCloneKey } from '../../utils/clone';
+import { getMultiVariableValues } from '../../utils/utils';
+import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
+import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
+
+import { getOptions } from './ResponsiveGridItemEditor';
+import { ResponsiveGridItemRenderer } from './ResponsiveGridItemRenderer';
 
 export interface ResponsiveGridItemState extends SceneObjectState {
   body: VizPanel;
   hideWhenNoData?: boolean;
+  repeatedPanels?: VizPanel[];
+  variableName?: string;
 }
 
 export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState> implements DashboardLayoutItem {
+  public static Component = ResponsiveGridItemRenderer;
+  private _prevRepeatValues?: VariableValueSingle[];
+  protected _variableDependency = new VariableDependencyConfig(this, {
+    variableNames: this.state.variableName ? [this.state.variableName] : [],
+    onVariableUpdateCompleted: () => this.performRepeat(),
+  });
+  public readonly isDashboardLayoutItem = true;
+
   public constructor(state: ResponsiveGridItemState) {
     super(state);
     this.addActivationHandler(() => this._activationHandler());
   }
 
   private _activationHandler() {
-    if (!this.state.hideWhenNoData) {
-      return;
+    if (this.state.variableName) {
+      this.performRepeat();
     }
+  }
+
+  public getOptions(): OptionsPaneCategoryDescriptor {
+    return getOptions(this);
   }
 
   public toggleHideWhenNoData() {
     this.setState({ hideWhenNoData: !this.state.hideWhenNoData });
   }
 
-  /**
-   * DashboardLayoutElement interface
-   */
-  public isDashboardLayoutItem: true = true;
-
-  public getOptions?(): OptionsPaneCategoryDescriptor {
-    const model = this;
-
-    const category = new OptionsPaneCategoryDescriptor({
-      title: 'Layout options',
-      id: 'layout-options',
-      isOpenDefault: false,
-    });
-
-    category.addItem(
-      new OptionsPaneItemDescriptor({
-        title: 'Hide when no data',
-        render: function renderTransparent() {
-          const { hideWhenNoData } = model.useState();
-          return <Switch value={hideWhenNoData} id="hide-when-no-data" onChange={() => model.toggleHideWhenNoData()} />;
-        },
-      })
-    );
-
-    return category;
-  }
-
-  public setBody(body: SceneObject): void {
-    if (body instanceof VizPanel) {
-      this.setState({ body });
+  public performRepeat() {
+    if (!this.state.variableName || sceneGraph.hasVariableDependencyInLoadingState(this)) {
+      return;
     }
+
+    const variable =
+      sceneGraph.lookupVariable(this.state.variableName, this) ??
+      new CustomVariable({
+        name: '_____default_sys_repeat_var_____',
+        options: [],
+        value: '',
+        text: '',
+        query: 'A',
+      });
+
+    if (!(variable instanceof MultiValueVariable)) {
+      console.error('DashboardGridItem: Variable is not a MultiValueVariable');
+      return;
+    }
+
+    const { values, texts } = getMultiVariableValues(variable);
+
+    if (isEqual(this._prevRepeatValues, values)) {
+      return;
+    }
+
+    const panelToRepeat = this.state.body;
+    const repeatedPanels: VizPanel[] = [];
+
+    // when variable has no options (due to error or similar) it will not render any panels at all
+    // adding a placeholder in this case so that there is at least empty panel that can display error
+    const emptyVariablePlaceholderOption = {
+      values: [''],
+      texts: variable.hasAllValue() ? ['All'] : ['None'],
+    };
+
+    const variableValues = values.length ? values : emptyVariablePlaceholderOption.values;
+    const variableTexts = texts.length ? texts : emptyVariablePlaceholderOption.texts;
+    for (let index = 0; index < variableValues.length; index++) {
+      const cloneState: Partial<VizPanelState> = {
+        $variables: new SceneVariableSet({
+          variables: [
+            new LocalValueVariable({
+              name: variable.state.name,
+              value: variableValues[index],
+              text: String(variableTexts[index]),
+            }),
+          ],
+        }),
+        key: getCloneKey(panelToRepeat.state.key!, index),
+      };
+      const clone = panelToRepeat.clone(cloneState);
+      repeatedPanels.push(clone);
+    }
+
+    this.setState({ repeatedPanels });
+    this._prevRepeatValues = values;
+
+    this.publishEvent(new DashboardRepeatsProcessedEvent({ source: this }), true);
   }
 
-  public getVizPanel() {
-    return this.state.body;
+  public setRepeatByVariable(variableName: string | undefined) {
+    const stateUpdate: Partial<ResponsiveGridItemState> = { variableName };
+
+    if (this.state.body.state.$variables) {
+      this.state.body.setState({ $variables: undefined });
+    }
+
+    this._variableDependency.setVariableNames(variableName ? [variableName] : []);
+
+    this.setState(stateUpdate);
+    this.performRepeat();
   }
-
-  public static Component = ({ model }: SceneComponentProps<ResponsiveGridItem>) => {
-    const { body } = model.useState();
-    const style = useStyles2(getStyles);
-
-    return (
-      <div className={cx(style.wrapper)}>
-        <body.Component model={body} />
-      </div>
-    );
-  };
-}
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    wrapper: css({
-      width: '100%',
-      height: '100%',
-      position: 'relative',
-    }),
-  };
 }

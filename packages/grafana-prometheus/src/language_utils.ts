@@ -323,7 +323,7 @@ export function fixSummariesMetadata(metadata: { [metric: string]: PromMetricsMe
   // Synthetic series
   const syntheticMetadata: PromMetricsMetadata = {};
   syntheticMetadata['ALERTS'] = {
-    type: 'counter',
+    type: 'gauge',
     help: 'Time series showing pending and firing alerts. The sample value is set to 1 as long as the alert is in the indicated active (pending or firing) state.',
   };
 
@@ -478,7 +478,10 @@ export function extractLabelMatchers(tokens: Array<string | Token>): AbstractLab
 export function getRangeSnapInterval(
   cacheLevel: PrometheusCacheLevel,
   range: TimeRange
-): { start: string; end: string } {
+): {
+  start: string;
+  end: string;
+} {
   // Don't round the range if we're not caching
   if (cacheLevel === PrometheusCacheLevel.None) {
     return {
