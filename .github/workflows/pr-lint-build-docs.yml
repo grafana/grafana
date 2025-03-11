@@ -28,7 +28,6 @@ jobs:
       - name: Lint docs
         run: yarn run prettier:checkDocs
         env:
-          # Increase the memory limit for Node.js processes to 8GB to handle the larger docs files
           NODE_OPTIONS: --max_old_space_size=8192
 
       - name: Build docs website
