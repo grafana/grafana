@@ -50,7 +50,7 @@ export function RepositoryStep({ onStatusChange }: Props) {
 
   const handleVerify = async () => {
     const formData = getValues();
-    const spec = dataToSpec(formData.repository);
+    const spec = dataToSpec(formData.repository, 'connection');
 
     try {
       const testResponse = await testConfig({ name: 'new', body: { spec } });

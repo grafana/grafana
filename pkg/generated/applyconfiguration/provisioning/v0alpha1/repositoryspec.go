@@ -14,6 +14,7 @@ type RepositorySpecApplyConfiguration struct {
 	Title       *string                                   `json:"title,omitempty"`
 	Description *string                                   `json:"description,omitempty"`
 	Workflows   []provisioningv0alpha1.Workflow           `json:"workflows,omitempty"`
+	Setup       *provisioningv0alpha1.SetupStep           `json:"setup,omitempty"`
 	Sync        *SyncOptionsApplyConfiguration            `json:"sync,omitempty"`
 	Type        *provisioningv0alpha1.RepositoryType      `json:"type,omitempty"`
 	Local       *LocalRepositoryConfigApplyConfiguration  `json:"local,omitempty"`
@@ -49,6 +50,14 @@ func (b *RepositorySpecApplyConfiguration) WithWorkflows(values ...provisioningv
 	for i := range values {
 		b.Workflows = append(b.Workflows, values[i])
 	}
+	return b
+}
+
+// WithSetup sets the Setup field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Setup field is set to the value of the last call.
+func (b *RepositorySpecApplyConfiguration) WithSetup(value provisioningv0alpha1.SetupStep) *RepositorySpecApplyConfiguration {
+	b.Setup = &value
 	return b
 }
 

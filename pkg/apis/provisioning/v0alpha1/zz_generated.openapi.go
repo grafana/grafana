@@ -971,6 +971,14 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 							},
 						},
 					},
+					"setup": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Used by the configuration wizard to indicate which step is active when a setup step exists, no sync jobs will be scheduled\n\nPossible enum values:\n - `\"connection\"` indicates that the connection settings were entered, but not yet validating\n - `\"resources\"` indicates that a job has been started to either migrate or pull resources",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"connection", "resources"},
+						},
+					},
 					"sync": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Sync settings -- how values are pulled from the repository into grafana",
@@ -1187,7 +1195,13 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceCount(ref common.ReferenceCal
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"repository": {
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"id": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",

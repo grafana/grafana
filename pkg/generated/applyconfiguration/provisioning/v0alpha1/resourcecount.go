@@ -4,13 +4,18 @@
 
 package v0alpha1
 
+import (
+	utils "github.com/grafana/grafana/pkg/apimachinery/utils"
+)
+
 // ResourceCountApplyConfiguration represents a declarative configuration of the ResourceCount type for use
 // with apply.
 type ResourceCountApplyConfiguration struct {
-	Repository *string `json:"repository,omitempty"`
-	Group      *string `json:"group,omitempty"`
-	Resource   *string `json:"resource,omitempty"`
-	Count      *int64  `json:"count,omitempty"`
+	Kind     *utils.ManagerKind `json:"kind,omitempty"`
+	Identity *string            `json:"id,omitempty"`
+	Group    *string            `json:"group,omitempty"`
+	Resource *string            `json:"resource,omitempty"`
+	Count    *int64             `json:"count,omitempty"`
 }
 
 // ResourceCountApplyConfiguration constructs a declarative configuration of the ResourceCount type for use with
@@ -19,11 +24,19 @@ func ResourceCount() *ResourceCountApplyConfiguration {
 	return &ResourceCountApplyConfiguration{}
 }
 
-// WithRepository sets the Repository field in the declarative configuration to the given value
+// WithKind sets the Kind field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the Repository field is set to the value of the last call.
-func (b *ResourceCountApplyConfiguration) WithRepository(value string) *ResourceCountApplyConfiguration {
-	b.Repository = &value
+// If called multiple times, the Kind field is set to the value of the last call.
+func (b *ResourceCountApplyConfiguration) WithKind(value utils.ManagerKind) *ResourceCountApplyConfiguration {
+	b.Kind = &value
+	return b
+}
+
+// WithIdentity sets the Identity field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Identity field is set to the value of the last call.
+func (b *ResourceCountApplyConfiguration) WithIdentity(value string) *ResourceCountApplyConfiguration {
+	b.Identity = &value
 	return b
 }
 

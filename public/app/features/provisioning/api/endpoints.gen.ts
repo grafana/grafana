@@ -875,6 +875,12 @@ export type RepositorySpec = {
   github?: GitHubRepositoryConfig;
   /** The repository on the local file system. Mutually exclusive with local | github. */
   local?: LocalRepositoryConfig;
+  /** Used by the configuration wizard to indicate which step is active when a setup step exists, no sync jobs will be scheduled
+    
+    Possible enum values:
+     - `"connection"` indicates that the connection settings were entered, but not yet validating
+     - `"resources"` indicates that a job has been started to either migrate or pull resources */
+  setup?: 'connection' | 'resources';
   /** Sync settings -- how values are pulled from the repository into grafana */
   sync: SyncOptions;
   /** The repository display name (shown in the UI) */
@@ -899,7 +905,8 @@ export type HealthStatus = {
 export type ResourceCount = {
   count: number;
   group: string;
-  repository?: string;
+  id?: string;
+  kind?: string;
   resource: string;
 };
 export type SyncStatus = {

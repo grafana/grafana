@@ -335,6 +335,9 @@ func (rc *RepositoryController) determineSyncStrategy(ctx context.Context, obj *
 	case !obj.Spec.Sync.Enabled:
 		logger.Info("skip sync as it's disabled")
 		return nil
+	case obj.Spec.Setup == "":
+		logger.Info("skip sync, the resource is getting setup")
+		return nil
 	case !healthStatus.Healthy:
 		logger.Info("skip sync for unhealthy repository")
 		return nil

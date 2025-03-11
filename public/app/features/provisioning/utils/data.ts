@@ -1,12 +1,13 @@
 import { RepositorySpec } from '../api';
 import { RepositoryFormData } from '../types';
 
-export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
+export const dataToSpec = (data: RepositoryFormData, step?: 'connection' | 'resources'): RepositorySpec => {
   const spec: RepositorySpec = {
     type: data.type,
     sync: data.sync,
     title: data.title || '',
     workflows: data.workflows,
+    setup: step,
   };
   switch (data.type) {
     case 'github':

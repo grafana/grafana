@@ -52,6 +52,17 @@ type GitHubRepositoryConfig struct {
 	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
 }
 
+// SetupStep indicates the current step in the wizard
+// +enum
+type SetupStep string
+
+const (
+	// SetupConnection indicates that the connection settings were entered, but not yet validating
+	SetupConnection SetupStep = "connection"
+	// SetupResources indicates that a job has been started to either migrate or pull resources
+	SetupResources SetupStep = "resources"
+)
+
 // RepositoryType defines the types of Repository
 // +enum
 type RepositoryType string
@@ -73,6 +84,10 @@ type RepositorySpec struct {
 	// The order is relevant for defining the precedence of the workflows.
 	// When empty, the repository does not support any edits (eg, readonly)
 	Workflows []Workflow `json:"workflows"`
+
+	// Used by the configuration wizard to indicate which step is active
+	// when a setup step exists, no sync jobs will be scheduled
+	Setup SetupStep `json:"setup,omitempty"`
 
 	// Sync settings -- how values are pulled from the repository into grafana
 	Sync SyncOptions `json:"sync"`

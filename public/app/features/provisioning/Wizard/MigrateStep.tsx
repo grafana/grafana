@@ -24,6 +24,10 @@ export function MigrateStep({ onStatusChange }: MigrateStepProps) {
     if (!repositoryName) {
       return;
     }
+    // PATCH the step
+    const patch = [{ op: 'replace', path: 'spec.setup', value: 'resources' }];
+    console.log('TODO path', patch);
+
     setShowMigrateStatus(true);
     const response = await migrateRepo({
       name: repositoryName,
