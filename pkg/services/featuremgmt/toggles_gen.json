@@ -1715,6 +1715,19 @@
     },
     {
       "metadata": {
+        "name": "extraLanguages",
+        "resourceVersion": "1741626708204",
+        "creationTimestamp": "2025-03-10T17:11:48Z"
+      },
+      "spec": {
+        "description": "Enables additional languages",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "extraThemes",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-05-10T13:37:04Z"
