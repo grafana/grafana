@@ -50,55 +50,8 @@ jobs:
         uses: ./.github/actions/setup-enterprise
         with:
           github-app-name: 'grafana-ci-bot'
-
       - name: Generate Go code
         run: make gen-go
-  
-      # - name: Verify project test caching
-      #   run: |
-      #     # Clear the test cache
-      #     go clean -testcache
-          
-      #     # Run a specific package's tests twice
-      #     echo "First run of project tests:"
-      #     GODEBUG=gocacheverify=1,gocachehash=1 go test -v ./pkg/bus
-          
-      #     echo "Second run of project tests (should be cached):"
-      #     GODEBUG=gocacheverify=1,gocachehash=1 go test -v ./pkg/bus
-          
-      # - name: Verify test caching with explicit cache control
-      #   run: |
-      #     # Clear the test cache
-      #     go clean -testcache
-          
-      #     # Create a simple test module
-      #     mkdir -p /tmp/testcache
-      #     cd /tmp/testcache
-          
-      #     # Initialize a Go module
-      #     go mod init testcache
-          
-      #     # Create a simple test file
-      #     cat > simple_test.go << 'EOF'
-      #     package testcache
-          
-      #     import "testing"
-          
-      #     func TestSimple(t *testing.T) {
-      #         t.Log("Running simple test")
-      #     }
-      #     EOF
-          
-      #     # Run the test twice
-      #     echo "First run:"
-      #     go test -v ./...
-      #     echo "Second run (should be cached):"
-      #     go test -v ./...
-          
-      #     # Check GOCACHE location
-      #     echo "Go test cache location:"
-      #     go env GOCACHE
-
       - name: Run unit tests
         run: GODEBUG=gocachetest=1 make test-go-unit
         env:
@@ -106,14 +59,12 @@ jobs:
           # GO_TEST_OUTPUT: ''
           # GO_UNIT_TEST_COVERPKG: 'github.com/grafana/grafana/...'
           GO_UNIT_COVERAGE: false
-
       # Run Grafana Bench only on pushes to `main` or `release-*`
       - name: Install Grafana Bench
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release-'))
         uses: ./.github/actions/setup-grafana-bench
         with:
           github-app-name: 'grafana-ci-bot'
-
       - name: Process output for Bench
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release-'))
         run: |
@@ -136,6 +87,8 @@ jobs:
       # "Clear build cache" is a hack to get around GitHub Actions not allowing us to overwrite existing cache keys
       - name: Clear build cache
         run: gh cache delete go-test-cache
+        env:
+          GH_TOKEN: ${{ github.token }}
       - name: Save build cache
         uses: actions/cache/restore@v4
         with:
