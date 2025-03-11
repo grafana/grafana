@@ -93,14 +93,14 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 		allFrames = append(allFrames, frames...)
 	}
 
-	totalRows := totalRows(allFrames)
+	totalCells := totalCells(allFrames)
 	// limit of 0 or less means no limit (following convention)
-	if gr.limit > 0 && totalRows > gr.limit {
+	if gr.limit > 0 && totalCells > gr.limit {
 		return mathexp.Results{},
 			fmt.Errorf(
-				"SQL expression: total row count across all input tables exceeds limit of %d. Total rows: %d",
+				"SQL expression: total cell count across all input tables exceeds limit of %d. Total cells: %d",
 				gr.limit,
-				totalRows,
+				totalCells,
 			)
 	}
 
@@ -135,12 +135,15 @@ func (gr *SQLCommand) Type() string {
 	return TypeSQL.String()
 }
 
-func totalRows(frames []*data.Frame) int64 {
-	total := 0
+func totalCells(frames []*data.Frame) int64 {
+	total := int64(0)
 	for _, frame := range frames {
 		if frame != nil {
-			total += frame.Rows()
+			// Calculate cells as rows × columns
+			rows := int64(frame.Rows())
+			cols := int64(len(frame.Fields))
+			total += rows * cols
 		}
 	}
-	return int64(total)
+	return total
 }

@@ -2,6 +2,7 @@ package expr
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -33,16 +34,22 @@ func TestNewCommand(t *testing.T) {
 	}
 }
 
-// Helper functions for creating test data
-func createFrameWithRows(rows int) *data.Frame {
-	values := make([]string, rows)
-	for i := range values {
-		values[i] = "dummy"
+// Helper function for creating test data
+func createFrameWithRowsAndCols(rows int, cols int) *data.Frame {
+	frame := data.NewFrame("dummy")
+
+	for c := 0; c < cols; c++ {
+		values := make([]string, rows)
+		for i := range values {
+			values[i] = "dummy"
+		}
+		frame.Fields = append(frame.Fields, data.NewField(fmt.Sprintf("col%d", c), nil, values))
 	}
-	return data.NewFrame("dummy", data.NewField("dummy", nil, values))
+
+	return frame
 }
 
-func TestSQLCommandRowLimits(t *testing.T) {
+func TestSQLCommandCellLimits(t *testing.T) {
 	tests := []struct {
 		name          string
 		limit         int64
@@ -52,31 +59,66 @@ func TestSQLCommandRowLimits(t *testing.T) {
 		errorContains string
 	}{
 		{
-			name:  "multiple frames within limit",
-			limit: 4,
+			name:  "single (long) frame within cell limit",
+			limit: 10,
 			frames: []*data.Frame{
-				createFrameWithRows(2),
-				createFrameWithRows(2),
+				createFrameWithRowsAndCols(10, 1), // 10 cells
+			},
+			vars: []string{"foo"},
+		},
+		{
+			name:  "single (wide) frame within cell limit",
+			limit: 10,
+			frames: []*data.Frame{
+				createFrameWithRowsAndCols(1, 10), // 10 cells
+			},
+			vars: []string{"foo"},
+		},
+		{
+			name:  "multiple frames within cell limit",
+			limit: 12,
+			frames: []*data.Frame{
+				createFrameWithRowsAndCols(2, 3), // 6 cells
+				createFrameWithRowsAndCols(2, 3), // 6 cells
 			},
 			vars: []string{"foo", "bar"},
 		},
 		{
-			name:  "multiple frames exceed limit",
-			limit: 3,
+			name:  "single (long) frame exceeds cell limit",
+			limit: 9,
 			frames: []*data.Frame{
-				createFrameWithRows(2),
-				createFrameWithRows(2),
+				createFrameWithRowsAndCols(10, 1), // 10 cells > 9 limit
+			},
+			vars:          []string{"foo"},
+			expectError:   true,
+			errorContains: "exceeds limit",
+		},
+		{
+			name:  "single (wide) frame exceeds cell limit",
+			limit: 9,
+			frames: []*data.Frame{
+				createFrameWithRowsAndCols(1, 10), // 10 cells > 9 limit
+			},
+			vars:          []string{"foo"},
+			expectError:   true,
+			errorContains: "exceeds limit",
+		},
+		{
+			name:  "multiple frames exceed cell limit",
+			limit: 11,
+			frames: []*data.Frame{
+				createFrameWithRowsAndCols(2, 3), // 6 cells
+				createFrameWithRowsAndCols(2, 3), // 6 cells
 			},
 			vars:          []string{"foo", "bar"},
 			expectError:   true,
 			errorContains: "exceeds limit",
 		},
 		{
-			name:  "limit of 0 means no limit: allow multiple large frames",
+			name:  "limit of 0 means no limit: allow large frame",
 			limit: 0,
 			frames: []*data.Frame{
-				createFrameWithRows(100000),
-				createFrameWithRows(100000),
+				createFrameWithRowsAndCols(200000, 1), // 200,000 cells
 			},
 			vars: []string{"foo", "bar"},
 		},

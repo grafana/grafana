@@ -168,21 +168,21 @@ func TestCheckIfSeriesNeedToBeFixed(t *testing.T) {
 	}
 }
 
-func TestCMDNodeExecute_SQLRowLimitFromConfig(t *testing.T) {
+func TestCMDNodeExecute_SQLCellLimitFromConfig(t *testing.T) {
 	tests := []struct {
-		name           string
-		configRowLimit int64
-		wantRowLimit   int64
+		name            string
+		configCellLimit int64
+		wantCellLimit   int64
 	}{
 		{
-			name:           "should set SQL command row limit from service config",
-			configRowLimit: 42,
-			wantRowLimit:   42,
+			name:            "should set SQL command cell limit from service config",
+			configCellLimit: 42,
+			wantCellLimit:   42,
 		},
 		{
-			name:           "should set SQL command row limit to 0 when config is 0",
-			configRowLimit: 0,
-			wantRowLimit:   0,
+			name:            "should set SQL command cell limit to 0 when config is 0",
+			configCellLimit: 0,
+			wantCellLimit:   0,
 		},
 	}
 
@@ -202,18 +202,18 @@ func TestCMDNodeExecute_SQLRowLimitFromConfig(t *testing.T) {
 
 			svc := &Service{
 				cfg: &setting.Cfg{
-					SQLExpressionRowLimit: tt.configRowLimit,
+					SQLExpressionCellLimit: tt.configCellLimit,
 				},
 				tracer: &testTracer{},
 			}
 
-			// Execute node to trigger the row limit configuration
+			// Execute node to trigger the cell limit configuration
 			_, err = node.Execute(context.Background(), time.Now(), mathexp.Vars{}, svc)
 			require.NoError(t, err)
 
-			// Verify the SQL command received the correct row limit from config
+			// Verify the SQL command received the correct cell limit from config
 			sqlCmd := node.Command.(*SQLCommand)
-			require.Equal(t, tt.wantRowLimit, sqlCmd.limit)
+			require.Equal(t, tt.wantCellLimit, sqlCmd.limit)
 		})
 	}
 }
