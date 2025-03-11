@@ -117,11 +117,11 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	// Only add stats patch if stats are not nil
 	if stats, err := r.lister.Stats(ctx, cfg.Namespace, cfg.Name); err != nil {
 		logger.Error("unable to read stats", "error", err)
-	} else if stats != nil && stats.Items != nil {
+	} else if stats != nil && len(stats.Managed) == 1 {
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/stats",
-			"value": stats.Items,
+			"value": stats.Managed[0].Stats,
 		})
 	}
 
