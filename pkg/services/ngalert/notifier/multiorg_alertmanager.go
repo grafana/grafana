@@ -151,8 +151,15 @@ func NewMultiOrgAlertmanager(
 	if cfg.UnifiedAlerting.SkipClustering {
 		l.Info("Skipping setting up clustering for MOA")
 	} else {
+		l.Info("Setting up clustering for MultiOrgAlertmanager")
 		if err := moa.setupClustering(cfg); err != nil {
 			return nil, err
+		}
+		// Log information about the peer type
+		if moa.peer != nil {
+			l.Info("Cluster peer initialized", 
+				"peerType", fmt.Sprintf("%T", moa.peer),
+				"isNilPeer", moa.peer == &NilPeer{})
 		}
 	}
 
@@ -178,6 +185,7 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 	const settleTimeout = alertingCluster.DefaultGossipInterval * 10
 	// Redis setup.
 	if cfg.UnifiedAlerting.HARedisAddr != "" {
+		clusterLogger.Info("Setting up Redis-based alertmanager clustering")
 		redisPeer, err := newRedisPeer(redisConfig{
 			addr:       cfg.UnifiedAlerting.HARedisAddr,
 			name:       cfg.UnifiedAlerting.HARedisPeerName,
@@ -200,6 +208,10 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 	}
 	// Memberlist setup.
 	if len(cfg.UnifiedAlerting.HAPeers) > 0 {
+		clusterLogger.Info("Setting up memberlist-based alertmanager clustering", 
+			"peers", cfg.UnifiedAlerting.HAPeers,
+			"listenAddr", cfg.UnifiedAlerting.HAListenAddr,
+			"advertiseAddr", cfg.UnifiedAlerting.HAAdvertiseAddr)
 		peer, err := alertingCluster.Create(
 			clusterLogger,
 			moa.metrics.Registerer,

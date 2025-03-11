@@ -124,7 +124,11 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 			return stateStore.SaveNotificationLog(context.Background(), state)
 		},
 	}
+	
 	l := log.New("ngalert.notifier.alertmanager", "org", orgID)
+	if peer != nil && peer != &NilPeer{} {
+		l.Info("Alertmanager initialized with cluster peer", "peerType", fmt.Sprintf("%T", peer))
+	}
 	action := stages.Disabled
 	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingAlertmanagerExtraDedupStage) {
 		if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingAlertmanagerExtraDedupStageStopPipeline) {
@@ -133,6 +137,16 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 			action = stages.LogOnly
 		}
 		l.Info("Initializing Alertmanager", "extra_dedup_stage", action)
+	}
+
+	syncFlushAction := stages.SyncFlushActionDisabled
+	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingAlertmanagerSyncFlushStage) {
+		if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingAlertmanagerSyncFlushStageSync) {
+			syncFlushAction = stages.SyncFlushActionSync
+		} else {
+			syncFlushAction = stages.SyncFlushActionLog
+		}
+		l.Info("Initializing Alertmanager", "sync_flush_stage", syncFlushAction)
 	}
 
 	amcfg := &alertingNotify.GrafanaAlertmanagerConfig{
@@ -146,12 +160,19 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 			MaxSilenceSizeBytes: cfg.UnifiedAlerting.AlertmanagerMaxSilenceSizeBytes,
 		},
 		PipelineAndStateTimestampsMismatchAction: action,
+		SyncFlushAction:                          syncFlushAction,
+		SyncFlushMargin:                          cfg.UnifiedAlerting.AlertmanagerSyncFlushStageMarginDuration,
 	}
 
+	// Debug the cluster flow to understand how alerts are gossiped
+	DebugClusterFlow(l)
+	
 	gam, err := alertingNotify.NewGrafanaAlertmanager("orgID", orgID, amcfg, peer, l, alertingNotify.NewGrafanaAlertmanagerMetrics(m.Registerer, l))
 	if err != nil {
 		return nil, err
 	}
+
+	l.Info("Created GrafanaAlertmanager instance", "orgID", orgID)
 
 	am := &alertmanager{
 		Base:                gam,
@@ -167,7 +188,13 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		// TODO: Preferably, logic around autogen would be outside of the specific alertmanager implementation so that remote alertmanager will get it for free.
 		withAutogen: featureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingSimplifiedRouting),
 	}
-
+	
+	// Inspect the alertmanager to understand its structure
+	InspectAlertmanager(am, l)
+	
+	// Monitor alert flow in real-time
+	MonitorAlertFlow(am, l)
+	
 	return am, nil
 }
 
@@ -434,6 +461,42 @@ func (am *alertmanager) PutAlerts(_ context.Context, postableAlerts apimodels.Po
 		})
 	}
 
+	// Get the caller information to help trace the source of alerts
+	pc, file, line, _ := runtime.Caller(1)
+	caller := runtime.FuncForPC(pc).Name()
+	
+	am.logger.Debug("Putting alerts into alertmanager", 
+		"count", len(alerts), 
+		"orgID", am.orgID, 
+		"source", "API",
+		"caller", caller,
+		"file", file,
+		"line", line)
+		
+	// Log some information about the alerts
+	for i, alert := range alerts {
+		if i >= 5 {
+			am.logger.Debug("Too many alerts to log individually, truncating log")
+			break
+		}
+		
+		// Extract key information from the alert
+		var fingerprint string
+		var labels string
+		
+		if alert.Alert != nil {
+			fingerprint = fmt.Sprintf("%v", alert.Alert.Fingerprint)
+			labels = fmt.Sprintf("%v", alert.Alert.Labels)
+		}
+		
+		am.logger.Debug("Alert details", 
+			"index", i,
+			"startsAt", alert.StartsAt,
+			"endsAt", alert.EndsAt,
+			"fingerprint", fingerprint,
+			"labels", labels)
+	}
+	
 	return am.Base.PutAlerts(alerts)
 }
 
