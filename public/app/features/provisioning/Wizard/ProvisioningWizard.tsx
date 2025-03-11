@@ -1,16 +1,17 @@
 import { css } from '@emotion/css';
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { Button, Stack, useStyles2, Text, Box } from '@grafana/ui';
+import { Alert, Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { getDefaultValues } from '../ConfigForm';
 import { useDeleteRepositoryMutation, useGetFrontendSettingsQuery } from '../api';
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks';
+import { StepStatus } from '../hooks/useStepStatus';
 import { dataToSpec } from '../utils/data';
 
 import { BootstrapStep } from './BootstrapStep';
@@ -19,7 +20,7 @@ import { FinishStep } from './FinishStep';
 import { MigrateStep } from './MigrateStep';
 import { PullStep } from './PullStep';
 import { RequestErrorAlert } from './RequestErrorAlert';
-import { Stepper, Step } from './Stepper';
+import { Step, Stepper } from './Stepper';
 import { WizardFormData, WizardStep } from './types';
 
 const steps: Array<Step<WizardStep>> = [
@@ -166,6 +167,14 @@ function WizardContent({
   const [isJobRunning, setIsJobRunning] = useState(false);
   const [hasError, setHasError] = useState(false);
 
+  const [stepStatus, setStepStatus] = useState<StepStatus>('idle');
+  const [stepError, setStepError] = useState<string | undefined>();
+
+  const handleStepUpdate = useCallback((status: StepStatus, error?: string) => {
+    setStepStatus(status);
+    setStepError(error);
+  }, []);
+
   const handleJobRunningChange = (isRunning: boolean) => {
     setIsJobRunning(isRunning);
   };
@@ -278,12 +287,10 @@ function WizardContent({
       return true;
     }
 
-    // For job steps, wait for job completion and success
     if (isJobStep(activeStep)) {
-      return isJobRunning || hasError;
+      return stepStatus === 'running' || stepStatus === 'error';
     }
 
-    // For form steps, only disable during submission
     return false;
   };
 
@@ -318,22 +325,12 @@ function WizardContent({
             onErrorChange={handleJobErrorChange}
           />
         )}
-        {activeStep === 'migrate' && requiresMigration && (
-          <MigrateStep
-            onStatusChange={handleJobStatusChange}
-            onRunningChange={handleJobRunningChange}
-            onErrorChange={handleJobErrorChange}
-          />
-        )}
-        {activeStep === 'pull' && !requiresMigration && (
-          <PullStep
-            onStatusChange={handleJobStatusChange}
-            onRunningChange={handleJobRunningChange}
-            onErrorChange={handleJobErrorChange}
-          />
-        )}
+        {activeStep === 'migrate' && requiresMigration && <MigrateStep onStepUpdate={handleStepUpdate} />}
+        {activeStep === 'pull' && !requiresMigration && <PullStep onStepUpdate={handleStepUpdate} />}
         {activeStep === 'finish' && <FinishStep />}
       </div>
+
+      {stepError && <Alert severity="error" title={stepError} />}
 
       <Stack gap={2} justifyContent="flex-end">
         <Button
