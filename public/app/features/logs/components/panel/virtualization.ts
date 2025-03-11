@@ -176,9 +176,10 @@ export function getLogLineSize(
     optionsWidth += gap;
     textToMeasure += logs[index].timestamp;
   }
-  if (logs[index].logLevel) {
+  // When logs are unwrapped, we want an empty column space to align with other log lines.
+  if (logs[index].logLevel || !wrap) {
     optionsWidth += gap;
-    textToMeasure += logs[index].logLevel;
+    textToMeasure += logs[index].logLevel ?? '';
   }
   for (const field of displayedFields) {
     textToMeasure = getDisplayedFieldValue(field, logs[index]) + textToMeasure;

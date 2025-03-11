@@ -57,7 +57,13 @@ export const LogLine = ({
     >
       <LogLineMenu styles={styles} log={log} />
       <div className={`${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`}`}>
-        <Log displayedFields={displayedFields} log={log} showTime={showTime} styles={styles} />
+        <Log
+          displayedFields={displayedFields}
+          log={log}
+          showTime={showTime}
+          styles={styles}
+          wrapLogMessage={wrapLogMessage}
+        />
       </div>
     </div>
   );
@@ -68,13 +74,19 @@ interface LogProps {
   log: LogListModel;
   showTime: boolean;
   styles: LogLineStyles;
+  wrapLogMessage: boolean;
 }
 
-const Log = ({ displayedFields, log, showTime, styles }: LogProps) => {
+const Log = ({ displayedFields, log, showTime, styles, wrapLogMessage }: LogProps) => {
   return (
     <>
       {showTime && <span className={`${styles.timestamp} level-${log.logLevel} field`}>{log.timestamp}</span>}
-      <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel}</span>
+      {
+        // When logs are unwrapped, we want an empty column space to align with other log lines.
+      }
+      {(log.displayLevel || !wrapLogMessage) && (
+        <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel}</span>
+      )}
       {displayedFields.length > 0 ? (
         displayedFields.map((field) =>
           field === LOG_LINE_BODY_FIELD_NAME ? (
@@ -176,6 +188,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
           color: theme.colors.success.text,
         },
         '.token.log-token-size': {
+          color: theme.colors.success.text,
+        },
+        '.token.log-token-uuid': {
           color: theme.colors.success.text,
         },
         '.token.log-token-key': {
