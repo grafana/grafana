@@ -27,6 +27,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -226,10 +227,17 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 				case "files":
 					// Reading files is allowed for everyone, so as to allow code reviews and similar.
-					if id.GetOrgRole().Includes(identity.RoleViewer) {
+					// Writing files is only allowed fo Editor and higher.
+					isViewer := id.GetOrgRole().Includes(identity.RoleViewer)
+					isEditor := id.GetOrgRole().Includes(identity.RoleEditor)
+					isReadOperation := a.GetVerb() == apiutils.VerbGet || a.GetVerb() == apiutils.VerbList || a.GetVerb() == apiutils.VerbWatch
+
+					if isEditor || (isViewer && isReadOperation) {
 						return authorizer.DecisionAllow, "", nil
+					} else if isReadOperation {
+						return authorizer.DecisionDeny, "viewer role is required for reads", nil
 					} else {
-						return authorizer.DecisionDeny, "viewer role is required", nil
+						return authorizer.DecisionDeny, "editor role is required for edits", nil
 					}
 
 				case "resources", "sync", "history", "render":
