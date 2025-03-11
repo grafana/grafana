@@ -156,12 +156,15 @@ func (b *backend) initLocked(ctx context.Context) error {
 	b.historyPruner = newHistoryPruner(&historyPrunerCfg{
 		metrics: b.storageMetrics,
 
-		bufferSize: 100,
-		minWait:    10 * time.Second,
-		maxWait:    time.Minute,
+		bufferSize: 1000,
+		minWait:    time.Second,
+		maxWait:    time.Second * 10,
 
 		keyFunc: func(key *resource.ResourceKey) string {
 			return key.Namespace + ":" + key.Group + ":" + key.Resource
+		},
+		errorHandler: func(key *resource.ResourceKey, err error) {
+			b.log.Error("failed to prune history", "error", err, "key", key)
 		},
 	})
 	b.historyPruner.startWorker(ctx, func(ctx context.Context, key *resource.ResourceKey) error {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/util"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -20,7 +21,8 @@ type historyPrunerCfg struct {
 	minWait    time.Duration
 	maxWait    time.Duration
 
-	keyFunc util.KeyFunc[*resource.ResourceKey]
+	keyFunc      util.KeyFunc[*resource.ResourceKey]
+	errorHandler func(*resource.ResourceKey, error)
 }
 
 // historyPruner handles pruning of resource history
@@ -32,12 +34,15 @@ type historyPruner struct {
 // newHistoryPruner creates a new history pruner with the given buffer size
 func newHistoryPruner(cfg *historyPrunerCfg) *historyPruner {
 	// Create a debouncer with default wait times
-	debouncer := util.NewDebouncer(
-		cfg.bufferSize,
-		cfg.keyFunc,
-		cfg.minWait,
-		cfg.maxWait,
-	)
+	debouncer := util.NewDebouncer(util.DebouncerCfg[*resource.ResourceKey]{
+		BufferSize:        cfg.bufferSize,
+		KeyFunc:           cfg.keyFunc,
+		MinWait:           cfg.minWait,
+		MaxWait:           cfg.maxWait,
+		MetricsRegisterer: prometheus.DefaultRegisterer,
+		Name:              "history_pruner",
+		ErrorHandler:      cfg.errorHandler,
+	})
 
 	return &historyPruner{
 		debouncer: debouncer,
