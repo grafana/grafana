@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/configure-jira/
-description: Configure the Jira Service Management integration to receive notifications when your alerts are firing
+description: Configure the Jira integration to receive notifications when your alerts are firing
 keywords:
   - grafana
   - alerting
