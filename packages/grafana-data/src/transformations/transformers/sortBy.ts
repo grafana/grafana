@@ -6,7 +6,6 @@ import { DataFrame } from '../../types/dataFrame';
 import { DataTransformContext, DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
-import { transformationsVariableSupport } from './utils';
 
 export interface SortByField {
   field: string;
@@ -59,12 +58,7 @@ function attachFieldIndex(frame: DataFrame, sort: SortByField[], ctx: DataTransf
       // null or undefined
       return s;
     }
-    if (transformationsVariableSupport()) {
-      return {
-        ...s,
-        index: frame.fields.findIndex((f) => ctx.interpolate(s.field) === getFieldDisplayName(f, frame)),
-      };
-    }
+
     return {
       ...s,
       index: frame.fields.findIndex((f) => s.field === getFieldDisplayName(f, frame)),

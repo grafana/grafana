@@ -7,6 +7,7 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
 	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
@@ -57,8 +58,6 @@ const (
 	KindDashboards string = "dashboards"
 	KindFolders    string = "folders"
 )
-
-var ClusterNamespace = common.ClusterNamespace
 
 var (
 	ToAuthzExtTupleKey                  = common.ToAuthzExtTupleKey

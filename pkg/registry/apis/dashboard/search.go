@@ -18,10 +18,10 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -30,7 +30,6 @@ import (
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -43,8 +42,8 @@ type SearchHandler struct {
 	features featuremgmt.FeatureToggles
 }
 
-func NewSearchHandler(tracer trace.Tracer, cfg *setting.Cfg, legacyDashboardSearcher resource.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
-	searchClient := resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, resourceClient, legacyDashboardSearcher)
+func NewSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyDashboardSearcher resource.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
+	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), dashboardv0alpha1.DashboardResourceInfo.GroupResource(), resourceClient, legacyDashboardSearcher)
 	return &SearchHandler{
 		client:   searchClient,
 		log:      log.New("grafana-apiserver.dashboards.search"),
@@ -263,7 +262,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	switch len(types) {
 	case 0:
 		// When no type specified, search for dashboards
-		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), dashboard.DASHBOARD_RESOURCE)
+		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
 		// Currently a search query is across folders and dashboards
 		if err == nil {
 			federate, err = asResourceKey(user.GetNamespace(), folderv0alpha1.RESOURCE)
@@ -290,7 +289,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	if queryParams.Has("sort") {
 		for _, sort := range queryParams["sort"] {
 			if slices.Contains(search.DashboardFields(), sort) {
-				sort = "fields." + sort
+				sort = resource.SEARCH_FIELD_PREFIX + sort
 			}
 			s := &resource.ResourceSearchRequest_Sort{Field: sort}
 			if strings.HasPrefix(sort, "-") {
@@ -333,10 +332,14 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// hijacks the "name" query param to only search for shared dashboard UIDs
-		if len(dashboardUIDs) > 0 {
-			names = append(names, dashboardUIDs...)
+		if len(dashboardUIDs) == 0 {
+			s.write(w, dashboardv0alpha1.SearchResults{
+				Hits: []dashboardv0alpha1.DashboardHit{},
+			})
+			return
 		}
+		// hijacks the "name" query param to only search for shared dashboard UIDs
+		names = append(names, dashboardUIDs...)
 	} else if folder != "" {
 		if folder == rootFolder {
 			folder = "" // root folder is empty in the search index
@@ -366,6 +369,10 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if result != nil {
+		s.log.Debug("search result hits and cost", "total_hits", result.TotalHits, "query_cost", result.QueryCost)
+	}
+
 	parsedResults, err := dashboardsearch.ParseResults(result, searchRequest.Offset)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
@@ -375,8 +382,8 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	if len(searchRequest.SortBy) == 0 {
 		// default sort by resource descending ( folders then dashboards ) then title
 		sort.Slice(parsedResults.Hits, func(i, j int) bool {
-			return parsedResults.Hits[i].Resource > parsedResults.Hits[j].Resource ||
-				(parsedResults.Hits[i].Resource == parsedResults.Hits[j].Resource && strings.ToLower(parsedResults.Hits[i].Title) < strings.ToLower(parsedResults.Hits[j].Title))
+			// Just sorting by resource for now. The rest should be sorted by search score already
+			return parsedResults.Hits[i].Resource > parsedResults.Hits[j].Resource
 		})
 	}
 
@@ -421,7 +428,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		return sharedDashboards, nil
 	}
 
-	key, err := asResourceKey(user.GetNamespace(), dashboard.DASHBOARD_RESOURCE)
+	key, err := asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
 	if err != nil {
 		return sharedDashboards, err
 	}

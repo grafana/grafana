@@ -3,10 +3,10 @@
 # to maintain formatting of multiline commands in vscode, add the following to settings.json:
 # "docker.languageserver.formatter.ignoreMultilineInstructions": true
 
-ARG BASE_IMAGE=alpine:3.20
+ARG BASE_IMAGE=alpine:3.21
 ARG JS_IMAGE=node:22-alpine
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.23.5-alpine
+ARG GO_IMAGE=golang:1.23.7-alpine
 
 # Default to building locally
 ARG GO_SRC=go-builder
@@ -73,7 +73,7 @@ COPY pkg/storage/unified/apistore pkg/storage/unified/apistore
 COPY pkg/semconv pkg/semconv
 COPY pkg/aggregator pkg/aggregator
 COPY apps/playlist apps/playlist
-COPY apps/investigation apps/investigation
+COPY apps/investigations apps/investigations
 COPY apps/advisor apps/advisor
 COPY apps apps
 COPY kindsv2 kindsv2
@@ -124,6 +124,7 @@ FROM ${JS_SRC} AS js-src
 FROM ${BASE_IMAGE}
 
 LABEL maintainer="Grafana Labs <hello@grafana.com>"
+LABEL org.opencontainers.image.source="https://github.com/grafana/grafana"
 
 ARG GF_UID="472"
 ARG GF_GID="0"

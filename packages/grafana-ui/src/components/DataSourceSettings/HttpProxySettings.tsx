@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
+import { t } from '../../utils/i18n';
 import { InlineField } from '../Forms/InlineField';
 import { Stack } from '../Layout/Stack/Stack';
 import { InlineSwitch } from '../Switch/Switch';
@@ -20,7 +21,11 @@ export const HttpProxySettings = ({
   return (
     <div className={gridLayout}>
       <Stack direction="row" gap={0.5}>
-        <InlineField label="TLS Client Auth" labelWidth={LABEL_WIDTH} disabled={dataSourceConfig.readOnly}>
+        <InlineField
+          label={t('grafana-ui.data-source-http-proxy-settings.ts-client-auth-label', 'TLS Client Auth')}
+          labelWidth={LABEL_WIDTH}
+          disabled={dataSourceConfig.readOnly}
+        >
           <InlineSwitch
             id="http-settings-tls-client-auth"
             value={dataSourceConfig.jsonData.tlsAuth || false}
@@ -28,8 +33,11 @@ export const HttpProxySettings = ({
           />
         </InlineField>
         <InlineField
-          label="With CA Cert"
-          tooltip="Needed for verifying self-signed TLS Certs"
+          label={t('grafana-ui.data-source-http-proxy-settings.with-ca-cert-label', 'With CA Cert')}
+          tooltip={t(
+            'grafana-ui.data-source-http-proxy-settings.with-ca-cert-tooltip',
+            'Needed for verifying self-signed TLS Certs'
+          )}
           labelWidth={LABEL_WIDTH}
           disabled={dataSourceConfig.readOnly}
         >
@@ -42,7 +50,11 @@ export const HttpProxySettings = ({
           />
         </InlineField>
       </Stack>
-      <InlineField label="Skip TLS Verify" labelWidth={LABEL_WIDTH} disabled={dataSourceConfig.readOnly}>
+      <InlineField
+        label={t('grafana-ui.data-source-http-proxy-settings.skip-tls-verify-label', 'Skip TLS Verify')}
+        labelWidth={LABEL_WIDTH}
+        disabled={dataSourceConfig.readOnly}
+      >
         <InlineSwitch
           id="http-settings-skip-tls-verify"
           value={dataSourceConfig.jsonData.tlsSkipVerify || false}
@@ -51,8 +63,11 @@ export const HttpProxySettings = ({
       </InlineField>
       {showForwardOAuthIdentityOption && (
         <InlineField
-          label="Forward OAuth Identity"
-          tooltip="Forward the user's upstream OAuth identity to the data source (Their access token gets passed along)."
+          label={t('grafana-ui.data-source-http-proxy-settings.oauth-identity-label', 'Forward OAuth Identity')}
+          tooltip={t(
+            'grafana-ui.data-source-http-proxy-settings.oauth-identity-tooltip',
+            "Forward the user's upstream OAuth identity to the data source (Their access token gets passed along)."
+          )}
           labelWidth={LABEL_WIDTH}
           disabled={dataSourceConfig.readOnly}
         >

@@ -25,17 +25,14 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { useCleanup } from 'app/core/hooks/useCleanup';
 import { Trans, t } from 'app/core/internationalization';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
-import { AppChromeUpdate } from '../../../../../core/components/AppChrome/AppChromeUpdate';
-import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
-import { initialAsyncRequestState } from '../../utils/redux';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
+import { Spacer } from '../Spacer';
 import { EditorColumnHeader } from '../contact-points/templates/EditorColumnHeader';
 import {
   NotificationTemplate,
@@ -95,15 +92,14 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
 
   const appNotification = useAppNotification();
 
-  const [createNewTemplate] = useCreateNotificationTemplate({ alertmanager });
-  const [updateTemplate] = useUpdateNotificationTemplate({ alertmanager });
+  const [createNewTemplate, { error: createTemplateError }] = useCreateNotificationTemplate({ alertmanager });
+  const [updateTemplate, { error: updateTemplateError }] = useUpdateNotificationTemplate({ alertmanager });
   const { titleIsUnique } = useValidateNotificationTemplate({ alertmanager, originalTemplate });
 
-  useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
   const formRef = useRef<HTMLFormElement>(null);
   const isGrafanaAlertManager = alertmanager === GRAFANA_RULES_SOURCE_NAME;
 
-  const { error } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
+  const error = updateTemplateError ?? createTemplateError;
 
   const [cheatsheetOpened, toggleCheatsheetOpened] = useToggle(false);
 
@@ -168,28 +164,9 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
     setValue('content', newValue);
   };
 
-  const actionButtons = (
-    <Stack>
-      <Button onClick={() => formRef.current?.requestSubmit()} variant="primary" size="sm" disabled={isSubmitting}>
-        <Trans i18nKey="common.save">Save</Trans>
-      </Button>
-      <LinkButton
-        disabled={isSubmitting}
-        href={makeAMLink('alerting/notifications', alertmanager, {
-          tab: ContactPointsActiveTabs.NotificationTemplates,
-        })}
-        variant="secondary"
-        size="sm"
-      >
-        <Trans i18nKey="common.cancel">Cancel</Trans>
-      </LinkButton>
-    </Stack>
-  );
-
   return (
     <>
       <FormProvider {...formApi}>
-        <AppChromeUpdate actions={actionButtons} />
         <form onSubmit={handleSubmit(submit)} ref={formRef} className={styles.form} aria-label="Template form">
           {/* error message */}
           {error && (
@@ -206,136 +183,155 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
 
           {/* name field for the template */}
           <FieldSet disabled={isProvisioned} className={styles.fieldset}>
-            <InlineField
-              label="Template group name"
-              error={errors?.title?.message}
-              invalid={!!errors.title?.message}
-              required
-              className={styles.nameField}
-            >
-              <Input
-                {...register('title', {
-                  required: { value: true, message: 'Required.' },
-                  validate: { titleIsUnique },
-                })}
-                placeholder="Give your template group a name"
-                width={42}
-                autoFocus={true}
-                id="new-template-name"
-              />
-            </InlineField>
+            <Stack direction="column" gap={1} alignItems="stretch" minHeight="100%">
+              {/* name and save buttons */}
+              <Stack direction="row" alignItems="center">
+                <InlineField
+                  label="Template group name"
+                  error={errors?.title?.message}
+                  invalid={!!errors.title?.message}
+                  required
+                >
+                  <Input
+                    {...register('title', {
+                      required: { value: true, message: 'Required.' },
+                      validate: { titleIsUnique },
+                    })}
+                    placeholder="Give your template group a name"
+                    width={42}
+                    autoFocus={true}
+                    id="new-template-name"
+                  />
+                </InlineField>
+                <Spacer />
+                <Stack>
+                  <Button onClick={() => formRef.current?.requestSubmit()} variant="primary" disabled={isSubmitting}>
+                    <Trans i18nKey="common.save">Save</Trans>
+                  </Button>
+                  <LinkButton
+                    disabled={isSubmitting}
+                    href={makeAMLink('alerting/notifications', alertmanager, {
+                      tab: ContactPointsActiveTabs.NotificationTemplates,
+                    })}
+                    variant="secondary"
+                  >
+                    <Trans i18nKey="common.cancel">Cancel</Trans>
+                  </LinkButton>
+                </Stack>
+              </Stack>
 
-            {/* editor layout */}
-            <div {...rowSplitter.containerProps} className={styles.contentContainer}>
-              <div {...rowSplitter.primaryProps}>
-                {/* template content and payload editor column – full height and half-width */}
-                <div {...columnSplitter.containerProps} className={styles.contentField}>
-                  {/* template editor */}
-                  <div {...columnSplitter.primaryProps}>
-                    {/* primaryProps will set "minHeight: min-content;" so we have to make sure to apply minHeight to the child */}
-                    <div className={cx(styles.flexColumn, styles.containerWithBorderAndRadius, styles.minEditorSize)}>
-                      <div>
-                        <EditorColumnHeader
-                          label="Template group"
-                          actions={
-                            <>
-                              {/* examples dropdown – only available for Grafana Alertmanager */}
-                              {isGrafanaAlertManager && (
-                                <Dropdown
-                                  overlay={
-                                    <Menu>
-                                      {GlobalTemplateDataExamples.map((item, index) => (
+              {/* editor layout */}
+              <div {...rowSplitter.containerProps} className={styles.contentContainer}>
+                <div {...rowSplitter.primaryProps}>
+                  {/* template content and payload editor column – full height and half-width */}
+                  <div {...columnSplitter.containerProps} className={styles.contentField}>
+                    {/* template editor */}
+                    <div {...columnSplitter.primaryProps}>
+                      {/* primaryProps will set "minHeight: min-content;" so we have to make sure to apply minHeight to the child */}
+                      <div className={cx(styles.flexColumn, styles.containerWithBorderAndRadius, styles.minEditorSize)}>
+                        <div>
+                          <EditorColumnHeader
+                            label="Template group"
+                            actions={
+                              <>
+                                {/* examples dropdown – only available for Grafana Alertmanager */}
+                                {isGrafanaAlertManager && (
+                                  <Dropdown
+                                    overlay={
+                                      <Menu>
+                                        {GlobalTemplateDataExamples.map((item, index) => (
+                                          <Menu.Item
+                                            key={index}
+                                            label={item.description}
+                                            onClick={() => appendExample(item.example)}
+                                          />
+                                        ))}
+                                        <Menu.Divider />
                                         <Menu.Item
-                                          key={index}
-                                          label={item.description}
-                                          onClick={() => appendExample(item.example)}
+                                          label={'Examples documentation'}
+                                          url="https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/examples/"
+                                          target="_blank"
+                                          icon="external-link-alt"
                                         />
-                                      ))}
-                                      <Menu.Divider />
-                                      <Menu.Item
-                                        label={'Examples documentation'}
-                                        url="https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/examples/"
-                                        target="_blank"
-                                        icon="external-link-alt"
-                                      />
-                                    </Menu>
-                                  }
+                                      </Menu>
+                                    }
+                                  >
+                                    <Button variant="secondary" size="sm" icon="angle-down">
+                                      <Trans i18nKey="alerting.templates.editor.add-example">Add example</Trans>
+                                    </Button>
+                                  </Dropdown>
+                                )}
+                                <Button
+                                  icon="question-circle"
+                                  size="sm"
+                                  fill="outline"
+                                  variant="secondary"
+                                  onClick={toggleCheatsheetOpened}
                                 >
-                                  <Button variant="secondary" size="sm" icon="angle-down">
-                                    <Trans i18nKey="alerting.templates.editor.add-example">Add example</Trans>
-                                  </Button>
-                                </Dropdown>
-                              )}
-                              <Button
-                                icon="question-circle"
-                                size="sm"
-                                fill="outline"
-                                variant="secondary"
-                                onClick={toggleCheatsheetOpened}
-                              >
-                                <Trans i18nKey="common.help">Help</Trans>
-                              </Button>
-                            </>
-                          }
-                        />
-                      </div>
-                      <Box flex={1}>
-                        <AutoSizer>
-                          {({ width, height }) => (
-                            <TemplateEditor
-                              value={getValues('content')}
-                              onBlur={(value) => setValue('content', value)}
-                              containerStyles={styles.editorContainer}
-                              width={width}
-                              height={height}
-                            />
-                          )}
-                        </AutoSizer>
-                      </Box>
-                    </div>
-                  </div>
-                  {/* payload editor – only available for Grafana Alertmanager */}
-                  {isGrafanaAlertManager && (
-                    <>
-                      <div {...columnSplitter.splitterProps} />
-                      <div {...columnSplitter.secondaryProps}>
-                        <div
-                          className={cx(
-                            styles.containerWithBorderAndRadius,
-                            styles.minEditorSize,
-                            styles.payloadEditor,
-                            styles.flexFull
-                          )}
-                        >
-                          <PayloadEditor
-                            payload={payload}
-                            defaultPayload={defaultPayloadString}
-                            setPayload={setPayload}
-                            setPayloadFormatError={setPayloadFormatError}
-                            payloadFormatError={payloadFormatError}
+                                  <Trans i18nKey="common.help">Help</Trans>
+                                </Button>
+                              </>
+                            }
                           />
                         </div>
+                        <Box flex={1}>
+                          <AutoSizer>
+                            {({ width, height }) => (
+                              <TemplateEditor
+                                value={getValues('content')}
+                                onBlur={(value) => setValue('content', value)}
+                                containerStyles={styles.editorContainer}
+                                width={width}
+                                height={height}
+                              />
+                            )}
+                          </AutoSizer>
+                        </Box>
                       </div>
-                    </>
-                  )}
-                </div>
-              </div>
-              {/* preview column – full height and half-width */}
-              {isGrafanaAlertManager && (
-                <>
-                  <div {...rowSplitter.secondaryProps}>
-                    <div {...rowSplitter.splitterProps} />
-                    <TemplatePreview
-                      payload={payload}
-                      templateName={watch('title')}
-                      setPayloadFormatError={setPayloadFormatError}
-                      payloadFormatError={payloadFormatError}
-                      className={cx(styles.templatePreview, styles.minEditorSize)}
-                    />
+                    </div>
+                    {/* payload editor – only available for Grafana Alertmanager */}
+                    {isGrafanaAlertManager && (
+                      <>
+                        <div {...columnSplitter.splitterProps} />
+                        <div {...columnSplitter.secondaryProps}>
+                          <div
+                            className={cx(
+                              styles.containerWithBorderAndRadius,
+                              styles.minEditorSize,
+                              styles.payloadEditor,
+                              styles.flexFull
+                            )}
+                          >
+                            <PayloadEditor
+                              payload={payload}
+                              defaultPayload={defaultPayloadString}
+                              setPayload={setPayload}
+                              setPayloadFormatError={setPayloadFormatError}
+                              payloadFormatError={payloadFormatError}
+                            />
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
-                </>
-              )}
-            </div>
+                </div>
+                {/* preview column – full height and half-width */}
+                {isGrafanaAlertManager && (
+                  <>
+                    <div {...rowSplitter.secondaryProps}>
+                      <div {...rowSplitter.splitterProps} />
+                      <TemplatePreview
+                        payload={payload}
+                        templateName={watch('title')}
+                        setPayloadFormatError={setPayloadFormatError}
+                        payloadFormatError={payloadFormatError}
+                        className={cx(styles.templatePreview, styles.minEditorSize)}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+            </Stack>
           </FieldSet>
         </form>
       </FormProvider>
@@ -438,9 +434,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     label: css({
       margin: 0,
-    }),
-    nameField: css({
-      marginBottom: theme.spacing(1),
     }),
     contentContainer: css({
       flex: 1,

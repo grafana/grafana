@@ -1,6 +1,9 @@
-import { UsePluginComponentResult } from './getPluginExtensions';
+export type UsePluginComponent<Props extends object = {}> = (componentId: string) => UsePluginComponentResult<Props>;
 
-export type UsePluginComponent<Props extends object = {}> = (id: string) => UsePluginComponentResult<Props>;
+export type UsePluginComponentResult<Props = {}> = {
+  component: React.ComponentType<Props> | undefined | null;
+  isLoading: boolean;
+};
 
 let singleton: UsePluginComponent | undefined;
 
@@ -12,9 +15,9 @@ export function setPluginComponentHook(hook: UsePluginComponent): void {
   singleton = hook;
 }
 
-export function usePluginComponent<Props extends object = {}>(id: string): UsePluginComponentResult<Props> {
+export function usePluginComponent<Props extends object = {}>(componentId: string): UsePluginComponentResult<Props> {
   if (!singleton) {
     throw new Error('setPluginComponentHook(options) can only be used after the Grafana instance has started.');
   }
-  return singleton(id) as UsePluginComponentResult<Props>;
+  return singleton(componentId) as UsePluginComponentResult<Props>;
 }

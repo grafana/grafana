@@ -54,6 +54,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
     const result = await onSaveDashboard(dashboard, {
       overwrite,
       folderUid: data.folder.uid,
+      rawDashboardJSON: changedSaveModel,
 
       // save as config
       saveAsCopy: true,

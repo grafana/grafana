@@ -62,21 +62,24 @@ export async function isPluginFrontendSandboxEligible({
     return false;
   }
 
-  // don't run grafana-signed plugins in sandbox
+  // grafana signature and internal plugins are not allowed in the sandbox
+  return isPluginSignatureEligibleForSandbox({ pluginId });
+}
+
+async function isPluginSignatureEligibleForSandbox({ pluginId }: SandboxEligibilityCheckParams): Promise<boolean> {
   try {
-    //this can fail if gcom is not accesible
-    const details = await getPluginDetails(pluginId);
-    return details.signatureType !== PluginSignatureType.grafana && details.signature !== 'internal';
+    // this can fail if we are trying to fetch settings of a non-installed plugin
+    const pluginMeta = await getPluginSettings(pluginId, { showErrorAlert: false });
+    return pluginMeta.signatureType !== PluginSignatureType.grafana && pluginMeta.signature !== 'internal';
   } catch (e) {
     try {
-      // this can fail if we are trying to fetch settings of a non-installed plugin
-      const pluginMeta = await getPluginSettings(pluginId, { showErrorAlert: false });
-      return pluginMeta.signatureType !== PluginSignatureType.grafana && pluginMeta.signature !== 'internal';
+      //this can fail if gcom is not accesible
+      const details = await getPluginDetails(pluginId);
+      return details.signatureType !== PluginSignatureType.grafana && details.signature !== 'internal';
     } catch (e) {
       return false;
     }
   }
-  return true;
 }
 
 /**
