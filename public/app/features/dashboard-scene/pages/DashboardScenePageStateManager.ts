@@ -651,6 +651,21 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   public async loadSnapshot(slug: string) {
     return this.withVersionHandling((manager) => manager.loadSnapshot(slug));
   }
+
+  public clearDashboardCache() {
+    this.v1Manager.clearDashboardCache();
+    this.v2Manager.clearDashboardCache();
+  }
+
+  public clearSceneCache() {
+    this.v1Manager.clearSceneCache();
+    this.v2Manager.clearSceneCache();
+    this.cache = {};
+  }
+
+  public getCache() {
+    return this.activeManager.getCache();
+  }
 }
 
 const managers: {
