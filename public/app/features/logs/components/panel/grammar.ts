@@ -4,6 +4,7 @@ import { LogListModel } from './processing';
 
 // The Logs grammar is used for highlight in the logs panel
 export const logsGrammar: Grammar = {
+  'log-token-uuid': /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}/g,
   'log-token-timestamp': /\b\d{4}-\d{2}-\d{2}[T|\s]{1}\d{1,2}:\d{2}:\d{2}(?:[\.]{0,1}\d{0,9})?(?:Z|\+\d{2}:\d{2}|\b)\b/,
   'log-token-json-key': /"(\b|\B)[\w-]+"(?=\s*:)/gi,
   'log-token-key': /(\b|\B)[\w_]+(?=\s*=)/gi,
