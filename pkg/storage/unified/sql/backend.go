@@ -157,8 +157,8 @@ func (b *backend) initLocked(ctx context.Context) error {
 		metrics: b.storageMetrics,
 
 		bufferSize: 1000,
-		minWait:    time.Second,
-		maxWait:    time.Second * 10,
+		minWait:    time.Second * 5,
+		maxWait:    time.Second * 30,
 
 		keyFunc: func(key *resource.ResourceKey) string {
 			return key.Namespace + ":" + key.Group + ":" + key.Resource
@@ -169,13 +169,18 @@ func (b *backend) initLocked(ctx context.Context) error {
 	})
 	b.historyPruner.startWorker(ctx, func(ctx context.Context, key *resource.ResourceKey) error {
 		return dbConn.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
-			_, err := dbutil.Exec(ctx, tx, sqlResourceHistoryPrune, &sqlPruneHistoryRequest{
+			res, err := dbutil.Exec(ctx, tx, sqlResourceHistoryPrune, &sqlPruneHistoryRequest{
 				SQLTemplate: sqltemplate.New(b.dialect),
 				Key:         key,
 			})
 			if err != nil {
 				return fmt.Errorf("failed to prune history: %w", err)
 			}
+			rows, err := res.RowsAffected()
+			if err != nil {
+				return fmt.Errorf("failed to get rows affected: %w", err)
+			}
+			b.log.Info("pruned history", "key", key, "rows", rows)
 			return nil
 		})
 	})
