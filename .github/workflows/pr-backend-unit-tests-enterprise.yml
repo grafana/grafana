@@ -86,12 +86,17 @@ jobs:
           codecov-token: ${{ secrets.CODECOV_TOKEN }}
           codecov-flag: '${{ env.TEST_TYPE }}'
           codecov-name: '${{ env.TEST_TYPE }}'
-      # "Clear build cache" is a hack to get around GitHub Actions not allowing us to overwrite existing cache keys
+      - name: "Generate token"
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
       - name: Clear build cache
         run: gh cache delete go-test-cache-${{ github.ref_name }}
         continue-on-error: true
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
       - name: Save build cache
         uses: actions/cache/save@v4
         with:
