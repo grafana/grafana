@@ -3,11 +3,10 @@ name: Verify Storybook
 on:
   pull_request:
     paths:
-      - packages/grafana-ui/**
-      - .github/workflows/storybook-verification.yml
-    paths-ignore:
-      - 'docs/**'
-      - '*.md'
+      - 'packages/grafana-ui/**'
+      - '.github/workflows/storybook-verification.yml'
+      - '!docs/**'
+      - '!*.md'
 
 jobs:
   verify-storybook:
