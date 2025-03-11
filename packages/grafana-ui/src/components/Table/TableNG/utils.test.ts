@@ -1,48 +1,50 @@
+import { SortColumn } from 'react-data-grid';
+
 import {
-  FieldType,
   createDataFrame,
+  createTheme,
+  DataFrame,
   DisplayProcessor,
-  Field,
-  GrafanaTheme2,
   DisplayValue,
+  Field,
+  FieldType,
+  GrafanaTheme2,
+  LinkModel,
   ValueLinkConfig,
 } from '@grafana/data';
-import { createTheme } from '@grafana/data';
 import {
-  mapFrameToDataGrid,
-  getFooterItemNG,
-  getTextAlign,
-  getCellColors,
-  frameToRecords,
-  handleSort,
-  getAlignmentFactor,
-  getIsNestedTable,
-  shouldTextOverflow,
-  getRowHeight,
-  isTextCell,
-  getComparator,
-  migrateTableDisplayModeToCellOptions,
-  getCellOptions,
-  getCellLinks,
-  getCellHeight,
-  getColumnWidth,
-  getFooterStyles,
-  extractPixelValue,
-  convertRGBAToHex,
-  getDefaultRowHeight,
-  myRowRenderer,
-} from './utils';
-import { TableColumn } from './types';
-import {
+  BarGaugeDisplayMode,
   TableCellBackgroundDisplayMode,
   TableCellDisplayMode,
-  BarGaugeDisplayMode,
   TableCellHeight,
 } from '@grafana/schema';
-import { SortColumn } from 'react-data-grid';
-import { DataFrame } from '@grafana/data';
+
 import { COLUMN, TABLE } from './constants';
-import { LinkModel } from '@grafana/data';
+import { TableColumn } from './types';
+import {
+  convertRGBAToHex,
+  extractPixelValue,
+  frameToRecords,
+  getAlignmentFactor,
+  getCellColors,
+  getCellHeight,
+  getCellLinks,
+  getCellOptions,
+  getColumnWidth,
+  getComparator,
+  getDefaultRowHeight,
+  getFooterItemNG,
+  getFooterStyles,
+  getIsNestedTable,
+  getRowHeight,
+  getTextAlign,
+  handleSort,
+  isTextCell,
+  mapFrameToDataGrid,
+  migrateTableDisplayModeToCellOptions,
+  myRowRenderer,
+  shouldTextOverflow,
+} from './utils';
 
 const data = createDataFrame({
   fields: [
@@ -623,7 +625,7 @@ describe('TableNG utils', () => {
 
   describe('handleSort', () => {
     const setSortColumns = jest.fn();
-    const sortColumnsRef: { current: readonly SortColumn[] } = { current: [] };
+    const sortColumnsRef: { current: SortColumn[] } = { current: [] };
 
     beforeEach(() => {
       setSortColumns.mockClear();
