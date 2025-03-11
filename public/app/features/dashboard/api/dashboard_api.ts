@@ -30,14 +30,14 @@ export function getDashboardAPI(): DashboardAPI<
   DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>,
   Dashboard | DashboardV2Spec
 >;
-export function getDashboardAPI(apiVersion: 'v1'): DashboardAPI<DashboardDTO, Dashboard>;
+export function getDashboardAPI(responseFormat: 'v1'): DashboardAPI<DashboardDTO, Dashboard>;
 export function getDashboardAPI(
-  apiVersion: 'v2'
+  responseFormat: 'v2'
 ): DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec>, DashboardV2Spec>;
 export function getDashboardAPI(
-  apiVersion?: 'v1' | 'v2'
+  responseFormat?: 'v1' | 'v2'
 ): DashboardAPI<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>, Dashboard | DashboardV2Spec> {
-  const v = getDashboardsApiVersion();
+  const v = getDashboardsApiVersion(responseFormat);
 
   if (!clients) {
     clients = {
@@ -46,14 +46,6 @@ export function getDashboardAPI(
       v2: new K8sDashboardV2API(),
       unified: new UnifiedDashboardAPI(),
     };
-  }
-
-  if (apiVersion === 'v1') {
-    return clients.v1 ?? new K8sDashboardAPI();
-  }
-
-  if (apiVersion === 'v2') {
-    return clients.v2 ?? new K8sDashboardV2API();
   }
 
   if (!clients[v]) {
