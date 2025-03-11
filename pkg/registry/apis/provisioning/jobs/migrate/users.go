@@ -14,11 +14,14 @@ import (
 )
 
 func (j *migrationJob) loadUsers(ctx context.Context) error {
-	client := j.client.Resource(schema.GroupVersionResource{
+	client, _, err := j.client.ForResource(schema.GroupVersionResource{
 		Group:    iam.GROUP,
 		Version:  iam.VERSION,
 		Resource: iam.UserResourceInfo.GroupResource().Resource,
 	})
+	if err != nil {
+		return err
+	}
 
 	rawList, err := client.List(ctx, metav1.ListOptions{Limit: 10000})
 	if err != nil {

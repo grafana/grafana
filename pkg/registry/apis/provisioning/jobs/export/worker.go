@@ -12,6 +12,7 @@ import (
 	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
@@ -19,8 +20,8 @@ type ExportWorker struct {
 	// Tempdir for repo clones
 	clonedir string
 
-	// When exporting from apiservers
-	clients *resources.ClientFactory
+	// required to create clients
+	configProvider apiserver.RestConfigProvider
 
 	// Check where values are currently saved
 	storageStatus dualwrite.Service
@@ -29,14 +30,14 @@ type ExportWorker struct {
 	secrets secrets.Service
 }
 
-func NewExportWorker(clients *resources.ClientFactory,
+func NewExportWorker(configProvider apiserver.RestConfigProvider,
 	storageStatus dualwrite.Service,
 	secrets secrets.Service,
 	clonedir string,
 ) *ExportWorker {
 	return &ExportWorker{
 		clonedir,
-		clients,
+		configProvider,
 		storageStatus,
 		secrets,
 	}
@@ -82,12 +83,12 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return errors.New("export job submitted targeting repository that is not a ReaderWriter")
 	}
 
-	dynamicClient, _, err := r.clients.New(rw.Config().Namespace)
+	clients, err := resources.NewResourceClients(ctx, r.configProvider, repo.Config().Namespace)
 	if err != nil {
-		return fmt.Errorf("error getting client: %w", err)
+		return err
 	}
 
-	worker := newExportJob(ctx, rw, *options, dynamicClient, progress)
+	worker := newExportJob(ctx, rw, *options, clients, progress)
 
 	// Load and write all folders
 	progress.SetMessage("start folder export")

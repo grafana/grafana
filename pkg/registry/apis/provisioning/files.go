@@ -274,7 +274,11 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 }
 
 func (s *filesConnector) doCreateFolder(ctx context.Context, repo repository.Writer, path string, ref string, message string, parser *resources.Parser) (*provisioning.ResourceWrapper, error) {
-	manager := resources.NewFolderManager(repo, parser.Client().Resource(folder.SchemeGroupVersion.WithResource(folder.RESOURCE)))
+	client, _, err := parser.Clients().ForResource(folder.SchemeGroupVersion.WithResource(folder.RESOURCE))
+	if err != nil {
+		return nil, err
+	}
+	manager := resources.NewFolderManager(repo, client)
 
 	// Now actually create the folder
 	if err := repo.Create(ctx, path, ref, nil, message); err != nil {

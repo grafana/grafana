@@ -16,7 +16,6 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 type testConnector struct {
@@ -106,9 +105,6 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 }
 
 type RepositoryTester struct {
-	// Across Grafana (currently used to get a folder client)
-	clientFactory *resources.ClientFactory
-
 	// Repository+Jobs
 	client client.ProvisioningV0alpha1Interface
 }

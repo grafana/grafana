@@ -24,11 +24,14 @@ func (r *exportJob) loadFolders(ctx context.Context) error {
 
 	// TODO: should this be logging or message or both?
 	r.progress.SetMessage("read folder tree from unified storage")
-	client := r.client.Resource(schema.GroupVersionResource{
+	client, _, err := r.client.ForResource(schema.GroupVersionResource{
 		Group:    folders.GROUP,
 		Version:  folders.VERSION,
 		Resource: folders.RESOURCE,
 	})
+	if err != nil {
+		return err
+	}
 
 	rawList, err := client.List(ctx, metav1.ListOptions{Limit: 10000})
 	if err != nil {

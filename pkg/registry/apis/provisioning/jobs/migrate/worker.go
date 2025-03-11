@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -27,8 +28,8 @@ type MigrationWorker struct {
 	// Tempdir for repo clones
 	clonedir string
 
-	// Read users
-	clients *resources.ClientFactory
+	// required to create clients
+	configProvider apiserver.RestConfigProvider
 
 	// temporary... while we still do an import
 	parsers *resources.ParserFactory
@@ -52,7 +53,8 @@ type MigrationWorker struct {
 	syncWorker *sync.SyncWorker
 }
 
-func NewMigrationWorker(clients *resources.ClientFactory,
+func NewMigrationWorker(
+	configProvider apiserver.RestConfigProvider, // required to create clients
 	legacyMigrator legacy.LegacyMigrator,
 	parsers *resources.ParserFactory, // should not be necessary!
 	storageStatus dualwrite.Service,
@@ -64,7 +66,7 @@ func NewMigrationWorker(clients *resources.ClientFactory,
 ) *MigrationWorker {
 	return &MigrationWorker{
 		clonedir,
-		clients,
+		configProvider,
 		parsers,
 		storageStatus,
 		legacyMigrator,
@@ -134,17 +136,12 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		}
 	}
 
-	dynamicClient, _, err := w.clients.New(repo.Config().Namespace)
-	if err != nil {
-		return fmt.Errorf("error getting client: %w", err)
-	}
-
 	parser, err := w.parsers.GetParser(ctx, rw)
 	if err != nil {
 		return fmt.Errorf("error getting parser: %w", err)
 	}
 
-	worker, err := newMigrationJob(ctx, rw, *options, dynamicClient, parser, w.bulk, w.legacyMigrator, progress)
+	worker, err := newMigrationJob(ctx, rw, *options, parser.Clients(), parser, w.bulk, w.legacyMigrator, progress)
 	if err != nil {
 		return fmt.Errorf("error creating job: %w", err)
 	}
@@ -229,7 +226,7 @@ type migrationJob struct {
 	logger logging.Logger
 	target repository.ReaderWriter
 	legacy legacy.LegacyMigrator
-	client *resources.DynamicClient // used to read users
+	client *resources.ResourceClients // used to read users
 	parser *resources.Parser
 	batch  resource.BulkStoreClient
 
@@ -246,7 +243,7 @@ type migrationJob struct {
 func newMigrationJob(ctx context.Context,
 	target repository.ReaderWriter,
 	options provisioning.MigrateJobOptions,
-	client *resources.DynamicClient,
+	client *resources.ResourceClients,
 	parser *resources.Parser,
 	batch resource.BulkStoreClient,
 	legacyMigrator legacy.LegacyMigrator,

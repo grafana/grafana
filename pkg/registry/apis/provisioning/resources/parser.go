@@ -12,7 +12,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -27,41 +26,28 @@ import (
 var ErrNamespaceMismatch = errors.New("the file namespace does not match target namespace")
 
 type ParserFactory struct {
-	configProvider apiserver.RestConfigProvider
+	ConfigProvider apiserver.RestConfigProvider
 }
 
 func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Reader) (*Parser, error) {
 	config := repo.Config()
 
-	restConfig, err := f.configProvider.GetRestConfig(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	discoveryClient, err := discovery.NewDiscoveryClientForConfig(restConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	client, kinds, err := f.Client.New(config.Namespace) // As system user
+	clients, err := NewResourceClients(ctx, f.ConfigProvider, config.GetNamespace())
 	if err != nil {
 		return nil, err
 	}
 
 	urls, _ := repo.(repository.RepositoryWithURLs)
-	parser := &Parser{
+	return &Parser{
 		repo: provisioning.ResourceRepositoryInfo{
 			Type:      config.Spec.Type,
 			Title:     config.Spec.Title,
 			Namespace: config.Namespace,
 			Name:      config.Name,
 		},
-		urls:   urls,
-		client: client,
-		kinds:  kinds,
-	}
-
-	return parser, nil
+		urls:    urls,
+		clients: clients,
+	}, nil
 }
 
 type Parser struct {
@@ -71,11 +57,8 @@ type Parser struct {
 	// for repositories that have URL support
 	urls repository.RepositoryWithURLs
 
-	// client helper (for this namespace?)
-	discovery *discovery.DiscoveryClient
-
-	// ResourceInterface cache for this context + namespace
-	client map[schema.GroupVersionKind]dynamic.ResourceInterface
+	// ResourceClients give access to k8s apis
+	clients *ResourceClients
 }
 
 type ParsedResource struct {
@@ -118,6 +101,10 @@ type ParsedResource struct {
 
 	// If we got some Errors
 	Errors []error
+}
+
+func (r *Parser) Clients() *ResourceClients {
+	return r.clients
 }
 
 func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate bool) (parsed *ParsedResource, err error) {
@@ -193,13 +180,13 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 		return parsed, nil
 	}
 
-	gvr, ok := r.kinds.Resource(*parsed.GVK)
-	if !ok {
-		return parsed, nil
+	client, gvr, err := r.clients.ForKind(*parsed.GVK)
+	if err != nil {
+		return nil, err // does not map to a resour e
 	}
 
 	parsed.GVR = &gvr
-	parsed.Client = r.client.Resource(gvr)
+	parsed.Client = client
 	if !validate {
 		return parsed, nil
 	}

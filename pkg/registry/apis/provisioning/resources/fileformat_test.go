@@ -99,8 +99,6 @@ spec:
 			repo: provisioning.ResourceRepositoryInfo{
 				Name: "test",
 			},
-			client: &DynamicClient{},
-			kinds:  &StaticKindsLookup{},
 		}
 
 		// try to validate (and lint)
