@@ -20,7 +20,7 @@ export function JobStatus({ name, onStatusChange, onRunningChange, onErrorChange
 
   useEffect(() => {
     if (onRunningChange) {
-      onRunningChange(jobQuery.isLoading || !job || job.status?.state === 'success' || job.status?.state === 'error');
+      onRunningChange(jobQuery.isLoading || !job || job.status?.state === 'working' || job.status?.state === 'pending');
     }
   }, [jobQuery.isLoading, job, onRunningChange, onErrorChange]);
 
