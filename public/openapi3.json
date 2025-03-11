@@ -7445,6 +7445,23 @@
         },
         "type": "object"
       },
+      "NamespaceListResponse": {
+        "properties": {
+          "groupNextToken": {
+            "type": "string"
+          },
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/RuleGroupSummary"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "groups"
+        ],
+        "type": "object"
+      },
       "NavbarPreference": {
         "properties": {
           "bookmarkUrls": {
@@ -10202,6 +10219,25 @@
         },
         "type": "object"
       },
+      "RuleGroupSummary": {
+        "properties": {
+          "file": {
+            "type": "string"
+          },
+          "folderUid": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "file",
+          "folderUid"
+        ],
+        "type": "object"
+      },
       "RuleResponse": {
         "properties": {
           "data": {
@@ -12707,6 +12743,7 @@
         "type": "object"
       },
       "alertGroups": {
+        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -12910,7 +12947,6 @@
         "type": "object"
       },
       "gettableAlerts": {
-        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
