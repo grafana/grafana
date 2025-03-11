@@ -3816,7 +3816,7 @@
         }
       },
       "spec": {
-        "description": "Enables using SQL and DuckDB functions as Expressions.",
+        "description": "Enables SQL Expressions, which can execute SQL queries against data source results.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services"
       }
