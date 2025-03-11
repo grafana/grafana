@@ -247,6 +247,8 @@ export interface FeatureToggles {
   alertingConversionAPI?: boolean;
   alertingAlertmanagerExtraDedupStage?: boolean;
   alertingAlertmanagerExtraDedupStageStopPipeline?: boolean;
+  alertingAlertmanagerSyncFlushStage?: boolean;
+  alertingAlertmanagerSyncFlushStageSync?: boolean;
   newLogsPanel?: boolean;
   grafanaconThemes?: boolean;
   pluginsCDNSyncLoader?: boolean;

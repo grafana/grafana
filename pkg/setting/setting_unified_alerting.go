@@ -129,6 +129,12 @@ type UnifiedAlertingSettings struct {
 	// should be stored in the database for each alert_rule in an organization including the current one.
 	// 0 value means no limit
 	RuleVersionRecordLimit int
+
+	// AlertmanagerSyncFlushStageMarginDuration is the margin used by the sync flush stage when calculating the next flush time.
+	// The stage will fetch the previous pipeline time from the notification log and will calculate the next flush time
+	// by adding the group wait time to it. If the difference between the calculated time and the current time is less
+	// than this margin, the stage will wait for the next flush time.
+	AlertmanagerSyncFlushStageMarginDuration time.Duration
 }
 
 type RecordingRuleSettings struct {
@@ -478,6 +484,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	if uaCfg.RuleVersionRecordLimit < 0 {
 		return fmt.Errorf("setting 'rule_version_record_limit' is invalid, only 0 or a positive integer are allowed")
 	}
+
+	uaCfg.AlertmanagerSyncFlushStageMarginDuration = ua.Key("alertmanager_sync_flush_stage_margin_duration").MustDuration(time.Second * 1)
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil

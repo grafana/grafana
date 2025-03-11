@@ -139,6 +139,16 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		l.Info("Initializing Alertmanager", "extra_dedup_stage", action)
 	}
 
+	syncFlushAction := stages.SyncFlushActionDisabled
+	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingAlertmanagerSyncFlushStage) {
+		if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingAlertmanagerSyncFlushStageSync) {
+			syncFlushAction = stages.SyncFlushActionSync
+		} else {
+			syncFlushAction = stages.SyncFlushActionLog
+		}
+		l.Info("Initializing Alertmanager", "sync_flush_stage", syncFlushAction)
+	}
+
 	amcfg := &alertingNotify.GrafanaAlertmanagerConfig{
 		ExternalURL:        cfg.AppURL,
 		AlertStoreCallback: nil,
@@ -150,6 +160,8 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 			MaxSilenceSizeBytes: cfg.UnifiedAlerting.AlertmanagerMaxSilenceSizeBytes,
 		},
 		PipelineAndStateTimestampsMismatchAction: action,
+		SyncFlushAction:                          syncFlushAction,
+		SyncFlushMargin:                          cfg.UnifiedAlerting.AlertmanagerSyncFlushStageMarginDuration,
 	}
 
 	// Debug the cluster flow to understand how alerts are gossiped
