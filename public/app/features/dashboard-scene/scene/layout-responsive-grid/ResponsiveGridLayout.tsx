@@ -22,7 +22,6 @@ export interface ResponsiveGridLayoutState extends SceneObjectState, ResponsiveG
   md?: ResponsiveGridLayoutOptions;
   /** True when the items should be lazy loaded */
   isLazy?: boolean;
-  activeOrder?: number;
 }
 
 export interface ResponsiveGridLayoutOptions {
@@ -118,6 +117,8 @@ export class ResponsiveGridLayout extends SceneObjectBase<ResponsiveGridLayoutSt
     return this.container;
   }
 
+  public activeOrder: number | undefined;
+
   /**
    * Find the drop zone in this layout closest to the provided `point`.
    * This gets called every tick while a layout item is being dragged, so we use the grid item's cached bbox,
@@ -137,12 +138,7 @@ export class ResponsiveGridLayout extends SceneObjectBase<ResponsiveGridLayoutSt
       }
     });
 
-    // side effect, ew
-    if (closestIndex !== this.state.activeOrder) {
-      this.setState({
-        activeOrder: closestIndex,
-      });
-    }
+    this.activeOrder = closestIndex;
 
     return { ...closestRect, distanceToPoint: minDistance };
   }

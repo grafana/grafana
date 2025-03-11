@@ -21,8 +21,9 @@ export interface DragAndDropProps {
   };
 }
 
+let i = 0;
 export function ResponsiveGridRenderer({ model }: SceneComponentProps<ResponsiveGridLayout>) {
-  const { children, activeOrder, isHidden } = model.useState();
+  const { children, isHidden } = model.useState();
   const styles = useStyles2(getStyles, model.state);
   const containerRef = useRef<HTMLDivElement>(null);
   const layoutOrchestrator = closestOfType(model, (s) => s instanceof LayoutOrchestrator);
@@ -30,6 +31,7 @@ export function ResponsiveGridRenderer({ model }: SceneComponentProps<Responsive
   const activeLayoutItem = activeLayoutItemRef?.resolve();
   const currentLayoutIsActive = children.some((c) => c === activeLayoutItem);
 
+  console.log(`ResponsiveGridRenderer: ${i++}`);
   if (isHidden || !layoutOrchestrator) {
     return null;
   }
@@ -39,13 +41,12 @@ export function ResponsiveGridRenderer({ model }: SceneComponentProps<Responsive
 
   return (
     <div className={styles.container} ref={containerRef}>
-      {currentLayoutIsActive && activeOrder && (
-        <div
-          style={{
-            order: activeOrder,
-          }}
-        ></div>
-      )}
+      <div
+        style={{
+          order: model.activeOrder,
+          display: currentLayoutIsActive && model.activeOrder ? 'grid' : 'none',
+        }}
+      ></div>
       {children.map((item, i) => {
         const Component = item.Component as ComponentType<ResponsiveGridItemProps>;
         // const Wrapper = isLazy ? LazyLoader : 'div';

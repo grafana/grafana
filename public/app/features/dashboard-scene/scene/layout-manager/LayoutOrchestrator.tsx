@@ -43,6 +43,7 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
 
   public descriptor: Readonly<LayoutRegistryItem<{}>> = this.state.manager.descriptor;
 
+  private dragOffset = { top: 0, left: 0 };
   /** Used in `SceneCSSGridLayout`'s `onPointerDown` method */
   public onDragStart = (e: PointerEvent, panel: VizPanel) => {
     const closestLayoutItem = closestOfType(panel, isDashboardLayoutItem);
@@ -51,6 +52,8 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
       return;
     }
 
+    const targetRect = (e.target as HTMLElement).getBoundingClientRect();
+    this.dragOffset = { top: e.y - targetRect.top, left: e.x - targetRect.left };
     this.setState({ activeLayoutItemRef: closestLayoutItem.getRef() });
     document.addEventListener('pointermove', this.onDrag);
     document.addEventListener('pointerup', this.onDragEnd);
@@ -69,6 +72,10 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
     }
 
     const cursorPos: Point = { x: e.clientX, y: e.clientY };
+    layoutItemContainer.style.position = 'fixed';
+    layoutItemContainer.style.top = '0';
+    layoutItemContainer.style.left = '0';
+    layoutItemContainer.style.translate = `${-this.dragOffset.left}px ${-this.dragOffset.top}px`;
     layoutItemContainer.style.transform = `translate(${cursorPos.x}px,${cursorPos.y}px)`;
     const closestDropZone = this.findClosestDropZone(cursorPos);
     if (!dropZonesAreEqual(this.activeDropZone, closestDropZone)) {
@@ -102,6 +109,8 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
 
     const activeLayoutItem = this.state.activeLayoutItemRef?.resolve();
     const targetLayout = this.activeDropZone?.layout.resolve();
+    // clear inline styles
+    activeLayoutItem?.containerRef.current?.removeAttribute('style');
 
     this.setState({
       activeLayoutItemRef: undefined,
@@ -122,8 +131,20 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
       return;
     }
 
-    moveLayoutItem(activeLayoutItem, targetLayout);
+    this.moveLayoutItem(activeLayoutItem, targetLayout);
   };
+
+  /** Moves layoutItem from its current layout to targetLayout.
+   * Throws if layoutItem does not belong to any layout. */
+  private moveLayoutItem(layoutItem: DashboardLayoutItem, targetLayout: SceneLayout2) {
+    const sourceLayout = closestOfType(layoutItem, isSceneLayout);
+    if (!sourceLayout) {
+      throw new Error(`Layout item with key "${layoutItem.state.key}" does not belong to any layout`);
+    }
+
+    sourceLayout.removeLayoutItem(layoutItem);
+    targetLayout.importLayoutItem(layoutItem);
+  }
 
   public findClosestDropZone(p: Point) {
     const sceneLayouts = sceneGraph.findAllObjects(this.getRoot(), isSceneLayout) as SceneLayout2[];
@@ -205,16 +226,4 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
 function dropZonesAreEqual(a?: DropZone, b?: DropZone) {
   const dims: Array<keyof DropZone> = ['top', 'left', 'bottom', 'right'];
   return a && b && dims.every((dim) => b[dim] === a[dim]);
-}
-
-/** Moves layoutItem from its current layout to targetLayout.
- * Throws if layoutItem does not belong to any layout. */
-function moveLayoutItem(layoutItem: DashboardLayoutItem, targetLayout: SceneLayout2) {
-  const sourceLayout = closestOfType(layoutItem, isSceneLayout);
-  if (!sourceLayout) {
-    throw new Error(`Layout item with key "${layoutItem.state.key}" does not belong to any layout`);
-  }
-
-  sourceLayout.removeLayoutItem(layoutItem);
-  targetLayout.importLayoutItem(layoutItem);
 }

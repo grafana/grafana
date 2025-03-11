@@ -20,7 +20,7 @@ export const DropZonePlaceholder = forwardRef<HTMLDivElement, DropZonePlaceholde
     return (
       <Portal>
         <div
-          className={classNames('react-grid-item', 'react-grid-placeholder', styles.placeholder, {
+          className={classNames(styles.placeholder, {
             [styles.visible]: width > 0 && height > 0,
           })}
           style={{ width, height, transform: `translate(${left}px, ${top}px)` }}
@@ -33,14 +33,24 @@ export const DropZonePlaceholder = forwardRef<HTMLDivElement, DropZonePlaceholde
 
 const getStyles = (theme: GrafanaTheme2) => ({
   placeholder: css({
+    visibility: 'hidden',
     position: 'fixed',
     top: 0,
     left: 0,
-    visibility: 'hidden',
+    zIndex: -1,
     pointerEvents: 'none',
-    zIndex: '1000',
+    background: theme.colors.primary.transparent,
+    boxShadow: `0 0 4px ${theme.colors.primary.border}`,
+    '@keyframes activate': {
+      '0%': {
+        transition: 'unset',
+      },
+      '100%': {
+        transition: 'transform 150ms ease',
+      },
+    },
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-      transition: 'transform 150ms ease',
+      animation: '0s linear 151ms 1 normal forwards running activate',
     },
   }),
   visible: css({

@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import classNames from 'classnames';
-import { useLayoutEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
@@ -20,13 +21,17 @@ export function ResponsiveGridItemRenderer({ model, order }: ResponsiveGridItemP
   const layoutOrchestrator = closestOfType(model, (s) => s instanceof LayoutOrchestrator);
   const { activeLayoutItemRef } = layoutOrchestrator!.useState();
   const activeLayoutItem = activeLayoutItemRef?.resolve();
+  const counter = useRef(0);
+
   const isDragging = model === activeLayoutItem;
 
-  useLayoutEffect(() => {
-    console.log(`Storing bounding box for grid item ${model.state.key}`);
+  console.log(`ResponsiveGridItem ${model.state.key}: ${counter.current++}. Dragging: ${isDragging}`);
+
+  useEffect(() => {
     // Compute and cache the grid item's bounding box.
     // Don't re-calculate while an item is being dragged.
     if (!activeLayoutItem) {
+      console.log(`Storing bounding box for grid item ${model.state.key}`);
       model.cachedBoundingBox = model.computeBoundingBox();
     }
   });
@@ -59,7 +64,7 @@ export function ResponsiveGridItemRenderer({ model, order }: ResponsiveGridItemP
   );
 }
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     display: 'grid',
     position: 'relative',
@@ -73,5 +78,7 @@ const getStyles = () => ({
     left: 0,
     width: '200px',
     height: '200px',
+    zIndex: theme.zIndex.portal + 1,
+    pointerEvents: 'none',
   }),
 });
