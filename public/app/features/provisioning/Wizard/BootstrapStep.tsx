@@ -79,6 +79,8 @@ export function BootstrapStep({ onOptionSelect }: Props) {
   const [fileCount, setFileCount] = useState<number>(0);
   const [isLoadingCounts, setIsLoadingCounts] = useState(true);
   const [hasLoadedCounts, setHasLoadedCounts] = useState(false);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(true);
+  const [hasTriedSelection, setHasTriedSelection] = useState(false);
 
   // Get repository files count
   const { data: filesData } = useGetRepositoryFilesQuery({ name: currentRepoName || '' }, { skip: !currentRepoName });
@@ -228,15 +230,12 @@ export function BootstrapStep({ onOptionSelect }: Props) {
     }
   }, [selectedOption, setValue]);
 
-  const isLoading = settingsQuery.isLoading || isLoadingCounts;
-  const hasAllData = settingsQuery.data !== undefined && filesData !== undefined && hasLoadedCounts;
+  const isLoading = settingsQuery.isLoading || isLoadingCounts || isLoadingFiles;
+  const hasAllData = Boolean(settingsQuery.data) && hasLoadedCounts && (filesData !== undefined || !currentRepoName);
 
   // Select first available option by default
   useEffect(() => {
-    // Only try to select when we have all the data needed to make the decision
-    const canSelectOption = !isLoading && hasAllData && !selectedOption;
-
-    if (canSelectOption) {
+    if (!hasTriedSelection && !isLoading && hasAllData) {
       // Find first enabled option
       const firstAvailableOption = sortedModeOptions.find((option) => {
         const state = getOptionState(option);
@@ -246,8 +245,9 @@ export function BootstrapStep({ onOptionSelect }: Props) {
       if (firstAvailableOption) {
         handleOptionSelect(firstAvailableOption);
       }
+      setHasTriedSelection(true);
     }
-  }, [isLoading, hasAllData, selectedOption, getOptionState, handleOptionSelect, sortedModeOptions]);
+  }, [isLoading, hasAllData, selectedOption, getOptionState, handleOptionSelect, sortedModeOptions, hasTriedSelection]);
 
   // Watch for target changes and update title accordingly
   useEffect(() => {
