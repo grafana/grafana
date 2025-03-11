@@ -292,7 +292,9 @@ export function BootstrapStep({ onOptionSelect }: Props) {
                         autoFocus={index === 0}
                       >
                         <Card.Heading>
-                          <Text color="primary">{option.label}</Text>
+                          <Text color="primary" element="h4">
+                            {option.label}
+                          </Text>
                         </Card.Heading>
                         <Card.Description>{option.description}</Card.Description>
                       </Card>
