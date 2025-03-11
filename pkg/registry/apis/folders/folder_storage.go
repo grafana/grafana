@@ -133,11 +133,15 @@ func (s *folderStorage) DeleteCollection(ctx context.Context, deleteValidation r
 }
 
 func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, uid string, parentUID string) error {
-	if !s.cfg.RBAC.PermissionsOnCreation("folder") {
+	isNested := parentUID != ""
+	if (isNested && s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders)) || !s.cfg.RBAC.PermissionsOnCreation("folder") {
 		return nil
 	}
 
-	var permissions []accesscontrol.SetResourcePermissionCommand
+	permissions := []accesscontrol.SetResourcePermissionCommand{
+		{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+		{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+	}
 
 	if user.IsIdentityType(claims.TypeUser) {
 		userID, err := user.GetInternalID()
@@ -149,13 +153,7 @@ func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID i
 			UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 		})
 	}
-	isNested := parentUID != ""
-	if !isNested || !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
-			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
-		}...)
-	}
+
 	_, err := s.folderPermissionsSvc.SetPermissions(ctx, orgID, uid, permissions...)
 	return err
 }

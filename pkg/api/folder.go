@@ -220,11 +220,15 @@ func (hs *HTTPServer) CreateFolder(c *contextmodel.ReqContext) response.Response
 }
 
 func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, folder *folder.Folder) error {
-	if !hs.Cfg.RBAC.PermissionsOnCreation("folder") {
+	isNested := folder.ParentUID != ""
+	if (isNested && hs.Features.IsEnabled(ctx, featuremgmt.FlagNestedFolders)) || !hs.Cfg.RBAC.PermissionsOnCreation("folder") {
 		return nil
 	}
 
-	var permissions []accesscontrol.SetResourcePermissionCommand
+	permissions := []accesscontrol.SetResourcePermissionCommand{
+		{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+		{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+	}
 
 	if user.IsIdentityType(claims.TypeUser) {
 		userID, err := user.GetInternalID()
@@ -235,14 +239,6 @@ func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int
 		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 			UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 		})
-	}
-
-	isNested := folder.ParentUID != ""
-	if !isNested || !hs.Features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
-			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
-		}...)
 	}
 
 	_, err := hs.folderPermissionsService.SetPermissions(ctx, orgID, folder.UID, permissions...)
