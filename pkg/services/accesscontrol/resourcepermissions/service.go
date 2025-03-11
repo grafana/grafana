@@ -572,7 +572,7 @@ func (a *ActionSetSvc) ExpandActionSetsWithFilter(permissions []accesscontrol.Pe
 // RegisterActionSets allow the caller to expand the existing action sets with additional permissions
 // This is intended to be used by plugins, and currently supports extending folder and dashboard action sets
 func (a *ActionSetSvc) RegisterActionSets(ctx context.Context, pluginID string, registrations []plugins.ActionSet) error {
-	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.RegisterActionSets")
+	_, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.RegisterActionSets")
 	defer span.End()
 
 	for _, reg := range registrations {
