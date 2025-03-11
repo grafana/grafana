@@ -192,6 +192,54 @@
     },
     {
       "metadata": {
+        "name": "alertingAlertmanagerSyncFlushStage",
+        "resourceVersion": "1741690170400",
+        "creationTimestamp": "2025-03-11T10:49:30Z",
+        "deletionTimestamp": "2025-03-11T11:59:15Z"
+      },
+      "spec": {
+        "description": "the sync flush stage is an alertmanager stage which synchronizes instances' flush time. If this is enabled without alertingAlertmanagerSyncFlushStageSync, it will only emit a `syncing flush time` log",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingAlertmanagerSyncFlushStageMarginDuration",
+        "resourceVersion": "1741690170400",
+        "creationTimestamp": "2025-03-11T10:49:30Z",
+        "deletionTimestamp": "2025-03-11T11:18:45Z"
+      },
+      "spec": {
+        "description": "the sync flush stage is an alertmanager stage which synchronizes instances' flush time. It applies a margin of error when calculating the next flush to allow for small variations. Defaults to 1s",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingAlertmanagerSyncFlushStageSync",
+        "resourceVersion": "1741690170400",
+        "creationTimestamp": "2025-03-11T10:49:30Z",
+        "deletionTimestamp": "2025-03-11T11:59:15Z"
+      },
+      "spec": {
+        "description": "the sync flush stage is an alertmanager stage which synchronizes instances' flush time. When enabled together with alertingAlertmanagerSyncFlushStage, it will delay the execution of the notification pipeline to synchronize instances",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingApiServer",
         "resourceVersion": "1734627512749",
         "creationTimestamp": "2024-06-20T20:52:03Z",

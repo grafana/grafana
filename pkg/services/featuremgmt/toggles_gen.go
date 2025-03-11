@@ -923,6 +923,14 @@ const (
 	// works together with alertingAlertmanagerExtraDedupStage, if enabled, it will stop the pipeline if the timestamps are not matching. Otherwise, it will emit a warning
 	FlagAlertingAlertmanagerExtraDedupStageStopPipeline = "alertingAlertmanagerExtraDedupStageStopPipeline"
 
+	// FlagAlertingAlertmanagerSyncFlushStage
+	// the sync flush stage is an alertmanager stage which synchronizes instances&#39; flush time. If this is enabled without alertingAlertmanagerSyncFlushStageSync, it will only emit a `syncing flush time` log
+	FlagAlertingAlertmanagerSyncFlushStage = "alertingAlertmanagerSyncFlushStage"
+
+	// FlagAlertingAlertmanagerSyncFlushStageSync
+	// the sync flush stage is an alertmanager stage which synchronizes instances&#39; flush time. When enabled together with alertingAlertmanagerSyncFlushStage, it will delay the execution of the notification pipeline to synchronize instances
+	FlagAlertingAlertmanagerSyncFlushStageSync = "alertingAlertmanagerSyncFlushStageSync"
+
 	// FlagNewLogsPanel
 	// Enables the new logs panel in Explore
 	FlagNewLogsPanel = "newLogsPanel"
