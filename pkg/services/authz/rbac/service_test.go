@@ -224,9 +224,9 @@ func TestService_getUserTeams(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
 			s := setupService()
 			ns := types.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
-			ctx := request.WithNamespace(context.Background(), ns.Value)
 
 			userIdentifiers := &store.UserIdentifiers{UID: "test-uid"}
 			identityStore := &fakeIdentityStore{teams: tc.teams, err: tc.expectedError}
@@ -300,9 +300,9 @@ func TestService_getUserBasicRole(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
 			s := setupService()
 			ns := types.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
-			ctx := request.WithNamespace(context.Background(), ns.Value)
 
 			userIdentifiers := &store.UserIdentifiers{UID: "test-uid", ID: 1}
 			store := &fakeStore{basicRole: &tc.basicRole, err: tc.expectedError}
@@ -365,9 +365,9 @@ func TestService_getUserPermissions(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
 			s := setupService()
 			ns := types.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
-			ctx := request.WithNamespace(context.Background(), ns.Value)
 
 			userID := &store.UserIdentifiers{UID: "test-uid", ID: 112}
 			action := "dashboards:read"
@@ -734,10 +734,11 @@ func TestService_Check(t *testing.T) {
 				store := &fakeStore{
 					userID:          userID,
 					userPermissions: tc.permissions,
+					checkNamespace:  true,
 				}
 				s.store = store
 				s.permissionStore = store
-				s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
+				s.identityStore = &fakeIdentityStore{checkNamespace: true}
 
 				_, err := s.Check(ctx, tc.req)
 				require.Error(t, err)
@@ -782,10 +783,11 @@ func TestService_Check(t *testing.T) {
 				store := &fakeStore{
 					userID:          userID,
 					userPermissions: tc.permissions,
+					checkNamespace:  true,
 				}
 				s.store = store
 				s.permissionStore = store
-				s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
+				s.identityStore = &fakeIdentityStore{checkNamespace: true}
 
 				resp, err := s.Check(ctx, tc.req)
 				require.NoError(t, err)
@@ -835,10 +837,13 @@ func TestService_Check(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				s := setupService()
 				ctx := types.WithAuthInfo(context.Background(), callingService)
-				store := &fakeStore{userPermissions: tc.permissions}
+				store := &fakeStore{
+					userPermissions: tc.permissions,
+					checkNamespace:  true,
+				}
 				s.store = store
 				s.permissionStore = store
-				s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
+				s.identityStore = &fakeIdentityStore{checkNamespace: true}
 
 				resp, err := s.Check(ctx, tc.req)
 				require.NoError(t, err)
@@ -1016,10 +1021,11 @@ func TestService_List(t *testing.T) {
 				store := &fakeStore{
 					userID:          userID,
 					userPermissions: tc.permissions,
+					checkNamespace:  true,
 				}
 				s.store = store
 				s.permissionStore = store
-				s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
+				s.identityStore = &fakeIdentityStore{checkNamespace: true}
 
 				_, err := s.List(ctx, tc.req)
 				require.Error(t, err)
@@ -1069,10 +1075,11 @@ func TestService_List(t *testing.T) {
 				store := &fakeStore{
 					userID:          userID,
 					userPermissions: tc.permissions,
+					checkNamespace:  true,
 				}
 				s.store = store
 				s.permissionStore = store
-				s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
+				s.identityStore = &fakeIdentityStore{checkNamespace: true}
 
 				resp, err := s.List(ctx, tc.req)
 				require.NoError(t, err)
@@ -1128,10 +1135,13 @@ func TestService_List(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				s := setupService()
 				ctx := types.WithAuthInfo(context.Background(), callingService)
-				store := &fakeStore{userPermissions: tc.permissions}
+				store := &fakeStore{
+					userPermissions: tc.permissions,
+					checkNamespace:  true,
+				}
 				s.store = store
 				s.permissionStore = store
-				s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
+				s.identityStore = &fakeIdentityStore{checkNamespace: true}
 
 				resp, err := s.List(ctx, tc.req)
 				require.NoError(t, err)
@@ -1218,6 +1228,8 @@ func strPtr(s string) *string {
 
 type fakeStore struct {
 	store.Store
+	// The namespace has to be set in the handlers for the correct organization to be picked up.
+	checkNamespace  bool
 	folders         []store.Folder
 	basicRole       *store.BasicRole
 	userID          *store.UserIdentifiers
@@ -1227,7 +1239,7 @@ type fakeStore struct {
 }
 
 func (f *fakeStore) GetBasicRoles(ctx context.Context, namespace types.NamespaceInfo, query store.BasicRoleQuery) (*store.BasicRole, error) {
-	if ns, ok := request.NamespaceFrom(ctx); !ok || ns != namespace.Value {
+	if ns, ok := request.NamespaceFrom(ctx); f.checkNamespace && (!ok || ns != namespace.Value) {
 		return nil, fmt.Errorf("namespace mismatch")
 	}
 	f.calls++
@@ -1238,7 +1250,7 @@ func (f *fakeStore) GetBasicRoles(ctx context.Context, namespace types.Namespace
 }
 
 func (f *fakeStore) GetUserIdentifiers(ctx context.Context, query store.UserIdentifierQuery) (*store.UserIdentifiers, error) {
-	if _, ok := request.NamespaceFrom(ctx); !ok {
+	if _, ok := request.NamespaceFrom(ctx); f.checkNamespace && !ok {
 		return nil, fmt.Errorf("namespace not found")
 	}
 	f.calls++
@@ -1249,7 +1261,7 @@ func (f *fakeStore) GetUserIdentifiers(ctx context.Context, query store.UserIden
 }
 
 func (f *fakeStore) GetUserPermissions(ctx context.Context, namespace types.NamespaceInfo, query store.PermissionsQuery) ([]accesscontrol.Permission, error) {
-	if ns, ok := request.NamespaceFrom(ctx); !ok || ns != namespace.Value {
+	if ns, ok := request.NamespaceFrom(ctx); f.checkNamespace && (!ok || ns != namespace.Value) {
 		return nil, fmt.Errorf("namespace mismatch")
 	}
 	f.calls++
@@ -1260,7 +1272,7 @@ func (f *fakeStore) GetUserPermissions(ctx context.Context, namespace types.Name
 }
 
 func (f *fakeStore) ListFolders(ctx context.Context, namespace types.NamespaceInfo) ([]store.Folder, error) {
-	if ns, ok := request.NamespaceFrom(ctx); !ok || ns != namespace.Value {
+	if ns, ok := request.NamespaceFrom(ctx); f.checkNamespace && (!ok || ns != namespace.Value) {
 		return nil, fmt.Errorf("namespace mismatch")
 	}
 	f.calls++
@@ -1272,13 +1284,14 @@ func (f *fakeStore) ListFolders(ctx context.Context, namespace types.NamespaceIn
 
 type fakeIdentityStore struct {
 	legacy.LegacyIdentityStore
-	teams []int64
-	err   bool
-	calls int
+	teams          []int64
+	checkNamespace bool
+	err            bool
+	calls          int
 }
 
 func (f *fakeIdentityStore) ListUserTeams(ctx context.Context, namespace types.NamespaceInfo, query legacy.ListUserTeamsQuery) (*legacy.ListUserTeamsResult, error) {
-	if ns, ok := request.NamespaceFrom(ctx); !ok || ns != namespace.Value {
+	if ns, ok := request.NamespaceFrom(ctx); f.checkNamespace && (!ok || ns != namespace.Value) {
 		return nil, fmt.Errorf("namespace mismatch")
 	}
 	f.calls++
