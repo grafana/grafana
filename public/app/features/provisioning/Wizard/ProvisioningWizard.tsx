@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { Button, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Stack, useStyles2, Text } from '@grafana/ui';
 
 import { getDefaultValues } from '../ConfigForm';
 import { useDeleteRepositoryMutation, useGetFrontendSettingsQuery } from '../api';
@@ -23,11 +23,11 @@ import { Stepper, Step } from './Stepper';
 import { WizardFormData, WizardStep } from './types';
 
 const steps: Array<Step<WizardStep>> = [
-  { id: 'connection', name: 'Connect', submitOnNext: true },
-  { id: 'bootstrap', name: 'Bootstrap', submitOnNext: true },
-  { id: 'migrate', name: 'Resources', submitOnNext: false },
-  { id: 'pull', name: 'Resources', submitOnNext: false },
-  { id: 'finish', name: 'Finish', submitOnNext: true },
+  { id: 'connection', name: 'Connect', title: 'Connect to Repository', submitOnNext: true },
+  { id: 'bootstrap', name: 'Bootstrap', title: 'Bootstrap Repository', submitOnNext: true },
+  { id: 'migrate', name: 'Resources', title: 'Migrate Resources', submitOnNext: false },
+  { id: 'pull', name: 'Resources', title: 'Pull Resources', submitOnNext: false },
+  { id: 'finish', name: 'Finish', title: 'Complete Setup', submitOnNext: true },
 ];
 
 export function ProvisioningWizard() {
@@ -225,17 +225,20 @@ function WizardContent({
         validationResults={{
           connection: { valid: true },
           bootstrap: { valid: true },
-          repository: { valid: true },
           migrate: { valid: true },
           pull: { valid: true },
           finish: { valid: true },
         }}
       />
       <RequestErrorAlert request={saveRequest} title="Repository verification failed" />
+
       <div className={styles.content}>
+        <Text element="h2">
+          {availableSteps.findIndex((step) => step.id === activeStep) + 1}.{' '}
+          {availableSteps.find((step) => step.id === activeStep)?.title}
+        </Text>
         {activeStep === 'connection' && <ConnectStep />}
         {activeStep === 'bootstrap' && <BootstrapStep onOptionSelect={onOptionSelect} />}
-        {activeStep === 'repository' && <ConnectStep />}
         {activeStep === 'migrate' && requiresMigration && <MigrateStep onStatusChange={handleStatusChange} />}
         {activeStep === 'pull' && !requiresMigration && <PullStep onStatusChange={handleStatusChange} />}
         {activeStep === 'finish' && <FinishStep onStatusChange={handleStatusChange} />}

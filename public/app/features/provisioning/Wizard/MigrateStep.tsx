@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { Alert, FieldSet, Stack, Text } from '@grafana/ui';
+import { Alert, Stack, Text } from '@grafana/ui';
 
 import { JobStatus } from '../JobStatus';
 import { useCreateRepositoryMigrateMutation } from '../api';
@@ -51,26 +51,24 @@ export function MigrateStep({ onStatusChange }: MigrateStepProps) {
   }
 
   return (
-    <FieldSet label="3. Migrate dashboards">
-      <Stack direction="column" gap={2}>
-        <Text color="secondary">
-          Migrating all dashboards from this instance to your repository, including their identifiers and complete
-          history. After this one-time migration, all future updates will be automatically saved to the repository.
-        </Text>
+    <Stack direction="column" gap={2}>
+      <Text color="secondary">
+        Migrating all dashboards from this instance to your repository, including their identifiers and complete
+        history. After this one-time migration, all future updates will be automatically saved to the repository.
+      </Text>
 
-        {!repositoryName && (
-          <Alert severity="error" title="Repository name required">
-            Repository name is required to migrate dashboards. Please complete the repository configuration step first.
-          </Alert>
-        )}
-        <RequestErrorAlert request={migrateQuery} />
-
-        <Alert severity="info" title="Note">
-          Dashboards will be unavailable while running this process.
+      {!repositoryName && (
+        <Alert severity="error" title="Repository name required">
+          Repository name is required to migrate dashboards. Please complete the repository configuration step first.
         </Alert>
+      )}
+      <RequestErrorAlert request={migrateQuery} />
 
-        {migrateQuery.isLoading && <Text>Migrating dashboards to repository...</Text>}
-      </Stack>
-    </FieldSet>
+      <Alert severity="info" title="Note">
+        Dashboards will be unavailable while running this process.
+      </Alert>
+
+      {migrateQuery.isLoading && <Text>Migrating dashboards to repository...</Text>}
+    </Stack>
   );
 }

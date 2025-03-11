@@ -1,7 +1,7 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Box, Field, Input, Stack, FieldSet, Card, Alert, Text, LoadingPlaceholder } from '@grafana/ui';
+import { Alert, Box, Card, Field, Input, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
 
 import { useGetFrontendSettingsQuery, useGetRepositoryFilesQuery } from '../api';
 import { checkSyncSettings } from '../utils';
@@ -230,94 +230,92 @@ export function BootstrapStep({ onOptionSelect }: Props) {
   }, [selectedTarget, setValue]);
 
   return (
-    <FieldSet label="2. Bootstrap your repository">
+    <Stack direction="column" gap={2}>
       <Stack direction="column" gap={2}>
-        <Stack direction="column" gap={2}>
-          {isLoading ? (
-            <Box padding={4}>
-              <LoadingPlaceholder text="Loading repository settings..." />
-            </Box>
-          ) : (
-            <>
-              <Box alignItems="center" padding={4}>
-                <Stack direction="row" gap={4} alignItems="flex-start" justifyContent="center">
-                  <Stack direction="column" gap={1} alignItems="center">
-                    <Text variant="h4" color="secondary">
-                      Grafana
-                    </Text>
-                    <Stack direction="row" gap={2}>
-                      <Text variant="h3">{dashboardCount + folderCount} resources</Text>
-                    </Stack>
-                  </Stack>
-                  <Stack direction="column" gap={1} alignItems="center">
-                    <Text variant="h4" color="secondary">
-                      Repository
-                    </Text>
-                    <Text variant="h3">{fileCount} files</Text>
+        {isLoading ? (
+          <Box padding={4}>
+            <LoadingPlaceholder text="Loading repository settings..." />
+          </Box>
+        ) : (
+          <>
+            <Box alignItems="center" padding={4}>
+              <Stack direction="row" gap={4} alignItems="flex-start" justifyContent="center">
+                <Stack direction="column" gap={1} alignItems="center">
+                  <Text variant="h4" color="secondary">
+                    Grafana
+                  </Text>
+                  <Stack direction="row" gap={2}>
+                    <Text variant="h3">{dashboardCount + folderCount} resources</Text>
                   </Stack>
                 </Stack>
-              </Box>
+                <Stack direction="column" gap={1} alignItems="center">
+                  <Text variant="h4" color="secondary">
+                    Repository
+                  </Text>
+                  <Text variant="h3">{fileCount} files</Text>
+                </Stack>
+              </Stack>
+            </Box>
 
-              <Controller
-                name="repository.sync.target"
-                control={control}
-                render={({ field: { value } }) => (
-                  <>
-                    {modeOptions.map((option, index) => {
-                      const optionState = getOptionState(option);
-                      const isSelected =
-                        selectedOption?.value === option.value && selectedOption?.operation === option.operation;
+            <Controller
+              name="repository.sync.target"
+              control={control}
+              render={({ field: { value } }) => (
+                <>
+                  {modeOptions.map((option, index) => {
+                    const optionState = getOptionState(option);
+                    const isSelected =
+                      selectedOption?.value === option.value && selectedOption?.operation === option.operation;
 
-                      return (
-                        <Card
-                          key={`${option.value}-${option.operation}`}
-                          // Only pass isSelected if the option is enabled
-                          {...(!optionState.isDisabled && { isSelected })}
-                          onClick={() => !optionState.isDisabled && handleOptionSelect(option)}
-                          disabled={optionState.isDisabled}
-                          tabIndex={optionState.isDisabled ? -1 : 0}
-                          // Auto-focus the first available option
-                          autoFocus={index === 0 && !optionState.isDisabled}
-                        >
-                          <Card.Heading>
-                            <Text color={optionState.isDisabled ? 'secondary' : 'primary'}>{option.label}</Text>
-                          </Card.Heading>
-                          <Card.Description>
-                            {option.description}
-                            {optionState.isDisabled && optionState.disabledReason && (
-                              <Box paddingTop={2}>
-                                <Alert severity="info" title="Not available">
-                                  {optionState.disabledReason}
-                                </Alert>
-                              </Box>
-                            )}
-                          </Card.Description>
-                        </Card>
-                      );
-                    })}
-                  </>
-                )}
-              />
-              {/* Only show title field if not instance sync */}
-              {selectedTarget === 'folder' && (
-                <Field
-                  label="Display name"
-                  description="Add a clear name for this repository connection"
-                  error={errors.repository?.title?.message}
-                  invalid={!!errors.repository?.title}
-                >
-                  <Input
-                    {...register('repository.title', { required: 'This field is required.' })}
-                    placeholder="My repository connection"
-                    // Auto-focus the title field if it's the only available option
-                    autoFocus={modeOptions.length === 1 && modeOptions[0].value === 'folder'}
-                  />
-                </Field>
+                    return (
+                      <Card
+                        key={`${option.value}-${option.operation}`}
+                        // Only pass isSelected if the option is enabled
+                        {...(!optionState.isDisabled && { isSelected })}
+                        onClick={() => !optionState.isDisabled && handleOptionSelect(option)}
+                        disabled={optionState.isDisabled}
+                        tabIndex={optionState.isDisabled ? -1 : 0}
+                        // Auto-focus the first available option
+                        autoFocus={index === 0 && !optionState.isDisabled}
+                      >
+                        <Card.Heading>
+                          <Text color={optionState.isDisabled ? 'secondary' : 'primary'}>{option.label}</Text>
+                        </Card.Heading>
+                        <Card.Description>
+                          {option.description}
+                          {optionState.isDisabled && optionState.disabledReason && (
+                            <Box paddingTop={2}>
+                              <Alert severity="info" title="Not available">
+                                {optionState.disabledReason}
+                              </Alert>
+                            </Box>
+                          )}
+                        </Card.Description>
+                      </Card>
+                    );
+                  })}
+                </>
               )}
-            </>
-          )}
-        </Stack>
+            />
+            {/* Only show title field if not instance sync */}
+            {selectedTarget === 'folder' && (
+              <Field
+                label="Display name"
+                description="Add a clear name for this repository connection"
+                error={errors.repository?.title?.message}
+                invalid={!!errors.repository?.title}
+              >
+                <Input
+                  {...register('repository.title', { required: 'This field is required.' })}
+                  placeholder="My repository connection"
+                  // Auto-focus the title field if it's the only available option
+                  autoFocus={modeOptions.length === 1 && modeOptions[0].value === 'folder'}
+                />
+              </Field>
+            )}
+          </>
+        )}
       </Stack>
-    </FieldSet>
+    </Stack>
   );
 }

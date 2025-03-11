@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { Alert, FieldSet, Stack, Text } from '@grafana/ui';
+import { Alert, Stack, Text } from '@grafana/ui';
 
 import { JobStatus } from '../JobStatus';
 import { useCreateRepositorySyncMutation } from '../api';
@@ -50,22 +50,20 @@ export function PullStep({ onStatusChange }: PullStepProps) {
   }
 
   return (
-    <FieldSet label="3. Pull resources">
-      <Stack direction="column" gap={2}>
-        <Text color="secondary">
-          Pulling all resources from your repository to this Grafana instance. After this initial pull, all future
-          updates from the repository will be automatically synchronized.
-        </Text>
+    <Stack direction="column" gap={2}>
+      <Text color="secondary">
+        Pulling all resources from your repository to this Grafana instance. After this initial pull, all future updates
+        from the repository will be automatically synchronized.
+      </Text>
 
-        {!repositoryName && (
-          <Alert severity="error" title="Repository name required">
-            Repository name is required to pull resources. Please complete the repository configuration step first.
-          </Alert>
-        )}
-        <RequestErrorAlert request={syncQuery} />
+      {!repositoryName && (
+        <Alert severity="error" title="Repository name required">
+          Repository name is required to pull resources. Please complete the repository configuration step first.
+        </Alert>
+      )}
+      <RequestErrorAlert request={syncQuery} />
 
-        {syncQuery.isLoading && <Text>Pulling resources from repository...</Text>}
-      </Stack>
-    </FieldSet>
+      {syncQuery.isLoading && <Text>Pulling resources from repository...</Text>}
+    </Stack>
   );
 }
