@@ -9,15 +9,13 @@ import { ConditionHeader } from './ConditionHeader';
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
 import { handleDeleteNonGroupCondition } from './shared';
 
-interface Value {
+export type VariableConditionValue = {
   name: string;
   operator: '=' | '!=';
   value: string;
-}
+};
 
-interface ConditionalRenderingVariableState extends ConditionalRenderingBaseState<Value> {
-  value: Value;
-}
+interface ConditionalRenderingVariableState extends ConditionalRenderingBaseState<VariableConditionValue> {}
 
 export class ConditionalRenderingVariable extends ConditionalRenderingBase<ConditionalRenderingVariableState> {
   public get title(): string {
@@ -91,7 +89,7 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
             <Combobox
               options={variableNames}
               value={value.name}
-              onChange={(option) => model.changeValue({ ...value, name: option.value })}
+              onChange={(option) => model.setStateAndNotify({ value: { ...value, name: option.value } })}
             />
           </Field>
           <Field
@@ -101,12 +99,15 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
             <Combobox
               options={operatorOptions}
               value={value.operator}
-              onChange={(option) => model.changeValue({ ...value, operator: option.value })}
+              onChange={(option) => model.setStateAndNotify({ value: { ...value, operator: option.value } })}
             />
           </Field>
         </Stack>
         <Field label={t('dashboard.conditional-rendering.variable.value-input', 'Value')}>
-          <Input value={value.value} onChange={(e) => model.changeValue({ ...value, value: e.currentTarget.value })} />
+          <Input
+            value={value.value}
+            onChange={(e) => model.setStateAndNotify({ value: { ...value, value: e.currentTarget.value } })}
+          />
         </Field>
       </Stack>
     </Stack>

@@ -13,7 +13,8 @@ import { ConditionalRenderingInterval } from './ConditionalRenderingInterval';
 import { ConditionalRenderingVariable } from './ConditionalRenderingVariable';
 import { ConditionsRenderingConditions } from './shared';
 
-export interface ConditionalRenderingGroupState extends ConditionalRenderingBaseState<ConditionsRenderingConditions[]> {
+export type GroupConditionValue = ConditionsRenderingConditions[];
+export interface ConditionalRenderingGroupState extends ConditionalRenderingBaseState<GroupConditionValue> {
   condition: 'and' | 'or';
 }
 
@@ -43,7 +44,7 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
   }
 
   public addItem(item: ConditionsRenderingConditions) {
-    this.changeValue([...this.state.value, item]);
+    this.setStateAndNotify({ value: [...this.state.value, item] });
   }
 
   public static createEmpty(): ConditionalRenderingGroup {
@@ -53,7 +54,7 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
   public onDelete() {
     const rootGroup = this.getRootGroup();
     if (this === rootGroup) {
-      this.getBehavior().setState({ rootGroup: ConditionalRenderingGroup.createEmpty() });
+      this.getConditionalLogicRoot().setState({ rootGroup: ConditionalRenderingGroup.createEmpty() });
     } else {
       rootGroup.setState({ value: rootGroup.state.value.filter((condition) => condition !== this) });
     }

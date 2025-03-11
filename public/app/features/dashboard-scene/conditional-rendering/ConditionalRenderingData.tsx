@@ -9,7 +9,9 @@ import { ConditionHeader } from './ConditionHeader';
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
 import { handleDeleteNonGroupCondition } from './shared';
 
-interface ConditionalRenderingDataState extends ConditionalRenderingBaseState<boolean> {}
+export type DataConditionValue = boolean;
+
+interface ConditionalRenderingDataState extends ConditionalRenderingBaseState<DataConditionValue> {}
 
 export class ConditionalRenderingData extends ConditionalRenderingBase<ConditionalRenderingDataState> {
   public get title(): string {
@@ -64,7 +66,7 @@ function ConditionalRenderingDataRenderer({ model }: SceneComponentProps<Conditi
         fullWidth
         options={enableConditionOptions}
         value={value}
-        onChange={(value) => model.changeValue(value!)}
+        onChange={(value) => model.setStateAndNotify({ value: value })}
       />
     </Stack>
   );

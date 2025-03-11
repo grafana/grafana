@@ -4,14 +4,15 @@ import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState } fr
 
 import { ConditionalRendering } from './ConditionalRendering';
 import { ConditionalRenderingGroup } from './ConditionalRenderingGroup';
+import { ConditionValues } from './shared';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface ConditionalRenderingBaseState<V = any> extends SceneObjectState {
+export interface ConditionalRenderingBaseState<V = ConditionValues> extends SceneObjectState {
   value: V;
-  isCollapsed?: boolean;
 }
 
-export abstract class ConditionalRenderingBase<S extends ConditionalRenderingBaseState> extends SceneObjectBase<S> {
+export abstract class ConditionalRenderingBase<
+  S extends ConditionalRenderingBaseState<ConditionValues>,
+> extends SceneObjectBase<S> {
   public static Component = ConditionalRenderingBaseRenderer;
 
   public abstract readonly title: string;
@@ -22,27 +23,17 @@ export abstract class ConditionalRenderingBase<S extends ConditionalRenderingBas
 
   public abstract onDelete(): void;
 
-  public getBehavior(): ConditionalRendering {
+  public getConditionalLogicRoot(): ConditionalRendering {
     return sceneGraph.getAncestor(this, ConditionalRendering);
   }
 
   public getRootGroup(): ConditionalRenderingGroup {
-    return this.getBehavior().state.rootGroup;
+    return this.getConditionalLogicRoot().state.rootGroup;
   }
 
   public setStateAndNotify(state: Partial<S>) {
     this.setState(state);
-    this.getBehavior().notifyChange();
-  }
-
-  public changeValue(value: S['value']) {
-    // @ts-expect-error: For some reason this throws an error
-    this.setStateAndNotify({ value });
-  }
-
-  public toggleCollapse() {
-    // @ts-expect-error: For some reason this throws an error
-    this.setState({ isCollapsed: !this.state.isCollapsed });
+    this.getConditionalLogicRoot().notifyChange();
   }
 }
 

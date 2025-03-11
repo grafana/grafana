@@ -9,7 +9,8 @@ import { ConditionHeader } from './ConditionHeader';
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
 import { handleDeleteNonGroupCondition } from './shared';
 
-interface ConditionalRenderingIntervalState extends ConditionalRenderingBaseState<string> {
+export type IntervalConditionValue = string;
+interface ConditionalRenderingIntervalState extends ConditionalRenderingBaseState<IntervalConditionValue> {
   value: string;
 }
 
@@ -59,7 +60,7 @@ function ConditionalRenderingIntervalRenderer({ model }: SceneComponentProps<Con
           value={value}
           onChange={(e) => {
             setIsValid(validateIntervalRegex.test(e.currentTarget.value));
-            model.changeValue(e.currentTarget.value);
+            model.setStateAndNotify({ value: e.currentTarget.value });
           }}
         />
       </Field>
