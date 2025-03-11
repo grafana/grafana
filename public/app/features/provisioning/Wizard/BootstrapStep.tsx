@@ -111,15 +111,16 @@ export function BootstrapStep({ onOptionSelect, onStatusChange, onRunningChange,
     return checkSyncSettings({ ...settingsQuery.data, items: otherRepos });
   }, [settingsQuery.data, currentRepoName]);
 
-  // Add a ref to track if we've loaded counts
-  const hasLoadedCountsRef = useRef(false);
+  // Add a ref to track component mount state
+  const isMounted = useRef(false);
 
   // Modify the fetch counts effect
   useEffect(() => {
-    // Skip if we've already loaded counts
-    if (hasLoadedCountsRef.current) {
+    // Only run on mount
+    if (isMounted.current) {
       return;
     }
+    isMounted.current = true;
 
     const fetchCounts = async () => {
       setIsLoadingCounts(true);
@@ -155,12 +156,11 @@ export function BootstrapStep({ onOptionSelect, onStatusChange, onRunningChange,
         setIsLoadingCounts(false);
         setHasLoadedCounts(true);
         onRunningChange(false);
-        hasLoadedCountsRef.current = true;
       }
     };
 
     fetchCounts();
-  }, []); // Empty dependency array since we're using the ref to control execution
+  }, [onRunningChange, onStatusChange, onErrorChange]); // Include the prop dependencies
 
   // Get available options and disabled state logic
   const getOptionState = useCallback(
