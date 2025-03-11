@@ -253,6 +253,26 @@ function WizardContent({
     }
   }, [saveRequest.isSuccess, saveRequest.isError, saveRequest.data, setValue, handleStatusChange]);
 
+  // Helper to check if current step needs job status
+  const isJobStep = (step: string) => {
+    return step === 'migrate' || step === 'pull';
+  };
+
+  // Determine if the next button should be disabled
+  const isNextButtonDisabled = () => {
+    if (isSubmitting || isCancelling) {
+      return true;
+    }
+
+    // For job steps, wait for job completion and success
+    if (isJobStep(activeStep)) {
+      return isJobRunning || !stepSuccess;
+    }
+
+    // For form steps, only disable during submission
+    return false;
+  };
+
   return (
     <form className={styles.form}>
       <Stepper
@@ -294,7 +314,7 @@ function WizardContent({
         >
           {isCancelling ? 'Cancelling...' : 'Cancel'}
         </Button>
-        <Button onClick={handleNextWithSubmit} disabled={isSubmitting || isCancelling || isJobRunning || !stepSuccess}>
+        <Button onClick={handleNextWithSubmit} disabled={isNextButtonDisabled()}>
           {isSubmitting ? 'Submitting...' : getNextButtonText(activeStep)}
         </Button>
       </Stack>
