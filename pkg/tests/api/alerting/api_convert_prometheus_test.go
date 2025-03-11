@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -591,6 +592,122 @@ func TestIntegrationConvertPrometheusEndpoints_FolderUIDHeader(t *testing.T) {
 			// Verify the rule group was created
 			group := apiClient.ConvertPrometheusGetRuleGroupRules(t, rootFolderTitle, promGroup3.Name, headers)
 			require.Equal(t, promGroup3, group)
+		})
+	}
+
+	t.Run("with the mimirtool paths", func(t *testing.T) {
+		runTest(t, false)
+	})
+
+	t.Run("with the cortextool Loki paths", func(t *testing.T) {
+		runTest(t, true)
+	})
+}
+
+func TestIntegrationConvertPrometheusEndpoints_Provenance(t *testing.T) {
+	runTest := func(t *testing.T, enableLokiPaths bool) {
+		testinfra.SQLiteIntegrationTest(t)
+
+		// Setup Grafana and its Database
+		dir, gpath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+			DisableLegacyAlerting: true,
+			EnableUnifiedAlerting: true,
+			DisableAnonymous:      true,
+			AppModeProduction:     true,
+			EnableFeatureToggles:  []string{"alertingConversionAPI", "grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
+			EnableRecordingRules:  true,
+		})
+
+		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)
+
+		// Create admin user
+		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleAdmin),
+			Password:       "password",
+			Login:          "admin",
+		})
+		adminClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+		adminClient.prometheusConversionUseLokiPaths = enableLokiPaths
+
+		ds := adminClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
+
+		t.Run("default provenance is ProvenanceConvertedPrometheus", func(t *testing.T) {
+			namespace := "test-namespace-provenance-" + util.GenerateShortUID()
+
+			// We have to create a folder to get its UID to use in the ruler API later to fetch the rule group.
+			namespaceUID := util.GenerateShortUID()
+			adminClient.CreateFolder(t, namespaceUID, namespace)
+
+			adminClient.ConvertPrometheusPostRuleGroup(t, namespace, ds.Body.Datasource.UID, promGroup1, nil)
+
+			// Get the rule group using the ruler API and check its provenance
+			ruleGroup, status := adminClient.GetRulesGroup(t, namespaceUID, promGroup1.Name)
+			require.Equal(t, http.StatusAccepted, status)
+			for _, rule := range ruleGroup.Rules {
+				require.Equal(t, apimodels.Provenance(models.ProvenanceConvertedPrometheus), rule.GrafanaManagedAlert.Provenance)
+			}
+		})
+
+		t.Run("with disable provenance header should use ProvenanceNone", func(t *testing.T) {
+			namespace := "test-namespace-provenance-" + util.GenerateShortUID()
+
+			// We have to create a folder to get its UID to use in the ruler API later to fetch the rule group.
+			namespaceUID := util.GenerateShortUID()
+			adminClient.CreateFolder(t, namespaceUID, namespace)
+
+			// Create rule group with the X-Disable-Provenance header
+			headers := map[string]string{
+				"X-Disable-Provenance": "true",
+			}
+			adminClient.ConvertPrometheusPostRuleGroup(t, namespace, ds.Body.Datasource.UID, promGroup1, headers)
+
+			// Get the rule group using the ruler API and check its provenance
+			ruleGroup, status := adminClient.GetRulesGroup(t, namespaceUID, promGroup1.Name)
+			require.Equal(t, http.StatusAccepted, status)
+			for _, rule := range ruleGroup.Rules {
+				require.Equal(t, apimodels.Provenance(models.ProvenanceNone), rule.GrafanaManagedAlert.Provenance)
+			}
+		})
+
+		t.Run("can delete rule groups with X-Disable-Provenance header", func(t *testing.T) {
+			namespace := "test-namespace-delete-provenance-" + util.GenerateShortUID()
+			namespaceUID := util.GenerateShortUID()
+			adminClient.CreateFolder(t, namespaceUID, namespace)
+
+			// Create a rule group
+			adminClient.ConvertPrometheusPostRuleGroup(t, namespace, ds.Body.Datasource.UID, promGroup1, nil)
+
+			// Now try to delete with X-Disable-Provenance header
+			// This should succeed
+			headers := map[string]string{
+				"X-Disable-Provenance": "true",
+			}
+			adminClient.ConvertPrometheusDeleteRuleGroup(t, namespace, promGroup1.Name, headers)
+
+			// Verify the rule group is gone
+			_, status, _ := adminClient.GetRulesGroupWithStatus(t, namespaceUID, promGroup1.Name)
+			require.Equal(t, http.StatusNotFound, status)
+		})
+
+		t.Run("can delete namespaces with X-Disable-Provenance header", func(t *testing.T) {
+			namespace := "test-namespace-delete-ns-provenance-" + util.GenerateShortUID()
+			namespaceUID := util.GenerateShortUID()
+			adminClient.CreateFolder(t, namespaceUID, namespace)
+
+			// Create a rule group with provenance=ProvenanceConvertedPrometheus
+			adminClient.ConvertPrometheusPostRuleGroup(t, namespace, ds.Body.Datasource.UID, promGroup1, nil)
+
+			// Now delete with X-Disable-Provenance header
+			// This should succeed
+			headers := map[string]string{
+				"X-Disable-Provenance": "true",
+			}
+			adminClient.ConvertPrometheusDeleteNamespace(t, namespace, headers)
+
+			// Verify the namespace has no rule groups
+			namespaces := adminClient.ConvertPrometheusGetAllRules(t, nil)
+			_, exists := namespaces[namespace]
+			require.False(t, exists)
 		})
 	}
 

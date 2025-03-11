@@ -37,8 +37,12 @@ type Config struct {
 	EvaluationOffset *time.Duration
 	ExecErrState     models.ExecutionErrorState
 	NoDataState      models.NoDataState
-	RecordingRules   RulesConfig
-	AlertRules       RulesConfig
+	// KeepOriginalRuleDefinition indicates whether the original Prometheus rule definition
+	// if saved to the alert rule metadata. If not, then it will not be possible to convert
+	// the alert rule back to Prometheus format.
+	KeepOriginalRuleDefinition *bool
+	RecordingRules             RulesConfig
+	AlertRules                 RulesConfig
 }
 
 // RulesConfig contains configuration that applies to either recording or alerting rules.
@@ -51,10 +55,11 @@ var (
 	defaultEvaluationOffset = 0 * time.Minute
 
 	defaultConfig = Config{
-		FromTimeRange:    &defaultTimeRange,
-		EvaluationOffset: &defaultEvaluationOffset,
-		ExecErrState:     models.ErrorErrState,
-		NoDataState:      models.OK,
+		FromTimeRange:              &defaultTimeRange,
+		EvaluationOffset:           &defaultEvaluationOffset,
+		ExecErrState:               models.ErrorErrState,
+		NoDataState:                models.OK,
+		KeepOriginalRuleDefinition: util.Pointer(true),
 	}
 )
 
@@ -87,7 +92,9 @@ func NewConverter(cfg Config) (*Converter, error) {
 	if cfg.NoDataState == "" {
 		cfg.NoDataState = defaultConfig.NoDataState
 	}
-
+	if cfg.KeepOriginalRuleDefinition == nil {
+		cfg.KeepOriginalRuleDefinition = defaultConfig.KeepOriginalRuleDefinition
+	}
 	if cfg.DatasourceType != datasources.DS_PROMETHEUS && cfg.DatasourceType != datasources.DS_LOKI {
 		return nil, fmt.Errorf("invalid datasource type: %s", cfg.DatasourceType)
 	}
@@ -233,11 +240,12 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 		RuleGroup:    promGroup.Name,
 		IsPaused:     isPaused,
 		Record:       record,
-		Metadata: models.AlertRuleMetadata{
-			PrometheusStyleRule: &models.PrometheusStyleRule{
-				OriginalRuleDefinition: string(originalRuleDefinition),
-			},
-		},
+	}
+
+	if p.cfg.KeepOriginalRuleDefinition != nil && *p.cfg.KeepOriginalRuleDefinition {
+		result.Metadata.PrometheusStyleRule = &models.PrometheusStyleRule{
+			OriginalRuleDefinition: string(originalRuleDefinition),
+		}
 	}
 
 	return result, nil
