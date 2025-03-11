@@ -46,11 +46,11 @@ export function getClosest<T>(sceneObject: SceneObject, extract: (s: SceneObject
 /** Walks up the scene graph, returning the first non-undefined result of `extract` */
 export function closestOfType<T extends SceneObject>(
   sceneObject: SceneObject,
-  predicate: (s: SceneObject) => s is T
+  objectIsOfType: (s: SceneObject) => s is T
 ): T | undefined {
   let curSceneObject: SceneObject | undefined = sceneObject;
 
-  while (curSceneObject && !predicate(curSceneObject)) {
+  while (curSceneObject && !objectIsOfType(curSceneObject)) {
     curSceneObject = curSceneObject.parent;
   }
 

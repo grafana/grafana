@@ -37,10 +37,12 @@ export function ResponsiveGridItemRenderer({ model, order }: ResponsiveGridItemP
   });
 
   const dragStyles =
-    isDragging && model.cachedBoundingBox
+    isDragging && layoutOrchestrator && model.cachedBoundingBox
       ? {
           width: model.cachedBoundingBox.right - model.cachedBoundingBox.left,
           height: model.cachedBoundingBox.bottom - model.cachedBoundingBox.top,
+          translate: `${-layoutOrchestrator.dragOffset.left}px ${-layoutOrchestrator.dragOffset.top}px`,
+          transform: `translate(var(--x-pos), var(--y-pos))`,
         }
       : {};
 
@@ -76,8 +78,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'fixed',
     top: 0,
     left: 0,
-    width: '200px',
-    height: '200px',
     zIndex: theme.zIndex.portal + 1,
     pointerEvents: 'none',
   }),

@@ -26,15 +26,6 @@ interface LayoutOrchestratorState extends SceneObjectState {
 export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState> implements DashboardLayoutManager {
   public isDashboardLayoutManager: true = true;
 
-  /** Rectangles representing areas the dragged panel can be placed */
-  public dropZones: DropZone[] = [];
-
-  /**
-   * Ref to the div containing the panel as it's being dragged.
-   * Needed for updating css transform without causing react to re-render.
-   */
-  public floatingPanelRef = createRef<HTMLDivElement>();
-
   /**
    * Ref to the div containing the dropzone placeholder/preview.
    * Needed for updating css transform without causing react to re-render.
@@ -43,7 +34,7 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
 
   public descriptor: Readonly<LayoutRegistryItem<{}>> = this.state.manager.descriptor;
 
-  private dragOffset = { top: 0, left: 0 };
+  public dragOffset = { top: 0, left: 0 };
   /** Used in `SceneCSSGridLayout`'s `onPointerDown` method */
   public onDragStart = (e: PointerEvent, panel: VizPanel) => {
     const closestLayoutItem = closestOfType(panel, isDashboardLayoutItem);
@@ -72,11 +63,13 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
     }
 
     const cursorPos: Point = { x: e.clientX, y: e.clientY };
-    layoutItemContainer.style.position = 'fixed';
-    layoutItemContainer.style.top = '0';
-    layoutItemContainer.style.left = '0';
-    layoutItemContainer.style.translate = `${-this.dragOffset.left}px ${-this.dragOffset.top}px`;
-    layoutItemContainer.style.transform = `translate(${cursorPos.x}px,${cursorPos.y}px)`;
+    // layoutItemContainer.style.position = 'fixed';
+    // layoutItemContainer.style.top = '0';
+    // layoutItemContainer.style.left = '0';
+    // layoutItemContainer.style.translate = `${-this.dragOffset.left}px ${-this.dragOffset.top}px`;
+    layoutItemContainer.style.setProperty('--x-pos', `${cursorPos.x}px`);
+    layoutItemContainer.style.setProperty('--y-pos', `${cursorPos.y}px`);
+    // this.layoutItemDragTransform = `translate(${cursorPos.x}px, ${cursorPos.y}px)`;
     const closestDropZone = this.findClosestDropZone(cursorPos);
     if (!dropZonesAreEqual(this.activeDropZone, closestDropZone)) {
       console.log('Entered new drop zone!');
@@ -114,12 +107,7 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
 
     this.setState({
       activeLayoutItemRef: undefined,
-      placeholderSize: {
-        width: 0,
-        height: 0,
-        top: 0,
-        left: 0,
-      },
+      placeholderSize: undefined,
     });
     this.activeDropZone = undefined;
 
