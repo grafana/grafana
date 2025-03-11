@@ -7,3 +7,46 @@ on:
     paths-ignore:
       - 'docs/**'
       - '*.md'
+
+jobs:
+  verify-storybook:
+    name: Verify Storybook
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.11.0'
+          cache: 'yarn'
+      
+      - name: Identify runner
+        run: echo $RUNNER_NAME
+      
+      - name: Install dependencies
+        run: yarn install --immutable || yarn install --immutable
+      
+      - name: Start Storybook
+        run: |
+          yarn storybook --quiet &
+          echo "STORYBOOK_PID=$!" >> $GITHUB_ENV
+      
+      - name: Wait for Storybook to be ready
+        run: npx wait-on@7.2.0 -t 1m http://localhost:9001
+      
+      - name: Run Storybook E2E tests
+        uses: cypress-io/github-action@v6
+        with:
+          browser: chrome
+          command: yarn e2e:storybook
+          install: false
+        env:
+          HOST: localhost
+          PORT: 9001
+      
+      - name: Stop Storybook
+        if: always()
+        run: kill $STORYBOOK_PID || true
