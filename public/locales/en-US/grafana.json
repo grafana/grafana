@@ -184,7 +184,8 @@
       "rule-identifier": "Rule identifier",
       "rule-type": "Rule type",
       "state-error-timeout": "Alert state if execution error or timeout",
-      "state-no-data": "Alert state if no data or all values are null"
+      "state-no-data": "Alert state if no data or all values are null",
+      "target-datasource-uid": "Target data source"
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -378,6 +379,8 @@
     "list-view": {
       "empty": {
         "new-alert-rule": "New alert rule",
+        "new-ds-managed-recording-rule": "New data source-managed recording rule",
+        "new-grafana-recording-rule": "New Grafana-managed recording rule",
         "new-recording-rule": "New recording rule",
         "provisioning": "You can also define rules through file provisioning or Terraform. <2>Learn more</2>"
       },
@@ -503,6 +506,10 @@
       },
       "preview": "Preview",
       "previewCondition": "Preview alert rule condition"
+    },
+    "recording-rules": {
+      "description-target-data-source": "The Prometheus data source to store the recording rule in",
+      "label-target-data-source": "Target data source"
     },
     "rule-form": {
       "evaluation": {
@@ -1011,7 +1018,7 @@
       "subtitle": "Alert rules related to this dashboard"
     },
     "default-layout": {
-      "description": "The default grid layout",
+      "description": "Manually size and position panels",
       "item-options": {
         "repeat": {
           "direction": {
@@ -1027,7 +1034,7 @@
           }
         }
       },
-      "name": "Default grid",
+      "name": "Custom",
       "row-actions": {
         "delete": "Delete row",
         "modal": {
@@ -1068,24 +1075,18 @@
       "elements": {
         "dashboard": "Dashboard",
         "objects": "Objects",
+        "panel": "Panel",
         "panels": "Panels",
+        "row": "Row",
         "rows": "Rows",
+        "tab": "Tab",
         "tabs": "Tabs"
-      },
-      "objects": {
-        "multi-select": {
-          "selection-number": "No. of objects selected: {{length}}"
-        }
       },
       "open": "Open options pane",
       "row": {
         "header": {
           "hide": "Hide",
           "title": "Row header"
-        },
-        "multi-select": {
-          "options-header": "Multi-selected Row options",
-          "selection-number": "No. of rows selected: {{length}}"
         }
       }
     },
@@ -1166,13 +1167,11 @@
         "copy-or-duplicate": "Copy or Duplicate",
         "delete": "Delete",
         "duplicate": "Duplicate",
-        "layout": "Layout",
-        "panels-title": "{{length}} Panels Selected"
+        "layout": "Layout"
       }
     },
     "options": {
       "description": "Description",
-      "title": "Dashboard options",
       "title-option": "Title"
     },
     "outline": {
@@ -1191,7 +1190,7 @@
       }
     },
     "responsive-layout": {
-      "description": "CSS layout that adjusts to the available space",
+      "description": "Automatically positions panels into a grid.",
       "item-options": {
         "hide-no-data": "Hide when no data",
         "repeat": {
@@ -1202,7 +1201,7 @@
         },
         "title": "Layout options"
       },
-      "name": "Responsive grid",
+      "name": "Auto",
       "options": {
         "columns": "Columns",
         "fixed": "Fixed: {{size}}px",
@@ -1216,9 +1215,28 @@
     "rows-layout": {
       "description": "Rows layout",
       "name": "Rows",
+      "option": {
+        "height": "Height",
+        "hide-header": "Hide row header",
+        "repeat": "Repeat for",
+        "title": "Title"
+      },
+      "options": {
+        "height-expand": "Expand",
+        "height-min": "Min"
+      },
       "row": {
         "collapse": "Collapse row",
         "expand": "Expand row",
+        "menu": {
+          "add": "Add row",
+          "add-panel": "Panel",
+          "add-row-above": "Row above",
+          "add-row-below": "Row below",
+          "move-down": "Move row down",
+          "move-row": "Move row",
+          "move-up": "Move row up"
+        },
         "new": "New row",
         "repeat": {
           "learn-more": "Learn more",
@@ -1226,19 +1244,6 @@
         }
       },
       "row-options": {
-        "height": {
-          "expand": "Expand",
-          "hide-row-header": "Hide row header",
-          "min": "Min",
-          "title": "Height"
-        },
-        "repeat": {
-          "title": "Repeat options",
-          "variable": {
-            "title": "Variable"
-          }
-        },
-        "title": "Row options",
         "title-option": "Title"
       }
     },
@@ -1246,9 +1251,6 @@
       "description": "Tabs layout",
       "menu": {
         "move-tab": "Move tab"
-      },
-      "multi-select": {
-        "title": "{{length}} tabs selected"
       },
       "name": "Tabs",
       "tab": {
@@ -1264,7 +1266,6 @@
         "new": "New tab"
       },
       "tab-options": {
-        "title": "Tab",
         "title-option": "Title"
       }
     },
@@ -1339,9 +1340,8 @@
     "viz-panel": {
       "options": {
         "description": "Description",
-        "open-edit": "Open Panel Edit",
+        "open-edit": "Open panel editor",
         "plugin-type-image": "Image of plugin type",
-        "title": "Panel",
         "title-option": "Title",
         "transparent-background": "Transparent background"
       }
@@ -1902,6 +1902,16 @@
     "named-colors-palette": {
       "text-color-swatch": "Text color",
       "transparent-swatch": "Transparent"
+    },
+    "page-toolbar": {
+      "go-back": "Go back (Esc)",
+      "search-dashboard-name": "Search dashboard by name",
+      "search-links": "Search links",
+      "search-parent-folder": "Search dashboard in the {{parent}} folder"
+    },
+    "pagination": {
+      "next-page": "next page",
+      "previous-page": "previous page"
     },
     "secret-form-field": {
       "reset": "Reset"
@@ -2899,6 +2909,10 @@
     }
   },
   "navigation": {
+    "invite-user": {
+      "invite-button": "Invite",
+      "invite-tooltip": "Invite new member"
+    },
     "item": {
       "add-bookmark": "Add to Bookmarks",
       "remove-bookmark": "Remove from Bookmarks"
@@ -3106,7 +3120,8 @@
       "old-password-required": "Old password is required",
       "passwords-must-match": "Passwords must match",
       "strong-password-validation-register": "Password does not comply with the strong password policy"
-    }
+    },
+    "change-theme": "Change theme"
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
@@ -3512,7 +3527,6 @@
   "share-dashboard": {
     "menu": {
       "export-json-title": "Export as JSON",
-      "invite-user-title": "Invite new member",
       "share-externally-title": "Share externally",
       "share-internally-title": "Share internally",
       "share-snapshot-title": "Share snapshot"

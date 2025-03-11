@@ -126,9 +126,9 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 				{
 					httpReq: &http.Request{
 						Header: http.Header{
-							"User-Agent":                            []string{"test"},
-							"X-Forwarded-For":                       []string{"10.30.30.1"},
-							http.CanonicalHeaderKey(deviceIDHeader): []string{"32mdo31deeqwes"},
+							"User-Agent":                            []string{"testdisabled"},
+							"X-Forwarded-For":                       []string{"10.33.33.3"},
+							http.CanonicalHeaderKey(deviceIDHeader): []string{"t35td154b13d1d"},
 						},
 					},
 					kind: anonymous.AnonDeviceUI,
@@ -178,7 +178,8 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 				assert.Equal(t, tc.expectedDevice, devices[0])
 			}
 
-			to := time.Now()
+			// One minute is added to the end time as mysql 5.7 datetime type has a default precision of seconds and not milis.
+			to := time.Now().Add(time.Minute)
 			from := to.AddDate(0, 0, -1)
 
 			devicesCount, err := anonService.CountDevices(ctx, from, to)

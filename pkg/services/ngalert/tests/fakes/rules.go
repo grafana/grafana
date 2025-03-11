@@ -102,10 +102,10 @@ func (f *RuleStore) GetRecordedCommands(predicate func(cmd any) (any, bool)) []a
 	return result
 }
 
-func (f *RuleStore) DeleteAlertRulesByUID(_ context.Context, orgID int64, UIDs ...string) error {
+func (f *RuleStore) DeleteAlertRulesByUID(_ context.Context, orgID int64, user *models.UserUID, UIDs ...string) error {
 	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
 		Name:   "DeleteAlertRulesByUID",
-		Params: []any{orgID, UIDs},
+		Params: []any{orgID, user, UIDs},
 	})
 
 	rules := f.Rules[orgID]
@@ -215,11 +215,7 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 			continue
 		}
 		if q.ImportedPrometheusRule != nil {
-			hasOriginalRuleDefinition := r.PrometheusRuleDefinition() != ""
-			if *q.ImportedPrometheusRule && !hasOriginalRuleDefinition {
-				continue
-			}
-			if !*q.ImportedPrometheusRule && hasOriginalRuleDefinition {
+			if *q.ImportedPrometheusRule != r.ImportedFromPrometheus() {
 				continue
 			}
 		}

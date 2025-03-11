@@ -3356,6 +3356,9 @@
           "404": {
             "$ref": "#/responses/notFoundError"
           },
+          "406": {
+            "$ref": "#/responses/notAcceptableError"
+          },
           "500": {
             "$ref": "#/responses/internalServerError"
           }
@@ -13052,6 +13055,7 @@
       }
     },
     "AnnotationActions": {
+      "description": "+k8s:deepcopy-gen=true",
       "type": "object",
       "properties": {
         "canAdd": {
@@ -13126,6 +13130,7 @@
       }
     },
     "AnnotationPermission": {
+      "description": "+k8s:deepcopy-gen=true",
       "type": "object",
       "properties": {
         "dashboard": {
@@ -14240,6 +14245,9 @@
         },
         "state": {
           "$ref": "#/definitions/State"
+        },
+        "subject": {
+          "type": "string"
         }
       }
     },
@@ -19492,6 +19500,9 @@
         "state": {
           "$ref": "#/definitions/State"
         },
+        "subject": {
+          "type": "string"
+        },
         "uid": {
           "type": "string"
         },
@@ -24432,6 +24443,12 @@
       "description": "(empty)",
       "schema": {
         "type": "object"
+      }
+    },
+    "notAcceptableError": {
+      "description": "NotAcceptableError is returned when the server cannot produce a response matching the accepted formats.",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
       }
     },
     "notFoundError": {
