@@ -79,11 +79,13 @@ export function BootstrapStep({ onOptionSelect }: Props) {
   const [fileCount, setFileCount] = useState<number>(0);
   const [isLoadingCounts, setIsLoadingCounts] = useState(true);
   const [hasLoadedCounts, setHasLoadedCounts] = useState(false);
-  const [isLoadingFiles, setIsLoadingFiles] = useState(true);
   const [hasTriedSelection, setHasTriedSelection] = useState(false);
 
   // Get repository files count
-  const { data: filesData } = useGetRepositoryFilesQuery({ name: currentRepoName || '' }, { skip: !currentRepoName });
+  const { data: filesData, isLoading: isLoadingFiles } = useGetRepositoryFilesQuery(
+    { name: currentRepoName || '' },
+    { skip: !currentRepoName }
+  );
 
   useEffect(() => {
     if (filesData?.items) {
@@ -230,8 +232,8 @@ export function BootstrapStep({ onOptionSelect }: Props) {
     }
   }, [selectedOption, setValue]);
 
-  const isLoading = settingsQuery.isLoading || isLoadingCounts || isLoadingFiles;
-  const hasAllData = Boolean(settingsQuery.data) && hasLoadedCounts && (filesData !== undefined || !currentRepoName);
+  const isLoading = settingsQuery.isLoading || isLoadingCounts || (currentRepoName ? isLoadingFiles : false);
+  const hasAllData = Boolean(settingsQuery.data) && hasLoadedCounts && (!currentRepoName || filesData !== undefined);
 
   // Select first available option by default
   useEffect(() => {
