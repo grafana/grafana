@@ -214,6 +214,11 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 				searchFields.Field(resource.SEARCH_FIELD_FOLDER),
 				searchFields.Field(resource.SEARCH_FIELD_TAGS),
 				{
+					Name:        unisearch.DASHBOARD_LEGACY_ID,
+					Type:        resource.ResourceTableColumnDefinition_INT64,
+					Description: "Deprecated legacy id of the dashboard",
+				},
+				{
 					Name: sortByField,
 					Type: resource.ResourceTableColumnDefinition_INT64,
 				},
@@ -270,7 +275,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 
 		list.Results.Rows = append(list.Results.Rows, &resource.ResourceTableRow{
 			Key:   getResourceKey(dashboard, req.Options.Key.Namespace),
-			Cells: [][]byte{[]byte(dashboard.Title), []byte(dashboard.FolderUID), tags, []byte(strconv.FormatInt(dashboard.SortMeta, 10))},
+			Cells: [][]byte{[]byte(dashboard.Title), []byte(dashboard.FolderUID), tags, []byte(strconv.FormatInt(dashboard.ID, 10)), []byte(strconv.FormatInt(dashboard.SortMeta, 10))},
 		})
 	}
 
@@ -306,6 +311,7 @@ func formatQueryResult(res []dashboards.DashboardSearchProjection) []*dashboards
 		hit, exists := hits[key]
 		if !exists {
 			hit = &dashboards.DashboardSearchProjection{
+				ID:        item.ID,
 				UID:       item.UID,
 				Title:     item.Title,
 				FolderUID: item.FolderUID,
