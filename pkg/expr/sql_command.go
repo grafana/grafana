@@ -23,7 +23,7 @@ type SQLCommand struct {
 }
 
 // NewSQLCommand creates a new SQLCommand.
-func NewSQLCommand(refID, rawSQL string) (*SQLCommand, error) {
+func NewSQLCommand(refID, rawSQL string, limit int64) (*SQLCommand, error) {
 	if rawSQL == "" {
 		return nil, errutil.BadRequest("sql-missing-query",
 			errutil.WithPublicMessage("missing SQL query"))
@@ -46,11 +46,12 @@ func NewSQLCommand(refID, rawSQL string) (*SQLCommand, error) {
 		query:       rawSQL,
 		varsToQuery: tables,
 		refID:       refID,
+		limit:       limit,
 	}, nil
 }
 
 // UnmarshalSQLCommand creates a SQLCommand from Grafana's frontend query.
-func UnmarshalSQLCommand(rn *rawNode) (*SQLCommand, error) {
+func UnmarshalSQLCommand(rn *rawNode, limit int64) (*SQLCommand, error) {
 	if rn.TimeRange == nil {
 		logger.Error("time range must be specified for refID", "refID", rn.RefID)
 		return nil, fmt.Errorf("time range must be specified for refID %s", rn.RefID)
@@ -67,7 +68,7 @@ func UnmarshalSQLCommand(rn *rawNode) (*SQLCommand, error) {
 		return nil, fmt.Errorf("expected sql expression to be type string, but got type %T", expressionRaw)
 	}
 
-	return NewSQLCommand(rn.RefID, expression)
+	return NewSQLCommand(rn.RefID, expression, limit)
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies

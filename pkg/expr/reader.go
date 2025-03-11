@@ -134,7 +134,8 @@ func (h *ExpressionQueryReader) ReadQuery(
 		err = iter.ReadVal(q)
 		if err == nil {
 			eq.Properties = q
-			eq.Command, err = NewSQLCommand(common.RefID, q.Expression)
+			// TODO: implement limit in MT DS Querier, and when `expressionParser` flag is enabled
+			eq.Command, err = NewSQLCommand(common.RefID, q.Expression, 0)
 		}
 
 	case QueryTypeThreshold:

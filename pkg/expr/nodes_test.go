@@ -1,7 +1,6 @@
 package expr
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -13,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type expectedError struct{}
@@ -164,56 +162,6 @@ func TestCheckIfSeriesNeedToBeFixed(t *testing.T) {
 					require.Equal(t, tc.expectedName, getLabelName(fixer))
 				}
 			}
-		})
-	}
-}
-
-func TestCMDNodeExecute_SQLCellLimitFromConfig(t *testing.T) {
-	tests := []struct {
-		name            string
-		configCellLimit int64
-		wantCellLimit   int64
-	}{
-		{
-			name:            "should set SQL command cell limit from service config",
-			configCellLimit: 42,
-			wantCellLimit:   42,
-		},
-		{
-			name:            "should set SQL command cell limit to 0 when config is 0",
-			configCellLimit: 0,
-			wantCellLimit:   0,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			cmd, err := NewSQLCommand("B", "SELECT 1")
-			require.NoError(t, err)
-
-			node := &CMDNode{
-				baseNode: baseNode{
-					id:    1,
-					refID: "B",
-				},
-				CMDType: TypeSQL,
-				Command: cmd,
-			}
-
-			svc := &Service{
-				cfg: &setting.Cfg{
-					SQLExpressionCellLimit: tt.configCellLimit,
-				},
-				tracer: &testTracer{},
-			}
-
-			// Execute node to trigger the cell limit configuration
-			_, err = node.Execute(context.Background(), time.Now(), mathexp.Vars{}, svc)
-			require.NoError(t, err)
-
-			// Verify the SQL command received the correct cell limit from config
-			sqlCmd := node.Command.(*SQLCommand)
-			require.Equal(t, tt.wantCellLimit, sqlCmd.limit)
 		})
 	}
 }

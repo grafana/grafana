@@ -103,14 +103,10 @@ func (gn *CMDNode) NeedsVars() []string {
 // other nodes they must have already been executed and their results must
 // already by in vars.
 func (gn *CMDNode) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, s *Service) (mathexp.Results, error) {
-	// If this is a SQL command, pass the cell limit from service config
-	if sqlCmd, ok := gn.Command.(*SQLCommand); ok {
-		sqlCmd.limit = s.cfg.SQLExpressionCellLimit
-	}
 	return gn.Command.Execute(ctx, now, vars, s.tracer)
 }
 
-func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles) (*CMDNode, error) {
+func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles, sqlExpressionCellLimit int64) (*CMDNode, error) {
 	commandType, err := GetExpressionCommandType(rn.Query)
 	if err != nil {
 		return nil, fmt.Errorf("invalid command type in expression '%v': %w", rn.RefID, err)
@@ -167,7 +163,7 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles) (*CMDNode, er
 	case TypeThreshold:
 		node.Command, err = UnmarshalThresholdCommand(rn, toggles)
 	case TypeSQL:
-		node.Command, err = UnmarshalSQLCommand(rn)
+		node.Command, err = UnmarshalSQLCommand(rn, sqlExpressionCellLimit)
 	default:
 		return nil, fmt.Errorf("expression command type '%v' in expression '%v' not implemented", commandType, rn.RefID)
 	}
