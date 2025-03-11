@@ -760,14 +760,12 @@ func createRecordingWriter(featureToggles featuremgmt.FeatureToggles, settings s
 	if settings.Enabled {
 		if featureToggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRulesDatasources) {
 			cfg := writer.DatasourceWriterConfig{
-				Timeout:               settings.Timeout,
-				DefaultDatasourceUID:  settings.DefaultDatasourceUID,
-				RemoteWritePathSuffix: settings.RemoteWritePathSuffix,
+				Timeout:              settings.Timeout,
+				DefaultDatasourceUID: settings.DefaultDatasourceUID,
 			}
 
 			logger.Info("Setting up remote write using data sources",
-				"timeout", cfg.Timeout, "default_datasource_uid", cfg.DefaultDatasourceUID,
-				"remote_write_path_suffix", cfg.RemoteWritePathSuffix)
+				"timeout", cfg.Timeout, "default_datasource_uid", cfg.DefaultDatasourceUID)
 
 			return writer.NewDatasourceWriter(cfg, datasourceService, httpClientProvider, clock, logger, m), nil
 		} else {
