@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Stack, Text } from '@grafana/ui';
@@ -73,7 +73,6 @@ export function PullStep({ onStatusChange, onRunningChange, onErrorChange }: Pul
         Pulling all resources from your repository to this Grafana instance. After this initial pull, all future updates
         from the repository will be automatically synchronized.
       </Text>
-      {syncQuery.isLoading && <Text>Initializing sync operation...</Text>}
       {syncName && (
         <JobStatus
           name={syncName}

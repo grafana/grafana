@@ -277,7 +277,7 @@ function WizardContent({
 
     // For job steps, wait for job completion and success
     if (isJobStep(activeStep)) {
-      return isJobRunning || !stepSuccess;
+      return isJobRunning || hasError;
     }
 
     // For form steps, only disable during submission

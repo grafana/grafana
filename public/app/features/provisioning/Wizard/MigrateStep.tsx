@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Alert, Stack, Text } from '@grafana/ui';
@@ -80,8 +80,6 @@ export function MigrateStep({ onStatusChange, onRunningChange, onErrorChange }: 
       <Alert severity="info" title="Note">
         Dashboards will be unavailable while running this process.
       </Alert>
-
-      {migrateQuery.isLoading && <Text>Initializing migration operation...</Text>}
 
       {migrateName && (
         <JobStatus
