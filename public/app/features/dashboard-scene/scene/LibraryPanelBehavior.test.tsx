@@ -167,7 +167,7 @@ describe('LibraryPanelBehavior', () => {
 });
 
 async function buildTestSceneWithLibraryPanel() {
-  const behavior = new LibraryPanelBehavior({ title: 'LibraryPanel A title', name: 'LibraryPanel A', uid: '111' });
+  const behavior = new LibraryPanelBehavior({ name: 'LibraryPanel A', uid: '111' });
 
   const vizPanel = new VizPanel({
     title: 'Panel A',

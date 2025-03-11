@@ -68,7 +68,7 @@ Alert instances will be routed for [notifications](ref:notifications) when they 
 
 ### `No Data` and `Error` alerts
 
-When evaluation of an alert rule produces state `No Data` or `Error`, Grafana Alerting generates a new alert instance that have the following additional labels:
+When an alert rule evaluation results in a `No Data` or `Error` state, Grafana Alerting immediately creates a new alert instance —skipping the pending period—with the following additional labels:
 
 - `alertname`: Either `DatasourceNoData` or `DatasourceError` depending on the state.
 - `datasource_uid`: The UID of the data source that caused the state.
@@ -87,7 +87,7 @@ In [Configure no data and error handling](ref:no-data-and-error-handling), you c
 
 Note that `No Data` and `Error` states are supported only for Grafana-managed alert rules.
 
-{{< figure src="/media/docs/alerting/alert-rule-configure-no-data-and-error.png" alt="A screenshot of the `Configure no data and error handling` option in Grafana Alerting." max-width="500px" >}}
+{{< figure src="/media/docs/alerting/alert-rule-configure-no-data-and-error-v2.png" alt="A screenshot of the `Configure no data and error handling` option in Grafana Alerting." max-width="500px" >}}
 
 {{< docs/shared lookup="alerts/table-configure-no-data-and-error.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 

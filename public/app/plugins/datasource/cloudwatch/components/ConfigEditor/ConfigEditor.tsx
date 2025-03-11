@@ -12,7 +12,7 @@ import {
   DataSourceTestFailed,
   GrafanaTheme2,
 } from '@grafana/data';
-import { ConfigSection } from '@grafana/experimental';
+import { ConfigSection } from '@grafana/plugin-ui';
 import { getAppEvents, usePluginInteractionReporter, getDataSourceSrv, config } from '@grafana/runtime';
 import { Alert, Input, FieldProps, Field, Divider, useStyles2 } from '@grafana/ui';
 

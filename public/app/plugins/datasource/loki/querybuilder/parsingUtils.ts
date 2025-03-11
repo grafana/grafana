@@ -1,6 +1,6 @@
 import { SyntaxNode, TreeCursor } from '@lezer/common';
 
-import { QueryBuilderOperation, QueryBuilderOperationParamValue } from '@grafana/experimental';
+import { QueryBuilderOperation, QueryBuilderOperationParamValue } from '@grafana/plugin-ui';
 
 // Although 0 isn't explicitly provided in the @grafana/lezer-logql library as the error node ID, it does appear to be the ID of error nodes within lezer.
 export const ErrorId = 0;

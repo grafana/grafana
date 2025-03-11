@@ -334,3 +334,82 @@ describe('PromQueryModeller', () => {
     ).toBe('cluster_namespace_slug_dialer_name <= bool 2');
   });
 });
+
+describe('PromQueryModeller with utf8 support', () => {
+  const modeller = new PromQueryModeller();
+
+  it('should render nothing if there is nothing', () => {
+    expect(
+      modeller.renderQuery({
+        metric: undefined,
+        labels: [],
+        operations: [],
+      })
+    ).toBe('');
+
+    expect(
+      modeller.renderQuery({
+        metric: '',
+        labels: [],
+        operations: [],
+      })
+    ).toBe('');
+  });
+
+  it('should render legacy metric name as usual', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'not_a_utf8_metric',
+        labels: [],
+        operations: [],
+      })
+    ).toBe('not_a_utf8_metric');
+  });
+
+  it('can render utf8 metric name in curly braces', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'a.utf8.metric',
+        labels: [],
+        operations: [],
+      })
+    ).toBe('{"a.utf8.metric"}');
+  });
+
+  it('can render utf8 metric name in curly braces with legacy labels', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'a.utf8.metric',
+        labels: [
+          {
+            label: 'label',
+            value: 'value',
+            op: '=',
+          },
+        ],
+        operations: [],
+      })
+    ).toBe('{"a.utf8.metric", label="value"}');
+  });
+
+  it('can render utf8 metric name in curly braces with legacy and utf8 labels', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'a.utf8.metric',
+        labels: [
+          {
+            label: 'label',
+            value: 'value',
+            op: '=',
+          },
+          {
+            label: 'utf8.label',
+            value: 'value',
+            op: '=',
+          },
+        ],
+        operations: [],
+      })
+    ).toBe('{"a.utf8.metric", label="value", "utf8.label"="value"}');
+  });
+});

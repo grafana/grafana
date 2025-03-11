@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"github.com/go-jose/go-jose/v3/jwt"
-	authnlib "github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/claims"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/sync/singleflight"
+
+	authnlib "github.com/grafana/authlib/authn"
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -62,7 +63,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 		s.metrics.tokenSigningDurationHistogram.Observe(time.Since(t).Seconds())
 	}(time.Now())
 
-	cacheKey := prefixCacheKey(id.GetCacheKey())
+	cacheKey := getCacheKey(id)
 
 	type resultType struct {
 		token    string
@@ -108,6 +109,10 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 			idClaims.Rest.DisplayName = id.GetName()
 		}
 
+		if id.GetOrgRole().IsValid() {
+			idClaims.Rest.Role = string(id.GetOrgRole())
+		}
+
 		token, err := s.signer.SignIDToken(ctx, idClaims)
 		if err != nil {
 			s.metrics.failedTokenSigningCounter.Inc()
@@ -135,7 +140,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 }
 
 func (s *Service) RemoveIDToken(ctx context.Context, id identity.Requester) error {
-	return s.cache.Delete(ctx, prefixCacheKey(id.GetCacheKey()))
+	return s.cache.Delete(ctx, getCacheKey(id))
 }
 
 func (s *Service) hook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
@@ -176,8 +181,8 @@ func getAudience(orgID int64) jwt.Audience {
 	return jwt.Audience{fmt.Sprintf("org:%d", orgID)}
 }
 
-func prefixCacheKey(key string) string {
-	return fmt.Sprintf("%s-%s", cachePrefix, key)
+func getCacheKey(ident identity.Requester) string {
+	return cachePrefix + ident.GetCacheKey() + string(ident.GetOrgRole())
 }
 
 func shouldLogErr(err error) bool {

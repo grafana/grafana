@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -41,6 +42,11 @@ func ToFolderErrorResponse(err error) response.Response {
 
 	if errors.Is(err, dashboards.ErrFolderVersionMismatch) {
 		return response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": dashboards.ErrFolderVersionMismatch.Error()})
+	}
+
+	// folder errors are wrapped in an error util, so this is the only way of comparing errors
+	if err.Error() == folder.ErrMaximumDepthReached.Error() {
+		return response.JSON(http.StatusBadRequest, util.DynMap{"messageId": "folder.maximum-depth-reached", "message": "Maximum nested folder depth reached"})
 	}
 
 	return response.ErrOrFallback(http.StatusInternalServerError, "Folder API error", err)
@@ -81,4 +87,8 @@ func ToFolderStatusError(err error) k8sErrors.StatusError {
 			Code:    int32(normResp.Status()),
 		},
 	}
+}
+
+func IsForbidden(err error) bool {
+	return k8sErrors.IsForbidden(err) || errors.Is(err, dashboards.ErrFolderAccessDenied)
 }

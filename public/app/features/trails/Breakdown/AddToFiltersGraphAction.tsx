@@ -9,7 +9,7 @@ import {
 import { Button } from '@grafana/ui';
 
 import { reportExploreMetrics } from '../interactions';
-import { VAR_OTEL_GROUP_LEFT, VAR_OTEL_RESOURCES } from '../shared';
+import { VAR_OTEL_AND_METRIC_FILTERS, VAR_OTEL_GROUP_LEFT, VAR_OTEL_RESOURCES } from '../shared';
 import { getTrailFor } from '../utils';
 
 export interface AddToFiltersGraphActionState extends SceneObjectState {
@@ -38,7 +38,6 @@ export class AddToFiltersGraphAction extends SceneObjectBase<AddToFiltersGraphAc
       operator: '=',
       value: labels[labelName],
     };
-
     // add to either label filters or otel resource filters
     if (
       allAttributes &&
@@ -46,12 +45,30 @@ export class AddToFiltersGraphAction extends SceneObjectBase<AddToFiltersGraphAc
       // if the label chosen is a resource attribute, add it to the otel resource variable
       allAttributes?.split(',').includes(labelName)
     ) {
+      // This is different than the first non-promoted labels on data trail. In data trail we look at all labels
+      // for all metrics. In breakdown, we look at one metric.
+      //
+      // The metric may not have the label promoted so we have to compare not the non-promoted
+      // label collection we use in the parent datatrail, but instead have to look at `VAR_OTEL_GROUP_LEFT`
+      // which are a collection of labels from `target_info` that have not been promoted to the metric.
+      //
+      // These metric-specific non-promoted labels are retrieved in the function `getFilteredResourceAttributes`.
+      // These attributes on the metric that has been selected.
+      trail.setState({ addingLabelFromBreakdown: true });
       // add to OTel resource var filters
       const otelResourcesVar = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, trail);
-      if (!(otelResourcesVar instanceof AdHocFiltersVariable)) {
+      const otelAndMetricsResourcesVar = sceneGraph.lookupVariable(VAR_OTEL_AND_METRIC_FILTERS, trail);
+      if (
+        !(
+          otelResourcesVar instanceof AdHocFiltersVariable && otelAndMetricsResourcesVar instanceof AdHocFiltersVariable
+        )
+      ) {
         return;
       }
-      otelResourcesVar.setState({ filters: [...variable.state.filters, filter] });
+
+      otelResourcesVar.setState({ filters: [...otelResourcesVar.state.filters, filter] });
+      otelAndMetricsResourcesVar.setState({ filters: [...otelAndMetricsResourcesVar.state.filters, filter] });
+      trail.setState({ addingLabelFromBreakdown: false });
     } else {
       // add to regular var filters
       trail.addFilterWithoutReportingInteraction(filter);

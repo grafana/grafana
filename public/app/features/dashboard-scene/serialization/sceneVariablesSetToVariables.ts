@@ -18,7 +18,7 @@ import {
   GroupByVariableKind,
   defaultVariableHide,
   VariableOption,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 
@@ -27,6 +27,7 @@ import {
   transformVariableRefreshToEnum,
   transformVariableHideToEnum,
   transformSortVariableToEnum,
+  LEGACY_STRING_VALUE_KEY,
 } from './transformToV2TypesUtils';
 /**
  * Converts a SceneVariables object into an array of VariableModel objects.
@@ -175,8 +176,6 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
     } else if (sceneUtils.isAdHocVariable(variable)) {
       variables.push({
         ...commonProperties,
-        name: variable.state.name,
-        type: 'adhoc',
         datasource: variable.state.datasource,
         allowCustomValue: variable.state.allowCustomValue,
         // @ts-expect-error
@@ -271,16 +270,20 @@ export function sceneVariablesSetToSchemaV2Variables(
       if (transformVariableRefreshToEnum(variable.state.refresh) === 'never' || keepQueryOptions) {
         options = variableValueOptionsToVariableOptions(variable.state);
       }
-      //query: DataQueryKind | string;
       const query = variable.state.query;
       let dataQuery: DataQueryKind | string;
       if (typeof query !== 'string') {
         dataQuery = {
-          kind: getDataQueryKind(query),
+          kind: variable.state.datasource?.type ?? getDataQueryKind(query),
           spec: getDataQuerySpec(query),
         };
       } else {
-        dataQuery = query;
+        dataQuery = {
+          kind: variable.state.datasource?.type ?? getDataQueryKind(query),
+          spec: {
+            [LEGACY_STRING_VALUE_KEY]: query,
+          },
+        };
       }
       const queryVariable: QueryVariableKind = {
         kind: 'QueryVariable',
@@ -407,7 +410,6 @@ export function sceneVariablesSetToSchemaV2Variables(
             })) || [],
           current: currentVariableOption,
           multi: variable.state.isMulti || false,
-          includeAll: variable.state.includeAll || false,
         },
       };
       variables.push(groupVariable);

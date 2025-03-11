@@ -1,6 +1,8 @@
 import * as e2e from '@grafana/e2e-selectors';
 import { expect, test } from '@grafana/plugin-e2e';
 
+// let's disable the feature toggles for now, otherwise the getAlertRuleQueryRow fails and I don't see any other way to get the query row
+test.use({ featureToggles: { alertingQueryAndExpressionsStepMode: false, alertingNotificationsStepMode: false } });
 test('should evaluate to false if entire request returns 200 but partial query result is invalid', async ({
   page,
   alertRuleEditPage,

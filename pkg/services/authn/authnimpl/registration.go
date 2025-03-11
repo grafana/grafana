@@ -115,7 +115,7 @@ func ProvideRegistration(
 		authnSvc.RegisterClient(clients.ProvideJWT(jwtService, cfg))
 	}
 
-	if cfg.ExtJWTAuth.Enabled && features.IsEnabledGlobally(featuremgmt.FlagAuthAPIAccessTokenAuth) {
+	if cfg.ExtJWTAuth.Enabled {
 		authnSvc.RegisterClient(clients.ProvideExtendedJWT(cfg))
 	}
 
@@ -145,5 +145,7 @@ func ProvideRegistration(
 
 	nsSync := sync.ProvideNamespaceSync(cfg)
 	authnSvc.RegisterPostAuthHook(nsSync.SyncNamespace, 150)
+	authnSvc.RegisterPostAuthHook(sync.AccessClaimsHook, 160)
+
 	return Registration{}
 }

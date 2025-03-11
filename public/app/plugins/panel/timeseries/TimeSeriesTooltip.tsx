@@ -38,6 +38,7 @@ export interface TimeSeriesTooltipProps {
 
   replaceVariables?: InterpolateFunction;
   dataLinks: LinkModel[];
+  hideZeros?: boolean;
 }
 
 export const TimeSeriesTooltip = ({
@@ -50,8 +51,9 @@ export const TimeSeriesTooltip = ({
   isPinned,
   annotate,
   maxHeight,
-  replaceVariables,
+  replaceVariables = (str) => str,
   dataLinks,
+  hideZeros,
 }: TimeSeriesTooltipProps) => {
   const xField = series.fields[0];
   const xVal = formattedValueToString(xField.display!(xField.values[dataIdxs[0]!]));
@@ -63,7 +65,8 @@ export const TimeSeriesTooltip = ({
     seriesIdx,
     mode,
     sortOrder,
-    (field) => field.type === FieldType.number || field.type === FieldType.enum
+    (field) => field.type === FieldType.number || field.type === FieldType.enum,
+    hideZeros
   );
 
   _rest?.forEach((field) => {
@@ -77,12 +80,16 @@ export const TimeSeriesTooltip = ({
 
   let footer: ReactNode;
 
-  if (isPinned && seriesIdx != null) {
+  if (seriesIdx != null) {
     const field = series.fields[seriesIdx];
-    const dataIdx = dataIdxs[seriesIdx]!;
-    const actions = getFieldActions(series, field, replaceVariables!, dataIdx);
+    const hasOneClickLink = dataLinks.some((dataLink) => dataLink.oneClick === true);
 
-    footer = <VizTooltipFooter dataLinks={dataLinks} actions={actions} annotate={annotate} />;
+    if (isPinned || hasOneClickLink) {
+      const dataIdx = dataIdxs[seriesIdx]!;
+      const actions = getFieldActions(series, field, replaceVariables, dataIdx);
+
+      footer = <VizTooltipFooter dataLinks={dataLinks} actions={actions} annotate={annotate} />;
+    }
   }
 
   const headerItem: VizTooltipItem | null = xField.config.custom?.hideFrom?.tooltip

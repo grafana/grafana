@@ -75,6 +75,10 @@ Each policy consists of a set of label matchers (0 or more) that specify which a
 
 {{< figure src="/media/docs/alerting/notification-routing.png" max-width="750px" caption="Matching alert instances with notification policies" alt="Example of a notification policy tree" >}}
 
+{{< admonition type="tip" >}}
+For a practical example of routing with notification policies, refer to our [Getting Started with Alert Instances and Notification Routing tutorial](https://grafana.com/tutorials/alerting-get-started-pt2/).
+{{< /admonition  >}}
+
 ## Routing
 
 To determine which notification policies handle an alert instance, the system looks for matching policies starting from the top of the tree—beginning with the default notification policy.

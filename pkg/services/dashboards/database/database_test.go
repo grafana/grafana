@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -24,12 +23,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -62,6 +63,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.ID, savedFolder.UID, false, "prod", "webapp")
 		insertTestDashboard(t, dashboardStore, "test dash 45", 1, savedFolder.ID, savedFolder.UID, false, "prod")
 		savedDash2 = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, "", false, "prod")
+		insertTestDashboard(t, dashboardStore, "test dash org2", 2, 0, "", false, "")
 		insertTestRule(t, sqlStore, savedFolder.OrgID, savedFolder.UID)
 	}
 
@@ -80,6 +82,17 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.True(t, savedFolder.IsFolder)
 		require.Empty(t, savedFolder.FolderUID)
 		require.Positive(t, len(savedFolder.UID))
+	})
+
+	t.Run("Should be able to get dashboard counts per org", func(t *testing.T) {
+		setup()
+		count, err := dashboardStore.CountInOrg(context.Background(), 1)
+		require.NoError(t, err)
+		require.Equal(t, int64(3), count)
+
+		count, err = dashboardStore.CountInOrg(context.Background(), 2)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), count)
 	})
 
 	t.Run("Should be able to get dashboard by id", func(t *testing.T) {
@@ -238,6 +251,63 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.NotContains(t, terms, "delete this")
 	})
 
+	t.Run("Should delete associated provisioning info, even without the dashboard existing in the db", func(t *testing.T) {
+		setup()
+		dash1 := insertTestDashboard(t, dashboardStore, "provisioned", 1, 0, "", false, "provisioned")
+		dash2 := insertTestDashboard(t, dashboardStore, "orphaned", 1, 0, "", false, "orphaned")
+		provisioningData := &dashboards.DashboardProvisioning{
+			ID:          1,
+			DashboardID: dash1.ID,
+			Name:        "test",
+			CheckSum:    "123",
+			Updated:     54321,
+			ExternalID:  "/path/to/dashboard",
+		}
+		err := dashboardStore.SaveProvisionedDashboard(context.Background(), dash1, provisioningData)
+		require.NoError(t, err)
+		provisioningData2 := &dashboards.DashboardProvisioning{
+			ID:          1,
+			DashboardID: dash2.ID,
+			Name:        "orphaned",
+			CheckSum:    "123",
+			Updated:     54321,
+			ExternalID:  "/path/to/dashboard",
+		}
+		err = dashboardStore.SaveProvisionedDashboard(context.Background(), dash2, provisioningData2)
+		require.NoError(t, err)
+
+		// get provisioning data
+		res, err := dashboardStore.GetProvisionedDashboardData(context.Background(), "test")
+		require.NoError(t, err)
+		require.Len(t, res, 1)
+		require.Equal(t, res[0], provisioningData)
+
+		// get dashboards within the provisioner
+		dashs, err := dashboardStore.GetProvisionedDashboardsByName(context.Background(), "test")
+		require.NoError(t, err)
+		require.Len(t, dashs, 1)
+
+		// find dashboards not within that provisioner
+		dashs, err = dashboardStore.GetOrphanedProvisionedDashboards(context.Background(), []string{"test"})
+		require.NoError(t, err)
+		require.Len(t, dashs, 1)
+		// if both are provided, nothing should be returned
+		dashs, err = dashboardStore.GetOrphanedProvisionedDashboards(context.Background(), []string{"test", "orphaned"})
+		require.NoError(t, err)
+		require.Len(t, dashs, 0)
+
+		err = dashboardStore.CleanupAfterDelete(context.Background(), &dashboards.DeleteDashboardCommand{
+			ID:    dash1.ID,
+			OrgID: 1,
+			UID:   "test",
+		})
+		require.NoError(t, err)
+
+		res, err = dashboardStore.GetProvisionedDashboardData(context.Background(), "test")
+		require.NoError(t, err)
+		require.Len(t, res, 0)
+	})
+
 	t.Run("Should be able to delete all dashboards for an org", func(t *testing.T) {
 		setup()
 		dash1 := insertTestDashboard(t, dashboardStore, "delete me", 1, 0, "", false, "delete this")
@@ -306,6 +376,23 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.False(t, dashboard.Created.IsZero())
 		require.EqualValues(t, dashboard.UpdatedBy, 100)
 		require.False(t, dashboard.Updated.IsZero())
+	})
+
+	t.Run("Should populate FolderID if FolderUID is provided when creating a dashboard", func(t *testing.T) {
+		setup()
+		cmd := dashboards.SaveDashboardCommand{
+			OrgID: 1,
+			Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				"title": "folderId",
+				"tags":  []interface{}{},
+			}),
+			FolderUID: savedFolder.UID,
+			UserID:    100,
+		}
+		dashboard, err := dashboardStore.SaveDashboard(context.Background(), cmd)
+		require.NoError(t, err)
+		require.EqualValues(t, dashboard.FolderID, savedFolder.ID) //nolint:staticcheck
+		require.EqualValues(t, dashboard.FolderUID, savedFolder.UID)
 	})
 
 	t.Run("Should be able to update dashboard by id and remove folderId", func(t *testing.T) {
@@ -855,11 +942,12 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 	orgID := int64(1)
 	insertTestDashboard(t, dashboardStore, "dashboard under general", orgID, 0, "", false)
 
-	ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(features)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	fStore := folderimpl.ProvideStore(sqlStore)
-	folderServiceWithFlagOn := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore,
-		folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+	folderServiceWithFlagOn := folderimpl.ProvideService(
+		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
+		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
 
 	user := &user.SignedInUser{
 		OrgID: 1,
@@ -973,12 +1061,13 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 	orgID := int64(1)
 	insertTestDashboard(t, dashboardStore, "dashboard under general", orgID, 0, "", false)
 
-	ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(features)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	fStore := folderimpl.ProvideStore(sqlStore)
 
-	folderServiceWithFlagOn := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore,
-		folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+	folderServiceWithFlagOn := folderimpl.ProvideService(
+		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
+		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
 
 	user := &user.SignedInUser{
 		OrgID: 1,

@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	authnlib "github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 )
 
 var _ Requester = (*StaticRequester)(nil)
@@ -30,10 +30,11 @@ type StaticRequester struct {
 	Namespace       string
 	IsGrafanaAdmin  bool
 	// Permissions grouped by orgID and actions
-	Permissions   map[int64]map[string][]string
-	IDToken       string
-	IDTokenClaims *authnlib.Claims[authnlib.IDTokenClaims]
-	CacheKey      string
+	Permissions       map[int64]map[string][]string
+	IDToken           string
+	IDTokenClaims     *authnlib.Claims[authnlib.IDTokenClaims]
+	AccessTokenClaims *authnlib.Claims[authnlib.AccessTokenClaims]
+	CacheKey          string
 }
 
 // GetID returns typed id for the entity
@@ -62,10 +63,16 @@ func (u *StaticRequester) GetAudience() []string {
 }
 
 func (u *StaticRequester) GetTokenPermissions() []string {
+	if u.AccessTokenClaims != nil {
+		return u.AccessTokenClaims.Rest.Permissions
+	}
 	return []string{}
 }
 
 func (u *StaticRequester) GetTokenDelegatedPermissions() []string {
+	if u.AccessTokenClaims != nil {
+		return u.AccessTokenClaims.Rest.DelegatedPermissions
+	}
 	return []string{}
 }
 

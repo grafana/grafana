@@ -1,32 +1,47 @@
 import { useMemo } from 'react';
 
 import { Select } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { DashboardLayoutManager, isLayoutParent, LayoutRegistryItem } from '../types';
+import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { isLayoutParent } from '../types/LayoutParent';
+import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { layoutRegistry } from './layoutRegistry';
+import { findParentLayout } from './utils';
 
 export interface Props {
   layoutManager: DashboardLayoutManager;
 }
 
-export function DashboardLayoutSelector({ layoutManager }: { layoutManager: DashboardLayoutManager }) {
-  const layouts = layoutRegistry.list();
-  const options = layouts.map((layout) => ({
-    label: layout.name,
-    value: layout,
-  }));
+export function DashboardLayoutSelector({ layoutManager }: Props) {
+  const options = useMemo(() => {
+    const parentLayout = findParentLayout(layoutManager);
+    const parentLayoutId = parentLayout?.descriptor.id;
 
-  const currentLayoutId = layoutManager.getDescriptor().id;
-  const currentLayoutOption = options.find((option) => option.value.id === currentLayoutId);
+    return layoutRegistry
+      .list()
+      .filter((layout) => layout.id !== parentLayoutId)
+      .map((layout) => ({
+        label: layout.name,
+        value: layout,
+      }));
+  }, [layoutManager]);
+
+  const currentLayoutId = layoutManager.descriptor.id;
+  const currentOption = options.find((option) => option.value.id === currentLayoutId);
 
   return (
     <Select
       options={options}
-      value={currentLayoutOption}
-      onChange={(option) => changeLayoutTo(layoutManager, option.value!)}
+      value={currentOption}
+      onChange={(option) => {
+        if (option.value?.id !== currentOption?.value.id) {
+          changeLayoutTo(layoutManager, option.value!);
+        }
+      }}
     />
   );
 }
@@ -41,10 +56,8 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
 
     layoutCategory.addItem(
       new OptionsPaneItemDescriptor({
-        title: 'Type',
-        render: function renderTitle() {
-          return <DashboardLayoutSelector layoutManager={layoutManager} />;
-        },
+        title: t('dashboard.layout.common.layout', 'Layout'),
+        render: () => <DashboardLayoutSelector layoutManager={layoutManager} />,
       })
     );
 

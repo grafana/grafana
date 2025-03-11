@@ -27,7 +27,6 @@ import (
 
 func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 	t.Run("exemplars response should be sampled and parsed normally", func(t *testing.T) {
-		t.Skip()
 		exemplars := []apiv1.ExemplarQueryResult{
 			{
 				SeriesLabels: p.LabelSet{
@@ -60,6 +59,22 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 		}
 
+		values := []p.SamplePair{
+			{Value: 1, Timestamp: 1000},
+			{Value: 4, Timestamp: 4000},
+			{Value: 6, Timestamp: 7000},
+			{Value: 8, Timestamp: 1100},
+		}
+		rangeResult := queryResult{
+			Type: p.ValMatrix,
+			Result: p.Matrix{
+				&p.SampleStream{
+					Metric: p.Metric{"app": "Application", "tag2": "tag2"},
+					Values: values,
+				},
+			},
+		}
+
 		tctx, err := setup()
 		require.NoError(t, err)
 
@@ -76,20 +91,20 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			RefID: "A",
 			JSON:  b,
 		}
-		res, err := execute(tctx, query, exemplars)
+		res, err := execute(tctx, query, exemplars, rangeResult)
 		require.NoError(t, err)
 
 		// Test fields
-		require.Len(t, res, 1)
-		//		require.Equal(t, res[0].Name, "exemplar")
+		require.Len(t, res, 2)
+		require.Equal(t, res[0].Name, "exemplar")
 		require.Equal(t, res[0].Fields[0].Name, "Time")
 		require.Equal(t, res[0].Fields[1].Name, "Value")
 		require.Len(t, res[0].Fields, 6)
 
 		// Test correct values (sampled to 2)
-		require.Equal(t, res[0].Fields[1].Len(), 2)
+		require.Equal(t, res[0].Fields[1].Len(), 4)
 		require.Equal(t, res[0].Fields[1].At(0), 0.009545445)
-		require.Equal(t, res[0].Fields[1].At(1), 0.003535405)
+		require.Equal(t, res[0].Fields[1].At(3), 0.003535405)
 	})
 
 	t.Run("matrix response should be parsed normally", func(t *testing.T) {
@@ -128,7 +143,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		}
 		tctx, err := setup()
 		require.NoError(t, err)
-		res, err := execute(tctx, query, result)
+		res, err := execute(tctx, query, result, nil)
 		require.NoError(t, err)
 
 		require.Len(t, res, 1)
@@ -177,7 +192,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		}
 		tctx, err := setup()
 		require.NoError(t, err)
-		res, err := execute(tctx, query, result)
+		res, err := execute(tctx, query, result, nil)
 
 		require.NoError(t, err)
 		require.Len(t, res, 1)
@@ -222,7 +237,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		}
 		tctx, err := setup()
 		require.NoError(t, err)
-		res, err := execute(tctx, query, result)
+		res, err := execute(tctx, query, result, nil)
 
 		require.NoError(t, err)
 		require.Len(t, res, 1)
@@ -266,7 +281,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 
 		tctx, err := setup()
 		require.NoError(t, err)
-		res, err := execute(tctx, query, result)
+		res, err := execute(tctx, query, result, nil)
 		require.NoError(t, err)
 
 		require.Equal(t, `{app="Application"}`, res[0].Fields[1].Config.DisplayNameFromDS)
@@ -298,7 +313,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		}
 		tctx, err := setup()
 		require.NoError(t, err)
-		res, err := execute(tctx, query, qr)
+		res, err := execute(tctx, query, qr, nil)
 		require.NoError(t, err)
 
 		require.Len(t, res, 1)
@@ -317,7 +332,6 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 	})
 
 	t.Run("scalar response should be parsed normally", func(t *testing.T) {
-		t.Skip("TODO: implement scalar responses")
 		qr := queryResult{
 			Type: p.ValScalar,
 			Result: &p.Scalar{
@@ -339,14 +353,15 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		}
 		tctx, err := setup()
 		require.NoError(t, err)
-		res, err := execute(tctx, query, qr)
+		res, err := execute(tctx, query, qr, nil)
 		require.NoError(t, err)
 
 		require.Len(t, res, 1)
 		require.Len(t, res[0].Fields, 2)
 		require.Len(t, res[0].Fields[0].Labels, 0)
 		require.Equal(t, res[0].Fields[0].Name, "Time")
-		require.Equal(t, "1", res[0].Fields[1].Name)
+		require.Equal(t, "Value", res[0].Fields[1].Name)
+		require.Equal(t, float64(1), res[0].Fields[1].At(0))
 
 		// Ensure the timestamps are UTC zoned
 		testValue := res[0].Fields[0].At(0)
@@ -360,22 +375,29 @@ type queryResult struct {
 	Result any         `json:"result"`
 }
 
-func executeWithHeaders(tctx *testContext, query backend.DataQuery, qr any, headers map[string]string) (data.Frames, error) {
+func executeWithHeaders(tctx *testContext, query backend.DataQuery, rqr any, eqr any, headers map[string]string) (data.Frames, error) {
 	req := backend.QueryDataRequest{
 		Queries: []backend.DataQuery{query},
 		Headers: headers,
 	}
 
-	promRes, err := toAPIResponse(qr)
-	defer func() {
-		if err := promRes.Body.Close(); err != nil {
-			fmt.Println(fmt.Errorf("response body close error: %v", err))
-		}
-	}()
+	rangeRes, err := toAPIResponse(rqr)
 	if err != nil {
 		return nil, err
 	}
-	tctx.httpProvider.setResponse(promRes)
+	exemplarRes, err := toAPIResponse(eqr)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := rangeRes.Body.Close(); err != nil {
+			fmt.Println(fmt.Errorf("rangeRes body close error: %v", err))
+		}
+		if err := exemplarRes.Body.Close(); err != nil {
+			fmt.Println(fmt.Errorf("exemplarRes body close error: %v", err))
+		}
+	}()
+	tctx.httpProvider.setResponse(rangeRes, exemplarRes)
 
 	res, err := tctx.queryData.Execute(context.Background(), &req)
 	if err != nil {
@@ -385,8 +407,8 @@ func executeWithHeaders(tctx *testContext, query backend.DataQuery, qr any, head
 	return res.Responses[req.Queries[0].RefID].Frames, nil
 }
 
-func execute(tctx *testContext, query backend.DataQuery, qr any) (data.Frames, error) {
-	return executeWithHeaders(tctx, query, qr, map[string]string{})
+func execute(tctx *testContext, query backend.DataQuery, rqr any, eqr any) (data.Frames, error) {
+	return executeWithHeaders(tctx, query, rqr, eqr, map[string]string{})
 }
 
 type apiResponse struct {
@@ -426,7 +448,11 @@ func setup() (*testContext, error) {
 		opts: httpclient.Options{
 			Timeouts: &httpclient.DefaultTimeoutOptions,
 		},
-		res: &http.Response{
+		rangeRes: &http.Response{
+			StatusCode: 200,
+			Body:       io.NopCloser(bytes.NewReader([]byte(`{}`))),
+		},
+		exemplarRes: &http.Response{
 			StatusCode: 200,
 			Body:       io.NopCloser(bytes.NewReader([]byte(`{}`))),
 		},
@@ -456,9 +482,10 @@ func setup() (*testContext, error) {
 
 type fakeHttpClientProvider struct {
 	httpclient.Provider
-	opts httpclient.Options
-	req  *http.Request
-	res  *http.Response
+	opts        httpclient.Options
+	req         *http.Request
+	rangeRes    *http.Response
+	exemplarRes *http.Response
 }
 
 func (p *fakeHttpClientProvider) New(opts ...httpclient.Options) (*http.Client, error) {
@@ -476,11 +503,18 @@ func (p *fakeHttpClientProvider) GetTransport(opts ...httpclient.Options) (http.
 	return http.DefaultTransport, nil
 }
 
-func (p *fakeHttpClientProvider) setResponse(res *http.Response) {
-	p.res = res
+func (p *fakeHttpClientProvider) setResponse(rangeRes *http.Response, exemplarRes *http.Response) {
+	p.rangeRes = rangeRes
+	p.exemplarRes = exemplarRes
 }
 
 func (p *fakeHttpClientProvider) RoundTrip(req *http.Request) (*http.Response, error) {
 	p.req = req
-	return p.res, nil
+	switch req.URL.Path {
+	case "/api/v1/query_range", "/api/v1/query":
+		return p.rangeRes, nil
+	case "/api/v1/query_exemplars":
+		return p.exemplarRes, nil
+	}
+	return nil, fmt.Errorf("no such path: %s", req.URL.Path)
 }

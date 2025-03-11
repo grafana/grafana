@@ -1,12 +1,10 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilder.tsx
 import { css } from '@emotion/css';
-import { memo, useEffect, useState } from 'react';
+import { memo, useState } from 'react';
 
 import { DataSourceApi, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { EditorRow } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
-import { Drawer, useStyles2 } from '@grafana/ui';
+import { EditorRow } from '@grafana/plugin-ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import promqlGrammar from '../../promql';
@@ -24,9 +22,6 @@ import { PromVisualQuery } from '../types';
 import { MetricsLabelsSection } from './MetricsLabelsSection';
 import { NestedQueryList } from './NestedQueryList';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
-import { PromQail } from './promQail/PromQail';
-import { QueryAssistantButton } from './promQail/QueryAssistantButton';
-import { isLLMPluginEnabled } from './promQail/state/helpers';
 
 export interface PromQueryBuilderProps {
   query: PromVisualQuery;
@@ -40,44 +35,16 @@ export interface PromQueryBuilderProps {
 export const PromQueryBuilder = memo<PromQueryBuilderProps>((props) => {
   const { datasource, query, onChange, onRunQuery, data, showExplain } = props;
   const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>();
-  const [showDrawer, setShowDrawer] = useState<boolean>(false);
-  const [llmAppEnabled, updateLlmAppEnabled] = useState<boolean>(false);
-  const { prometheusPromQAIL } = config.featureToggles; // AI/ML + Prometheus
 
   const lang = { grammar: promqlGrammar, name: 'promql' };
 
   const initHints = datasource.getInitHints();
 
-  useEffect(() => {
-    async function checkLlms() {
-      const check = await isLLMPluginEnabled();
-      updateLlmAppEnabled(check);
-    }
-
-    if (prometheusPromQAIL) {
-      checkLlms();
-    }
-  }, [prometheusPromQAIL]);
-  const styles = useStyles2(getPromQueryBuilderStyles);
-
   return (
     <>
-      {prometheusPromQAIL && showDrawer && (
-        <Drawer closeOnMaskClick={false} onClose={() => setShowDrawer(false)}>
-          <PromQail
-            query={query}
-            closeDrawer={() => setShowDrawer(false)}
-            onChange={onChange}
-            datasource={datasource}
-          />
-        </Drawer>
-      )}
-      <span className={styles.addaptToParent}>
-        <EditorRow>
-          <MetricsLabelsSection query={query} onChange={onChange} datasource={datasource} />
-        </EditorRow>
-      </span>
-
+      <EditorRow>
+        <MetricsLabelsSection query={query} onChange={onChange} datasource={datasource} />
+      </EditorRow>
       {initHints.length ? (
         <div
           className={css({
@@ -97,7 +64,7 @@ export const PromQueryBuilder = memo<PromQueryBuilderProps>((props) => {
       {showExplain && (
         <OperationExplainedBox
           stepNumber={1}
-          title={<RawQuery query={`${query.metric} ${promQueryModeller.renderLabels(query.labels)}`} lang={lang} />}
+          title={<RawQuery query={`${promQueryModeller.renderQuery(query)}`} lang={lang} />}
         >
           {EXPLAIN_LABEL_FILTER_CONTENT}
         </OperationExplainedBox>
@@ -112,15 +79,6 @@ export const PromQueryBuilder = memo<PromQueryBuilderProps>((props) => {
           onRunQuery={onRunQuery}
           highlightedOp={highlightedOp}
         />
-        {prometheusPromQAIL && (
-          <div
-            className={css({
-              padding: '0 0 0 6px',
-            })}
-          >
-            <QueryAssistantButton llmAppEnabled={llmAppEnabled} metric={query.metric} setShowDrawer={setShowDrawer} />
-          </div>
-        )}
         <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.builder.hints}>
           <QueryBuilderHints<PromVisualQuery>
             datasource={datasource}
@@ -154,9 +112,5 @@ export const PromQueryBuilder = memo<PromQueryBuilderProps>((props) => {
     </>
   );
 });
-const getPromQueryBuilderStyles = () => ({
-  addaptToParent: css({
-    maxWidth: '100%',
-  }),
-});
+
 PromQueryBuilder.displayName = 'PromQueryBuilder';

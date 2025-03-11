@@ -5,6 +5,8 @@ import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { DataTrail } from './DataTrail';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
+import { sortResources } from './otel/util';
+import { VAR_OTEL_AND_METRIC_FILTERS } from './shared';
 import { getDatasourceForNewTrail, limitAdhocProviders } from './utils';
 
 jest.mock('./TrailStore/TrailStore', () => ({
@@ -15,8 +17,13 @@ jest.mock('../plugins/datasource_srv', () => ({
   getDatasourceSrv: jest.fn(),
 }));
 
+jest.mock('./otel/util', () => ({
+  sortResources: jest.fn(),
+}));
+
 describe('limitAdhocProviders', () => {
   let filtersVariable: AdHocFiltersVariable;
+  let otelAndMetricsVariable: AdHocFiltersVariable;
   let datasourceHelper: MetricDatasourceHelper;
   let dataTrail: DataTrail;
 
@@ -31,12 +38,19 @@ describe('limitAdhocProviders', () => {
       type: 'adhoc',
     });
 
+    otelAndMetricsVariable = new AdHocFiltersVariable({
+      name: VAR_OTEL_AND_METRIC_FILTERS,
+      label: 'Test Variable',
+      type: 'adhoc',
+    });
+
     datasourceHelper = {
       getTagKeys: jest.fn().mockResolvedValue(Array(20000).fill({ text: 'key' })),
       getTagValues: jest.fn().mockResolvedValue(Array(20000).fill({ text: 'value' })),
     } as unknown as MetricDatasourceHelper;
 
     dataTrail = {
+      forEachChild: jest.fn(),
       getQueries: jest.fn().mockReturnValue([]),
     } as unknown as DataTrail;
   });
@@ -69,6 +83,14 @@ describe('limitAdhocProviders', () => {
       expect(result.values).toHaveLength(10000);
       expect(result.replace).toBe(true);
     }
+  });
+
+  it('should call sort resources and sort the promoted otel resources list if using the otel and metrics filter', async () => {
+    limitAdhocProviders(dataTrail, otelAndMetricsVariable, datasourceHelper);
+    if (otelAndMetricsVariable instanceof AdHocFiltersVariable && otelAndMetricsVariable.state.getTagKeysProvider) {
+      await otelAndMetricsVariable.state.getTagKeysProvider(otelAndMetricsVariable, null);
+    }
+    expect(sortResources).toHaveBeenCalled();
   });
 });
 

@@ -127,6 +127,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
         this.setState({ filtersApplied });
       }
 
+      // TEST THE MIGRATION OF REMOVING THE VAR_OTEL_DEPLOYMENT_ENV
       if (evt.payload.state.name === VAR_OTEL_DEPLOYMENT_ENV) {
         const otelDepEnvs = this.state.otelDepEnvs;
         const urlState = sceneUtils.getUrlState(trail);

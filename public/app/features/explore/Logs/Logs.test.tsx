@@ -14,10 +14,12 @@ import {
   toUtc,
   createDataFrame,
   ExploreLogsPanelState,
+  DataQuery,
 } from '@grafana/data';
 import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
 import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
+import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { configureStore } from 'app/store/configureStore';
 
 import { initialExploreState } from '../state/main';
@@ -45,6 +47,18 @@ jest.mock('../state/explorePane', () => ({
   ...jest.requireActual('../state/explorePane'),
   changePanelState: (exploreId: string, panel: 'logs', panelState: {} | ExploreLogsPanelState) => {
     return fakeChangePanelState(exploreId, panel, panelState);
+  },
+}));
+
+const fakeChangeQueries = jest.fn().mockReturnValue({ type: 'fakeChangeQueries' });
+const fakeRunQueries = jest.fn().mockReturnValue({ type: 'fakeRunQueries' });
+jest.mock('../state/query', () => ({
+  ...jest.requireActual('../state/query'),
+  changeQueries: (args: { queries: DataQuery[]; exploreId: string | undefined }) => {
+    return fakeChangeQueries(args);
+  },
+  runQueries: (args: { queries: DataQuery[]; exploreId: string | undefined }) => {
+    return fakeRunQueries(args);
   },
 }));
 
@@ -375,6 +389,28 @@ describe('Logs', () => {
     expect(logRows.length).toBe(3);
     expect(logRows[0].textContent).toContain('log message 1');
     expect(logRows[2].textContent).toContain('log message 3');
+    expect(fakeRunQueries).not.toHaveBeenCalled();
+  });
+
+  it('should sync the query direction when changing the order of loki queries', async () => {
+    const query = { expr: '{a="b"}', refId: 'A', datasource: { type: 'loki' } };
+    setup({ logsQueries: [query] });
+    const oldestFirstSelection = screen.getByLabelText('Oldest first');
+    await userEvent.click(oldestFirstSelection);
+    expect(fakeChangeQueries).toHaveBeenCalledWith({
+      exploreId: 'left',
+      queries: [{ ...query, direction: LokiQueryDirection.Forward }],
+    });
+    expect(fakeRunQueries).toHaveBeenCalledWith({ exploreId: 'left' });
+  });
+
+  it('should not change the query direction when changing the order of non-loki queries', async () => {
+    fakeChangeQueries.mockClear();
+    const query = { refId: 'B' };
+    setup({ logsQueries: [query] });
+    const oldestFirstSelection = screen.getByLabelText('Oldest first');
+    await userEvent.click(oldestFirstSelection);
+    expect(fakeChangeQueries).not.toHaveBeenCalled();
   });
 
   describe('for permalinking', () => {

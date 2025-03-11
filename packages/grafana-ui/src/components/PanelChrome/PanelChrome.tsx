@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { CSSProperties, ReactElement, ReactNode, useId } from 'react';
+import { CSSProperties, PointerEvent, ReactElement, ReactNode, useId, useRef, useState } from 'react';
 import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
@@ -150,11 +150,17 @@ export function PanelChrome({
   const styles = useStyles2(getStyles);
   const panelContentId = useId();
   const panelTitleId = useId().replace(/:/g, '_');
-  const { isSelected, onSelect } = useElementSelection(selectionId);
+  const { isSelected, onSelect, isSelectable } = useElementSelection(selectionId);
+  const pointerDownEvt = useRef<PointerEvent | null>(null);
 
   const hasHeader = !hoverHeader;
 
   const [isOpen, toggleOpen] = useToggle(true);
+
+  // Highlight the full panel when hovering over header
+  const [selectableHighlight, setSelectableHighlight] = useState(false);
+  const onHeaderEnter = React.useCallback(() => setSelectableHighlight(true), []);
+  const onHeaderLeave = React.useCallback(() => setSelectableHighlight(false), []);
 
   // if collapsed is not defined, then component is uncontrolled and state is managed internally
   if (collapsed === undefined) {
@@ -272,7 +278,8 @@ export function PanelChrome({
       className={cx(
         styles.container,
         isPanelTransparent && styles.transparentContainer,
-        isSelected && 'dashboard-selected-element'
+        isSelected && 'dashboard-selected-element',
+        !isSelected && isSelectable && selectableHighlight && 'dashboard-selectable-element'
       )}
       style={containerStyles}
       aria-labelledby={!!title ? panelTitleId : undefined}
@@ -314,8 +321,30 @@ export function PanelChrome({
           className={cx(styles.headerContainer, dragClass)}
           style={headerStyles}
           data-testid="header-container"
-          onPointerDown={onDragStart}
-          onPointerUp={onSelect}
+          onPointerDown={(evt) => {
+            evt.stopPropagation();
+            pointerDownEvt.current = evt;
+          }}
+          onPointerMove={() => {
+            if (pointerDownEvt.current) {
+              onDragStart?.(pointerDownEvt.current);
+              pointerDownEvt.current = null;
+            }
+          }}
+          onMouseEnter={isSelectable ? onHeaderEnter : undefined}
+          onMouseLeave={isSelectable ? onHeaderLeave : undefined}
+          onPointerUp={(evt) => {
+            evt.stopPropagation();
+            if (
+              pointerDownEvt.current &&
+              dragClassCancel &&
+              evt.target instanceof HTMLElement &&
+              !evt.target.closest(`.${dragClassCancel}`)
+            ) {
+              onSelect?.(pointerDownEvt.current);
+              pointerDownEvt.current = null;
+            }
+          }}
         >
           {statusMessage && (
             <div className={dragClassCancel}>

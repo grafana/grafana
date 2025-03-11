@@ -3,9 +3,10 @@ import { Meta, StoryFn } from '@storybook/react';
 import { useState } from 'react';
 import * as React from 'react';
 
-import { SegmentInput, Icon, SegmentSection } from '@grafana/ui';
+import { Icon } from '../Icon/Icon';
 
-import { SegmentInputProps } from './SegmentInput';
+import { SegmentInput, SegmentInputProps } from './SegmentInput';
+import { SegmentSection } from './SegmentSection';
 
 const SegmentFrame = ({ children }: React.PropsWithChildren) => (
   <>

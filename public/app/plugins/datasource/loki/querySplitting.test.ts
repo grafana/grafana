@@ -64,9 +64,20 @@ describe('runSplitQuery()', () => {
   });
 
   test('Splits datasource queries', async () => {
-    await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((emitted) => {
       // 3 days, 3 chunks, 3 requests.
       expect(datasource.runQuery).toHaveBeenCalledTimes(3);
+      // 3 sub-requests + complete
+      expect(emitted).toHaveLength(4);
+    });
+  });
+
+  test('Skips partial updates as an option', async () => {
+    await expect(runSplitQuery(datasource, request, { skipPartialUpdates: true })).toEmitValuesWith((emitted) => {
+      // 3 days, 3 chunks, 3 requests.
+      expect(datasource.runQuery).toHaveBeenCalledTimes(3);
+      // partial updates skipped
+      expect(emitted).toHaveLength(1);
     });
   });
 
@@ -77,6 +88,16 @@ describe('runSplitQuery()', () => {
     await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
       // 3 days, 3 chunks, 1 retry, 4 requests.
       expect(datasource.runQuery).toHaveBeenCalledTimes(4);
+    });
+  });
+
+  test('Does not retry failed queries as an option', async () => {
+    jest
+      .mocked(datasource.runQuery)
+      .mockReturnValueOnce(of({ state: LoadingState.Error, errors: [{ refId: 'A', message: 'timeout' }], data: [] }));
+    await expect(runSplitQuery(datasource, request, { disableRetry: true })).toEmitValuesWith(() => {
+      // No retries
+      expect(datasource.runQuery).toHaveBeenCalledTimes(1);
     });
   });
 

@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/authlib/authz"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+
+	authlib "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
@@ -57,8 +58,6 @@ const (
 	KindDashboards string = "dashboards"
 	KindFolders    string = "folders"
 )
-
-var ClusterNamespace = common.ClusterNamespace
 
 var (
 	ToAuthzExtTupleKey                  = common.ToAuthzExtTupleKey
@@ -124,7 +123,7 @@ func MergeFolderResourceTuples(a, b *openfgav1.TupleKey) {
 	va.GetListValue().Values = append(va.GetListValue().Values, vb.GetListValue().Values...)
 }
 
-func TranslateToCheckRequest(namespace, action, kind, folder, name string) (*authz.CheckRequest, bool) {
+func TranslateToCheckRequest(namespace, action, kind, folder, name string) (*authlib.CheckRequest, bool) {
 	translation, ok := resourceTranslations[kind]
 
 	if !ok {
@@ -141,7 +140,7 @@ func TranslateToCheckRequest(namespace, action, kind, folder, name string) (*aut
 		return nil, false
 	}
 
-	req := &authz.CheckRequest{
+	req := &authlib.CheckRequest{
 		Namespace: namespace,
 		Verb:      verb,
 		Group:     translation.group,
@@ -153,7 +152,7 @@ func TranslateToCheckRequest(namespace, action, kind, folder, name string) (*aut
 	return req, true
 }
 
-func TranslateToListRequest(namespace, action, kind string) (*authz.ListRequest, bool) {
+func TranslateToListRequest(namespace, action, kind string) (*authlib.ListRequest, bool) {
 	translation, ok := resourceTranslations[kind]
 
 	if !ok {
@@ -161,7 +160,7 @@ func TranslateToListRequest(namespace, action, kind string) (*authz.ListRequest,
 	}
 
 	// FIXME: support different verbs
-	req := &authz.ListRequest{
+	req := &authlib.ListRequest{
 		Namespace: namespace,
 		Group:     translation.group,
 		Resource:  translation.resource,

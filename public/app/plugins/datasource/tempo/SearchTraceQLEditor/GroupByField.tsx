@@ -3,15 +3,16 @@ import { useEffect, useMemo, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { AccessoryButton } from '@grafana/experimental';
+import { AccessoryButton } from '@grafana/plugin-ui';
 import { Alert, HorizontalGroup, InputActionMeta, Select, useStyles2 } from '@grafana/ui';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
+import { OPTIONS_LIMIT } from '../language_provider';
 import { TempoQuery } from '../types';
 
 import InlineSearchField from './InlineSearchField';
-import { maxOptions, withTemplateVariableOptions } from './SearchField';
+import { withTemplateVariableOptions } from './SearchField';
 import { replaceAt } from './utils';
 
 interface Props {
@@ -46,11 +47,11 @@ export const GroupByField = (props: Props) => {
     () => (f: TraceqlFilter) => {
       const tags = datasource!.languageProvider.getMetricsSummaryTags(f.scope);
       if (tagQuery.length === 0) {
-        return tags.slice(0, maxOptions);
+        return tags.slice(0, OPTIONS_LIMIT);
       }
 
       const queryLowerCase = tagQuery.toLowerCase();
-      return tags.filter((tag) => tag.toLowerCase().includes(queryLowerCase)).slice(0, maxOptions);
+      return tags.filter((tag) => tag.toLowerCase().includes(queryLowerCase)).slice(0, OPTIONS_LIMIT);
     },
     [datasource, tagQuery]
   );

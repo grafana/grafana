@@ -68,7 +68,14 @@ export const Trans = (props: TransProps): ReactElement => {
   return <I18NextTrans shouldUnescape ns={NAMESPACES} {...props} />;
 };
 
-// Wrap t() to provide default namespaces and enforce a consistent API
+/**
+ * This is a simple wrapper over i18n.t() to provide default namespaces and enforce a consistent API.
+ * Note: Don't use this in the top level module scope. This wrapper needs initialization, which is done during Grafana
+ * startup, and it will throw if used before.
+ * @param id ID of the translation string
+ * @param defaultMessage Default message to use if the translation is missing
+ * @param values Values to be interpolated into the string
+ */
 export const t = (id: string, defaultMessage: string, values?: Record<string, unknown>) => {
   if (!tFunc) {
     if (process.env.NODE_ENV !== 'test') {

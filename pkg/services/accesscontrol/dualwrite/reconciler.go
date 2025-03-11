@@ -6,13 +6,15 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/authlib/claims"
 	"go.opentelemetry.io/otel"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -24,26 +26,25 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/accesscontrol/migrator"
 // We should rewrite the migration after we have "migrated" all possible actions
 // into our schema.
 type ZanzanaReconciler struct {
-	cfg *setting.Cfg
-	log log.Logger
-
-	store  db.DB
-	client zanzana.Client
-	lock   *serverlock.ServerLockService
+	cfg      *setting.Cfg
+	log      log.Logger
+	features featuremgmt.FeatureToggles
+	store    db.DB
+	client   zanzana.Client
+	lock     *serverlock.ServerLockService
 	// reconcilers are migrations that tries to reconcile the state of grafana db to zanzana store.
 	// These are run periodically to try to maintain a consistent state.
 	reconcilers []resourceReconciler
-	// globalReconcilers are reconcilers that should only run for cluster namespace
-	globalReconcilers []resourceReconciler
 }
 
-func NewZanzanaReconciler(cfg *setting.Cfg, client zanzana.Client, store db.DB, lock *serverlock.ServerLockService, folderService folder.Service) *ZanzanaReconciler {
+func ProvideZanzanaReconciler(cfg *setting.Cfg, features featuremgmt.FeatureToggles, client zanzana.Client, store db.DB, lock *serverlock.ServerLockService, folderService folder.Service) *ZanzanaReconciler {
 	zanzanaReconciler := &ZanzanaReconciler{
-		cfg:    cfg,
-		log:    log.New("zanzana.reconciler"),
-		client: client,
-		lock:   lock,
-		store:  store,
+		cfg:      cfg,
+		log:      log.New("zanzana.reconciler"),
+		features: features,
+		client:   client,
+		lock:     lock,
+		store:    store,
 		reconcilers: []resourceReconciler{
 			newResourceReconciler(
 				"team memberships",
@@ -93,8 +94,6 @@ func NewZanzanaReconciler(cfg *setting.Cfg, client zanzana.Client, store db.DB, 
 				zanzanaCollector([]string{zanzana.RelationAssignee}),
 				client,
 			),
-		},
-		globalReconcilers: []resourceReconciler{
 			newResourceReconciler(
 				"fixed role pemissions",
 				fixedRolePermissionsCollector(store),
@@ -118,6 +117,14 @@ func NewZanzanaReconciler(cfg *setting.Cfg, client zanzana.Client, store db.DB, 
 	return zanzanaReconciler
 }
 
+// Run implements registry.BackgroundService
+func (r *ZanzanaReconciler) Run(ctx context.Context) error {
+	if r.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+		return r.Reconcile(ctx)
+	}
+	return nil
+}
+
 // Reconcile schedules as job that will run and reconcile resources between
 // legacy access control and zanzana.
 func (r *ZanzanaReconciler) Reconcile(ctx context.Context) error {
@@ -136,23 +143,7 @@ func (r *ZanzanaReconciler) Reconcile(ctx context.Context) error {
 	}
 }
 
-// ReconcileSync runs reconciliation and returns. Useful for tests to perform
-// reconciliation in a synchronous way.
-func (r *ZanzanaReconciler) ReconcileSync(ctx context.Context) error {
-	r.reconcile(ctx)
-	return nil
-}
-
 func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
-	runGlobal := func(ctx context.Context) {
-		for _, reconciler := range r.globalReconcilers {
-			r.log.Debug("Performing zanzana reconciliation", "reconciler", reconciler.name)
-			if err := reconciler.reconcile(ctx, zanzana.ClusterNamespace); err != nil {
-				r.log.Warn("Failed to perform reconciliation for resource", "err", err)
-			}
-		}
-	}
-
 	run := func(ctx context.Context, namespace string) {
 		now := time.Now()
 		r.log.Debug("Started reconciliation")
@@ -188,7 +179,6 @@ func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
 	}
 
 	if r.lock == nil {
-		runGlobal(ctx)
 		for _, ns := range namespaces {
 			run(ctx, ns)
 		}
@@ -197,7 +187,6 @@ func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
 
 	// We ignore the error for now
 	err := r.lock.LockExecuteAndRelease(ctx, "zanzana-reconciliation", 10*time.Hour, func(ctx context.Context) {
-		runGlobal(ctx)
 		for _, ns := range namespaces {
 			run(ctx, ns)
 		}

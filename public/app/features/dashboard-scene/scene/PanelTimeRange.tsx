@@ -51,6 +51,15 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
         }
       })
     );
+
+    const { timeRange } = this.getTimeOverride(this.getAncestorTimeRange().state.value);
+
+    // set initial values on activate
+    this.setState({
+      value: timeRange,
+      from: timeRange.raw.from.toString(),
+      to: timeRange.raw.to.toString(),
+    });
   }
   protected ancestorTimeRangeChanged(timeRange: SceneTimeRangeState): void {
     const overrideResult = this.getTimeOverride(timeRange.value);
@@ -72,10 +81,11 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
 
       // Only evaluate if the timeFrom if parent time is relative
       if (rangeUtil.isRelativeTimeRange(parentTimeRange.raw)) {
+        const timeZone = this.getTimeZone();
         newTimeData.timeInfo = timeFromInfo.display;
         newTimeData.timeRange = {
-          from: dateMath.parse(timeFromInfo.from)!,
-          to: dateMath.parse(timeFromInfo.to)!,
+          from: dateMath.parse(timeFromInfo.from, undefined, timeZone)!,
+          to: dateMath.parse(timeFromInfo.to, undefined, timeZone)!,
           raw: { from: timeFromInfo.from, to: timeFromInfo.to },
         };
       }
@@ -94,6 +104,11 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
       newTimeData.timeInfo += ' timeshift ' + timeShift;
       const from = dateMath.parseDateMath(timeShift, newTimeData.timeRange.from, false)!;
       const to = dateMath.parseDateMath(timeShift, newTimeData.timeRange.to, true)!;
+
+      if (!from || !to) {
+        newTimeData.timeInfo = 'invalid timeshift';
+        return newTimeData;
+      }
 
       newTimeData.timeRange = { from, to, raw: { from, to } };
     }

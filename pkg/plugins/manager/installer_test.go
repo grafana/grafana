@@ -212,37 +212,28 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		})
 	})
 
-	t.Run("Can't update core or bundled plugin", func(t *testing.T) {
-		tcs := []struct {
-			class plugins.Class
-		}{
-			{class: plugins.ClassCore},
-			{class: plugins.ClassBundled},
+	t.Run("Can't update core plugin", func(t *testing.T) {
+		p := createPlugin(t, testPluginID, plugins.ClassCore, true, true, func(plugin *plugins.Plugin) {
+			plugin.Info.Version = "1.0.0"
+		})
+
+		reg := &fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				testPluginID: p,
+			},
 		}
 
-		for _, tc := range tcs {
-			p := createPlugin(t, testPluginID, tc.class, true, true, func(plugin *plugins.Plugin) {
-				plugin.Info.Version = "1.0.0"
-			})
+		pm := New(reg, &fakes.FakeLoader{}, &fakes.FakePluginRepo{}, &fakes.FakePluginStorage{}, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
+		err := pm.Add(context.Background(), p.ID, "3.2.0", testCompatOpts())
+		require.ErrorIs(t, err, plugins.ErrInstallCorePlugin)
 
-			reg := &fakes.FakePluginRegistry{
-				Store: map[string]*plugins.Plugin{
-					testPluginID: p,
-				},
-			}
+		err = pm.Add(context.Background(), testPluginID, "", testCompatOpts())
+		require.Equal(t, plugins.ErrInstallCorePlugin, err)
 
-			pm := New(reg, &fakes.FakeLoader{}, &fakes.FakePluginRepo{}, &fakes.FakePluginStorage{}, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
-			err := pm.Add(context.Background(), p.ID, "3.2.0", testCompatOpts())
-			require.ErrorIs(t, err, plugins.ErrInstallCorePlugin)
-
-			err = pm.Add(context.Background(), testPluginID, "", testCompatOpts())
-			require.Equal(t, plugins.ErrInstallCorePlugin, err)
-
-			t.Run(fmt.Sprintf("Can't uninstall %s plugin", tc.class), func(t *testing.T) {
-				err = pm.Remove(context.Background(), p.ID, p.Info.Version)
-				require.Equal(t, plugins.ErrUninstallCorePlugin, err)
-			})
-		}
+		t.Run("Can't uninstall core plugin", func(t *testing.T) {
+			err = pm.Remove(context.Background(), p.ID, p.Info.Version)
+			require.Equal(t, plugins.ErrUninstallCorePlugin, err)
+		})
 	})
 
 	t.Run("Can install multiple dependency levels", func(t *testing.T) {

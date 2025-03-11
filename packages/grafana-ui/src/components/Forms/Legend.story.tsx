@@ -1,7 +1,6 @@
 import { Meta, StoryFn } from '@storybook/react';
 
-import { Legend } from '@grafana/ui';
-
+import { Legend } from './Legend';
 import mdx from './Legend.mdx';
 
 const meta: Meta<typeof Legend> = {

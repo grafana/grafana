@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
-	"github.com/grafana/grafana/pkg/plugins/codegen/pfs"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
@@ -457,7 +456,7 @@ func TestPluginEnvVarsProvider_authEnvVars(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID:  "test",
-				IAM: &pfs.IAM{},
+				IAM: &auth.IAM{},
 			},
 			ExternalService: &auth.ExternalService{
 				ClientID:     "clientID",

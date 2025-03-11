@@ -14,6 +14,7 @@ import {
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Icon, PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { checkLogsError, checkLogsSampled, escapeUnescapedString } from '../utils';
 
@@ -244,7 +245,13 @@ export const LogRow = ({
           className={enableLogDetails ? styles.logsRowToggleDetails : ''}
         >
           {enableLogDetails && (
-            <Icon className={styles.topVerticalAlign} name={showDetails ? 'angle-down' : 'angle-right'} />
+            <button
+              aria-label={t('logs.log-row-message.see-details', `See log details`)}
+              className={styles.detailsToggle}
+              aria-expanded={showDetails}
+            >
+              <Icon className={styles.topVerticalAlign} name={showDetails ? 'angle-down' : 'angle-right'} />
+            </button>
           )}
         </td>
         {showTime && <td className={styles.logsRowLocalTime}>{timestamp}</td>}

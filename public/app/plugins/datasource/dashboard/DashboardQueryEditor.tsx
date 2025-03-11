@@ -5,7 +5,7 @@ import { useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataQuery, GrafanaTheme2, SelectableValue, DataTopic, QueryEditorProps } from '@grafana/data';
-import { OperationsEditorRow } from '@grafana/experimental';
+import { OperationsEditorRow } from '@grafana/plugin-ui';
 import { Field, Select, useStyles2, Spinner, RadioButtonGroup, Stack, InlineSwitch } from '@grafana/ui';
 import config from 'app/core/config';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -13,6 +13,8 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
+
+import { MIXED_DATASOURCE_NAME } from '../mixed/MixedDataSource';
 
 import { SHARED_DASHBOARD_QUERY } from './constants';
 import { DashboardDatasource } from './datasource';
@@ -38,6 +40,8 @@ const topics = [
   { label: 'All data', value: false },
   { label: 'Annotations', value: true, description: 'Include annotations as regular data' },
 ];
+
+export const INVALID_PANEL_DESCRIPTION = 'Contains a shared dashboard query';
 
 export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Props) {
   const { value: defaultDatasource } = useAsync(() => getDatasourceSrv().get());
@@ -104,6 +108,13 @@ export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Prop
     [query, onUpdateQuery]
   );
 
+  const isMixedDSWithDashboardQueries = (panel: PanelModel) => {
+    return (
+      panel.datasource?.uid === MIXED_DATASOURCE_NAME &&
+      panel.targets.some((t) => t.datasource?.uid === SHARED_DASHBOARD_QUERY)
+    );
+  };
+
   const getPanelDescription = useCallback(
     (panel: PanelModel): string => {
       const datasource = panel.datasource ?? defaultDatasource;
@@ -120,18 +131,24 @@ export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Prop
     () =>
       dashboard?.panels
         .filter(
-          (panel) =>
-            config.panels[panel.type] &&
-            panel.targets &&
-            !isPanelInEdit(panel.id, dashboard.panelInEdit?.id) &&
-            panel.datasource?.uid !== SHARED_DASHBOARD_QUERY
+          (panel) => config.panels[panel.type] && panel.targets && !isPanelInEdit(panel.id, dashboard.panelInEdit?.id)
         )
-        .map((panel) => ({
-          value: panel.id,
-          label: panel.title ?? 'Panel ' + panel.id,
-          description: getPanelDescription(panel),
-          imgUrl: config.panels[panel.type].info.logos.small,
-        })) ?? [],
+        .map((panel) => {
+          let description = getPanelDescription(panel);
+          let isDisabled = false;
+          if (panel.datasource?.uid === SHARED_DASHBOARD_QUERY || isMixedDSWithDashboardQueries(panel)) {
+            description = INVALID_PANEL_DESCRIPTION;
+            isDisabled = true;
+          }
+
+          return {
+            value: panel.id,
+            label: panel.title ?? 'Panel ' + panel.id,
+            imgUrl: config.panels[panel.type].info.logos.small,
+            description,
+            isDisabled,
+          };
+        }) ?? [],
     [dashboard, getPanelDescription]
   );
 

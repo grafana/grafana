@@ -30,8 +30,7 @@ export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement 
     return null;
   }
 
-  const disabledButton =
-    config.featureToggles.managedPluginsInstall && config.pluginAdminExternalManageEnabled && !plugin.isFullyInstalled;
+  const disabledButton = config.pluginAdminExternalManageEnabled && !plugin.isFullyInstalled;
 
   return (
     <Button

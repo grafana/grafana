@@ -7,6 +7,8 @@ import (
 	"github.com/grafana/grafana/apps/alerting/common"
 )
 
+const DefaultTemplateTitle = "Built-in Templates"
+
 func (o *TemplateGroup) GetProvenanceStatus() string {
 	if o == nil || o.Annotations == nil {
 		return ""

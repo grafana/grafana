@@ -7,7 +7,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
 import { Table, AdHocFilterItem, PanelChrome, withTheme2, Themeable2 } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import {
   hasDeprecatedParentRowIndex,
   migrateFromParentRowIndexToNestedFrames,
@@ -15,9 +15,12 @@ import {
 import { StoreState } from 'app/types';
 import { ExploreItemState } from 'app/types/explore';
 
+import { LimitedDataDisclaimer } from '../LimitedDataDisclaimer';
 import { MetaInfoText } from '../MetaInfoText';
 import { selectIsWaitingForData } from '../state/query';
 import { exploreDataLinkPostProcessorFactory } from '../utils/links';
+
+const MAX_NUMBER_OF_COLUMNS = 20;
 
 interface TableContainerProps extends Themeable2 {
   ariaLabel?: string;
@@ -40,8 +43,13 @@ function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) 
 const connector = connect(mapStateToProps, {});
 
 type Props = TableContainerProps & ConnectedProps<typeof connector>;
+type State = {
+  showAll: boolean;
+};
 
-export class TableContainer extends PureComponent<Props> {
+export class TableContainer extends PureComponent<Props, State> {
+  state = { showAll: false };
+
   hasSubFrames = (data: DataFrame) => data.fields.some((f) => f.type === FieldType.nestedFrames);
 
   getTableHeight(rowCount: number, hasSubFrames: boolean) {
@@ -64,16 +72,35 @@ export class TableContainer extends PureComponent<Props> {
       : t('explore.table.title', 'Table');
   }
 
+  showAll() {
+    this.setState({
+      showAll: true,
+    });
+  }
+
   render() {
     const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, ariaLabel, timeZone, theme } =
       this.props;
+
+    const { showAll } = this.state;
 
     let dataFrames = hasDeprecatedParentRowIndex(tableResult)
       ? migrateFromParentRowIndexToNestedFrames(tableResult)
       : tableResult;
     const dataLinkPostProcessor = exploreDataLinkPostProcessorFactory(splitOpenFn, range);
 
+    let dataLimited = false;
+
     if (dataFrames?.length) {
+      dataFrames = dataFrames.map((frame) => {
+        frame.fields.forEach((field, index) => {
+          const hidden = showAll ? false : index >= MAX_NUMBER_OF_COLUMNS;
+          field.config.custom = { hidden };
+          dataLimited = dataLimited || hidden;
+        });
+        return frame;
+      });
+
       dataFrames = applyFieldOverrides({
         data: dataFrames,
         timeZone,
@@ -104,6 +131,23 @@ export class TableContainer extends PureComponent<Props> {
               <PanelChrome
                 key={data.refId || `table-${i}`}
                 title={this.getTableTitle(dataFrames, data, i)}
+                titleItems={[
+                  !showAll && dataLimited && (
+                    <LimitedDataDisclaimer
+                      toggleShowAllSeries={() => this.showAll()}
+                      info={
+                        <Trans i18nKey={'table.container.show-only-series'}>
+                          Showing only {{ MAX_NUMBER_OF_COLUMNS }} columns
+                        </Trans>
+                      }
+                      tooltip={t(
+                        'table.container.content',
+                        'Showing too many columns in a single table may impact performance and make data harder to read. Consider refining your queries.'
+                      )}
+                      buttonLabel={<Trans i18nKey={'table.container.show-all-series'}>Show all columns</Trans>}
+                    />
+                  ),
+                ]}
                 width={width}
                 height={this.getTableHeight(data.length, this.hasSubFrames(data))}
                 loadingState={loading ? LoadingState.Loading : undefined}
