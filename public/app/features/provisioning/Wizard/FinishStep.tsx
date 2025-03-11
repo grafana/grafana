@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { Alert, Field, FieldSet, Input, MultiCombobox, Stack, Switch } from '@grafana/ui';
+import { Alert, Field, FieldSet, Input, MultiCombobox, Stack, Switch, Text } from '@grafana/ui';
 
 import { getWorkflowOptions } from '../ConfigForm';
 import { checkPublicAccess } from '../GettingStarted/features';
@@ -85,18 +85,20 @@ export function FinishStep({ onStatusChange }: FinishStepProps) {
           />
         </Field>
         {isGithub && (
-          <Field
-            label={'Attach dashboard previews to pull requests'}
-            description={
-              <span>
-                Render before/after images and link them to the pull request.
-                <br />
-                NOTE! this will render dashboards into an image that can be access by a public URL
-              </span>
-            }
-          >
-            <Switch {...register('repository.generateDashboardPreviews')} id={'repository.generateDashboardPreviews'} />
-          </Field>
+          <>
+            <Field
+              label={'Attach dashboard previews to pull requests'}
+              description={<Text element="span">Render before/after images and link them to the pull request.</Text>}
+            >
+              <Switch
+                {...register('repository.generateDashboardPreviews')}
+                id={'repository.generateDashboardPreviews'}
+              />
+            </Field>
+            <Alert severity="info" title="Note">
+              This will render dashboards into an image that can be access by a public URL
+            </Alert>
+          </>
         )}
       </FieldSet>
     </Stack>

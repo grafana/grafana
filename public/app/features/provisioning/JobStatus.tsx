@@ -48,7 +48,7 @@ export function JobStatus({ name, onStatusChange }: JobStatusProps) {
     }
     return (
       <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
-        <Spinner size={24} />
+        {!job.status?.progress && <Spinner size={24} />}
         <Text element="h4" color="secondary">
           {job.status?.message ?? job.status?.state!}
         </Text>
@@ -62,7 +62,9 @@ export function JobStatus({ name, onStatusChange }: JobStatusProps) {
         <Stack direction="column" gap={2}>
           {status()}
 
-          <ProgressBar progress={job.status.progress} />
+          <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
+            <ProgressBar progress={job.status.progress} />
+          </Stack>
 
           {job.status.summary && <SummaryTable summary={job.status.summary} />}
 
