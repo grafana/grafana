@@ -73,7 +73,7 @@
   "devDependencies": {
     "@babel/core": "7.26.9",
     "@babel/preset-env": "7.26.9",
-    "@babel/runtime": "7.26.9",
+    "@babel/runtime": "7.26.10",
     "@betterer/betterer": "5.4.0",
     "@betterer/cli": "5.4.0",
     "@cypress/webpack-preprocessor": "6.0.2",
