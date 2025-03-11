@@ -20,14 +20,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22.11.0'
+          node-version-file: 'package.json'
+          node-version: '22.11.0' # fallback version stipulated by the old Drone pipeline
           cache: 'yarn'
       
-      - name: Identify runner
-        run: echo $RUNNER_NAME
-      
       - name: Install dependencies
-        run: yarn install --immutable || yarn install --immutable
+        run: yarn install --immutable
       
       - name: Start Storybook
         run: |
