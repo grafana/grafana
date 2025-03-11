@@ -172,6 +172,10 @@ function WizardContent({
     setHasError(!success);
   };
 
+  const handleJobErrorChange = (error: string | null) => {
+    setHasError(!!error);
+  };
+
   const handleCancel = async () => {
     if (activeStep === 'connection') {
       navigate(PROVISIONING_URL);
@@ -301,7 +305,11 @@ function WizardContent({
           <MigrateStep onStatusChange={handleJobStatusChange} onRunningChange={handleJobRunningChange} />
         )}
         {activeStep === 'pull' && !requiresMigration && (
-          <PullStep onStatusChange={handleJobStatusChange} onRunningChange={handleJobRunningChange} />
+          <PullStep
+            onStatusChange={handleJobStatusChange}
+            onRunningChange={handleJobRunningChange}
+            onErrorChange={handleJobErrorChange}
+          />
         )}
         {activeStep === 'finish' && <FinishStep />}
       </div>

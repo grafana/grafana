@@ -10,19 +10,34 @@ import { getRemoteURL } from './utils/git';
 export interface JobStatusProps {
   name: string;
   onStatusChange?: (success: boolean) => void;
+  onRunningChange?: (isRunning: boolean) => void;
+  onErrorChange?: (error: string | null) => void;
 }
 
-export function JobStatus({ name, onStatusChange }: JobStatusProps) {
+export function JobStatus({ name, onStatusChange, onRunningChange, onErrorChange }: JobStatusProps) {
   const jobQuery = useListJobQuery({ watch: true, fieldSelector: `metadata.name=${name}` });
   const job = jobQuery.data?.items?.[0];
-  const hasNotifiedSuccess = useRef(false);
 
   useEffect(() => {
-    if (onStatusChange && !hasNotifiedSuccess.current) {
-      hasNotifiedSuccess.current = true;
-      onStatusChange(true);
+    if (onRunningChange) {
+      onRunningChange(jobQuery.isLoading || !job || job.status?.state === 'success' || job.status?.state === 'error');
     }
-  }, [onStatusChange]);
+  }, [jobQuery.isLoading, job, onRunningChange, onErrorChange]);
+
+  useEffect(() => {
+    if (onStatusChange && job?.status?.state === 'success') {
+      onStatusChange(true);
+      if (onRunningChange) {
+        onRunningChange(false);
+      }
+    }
+    if (onErrorChange && job?.status?.state === 'error') {
+      onErrorChange(job.status.message ?? 'An unknown error occurred');
+      if (onRunningChange) {
+        onRunningChange(false);
+      }
+    }
+  }, [job, onStatusChange, onErrorChange, onRunningChange]);
 
   if (jobQuery.isLoading || !job) {
     return (
