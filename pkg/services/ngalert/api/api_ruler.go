@@ -288,31 +288,29 @@ func (srv RulerSrv) RouteGetRuleGroups(c *contextmodel.ReqContext) response.Resp
 	}
 	namespaceListParams.PageSize = c.QueryIntWithDefault("group_limit", defaultPageSize)
 
-	// NOTE: can probably use HasAccessInFolder in the inner loop to avoid fetching all rules
-	// TODO: clean this to ignore the rule bits and make sure it's returned sorted
-	keys, err := srv.getAuthorizedRuleGroups(c.Req.Context(), namespaceMap, c.SignedInUser)
+	groups, err := srv.getAuthorizedRuleGroups(c.Req.Context(), namespaceMap, c.SignedInUser)
 	if err != nil {
 		return errorToResponse(err)
 	}
 
-	for _, key := range keys {
+	for _, group := range groups {
 		if namespaceListParams.NextToken != "" {
 			// skip until we find the next group
-			if !TokenGreaterThanOrEqual(GetRuleGroupNextToken(key.FolderFullpath, key.RuleGroup), namespaceListParams.NextToken) {
+			if !TokenGreaterThanOrEqual(GetRuleGroupNextToken(group.FolderFullpath, group.RuleGroup), namespaceListParams.NextToken) {
 				continue
 			}
 			namespaceListParams.NextToken = ""
 		}
 		if len(result.RuleGroups) == namespaceListParams.PageSize {
 			// hash the last group name and namespace uid for the next token
-			result.NextToken = GetRuleGroupNextToken(key.FolderFullpath, key.RuleGroup)
+			result.NextToken = GetRuleGroupNextToken(group.FolderFullpath, group.RuleGroup)
 			break
 		}
 
 		ruleGroupSummary := apimodels.RuleGroupSummary{
-			Name:      key.RuleGroup,
-			File:      key.FolderFullpath,
-			FolderUID: key.NamespaceUID,
+			Name:      group.RuleGroup,
+			File:      group.FolderFullpath,
+			FolderUID: group.NamespaceUID,
 		}
 
 		result.RuleGroups = append(result.RuleGroups, ruleGroupSummary)
