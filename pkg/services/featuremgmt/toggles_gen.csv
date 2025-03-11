@@ -239,3 +239,4 @@ assetSriChecks,experimental,@grafana/frontend-ops,false,false,true
 alertRuleRestore,preview,@grafana/alerting-squad,false,false,false
 grafanaManagedRecordingRulesDatasources,experimental,@grafana/alerting-squad,false,false,false
 inviteUserExperimental,experimental,@grafana/sharing-squad,false,false,true
+extraLanguages,experimental,@grafana/grafana-frontend-platform,false,false,true

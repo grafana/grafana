@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/singleflight"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/authlib/authn"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -225,11 +226,10 @@ func TestService_getUserTeams(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
 			s := setupService()
-
 			ns := types.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 
 			userIdentifiers := &store.UserIdentifiers{UID: "test-uid"}
-			identityStore := &fakeIdentityStore{teams: tc.teams, err: tc.expectedError}
+			identityStore := &fakeIdentityStore{teams: tc.teams, err: tc.expectedError, disableNsCheck: true}
 			s.identityStore = identityStore
 
 			if tc.cacheHit {
@@ -305,7 +305,7 @@ func TestService_getUserBasicRole(t *testing.T) {
 			ns := types.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 
 			userIdentifiers := &store.UserIdentifiers{UID: "test-uid", ID: 1}
-			store := &fakeStore{basicRole: &tc.basicRole, err: tc.expectedError}
+			store := &fakeStore{basicRole: &tc.basicRole, err: tc.expectedError, disableNsCheck: true}
 			s.store = store
 			s.permissionStore = store
 
@@ -367,9 +367,9 @@ func TestService_getUserPermissions(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
 			s := setupService()
+			ns := types.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 
 			userID := &store.UserIdentifiers{UID: "test-uid", ID: 112}
-			ns := types.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 			action := "dashboards:read"
 
 			if tc.cacheHit {
@@ -380,10 +380,11 @@ func TestService_getUserPermissions(t *testing.T) {
 				userID:          userID,
 				basicRole:       &store.BasicRole{Role: "viewer", IsAdmin: false},
 				userPermissions: tc.permissions,
+				disableNsCheck:  true,
 			}
 			s.store = store
 			s.permissionStore = store
-			s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
+			s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}, disableNsCheck: true}
 
 			perms, err := s.getIdentityPermissions(ctx, ns, types.TypeUser, userID.UID, action)
 			require.NoError(t, err)
@@ -737,7 +738,7 @@ func TestService_Check(t *testing.T) {
 				}
 				s.store = store
 				s.permissionStore = store
-				s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
+				s.identityStore = &fakeIdentityStore{}
 
 				_, err := s.Check(ctx, tc.req)
 				require.Error(t, err)
@@ -785,7 +786,7 @@ func TestService_Check(t *testing.T) {
 				}
 				s.store = store
 				s.permissionStore = store
-				s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
+				s.identityStore = &fakeIdentityStore{}
 
 				resp, err := s.Check(ctx, tc.req)
 				require.NoError(t, err)
@@ -838,7 +839,7 @@ func TestService_Check(t *testing.T) {
 				store := &fakeStore{userPermissions: tc.permissions}
 				s.store = store
 				s.permissionStore = store
-				s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
+				s.identityStore = &fakeIdentityStore{}
 
 				resp, err := s.Check(ctx, tc.req)
 				require.NoError(t, err)
@@ -1019,7 +1020,7 @@ func TestService_List(t *testing.T) {
 				}
 				s.store = store
 				s.permissionStore = store
-				s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
+				s.identityStore = &fakeIdentityStore{}
 
 				_, err := s.List(ctx, tc.req)
 				require.Error(t, err)
@@ -1072,7 +1073,7 @@ func TestService_List(t *testing.T) {
 				}
 				s.store = store
 				s.permissionStore = store
-				s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
+				s.identityStore = &fakeIdentityStore{}
 
 				resp, err := s.List(ctx, tc.req)
 				require.NoError(t, err)
@@ -1131,7 +1132,7 @@ func TestService_List(t *testing.T) {
 				store := &fakeStore{userPermissions: tc.permissions}
 				s.store = store
 				s.permissionStore = store
-				s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
+				s.identityStore = &fakeIdentityStore{}
 
 				resp, err := s.List(ctx, tc.req)
 				require.NoError(t, err)
@@ -1218,6 +1219,8 @@ func strPtr(s string) *string {
 
 type fakeStore struct {
 	store.Store
+	// The namespace has to be set in the handlers for the correct organization to be picked up.
+	disableNsCheck  bool
 	folders         []store.Folder
 	basicRole       *store.BasicRole
 	userID          *store.UserIdentifiers
@@ -1227,6 +1230,9 @@ type fakeStore struct {
 }
 
 func (f *fakeStore) GetBasicRoles(ctx context.Context, namespace types.NamespaceInfo, query store.BasicRoleQuery) (*store.BasicRole, error) {
+	if ns, ok := request.NamespaceFrom(ctx); !f.disableNsCheck && (!ok || ns != namespace.Value) {
+		return nil, fmt.Errorf("namespace mismatch")
+	}
 	f.calls++
 	if f.err {
 		return nil, fmt.Errorf("store error")
@@ -1235,6 +1241,9 @@ func (f *fakeStore) GetBasicRoles(ctx context.Context, namespace types.Namespace
 }
 
 func (f *fakeStore) GetUserIdentifiers(ctx context.Context, query store.UserIdentifierQuery) (*store.UserIdentifiers, error) {
+	if _, ok := request.NamespaceFrom(ctx); !f.disableNsCheck && !ok {
+		return nil, fmt.Errorf("namespace not found")
+	}
 	f.calls++
 	if f.err {
 		return nil, fmt.Errorf("store error")
@@ -1243,6 +1252,9 @@ func (f *fakeStore) GetUserIdentifiers(ctx context.Context, query store.UserIden
 }
 
 func (f *fakeStore) GetUserPermissions(ctx context.Context, namespace types.NamespaceInfo, query store.PermissionsQuery) ([]accesscontrol.Permission, error) {
+	if ns, ok := request.NamespaceFrom(ctx); !f.disableNsCheck && (!ok || ns != namespace.Value) {
+		return nil, fmt.Errorf("namespace mismatch")
+	}
 	f.calls++
 	if f.err {
 		return nil, fmt.Errorf("store error")
@@ -1251,6 +1263,9 @@ func (f *fakeStore) GetUserPermissions(ctx context.Context, namespace types.Name
 }
 
 func (f *fakeStore) ListFolders(ctx context.Context, namespace types.NamespaceInfo) ([]store.Folder, error) {
+	if ns, ok := request.NamespaceFrom(ctx); !f.disableNsCheck && (!ok || ns != namespace.Value) {
+		return nil, fmt.Errorf("namespace mismatch")
+	}
 	f.calls++
 	if f.err {
 		return nil, fmt.Errorf("store error")
@@ -1260,12 +1275,16 @@ func (f *fakeStore) ListFolders(ctx context.Context, namespace types.NamespaceIn
 
 type fakeIdentityStore struct {
 	legacy.LegacyIdentityStore
-	teams []int64
-	err   bool
-	calls int
+	teams          []int64
+	disableNsCheck bool
+	err            bool
+	calls          int
 }
 
 func (f *fakeIdentityStore) ListUserTeams(ctx context.Context, namespace types.NamespaceInfo, query legacy.ListUserTeamsQuery) (*legacy.ListUserTeamsResult, error) {
+	if ns, ok := request.NamespaceFrom(ctx); !f.disableNsCheck && (!ok || ns != namespace.Value) {
+		return nil, fmt.Errorf("namespace mismatch")
+	}
 	f.calls++
 	if f.err {
 		return nil, fmt.Errorf("identity store error")
