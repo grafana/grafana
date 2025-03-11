@@ -13,7 +13,7 @@ import {
 import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
 
 import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
-import { DEFAULT_LOGS_BUILDER_QUERY, toOperatorOptions, valueToDefinition } from './utils';
+import { toOperatorOptions, valueToDefinition } from './utils';
 
 interface FilterSectionProps {
   query: AzureMonitorQuery;
@@ -24,7 +24,11 @@ interface FilterSectionProps {
 export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, query, allColumns }) => {
   const styles = useStyles2(getStyles);
   const [filters, setFilters] = useState<Array<{ column: string; operator: string; value: string }>>([]);
-  const builderQuery = query.azureLogAnalytics?.builderQuery || DEFAULT_LOGS_BUILDER_QUERY;
+  const builderQuery = query.azureLogAnalytics?.builderQuery;
+
+  if (!builderQuery) {
+    return;
+  }
 
   const selectableColumns: Array<SelectableValue<string>> = useMemo(
     () => allColumns.map((col) => ({ label: col.name, value: col.name })),
@@ -52,7 +56,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, que
 
     if (builderQuery) {
       const updatedBuilderQuery: BuilderQueryExpression = {
-        ...DEFAULT_LOGS_BUILDER_QUERY,
+        ...builderQuery,
         from: {
           property: { name: builderQuery.from?.property.name!, type: BuilderQueryEditorPropertyType.String },
           type: BuilderQueryEditorExpressionType.Property,
@@ -98,7 +102,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, que
 
     if (builderQuery) {
       const updatedBuilderQuery: BuilderQueryExpression = {
-        ...DEFAULT_LOGS_BUILDER_QUERY,
+        ...builderQuery,
         from: {
           property: { name: builderQuery.from?.property.name!, type: BuilderQueryEditorPropertyType.String },
           type: BuilderQueryEditorExpressionType.Property,

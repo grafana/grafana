@@ -25,6 +25,7 @@ export class AzureMonitorKustoQueryParser {
     this.appendFrom(selectedTable, parts);
     this.appendWhere(selectedColumns, filters, datetimeColumn, shouldApplyTimeFilter, columns, parts);
     this.appendSummarize(selectedColumns, aggregation, groupBy, datetimeColumn, parts);
+    this.appendProject(selectedColumns, parts);
     this.appendOrderBy(datetimeColumn, selectedColumns, groupBy, shouldApplyTimeFilter, parts);
     this.appendLimit(limit, parts);
 
@@ -81,21 +82,35 @@ export class AzureMonitorKustoQueryParser {
     parts: string[]
   ) {
     const groupByParts = new Set<string>();
-    if (groupBy) {
-      groupBy.forEach((col) => groupByParts.add(col));
-      if (selectedColumns.includes(datetimeColumn)) {
-        groupByParts.add(`bin(${datetimeColumn}, 1m)`);
+    const hasValidAggregation = !!(aggregation && aggregation.trim());
+
+    if (hasValidAggregation) {
+      const aggregationWithColumn =
+        aggregation === 'count()' && selectedColumns.length > 0
+          ? `count() by ${selectedColumns.join(', ')}`
+          : aggregation;
+
+      if (selectedColumns.includes(datetimeColumn) || selectedColumns.length === 0) {
+        parts.push(`summarize ${aggregationWithColumn} by ${datetimeColumn}`);
+      } else {
+        parts.push(`summarize ${aggregationWithColumn}`);
       }
     }
 
-    const hasValidGroupBy = groupByParts.size > 0;
-    const hasValidAggregation = !!(aggregation && aggregation.trim());
+    if (groupBy) {
+      groupBy.forEach((col) => groupByParts.add(col));
+      if (selectedColumns.includes(datetimeColumn)) {
+        groupByParts.add(`bin(${datetimeColumn}, 1h)`);
+      }
 
-    if (hasValidAggregation || hasValidGroupBy) {
-      parts.push(
-        `summarize ${aggregation || 'count()'}${hasValidGroupBy ? ` by ${Array.from(groupByParts).join(', ')}` : ''}`
-      );
-    } else if (selectedColumns.length > 0) {
+      if (groupByParts.size > 0) {
+        parts.push(`summarize ${aggregation || 'count()'} by ${Array.from(groupByParts).join(', ')}`);
+      }
+    }
+  }
+
+  private static appendProject(selectedColumns: string[], parts: string[]) {
+    if (selectedColumns.length > 0) {
       parts.push(`project ${selectedColumns.join(', ')}`);
     }
   }

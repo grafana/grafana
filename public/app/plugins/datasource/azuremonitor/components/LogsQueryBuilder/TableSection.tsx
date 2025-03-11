@@ -41,7 +41,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
     const selectedTable = tables.find((t) => t.name === selected.value);
     if (selectedTable) {
       const updatedBuilderQuery: BuilderQueryExpression = {
-        ...DEFAULT_LOGS_BUILDER_QUERY,
+        // ...DEFAULT_LOGS_BUILDER_QUERY,
         from: {
           property: { name: selectedTable.name, type: BuilderQueryEditorPropertyType.String },
           type: BuilderQueryEditorExpressionType.Property,
@@ -67,11 +67,13 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
 
   const handleColumnsChange = (selected: SelectableValue<string> | Array<SelectableValue<string>>) => {
     const selectedArray = Array.isArray(selected) ? selected.map((col) => col.value!) : [selected.value!];
+    console.log(selectedArray);
     const updatedBuilderQuery: BuilderQueryExpression = {
       ...DEFAULT_LOGS_BUILDER_QUERY,
       ...builderQuery,
       columns: { columns: selectedArray, type: BuilderQueryEditorExpressionType.Property },
     };
+    //TODO: find a way to send the builderQuery
     const updatedQuery = AzureMonitorKustoQueryParser.toQuery({
       selectedTable: builderQuery?.from?.property.name || '',
       selectedColumns: selectedArray,
@@ -108,7 +110,6 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
             options={columnOptions}
             placeholder="Select columns"
             onChange={(e) => {
-              console.log(e);
               handleColumnsChange(e);
             }}
             isDisabled={!query.azureLogAnalytics?.builderQuery?.from?.property.name}

@@ -28,7 +28,7 @@ interface LogsQueryBuilderProps {
 export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
   const { query, onQueryChange, schema } = props;
   const [isKQLPreviewHidden, setIsKQLPreviewHidden] = useState<boolean>(true);
-  const [limit, setLimit] = useState<number | undefined>(undefined);
+  const [limit, setLimit] = useState<number>();
 
   const tables: AzureLogAnalyticsMetadataTable[] = useMemo(() => {
     return schema?.database?.tables || [];
@@ -85,12 +85,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
         )}
         <TableSection {...props} tables={tables} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
         <FilterSection {...props} onQueryUpdate={onQueryChange} allColumns={allColumns} query={query} />
-        <AggregateSection 
-          {...props} 
-          allColumns={allColumns} 
-          query={query}
-          onQueryUpdate={onQueryChange} 
-        />
+        <AggregateSection {...props} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
         {/* <GroupBySection 
           {...props} 
           columns={columns} 

@@ -3,11 +3,17 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorList, EditorRow } from '@grafana/plugin-ui';
 
-import { BuilderQueryEditorExpressionType, BuilderQueryEditorPropertyType, BuilderQueryEditorReduceExpression, BuilderQueryExpression } from '../../dataquery.gen';
+import {
+  BuilderQueryEditorExpressionType,
+  BuilderQueryEditorPropertyType,
+  BuilderQueryEditorReduceExpression,
+  BuilderQueryExpression,
+} from '../../dataquery.gen';
 import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
 
-import { AggregateItem } from './AggregateItem';
+import AggregateItem from './AggregateItem';
 import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
+import { DEFAULT_LOGS_BUILDER_QUERY } from './utils';
 
 interface AggregateSectionProps {
   query: AzureMonitorQuery;
@@ -23,16 +29,12 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
   templateVariableOptions,
 }) => {
   const [aggregates, setAggregates] = useState<BuilderQueryEditorReduceExpression[]>([]);
-  const builderQuery = query.azureLogAnalytics?.builderQuery;
-
-  if (!builderQuery) {
-    return null; // If builderQuery is not available, don't render
-  }
+  const builderQuery = query.azureLogAnalytics?.builderQuery || DEFAULT_LOGS_BUILDER_QUERY;
 
   const availableColumns: Array<SelectableValue<string>> = useMemo(() => {
-    const columns = builderQuery.columns?.columns;
+    const columns = builderQuery.columns?.columns ?? [];
 
-    if (columns?.length) {
+    if (columns.length > 0) {
       return columns.map((col) => ({
         label: col,
         value: col,
@@ -51,12 +53,22 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
     });
   }, [builderQuery.from?.property.name]);
 
-  // Update both state and query string with aggregates
   const updateAggregatesAndQuery = (newAggregates: BuilderQueryEditorReduceExpression[]) => {
-    const validAggregates = newAggregates.filter((agg) => agg.property?.name && agg.reduce?.name);
-    const aggregation = validAggregates.length > 0
-      ? validAggregates.map((agg) => `${agg.reduce.name}(${agg.property.name})`).join(', ')
-      : '';
+    const validAggregates = newAggregates.filter((agg) => agg.reduce?.name);
+
+    const aggregation =
+      validAggregates.length > 0
+        ? validAggregates
+            .map((agg) => {
+              if (agg.reduce?.name === 'count' && agg.property?.name) {
+                return `count(${agg.property.name})`;
+              } else if (agg.reduce?.name === 'count') {
+                return `count()`;
+              }
+              return `${agg.reduce.name}(${agg.property?.name})`;
+            })
+            .join(', ')
+        : '';
 
     const updatedBuilderQuery: BuilderQueryExpression = {
       ...query.azureLogAnalytics?.builderQuery,
@@ -100,7 +112,7 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
   const onDeleteAggregate = (aggregateToDelete: Partial<BuilderQueryEditorReduceExpression>) => {
     setAggregates((prevAggregates) => {
       const updatedAggregates = prevAggregates.filter((agg) => agg.property?.name !== aggregateToDelete.property?.name);
-      updateAggregatesAndQuery(updatedAggregates);  // Rebuild the query
+      updateAggregatesAndQuery(updatedAggregates);
       return updatedAggregates;
     });
   };
@@ -133,8 +145,8 @@ function makeRenderAggregate(
     return (
       <AggregateItem
         aggregate={item}
-        onChange={onChange} // Pass the onChange function to update parent state
-        onDelete={() => onDeleteAggregate(item)} // Pass the onDelete function to delete the aggregate
+        onChange={onChange}
+        onDelete={() => onDeleteAggregate(item)}
         columns={availableColumns}
       />
     );
