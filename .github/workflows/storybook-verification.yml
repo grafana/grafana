@@ -1,0 +1,9 @@
+name: Verify Storybook
+
+on:
+  pull_request:
+    paths:
+      - packages/grafana-ui/**
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
