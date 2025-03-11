@@ -8,7 +8,7 @@ name: "CodeQL"
 on:
   workflow_dispatch:
   push:
-    branches: [main, v10.4.x, v11.1.x, v11.2.x, v11.3.x, v11.4.x, v11.5.x]
+    branches: [main, v10.*.*, v11.*.*]
     paths-ignore:
       - '**/*.cue'
       - '**/*.json'
