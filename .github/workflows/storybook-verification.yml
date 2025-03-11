@@ -7,13 +7,12 @@ on:
     paths-ignore:
       - 'docs/**'
       - '*.md'
-  # Add manual trigger for testing
-  workflow_dispatch:
-    inputs:
-      reason:
-        description: 'Reason for manual run'
-        required: false
-        default: 'Testing workflow'
+  # Add temporary push trigger for testing
+  push:
+    branches:
+      - your-feature-branch-name
+    paths:
+      - .github/workflows/storybook-verification.yml
 
 jobs:
   verify-storybook:
