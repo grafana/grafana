@@ -207,7 +207,7 @@ export const parseQueryToBuilder = (query: string): BuilderQueryExpression => {
   return expression;
 };
 
-export const getAggregationString = (reduceExpressions: any[] = []) => {
+export const getAggregations = (reduceExpressions: any[] = []) => {
   return reduceExpressions
     .map((agg) => {
       if (agg.reduce?.name === 'count()' && agg.property?.name === '') {
@@ -225,4 +225,16 @@ export const getAggregationString = (reduceExpressions: any[] = []) => {
       }
     })
     .join(', ');
+};
+
+export const getFilters = (whereExpressions: any[] = []) => {
+  return whereExpressions
+    .map((exp) => {
+      if ('property' in exp && exp.property?.name && exp.operator?.name && exp.operator?.value !== undefined) {
+        return `${exp.property.name} ${exp.operator.name} ${exp.operator.value}`;
+      }
+      return null;
+    })
+    .filter((filter) => filter !== null)
+    .join(' and ');
 };

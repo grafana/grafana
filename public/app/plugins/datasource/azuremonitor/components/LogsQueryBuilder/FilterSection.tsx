@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
@@ -13,7 +13,7 @@ import {
 import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
 
 import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
-import { getAggregationString, toOperatorOptions, valueToDefinition } from './utils';
+import { getAggregations, toOperatorOptions, valueToDefinition } from './utils';
 
 interface FilterSectionProps {
   query: AzureMonitorQuery;
@@ -30,9 +30,9 @@ export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, que
     return;
   }
 
-const availableColumns: Array<SelectableValue<string>> = [];
+  const availableColumns: Array<SelectableValue<string>> = [];
   const columns = builderQuery.columns?.columns ?? [];
-  
+
   if (columns.length > 0) {
     availableColumns.push(
       ...columns.map((col) => ({
@@ -72,7 +72,7 @@ const availableColumns: Array<SelectableValue<string>> = [];
         .map((filter) => `${filter.column} ${filter.operator} '${filter.value}'`)
         .join(' and ');
 
-      const aggregation = getAggregationString(builderQuery.reduce?.expressions);
+      const aggregation = getAggregations(builderQuery.reduce?.expressions);
       const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(
         updatedBuilderQuery,
         allColumns,
@@ -115,7 +115,7 @@ const availableColumns: Array<SelectableValue<string>> = [];
         },
       };
 
-      const aggregation = getAggregationString(builderQuery.reduce?.expressions);
+      const aggregation = getAggregations(builderQuery.reduce?.expressions);
       const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(
         updatedBuilderQuery,
         allColumns,

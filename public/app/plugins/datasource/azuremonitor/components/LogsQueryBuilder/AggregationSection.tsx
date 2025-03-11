@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorList, EditorRow } from '@grafana/plugin-ui';
@@ -33,10 +33,10 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
   if (!builderQuery) {
     return;
   }
-  
+
   const availableColumns: Array<SelectableValue<string>> = [];
   const columns = builderQuery.columns?.columns ?? [];
-  
+
   if (columns.length > 0) {
     availableColumns.push(
       ...columns.map((col) => ({
@@ -85,14 +85,29 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
         : '';
 
     const updatedBuilderQuery: BuilderQueryExpression = {
-      ...query.azureLogAnalytics?.builderQuery,
+      ...builderQuery,
       reduce: {
         expressions: validAggregates,
         type: BuilderQueryEditorExpressionType.Reduce,
       },
     };
 
-    const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(updatedBuilderQuery, allColumns, aggregation);
+    const filters = builderQuery.where?.expressions
+      ?.map((exp) => {
+        if ('property' in exp && exp.property?.name && exp.operator?.name && exp.operator?.value !== undefined) {
+          return `${exp.property.name} ${exp.operator.name} ${exp.operator.value}`;
+        }
+        return null;
+      })
+      .filter((filter) => filter !== null)
+      .join(' and ');
+
+    const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(
+      updatedBuilderQuery,
+      allColumns,
+      aggregation,
+      filters
+    );
 
     onQueryUpdate({
       ...query,
