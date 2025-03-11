@@ -84,9 +84,9 @@ For a list of available tags, refer to [grafana/grafana-oss](https://hub.docker.
 
 ## Default paths
 
-Grafana comes with default configuration parameters that remain the same among versions regardless of the operating system or the environment (for example, virtual machine, Docker, Kubernetes, etc.). You can refer to the [Configure Grafana]({{< relref "./configure-grafana" >}}) documentation to view all the default configuration settings.
+Grafana comes with default configuration parameters that remain the same among versions regardless of the operating system or the environment (for example, virtual machine, Docker, Kubernetes, etc.). You can refer to the [Configure Grafana](../configure-grafana/) documentation to view all the default configuration settings.
 
-The following configurations are set by default when you start the Grafana Docker container. When running in Docker you cannot change the configurations by editing the `conf/grafana.ini` file. Instead, you can modify the configuration using [environment variables]({{< relref "./configure-grafana#override-configuration-with-environment-variables" >}}).
+The following configurations are set by default when you start the Grafana Docker container. When running in Docker you cannot change the configurations by editing the `conf/grafana.ini` file. Instead, you can modify the configuration using [environment variables](../configure-grafana/#override-configuration-with-environment-variables).
 
 | Setting               | Default value             |
 | --------------------- | ------------------------- |
@@ -99,7 +99,7 @@ The following configurations are set by default when you start the Grafana Docke
 
 ## Install plugins in the Docker container
 
-You can install publicly available plugins and plugins that are private or used internally in an organization. For plugin installation instructions, refer to [Install plugins in the Docker container]({{< relref "./installation/docker#install-plugins-in-the-docker-container" >}}).
+You can install publicly available plugins and plugins that are private or used internally in an organization. For plugin installation instructions, refer to [Install plugins in the Docker container](../installation/docker/#install-plugins-in-the-docker-container).
 
 ### Install plugins from other sources
 
@@ -209,7 +209,7 @@ docker run -d -p 3000:3000 --name=grafana grafana-custom
 
 ## Logging
 
-By default, Docker container logs are directed to `STDOUT`, a common practice in the Docker community. You can change this by setting a different [log mode]({{< relref "./configure-grafana#mode" >}}) such as `console`, `file`, or `syslog`. You can use one or more modes by separating them with spaces, for example, `console file`. By default, both `console` and `file` modes are enabled.
+By default, Docker container logs are directed to `STDOUT`, a common practice in the Docker community. You can change this by setting a different [log mode](../configure-grafana/#mode) such as `console`, `file`, or `syslog`. You can use one or more modes by separating them with spaces, for example, `console file`. By default, both `console` and `file` modes are enabled.
 
 Example:
 
@@ -235,7 +235,7 @@ The following example demonstrates how to set the admin password:
 
 ### Configure Docker secrets credentials for AWS CloudWatch
 
-Grafana ships with built-in support for the [Amazon CloudWatch datasource]({{< relref "../datasources/aws-cloudwatch" >}}). To configure the data source, you must provide information such as the AWS ID-Key, secret access key, region, and so on. You can use Docker secrets as a way to provide this information.
+Grafana ships with built-in support for the [Amazon CloudWatch datasource](../../datasources/aws-cloudwatch/). To configure the data source, you must provide information such as the AWS ID-Key, secret access key, region, and so on. You can use Docker secrets as a way to provide this information.
 
 Example:
 
@@ -309,7 +309,7 @@ The following list includes the supported environment variables:
 
 By default, the Grafana log level is set to `INFO`, but you can increase the log level to `DEBUG` mode when you want to reproduce a problem.
 
-For more information about logging, refer to [logs]({{< relref "./configure-grafana#log" >}}).
+For more information about logging, refer to [logs](../configure-grafana/#log).
 
 ### Increase log level using the Docker run (CLI) command
 

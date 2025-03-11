@@ -5,6 +5,7 @@ import { ConditionalRendering } from '../../conditional-rendering/ConditionalRen
 import { ResponsiveGridItem } from '../../scene/layout-responsive-grid/ResponsiveGridItem';
 import { ResponsiveGridLayoutManager } from '../../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { DashboardLayoutManager, LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
+import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getGridItemKeyForPanelId } from '../../utils/utils';
 
 import { buildVizPanel } from './utils';
@@ -22,12 +23,15 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
           if (!(child instanceof ResponsiveGridItem)) {
             throw new Error('Expected ResponsiveGridItem');
           }
+          // For serialization we should retrieve the original element key
+          const elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(child.state?.body);
+
           const layoutItem: ResponsiveGridLayoutItemKind = {
             kind: 'ResponsiveGridLayoutItem',
             spec: {
               element: {
                 kind: 'ElementReference',
-                name: child.state?.body?.state.key ?? 'DefaultName',
+                name: elementKey,
               },
             },
           };

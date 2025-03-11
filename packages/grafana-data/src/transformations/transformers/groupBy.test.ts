@@ -368,4 +368,97 @@ describe('GroupBy transformer', () => {
       expect(result[0].fields).toEqual(expected);
     });
   });
+
+  it('should retain "time" field type when used as aggregation (max, etc)', async () => {
+    const testSeries = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'user', type: FieldType.string, values: ['A', 'B', 'A', 'B'] },
+        { name: 'time', type: FieldType.time, values: [7, 2, 1, 5] },
+      ],
+    });
+
+    const cfg: DataTransformerConfig<GroupByTransformerOptions> = {
+      id: DataTransformerID.groupBy,
+      options: {
+        fields: {
+          user: {
+            operation: GroupByOperationID.groupBy,
+            aggregations: [],
+          },
+          time: {
+            operation: GroupByOperationID.aggregate,
+            aggregations: [ReducerID.max],
+          },
+        },
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+      const result = received[0];
+      const expected: Field[] = [
+        {
+          name: 'user',
+          type: FieldType.string,
+          values: ['A', 'B'],
+          config: {},
+        },
+        {
+          name: 'time (max)',
+          type: FieldType.time,
+          values: [7, 5],
+          config: {},
+        },
+      ];
+
+      expect(result[0].fields).toEqual(expected);
+    });
+  });
+
+  it('should retain "time" field type when used as aggregation (max, etc)', async () => {
+    const testSeries = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'user', type: FieldType.string, values: ['A', 'B', 'A', 'B'] },
+        { name: 'time', type: FieldType.time, values: [7, 2, 1, 5] },
+      ],
+    });
+
+    const cfg: DataTransformerConfig<GroupByTransformerOptions> = {
+      id: DataTransformerID.groupBy,
+      options: {
+        fields: {
+          user: {
+            operation: GroupByOperationID.groupBy,
+            aggregations: [],
+          },
+          time: {
+            operation: GroupByOperationID.aggregate,
+            aggregations: [ReducerID.max],
+          },
+        },
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+      const result = received[0];
+      const expected: Field[] = [
+        {
+          name: 'user',
+          type: FieldType.string,
+          values: ['A', 'B'],
+          config: {},
+        },
+        {
+          name: 'time (max)',
+          type: FieldType.time,
+          values: [7, 5],
+          config: {},
+        },
+      ];
+
+      expect(result[0].refId).toEqual('A');
+      expect(result[0].fields).toEqual(expected);
+    });
+  });
 });

@@ -256,4 +256,6 @@ export interface FeatureToggles {
   rendererDisableAppPluginsPreload?: boolean;
   assetSriChecks?: boolean;
   alertRuleRestore?: boolean;
+  grafanaManagedRecordingRulesDatasources?: boolean;
+  inviteUserExperimental?: boolean;
 }

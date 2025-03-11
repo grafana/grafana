@@ -6,21 +6,14 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { useConditionalRenderingEditor } from '../../conditional-rendering/ConditionalRenderingEditor';
-import { EditPaneHeader } from '../../edit-pane/EditPaneHeader';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
+import { useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
 import { TabItem } from './TabItem';
 
 export function getEditOptions(model: TabItem): OptionsPaneCategoryDescriptor[] {
   const tabOptions = useMemo(() => {
-    return new OptionsPaneCategoryDescriptor({
-      title: '',
-      id: 'tab-options',
-      isOpenable: false,
-      renderTitle: () => (
-        <EditPaneHeader title={t('dashboard.tabs-layout.tab-options.title', 'Tab')} onDelete={() => model.onDelete()} />
-      ),
-    }).addItem(
+    return new OptionsPaneCategoryDescriptor({ title: '', id: 'tab-item-options' }).addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.tabs-layout.tab-options.title-option', 'Title'),
         render: () => <TabTitleInput tab={model} />,
@@ -42,6 +35,7 @@ export function getEditOptions(model: TabItem): OptionsPaneCategoryDescriptor[] 
 
 function TabTitleInput({ tab }: { tab: TabItem }) {
   const { title } = tab.useState();
+  const ref = useEditPaneInputAutoFocus();
 
-  return <Input value={title} onChange={(e) => tab.onChangeTitle(e.currentTarget.value)} />;
+  return <Input ref={ref} value={title} onChange={(e) => tab.onChangeTitle(e.currentTarget.value)} />;
 }

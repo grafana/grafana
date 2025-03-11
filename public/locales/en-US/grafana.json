@@ -184,7 +184,8 @@
       "rule-identifier": "Rule identifier",
       "rule-type": "Rule type",
       "state-error-timeout": "Alert state if execution error or timeout",
-      "state-no-data": "Alert state if no data or all values are null"
+      "state-no-data": "Alert state if no data or all values are null",
+      "target-datasource-uid": "Target data source"
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -503,6 +504,10 @@
       },
       "preview": "Preview",
       "previewCondition": "Preview alert rule condition"
+    },
+    "recording-rules": {
+      "description-target-data-source": "The Prometheus data source to store the recording rule in",
+      "label-target-data-source": "Target data source"
     },
     "rule-form": {
       "evaluation": {
@@ -1055,7 +1060,7 @@
       }
     },
     "default-layout": {
-      "description": "The default grid layout",
+      "description": "Manually size and position panels",
       "item-options": {
         "repeat": {
           "direction": {
@@ -1071,7 +1076,7 @@
           }
         }
       },
-      "name": "Default grid",
+      "name": "Custom",
       "row-actions": {
         "delete": "Delete row",
         "modal": {
@@ -1112,23 +1117,18 @@
       "elements": {
         "dashboard": "Dashboard",
         "objects": "Objects",
+        "panel": "Panel",
         "panels": "Panels",
+        "row": "Row",
         "rows": "Rows",
+        "tab": "Tab",
         "tabs": "Tabs"
-      },
-      "objects": {
-        "multi-select": {
-          "selection-number": "No. of objects selected: {{length}}"
-        }
       },
       "open": "Open options pane",
       "row": {
         "header": {
           "hide": "Hide",
           "title": "Row header"
-        },
-        "multi-select": {
-          "title": "{{length}} rows selected"
         }
       }
     },
@@ -1209,13 +1209,11 @@
         "copy-or-duplicate": "Copy or Duplicate",
         "delete": "Delete",
         "duplicate": "Duplicate",
-        "layout": "Layout",
-        "panels-title": "{{length}} panels selected"
+        "layout": "Layout"
       }
     },
     "options": {
       "description": "Description",
-      "title": "Dashboard options",
       "title-option": "Title"
     },
     "outline": {
@@ -1234,8 +1232,8 @@
       }
     },
     "responsive-layout": {
-      "description": "CSS layout that adjusts to the available space",
-      "name": "Responsive grid",
+      "description": "Automatically positions panels into a grid.",
+      "name": "Auto",
       "options": {
         "columns": "Columns",
         "fixed": "Fixed: {{size}}px",
@@ -1248,7 +1246,6 @@
     },
     "rows-layout": {
       "description": "Rows layout",
-      "item-name": "Row",
       "name": "Rows",
       "option": {
         "height": "Height",
@@ -1287,9 +1284,6 @@
       "menu": {
         "move-tab": "Move tab"
       },
-      "multi-select": {
-        "title": "{{length}} tabs selected"
-      },
       "name": "Tabs",
       "tab": {
         "menu": {
@@ -1304,7 +1298,6 @@
         "new": "New tab"
       },
       "tab-options": {
-        "title": "Tab",
         "title-option": "Title"
       }
     },
@@ -1379,9 +1372,8 @@
     "viz-panel": {
       "options": {
         "description": "Description",
-        "open-edit": "Open Panel Edit",
+        "open-edit": "Open panel editor",
         "plugin-type-image": "Image of plugin type",
-        "title": "Panel",
         "title-option": "Title",
         "transparent-background": "Transparent background"
       }
@@ -1947,6 +1939,16 @@
     "named-colors-palette": {
       "text-color-swatch": "Text color",
       "transparent-swatch": "Transparent"
+    },
+    "page-toolbar": {
+      "go-back": "Go back (Esc)",
+      "search-dashboard-name": "Search dashboard by name",
+      "search-links": "Search links",
+      "search-parent-folder": "Search dashboard in the {{parent}} folder"
+    },
+    "pagination": {
+      "next-page": "next page",
+      "previous-page": "previous page"
     },
     "secret-form-field": {
       "reset": "Reset"
@@ -2944,6 +2946,10 @@
     }
   },
   "navigation": {
+    "invite-user": {
+      "invite-button": "Invite",
+      "invite-tooltip": "Invite new member"
+    },
     "item": {
       "add-bookmark": "Add to Bookmarks",
       "remove-bookmark": "Remove from Bookmarks"
@@ -3558,7 +3564,6 @@
   "share-dashboard": {
     "menu": {
       "export-json-title": "Export as JSON",
-      "invite-user-title": "Invite new member",
       "share-externally-title": "Share externally",
       "share-internally-title": "Share internally",
       "share-snapshot-title": "Share snapshot"

@@ -2,6 +2,7 @@ import { DataSourceWithBackend, reportInteraction } from '@grafana/runtime';
 
 import { logsResourceTypes, resourceTypeDisplayNames, resourceTypes } from '../azureMetadata';
 import AzureMonitorDatasource from '../azure_monitor/azure_monitor_datasource';
+import AzureResourceGraphDatasource from '../azure_resource_graph/azure_resource_graph_datasource';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
 import {
   addResources,
@@ -14,18 +15,11 @@ import {
 import {
   AzureMonitorDataSourceInstanceSettings,
   AzureMonitorDataSourceJsonData,
-  AzureGraphResponse,
   AzureMonitorResource,
   AzureMonitorQuery,
-  AzureResourceGraphOptions,
   AzureResourceSummaryItem,
-  RawAzureResourceGroupItem,
   RawAzureResourceItem,
-  RawAzureSubscriptionItem,
 } from '../types';
-import { routeNames } from '../utils/common';
-
-const RESOURCE_GRAPH_URL = '/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01';
 
 const logsSupportedResourceTypesKusto = logsResourceTypes.map((v) => `"${v}"`).join(',');
 
@@ -35,18 +29,19 @@ export default class ResourcePickerData extends DataSourceWithBackend<
   AzureMonitorQuery,
   AzureMonitorDataSourceJsonData
 > {
-  private resourcePath: string;
   resultLimit = 200;
   azureMonitorDatasource;
+  azureResourceGraphDatasource;
   supportedMetricNamespaces = '';
 
   constructor(
     instanceSettings: AzureMonitorDataSourceInstanceSettings,
-    azureMonitorDatasource: AzureMonitorDatasource
+    azureMonitorDatasource: AzureMonitorDatasource,
+    azureResourceGraphDatasource: AzureResourceGraphDatasource
   ) {
     super(instanceSettings);
-    this.resourcePath = `${routeNames.resourceGraph}`;
     this.azureMonitorDatasource = azureMonitorDatasource;
+    this.azureResourceGraphDatasource = azureResourceGraphDatasource;
   }
 
   async fetchInitialRows(
@@ -111,7 +106,8 @@ export default class ResourcePickerData extends DataSourceWithBackend<
         | order by tolower(name) asc
         | limit ${this.resultLimit}
       `;
-    const { data: response } = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(searchQuery);
+    const response =
+      await this.azureResourceGraphDatasource.pagedResourceGraphRequest<RawAzureResourceItem>(searchQuery);
     return response.map((item) => {
       const parsedUri = parseResourceURI(item.id);
       if (!parsedUri || !(parsedUri.resourceName || parsedUri.resourceGroup || parsedUri.subscription)) {
@@ -138,41 +134,14 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     });
   };
 
-  // private
   async getSubscriptions(): Promise<ResourceRowGroup> {
-    const query = `
-    resources
-    | join kind=inner (
-              ResourceContainers
-                | where type == 'microsoft.resources/subscriptions'
-                | project subscriptionName=name, subscriptionURI=id, subscriptionId
-              ) on subscriptionId
-    | summarize count() by subscriptionName, subscriptionURI, subscriptionId
-    | order by subscriptionName desc
-  `;
+    const subscriptions = await this.azureResourceGraphDatasource.getSubscriptions();
 
-    let resources: RawAzureSubscriptionItem[] = [];
-
-    let allFetched = false;
-    let $skipToken = undefined;
-    while (!allFetched) {
-      // The response may include several pages
-      let options: Partial<AzureResourceGraphOptions> = {};
-      if ($skipToken) {
-        options = {
-          $skipToken,
-        };
-      }
-      const resourceResponse = await this.makeResourceGraphRequest<RawAzureSubscriptionItem[]>(query, 1, options);
-      if (!resourceResponse.data.length) {
-        throw new Error('No subscriptions were found');
-      }
-      resources = resources.concat(resourceResponse.data);
-      $skipToken = resourceResponse.$skipToken;
-      allFetched = !$skipToken;
+    if (!subscriptions.length) {
+      throw new Error('No subscriptions were found');
     }
 
-    return resources.map((subscription) => ({
+    return subscriptions.map((subscription) => ({
       name: subscription.subscriptionName,
       id: subscription.subscriptionId,
       uri: `/subscriptions/${subscription.subscriptionId}`,
@@ -186,41 +155,9 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     subscriptionId: string,
     type: ResourcePickerQueryType
   ): Promise<ResourceRowGroup> {
-    // We can use subscription ID for the filtering here as they're unique
-    // The logic of this query is:
-    // Retrieve _all_ resources a user/app registration/identity has access to
-    // Filter by the namespaces that support metrics
-    // Filter to resources contained within the subscription
-    // Conduct a left-outer join on the resourcecontainers table to allow us to get the case-sensitive resource group name
-    // Return the count of resources in a group, the URI, and name of the group in ascending order
-    const query = `
-    resources 
-    ${await this.filterByType(type)}
-    | where subscriptionId == '${subscriptionId}'
-    | extend resourceGroupURI = strcat("/subscriptions/", subscriptionId, "/resourcegroups/", resourceGroup) 
-    | join kind=leftouter (resourcecontainers  
-        | where type =~ 'microsoft.resources/subscriptions/resourcegroups'  
-        | project resourceGroupName=name, resourceGroupURI=tolower(id)) on resourceGroupURI 
-    | project resourceGroupName=iff(resourceGroupName != "", resourceGroupName, resourceGroup), resourceGroupURI
-    | summarize count() by resourceGroupName, resourceGroupURI
-    | order by tolower(resourceGroupName) asc `;
+    const filter = await this.filterByType(type);
 
-    let resourceGroups: RawAzureResourceGroupItem[] = [];
-    let allFetched = false;
-    let $skipToken = undefined;
-    while (!allFetched) {
-      // The response may include several pages
-      let options: Partial<AzureResourceGraphOptions> = {};
-      if ($skipToken) {
-        options = {
-          $skipToken,
-        };
-      }
-      const resourceResponse = await this.makeResourceGraphRequest<RawAzureResourceGroupItem[]>(query, 1, options);
-      resourceGroups = resourceGroups.concat(resourceResponse.data);
-      $skipToken = resourceResponse.$skipToken;
-      allFetched = !$skipToken;
-    }
+    const resourceGroups = await this.azureResourceGraphDatasource.getResourceGroups(subscriptionId, filter);
 
     return resourceGroups.map((r) => {
       const parsedUri = parseResourceURI(r.resourceGroupURI);
@@ -238,50 +175,20 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     });
   }
 
-  async getResourcesForResourceGroup(
-    resourceGroupUri: string,
-    type: ResourcePickerQueryType
-  ): Promise<ResourceRowGroup> {
-    // We use resource group URI for the filtering here because resource group names are not unique across subscriptions
-    // We also add a slash at the end of the resource group URI to ensure we do not pull resources from a resource group
-    // that has a similar naming prefix e.g. resourceGroup1 and resourceGroup10
-    const query = `
-    resources 
-    | where id hasprefix "${resourceGroupUri}/"
-    ${await this.filterByType(type)}
-    | order by tolower(name) asc`;
+  // Refactor this one out at a later date
+  async getResourcesForResourceGroup(uri: string, type: ResourcePickerQueryType): Promise<ResourceRowGroup> {
+    const resources = await this.azureResourceGraphDatasource.getResourceNames({ uri }, await this.filterByType(type));
 
-    let resources: RawAzureResourceItem[] = [];
-    let allFetched = false;
-    let $skipToken = undefined;
-    while (!allFetched) {
-      // The response may include several pages
-      let options: Partial<AzureResourceGraphOptions> = {};
-      if ($skipToken) {
-        options = {
-          $skipToken,
-        };
-      }
-      const resourceResponse = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(query, 1, options);
-      resources = resources.concat(resourceResponse.data);
-      $skipToken = resourceResponse.$skipToken;
-      allFetched = !$skipToken;
-    }
-
-    return resources.map((item) => {
-      const parsedUri = parseResourceURI(item.id);
-      if (!parsedUri || !parsedUri.resourceName) {
-        throw new Error('unable to fetch resource details');
-      }
+    return resources.map((resource) => {
       return {
-        name: item.name,
-        id: parsedUri.resourceName,
-        uri: item.id,
-        resourceGroupName: item.resourceGroup,
+        name: resource.name,
+        id: resource.name,
+        uri: resource.id,
+        resourceGroupName: resource.resourceGroup,
         type: ResourceRowType.Resource,
-        typeLabel: resourceTypeDisplayNames[item.type] || item.type,
-        locationDisplayName: item.location,
-        location: item.location,
+        typeLabel: resourceTypeDisplayNames[resource.type] || resource.type,
+        locationDisplayName: resource.location,
+        location: resource.location,
       };
     });
   }
@@ -321,7 +228,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<
         | project subscriptionName, resourceGroupName, resourceName
     `;
 
-    const { data: response } = await this.makeResourceGraphRequest<AzureResourceSummaryItem[]>(query);
+    const response = await this.azureResourceGraphDatasource.pagedResourceGraphRequest<AzureResourceSummaryItem>(query);
 
     if (!response.length) {
       throw new Error('unable to fetch resource details');
@@ -339,7 +246,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<
   }
 
   async getResourceURIFromWorkspace(workspace: string) {
-    const { data: response } = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(`
+    const response = await this.azureResourceGraphDatasource.pagedResourceGraphRequest<RawAzureResourceItem>(`
       resources
       | where properties['customerId'] == "${workspace}"
       | project id
@@ -350,28 +257,6 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     }
 
     return response[0].id;
-  }
-
-  async makeResourceGraphRequest<T = unknown>(
-    query: string,
-    maxRetries = 1,
-    reqOptions?: Partial<AzureResourceGraphOptions>
-  ): Promise<AzureGraphResponse<T>> {
-    try {
-      return await this.postResource(this.resourcePath + RESOURCE_GRAPH_URL, {
-        query: query,
-        options: {
-          resultFormat: 'objectArray',
-          ...reqOptions,
-        },
-      });
-    } catch (error) {
-      if (maxRetries > 0) {
-        return this.makeResourceGraphRequest(query, maxRetries - 1);
-      }
-
-      throw error;
-    }
   }
 
   private filterByType = async (t: ResourcePickerQueryType) => {
