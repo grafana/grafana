@@ -302,7 +302,11 @@ function WizardContent({
         {activeStep === 'connection' && <ConnectStep />}
         {activeStep === 'bootstrap' && <BootstrapStep onOptionSelect={onOptionSelect} />}
         {activeStep === 'migrate' && requiresMigration && (
-          <MigrateStep onStatusChange={handleJobStatusChange} onRunningChange={handleJobRunningChange} />
+          <MigrateStep
+            onStatusChange={handleJobStatusChange}
+            onRunningChange={handleJobRunningChange}
+            onErrorChange={handleJobErrorChange}
+          />
         )}
         {activeStep === 'pull' && !requiresMigration && (
           <PullStep
