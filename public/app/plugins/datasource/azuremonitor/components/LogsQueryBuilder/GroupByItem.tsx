@@ -4,15 +4,14 @@ import { SelectableValue } from '@grafana/data';
 import { AccessoryButton, InputGroup } from '@grafana/plugin-ui';
 import { Select } from '@grafana/ui';
 
-import { QueryEditorPropertyType } from '../../types';
+import { BuilderQueryEditorGroupByExpression, BuilderQueryEditorPropertyType, BuilderQueryEditorExpressionType } from '../../dataquery.gen';
 
-import { QueryEditorExpressionType, QueryEditorGroupByExpression } from './expressions';
-import { toPropertyType, valueToDefinition } from './utils';
+import { valueToDefinition } from './utils';
 
 interface GroupByItemProps {
-  groupBy: Partial<QueryEditorGroupByExpression>;
+  groupBy: Partial<BuilderQueryEditorGroupByExpression>;
   columns: Array<SelectableValue<string>>;
-  onChange: (item: QueryEditorGroupByExpression) => void;
+  onChange: (item: BuilderQueryEditorGroupByExpression) => void;
   onDelete: () => void;
 }
 
@@ -40,11 +39,11 @@ export const GroupByItem: React.FC<GroupByItemProps> = ({ groupBy, onChange, onD
           onChange({
             property: {
               name: e.value!,
-              type: selectedColumn?.type ? toPropertyType(selectedColumn.type) : QueryEditorPropertyType.String,
+              type: selectedColumn?.type ? BuilderQueryEditorPropertyType.String : BuilderQueryEditorPropertyType.String,  // Default to BuilderQueryEditorPropertyType.String or handle conversion here
             },
             interval: groupBy.interval,
-            type: QueryEditorExpressionType.GroupBy,
-          });
+            type: BuilderQueryEditorExpressionType.Group_by,
+          });          
         }}
       />
       <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} />

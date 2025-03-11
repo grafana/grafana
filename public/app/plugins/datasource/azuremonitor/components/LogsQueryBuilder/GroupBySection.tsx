@@ -1,49 +1,60 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorList, EditorRow } from '@grafana/plugin-ui';
 import { Button } from '@grafana/ui';
 
-import { AzureLogAnalyticsMetadataColumn, QueryEditorPropertyType } from '../../types';
+import { BuilderQueryEditorExpressionType, BuilderQueryEditorGroupByExpression, BuilderQueryEditorPropertyType, BuilderQueryExpression } from '../../dataquery.gen';
+import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
 
+import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
 import { GroupByItem } from './GroupByItem';
-import { QueryEditorExpressionType, QueryEditorGroupByExpression } from './expressions';
 
 interface GroupBySectionProps {
-  selectedColumns: Array<SelectableValue<string>>;
-  columns: AzureLogAnalyticsMetadataColumn[];
-  selectedTable: string;
-  onQueryUpdate: (params: { groupBy?: string[] }) => void;
+  query: AzureMonitorQuery;
+  allColumns: AzureLogAnalyticsMetadataColumn[];
+  onQueryUpdate: (newQuery: AzureMonitorQuery) => void;
 }
 
 export const GroupBySection: React.FC<GroupBySectionProps> = ({
-  selectedColumns,
-  selectedTable,
+  query, 
   onQueryUpdate,
-  columns,
+  allColumns,
 }) => {
-  const [groupBys, setGroupBys] = useState<QueryEditorGroupByExpression[]>([]);
+  const [groupBys, setGroupBys] = useState<BuilderQueryEditorGroupByExpression[]>([]);
+  const builderQuery = query.azureLogAnalytics?.builderQuery;
 
-  const availableColumns =
-    selectedColumns.length > 0
-      ? selectedColumns
-      : columns.map((col) => ({
-          label: col.name,
-          value: col.name,
-        }));
+  if (!builderQuery) {
+    return null; // Return early if builderQuery is not available
+  }
+
+  const availableColumns: Array<SelectableValue<string>> = useMemo(() => {
+    const columns = builderQuery.columns?.columns ?? [];
+
+    if (columns.length > 0) {
+      return columns.map((col) => ({
+        label: col,
+        value: col,
+      }));
+    }
+
+    return allColumns.map((col) => ({
+      label: col.name,
+      value: col.name,
+    }));
+  }, [builderQuery.columns?.columns, allColumns]);
 
   useEffect(() => {
-    setGroupBys(() => {
-      return [];
-    });
-  }, [selectedTable]);
+    setGroupBys([]);
+  }, [builderQuery]);
 
-  const handleGroupByChange = (newItems: Array<Partial<QueryEditorGroupByExpression>>) => {
-    let cleaned: QueryEditorGroupByExpression[] = newItems
+  const handleGroupByChange = (newItems: Array<Partial<BuilderQueryEditorGroupByExpression>>) => {
+    // Clean the new items and update groupBys state
+    let cleaned: BuilderQueryEditorGroupByExpression[] = newItems
       .filter((g) => g.property?.name)
       .map((g) => ({
-        type: QueryEditorExpressionType.GroupBy,
-        property: g.property ?? { type: QueryEditorPropertyType.String, name: '' },
+        type: BuilderQueryEditorExpressionType.Group_by,
+        property: g.property ?? { type: BuilderQueryEditorPropertyType.String, name: '' },
         interval: g.interval,
         focus: g.focus ?? false,
       }));
@@ -54,9 +65,8 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
 
     cleaned.forEach((gb) => {
       if (gb.property?.name) {
-        const isDatetime = columns.find((col) => col.name === gb.property?.name)?.type === 'datetime';
+        const isDatetime = allColumns.find((col) => col.name === gb.property?.name)?.type === 'datetime';
 
-        // 🔥 **Replace raw datetime with bin() if it's in groupBy**
         if (isDatetime) {
           groupByClauses.push(`bin(${gb.property.name}, 1m)`);
         } else {
@@ -65,15 +75,31 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
       }
     });
 
-    onQueryUpdate({ groupBy: groupByClauses });
+    const updatedBuilderQuery = {
+      ...builderQuery,
+      groupBy: {
+        expressions: cleaned,
+        type: BuilderQueryEditorExpressionType.Group_by,
+      },
+    };
+
+    const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(updatedBuilderQuery, allColumns);
+
+    onQueryUpdate({
+      ...query,
+      azureLogAnalytics: {
+        ...query.azureLogAnalytics,
+        builderQuery: updatedBuilderQuery,
+        query: updatedQueryString,
+      },
+    });
   };
 
   const onDeleteGroupBy = (propertyName: string) => {
     setGroupBys((prevGroupBys) => {
       const updatedGroupBys = prevGroupBys.filter((gb) => gb.property.name !== propertyName);
-
-      let hasSelectedDatetime = updatedGroupBys.some((g) => g.property?.type === QueryEditorPropertyType.DateTime);
-      let shouldIncludeTime = selectedColumns.length === 0 || hasSelectedDatetime;
+      const hasSelectedDatetime = updatedGroupBys.some((g) => g.property?.type === BuilderQueryEditorPropertyType.Datetime);
+      const shouldIncludeTime = !updatedGroupBys.length || hasSelectedDatetime;
 
       let groupByClauses = updatedGroupBys.map((gb) => gb.property.name);
 
@@ -85,16 +111,25 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
         }
       }
 
-      console.log(
-        'groupByClauses.length > 0 ? groupByClauses : undefined',
-        groupByClauses.length > 0 ? groupByClauses : undefined
-      );
+      const updatedBuilderQuery: BuilderQueryExpression = {
+        ...builderQuery,
+        groupBy: {
+          expressions: updatedGroupBys,
+          type: BuilderQueryEditorExpressionType.Group_by,
+        },
+      };
+
+      const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(updatedBuilderQuery, allColumns);
 
       onQueryUpdate({
-        groupBy: groupByClauses.length > 0 ? groupByClauses : undefined,
+        ...query,
+        azureLogAnalytics: {
+          ...query.azureLogAnalytics,
+          builderQuery: updatedBuilderQuery,
+          query: updatedQueryString,
+        },
       });
 
-      console.log('updatedGroupBys', updatedGroupBys);
       return updatedGroupBys;
     });
   };
@@ -103,8 +138,8 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
     setGroupBys([
       ...groupBys,
       {
-        type: QueryEditorExpressionType.GroupBy,
-        property: { type: QueryEditorPropertyType.String, name: '' },
+        type: BuilderQueryEditorExpressionType.Group_by,
+        property: { type: BuilderQueryEditorPropertyType.String, name: '' },
         interval: undefined,
         focus: true,
       },
@@ -135,8 +170,8 @@ const makeRenderGroupBy = (
   onDeleteGroupBy: (propertyName: string) => void
 ) => {
   return (
-    item: Partial<QueryEditorGroupByExpression>,
-    onChangeItem: (updatedItem: Partial<QueryEditorGroupByExpression>) => void,
+    item: Partial<BuilderQueryEditorGroupByExpression>,
+    onChangeItem: (updatedItem: Partial<BuilderQueryEditorGroupByExpression>) => void,
     onDeleteItem: () => void
   ) => (
     <GroupByItem

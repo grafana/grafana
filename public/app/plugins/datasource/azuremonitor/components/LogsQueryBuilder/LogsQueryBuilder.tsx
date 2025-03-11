@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { EditorField, EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { Alert, Input } from '@grafana/ui';
@@ -14,6 +14,7 @@ import { AzureLogAnalyticsMetadataTable, AzureMonitorQuery, EngineSchema } from 
 import { AggregateSection } from './AggregationSection';
 import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
 import { FilterSection } from './FilterSection';
+import { GroupBySection } from './GroupBySection';
 import KQLPreview from './KQLPreview';
 import { TableSection } from './TableSection';
 import { DEFAULT_LOGS_BUILDER_QUERY, parseQueryToBuilder } from './utils';
@@ -96,13 +97,12 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
         <TableSection {...props} tables={tables} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
         <FilterSection {...props} onQueryUpdate={onQueryChange} allColumns={allColumns} query={query} />
         <AggregateSection {...props} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
-        {/* <GroupBySection 
+        <GroupBySection 
           {...props} 
-          columns={columns} 
-          selectedTable={selectedTable!} 
-          selectedColumns={selectedColumns} 
+          allColumns={allColumns}
+          query={query} 
           onQueryUpdate={onQueryChange} 
-        /> */}
+        />
         <EditorRow>
           <EditorFieldGroup>
             <EditorField label="Limit">

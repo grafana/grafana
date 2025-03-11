@@ -48,11 +48,9 @@ export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, que
     return reduceExpressions
       .map((agg) => {
         if (agg.reduce?.name === 'count') {
-          // If it's a 'count' aggregation, check if a property exists
           return agg.property?.name ? `count(${agg.property.name})` : 'count()';
         }
 
-        // For other types of aggregation, return the standard format
         return `${agg.reduce.name}(${agg.property?.name})`;
       })
       .join(', ');
