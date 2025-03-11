@@ -175,6 +175,15 @@ export function BootstrapStep({ onOptionSelect }: Props) {
     ]
   );
 
+  // Add sorted options after getOptionState is defined
+  const sortedModeOptions = useMemo(() => {
+    return [...modeOptions].sort((a, b) => {
+      const stateA = getOptionState(a);
+      const stateB = getOptionState(b);
+      return stateA.isDisabled === stateB.isDisabled ? 0 : stateA.isDisabled ? 1 : -1;
+    });
+  }, [getOptionState]);
+
   const handleOptionSelect = useCallback(
     (option: ModeOption) => {
       const optionState = getOptionState(option);
@@ -262,7 +271,7 @@ export function BootstrapStep({ onOptionSelect }: Props) {
               control={control}
               render={({ field: { value } }) => (
                 <>
-                  {modeOptions.map((option, index) => {
+                  {sortedModeOptions.map((option, index) => {
                     const optionState = getOptionState(option);
                     const isSelected =
                       selectedOption?.value === option.value && selectedOption?.operation === option.operation;
