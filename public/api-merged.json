@@ -3356,6 +3356,9 @@
           "404": {
             "$ref": "#/responses/notFoundError"
           },
+          "406": {
+            "$ref": "#/responses/notAcceptableError"
+          },
           "500": {
             "$ref": "#/responses/internalServerError"
           }
@@ -14240,6 +14243,9 @@
         },
         "state": {
           "$ref": "#/definitions/State"
+        },
+        "subject": {
+          "type": "string"
         }
       }
     },
@@ -19492,6 +19498,9 @@
         "state": {
           "$ref": "#/definitions/State"
         },
+        "subject": {
+          "type": "string"
+        },
         "uid": {
           "type": "string"
         },
@@ -24432,6 +24441,12 @@
       "description": "(empty)",
       "schema": {
         "type": "object"
+      }
+    },
+    "notAcceptableError": {
+      "description": "NotAcceptableError is returned when the server cannot produce a response matching the accepted formats.",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
       }
     },
     "notFoundError": {

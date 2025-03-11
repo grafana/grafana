@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 
+import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Alert, Input, Switch, TextLink } from '@grafana/ui';
+import { Alert, Input, RadioButtonGroup, Switch, TextLink } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -9,10 +10,10 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { EditPaneHeader } from '../../edit-pane/EditPaneHeader';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { DashboardLayoutSelector } from '../layouts-shared/DashboardLayoutSelector';
+import { useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
 import { RowItem } from './RowItem';
 
@@ -21,18 +22,17 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
   const rowOptions = useMemo(() => {
     const dashboard = getDashboardSceneFor(model);
 
-    const editPaneHeaderOptions = new OptionsPaneCategoryDescriptor({
-      title: t('dashboard.rows-layout.row-options.title', 'Row'),
-      id: 'row-options',
-      isOpenable: false,
-      renderTitle: () => (
-        <EditPaneHeader title={t('dashboard.rows-layout.row-options.title', 'Row')} onDelete={() => model.onDelete()} />
-      ),
-    })
+    const editPaneHeaderOptions = new OptionsPaneCategoryDescriptor({ title: '', id: 'row-options' })
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.rows-layout.row-options.title-option', 'Title'),
+          title: t('dashboard.rows-layout.option.title', 'Title'),
           render: () => <RowTitleInput row={model} />,
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard.rows-layout.option.height', 'Height'),
+          render: () => <RowHeightSelect row={model} />,
         })
       )
       .addItem(
@@ -51,13 +51,13 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
     editPaneHeaderOptions
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.rows-layout.row-options.repeat.variable.title', 'Repeat for'),
+          title: t('dashboard.rows-layout.option.repeat', 'Repeat for'),
           render: () => <RowRepeatSelect row={model} dashboard={dashboard} />,
         })
       )
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.rows-layout.row-options.height.hide-row-header', 'Hide row header'),
+          title: t('dashboard.rows-layout.option.hide-header', 'Hide row header'),
           render: () => <RowHeaderSwitch row={model} />,
         })
       );
@@ -70,9 +70,11 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
 
 function RowTitleInput({ row }: { row: RowItem }) {
   const { title } = row.useState();
+  const ref = useEditPaneInputAutoFocus();
 
   return (
     <Input
+      ref={ref}
       title={t('dashboard.rows-layout.row-options.title-option', 'Title')}
       value={title}
       onChange={(e) => row.onChangeTitle(e.currentTarget.value)}
@@ -84,6 +86,17 @@ function RowHeaderSwitch({ row }: { row: RowItem }) {
   const { isHeaderHidden = false } = row.useState();
 
   return <Switch value={isHeaderHidden} onChange={() => row.onHeaderHiddenToggle()} />;
+}
+
+function RowHeightSelect({ row }: { row: RowItem }) {
+  const { height = 'min' } = row.useState();
+
+  const options: Array<SelectableValue<'expand' | 'min'>> = [
+    { label: t('dashboard.rows-layout.options.height-expand', 'Expand'), value: 'expand' },
+    { label: t('dashboard.rows-layout.options.height-min', 'Min'), value: 'min' },
+  ];
+
+  return <RadioButtonGroup options={options} value={height} onChange={(option) => row.onChangeHeight(option)} />;
 }
 
 function RowRepeatSelect({ row, dashboard }: { row: RowItem; dashboard: DashboardScene }) {

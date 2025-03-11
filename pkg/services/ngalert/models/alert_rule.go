@@ -1010,6 +1010,8 @@ type Record struct {
 	Metric string
 	// From contains a query RefID, indicating which expression node is the output of the recording rule.
 	From string
+	// TargetDatasourceUID is the data source to write the result of the recording rule.
+	TargetDatasourceUID string
 }
 
 func (r *Record) Fingerprint() data.Fingerprint {
@@ -1024,6 +1026,7 @@ func (r *Record) Fingerprint() data.Fingerprint {
 
 	writeString(r.Metric)
 	writeString(r.From)
+	writeString(r.TargetDatasourceUID)
 	return data.Fingerprint(h.Sum64())
 }
 
