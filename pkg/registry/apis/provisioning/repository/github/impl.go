@@ -104,7 +104,7 @@ func (r *githubClient) GetTree(ctx context.Context, owner, repository, ref strin
 			return nil, false, ErrServiceUnavailable
 		}
 		if ghErr.Response.StatusCode == http.StatusNotFound {
-			return nil, false, ErrResourceNotFound
+			return []RepositoryContent{}, false, nil
 		}
 		return nil, false, err
 	}
