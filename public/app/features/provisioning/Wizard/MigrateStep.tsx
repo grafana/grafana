@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Alert, Stack, Text } from '@grafana/ui';
@@ -20,31 +20,47 @@ export function MigrateStep({ onStatusChange, onRunningChange }: MigrateStepProp
   const [migrateError, setMigrateError] = useState<string | null>(null);
   const [isInitialMigrate, setIsInitialMigrate] = useState(true);
   const { watch } = useFormContext<WizardFormData>();
-  const repositoryName = watch('repositoryName');
+
+  // Memoize form values to prevent unnecessary re-renders
+  const formValues = useMemo(
+    () => ({
+      repositoryName: watch('repositoryName'),
+      identifier: watch('migrate.identifier'),
+      history: watch('migrate.history'),
+    }),
+    [watch]
+  );
+
   const migrateName = migrateQuery.data?.metadata?.name;
-  const identifier = watch('migrate.identifier');
-  const history = watch('migrate.history');
 
   // Update running state
   useEffect(() => {
     onRunningChange(showMigrateStatus || migrateQuery.isLoading);
   }, [showMigrateStatus, migrateQuery.isLoading, onRunningChange]);
 
+  // Memoize the status change handler
+  const handleStatusChange = useCallback(
+    (success: boolean) => {
+      onStatusChange(success);
+    },
+    [onStatusChange]
+  );
+
   // Handle initial migration
   useEffect(() => {
     let isMounted = true;
 
     const startMigrate = async () => {
-      if (!repositoryName || !isInitialMigrate) {
+      if (!formValues.repositoryName || !isInitialMigrate) {
         return;
       }
 
       try {
         const response = await migrateRepo({
-          name: repositoryName,
+          name: formValues.repositoryName,
           body: {
-            identifier,
-            history,
+            identifier: formValues.identifier,
+            history: formValues.history,
           },
         }).unwrap();
 
@@ -56,17 +72,17 @@ export function MigrateStep({ onStatusChange, onRunningChange }: MigrateStepProp
           setShowMigrateStatus(true);
           setMigrateError(null);
         } else {
-          onStatusChange(false);
           setShowMigrateStatus(false);
           setMigrateError('Invalid response from migration operation');
+          handleStatusChange(false);
         }
       } catch (error) {
         if (!isMounted) {
           return;
         }
-        onStatusChange(false);
         setShowMigrateStatus(false);
         setMigrateError(error instanceof Error ? error.message : 'Failed to start migration operation');
+        handleStatusChange(false);
       } finally {
         if (isMounted) {
           setIsInitialMigrate(false);
@@ -79,7 +95,7 @@ export function MigrateStep({ onStatusChange, onRunningChange }: MigrateStepProp
     return () => {
       isMounted = false;
     };
-  }, [repositoryName, migrateRepo, onStatusChange, identifier, history, isInitialMigrate]);
+  }, [formValues, migrateRepo, handleStatusChange, isInitialMigrate]);
 
   return (
     <Stack direction="column" gap={2}>
@@ -88,7 +104,7 @@ export function MigrateStep({ onStatusChange, onRunningChange }: MigrateStepProp
         history. After this one-time migration, all future updates will be automatically saved to the repository.
       </Text>
 
-      {!repositoryName && (
+      {!formValues.repositoryName && (
         <Alert severity="error" title="Repository name required">
           Repository name is required to migrate dashboards. Please complete the repository configuration step first.
         </Alert>
@@ -116,7 +132,7 @@ export function MigrateStep({ onStatusChange, onRunningChange }: MigrateStepProp
         <JobStatus
           name={migrateName}
           onStatusChange={(success) => {
-            onStatusChange(success);
+            handleStatusChange(success);
             if (!success) {
               setShowMigrateStatus(false);
               setMigrateError('Migration operation failed');

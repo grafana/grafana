@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Stack, Text, Alert } from '@grafana/ui';
@@ -20,7 +20,15 @@ export function PullStep({ onStatusChange, onRunningChange }: PullStepProps) {
   const [syncError, setSyncError] = useState<string | null>(null);
   const [isInitialSync, setIsInitialSync] = useState(true);
   const { watch } = useFormContext<WizardFormData>();
-  const repositoryName = watch('repositoryName');
+
+  // Memoize form values to prevent unnecessary re-renders
+  const formValues = useMemo(
+    () => ({
+      repositoryName: watch('repositoryName'),
+    }),
+    [watch]
+  );
+
   const syncName = syncQuery.data?.metadata?.name;
 
   // Update running state
@@ -28,18 +36,26 @@ export function PullStep({ onStatusChange, onRunningChange }: PullStepProps) {
     onRunningChange(showSyncStatus || syncQuery.isLoading);
   }, [showSyncStatus, syncQuery.isLoading, onRunningChange]);
 
+  // Memoize the status change handler
+  const handleStatusChange = useCallback(
+    (success: boolean) => {
+      onStatusChange(success);
+    },
+    [onStatusChange]
+  );
+
   // Handle initial sync
   useEffect(() => {
     let isMounted = true;
 
     const startSync = async () => {
-      if (!repositoryName || !isInitialSync) {
+      if (!formValues.repositoryName || !isInitialSync) {
         return;
       }
 
       try {
         const response = await syncRepo({
-          name: repositoryName,
+          name: formValues.repositoryName,
           body: {
             incremental: false,
           },
@@ -53,17 +69,17 @@ export function PullStep({ onStatusChange, onRunningChange }: PullStepProps) {
           setShowSyncStatus(true);
           setSyncError(null);
         } else {
-          onStatusChange(false);
           setShowSyncStatus(false);
           setSyncError('Invalid response from sync operation');
+          handleStatusChange(false);
         }
       } catch (error) {
         if (!isMounted) {
           return;
         }
-        onStatusChange(false);
         setShowSyncStatus(false);
         setSyncError(error instanceof Error ? error.message : 'Failed to start sync operation');
+        handleStatusChange(false);
       } finally {
         if (isMounted) {
           setIsInitialSync(false);
@@ -76,7 +92,7 @@ export function PullStep({ onStatusChange, onRunningChange }: PullStepProps) {
     return () => {
       isMounted = false;
     };
-  }, [repositoryName, syncRepo, onStatusChange, isInitialSync]);
+  }, [formValues, syncRepo, handleStatusChange, isInitialSync]);
 
   return (
     <Stack direction="column" gap={2}>
@@ -101,7 +117,7 @@ export function PullStep({ onStatusChange, onRunningChange }: PullStepProps) {
         <JobStatus
           name={syncName}
           onStatusChange={(success) => {
-            onStatusChange(success);
+            handleStatusChange(success);
             if (!success) {
               setShowSyncStatus(false);
               setSyncError('Sync operation failed');
