@@ -125,7 +125,7 @@ func NewAPIBuilder(
 		},
 		render:         render,
 		clonedir:       clonedir,
-		resourceLister: resources.NewResourceLister(unified),
+		resourceLister: resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus),
 		legacyMigrator: legacyMigrator,
 		storageStatus:  storageStatus,
 		unified:        unified,
@@ -737,23 +737,7 @@ spec:
 		}
 	}
 	compBase := "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1."
-	schema := oas.Components.Schemas[compBase+"ResourceStats"].Properties["items"]
-	schema.Items = &spec.SchemaOrArray{
-		Schema: &spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				AllOf: []spec.Schema{
-					{
-						SchemaProps: spec.SchemaProps{
-							Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "ResourceCount"),
-						},
-					},
-				},
-			},
-		},
-	}
-	oas.Components.Schemas[compBase+"ResourceStats"].Properties["items"] = schema
-
-	schema = oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"]
+	schema := oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"]
 	schema.Items = &spec.SchemaOrArray{
 		Schema: &spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -768,6 +752,27 @@ spec:
 		},
 	}
 	oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"] = schema
+
+	// statsSpec := &spec.SchemaOrArray{
+	// 	Schema: &spec.Schema{
+	// 		SchemaProps: spec.SchemaProps{
+	// 			AllOf: []spec.Schema{
+	// 				{
+	// 					SchemaProps: spec.SchemaProps{
+	// 						Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "ResourceCount"),
+	// 					},
+	// 				},
+	// 			},
+	// 		},
+	// 	},
+	// }
+	// schema := oas.Components.Schemas[compBase+"ManagerStats"].Properties["managed"]
+	// schema.Items = statsSpec
+	// oas.Components.Schemas[compBase+"ManagerStats"].Properties["managed"] = schema
+
+	// schema = oas.Components.Schemas[compBase+"ManagerStats"].Properties["instance"]
+	// schema.Items = statsSpec
+	// oas.Components.Schemas[compBase+"ManagerStats"].Properties["instance"] = schema
 
 	return oas, nil
 }
