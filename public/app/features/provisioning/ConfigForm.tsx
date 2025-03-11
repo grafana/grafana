@@ -55,6 +55,7 @@ export function getDefaultValues(repository?: RepositorySpec): RepositoryFormDat
       branch: 'main',
       generateDashboardPreviews: true,
       workflows: ['branch', 'write'],
+      prefix: 'grafana/',
       sync: {
         enabled: true,
         target: 'instance',
@@ -183,6 +184,9 @@ export function ConfigForm({ data }: ConfigFormProps) {
           </Field>
           <Field label={'Branch'}>
             <Input {...register('branch')} placeholder={'main'} />
+          </Field>
+          <Field label={'Prefix'}>
+            <Input {...register('prefix')} placeholder={'main'} />
           </Field>
         </>
       )}

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/v69/github"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -93,20 +94,60 @@ func (r *githubClient) GetContents(ctx context.Context, owner, repository, path,
 	}
 }
 
-func (r *githubClient) GetTree(ctx context.Context, owner, repository, ref string, recursive bool) ([]RepositoryContent, bool, error) {
-	tree, _, err := r.gh.Git.GetTree(ctx, owner, repository, ref, recursive)
-	if err != nil {
-		var ghErr *github.ErrorResponse
-		if !errors.As(err, &ghErr) {
+func (r *githubClient) GetTree(ctx context.Context, owner, repository, basePath, ref string, recursive bool) ([]RepositoryContent, bool, error) {
+	var tree *github.Tree
+	var err error
+
+	basePath = safepath.Clean(basePath)
+	if basePath == "." || basePath == "/" {
+		basePath = ""
+	}
+
+	subPaths := strings.Split(basePath, "/")
+	subPaths = keepNonEmpty(subPaths)
+
+	for {
+		// If subPaths is empty, we can read recursively. Otherwise, always read only the direct children.
+		recursive := recursive && len(subPaths) == 0
+
+		tree, _, err = r.gh.Git.GetTree(ctx, owner, repository, ref, recursive)
+		if err != nil {
+			var ghErr *github.ErrorResponse
+			if !errors.As(err, &ghErr) {
+				return nil, false, err
+			}
+			if ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+				return nil, false, ErrServiceUnavailable
+			}
+			if ghErr.Response.StatusCode == http.StatusNotFound {
+				return nil, false, ErrResourceNotFound
+			}
 			return nil, false, err
 		}
-		if ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-			return nil, false, ErrServiceUnavailable
+
+		// Prep for next iteration.
+		if len(subPaths) != 0 {
+			// the ref must be equal the SHA of the entry corresponding to subPaths[0]
+			ref = ""
+			for _, e := range tree.Entries {
+				if e.GetPath() == subPaths[0] {
+					ref = e.GetSHA()
+					break
+				}
+			}
+			subPaths = subPaths[1:]
+			if ref == "" {
+				// We couldn't find the folder in the tree...
+				return nil, false, ErrResourceNotFound
+			}
+		} else {
+			// We've got the tree we want.
+			break
 		}
-		if ghErr.Response.StatusCode == http.StatusNotFound {
-			return nil, false, ErrResourceNotFound
-		}
-		return nil, false, err
+	}
+
+	if basePath != "" {
+		// First, we need to find the base path in the tree we just fetched, then we set tree to the response of another GetTree call with that folder's SHA.
 	}
 
 	entries := make([]RepositoryContent, 0, len(tree.Entries))
@@ -670,4 +711,14 @@ func (c realRepositoryContent) GetSize() int64 {
 		}
 	}
 	return 0
+}
+
+func keepNonEmpty(strs []string) []string {
+	ret := make([]string, 0, len(strs))
+	for _, s := range strs {
+		if s != "" {
+			ret = append(ret, s)
+		}
+	}
+	return ret
 }

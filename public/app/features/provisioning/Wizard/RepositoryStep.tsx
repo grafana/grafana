@@ -140,6 +140,10 @@ export function RepositoryStep({ onStatusChange }: Props) {
             <Field label={'Branch'} error={errors.repository?.branch?.message} invalid={!!errors.repository?.branch}>
               <Input {...register('repository.branch')} placeholder={'main'} />
             </Field>
+
+            <Field label={'Prefix'} error={errors.repository?.prefix?.message} invalid={!!errors.repository?.prefix}>
+              <Input {...register('repository.prefix')} placeholder={'grafana/'} />
+            </Field>
           </>
         )}
 
