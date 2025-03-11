@@ -150,7 +150,7 @@ To install plugins in the Docker container, complete the following steps:
 
    ```bash
    docker run -d -p 3000:3000 --name=grafana \
-     -e "GF_PLUGINS_PREINSTALL=grafana-clock-panel 1.0.1" \
+     -e "GF_PLUGINS_PREINSTALL=grafana-clock-panel@1.0.1" \
      grafana/grafana-enterprise
    ```
 
