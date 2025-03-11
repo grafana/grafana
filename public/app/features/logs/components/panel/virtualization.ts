@@ -157,6 +157,7 @@ export function getLogLineSize(
   { wrap, showTime }: DisplayOptions,
   index: number
 ) {
+  console.log('measuring', index);
   if (!container) {
     return 0;
   }
@@ -177,9 +178,9 @@ export function getLogLineSize(
     textToMeasure += logs[index].timestamp;
   }
   // When logs are unwrapped, we want an empty column space to align with other log lines.
-  if (logs[index].logLevel || !wrap) {
+  if (logs[index].displayLevel || !wrap) {
     optionsWidth += gap;
-    textToMeasure += logs[index].logLevel ?? '';
+    textToMeasure += logs[index].displayLevel ?? '';
   }
   for (const field of displayedFields) {
     textToMeasure = getDisplayedFieldValue(field, logs[index]) + textToMeasure;
