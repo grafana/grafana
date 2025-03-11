@@ -21,7 +21,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: 'package.json'
-          node-version: '22.11.0' # fallback version stipulated by the old Drone pipeline
           cache: 'yarn'
       
       - name: Install dependencies
