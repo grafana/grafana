@@ -49,7 +49,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
   }
 
   // Retrieve timestamp of the last data point if available
-  const timeField = scene.data?.series[0].fields?.find((field) => field.type === FieldType.time);
+  const timeField = scene.data?.series[0]?.fields?.find((field) => field.type === FieldType.time);
   const lastTimeValue = timeField?.values[timeField.values.length - 1];
   const shouldDisplayTimeContentItem =
     timeField && lastTimeValue && element.data.field && getFieldDisplayName(timeField) !== element.data.field;
@@ -88,7 +88,6 @@ export const CanvasTooltip = ({ scene }: Props) => {
       }
     });
   }
-  // ---------
 
   if (scene.data?.series) {
     getElementFields(scene.data?.series, element.options).forEach((field) => {

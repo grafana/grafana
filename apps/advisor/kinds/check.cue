@@ -7,28 +7,45 @@ check: {
 	versions: {
 		"v0alpha1": {
 			codegen: {
-				frontend: false
+				frontend: true
 				backend:  true
 			}
+			validation: {
+				operations: [
+					"CREATE",
+					"UPDATE",
+				]
+			}
 			schema: {
-				spec: {
+				#Data: {
 					// Generic data input that a check can receive
 					data?: [string]: string
 				}
-				status: {
-					report: {
+				#ErrorLink: {
+					// URL to a page with more information about the error
+					url: string
+					// Human readable error message
+					message: string
+ 				}
+				#ReportFailure: {
+					// Severity of the failure
+					severity: "high" | "low"
+					// Step ID that the failure is associated with
+					stepID: string
+					// Human readable identifier of the item that failed
+					item: string
+					// Links to actions that can be taken to resolve the failure
+					links: [...#ErrorLink]
+				}	
+				#Report: {
 						// Number of elements analyzed
 						count: int
-						// List of errors
-						errors: [...{
-							// Severity of the error
-							severity: "high" | "low"
-							// Human readable reason for the error
-							reason: string
-							// Action to take to resolve the error
-							action: string
-						}]
-					}
+						// List of failures
+						failures: [...#ReportFailure]
+				}
+				spec: #Data
+				status: {
+					report: #Report
 				}
 			}
 		}

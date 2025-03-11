@@ -27,7 +27,6 @@ import {
 } from '@grafana/scenes';
 import { Alert, Badge, Field, Icon, IconButton, InlineSwitch, Input, Select, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
-import { getSelectedScopes } from 'app/features/scopes';
 
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
@@ -45,7 +44,6 @@ import {
 } from '../shared';
 import { getFilters, getTrailFor, isSceneTimeRangeState } from '../utils';
 
-import { AddToExplorationButton } from './AddToExplorationsButton';
 import { SelectMetricAction } from './SelectMetricAction';
 import { getMetricNames } from './api';
 import { getPreviewPanelFor } from './previewPanel';
@@ -258,7 +256,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       const response = await getMetricNames(
         datasourceUid,
         timeRange,
-        getSelectedScopes(),
+        sceneGraph.getScopesBridge(this)?.getValue() ?? [],
         filters,
         jobsList,
         instancesList,
@@ -424,7 +422,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
         }
         // refactor this into the query generator in future
         const isNative = trail.isNativeHistogram(metric.name);
-        const panel = getPreviewPanelFor(metric.name, index, currentFilterCount, description, isNative);
+        const panel = getPreviewPanelFor(metric.name, index, currentFilterCount, description, isNative, true);
 
         metric.itemRef = panel.getRef();
         metric.isPanel = true;
@@ -579,7 +577,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
                 },
                 ...Array.from(rootGroup?.groups.keys() ?? []).map((g) => ({ label: `${g}_`, value: g })),
               ]}
-              className="explore-metrics-metric-prefix-select"
+              className="metrics-drilldown-metric-prefix-select"
             />
           </Field>
           {!metric && hasOtelResources && (
@@ -655,10 +653,7 @@ function getCardPanelFor(metric: string, description?: string) {
   return PanelBuilders.text()
     .setTitle(metric)
     .setDescription(description)
-    .setHeaderActions([
-      new SelectMetricAction({ metric, title: 'Select' }),
-      new AddToExplorationButton({ labelName: metric }),
-    ])
+    .setHeaderActions([new SelectMetricAction({ metric, title: 'Select' })])
     .setOption('content', '')
     .build();
 }

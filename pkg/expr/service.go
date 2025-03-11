@@ -64,9 +64,8 @@ type Service struct {
 
 	pluginsClient backend.CallResourceHandler
 
-	tracer          tracing.Tracer
-	metrics         *metrics
-	allowLongFrames bool
+	tracer  tracing.Tracer
+	metrics *metrics
 }
 
 type pluginContextProvider interface {

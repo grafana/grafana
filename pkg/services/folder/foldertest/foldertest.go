@@ -4,11 +4,13 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/search/model"
 )
 
 type FakeService struct {
 	ExpectedFolders          []*folder.Folder
 	ExpectedFolder           *folder.Folder
+	ExpectedHitList          model.HitList
 	ExpectedError            error
 	ExpectedDescendantCounts map[string]int64
 }
@@ -82,6 +84,11 @@ func (s *FakeService) GetDescendantCountsLegacy(ctx context.Context, q *folder.G
 func (s *FakeService) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
 	return s.ExpectedFolders, s.ExpectedError
 }
+
+func (s *FakeService) SearchFolders(ctx context.Context, q folder.SearchFoldersQuery) (model.HitList, error) {
+	return s.ExpectedHitList, s.ExpectedError
+}
+
 func (s *FakeService) GetFoldersLegacy(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
 	return s.ExpectedFolders, s.ExpectedError
 }

@@ -54,13 +54,15 @@ type TempoQuery struct {
 	TableType *SearchTableType `json:"tableType,omitempty"`
 	// For metric queries, the step size to use
 	Step *string `json:"step,omitempty"`
+	// For metric queries, how many exemplars to request, 0 means no exemplars
+	Exemplars *int64 `json:"exemplars,omitempty"`
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
 	Datasource any `json:"datasource,omitempty"`
-	// For metric queries, how many exemplars to request, 0 means no exemplars
-	Exemplars *int64 `json:"exemplars,omitempty"`
+	// For metric queries, whether to run instant or range queries
+	MetricsQueryType *MetricsQueryType `json:"metricsQueryType,omitempty"`
 }
 
 // NewTempoQuery creates a new TempoQuery object.
@@ -78,6 +80,13 @@ const (
 	TempoQueryTypeNativeSearch  TempoQueryType = "nativeSearch"
 	TempoQueryTypeTraceId       TempoQueryType = "traceId"
 	TempoQueryTypeClear         TempoQueryType = "clear"
+)
+
+type MetricsQueryType string
+
+const (
+	MetricsQueryTypeRange   MetricsQueryType = "range"
+	MetricsQueryTypeInstant MetricsQueryType = "instant"
 )
 
 // The state of the TraceQL streaming search query

@@ -43,9 +43,6 @@ export interface ThemeComponents {
   sidemenu: {
     width: number;
   };
-  menuTabs: {
-    height: number;
-  };
   horizontalDrawer: {
     defaultHeight: number;
   };
@@ -80,10 +77,10 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
     input,
     panel,
     dropdown: {
-      background: input.background,
+      background: colors.background.elevated,
     },
     tooltip: {
-      background: colors.background.secondary,
+      background: colors.background.elevated,
       text: colors.text.primary,
     },
     dashboard: {
@@ -96,6 +93,7 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
     sidemenu: {
       width: 57,
     },
+    // @ts-expect-error (added here to not crash plugins that might use it)
     menuTabs: {
       height: 5,
     },

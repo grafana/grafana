@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps, UrlSyncContextProvider } from '@grafana/scenes';
-import { Icon, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Icon, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -15,11 +15,12 @@ import {
   PublicDashboardPageRouteParams,
   PublicDashboardPageRouteSearchParams,
 } from 'app/features/dashboard/containers/types';
+import { AppNotificationSeverity } from 'app/types';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
-import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
+import { getDashboardScenePageStateManager, LoadError } from './DashboardScenePageStateManager';
 
 const selectors = e2eSelectors.pages.PublicDashboardScene;
 
@@ -42,21 +43,16 @@ export function PublicDashboardScenePage({ route }: Props) {
     };
   }, [stateManager, accessToken, route.routeName]);
 
+  if (loadError) {
+    return <PublicDashboardScenePageError error={loadError} />;
+  }
+
   if (!dashboard) {
     return (
       <Page layout={PageLayoutType.Custom} className={styles.loadingPage} data-testid={selectors.loadingPage}>
         {isLoading && <PageLoader />}
-        {loadError && <h2>{loadError}</h2>}
       </Page>
     );
-  }
-
-  if (dashboard.state.meta.publicDashboardEnabled === false) {
-    return <PublicDashboardNotAvailable paused />;
-  }
-
-  if (dashboard.state.meta.dashboardNotFound) {
-    return <PublicDashboardNotAvailable />;
   }
 
   // if no time picker render without url sync
@@ -161,4 +157,36 @@ function getStyles(theme: GrafanaTheme2) {
       overflowY: 'auto',
     }),
   };
+}
+
+function PublicDashboardScenePageError({ error }: { error: LoadError }) {
+  const styles = useStyles2(getStyles);
+  const statusCode = error.status;
+  const messageId = error.messageId;
+  const message = error.message;
+
+  const isPublicDashboardPaused = statusCode === 403 && messageId === 'publicdashboards.notEnabled';
+  const isPublicDashboardNotFound = statusCode === 404 && messageId === 'publicdashboards.notFound';
+  const isDashboardNotFound = statusCode === 404 && messageId === 'publicdashboards.dashboardNotFound';
+
+  const publicDashboardEnabled = isPublicDashboardNotFound ? undefined : !isPublicDashboardPaused;
+  const dashboardNotFound = isPublicDashboardNotFound || isDashboardNotFound;
+
+  if (publicDashboardEnabled === false) {
+    return <PublicDashboardNotAvailable paused />;
+  }
+
+  if (dashboardNotFound) {
+    return <PublicDashboardNotAvailable />;
+  }
+
+  return (
+    <Page layout={PageLayoutType.Custom} className={styles.loadingPage} data-testid={selectors.loadingPage}>
+      <Box paddingY={4} display="flex" direction="column" alignItems="center">
+        <Alert severity={AppNotificationSeverity.Error} title={message}>
+          {message}
+        </Alert>
+      </Box>
+    </Page>
+  );
 }

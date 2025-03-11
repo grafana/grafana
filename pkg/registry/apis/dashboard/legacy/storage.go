@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -87,7 +87,10 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 	if a.subscribers != nil {
 		go func() {
 			write := &resource.WrittenEvent{
-				WriteEvent: event,
+				Type:       event.Type,
+				Key:        event.Key,
+				PreviousRV: event.PreviousRV,
+				Value:      event.Value,
 
 				Timestamp:       time.Now().UnixMilli(),
 				ResourceVersion: rv,
@@ -139,7 +142,7 @@ func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.Rea
 	}
 	version := int64(0)
 	if req.ResourceVersion > 0 {
-		version = getVersionFromRV(req.ResourceVersion)
+		version = req.ResourceVersion
 	}
 
 	dash, rv, err := a.GetDashboard(ctx, info.OrgID, req.Key.Name, version)
@@ -255,50 +258,19 @@ func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest
 	return a.ReadResource(ctx, req), nil
 }
 
-// TODO: this needs to be implemented
 func (a *dashboardSqlAccess) Search(ctx context.Context, req *resource.ResourceSearchRequest) (*resource.ResourceSearchResponse, error) {
-	return nil, fmt.Errorf("not yet (filter)")
+	return a.dashboardSearchClient.Search(ctx, req)
 }
 
-func (a *dashboardSqlAccess) ListRepositoryObjects(ctx context.Context, req *resource.ListRepositoryObjectsRequest) (*resource.ListRepositoryObjectsResponse, error) {
+func (a *dashboardSqlAccess) ListManagedObjects(ctx context.Context, req *resource.ListManagedObjectsRequest) (*resource.ListManagedObjectsResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (a *dashboardSqlAccess) CountRepositoryObjects(context.Context, *resource.CountRepositoryObjectsRequest) (*resource.CountRepositoryObjectsResponse, error) {
+func (a *dashboardSqlAccess) CountManagedObjects(context.Context, *resource.CountManagedObjectsRequest) (*resource.CountManagedObjectsResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
 // GetStats implements ResourceServer.
 func (a *dashboardSqlAccess) GetStats(ctx context.Context, req *resource.ResourceStatsRequest) (*resource.ResourceStatsResponse, error) {
-	info, err := claims.ParseNamespace(req.Namespace)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read namespace")
-	}
-	if info.OrgID == 0 {
-		return nil, fmt.Errorf("invalid OrgID found in namespace")
-	}
-
-	if len(req.Kinds) != 1 {
-		return nil, fmt.Errorf("only can query for dashboard kind in legacy fallback")
-	}
-
-	parts := strings.SplitN(req.Kinds[0], "/", 2)
-	if len(parts) != 2 {
-		return nil, fmt.Errorf("invalid kind")
-	}
-
-	count, err := a.dashStore.CountInOrg(ctx, info.OrgID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &resource.ResourceStatsResponse{
-		Stats: []*resource.ResourceStatsResponse_Stats{
-			{
-				Group:    parts[0],
-				Resource: parts[1],
-				Count:    count,
-			},
-		},
-	}, nil
+	return a.dashboardSearchClient.GetStats(ctx, req)
 }

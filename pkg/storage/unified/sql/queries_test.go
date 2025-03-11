@@ -385,33 +385,16 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					},
 				},
 			},
-			sqlMigratorGetDeletionMarkers: {
-				{
-					Name: "list",
-					Data: &sqlMigrationQueryRequest{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						MarkerQuery: `{"kind":"DeletedMarker"%`,
-					},
-				},
-			},
-			sqlMigratorGetValueFromRV: {
-				{
-					Name: "get",
-					Data: &sqlMigrationQueryRequest{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Group:       "ggg",
-						Resource:    "rrr",
-						RV:          1234,
-					},
-				},
-			},
-			sqlMigratorUpdateValueWithGUID: {
+			sqlResourceInsertFromHistory: {
 				{
 					Name: "update",
-					Data: &sqlMigrationQueryRequest{
+					Data: &sqlResourceInsertFromHistoryRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						GUID:        "ggggg",
-						Value:       "{new value}",
+						Key: &resource.ResourceKey{
+							Namespace: "default",
+							Group:     "dashboard.grafana.app",
+							Resource:  "dashboards",
+						},
 					},
 				},
 			},

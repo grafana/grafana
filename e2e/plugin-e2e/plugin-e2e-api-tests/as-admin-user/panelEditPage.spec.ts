@@ -6,6 +6,7 @@ import { scenarios } from '../mocks/resources';
 
 const PANEL_TITLE = 'Table panel E2E test';
 const TABLE_VIZ_NAME = 'Table';
+const TIME_SERIES_VIZ_NAME = 'Time series';
 const STANDARD_OTIONS_CATEGORY = 'Standard options';
 const DISPLAY_NAME_LABEL = 'Display name';
 const REACT_TABLE_DASHBOARD = { uid: 'U_bZIMRMk' };
@@ -83,6 +84,118 @@ test.describe('edit panel plugin settings', () => {
       page.getByText(DISPLAY_NAME_LABEL),
       formatExpectError('Expected section to be collapsed')
     ).toBeVisible();
+  });
+
+  test('Select time zone in timezone picker', async ({ panelEditPage }) => {
+    await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
+    const axisOptions = await panelEditPage.getCustomOptions('Axis');
+    const timeZonePicker = axisOptions.getSelect('Time zone');
+
+    await timeZonePicker.selectOption('Europe/Stockholm');
+    await expect(timeZonePicker).toHaveSelected('Europe/Stockholm');
+  });
+
+  test('select unit in unit picker', async ({ panelEditPage }) => {
+    await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
+    const standardOptions = panelEditPage.getStandardOptions();
+    const unitPicker = standardOptions.getUnitPicker('Unit');
+
+    await unitPicker.selectOption('Misc > Pixels');
+
+    await expect(unitPicker).toHaveSelected('Pixels');
+  });
+
+  test('enter value in number input', async ({ panelEditPage }) => {
+    await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
+    const axisOptions = panelEditPage.getCustomOptions('Axis');
+    const lineWith = axisOptions.getNumberInput('Soft min');
+
+    await lineWith.fill('10');
+
+    await expect(lineWith).toHaveValue('10');
+  });
+
+  test('enter value in slider', async ({ panelEditPage }) => {
+    await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
+    const graphOptions = panelEditPage.getCustomOptions('Graph styles');
+    const lineWidth = graphOptions.getSliderInput('Line width');
+
+    await lineWidth.fill('10');
+
+    await expect(lineWidth).toHaveValue('10');
+  });
+
+  test('select value in single value select', async ({ panelEditPage }) => {
+    await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
+    const standardOptions = panelEditPage.getStandardOptions();
+    const colorSchemeSelect = standardOptions.getSelect('Color scheme');
+
+    await colorSchemeSelect.selectOption('Classic palette');
+    await expect(colorSchemeSelect).toHaveSelected('Classic palette');
+  });
+
+  test('clear input', async ({ panelEditPage }) => {
+    await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
+    const panelOptions = panelEditPage.getPanelOptions();
+    const title = panelOptions.getTextInput('Title');
+
+    await expect(title).toHaveValue('Panel Title');
+    await title.clear();
+    await expect(title).toHaveValue('');
+  });
+
+  test('enter value in input', async ({ panelEditPage }) => {
+    await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
+    const panelOptions = panelEditPage.getPanelOptions();
+    const description = panelOptions.getTextInput('Description');
+
+    await expect(description).toHaveValue('');
+    await description.fill('This is a panel');
+    await expect(description).toHaveValue('This is a panel');
+  });
+
+  test('unchecking switch', async ({ panelEditPage }) => {
+    await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
+    const axisOptions = panelEditPage.getCustomOptions('Axis');
+    const showBorder = axisOptions.getSwitch('Show border');
+
+    await expect(showBorder).toBeChecked({ checked: false });
+    await showBorder.check();
+    await expect(showBorder).toBeChecked();
+
+    await showBorder.uncheck();
+    await expect(showBorder).toBeChecked({ checked: false });
+  });
+
+  test('checking switch', async ({ panelEditPage }) => {
+    await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
+    const axisOptions = panelEditPage.getCustomOptions('Axis');
+    const showBorder = axisOptions.getSwitch('Show border');
+
+    await expect(showBorder).toBeChecked({ checked: false });
+    await showBorder.check();
+    await expect(showBorder).toBeChecked();
+  });
+
+  test('re-selecting value in radio button group', async ({ panelEditPage }) => {
+    await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
+    const axisOptions = panelEditPage.getCustomOptions('Axis');
+    const placement = axisOptions.getRadioGroup('Placement');
+
+    await placement.check('Right');
+    await expect(placement).toHaveChecked('Right');
+
+    await placement.check('Auto');
+    await expect(placement).toHaveChecked('Auto');
+  });
+
+  test('selecting value in radio button group', async ({ panelEditPage }) => {
+    await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
+    const axisOptions = panelEditPage.getCustomOptions('Axis');
+    const placement = axisOptions.getRadioGroup('Placement');
+
+    await placement.check('Right');
+    await expect(placement).toHaveChecked('Right');
   });
 });
 

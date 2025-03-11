@@ -17,21 +17,16 @@ labels:
 title: Queries and conditions
 weight: 104
 refs:
-  data-sources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/
   data-source-alerting:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/#supported-data-sources
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/#supported-data-sources
-  alert-rule-evaluation:
+  state-and-health:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/state-and-health/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/state-and-health/
   query-transform-data:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
@@ -41,71 +36,122 @@ refs:
 
 # Queries and conditions
 
-In Grafana, queries fetch and transform data from [data sources,](ref:data-sources) which include databases like MySQL or PostgreSQL, time series databases like Prometheus or InfluxDB, and services like Amazon CloudWatch or Azure Monitor.
+In Grafana, queries fetch and transform data from data sources, which include databases like MySQL or PostgreSQL, time series databases like Prometheus or InfluxDB, and services like Amazon CloudWatch or Azure Monitor.
 
-A query specifies the data to extract from a data source, with the syntax varying based on the type of data source used.
+An alert rule defines the following components:
 
-In Alerting, an alert rule defines of one or more queries and expressions that select the data you want to measure and a [condition](#alert-condition) that needs to be met before an alert rule fires.
+- A [query](#data-source-queries) that specifies the data to retrieve from a data source, with the syntax depending on the type of data source used.
+- A [condition](#alert-condition) that must be met before the alert rule fires.
+- Optional [expressions](#advanced-options-expressions) to perform transformations on the retrieved data.
+
+Alerting periodically runs the queries and expressions, evaluating the condition. If the condition is breached, an alert instance is triggered for each time series.
 
 ## Data source queries
 
-Alerting queries are the same type of queries available in Grafana panels. Queries in Grafana can be applied in various ways, depending on the data source and query language being used. However, not all [data sources support Alerting](ref:data-source-alerting).
+Alerting queries are the same as the queries used in Grafana panels, but Grafana-managed alerts are limited to querying [data sources that have Alerting enabled](ref:data-source-alerting).
 
-Each data source’s query editor provides a customized user interface to help you write queries that take advantage of its unique capabilities. For additional information about queries in Grafana, refer to [Query and transform data](ref:query-transform-data).
+Queries in Grafana can be applied in various ways, depending on the data source and query language being used. Each data source’s query editor provides a customized user interface to help you write queries that take advantage of its unique capabilities.
 
-Some common types of query components include:
+For more details about queries in Grafana, refer to [Query and transform data](ref:query-transform-data).
 
-**Metrics or data fields**: Specify the specific metrics or data fields you want to retrieve, such as CPU usage, network traffic, or sensor readings.
+{{< figure src="/media/docs/alerting/alerting-query-conditions-default-options.png" max-width="750px" caption="Define alert query and alert condition" >}}
 
-**Time range**: Define the time range for which you want to fetch data, such as the last hour, a specific day, or a custom time range.
+## Alert condition
 
-**Filters**: Apply filters to narrow down the data based on specific criteria, such as filtering data by a specific tag, host, or application.
+The alert condition is the query or expression that determines whether the alert fires or not depending whether the value satisfies the specified comparison. There can be only one condition which determines the triggering of the alert.
 
-**Aggregations**: Perform aggregations on the data to calculate metrics like averages, sums, or counts over a given time period.
+If the queried data meets the defined condition, Grafana fires the alert.
 
-**Grouping**: Group the data by specific dimensions or tags to create aggregated views or breakdowns.
+When using **Default options**, the `When` input [reduces the query data](#reduce), and the last input defines the threshold condition.
 
-{{% admonition type="note" %}}
-Grafana doesn't support alert queries with template variables. More details [here](https://community.grafana.com/t/template-variables-are-not-supported-in-alert-queries-while-setting-up-alert/2514).
-{{% /admonition %}}
+When using **Advanced options**, you have to choose one of your queries or expressions as the alert condition.
 
-## Expression queries
+## Advanced options: Expressions
 
-In Grafana, an expression is used to perform calculations, transformations, or aggregations on the data source queried data. It allows you to create custom metrics or modify existing metrics based on mathematical operations, functions, or logical expressions.
+Expressions are only available for Grafana-managed alerts and when the **Advanced options** are enabled.
 
-By leveraging expression queries, users can perform tasks such as calculating the percentage change between two values, applying functions like logarithmic or trigonometric functions, aggregating data over specific time ranges or dimensions, and implementing conditional logic to handle different scenarios.
+In Grafana, expressions allow you to perform calculations, transformations, or aggregations on queried data. They modify existing metrics through mathematical operations, functions, or logical expressions.
 
-In Alerting, you can only use expressions for Grafana-managed alert rules. For each expression, you can choose from the math, reduce, and resample expressions. These are called multi-dimensional rules, because they generate an alert instance for each series.
+With expression queries, you can perform tasks such as calculating the percentage change between two values, applying functions like logarithmic or trigonometric functions, aggregating data over specific time ranges or dimensions, and implementing conditional logic to handle different scenarios.
 
-**Reduce**
+{{< figure src="/media/docs/alerting/alert-rule-expressions.png" max-width="750px" caption="Alert rule expressions" >}}
 
-Aggregates time series values in the selected time range into a single value. It's not necessary for [rules using numeric data](#alert-on-numeric-data).
+The following expressions are available:
 
-**Math**
+### Reduce
 
-Performs free-form math functions/operations on time series and number data. Can be used to preprocess time series data or to define an alert condition for number data. For example:
+Aggregates time series values within the selected time range into a single number.
+
+Reduce takes one or more time series and transform each series into a single number, which can then be compared in the alert condition.
+
+The following aggregations functions are included: `Min`, `Max`, `Mean`, `Mediam`, `Sum`, `Count`, and `Last`.
+
+### Math
+
+Performs free-form math functions/operations on time series data and numbers. For instance, `$A + 1` or `$A * 100`.
+
+You can also use a Math expression to define the alert condition for numbers. For example:
 
 - `$B > 70` should fire if the value of B (query or expression) is more than 70.
 - `$B < $C * 100` should fire if the value of B is less than the value of C multiplied by 100.
 
 If queries being compared have multiple series in their results, series from different queries are matched if they have the same labels or one is a subset of the other.
 
-**Resample**
+### Resample
 
 Realigns a time range to a new set of timestamps, this is useful when comparing time series data from different data sources where the timestamps would otherwise not align.
 
-**Threshold**
+### Threshold
 
-Checks if any time series data matches the threshold condition.
+Compares single numbers from previous queries or expressions (e.g., `$A`, `$B`) to a specified condition. It's often used to define the alert condition.
 
-The threshold expression allows you to compare two single values. It returns `0` when the condition is false and `1` if the condition is true. The following threshold functions are available:
+The threshold expression allows the comparison between two single values. Available threshold functions are:
 
-- Is above (x > y)
-- Is below (x < y)
-- Is within range (x > y1 AND x < y2)
-- Is outside range (x < y1 AND x > y2)
+- **Is above**: `$A > 5`
+- **Is below**: `$B < 3`
+- **Is equal to**: `$A == 2`
+- **Is not equal to**: `$B =! 4`
+- **Is above or equal to**: `$A >= 8`
+- **Is below or equal to**: `$B <= 16`
+- **Is within range**: `$A > 0 AND $A < 10`
+- **Is outside range**: `$B < 0 OR $B > 100`
+- **Is within range included**: `$A >= 0 AND $A <= 10`
+- **Is outside range included**: `$B <= 0 OR $B >= 100`
 
-**Classic condition (legacy)**
+A threshold returns `0` when the condition is false and `1` when true.
+
+If the threshold is set as the alert condition, the alert fires when the threshold returns `1`.
+
+#### Recovery threshold
+
+To reduce the noise from flapping alerts, you can set a recovery threshold different to the alert threshold.
+
+Flapping alerts occur when a metric hovers around the alert threshold condition and may lead to frequent state changes, resulting in too many notifications.
+
+The value of a flapping metric can continually go above and below a threshold, resulting in a series of firing-resolved-firing notifications and a noisy alert state history.
+
+For example, if you have an alert for latency with a threshold of 1000ms and the number fluctuates around 1000 (say 980 -> 1010 -> 990 -> 1020, and so on), then each of those might trigger a notification:
+
+- 980 -> 1010 triggers a firing alert.
+- 1010 -> 990 triggers a resolving alert.
+- 990 -> 1020 triggers a firing alert again.
+
+To prevent this, you can set a recovery threshold to define two thresholds instead of one:
+
+1. An alert is triggered when the first threshold is crossed.
+1. An alert is resolved only when the second (recovery) threshold is crossed.
+
+In the previous example, setting the recovery threshold to 900ms means the alert only resolves when the latency falls below 900ms:
+
+- 980 -> 1010 triggers a firing alert.
+- 1010 -> 990 does not resolve the alert, keeping it in the firing state.
+- 990 -> 1020 keeps the alert in the firing state.
+
+The recovery threshold mitigates unnecessary alert state changes and reduces alert noise.
+
+{{< collapse title="Classic condition (legacy)" >}}
+
+#### Classic condition (legacy)
 
 Classic conditions exist mainly for compatibility reasons and should be avoided if possible.
 
@@ -113,66 +159,35 @@ Classic condition checks if any time series data matches the alert condition. It
 
 | Condition operators | How it works                                                                                                                                                                                                                                                |
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| and                 | Two conditions before and after must be true for the overall condition to be true.                                                                                                                                                                          |
-| or                  | If one of conditions before and after are true, the overall condition is true.                                                                                                                                                                              |
-| logic-or            | If the condition before `logic-or` is true, the overall condition is immediately true, without evaluating subsequent conditions. For instance, `TRUE and TRUE logic-or FALSE and FALSE` evaluate to `TRUE`, because the preceding condition returns `TRUE`. |
+| `and`               | Two conditions before and after must be true for the overall condition to be true.                                                                                                                                                                          |
+| `or`                | If one of conditions before and after are true, the overall condition is true.                                                                                                                                                                              |
+| `logic-or`          | If the condition before `logic-or` is true, the overall condition is immediately true, without evaluating subsequent conditions. For instance, `TRUE and TRUE logic-or FALSE and FALSE` evaluate to `TRUE`, because the preceding condition returns `TRUE`. |
 
-## Aggregations
+The following aggregation functions are also available to further refine your query.
 
-Grafana Alerting provides the following aggregation functions to enable you to further refine your query.
+| Function           | What it does                                                                    |
+| ------------------ | ------------------------------------------------------------------------------- |
+| `avg`              | Displays the average of the values                                              |
+| `min`              | Displays the lowest value                                                       |
+| `max`              | Displays the highest value                                                      |
+| `sum`              | Displays the sum of all values                                                  |
+| `count`            | Counts the number of values in the result                                       |
+| `last`             | Displays the last value                                                         |
+| `median`           | Displays the median value                                                       |
+| `diff`             | Displays the difference between the newest and oldest value                     |
+| `diff_abs`         | Displays the absolute value of diff                                             |
+| `percent_diff`     | Displays the percentage value of the difference between newest and oldest value |
+| `percent_diff_abs` | Displays the absolute value of `percent_diff`                                   |
+| `count_non_null`   | Displays a count of values in the result set that aren't `null`                 |
 
-These functions are available for **Reduce** and **Classic condition** expressions only.
-
-| Function         | Expression       | What it does                                                                    |
-| ---------------- | ---------------- | ------------------------------------------------------------------------------- |
-| avg              | Reduce / Classic | Displays the average of the values                                              |
-| min              | Reduce / Classic | Displays the lowest value                                                       |
-| max              | Reduce / Classic | Displays the highest value                                                      |
-| sum              | Reduce / Classic | Displays the sum of all values                                                  |
-| count            | Reduce / Classic | Counts the number of values in the result                                       |
-| last             | Reduce / Classic | Displays the last value                                                         |
-| median           | Reduce / Classic | Displays the median value                                                       |
-| diff             | Classic          | Displays the difference between the newest and oldest value                     |
-| diff_abs         | Classic          | Displays the absolute value of diff                                             |
-| percent_diff     | Classic          | Displays the percentage value of the difference between newest and oldest value |
-| percent_diff_abs | Classic          | Displays the absolute value of percent_diff                                     |
-| count_non_null   | Classic          | Displays a count of values in the result set that aren't `null`                 |
-
-## Alert condition
-
-An alert condition is the query or expression that determines whether the alert fires or not depending on the value it yields. There can be only one condition which determines the triggering of the alert.
-
-After you have defined your queries and expressions, choose one of them as the alert rule condition. By default, the last expression added is used as the alert condition.
-
-When the queried data satisfies the defined condition, Grafana triggers the associated alert, which can be configured to send notifications through various channels like email, Slack, or PagerDuty.
-
-For details about how the alert evaluation triggers notifications, refer to [Alert rule evaluation](ref:alert-rule-evaluation).
-
-## Recovery threshold
-
-To reduce the noise of flapping alerts, you can set a recovery threshold different to the alert threshold.
-
-Flapping alerts occur when a metric hovers around the alert threshold condition and may lead to frequent state changes, resulting in too many notifications being generated.
-
-It can be tricky to create an alert rule for a noisy metric. That is, when the value of a metric continually goes above and below a threshold. This is called flapping and results in a series of firing - resolved - firing notifications and a noisy alert state history.
-
-For example, if you have an alert for latency with a threshold of 1000ms and the number fluctuates around 1000 (say 980 ->1010 -> 990 -> 1020, and so on) then each of those triggers a notification.
-
-To solve this problem, you can set a (custom) recovery threshold, which basically means having two thresholds instead of one:
-
-1. An alert is triggered when the first threshold is crossed.
-2. An alert is resolved only when the second threshold is crossed.
-
-For example, you could set a threshold of 1000ms and a recovery threshold of 900ms. This way, an alert rule only stops firing when it goes under 900ms and flapping is reduced.
-
-For details about how the alert evaluation triggers notifications, refer to [Alert rule evaluation](ref:alert-rule-evaluation).
+{{< /collapse >}}
 
 ## Alert on numeric data
 
 Among certain data sources numeric data that is not time series can be directly alerted on, or passed into Server Side Expressions (SSE). This allows for more processing and resulting efficiency within the data source, and it can also simplify alert rules.
-When alerting on numeric data instead of time series data, there is no need to reduce each labeled time series into a single number. Instead labeled numbers are returned to Grafana instead.
+When alerting on numeric data instead of time series data, there is no need to [reduce](#reduce) each labeled time series into a single number. Instead labeled numbers are returned to Grafana instead.
 
-### Tabular Data
+#### Tabular Data
 
 This feature is supported with backend data sources that query tabular data:
 

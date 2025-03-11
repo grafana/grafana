@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/alerting/templates"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+
+	"github.com/grafana/alerting/templates"
 
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/templategroup/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -19,7 +20,7 @@ import (
 )
 
 var (
-	_ grafanarest.LegacyStorage = (*legacyStorage)(nil)
+	_ grafanarest.Storage = (*legacyStorage)(nil)
 )
 
 type TemplateService interface {

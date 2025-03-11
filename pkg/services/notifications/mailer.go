@@ -112,14 +112,15 @@ func (ns *NotificationService) buildEmailMessage(cmd *SendEmailCommand) (*Messag
 
 	addr := mail.Address{Name: ns.Cfg.Smtp.FromName, Address: ns.Cfg.Smtp.FromAddress}
 	return &Message{
-		To:            cmd.To,
-		SingleEmail:   cmd.SingleEmail,
-		From:          addr.String(),
-		Subject:       subject,
-		Body:          body,
-		EmbeddedFiles: cmd.EmbeddedFiles,
-		AttachedFiles: buildAttachedFiles(cmd.AttachedFiles),
-		ReplyTo:       cmd.ReplyTo,
+		To:               cmd.To,
+		SingleEmail:      cmd.SingleEmail,
+		From:             addr.String(),
+		Subject:          subject,
+		Body:             body,
+		EmbeddedFiles:    cmd.EmbeddedFiles,
+		EmbeddedContents: cmd.EmbeddedContents,
+		AttachedFiles:    buildAttachedFiles(cmd.AttachedFiles),
+		ReplyTo:          cmd.ReplyTo,
 	}, nil
 }
 

@@ -97,6 +97,15 @@
       }
     },
     {
+      "name": "Debug ESLint",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "yarn",
+      "runtimeArgs": ["run", "eslint", "${file}"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
       "name": "Debug Go test",
       "type": "go",
       "request": "launch",

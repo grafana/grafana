@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/aws/aws-sdk-go/service/marketplacecatalog"
 	"github.com/docker/docker/api/types/image"
+	"github.com/grafana/grafana/pkg/build/cmd/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/urfave/cli/v2"
 )
@@ -138,7 +139,7 @@ func setupPublishAwsMarketplaceTests(t *testing.T) *cli.App {
 	testApp := cli.NewApp()
 	testApp.Action = PublishAwsMarketplace
 	testApp.Flags = []cli.Flag{
-		&dryRunFlag,
+		&util.DryRunFlag,
 		&cli.StringFlag{
 			Name:  "version",
 			Usage: "Release version (default from metadata)",
@@ -171,9 +172,11 @@ type mockAwsMarketplaceDocker struct {
 func (m *mockAwsMarketplaceDocker) ImagePull(ctx context.Context, refStr string, options image.PullOptions) (io.ReadCloser, error) {
 	return io.NopCloser(bytes.NewReader([]byte(""))), m.ImagePullError
 }
+
 func (m *mockAwsMarketplaceDocker) ImageTag(ctx context.Context, source string, target string) error {
 	return m.ImageTagError
 }
+
 func (m *mockAwsMarketplaceDocker) ImagePush(ctx context.Context, image string, options image.PushOptions) (io.ReadCloser, error) {
 	return io.NopCloser(bytes.NewReader([]byte(""))), m.ImagePushError
 }
@@ -202,6 +205,7 @@ func (m *mockAwsMarketplaceCatalog) DescribeEntityWithContext(ctx context.Contex
 		EntityIdentifier: aws.String("productid"),
 	}, m.DescribeEntityWithContextError
 }
+
 func (m *mockAwsMarketplaceCatalog) StartChangeSetWithContext(ctx context.Context, input *marketplacecatalog.StartChangeSetInput, opts ...request.Option) (*marketplacecatalog.StartChangeSetOutput, error) {
 	return &marketplacecatalog.StartChangeSetOutput{}, m.StartChangeSetWithContextError
 }

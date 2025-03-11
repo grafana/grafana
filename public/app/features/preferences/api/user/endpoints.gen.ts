@@ -26,38 +26,32 @@ export type UpdateUserPreferencesApiResponse =
 export type UpdateUserPreferencesApiArg = {
   updatePrefsCmd: UpdatePrefsCmd;
 };
-export type CookiePreferencesDefinesModelForCookiePreferences = {
-  analytics?: {
-    [key: string]: any;
-  };
-  functional?: {
-    [key: string]: any;
-  };
-  performance?: {
-    [key: string]: any;
-  };
+export type CookiePreferences = {
+  analytics?: any;
+  functional?: any;
+  performance?: any;
 };
-export type NavbarPreferenceDefinesModelForNavbarPreference = {
+export type NavbarPreference = {
   bookmarkUrls?: string[];
 };
-export type QueryHistoryPreferenceDefinesModelForQueryHistoryPreference = {
-  /** HomeTab one of: '' | 'query' | 'starred'; */
+export type QueryHistoryPreference = {
+  /** one of: '' | 'query' | 'starred'; */
   homeTab?: string;
 };
 export type Preferences = {
-  cookiePreferences?: CookiePreferencesDefinesModelForCookiePreferences;
+  cookiePreferences?: CookiePreferences;
   /** UID for the home dashboard */
   homeDashboardUID?: string;
   /** Selected language (beta) */
   language?: string;
-  navbar?: NavbarPreferenceDefinesModelForNavbarPreference;
-  queryHistory?: QueryHistoryPreferenceDefinesModelForQueryHistoryPreference;
-  /** Theme light, dark, empty is default */
+  navbar?: NavbarPreference;
+  queryHistory?: QueryHistoryPreference;
+  /** light, dark, empty is default */
   theme?: string;
   /** The timezone selection
     TODO: this should use the timezone defined in common */
   timezone?: string;
-  /** WeekStart day of the week (sunday, monday, etc) */
+  /** day of the week (sunday, monday, etc) */
   weekStart?: string;
 };
 export type ErrorResponseBody = {
@@ -80,8 +74,8 @@ export type PatchPrefsCmd = {
   homeDashboardId?: number;
   homeDashboardUID?: string;
   language?: string;
-  navbar?: NavbarPreferenceDefinesModelForNavbarPreference;
-  queryHistory?: QueryHistoryPreferenceDefinesModelForQueryHistoryPreference;
+  navbar?: NavbarPreference;
+  queryHistory?: QueryHistoryPreference;
   theme?: 'light' | 'dark';
   timezone?: 'utc' | 'browser';
   weekStart?: string;
@@ -92,8 +86,8 @@ export type UpdatePrefsCmd = {
   homeDashboardId?: number;
   homeDashboardUID?: string;
   language?: string;
-  navbar?: NavbarPreferenceDefinesModelForNavbarPreference;
-  queryHistory?: QueryHistoryPreferenceDefinesModelForQueryHistoryPreference;
+  navbar?: NavbarPreference;
+  queryHistory?: QueryHistoryPreference;
   theme?: 'light' | 'dark' | 'system';
   timezone?: 'utc' | 'browser';
   weekStart?: string;

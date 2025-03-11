@@ -104,7 +104,7 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	var storage sql.UnifiedStorageGrpcService
 	if runstore {
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles, env.SQLStore,
-			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil)
+			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil)
 		require.NoError(t, err)
 		ctx := context.Background()
 		err = storage.StartAsync(ctx)
@@ -294,6 +294,20 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = alertingSect.NewKey("max_attempts", "3")
 	require.NoError(t, err)
+
+	if opts.EnableRecordingRules {
+		recordingRulesSect, err := cfg.NewSection("recording_rules")
+		require.NoError(t, err)
+		_, err = recordingRulesSect.NewKey("enabled", "true")
+		require.NoError(t, err)
+	}
+
+	if opts.LicensePath != "" {
+		section, err := cfg.NewSection("enterprise")
+		require.NoError(t, err)
+		_, err = section.NewKey("license_path", opts.LicensePath)
+		require.NoError(t, err)
+	}
 
 	rbacSect, err := cfg.NewSection("rbac")
 	require.NoError(t, err)
@@ -529,6 +543,8 @@ type GrafanaOpts struct {
 	GrafanaComAPIURL                      string
 	UnifiedStorageConfig                  map[string]setting.UnifiedStorageConfig
 	GrafanaComSSOAPIToken                 string
+	LicensePath                           string
+	EnableRecordingRules                  bool
 
 	// When "unified-grpc" is selected it will also start the grpc server
 	APIServerStorageType options.StorageType

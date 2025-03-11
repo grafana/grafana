@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -41,7 +42,7 @@ func (l *LibraryElementService) requireEditPermissionsOnFolderUID(ctx context.Co
 		return dashboards.ErrFolderAccessDenied
 	}
 
-	g, err := guardian.NewByUID(ctx, folderUID, user.GetOrgID(), user)
+	g, err := guardian.NewByFolderUID(ctx, folderUID, user.GetOrgID(), user)
 	if err != nil {
 		return err
 	}
@@ -67,7 +68,10 @@ func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Conte
 		return dashboards.ErrFolderAccessDenied
 	}
 
-	g, err := guardian.New(ctx, folderID, user.GetOrgID(), user)
+	g, err := guardian.NewByFolder(ctx, &folder.Folder{
+		ID:    folderID,
+		OrgID: user.GetOrgID(),
+	}, user.GetOrgID(), user)
 	if err != nil {
 		return err
 	}
@@ -88,7 +92,10 @@ func (l *LibraryElementService) requireViewPermissionsOnFolder(ctx context.Conte
 		return nil
 	}
 
-	g, err := guardian.New(ctx, folderID, user.GetOrgID(), user)
+	g, err := guardian.NewByFolder(ctx, &folder.Folder{
+		ID:    folderID,
+		OrgID: user.GetOrgID(),
+	}, user.GetOrgID(), user)
 	if err != nil {
 		return err
 	}

@@ -11,6 +11,7 @@ on:
     branches:
       - "main"
       - "v*.*.*"
+      - "release-*.*.*"
 
 # This is run before the pull request has been merged, so we'll run against the src branch
 jobs:

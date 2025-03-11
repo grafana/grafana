@@ -44,6 +44,7 @@ var (
 	sqlResourceHistoryPoll       = mustTemplate("resource_history_poll.sql")
 	sqlResourceHistoryGet        = mustTemplate("resource_history_get.sql")
 	sqlResourceHistoryDelete     = mustTemplate("resource_history_delete.sql")
+	sqlResourceInsertFromHistory = mustTemplate("resource_insert_from_history.sql")
 
 	// sqlResourceLabelsInsert = mustTemplate("resource_labels_insert.sql")
 	sqlResourceVersionGet    = mustTemplate("resource_version_get.sql")
@@ -53,10 +54,6 @@ var (
 
 	sqlResourceBlobInsert = mustTemplate("resource_blob_insert.sql")
 	sqlResourceBlobQuery  = mustTemplate("resource_blob_query.sql")
-
-	sqlMigratorGetDeletionMarkers  = mustTemplate("migrator_get_deletion_markers.sql")
-	sqlMigratorGetValueFromRV      = mustTemplate("migrator_get_value_from_rv.sql")
-	sqlMigratorUpdateValueWithGUID = mustTemplate("migrator_update_value_with_guid.sql")
 )
 
 // TxOptions.
@@ -85,6 +82,18 @@ type sqlResourceRequest struct {
 
 func (r sqlResourceRequest) Validate() error {
 	return nil // TODO
+}
+
+type sqlResourceInsertFromHistoryRequest struct {
+	sqltemplate.SQLTemplate
+	Key *resource.ResourceKey
+}
+
+func (r sqlResourceInsertFromHistoryRequest) Validate() error {
+	if r.Key == nil {
+		return fmt.Errorf("missing key")
+	}
+	return nil
 }
 
 type sqlStatsRequest struct {
@@ -348,20 +357,4 @@ func (r *sqlResourceVersionListRequest) Validate() error {
 func (r *sqlResourceVersionListRequest) Results() (*groupResourceVersion, error) {
 	x := *r.groupResourceVersion
 	return &x, nil
-}
-
-// This holds all the variables used in migration queries
-
-type sqlMigrationQueryRequest struct {
-	sqltemplate.SQLTemplate
-	MarkerQuery string //
-	Group       string
-	Resource    string
-	RV          int64
-	GUID        string
-	Value       string
-}
-
-func (r sqlMigrationQueryRequest) Validate() error {
-	return nil // TODO
 }

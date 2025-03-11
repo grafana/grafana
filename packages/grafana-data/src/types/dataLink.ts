@@ -1,3 +1,4 @@
+import { ScopedVars } from './ScopedVars';
 import { ExploreCorrelationHelperData, ExplorePanelsState } from './explore';
 import { InterpolateFunction } from './panel';
 import { DataQuery } from './query';
@@ -55,6 +56,8 @@ export interface DataLink<T extends DataQuery = any> {
     correlationData?: ExploreCorrelationHelperData;
     transformations?: DataLinkTransformationConfig[];
   };
+
+  oneClick?: boolean;
 }
 
 /**
@@ -78,7 +81,7 @@ export interface DataLinkTransformationConfig {
 
 /** @internal */
 export interface InternalDataLink<T extends DataQuery = any> {
-  query: T;
+  query: T | ((options: { replaceVariables: InterpolateFunction; scopedVars: ScopedVars }) => T);
   datasourceUid: string;
   datasourceName: string; // used as a title if `DataLink.title` is empty
   panelsState?: ExplorePanelsState;
@@ -98,6 +101,7 @@ export interface LinkModel<T = any> {
 
   // When a click callback exists, this is passed the raw mouse|react event
   onClick?: (e: any, origin?: any) => void;
+  oneClick?: boolean;
 }
 
 /**

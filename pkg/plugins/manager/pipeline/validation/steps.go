@@ -57,6 +57,11 @@ func newModuleJSValidator() *ModuleJSValidator {
 }
 
 func (v *ModuleJSValidator) Validate(_ context.Context, p *plugins.Plugin) error {
+	// CDN plugins are ignored because the module.js is guaranteed to exist
+	if p.Class == plugins.ClassCDN {
+		return nil
+	}
+
 	if !p.IsRenderer() && !p.IsCorePlugin() {
 		f, err := p.FS.Open("module.js")
 		if err != nil {

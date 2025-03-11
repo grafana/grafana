@@ -131,7 +131,10 @@ func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64
 	if s.stream != nil {
 		go func() {
 			write := &WrittenEvent{
-				WriteEvent:      event,
+				Type:            event.Type,
+				Key:             event.Key,
+				PreviousRV:      event.PreviousRV,
+				Value:           event.Value,
 				Timestamp:       time.Now().UnixMilli(),
 				ResourceVersion: rv,
 			}
@@ -318,6 +321,11 @@ func (c *cdkListIterator) Value() []byte {
 
 // ContinueToken implements ListIterator.
 func (c *cdkListIterator) ContinueToken() string {
+	return fmt.Sprintf("index:%d/key:%s", c.index, c.currentKey)
+}
+
+// ContinueTokenWithCurrentRV implements ListIterator.
+func (c *cdkListIterator) ContinueTokenWithCurrentRV() string {
 	return fmt.Sprintf("index:%d/key:%s", c.index, c.currentKey)
 }
 

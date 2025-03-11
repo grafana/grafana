@@ -5,11 +5,12 @@ import { DataSourceRuleGroupIdentifier, Rule, RuleIdentifier } from 'app/types/u
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { equal, fromRule, fromRulerRule, stringifyIdentifier } from '../utils/rule-id';
-import { getRulePluginOrigin, isAlertingRule, isRecordingRule } from '../utils/rules';
+import { getRulePluginOrigin, prometheusRuleType } from '../utils/rules';
 import { createRelativeUrl } from '../utils/url';
 
 import { AlertRuleListItem, RecordingRuleListItem, UnknownRuleListItem } from './components/AlertRuleListItem';
-import { ActionsLoader, RuleActionsButtons } from './components/RuleActionsButtons.V2';
+import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
+import { RuleActionsSkeleton } from './components/RuleActionsSkeleton';
 
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 const { useGetRuleGroupForNamespaceQuery } = alertRuleApi;
@@ -63,7 +64,7 @@ export const DataSourceRuleLoader = memo(function DataSourceRuleLoader({
   // 2.2 render provisioning badge and contact point metadata, etc.
   const actions = useMemo(() => {
     if (isLoading) {
-      return <ActionsLoader />;
+      return <RuleActionsSkeleton />;
     }
 
     if (rulerRule) {
@@ -73,7 +74,7 @@ export const DataSourceRuleLoader = memo(function DataSourceRuleLoader({
     return null;
   }, [groupIdentifier, isLoading, rule, rulerRule]);
 
-  if (isAlertingRule(rule)) {
+  if (prometheusRuleType.alertingRule(rule)) {
     return (
       <AlertRuleListItem
         name={rule.name}
@@ -95,7 +96,7 @@ export const DataSourceRuleLoader = memo(function DataSourceRuleLoader({
     );
   }
 
-  if (isRecordingRule(rule)) {
+  if (prometheusRuleType.recordingRule(rule)) {
     return (
       <RecordingRuleListItem
         name={rule.name}

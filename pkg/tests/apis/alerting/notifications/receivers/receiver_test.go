@@ -1199,7 +1199,8 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	receiver := receivers.Items[idx]
 
 	currentRoute := legacyCli.GetRoute(t)
-	currentRuleGroup := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
+	currentRuleGroup, status := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
+	require.Equal(t, http.StatusAccepted, status)
 
 	t.Run("Update", func(t *testing.T) {
 		t.Run("should rename all references if name changes", func(t *testing.T) {
@@ -1210,7 +1211,8 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 			actual, err := adminClient.Update(ctx, renamed, v1.UpdateOptions{})
 			require.NoError(t, err)
 
-			updatedRuleGroup := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
+			updatedRuleGroup, status := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
+			require.Equal(t, http.StatusAccepted, status)
 			for idx, rule := range updatedRuleGroup.Rules {
 				assert.Equalf(t, expectedTitle, rule.GrafanaManagedAlert.NotificationSettings.Receiver, "receiver in rule %d should have been renamed but it did not", idx)
 			}
@@ -1390,9 +1392,15 @@ func TestIntegrationCRUD(t *testing.T) {
 		t.Run("should return secrets in secureFields but not settings", func(t *testing.T) {
 			for _, integration := range get.Spec.Integrations {
 				t.Run(integration.Type, func(t *testing.T) {
+					expected := notify.AllKnownConfigsForTesting[strings.ToLower(integration.Type)]
+					var fields map[string]any
+					require.NoError(t, json.Unmarshal([]byte(expected.Config), &fields))
 					secretFields, err := channels_config.GetSecretKeysForContactPointType(integration.Type)
 					require.NoError(t, err)
 					for _, field := range secretFields {
+						if _, ok := fields[field]; !ok { // skip field that is not in the original setting
+							continue
+						}
 						assert.Contains(t, integration.SecureFields, field)
 						assert.Truef(t, integration.SecureFields[field], "secure field should be always true")
 

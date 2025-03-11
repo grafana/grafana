@@ -5,12 +5,12 @@ import (
 	"os"
 	"testing"
 
-	dashboardinternal "github.com/grafana/grafana/pkg/apis/dashboard"
-	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 )
 
 func TestLargeDashboardSupport(t *testing.T) {
@@ -41,9 +41,6 @@ func TestLargeDashboardSupport(t *testing.T) {
 	err = dashboardv0alpha1.AddToScheme(scheme)
 	require.NoError(t, err)
 
-	err = dashboardinternal.AddToScheme(scheme)
-	require.NoError(t, err)
-
 	largeObject := NewDashboardLargeObjectSupport(scheme)
 
 	// Convert the dashboard to a small value
@@ -54,15 +51,22 @@ func TestLargeDashboardSupport(t *testing.T) {
 	require.NoError(t, err)
 	require.JSONEq(t, `{
 		"schemaVersion": 33,
-		"title": "Panel tests - All panels"
+		"title": "Panel tests - All panels",
+		"tags": ["gdev","panel-tests","all-panels"]
 	}`, string(small))
 
 	// Now make it big again
-	err = largeObject.RebuildSpec(dash, f)
+	rehydratedDash := &dashboardv0alpha1.Dashboard{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "test",
+			Namespace: "test",
+		},
+	}
+	err = largeObject.RebuildSpec(rehydratedDash, f)
 	require.NoError(t, err)
 
 	// check that all panels exist again
-	panels, found, err = unstructured.NestedSlice(dash.Spec.Object, "panels")
+	panels, found, err = unstructured.NestedSlice(rehydratedDash.Spec.Object, "panels")
 	require.NoError(t, err)
 	require.True(t, found)
 	require.Len(t, panels, expectedPanelCount)

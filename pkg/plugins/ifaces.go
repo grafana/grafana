@@ -20,7 +20,7 @@ type Installer interface {
 type PluginSource interface {
 	PluginClass(ctx context.Context) Class
 	PluginURIs(ctx context.Context) []string
-	DefaultSignature(ctx context.Context) (Signature, bool)
+	DefaultSignature(ctx context.Context, pluginID string) (Signature, bool)
 }
 
 type FileStore interface {

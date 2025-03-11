@@ -1,12 +1,16 @@
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { Graph } from 'app/core/utils/dag';
+import { EvalFunction } from 'app/features/alerting/state/alertDef';
+import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import {
-  _createDagFromQueries,
+  DAGError,
   _getDescendants,
   _getOriginsOfRefId,
-  fingerPrintQueries,
+  createDagFromQueries,
   fingerprintGraph,
+  getTargets,
   parseRefsFromMathExpression,
 } from './dag';
 
@@ -45,7 +49,7 @@ describe('working with dag', () => {
       },
     ] as AlertQuery[];
 
-    const dag = _createDagFromQueries(queries);
+    const dag = createDagFromQueries(queries);
 
     expect(Object.keys(dag.nodes)).toHaveLength(4);
 
@@ -84,15 +88,40 @@ describe('working with dag', () => {
       },
     ] as AlertQuery[];
 
-    expect(() => _createDagFromQueries(queries)).not.toThrow();
+    expect(() => createDagFromQueries(queries)).not.toThrow();
 
-    const dag = _createDagFromQueries(queries);
+    const dag = createDagFromQueries(queries);
 
     expect(Object.keys(dag.nodes)).toHaveLength(1);
 
     expect(() => {
       dag.getNode('A');
     }).not.toThrow();
+  });
+
+  it('should throw on references to self', () => {
+    const queries: Array<AlertQuery<ExpressionQuery>> = [
+      {
+        refId: 'A',
+        model: { refId: 'A', expression: '$A', datasource: ExpressionDatasourceRef, type: ExpressionQueryType.math },
+        queryType: '',
+        datasourceUid: '__expr__',
+      },
+    ];
+
+    expect(() => createDagFromQueries(queries)).toThrowError(/failed to create DAG from queries/i);
+
+    // now assert we get the correct error diagnostics
+    try {
+      createDagFromQueries(queries);
+    } catch (error) {
+      if (!(error instanceof Error)) {
+        throw error;
+      }
+
+      expect(error instanceof DAGError).toBe(true);
+      expect(error!.cause).toMatchSnapshot();
+    }
   });
 });
 
@@ -157,36 +186,61 @@ describe('fingerprints', () => {
 
     expect(fingerprintGraph(graph)).toMatchInlineSnapshot(`"A:B: B:C:A, D C::B D:B:"`);
   });
+});
 
-  test('Queries fingerprint', () => {
-    const queries = [
-      {
-        refId: 'A',
-        queryType: 'query',
-        model: {
-          refId: 'A',
-          expression: '',
-        },
-      },
-      {
-        refId: 'B',
-        queryType: 'query',
-        model: {
-          refId: 'B',
-          expression: 'A',
-        },
-      },
-      {
-        refId: 'C',
-        queryType: 'query',
-        model: {
-          refId: 'C',
-          expression: '$B > 0',
-          type: 'math',
-        },
-      },
-    ] as AlertQuery[];
+describe('getTargets', () => {
+  it('should correct get targets from Math expression', () => {
+    const expression: ExpressionQuery = {
+      refId: 'C',
+      type: ExpressionQueryType.math,
+      datasource: ExpressionDatasourceRef,
+      expression: '$A + $B',
+    };
 
-    expect(fingerPrintQueries(queries)).toMatchInlineSnapshot(`"Aquery,BAquery,C$B > 0math"`);
+    expect(getTargets(expression)).toEqual(['A', 'B']);
+  });
+
+  it('should be able to find the targets of a classic condition', () => {
+    const expression: ExpressionQuery = {
+      refId: 'C',
+      type: ExpressionQueryType.classic,
+      datasource: ExpressionDatasourceRef,
+      expression: '',
+      conditions: [
+        {
+          evaluator: {
+            params: [0, 0],
+            type: EvalFunction.IsAbove,
+          },
+          operator: { type: 'and' },
+          query: { params: ['A'] },
+          reducer: { params: [], type: 'avg' },
+          type: 'query',
+        },
+        {
+          evaluator: {
+            params: [0, 0],
+            type: EvalFunction.IsAbove,
+          },
+          operator: { type: 'and' },
+          query: { params: ['B'] },
+          reducer: { params: [], type: 'avg' },
+          type: 'query',
+        },
+      ],
+    };
+
+    expect(getTargets(expression)).toEqual(['A', 'B']);
+  });
+
+  it('should work for any other expression type', () => {
+    const expression: ExpressionQuery = {
+      refId: 'C',
+      type: ExpressionQueryType.reduce,
+      datasource: ExpressionDatasourceRef,
+      expression: 'A',
+    };
+
+    expect(getTargets(expression)).toEqual(['A']);
   });
 });

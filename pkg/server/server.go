@@ -131,7 +131,7 @@ func (s *Server) Init() error {
 		return err
 	}
 
-	return s.provisioningService.RunInitProvisioners(s.context)
+	return nil
 }
 
 // Run initializes and starts services. This will block until all services have

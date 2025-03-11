@@ -31,7 +31,6 @@ import {
   VariableValueSelectors,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
-import { getSelectedScopes } from 'app/features/scopes';
 
 import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory } from './DataTrailsHistory';
@@ -426,7 +425,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
     if (timeRange) {
       const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
       const otelTargets = await totalOtelResources(datasourceUid, timeRange);
-      const deploymentEnvironments = await getDeploymentEnvironments(datasourceUid, timeRange, getSelectedScopes());
+      const deploymentEnvironments = await getDeploymentEnvironments(
+        datasourceUid,
+        timeRange,
+        sceneGraph.getScopesBridge(trail)?.getValue() ?? []
+      );
       const hasOtelResources = otelTargets.jobs.length > 0 && otelTargets.instances.length > 0;
       // loading from the url with otel resources selected will result in turning on OTel experience
       const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_AND_METRIC_FILTERS, this);
@@ -650,9 +653,10 @@ function getVariableSet(
         addFilterButtonText: 'Select resource attributes',
         datasource: trailDS,
         hide: VariableHide.hideVariable,
-        layout: 'vertical',
+        layout: 'combobox',
         defaultKeys: [],
         applyMode: 'manual',
+        allowCustomValue: true,
       }),
       new AdHocFiltersVariable({
         name: VAR_FILTERS,
@@ -660,12 +664,16 @@ function getVariableSet(
         datasource: trailDS,
         // default to use var filters and have otel off
         hide: VariableHide.hideLabel,
-        layout: 'vertical',
+        layout: 'combobox',
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),
         applyMode: 'manual',
-        // since we only support prometheus datasources, this is always true
-        supportsMultiValueOperators: true,
+        allowCustomValue: true,
+        expressionBuilder: (filters: AdHocVariableFilter[]) => {
+          return [...getBaseFiltersForMetric(metric), ...filters]
+            .map((filter) => `${filter.key}${filter.operator}"${filter.value}"`)
+            .join(',');
+        },
       }),
       ...getVariablesWithOtelJoinQueryConstant(otelJoinQuery ?? ''),
       new ConstantVariable({
@@ -683,12 +691,11 @@ function getVariableSet(
         addFilterButtonText: 'Filter',
         datasource: trailDS,
         hide: VariableHide.hideVariable,
-        layout: 'vertical',
+        layout: 'combobox',
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),
         applyMode: 'manual',
-        // since we only support prometheus datasources, this is always true
-        supportsMultiValueOperators: true,
+        allowCustomValue: true,
         // skipUrlSync: true
       }),
       // Legacy variable needed for bookmarking which is necessary because
