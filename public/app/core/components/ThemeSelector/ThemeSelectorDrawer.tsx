@@ -19,7 +19,7 @@ export function ThemeSelectorDrawer({ onClose }: Props) {
   const currentTheme = useTheme2();
 
   const onChange = (theme: ThemeRegistryItem) => {
-    changeTheme(theme.id, true);
+    changeTheme(theme.id, false);
   };
 
   const subTitle = (
