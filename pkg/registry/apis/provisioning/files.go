@@ -20,7 +20,6 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 type filesConnector struct {
@@ -275,11 +274,6 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 }
 
 func (s *filesConnector) doCreateFolder(ctx context.Context, repo repository.Writer, path string, ref string, message string, parser *resources.Parser) (*provisioning.ResourceWrapper, error) {
-	filePath, err := safepath.Join(path, "dummy.json")
-	if err != nil {
-		return nil, err
-	}
-
 	manager := resources.NewFolderManager(repo, parser.Client().Resource(folder.SchemeGroupVersion.WithResource(folder.RESOURCE)))
 
 	// Now actually create the folder
@@ -303,7 +297,7 @@ func (s *filesConnector) doCreateFolder(ctx context.Context, repo repository.Wri
 	}
 
 	if ref == "" {
-		folderName, err := manager.EnsureFolderPathExist(ctx, filePath)
+		folderName, err := manager.EnsureFolderPathExist(ctx, path)
 		if err != nil {
 			return nil, err
 		}
