@@ -25,8 +25,6 @@ import { SignInLink } from './SignInLink';
 import { TopNavBarMenu } from './TopNavBarMenu';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
 
-export const MEGA_MENU_TOGGLE_ID = 'mega-menu-toggle';
-
 interface Props {
   sectionNav: NavModelItem;
   pageNav?: NavModelItem;
