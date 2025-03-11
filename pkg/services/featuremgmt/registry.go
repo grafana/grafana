@@ -1812,6 +1812,13 @@ var (
 			HideFromDocs:      true,
 			FrontendOnly:      true,
 		},
+		{
+			Name:         "extraLanguages",
+			Description:  "Enables additional languages",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+		},
 	}
 )
 
