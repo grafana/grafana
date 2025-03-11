@@ -7,6 +7,13 @@ on:
     paths-ignore:
       - 'docs/**'
       - '*.md'
+  # Add manual trigger for testing
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual run'
+        required: false
+        default: 'Testing workflow'
 
 jobs:
   verify-storybook:
