@@ -14,7 +14,6 @@ type BleveIndexMetrics struct {
 	IndexedKinds      *prometheus.GaugeVec
 	IndexCreationTime *prometheus.HistogramVec
 	IndexTenants      *prometheus.CounterVec
-	SprinklesLatency  prometheus.Histogram
 }
 
 var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000}
@@ -54,14 +53,5 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name:      "index_tenants",
 			Help:      "Number of tenants in the index",
 		}, []string{"index_storage"}), // index_storage is either "file" or "memory"
-		SprinklesLatency: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
-			Namespace:                       "index_server",
-			Name:                            "sprinkles_latency_seconds",
-			Help:                            "Time (in seconds) it takes until sprinkles are fetched",
-			Buckets:                         instrument.DefBuckets,
-			NativeHistogramBucketFactor:     1.1, // enable native histograms
-			NativeHistogramMaxBucketNumber:  160,
-			NativeHistogramMinResetDuration: time.Hour,
-		}),
 	}
 }
