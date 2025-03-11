@@ -23,7 +23,7 @@ jobs:
           cache: 'yarn'
 
       - name: Install dependencies
-        run: yarn install --immutable || yarn install --immutable
+        run: yarn install --immutable
 
       - name: Lint docs
         run: yarn run prettier:checkDocs
