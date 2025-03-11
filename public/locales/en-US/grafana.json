@@ -3123,7 +3123,8 @@
       "old-password-required": "Old password is required",
       "passwords-must-match": "Passwords must match",
       "strong-password-validation-register": "Password does not comply with the strong password policy"
-    }
+    },
+    "change-theme": "Change theme"
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
