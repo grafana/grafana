@@ -180,7 +180,7 @@ func (b *backend) initLocked(ctx context.Context) error {
 			if err != nil {
 				return fmt.Errorf("failed to get rows affected: %w", err)
 			}
-			b.log.Info("pruned history", "key", key, "rows", rows)
+			b.log.Debug("pruned history", "key", key, "rows", rows)
 			return nil
 		})
 	})
