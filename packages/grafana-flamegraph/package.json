@@ -69,7 +69,7 @@
     "@types/jest": "^29.5.4",
     "@types/lodash": "4.17.15",
     "@types/node": "22.12.0",
-    "@types/react": "19.0.7",
+    "@types/react": "19.0.10",
     "@types/react-virtualized-auto-sizer": "1.0.4",
     "@types/tinycolor2": "1.4.6",
     "babel-jest": "29.7.0",
