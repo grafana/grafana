@@ -74,11 +74,12 @@ func (s *FakeDataSourceService) AddDataSource(ctx context.Context, cmd *datasour
 		s.lastID = int64(len(s.DataSources) - 1)
 	}
 	dataSource := &datasources.DataSource{
-		ID:    s.lastID + 1,
-		Name:  cmd.Name,
-		Type:  cmd.Type,
-		UID:   cmd.UID,
-		OrgID: cmd.OrgID,
+		ID:       s.lastID + 1,
+		Name:     cmd.Name,
+		Type:     cmd.Type,
+		UID:      cmd.UID,
+		OrgID:    cmd.OrgID,
+		JsonData: cmd.JsonData,
 	}
 	s.DataSources = append(s.DataSources, dataSource)
 	return dataSource, nil
