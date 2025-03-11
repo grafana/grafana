@@ -5,8 +5,8 @@ Here's some notes about [OpenFGA authorization model](https://openfga.dev/docs/m
 ## GroupResource level permissions
 
 A relation to a group_resource object grants access to all objects of the GroupResource.
-They take the form of `{ “user”: “user:1”, relation: “read”, object:”group_resource:dashboard.grafana.app/dashboard” }`. This
-example would grant `user:1` access to all `dashboard.grafana.app/dashboard` in the namespace.
+They take the form of `{ “user”: “user:1”, relation: “read”, object:”group_resource:dashboard.grafana.app/dashboards” }`. This
+example would grant `user:1` access to all `dashboard.grafana.app/dashboards` in the namespace.
 
 ## Folder level permissions
 
@@ -20,10 +20,18 @@ This context holds all GroupResources in a list e.g. `{ "group_resources": ["das
 
 ## Resource level permissions
 
-Most of our resource should use the generic resource type. 
+Most of our resource should use the generic resource type.
 
-To grant a user direct access to a specific resource we store `{ “user”: “user:1”, relation: “read”, object:”resource:dashboard.grafana.app/dashboard/<name>” }` with additional context.
+To grant a user direct access to a specific resource we store `{ “user”: “user:1”, relation: “read”, object:”resource:dashboard.grafana.app/dashboards/<name>” }` with additional context.
 This context store the GroupResource. `{ "group_resource": "dashboard.grafana.app/dashboards" }`. This is required so we can filter them out for list requests.
+
+## Subresources
+
+Subresources enable more granular permissions for the resources. Example might be access to public dashboards or access to dashboard settings.
+
+To grant a user access to the subresource of the specific resource we store following tuple: `{ “user”: “user:1”, relation: “read”, object:”resource:dashboard.grafana.app/dashboards/<subresource>/<resource_name>” }` with additional context `{ "group_resource": "dashboard.grafana.app/dashboards/<subresource>" }`
+
+It's also possible to grant user access to all subresources for specific resource type. It can be done with following tuple: `{ “user”: “user:1”, relation: “read”, object:”resource:dashboard.grafana.app/dashboards/<subresource>” }`.
 
 ## Managed permissions
 
@@ -58,4 +66,3 @@ type folder
 ```
 
 According to the schema, user can get `read` access to folder if it has `read` relation granted directly to the folder or its parent folders.
-
