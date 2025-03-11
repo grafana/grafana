@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Stack, Text, Alert } from '@grafana/ui';
@@ -18,44 +18,34 @@ export function PullStep({ onStatusChange, onRunningChange }: PullStepProps) {
   const [syncRepo, syncQuery] = useCreateRepositorySyncMutation();
   const [showSyncStatus, setShowSyncStatus] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
-  const [isInitialSync, setIsInitialSync] = useState(true);
+  const hasInitialized = useRef(false);
   const { watch } = useFormContext<WizardFormData>();
-
-  // Memoize form values to prevent unnecessary re-renders
-  const formValues = useMemo(
-    () => ({
-      repositoryName: watch('repositoryName'),
-    }),
-    [watch]
-  );
-
+  const repositoryName = watch('repositoryName');
   const syncName = syncQuery.data?.metadata?.name;
 
   // Update running state
   useEffect(() => {
-    onRunningChange(showSyncStatus || syncQuery.isLoading);
-  }, [showSyncStatus, syncQuery.isLoading, onRunningChange]);
-
-  // Memoize the status change handler
-  const handleStatusChange = useCallback(
-    (success: boolean) => {
-      onStatusChange(success);
-    },
-    [onStatusChange]
-  );
+    const isRunning = showSyncStatus || syncQuery.isLoading;
+    onRunningChange(isRunning);
+    // If we're not running anymore and there's no error, it means we succeeded
+    if (!isRunning && !syncError && syncName) {
+      onStatusChange(true);
+    }
+  }, [showSyncStatus, syncQuery.isLoading, onRunningChange, syncError, syncName, onStatusChange]);
 
   // Handle initial sync
   useEffect(() => {
+    if (!repositoryName || hasInitialized.current) {
+      return;
+    }
+
     let isMounted = true;
+    hasInitialized.current = true;
 
     const startSync = async () => {
-      if (!formValues.repositoryName || !isInitialSync) {
-        return;
-      }
-
       try {
         const response = await syncRepo({
-          name: formValues.repositoryName,
+          name: repositoryName,
           body: {
             incremental: false,
           },
@@ -71,7 +61,7 @@ export function PullStep({ onStatusChange, onRunningChange }: PullStepProps) {
         } else {
           setShowSyncStatus(false);
           setSyncError('Invalid response from sync operation');
-          handleStatusChange(false);
+          onStatusChange(false);
         }
       } catch (error) {
         if (!isMounted) {
@@ -79,11 +69,7 @@ export function PullStep({ onStatusChange, onRunningChange }: PullStepProps) {
         }
         setShowSyncStatus(false);
         setSyncError(error instanceof Error ? error.message : 'Failed to start sync operation');
-        handleStatusChange(false);
-      } finally {
-        if (isMounted) {
-          setIsInitialSync(false);
-        }
+        onStatusChange(false);
       }
     };
 
@@ -92,7 +78,31 @@ export function PullStep({ onStatusChange, onRunningChange }: PullStepProps) {
     return () => {
       isMounted = false;
     };
-  }, [formValues, syncRepo, handleStatusChange, isInitialSync]);
+  }, [repositoryName, syncRepo, onStatusChange]);
+
+  // Show job status when we have a job name
+  useEffect(() => {
+    if (syncName) {
+      setShowSyncStatus(true);
+    }
+  }, [syncName]);
+
+  const handleJobStatusChange = useCallback(
+    (success: boolean) => {
+      if (success) {
+        setShowSyncStatus(false);
+        setSyncError(null);
+        onRunningChange(false);
+        onStatusChange(true);
+      } else {
+        setShowSyncStatus(false);
+        setSyncError('Sync operation failed');
+        onRunningChange(false);
+        onStatusChange(false);
+      }
+    },
+    [onStatusChange, onRunningChange]
+  );
 
   return (
     <Stack direction="column" gap={2}>
@@ -109,22 +119,9 @@ export function PullStep({ onStatusChange, onRunningChange }: PullStepProps) {
 
       <RequestErrorAlert request={syncQuery} />
 
-      {(syncQuery.isLoading || showSyncStatus) && (
-        <Text>{syncQuery.isLoading ? 'Initializing sync operation...' : 'Pulling resources from repository...'}</Text>
-      )}
+      {syncQuery.isLoading && <Text>Initializing sync operation...</Text>}
 
-      {showSyncStatus && syncName && (
-        <JobStatus
-          name={syncName}
-          onStatusChange={(success) => {
-            handleStatusChange(success);
-            if (!success) {
-              setShowSyncStatus(false);
-              setSyncError('Sync operation failed');
-            }
-          }}
-        />
-      )}
+      {syncName && <JobStatus name={syncName} onStatusChange={handleJobStatusChange} />}
     </Stack>
   );
 }

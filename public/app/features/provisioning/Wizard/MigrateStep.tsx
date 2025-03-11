@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Alert, Stack, Text } from '@grafana/ui';
@@ -18,19 +18,11 @@ export function MigrateStep({ onStatusChange, onRunningChange }: MigrateStepProp
   const [migrateRepo, migrateQuery] = useCreateRepositoryMigrateMutation();
   const [showMigrateStatus, setShowMigrateStatus] = useState(false);
   const [migrateError, setMigrateError] = useState<string | null>(null);
-  const [isInitialMigrate, setIsInitialMigrate] = useState(true);
+  const hasInitialized = useRef(false);
   const { watch } = useFormContext<WizardFormData>();
-
-  // Memoize form values to prevent unnecessary re-renders
-  const formValues = useMemo(
-    () => ({
-      repositoryName: watch('repositoryName'),
-      identifier: watch('migrate.identifier'),
-      history: watch('migrate.history'),
-    }),
-    [watch]
-  );
-
+  const repositoryName = watch('repositoryName');
+  const identifier = watch('migrate.identifier');
+  const history = watch('migrate.history');
   const migrateName = migrateQuery.data?.metadata?.name;
 
   // Update running state
@@ -48,19 +40,20 @@ export function MigrateStep({ onStatusChange, onRunningChange }: MigrateStepProp
 
   // Handle initial migration
   useEffect(() => {
+    if (!repositoryName || hasInitialized.current) {
+      return;
+    }
+
     let isMounted = true;
+    hasInitialized.current = true;
 
     const startMigrate = async () => {
-      if (!formValues.repositoryName || !isInitialMigrate) {
-        return;
-      }
-
       try {
         const response = await migrateRepo({
-          name: formValues.repositoryName,
+          name: repositoryName,
           body: {
-            identifier: formValues.identifier,
-            history: formValues.history,
+            identifier,
+            history,
           },
         }).unwrap();
 
@@ -83,10 +76,6 @@ export function MigrateStep({ onStatusChange, onRunningChange }: MigrateStepProp
         setShowMigrateStatus(false);
         setMigrateError(error instanceof Error ? error.message : 'Failed to start migration operation');
         handleStatusChange(false);
-      } finally {
-        if (isMounted) {
-          setIsInitialMigrate(false);
-        }
       }
     };
 
@@ -95,7 +84,31 @@ export function MigrateStep({ onStatusChange, onRunningChange }: MigrateStepProp
     return () => {
       isMounted = false;
     };
-  }, [formValues, migrateRepo, handleStatusChange, isInitialMigrate]);
+  }, [repositoryName, migrateRepo, handleStatusChange, identifier, history]);
+
+  // Show job status when we have a job name
+  useEffect(() => {
+    if (migrateName) {
+      setShowMigrateStatus(true);
+    }
+  }, [migrateName]);
+
+  const handleJobStatusChange = useCallback(
+    (success: boolean) => {
+      if (success) {
+        setShowMigrateStatus(false);
+        setMigrateError(null);
+        onRunningChange(false);
+        handleStatusChange(true);
+      } else {
+        setShowMigrateStatus(false);
+        setMigrateError('Migration operation failed');
+        onRunningChange(false);
+        handleStatusChange(false);
+      }
+    },
+    [handleStatusChange, onRunningChange]
+  );
 
   return (
     <Stack direction="column" gap={2}>
@@ -104,7 +117,7 @@ export function MigrateStep({ onStatusChange, onRunningChange }: MigrateStepProp
         history. After this one-time migration, all future updates will be automatically saved to the repository.
       </Text>
 
-      {!formValues.repositoryName && (
+      {!repositoryName && (
         <Alert severity="error" title="Repository name required">
           Repository name is required to migrate dashboards. Please complete the repository configuration step first.
         </Alert>
@@ -122,24 +135,9 @@ export function MigrateStep({ onStatusChange, onRunningChange }: MigrateStepProp
         Dashboards will be unavailable while running this process.
       </Alert>
 
-      {(migrateQuery.isLoading || showMigrateStatus) && (
-        <Text>
-          {migrateQuery.isLoading ? 'Initializing migration operation...' : 'Migrating dashboards to repository...'}
-        </Text>
-      )}
+      {migrateQuery.isLoading && <Text>Initializing migration operation...</Text>}
 
-      {showMigrateStatus && migrateName && (
-        <JobStatus
-          name={migrateName}
-          onStatusChange={(success) => {
-            handleStatusChange(success);
-            if (!success) {
-              setShowMigrateStatus(false);
-              setMigrateError('Migration operation failed');
-            }
-          }}
-        />
-      )}
+      {migrateName && <JobStatus name={migrateName} onStatusChange={handleJobStatusChange} />}
     </Stack>
   );
 }
