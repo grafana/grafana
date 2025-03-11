@@ -7,6 +7,7 @@ import { VariableFormatID } from '@grafana/schema';
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { getEscapedSpanNames } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
+import { intrinsics } from '../traceql/traceql';
 import { Scope } from '../types';
 
 export const interpolateFilters = (filters: TraceqlFilter[], scopedVars?: ScopedVars) => {
@@ -132,13 +133,16 @@ export const getUnscopedTags = (scopes: Scope[]) => {
 };
 
 export const getIntrinsicTags = (scopes: Scope[]) => {
-  return uniq(
-    scopes
-      .map((scope: Scope) =>
-        scope.name && scope.name === TraceqlSearchScope.Intrinsic && scope.tags ? scope.tags : []
-      )
-      .flat()
-  );
+  let tags = scopes
+    .map((scope: Scope) => (scope.name && scope.name === TraceqlSearchScope.Intrinsic && scope.tags ? scope.tags : []))
+    .flat();
+
+  // Add the default intrinsic tags to the list of tags.
+  // This is needed because the /api/v2/search/tags API
+  // may not always return all the default intrinsic tags
+  // but generally has the most up to date list.
+  tags = uniq(tags.concat(intrinsics));
+  return tags;
 };
 
 export const getAllTags = (scopes: Scope[]) => {
