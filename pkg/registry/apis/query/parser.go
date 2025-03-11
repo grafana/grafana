@@ -90,6 +90,7 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 		}
 
 		// Process each query
+		// check if ds is expression
 		if expr.IsDataSource(ds.UID) {
 			// In order to process the query as a typed expression query, we
 			// are writing it back to JSON and parsing again.  Alternatively we
@@ -154,15 +155,34 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 		}
 		for _, exp := range expressions {
 			vars := exp.Command.NeedsVars()
+
 			for _, refId := range vars {
+
 				target := queryNode
 				q, ok := queryRefIDs[refId]
+
 				if !ok {
-					target, ok = expressions[refId]
-					if !ok {
-						return rsp, makeDependencyError(exp.RefID, refId)
+					_, isSQLCMD := target.Command.(*expr.SQLCommand)
+					if isSQLCMD {
+						continue
+					} else {
+						target, ok = expressions[refId]
+						if !ok {
+							return rsp, makeDependencyError(exp.RefID, refId)
+						}
 					}
 				}
+
+				// If the input is SQL, conversion is handled differently
+				if _, ok := target.Command.(*expr.SQLCommand); ok {
+					if dsNode, ok := target.(*DSNode); ok {
+						dsNode.isInputToSQLExpr = true
+					} else {
+						// Only allow data source nodes as SQL expression inputs for now
+						return fmt.Errorf("only data source queries may be inputs to a sql expression, %v is the input for %v", neededVar, cmdNode.RefID())
+					}
+				}
+
 				// Do not hide queries used in variables
 				if q != nil && q.Hide {
 					q.Hide = false
