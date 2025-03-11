@@ -51,8 +51,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CallResourceReq)
 				require.Len(t, cdt.CallResourceReq.Headers, 1)
-				require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
-
+				require.Equal(t, http.Header{http.CanonicalHeaderKey(otherHeader): {"test"}}, cdt.CallResourceReq.GetHTTPHeaders())
 			})
 
 			t.Run("No auth headers to clear when calling CheckHealth", func(t *testing.T) {
@@ -63,8 +62,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CheckHealthReq)
 				require.Len(t, cdt.CheckHealthReq.Headers, 1)
-				require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
-
+				require.Empty(t, cdt.CheckHealthReq.GetHTTPHeaders())
 			})
 
 			t.Run("No auth headers to clear when calling SubscribeStream", func(t *testing.T) {
@@ -75,8 +73,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, cdt.SubscribeStreamReq)
 				require.Len(t, cdt.SubscribeStreamReq.Headers, 1)
-				require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
-
+				require.Empty(t, cdt.SubscribeStreamReq.GetHTTPHeaders())
 			})
 
 			t.Run("No auth headers to clear when calling PublishStream", func(t *testing.T) {
@@ -87,7 +84,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, cdt.PublishStreamReq)
 				require.Len(t, cdt.PublishStreamReq.Headers, 1)
-				require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
+				require.Empty(t, cdt.PublishStreamReq.GetHTTPHeaders())
 			})
 
 			t.Run("No auth headers to clear when calling RunStream", func(t *testing.T) {
@@ -98,7 +95,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, cdt.RunStreamReq)
 				require.Len(t, cdt.RunStreamReq.Headers, 1)
-				require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
+				require.Empty(t, cdt.RunStreamReq.GetHTTPHeaders())
 			})
 		})
 
@@ -133,7 +130,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.NotNil(t, cdt.CallResourceReq)
 				require.Len(t, cdt.CallResourceReq.Headers, 1)
 				require.Equal(t, []string{"test"}, cdt.CallResourceReq.Headers[otherHeader])
-				require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
+				require.Equal(t, http.Header{http.CanonicalHeaderKey(otherHeader): {"test"}}, cdt.CallResourceReq.GetHTTPHeaders())
 			})
 
 			t.Run("No auth heads to clear when calling CheckHealth", func(t *testing.T) {
@@ -145,7 +142,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.NotNil(t, cdt.CheckHealthReq)
 				require.Len(t, cdt.CheckHealthReq.Headers, 1)
 				require.Equal(t, "test", cdt.CheckHealthReq.Headers[otherHeader])
-				require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
+				require.Empty(t, cdt.CheckHealthReq.GetHTTPHeaders())
 			})
 
 			t.Run("No auth heads to clear when calling SubscribeStream", func(t *testing.T) {
@@ -157,7 +154,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.NotNil(t, cdt.SubscribeStreamReq)
 				require.Len(t, cdt.SubscribeStreamReq.Headers, 1)
 				require.Equal(t, "test", cdt.SubscribeStreamReq.Headers[otherHeader])
-				require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
+				require.Empty(t, cdt.SubscribeStreamReq.GetHTTPHeaders())
 			})
 
 			t.Run("No auth heads to clear when calling PublishStream", func(t *testing.T) {
@@ -169,7 +166,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.NotNil(t, cdt.PublishStreamReq)
 				require.Len(t, cdt.PublishStreamReq.Headers, 1)
 				require.Equal(t, "test", cdt.PublishStreamReq.Headers[otherHeader])
-				require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
+				require.Empty(t, cdt.PublishStreamReq.GetHTTPHeaders())
 			})
 
 			t.Run("No auth heads to clear when calling RunStream", func(t *testing.T) {
@@ -181,7 +178,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.NotNil(t, cdt.RunStreamReq)
 				require.Len(t, cdt.RunStreamReq.Headers, 1)
 				require.Equal(t, "test", cdt.RunStreamReq.Headers[otherHeader])
-				require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
+				require.Empty(t, cdt.RunStreamReq.GetHTTPHeaders())
 			})
 		})
 	})
