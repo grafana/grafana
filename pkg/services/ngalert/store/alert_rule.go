@@ -39,7 +39,7 @@ var (
 )
 
 // DeleteAlertRulesByUID is a handler for deleting an alert rule.
-func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *ngmodels.UserUID, ruleUID ...string) error {
+func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *ngmodels.UserUID, permanently bool, ruleUID ...string) error {
 	if len(ruleUID) == 0 {
 		return nil
 	}
@@ -73,7 +73,7 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 		logger.Debug("Deleted alert rule state", "count", rows)
 
 		var versions []alertRuleVersion
-		if st.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertRuleRestore) && st.Cfg.DeletedRuleRetention > 0 { // save deleted version only if retention is greater than 0
+		if st.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertRuleRestore) && st.Cfg.DeletedRuleRetention > 0 && !permanently { // save deleted version only if retention is greater than 0
 			versions, err = st.getLatestVersionOfRulesByUID(ctx, orgID, ruleUID)
 			if err != nil {
 				logger.Error("Failed to get latest version of deleted alert rules. The recovery will not be possible", "error", err)
@@ -919,7 +919,7 @@ func (st DBstore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs [
 			}
 		}
 
-		if err := st.DeleteAlertRulesByUID(ctx, orgID, ngmodels.NewUserUID(user), uids...); err != nil {
+		if err := st.DeleteAlertRulesByUID(ctx, orgID, ngmodels.NewUserUID(user), false, uids...); err != nil {
 			return err
 		}
 	}
