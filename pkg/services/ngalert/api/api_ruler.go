@@ -261,6 +261,26 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 
 // RouteGetRulesConfig returns all alert rules that are available to the current user
 func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Response {
+	if strings.ToLower(c.Query("deleted")) == "true" {
+		if !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertRuleRestore) {
+			return ErrResp(http.StatusBadRequest, errors.New("restore of deleted rules is not enabled"), "")
+		}
+		if !c.SignedInUser.HasRole(identity.RoleAdmin) {
+			return ErrResp(http.StatusForbidden, errors.New("only admins can get deleted rules"), "")
+		}
+		rules, err := srv.store.ListDeletedRules(c.Req.Context(), c.SignedInUser.GetOrgID())
+		if err != nil {
+			return ErrResp(http.StatusInternalServerError, err, "failed to get deleted rules")
+		}
+		result := apimodels.NamespaceConfigResponse{}
+		if len(rules) > 0 {
+			result[""] = []apimodels.GettableRuleGroupConfig{
+				toGettableRuleGroupConfig("", rules, map[string]ngmodels.Provenance{}, srv.resolveUserIdToNameFn(c.Req.Context())),
+			}
+		}
+		return response.JSON(http.StatusOK, result)
+	}
+
 	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")

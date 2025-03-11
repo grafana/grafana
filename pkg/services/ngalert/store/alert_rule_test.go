@@ -1954,6 +1954,63 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 	})
 }
 
+func TestIntegration_ListDeletedRules(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
+		BaseInterval:           1 * time.Second,
+		RuleVersionRecordLimit: -1,
+	}
+	sqlStore := db.InitTestDB(t)
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	b := &fakeBus{}
+	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+	store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
+
+	orgID := int64(1)
+	gen := models.RuleGen
+	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval), gen.WithOrgID(orgID))
+
+	result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.AlertRule{gen.Generate()})
+	require.NoError(t, err)
+	rule, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: result[0].UID})
+	require.NoError(t, err)
+
+	rule2 := models.CopyRule(rule, gen.WithTitle(util.GenerateShortUID()))
+	err = store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, []models.UpdateRule{
+		{
+			Existing: rule,
+			New:      *rule2,
+		},
+	})
+	require.NoError(t, err)
+	rule2, err = store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: result[0].UID})
+	require.NoError(t, err)
+
+	versions, err := store.GetAlertRuleVersions(context.Background(), orgID, rule.GUID)
+	require.NoError(t, err)
+	require.Len(t, versions, 2)
+
+	t.Run("should not return if rule is not deleted", func(t *testing.T) {
+		list, err := store.ListDeletedRules(context.Background(), orgID)
+		require.NoError(t, err)
+		require.Empty(t, list)
+	})
+
+	err = store.DeleteAlertRulesByUID(context.Background(), orgID, &models.AlertingUserUID, rule.UID)
+	require.NoError(t, err)
+
+	t.Run("should return the last deleted rule", func(t *testing.T) {
+		list, err := store.ListDeletedRules(context.Background(), orgID)
+		require.NoError(t, err)
+		require.Len(t, list, 1)
+		assert.Empty(t, list[0].UID)
+		assert.Empty(t, rule2.Diff(list[0], "ID", "UID", "DashboardUID", "PanelID"))
+	})
+}
+
 func createTestStore(
 	sqlStore db.DB,
 	folderService folder.Service,
