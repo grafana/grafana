@@ -4,8 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
-import { useCreateRepositoryFilesWithPathMutation, useGetRepositoryQuery } from 'app/features/provisioning/api';
-import { usePullRequestParam } from 'app/features/provisioning/hooks';
+import { useCreateRepositoryFilesWithPathMutation } from 'app/features/provisioning/api';
+import { usePullRequestParam, useRepositoryList } from 'app/features/provisioning/hooks';
 
 import { FolderDTO } from '../../../types';
 import { useGetFolderQuery } from '../../folders/api';
@@ -37,7 +37,6 @@ jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => {
 jest.mock('app/features/provisioning/api', () => {
   return {
     useCreateRepositoryFilesWithPathMutation: jest.fn(),
-    useGetRepositoryQuery: jest.fn(),
   };
 });
 
@@ -50,6 +49,15 @@ jest.mock('../../folders/api', () => {
 jest.mock('app/features/provisioning/hooks', () => {
   return {
     usePullRequestParam: jest.fn(),
+    useRepositoryList: jest.fn(),
+  };
+});
+
+jest.mock('react-router-dom-v5-compat', () => {
+  const actual = jest.requireActual('react-router-dom-v5-compat');
+  return {
+    ...actual,
+    useNavigate: () => jest.fn(),
   };
 });
 
@@ -101,6 +109,14 @@ function setup(props: Partial<Props> = {}) {
   };
 }
 
+const mockRequest = {
+  isSuccess: false,
+  isError: false,
+  isLoading: false,
+  error: null,
+  data: { resource: { upsert: { metadata: { name: 'new-folder' } } } },
+};
+
 describe('NewProvisionedFolderForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -111,21 +127,25 @@ describe('NewProvisionedFolderForm', () => {
     };
     (getAppEvents as jest.Mock).mockReturnValue(mockAppEvents);
 
-    // Mock useGetRepositoryQuery
-    (useGetRepositoryQuery as jest.Mock).mockReturnValue({
-      data: {
-        spec: {
-          type: 'github',
-          github: {
-            url: 'https://github.com/grafana/grafana',
-            branch: 'main',
+    (useRepositoryList as jest.Mock).mockReturnValue([
+      [
+        {
+          metadata: {
+            name: 'test-repo',
           },
-          workflows: ['write', 'branch'],
+          spec: {
+            title: 'Test Repository',
+            type: 'github',
+            github: {
+              url: 'https://github.com/grafana/grafana',
+              branch: 'main',
+            },
+            workflows: [{ name: 'default', path: 'workflows/default.yaml' }],
+          },
         },
-      },
-      isLoading: false,
-      isError: false,
-    });
+      ],
+      false,
+    ]);
 
     // Mock useGetFolderQuery
     (useGetFolderQuery as jest.Mock).mockReturnValue({
@@ -145,12 +165,7 @@ describe('NewProvisionedFolderForm', () => {
 
     // Mock useCreateRepositoryFilesWithPathMutation
     const mockCreate = jest.fn();
-    const mockRequest = {
-      isSuccess: false,
-      isError: false,
-      isLoading: false,
-      error: null,
-    };
+
     (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([mockCreate, mockRequest]);
 
     (validationSrv.validateNewFolderName as jest.Mock).mockResolvedValue(true);
@@ -168,11 +183,7 @@ describe('NewProvisionedFolderForm', () => {
   });
 
   it('should show loading state when repository data is loading', () => {
-    (useGetRepositoryQuery as jest.Mock).mockReturnValue({
-      data: null,
-      isLoading: true,
-      isError: false,
-    });
+    (useRepositoryList as jest.Mock).mockReturnValue([[], true]);
 
     setup();
 
@@ -180,11 +191,7 @@ describe('NewProvisionedFolderForm', () => {
   });
 
   it('should show error when repository is not found', () => {
-    (useGetRepositoryQuery as jest.Mock).mockReturnValue({
-      data: null,
-      isLoading: false,
-      isError: true,
-    });
+    (useRepositoryList as jest.Mock).mockReturnValue([null, false]);
 
     setup();
 
@@ -248,6 +255,7 @@ describe('NewProvisionedFolderForm', () => {
     (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([
       mockCreate,
       {
+        ...mockRequest,
         isSuccess: true,
         isError: false,
         isLoading: false,
@@ -294,6 +302,7 @@ describe('NewProvisionedFolderForm', () => {
     (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([
       mockCreate,
       {
+        ...mockRequest,
         isSuccess: true,
         isError: false,
         isLoading: false,
@@ -342,6 +351,7 @@ describe('NewProvisionedFolderForm', () => {
     (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([
       mockCreate,
       {
+        ...mockRequest,
         isSuccess: false,
         isError: true,
         isLoading: false,
@@ -374,6 +384,7 @@ describe('NewProvisionedFolderForm', () => {
     (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([
       jest.fn(),
       {
+        ...mockRequest,
         isSuccess: false,
         isError: false,
         isLoading: true,
@@ -411,24 +422,29 @@ describe('NewProvisionedFolderForm', () => {
   });
 
   it('should show read-only alert when repository has no workflows', () => {
-    (useGetRepositoryQuery as jest.Mock).mockReturnValue({
-      data: {
-        spec: {
-          type: 'github',
-          github: {
-            url: 'https://github.com/grafana/grafana',
-            branch: 'main',
+    // Mock repository with empty workflows array
+    (useRepositoryList as jest.Mock).mockReturnValue([
+      [
+        {
+          metadata: {
+            name: 'test-repo',
           },
-          workflows: [], // Empty workflows array
+          spec: {
+            type: 'github',
+            github: {
+              url: 'https://github.com/grafana/grafana',
+              branch: 'main',
+            },
+            workflows: [], // Empty workflows array
+          },
         },
-      },
-      isLoading: false,
-      isError: false,
-    });
+      ],
+      false,
+    ]);
 
     setup();
 
-    // Read-only alert should be visible - use text content instead of role
+    // Read-only alert should be visible
     expect(screen.getByText('This repository is read only')).toBeInTheDocument();
   });
 });

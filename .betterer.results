@@ -5,6 +5,12 @@
 //
 exports[`better eslint`] = {
   value: `{
+    "apps/dashboard/tshack/v0alpha1_spec_gen.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "apps/dashboard/tshack/v1alpha1_spec_gen.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
     "e2e/old-arch/utils/support/types.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -2384,10 +2390,8 @@ exports[`better eslint`] = {
     ],
     "public/app/features/alerting/unified/components/rules/CloudRules.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/alerting/unified/components/rules/EditRuleGroupModal.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
@@ -2959,10 +2963,6 @@ exports[`better eslint`] = {
     "public/app/features/auth-config/utils/data.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/browse-dashboards/BrowseDashboardsPage.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
-    ],
     "public/app/features/browse-dashboards/api/browseDashboardsAPI.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`@reduxjs/toolkit/query/react\`)", "0"]
     ],
@@ -2977,7 +2977,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/browse-dashboards/components/NewProvisionedFolderForm.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
@@ -2987,14 +2987,15 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "7"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "8"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "9"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "10"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "10"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "11"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "12"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "13"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "14"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "15"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "16"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "17"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "17"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "18"]
     ],
     "public/app/features/browse-dashboards/state/index.ts:5381": [
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
@@ -6049,10 +6050,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
-    ],
-    "public/app/features/scopes/index.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`./ScopesDashboards\`)", "0"],
-      [0, 0, 0, "Do not re-export imported variable (\`./instance\`)", "1"]
     ],
     "public/app/features/search/page/components/ActionRow.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]

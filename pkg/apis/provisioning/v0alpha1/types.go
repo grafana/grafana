@@ -4,6 +4,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // When this code is changed, make sure to update the code generation.
@@ -357,10 +358,11 @@ type ResourceStats struct {
 }
 
 type ResourceCount struct {
-	Repository string `json:"repository,omitempty"`
-	Group      string `json:"group"`
-	Resource   string `json:"resource"`
-	Count      int64  `json:"count"`
+	Kind     utils.ManagerKind `json:"kind,omitempty"`
+	Identity string            `json:"id,omitempty"`
+	Group    string            `json:"group"`
+	Resource string            `json:"resource"`
+	Count    int64             `json:"count"`
 }
 
 // HistoryList is a list of versions of a resource

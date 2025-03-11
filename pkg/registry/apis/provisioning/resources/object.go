@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -14,10 +15,10 @@ type ResourceLister interface {
 }
 
 type ResourceListerFromSearch struct {
-	index resource.RepositoryIndexClient
+	index resource.ManagedObjectIndexClient
 }
 
-func NewResourceLister(index resource.RepositoryIndexClient) ResourceLister {
+func NewResourceLister(index resource.ManagedObjectIndexClient) ResourceLister {
 	return &ResourceListerFromSearch{
 		index: index,
 	}
@@ -25,9 +26,10 @@ func NewResourceLister(index resource.RepositoryIndexClient) ResourceLister {
 
 // List implements ResourceLister.
 func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, repository string) (*provisioning.ResourceList, error) {
-	objects, err := o.index.ListRepositoryObjects(ctx, &resource.ListRepositoryObjectsRequest{
+	objects, err := o.index.ListManagedObjects(ctx, &resource.ListManagedObjectsRequest{
 		Namespace: namespace,
-		Name:      repository,
+		Kind:      string(utils.ManagerKindRepo),
+		Id:        repository,
 	})
 	if err != nil {
 		return nil, err
@@ -54,9 +56,10 @@ func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, reposito
 
 // Stats implements ResourceLister.
 func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, repository string) (*provisioning.ResourceStats, error) {
-	counts, err := o.index.CountRepositoryObjects(ctx, &resource.CountRepositoryObjectsRequest{
+	counts, err := o.index.CountManagedObjects(ctx, &resource.CountManagedObjectsRequest{
 		Namespace: namespace,
-		Name:      repository,
+		Kind:      string(utils.ManagerKindRepo),
+		Id:        repository,
 	})
 	if err != nil {
 		return nil, err
@@ -68,10 +71,12 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 	stats := &provisioning.ResourceStats{}
 	for _, v := range counts.Items {
 		stats.Items = append(stats.Items, provisioning.ResourceCount{
-			Repository: v.Repository,
-			Group:      v.Group,
-			Resource:   v.Resource,
-			Count:      v.Count,
+			Kind:     utils.ManagerKind(v.Kind),
+			Identity: v.Id,
+
+			Group:    v.Group,
+			Resource: v.Resource,
+			Count:    v.Count,
 		})
 	}
 	return stats, nil
