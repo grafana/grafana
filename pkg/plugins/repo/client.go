@@ -5,18 +5,17 @@ import (
 	"bufio"
 	"context"
 	"crypto/sha256"
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
@@ -31,9 +30,27 @@ type Client struct {
 }
 
 func NewClient(skipTLSVerify bool, grafanaComAPIToken, grafanaComAPIURL string, logger log.PrettyLogger) *Client {
+	httpCliOpts := httpclient.Options{
+		TLS: &httpclient.TLSOptions{
+			InsecureSkipVerify: skipTLSVerify,
+		},
+		Timeouts: &httpclient.TimeoutOptions{
+			Timeout: 10 * time.Second,
+		},
+	}
+	httpClient, err := httpclient.New(httpCliOpts)
+	if err != nil {
+		logger.Error("Failed to create HTTP client", "error", err)
+	}
+	// Disable timeout for the no timeout client
+	httpCliOpts.Timeouts.Timeout = 0
+	httpClientNoTimeout, err := httpclient.New(httpCliOpts)
+	if err != nil {
+		logger.Error("Failed to create HTTP client", "error", err)
+	}
 	return &Client{
-		httpClient:          MakeHttpClient(skipTLSVerify, 10*time.Second),
-		httpClientNoTimeout: MakeHttpClient(skipTLSVerify, 0),
+		httpClient:          *httpClient,
+		httpClientNoTimeout: *httpClientNoTimeout,
 		log:                 logger,
 		grafanaComAPIToken:  grafanaComAPIToken,
 		grafanaComAPIURL:    grafanaComAPIURL,
@@ -271,24 +288,4 @@ func (c *Client) handleResp(res *http.Response, compatOpts CompatOpts) (io.ReadC
 	}
 
 	return res.Body, nil
-}
-
-func MakeHttpClient(skipTLSVerify bool, timeout time.Duration) http.Client {
-	return http.Client{
-		Timeout: timeout,
-		Transport: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-			DialContext: (&net.Dialer{
-				Timeout:   30 * time.Second,
-				KeepAlive: 30 * time.Second,
-			}).DialContext,
-			MaxIdleConns:          100,
-			IdleConnTimeout:       90 * time.Second,
-			TLSHandshakeTimeout:   10 * time.Second,
-			ExpectContinueTimeout: 1 * time.Second,
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: skipTLSVerify,
-			},
-		},
-	}
 }
