@@ -177,6 +177,9 @@ function WizardContent({
         type: AppEvents.alertSuccess.name,
         payload: ['Repository deleted'],
       });
+
+      // Wait for 1 second before redirecting to ensure deletion is indexed
+      await new Promise((resolve) => setTimeout(resolve, 1500));
       navigate(PROVISIONING_URL);
     } catch (error) {
       console.error('Failed to delete repository:', error);
