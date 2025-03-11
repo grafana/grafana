@@ -141,6 +141,11 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
         return HttpResponse.json({
           sortOptions: [],
         });
+      }),
+      http.get('/apis/provisioning.grafana.app/v0alpha1/namespaces/default/settings', () => {
+        return HttpResponse.json({
+          items: [],
+        });
       })
     );
     server.listen();
