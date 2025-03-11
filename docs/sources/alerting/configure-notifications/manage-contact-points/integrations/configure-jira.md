@@ -1,19 +1,18 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/configure-jira/
-description: Configure the Jira Service Management integration to receive notifications when your alerts are firing
+description: Configure the Jira integration to receive notifications when your alerts are firing
 keywords:
   - grafana
   - alerting
   - Jira
-  - Jira Service Management
   - integration
 labels:
   products:
     - cloud
     - enterprise
     - oss
-menuTitle: Jira Service Management
-title: Configure Jira Service Management for Alerting
+menuTitle: Jira
+title: Configure Jira for Alerting
 weight: 121
 refs:
   configure-contact-points:
@@ -23,7 +22,7 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/
 ---
 
-# Configure Jira Service Management for Alerting
+# Configure Jira for Alerting
 
 Use the Jira integration in a contact point to create issues in your Jira instance when alerts fire. The integration supports both Jira Cloud and Jira Server/Data Center installations.
 
@@ -52,11 +51,11 @@ For more details on contact points, including how to test them and enable notifi
 
 | Key | Description | 
 | --- | --- |
-| URL | The URL of your Jira instance (e.g., `https://your-domain.atlassian.net` or `https://jira.your-domain.com`). |
-| Basic Auth User | Username for authentication. |
+| URL | The URL of the REST API of your Jira instance. Supported versions: `2` and `3` (e.g., `https://your-domain.atlassian.net/rest/api/3`). |
+| Basic Auth User | Username for authentication. For Jira Cloud, use your email address. |
 | Basic Auth Password | Password or personal token. For Jira Cloud, you need to obtain a personal token [here](https://id.atlassian.com/manage-profile/security/api-tokens)) and use it as the password. |
 | API Token | An alternative to basic authentication, a bearer token is used to authorize the API requests. See [Jira documentation](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html) for more information. |
-| Project Key | The project key where issues are be created (e.g., `ALERTS`). |
+| Project Key | The project key identifying the project where issues will be created. Project keys are unique identifiers for a project. |
 | Issue Type | The type of issue to create (e.g., `Task`, `Bug`, `Incident`). Make sure that you specify a type that is available in your project. |
 
 ### Optional Settings
