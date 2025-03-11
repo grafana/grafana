@@ -221,6 +221,7 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				require.Equal(t, promRule.Annotations, grafanaRule.Annotations, tc.name)
 				require.Equal(t, models.Duration(0*time.Minute), grafanaRule.Data[0].RelativeTimeRange.To)
 				require.Equal(t, models.Duration(10*time.Minute), grafanaRule.Data[0].RelativeTimeRange.From)
+				require.Equal(t, util.Pointer(1), grafanaRule.MissingSeriesEvalsToResolve)
 
 				originalRuleDefinition, err := yaml.Marshal(promRule)
 				require.NoError(t, err)
