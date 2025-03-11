@@ -3,7 +3,7 @@ package legacy
 import (
 	"context"
 
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -30,6 +30,9 @@ type DashboardQuery struct {
 
 	// The label requirements
 	Labels []*resource.Requirement
+
+	// DESC|ASC, how to order the IDs
+	Order string // asc required to use lastID, desc required for export with history
 }
 
 func (r *DashboardQuery) UseHistoryTable() bool {

@@ -157,7 +157,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceU
 			rulesToDelete = append(rulesToDelete, uid...)
 		}
 		if len(rulesToDelete) > 0 {
-			err := srv.store.DeleteAlertRulesByUID(ctx, c.SignedInUser.GetOrgID(), rulesToDelete...)
+			err := srv.store.DeleteAlertRulesByUID(ctx, c.SignedInUser.GetOrgID(), ngmodels.NewUserUID(c.SignedInUser), rulesToDelete...)
 			if err != nil {
 				return err
 			}
@@ -261,6 +261,26 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 
 // RouteGetRulesConfig returns all alert rules that are available to the current user
 func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Response {
+	if strings.ToLower(c.Query("deleted")) == "true" {
+		if !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertRuleRestore) {
+			return ErrResp(http.StatusBadRequest, errors.New("restore of deleted rules is not enabled"), "")
+		}
+		if !c.SignedInUser.HasRole(identity.RoleAdmin) {
+			return ErrResp(http.StatusForbidden, errors.New("only admins can get deleted rules"), "")
+		}
+		rules, err := srv.store.ListDeletedRules(c.Req.Context(), c.SignedInUser.GetOrgID())
+		if err != nil {
+			return ErrResp(http.StatusInternalServerError, err, "failed to get deleted rules")
+		}
+		result := apimodels.NamespaceConfigResponse{}
+		if len(rules) > 0 {
+			result[""] = []apimodels.GettableRuleGroupConfig{
+				toGettableRuleGroupConfig("", rules, map[string]ngmodels.Provenance{}, srv.resolveUserIdToNameFn(c.Req.Context())),
+			}
+		}
+		return response.JSON(http.StatusOK, result)
+	}
+
 	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")
@@ -339,7 +359,7 @@ func (srv RulerSrv) RouteGetRuleByUID(c *contextmodel.ReqContext, ruleUID string
 func (srv RulerSrv) RouteGetRuleVersionsByUID(c *contextmodel.ReqContext, ruleUID string) response.Response {
 	ctx := c.Req.Context()
 	// make sure the user has access to the current version of the rule. Also, check if it exists
-	_, err := srv.getAuthorizedRuleByUid(ctx, c, ruleUID)
+	rule, err := srv.getAuthorizedRuleByUid(ctx, c, ruleUID)
 	if err != nil {
 		if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
 			return response.Empty(http.StatusNotFound)
@@ -347,7 +367,7 @@ func (srv RulerSrv) RouteGetRuleVersionsByUID(c *contextmodel.ReqContext, ruleUI
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get rule by UID", err)
 	}
 
-	rules, err := srv.store.GetAlertRuleVersions(ctx, ngmodels.AlertRuleKey{OrgID: c.OrgID, UID: ruleUID})
+	rules, err := srv.store.GetAlertRuleVersions(ctx, rule.OrgID, rule.GUID)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get rule history", err)
 	}
@@ -461,7 +481,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 				UIDs = append(UIDs, rule.UID)
 			}
 
-			if err = srv.store.DeleteAlertRulesByUID(tranCtx, c.SignedInUser.GetOrgID(), UIDs...); err != nil {
+			if err = srv.store.DeleteAlertRulesByUID(tranCtx, c.SignedInUser.GetOrgID(), ngmodels.NewUserUID(c.SignedInUser), UIDs...); err != nil {
 				return fmt.Errorf("failed to delete rules: %w", err)
 			}
 		}

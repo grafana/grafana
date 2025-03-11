@@ -17,7 +17,7 @@ type SyncStatusApplyConfiguration struct {
 	Finished    *int64                         `json:"finished,omitempty"`
 	Scheduled   *int64                         `json:"scheduled,omitempty"`
 	Message     []string                       `json:"message,omitempty"`
-	Hash        *string                        `json:"hash,omitempty"`
+	LastRef     *string                        `json:"lastRef,omitempty"`
 	Incremental *bool                          `json:"incremental,omitempty"`
 }
 
@@ -77,11 +77,11 @@ func (b *SyncStatusApplyConfiguration) WithMessage(values ...string) *SyncStatus
 	return b
 }
 
-// WithHash sets the Hash field in the declarative configuration to the given value
+// WithLastRef sets the LastRef field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the Hash field is set to the value of the last call.
-func (b *SyncStatusApplyConfiguration) WithHash(value string) *SyncStatusApplyConfiguration {
-	b.Hash = &value
+// If called multiple times, the LastRef field is set to the value of the last call.
+func (b *SyncStatusApplyConfiguration) WithLastRef(value string) *SyncStatusApplyConfiguration {
+	b.LastRef = &value
 	return b
 }
 

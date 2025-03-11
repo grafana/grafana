@@ -25,7 +25,6 @@ import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-import { ScopesSelector } from 'app/features/scopes';
 
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
 import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
@@ -37,6 +36,7 @@ import { isLibraryPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
+import ManagedDashboardNavBarBadge from './ManagedDashboardNavBarBadge';
 
 interface Props {
   dashboard: DashboardScene;
@@ -69,14 +69,14 @@ export function ToolbarActions({ dashboard }: Props) {
   const isViewingPanel = Boolean(viewPanelScene);
   const isEditedPanelDirty = usePanelEditDirty(editPanel);
   const isEditingLibraryPanel = editPanel && isLibraryPanel(editPanel.state.panelRef.resolve());
-  const isNew = !Boolean(uid);
+  const isNew = !Boolean(uid || dashboard.isManaged());
 
   const hasCopiedPanel = store.exists(LS_PANEL_COPY_KEY);
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
-  const showScopesSelector = config.featureToggles.scopeFilters && !isEditing;
   const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
+  const isManaged = Boolean(dashboard.isManaged());
 
   if (!isEditingPanel) {
     // This adds the presence indicators in enterprise
@@ -125,6 +125,16 @@ export function ToolbarActions({ dashboard }: Props) {
     });
   }
 
+  if (isManaged && meta.canEdit) {
+    toolbarActions.push({
+      group: 'icon-actions',
+      condition: true,
+      render: () => {
+        return <ManagedDashboardNavBarBadge meta={meta} />;
+      },
+    });
+  }
+
   const isDevEnv = config.buildInfo.env === 'development';
 
   toolbarActions.push({
@@ -156,83 +166,6 @@ export function ToolbarActions({ dashboard }: Props) {
   }
 
   if (dashboardNewLayouts) {
-    leftActions.push({
-      group: 'add-panel',
-      condition: isEditingAndShowingDashboard,
-      render: () => (
-        <Button
-          key="add-panel-button"
-          variant="secondary"
-          size="sm"
-          icon="plus"
-          fill="text"
-          onClick={() => {
-            dashboard.onCreateNewPanel();
-          }}
-          data-testid={selectors.components.PageToolbar.itemButton('add_visualization')}
-        >
-          <Trans i18nKey="dashboard.toolbar.add-panel">Panel</Trans>
-        </Button>
-      ),
-    });
-    leftActions.push({
-      group: 'add-panel',
-      condition: isEditingAndShowingDashboard,
-      render: () => (
-        <Button
-          key="add-panel-button"
-          variant="secondary"
-          size="sm"
-          icon="plus"
-          fill="text"
-          onClick={() => {
-            dashboard.onCreateNewRow();
-          }}
-          data-testid={selectors.components.PageToolbar.itemButton('add_row')}
-        >
-          <Trans i18nKey="dashboard.toolbar.add-row">Row</Trans>
-        </Button>
-      ),
-    });
-    leftActions.push({
-      group: 'add-panel',
-      condition: isEditingAndShowingDashboard,
-      render: () => (
-        <Button
-          key="add-tab-button"
-          variant="secondary"
-          size="sm"
-          icon="plus"
-          fill="text"
-          onClick={() => {
-            dashboard.onCreateNewTab();
-          }}
-          data-testid={selectors.components.PageToolbar.itemButton('add_tab')}
-        >
-          <Trans i18nKey="dashboard.toolbar.add-tab">Tab</Trans>
-        </Button>
-      ),
-    });
-    leftActions.push({
-      group: 'add-panel',
-      condition: isEditingAndShowingDashboard,
-      render: () => (
-        <Button
-          key="add-panel-lib"
-          variant="secondary"
-          size="sm"
-          icon="plus"
-          fill="text"
-          data-testid={selectors.pages.AddDashboard.itemButton('Add new panel from panel library menu item')}
-          onClick={() => {
-            dashboard.onShowAddLibraryPanelDrawer();
-            DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
-          }}
-        >
-          <Trans i18nKey="dashboard.toolbar.add-panel-lib">Import</Trans>
-        </Button>
-      ),
-    });
     leftActions.push({
       group: 'hidden-elements',
       condition: isEditingAndShowingDashboard,
@@ -625,7 +558,7 @@ export function ToolbarActions({ dashboard }: Props) {
       }
 
       // If we only can save as copy
-      if (canSaveAs && !meta.canSave && !meta.canMakeEditable) {
+      if (canSaveAs && !meta.canSave && !meta.canMakeEditable && !isManaged) {
         return (
           <Button
             onClick={() => {
@@ -708,11 +641,10 @@ export function ToolbarActions({ dashboard }: Props) {
 
   const rightActionsElements: ReactNode[] = renderActionElements(toolbarActions);
   const leftActionsElements: ReactNode[] = renderActionElements(leftActions);
-  const hasActionsToLeftAndRight = showScopesSelector || leftActionsElements.length > 0;
+  const hasActionsToLeftAndRight = leftActionsElements.length > 0;
 
   return (
     <Stack flex={1} minWidth={0} justifyContent={hasActionsToLeftAndRight ? 'space-between' : 'flex-end'}>
-      {showScopesSelector && <ScopesSelector />}
       {leftActionsElements.length > 0 && <ToolbarButtonRow alignment="left">{leftActionsElements}</ToolbarButtonRow>}
       <ToolbarButtonRow alignment="right">{rightActionsElements}</ToolbarButtonRow>
     </Stack>

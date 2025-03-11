@@ -10,7 +10,7 @@ import { t } from 'app/core/internationalization';
 import { AutoRefreshIntervals } from './AutoRefreshIntervals';
 
 interface Props {
-  onWeekStartChange: (weekStart: WeekStart) => void;
+  onWeekStartChange: (weekStart?: WeekStart) => void;
   onTimeZoneChange: (timeZone: TimeZone) => void;
   onRefreshIntervalChange: (interval: string[]) => void;
   onNowDelayChange: (nowDelay: string) => void;
@@ -20,7 +20,7 @@ interface Props {
   timePickerHidden?: boolean;
   nowDelay?: string;
   timezone: TimeZone;
-  weekStart: string;
+  weekStart?: WeekStart;
   liveNow?: boolean;
 }
 
@@ -62,7 +62,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
     this.props.onTimeZoneChange(timeZone);
   };
 
-  onWeekStartChange = (weekStart: WeekStart) => {
+  onWeekStartChange = (weekStart?: WeekStart) => {
     this.props.onWeekStartChange(weekStart);
   };
 

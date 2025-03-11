@@ -6,6 +6,7 @@
 package apistore
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -47,7 +48,6 @@ var _ storage.Interface = (*Storage)(nil)
 // Optional settings that apply to a single resource
 type StorageOptions struct {
 	LargeObjectSupport LargeObjectSupport
-	InternalConversion func([]byte, runtime.Object) (runtime.Object, error)
 
 	RequireDeprecatedInternalID bool
 }
@@ -148,9 +148,6 @@ func (s *Storage) Versioner() storage.Versioner {
 }
 
 func (s *Storage) convertToObject(data []byte, obj runtime.Object) (runtime.Object, error) {
-	if s.opts.InternalConversion != nil {
-		return s.opts.InternalConversion(data, obj)
-	}
 	obj, _, err := s.codec.Decode(data, nil, obj)
 	return obj, err
 }
@@ -180,7 +177,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return resource.GetError(rsp.Error)
 	}
 
-	if err := copyModifiedObjectToDestination(obj, out); err != nil {
+	if _, err := s.convertToObject(req.Value, out); err != nil {
 		return err
 	}
 
@@ -294,7 +291,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 	}
 
 	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
-	decoder := newStreamDecoder(client, s.newFunc, predicate, s.codec, cancelWatch, s.opts.InternalConversion)
+	decoder := newStreamDecoder(client, s.newFunc, predicate, s.codec, cancelWatch)
 
 	return watch.NewStreamWatcher(decoder, reporter), nil
 }
@@ -538,15 +535,22 @@ func (s *Storage) GuaranteedUpdate(
 	}
 
 	if unchanged {
-		if err := copyModifiedObjectToDestination(updatedObj, destination); err != nil {
+		var buf bytes.Buffer
+		if err = s.codec.Encode(updatedObj, &buf); err != nil {
+			return err
+		}
+		if _, err := s.convertToObject(buf.Bytes(), destination); err != nil {
 			return err
 		}
 		return nil
 	}
 
-	rv := int64(0)
+	var (
+		value []byte
+		rv    int64
+	)
 	if created {
-		value, err := s.prepareObjectForStorage(ctx, updatedObj)
+		value, err = s.prepareObjectForStorage(ctx, updatedObj)
 		if err != nil {
 			return err
 		}
@@ -562,10 +566,11 @@ func (s *Storage) GuaranteedUpdate(
 		}
 		rv = rsp2.ResourceVersion
 	} else {
-		req.Value, err = s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
+		value, err = s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
 		if err != nil {
 			return err
 		}
+		req.Value = value
 		rsp2, err := s.store.Update(ctx, req)
 		if err != nil {
 			return resource.GetError(resource.AsErrorResult(err))
@@ -576,11 +581,11 @@ func (s *Storage) GuaranteedUpdate(
 		rv = rsp2.ResourceVersion
 	}
 
-	if err := s.versioner.UpdateObject(updatedObj, uint64(rv)); err != nil {
+	if _, err := s.convertToObject(value, destination); err != nil {
 		return err
 	}
 
-	if err := copyModifiedObjectToDestination(updatedObj, destination); err != nil {
+	if err := s.versioner.UpdateObject(destination, uint64(rv)); err != nil {
 		return err
 	}
 
@@ -632,18 +637,5 @@ func (s *Storage) validateMinimumResourceVersion(minimumResourceVersion string, 
 	if minimumRV > actualRevision {
 		return storage.NewTooLargeResourceVersionError(minimumRV, actualRevision, 0)
 	}
-	return nil
-}
-
-func copyModifiedObjectToDestination(updatedObj runtime.Object, destination runtime.Object) error {
-	u, err := conversion.EnforcePtr(updatedObj)
-	if err != nil {
-		return fmt.Errorf("unable to enforce updated object pointer: %w", err)
-	}
-	d, err := conversion.EnforcePtr(destination)
-	if err != nil {
-		return fmt.Errorf("unable to enforce destination pointer: %w", err)
-	}
-	d.Set(u)
 	return nil
 }

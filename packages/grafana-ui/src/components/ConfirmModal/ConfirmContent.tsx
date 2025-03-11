@@ -7,6 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes';
+import { t } from '../../utils/i18n';
 import { Button, ButtonVariant } from '../Button';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
@@ -90,7 +91,9 @@ export const ConfirmContent = ({
   };
 
   const { handleSubmit } = useForm();
-
+  const placeholder = t('grafana-ui.confirm-content.placeholder', 'Type "{{confirmPromptText}}" to confirm', {
+    confirmPromptText,
+  });
   return (
     <form onSubmit={handleSubmit(onConfirmClick)}>
       <div className={styles.text}>
@@ -100,7 +103,7 @@ export const ConfirmContent = ({
           <div className={styles.confirmationInput}>
             <Stack alignItems="flex-start">
               <Field disabled={disabled}>
-                <Input placeholder={`Type "${confirmPromptText}" to confirm`} onChange={onConfirmationTextChange} />
+                <Input placeholder={placeholder} onChange={onConfirmationTextChange} />
               </Field>
             </Stack>
           </div>
