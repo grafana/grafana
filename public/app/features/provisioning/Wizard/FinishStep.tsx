@@ -1,10 +1,12 @@
 import { useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { Field, FieldSet, Input, MultiCombobox, Stack, Switch } from '@grafana/ui';
+import { Alert, Field, FieldSet, Input, MultiCombobox, Stack, Switch } from '@grafana/ui';
 
 import { getWorkflowOptions } from '../ConfigForm';
-import { ConfigFormGithubCollpase } from '../ConfigFormGithubCollapse';
+import { checkPublicAccess } from '../GettingStarted/features';
+import { GETTING_STARTED_URL } from '../constants';
 
 import { WizardFormData } from './types';
 
@@ -22,8 +24,10 @@ export function FinishStep({ onStatusChange }: FinishStepProps) {
 
   const type = watch('repository.type');
   const isGithub = type === 'github';
+  const isPublic = checkPublicAccess();
   // Enable sync by default
   const { setValue } = useFormContext<WizardFormData>();
+  const navigate = useNavigate();
 
   // Set sync enabled by default
   useEffect(() => {
@@ -34,17 +38,29 @@ export function FinishStep({ onStatusChange }: FinishStepProps) {
   return (
     <FieldSet label="3. Finish">
       <Stack direction="column">
-        <FieldSet label="Automatic pulling">
-          <Switch label="Enabled" {...register('repository.sync.enabled')} />
-          <Field label={'Interval (seconds)'}>
-            <Input
-              {...register('repository.sync.intervalSeconds', { valueAsNumber: true })}
-              type={'number'}
-              placeholder={'60'}
-            />
-          </Field>
-        </FieldSet>
-        <FieldSet label="Collaboration Settings">
+        {(!isPublic || !isGithub) && (
+          <FieldSet label="Automatic pulling">
+            {isGithub && (
+              <Alert
+                title={'Public URL not configured'}
+                severity={'warning'}
+                buttonContent={<span>Instructions</span>}
+                onRemove={() => navigate(GETTING_STARTED_URL)}
+              >
+                Changes in git will eventually be pulled depending on the synchronization interval. Pull requests will
+                not be proccessed
+              </Alert>
+            )}
+            <Field label={'Interval (seconds)'}>
+              <Input
+                {...register('repository.sync.intervalSeconds', { valueAsNumber: true })}
+                type={'number'}
+                placeholder={'60'}
+              />
+            </Field>
+          </FieldSet>
+        )}
+        <FieldSet label="Collaboration">
           <Field
             label={'Workflows'}
             required
@@ -70,14 +86,21 @@ export function FinishStep({ onStatusChange }: FinishStepProps) {
             />
           </Field>
           {isGithub && (
-            <ConfigFormGithubCollpase
-              previews={
-                <Switch
-                  {...register('repository.generateDashboardPreviews')}
-                  id={'repository.generateDashboardPreviews'}
-                />
+            <Field
+              label={'Attach dashboard previews to pull requests'}
+              description={
+                <span>
+                  Render before/after images and link them to the pull request.
+                  <br />
+                  NOTE! this will render dashboards into an image that can be access by a public URL
+                </span>
               }
-            />
+            >
+              <Switch
+                {...register('repository.generateDashboardPreviews')}
+                id={'repository.generateDashboardPreviews'}
+              />
+            </Field>
           )}
         </FieldSet>
       </Stack>

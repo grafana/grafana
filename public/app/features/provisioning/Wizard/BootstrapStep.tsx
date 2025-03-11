@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Box, Field, Input, Stack, FieldSet, Card, Alert, Text, LoadingPlaceholder, Icon, Tooltip } from '@grafana/ui';
+import { Box, Field, Input, Stack, FieldSet, Card, Alert, Text, LoadingPlaceholder } from '@grafana/ui';
 
 import { useGetFrontendSettingsQuery, useGetRepositoryFilesQuery } from '../api';
 import { checkSyncSettings } from '../utils';

@@ -1,7 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
-import { Stack, Text, TextLink, InteractiveTable, Spinner, ControlledCollapse, Alert, LinkButton } from '@grafana/ui';
+import { Alert, ControlledCollapse, InteractiveTable, LinkButton, Spinner, Stack, Text } from '@grafana/ui';
 
 import ProgressBar from './ProgressBar';
 import { useGetRepositoryQuery, useListJobQuery } from './api';
