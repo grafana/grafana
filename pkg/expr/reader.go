@@ -134,8 +134,9 @@ func (h *ExpressionQueryReader) ReadQuery(
 		err = iter.ReadVal(q)
 		if err == nil {
 			eq.Properties = q
-			// TODO: implement limit in MT DS Querier, and when `expressionParser` flag is enabled
-			eq.Command, err = NewSQLCommand(common.RefID, q.Expression, 0)
+			// TODO: Cascade limit from Grafana config in this (new Expression Parser) branch of the code
+			cellLimit := 0 // zero means no limit
+			eq.Command, err = NewSQLCommand(common.RefID, q.Expression, int64(cellLimit))
 		}
 
 	case QueryTypeThreshold:
