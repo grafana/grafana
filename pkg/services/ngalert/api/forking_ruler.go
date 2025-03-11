@@ -130,5 +130,5 @@ func (f *RulerApiHandler) handleRouteGetRuleVersionsByUID(ctx *contextmodel.ReqC
 }
 
 func (f *RulerApiHandler) handleRouteGetGrafanaRuleGroups(ctx *contextmodel.ReqContext) response.Response {
-	return f.GrafanaRuler.RouteGetAlertRuleGroups(ctx)
+	return f.GrafanaRuler.RouteGetRuleGroups(ctx)
 }
