@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 
 import { EventBus, GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Icon, useStyles2 } from '@grafana/ui';
+import { IconButton, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { ScrollToLogsEvent } from './virtualization';
@@ -35,24 +35,40 @@ export const LogListControls = ({ eventBus }: Props) => {
 
   return (
     <div className={styles.navContainer}>
-      <Button
+      <IconButton
+        name="arrow-down"
         data-testid="scrollToBottom"
-        className={styles.scrollToBottomButton}
+        className={styles.controlButton}
         variant="secondary"
         onClick={onScrollToBottomClick}
-        title={t('logs.logs-controls.scroll-bottom', 'Scroll to bottom')}
-      >
-        <Icon name="arrow-down" size="lg" />
-      </Button>
-      <Button
+        tooltip={t('logs.logs-controls.scroll-bottom', 'Scroll to bottom')}
+        size="md"
+      />
+      <IconButton
+        name="clock-nine"
+        className={styles.controlButton}
+        variant="secondary"
+        onClick={onScrollToBottomClick}
+        tooltip={t('logs.logs-controls.show-timestamps', 'Show timestamps')}
+        size="md"
+      />
+      <IconButton
+        name="wrap-text"
+        className={styles.controlButton}
+        variant="secondary"
+        onClick={onScrollToBottomClick}
+        tooltip={t('logs.logs-controls.wrap-lines', 'Wrap lines')}
+        size="md"
+      />
+      <IconButton
+        name="arrow-up"
         data-testid="scrollToTop"
         className={styles.scrollToTopButton}
         variant="secondary"
         onClick={onScrollToTopClick}
-        title={t('logs.logs-controls.scroll-top', 'Scroll to top')}
-      >
-        <Icon name="arrow-up" size="lg" />
-      </Button>
+        tooltip={t('logs.logs-controls.scroll-top', 'Scroll to top')}
+        size="md"
+      />
     </div>
   );
 };
@@ -62,31 +78,19 @@ const getStyles = (theme: GrafanaTheme2) => {
     navContainer: css({
       maxHeight: '100%',
       display: 'flex',
+      gap: theme.spacing(2.5),
       flexDirection: 'column',
-      justifyContent: 'flex-end',
-      position: 'sticky',
-      top: theme.spacing(2),
-      right: 0,
-    }),
-    scrollToBottomButton: css({
-      width: theme.spacing(3.5),
-      height: theme.spacing(3.5),
-      padding: 0,
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      position: 'absolute',
-      top: 0,
+      justifyContent: 'flex-start',
+      width: theme.spacing(2.75),
+      paddingTop: theme.spacing(0.5),
+      paddingLeft: theme.spacing(0.5),
     }),
     scrollToTopButton: css({
-      width: theme.spacing(3.5),
-      height: theme.spacing(3.5),
-      padding: 0,
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
+      margin: 0,
+      marginTop: 'auto',
+    }),
+    controlButton: css({
+      margin: 0,
     }),
   };
 };
