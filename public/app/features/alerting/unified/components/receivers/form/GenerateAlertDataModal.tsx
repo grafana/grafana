@@ -97,31 +97,29 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
             setStatus('firing');
           }}
         >
-          <>
-            <Card>
-              <Stack direction="column" gap={1}>
-                <div className={styles.section}>
-                  <AnnotationsStep />
-                </div>
-                <div className={styles.section}>
-                  <LabelsField />
-                </div>
-                <div className={styles.flexWrapper}>
-                  <RadioButtonGroup value={status} options={alertOptions} onChange={(value) => setStatus(value)} />
-                  <Button
-                    onClick={onAdd}
-                    className={styles.onAddButton}
-                    icon="plus-circle"
-                    type="button"
-                    variant="secondary"
-                    disabled={!labelsOrAnnotationsAdded()}
-                  >
-                    Add alert data
-                  </Button>
-                </div>
-              </Stack>
-            </Card>
-          </>
+          <Card>
+            <Stack direction="column" gap={1}>
+              <div className={styles.section}>
+                <AnnotationsStep />
+              </div>
+              <div className={styles.section}>
+                <LabelsField />
+              </div>
+              <div className={styles.flexWrapper}>
+                <RadioButtonGroup value={status} options={alertOptions} onChange={(value) => setStatus(value)} />
+                <Button
+                  onClick={onAdd}
+                  className={styles.onAddButton}
+                  icon="plus-circle"
+                  type="button"
+                  variant="secondary"
+                  disabled={!labelsOrAnnotationsAdded()}
+                >
+                  Add alert data
+                </Button>
+              </div>
+            </Stack>
+          </Card>
           <div className={styles.onSubmitWrapper} />
           {alerts.length > 0 && (
             <Stack direction="column" gap={1}>

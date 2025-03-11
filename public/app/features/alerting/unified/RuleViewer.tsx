@@ -15,7 +15,7 @@ import { stringifyErrorLike } from './utils/misc';
 import { getRuleIdFromPathname, parse as parseRuleId } from './utils/rule-id';
 import { withPageErrorBoundary } from './withPageErrorBoundary';
 
-const RuleViewer = (): JSX.Element => {
+const RuleViewer = () => {
   const params = useParams();
   const id = getRuleIdFromPathname(params);
 
@@ -48,11 +48,7 @@ const RuleViewer = (): JSX.Element => {
   }
 
   if (loading) {
-    return (
-      <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list" isLoading={true}>
-        <></>
-      </AlertingPageWrapper>
-    );
+    return <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list" isLoading={true} />;
   }
 
   if (rule) {
@@ -73,7 +69,7 @@ const RuleViewer = (): JSX.Element => {
   }
 
   // we should never get to this state
-  return <></>;
+  return null;
 };
 
 export const defaultPageNav: NavModelItem = {

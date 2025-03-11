@@ -197,38 +197,36 @@ export function ReceiverForm<R extends ChannelValues>({
             />
           );
         })}
-        <>
+        {isEditable && (
+          <Button
+            type="button"
+            icon="plus"
+            variant="secondary"
+            onClick={() => append({ ...defaultItem, __id: String(Math.random()) })}
+          >
+            Add contact point integration
+          </Button>
+        )}
+        <div className={styles.buttons}>
           {isEditable && (
-            <Button
-              type="button"
-              icon="plus"
-              variant="secondary"
-              onClick={() => append({ ...defaultItem, __id: String(Math.random()) })}
-            >
-              Add contact point integration
-            </Button>
+            <>
+              {isSubmitting && (
+                <Button disabled={true} icon="spinner" variant="primary">
+                  Saving...
+                </Button>
+              )}
+              {!isSubmitting && <Button type="submit">Save contact point</Button>}
+            </>
           )}
-          <div className={styles.buttons}>
-            {isEditable && (
-              <>
-                {isSubmitting && (
-                  <Button disabled={true} icon="spinner" variant="primary">
-                    Saving...
-                  </Button>
-                )}
-                {!isSubmitting && <Button type="submit">Save contact point</Button>}
-              </>
-            )}
-            <LinkButton
-              disabled={isSubmitting}
-              variant="secondary"
-              data-testid="cancel-button"
-              href={makeAMLink('/alerting/notifications', alertManagerSourceName)}
-            >
-              <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
-            </LinkButton>
-          </div>
-        </>
+          <LinkButton
+            disabled={isSubmitting}
+            variant="secondary"
+            data-testid="cancel-button"
+            href={makeAMLink('/alerting/notifications', alertManagerSourceName)}
+          >
+            <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
+          </LinkButton>
+        </div>
       </form>
     </FormProvider>
   );

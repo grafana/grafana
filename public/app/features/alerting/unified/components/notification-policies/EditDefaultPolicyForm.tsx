@@ -51,32 +51,34 @@ export const AmRootRouteForm = ({ actionButtons, alertManagerSourceName, onSubmi
   });
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <Field label="Default contact point" invalid={!!errors.receiver} error={errors.receiver?.message}>
-        <>
-          <div className={styles.container} data-testid="am-receiver-select">
-            <Controller
-              render={({ field: { onChange, ref, value, ...field } }) => (
-                <ContactPointSelector
-                  selectProps={{
-                    ...field,
-                    onChange: (changeValue) => handleContactPointSelect(changeValue, onChange),
-                  }}
-                  selectedContactPointName={value}
-                />
-              )}
-              control={control}
-              name="receiver"
-              rules={{ required: { value: true, message: 'Required.' } }}
-            />
-            <span>or</span>
-            <Link
-              className={styles.linkText}
-              href={makeAMLink('/alerting/notifications/receivers/new', alertManagerSourceName)}
-            >
-              Create a contact point
-            </Link>
-          </div>
-        </>
+      <Field
+        label="Default contact point"
+        invalid={Boolean(errors.receiver) ? true : undefined}
+        error={errors.receiver?.message}
+      >
+        <div className={styles.container} data-testid="am-receiver-select">
+          <Controller
+            render={({ field: { onChange, ref, value, ...field } }) => (
+              <ContactPointSelector
+                selectProps={{
+                  ...field,
+                  onChange: (changeValue) => handleContactPointSelect(changeValue, onChange),
+                }}
+                selectedContactPointName={value}
+              />
+            )}
+            control={control}
+            name="receiver"
+            rules={{ required: { value: true, message: 'Required.' } }}
+          />
+          <span>or</span>
+          <Link
+            className={styles.linkText}
+            href={makeAMLink('/alerting/notifications/receivers/new', alertManagerSourceName)}
+          >
+            Create a contact point
+          </Link>
+        </div>
       </Field>
       <Field
         label="Group by"

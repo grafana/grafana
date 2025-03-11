@@ -113,9 +113,7 @@ export function AlertInstanceModalSelector({
       >
         <div className={cx(styles.ruleTitle, styles.rowButtonTitle)}>{ruleName}</div>
         <div className={styles.alertFolder}>
-          <>
-            <Icon name="folder" /> {filteredRules[ruleName][0].labels.grafana_folder ?? ''}
-          </>
+          <Icon name="folder" /> {filteredRules[ruleName][0].labels.grafana_folder ?? ''}
         </div>
       </button>
     );
