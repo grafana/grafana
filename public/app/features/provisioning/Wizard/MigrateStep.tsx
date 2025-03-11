@@ -4,7 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import { Alert, Button, FieldSet, Stack, Text, Switch, Field } from '@grafana/ui';
 
 import { JobStatus } from '../JobStatus';
-import { useCreateRepositoryMigrateMutation } from '../api';
+import { useCreateRepositoryMigrateMutation, useUpdateRepositoryMutation } from '../api';
 
 import { RequestErrorAlert } from './RequestErrorAlert';
 import { WizardFormData } from './types';
@@ -15,6 +15,7 @@ export interface MigrateStepProps {
 
 export function MigrateStep({ onStatusChange }: MigrateStepProps) {
   const [migrateRepo, migrateQuery] = useCreateRepositoryMigrateMutation();
+  const [updateRepo] = useUpdateRepositoryMutation();
   const [showMigrateStatus, setShowMigrateStatus] = useState(false);
   const { watch, register } = useFormContext<WizardFormData>();
   const [repositoryName, history, identifier] = watch(['repositoryName', 'migrate.history', 'migrate.identifier']);
@@ -24,9 +25,14 @@ export function MigrateStep({ onStatusChange }: MigrateStepProps) {
     if (!repositoryName) {
       return;
     }
-    // PATCH the step
-    const patch = [{ op: 'replace', path: 'spec.setup', value: 'resources' }];
-    console.log('TODO path', patch);
+
+    // Async update the spec
+    updateRepo({
+      name: repositoryName,
+      patch: [{ op: 'replace', path: '/spec/setup', value: 'resources' }],
+    }).then((v) => {
+      console.log('Update STEP', v);
+    });
 
     setShowMigrateStatus(true);
     const response = await migrateRepo({

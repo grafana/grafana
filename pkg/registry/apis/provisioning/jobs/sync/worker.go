@@ -483,6 +483,8 @@ func (r *syncJob) client(kind string) (dynamic.ResourceInterface, error) {
 	switch kind {
 	case dashboard.GROUP, dashboard.DASHBOARD_RESOURCE, "Dashboard":
 		return r.dashboards, nil
+	case folders.GROUP, folders.RESOURCE, "Folder":
+		return r.folders.Client(), nil
 	}
 	return nil, fmt.Errorf("unsupported resource: %s", kind)
 }

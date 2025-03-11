@@ -102,7 +102,7 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 				Resource:  dashboard.DASHBOARD_RESOURCE,
 			})
 		default:
-			return nil, fmt.Errorf("unsupported resource: %s", res)
+			return nil, fmt.Errorf("unable to migrate resource: %s", res)
 		}
 	}
 

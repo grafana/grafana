@@ -60,9 +60,7 @@ export function ConnectionStep({ targetSelectable = true, generateName = false }
       setValue('repository.sync.target', folderConnected ? 'folder' : 'instance');
     }
     if (generateName) {
-      // Generate a unique title with timestamp to ensure uniqueness
-      const timestamp = Date.now();
-      setValue('repository.title', `instance-${timestamp}`);
+      setValue('repository.title', `instance`); // no need for special title
     }
   }, [folderConnected, generateName, setValue]);
 
