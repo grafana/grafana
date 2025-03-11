@@ -677,3 +677,94 @@ func TestGetFolderLegacyAndUnifiedStorage(t *testing.T) {
 		}
 	})
 }
+
+func TestSetDefaultPermissionsWhenCreatingFolder(t *testing.T) {
+	folderService := &foldertest.FakeService{}
+	setUpRBACGuardian(t)
+	folderWithoutParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
+
+	type testCase struct {
+		description                   string
+		expectedCallsToSetPermissions int
+		expectedCode                  int
+		expectedFolder                *folder.Folder
+		permissions                   []accesscontrol.Permission
+		featuresArr                   []any
+		input                         string
+	}
+
+	tcs := []testCase{
+		{
+			description:                   "folder creation succeeds, via legacy storage",
+			expectedCallsToSetPermissions: 1,
+			input:                         folderWithoutParentInput,
+			expectedCode:                  http.StatusOK,
+			expectedFolder:                &folder.Folder{UID: "uid", Title: "Folder"},
+			permissions:                   []accesscontrol.Permission{{Action: dashboards.ActionFoldersCreate}},
+		},
+		{
+			description:                   "folder creation succeeds, via API Server",
+			expectedCallsToSetPermissions: 0,
+			input:                         folderWithoutParentInput,
+			expectedCode:                  http.StatusOK,
+			expectedFolder:                &folder.Folder{UID: "uid", Title: "Folder"},
+			permissions:                   []accesscontrol.Permission{{Action: dashboards.ActionFoldersCreate}},
+			featuresArr:                   []any{featuremgmt.FlagKubernetesClientDashboardsFolders},
+		},
+	}
+
+	// we need to save these values because they are defined at `setting` package level
+	// and modified when we invoke setting.NewCfgFromINIFile
+	prevCookieSameSiteDisabled := setting.CookieSameSiteDisabled
+	prevCookieSameSiteMode := setting.CookieSameSiteMode
+
+	cfg := setting.NewCfg()
+	cfg.Raw.Section("rbac").Key("resources_with_managed_permissions_on_creation").SetValue("folder")
+	tmpCfg, err := setting.NewCfgFromINIFile(cfg.Raw)
+	require.NoError(t, err)
+	cfg.RBAC = tmpCfg.RBAC
+
+	// restore previous values so other tests don't break
+	// ex: TestHTTPServer_RotateUserAuthToken
+	setting.CookieSameSiteDisabled = prevCookieSameSiteDisabled
+	setting.CookieSameSiteMode = prevCookieSameSiteMode
+
+	for _, tc := range tcs {
+		t.Run(tc.description, func(t *testing.T) {
+			folderService.ExpectedFolder = tc.expectedFolder
+			folderPermService := acmock.NewMockedPermissionsService()
+			folderPermService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
+
+			srv := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = cfg
+
+				featuresArr := append(tc.featuresArr, featuremgmt.FlagNestedFolders)
+				hs.Features = featuremgmt.WithFeatures(
+					featuresArr...,
+				)
+				hs.folderService = folderService
+				hs.folderPermissionsService = folderPermService
+				hs.accesscontrolService = actest.FakeService{}
+			})
+
+			input := strings.NewReader(tc.input)
+			req := srv.NewPostRequest("/api/folders", input)
+			req = webtest.RequestWithSignedInUser(req, userWithPermissions(1, tc.permissions))
+			resp, err := srv.SendJSON(req)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedCode, resp.StatusCode)
+
+			folder := dtos.Folder{}
+			err = json.NewDecoder(resp.Body).Decode(&folder)
+			require.NoError(t, err)
+			require.NoError(t, resp.Body.Close())
+
+			folderPermService.AssertNumberOfCalls(t, "SetPermissions", tc.expectedCallsToSetPermissions)
+
+			if tc.expectedCode == http.StatusOK {
+				assert.Equal(t, "uid", folder.UID)
+				assert.Equal(t, "Folder", folder.Title)
+			}
+		})
+	}
+}
