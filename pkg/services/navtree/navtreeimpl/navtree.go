@@ -130,7 +130,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		})
 	}
 
-	if hasAccess(ac.EvalPermission(ac.ActionDatasourcesDrilldown)) {
+	if hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
 		drilldownChildNavLinks := s.buildDrilldownNavLinks(c)
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:       "Drilldown",
@@ -293,18 +293,6 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 		children = append(children, &navtree.NavLink{
 			Text: "Change password", Id: "profile/password", Url: s.cfg.AppSubURL + "/profile/password",
 			Icon: "lock",
-		})
-	}
-
-	if !s.cfg.DisableSignoutMenu {
-		// add sign out first
-		children = append(children, &navtree.NavLink{
-			Text:         "Sign out",
-			Id:           "sign-out",
-			Url:          s.cfg.AppSubURL + "/logout",
-			Icon:         "arrow-from-right",
-			Target:       "_self",
-			HideFromTabs: true,
 		})
 	}
 

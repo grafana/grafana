@@ -66,9 +66,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				{
 					Action: ac.ActionDatasourcesExplore,
 				},
-				{
-					Action: ac.ActionDatasourcesDrilldown,
-				},
 			},
 		},
 		Grants: []string{string(org.RoleEditor)},

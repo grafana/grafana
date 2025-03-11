@@ -79,10 +79,6 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
-	// FlagVizActions
-	// Allow actions in visualizations
-	FlagVizActions = "vizActions"
-
 	// FlagDisableSecretsCompatibility
 	// Disable duplicated secret storage in legacy tables
 	FlagDisableSecretsCompatibility = "disableSecretsCompatibility"
@@ -540,7 +536,7 @@ const (
 	FlagLogQLScope = "logQLScope"
 
 	// FlagSqlExpressions
-	// Enables using SQL and DuckDB functions as Expressions.
+	// Enables SQL Expressions, which can execute SQL queries against data source results.
 	FlagSqlExpressions = "sqlExpressions"
 
 	// FlagNodeGraphDotLayout
@@ -958,4 +954,24 @@ const (
 	// FlagRendererDisableAppPluginsPreload
 	// Disable pre-loading app plugins when the request is coming from the renderer
 	FlagRendererDisableAppPluginsPreload = "rendererDisableAppPluginsPreload"
+
+	// FlagAssetSriChecks
+	// Enables SRI checks for Grafana JavaScript assets
+	FlagAssetSriChecks = "assetSriChecks"
+
+	// FlagAlertRuleRestore
+	// Enables the alert rule restore feature
+	FlagAlertRuleRestore = "alertRuleRestore"
+
+	// FlagGrafanaManagedRecordingRulesDatasources
+	// Enables writing to data sources for Grafana-managed recording rules.
+	FlagGrafanaManagedRecordingRulesDatasources = "grafanaManagedRecordingRulesDatasources"
+
+	// FlagInviteUserExperimental
+	// Renders invite user button along the app
+	FlagInviteUserExperimental = "inviteUserExperimental"
+
+	// FlagExtraLanguages
+	// Enables additional languages
+	FlagExtraLanguages = "extraLanguages"
 )

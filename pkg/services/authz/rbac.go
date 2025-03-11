@@ -11,6 +11,7 @@ import (
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"k8s.io/client-go/rest"
 
@@ -33,8 +34,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
-// `authzService` is hardcoded in authz-service
-const authzServiceAudience = "authzService"
+// AuthzServiceAudience is the audience for the authz service.
+const AuthzServiceAudience = "authzService"
 
 // ProvideAuthZClient provides an AuthZ client and creates the AuthZ service.
 func ProvideAuthZClient(
@@ -119,11 +120,19 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer tracing.Tracer) 
 		return nil, fmt.Errorf("failed to initialize token exchange client: %w", err)
 	}
 
+	transportCreds := insecure.NewCredentials()
+	if clientCfg.certFile != "" {
+		transportCreds, err = credentials.NewClientTLSFromFile(clientCfg.certFile, "")
+		if err != nil {
+			return nil, fmt.Errorf("failed to load TLS credentials: %w", err)
+		}
+	}
+
 	conn, err := grpc.NewClient(
 		clientCfg.remoteAddress,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithTransportCredentials(transportCreds),
 		grpc.WithPerRPCCredentials(
-			newGRPCTokenAuth(authzServiceAudience, clientCfg.tokenNamespace, tokenClient),
+			NewGRPCTokenAuth(AuthzServiceAudience, clientCfg.tokenNamespace, tokenClient),
 		),
 	)
 	if err != nil {

@@ -20,6 +20,7 @@ func NewConvertPrometheusApi(svc *ConvertPrometheusSrv) *ConvertPrometheusApiHan
 	}
 }
 
+// mimirtool
 func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusGetRules(ctx *contextmodel.ReqContext) response.Response {
 	return f.svc.RouteConvertPrometheusGetRules(ctx)
 }
@@ -53,4 +54,29 @@ func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusPostRuleGroup(
 	}
 
 	return f.svc.RouteConvertPrometheusPostRuleGroup(ctx, namespaceTitle, promGroup)
+}
+
+// cortextool
+func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusCortexGetRules(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteConvertPrometheusGetRules(ctx)
+}
+
+func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusCortexDeleteNamespace(ctx *contextmodel.ReqContext, namespaceTitle string) response.Response {
+	return f.handleRouteConvertPrometheusDeleteNamespace(ctx, namespaceTitle)
+}
+
+func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusCortexDeleteRuleGroup(ctx *contextmodel.ReqContext, namespaceTitle string, group string) response.Response {
+	return f.handleRouteConvertPrometheusDeleteRuleGroup(ctx, namespaceTitle, group)
+}
+
+func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusCortexGetNamespace(ctx *contextmodel.ReqContext, namespaceTitle string) response.Response {
+	return f.handleRouteConvertPrometheusGetNamespace(ctx, namespaceTitle)
+}
+
+func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusCortexGetRuleGroup(ctx *contextmodel.ReqContext, namespaceTitle string, group string) response.Response {
+	return f.handleRouteConvertPrometheusGetRuleGroup(ctx, namespaceTitle, group)
+}
+
+func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusCortexPostRuleGroup(ctx *contextmodel.ReqContext, namespaceTitle string) response.Response {
+	return f.handleRouteConvertPrometheusPostRuleGroup(ctx, namespaceTitle)
 }
