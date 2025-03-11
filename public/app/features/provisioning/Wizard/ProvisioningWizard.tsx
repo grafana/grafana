@@ -76,6 +76,9 @@ export function ProvisioningWizard() {
   // Calculate button text based on current step position
   const getNextButtonText = (currentStep: WizardStep) => {
     const stepIndex = availableSteps.findIndex((s) => s.id === currentStep);
+    if (currentStep === 'bootstrap') {
+      return 'Start';
+    }
     return stepIndex === availableSteps.length - 1 ? 'Finish' : 'Next';
   };
 
