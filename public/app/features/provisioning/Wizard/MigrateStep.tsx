@@ -17,6 +17,8 @@ export interface MigrateStepProps {
 export function MigrateStep({ onStatusChange, onRunningChange }: MigrateStepProps) {
   const [migrateRepo, migrateQuery] = useCreateRepositoryMigrateMutation();
   const [showMigrateStatus, setShowMigrateStatus] = useState(false);
+  const [migrateError, setMigrateError] = useState<string | null>(null);
+  const [isInitialMigrate, setIsInitialMigrate] = useState(true);
   const { watch } = useFormContext<WizardFormData>();
   const repositoryName = watch('repositoryName');
   const migrateName = migrateQuery.data?.metadata?.name;
@@ -25,46 +27,59 @@ export function MigrateStep({ onStatusChange, onRunningChange }: MigrateStepProp
 
   // Update running state
   useEffect(() => {
-    onRunningChange(showMigrateStatus);
-  }, [showMigrateStatus, onRunningChange]);
+    onRunningChange(showMigrateStatus || migrateQuery.isLoading);
+  }, [showMigrateStatus, migrateQuery.isLoading, onRunningChange]);
 
+  // Handle initial migration
   useEffect(() => {
+    let isMounted = true;
+
     const startMigrate = async () => {
-      if (!repositoryName) {
+      if (!repositoryName || !isInitialMigrate) {
         return;
       }
-      setShowMigrateStatus(true);
-      const response = await migrateRepo({
-        name: repositoryName,
-        body: {
-          identifier,
-          history,
-        },
-      });
-      if ('error' in response) {
+
+      try {
+        const response = await migrateRepo({
+          name: repositoryName,
+          body: {
+            identifier,
+            history,
+          },
+        }).unwrap();
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (response?.metadata?.name) {
+          setShowMigrateStatus(true);
+          setMigrateError(null);
+        } else {
+          onStatusChange(false);
+          setShowMigrateStatus(false);
+          setMigrateError('Invalid response from migration operation');
+        }
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
         onStatusChange(false);
         setShowMigrateStatus(false);
+        setMigrateError(error instanceof Error ? error.message : 'Failed to start migration operation');
+      } finally {
+        if (isMounted) {
+          setIsInitialMigrate(false);
+        }
       }
     };
 
     startMigrate();
-  }, [repositoryName, migrateRepo, onStatusChange, identifier, history]);
 
-  if (showMigrateStatus && migrateName) {
-    return (
-      <Stack direction="column" gap={2}>
-        <JobStatus
-          name={migrateName}
-          onStatusChange={(success) => {
-            onStatusChange(success);
-            if (!success) {
-              setShowMigrateStatus(false);
-            }
-          }}
-        />
-      </Stack>
-    );
-  }
+    return () => {
+      isMounted = false;
+    };
+  }, [repositoryName, migrateRepo, onStatusChange, identifier, history, isInitialMigrate]);
 
   return (
     <Stack direction="column" gap={2}>
@@ -78,13 +93,37 @@ export function MigrateStep({ onStatusChange, onRunningChange }: MigrateStepProp
           Repository name is required to migrate dashboards. Please complete the repository configuration step first.
         </Alert>
       )}
+
+      {migrateError && (
+        <Alert severity="error" title="Migration Error">
+          {migrateError}
+        </Alert>
+      )}
+
       <RequestErrorAlert request={migrateQuery} />
 
       <Alert severity="info" title="Note">
         Dashboards will be unavailable while running this process.
       </Alert>
 
-      {migrateQuery.isLoading && <Text>Migrating dashboards to repository...</Text>}
+      {(migrateQuery.isLoading || showMigrateStatus) && (
+        <Text>
+          {migrateQuery.isLoading ? 'Initializing migration operation...' : 'Migrating dashboards to repository...'}
+        </Text>
+      )}
+
+      {showMigrateStatus && migrateName && (
+        <JobStatus
+          name={migrateName}
+          onStatusChange={(success) => {
+            onStatusChange(success);
+            if (!success) {
+              setShowMigrateStatus(false);
+              setMigrateError('Migration operation failed');
+            }
+          }}
+        />
+      )}
     </Stack>
   );
 }

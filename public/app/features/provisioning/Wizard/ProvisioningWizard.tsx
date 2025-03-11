@@ -232,8 +232,8 @@ function WizardContent({
       } finally {
         setIsSubmitting(false);
       }
-    } else {
-      handleStatusChange(true);
+    } else if (!isJobStep(activeStep)) {
+      // Only auto-proceed for non-job steps
       handleNext();
     }
   };
