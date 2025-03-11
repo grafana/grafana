@@ -63,8 +63,8 @@ const desertBloomTheme: NewThemeOptions = {
     },
 
     gradients: {
-      brandHorizontal: 'linear-gradient(270deg, #FF6F61 0%, rgba(255, 167, 58, 1) 100%)',
-      brandVertical: 'linear-gradient(0deg, #FF6F61 0%, rgba(255, 167, 58, 1) 100%)',
+      brandHorizontal: 'linear-gradient(270deg,rgba(255, 111, 97, 1) 0%, rgba(255, 167, 58, 1) 100%)',
+      brandVertical: 'linear-gradient(0deg, rgba(255, 111, 97, 1) 0%, rgba(255, 167, 58, 1) 100%)',
     },
     contrastThreshold: 3,
     hoverFactor: 0.03,
