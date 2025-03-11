@@ -261,10 +261,6 @@ func TestDebouncer(t *testing.T) {
 
 		// Check processed values
 		close(processed)
-		processedSlice := make([]string, 0, len(processed))
-		for v := range processed {
-			processedSlice = append(processedSlice, v)
-		}
 
 		// We should have processed key1 and key2
 		processedMu.Lock()
