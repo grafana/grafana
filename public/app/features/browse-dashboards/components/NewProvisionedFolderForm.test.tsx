@@ -53,6 +53,14 @@ jest.mock('app/features/provisioning/hooks', () => {
   };
 });
 
+jest.mock('react-router-dom-v5-compat', () => {
+  const actual = jest.requireActual('react-router-dom-v5-compat');
+  return {
+    ...actual,
+    useNavigate: () => jest.fn(),
+  };
+});
+
 // Mock the defaults
 jest.mock('../../dashboard-scene/saving/provisioned/defaults', () => {
   return {
@@ -101,6 +109,14 @@ function setup(props: Partial<Props> = {}) {
   };
 }
 
+const mockRequest = {
+  isSuccess: false,
+  isError: false,
+  isLoading: false,
+  error: null,
+  data: { resource: { upsert: { metadata: { name: 'new-folder' } } } },
+};
+
 describe('NewProvisionedFolderForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -145,12 +161,7 @@ describe('NewProvisionedFolderForm', () => {
 
     // Mock useCreateRepositoryFilesWithPathMutation
     const mockCreate = jest.fn();
-    const mockRequest = {
-      isSuccess: false,
-      isError: false,
-      isLoading: false,
-      error: null,
-    };
+
     (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([mockCreate, mockRequest]);
 
     (validationSrv.validateNewFolderName as jest.Mock).mockResolvedValue(true);
@@ -248,6 +259,7 @@ describe('NewProvisionedFolderForm', () => {
     (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([
       mockCreate,
       {
+        ...mockRequest,
         isSuccess: true,
         isError: false,
         isLoading: false,
@@ -294,6 +306,7 @@ describe('NewProvisionedFolderForm', () => {
     (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([
       mockCreate,
       {
+        ...mockRequest,
         isSuccess: true,
         isError: false,
         isLoading: false,
@@ -342,6 +355,7 @@ describe('NewProvisionedFolderForm', () => {
     (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([
       mockCreate,
       {
+        ...mockRequest,
         isSuccess: false,
         isError: true,
         isLoading: false,
@@ -374,6 +388,7 @@ describe('NewProvisionedFolderForm', () => {
     (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([
       jest.fn(),
       {
+        ...mockRequest,
         isSuccess: false,
         isError: false,
         isLoading: true,
