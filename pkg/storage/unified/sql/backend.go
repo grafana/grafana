@@ -123,7 +123,7 @@ func (b *backend) initLocked(ctx context.Context) error {
 		return fmt.Errorf("initialize resource DB: %w", err)
 	}
 
-	if err := b.db.PingContext(ctx); err != nil {
+	if err := dbConn.PingContext(ctx); err != nil {
 		return fmt.Errorf("ping resource DB: %w", err)
 	}
 
