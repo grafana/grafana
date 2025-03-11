@@ -28,7 +28,6 @@ jobs:
     env:
       TEST_TYPE: 'be-unit-enterprise'
       WIRE_TAGS: 'enterprise'
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -44,7 +43,10 @@ jobs:
       - name: Restore build dependencies
         uses: actions/cache/restore@v4
         with:
-          key: go-test-cache
+          key: go-test-cache-${{ github.ref_name }}
+          restore-keys: |
+            go-test-cache-${{ github.head_ref }}
+            go-test-cache-main
           path: /home/runner/.cache/go-build
       - name: Setup Enterprise
         uses: ./.github/actions/setup-enterprise
@@ -86,13 +88,14 @@ jobs:
           codecov-name: '${{ env.TEST_TYPE }}'
       # "Clear build cache" is a hack to get around GitHub Actions not allowing us to overwrite existing cache keys
       - name: Clear build cache
-        run: gh cache delete go-test-cache
+        run: gh cache delete go-test-cache-${{ github.ref_name }}
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
       - name: Save build cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/save@v4
         with:
-          key: go-test-cache
+          key: go-test-cache-${{ github.ref_name }}
           path: /home/runner/.cache/go-build
 
 concurrency:
