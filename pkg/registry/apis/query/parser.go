@@ -43,6 +43,9 @@ type parsedRequestInfo struct {
 
 	// Hidden queries used as dependencies
 	HideBeforeReturn []string `json:"hide,omitempty"`
+
+	// SQL Inputs
+	SqlInputs map[string]struct{} `json:"sqlInputs,omitempty"`
 }
 
 type queryParser struct {
@@ -150,9 +153,11 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 		// Build the graph for a request
 		dg := simple.NewDirectedGraph()
 		dg.AddNode(queryNode)
+
 		for _, exp := range expressions {
 			dg.AddNode(exp)
 		}
+
 		for _, exp := range expressions {
 			vars := exp.Command.NeedsVars()
 
@@ -174,12 +179,12 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 				}
 
 				// If the input is SQL, conversion is handled differently
-				if _, ok := target.Command.(*expr.SQLCommand); ok {
-					if dsNode, ok := target.(*DSNode); ok {
-						dsNode.isInputToSQLExpr = true
-					} else {
+				if _, isSqlExp := exp.Command.(*expr.SQLCommand); isSqlExp {
+					if _, ifDepIsAlsoExpression := expressions[refId]; ifDepIsAlsoExpression {
 						// Only allow data source nodes as SQL expression inputs for now
-						return fmt.Errorf("only data source queries may be inputs to a sql expression, %v is the input for %v", neededVar, cmdNode.RefID())
+						return rsp, fmt.Errorf("only data source queries may be inputs to a sql expression, %v is the input for %v", refId, exp.RefID)
+					} else {
+						rsp.SqlInputs[refId] = struct{}{}
 					}
 				}
 
