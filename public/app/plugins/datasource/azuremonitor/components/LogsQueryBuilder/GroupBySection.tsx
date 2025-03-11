@@ -4,11 +4,17 @@ import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorList, EditorRow } from '@grafana/plugin-ui';
 import { Button } from '@grafana/ui';
 
-import { BuilderQueryEditorExpressionType, BuilderQueryEditorGroupByExpression, BuilderQueryEditorPropertyType, BuilderQueryExpression } from '../../dataquery.gen';
+import {
+  BuilderQueryEditorExpressionType,
+  BuilderQueryEditorGroupByExpression,
+  BuilderQueryEditorPropertyType,
+  BuilderQueryExpression,
+} from '../../dataquery.gen';
 import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
 
 import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
 import { GroupByItem } from './GroupByItem';
+import { getAggregationString } from './utils';
 
 interface GroupBySectionProps {
   query: AzureMonitorQuery;
@@ -16,16 +22,12 @@ interface GroupBySectionProps {
   onQueryUpdate: (newQuery: AzureMonitorQuery) => void;
 }
 
-export const GroupBySection: React.FC<GroupBySectionProps> = ({
-  query, 
-  onQueryUpdate,
-  allColumns,
-}) => {
+export const GroupBySection: React.FC<GroupBySectionProps> = ({ query, onQueryUpdate, allColumns }) => {
   const [groupBys, setGroupBys] = useState<BuilderQueryEditorGroupByExpression[]>([]);
   const builderQuery = query.azureLogAnalytics?.builderQuery;
 
   if (!builderQuery) {
-    return null; // Return early if builderQuery is not available
+    return;
   }
 
   const availableColumns: Array<SelectableValue<string>> = useMemo(() => {
@@ -46,10 +48,9 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
 
   useEffect(() => {
     setGroupBys([]);
-  }, [builderQuery]);
+  }, [builderQuery.from?.property.name]);
 
   const handleGroupByChange = (newItems: Array<Partial<BuilderQueryEditorGroupByExpression>>) => {
-    // Clean the new items and update groupBys state
     let cleaned: BuilderQueryEditorGroupByExpression[] = newItems
       .filter((g) => g.property?.name)
       .map((g) => ({
@@ -60,7 +61,6 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
       }));
 
     setGroupBys(cleaned);
-
     let groupByClauses: string[] = [];
 
     cleaned.forEach((gb) => {
@@ -83,7 +83,8 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
       },
     };
 
-    const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(updatedBuilderQuery, allColumns);
+    const aggregation = getAggregationString(builderQuery.reduce?.expressions);
+    const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(updatedBuilderQuery, allColumns, aggregation);
 
     onQueryUpdate({
       ...query,
@@ -98,7 +99,9 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
   const onDeleteGroupBy = (propertyName: string) => {
     setGroupBys((prevGroupBys) => {
       const updatedGroupBys = prevGroupBys.filter((gb) => gb.property.name !== propertyName);
-      const hasSelectedDatetime = updatedGroupBys.some((g) => g.property?.type === BuilderQueryEditorPropertyType.Datetime);
+      const hasSelectedDatetime = updatedGroupBys.some(
+        (g) => g.property?.type === BuilderQueryEditorPropertyType.Datetime
+      );
       const shouldIncludeTime = !updatedGroupBys.length || hasSelectedDatetime;
 
       let groupByClauses = updatedGroupBys.map((gb) => gb.property.name);
@@ -119,7 +122,8 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
         },
       };
 
-      const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(updatedBuilderQuery, allColumns);
+      const aggregation = getAggregationString(builderQuery.reduce?.expressions);
+      const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(updatedBuilderQuery, allColumns, aggregation);
 
       onQueryUpdate({
         ...query,

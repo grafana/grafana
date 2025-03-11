@@ -13,7 +13,6 @@ import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types'
 
 import AggregateItem from './AggregateItem';
 import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
-import { DEFAULT_LOGS_BUILDER_QUERY } from './utils';
 
 interface AggregateSectionProps {
   query: AzureMonitorQuery;
@@ -29,7 +28,11 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
   templateVariableOptions,
 }) => {
   const [aggregates, setAggregates] = useState<BuilderQueryEditorReduceExpression[]>([]);
-  const builderQuery = query.azureLogAnalytics?.builderQuery || DEFAULT_LOGS_BUILDER_QUERY;
+  const builderQuery = query.azureLogAnalytics?.builderQuery;
+
+  if (!builderQuery) {
+    return;
+  }
 
   const availableColumns: Array<SelectableValue<string>> = useMemo(() => {
     const columns = builderQuery.columns?.columns ?? [];
@@ -52,6 +55,20 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
       return [];
     });
   }, [builderQuery.from?.property.name]);
+
+  const onDeleteAggregate = (aggregateToDelete: Partial<BuilderQueryEditorReduceExpression>) => {
+    setAggregates((prevAggregates) => {
+      const updatedAggregates = prevAggregates.filter((agg) => agg.property?.name !== aggregateToDelete.property?.name);
+
+      if (updatedAggregates.length === 0) {
+        updateAggregatesAndQuery([]);
+      } else {
+        updateAggregatesAndQuery(updatedAggregates);
+      }
+
+      return updatedAggregates;
+    });
+  };
 
   const updateAggregatesAndQuery = (newAggregates: BuilderQueryEditorReduceExpression[]) => {
     const validAggregates = newAggregates.filter((agg) => agg.reduce?.name);
@@ -102,14 +119,6 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
 
     setAggregates(cleaned);
     updateAggregatesAndQuery(cleaned);
-  };
-
-  const onDeleteAggregate = (aggregateToDelete: Partial<BuilderQueryEditorReduceExpression>) => {
-    setAggregates((prevAggregates) => {
-      const updatedAggregates = prevAggregates.filter((agg) => agg.property?.name !== aggregateToDelete.property?.name);
-      updateAggregatesAndQuery(updatedAggregates);
-      return updatedAggregates;
-    });
   };
 
   return (

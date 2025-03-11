@@ -96,30 +96,39 @@ export class AzureMonitorKustoQueryParser {
     parts: string[]
   ) {
     const hasValidAggregation = !!(aggregation && aggregation.trim());
+    const summarizeAlreadyAdded = parts.some((part) => part.startsWith('summarize'));
+    const hasTimeFilter = parts.find((p) => p.includes('$__timeFilter'));
 
-    if (hasValidAggregation) {
-      const aggregationWithColumn =
-        aggregation === 'count()' && selectedColumns.length > 0
-          ? `count() by ${selectedColumns.join(', ')}`
-          : aggregation;
-
-      if (selectedColumns.includes(datetimeColumn) || selectedColumns.length === 0) {
-        parts.push(`summarize ${aggregationWithColumn} by ${datetimeColumn}`);
-      } else {
-        parts.push(`summarize ${aggregationWithColumn}`);
-      }
-    }
-
-    if (groupBy && groupBy.length > 0) {
+    if (hasValidAggregation && groupBy && groupBy.length > 0) {
       const groupByParts = new Set<string>();
+
       groupBy.forEach((col) => groupByParts.add(col));
+
+      if (hasTimeFilter && datetimeColumn) {
+        groupByParts.add(`bin(${datetimeColumn}, 1h)`);
+      }
+
+      if (groupByParts.has(datetimeColumn)) {
+        groupByParts.delete(datetimeColumn);
+      }
+
+      if (groupByParts.size > 0 && !summarizeAlreadyAdded) {
+        parts.push(`summarize ${aggregation} by ${Array.from(groupByParts).join(', ')}`);
+      }
+    } else if (!hasValidAggregation && groupBy && groupBy.length > 0) {
+      const groupByParts = new Set<string>();
+
+      groupBy.forEach((col) => groupByParts.add(col));
+
       if (selectedColumns.includes(datetimeColumn)) {
         groupByParts.add(`bin(${datetimeColumn}, 1h)`);
       }
 
-      if (groupByParts.size > 0) {
-        parts.push(`summarize ${aggregation || 'count()'} by ${Array.from(groupByParts).join(', ')}`);
+      if (groupByParts.size > 0 && !summarizeAlreadyAdded) {
+        parts.push(`summarize by ${Array.from(groupByParts).join(', ')}`);
       }
+    } else if (hasValidAggregation && !summarizeAlreadyAdded) {
+      parts.push(`summarize ${aggregation}`);
     }
   }
 
@@ -136,10 +145,13 @@ export class AzureMonitorKustoQueryParser {
     shouldApplyTimeFilter: boolean,
     parts: string[]
   ) {
-    // If the datetime column is selected and it's not part of groupBy, add the order by
-    if (selectedColumns.includes(datetimeColumn) && !groupBy?.some((col) => col.startsWith('bin('))) {
-      parts.push(`order by ${datetimeColumn} asc`);
-    } else if (shouldApplyTimeFilter && !groupBy?.some((col) => col.startsWith('bin('))) {
+    const hasDatetimeGroupBy = groupBy?.some((col) => col === datetimeColumn);
+
+    const hasBinApplied = parts?.some((col) => col.includes('bin('));
+
+    if (hasDatetimeGroupBy && !hasBinApplied) {
+      parts.push(`summarize ${selectedColumns.join(', ')} by bin(${datetimeColumn}, 1h)`);
+    } else if (!groupBy?.length && selectedColumns.includes(datetimeColumn)) {
       parts.push(`order by ${datetimeColumn} asc`);
     }
   }

@@ -166,19 +166,36 @@ export const parseQueryToBuilder = (query: string): BuilderQueryExpression => {
     }
 
     if (line.startsWith('| summarize ')) {
-      const groupByColumns = line
-        .replace('| summarize ', '')
-        .split(',')
-        .map((col) => col.trim());
-      expression.groupBy = {
-        type: BuilderQueryEditorExpressionType.Group_by,
-        expressions: groupByColumns.map((col) => ({
-          property: { name: col, type: BuilderQueryEditorPropertyType.String },
+      const summarizeParts = line.replace('| summarize ', '').split('by');
+      const aggregationPart = summarizeParts[0].trim();
+      const groupByPart = summarizeParts[1]?.trim();
+
+      const aggregationExpressions = aggregationPart.split(',').map((agg) => {
+        return {
+          reduce: { name: agg.trim(), type: BuilderQueryEditorPropertyType.Function },
+          property: { name: '', type: BuilderQueryEditorPropertyType.String },
+        };
+      });
+
+      if (!expression.reduce) {
+        expression.reduce = { expressions: [], type: BuilderQueryEditorExpressionType.Reduce };
+      }
+
+      expression.reduce.expressions = aggregationExpressions;
+
+      if (groupByPart) {
+        const groupByColumns = groupByPart.split(',').map((col) => col.trim());
+        expression.groupBy = {
           type: BuilderQueryEditorExpressionType.Group_by,
-        })),
-      };
+          expressions: groupByColumns.map((col) => ({
+            property: { name: col, type: BuilderQueryEditorPropertyType.String },
+            type: BuilderQueryEditorExpressionType.Group_by,
+          })),
+        };
+      }
     }
 
+    // Handle limit clause
     if (line.startsWith('| limit ')) {
       const limitValue = parseInt(line.replace('| limit ', '').trim(), 10);
       if (!isNaN(limitValue)) {
@@ -188,4 +205,24 @@ export const parseQueryToBuilder = (query: string): BuilderQueryExpression => {
   });
 
   return expression;
+};
+
+export const getAggregationString = (reduceExpressions: any[] = []) => {
+  return reduceExpressions
+    .map((agg) => {
+      if (agg.reduce?.name === 'count()' && agg.property?.name === '') {
+        return 'count()';
+      }
+
+      if (agg.reduce?.name === 'count()') {
+        return `count(${agg.property?.name})`;
+      }
+
+      if (agg.property?.name === '') {
+        return `${agg.reduce.name}`;
+      } else {
+        return `${agg.reduce.name}(${agg.property?.name})`;
+      }
+    })
+    .join(', ');
 };

@@ -4,9 +4,11 @@ import { SelectableValue } from '@grafana/data';
 import { AccessoryButton, InputGroup } from '@grafana/plugin-ui';
 import { Select } from '@grafana/ui';
 
-import { BuilderQueryEditorGroupByExpression, BuilderQueryEditorPropertyType, BuilderQueryEditorExpressionType } from '../../dataquery.gen';
-
-import { valueToDefinition } from './utils';
+import {
+  BuilderQueryEditorGroupByExpression,
+  BuilderQueryEditorPropertyType,
+  BuilderQueryEditorExpressionType,
+} from '../../dataquery.gen';
 
 interface GroupByItemProps {
   groupBy: Partial<BuilderQueryEditorGroupByExpression>;
@@ -21,30 +23,33 @@ export const GroupByItem: React.FC<GroupByItemProps> = ({ groupBy, onChange, onD
       ? columns.map((c) => ({ label: c.label, value: c.value }))
       : [{ label: 'No columns available', value: '' }];
 
+  const handleChange = (selectedValue: SelectableValue<string>) => {
+    if (!selectedValue.value) {
+      return;
+    }
+
+    const selectedColumn = columns.find((c) => c.value === selectedValue.value);
+
+    onChange({
+      ...groupBy,
+      property: {
+        name: selectedValue.value,
+        type: selectedColumn?.type || BuilderQueryEditorPropertyType.String,
+      },
+      interval: groupBy.interval,
+      type: BuilderQueryEditorExpressionType.Group_by,
+    });
+  };
+
   return (
     <InputGroup>
       <Select
         aria-label="column"
         width="auto"
-        autoFocus={groupBy.focus}
-        value={groupBy.property?.name ? valueToDefinition(groupBy.property?.name) : null}
+        value={groupBy.property?.name ? { label: groupBy.property.name, value: groupBy.property.name } : null}
         options={columnOptions}
         allowCustomValue
-        onChange={(e) => {
-          if (!e.value) {
-            return;
-          }
-
-          const selectedColumn = columns.find((c) => c.value === e.value);
-          onChange({
-            property: {
-              name: e.value!,
-              type: selectedColumn?.type ? BuilderQueryEditorPropertyType.String : BuilderQueryEditorPropertyType.String,  // Default to BuilderQueryEditorPropertyType.String or handle conversion here
-            },
-            interval: groupBy.interval,
-            type: BuilderQueryEditorExpressionType.Group_by,
-          });          
-        }}
+        onChange={handleChange}
       />
       <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} />
     </InputGroup>

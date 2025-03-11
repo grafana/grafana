@@ -15,6 +15,7 @@ interface AggregateItemProps {
 
 const AggregateItem: React.FC<AggregateItemProps> = (props) => {
   const { aggregate, onChange, onDelete, columns } = props;
+  const isCountAggregate = aggregate.reduce?.name === 'count';
 
   const availableAggregates = useMemo(() => {
     return [
@@ -50,24 +51,32 @@ const AggregateItem: React.FC<AggregateItemProps> = (props) => {
           });
         }}
       />
-      <Label style={{ margin: '9px 9px 0 9px' }}>OF</Label>
-      <Select
-        aria-label="column"
-        width="auto"
-        value={aggregate.property?.name ? { label: aggregate.property?.name, value: aggregate.property?.name } : null}
-        options={columns}
-        onChange={(e) => {
-          const newColumn = e.value;
-          onChange({
-            ...aggregate,
-            property: {
-              name: newColumn || '',
-              type: aggregate.property?.type || BuilderQueryEditorPropertyType.String,
-            },
-            reduce: aggregate.reduce || { name: '', type: BuilderQueryEditorPropertyType.Function },
-          });
-        }}
-      />
+      {!isCountAggregate ? (
+        <>
+          <Label style={{ margin: '9px 9px 0 9px' }}>OF</Label>
+          <Select
+            aria-label="column"
+            width="auto"
+            value={
+              aggregate.property?.name ? { label: aggregate.property?.name, value: aggregate.property?.name } : null
+            }
+            options={columns}
+            onChange={(e) => {
+              const newColumn = e.value;
+              onChange({
+                ...aggregate,
+                property: {
+                  name: newColumn || '',
+                  type: aggregate.property?.type || BuilderQueryEditorPropertyType.String,
+                },
+                reduce: aggregate.reduce || { name: '', type: BuilderQueryEditorPropertyType.String },
+              });
+            }}
+          />
+        </>
+      ) : (
+        <></>
+      )}
       <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} />
     </InputGroup>
   );

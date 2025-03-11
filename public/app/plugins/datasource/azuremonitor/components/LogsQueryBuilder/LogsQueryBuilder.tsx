@@ -97,12 +97,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
         <TableSection {...props} tables={tables} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
         <FilterSection {...props} onQueryUpdate={onQueryChange} allColumns={allColumns} query={query} />
         <AggregateSection {...props} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
-        <GroupBySection 
-          {...props} 
-          allColumns={allColumns}
-          query={query} 
-          onQueryUpdate={onQueryChange} 
-        />
+        <GroupBySection {...props} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
         <EditorRow>
           <EditorFieldGroup>
             <EditorField label="Limit">

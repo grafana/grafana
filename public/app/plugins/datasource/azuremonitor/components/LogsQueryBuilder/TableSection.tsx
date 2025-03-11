@@ -48,7 +48,6 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
       };
 
       const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(updatedBuilderQuery, allColumns);
-      console.log('updatedQueryString', updatedQueryString);
       onQueryUpdate({
         ...query,
         azureLogAnalytics: {
@@ -69,7 +68,6 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
       columns: { columns: selectedArray, type: BuilderQueryEditorExpressionType.Property },
     };
     const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(updatedBuilderQuery, allColumns);
-    console.log('updatedQueryString', updatedQueryString);
 
     onQueryUpdate({
       ...query,
