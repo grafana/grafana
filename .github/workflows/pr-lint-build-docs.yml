@@ -37,3 +37,11 @@ jobs:
           cp -r docs/sources/* hugo/content/docs/grafana/latest/
           
           docker run --rm -v $(pwd):/src grafana/docs-base:latest /bin/sh -c "cd /src/hugo && make prod"
+      
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Verify generated CUE code
+        run: CODEGEN_VERIFY=1 make gen-cue
