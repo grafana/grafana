@@ -16,6 +16,7 @@ import (
 	"github.com/prometheus/prometheus/template"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/prom"
 )
 
 type Labels map[string]string
@@ -77,10 +78,17 @@ type Data struct {
 }
 
 func NewData(labels map[string]string, res eval.Result) Data {
+	values := NewValues(res.Values)
+
+	value := res.EvaluationString
+	if v, ok := values[prom.QueryRefID]; ok {
+		value = fmt.Sprintf("%g", v.Value)
+	}
+
 	return Data{
 		Labels: labels,
-		Values: NewValues(res.Values),
-		Value:  res.EvaluationString,
+		Values: values,
+		Value:  value,
 	}
 }
 

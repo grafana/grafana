@@ -21,7 +21,7 @@ const (
 )
 
 const (
-	queryRefID          = "query"
+	QueryRefID          = "query"
 	prometheusMathRefID = "prometheus_math"
 	thresholdRefID      = "threshold"
 )
@@ -198,7 +198,7 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 
 	if isRecordingRule {
 		record = &models.Record{
-			From:                queryRefID,
+			From:                QueryRefID,
 			Metric:              rule.Record,
 			TargetDatasourceUID: p.cfg.DatasourceUID,
 		}
