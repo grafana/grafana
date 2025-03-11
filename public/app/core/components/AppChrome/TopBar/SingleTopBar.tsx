@@ -19,6 +19,7 @@ import { enrichHelpItem } from '../MegaMenu/utils';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
 import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
+import { InviteUserButton } from './InviteUserButton';
 import { ProfileButton } from './ProfileButton';
 import { SignInLink } from './SignInLink';
 import { TopNavBarMenu } from './TopNavBarMenu';
@@ -87,6 +88,7 @@ export const SingleTopBar = memo(function SingleTopBar({
           tooltip="Enable kiosk mode"
         />
         {!contextSrv.user.isSignedIn && <SignInLink />}
+        {config.featureToggles.inviteUserExperimental && <InviteUserButton />}
         {profileNode && <ProfileButton profileNode={profileNode} />}
       </Stack>
     </div>

@@ -983,18 +983,22 @@ var (
 			Expression:        "false",
 		},
 		{
-			Name:        "promQLScope",
-			Description: "In-development feature that will allow injection of labels into prometheus queries.",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaOSSBigTent,
-			Expression:  "true",
+			Name:              "promQLScope",
+			Description:       "In-development feature that will allow injection of labels into prometheus queries.",
+			Stage:             FeatureStageGeneralAvailability,
+			Owner:             grafanaOSSBigTent,
+			Expression:        "true",
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
 		},
 		{
-			Name:        "logQLScope",
-			Description: "In-development feature that will allow injection of labels into loki queries.",
-			Stage:       FeatureStagePrivatePreview,
-			Owner:       grafanaObservabilityLogsSquad,
-			Expression:  "false",
+			Name:              "logQLScope",
+			Description:       "In-development feature that will allow injection of labels into loki queries.",
+			Stage:             FeatureStagePrivatePreview,
+			Owner:             grafanaObservabilityLogsSquad,
+			Expression:        "false",
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
 		},
 		{
 			Name:         "sqlExpressions",
@@ -1070,8 +1074,9 @@ var (
 		{
 			Name:           "ssoSettingsSAML",
 			Description:    "Use the new SSO Settings API to configure the SAML connector",
-			Stage:          FeatureStagePublicPreview,
+			Stage:          FeatureStageGeneralAvailability,
 			Owner:          identityAccessTeam,
+			Expression:     "true",
 			AllowSelfServe: true,
 		},
 		{
@@ -1788,6 +1793,24 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaAlertingSquad,
 			Expression:  "true", // enabled by default
+		},
+		{
+			Name:              "grafanaManagedRecordingRulesDatasources",
+			Description:       "Enables writing to data sources for Grafana-managed recording rules.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			AllowSelfServe:    false,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
+			Name:              "inviteUserExperimental",
+			Description:       "Renders invite user button along the app",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSharingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
 		},
 	}
 )
