@@ -63,6 +63,9 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case sqlparser.BoolVal:
 		return
 
+	case *sqlparser.CaseExpr, *sqlparser.When:
+		return
+
 	case sqlparser.ColIdent, *sqlparser.ColName, sqlparser.Columns:
 		return
 
