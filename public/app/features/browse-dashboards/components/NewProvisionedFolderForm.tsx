@@ -7,9 +7,9 @@ import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { Alert, Button, Field, Input, RadioButtonGroup, Spinner, Stack, TextArea } from '@grafana/ui';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
-import { useCreateRepositoryFilesWithPathMutation, useGetRepositoryQuery } from 'app/features/provisioning/api';
+import { useCreateRepositoryFilesWithPathMutation } from 'app/features/provisioning/api';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
-import { usePullRequestParam } from 'app/features/provisioning/hooks';
+import { usePullRequestParam, useRepositoryList } from 'app/features/provisioning/hooks';
 import { WorkflowOption } from 'app/features/provisioning/types';
 import { validateBranchName } from 'app/features/provisioning/utils/git';
 
@@ -30,7 +30,7 @@ type FormData = {
 interface Props {
   onSubmit: () => void;
   onCancel: () => void;
-  parentFolder: FolderDTO;
+  parentFolder?: FolderDTO;
 }
 
 const initialFormValues: Partial<FormData> = {
@@ -40,20 +40,21 @@ const initialFormValues: Partial<FormData> = {
 };
 
 export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: Props) {
-  const repositoryName = parentFolder.repository?.name;
-  const query = useGetRepositoryQuery(repositoryName ? { name: repositoryName } : skipToken);
+  const repositoryName = parentFolder?.repository?.name;
+  const [items, isLoading] = useRepositoryList();
   const prURL = usePullRequestParam();
   const navigate = useNavigate();
   const [create, request] = useCreateRepositoryFilesWithPathMutation();
 
   // Get k8s folder data, necessary to get parent folder path
-  const folderQuery = useGetFolderQuery({ name: parentFolder.uid });
+  const folderQuery = useGetFolderQuery(parentFolder ? { name: parentFolder.uid } : skipToken);
 
-  if (!query.data && !query.isLoading) {
+  if (!items && !isLoading) {
     return <Alert title="Repository not found" severity="error" />;
   }
 
-  const repositoryConfig = query.data?.spec;
+  const repository = repositoryName ? items?.find((item) => item?.metadata?.name === repositoryName) : items?.[0];
+  const repositoryConfig = repository?.spec;
   const isGitHub = Boolean(repositoryConfig?.github);
 
   const {
@@ -110,7 +111,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
     repositoryName,
   ]);
 
-  if (query.isLoading || folderQuery.isLoading) {
+  if (isLoading || folderQuery.isLoading) {
     return <Spinner />;
   }
 
@@ -127,7 +128,8 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
   };
 
   const doSave = async ({ ref, title, workflow, comment }: FormData) => {
-    if (!title) {
+    const repoName = repository?.metadata?.name;
+    if (!title || !repoName) {
       return;
     }
     const basePath = folderQuery.data?.metadata?.annotations?.[AnnoKeySourcePath] ?? '';
@@ -138,7 +140,8 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
       .replace(/\s+/g, '-')
       .replace(/[^a-z0-9-]/g, '');
 
-    const path = `${basePath}/${titleInFilenameFormat}/`;
+    const prefix = basePath ? `${basePath}/` : '';
+    const path = `${prefix}${titleInFilenameFormat}/`;
 
     const folderModel = {
       title,
@@ -151,7 +154,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
 
     create({
       ref,
-      name: repositoryName ?? '',
+      name: repoName,
       path,
       message: comment || `Create folder: ${title}`,
       body: folderModel,

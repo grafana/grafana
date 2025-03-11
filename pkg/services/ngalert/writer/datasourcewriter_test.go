@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -43,16 +44,20 @@ func setupDataSources(t *testing.T) *testDataSources {
 	})
 
 	p1, _ := res.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-		UID:  "prom-1",
-		Type: datasources.DS_PROMETHEUS,
+		UID:      "prom-1",
+		Type:     datasources.DS_PROMETHEUS,
+		JsonData: simplejson.MustJson([]byte(`{"prometheusType":"Prometheus"}`)),
 	})
-	p1.URL = res.prom1.srv.URL + "/api/v1"
+	p1.URL = res.prom1.srv.URL
+	res.prom1.ExpectedPath = "/api/v1/write"
 
 	p2, _ := res.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-		UID:  "prom-2",
-		Type: datasources.DS_PROMETHEUS,
+		UID:      "prom-2",
+		Type:     datasources.DS_PROMETHEUS,
+		JsonData: simplejson.MustJson([]byte(`{"prometheusType":"Mimir"}`)),
 	})
-	p2.URL = res.prom2.srv.URL + "/api/v1"
+	p2.URL = res.prom2.srv.URL + "/api/prom"
+	res.prom2.ExpectedPath = "/api/prom/push"
 
 	// Add a non-Prometheus datasource.
 	_, _ = res.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
@@ -70,9 +75,8 @@ func TestDatasourceWriter(t *testing.T) {
 	datasources := setupDataSources(t)
 
 	cfg := DatasourceWriterConfig{
-		Timeout:               time.Second * 5,
-		DefaultDatasourceUID:  "prom-2",
-		RemoteWritePathSuffix: "/write",
+		Timeout:              time.Second * 5,
+		DefaultDatasourceUID: "prom-2",
 	}
 
 	met := metrics.NewRemoteWriterMetrics(prometheus.NewRegistry())
@@ -116,4 +120,77 @@ func TestDatasourceWriter(t *testing.T) {
 		err := writer.WriteDatasource(context.Background(), "", "metric", time.Now(), frames, 1, map[string]string{})
 		require.NoError(t, err)
 	})
+}
+
+func TestDatasourceWriterGetRemoteWriteURL(t *testing.T) {
+	tc := []struct {
+		name string
+		ds   datasources.DataSource
+		url  string
+	}{
+		{
+			"prometheus",
+			datasources.DataSource{
+				JsonData: simplejson.MustJson([]byte(`{"prometheusType":"Prometheus"}`)),
+				URL:      "http://example.com",
+			},
+			"http://example.com/api/v1/write",
+		},
+		{
+			"prometheus with prefix",
+			datasources.DataSource{
+				JsonData: simplejson.MustJson([]byte(`{"prometheusType":"Prometheus"}`)),
+				URL:      "http://example.com/myprom",
+			},
+			"http://example.com/myprom/api/v1/write",
+		},
+		{
+			"mimir/cortex legacy routes",
+			datasources.DataSource{
+				JsonData: simplejson.MustJson([]byte(`{"prometheusType":"Anything"}`)),
+				URL:      "http://example.com/api/prom",
+			},
+			"http://example.com/api/prom/push",
+		},
+		{
+			"mimir/cortex legacy routes with prefix",
+			datasources.DataSource{
+				JsonData: simplejson.MustJson([]byte(`{"prometheusType":"Anything"}`)),
+				URL:      "http://example.com/myprom/api/prom",
+			},
+			"http://example.com/myprom/api/prom/push",
+		},
+		{
+			"mimir/cortex new routes",
+			datasources.DataSource{
+				JsonData: simplejson.MustJson([]byte(`{"prometheusType":"Anything"}`)),
+				URL:      "http://example.com/prometheus",
+			},
+			"http://example.com/api/v1/push",
+		},
+		{
+			"mimir/cortex new routes with prefix",
+			datasources.DataSource{
+				JsonData: simplejson.MustJson([]byte(`{"prometheusType":"Anything"}`)),
+				URL:      "http://example.com/mymimir/prometheus",
+			},
+			"http://example.com/mymimir/api/v1/push",
+		},
+		{
+			"mimir/cortex with unknown suffix",
+			datasources.DataSource{
+				JsonData: simplejson.MustJson([]byte(`{"prometheusType":"Anything"}`)),
+				URL:      "http://example.com/foo/bar",
+			},
+			"http://example.com/api/v1/push",
+		},
+	}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			res, err := getRemoteWriteURL(&tt.ds)
+			require.NoError(t, err)
+			require.Equal(t, tt.url, res.String())
+		})
+	}
 }

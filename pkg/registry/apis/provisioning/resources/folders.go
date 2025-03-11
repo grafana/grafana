@@ -30,6 +30,10 @@ func NewFolderManager(repo repository.Repository, client dynamic.ResourceInterfa
 	}
 }
 
+func (fm *FolderManager) Client() dynamic.ResourceInterface {
+	return fm.client
+}
+
 // EnsureFoldersExist creates the folder structure in the cluster.
 func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath string) (parent string, err error) {
 	if filePath == "" || filePath == "/" || filePath == "." || filePath == "./" {
