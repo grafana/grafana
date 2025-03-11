@@ -1,7 +1,6 @@
 import { isEmpty } from 'lodash';
 
-import { dateTime } from '@grafana/data';
-import { createMonitoringLogger, getBackendSrv } from '@grafana/runtime';
+import { createMonitoringLogger } from '@grafana/runtime';
 import { config, reportInteraction } from '@grafana/runtime/src';
 import { contextSrv } from 'app/core/core';
 
@@ -12,8 +11,6 @@ import { Origin } from './components/rule-viewer/tabs/version-history/ConfirmVer
 import { FilterType } from './components/rules/central-state-history/EventListSceneObject';
 import { RulesFilter, getSearchFilterFromQuery } from './search/rulesSearchParser';
 import { RuleFormType } from './types/rule-form';
-
-export const USER_CREATION_MIN_DAYS = 7;
 
 export const LogMessages = {
   filterByLabel: 'filtering alert instances by label',
@@ -152,21 +149,6 @@ function getRulerRulesMetadata(rulerRules: RulerRulesConfigDTO) {
   };
 }
 
-export async function isNewUser() {
-  try {
-    const { createdAt } = await getBackendSrv().get(`/api/user`);
-
-    const limitDateForNewUser = dateTime().subtract(USER_CREATION_MIN_DAYS, 'days');
-    const userCreationDate = dateTime(createdAt);
-
-    const isNew = limitDateForNewUser.isBefore(userCreationDate);
-
-    return isNew;
-  } catch {
-    return true; //if no date is returned, we assume the user is new to prevent tracking actions
-  }
-}
-
 export const trackRuleListNavigation = async (
   props: AlertRuleTrackingProps = {
     grafana_version: config.buildInfo.version,
@@ -174,10 +156,6 @@ export const trackRuleListNavigation = async (
     user_id: contextSrv.user.id,
   }
 ) => {
-  const isNew = await isNewUser();
-  if (isNew) {
-    return;
-  }
   reportInteraction('grafana_alerting_navigation', props);
 };
 
