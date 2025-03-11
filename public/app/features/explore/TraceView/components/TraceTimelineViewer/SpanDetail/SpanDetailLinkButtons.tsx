@@ -79,7 +79,7 @@ export const getSpanDetailLinkButtons = (props: Props) => {
 
     // if in explore, use the plugin extension point to get the link
     // note: plugin extension point links are not currently supported in panel plugins
-    // TODO: create SpnaLinkDef in createSpanLink (https://github.com/grafana/grafana/issues/101925)
+    // TODO: create SpanLinkDef in createSpanLink (https://github.com/grafana/grafana/issues/101925)
     if (linkToProfiles && app === CoreApp.Explore) {
       // ensure we have a profile link
       const profilesDrilldownPluginId = 'grafana-pyroscope-app';
