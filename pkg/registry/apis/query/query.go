@@ -381,6 +381,7 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 			if !ok {
 				dr, ok := qdr.Responses[refId]
 				if ok {
+					// somewhere before this we have to do the equivalent of nodes.go 414 or whatever
 					_, res, err := b.converter.Convert(ctx, req.RefIDTypes[refId], dr.Frames)
 					if err != nil {
 						expressionsLogger.Error("error converting frames for expressions", "error", err)
