@@ -1,4 +1,4 @@
-name: Documentation
+name: Lint and Build Documentation
 
 on:
   pull_request:
@@ -31,9 +31,25 @@ jobs:
           NODE_OPTIONS: --max_old_space_size=8192
 
       - name: Build docs website
+        uses: docker://grafana/docs-base:latest
+        with:
+          entrypoint: /bin/sh
+          args: |
+            -c "mkdir -p /github/workspace/hugo/content/docs/grafana/latest && \
+            echo -e '---\\nredirectURL: /docs/grafana/latest/\\ntype: redirect\\nversioned: true\\n---\\n' > /github/workspace/hugo/content/docs/grafana/_index.md && \
+            cp -r /github/workspace/docs/sources/* /github/workspace/hugo/content/docs/grafana/latest/ && \
+            cd /github/workspace/hugo && make prod"
+        
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.1'
+
+      - name: Verify generated CUE code
         run: |
-          mkdir -p hugo/content/docs/grafana/latest
-          echo -e '---\nredirectURL: /docs/grafana/latest/\ntype: redirect\nversioned: true\n---\n' > hugo/content/docs/grafana/_index.md
-          cp -r docs/sources/* hugo/content/docs/grafana/latest/
-          
-          docker run --rm -v $(pwd):/src grafana/docs-base:latest /bin/sh -c "cd /src/hugo && make prod"
+          make gen-cue
+          if [ -n "$(git diff)" ]; then
+            echo "Generated CUE code is not in sync with its inputs. Please run 'make gen-cue' and commit the changes."
+            git diff
+            exit 1
+          fi
