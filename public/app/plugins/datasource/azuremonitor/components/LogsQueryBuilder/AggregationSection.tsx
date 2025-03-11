@@ -68,13 +68,19 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
   };
 
   const updateAggregatesAndQuery = (newAggregates: BuilderQueryEditorReduceExpression[]) => {
+    console.log('newAggregates', newAggregates);
     const validAggregates = newAggregates.filter((agg) => agg.reduce?.name);
 
     const aggregation =
       validAggregates.length > 0
         ? validAggregates
             .map((agg) => {
-              if (agg.reduce?.name === 'count' && agg.property?.name) {
+              if (agg.reduce?.name === 'percentile' && agg.parameters && agg.parameters.length >= 2) {
+                const percentileValue = agg.parameters[0]?.value;
+                const columnName = agg.property.name;
+
+                return `percentile(${columnName}, ${percentileValue})`;
+              } else if (agg.reduce?.name === 'count' && agg.property?.name) {
                 return `count(${agg.property.name})`;
               } else if (agg.reduce?.name === 'count') {
                 return `count()`;

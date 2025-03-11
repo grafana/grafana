@@ -108,12 +108,19 @@ export class AzureMonitorKustoQueryParser {
         groupByParts.add(`bin(${datetimeColumn}, 1h)`);
       }
 
-      if (groupByParts.has(datetimeColumn)) {
-        groupByParts.delete(datetimeColumn);
-      }
+      // Special handling for percentile aggregation
+      if (aggregation.startsWith('percentile')) {
+        const percentileValue = selectedColumns.includes('percentileParam') ? 15 : undefined; // Get the percentile value
+        const column = selectedColumns.includes('percentileColumn') ? 'TenantId' : ''; // Get the column (e.g., 'TenantId')
+        parts.push(`summarize ${aggregation}(${percentileValue}, ${column})`);
+      } else {
+        if (groupByParts.has(datetimeColumn)) {
+          groupByParts.delete(datetimeColumn);
+        }
 
-      if (groupByParts.size > 0 && !summarizeAlreadyAdded) {
-        parts.push(`summarize ${aggregation} by ${Array.from(groupByParts).join(', ')}`);
+        if (groupByParts.size > 0 && !summarizeAlreadyAdded) {
+          parts.push(`summarize ${aggregation} by ${Array.from(groupByParts).join(', ')}`);
+        }
       }
     } else if (!hasValidAggregation && groupBy && groupBy.length > 0) {
       const groupByParts = new Set<string>();
@@ -128,7 +135,12 @@ export class AzureMonitorKustoQueryParser {
         parts.push(`summarize by ${Array.from(groupByParts).join(', ')}`);
       }
     } else if (hasValidAggregation && !summarizeAlreadyAdded) {
-      parts.push(`summarize ${aggregation}`);
+      // Handle percentiles or other aggregations
+      if (aggregation === 'percentile') {
+        parts.push(`summarize ${aggregation}(15, TenantId)`); // Adjust with actual percentile and column
+      } else {
+        parts.push(`summarize ${aggregation}`);
+      }
     }
   }
 
