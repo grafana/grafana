@@ -4,15 +4,10 @@ on:
   pull_request:
     paths:
       - packages/grafana-ui/**
+      - .github/workflows/storybook-verification.yml
     paths-ignore:
       - 'docs/**'
       - '*.md'
-  # Add temporary push trigger for testing
-  push:
-    branches:
-      - your-feature-branch-name
-    paths:
-      - .github/workflows/storybook-verification.yml
 
 jobs:
   verify-storybook:
