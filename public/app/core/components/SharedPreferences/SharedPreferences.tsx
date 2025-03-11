@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { PureComponent } from 'react';
 import * as React from 'react';
 
-import { FeatureState, getBuiltInThemes, ThemeRegistryItem } from '@grafana/data';
+import { FeatureState, ThemeRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
@@ -26,6 +26,9 @@ import { t, Trans } from 'app/core/internationalization';
 import { LANGUAGES, PSEUDO_LOCALE } from 'app/core/internationalization/constants';
 import { PreferencesService } from 'app/core/services/PreferencesService';
 import { changeTheme } from 'app/core/services/theme';
+
+import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
+
 export interface Props {
   resourceUri: string;
   disabled?: boolean;
@@ -82,21 +85,9 @@ export class SharedPreferences extends PureComponent<Props, State> {
       navbar: { bookmarkUrls: [] },
     };
 
-    const allowedExtraThemes = [];
+    const themes = getSelectableThemes();
 
-    if (config.featureToggles.extraThemes) {
-      allowedExtraThemes.push('debug');
-    }
-
-    if (config.featureToggles.grafanaconThemes) {
-      allowedExtraThemes.push('desertbloom');
-      allowedExtraThemes.push('gildedgrove');
-      allowedExtraThemes.push('sapphiredusk');
-      allowedExtraThemes.push('tron');
-      allowedExtraThemes.push('gloom');
-    }
-
-    this.themeOptions = getBuiltInThemes(allowedExtraThemes).map((theme) => ({
+    this.themeOptions = themes.map((theme) => ({
       value: theme.id,
       label: getTranslatedThemeName(theme),
     }));
