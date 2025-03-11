@@ -129,23 +129,21 @@ const injectedRtkApi = api
         invalidatesTags: ['Repository'],
       }),
       updateRepository: build.mutation<UpdateRepositoryResponse, UpdateRepositoryArg>({
-        query: (queryArg) => { 
-          console.log('updateRepository', queryArg);
-          return {
-            url: `/repositories/${queryArg.name}`,
-            method: 'PATCH',
-            headers: {
-              'Content-Type': `application/json-patch+json`, // Or merge-patch
-            },
-            body: queryArg.patch,
-            params: {
-              pretty: queryArg.pretty,
-              dryRun: queryArg.dryRun,
-              fieldManager: queryArg.fieldManager,
-              fieldValidation: queryArg.fieldValidation,
-              force: queryArg.force,
-            },
-          }},
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}`,
+          method: 'PATCH',
+          headers: {
+            'Content-Type': `application/json-patch+json`, // Or merge-patch
+          },
+          body: JSON.stringify(queryArg.patch), // backendSrv does not know to convert
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+            force: queryArg.force,
+          },
+        }),
         invalidatesTags: ['Repository'],
       }),
       createRepositoryExport: build.mutation<CreateRepositoryExportResponse, CreateRepositoryExportArg>({

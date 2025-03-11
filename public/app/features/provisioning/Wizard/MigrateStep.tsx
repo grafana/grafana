@@ -29,7 +29,10 @@ export function MigrateStep({ onStatusChange }: MigrateStepProps) {
     // Async update the spec
     updateRepo({
       name: repositoryName,
-      patch: [{ op: 'replace', path: '/spec/setup', value: 'resources' }],
+      patch: [
+        // { op: 'replace', path: '/spec/setup', value: 'resources' }
+        { op: 'remove', path: '/spec/setup' }, // TODO: this should be in the "finish" step
+      ],
     }).then((v) => {
       console.log('Update STEP', v);
     });
