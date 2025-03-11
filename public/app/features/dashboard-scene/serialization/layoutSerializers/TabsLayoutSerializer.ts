@@ -1,6 +1,5 @@
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
-import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
@@ -43,7 +42,6 @@ export class TabsLayoutSerializer implements LayoutManagerSerializer {
       return new TabItem({
         title: tab.spec.title,
         layout: layoutSerializerRegistry.get(layout.kind).serializer.deserialize(layout, elements, preload),
-        $behaviors: [ConditionalRendering.createEmpty()],
       });
     });
     return new TabsLayoutManager({ tabs });

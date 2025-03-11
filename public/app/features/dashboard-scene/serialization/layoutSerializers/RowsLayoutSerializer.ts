@@ -1,7 +1,6 @@
 import { SceneObject } from '@grafana/scenes';
 import { DashboardV2Spec, RowsLayoutRowKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
-import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowItemRepeaterBehavior } from '../../scene/layout-rows/RowItemRepeaterBehavior';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
@@ -55,7 +54,7 @@ export class RowsLayoutSerializer implements LayoutManagerSerializer {
     }
     const rows = layout.spec.rows.map((row) => {
       const layout = row.spec.layout;
-      const behaviors: SceneObject[] = [ConditionalRendering.createEmpty()];
+      const behaviors: SceneObject[] = [];
       if (row.spec.repeat) {
         behaviors.push(new RowItemRepeaterBehavior({ variableName: row.spec.repeat.value }));
       }

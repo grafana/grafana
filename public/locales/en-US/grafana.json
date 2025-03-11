@@ -1016,13 +1016,9 @@
       "subtitle": "Alert rules related to this dashboard"
     },
     "conditional-rendering": {
-      "after": {
-        "label": "After"
-      },
-      "before": {
-        "label": "Before"
-      },
       "data": {
+        "disable": "Disable",
+        "enable": "Enable",
         "label": "Data"
       },
       "group": {

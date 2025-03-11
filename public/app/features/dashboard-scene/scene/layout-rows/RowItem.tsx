@@ -2,7 +2,7 @@ import { sceneGraph, SceneObject, SceneObjectBase, SceneObjectState, VariableDep
 import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
-import { ConditionalRenderingGroup } from '../../conditional-rendering/ConditionalRenderingGroup';
+import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { getDefaultVizPanel } from '../../utils/utils';
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { BulkActionElement } from '../types/BulkActionElement';
@@ -22,7 +22,7 @@ export interface RowItemState extends SceneObjectState {
   isCollapsed?: boolean;
   isHeaderHidden?: boolean;
   height?: 'expand' | 'min';
-  conditionalRendering?: ConditionalRenderingGroup;
+  conditionalRendering?: ConditionalRendering;
 }
 
 export class RowItem
@@ -42,7 +42,19 @@ export class RowItem
       ...state,
       title: state?.title ?? t('dashboard.rows-layout.row.new', 'New row'),
       layout: state?.layout ?? ResponsiveGridLayoutManager.createEmpty(),
+      conditionalRendering: state?.conditionalRendering ?? ConditionalRendering.createEmpty(),
     });
+    this.addActivationHandler(() => this._activationHandler());
+  }
+
+  private _activationHandler() {
+    const deactivate = this.state.conditionalRendering?.activate();
+
+    return () => {
+      if (deactivate) {
+        deactivate();
+      }
+    };
   }
 
   public getEditableElementInfo(): EditableDashboardElementInfo {

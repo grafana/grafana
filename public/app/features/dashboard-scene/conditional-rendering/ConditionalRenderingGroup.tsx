@@ -72,11 +72,6 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
     []
   );
 
-  const currentConditionOption = useMemo(
-    () => conditionsOptions.find((option) => option.value === condition)!,
-    [conditionsOptions, condition]
-  );
-
   return (
     <Stack direction="column">
       <ConditionHeader title={model.title} onDelete={() => model.onDelete()} />
@@ -84,7 +79,7 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
         <RadioButtonGroup
           fullWidth
           options={conditionsOptions}
-          value={currentConditionOption.value}
+          value={condition}
           onChange={(value) => model.changeCondition(value!)}
         />
       </Field>
@@ -98,7 +93,7 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
 
           <div className={styles.entryDivider}>
             <Divider spacing={1} />
-            <p className={styles.entryDividerText}> {currentConditionOption.value}</p>
+            <p className={styles.entryDividerText}> {condition}</p>
             <Divider spacing={1} />
           </div>
         </Fragment>

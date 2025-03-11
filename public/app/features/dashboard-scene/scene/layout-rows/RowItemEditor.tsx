@@ -63,12 +63,14 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
     return editPaneHeaderOptions;
   }, [layout, model]);
 
+  const conditionalRenderingOptions = useMemo(() => {
+    return useConditionalRenderingEditor(model.state.conditionalRendering);
+  }, [model]);
+
   const editOptions = [rowOptions];
 
-  const rowConditionalRenderingOptions = useConditionalRenderingEditor(model);
-
-  if (rowConditionalRenderingOptions) {
-    editOptions.push(rowConditionalRenderingOptions);
+  if (conditionalRenderingOptions) {
+    editOptions.push(conditionalRenderingOptions);
   }
 
   return editOptions;

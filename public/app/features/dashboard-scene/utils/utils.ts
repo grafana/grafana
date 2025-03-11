@@ -1,5 +1,3 @@
-import { useMemo } from 'react';
-
 import { getDataSourceRef, IntervalVariableModel } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
@@ -17,13 +15,14 @@ import {
 import { useElementSelection, UseElementSelectionResult } from '@grafana/ui';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
-import { ConditionalRendering } from '../conditional-rendering/ConditionalRendering';
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
+import { RowItem } from '../scene/layout-rows/RowItem';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 
@@ -460,13 +459,9 @@ export function useDashboardState(
   };
 }
 
-export function useConditionalRenderingBehavior(scene: SceneObject): ConditionalRendering | undefined {
-  const { $behaviors } = scene.useState();
-  return useMemo(() => $behaviors?.find((b) => b instanceof ConditionalRendering), [$behaviors]);
-}
+export function useIsConditionallyHidden(scene: RowItem | ResponsiveGridItem): boolean {
+  const { conditionalRendering } = scene.useState();
 
-export function useIsConditionallyHidden(scene: SceneObject): boolean {
-  const conditionalRendering = useConditionalRenderingBehavior(scene);
   return !(conditionalRendering?.evaluate() ?? true);
 }
 

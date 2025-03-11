@@ -16,17 +16,21 @@ export function ResponsiveGridItemRenderer({ model }: SceneComponentProps<Respon
   if (isConditionallyHidden && !showHiddenElements) {
     return null;
   }
+  const isHiddenButVisibleElement = showHiddenElements && isConditionallyHidden;
 
   return model.state.repeatedPanels ? (
     <>
       {model.state.repeatedPanels.map((item) => (
-        <div className={cx(style.wrapper)} key={item.state.key}>
+        <div
+          className={cx(style.wrapper, isHiddenButVisibleElement && 'dashboard-visible-hidden-element')}
+          key={item.state.key}
+        >
           <item.Component model={item} />
         </div>
       ))}
     </>
   ) : (
-    <div className={cx(style.wrapper)}>
+    <div className={cx(style.wrapper, isHiddenButVisibleElement && 'dashboard-visible-hidden-element')}>
       <body.Component model={body} />
     </div>
   );

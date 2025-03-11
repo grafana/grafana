@@ -141,8 +141,8 @@ describe('deserialization', () => {
     const row = deserialized.state.rows[0];
     expect(row.state.$behaviors).toBeDefined();
     const behaviors = row.state.$behaviors ?? [];
-    expect(behaviors).toHaveLength(2);
-    const repeaterBehavior = behaviors[1] as RowItemRepeaterBehavior;
+    expect(behaviors).toHaveLength(1);
+    const repeaterBehavior = behaviors[0] as RowItemRepeaterBehavior;
     expect(repeaterBehavior).toBeInstanceOf(RowItemRepeaterBehavior);
     expect(repeaterBehavior.state.variableName).toBe('foo');
   });
