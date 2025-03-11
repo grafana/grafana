@@ -14,9 +14,7 @@
       "small": "img/icn-reusequeries.svg",
       "large": "img/icn-reusequeries.svg"
     },
-    "links": [
-      { "name": "Raise issue", "url": "https://github.com/grafana/grafana/issues/new" }
-    ]
+    "links": [{ "name": "Raise issue", "url": "https://github.com/grafana/grafana/issues/new" }]
   },
 
   "metrics": true

@@ -16,8 +16,6 @@
       "small": "img/live.svg",
       "large": "img/live.svg"
     },
-    "links": [
-      { "name": "Raise issue", "url": "https://github.com/grafana/grafana/issues/new" }
-    ]
+    "links": [{ "name": "Raise issue", "url": "https://github.com/grafana/grafana/issues/new" }]
   }
 }
