@@ -23,9 +23,9 @@ require (
 	github.com/urfave/cli v1.22.16 // @grafana/grafana-backend-group
 	github.com/urfave/cli/v2 v2.27.1 // @grafana/grafana-backend-group
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.59.0 // indirect; @grafana/plugins-platform-backend
-	go.opentelemetry.io/otel v1.34.0 // indirect; @grafana/grafana-backend-group
+	go.opentelemetry.io/otel v1.35.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk v1.34.0 // indirect; @grafana/grafana-backend-group
-	go.opentelemetry.io/otel/trace v1.34.0 // indirect; @grafana/grafana-backend-group
+	go.opentelemetry.io/otel/trace v1.35.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/crypto v0.35.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/mod v0.22.0 // @grafana/grafana-backend-group
 	golang.org/x/net v0.36.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
@@ -70,7 +70,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.59.0 // indirect
-	go.opentelemetry.io/otel/metric v1.34.0 // indirect
+	go.opentelemetry.io/otel/metric v1.35.0 // indirect
 	go.starlark.net v0.0.0-20230525235612-a134d8f9ddca // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	google.golang.org/genproto v0.0.0-20250122153221-138b5a5a4fd4 // indirect; @grafana/grafana-backend-group
