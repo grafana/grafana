@@ -99,7 +99,7 @@ jobs:
       #     go env GOCACHE
 
       - name: Run unit tests
-        run: make test-go-unit
+        run: GODEBUG=gocachetest=1 make test-go-unit
         env:
           # GO_UNIT_COVER_PROFILE: '${{ env.TEST_TYPE }}.cov'
           # GO_TEST_OUTPUT: ''
