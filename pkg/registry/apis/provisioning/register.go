@@ -753,26 +753,43 @@ spec:
 	}
 	oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"] = schema
 
-	// statsSpec := &spec.SchemaOrArray{
-	// 	Schema: &spec.Schema{
-	// 		SchemaProps: spec.SchemaProps{
-	// 			AllOf: []spec.Schema{
-	// 				{
-	// 					SchemaProps: spec.SchemaProps{
-	// 						Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "ResourceCount"),
-	// 					},
-	// 				},
-	// 			},
-	// 		},
-	// 	},
-	// }
-	// schema := oas.Components.Schemas[compBase+"ManagerStats"].Properties["managed"]
-	// schema.Items = statsSpec
-	// oas.Components.Schemas[compBase+"ManagerStats"].Properties["managed"] = schema
+	countSpec := &spec.SchemaOrArray{
+		Schema: &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				AllOf: []spec.Schema{
+					{
+						SchemaProps: spec.SchemaProps{
+							Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "ResourceCount"),
+						},
+					},
+				},
+			},
+		},
+	}
+	managerSpec := &spec.SchemaOrArray{
+		Schema: &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				AllOf: []spec.Schema{
+					{
+						SchemaProps: spec.SchemaProps{
+							Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "ManagerStats"),
+						},
+					},
+				},
+			},
+		},
+	}
+	schema = oas.Components.Schemas[compBase+"ResourceStats"].Properties["instance"]
+	schema.Items = countSpec
+	oas.Components.Schemas[compBase+"ResourceStats"].Properties["instance"] = schema
 
-	// schema = oas.Components.Schemas[compBase+"ManagerStats"].Properties["instance"]
-	// schema.Items = statsSpec
-	// oas.Components.Schemas[compBase+"ManagerStats"].Properties["instance"] = schema
+	schema = oas.Components.Schemas[compBase+"ResourceStats"].Properties["managed"]
+	schema.Items = managerSpec
+	oas.Components.Schemas[compBase+"ResourceStats"].Properties["managed"] = schema
+
+	schema = oas.Components.Schemas[compBase+"ManagerStats"].Properties["stats"]
+	schema.Items = countSpec
+	oas.Components.Schemas[compBase+"ManagerStats"].Properties["stats"] = schema
 
 	return oas, nil
 }

@@ -366,7 +366,7 @@ type ManagerStats struct {
 	Identity string `json:"id,omitempty"`
 
 	// stats
-	Stats []ResourceCount `json:"stats,omitempty"`
+	Stats []ResourceCount `json:"stats"`
 }
 
 type ResourceCount struct {

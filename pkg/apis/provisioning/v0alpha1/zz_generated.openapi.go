@@ -797,6 +797,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ManagerStats(ref common.ReferenceCall
 						},
 					},
 				},
+				Required: []string{"stats"},
 			},
 		},
 		Dependencies: []string{
