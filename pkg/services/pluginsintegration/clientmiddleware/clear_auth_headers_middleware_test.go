@@ -32,7 +32,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			}
 
-			t.Run("Should not attach delete headers middleware when calling QueryData", func(t *testing.T) {
+			t.Run("No auth headers to clear when calling QueryData", func(t *testing.T) {
 				_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{otherHeader: "test"},
@@ -40,9 +40,10 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, cdt.QueryDataReq)
 				require.Len(t, cdt.QueryDataReq.Headers, 1)
+				require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
 			})
 
-			t.Run("Should not attach delete headers middleware when calling CallResource", func(t *testing.T) {
+			t.Run("No auth headers to clear when calling CallResource", func(t *testing.T) {
 				err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string][]string{otherHeader: {"test"}},
@@ -50,9 +51,11 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CallResourceReq)
 				require.Len(t, cdt.CallResourceReq.Headers, 1)
+				require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
+
 			})
 
-			t.Run("Should not attach delete headers middleware when calling CheckHealth", func(t *testing.T) {
+			t.Run("No auth headers to clear when calling CheckHealth", func(t *testing.T) {
 				_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{otherHeader: "test"},
@@ -60,6 +63,42 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CheckHealthReq)
 				require.Len(t, cdt.CheckHealthReq.Headers, 1)
+				require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
+
+			})
+
+			t.Run("No auth headers to clear when calling SubscribeStream", func(t *testing.T) {
+				_, err = cdt.MiddlewareHandler.SubscribeStream(req.Context(), &backend.SubscribeStreamRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{otherHeader: "test"},
+				})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.SubscribeStreamReq)
+				require.Len(t, cdt.SubscribeStreamReq.Headers, 1)
+				require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
+
+			})
+
+			t.Run("No auth headers to clear when calling PublishStream", func(t *testing.T) {
+				_, err = cdt.MiddlewareHandler.PublishStream(req.Context(), &backend.PublishStreamRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{otherHeader: "test"},
+				})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.PublishStreamReq)
+				require.Len(t, cdt.PublishStreamReq.Headers, 1)
+				require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
+			})
+
+			t.Run("No auth headers to clear when calling RunStream", func(t *testing.T) {
+				err = cdt.MiddlewareHandler.RunStream(req.Context(), &backend.RunStreamRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{otherHeader: "test"},
+				}, &backend.StreamSender{})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.RunStreamReq)
+				require.Len(t, cdt.RunStreamReq.Headers, 1)
+				require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
 			})
 		})
 
@@ -73,7 +112,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				AppInstanceSettings: &backend.AppInstanceSettings{},
 			}
 
-			t.Run("Should not attach delete headers middleware when calling QueryData", func(t *testing.T) {
+			t.Run("No auth heads to clear when calling QueryData", func(t *testing.T) {
 				_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{otherHeader: "test"},
@@ -81,9 +120,11 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, cdt.QueryDataReq)
 				require.Len(t, cdt.QueryDataReq.Headers, 1)
+				require.Equal(t, "test", cdt.QueryDataReq.Headers[otherHeader])
+				require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
 			})
 
-			t.Run("Should not attach delete headers middleware when calling CallResource", func(t *testing.T) {
+			t.Run("No auth heads to clear when calling CallResource", func(t *testing.T) {
 				err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string][]string{otherHeader: {"test"}},
@@ -91,9 +132,11 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CallResourceReq)
 				require.Len(t, cdt.CallResourceReq.Headers, 1)
+				require.Equal(t, []string{"test"}, cdt.CallResourceReq.Headers[otherHeader])
+				require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
 			})
 
-			t.Run("Should not attach delete headers middleware when calling CheckHealth", func(t *testing.T) {
+			t.Run("No auth heads to clear when calling CheckHealth", func(t *testing.T) {
 				_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{otherHeader: "test"},
@@ -101,6 +144,44 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CheckHealthReq)
 				require.Len(t, cdt.CheckHealthReq.Headers, 1)
+				require.Equal(t, "test", cdt.CheckHealthReq.Headers[otherHeader])
+				require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
+			})
+
+			t.Run("No auth heads to clear when calling SubscribeStream", func(t *testing.T) {
+				_, err = cdt.MiddlewareHandler.SubscribeStream(req.Context(), &backend.SubscribeStreamRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{otherHeader: "test"},
+				})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.SubscribeStreamReq)
+				require.Len(t, cdt.SubscribeStreamReq.Headers, 1)
+				require.Equal(t, "test", cdt.SubscribeStreamReq.Headers[otherHeader])
+				require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
+			})
+
+			t.Run("No auth heads to clear when calling PublishStream", func(t *testing.T) {
+				_, err = cdt.MiddlewareHandler.PublishStream(req.Context(), &backend.PublishStreamRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{otherHeader: "test"},
+				})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.PublishStreamReq)
+				require.Len(t, cdt.PublishStreamReq.Headers, 1)
+				require.Equal(t, "test", cdt.PublishStreamReq.Headers[otherHeader])
+				require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
+			})
+
+			t.Run("No auth heads to clear when calling RunStream", func(t *testing.T) {
+				err = cdt.MiddlewareHandler.RunStream(req.Context(), &backend.RunStreamRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{otherHeader: "test"},
+				}, &backend.StreamSender{})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.RunStreamReq)
+				require.Len(t, cdt.RunStreamReq.Headers, 1)
+				require.Equal(t, "test", cdt.RunStreamReq.Headers[otherHeader])
+				require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
 			})
 		})
 	})
@@ -125,7 +206,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			}
 
-			t.Run("Should attach delete headers middleware when calling QueryData", func(t *testing.T) {
+			t.Run("Should clear auth headers when calling QueryData", func(t *testing.T) {
 				_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{otherHeader: "test"},
@@ -136,7 +217,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.Equal(t, "test", cdt.QueryDataReq.Headers[otherHeader])
 			})
 
-			t.Run("Should attach delete headers middleware when calling CallResource", func(t *testing.T) {
+			t.Run("Should clear auth headers when calling CallResource", func(t *testing.T) {
 				err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string][]string{otherHeader: {"test"}},
@@ -147,7 +228,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.Equal(t, []string{"test"}, cdt.CallResourceReq.Headers[otherHeader])
 			})
 
-			t.Run("Should attach delete headers middleware when calling CheckHealth", func(t *testing.T) {
+			t.Run("Should clear auth headers when calling CheckHealth", func(t *testing.T) {
 				_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{otherHeader: "test"},
@@ -156,6 +237,39 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.NotNil(t, cdt.CheckHealthReq)
 				require.Len(t, cdt.CheckHealthReq.Headers, 1)
 				require.Equal(t, "test", cdt.CheckHealthReq.Headers[otherHeader])
+			})
+
+			t.Run("Should clear auth headers when calling SubscribeStream", func(t *testing.T) {
+				_, err = cdt.MiddlewareHandler.SubscribeStream(req.Context(), &backend.SubscribeStreamRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{otherHeader: "test"},
+				})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.SubscribeStreamReq)
+				require.Len(t, cdt.SubscribeStreamReq.Headers, 1)
+				require.Equal(t, "test", cdt.SubscribeStreamReq.Headers[otherHeader])
+			})
+
+			t.Run("Should clear auth headers when calling PublishStream", func(t *testing.T) {
+				_, err = cdt.MiddlewareHandler.PublishStream(req.Context(), &backend.PublishStreamRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{otherHeader: "test"},
+				})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.PublishStreamReq)
+				require.Len(t, cdt.PublishStreamReq.Headers, 1)
+				require.Equal(t, "test", cdt.PublishStreamReq.Headers[otherHeader])
+			})
+
+			t.Run("Should clear auth headers when calling RunStream", func(t *testing.T) {
+				err = cdt.MiddlewareHandler.RunStream(req.Context(), &backend.RunStreamRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{otherHeader: "test"},
+				}, &backend.StreamSender{})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.RunStreamReq)
+				require.Len(t, cdt.RunStreamReq.Headers, 1)
+				require.Equal(t, "test", cdt.RunStreamReq.Headers[otherHeader])
 			})
 		})
 
@@ -175,7 +289,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				AppInstanceSettings: &backend.AppInstanceSettings{},
 			}
 
-			t.Run("Should attach delete headers middleware when calling QueryData", func(t *testing.T) {
+			t.Run("Should clear auth headers when calling QueryData", func(t *testing.T) {
 				_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{otherHeader: "test"},
@@ -186,7 +300,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.Equal(t, "test", cdt.QueryDataReq.Headers[otherHeader])
 			})
 
-			t.Run("Should attach delete headers middleware when calling CallResource", func(t *testing.T) {
+			t.Run("Should clear auth headers when calling CallResource", func(t *testing.T) {
 				err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string][]string{otherHeader: {"test"}},
@@ -197,7 +311,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.Equal(t, []string{"test"}, cdt.CallResourceReq.Headers[otherHeader])
 			})
 
-			t.Run("Should attach delete headers middleware when calling CheckHealth", func(t *testing.T) {
+			t.Run("Should clear auth headers when calling CheckHealth", func(t *testing.T) {
 				_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{otherHeader: "test"},
@@ -206,6 +320,39 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.NotNil(t, cdt.CheckHealthReq)
 				require.Len(t, cdt.CheckHealthReq.Headers, 1)
 				require.Equal(t, "test", cdt.CheckHealthReq.Headers[otherHeader])
+			})
+
+			t.Run("Should clear auth headers when calling SubscribeStream", func(t *testing.T) {
+				_, err = cdt.MiddlewareHandler.SubscribeStream(req.Context(), &backend.SubscribeStreamRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{otherHeader: "test"},
+				})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.SubscribeStreamReq)
+				require.Len(t, cdt.SubscribeStreamReq.Headers, 1)
+				require.Equal(t, "test", cdt.SubscribeStreamReq.Headers[otherHeader])
+			})
+
+			t.Run("Should clear auth headers when calling PublishStream", func(t *testing.T) {
+				_, err = cdt.MiddlewareHandler.PublishStream(req.Context(), &backend.PublishStreamRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{otherHeader: "test"},
+				})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.PublishStreamReq)
+				require.Len(t, cdt.PublishStreamReq.Headers, 1)
+				require.Equal(t, "test", cdt.PublishStreamReq.Headers[otherHeader])
+			})
+
+			t.Run("Should clear auth headers when calling RunStream", func(t *testing.T) {
+				err = cdt.MiddlewareHandler.RunStream(req.Context(), &backend.RunStreamRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{otherHeader: "test"},
+				}, &backend.StreamSender{})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.RunStreamReq)
+				require.Len(t, cdt.RunStreamReq.Headers, 1)
+				require.Equal(t, "test", cdt.RunStreamReq.Headers[otherHeader])
 			})
 		})
 	})
