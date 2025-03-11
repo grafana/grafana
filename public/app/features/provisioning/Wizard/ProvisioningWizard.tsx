@@ -150,18 +150,42 @@ function WizardContent({
 }) {
   const { watch, setValue, getValues, trigger } = useFormContext<WizardFormData>();
   const navigate = useNavigate();
+  const appEvents = getAppEvents();
 
   const repoName = watch('repositoryName');
   const [submitData, saveRequest] = useCreateOrUpdateRepository(repoName);
   const [deleteRepository] = useDeleteRepositoryMutation();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const handleCancel = async () => {
-    if (activeStep !== 'connection' && repoName) {
+    if (activeStep === 'connection') {
+      navigate(PROVISIONING_URL);
+      return;
+    }
+
+    if (!repoName) {
+      navigate(PROVISIONING_URL);
+      return;
+    }
+
+    setIsCancelling(true);
+    try {
       // Delete repository if we're past the first step
       await deleteRepository({ name: repoName });
+      appEvents.publish({
+        type: AppEvents.alertSuccess.name,
+        payload: ['Repository deleted'],
+      });
+      navigate(PROVISIONING_URL);
+    } catch (error) {
+      console.error('Failed to delete repository:', error);
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: ['Failed to delete repository. Please try again.'],
+      });
+      setIsCancelling(false);
     }
-    navigate(PROVISIONING_URL);
   };
 
   const handleNextWithSubmit = async () => {
@@ -242,28 +266,21 @@ function WizardContent({
       </div>
 
       <Stack gap={2} justifyContent="flex-end">
-        {saveRequest.isError ? (
-          <Button variant="destructive" onClick={handleCancel} disabled={isSubmitting}>
-            Abort
-          </Button>
-        ) : (
-          <>
-            <Button variant="secondary" onClick={handleCancel} disabled={isSubmitting}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleNextWithSubmit}
-              disabled={
-                isSubmitting ||
-                (activeStep === 'migrate' && !saveRequest.isSuccess) ||
-                (activeStep === 'pull' && !saveRequest.isSuccess) ||
-                (activeStep === 'finish' && !saveRequest.isSuccess)
-              }
-            >
-              {isSubmitting ? 'Submitting...' : getNextButtonText(activeStep)}
-            </Button>
-          </>
-        )}
+        <Button variant="secondary" onClick={handleCancel} disabled={isSubmitting || isCancelling}>
+          {isCancelling ? 'Cancelling...' : 'Cancel'}
+        </Button>
+        <Button
+          onClick={handleNextWithSubmit}
+          disabled={
+            isSubmitting ||
+            isCancelling ||
+            (activeStep === 'migrate' && !saveRequest.isSuccess) ||
+            (activeStep === 'pull' && !saveRequest.isSuccess) ||
+            (activeStep === 'finish' && !saveRequest.isSuccess)
+          }
+        >
+          {isSubmitting ? 'Submitting...' : getNextButtonText(activeStep)}
+        </Button>
       </Stack>
     </form>
   );
