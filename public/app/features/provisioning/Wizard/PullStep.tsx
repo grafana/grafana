@@ -21,47 +21,46 @@ export function PullStep({ onStatusChange, onRunningChange, onErrorChange }: Pul
   const repositoryName = watch('repositoryName');
   const syncName = syncQuery.data?.metadata?.name;
 
-  // Handle initial sync
   useEffect(() => {
+    // Early return conditions
     if (!repositoryName || hasInitialized.current) {
       return;
     }
 
-    let isMounted = true;
     hasInitialized.current = true;
+    let isMounted = true;
+
+    const handleError = (error: unknown) => {
+      if (!isMounted) {
+        return;
+      }
+      const errorMessage = error instanceof Error ? error.message : 'Failed to start sync operation';
+      onErrorChange(errorMessage);
+      onStatusChange(false);
+      onRunningChange(false);
+    };
 
     const startSync = async () => {
       try {
-        if (!isMounted) {
-          return;
-        }
-
         onRunningChange(true);
         const response = await syncRepo({
           name: repositoryName,
-          body: {
-            incremental: false,
-          },
+          body: { incremental: false },
         }).unwrap();
 
-        if (response?.metadata?.name) {
-        } else {
-          onErrorChange('Invalid response from sync operation');
-          onStatusChange(false);
-          onRunningChange(false);
-        }
-      } catch (error) {
         if (!isMounted) {
           return;
         }
-        onErrorChange(error instanceof Error ? error.message : 'Failed to start sync operation');
-        onStatusChange(false);
-        onRunningChange(false);
+
+        if (!response?.metadata?.name) {
+          handleError(new Error('Invalid response from sync operation'));
+        }
+      } catch (error) {
+        handleError(error);
       }
     };
 
     startSync();
-
     return () => {
       isMounted = false;
     };

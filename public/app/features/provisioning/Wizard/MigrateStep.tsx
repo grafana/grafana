@@ -23,48 +23,46 @@ export function MigrateStep({ onStatusChange, onRunningChange, onErrorChange }: 
   const history = watch('migrate.history');
   const migrateName = migrateQuery.data?.metadata?.name;
 
-  // Handle initial migration
   useEffect(() => {
+    // Early return conditions
     if (!repositoryName || hasInitialized.current) {
       return;
     }
 
-    let isMounted = true;
     hasInitialized.current = true;
+    let isMounted = true;
+
+    const handleError = (error: unknown) => {
+      if (!isMounted) {
+        return;
+      }
+      const errorMessage = error instanceof Error ? error.message : 'Failed to start migration operation';
+      onErrorChange(errorMessage);
+      onStatusChange(false);
+      onRunningChange(false);
+    };
 
     const startMigrate = async () => {
       try {
-        if (!isMounted) {
-          return;
-        }
-
         onRunningChange(true);
         const response = await migrateRepo({
           name: repositoryName,
-          body: {
-            identifier,
-            history,
-          },
+          body: { identifier, history },
         }).unwrap();
 
-        if (response?.metadata?.name) {
-        } else {
-          onErrorChange('Invalid response from migration operation');
-          onStatusChange(false);
-          onRunningChange(false);
-        }
-      } catch (error) {
         if (!isMounted) {
           return;
         }
-        onErrorChange(error instanceof Error ? error.message : 'Failed to start migration operation');
-        onStatusChange(false);
-        onRunningChange(false);
+
+        if (!response?.metadata?.name) {
+          handleError(new Error('Invalid response from migration operation'));
+        }
+      } catch (error) {
+        handleError(error);
       }
     };
 
     startMigrate();
-
     return () => {
       isMounted = false;
     };
