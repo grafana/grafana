@@ -1386,6 +1386,8 @@ Status: Conflict
 
 ### <span id="route-put-policy-tree"></span> Sets the notification policy tree. (_RoutePutPolicyTree_)
 
+{{< docs/shared lookup="alerts/warning-provisioning-tree.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ```
 PUT /api/v1/provisioning/policies
 ```
