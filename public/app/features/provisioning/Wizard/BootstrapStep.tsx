@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import {
@@ -79,7 +79,7 @@ export function BootstrapStep({ onOptionSelect }: Props) {
   const [fileCount, setFileCount] = useState<number>(0);
   const [isLoadingCounts, setIsLoadingCounts] = useState(true);
   const [hasLoadedCounts, setHasLoadedCounts] = useState(false);
-  const [hasTriedSelection, setHasTriedSelection] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   // Get repository files count
   const { data: filesData, isLoading: isLoadingFiles } = useGetRepositoryFilesQuery(
@@ -210,46 +210,49 @@ export function BootstrapStep({ onOptionSelect }: Props) {
         return;
       }
 
-      // If clicking the same option, do nothing (no deselection allowed)
-      if (selectedOption?.value === option.value && selectedOption?.operation === option.operation) {
-        return;
-      }
-
-      // Select the new option
+      // Select the new option and update form state
       setSelectedOption(option);
       setValue('repository.sync.target', option.value);
       onOptionSelect(option.operation === 'migrate');
     },
-    [selectedOption, setValue, onOptionSelect, getOptionState]
+    [setValue, onOptionSelect, getOptionState]
   );
-
-  // Add this after handleOptionSelect
-  useEffect(() => {
-    // Set default values for migration options when instance migration is selected
-    if (selectedOption?.operation === 'migrate') {
-      setValue('migrate.history', true);
-      setValue('migrate.identifier', true);
-    }
-  }, [selectedOption, setValue]);
 
   const isLoading = settingsQuery.isLoading || isLoadingCounts || (currentRepoName ? isLoadingFiles : false);
   const hasAllData = Boolean(settingsQuery.data) && hasLoadedCounts && (!currentRepoName || filesData !== undefined);
 
-  // Select first available option by default
-  useEffect(() => {
-    if (!hasTriedSelection && !isLoading && hasAllData) {
-      // Find first enabled option
-      const firstAvailableOption = sortedModeOptions.find((option) => {
-        const state = getOptionState(option);
-        return !state.isDisabled;
-      });
+  // Store initialization function in a ref to avoid dependency issues
+  const initializeRef = useRef((options: typeof sortedModeOptions) => {
+    const firstAvailableOption = options.find((option) => !getOptionState(option).isDisabled);
+    if (firstAvailableOption) {
+      // Set form state first
+      setValue('repository.sync.target', firstAvailableOption.value);
 
-      if (firstAvailableOption) {
-        handleOptionSelect(firstAvailableOption);
-      }
-      setHasTriedSelection(true);
+      // Small delay to ensure form state is set
+      setTimeout(() => {
+        setSelectedOption(firstAvailableOption);
+        onOptionSelect(firstAvailableOption.operation === 'migrate');
+        setHasInitialized(true);
+      }, 0);
+    } else {
+      setHasInitialized(true); // Mark as initialized even if no options available
     }
-  }, [isLoading, hasAllData, selectedOption, getOptionState, handleOptionSelect, sortedModeOptions, hasTriedSelection]);
+  });
+
+  // Initialize form with first available option
+  useEffect(() => {
+    if (!isLoading && hasAllData && !hasInitialized && sortedModeOptions.length > 0) {
+      initializeRef.current(sortedModeOptions);
+    }
+  }, [isLoading, hasAllData, hasInitialized, sortedModeOptions]);
+
+  // Set migration options when operation changes
+  useEffect(() => {
+    if (selectedOption?.operation === 'migrate') {
+      setValue('migrate.history', true);
+      setValue('migrate.identifier', true);
+    }
+  }, [selectedOption?.operation, setValue]);
 
   // Watch for target changes and update title accordingly
   useEffect(() => {
@@ -295,19 +298,19 @@ export function BootstrapStep({ onOptionSelect }: Props) {
         <Controller
           name="repository.sync.target"
           control={control}
-          render={({ field: { value } }) => (
+          defaultValue={undefined}
+          render={({ field }) => (
             <>
               {sortedModeOptions.map((option, index) => {
                 const optionState = getOptionState(option);
-                const isSelected =
-                  selectedOption?.value === option.value && selectedOption?.operation === option.operation;
+                const isSelected = option.value === field.value && selectedOption?.operation === option.operation;
 
                 return optionState.isDisabled ? (
-                  <Box paddingLeft={2} paddingRight={2}>
+                  <Box key={`${option.value}-${option.operation}`} paddingLeft={2} paddingRight={2}>
                     <Tooltip content={optionState.disabledReason || ''} placement="top">
                       <div style={{ pointerEvents: 'auto' }}>
                         <div style={{ pointerEvents: 'none' }}>
-                          <Card key={`${option.value}-${option.operation}`} disabled={true} tabIndex={-1}>
+                          <Card disabled={true} tabIndex={-1}>
                             <Card.Heading>
                               <Stack direction="row" alignItems="center" gap={2}>
                                 <Text color="secondary">{option.label}</Text>
@@ -324,7 +327,10 @@ export function BootstrapStep({ onOptionSelect }: Props) {
                   <Card
                     key={`${option.value}-${option.operation}`}
                     isSelected={isSelected}
-                    onClick={() => handleOptionSelect(option)}
+                    onClick={() => {
+                      field.onChange(option.value);
+                      handleOptionSelect(option);
+                    }}
                     tabIndex={0}
                     autoFocus={index === 0}
                   >
