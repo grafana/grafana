@@ -13,7 +13,7 @@ labels:
     - enterprise
     - oss
 menuTitle: Jira Service Management
-title: Configure Jira Service Management for Alerting
+title: Configure Jira for Alerting
 weight: 121
 refs:
   configure-contact-points:
