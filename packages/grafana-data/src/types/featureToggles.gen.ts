@@ -28,13 +28,6 @@ export interface FeatureToggles {
   featureHighlights?: boolean;
   storage?: boolean;
   correlations?: boolean;
-  autoMigrateOldPanels?: boolean;
-  autoMigrateGraphPanel?: boolean;
-  autoMigrateTablePanel?: boolean;
-  autoMigratePiechartPanel?: boolean;
-  autoMigrateWorldmapPanel?: boolean;
-  autoMigrateStatPanel?: boolean;
-  disableAngular?: boolean;
   canvasPanelNesting?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;

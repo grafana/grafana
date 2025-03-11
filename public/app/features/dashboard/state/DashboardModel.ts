@@ -24,7 +24,6 @@ import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
-import { isAngularDatasourcePluginAndNotHidden } from 'app/features/plugins/angularDeprecation/utils';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
@@ -44,7 +43,7 @@ import { getTimeSrv } from '../services/TimeSrv';
 import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
 
 import { DashboardMigrator } from './DashboardMigrator';
-import { explicitlyControlledMigrationPanels, PanelModel } from './PanelModel';
+import { PanelModel } from './PanelModel';
 import { TimeModel } from './TimeModel';
 import { deleteScopeVars, isOnTheSameGridRow } from './utils';
 
@@ -1321,22 +1320,6 @@ export class DashboardModel implements TimeModel {
 
   getOriginalDashboard() {
     return this.originalDashboard;
-  }
-
-  hasAngularPlugins(): boolean {
-    return this.panels.some((panel) => {
-      // Return false for plugins that are angular but have angular.hideDeprecation = false
-      // We cannot use panel.plugin.isAngularPlugin() because panel.plugin may not be initialized at this stage.
-      // We also have to check for old core angular plugins (explicitlyControlledMigrationPanels).
-      const isAngularPanel =
-        (config.panels[panel.type]?.angular?.detected || explicitlyControlledMigrationPanels.includes(panel.type)) &&
-        !config.panels[panel.type]?.angular?.hideDeprecation;
-      let isAngularDs = false;
-      if (panel.datasource?.uid) {
-        isAngularDs = isAngularDatasourcePluginAndNotHidden(panel.datasource?.uid);
-      }
-      return isAngularPanel || isAngularDs;
-    });
   }
 }
 

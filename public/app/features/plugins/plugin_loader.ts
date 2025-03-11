@@ -6,6 +6,7 @@ import {
   DataSourcePluginMeta,
   PluginLoadingStrategy,
   PluginMeta,
+  throwIfAngular,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -80,7 +81,6 @@ type PluginImportInfo = {
   pluginId: string;
   loadingStrategy: PluginLoadingStrategy;
   version?: string;
-  isAngular?: boolean;
   moduleHash?: string;
 };
 
@@ -89,7 +89,6 @@ export async function importPluginModule({
   pluginId,
   loadingStrategy,
   version,
-  isAngular,
   moduleHash,
 }: PluginImportInfo): Promise<System.Module> {
   if (version) {
@@ -123,7 +122,7 @@ export async function importPluginModule({
   }
 
   // the sandboxing environment code cannot work in nodejs and requires a real browser
-  if (await shouldLoadPluginInFrontendSandbox({ isAngular, pluginId })) {
+  if (await shouldLoadPluginInFrontendSandbox({ pluginId })) {
     return importPluginModuleInSandbox({ pluginId });
   }
 
@@ -143,12 +142,12 @@ export async function importPluginModule({
 }
 
 export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
-  const isAngular = meta.angular?.detected ?? meta.angularDetected;
+  throwIfAngular(meta);
+
   const fallbackLoadingStrategy = meta.loadingStrategy ?? PluginLoadingStrategy.fetch;
   return importPluginModule({
     path: meta.module,
     version: meta.info?.version,
-    isAngular,
     loadingStrategy: fallbackLoadingStrategy,
     pluginId: meta.id,
     moduleHash: meta.moduleHash,
@@ -183,11 +182,12 @@ export async function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
     return importedAppPlugins[pluginId];
   }
 
+  throwIfAngular(meta);
+
   const pluginExports = await importPluginModule({
     path: meta.module,
     version: meta.info?.version,
     pluginId: meta.id,
-    isAngular: meta.angular?.detected ?? meta.angularDetected,
     loadingStrategy: meta.loadingStrategy ?? PluginLoadingStrategy.fetch,
     moduleHash: meta.moduleHash,
   });

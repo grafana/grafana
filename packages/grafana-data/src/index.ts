@@ -257,6 +257,7 @@ export { toOption } from './utils/selectUtils';
 export * as arrayUtils from './utils/arrayUtils';
 export { store } from './utils/store';
 export { LocalStorageValueProvider } from './utils/LocalStorageValueProvider';
+export { throwIfAngular } from './utils/throwIfAngular';
 
 // Tranformations
 export { standardTransformers } from './transformations/transformers';
