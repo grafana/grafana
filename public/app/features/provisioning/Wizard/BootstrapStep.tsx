@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
+import { useAsync } from 'react-use';
 
+import { getBackendSrv } from '@grafana/runtime';
 import {
   Badge,
   Box,
@@ -52,6 +54,7 @@ const modeOptions: ModeOption[] = [
   },
 ];
 
+const backendSrv = getBackendSrv();
 type Props = {
   onOptionSelect: (requiresMigration: boolean) => void;
   onStatusChange: (success: boolean) => void;
@@ -77,12 +80,44 @@ export function BootstrapStep({ onOptionSelect, onStatusChange, onRunningChange,
   const currentRepoName = watch('repositoryName');
   const selectedTarget = watch('repository.sync.target');
   const [selectedOption, setSelectedOption] = useState<ModeOption | null>(null);
-  const [dashboardCount, setDashboardCount] = useState<number>(0);
-  const [folderCount, setFolderCount] = useState<number>(0);
-  const [fileCount, setFileCount] = useState<number>(0);
-  const [isLoadingCounts, setIsLoadingCounts] = useState(true);
-  const [hasLoadedCounts, setHasLoadedCounts] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
+
+  const { value: counts, loading: isLoadingCounts } = useAsync(async () => {
+    onRunningChange(true);
+    try {
+      // Fetch dashboard count
+      const dashboardData = await backendSrv.get('/apis/dashboard.grafana.app/v0alpha1/namespaces/default/search', {
+        query: '*',
+        limit: 0,
+        type: 'dashboard',
+      });
+
+      // Fetch folder count
+      const folderData = await backendSrv.get('/apis/dashboard.grafana.app/v0alpha1/namespaces/default/search', {
+        query: '*',
+        limit: 0,
+        type: 'dashboard',
+      });
+
+      onStatusChange(true);
+      onErrorChange(null);
+
+      return {
+        dashboardCount: dashboardData.totalHits || 0,
+        folderCount: folderData.totalHits || 0,
+      };
+    } catch (error) {
+      console.error('Error fetching counts:', error);
+      onErrorChange(error instanceof Error ? error.message : 'Failed to fetch resource counts');
+      onStatusChange(false);
+      return {
+        dashboardCount: 0,
+        folderCount: 0,
+      };
+    } finally {
+      onRunningChange(false);
+    }
+  }, []);
 
   // Get repository files count
   const { data: filesData, isLoading: isLoadingFiles } = useGetRepositoryFilesQuery(
@@ -90,11 +125,10 @@ export function BootstrapStep({ onOptionSelect, onStatusChange, onRunningChange,
     { skip: !currentRepoName }
   );
 
-  useEffect(() => {
-    if (filesData?.items) {
-      setFileCount(filesData.items.length);
-    }
-  }, [filesData]);
+  const dashboardCount = counts?.dashboardCount || 0;
+  const folderCount = counts?.folderCount || 0;
+  const fileCount = filesData?.items?.length || 0;
+  const hasLoadedCounts = counts !== undefined;
 
   // Check for other repositories excluding the current one
   const [otherInstanceConnected, otherFolderConnected] = useMemo(() => {
@@ -110,57 +144,6 @@ export function BootstrapStep({ onOptionSelect, onStatusChange, onRunningChange,
 
     return checkSyncSettings({ ...settingsQuery.data, items: otherRepos });
   }, [settingsQuery.data, currentRepoName]);
-
-  // Add a ref to track component mount state
-  const isMounted = useRef(false);
-
-  // Modify the fetch counts effect
-  useEffect(() => {
-    // Only run on mount
-    if (isMounted.current) {
-      return;
-    }
-    isMounted.current = true;
-
-    const fetchCounts = async () => {
-      setIsLoadingCounts(true);
-      onRunningChange(true);
-      try {
-        const dashboardResponse = await fetch(
-          '/apis/dashboard.grafana.app/v0alpha1/namespaces/default/search?query=*&limit=0&type=dashboard'
-        );
-        if (!dashboardResponse.ok) {
-          throw new Error(`Failed to fetch dashboard count: ${dashboardResponse.statusText}`);
-        }
-        const dashboardData = await dashboardResponse.json();
-        setDashboardCount(dashboardData.totalHits || 0);
-
-        const folderResponse = await fetch(
-          '/apis/dashboard.grafana.app/v0alpha1/namespaces/default/search?query=*&limit=0&type=folder'
-        );
-        if (!folderResponse.ok) {
-          throw new Error(`Failed to fetch folder count: ${folderResponse.statusText}`);
-        }
-        const folderData = await folderResponse.json();
-        setFolderCount(folderData.totalHits || 0);
-
-        onStatusChange(true);
-        onErrorChange(null);
-      } catch (error) {
-        console.error('Error fetching counts:', error);
-        onErrorChange(error instanceof Error ? error.message : 'Failed to fetch resource counts');
-        onStatusChange(false);
-        setDashboardCount(0);
-        setFolderCount(0);
-      } finally {
-        setIsLoadingCounts(false);
-        setHasLoadedCounts(true);
-        onRunningChange(false);
-      }
-    };
-
-    fetchCounts();
-  }, [onRunningChange, onStatusChange, onErrorChange]); // Include the prop dependencies
 
   // Get available options and disabled state logic
   const getOptionState = useCallback(
@@ -242,7 +225,7 @@ export function BootstrapStep({ onOptionSelect, onStatusChange, onRunningChange,
     [setValue, onOptionSelect, getOptionState]
   );
 
-  const isLoading = settingsQuery.isLoading || isLoadingCounts || (currentRepoName ? isLoadingFiles : false);
+  const isLoading = settingsQuery.isLoading || isLoadingCounts || isLoadingFiles;
   const hasAllData = Boolean(settingsQuery.data) && hasLoadedCounts && (!currentRepoName || filesData !== undefined);
 
   // Store initialization function in a ref to avoid dependency issues
