@@ -51,7 +51,7 @@ For more details on contact points, including how to test them and enable notifi
 
 | Key | Description | 
 | --- | --- |
-| URL | The URL of your Jira instance (e.g., `https://your-domain.atlassian.net` or `https://jira.your-domain.com`). |
+| URL | The URL of the REST API of your Jira instance. Supported versions: `2` and `3` (e.g., `https://your-domain.atlassian.net/rest/api/3`). |
 | Basic Auth User | Username for authentication. |
 | Basic Auth Password | Password or personal token. For Jira Cloud, you need to obtain a personal token [here](https://id.atlassian.com/manage-profile/security/api-tokens)) and use it as the password. |
 | API Token | An alternative to basic authentication, a bearer token is used to authorize the API requests. See [Jira documentation](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html) for more information. |
