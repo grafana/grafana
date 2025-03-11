@@ -805,8 +805,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ac := setupTestEnv(t)
 			if tt.withActionSets {
-				ac.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets)
-				actionSetSvc := resourcepermissions.NewActionSetService(ac.features)
+				actionSetSvc := resourcepermissions.NewActionSetService()
 				for set, actions := range tt.actionSets {
 					actionSetName := resourcepermissions.GetActionSetName(strings.Split(set, ":")[0], strings.Split(set, ":")[1])
 					actionSetSvc.StoreActionSet(actionSetName, actions)
