@@ -52,7 +52,7 @@ const config: ConfigFile = {
       apiFile: '../public/app/features/provisioning/api/baseAPI.ts',
       schemaFile: '../data/openapi/provisioning.grafana.app-v0alpha1.json',
       apiImport: 'baseAPI',
-      filterEndpoints,
+      filterEndpoints: (name: string) => !name.toLowerCase().includes('getapiresources'),
       argSuffix: 'Arg',
       responseSuffix: 'Response',
       tag: true,
@@ -70,9 +70,5 @@ const config: ConfigFile = {
     },
   },
 };
-
-function filterEndpoints(name: string) {
-  return !name.toLowerCase().includes('getapiresources') && !name.toLowerCase().includes('update');
-}
 
 export default config;
