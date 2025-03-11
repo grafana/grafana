@@ -48,23 +48,18 @@ describe('PromQueryModeller', () => {
     ).toBe('histogram_quantile(0.86, metric)');
   });
 
-    it('Can render query with function with parameter to left of inner expression for info func', () => {
-      expect(
-        modeller.renderQuery(
-          {
-            metric: 'metric',
-            labels: [{ label: 'pod', op: '=', value: 'A' }],
-            operations: [
-              { id: PromOperationId.Rate, params: ['2m'] },
-              { id: PromOperationId.Info, params: ['{k8s_cluster_name=~".+"}'] },
-              // probably we need to change the info function renderer
-              { id: PromOperationId.NestedQuery, params: ['3m'] },
-            ],
-          },
-          true
-        )
-      ).toBe('info(rate(metric{pod="A"}[2m]), {k8s_cluster_name=~".+"})');
-    });
+  it('Can render query with info function', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'metric',
+        labels: [{ label: 'pod', op: '=', value: 'A' }],
+        operations: [
+          { id: PromOperationId.Rate, params: ['2m'] },
+          { id: PromOperationId.Info, params: ['{k8s_cluster_name=~".+"}'] },
+        ],
+      })
+    ).toBe('info(rate(metric{pod="A"}[2m]), {k8s_cluster_name=~".+"})');
+  });
 
   it('Can render query with function with function parameters to the right of inner expression', () => {
     expect(
