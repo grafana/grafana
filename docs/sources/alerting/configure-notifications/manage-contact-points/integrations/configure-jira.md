@@ -23,7 +23,7 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/
 ---
 
-# Configure Jira Service Management for Alerting
+# Configure Jira for Alerting
 
 Use the Jira integration in a contact point to create issues in your Jira instance when alerts fire. The integration supports both Jira Cloud and Jira Server/Data Center installations.
 
