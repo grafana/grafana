@@ -32,20 +32,20 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
       - name: Setup Go
-        uses: kminehart/setup-go@main
+        uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-          cache: true
-          always-cache: true
-          
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential shared-mime-info
           go install github.com/mfridman/tparse@c1754a1f484ac5cd422697b0fec635177ddc8507 # v0.17.0
-
+      - name: Restore build dependencies
+        uses: actions/cache/restore@v4
+        with:
+          key: go-test-cache
+          path: /home/runner/.cache/go-build
       - name: Setup Enterprise
         uses: ./.github/actions/setup-enterprise
         with:
@@ -133,6 +133,14 @@ jobs:
           codecov-token: ${{ secrets.CODECOV_TOKEN }}
           codecov-flag: '${{ env.TEST_TYPE }}'
           codecov-name: '${{ env.TEST_TYPE }}'
+      # "Clear build cache" is a hack to get around GitHub Actions not allowing us to overwrite existing cache keys
+      - name: Clear build cache
+        run: gh cache delete go-test-cache
+      - name: Save build cache
+        uses: actions/cache/restore@v4
+        with:
+          key: go-test-cache
+          path: /home/runner/.cache/go-build
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
