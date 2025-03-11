@@ -46,6 +46,18 @@ Grafana ships with built-in support for Prometheus. If you are new to Prometheus
 - [Prometheus data model](https://prometheus.io/docs/concepts/data_model/)
 - [Getting started](https://prometheus.io/docs/prometheus/latest/getting_started/)
 
+
+
+## Before you begin
+
+Only users with the organization `administrator` role can add data sources and edit existing data sources.
+Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
+
+
+For general information on adding a data source to Grafana, refer to the [administration documentation](ref:administration-documentation).
+
+
+
 ## Configure the data source
 
 {{< shared id="add-prom-data-source" >}}
