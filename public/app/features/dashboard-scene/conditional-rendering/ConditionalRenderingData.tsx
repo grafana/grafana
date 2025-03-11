@@ -1,9 +1,12 @@
 import { ReactNode, useMemo } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { PanelData, SelectableValue } from '@grafana/data';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { RadioButtonGroup, Stack } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
+
+import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
+import { RowItem } from '../scene/layout-rows/RowItem';
 
 import { ConditionHeader } from './ConditionHeader';
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
@@ -21,18 +24,58 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
   public evaluate(): boolean {
     const { value } = this.state;
 
+    // enable/disable condition
     if (!value) {
       return true;
     }
-    const data = sceneGraph.getData(this).state.data;
+
+    let data: PanelData[] = [];
     let hasData = false;
 
-    for (let i = 0; i === (data?.series.length || 0); i++) {
-      if (!hasData) {
-        break;
+    // get ResponsiveGridItem or RowItem
+    const item = this.getConditionalLogicRoot().parent;
+
+    // extract single panel data from ResponsiveGridItem
+    if (item instanceof ResponsiveGridItem) {
+      const panelData = sceneGraph.getData(item.state.body).state.data;
+      if (panelData) {
+        data.push(panelData);
       }
-      if (data?.series[i].length) {
-        hasData = true;
+    }
+
+    // extract multiple panel data from RowItem
+    if (item instanceof RowItem) {
+      const panels = item.getLayout().getVizPanels();
+      for (const panel of panels) {
+        const panelData = sceneGraph.getData(panel).state.data;
+        if (panelData) {
+          data.push(panelData);
+        }
+      }
+    }
+
+    // early return if no panel data
+    if (!data.length) {
+      return false;
+    }
+
+    // outer loop for PanelData[]
+    outer: for (let p = 0; p < data.length; p++) {
+      const panelData = data[p];
+
+      if (!panelData?.series.length) {
+        continue outer;
+      }
+
+      // inner loop for PanelData.series
+      for (let i = 0; i < panelData.series.length; i++) {
+        // early break if any data is detected
+        if (hasData) {
+          break outer;
+        }
+        if (panelData?.series[i].length) {
+          hasData = true;
+        }
       }
     }
 
