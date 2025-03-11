@@ -7,11 +7,15 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
+	"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
 )
 
@@ -157,4 +161,94 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDashboardAPIBuilder_GetGroupVersions(t *testing.T) {
+	tests := []struct {
+		name            string
+		enabledFeatures []string
+		expected        []schema.GroupVersion
+	}{
+		{
+			name:            "should return v0alpha1 by default",
+			enabledFeatures: []string{},
+			expected: []schema.GroupVersion{
+				v0alpha1.DashboardResourceInfo.GroupVersion(),
+				v1alpha1.DashboardResourceInfo.GroupVersion(),
+				v2alpha1.DashboardResourceInfo.GroupVersion(),
+			},
+		},
+		{
+			name: "should return v0alpha1 as the default if some other feature is enabled",
+			enabledFeatures: []string{
+				featuremgmt.FlagKubernetesDashboards,
+			},
+			expected: []schema.GroupVersion{
+				v0alpha1.DashboardResourceInfo.GroupVersion(),
+				v1alpha1.DashboardResourceInfo.GroupVersion(),
+				v2alpha1.DashboardResourceInfo.GroupVersion(),
+			},
+		},
+		{
+			name: "should return v2alpha1 as the default if dashboards v2 is enabled",
+			enabledFeatures: []string{
+				featuremgmt.FlagUseV2DashboardsAPI,
+			},
+			expected: []schema.GroupVersion{
+				v2alpha1.DashboardResourceInfo.GroupVersion(),
+				v0alpha1.DashboardResourceInfo.GroupVersion(),
+				v1alpha1.DashboardResourceInfo.GroupVersion(),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			builder := &DashboardsAPIBuilder{
+				features: newMockFeatureToggles(t, tt.enabledFeatures...),
+			}
+
+			require.Equal(t, tt.expected, builder.GetGroupVersions())
+		})
+	}
+}
+
+type mockFeatureToggles struct {
+	// We need to make a copy in `GetEnabled` anyway,
+	// so no need to store the original map as map[string]bool.
+	enabledFeatures map[string]struct{}
+}
+
+func newMockFeatureToggles(t *testing.T, enabledFeatures ...string) featuremgmt.FeatureToggles {
+	t.Helper()
+
+	res := &mockFeatureToggles{
+		enabledFeatures: make(map[string]struct{}, len(enabledFeatures)),
+	}
+
+	for _, f := range enabledFeatures {
+		res.enabledFeatures[f] = struct{}{}
+	}
+
+	return res
+}
+
+func (m *mockFeatureToggles) IsEnabledGlobally(feature string) bool {
+	_, ok := m.enabledFeatures[feature]
+	return ok
+}
+
+func (m *mockFeatureToggles) IsEnabled(ctx context.Context, feature string) bool {
+	_, ok := m.enabledFeatures[feature]
+	return ok
+}
+
+func (m *mockFeatureToggles) GetEnabled(ctx context.Context) map[string]bool {
+	res := make(map[string]bool, len(m.enabledFeatures))
+
+	for f := range m.enabledFeatures {
+		res[f] = true
+	}
+
+	return res
 }
