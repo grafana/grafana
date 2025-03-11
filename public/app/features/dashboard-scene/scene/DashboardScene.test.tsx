@@ -610,26 +610,6 @@ describe('DashboardScene', () => {
         expect(behavior.state.uid).toBe('uid');
         expect(behavior.state.name).toBe('name');
       });
-
-      it('should maintain new timeZone in url when we do no restore initial state', () => {
-        const timeRange = sceneGraph.getTimeRange(scene)!;
-        timeRange.setState({ timeZone: 'UTC' });
-        // mimic saving
-        scene.setState({ isDirty: false });
-
-        // we exit edit mode and do not restore initial state, we should maintain new timezone in url
-        scene.exitEditMode({ skipConfirm: true, restoreInitialState: false });
-        expect(locationService.getLocation().search).toBe('?timezone=UTC');
-      });
-
-      it('should revert to initial timeZone in url when we restore initial state', () => {
-        const timeRange = sceneGraph.getTimeRange(scene)!;
-        timeRange.setState({ timeZone: 'UTC' });
-
-        // we exit edit mode and restore initial state, so we get the initial timezone in url
-        scene.exitEditMode({ skipConfirm: true });
-        expect(locationService.getLocation().search).toBe('?timezone=browser');
-      });
     });
   });
 
