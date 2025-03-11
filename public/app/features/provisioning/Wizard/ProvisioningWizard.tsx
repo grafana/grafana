@@ -23,11 +23,11 @@ import { Stepper, Step } from './Stepper';
 import { WizardFormData, WizardStep } from './types';
 
 const steps: Array<Step<WizardStep>> = [
-  { id: 'connection', name: 'Connect', title: 'Connect to Repository', submitOnNext: true },
-  { id: 'bootstrap', name: 'Bootstrap', title: 'Bootstrap Repository', submitOnNext: true },
-  { id: 'migrate', name: 'Resources', title: 'Migrate Resources', submitOnNext: false },
-  { id: 'pull', name: 'Resources', title: 'Pull Resources', submitOnNext: false },
-  { id: 'finish', name: 'Finish', title: 'Complete Setup', submitOnNext: true },
+  { id: 'connection', name: 'Connect', title: 'Connect to repository', submitOnNext: true },
+  { id: 'bootstrap', name: 'Bootstrap', title: 'Bootstrap repository', submitOnNext: true },
+  { id: 'migrate', name: 'Resources', title: 'Migrate resources', submitOnNext: false },
+  { id: 'pull', name: 'Resources', title: 'Pull resources', submitOnNext: false },
+  { id: 'finish', name: 'Finish', title: 'Finish setup', submitOnNext: true },
 ];
 
 export function ProvisioningWizard() {

@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { Alert, Field, FieldSet, Input, MultiCombobox, Stack, Switch, Text } from '@grafana/ui';
 
 import { getWorkflowOptions } from '../ConfigForm';
-import { checkPublicAccess } from '../GettingStarted/features';
+import { checkPublicAccess, checkImageRenderer } from '../GettingStarted/features';
 import { GETTING_STARTED_URL } from '../constants';
 
 import { WizardFormData } from './types';
@@ -25,6 +25,7 @@ export function FinishStep({ onStatusChange }: FinishStepProps) {
   const type = watch('repository.type');
   const isGithub = type === 'github';
   const isPublic = checkPublicAccess();
+  const hasImageRenderer = checkImageRenderer();
   // Enable sync by default
   const { setValue } = useFormContext<WizardFormData>();
   const navigate = useNavigate();
@@ -37,19 +38,26 @@ export function FinishStep({ onStatusChange }: FinishStepProps) {
 
   return (
     <Stack direction="column">
-      {(!isPublic || !isGithub) && (
-        <FieldSet label="Automatic pulling">
-          {isGithub && (
-            <Alert
-              title={'Public URL not configured'}
-              severity={'warning'}
-              buttonContent={<span>Instructions</span>}
-              onRemove={() => navigate(GETTING_STARTED_URL)}
-            >
-              Changes in git will eventually be pulled depending on the synchronization interval. Pull requests will not
-              be proccessed
+      <FieldSet label="Automatic pulling">
+        {isGithub && isPublic && (
+          <Stack>
+            <Alert severity="info" title="Instantenous provisioning available">
+              Automatically provision and update your dashboards as soon as changes are pushed to your GitHub
+              repository.
             </Alert>
-          )}
+          </Stack>
+        )}
+        {isGithub && !isPublic && (
+          <Alert
+            title={'Public URL not configured'}
+            severity={'warning'}
+            buttonContent={<span>Instructions</span>}
+            onRemove={() => navigate(GETTING_STARTED_URL)}
+          >
+            Changes in git will eventually be pulled depending on the synchronization interval.
+          </Alert>
+        )}
+        {!isPublic && (
           <Field label={'Interval (seconds)'}>
             <Input
               {...register('repository.sync.intervalSeconds', { valueAsNumber: true })}
@@ -57,8 +65,8 @@ export function FinishStep({ onStatusChange }: FinishStepProps) {
               placeholder={'60'}
             />
           </Field>
-        </FieldSet>
-      )}
+        )}
+      </FieldSet>
       <FieldSet label="Collaboration">
         <Field
           label={'Workflows'}
@@ -86,18 +94,50 @@ export function FinishStep({ onStatusChange }: FinishStepProps) {
         </Field>
         {isGithub && (
           <>
-            <Field
-              label={'Attach dashboard previews to pull requests'}
-              description={<Text element="span">Render before/after images and link them to the pull request.</Text>}
-            >
-              <Switch
-                {...register('repository.generateDashboardPreviews')}
-                id={'repository.generateDashboardPreviews'}
-              />
-            </Field>
-            <Alert severity="info" title="Note">
-              This will render dashboards into an image that can be access by a public URL
-            </Alert>
+            {isPublic ? (
+              <Alert severity="info" title="Preview links available">
+                Preview links will be automatically added to pull requests when changes are made.
+              </Alert>
+            ) : (
+              <Alert
+                severity="info"
+                title="Public URL not configured"
+                onRemove={() => navigate(GETTING_STARTED_URL)}
+                buttonContent={<span>Instructions</span>}
+              >
+                Preview links in pull requests will not be available until a public URL is configured.
+              </Alert>
+            )}
+
+            {!hasImageRenderer && (
+              <Alert
+                severity="info"
+                title="Image renderer not configured"
+                onRemove={() => navigate(GETTING_STARTED_URL)}
+                buttonContent={<span>Instructions</span>}
+              >
+                The image renderer is not configured. Preview images will not be available.
+              </Alert>
+            )}
+
+            {hasImageRenderer && isPublic && (
+              <>
+                <Field
+                  label={'Attach dashboard previews to pull requests'}
+                  description={
+                    <Text element="span">Render before/after images and link them to the pull request.</Text>
+                  }
+                >
+                  <Switch
+                    {...register('repository.generateDashboardPreviews')}
+                    id={'repository.generateDashboardPreviews'}
+                  />
+                </Field>
+                <Alert severity="info" title="Note">
+                  This will render dashboards into an image that can be access by a public URL
+                </Alert>
+              </>
+            )}
           </>
         )}
       </FieldSet>

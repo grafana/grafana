@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Alert, Box, Card, Field, Input, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
+import { Alert, Badge, Box, Card, Field, Input, LoadingPlaceholder, Stack, Text, Tooltip, Icon } from '@grafana/ui';
 
 import { useGetFrontendSettingsQuery, useGetRepositoryFilesQuery } from '../api';
 import { checkSyncSettings } from '../utils';
@@ -280,16 +280,16 @@ export function BootstrapStep({ onOptionSelect }: Props) {
                       >
                         <Card.Heading>
                           <Text color={optionState.isDisabled ? 'secondary' : 'primary'}>{option.label}</Text>
+                          {optionState.isDisabled && optionState.disabledReason && (
+                            <Tooltip content={optionState.disabledReason}>
+                              <Badge color="blue" text="Not available" icon="info" />
+                            </Tooltip>
+                          )}
                         </Card.Heading>
                         <Card.Description>
-                          {option.description}
-                          {optionState.isDisabled && optionState.disabledReason && (
-                            <Box paddingTop={2}>
-                              <Alert severity="info" title="Not available">
-                                {optionState.disabledReason}
-                              </Alert>
-                            </Box>
-                          )}
+                          <Stack direction="row" alignItems="center" gap={1}>
+                            {option.description}
+                          </Stack>
                         </Card.Description>
                       </Card>
                     );
