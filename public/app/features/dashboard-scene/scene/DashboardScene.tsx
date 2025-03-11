@@ -286,9 +286,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         folderUid: folderUid,
         version: result.version,
       },
+      overlay: undefined,
     });
 
     this.state.editPanel?.dashboardSaved();
+
+    this._initialState = sceneUtils.cloneSceneObjectState(this.state);
+    this._initialUrlState = locationService.getLocation();
+
     this._changeTracker.startTrackingChanges();
   }
 
