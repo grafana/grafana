@@ -1,9 +1,0 @@
-name: Lint and Build Documentation
-
-on:
-  pull_request:
-    paths:
-      - '*.md'
-      - 'docs/**'
-      - 'packages/**/*.md'
-      - 'latest.json'
