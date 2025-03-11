@@ -133,11 +133,12 @@ export function CreateRecordingRuleButton() {
         href={urlUtil.renderUrl(`alerting/new/recording`, {
           returnTo: location.pathname + location.search,
         })}
-        tooltip="Create new Data source-managed recording rule"
         icon="plus"
         variant="secondary"
       >
-        New recording rule
+        <Trans i18nKey="alerting.list-view.empty.new-ds-managed-recording-rule">
+          New data source-managed recording rule
+        </Trans>
       </LinkButton>
     );
   }
