@@ -29,7 +29,7 @@ This context store the GroupResource. `{ "group_resource": "dashboard.grafana.ap
 
 Subresources enable more granular permissions for the resources. Example might be access to public dashboards or access to dashboard settings.
 
-To grant a user access to the subresource we store following tuple: `{ “user”: “user:1”, relation: “read”, object:”resource:dashboard.grafana.app/dashboards/<subresource>/<name>” }` with additional context `{ "group_resource": "dashboard.grafana.app/dashboards/<subresource>" }`
+To grant a user access to the subresource of the specific resource we store following tuple: `{ “user”: “user:1”, relation: “read”, object:”resource:dashboard.grafana.app/dashboards/<subresource>/<resource_name>” }` with additional context `{ "group_resource": "dashboard.grafana.app/dashboards/<subresource>" }`
 
 It's also possible to grant user access to all subresources for specific resource type. It can be done with following tuple: `{ “user”: “user:1”, relation: “read”, object:”resource:dashboard.grafana.app/dashboards/<subresource>” }`.
 
