@@ -9,6 +9,7 @@ import { useTheme2 } from '../../themes/ThemeContext';
 import { allButtonVariants, Button } from '../Button';
 import { Card } from '../Card/Card';
 import { CollapsableSection } from '../Collapse/CollapsableSection';
+import { Combobox } from '../Combobox/Combobox';
 import { Field } from '../Forms/Field';
 import { InlineField } from '../Forms/InlineField';
 import { InlineFieldRow } from '../Forms/InlineFieldRow';
@@ -17,7 +18,6 @@ import { Icon } from '../Icon/Icon';
 import { Input } from '../Input/Input';
 import { BackgroundColor, BorderColor, Box, BoxShadow } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
-import { Select } from '../Select/Select';
 import { Switch } from '../Switch/Switch';
 import { Text, TextProps } from '../Text/Text';
 
@@ -150,8 +150,8 @@ export const ThemeDemo = () => {
             <Field label="Input disabled" disabled>
               <Input placeholder="Placeholder" value="Disabled value" />
             </Field>
-            <Field label="Select">
-              <Select options={selectOptions} value={selectValue} onChange={(v) => setSelectValue(v?.value!)} />
+            <Field label="Combobox">
+              <Combobox options={selectOptions} value={selectValue} onChange={(v) => setSelectValue(v?.value!)} />
             </Field>
             <Field label="Radio label">
               <RadioButtonGroup options={radioOptions} value={radioValue} onChange={setRadioValue} />
