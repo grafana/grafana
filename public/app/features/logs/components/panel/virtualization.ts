@@ -157,7 +157,6 @@ export function getLogLineSize(
   { wrap, showTime }: DisplayOptions,
   index: number
 ) {
-  console.log('measuring', index);
   if (!container) {
     return 0;
   }
