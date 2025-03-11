@@ -847,7 +847,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         loadingState={loading ? LoadingState.Loading : LoadingState.Done}
       >
         <div className={styles.stickyNavigation}>
-          {visualisationType !== 'table' && (
+          {visualisationType !== 'table' && !config.featureToggles.newLogsPanel && (
             <div className={styles.logOptions}>
               <InlineFieldRow>
                 <InlineField
