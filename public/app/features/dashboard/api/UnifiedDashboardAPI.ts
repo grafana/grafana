@@ -1,4 +1,3 @@
-import { UrlQueryMap } from '@grafana/data';
 import { Dashboard } from '@grafana/schema/dist/esm/index';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { DashboardDTO } from 'app/types';
