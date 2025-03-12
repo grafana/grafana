@@ -121,13 +121,8 @@ export function WizardContent({
         setIsSubmitting(false);
       }
     } else {
-      // For job steps, only proceed if the job was successful
-      if (isJobStep(activeStep)) {
-        if (stepSuccess) {
-          handleNext();
-        }
-      } else {
-        // For other non-submit steps, proceed normally
+      // only proceed if the job was successful
+      if (stepSuccess || stepStatus === 'success') {
         handleNext();
       }
     }
@@ -149,19 +144,9 @@ export function WizardContent({
     }
   }, [saveRequest.isSuccess, saveRequest.isError, saveRequest.data, setValue, handleStatusChange]);
 
-  // Helper to check if current step needs job status
-  const isJobStep = (step: string) => {
-    return step === 'migrate' || step === 'pull';
-  };
-
-  // Determine if the next button should be disabled
   const isNextButtonDisabled = () => {
-    if (isSubmitting || isCancelling) {
+    if (isSubmitting || isCancelling || stepStatus === 'running' || stepStatus === 'error') {
       return true;
-    }
-
-    if (isJobStep(activeStep)) {
-      return stepStatus === 'running' || stepStatus === 'error';
     }
 
     return false;
