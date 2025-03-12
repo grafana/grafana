@@ -29,8 +29,8 @@ type JobQueue interface {
 
 type JobProgressRecorder interface {
 	Record(ctx context.Context, result JobResourceResult)
+	SetFinalMessage(ctx context.Context, msg string)
 	SetMessage(ctx context.Context, msg string)
-	GetMessage() string
 	SetRef(ref string)
 	GetRef() string
 	SetTotal(ctx context.Context, total int)

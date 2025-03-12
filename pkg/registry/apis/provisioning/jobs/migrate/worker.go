@@ -181,8 +181,8 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		}
 	}
 
-	// Clear unified and allow writing
 	if isFromLegacy {
+		progress.SetMessage(ctx, "resetting unified storage")
 		if err = worker.wipeUnifiedAndSetMigratedFlag(ctx, w.storageStatus); err != nil {
 			return fmt.Errorf("unable to reset unified storage %w", err)
 		}
@@ -192,6 +192,7 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	rw.Config().Spec.Sync.Enabled = true
 
 	// Delegate the import to a sync (from the already checked out go-git repository!)
+	progress.SetMessage(ctx, "pulling resources")
 	err = w.syncWorker.Process(ctx, rw, provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Pull: &provisioning.SyncJobOptions{
@@ -200,6 +201,7 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		},
 	}, progress)
 	if err != nil && isFromLegacy { // this will have an error when too many errors exist
+		progress.SetMessage(ctx, "error importing resources, reverting")
 		if e2 := stopReadingUnifiedStorage(ctx, w.storageStatus); e2 != nil {
 			logger := logging.FromContext(ctx)
 			logger.Warn("error trying to revert dual write settings after an error", "err", err)

@@ -130,10 +130,6 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		return fmt.Errorf("update repo with job final status: %w", err)
 	}
 
-	if syncError == nil {
-		progress.SetMessage(ctx, "job completed successfully")
-	}
-
 	return syncError
 }
 
@@ -230,7 +226,7 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) 
 
 		if cfg.Status.Sync.LastRef != "" && options.Incremental {
 			if currentRef == cfg.Status.Sync.LastRef {
-				r.progress.SetMessage(ctx, "same commit as last sync")
+				r.progress.SetFinalMessage(ctx, "same commit as last sync")
 				return nil
 			}
 
@@ -253,7 +249,7 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) 
 	}
 
 	if len(changes) == 0 {
-		r.progress.SetMessage(ctx, "no changes to sync")
+		r.progress.SetFinalMessage(ctx, "no changes to sync")
 		return nil
 	}
 
@@ -327,7 +323,7 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 	}
 
 	if len(diff) < 1 {
-		r.progress.SetMessage(ctx, "no changes detected between commits")
+		r.progress.SetFinalMessage(ctx, "no changes detected between commits")
 		return nil
 	}
 

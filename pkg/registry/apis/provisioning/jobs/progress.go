@@ -36,15 +36,16 @@ type JobResourceResult struct {
 }
 
 type jobProgressRecorder struct {
-	started     time.Time
-	total       int
-	ref         string
-	message     string
-	resultCount int
-	errorCount  int
-	errors      []string
-	progressFn  ProgressFn
-	summaries   map[string]*provisioning.JobResourceSummary
+	started      time.Time
+	total        int
+	ref          string
+	message      string
+	finalMessage string
+	resultCount  int
+	errorCount   int
+	errors       []string
+	progressFn   ProgressFn
+	summaries    map[string]*provisioning.JobResourceSummary
 }
 
 func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
@@ -78,8 +79,9 @@ func (r *jobProgressRecorder) SetMessage(ctx context.Context, msg string) {
 	logging.FromContext(ctx).Info("job progress message", "message", msg)
 }
 
-func (r *jobProgressRecorder) GetMessage() string {
-	return r.message
+func (r *jobProgressRecorder) SetFinalMessage(ctx context.Context, msg string) {
+	r.finalMessage = msg
+	logging.FromContext(ctx).Info("job final message", "message", msg)
 }
 
 func (r *jobProgressRecorder) SetRef(ref string) {
@@ -198,8 +200,8 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 	}
 
 	// Override message if progress have a more explicit message
-	if r.message != "" && jobStatus.State != provisioning.JobStateError {
-		jobStatus.Message = r.message
+	if r.finalMessage != "" && jobStatus.State != provisioning.JobStateError {
+		jobStatus.Message = r.finalMessage
 	}
 
 	return jobStatus

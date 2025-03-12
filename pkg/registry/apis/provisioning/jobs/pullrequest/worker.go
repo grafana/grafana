@@ -87,7 +87,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	}
 
 	if len(files) == 0 {
-		progress.SetMessage(ctx, "no files to process")
+		progress.SetFinalMessage(ctx, "no files to process")
 		return nil
 	}
 
@@ -139,7 +139,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	}
 
 	if len(previews) == 0 {
-		progress.SetMessage(ctx, "no previews to add")
+		progress.SetFinalMessage(ctx, "no previews to add")
 		return nil
 	}
 
