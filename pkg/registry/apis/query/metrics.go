@@ -10,7 +10,8 @@ const (
 )
 
 type queryMetrics struct {
-	dsRequests *prometheus.CounterVec
+	dsRequests  *prometheus.CounterVec
+	dsResponses *prometheus.CounterVec
 
 	// older metric
 	expressionsQuerySummary *prometheus.SummaryVec
@@ -24,6 +25,12 @@ func newQueryMetrics(reg prometheus.Registerer) *queryMetrics {
 			Name:      "ds_queries_total",
 			Help:      "Number of datasource queries made from the query service",
 		}, []string{"error", "dataplane", "datasource_type"}),
+
+		dsResponses: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: "grafana",
+			Name:      "plugin_request_total",
+			Help:      "The total amount of plugin requests",
+		}, []string{"plugin_id", "status", "status_source"}),
 
 		expressionsQuerySummary: prometheus.NewSummaryVec(
 			prometheus.SummaryOpts{
