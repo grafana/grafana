@@ -76,6 +76,41 @@ type Debouncer[T any] struct {
 	metrics      *metrics
 }
 
+// NewDebouncer creates a new debouncer for processing events with unique keys.
+//
+// A debouncer helps optimize expensive operations by:
+// 1. Grouping identical events that occur in rapid succession
+// 2. Processing each unique key only once after waiting periods expire
+//
+// Parameters:
+//   - BufferSize: Maximum number of pending events to buffer
+//   - KeyFunc: Function that extracts/defines the key from an input
+//   - MinWait: Cooldown period after receiving an event. If another event with the
+//     same key arrives during this period, the timer resets and we wait another MinWait duration.
+//   - MaxWait: Maximum time any event will wait before processing. Even if new events
+//     for the same key keep arriving, we guarantee processing after MaxWait from the first event.
+//
+// Example usage:
+//
+//	debouncer := NewDebouncer(DebouncerOpts[string]{
+//		BufferSize: 10,
+//		KeyFunc:    func(s string) string { return s },
+//		MinWait:    time.Second * 10,
+//		MaxWait:    time.Minute,
+//	})
+//
+//	debouncer.Start(ctx, func(key string) error {
+//		// This is where you perform the expensive operation
+//		return doSuperExpensiveCommand(key)
+//	})
+//
+//	// Queue events
+//	debouncer.Add("user-1")
+//	// Adding the same key resets MinWait but not MaxWait
+//	debouncer.Add("user-1")
+//
+// The event will be processed when either MinWait expires (after the most recent add)
+// or MaxWait expires (after the first add), whichever comes first.
 func NewDebouncer[T any](opts DebouncerOpts[T]) *Debouncer[T] {
 	if opts.BufferSize <= 0 {
 		opts.BufferSize = 100
