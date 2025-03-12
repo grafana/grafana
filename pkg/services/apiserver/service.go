@@ -46,7 +46,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -79,6 +78,8 @@ var (
 	restConfig RestConfigProvider
 	ready      = make(chan struct{})
 )
+
+const MaxRequestBodyBytes = 16 * 1024 * 1024 // 16MB - determined by the size of `mediumtext` on mysql, which is used to save dashboard data
 
 func init() {
 	// we need to add the options to empty v1
@@ -156,7 +157,6 @@ func ProvideService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	rr routing.RouteRegister,
-	orgService org.Service,
 	tracing *tracing.TracingService,
 	serverLockService *serverlock.ServerLockService,
 	db db.DB,
@@ -176,7 +176,7 @@ func ProvideService(
 		rr:                                rr,
 		stopCh:                            make(chan struct{}),
 		builders:                          []builder.APIGroupBuilder{},
-		authorizer:                        authorizer.NewGrafanaAuthorizer(cfg, orgService),
+		authorizer:                        authorizer.NewGrafanaAuthorizer(cfg),
 		tracing:                           tracing,
 		db:                                db, // For Unified storage
 		metrics:                           metrics.ProvideRegisterer(),
@@ -335,6 +335,7 @@ func (s *service) start(ctx context.Context) error {
 	transport := &roundTripperFunc{ready: make(chan struct{})}
 	serverConfig.LoopbackClientConfig.Transport = transport
 	serverConfig.LoopbackClientConfig.TLSClientConfig = clientrest.TLSClientConfig{}
+	serverConfig.MaxRequestBodyBytes = MaxRequestBodyBytes
 
 	var optsregister apistore.StorageOptionsRegister
 

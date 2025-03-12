@@ -1641,6 +1641,16 @@
         },
         "description": "(empty)"
       },
+      "notAcceptableError": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponseBody"
+            }
+          }
+        },
+        "description": "NotAcceptableError is returned when the server cannot produce a response matching the accepted formats."
+      },
       "notFoundError": {
         "content": {
           "application/json": {
@@ -3108,6 +3118,7 @@
         "type": "object"
       },
       "AnnotationActions": {
+        "description": "+k8s:deepcopy-gen=true",
         "properties": {
           "canAdd": {
             "type": "boolean"
@@ -3182,6 +3193,7 @@
         "type": "object"
       },
       "AnnotationPermission": {
+        "description": "+k8s:deepcopy-gen=true",
         "properties": {
           "dashboard": {
             "$ref": "#/components/schemas/AnnotationActions"
@@ -3664,6 +3676,24 @@
             },
             "type": "array"
           },
+          "InhibitAnyPolicy": {
+            "description": "InhibitAnyPolicy and InhibitAnyPolicyZero indicate the presence and value\nof the inhibitAnyPolicy extension.\n\nThe value of InhibitAnyPolicy indicates the number of additional\ncertificates in the path after this certificate that may use the\nanyPolicy policy OID to indicate a match with any other policy.\n\nWhen parsing a certificate, a positive non-zero InhibitAnyPolicy means\nthat the field was specified, -1 means it was unset, and\nInhibitAnyPolicyZero being true mean that the field was explicitly set to\nzero. The case of InhibitAnyPolicy==0 with InhibitAnyPolicyZero==false\nshould be treated equivalent to -1 (unset).",
+            "format": "int64",
+            "type": "integer"
+          },
+          "InhibitAnyPolicyZero": {
+            "description": "InhibitAnyPolicyZero indicates that InhibitAnyPolicy==0 should be\ninterpreted as an actual maximum path length of zero. Otherwise, that\ncombination is interpreted as InhibitAnyPolicy not being set.",
+            "type": "boolean"
+          },
+          "InhibitPolicyMapping": {
+            "description": "InhibitPolicyMapping and InhibitPolicyMappingZero indicate the presence\nand value of the inhibitPolicyMapping field of the policyConstraints\nextension.\n\nThe value of InhibitPolicyMapping indicates the number of additional\ncertificates in the path after this certificate that may use policy\nmapping.\n\nWhen parsing a certificate, a positive non-zero InhibitPolicyMapping\nmeans that the field was specified, -1 means it was unset, and\nInhibitPolicyMappingZero being true mean that the field was explicitly\nset to zero. The case of InhibitPolicyMapping==0 with\nInhibitPolicyMappingZero==false should be treated equivalent to -1\n(unset).",
+            "format": "int64",
+            "type": "integer"
+          },
+          "InhibitPolicyMappingZero": {
+            "description": "InhibitPolicyMappingZero indicates that InhibitPolicyMapping==0 should be\ninterpreted as an actual maximum path length of zero. Otherwise, that\ncombination is interpreted as InhibitAnyPolicy not being set.",
+            "type": "boolean"
+          },
           "IsCA": {
             "type": "boolean"
           },
@@ -3728,16 +3758,23 @@
             "type": "array"
           },
           "Policies": {
-            "description": "Policies contains all policy identifiers included in the certificate.\nIn Go 1.22, encoding/gob cannot handle and ignores this field.",
+            "description": "Policies contains all policy identifiers included in the certificate.\nSee CreateCertificate for context about how this field and the PolicyIdentifiers field\ninteract.\nIn Go 1.22, encoding/gob cannot handle and ignores this field.",
             "items": {
               "type": "string"
             },
             "type": "array"
           },
           "PolicyIdentifiers": {
-            "description": "PolicyIdentifiers contains asn1.ObjectIdentifiers, the components\nof which are limited to int32. If a certificate contains a policy which\ncannot be represented by asn1.ObjectIdentifier, it will not be included in\nPolicyIdentifiers, but will be present in Policies, which contains all parsed\npolicy OIDs.",
+            "description": "PolicyIdentifiers contains asn1.ObjectIdentifiers, the components\nof which are limited to int32. If a certificate contains a policy which\ncannot be represented by asn1.ObjectIdentifier, it will not be included in\nPolicyIdentifiers, but will be present in Policies, which contains all parsed\npolicy OIDs.\nSee CreateCertificate for context about how this field and the Policies field\ninteract.",
             "items": {
               "$ref": "#/components/schemas/ObjectIdentifier"
+            },
+            "type": "array"
+          },
+          "PolicyMappings": {
+            "description": "PolicyMappings contains a list of policy mappings included in the certificate.",
+            "items": {
+              "$ref": "#/components/schemas/PolicyMapping"
             },
             "type": "array"
           },
@@ -3779,6 +3816,15 @@
               "type": "integer"
             },
             "type": "array"
+          },
+          "RequireExplicitPolicy": {
+            "description": "RequireExplicitPolicy and RequireExplicitPolicyZero indicate the presence\nand value of the requireExplicitPolicy field of the policyConstraints\nextension.\n\nThe value of RequireExplicitPolicy indicates the number of additional\ncertificates in the path after this certificate before an explicit policy\nis required for the rest of the path. When an explicit policy is required,\neach subsequent certificate in the path must contain a required policy OID,\nor a policy OID which has been declared as equivalent through the policy\nmapping extension.\n\nWhen parsing a certificate, a positive non-zero RequireExplicitPolicy\nmeans that the field was specified, -1 means it was unset, and\nRequireExplicitPolicyZero being true mean that the field was explicitly\nset to zero. The case of RequireExplicitPolicy==0 with\nRequireExplicitPolicyZero==false should be treated equivalent to -1\n(unset).",
+            "format": "int64",
+            "type": "integer"
+          },
+          "RequireExplicitPolicyZero": {
+            "description": "RequireExplicitPolicyZero indicates that RequireExplicitPolicy==0 should be\ninterpreted as an actual maximum path length of zero. Otherwise, that\ncombination is interpreted as InhibitAnyPolicy not being set.",
+            "type": "boolean"
           },
           "SerialNumber": {
             "type": "string"
@@ -4295,6 +4341,9 @@
           },
           "state": {
             "$ref": "#/components/schemas/State"
+          },
+          "subject": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -4584,6 +4633,9 @@
         "properties": {
           "annotationsPermissions": {
             "$ref": "#/components/schemas/AnnotationPermission"
+          },
+          "apiVersion": {
+            "type": "string"
           },
           "canAdmin": {
             "type": "boolean"
@@ -5566,6 +5618,9 @@
             "format": "int64",
             "type": "integer"
           },
+          "managedBy": {
+            "$ref": "#/components/schemas/ManagerKind"
+          },
           "orgId": {
             "format": "int64",
             "type": "integer"
@@ -5580,10 +5635,6 @@
               "$ref": "#/components/schemas/Folder"
             },
             "type": "array"
-          },
-          "repository": {
-            "description": "When the folder belongs to a repository\nNOTE: this is only populated when folders are managed by unified storage",
-            "type": "string"
           },
           "title": {
             "type": "string"
@@ -5614,11 +5665,10 @@
             "format": "int64",
             "type": "integer"
           },
-          "parentUid": {
-            "type": "string"
+          "managedBy": {
+            "$ref": "#/components/schemas/ManagerKind"
           },
-          "repository": {
-            "description": "When the folder belongs to a repository\nNOTE: this is only populated when folders are managed by unified storage",
+          "parentUid": {
             "type": "string"
           },
           "title": {
@@ -7100,6 +7150,11 @@
         },
         "type": "object"
       },
+      "ManagerKind": {
+        "description": "It can be a user or a tool or a generic API client.\n+enum",
+        "title": "ManagerKind is the type of manager, which is responsible for managing the resource.",
+        "type": "string"
+      },
       "MassDeleteAnnotationsCmd": {
         "properties": {
           "annotationId": {
@@ -8157,6 +8212,20 @@
           "$ref": "#/components/schemas/Playlist"
         },
         "type": "array"
+      },
+      "PolicyMapping": {
+        "properties": {
+          "IssuerDomainPolicy": {
+            "description": "IssuerDomainPolicy contains a policy OID the issuing certificate considers\nequivalent to SubjectDomainPolicy in the subject certificate.",
+            "type": "string"
+          },
+          "SubjectDomainPolicy": {
+            "description": "SubjectDomainPolicy contains a OID the issuing certificate considers\nequivalent to IssuerDomainPolicy in the subject certificate.",
+            "type": "string"
+          }
+        },
+        "title": "PolicyMapping represents a policy mapping entry in the policyMappings extension.",
+        "type": "object"
       },
       "PostAnnotationsCmd": {
         "properties": {
@@ -9540,6 +9609,9 @@
           },
           "state": {
             "$ref": "#/components/schemas/State"
+          },
+          "subject": {
+            "type": "string"
           },
           "uid": {
             "type": "string"
@@ -16984,6 +17056,9 @@
           },
           "404": {
             "$ref": "#/components/responses/notFoundError"
+          },
+          "406": {
+            "$ref": "#/components/responses/notAcceptableError"
           },
           "500": {
             "$ref": "#/components/responses/internalServerError"

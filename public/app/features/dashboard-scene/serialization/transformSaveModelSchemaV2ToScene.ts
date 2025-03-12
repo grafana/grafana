@@ -66,7 +66,6 @@ import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehavi
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
-import { DashboardScopesFacade } from '../scene/DashboardScopesFacade';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { getIntervalsFromQueryString } from '../utils/utils';
@@ -188,10 +187,6 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       new behaviors.LiveNowTimer({ enabled: dashboard.liveNow }),
       preserveDashboardSceneStateInLocalStorage,
       addPanelsOnLoadBehavior,
-      new DashboardScopesFacade({
-        reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange,
-        uid: dashboardId?.toString(),
-      }),
       new DashboardReloadBehavior({
         reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange,
         uid: dashboardId?.toString(),
@@ -203,7 +198,9 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     }),
     controls: new DashboardControls({
       variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
-      timePicker: new SceneTimePicker({}),
+      timePicker: new SceneTimePicker({
+        quickRanges: dashboard.timeSettings.quickRanges,
+      }),
       refreshPicker: new SceneRefreshPicker({
         refresh: dashboard.timeSettings.autoRefresh,
         intervals: dashboard.timeSettings.autoRefreshIntervals,

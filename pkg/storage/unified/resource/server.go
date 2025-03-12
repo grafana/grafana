@@ -28,7 +28,7 @@ type ResourceServer interface {
 	ResourceStoreServer
 	BulkStoreServer
 	ResourceIndexServer
-	RepositoryIndexServer
+	ManagedObjectIndexServer
 	BlobStoreServer
 	DiagnosticsServer
 }
@@ -456,12 +456,9 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		}
 	}
 
-	repo, err := obj.GetRepositoryInfo()
-	if err != nil {
-		return nil, NewBadRequestError("invalid repository info")
-	}
-	if repo != nil {
-		err = s.writeHooks.CanWriteValueFromRepository(ctx, user, repo.Name)
+	m, ok := obj.GetManagerProperties()
+	if ok && m.Kind == utils.ManagerKindRepo {
+		err = s.writeHooks.CanWriteValueFromRepository(ctx, user, m.Identity)
 		if err != nil {
 			return nil, AsErrorResult(err)
 		}
@@ -1108,12 +1105,12 @@ func (s *server) GetStats(ctx context.Context, req *ResourceStatsRequest) (*Reso
 	return s.search.GetStats(ctx, req)
 }
 
-func (s *server) ListRepositoryObjects(ctx context.Context, req *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error) {
-	return s.search.ListRepositoryObjects(ctx, req)
+func (s *server) ListManagedObjects(ctx context.Context, req *ListManagedObjectsRequest) (*ListManagedObjectsResponse, error) {
+	return s.search.ListManagedObjects(ctx, req)
 }
 
-func (s *server) CountRepositoryObjects(ctx context.Context, req *CountRepositoryObjectsRequest) (*CountRepositoryObjectsResponse, error) {
-	return s.search.CountRepositoryObjects(ctx, req)
+func (s *server) CountManagedObjects(ctx context.Context, req *CountManagedObjectsRequest) (*CountManagedObjectsResponse, error) {
+	return s.search.CountManagedObjects(ctx, req)
 }
 
 // IsHealthy implements ResourceServer.

@@ -185,6 +185,7 @@ export enum PluginExtensionPoints {
   DataSourceConfig = 'grafana/datasources/config',
   ExploreToolbarAction = 'grafana/explore/toolbar/action',
   UserProfileTab = 'grafana/user/profile/tab',
+  TraceViewDetails = 'grafana/traceview/details',
 }
 
 export type PluginExtensionPanelContext = {
