@@ -11,6 +11,7 @@ import { t, Trans } from 'app/core/internationalization';
 import { useScopesServices } from '../ScopesContextProvider';
 
 import { ScopesInput } from './ScopesInput';
+import { ScopesSelectorServiceState } from './ScopesSelectorService';
 import { ScopesTree } from './ScopesTree';
 
 export const ScopesSelector = () => {
@@ -20,17 +21,18 @@ export const ScopesSelector = () => {
   const styles = useStyles2(getStyles, menuDockedAndOpen);
   const scopes = useScopes();
 
-  const { scopesService, scopesSelectorService, scopesDashboardsService } = useScopesServices();
+  const services = useScopesServices();
 
-  const { nodes, selectedScopes, opened, loadingNodeName, treeScopes } = useObservable(
-    scopesSelectorService.stateObservable ?? new Observable(),
-    scopesSelectorService.state
+  const selectorServiceState: ScopesSelectorServiceState | undefined = useObservable(
+    services?.scopesSelectorService.stateObservable ?? new Observable(),
+    services?.scopesSelectorService.state
   );
 
-  if (!scopes || !scopes.state.enabled) {
+  if (!services || !scopes || !scopes.state.enabled || !selectorServiceState) {
     return null;
   }
-
+  const { nodes, loadingNodeName, selectedScopes, opened, treeScopes } = selectorServiceState;
+  const { scopesService, scopesSelectorService, scopesDashboardsService } = services;
   const { readOnly, drawerOpened, loading } = scopes.state;
   const { open, removeAllScopes, closeAndApply, closeAndReset, updateNode, toggleNodeSelect } = scopesSelectorService;
 

@@ -15,15 +15,18 @@ import { ScopesDashboardsTreeSearch } from './ScopesDashboardsTreeSearch';
 export function ScopesDashboards() {
   const styles = useStyles2(getStyles);
   const scopes = useScopes();
+  const scopeServices = useScopesServices();
 
-  const { scopesDashboardsService } = useScopesServices();
+  useObservable(
+    scopeServices?.scopesDashboardsService.stateObservable ?? new Observable(),
+    scopeServices?.scopesDashboardsService.state
+  );
 
-  useObservable(scopesDashboardsService.stateObservable ?? new Observable(), scopesDashboardsService.state);
-
-  if (!scopes || !scopes.state.enabled || !scopes.state.drawerOpened || scopes.state.readOnly) {
+  if (!scopeServices || !scopes || !scopes.state.enabled || !scopes.state.drawerOpened || scopes.state.readOnly) {
     return null;
   }
 
+  const { scopesDashboardsService } = scopeServices;
   const { loading, forScopeNames, dashboards, searchQuery, filteredFolders } = scopesDashboardsService.state;
   const { changeSearchQuery, updateFolder, clearSearchQuery } = scopesDashboardsService;
 

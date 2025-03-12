@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useMemo, useContext } from 'react';
 
-import { ScopesContext } from '@grafana/runtime';
+import { config, ScopesContext } from '@grafana/runtime';
 
 import { ScopesApiClient } from './ScopesApiClient';
 import { ScopesService } from './ScopesService';
@@ -19,13 +19,7 @@ type Services = {
  */
 export const ScopesServicesContext = createContext<Services | undefined>(undefined);
 export function useScopesServices() {
-  const services = useContext(ScopesServicesContext);
-  if (!services) {
-    throw new Error(
-      'Using `useScopesServices` but ScopesServicesContext is empty. Did you forget to wrap your component in a `ScopesContextProvider`?'
-    );
-  }
-  return services;
+  return useContext(ScopesServicesContext);
 }
 
 interface ScopesContextProviderProps {
@@ -55,8 +49,10 @@ export const ScopesContextProvider = ({ children, services }: ScopesContextProvi
   }, [services]);
 
   return (
-    <ScopesContext.Provider value={memoizedServices.scopesService}>
-      <ScopesServicesContext.Provider value={memoizedServices}>{children}</ScopesServicesContext.Provider>
+    <ScopesContext.Provider value={config.featureToggles.scopeFilters ? memoizedServices.scopesService : undefined}>
+      <ScopesServicesContext.Provider value={config.featureToggles.scopeFilters ? memoizedServices : undefined}>
+        {children}
+      </ScopesServicesContext.Provider>
     </ScopesContext.Provider>
   );
 };

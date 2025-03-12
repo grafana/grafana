@@ -7,7 +7,7 @@ import { getEmptyScopeObject } from '../utils';
 
 import { NodeReason, NodesMap, SelectedScope, TreeScope } from './types';
 
-interface ScopesSelectorServiceState {
+export interface ScopesSelectorServiceState {
   loading: boolean;
 
   // Whether the scopes selector drawer is opened
