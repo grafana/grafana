@@ -12,10 +12,12 @@ interface RequestErrorAlertProps {
 
 function getDefaultTitle(endpointName?: string): string {
   switch (endpointName) {
+    case 'createRepositorySync':
+      return 'Failed to sync dashboards';
     case 'createRepositoryMigrate':
       return 'Failed to migrate dashboards';
     case 'createOrUpdateRepository':
-      return 'Failed to save repository settings';
+      return 'Failed to save repository';
     default:
       return 'Operation failed';
   }

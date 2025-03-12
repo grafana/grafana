@@ -58,6 +58,27 @@ describe('PanelRepeaterGridItem', () => {
     expect(repeater.state.repeatedPanels?.length).toBe(5);
   });
 
+  it('Should pass isMulti/includeAll values if variable is multi variable and has them set', async () => {
+    const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 1 });
+
+    activateFullSceneTree(scene);
+
+    expect(repeater.state.repeatedPanels?.length).toBe(0);
+
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(repeater.state.repeatedPanels?.length).toBe(5);
+
+    // LocalValueVariableState is not exposed, so we build this type casting
+    const variableState = repeater.state.repeatedPanels![0].state.$variables?.state.variables[0].state as {
+      isMulti?: boolean;
+      includeAll?: boolean;
+    };
+
+    expect(variableState.isMulti).toBe(true);
+    expect(variableState.includeAll).toBe(true);
+  });
+
   it('Should display a panel when there are no options', async () => {
     const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 1, numberOfOptions: 0 });
 

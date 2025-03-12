@@ -1,22 +1,28 @@
-import { useEffect } from 'react';
+import { useCreateRepositorySyncMutation } from '../api';
+import { StepStatus } from '../hooks/useStepStatus';
 
-import { Alert, Stack } from '@grafana/ui';
+import { JobStep } from './JobStep';
 
-export interface PullStepProps {
-  onStatusChange: (success: boolean) => void;
+interface PullStepProps {
+  onStepUpdate: (status: StepStatus, error?: string) => void;
 }
 
-export function PullStep({ onStatusChange }: PullStepProps) {
-  useEffect(() => {
-    // Mark this step as successful immediately since it's just informational
-    onStatusChange(true);
-  }, [onStatusChange]);
+export function PullStep({ onStepUpdate }: PullStepProps) {
+  const [syncRepo] = useCreateRepositorySyncMutation();
+
+  const startSync = async (repositoryName: string) => {
+    const response = await syncRepo({
+      name: repositoryName,
+      body: { incremental: false },
+    }).unwrap();
+    return response;
+  };
 
   return (
-    <Stack direction="column" gap={3}>
-      <Alert severity="success" title="Successful connection!">
-        Your repository has been configured successfully and will start pulling dashboards shortly.
-      </Alert>
-    </Stack>
+    <JobStep
+      onStepUpdate={onStepUpdate}
+      description="Pulling all content from your repository to this Grafana instance. This ensures your dashboards and other resources are synchronized with the repository."
+      startJob={startSync}
+    />
   );
 }

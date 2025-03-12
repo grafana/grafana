@@ -1,34 +1,50 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
-import { Stack, Text, TextLink, InteractiveTable, Spinner, ControlledCollapse, Alert } from '@grafana/ui';
+import { Alert, ControlledCollapse, InteractiveTable, LinkButton, Spinner, Stack, Text } from '@grafana/ui';
 
 import ProgressBar from './ProgressBar';
 import { useGetRepositoryQuery, useListJobQuery } from './api';
-import { getRemoteURL } from './utils/git';
 
 export interface JobStatusProps {
   name: string;
   onStatusChange?: (success: boolean) => void;
+  onRunningChange?: (isRunning: boolean) => void;
+  onErrorChange?: (error: string | null) => void;
 }
 
-export function JobStatus({ name, onStatusChange }: JobStatusProps) {
+export function JobStatus({ name, onStatusChange, onRunningChange, onErrorChange }: JobStatusProps) {
   const jobQuery = useListJobQuery({ watch: true, fieldSelector: `metadata.name=${name}` });
   const job = jobQuery.data?.items?.[0];
-  const hasNotifiedSuccess = useRef(false);
 
   useEffect(() => {
-    if (onStatusChange && !hasNotifiedSuccess.current) {
-      hasNotifiedSuccess.current = true;
-      onStatusChange(true);
+    if (onRunningChange) {
+      onRunningChange(jobQuery.isLoading || !job || job.status?.state === 'working' || job.status?.state === 'pending');
     }
-  }, [onStatusChange]);
+  }, [jobQuery.isLoading, job, onRunningChange, onErrorChange]);
 
-  if (jobQuery.isLoading || !job) {
+  useEffect(() => {
+    if (onStatusChange && job?.status?.state === 'success') {
+      onStatusChange(true);
+      if (onRunningChange) {
+        onRunningChange(false);
+      }
+    }
+    if (onErrorChange && job?.status?.state === 'error') {
+      onErrorChange(job.status.message ?? 'An unknown error occurred');
+      if (onRunningChange) {
+        onRunningChange(false);
+      }
+    }
+  }, [job, onStatusChange, onErrorChange, onRunningChange]);
+
+  if (!name || jobQuery.isLoading || !job) {
     return (
-      <Stack direction="column" alignItems="center" gap={2}>
-        <Spinner />
-        <Text>Starting...</Text>
+      <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
+        <Spinner size={24} />
+        <Text element="h4" weight="bold">
+          Starting...
+        </Text>
       </Stack>
     );
   }
@@ -36,7 +52,7 @@ export function JobStatus({ name, onStatusChange }: JobStatusProps) {
   const status = () => {
     switch (job.status?.state) {
       case 'success':
-        return <Alert severity="success" title="Migration succesful" />;
+        return <Alert severity="success" title="Job completed successfully" />;
       case 'error':
         return (
           <Alert severity="error" title="error running job">
@@ -45,9 +61,9 @@ export function JobStatus({ name, onStatusChange }: JobStatusProps) {
         );
     }
     return (
-      <Stack direction="row">
-        <Spinner />
-        <Text element="p" weight="medium">
+      <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
+        {!job.status?.progress && <Spinner size={24} />}
+        <Text element="h4" color="secondary">
           {job.status?.message ?? job.status?.state!}
         </Text>
       </Stack>
@@ -60,9 +76,11 @@ export function JobStatus({ name, onStatusChange }: JobStatusProps) {
         <Stack direction="column" gap={2}>
           {status()}
 
-          <ProgressBar progress={job.status.progress} />
+          <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
+            <ProgressBar progress={job.status.progress} />
+          </Stack>
 
-          {job.status.summary && <MigrationSummaryTable summary={job.status.summary} />}
+          {job.status.summary && <SummaryTable summary={job.status.summary} />}
 
           {job.status.state === 'success' ? (
             <RepositoryLink name={job.metadata?.labels?.repository} />
@@ -86,7 +104,7 @@ interface SummaryRow {
   total: number;
 }
 
-interface MigrationSummaryTableProps {
+interface SummaryTableProps {
   summary: Array<{
     resource?: string;
     group?: string;
@@ -96,7 +114,7 @@ interface MigrationSummaryTableProps {
   }>;
 }
 
-function MigrationSummaryTable({ summary }: MigrationSummaryTableProps) {
+function SummaryTable({ summary }: SummaryTableProps) {
   const summaryData = useMemo(() => {
     return summary.map((item) => ({
       resource: item.resource || '',
@@ -121,7 +139,7 @@ function MigrationSummaryTable({ summary }: MigrationSummaryTableProps) {
 
   return (
     <Stack direction="column" gap={2}>
-      <Text variant="h6">Migration Summary</Text>
+      <Text variant="h6">Summary</Text>
       <InteractiveTable columns={columns} data={summaryData} getRowId={(row: SummaryRow) => row.resource} />
     </Stack>
   );
@@ -139,17 +157,24 @@ function RepositoryLink({ name }: RepositoryLinkProps) {
     return null;
   }
 
-  const href = getRemoteURL(repo);
+  const repoHref = repo.spec?.github?.url;
+  const folderHref = repo.spec?.sync.target === 'folder' ? `/dashboards/f/${repo.metadata?.name}` : '/dashboards';
 
-  if (!href) {
+  if (!repoHref) {
     return null;
   }
+
   return (
-    <Stack direction={'column'}>
-      <Text>Your dashboards and folders are now in your repository.</Text>
-      <TextLink external href={href}>
-        View repository
-      </TextLink>
+    <Stack direction="column" gap={1}>
+      <Text>Grafana and your repository are now in sync.</Text>
+      <Stack direction="row" gap={2}>
+        <LinkButton fill="outline" href={repoHref} icon="external-link-alt" target="_blank" rel="noopener noreferrer">
+          View repository
+        </LinkButton>
+        <LinkButton fill="outline" href={folderHref} icon="folder-open">
+          View folder
+        </LinkButton>
+      </Stack>
     </Stack>
   );
 }

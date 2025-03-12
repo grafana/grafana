@@ -1,42 +1,40 @@
-import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
-
-import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { getDefaultValues } from '../ConfigForm';
 import { useGetFrontendSettingsQuery } from '../api';
 import { PROVISIONING_URL } from '../constants';
 
-import { ConnectionStep } from './ConnectionStep';
-import { MigrateStep } from './MigrateStep';
-import { PullStep } from './PullStep';
-import { RepositoryStep } from './RepositoryStep';
-import { Stepper, Step } from './Stepper';
+import { Step } from './Stepper';
+import { WizardContent } from './WizardContent';
 import { WizardFormData, WizardStep } from './types';
 
 const steps: Array<Step<WizardStep>> = [
-  { id: 'connection', name: 'Repository connection' },
-  { id: 'repository', name: 'Repository configuration' },
-  { id: 'migrate', name: 'Migrate dashboards' },
-  { id: 'pull', name: 'Pull dashboards' },
+  { id: 'connection', name: 'Connect', title: 'Connect to repository', submitOnNext: true },
+  { id: 'bootstrap', name: 'Bootstrap', title: 'Bootstrap repository', submitOnNext: true },
+  { id: 'migrate', name: 'Resources', title: 'Migrate resources', submitOnNext: false },
+  { id: 'pull', name: 'Resources', title: 'Pull resources', submitOnNext: false },
+  { id: 'finish', name: 'Finish', title: 'Finish setup', submitOnNext: true },
 ];
 
-type Props = {
-  requiresMigration: boolean;
-};
-
-export function ProvisioningWizard({ requiresMigration }: Props) {
+export function ProvisioningWizard() {
   const [activeStep, setActiveStep] = useState<WizardStep>('connection');
   const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
   const [stepSuccess, setStepSuccess] = useState(false);
+  const [requiresMigration, setRequiresMigration] = useState(false);
   const settingsQuery = useGetFrontendSettingsQuery();
   const navigate = useNavigate();
+  const values = getDefaultValues();
+
+  // Disable sync at the start of the wizard
+  values.sync.enabled = false;
+  // HACK: Set folder as default for now as instance will block
+  values.sync.target = 'folder';
+
   const methods = useForm<WizardFormData>({
     defaultValues: {
-      repository: getDefaultValues(),
+      repository: values,
       migrate: {
         history: true,
         identifier: true, // Keep the same URLs
@@ -44,114 +42,82 @@ export function ProvisioningWizard({ requiresMigration }: Props) {
     },
   });
 
-  const styles = useStyles2(getStyles);
+  const handleStatusChange = useCallback(
+    (success: boolean) => {
+      setStepSuccess(success);
+      if (success) {
+        setCompletedSteps((prev) => [...prev, activeStep]);
+      }
+    },
+    [activeStep]
+  );
 
   // Filter out migrate step if using legacy storage
-  const availableSteps = requiresMigration
-    ? steps.filter((step) => step.id !== 'pull')
-    : steps.filter((step) => step.id !== 'migrate');
+  const availableSteps = useMemo(() => {
+    return requiresMigration
+      ? steps.filter((step) => step.id !== 'pull')
+      : steps.filter((step) => step.id !== 'migrate');
+  }, [requiresMigration]);
 
   // Calculate button text based on current step position
   const getNextButtonText = (currentStep: WizardStep) => {
     const stepIndex = availableSteps.findIndex((s) => s.id === currentStep);
+    if (currentStep === 'bootstrap') {
+      return 'Start';
+    }
     return stepIndex === availableSteps.length - 1 ? 'Finish' : 'Next';
   };
 
   const handleNext = async () => {
     const currentStepIndex = availableSteps.findIndex((s) => s.id === activeStep);
     const isLastStep = currentStepIndex === availableSteps.length - 1;
-    if (currentStepIndex < availableSteps.length - 1) {
-      if (activeStep === 'connection') {
-        // Validate repository form data before proceeding
-        const isValid = await methods.trigger('repository');
-        if (!isValid) {
-          return;
-        }
-      }
 
-      // If we're on the last step, mark it as completed
-      const isLastStep = currentStepIndex === availableSteps.length - 1;
-      if (isLastStep) {
-        setCompletedSteps((prev) => [...prev, activeStep]);
+    if (activeStep === 'connection') {
+      // Validate repository form data before proceeding
+      const isValid = await methods.trigger('repository');
+      if (!isValid) {
+        return;
       }
-      setActiveStep(availableSteps[currentStepIndex + 1].id);
-      setStepSuccess(false);
-    } else if (isLastStep) {
+    }
+
+    // If we're on the bootstrap step, determine the next step based on the migration flag
+    if (activeStep === 'bootstrap') {
+      const nextStep = requiresMigration ? 'migrate' : 'pull';
+      setActiveStep(nextStep);
+      return;
+    }
+
+    // Only navigate to provisioning URL if we're on the actual last step and it's completed
+    if (isLastStep && stepSuccess) {
       settingsQuery.refetch();
       navigate(PROVISIONING_URL);
+      return;
     }
-  };
 
-  const handleBack = () => {
-    const currentStepIndex = availableSteps.findIndex((s) => s.id === activeStep);
-    if (currentStepIndex > 0) {
-      setActiveStep(availableSteps[currentStepIndex - 1].id);
-      setStepSuccess(true);
-      // Remove the last completed step when going back
-      setCompletedSteps((prev) => prev.slice(0, -1));
-    }
-  };
-
-  const handleStatusChange = (success: boolean) => {
-    setStepSuccess(success);
-    if (success) {
-      setCompletedSteps((prev) => [...prev, activeStep]);
+    // For all other cases, proceed to next step
+    if (currentStepIndex < availableSteps.length - 1) {
+      setActiveStep(availableSteps[currentStepIndex + 1].id);
+      setStepSuccess(false);
+      // Update completed steps only if the current step was successful
+      if (stepSuccess) {
+        setCompletedSteps((prev) => [...prev, activeStep]);
+      }
     }
   };
 
   return (
     <FormProvider {...methods}>
-      <form className={styles.form}>
-        <Stepper
-          steps={availableSteps}
-          activeStep={activeStep}
-          visitedSteps={completedSteps}
-          validationResults={{
-            connection: { valid: true },
-            repository: { valid: true },
-            migrate: { valid: true },
-            pull: { valid: true },
-          }}
-        />
-
-        <div className={styles.content}>
-          {activeStep === 'connection' && (
-            <ConnectionStep targetSelectable={!requiresMigration} generateName={requiresMigration} />
-          )}
-          {activeStep === 'repository' && <RepositoryStep onStatusChange={handleStatusChange} />}
-          {activeStep === 'migrate' && requiresMigration && <MigrateStep onStatusChange={handleStatusChange} />}
-          {activeStep === 'pull' && !requiresMigration && <PullStep onStatusChange={handleStatusChange} />}
-        </div>
-
-        <Stack gap={2} justifyContent="flex-end">
-          {activeStep !== 'connection' && (
-            <Button variant="secondary" onClick={handleBack}>
-              Back
-            </Button>
-          )}
-          <Button
-            onClick={handleNext}
-            disabled={
-              (activeStep === 'repository' && !stepSuccess) ||
-              (activeStep === 'migrate' && !stepSuccess) ||
-              (activeStep === 'pull' && !stepSuccess)
-            }
-          >
-            {getNextButtonText(activeStep)}
-          </Button>
-        </Stack>
-      </form>
+      <WizardContent
+        activeStep={activeStep}
+        completedSteps={completedSteps}
+        availableSteps={availableSteps}
+        requiresMigration={requiresMigration}
+        handleStatusChange={handleStatusChange}
+        handleNext={handleNext}
+        getNextButtonText={getNextButtonText}
+        onOptionSelect={setRequiresMigration}
+        stepSuccess={stepSuccess}
+      />
     </FormProvider>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  form: css({
-    maxWidth: '900px',
-  }),
-  content: css({
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
-    paddingBottom: theme.spacing(4),
-    marginBottom: theme.spacing(4),
-  }),
-});
