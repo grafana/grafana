@@ -376,7 +376,7 @@ To only show the spans you have matched, you can press the `Show matches only` t
 
 You can link to Jaeger traces from logs in Loki, Elasticsearch, Splunk, and other logs data sources by configuring an internal link.
 
-To configure this feature, see the [Derived fields]({{< relref "../loki#configure-derived-fields" >}}) section of the Loki data source docs or the [Data links]({{< relref "../elasticsearch#data-links" >}}) section of the Elasticsearch or Splunk data source docs.
+To configure this feature, see the [Derived fields](../loki/#configure-derived-fields) section of the Loki data source docs or the [Data links](../elasticsearch/#data-links) section of the Elasticsearch or Splunk data source docs.
 
 ## Link to a trace ID from metrics
 
