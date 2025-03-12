@@ -24,26 +24,28 @@ export function JobStep({ onStepUpdate, description, startJob, children }: JobSt
   const stepStatus = useStepStatus({ onStepUpdate });
   const [jobName, setJobName] = useState<string>();
 
+  // Set initial running state outside the async operation
   useAsync(async () => {
-    if (!repositoryName) {
+    // Skip if we don't have a repository name or if we already started the job
+    if (!repositoryName || jobName) {
       return;
     }
 
-    try {
-      stepStatus.setRunning();
-      const response = await startJob(repositoryName);
+    // Only set running state when we're actually going to start the job
+    stepStatus.setRunning();
 
+    try {
+      const response = await startJob(repositoryName);
       if (!response?.metadata?.name) {
-        stepStatus.setError('Invalid response from operation');
         throw new Error('Invalid response from operation');
       }
-
       setJobName(response.metadata.name);
     } catch (error) {
-      stepStatus.setError(error instanceof Error ? error.message : 'Failed to start operation');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to start operation';
+      stepStatus.setError(errorMessage);
       throw error; // Re-throw to mark the async operation as failed
     }
-  }, [repositoryName, startJob, stepStatus]);
+  }, [repositoryName, jobName]); // Only depend on values that determine if we should start the job
 
   return (
     <Stack direction="column" gap={2}>
