@@ -203,10 +203,12 @@ export function PanelChrome({
   const onPointerUp = (evt: React.PointerEvent) => {
     evt.stopPropagation();
 
-    const distance = Math.sqrt(
-      Math.pow(pointerDownEvt.current?.screenX ?? 0 - evt.screenX, 2) +
-        Math.pow(pointerDownEvt.current?.screenY ?? 0 - evt.screenY, 2)
+    const distance = Math.hypot(
+      pointerDownEvt.current?.screenX ?? 0 - evt.screenX,
+      pointerDownEvt.current?.screenY ?? 0 - evt.screenY
     );
+
+    pointerDownEvt.current = undefined;
 
     // If we are dragging some distance or clicking on elements that should cancel dragging (panel menu, etc)
     if (
