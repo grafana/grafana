@@ -20,5 +20,6 @@ type NonGroupConditions = Exclude<ConditionsRenderingConditions, ConditionalRend
 export const handleDeleteNonGroupCondition = (model: NonGroupConditions) => {
   if (model.parent instanceof ConditionalRenderingGroup) {
     model.parent.setState({ value: model.parent.state.value.filter((condition) => condition !== model) });
+    model.getConditionalLogicRoot().notifyChange();
   }
 };

@@ -66,6 +66,7 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
     } else {
       rootGroup.setState({ value: rootGroup.state.value.filter((condition) => condition !== this) });
     }
+    this.getConditionalLogicRoot().notifyChange();
   }
 }
 
