@@ -109,7 +109,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				AppInstanceSettings: &backend.AppInstanceSettings{},
 			}
 
-			t.Run("No auth heads to clear when calling QueryData", func(t *testing.T) {
+			t.Run("No auth headers to clear when calling QueryData", func(t *testing.T) {
 				_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{otherHeader: "test"},
@@ -121,7 +121,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
 			})
 
-			t.Run("No auth heads to clear when calling CallResource", func(t *testing.T) {
+			t.Run("No auth headers to clear when calling CallResource", func(t *testing.T) {
 				err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string][]string{otherHeader: {"test"}},
@@ -133,7 +133,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.Equal(t, http.Header{http.CanonicalHeaderKey(otherHeader): {"test"}}, cdt.CallResourceReq.GetHTTPHeaders())
 			})
 
-			t.Run("No auth heads to clear when calling CheckHealth", func(t *testing.T) {
+			t.Run("No auth headers to clear when calling CheckHealth", func(t *testing.T) {
 				_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{otherHeader: "test"},
@@ -145,7 +145,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.Empty(t, cdt.CheckHealthReq.GetHTTPHeaders())
 			})
 
-			t.Run("No auth heads to clear when calling SubscribeStream", func(t *testing.T) {
+			t.Run("No auth headers to clear when calling SubscribeStream", func(t *testing.T) {
 				_, err = cdt.MiddlewareHandler.SubscribeStream(req.Context(), &backend.SubscribeStreamRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{otherHeader: "test"},
@@ -157,7 +157,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.Empty(t, cdt.SubscribeStreamReq.GetHTTPHeaders())
 			})
 
-			t.Run("No auth heads to clear when calling PublishStream", func(t *testing.T) {
+			t.Run("No auth headers to clear when calling PublishStream", func(t *testing.T) {
 				_, err = cdt.MiddlewareHandler.PublishStream(req.Context(), &backend.PublishStreamRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{otherHeader: "test"},
@@ -169,7 +169,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				require.Empty(t, cdt.PublishStreamReq.GetHTTPHeaders())
 			})
 
-			t.Run("No auth heads to clear when calling RunStream", func(t *testing.T) {
+			t.Run("No auth headers to clear when calling RunStream", func(t *testing.T) {
 				err = cdt.MiddlewareHandler.RunStream(req.Context(), &backend.RunStreamRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{otherHeader: "test"},
@@ -194,10 +194,6 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			)
 
 			req := req.WithContext(contexthandler.WithAuthHTTPHeaders(req.Context(), setting.NewCfg()))
-			req.Header.Set("Authorization", "val")
-
-			const otherHeader = "X-Other"
-			req.Header.Set(otherHeader, "test")
 
 			pluginCtx := backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -206,7 +202,11 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			t.Run("Should clear auth headers when calling QueryData", func(t *testing.T) {
 				_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
 					PluginContext: pluginCtx,
-					Headers:       map[string]string{otherHeader: "test"},
+					Headers: map[string]string{
+						otherHeader:           "test",
+						"Authorization":       "secret",
+						"X-Grafana-Device-Id": "secret",
+					},
 				})
 				require.NoError(t, err)
 				require.NotNil(t, cdt.QueryDataReq)
@@ -217,7 +217,11 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			t.Run("Should clear auth headers when calling CallResource", func(t *testing.T) {
 				err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
-					Headers:       map[string][]string{otherHeader: {"test"}},
+					Headers: map[string][]string{
+						otherHeader:           {"test"},
+						"Authorization":       {"secret"},
+						"X-Grafana-Device-Id": {"secret"},
+					},
 				}, nopCallResourceSender)
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CallResourceReq)
@@ -228,7 +232,11 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			t.Run("Should clear auth headers when calling CheckHealth", func(t *testing.T) {
 				_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 					PluginContext: pluginCtx,
-					Headers:       map[string]string{otherHeader: "test"},
+					Headers: map[string]string{
+						otherHeader:           "test",
+						"Authorization":       "secret",
+						"X-Grafana-Device-Id": "secret",
+					},
 				})
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CheckHealthReq)
@@ -239,7 +247,11 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			t.Run("Should clear auth headers when calling SubscribeStream", func(t *testing.T) {
 				_, err = cdt.MiddlewareHandler.SubscribeStream(req.Context(), &backend.SubscribeStreamRequest{
 					PluginContext: pluginCtx,
-					Headers:       map[string]string{otherHeader: "test"},
+					Headers: map[string]string{
+						otherHeader:           "test",
+						"Authorization":       "secret",
+						"X-Grafana-Device-Id": "secret",
+					},
 				})
 				require.NoError(t, err)
 				require.NotNil(t, cdt.SubscribeStreamReq)
@@ -250,7 +262,11 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			t.Run("Should clear auth headers when calling PublishStream", func(t *testing.T) {
 				_, err = cdt.MiddlewareHandler.PublishStream(req.Context(), &backend.PublishStreamRequest{
 					PluginContext: pluginCtx,
-					Headers:       map[string]string{otherHeader: "test"},
+					Headers: map[string]string{
+						otherHeader:           "test",
+						"Authorization":       "secret",
+						"X-Grafana-Device-Id": "secret",
+					},
 				})
 				require.NoError(t, err)
 				require.NotNil(t, cdt.PublishStreamReq)
@@ -261,7 +277,11 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			t.Run("Should clear auth headers when calling RunStream", func(t *testing.T) {
 				err = cdt.MiddlewareHandler.RunStream(req.Context(), &backend.RunStreamRequest{
 					PluginContext: pluginCtx,
-					Headers:       map[string]string{otherHeader: "test"},
+					Headers: map[string]string{
+						otherHeader:           "test",
+						"Authorization":       "secret",
+						"X-Grafana-Device-Id": "secret",
+					},
 				}, &backend.StreamSender{})
 				require.NoError(t, err)
 				require.NotNil(t, cdt.RunStreamReq)
@@ -289,7 +309,11 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			t.Run("Should clear auth headers when calling QueryData", func(t *testing.T) {
 				_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
 					PluginContext: pluginCtx,
-					Headers:       map[string]string{otherHeader: "test"},
+					Headers: map[string]string{
+						otherHeader:           "test",
+						"Authorization":       "secret",
+						"X-Grafana-Device-Id": "secret",
+					},
 				})
 				require.NoError(t, err)
 				require.NotNil(t, cdt.QueryDataReq)
@@ -300,7 +324,11 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			t.Run("Should clear auth headers when calling CallResource", func(t *testing.T) {
 				err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
-					Headers:       map[string][]string{otherHeader: {"test"}},
+					Headers: map[string][]string{
+						otherHeader:           {"test"},
+						"Authorization":       {"secret"},
+						"X-Grafana-Device-Id": {"secret"},
+					},
 				}, nopCallResourceSender)
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CallResourceReq)
@@ -311,7 +339,11 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			t.Run("Should clear auth headers when calling CheckHealth", func(t *testing.T) {
 				_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 					PluginContext: pluginCtx,
-					Headers:       map[string]string{otherHeader: "test"},
+					Headers: map[string]string{
+						otherHeader:           "test",
+						"Authorization":       "secret",
+						"X-Grafana-Device-Id": "secret",
+					},
 				})
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CheckHealthReq)
@@ -322,7 +354,11 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			t.Run("Should clear auth headers when calling SubscribeStream", func(t *testing.T) {
 				_, err = cdt.MiddlewareHandler.SubscribeStream(req.Context(), &backend.SubscribeStreamRequest{
 					PluginContext: pluginCtx,
-					Headers:       map[string]string{otherHeader: "test"},
+					Headers: map[string]string{
+						otherHeader:           "test",
+						"Authorization":       "secret",
+						"X-Grafana-Device-Id": "secret",
+					},
 				})
 				require.NoError(t, err)
 				require.NotNil(t, cdt.SubscribeStreamReq)
@@ -333,7 +369,11 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			t.Run("Should clear auth headers when calling PublishStream", func(t *testing.T) {
 				_, err = cdt.MiddlewareHandler.PublishStream(req.Context(), &backend.PublishStreamRequest{
 					PluginContext: pluginCtx,
-					Headers:       map[string]string{otherHeader: "test"},
+					Headers: map[string]string{
+						otherHeader:           "test",
+						"Authorization":       "secret",
+						"X-Grafana-Device-Id": "secret",
+					},
 				})
 				require.NoError(t, err)
 				require.NotNil(t, cdt.PublishStreamReq)
@@ -344,7 +384,11 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			t.Run("Should clear auth headers when calling RunStream", func(t *testing.T) {
 				err = cdt.MiddlewareHandler.RunStream(req.Context(), &backend.RunStreamRequest{
 					PluginContext: pluginCtx,
-					Headers:       map[string]string{otherHeader: "test"},
+					Headers: map[string]string{
+						otherHeader:           "test",
+						"Authorization":       "secret",
+						"X-Grafana-Device-Id": "secret",
+					},
 				}, &backend.StreamSender{})
 				require.NoError(t, err)
 				require.NotNil(t, cdt.RunStreamReq)
