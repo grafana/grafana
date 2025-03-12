@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { CSSProperties, PointerEvent, ReactElement, ReactNode, useId, useRef, useState } from 'react';
+import { CSSProperties, ReactElement, ReactNode, useId, useRef, useState } from 'react';
 import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
@@ -143,7 +143,6 @@ export function PanelChrome({
   onFocus,
   onMouseMove,
   onMouseEnter,
-  onDragStart,
   showMenuAlways = false,
 }: PanelChromeProps) {
   const theme = useTheme2();
@@ -151,7 +150,7 @@ export function PanelChrome({
   const panelContentId = useId();
   const panelTitleId = useId().replace(/:/g, '_');
   const { isSelected, onSelect, isSelectable } = useElementSelection(selectionId);
-  const pointerDownEvt = useRef<PointerEvent | null>(null);
+  const pointerDownPos = useRef<{ screenX: number; screenY: number }>({ screenX: 0, screenY: 0 });
 
   const hasHeader = !hoverHeader;
 
@@ -195,6 +194,33 @@ export function PanelChrome({
   }
 
   const testid = typeof title === 'string' ? selectors.components.Panels.Panel.title(title) : 'Panel';
+
+  // Handle drag & selection events
+  // Mainly the tricky bit of differentiating between dragging and selecting
+
+  const onPointerUp = (evt: React.PointerEvent) => {
+    evt.stopPropagation();
+
+    const distance = Math.sqrt(
+      Math.pow(pointerDownPos.current.screenX - evt.screenX, 2) +
+        Math.pow(pointerDownPos.current.screenY - evt.screenY, 2)
+    );
+
+    // If we are dragging some distance or clicking on elements that should cancel dragging (panel menu, etc)
+    if (
+      distance > 10 ||
+      (dragClassCancel && evt.target instanceof HTMLElement && evt.target.closest(`.${dragClassCancel}`))
+    ) {
+      return;
+    }
+
+    onSelect?.(evt);
+  };
+
+  const onPointerDown = (evt: React.PointerEvent) => {
+    evt.stopPropagation();
+    pointerDownPos.current = { screenX: evt.screenX, screenY: evt.screenY };
+  };
 
   const headerContent = (
     <>
@@ -321,30 +347,10 @@ export function PanelChrome({
           className={cx(styles.headerContainer, dragClass)}
           style={headerStyles}
           data-testid="header-container"
-          onPointerDown={(evt) => {
-            evt.stopPropagation();
-            pointerDownEvt.current = evt;
-          }}
-          onPointerMove={() => {
-            if (pointerDownEvt.current) {
-              onDragStart?.(pointerDownEvt.current);
-              pointerDownEvt.current = null;
-            }
-          }}
+          onPointerDown={onPointerDown}
           onMouseEnter={isSelectable ? onHeaderEnter : undefined}
           onMouseLeave={isSelectable ? onHeaderLeave : undefined}
-          onPointerUp={(evt) => {
-            evt.stopPropagation();
-            if (
-              pointerDownEvt.current &&
-              dragClassCancel &&
-              evt.target instanceof HTMLElement &&
-              !evt.target.closest(`.${dragClassCancel}`)
-            ) {
-              onSelect?.(pointerDownEvt.current);
-              pointerDownEvt.current = null;
-            }
-          }}
+          onPointerUp={onPointerUp}
         >
           {statusMessage && (
             <div className={dragClassCancel}>
