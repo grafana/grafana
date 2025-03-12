@@ -20,8 +20,8 @@ const AggregateItem: React.FC<AggregateItemProps> = ({ aggregate, onChange, onDe
   const isPercentile = aggregate.reduce?.name === 'percentile';
   const isCountAggregate = aggregate.reduce?.name === 'count';
 
-  const handlePercentileChange = (e: any) => {
-    const percentileValue = e.value;
+  const handlePercentileChange = (e: SelectableValue<string>) => {
+    const percentileValue = e.value || '';
     const column = aggregate.property?.name || '';
 
     onChange({

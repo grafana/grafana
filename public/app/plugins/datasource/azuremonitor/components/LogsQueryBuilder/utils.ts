@@ -7,6 +7,9 @@ import {
   BuilderQueryEditorExpressionType,
   BuilderQueryEditorPropertyType,
   BuilderQueryEditorOperatorType,
+  BuilderQueryEditorReduceExpression,
+  BuilderQueryEditorWhereArrayExpression,
+  BuilderQueryEditorOperatorExpression,
 } from '../../dataquery.gen';
 import { QueryEditorPropertyType } from '../../types';
 
@@ -207,7 +210,7 @@ export const parseQueryToBuilder = (query: string): BuilderQueryExpression => {
   return expression;
 };
 
-export const getAggregations = (reduceExpressions: any[] = []) => {
+export const getAggregations = (reduceExpressions: BuilderQueryEditorReduceExpression[] = []) => {
   return reduceExpressions
     .map((agg) => {
       if (agg.reduce?.name === 'count()' && agg.property?.name === '') {
@@ -227,12 +230,11 @@ export const getAggregations = (reduceExpressions: any[] = []) => {
     .join(', ');
 };
 
+//TODO: fix any type
 export const getFilters = (whereExpressions: any[] = []) => {
   return whereExpressions
     .map((exp) => {
-      // Check if the expression is a valid operator expression
       if ('property' in exp && exp.property?.name && exp.operator?.name && exp.operator?.value !== undefined) {
-        // Skip "has" conditions
         if (exp.operator.name === 'has') {
           return null;
         }
@@ -240,6 +242,6 @@ export const getFilters = (whereExpressions: any[] = []) => {
       }
       return null;
     })
-    .filter((filter) => filter !== null) // Remove null values (i.e., "has" conditions)
-    .join(' and '); // Join the filters with "and"
+    .filter((filter) => filter !== null)
+    .join(' and ');
 };
