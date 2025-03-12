@@ -27,6 +27,8 @@ export function maybeAPIError(err: unknown) {
 }
 
 export function transformError(error: unknown): APIError | unknown {
+  console.log('transformError', { error });
+
   if (!isFetchError<unknown>(error) || typeof error.data !== 'object' || !error.data) {
     return error;
   }
