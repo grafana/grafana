@@ -14,6 +14,15 @@ extend type folder
     define resource_get_permissions: [user with folder_group_filter, service-account with folder_group_filter, team#member with folder_group_filter, role#assignee with folder_group_filter] or resource_admin or resource_get_permissions from parent
     define resource_set_permissions: [user with folder_group_filter, service-account with folder_group_filter, team#member with folder_group_filter, role#assignee with folder_group_filter] or resource_admin or resource_set_permissions from parent
 
+    define subresource_view: [user with folder_subresource_filter, service-account with folder_subresource_filter, team#member with folder_subresource_filter, role#assignee with folder_subresource_filter] or subresource_edit or subresource_view from parent
+    define subresource_edit: [user with folder_subresource_filter, service-account with folder_subresource_filter, team#member with folder_subresource_filter, role#assignee with folder_subresource_filter] or subresource_admin or subresource_edit from parent
+    define subresource_admin: [user with folder_subresource_filter, service-account with folder_subresource_filter, team#member with folder_subresource_filter, role#assignee with folder_subresource_filter] or subresource_admin from parent
+
+    define subresource_get: [user with folder_subresource_filter, service-account with folder_subresource_filter, team#member with folder_subresource_filter, role#assignee with folder_subresource_filter] or subresource_view or subresource_get from parent
+    define subresource_create: [user with folder_subresource_filter, service-account with folder_subresource_filter, team#member with folder_subresource_filter, role#assignee with folder_subresource_filter] or subresource_edit or subresource_create from parent
+    define subresource_update: [user with folder_subresource_filter, service-account with folder_subresource_filter, team#member with folder_subresource_filter, role#assignee with folder_subresource_filter] or subresource_edit or subresource_update from parent
+    define subresource_delete: [user with folder_subresource_filter, service-account with folder_subresource_filter, team#member with folder_subresource_filter, role#assignee with folder_subresource_filter] or subresource_edit or subresource_delete from parent
+
 type group_resource
   relations
     define view: [user, service-account, render, team#member, role#assignee] or edit
@@ -41,10 +50,24 @@ type resource
     define get_permissions: [user with group_filter, service-account with group_filter, team#member with group_filter, role#assignee with group_filter] or admin
     define set_permissions: [user with group_filter, service-account with group_filter, team#member with group_filter, role#assignee with group_filter] or admin
 
+type folder_subresource
+  relations
+    define view: [user with folder_subresource_filter, service-account with folder_subresource_filter, team#member with folder_subresource_filter, role#assignee with folder_subresource_filter]
+    define edit: [user with folder_subresource_filter, service-account with folder_subresource_filter, team#member with folder_subresource_filter, role#assignee with folder_subresource_filter]
+    define admin: [user with folder_subresource_filter, service-account with folder_subresource_filter, team#member with folder_subresource_filter, role#assignee with folder_subresource_filter]
+
+    define get: [user with folder_subresource_filter, service-account with folder_subresource_filter, team#member with folder_subresource_filter, role#assignee with folder_subresource_filter] or view
+    define update: [user with folder_subresource_filter, service-account with folder_subresource_filter, team#member with folder_subresource_filter, role#assignee with folder_subresource_filter] or edit
+    define delete: [user with folder_subresource_filter, service-account with folder_subresource_filter, team#member with folder_subresource_filter, role#assignee with folder_subresource_filter] or edit
+
 condition group_filter(requested_group: string, group_resource: string) {
   requested_group == group_resource
 }
 
 condition folder_group_filter(requested_group: string, group_resources: list<string>) {
   requested_group in group_resources
+}
+
+condition folder_subresource_filter(requested_subresource: string, folder_subresources: list<string>) {
+  requested_subresource in folder_subresources
 }
