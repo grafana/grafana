@@ -2,11 +2,11 @@ This folder contains a rendered OpenAPI file for each group/version. The “real
 
 ## Generate RTK API Clients
 
-To show the steps to follow we are going to work on adding an API client for creating a new dashboard. Just addapt the following guide to your use case.
+To show the steps to follow, we are going to work on adding an API client to create a new dashboard. Just adapt the following guide to your use case.
 
-### 1.Specify `group` and `version`
-First check if the `group` and the `version` are already created in [openapi_test.go](https://github.com/grafana/grafana/blob/main/pkg/tests/apis/openapi_test.go). 
-<br/> If you need to add a new block, you can check for the right `group` and `version` in the backend api call that you want to replicate in the frontend.
+### 1. Specify `group` and `version`
+First, check if the `group` and the `version` are already created in [openapi_test.go](https://github.com/grafana/grafana/blob/main/pkg/tests/apis/openapi_test.go). 
+<br/> If you need to add a new block, you can check for the right `group` and `version` in the backend API call that you want to replicate in the frontend.
 
 ```jsx
 {
@@ -15,7 +15,7 @@ First check if the `group` and the `version` are already created in [openapi_tes
 }
 ```
 ### 2. Run the `TestIntegrationOpenAPIs` test
-Note that it will fail the first time you run it and, in the second one, it will generate the corresponding OpenAPI spec. You will find it in [openapi_snapshots](https://github.com/grafana/grafana/blob/main/pkg/tests/apis/openapi_snapshots).
+Note that it will fail the first time you run it, and, in the second one, it will generate the corresponding OpenAPI spec. You will find it in [openapi_snapshots](https://github.com/grafana/grafana/blob/main/pkg/tests/apis/openapi_snapshots).
 <br/>
 <br/>
 
@@ -50,10 +50,10 @@ Open [generate-rtk-apis.ts](https://github.com/grafana/grafana/blob/main/scripts
 | Data | Descritpion |
 |------|-------------|
 | outputFile name | File that will be created after running the API Client Generation script. It is the key of the object. | 
-| apiFile | File with the API definition for the group. |
+| apiFile | File with the group's API definition. |
 | schemaFile | File with the schema that was automatically created in the second step. Although it is in openapi_snapshots, you should link the one saved in `data/openapi`.|
 |apiImport| Function name exported in the API definition (baseAPI.ts file).|
-| filterEndpoints | The `operationId` of the particular route you want to work with. You can check the available operationIds in the specific spec file for the group. As seen in the `migrate-to-cloud`one, it is an array|
+| filterEndpoints | The `operationId` of the particular route you want to work with. You can check the available operationIds in the specific group's spec file. As seen in the `migrate-to-cloud` one, it is an array|
 | argSuffix | |
 | responseSuffix | |
 | tag | |
@@ -61,7 +61,7 @@ Open [generate-rtk-apis.ts](https://github.com/grafana/grafana/blob/main/scripts
 
 > More info in [Redux Toolkit](https://redux-toolkit.js.org/rtk-query/usage/code-generation#simple-usage) 
 
-In our example the information added will be:
+In our example, the information added will be:
 
 ```jsx
 '../public/app/features/dashboard/api/endpoints.gen.ts': {
@@ -77,7 +77,7 @@ In our example the information added will be:
 ```
 
 ### 5. Run the API Client script
-Then we are ready to run the script to create the API client:
+Then, we are ready to run the script to create the API client:
 
 ```jsx
 yarn generate-apis
@@ -101,7 +101,7 @@ export { type Dashboard } from './endpoints.gen';
 
 ```
 
-There are some use cases where the hook will not work and that is a clue to review if it needs to be modified. The hooks can be tweaked by using `enhanceEndpoints`.
+There are some use cases where the hook will not work, and that is a clue to see if it needs to be modified. The hooks can be tweaked by using `enhanceEndpoints`.
 
 TODO: Add examples of `enhanceEndpoints` usage
 
