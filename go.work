@@ -18,6 +18,7 @@ use (
 	./pkg/build
 	./pkg/build/wire // skip:golangci-lint
 	./pkg/codegen
+	./pkg/infra/tracing
 	./pkg/plugins/codegen
 	./pkg/promlib
 	./pkg/semconv
