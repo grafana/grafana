@@ -64,11 +64,11 @@ export function WizardContent({
     setStepError(error);
   }, []);
 
-  const handleJobRunningChange = (isRunning: boolean) => {
+  const handleJobRunningChange = (isRunning: boolean): void => {
     setIsJobRunning(isRunning);
   };
 
-  const handleJobStatusChange = (success: boolean) => {
+  const handleJobStatusChange = (success: boolean): void => {
     handleStatusChange(success);
     setHasError(!success);
   };
