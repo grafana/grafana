@@ -2,6 +2,7 @@ import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectSt
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { NewObjectAddedToCanvasEvent, ObjectRemovedFromCanvasEvent } from '../../edit-pane/shared';
 import { joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getGridItemKeyForPanelId, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
@@ -48,6 +49,7 @@ export class ResponsiveGridLayoutManager
 
     // @ts-ignore
     this.state.layout.getDragClassCancel = () => 'drag-cancel';
+    this.state.layout.isDraggable = () => true;
   }
 
   public addPanel(vizPanel: VizPanel) {
@@ -59,11 +61,14 @@ export class ResponsiveGridLayoutManager
     this.state.layout.setState({
       children: [new ResponsiveGridItem({ body: vizPanel }), ...this.state.layout.state.children],
     });
+
+    this.publishEvent(new NewObjectAddedToCanvasEvent(vizPanel), true);
   }
 
   public removePanel(panel: VizPanel) {
     const element = panel.parent;
     this.state.layout.setState({ children: this.state.layout.state.children.filter((child) => child !== element) });
+    this.publishEvent(new ObjectRemovedFromCanvasEvent(panel), true);
   }
 
   public duplicatePanel(panel: VizPanel) {
@@ -76,11 +81,13 @@ export class ResponsiveGridLayoutManager
     const newPanelId = dashboardSceneGraph.getNextPanelId(this);
     const grid = this.state.layout;
 
+    const newPanel = panel.clone({
+      key: getVizPanelKeyForPanelId(newPanelId),
+    });
+
     const newGridItem = gridItem.clone({
       key: getGridItemKeyForPanelId(newPanelId),
-      body: panel.clone({
-        key: getVizPanelKeyForPanelId(newPanelId),
-      }),
+      body: newPanel,
     });
 
     const sourceIndex = grid.state.children.indexOf(gridItem);
@@ -90,6 +97,8 @@ export class ResponsiveGridLayoutManager
     newChildren.splice(sourceIndex + 1, 0, newGridItem);
 
     grid.setState({ children: newChildren });
+
+    this.publishEvent(new NewObjectAddedToCanvasEvent(newPanel), true);
   }
 
   public getVizPanels(): VizPanel[] {
