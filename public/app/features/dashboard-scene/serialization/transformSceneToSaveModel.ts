@@ -55,7 +55,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   const timeRange = state.$timeRange!.state;
   const data = state.$data;
   const variablesSet = state.$variables;
-  let body = state.body;
+  const body = state.body;
 
   let panels: Panel[] = [];
   let variables: VariableModel[] = [];

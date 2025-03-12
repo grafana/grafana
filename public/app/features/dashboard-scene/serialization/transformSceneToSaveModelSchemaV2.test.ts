@@ -218,6 +218,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
           ],
         }),
       }),
+      meta: {},
       editPane: new DashboardEditPane(),
       $behaviors: [
         new behaviors.CursorSync({

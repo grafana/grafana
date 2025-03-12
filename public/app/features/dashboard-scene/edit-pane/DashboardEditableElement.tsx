@@ -26,7 +26,7 @@ export class DashboardEditableElement implements EditableDashboardElement {
     const dashboard = this.dashboard;
 
     // When layout changes we need to update options list
-    const { body: manager } = dashboard.useState();
+    const { body } = dashboard.useState();
 
     const dashboardOptions = useMemo(() => {
       const editPaneHeaderOptions = new OptionsPaneCategoryDescriptor({ title: '', id: 'dashboard-options' })
@@ -45,18 +45,18 @@ export class DashboardEditableElement implements EditableDashboardElement {
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.layout.common.layout', 'Layout'),
-            render: () => <DashboardLayoutSelector layoutManager={manager} />,
+            render: () => <DashboardLayoutSelector layoutManager={body} />,
           })
         );
 
-      if (manager.getOptions) {
-        for (const option of manager.getOptions()) {
+      if (body.getOptions) {
+        for (const option of body.getOptions()) {
           editPaneHeaderOptions.addItem(option);
         }
       }
 
       return editPaneHeaderOptions;
-    }, [manager, dashboard]);
+    }, [body, dashboard]);
 
     return [dashboardOptions];
   }

@@ -66,22 +66,6 @@ export class ResponsiveGridLayoutManager
     this.publishEvent(new NewObjectAddedToCanvasEvent(vizPanel), true);
   }
 
-  public getNextPanelId(): number {
-    let max = 0;
-
-    for (const child of this.state.layout.state.children) {
-      if (child instanceof VizPanel) {
-        let panelId = getPanelIdForVizPanel(child);
-
-        if (panelId > max) {
-          max = panelId;
-        }
-      }
-    }
-
-    return max;
-  }
-
   public removePanel(panel: VizPanel) {
     const element = panel.parent;
     this.state.layout.setState({ children: this.state.layout.state.children.filter((child) => child !== element) });

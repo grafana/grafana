@@ -28,7 +28,6 @@ import { TitleItem } from './TitleItem';
 export type PanelChromeProps = (AutoSize | FixedDimensions) & (Collapsible | HoverHeader);
 
 interface BaseProps {
-  dragFor?: string;
   padding?: PanelPadding;
   title?: string | React.ReactElement;
   description?: string | (() => string);
@@ -123,7 +122,6 @@ export function PanelChrome({
   children,
   padding = 'md',
   title = '',
-  dragFor,
   description = '',
   displayMode = 'default',
   titleItems,

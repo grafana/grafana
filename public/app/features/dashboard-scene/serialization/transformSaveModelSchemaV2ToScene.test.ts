@@ -228,6 +228,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
     expect(vizPanels).toHaveLength(3);
 
+    // Layout
     const layout = scene.state.body as DefaultGridLayoutManager;
 
     // Panel

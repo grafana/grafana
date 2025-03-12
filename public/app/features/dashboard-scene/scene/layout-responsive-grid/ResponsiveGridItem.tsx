@@ -185,7 +185,6 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
       { x: right, y: bottom },
     ];
 
-    // const { scrollTop } = closestScroll(itemContainer);
     const { distance } = closestPoint(point, ...corners);
     return distance;
   }
@@ -212,41 +211,6 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
   }
 }
 
-// function getStyles(theme: GrafanaTheme2, state: ResponsiveGridItemState) {
-//   return {
-//     wrapper: css({
-//       gridColumn: state.gridColumn || 'unset',
-//       gridRow: state.gridRow || 'unset',
-//       position: 'relative',
-//     }),
-//   };
-// }
-
-export function closestScroll(el?: HTMLElement | null): {
-  scrollTop: number;
-  scrollTopMax: number;
-  wrapper?: HTMLElement | null;
-} {
-  if (el && canScroll(el)) {
-    return { scrollTop: el.scrollTop, scrollTopMax: el.scrollHeight - el.clientHeight - 5, wrapper: el };
-  }
-
-  return el ? closestScroll(el.parentElement) : { scrollTop: 0, scrollTopMax: 0, wrapper: el };
-}
-
-function canScroll(el: HTMLElement) {
-  const oldScroll = el.scrollTop;
-  el.scrollTop = Number.MAX_SAFE_INTEGER;
-  const newScroll = el.scrollTop;
-  el.scrollTop = oldScroll;
-
-  return newScroll > 0;
-}
-
-function euclideanDistance(a: Point, b: Point): number {
-  return Math.hypot(a.x - b.x, a.y - b.y);
-}
-
 // todo@kay: tests
 function closestPoint(referencePoint: Point, ...points: Point[]): { point: Point; distance: number } {
   let minDistance = Number.POSITIVE_INFINITY;
@@ -260,4 +224,8 @@ function closestPoint(referencePoint: Point, ...points: Point[]): { point: Point
   }
 
   return { point: closestPoint, distance: minDistance };
+}
+
+function euclideanDistance(a: Point, b: Point): number {
+  return Math.hypot(a.x - b.x, a.y - b.y);
 }

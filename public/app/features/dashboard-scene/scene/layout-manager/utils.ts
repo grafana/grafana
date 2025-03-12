@@ -56,37 +56,3 @@ export function closestOfType<T extends SceneObject>(
 
   return curSceneObject;
 }
-
-export function closestScroll(el?: HTMLElement | null): number {
-  if (el && el.scrollTop > 0) {
-    return el.scrollTop;
-  }
-
-  return el ? closestScroll(el.parentElement) : 0;
-}
-
-export function shortestDistanceToLine(point: Point, line: [Point, Point]) {
-  const [{ x: x1, y: y1 }, { x: x2, y: y2 }] = line;
-  const { x, y } = point;
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-
-  const dotProduct = (x - x1) * dx + (y - y1) * dy;
-  const lengthSquared = dx * dx + dy * dy;
-  const param = dotProduct / lengthSquared;
-
-  let xx = x1 + param * dx;
-  let yy = y1 + param * dy;
-
-  if (param < 0) {
-    xx = x1;
-    yy = y1;
-  } else if (param > 1) {
-    xx = x2;
-    yy = y2;
-  }
-
-  const xDistance = x - xx;
-  const yDistance = y - yy;
-  return Math.hypot(xDistance, yDistance);
-}

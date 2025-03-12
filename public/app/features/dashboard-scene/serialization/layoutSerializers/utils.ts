@@ -195,10 +195,10 @@ function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
   };
 }
 
-export function getLayout(manager: DashboardLayoutManager): DashboardV2Spec['layout'] {
-  const registryItem = layoutSerializerRegistry.get(manager.descriptor.kind ?? '');
+export function getLayout(sceneState: DashboardLayoutManager): DashboardV2Spec['layout'] {
+  const registryItem = layoutSerializerRegistry.get(sceneState.descriptor.kind ?? '');
   if (!registryItem) {
-    throw new Error(`Layout serializer not found for kind: ${manager.descriptor.kind}`);
+    throw new Error(`Layout serializer not found for kind: ${sceneState.descriptor.kind}`);
   }
-  return registryItem.serializer.serialize(manager);
+  return registryItem.serializer.serialize(sceneState);
 }
