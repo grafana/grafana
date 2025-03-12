@@ -37,13 +37,13 @@ describe('areQueriesTransformableToSimpleCondition', () => {
     expect(result).toBe(false);
   });
 
-  it('should return false if no threshold expression is found with correct type and refId', () => {
+  it('should return true if threshold expression is found with correct type and any refId', () => {
     const dataQueries: Array<AlertQuery<AlertDataQuery | ExpressionQuery>> = [dataQuery];
     const result = areQueriesTransformableToSimpleCondition(dataQueries, [
       reduceExpression,
       { ...thresholdExpression, refId: 'hello' },
     ]);
-    expect(result).toBe(false);
+    expect(result).toBe(true);
   });
 
   it('should return false if reduceExpression settings mode is not ReducerMode.Strict', () => {
