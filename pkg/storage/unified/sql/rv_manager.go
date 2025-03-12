@@ -160,7 +160,12 @@ func (m *resourceVersionManager) ExecWithRV(ctx context.Context, key *resource.R
 		go m.startBatchProcessor(key.Group, key.Resource)
 	}
 	m.batchMu.Unlock()
-	ch <- &op
+	select {
+	case ch <- &op:
+	case <-ctx.Done():
+		return 0, ctx.Err()
+	}
+
 	select {
 	case res := <-op.done:
 		if res.err != nil {
