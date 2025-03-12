@@ -590,6 +590,7 @@ type GettableGrafanaRule struct {
 	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings,omitempty" yaml:"notification_settings,omitempty"`
 	Record               *Record                        `json:"record,omitempty" yaml:"record,omitempty"`
 	Metadata             *AlertRuleMetadata             `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+	GUID                 string                         `json:"guid" yaml:"guid"`
 }
 
 // UserInfo represents user-related information, including a unique identifier and a name.
