@@ -421,9 +421,12 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGro
 }
 
 func (srv RulerSrv) RouteDeleteAlertRuleFromTrashByGUID(ctx *contextmodel.ReqContext, guid string) response.Response {
-	_, err := srv.store.DeleteRuleFromTrashByGUID(ctx.Req.Context(), ctx.SignedInUser.GetOrgID(), guid)
+	deleted, err := srv.store.DeleteRuleFromTrashByGUID(ctx.Req.Context(), ctx.SignedInUser.GetOrgID(), guid)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to delete rule from trash")
+	}
+	if deleted == 0 {
+		return response.Empty(http.StatusNotFound)
 	}
 	return response.Empty(http.StatusOK)
 }
