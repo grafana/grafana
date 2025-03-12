@@ -29,6 +29,10 @@
     "./unstable": {
       "import": "./src/unstable.ts",
       "require": "./src/unstable.ts"
+    },
+    "./test": {
+      "import": "./test/index.ts",
+      "require": "./test/index.ts"
     }
   },
   "publishConfig": {
