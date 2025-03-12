@@ -17,12 +17,18 @@ import {
 } from '@grafana/ui';
 
 import { useGetFrontendSettingsQuery, useGetRepositoryFilesQuery, useGetResourceStatsQuery } from '../api';
+import { StepStatus } from '../hooks/useStepStatus';
 import { checkSyncSettings } from '../utils';
 
 import { WizardFormData } from './types';
 
 type Target = 'instance' | 'folder';
 type Operation = 'pull' | 'migrate';
+
+interface Props {
+  onOptionSelect: (requiresMigration: boolean) => void;
+  onStepUpdate: (status: StepStatus, error?: string) => void;
+}
 
 interface ModeOption {
   value: Target;
@@ -52,19 +58,12 @@ const modeOptions: ModeOption[] = [
   },
 ];
 
-type Props = {
-  onOptionSelect: (requiresMigration: boolean) => void;
-  onStatusChange: (success: boolean) => void;
-  onRunningChange: (isRunning: boolean) => void;
-  onErrorChange: (error: string | null) => void;
-};
-
 interface OptionState {
   isDisabled: boolean;
   disabledReason?: string;
 }
 
-export function BootstrapStep({ onOptionSelect, onStatusChange, onRunningChange, onErrorChange }: Props) {
+export function BootstrapStep({ onOptionSelect, onStepUpdate }: Props) {
   const {
     register,
     control,
