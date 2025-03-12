@@ -17,7 +17,7 @@ interface ConditionalRenderingIntervalState extends ConditionalRenderingBaseStat
 
 export class ConditionalRenderingInterval extends ConditionalRenderingBase<ConditionalRenderingIntervalState> {
   public get title(): string {
-    return t('dashboard.conditional-rendering.interval.label', 'Time interval');
+    return t('dashboard.conditional-rendering.interval.label', 'Time range interval');
   }
 
   public constructor(state: ConditionalRenderingIntervalState) {
