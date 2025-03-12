@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/promlib/instrumentation"
 	"github.com/grafana/grafana/pkg/promlib/querydata"
 	"github.com/grafana/grafana/pkg/promlib/resource"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 type Service struct {
@@ -23,8 +24,9 @@ type Service struct {
 }
 
 type instance struct {
-	queryData *querydata.QueryData
-	resource  *resource.Resource
+	queryData  *querydata.QueryData
+	resource   *resource.Resource
+	featureMap map[string]bool
 }
 
 type ExtendOptions func(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options, log log.Logger) error
@@ -79,9 +81,15 @@ func newInstanceSettings(httpClientProvider *sdkhttpclient.Provider, log log.Log
 			return nil, err
 		}
 
+		featureToggles := backend.GrafanaConfigFromContext(ctx).FeatureToggles()
+
 		return instance{
 			queryData: qd,
 			resource:  r,
+			featureMap: map[string]bool{
+				featuremgmt.FlagPromQLScope:                    featureToggles.IsEnabled("promQLScope"),
+				featuremgmt.FlagPrometheusRunQueriesInParallel: featureToggles.IsEnabled("prometheusRunQueriesInParallel"),
+			},
 		}, nil
 	}
 }
