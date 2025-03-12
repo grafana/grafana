@@ -15,7 +15,8 @@ type Props = {
 
 export const LogListControls = ({ eventBus }: Props) => {
   const styles = useStyles2(getStyles);
-  const { setShowTime, setWrapLogMessage, showTime, wrapLogMessage } = useLogListContext();
+  const { setShowTime, setSyntaxHighlighting, setWrapLogMessage, showTime, syntaxHighlighting, wrapLogMessage } =
+    useLogListContext();
 
   const onScrollToTopClick = useCallback(() => {
     reportInteraction('log_list_controls_scroll_top_clicked');
@@ -38,6 +39,10 @@ export const LogListControls = ({ eventBus }: Props) => {
   const onShowTimestampsClick = useCallback(() => {
     setShowTime(!showTime);
   }, [setShowTime, showTime]);
+
+  const onSyntaxHightlightingClick = useCallback(() => {
+    setSyntaxHighlighting(!syntaxHighlighting);
+  }, [setSyntaxHighlighting, syntaxHighlighting]);
 
   const onWrapLogMessageClick = useCallback(() => {
     setWrapLogMessage(!wrapLogMessage);
@@ -74,6 +79,18 @@ export const LogListControls = ({ eventBus }: Props) => {
           wrapLogMessage
             ? t('logs.logs-controls.unwrap-lines', 'Unwrap lines')
             : t('logs.logs-controls.wrap-lines', 'Wrap lines')
+        }
+        size="md"
+      />
+      <IconButton
+        name="brackets-curly"
+        className={styles.controlButton}
+        variant={syntaxHighlighting ? 'primary' : 'secondary'}
+        onClick={onSyntaxHightlightingClick}
+        tooltip={
+          wrapLogMessage
+            ? t('logs.logs-controls.disable-highlighting', 'Disable highlighting')
+            : t('logs.logs-controls.enable-highlighting', 'Enable highlighting')
         }
         size="md"
       />
