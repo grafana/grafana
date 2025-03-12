@@ -2,6 +2,7 @@ import { createEmpty, extend, Extent } from 'ol/extent';
 import LayerGroup from 'ol/layer/Group';
 import VectorLayer from 'ol/layer/Vector';
 import VectorImage from 'ol/layer/VectorImage';
+import WebGLPointsLayer from 'ol/layer/WebGLPoints.js';
 
 import { MapLayerState } from '../types';
 
@@ -51,9 +52,9 @@ export function getLayerGroupExtent(lg: LayerGroup, lastOnly: boolean) {
   return lg
     .getLayers()
     .getArray()
-    .filter((l) => l instanceof VectorLayer || l instanceof VectorImage)
+    .filter((l) => l instanceof VectorLayer || l instanceof VectorImage || l instanceof WebGLPointsLayer)
     .map((l) => {
-      if (l instanceof VectorLayer || l instanceof VectorImage) {
+      if (l instanceof VectorLayer || l instanceof VectorImage || l instanceof WebGLPointsLayer) {
         if (lastOnly) {
           // Return last coordinate only
           const feat = l.getSource().getFeatures();

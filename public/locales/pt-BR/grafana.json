@@ -184,7 +184,8 @@
       "rule-identifier": "",
       "rule-type": "",
       "state-error-timeout": "",
-      "state-no-data": ""
+      "state-no-data": "",
+      "target-datasource-uid": ""
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -378,6 +379,8 @@
     "list-view": {
       "empty": {
         "new-alert-rule": "",
+        "new-ds-managed-recording-rule": "",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "",
         "provisioning": ""
       },
@@ -503,6 +506,10 @@
       },
       "preview": "",
       "previewCondition": ""
+    },
+    "recording-rules": {
+      "description-target-data-source": "",
+      "label-target-data-source": ""
     },
     "rule-form": {
       "evaluation": {
@@ -1068,35 +1075,18 @@
       "elements": {
         "dashboard": "",
         "objects": "",
+        "panel": "",
         "panels": "",
+        "row": "",
         "rows": "",
+        "tab": "",
         "tabs": ""
       },
-      "objects": {
-        "multi-select": {
-          "selection-number": ""
-        }
-      },
       "open": "",
-      "panels": {
-        "multi-select": {
-          "selection-number": ""
-        }
-      },
       "row": {
         "header": {
           "hide": "",
           "title": ""
-        },
-        "multi-select": {
-          "options-header": "",
-          "selection-number": ""
-        }
-      },
-      "tab": {
-        "multi-select": {
-          "options-header": "",
-          "selection-number": ""
         }
       }
     },
@@ -1171,9 +1161,17 @@
       "rows": "Número total de linhas",
       "table-title": "Estatísticas"
     },
+    "layout": {
+      "common": {
+        "copy": "",
+        "copy-or-duplicate": "",
+        "delete": "",
+        "duplicate": "",
+        "layout": ""
+      }
+    },
     "options": {
       "description": "",
-      "title": "",
       "title-option": ""
     },
     "outline": {
@@ -1217,9 +1215,28 @@
     "rows-layout": {
       "description": "",
       "name": "",
+      "option": {
+        "height": "",
+        "hide-header": "",
+        "repeat": "",
+        "title": ""
+      },
+      "options": {
+        "height-expand": "",
+        "height-min": ""
+      },
       "row": {
         "collapse": "",
         "expand": "",
+        "menu": {
+          "add": "",
+          "add-panel": "",
+          "add-row-above": "",
+          "add-row-below": "",
+          "move-down": "",
+          "move-row": "",
+          "move-up": ""
+        },
         "new": "",
         "repeat": {
           "learn-more": "",
@@ -1227,30 +1244,28 @@
         }
       },
       "row-options": {
-        "height": {
-          "expand": "",
-          "hide-row-header": "",
-          "min": "",
-          "title": ""
-        },
-        "repeat": {
-          "title": "",
-          "variable": {
-            "title": ""
-          }
-        },
-        "title": "",
         "title-option": ""
       }
     },
     "tabs-layout": {
       "description": "",
+      "menu": {
+        "move-tab": ""
+      },
       "name": "",
       "tab": {
+        "menu": {
+          "add": "",
+          "add-panel": "",
+          "add-tab-above": "",
+          "add-tab-after": "",
+          "add-tab-before": "",
+          "move-left": "",
+          "move-right": ""
+        },
         "new": ""
       },
       "tab-options": {
-        "title": "",
         "title-option": ""
       }
     },
@@ -1325,7 +1340,8 @@
     "viz-panel": {
       "options": {
         "description": "",
-        "title": "",
+        "open-edit": "",
+        "plugin-type-image": "",
         "title-option": "",
         "transparent-background": ""
       }
@@ -1891,6 +1907,16 @@
     "named-colors-palette": {
       "text-color-swatch": "",
       "transparent-swatch": ""
+    },
+    "page-toolbar": {
+      "go-back": "",
+      "search-dashboard-name": "",
+      "search-links": "",
+      "search-parent-folder": ""
+    },
+    "pagination": {
+      "next-page": "",
+      "previous-page": ""
     },
     "secret-form-field": {
       "reset": ""
@@ -2888,6 +2914,10 @@
     }
   },
   "navigation": {
+    "invite-user": {
+      "invite-button": "",
+      "invite-tooltip": ""
+    },
     "item": {
       "add-bookmark": "",
       "remove-bookmark": ""
@@ -3095,7 +3125,8 @@
       "old-password-required": "A senha antiga é obrigatória",
       "passwords-must-match": "As senhas devem corresponder",
       "strong-password-validation-register": "A senha não está de acordo com a política de senha forte"
-    }
+    },
+    "change-theme": ""
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
@@ -3502,7 +3533,6 @@
   "share-dashboard": {
     "menu": {
       "export-json-title": "",
-      "invite-user-title": "",
       "share-externally-title": "",
       "share-internally-title": "",
       "share-snapshot-title": ""

@@ -4,9 +4,10 @@ import { DashboardV2Spec, ResponsiveGridLayoutItemKind } from '@grafana/schema/d
 import { ResponsiveGridItem } from '../../scene/layout-responsive-grid/ResponsiveGridItem';
 import { ResponsiveGridLayoutManager } from '../../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { DashboardLayoutManager, LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
+import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getGridItemKeyForPanelId } from '../../utils/utils';
 
-import { buildVizPanel } from './utils';
+import { buildLibraryPanel, buildVizPanel } from './utils';
 
 export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
   serialize(layoutManager: ResponsiveGridLayoutManager): DashboardV2Spec['layout'] {
@@ -21,12 +22,15 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
           if (!(child instanceof ResponsiveGridItem)) {
             throw new Error('Expected ResponsiveGridItem');
           }
+          // For serialization we should retrieve the original element key
+          const elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(child.state?.body);
+
           const layoutItem: ResponsiveGridLayoutItemKind = {
             kind: 'ResponsiveGridLayoutItem',
             spec: {
               element: {
                 kind: 'ElementReference',
-                name: child.state?.body?.state.key ?? 'DefaultName',
+                name: elementKey,
               },
             },
           };
@@ -54,12 +58,9 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
       if (!panel) {
         throw new Error(`Panel with uid ${item.spec.element.name} not found in the dashboard elements`);
       }
-      if (panel.kind !== 'Panel') {
-        throw new Error(`Unsupported element kind: ${panel.kind}`);
-      }
       return new ResponsiveGridItem({
         key: getGridItemKeyForPanelId(panel.spec.id),
-        body: buildVizPanel(panel),
+        body: panel.kind === 'LibraryPanel' ? buildLibraryPanel(panel) : buildVizPanel(panel),
         variableName: item.spec.repeat?.value,
       });
     });

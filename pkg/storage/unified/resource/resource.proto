@@ -503,18 +503,21 @@ message ResourceSearchResponse {
 
 // List items within a resource type & repository name
 // Access control is managed above this request
-message ListRepositoryObjectsRequest {
+message ListManagedObjectsRequest {
   // Starting from the requested page (other query parameters must match!)
   string next_page_token = 1;
 
   // Namespace (tenant)
   string namespace = 2;
 
-  // The name of the repository
-  string name = 3;
+  // The manager type (eg, terraform vs repo)
+  string kind = 3;
+
+  // The name of the manager
+  string id = 4;
 }
 
-message ListRepositoryObjectsResponse {
+message ListManagedObjectsResponse {
   message Item {
     // The resource object key
     ResourceKey object = 1;
@@ -546,22 +549,25 @@ message ListRepositoryObjectsResponse {
 }
 
 // Count the items that exist with
-message CountRepositoryObjectsRequest {
+message CountManagedObjectsRequest {
   // Namespace (tenant)
   string namespace = 1;
 
-  // The name of the repository
-  // empty to count across all repositories
-  string name = 2;
+  // Manager kind: terraform, plugin, kubectl, repo
+  string kind = 2;
+
+  // Name of the manager (meaningful inside kind)
+  string id = 3;
 }
 
 // Count the items that exist with
-message CountRepositoryObjectsResponse {
+message CountManagedObjectsResponse {
   message ResourceCount {
-    string repository = 1;
-    string group = 2;
-    string resource = 3;
-    int64 count = 4;
+    string kind = 1;
+    string id = 2;
+    string group = 3;
+    string resource = 4;
+    int64 count = 5;
   }
 
   // Resource counts
@@ -834,14 +840,14 @@ service ResourceIndex {
   rpc GetStats(ResourceStatsRequest) returns (ResourceStatsResponse);
 }
 
-// Query repository info from the search index.
+// Query managed objects
 // Results access control is based on access to the repository *not* the items
-service RepositoryIndex {
+service ManagedObjectIndex {
   // Describe how many resources of each type exist within a repository
-  rpc CountRepositoryObjects(CountRepositoryObjectsRequest) returns (CountRepositoryObjectsResponse);
+  rpc CountManagedObjects(CountManagedObjectsRequest) returns (CountManagedObjectsResponse);
 
   // List the resources of a specific kind within a repository
-  rpc ListRepositoryObjects(ListRepositoryObjectsRequest) returns (ListRepositoryObjectsResponse);
+  rpc ListManagedObjects(ListManagedObjectsRequest) returns (ListManagedObjectsResponse);
 }
 
 service BlobStore {

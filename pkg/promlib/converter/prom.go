@@ -673,7 +673,11 @@ func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt 
 
 		if histogram != nil {
 			histogram.yMin.Labels = labels
-			frame := data.NewFrame("", histogram.time, histogram.yMin, histogram.yMax, histogram.count, histogram.yLayout)
+			histogram.yMax.Labels = Labels
+			histogram.count.Labels = Labels
+			histogram.yLayout.Labels = Labels
+			histogram.time.Labels = labels
+			frame := data.NewFrame(valueField.Name, histogram.time, histogram.yMin, histogram.yMax, histogram.count, histogram.yLayout)
 			frame.Meta = &data.FrameMeta{
 				Type: "heatmap-cells",
 			}
