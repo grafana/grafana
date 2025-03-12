@@ -1,9 +1,9 @@
-import {css} from '@emotion/css';
-import {useMemo, useRef, useState} from 'react';
+import { css } from '@emotion/css';
+import { useMemo, useRef, useState } from 'react';
 
-import {DashboardCursorSync, PanelProps, TimeRange} from '@grafana/data';
-import {PanelDataErrorView} from '@grafana/runtime';
-import {LegendPlacement, ScaleDistributionConfig} from '@grafana/schema';
+import { DashboardCursorSync, PanelProps, TimeRange } from '@grafana/data';
+import { PanelDataErrorView } from '@grafana/runtime';
+import { LegendPlacement, ScaleDistributionConfig } from '@grafana/schema';
 import {
   EventBusPlugin,
   ScaleDistribution,
@@ -15,18 +15,18 @@ import {
   useTheme2,
   VizLayout,
 } from '@grafana/ui';
-import {TimeRange2, TooltipHoverMode} from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
-import {ColorScale} from 'app/core/components/ColorScale/ColorScale';
-import {readHeatmapRowsCustomMeta} from 'app/features/transformers/calculateHeatmap/heatmap';
+import { TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
+import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
-import {AnnotationsPlugin2} from '../timeseries/plugins/AnnotationsPlugin2';
-import {OutsideRangePlugin} from '../timeseries/plugins/OutsideRangePlugin';
+import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
+import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 
-import {HeatmapTooltip} from './HeatmapTooltip';
-import {prepareHeatmapData} from './fields';
-import {quantizeScheme} from './palettes';
-import {Options} from './types';
-import {prepConfig} from './utils';
+import { HeatmapTooltip } from './HeatmapTooltip';
+import { prepareHeatmapData } from './fields';
+import { quantizeScheme } from './palettes';
+import { Options } from './types';
+import { prepConfig } from './utils';
 
 interface HeatmapPanelProps extends PanelProps<Options> {}
 
