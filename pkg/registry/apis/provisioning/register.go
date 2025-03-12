@@ -349,6 +349,19 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		list = append(list, targetError)
 	}
 
+	testResults, err := repository.TestRepository(ctx, repo)
+	if err != nil {
+		list = append(list, field.Invalid(field.NewPath("spec"),
+			"Repository test failed", "Unable to verify repository: "+err.Error()))
+	}
+
+	if !testResults.Success {
+		for _, err := range testResults.Errors {
+			list = append(list, field.Invalid(field.NewPath("spec"),
+				"Repository test failed", err))
+		}
+	}
+
 	if len(list) > 0 {
 		return apierrors.NewInvalid(
 			provisioning.RepositoryResourceInfo.GroupVersionKind().GroupKind(),

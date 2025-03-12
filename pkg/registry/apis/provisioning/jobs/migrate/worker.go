@@ -118,22 +118,6 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		return errors.New("migration job submitted targeting repository that is not a ReaderWriter")
 	}
 
-	tree, err := rw.ReadTree(ctx, "")
-	if err != nil {
-		return fmt.Errorf("unable to read current tree: %w", err)
-	}
-
-	if true { // configurable?  can we skip if the repo is currently empty?
-		for _, v := range tree {
-			if v.Blob && !resources.ShouldIgnorePath(v.Path) {
-				err = rw.Delete(ctx, v.Path, "", "initial cleanup")
-				if err != nil {
-					return fmt.Errorf("initial cleanup error: %w", err)
-				}
-			}
-		}
-	}
-
 	dynamicClient, _, err := w.clients.New(repo.Config().Namespace)
 	if err != nil {
 		return fmt.Errorf("error getting client: %w", err)
