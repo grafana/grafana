@@ -29,11 +29,12 @@ func TestAuthzLimitedClient_Check(t *testing.T) {
 
 	for _, test := range tests {
 		req := authlib.CheckRequest{
-			Group:    test.group,
-			Resource: test.resource,
-			Verb:     utils.VerbGet,
+			Group:     test.group,
+			Resource:  test.resource,
+			Verb:      utils.VerbGet,
+			Namespace: "stacks-1",
 		}
-		resp, err := client.Check(context.Background(), nil, req)
+		resp, err := client.Check(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req)
 		assert.NoError(t, err)
 		assert.Equal(t, test.expected, resp.Allowed)
 	}
@@ -55,11 +56,12 @@ func TestAuthzLimitedClient_Compile(t *testing.T) {
 
 	for _, test := range tests {
 		req := authlib.ListRequest{
-			Group:    test.group,
-			Resource: test.resource,
-			Verb:     utils.VerbGet,
+			Group:     test.group,
+			Resource:  test.resource,
+			Verb:      utils.VerbGet,
+			Namespace: "stacks-1",
 		}
-		checker, err := client.Compile(context.Background(), nil, req)
+		checker, err := client.Compile(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req)
 		assert.NoError(t, err)
 		assert.NotNil(t, checker)
 
@@ -118,17 +120,6 @@ func TestNamespaceMatching(t *testing.T) {
 			authNamespace: "",
 			reqNamespace:  "",
 			expectError:   true,
-		},
-		// with fallback
-		{
-			name:         "with namespace fallback",
-			reqNamespace: "ns1",
-			expectError:  false,
-		},
-		{
-			name:         "empty request namespace with fallback",
-			reqNamespace: "",
-			expectError:  true,
 		},
 	}
 
