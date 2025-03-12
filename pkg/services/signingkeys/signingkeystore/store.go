@@ -39,7 +39,7 @@ type Store struct {
 type SigningKey struct {
 	ID         int64                   `json:"-" xorm:"id" db:"id"`
 	KeyID      string                  `json:"key_id" xorm:"key_id" db:"key_id"`
-	PrivateKey []byte                  `json:"private_key" xorm:"private_key" db:"private_key"`
+	PrivateKey string                  `json:"private_key" xorm:"private_key" db:"private_key"`
 	AddedAt    time.Time               `json:"added_at" xorm:"added_at" db:"added_at"`
 	ExpiresAt  *time.Time              `json:"expires_at" xorm:"expires_at" db:"expires_at"`
 	Alg        jose.SignatureAlgorithm `json:"alg" xorm:"alg" db:"alg"`
