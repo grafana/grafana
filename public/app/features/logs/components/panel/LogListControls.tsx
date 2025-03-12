@@ -6,6 +6,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { IconButton, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
+import { useLogListContext } from './LogListContext';
 import { ScrollToLogsEvent } from './virtualization';
 
 type Props = {
@@ -14,6 +15,7 @@ type Props = {
 
 export const LogListControls = ({ eventBus }: Props) => {
   const styles = useStyles2(getStyles);
+  const { setShowTime, setWrapLogMessage, showTime, wrapLogMessage } = useLogListContext();
 
   const onScrollToTopClick = useCallback(() => {
     reportInteraction('log_list_controls_scroll_top_clicked');
@@ -33,11 +35,18 @@ export const LogListControls = ({ eventBus }: Props) => {
     );
   }, [eventBus]);
 
+  const onShowTimestampsClick = useCallback(() => {
+    setShowTime(!showTime);
+  }, [setShowTime, showTime]);
+
+  const onWrapLogMessageClick = useCallback(() => {
+    setWrapLogMessage(!wrapLogMessage);
+  }, [setWrapLogMessage, wrapLogMessage]);
+
   return (
     <div className={styles.navContainer}>
       <IconButton
         name="arrow-down"
-        data-testid="scrollToBottom"
         className={styles.controlButton}
         variant="secondary"
         onClick={onScrollToBottomClick}
@@ -46,18 +55,26 @@ export const LogListControls = ({ eventBus }: Props) => {
       />
       <IconButton
         name="clock-nine"
+        variant={showTime ? 'primary' : 'secondary'}
         className={styles.controlButton}
-        variant="secondary"
-        onClick={onScrollToBottomClick}
-        tooltip={t('logs.logs-controls.show-timestamps', 'Show timestamps')}
+        onClick={onShowTimestampsClick}
+        tooltip={
+          showTime
+            ? t('logs.logs-controls.hide-timestamps', 'Hide timestamps')
+            : t('logs.logs-controls.show-timestamps', 'Show timestamps')
+        }
         size="md"
       />
       <IconButton
         name="wrap-text"
         className={styles.controlButton}
-        variant="secondary"
-        onClick={onScrollToBottomClick}
-        tooltip={t('logs.logs-controls.wrap-lines', 'Wrap lines')}
+        variant={wrapLogMessage ? 'primary' : 'secondary'}
+        onClick={onWrapLogMessageClick}
+        tooltip={
+          wrapLogMessage
+            ? t('logs.logs-controls.unwrap-lines', 'Unwrap lines')
+            : t('logs.logs-controls.wrap-lines', 'Wrap lines')
+        }
         size="md"
       />
       <IconButton

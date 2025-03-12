@@ -3985,8 +3985,12 @@
       }
     },
     "logs-controls": {
+      "hide-timestamps": "Hide timestamps",
       "scroll-bottom": "Scroll to bottom",
-      "scroll-top": "Scroll to top"
+      "scroll-top": "Scroll to top",
+      "show-timestamps": "Show timestamps",
+      "unwrap-lines": "Unwrap lines",
+      "wrap-lines": "Wrap lines"
     },
     "logs-navigation": {
       "newer-logs": "Newer logs",
