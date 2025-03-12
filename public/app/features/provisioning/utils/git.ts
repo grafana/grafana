@@ -1,5 +1,3 @@
-import { Repository } from '../api';
-
 /**
  * Validates a Git branch name according to the following rules:
  * 1. The branch name cannot start with `/`, end with `/`, `.`, or whitespace.
@@ -14,4 +12,3 @@ export function validateBranchName(branchName?: string) {
 
   return branchName && branchNameRegex.test(branchName!);
 }
-
