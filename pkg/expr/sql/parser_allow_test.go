@@ -22,6 +22,11 @@ func TestAllowQuery(t *testing.T) {
 			q:    example_argo_commit_example,
 			err:  nil,
 		},
+		{
+			name: "case statement",
+			q:    example_case_statement,
+			err:  nil,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -109,3 +114,12 @@ FROM drone,
      argo_success,
      argo_failure,
      workflows;`
+
+var example_case_statement = `SELECT 
+  value,
+  CASE 
+    WHEN value > 100 THEN 'High'
+    WHEN value > 50 THEN 'Medium'
+    ELSE 'Low'
+  END AS category
+FROM metrics`
