@@ -377,6 +377,8 @@
     "list-view": {
       "empty": {
         "new-alert-rule": "",
+        "new-ds-managed-recording-rule": "",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "",
         "provisioning": ""
       },
@@ -3113,7 +3115,8 @@
       "old-password-required": "旧密码是必需项",
       "passwords-must-match": "密码必须一致",
       "strong-password-validation-register": "密码不符合强密码政策"
-    }
+    },
+    "change-theme": ""
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
