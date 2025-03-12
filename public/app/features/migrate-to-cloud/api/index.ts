@@ -6,6 +6,7 @@ import { LocalPlugin } from 'app/features/plugins/admin/types';
 import { handleRequestError } from '../../../api/createBaseQuery';
 
 import { generatedAPI } from './endpoints.gen';
+import { transformError } from './errors';
 
 export * from './endpoints.gen';
 
@@ -31,40 +32,51 @@ export const cloudMigrationAPI = generatedAPI
     endpoints: {
       // Cloud-side - create token
       getCloudMigrationToken: {
+        transformErrorResponse: transformError,
         providesTags: ['cloud-migration-token'],
       },
       createCloudMigrationToken: {
+        transformErrorResponse: transformError,
         invalidatesTags: ['cloud-migration-token'],
       },
       deleteCloudMigrationToken: {
+        transformErrorResponse: transformError,
         invalidatesTags: ['cloud-migration-token'],
       },
 
       // On-prem session management (entering token)
       getSessionList: {
+        transformErrorResponse: transformError,
         providesTags: ['cloud-migration-session'] /* should this be a -list? */,
       },
       getSession: {
+        transformErrorResponse: transformError,
         providesTags: ['cloud-migration-session'],
       },
       createSession: {
+        transformErrorResponse: transformError,
         invalidatesTags: ['cloud-migration-session'],
       },
       deleteSession: {
+        transformErrorResponse: transformError,
         invalidatesTags: ['cloud-migration-session', 'cloud-migration-snapshot'],
       },
 
       // Snapshot management
       getShapshotList: {
+        transformErrorResponse: transformError,
         providesTags: ['cloud-migration-snapshot'],
       },
       getSnapshot: {
+        transformErrorResponse: transformError,
         providesTags: ['cloud-migration-snapshot'],
       },
       createSnapshot: {
+        transformErrorResponse: transformError,
         invalidatesTags: ['cloud-migration-snapshot'],
       },
       uploadSnapshot: {
+        transformErrorResponse: transformError,
         invalidatesTags: ['cloud-migration-snapshot'],
       },
 
