@@ -235,7 +235,7 @@ export function useOnCallIntegration() {
   return {
     integrationStatus,
     onCallNotifierMeta: {
-      enabled: !isOnCallEnabled,
+      enabled: !!isOnCallEnabled,
       order: -1, // The default is 0. We want OnCall to be the first on the list
       description: isOnCallEnabled
         ? `Simple way to handle alerts and manage incidents`
