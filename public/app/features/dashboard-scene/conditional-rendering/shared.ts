@@ -9,13 +9,13 @@ export type ConditionValues =
   | GroupConditionValue
   | IntervalConditionValue;
 
-export type ConditionsRenderingConditions =
+export type ConditionalRenderingConditions =
   | ConditionalRenderingData
   | ConditionalRenderingVariable
   | ConditionalRenderingInterval
   | ConditionalRenderingGroup;
 
-type NonGroupConditions = Exclude<ConditionsRenderingConditions, ConditionalRenderingGroup>;
+type NonGroupConditions = Exclude<ConditionalRenderingConditions, ConditionalRenderingGroup>;
 
 export const handleDeleteNonGroupCondition = (model: NonGroupConditions) => {
   if (model.parent instanceof ConditionalRenderingGroup) {

@@ -44,6 +44,7 @@ export class RowItem
       layout: state?.layout ?? ResponsiveGridLayoutManager.createEmpty(),
       conditionalRendering: state?.conditionalRendering ?? ConditionalRendering.createEmpty(),
     });
+
     this.addActivationHandler(() => this._activationHandler());
   }
 

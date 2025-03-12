@@ -10,9 +10,7 @@ import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './Condi
 import { handleDeleteNonGroupCondition } from './shared';
 
 export type IntervalConditionValue = string;
-interface ConditionalRenderingIntervalState extends ConditionalRenderingBaseState<IntervalConditionValue> {
-  value: string;
-}
+type ConditionalRenderingIntervalState = ConditionalRenderingBaseState<IntervalConditionValue>;
 
 export class ConditionalRenderingInterval extends ConditionalRenderingBase<ConditionalRenderingIntervalState> {
   public get title(): string {
