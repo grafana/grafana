@@ -118,6 +118,6 @@ export function getI18next() {
 // This hook doesn't do much now, but we want it to define the API for plugins.
 // Perhaps in the future this will use useTranslation from react-i18next or something else
 // from context
-export function useTInternal() {
+export function useTranslateInternal() {
   return t;
 }

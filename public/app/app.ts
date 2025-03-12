@@ -59,7 +59,7 @@ import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/componen
 import { PluginPage } from './core/components/Page/PluginPage';
 import { GrafanaContextType, useChromeHeaderHeight, useReturnToPreviousInternal } from './core/context/GrafanaContext';
 import { initializeCrashDetection } from './core/crash';
-import { initializeI18n, useTInternal } from './core/internationalization';
+import { initializeI18n, useTranslateInternal } from './core/internationalization';
 import { setMonacoEnv } from './core/monacoEnv';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { CorrelationsService } from './core/services/CorrelationsService';
@@ -254,7 +254,7 @@ export class GrafanaApp {
 
       setReturnToPreviousHook(useReturnToPreviousInternal);
       setChromeHeaderHeightHook(useChromeHeaderHeight);
-      setUseTHook(useTInternal);
+      setUseTHook(useTranslateInternal);
 
       if (config.featureToggles.crashDetection) {
         initializeCrashDetection();
