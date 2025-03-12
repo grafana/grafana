@@ -12,7 +12,7 @@ interface GetResourceRepositoryArgs {
 
 export const useGetResourceRepository = ({ name, folderUid }: GetResourceRepositoryArgs) => {
   const [items, isLoading] = useRepositoryList(name || !folderUid ? skipToken : undefined);
-  // Get the folder data from API to get repository data for nested folders
+  // Get the folder data from API to get the repository data for nested folders
   const folderQuery = useGetFolderQuery(name || !folderUid ? skipToken : { name: folderUid });
 
   const repoName = name || folderQuery.data?.metadata?.annotations?.[AnnoKeyManagerKind];

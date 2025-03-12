@@ -1,7 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 
 import { RepositoryViewList, useGetFrontendSettingsQuery } from '../api';
-import { checkSyncSettings } from '../utils';
+import { checkSyncSettings } from '../utils/checkSyncSettings';
 
 export function useIsProvisionedInstance(settings?: RepositoryViewList) {
   const settingsQuery = useGetFrontendSettingsQuery(settings ? skipToken : undefined);
