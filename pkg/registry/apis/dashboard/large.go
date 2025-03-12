@@ -1,6 +1,7 @@
 package dashboard
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -35,7 +36,11 @@ func NewDashboardLargeObjectSupport(scheme *runtime.Scheme) *apistore.BasicLarge
 			case *dashboardV1.Dashboard:
 				reduceUnstructredSpec(&dash.Spec)
 			case *dashboardV2.Dashboard:
-				reduceUnstructredSpec(&dash.Spec)
+				dash.Spec = dashboardV2.DashboardSpec{
+					Title:       dash.Spec.Title,
+					Description: dash.Spec.Description,
+					Tags:        dash.Spec.Tags,
+				}
 			default:
 				return fmt.Errorf("unsupported dashboard type %T", obj)
 			}
@@ -45,23 +50,16 @@ func NewDashboardLargeObjectSupport(scheme *runtime.Scheme) *apistore.BasicLarge
 		},
 
 		RebuildSpec: func(obj runtime.Object, blob []byte) error {
-			body := commonV0.Unstructured{}
-			err := body.UnmarshalJSON(blob)
-			if err != nil {
-				return err
-			}
-
 			switch dash := obj.(type) {
 			case *dashboardV0.Dashboard:
-				dash.Spec = body
+				return dash.Spec.UnmarshalJSON(blob)
 			case *dashboardV1.Dashboard:
-				dash.Spec = body
+				return dash.Spec.UnmarshalJSON(blob)
 			case *dashboardV2.Dashboard:
-				dash.Spec = body
+				return json.Unmarshal(blob, &dash.Spec)
 			default:
 				return fmt.Errorf("unsupported dashboard type %T", obj)
 			}
-			return nil
 		},
 	}
 }
