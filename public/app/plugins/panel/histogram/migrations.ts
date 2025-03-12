@@ -1,15 +1,16 @@
-import { isNil, omitBy } from 'lodash';
+import {isNil, omitBy} from 'lodash';
 
-import { FieldConfigSource, PanelTypeChangedHandler } from '@grafana/data';
+import {FieldConfigSource, PanelTypeChangedHandler} from '@grafana/data';
 import {
   LegendDisplayMode,
+  LegendPlacement,
   SortOrder,
   StackingMode,
   TooltipDisplayMode,
 } from '@grafana/schema/dist/esm/common/common.gen';
 
-import { defaultHistogramConfig } from './config';
-import { FieldConfig as HistogramFieldConfig, Options } from './panelcfg.gen';
+import {defaultHistogramConfig} from './config';
+import {FieldConfig as HistogramFieldConfig, Options} from './panelcfg.gen';
 
 /*
  * This is called when the panel changes from another panel
@@ -47,7 +48,7 @@ function graphToHistogramOptions(graphOptions: GraphOptions): {
     legend: {
       displayMode: LegendDisplayMode.List,
       showLegend: true,
-      placement: 'bottom',
+      placement: LegendPlacement.Bottom,
       calcs: [],
     },
     tooltip: {

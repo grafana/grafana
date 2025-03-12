@@ -131,19 +131,19 @@ const HeatmapHoverCell = ({
 
   const getData = (idx: number = index) => {
     if (meta.yOrdinalDisplay) {
-      const yMinIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx - 1 : yValueIdx;
-      const yMaxIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx : yValueIdx + 1;
+      const yMinIdx = data.yLayout === HeatmapCellLayout.Le ? yValueIdx - 1 : yValueIdx;
+      const yMaxIdx = data.yLayout === HeatmapCellLayout.Le ? yValueIdx : yValueIdx + 1;
       yBucketMin = yMinIdx < 0 ? meta.yMinDisplay! : `${meta.yOrdinalDisplay[yMinIdx]}`;
       yBucketMax = `${meta.yOrdinalDisplay[yMaxIdx]}`;
 
       // e.g. "pod-xyz123"
       if (!meta.yOrdinalLabel || Number.isNaN(+meta.yOrdinalLabel[0])) {
-        nonNumericOrdinalDisplay = data.yLayout === HeatmapCellLayout.le ? yBucketMax : yBucketMin;
+        nonNumericOrdinalDisplay = data.yLayout === HeatmapCellLayout.Le ? yBucketMax : yBucketMin;
       }
     } else {
       const value = yVals?.[yValueIdx];
 
-      if (data.yLayout === HeatmapCellLayout.le) {
+      if (data.yLayout === HeatmapCellLayout.Le) {
         yBucketMax = `${value}`;
 
         if (data.yLog) {
@@ -166,7 +166,7 @@ const HeatmapHoverCell = ({
       }
     }
 
-    if (data.xLayout === HeatmapCellLayout.le) {
+    if (data.xLayout === HeatmapCellLayout.Le) {
       xBucketMax = xVals[idx];
       xBucketMin = xBucketMax - data.xBucketSize!;
     } else {
@@ -223,7 +223,7 @@ const HeatmapHoverCell = ({
     }
 
     switch (data.yLayout) {
-      case HeatmapCellLayout.unknown:
+      case HeatmapCellLayout.Unknown:
         return isMulti
           ? [{ label: yDisp(yBucketMin), value: data.display!(count) }]
           : [{ label: '', value: yDisp(yBucketMin) }];

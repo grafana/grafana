@@ -121,7 +121,7 @@ export const LogRows = memo(
       () => dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0),
       [dedupedRows]
     );
-    const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
+    const showDuplicates = dedupStrategy !== LogsDedupStrategy.None && dedupCount > 0;
     const orderedRows = useMemo(
       () => (logsSortOrder ? sortLogRows(dedupedRows, logsSortOrder) : dedupedRows),
       [dedupedRows, logsSortOrder]

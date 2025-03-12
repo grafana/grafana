@@ -137,10 +137,10 @@ export type LogsVisualisationType = 'table' | 'logs';
 
 // we need to define the order of these explicitly
 const DEDUP_OPTIONS = [
-  LogsDedupStrategy.none,
-  LogsDedupStrategy.exact,
-  LogsDedupStrategy.numbers,
-  LogsDedupStrategy.signature,
+  LogsDedupStrategy.None,
+  LogsDedupStrategy.Exact,
+  LogsDedupStrategy.Numbers,
+  LogsDedupStrategy.Signature,
 ];
 
 const getDefaultVisualisationType = (): LogsVisualisationType => {
@@ -201,7 +201,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const [prettifyLogMessage, setPrettifyLogMessage] = useState<boolean>(
     store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)
   );
-  const [dedupStrategy, setDedupStrategy] = useState<LogsDedupStrategy>(LogsDedupStrategy.none);
+  const [dedupStrategy, setDedupStrategy] = useState<LogsDedupStrategy>(LogsDedupStrategy.None);
   const [hiddenLogLevels, setHiddenLogLevels] = useState<LogLevel[]>([]);
   const [logsSortOrder, setLogsSortOrder] = useState<LogsSortOrder>(
     store.get(SETTINGS_KEYS.logsSortOrder) || LogsSortOrder.Descending

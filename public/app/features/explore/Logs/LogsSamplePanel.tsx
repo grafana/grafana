@@ -94,7 +94,7 @@ export function LogsSamplePanel(props: Props) {
         <div className={styles.logContainer}>
           <LogRows
             logRows={logs.rows}
-            dedupStrategy={LogsDedupStrategy.none}
+            dedupStrategy={LogsDedupStrategy.None}
             showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
             showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
             wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}

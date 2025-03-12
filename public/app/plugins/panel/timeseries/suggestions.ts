@@ -1,21 +1,22 @@
 import {
-  FieldColorModeId,
-  VisualizationSuggestionsBuilder,
-  VisualizationSuggestion,
   DataTransformerID,
+  FieldColorModeId,
+  VisualizationSuggestion,
+  VisualizationSuggestionsBuilder,
 } from '@grafana/data';
 import {
   GraphDrawStyle,
   GraphFieldConfig,
   GraphGradientMode,
   LegendDisplayMode,
+  LegendPlacement,
   LineInterpolation,
   StackingMode,
 } from '@grafana/schema';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { SuggestionName } from 'app/types/suggestions';
+import {getDashboardSrv} from 'app/features/dashboard/services/DashboardSrv';
+import {SuggestionName} from 'app/types/suggestions';
 
-import { Options } from './panelcfg.gen';
+import {Options} from './panelcfg.gen';
 
 export class TimeSeriesSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
@@ -32,7 +33,7 @@ export class TimeSeriesSuggestionsSupplier {
         legend: {
           calcs: [],
           displayMode: LegendDisplayMode.Hidden,
-          placement: 'right',
+          placement: LegendPlacement.Right,
           showLegend: false,
         },
       },

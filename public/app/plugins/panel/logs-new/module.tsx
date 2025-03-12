@@ -37,25 +37,25 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
         description: '',
         settings: {
           options: [
-            { value: LogsDedupStrategy.none, label: 'None', description: LogsDedupDescription[LogsDedupStrategy.none] },
+            { value: LogsDedupStrategy.None, label: 'None', description: LogsDedupDescription[LogsDedupStrategy.None] },
             {
-              value: LogsDedupStrategy.exact,
+              value: LogsDedupStrategy.Exact,
               label: 'Exact',
-              description: LogsDedupDescription[LogsDedupStrategy.exact],
+              description: LogsDedupDescription[LogsDedupStrategy.Exact],
             },
             {
-              value: LogsDedupStrategy.numbers,
+              value: LogsDedupStrategy.Numbers,
               label: 'Numbers',
-              description: LogsDedupDescription[LogsDedupStrategy.numbers],
+              description: LogsDedupDescription[LogsDedupStrategy.Numbers],
             },
             {
-              value: LogsDedupStrategy.signature,
+              value: LogsDedupStrategy.Signature,
               label: 'Signature',
-              description: LogsDedupDescription[LogsDedupStrategy.signature],
+              description: LogsDedupDescription[LogsDedupStrategy.Signature],
             },
           ],
         },
-        defaultValue: LogsDedupStrategy.none,
+        defaultValue: LogsDedupStrategy.None,
       })
       .addRadio({
         path: 'sortOrder',

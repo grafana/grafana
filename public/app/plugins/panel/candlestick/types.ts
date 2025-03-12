@@ -1,15 +1,15 @@
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import {LegendDisplayMode, LegendPlacement, SortOrder, TooltipDisplayMode} from '@grafana/schema';
 
 import {
-  defaultOptions as defaultOptionsBase,
-  defaultCandlestickColors,
-  Options,
   CandlestickColors,
+  CandlestickFieldMap,
   CandleStyle,
   ColorStrategy,
-  VizDisplayMode,
-  CandlestickFieldMap,
+  defaultCandlestickColors,
+  defaultOptions as defaultOptionsBase,
   FieldConfig,
+  Options,
+  VizDisplayMode,
 } from './panelcfg.gen';
 
 export const defaultOptions: Partial<Options> = {
@@ -18,7 +18,7 @@ export const defaultOptions: Partial<Options> = {
   legend: {
     displayMode: LegendDisplayMode.List,
     showLegend: true,
-    placement: 'bottom',
+    placement: LegendPlacement.Bottom,
     calcs: [],
   },
   tooltip: {

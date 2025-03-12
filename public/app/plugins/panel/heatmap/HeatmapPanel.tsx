@@ -1,32 +1,32 @@
-import { css } from '@emotion/css';
-import { useMemo, useRef, useState } from 'react';
+import {css} from '@emotion/css';
+import {useMemo, useRef, useState} from 'react';
 
-import { DashboardCursorSync, PanelProps, TimeRange } from '@grafana/data';
-import { PanelDataErrorView } from '@grafana/runtime';
-import { ScaleDistributionConfig } from '@grafana/schema';
+import {DashboardCursorSync, PanelProps, TimeRange} from '@grafana/data';
+import {PanelDataErrorView} from '@grafana/runtime';
+import {LegendPlacement, ScaleDistributionConfig} from '@grafana/schema';
 import {
+  EventBusPlugin,
   ScaleDistribution,
-  TooltipPlugin2,
   TooltipDisplayMode,
+  TooltipPlugin2,
   UPlotChart,
   usePanelContext,
   useStyles2,
   useTheme2,
   VizLayout,
-  EventBusPlugin,
 } from '@grafana/ui';
-import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
-import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
-import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
+import {TimeRange2, TooltipHoverMode} from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
+import {ColorScale} from 'app/core/components/ColorScale/ColorScale';
+import {readHeatmapRowsCustomMeta} from 'app/features/transformers/calculateHeatmap/heatmap';
 
-import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
-import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
+import {AnnotationsPlugin2} from '../timeseries/plugins/AnnotationsPlugin2';
+import {OutsideRangePlugin} from '../timeseries/plugins/OutsideRangePlugin';
 
-import { HeatmapTooltip } from './HeatmapTooltip';
-import { prepareHeatmapData } from './fields';
-import { quantizeScheme } from './palettes';
-import { Options } from './types';
-import { prepConfig } from './utils';
+import {HeatmapTooltip} from './HeatmapTooltip';
+import {prepareHeatmapData} from './fields';
+import {quantizeScheme} from './palettes';
+import {Options} from './types';
+import {prepConfig} from './utils';
 
 interface HeatmapPanelProps extends PanelProps<Options> {}
 
@@ -145,7 +145,7 @@ export const HeatmapPanel = ({
     // }
 
     return (
-      <VizLayout.Legend placement="bottom" maxHeight="20%">
+      <VizLayout.Legend placement={LegendPlacement.Bottom} maxHeight="20%">
         <div className={styles.colorScaleWrapper}>
           <ColorScale
             hoverValue={hoverValue}

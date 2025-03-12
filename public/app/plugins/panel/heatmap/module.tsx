@@ -167,14 +167,14 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       builder.addRadio({
         path: 'rowsFrame.layout',
         name: 'Tick alignment',
-        defaultValue: defaultOptions.rowsFrame?.layout ?? HeatmapCellLayout.auto,
+        defaultValue: defaultOptions.rowsFrame?.layout ?? HeatmapCellLayout.Auto,
         category,
         settings: {
           options: [
-            { label: 'Auto', value: HeatmapCellLayout.auto },
-            { label: 'Top (LE)', value: HeatmapCellLayout.le },
-            { label: 'Middle', value: HeatmapCellLayout.unknown },
-            { label: 'Bottom (GE)', value: HeatmapCellLayout.ge },
+            { label: 'Auto', value: HeatmapCellLayout.Auto },
+            { label: 'Top (LE)', value: HeatmapCellLayout.Le },
+            { label: 'Middle', value: HeatmapCellLayout.Unknown },
+            { label: 'Bottom (GE)', value: HeatmapCellLayout.Ge },
           ],
         },
       });
