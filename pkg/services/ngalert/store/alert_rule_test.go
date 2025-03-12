@@ -243,18 +243,19 @@ func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) 
 	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 
 	gen := models.RuleGen
-	createRuleInFolder := func(title string, orgID int64, namespaceUID string) *models.AlertRule {
+	createRuleInFolder := func(title string, orgID int64, namespaceUID string, group string) *models.AlertRule {
 		gen := gen.With(
 			gen.WithOrgID(orgID),
 			gen.WithIntervalMatching(store.Cfg.BaseInterval),
 			gen.WithNamespaceUID(namespaceUID),
+			gen.WithGroupName(group),
 		)
 		return createRule(t, store, gen)
 	}
 
 	t.Run("should handle update chains without unique constraint violation", func(t *testing.T) {
-		rule1 := createRuleInFolder("chain-rule1", 1, "my-namespace")
-		rule2 := createRuleInFolder("chain-rule2", 1, "my-namespace")
+		rule1 := createRuleInFolder("chain-rule1", 1, "my-namespace", "my-group")
+		rule2 := createRuleInFolder("chain-rule2", 1, "my-namespace", "my-group")
 
 		newRule1 := models.CopyRule(rule1)
 		newRule2 := models.CopyRule(rule2)
@@ -294,9 +295,9 @@ func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) 
 	})
 
 	t.Run("should handle update chains with cycle without unique constraint violation", func(t *testing.T) {
-		rule1 := createRuleInFolder("cycle-rule1", 1, "my-namespace")
-		rule2 := createRuleInFolder("cycle-rule2", 1, "my-namespace")
-		rule3 := createRuleInFolder("cycle-rule3", 1, "my-namespace")
+		rule1 := createRuleInFolder("cycle-rule1", 1, "my-namespace", "my-group")
+		rule2 := createRuleInFolder("cycle-rule2", 1, "my-namespace", "my-group")
+		rule3 := createRuleInFolder("cycle-rule3", 1, "my-namespace", "my-group")
 
 		newRule1 := models.CopyRule(rule1)
 		newRule2 := models.CopyRule(rule2)
@@ -349,8 +350,8 @@ func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) 
 	})
 
 	t.Run("should handle case-insensitive intermediate collision without unique constraint violation", func(t *testing.T) {
-		rule1 := createRuleInFolder("case-cycle-rule1", 1, "my-namespace")
-		rule2 := createRuleInFolder("case-cycle-rule2", 1, "my-namespace")
+		rule1 := createRuleInFolder("case-cycle-rule1", 1, "my-namespace", "my-group")
+		rule2 := createRuleInFolder("case-cycle-rule2", 1, "my-namespace", "my-group")
 
 		newRule1 := models.CopyRule(rule1)
 		newRule2 := models.CopyRule(rule2)
@@ -390,10 +391,10 @@ func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) 
 	})
 
 	t.Run("should handle update multiple chains in different folders without unique constraint violation", func(t *testing.T) {
-		rule1 := createRuleInFolder("multi-cycle-rule1", 1, "my-namespace")
-		rule2 := createRuleInFolder("multi-cycle-rule2", 1, "my-namespace")
-		rule3 := createRuleInFolder("multi-cycle-rule1", 1, "my-namespace2")
-		rule4 := createRuleInFolder("multi-cycle-rule2", 1, "my-namespace2")
+		rule1 := createRuleInFolder("multi-cycle-rule1", 1, "my-namespace", "my-group1")
+		rule2 := createRuleInFolder("multi-cycle-rule2", 1, "my-namespace", "my-group1")
+		rule3 := createRuleInFolder("multi-cycle-rule1", 1, "my-namespace", "my-group2")
+		rule4 := createRuleInFolder("multi-cycle-rule2", 1, "my-namespace", "my-group2")
 
 		newRule1 := models.CopyRule(rule1)
 		newRule2 := models.CopyRule(rule2)
@@ -459,8 +460,8 @@ func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) 
 	})
 
 	t.Run("should fail with unique constraint violation", func(t *testing.T) {
-		rule1 := createRuleInFolder("unique-rule1", 1, "my-namespace")
-		rule2 := createRuleInFolder("unique-rule2", 1, "my-namespace")
+		rule1 := createRuleInFolder("unique-rule1", 1, "my-namespace", "my-group")
+		rule2 := createRuleInFolder("unique-rule2", 1, "my-namespace", "my-group")
 
 		newRule1 := models.CopyRule(rule1)
 		newRule2 := models.CopyRule(rule2)
