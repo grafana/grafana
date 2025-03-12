@@ -187,32 +187,27 @@ export function useOnCallIntegration() {
 
         const newIntegrationOption: SelectableValue<string> = {
           value: OnCallIntegrationType.NewIntegration,
-          label: 'New OnCall integration',
-          description: 'A new OnCall integration without escalation chains will be automatically created',
+          label: 'New IRM integration',
+          description: 'A new IRM integration without escalation chains will be automatically created',
         };
         const existingIntegrationOption: SelectableValue<string> = {
           value: OnCallIntegrationType.ExistingIntegration,
-          label: 'Existing OnCall integration',
-          description: 'Use an existing OnCall integration',
+          label: 'Existing IRM integration',
+          description: 'Use an existing IRM integration',
         };
 
         options.unshift(
-          option(OnCallIntegrationSetting.IntegrationType, 'How to connect to OnCall', '', {
+          option(OnCallIntegrationSetting.IntegrationType, 'How to connect to IRM', '', {
             required: true,
             element: 'radio',
             defaultValue: newIntegrationOption,
             selectOptions: [newIntegrationOption, existingIntegrationOption],
           }),
-          option(
-            OnCallIntegrationSetting.IntegrationName,
-            'Integration name',
-            'The name of the new OnCall integration',
-            {
-              required: true,
-              showWhen: { field: 'integration_type', is: OnCallIntegrationType.NewIntegration },
-            }
-          ),
-          option('url', 'OnCall Integration', 'The OnCall integration to send alerts to', {
+          option(OnCallIntegrationSetting.IntegrationName, 'Integration name', 'The name of the new IRM integration', {
+            required: true,
+            showWhen: { field: 'integration_type', is: OnCallIntegrationType.NewIntegration },
+          }),
+          option('url', 'IRM Integration', 'The IRM integration to send alerts to', {
             element: 'select',
             required: true,
             showWhen: { field: 'integration_type', is: OnCallIntegrationType.ExistingIntegration },
