@@ -59,7 +59,7 @@ describe('PanelRepeaterGridItem', () => {
   });
 
   it('Should pass isMulti/includeAll values if variable is multi variable and has them set', async () => {
-    const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 1, includeAll: true });
+    const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 1 });
 
     activateFullSceneTree(scene);
 
