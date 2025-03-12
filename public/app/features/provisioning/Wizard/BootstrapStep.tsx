@@ -1,11 +1,9 @@
-import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import {
   Alert,
-  Badge,
   Box,
-  Card,
   Field,
   FieldSet,
   Icon,
@@ -21,48 +19,12 @@ import { useGetFrontendSettingsQuery, useGetRepositoryFilesQuery, useGetResource
 import { StepStatus } from '../hooks/useStepStatus';
 import { checkSyncSettings } from '../utils';
 
-import { BootstrapOptionCard } from './BootstrapOptionCard';
+import { BootstrapOptionsList, ModeOption, modeOptions } from './BootstrapOptionsList';
 import { WizardFormData } from './types';
-
-type Target = 'instance' | 'folder';
-type Operation = 'pull' | 'migrate';
 
 interface Props {
   onOptionSelect: (requiresMigration: boolean) => void;
   onStepUpdate: (status: StepStatus, error?: string) => void;
-}
-
-interface ModeOption {
-  value: Target;
-  operation: Operation;
-  label: string;
-  description: string;
-}
-
-const modeOptions: ModeOption[] = [
-  {
-    value: 'instance',
-    operation: 'migrate',
-    label: 'Migrate Instance to Repository',
-    description: 'Save all Grafana resources to repository',
-  },
-  {
-    value: 'instance',
-    operation: 'pull',
-    label: 'Pull from Repository to Instance',
-    description: 'Pull resources from repository into this Grafana instance',
-  },
-  {
-    value: 'folder',
-    operation: 'pull',
-    label: 'Pull from Repository to Folder',
-    description: 'Pull repository resources into a specific folder',
-  },
-];
-
-interface OptionState {
-  isDisabled: boolean;
-  disabledReason?: string;
 }
 
 export function BootstrapStep({ onOptionSelect, onStepUpdate }: Props) {
@@ -118,7 +80,7 @@ export function BootstrapStep({ onOptionSelect, onStepUpdate }: Props) {
 
   // Get available options and disabled state logic
   const getOptionState = useCallback(
-    (option: ModeOption): OptionState => {
+    (option: ModeOption) => {
       // Disable pull instance option if using legacy storage
       if (option.value === 'instance' && option.operation === 'pull' && settingsQuery.data?.legacyStorage) {
         return {
@@ -274,30 +236,12 @@ export function BootstrapStep({ onOptionSelect, onStepUpdate }: Props) {
           </Stack>
         </Box>
 
-        <Controller
-          name="repository.sync.target"
+        <BootstrapOptionsList
           control={control}
-          defaultValue={undefined}
-          render={({ field }) => (
-            <>
-              {sortedModeOptions.map((option, index) => {
-                const optionState = getOptionState(option);
-                const isSelected = option.value === field.value && selectedOption?.operation === option.operation;
-
-                return (
-                  <BootstrapOptionCard
-                    key={`${option.value}-${option.operation}`}
-                    option={option}
-                    isSelected={isSelected}
-                    optionState={optionState}
-                    index={index}
-                    onSelect={handleOptionSelect}
-                    onChange={field.onChange}
-                  />
-                );
-              })}
-            </>
-          )}
+          selectedOption={selectedOption}
+          getOptionState={getOptionState}
+          onOptionSelect={handleOptionSelect}
+          sortedModeOptions={sortedModeOptions}
         />
 
         {/* Add migration options */}
