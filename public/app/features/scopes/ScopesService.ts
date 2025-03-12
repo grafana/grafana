@@ -43,25 +43,11 @@ export class ScopesService implements ScopesContextValue {
     // We combine the latest emissions from this state + selectorService + dashboardsService.
     combineLatest([
       this._state.asObservable(),
-      // As selectorService state is bigger than we need here, we map what we need and make sure it only emits when
-      // things we use here change.
-      this.selectorService.stateObservable.pipe(
-        map((state) => ({
-          // We do mapping here bu mainly to make the distinctUntilChanged simpler
-          selectedScopes: state.selectedScopes.map(({ scope }) => scope),
-          loading: state.loading,
-        })),
-        distinctUntilChanged(
-          (prev, curr) => prev.loading === curr.loading && isEqual(prev.selectedScopes, curr.selectedScopes)
-        )
-      ),
-      // Same here we want only relevant changes to be emitted.
-      this.dashboardsService.stateObservable.pipe(
-        distinctUntilChanged((prev, curr) => prev.drawerOpened === curr.drawerOpened)
-      ),
+      this.getSelectorServiceStateObservable(),
+      this.getDashboardsServiceStateObservable(),
     ])
       .pipe(
-        // Then we combine the two event states into single ScopesContextValueState object
+        // Map the 3 states into single ScopesContextValueState object
         map(
           ([thisState, selectorState, dashboardsState]): ScopesContextValueState => ({
             ...thisState,
@@ -71,6 +57,7 @@ export class ScopesService implements ScopesContextValue {
           })
         )
       )
+      // We pass this into behaviourSubject so we get the 1 event buffer and we can access latest value.
       .subscribe(this._stateObservable);
   }
 
@@ -112,4 +99,32 @@ export class ScopesService implements ScopesContextValue {
       this.updateState({ enabled });
     }
   };
+
+  /**
+   * Returns observable that emits when relevant parts of the selectorService state change.
+   * @private
+   */
+  private getSelectorServiceStateObservable() {
+    return this.selectorService.stateObservable.pipe(
+      map((state) => ({
+        // We only need these 2 properties from the selectorService state.
+        // We do mapping here but mainly to make the distinctUntilChanged simpler
+        selectedScopes: state.selectedScopes.map(({ scope }) => scope),
+        loading: state.loading,
+      })),
+      distinctUntilChanged(
+        (prev, curr) => prev.loading === curr.loading && isEqual(prev.selectedScopes, curr.selectedScopes)
+      )
+    );
+  }
+
+  /**
+   * Returns observable that emits when relevant parts of the dashboardService state change.
+   * @private
+   */
+  private getDashboardsServiceStateObservable() {
+    return this.dashboardsService.stateObservable.pipe(
+      distinctUntilChanged((prev, curr) => prev.drawerOpened === curr.drawerOpened)
+    );
+  }
 }
