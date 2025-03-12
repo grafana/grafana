@@ -1,6 +1,6 @@
 package migration
 
-import "github.com/grafana/grafana/pkg/apis/dashboard/migration/schemaversion"
+import "github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 
 func Migrate(dash map[string]interface{}, targetVersion int) error {
 	if dash == nil {

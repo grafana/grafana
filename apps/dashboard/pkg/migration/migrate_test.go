@@ -11,8 +11,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/apis/dashboard/migration"
-	"github.com/grafana/grafana/pkg/apis/dashboard/migration/schemaversion"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
 const INPUT_DIR = "testdata/input"

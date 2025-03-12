@@ -3,7 +3,7 @@ package schemaversion_test
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/apis/dashboard/migration/schemaversion"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
 func TestV38(t *testing.T) {

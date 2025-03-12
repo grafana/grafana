@@ -9,18 +9,18 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboardV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
-	dashboardV1 "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
-	dashboardV2 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
 )
 
 func TestConversionMatrixExist(t *testing.T) {
 	versions := []v1.Object{
-		&dashboardV0.Dashboard{Spec: v0alpha1.Unstructured{Object: map[string]any{"title": "dashboardV0"}}},
-		&dashboardV1.Dashboard{Spec: v0alpha1.Unstructured{Object: map[string]any{"title": "dashboardV1"}}},
-		&dashboardV2.Dashboard{Spec: dashboardV2.DashboardSpec{Title: "dashboardV2"}},
+		&v0alpha1.Dashboard{Spec: common.Unstructured{Object: map[string]any{"title": "dashboardV0"}}},
+		&v1alpha1.Dashboard{Spec: common.Unstructured{Object: map[string]any{"title": "dashboardV1"}}},
+		&v2alpha1.Dashboard{Spec: v2alpha1.DashboardSpec{Title: "dashboardV2"}},
 	}
 
 	scheme := runtime.NewScheme()
