@@ -119,7 +119,7 @@ const LogLineBody = ({ log }: { log: LogListModel }) => {
   }
 
   if (!syntaxHighlighting) {
-    return <span className="field">{log.body}</span>;
+    return <span className="field no-highlighting">{log.body}</span>;
   }
 
   return <span className="field log-syntax-highlight" dangerouslySetInnerHTML={{ __html: log.highlightedBody }} />;
@@ -210,6 +210,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
         '.log-token-method': {
           color: theme.colors.info.shade,
         },
+      },
+      '& .no-highlighting': {
+        color: theme.colors.text.primary,
       },
     }),
     pinnedLogLine: css({
