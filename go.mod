@@ -562,7 +562,6 @@ require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.49.0 // indirect
 	github.com/bluele/gcache v0.0.2 // indirect
 	github.com/envoyproxy/go-control-plane/envoy v1.32.3 // indirect
-	github.com/google/go-github/v69 v69.2.0 // indirect
 	github.com/onsi/ginkgo/v2 v2.22.0 // indirect
 	github.com/onsi/gomega v1.36.1 // indirect
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.5 // indirect
