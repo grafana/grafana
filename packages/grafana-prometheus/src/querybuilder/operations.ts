@@ -125,11 +125,11 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     }),
     createFunction({
       id: PromOperationId.Info,
-      params: [],
-      alternativesKey: 'overtime function',
+      params: [getRangeVectorParamDef()],
+      alternativesKey: 'info function',
       category: PromVisualQueryOperationCategory.Functions,
-      renderer: functionRendererRight,
-      addOperationHandler: addOperationWithRangeVector,
+      renderer: functionRendererLeft,
+      addOperationHandler: defaultAddOperationHandler,
     }),
     ...binaryScalarOperations,
     {

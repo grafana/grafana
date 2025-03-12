@@ -3,6 +3,47 @@ import { buildVisualQueryFromString } from './parsing';
 import { PromOperationId, PromVisualQuery } from './types';
 
 describe('buildVisualQueryFromString', () => {
+  describe('info function support', () => {
+    it('should parse info function properly', () => {
+      expect(
+        buildVisualQueryFromString(
+          'sum by (cluster, sdk_language) ( info( rate(server_req_dur_sec_count{instance="the-instance"}[2m]), {sdk_language="go"} ) )'
+        )
+      ).toEqual({
+        query: {
+          labels: [
+            {
+              label: 'instance',
+              op: '=',
+              value: 'the-instance',
+            },
+            {
+              label: 'sdk_language',
+              op: '=',
+              value: 'go',
+            },
+          ],
+          metric: 'server_req_dur_sec_count',
+          operations: [
+            {
+              id: 'rate',
+              params: ['2m'],
+            },
+            {
+              id: 'info',
+              params: [],
+            },
+            {
+              id: '__sum_by',
+              params: ['cluster', 'sdk_language'],
+            },
+          ],
+        },
+        errors: [],
+      });
+    });
+  });
+
   describe('utf8 support', () => {
     it('supports uts-8 label names', () => {
       expect(buildVisualQueryFromString('{"glück:🍀.dot"="luck"} == 11')).toEqual({
