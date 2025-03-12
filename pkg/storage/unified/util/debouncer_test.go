@@ -2,13 +2,13 @@ package util
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,10 +26,11 @@ func TestDebouncer_Deduplication(t *testing.T) {
 
 	// Create a new debouncer with a buffer size of 10
 	debouncer := NewDebouncer(DebouncerCfg[*TestItem]{
-		BufferSize: 10,
-		KeyFunc:    keyFunc,
-		MinWait:    50 * time.Millisecond,
-		MaxWait:    100 * time.Millisecond,
+		BufferSize:        10,
+		KeyFunc:           keyFunc,
+		MinWait:           time.Millisecond * 100,
+		MaxWait:           time.Millisecond * 500,
+		MetricsRegisterer: prometheus.NewPedanticRegistry(),
 	})
 
 	// Create a map to track processed items and a mutex to protect it
@@ -52,54 +53,98 @@ func TestDebouncer_Deduplication(t *testing.T) {
 	debouncer.Start(ctx, processFunc)
 	defer debouncer.Stop()
 
+	// If we add only one item and wait min wait time, it should be processed.
+	success := debouncer.Add(&TestItem{ID: "after-min", Data: "data"})
+	require.True(t, success)
+
+	time.Sleep(time.Millisecond * 200)
+
+	require.Equal(t, 1, processedItems["after-min"])
+
 	// Test case 1: Send the same item multiple times in quick succession
 	// It should only be processed once due to debouncing
 	for i := 0; i < 5; i++ {
-		success := debouncer.Add(&TestItem{ID: "item1", Data: "data" + string(rune('A'+i))})
+		success := debouncer.Add(&TestItem{ID: "dedoup", Data: "data" + string(rune('A'+i))})
 		require.True(t, success)
 	}
 
-	// Wait for the max timer to expire to ensure processing
-	time.Sleep(150 * time.Millisecond)
+	// Wait for the min timer to expire to ensure processing
+	time.Sleep(time.Millisecond * 200)
 
 	// Check that the item was processed once
 	processedMutex.Lock()
-	require.Equal(t, 1, processedItems["item1"])
+	require.Equal(t, 1, processedItems["dedoup"])
 	processedMutex.Unlock()
 
 	// Test case 2: Send different items
 	// Each should be processed once
-	success := debouncer.Add(&TestItem{ID: "item2", Data: "data2"})
+	success = debouncer.Add(&TestItem{ID: "item2", Data: "data2"})
 	require.True(t, success)
 
 	success = debouncer.Add(&TestItem{ID: "item3", Data: "data3"})
 	require.True(t, success)
 
 	// Wait for the min timer to expire
-	time.Sleep(150 * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 
 	// Check that each item was processed once
 	processedMutex.Lock()
-	require.Equal(t, 1, processedItems["item1"])
 	require.Equal(t, 1, processedItems["item2"])
 	require.Equal(t, 1, processedItems["item3"])
 	processedMutex.Unlock()
 
 	// Test case 3: Wait longer than the min wait time and send the same item again
 	// It should be processed again
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 
 	// Send the same item again
-	success = debouncer.Add(&TestItem{ID: "item1", Data: "data1-updated"})
+	success = debouncer.Add(&TestItem{ID: "item3", Data: "data1-updated"})
 	require.True(t, success)
 
 	// Wait for the min timer to expire
-	time.Sleep(150 * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 
 	// Check that the item was processed again
 	processedMutex.Lock()
-	require.Equal(t, 2, processedItems["item1"])
+	require.Equal(t, 2, processedItems["item3"])
 	processedMutex.Unlock()
+}
+
+func TestDebouncer_MinWait(t *testing.T) {
+	// Create a new debouncer with a min wait time of 100 milliseconds
+	debouncer := NewDebouncer(DebouncerCfg[*TestItem]{
+		BufferSize: 10,
+		KeyFunc: func(item *TestItem) string {
+			return item.ID
+		},
+		MinWait:           time.Millisecond * 100,
+		MaxWait:           time.Millisecond * 500,
+		MetricsRegisterer: prometheus.NewPedanticRegistry(),
+	})
+
+	// Start the debouncer with a context
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	counter := 0
+
+	debouncer.Start(ctx, func(ctx context.Context, item *TestItem) error {
+		counter++
+		return nil
+	})
+	defer debouncer.Stop()
+
+	running := true
+	go func() {
+		for running {
+			_ = debouncer.Add(&TestItem{ID: "item1", Data: "data1"})
+			time.Sleep(time.Millisecond * 50)
+		}
+	}()
+
+	require.Eventually(t, func() bool {
+		return counter == 1
+	}, time.Second*5, time.Millisecond*600)
 }
 
 func TestDebouncer_BufferFull(t *testing.T) {
@@ -252,9 +297,9 @@ func TestDebouncer(t *testing.T) {
 		})
 
 		// Add values
-		assert.True(t, debouncer.Add("key1"))
-		assert.True(t, debouncer.Add("key2"))
-		assert.True(t, debouncer.Add("key1")) // Should replace the previous key1
+		require.True(t, debouncer.Add("key1"))
+		require.True(t, debouncer.Add("key2"))
+		require.True(t, debouncer.Add("key1")) // Should replace the previous key1
 
 		// Wait for processing
 		time.Sleep(50 * time.Millisecond)
@@ -264,8 +309,8 @@ func TestDebouncer(t *testing.T) {
 
 		// We should have processed key1 and key2
 		processedMu.Lock()
-		assert.Equal(t, 1, processedValues["key1"])
-		assert.Equal(t, 1, processedValues["key2"])
+		require.Equal(t, 1, processedValues["key1"])
+		require.Equal(t, 1, processedValues["key2"])
 		processedMu.Unlock()
 	})
 
@@ -291,7 +336,7 @@ func TestDebouncer(t *testing.T) {
 		})
 
 		// Add a value
-		assert.True(t, debouncer.Add("key1"))
+		require.True(t, debouncer.Add("key1"))
 
 		// Wait for max wait to trigger
 		time.Sleep(30 * time.Millisecond)
@@ -299,7 +344,7 @@ func TestDebouncer(t *testing.T) {
 		// Check processed values
 		select {
 		case v := <-processed:
-			assert.Equal(t, "key1", v)
+			require.Equal(t, "key1", v)
 		default:
 			t.Fatal("expected key1 to be processed")
 		}
@@ -315,8 +360,8 @@ func TestDebouncer(t *testing.T) {
 		})
 
 		// Fill the buffer
-		assert.True(t, debouncer.Add("key1"))
-		assert.False(t, debouncer.Add("key2")) // Buffer is full
+		require.True(t, debouncer.Add("key1"))
+		require.False(t, debouncer.Add("key2")) // Buffer is full
 	})
 
 	t.Run("should track metrics", func(t *testing.T) {
@@ -345,14 +390,14 @@ func TestDebouncer(t *testing.T) {
 		})
 
 		// Add a value
-		assert.True(t, debouncer.Add("key1"))
+		require.True(t, debouncer.Add("key1"))
 
 		// Wait for processing
 		wg.Wait()
 
 		// Check metrics
-		assert.Equal(t, float64(1), testutil.ToFloat64(debouncer.metrics.itemsAddedCounter))
-		assert.Equal(t, float64(1), testutil.ToFloat64(debouncer.metrics.itemsProcessedCounter))
+		require.Equal(t, float64(1), testutil.ToFloat64(debouncer.metrics.itemsAddedCounter))
+		require.Equal(t, float64(1), testutil.ToFloat64(debouncer.metrics.itemsProcessedCounter))
 	})
 
 	t.Run("should handle errors", func(t *testing.T) {
@@ -360,7 +405,7 @@ func TestDebouncer(t *testing.T) {
 		reg := prometheus.NewRegistry()
 
 		// Create a channel to receive errors
-		errors := make(chan error, 10)
+		errs := make(chan error, 10)
 
 		// Create a debouncer with error handling
 		debouncer := NewDebouncer(DebouncerCfg[string]{
@@ -370,14 +415,14 @@ func TestDebouncer(t *testing.T) {
 			MaxWait:           100 * time.Millisecond,
 			MetricsRegisterer: reg,
 			Name:              "test_errors",
-			ErrorHandler:      func(_ string, err error) { errors <- err },
+			ErrorHandler:      func(_ string, err error) { errs <- err },
 		})
 
 		// Start the debouncer
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		expectedErr := assert.AnError
+		expectedErr := errors.New("test error")
 		var wg sync.WaitGroup
 		wg.Add(1)
 		debouncer.Start(ctx, func(ctx context.Context, value string) error {
@@ -386,20 +431,20 @@ func TestDebouncer(t *testing.T) {
 		})
 
 		// Add a value
-		assert.True(t, debouncer.Add("key1"))
+		require.True(t, debouncer.Add("key1"))
 
 		// Wait for processing
 		wg.Wait()
 
 		// Check errors
 		select {
-		case err := <-errors:
-			assert.Equal(t, expectedErr, err)
+		case err := <-errs:
+			require.Equal(t, expectedErr, err)
 		default:
 			t.Fatal("expected error")
 		}
 
 		// Check metrics
-		assert.Equal(t, float64(1), testutil.ToFloat64(debouncer.metrics.processingErrorsCounter))
+		require.Equal(t, float64(1), testutil.ToFloat64(debouncer.metrics.processingErrorsCounter))
 	})
 }
