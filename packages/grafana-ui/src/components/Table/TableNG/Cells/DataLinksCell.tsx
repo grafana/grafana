@@ -3,11 +3,10 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../../themes';
-import { CellNGProps } from '../types';
+import { DataLinksCellProps } from '../types';
 import { getCellLinks } from '../utils';
 
-export const DataLinksCell = (props: CellNGProps) => {
-  const { field, rowIdx } = props;
+export const DataLinksCell = ({ field, rowIdx }: DataLinksCellProps) => {
   const styles = useStyles2(getStyles);
 
   const links = getCellLinks(field, rowIdx!);
