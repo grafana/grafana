@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { createFieldConfigRegistry, SetFieldConfigOptionsArgs } from '@grafana/data';
 import { GraphFieldConfig, TableSparklineCellOptions } from '@grafana/schema';
 import { VerticalGroup, Field, useStyles2 } from '@grafana/ui';
-import { defaultSparklineCellConfig } from '@grafana/ui/src/components/Table/SparklineCell';
+import { defaultSparklineCellConfig } from '@grafana/ui/internal';
 
 import { getGraphFieldConfig } from '../../timeseries/config';
 import { TableCellEditorProps } from '../TableCellOptionEditor';

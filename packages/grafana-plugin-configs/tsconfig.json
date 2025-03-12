@@ -3,12 +3,14 @@
     "jsx": "react-jsx",
     "alwaysStrict": true,
     "declaration": false,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "moduleResolution": "bundler"
   },
   "ts-node": {
     "compilerOptions": {
       "module": "commonjs",
       "target": "es5",
+      "moduleResolution": "Node",
       "esModuleInterop": true
     },
     "transpileOnly": true

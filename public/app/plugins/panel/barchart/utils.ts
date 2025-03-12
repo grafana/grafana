@@ -33,8 +33,7 @@ import {
   UPlotConfigBuilder,
   measureText,
 } from '@grafana/ui';
-import { AxisProps, UPLOT_AXIS_FONT_SIZE } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
-import { getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
+import { AxisProps, UPLOT_AXIS_FONT_SIZE, getStackingGroups } from '@grafana/ui/internal';
 
 import { setClassicPaletteIdxs } from '../timeseries/utils';
 

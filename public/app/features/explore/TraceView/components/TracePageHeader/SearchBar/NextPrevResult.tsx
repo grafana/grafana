@@ -20,7 +20,7 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Icon, PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
-import { getButtonStyles } from '@grafana/ui/src/components/Button';
+import { getButtonStyles } from '@grafana/ui/internal';
 
 import { Trace } from '../../types';
 

@@ -4,7 +4,7 @@ import * as React from 'react';
 import { FieldNamePickerConfigSettings, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
 import { ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
 import { InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
-import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
+import { FieldNamePicker } from '@grafana/ui/internal';
 
 import { getPublicOrAbsoluteUrl, ResourceFolderName } from '..';
 import { MediaType, ResourceDimensionOptions, ResourcePickerSize } from '../types';

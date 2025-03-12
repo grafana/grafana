@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 
 import { Button, ScrollContainer, Stack, useStyles2, useTheme2 } from '@grafana/ui';
-import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
+import { getSelectStyles } from '@grafana/ui/internal';
 import { Trans } from 'app/core/internationalization';
 import { Role } from 'app/types';
 

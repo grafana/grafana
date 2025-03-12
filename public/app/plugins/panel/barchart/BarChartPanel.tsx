@@ -12,7 +12,7 @@ import {
   // usePanelContext,
   useTheme2,
 } from '@grafana/ui';
-import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
+import { TooltipHoverMode } from '@grafana/ui/internal';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 

@@ -2,7 +2,7 @@
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
+import { renderGeneratedFileBanner } from './generatedFileBanner';
 
 export const commonThemeVarsTemplate = (theme: GrafanaTheme2) =>
   `${renderGeneratedFileBanner('grafana-ui/src/themes/default.ts', 'grafana-ui/src/themes/_variables.scss.tmpl.ts')}

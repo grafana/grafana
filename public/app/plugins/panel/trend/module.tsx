@@ -1,6 +1,6 @@
 import { Field, FieldType, PanelPlugin } from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
-import { optsWithHideZeros } from '@grafana/ui/src/options/builder/tooltip';
+import { optsWithHideZeros } from '@grafana/ui/internal';
 
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 

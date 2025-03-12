@@ -939,9 +939,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
     ],
-    "public/app/core/components/AppChrome/TopBar/TopSearchBarCommandPaletteTrigger.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/themes/mixins\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/core/components/Breadcrumbs/Breadcrumbs.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
@@ -970,25 +967,17 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
     "public/app/core/components/GraphNG/GraphNG.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/Plot\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder\' import is restricted from being used by a pattern. Import from the public export instead.", "2"],
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder\' import is restricted from being used by a pattern. Import from the public export instead.", "3"],
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/utils\' import is restricted from being used by a pattern. Import from the public export instead.", "4"],
-      [0, 0, 0, "Do not use any type assertions.", "5"],
-      [0, 0, 0, "Do not use any type assertions.", "6"],
-      [0, 0, 0, "Do not use any type assertions.", "7"],
-      [0, 0, 0, "Do not use any type assertions.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"]
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"],
+      [0, 0, 0, "Do not use any type assertions.", "3"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
     ],
     "public/app/core/components/GraphNG/utils.ts:5381": [
       [0, 0, 0, "\'@grafana/data/src/transformations/transformers/joinDataFrames\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
       [0, 0, 0, "\'@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
       [0, 0, 0, "\'@grafana/data/src/transformations/transformers/nulls/nullToUndefThreshold\' import is restricted from being used by a pattern. Import from the public export instead.", "2"]
-    ],
-    "public/app/core/components/Indent/Indent.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Layout/utils/responsiveness\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/core/components/Layers/LayerDragDropList.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
@@ -1006,25 +995,14 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
     ],
-    "public/app/core/components/NestedFolderPicker/NestedFolderList.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Text/Text\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
-    "public/app/core/components/NestedFolderPicker/Trigger.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/themes/mixins\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/core/components/OptionsUI/color.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/ColorPicker/ColorSwatch\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
     "public/app/core/components/OptionsUI/fieldColor.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
     "public/app/core/components/OptionsUI/registry.tsx:5381": [
-      [0, 0, 0, "\'@grafana/data/src/field/overrides/processors\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/MatchersUI/FieldNamePicker\' import is restricted from being used by a pattern. Import from the public export instead.", "1"]
-    ],
-    "public/app/core/components/OptionsUI/slider.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Slider/styles\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
+      [0, 0, 0, "\'@grafana/data/src/field/overrides/processors\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/core/components/OptionsUI/units.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
@@ -1036,9 +1014,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
     ],
-    "public/app/core/components/PasswordField/PasswordField.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Input/Input\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/core/components/PluginHelp/PluginHelp.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
@@ -1046,23 +1021,16 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
     "public/app/core/components/RolePicker/RoleMenuGroupOption.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Select/getSelectStyles\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
     "public/app/core/components/RolePicker/RoleMenuOption.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Select/getSelectStyles\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
-    ],
-    "public/app/core/components/RolePicker/RolePickerInput.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/themes/mixins\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
     "public/app/core/components/RolePicker/RolePickerMenu.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Select/getSelectStyles\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
     "public/app/core/components/RolePicker/RolePickerSubMenu.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Select/getSelectStyles\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
     "public/app/core/components/RolePickerDrawer/RolePickerBadges.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
@@ -1112,19 +1080,10 @@ exports[`better eslint`] = {
     "public/app/core/components/TagFilter/TagOption.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
-    "public/app/core/components/TimeSeries/TimeSeries.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/PlotLegend\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
-      [0, 0, 0, "\'@grafana/ui/src/themes/ThemeContext\' import is restricted from being used by a pattern. Import from the public export instead.", "2"]
-    ],
     "public/app/core/components/TimeSeries/utils.ts:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/config/gradientFills\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/internal\' import is restricted from being used by a pattern. Import from the public export instead.", "2"],
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/utils\' import is restricted from being used by a pattern. Import from the public export instead.", "3"],
-      [0, 0, 0, "Do not use any type assertions.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
     "public/app/core/components/TimelineChart/timeline.ts:5381": [
       [0, 0, 0, "\'@grafana/data/src/themes/colorManipulator\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
@@ -1132,15 +1091,11 @@ exports[`better eslint`] = {
     "public/app/core/components/TimelineChart/utils.ts:5381": [
       [0, 0, 0, "\'@grafana/data/src/transformations/transformers/joinDataFrames\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
       [0, 0, 0, "\'@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
-      [0, 0, 0, "\'@grafana/data/src/transformations/transformers/nulls/nullToValue\' import is restricted from being used by a pattern. Import from the public export instead.", "2"],
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/utils\' import is restricted from being used by a pattern. Import from the public export instead.", "3"]
+      [0, 0, 0, "\'@grafana/data/src/transformations/transformers/nulls/nullToValue\' import is restricted from being used by a pattern. Import from the public export instead.", "2"]
     ],
     "public/app/core/config.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`Settings\`)", "0"],
       [0, 0, 0, "Do not re-export imported variable (\`config\`)", "1"]
-    ],
-    "public/app/core/context/ModalsContextProvider.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Modal/ModalsContext\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/core/core.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`JsonExplorer\`)", "0"],
@@ -1259,32 +1214,16 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/features/actions/ActionEditor.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Forms/Field\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/Forms/InlineField\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
-      [0, 0, 0, "\'@grafana/ui/src/components/Forms/InlineFieldRow\' import is restricted from being used by a pattern. Import from the public export instead.", "2"],
-      [0, 0, 0, "\'@grafana/ui/src/components/Forms/RadioButtonGroup/RadioButtonGroup\' import is restricted from being used by a pattern. Import from the public export instead.", "3"],
-      [0, 0, 0, "\'@grafana/ui/src/components/JSONFormatter/JSONFormatter\' import is restricted from being used by a pattern. Import from the public export instead.", "4"],
-      [0, 0, 0, "\'@grafana/ui/src/themes\' import is restricted from being used by a pattern. Import from the public export instead.", "5"],
-      [0, 0, 0, "\'@grafana/ui/src/utils/i18n\' import is restricted from being used by a pattern. Import from the public export instead.", "6"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "7"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "8"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "9"]
-    ],
-    "public/app/features/actions/ActionEditorModalContent.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Button\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/Modal/Modal\' import is restricted from being used by a pattern. Import from the public export instead.", "1"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"]
     ],
     "public/app/features/actions/ParamsEditor.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/IconButton/IconButton\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/Input/Input\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
-      [0, 0, 0, "\'@grafana/ui/src/components/Layout/Stack/Stack\' import is restricted from being used by a pattern. Import from the public export instead.", "2"],
-      [0, 0, 0, "\'@grafana/ui/src/components/Select/Select\' import is restricted from being used by a pattern. Import from the public export instead.", "3"],
-      [0, 0, 0, "\'@grafana/ui/src/themes\' import is restricted from being used by a pattern. Import from the public export instead.", "4"],
-      [0, 0, 0, "Do not use any type assertions.", "5"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "6"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "7"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "8"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "9"]
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "4"]
     ],
     "public/app/features/admin/AdminEditOrgPage.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
@@ -1297,12 +1236,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
     ],
     "public/app/features/admin/AdminOrgsTable.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/unstable\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"]
-    ],
-    "public/app/features/admin/AdminSettingsTable.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/unstable\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
     ],
     "public/app/features/admin/OrgRolePicker.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
@@ -2103,9 +2038,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"]
     ],
-    "public/app/features/alerting/unified/components/rule-editor/GrafanaAlertStatePicker.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Select/types\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/features/alerting/unified/components/rule-editor/GrafanaEvaluationBehavior.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
@@ -2226,18 +2158,17 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
     ],
     "public/app/features/alerting/unified/components/rule-editor/alert-rule-form/simplifiedRouting/route-settings/RouteSettings.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Select/MultiValue\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "4"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "5"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "8"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "9"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "10"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "11"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "10"]
     ],
     "public/app/features/alerting/unified/components/rule-editor/dag.test.ts:5381": [
       [0, 0, 0, "\'@grafana/runtime/src/utils/DataSourceWithBackend\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
@@ -2757,9 +2688,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "4"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
     ],
-    "public/app/features/alerting/unified/plugins/PluginOriginBadge.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Icon/utils\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/features/alerting/unified/rule-editor/CloneRuleEditor.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
@@ -2970,8 +2898,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
     "public/app/features/browse-dashboards/components/NameCell.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Icon/utils\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
     "public/app/features/browse-dashboards/state/index.ts:5381": [
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
@@ -2980,10 +2907,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/canvas/element.ts:5381": [
       [0, 0, 0, "\'@grafana/data/src/panel/PanelPlugin\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
-    "public/app/features/canvas/elements/metricValue.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/MatchersUI/FieldNamePicker\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/MatchersUI/utils\' import is restricted from being used by a pattern. Import from the public export instead.", "1"]
     ],
     "public/app/features/canvas/elements/notFound.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -3501,24 +3424,14 @@ exports[`better eslint`] = {
     "public/app/features/dashboard-scene/sharing/ShareButton/ShareButton.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
-    "public/app/features/dashboard-scene/sharing/ShareButton/share-externally/EmailShare/ConfigEmailSharing/ConfigEmailSharing.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Input/Input\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/features/dashboard-scene/sharing/ShareButton/share-externally/EmailShare/ConfigEmailSharing/EmailListConfiguration.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
-    ],
-    "public/app/features/dashboard-scene/sharing/ShareButton/share-externally/ShareConfiguration.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Switch/Switch\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/features/dashboard-scene/sharing/ShareButton/share-snapshot/ShareSnapshot.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
     "public/app/features/dashboard-scene/sharing/ShareButton/share-snapshot/UpsertSnapshot.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Input/Input\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
-    ],
-    "public/app/features/dashboard-scene/sharing/ShareDrawer/ShareDrawerConfirmAction.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/ConfirmModal/ConfirmContent\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
     "public/app/features/dashboard-scene/sharing/public-dashboards/ConfigPublicDashboard.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -3721,10 +3634,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
     ],
     "public/app/features/dashboard/components/PanelEditor/OverrideCategoryTitle.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/MatchersUI/types\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "1"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"]
+      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"]
     ],
     "public/app/features/dashboard/components/PanelEditor/PanelEditor.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
@@ -3745,20 +3657,16 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
     "public/app/features/dashboard/components/PanelEditor/PanelNotSupported.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Layout/Layout\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'Layout\' import from \'@grafana/ui/src/components/Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "1"],
-      [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "2"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
     "public/app/features/dashboard/components/PanelEditor/VisualizationButton.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
     ],
     "public/app/features/dashboard/components/PanelEditor/VisualizationSelectPane.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Forms/Field\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "3"]
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"]
     ],
     "public/app/features/dashboard/components/PanelEditor/getFieldOverrideElements.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
@@ -3873,21 +3781,17 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/ConfigPublicDashboard.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Layout/Layout\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui/src\' is restricted from being used by a pattern. Use Stack component instead.", "1"],
-      [0, 0, 0, "\'Layout\' import from \'@grafana/ui/src/components/Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "2"]
+      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/Configuration.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Layout/Layout\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'Layout\' import from \'@grafana/ui/src/components/Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "1"],
-      [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui/src\' is restricted from being used by a pattern. Use Stack component instead.", "2"]
+      [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/EmailSharingConfiguration.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
     "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/CreatePublicDashboard/AcknowledgeCheckboxes.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui/src\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
-      [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui/src\' is restricted from being used by a pattern. Use Stack component instead.", "1"]
+      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
+      [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "1"]
     ],
     "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboard.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -3898,18 +3802,14 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/components/ShareModal/ViewJsonModal.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
-    "public/app/features/dashboard/components/SubMenu/AnnotationPicker.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/PanelChrome/LoadingIndicator\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/features/dashboard/components/SubMenu/DashboardLinks.tsx:5381": [
       [0, 0, 0, "\'@grafana/data/src/text/sanitize\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/features/dashboard/components/SubMenu/DashboardLinksDashboard.tsx:5381": [
       [0, 0, 0, "\'@grafana/data/src/text/sanitize\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/Button\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
     "public/app/features/dashboard/components/SubMenu/SubMenu.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
@@ -4002,9 +3902,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
-    "public/app/features/dashboard/dashgrid/PanelHeader/PanelHeaderNotice.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/themes/mixins\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/features/dashboard/dashgrid/PanelLinks.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
@@ -4033,11 +3930,11 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/state/DashboardMigrator.ts:5381": [
       [0, 0, 0, "\'@grafana/data/src/transformations/transformers/labelsToFields\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
       [0, 0, 0, "\'@grafana/data/src/transformations/transformers/merge\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
-      [0, 0, 0, "\'@grafana/ui/src/components/Table/utils\' import is restricted from being used by a pattern. Import from the public export instead.", "2"],
+      [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Do not use any type assertions.", "3"],
       [0, 0, 0, "Do not use any type assertions.", "4"],
       [0, 0, 0, "Do not use any type assertions.", "5"],
-      [0, 0, 0, "Do not use any type assertions.", "6"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
@@ -4060,8 +3957,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "26"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "27"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "28"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "29"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "30"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "29"]
     ],
     "public/app/features/dashboard/state/DashboardModel.repeat.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -4259,9 +4155,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
-    "public/app/features/dimensions/editors/ColorDimensionEditor.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/MatchersUI/utils\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/features/dimensions/editors/FileUploader.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
@@ -4271,17 +4164,15 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
     ],
     "public/app/features/dimensions/editors/ResourceDimensionEditor.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/MatchersUI/FieldNamePicker\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "4"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"]
     ],
     "public/app/features/dimensions/editors/ResourcePicker.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/utils/closePopover\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/dimensions/editors/ResourcePickerPopover.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -4290,24 +4181,21 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
     ],
     "public/app/features/dimensions/editors/ScalarDimensionEditor.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/MatchersUI/utils\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
+    ],
+    "public/app/features/dimensions/editors/ScaleDimensionEditor.tsx:5381": [
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"]
     ],
-    "public/app/features/dimensions/editors/ScaleDimensionEditor.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/MatchersUI/utils\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"]
-    ],
     "public/app/features/dimensions/editors/TextDimensionEditor.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/MatchersUI/FieldNamePicker\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "4"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "5"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "6"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "5"]
     ],
     "public/app/features/dimensions/editors/ThresholdsEditor/ThresholdsEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -4382,8 +4270,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/explore/ContentOutline/ContentOutlineItemButton.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Tooltip\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
     "public/app/features/explore/CorrelationEditorModeBar.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -4422,7 +4309,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
     ],
     "public/app/features/explore/Explore.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Table/types\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
@@ -4430,8 +4317,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "5"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "6"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "7"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "8"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "9"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "8"]
     ],
     "public/app/features/explore/ExploreRunQueryButton.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
@@ -4460,7 +4346,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "\'@grafana/data/src/transformations/transformers/organize\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/features/explore/Logs/Logs.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/VizLegend/utils\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
@@ -4469,9 +4355,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "6"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "7"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "8"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "9"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "9"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "10"]
     ],
     "public/app/features/explore/Logs/LogsColumnSearch.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
@@ -4502,9 +4387,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/explore/Logs/LogsTable.test.tsx:5381": [
       [0, 0, 0, "\'@grafana/data/src/transformations/transformers/organize\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
-    "public/app/features/explore/Logs/LogsTable.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Table/types\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/features/explore/Logs/LogsTableAvailableFields.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
@@ -4597,26 +4479,24 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/explore/TraceView/components/TracePageHeader/SearchBar/NextPrevResult.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Button\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "8"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "9"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "10"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "9"]
     ],
     "public/app/features/explore/TraceView/components/TracePageHeader/SearchBar/TracePageSearchBar.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Button\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
     ],
     "public/app/features/explore/TraceView/components/TracePageHeader/SpanFilters/SpanFilters.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
@@ -4995,8 +4875,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
     ],
     "public/app/features/library-panels/components/LibraryPanelCard/LibraryPanelCard.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/unstable\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
     "public/app/features/library-panels/components/LibraryPanelInfo/LibraryPanelInfo.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -5139,9 +5018,6 @@ exports[`better eslint`] = {
     "public/app/features/manage-dashboards/components/SnapshotListTable.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
-    "public/app/features/manage-dashboards/components/SnapshotListTableRow.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/unstable\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/features/manage-dashboards/state/actions.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -5164,13 +5040,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"]
     ],
     "public/app/features/migrate-to-cloud/onprem/NameCell.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Icon/utils\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
-    ],
-    "public/app/features/migrate-to-cloud/shared/AlertWithTraceID.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Alert/Alert\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/notifications/StoredNotifications.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
@@ -5229,10 +5101,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
     ],
     "public/app/features/panel/components/VizTypePicker/PanelTypeCard.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/unstable\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "3"]
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"]
     ],
     "public/app/features/panel/components/VizTypePicker/VisualizationSuggestions.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -5247,15 +5118,9 @@ exports[`better eslint`] = {
     "public/app/features/panel/panellinks/link_srv.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/features/playlist/PlaylistCard.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/unstable\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/features/playlist/PlaylistForm.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
-    ],
-    "public/app/features/playlist/PlaylistPageList.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/unstable\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/features/playlist/PlaylistTableRows.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
@@ -5399,9 +5264,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/plugins/admin/components/PluginListItem.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/unstable\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/plugins/admin/components/PluginSignatureDetailsBadge.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -5671,9 +5535,6 @@ exports[`better eslint`] = {
     "public/app/features/query/state/updateQueries.ts:5381": [
       [0, 0, 0, "\'@grafana/runtime/src/utils/DataSourceWithBackend\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
-    "public/app/features/sandbox/BenchmarksPage.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/ThemeDemos/EmotionPerfTest\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/features/sandbox/TestStuffPage.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
@@ -5684,10 +5545,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
     "public/app/features/search/page/components/SearchResultsTable.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Table/TableCell\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/Table/styles\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/search/page/components/columns.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -5783,14 +5642,13 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"]
     ],
     "public/app/features/serviceaccounts/components/ServiceAccountsListItem.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/unstable\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "4"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"]
     ],
     "public/app/features/serviceaccounts/state/reducers.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -5922,9 +5780,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "\'@grafana/data/src/datetime/rangeutil\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
-    "public/app/features/trails/DataTrailsHome.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Text/Text\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/features/trails/MetricScene.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
@@ -6007,8 +5862,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
     ],
     "public/app/features/transformers/calculateHeatmap/editor/helper.ts:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/options/builder\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/transformers/calculateHeatmap/heatmap.test.ts:5381": [
       [0, 0, 0, "\'@grafana/data/src/dataframe/processDataFrame\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
@@ -6083,9 +5937,9 @@ exports[`better eslint`] = {
     ],
     "public/app/features/transformers/editors/ConvertFieldTypeTransformerEditor.tsx:5381": [
       [0, 0, 0, "\'@grafana/data/src/transformations/transformers/convertFieldType\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/MatchersUI/FieldNamePicker\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
-      [0, 0, 0, "\'@grafana/ui/src/components/MatchersUI/FieldTypeMatcherEditor\' import is restricted from being used by a pattern. Import from the public export instead.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"],
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "4"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "5"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "6"],
@@ -6099,9 +5953,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "14"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "15"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "16"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "17"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "18"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "19"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "17"]
     ],
     "public/app/features/transformers/editors/EnumMappingEditor.tsx:5381": [
       [0, 0, 0, "\'@grafana/data/src/transformations/transformers/convertFieldType\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
@@ -6130,10 +5982,9 @@ exports[`better eslint`] = {
     ],
     "public/app/features/transformers/editors/FormatStringTransformerEditor.tsx:5381": [
       [0, 0, 0, "\'@grafana/data/src/transformations/transformers/formatString\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/MatchersUI/FieldNamePicker\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "4"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"]
     ],
     "public/app/features/transformers/editors/FormatTimeTransformerEditor.tsx:5381": [
       [0, 0, 0, "\'@grafana/data/src/transformations/transformers/formatTime\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
@@ -6176,10 +6027,9 @@ exports[`better eslint`] = {
     ],
     "public/app/features/transformers/editors/JoinByFieldTransformerEditor.tsx:5381": [
       [0, 0, 0, "\'@grafana/data/src/transformations/transformers/joinByField\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/MatchersUI/utils\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "4"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"]
     ],
     "public/app/features/transformers/editors/LabelsToFieldsTransformerEditor.tsx:5381": [
       [0, 0, 0, "\'@grafana/data/src/transformations/transformers/labelsToFields\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
@@ -6239,9 +6089,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "5"]
     ],
     "public/app/features/transformers/extractFields/ExtractFieldsTransformerEditor.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/MatchersUI/FieldNamePicker\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "4"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "5"],
@@ -6251,9 +6101,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "9"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "10"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "11"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "12"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "14"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "13"]
     ],
     "public/app/features/transformers/extractFields/components/JSONPathEditor.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
@@ -6308,10 +6157,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "9"]
     ],
     "public/app/features/transformers/lookupGazetteer/FieldLookupTransformerEditor.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/MatchersUI/FieldNamePicker\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"]
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"]
     ],
     "public/app/features/transformers/lookupGazetteer/fieldLookup.test.ts:5381": [
       [0, 0, 0, "\'@grafana/data/src/dataframe/processDataFrame\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
@@ -6321,15 +6169,14 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/transformers/partitionByValues/PartitionByValuesEditor.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/MatchersUI/utils\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "1"],
+      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "4"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "5"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "6"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "7"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "8"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"]
     ],
     "public/app/features/transformers/partitionByValues/partitionByValues.ts:5381": [
       [0, 0, 0, "\'@grafana/data/src/transformations/transformers/filterByName\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
@@ -6361,13 +6208,12 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/transformers/regression/regressionEditor.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/MatchersUI/FieldNamePicker\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "4"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "5"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "6"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "5"]
     ],
     "public/app/features/transformers/spatial/optionsHelper.tsx:5381": [
       [0, 0, 0, "\'@grafana/data/src/panel/PanelPlugin\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
@@ -6384,12 +6230,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "\'@grafana/data/src/transformations/transformers/ids\' import is restricted from being used by a pattern. Import from the public export instead.", "1"]
     ],
     "public/app/features/transformers/suggestionsInput/SuggestionsInput.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/DataLinks/DataLinkSuggestions\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/Input/Input\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"],
-      [0, 0, 0, "Do not use any type assertions.", "4"],
-      [0, 0, 0, "Do not use any type assertions.", "5"]
+      [0, 0, 0, "Do not use any type assertions.", "3"]
     ],
     "public/app/features/transformers/timeSeriesTable/TimeSeriesTableTransformEditor.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
@@ -6398,13 +6242,12 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"]
     ],
     "public/app/features/users/TokenRevokedModal.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Modal/getModalStyles\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
     ],
     "public/app/features/users/UsersActionBar.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
@@ -6538,9 +6381,6 @@ exports[`better eslint`] = {
     "public/app/features/variables/pickers/index.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./OptionsPicker/OptionsPicker\`)", "0"]
     ],
-    "public/app/features/variables/pickers/shared/VariableLink.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/PanelChrome/LoadingIndicator\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/features/variables/pickers/shared/VariableOptions.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
@@ -6666,9 +6506,6 @@ exports[`better eslint`] = {
     "public/app/features/visualization/data-hover/DataHoverView.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
-    "public/app/features/visualization/data-hover/ExemplarHoverView.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/VizTooltipRow\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/plugins/datasource/alertmanager/DataSource.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -6715,9 +6552,6 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/azuremonitor/components/VariableEditor/VariableEditor.test.tsx:5381": [
       [0, 0, 0, "* import is invalid because \'Layout,HorizontalGroup,VerticalGroup\' from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
-    "public/app/plugins/datasource/azuremonitor/components/shared/Field.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Forms/InlineField\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/plugins/datasource/azuremonitor/types/index.ts:5381": [
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
@@ -6826,12 +6660,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not re-export imported variable (\`./thirdArgAfterSearchQuery\`)", "4"],
       [0, 0, 0, "Do not re-export imported variable (\`./withinStringQuery\`)", "5"]
     ],
-    "public/app/plugins/datasource/cloudwatch/components/CheatSheet/LogsCheatSheet.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/slate-plugins/slate-prism\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/components/QueryEditor/LogsQueryEditor/code-editors/PPLQueryEditor.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Monaco/types\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/plugins/datasource/cloudwatch/components/QueryEditor/MetricsQueryEditor/MetricsQueryEditor.test.tsx:5381": [
       [0, 0, 0, "* import is invalid because \'Layout,HorizontalGroup,VerticalGroup\' from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
@@ -6840,9 +6668,6 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/cloudwatch/components/QueryEditor/QueryEditor.test.tsx:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./MetricsQueryEditor/SQLCodeEditor\`)", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/components/shared/LogGroups/LegacyLogGroupSelector.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Select/types\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/plugins/datasource/cloudwatch/components/shared/MetricStatEditor/index.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./MetricStatEditor\`)", "0"]
@@ -7025,10 +6850,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
-    "public/app/plugins/datasource/grafana/components/TimeRegionEditor.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/DateTimePickers/TimeZonePicker/TimeZoneOffset\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/DateTimePickers/TimeZonePicker/TimeZoneTitle\' import is restricted from being used by a pattern. Import from the public export instead.", "1"]
-    ],
     "public/app/plugins/datasource/grafana/datasource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
@@ -7201,15 +7022,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not re-export imported variable (\`Datasource\`)", "0"],
       [0, 0, 0, "Do not re-export imported variable (\`MixedDatasource\`)", "1"]
     ],
-    "public/app/plugins/datasource/mssql/azureauth/AzureAuthSettings.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/DataSourceSettings/types\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
-    "public/app/plugins/datasource/mssql/azureauth/AzureCredentialsForm.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
-    "public/app/plugins/datasource/mssql/types.ts:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/DataSourceSettings/types\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/plugins/datasource/opentsdb/datasource.d.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -7235,12 +7047,6 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/parca/webpack.config.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`config\`)", "0"]
-    ],
-    "public/app/plugins/datasource/prometheus/configuration/AzureAuthSettings.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/DataSourceSettings/types\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
-    "public/app/plugins/datasource/prometheus/configuration/DataSourceHttpSettingsOverhaulPackage.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/DataSourceSettings/types\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/plugins/datasource/tempo/QueryField.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
@@ -7306,47 +7112,24 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not re-export imported variable (\`config\`)", "0"]
     ],
     "public/app/plugins/panel/annolist/AnnoListPanel.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/List/AbstractList\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
-    "public/app/plugins/panel/barchart/BarChartLegend.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/utils\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
-    "public/app/plugins/panel/barchart/BarChartPanel.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/panel/barchart/TickSpacingEditor.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "public/app/plugins/panel/barchart/bars.ts:5381": [
       [0, 0, 0, "\'@grafana/data/src/themes/colorManipulator\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/utils\' import is restricted from being used by a pattern. Import from the public export instead.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"]
-    ],
-    "public/app/plugins/panel/barchart/module.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/options/builder/tooltip\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
+      [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/plugins/panel/barchart/quadtree.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/panel/barchart/utils.ts:5381": [
-      [0, 0, 0, "\'@grafana/data/src/field/fieldState\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/utils\' import is restricted from being used by a pattern. Import from the public export instead.", "2"]
-    ],
-    "public/app/plugins/panel/bargauge/BarGaugeLegend.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/utils\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
-    "public/app/plugins/panel/bargauge/BarGaugePanel.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/DataLinks/DataLinksContextMenu\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
+      [0, 0, 0, "\'@grafana/data/src/field/fieldState\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/plugins/panel/candlestick/CandlestickPanel.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2\' import is restricted from being used by a pattern. Import from the public export instead.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/panel/candlestick/fields.ts:5381": [
       [0, 0, 0, "\'@grafana/data/src/transformations/transformers/joinDataFrames\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
@@ -7362,12 +7145,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not re-export imported variable (\`defaultCandlestickColors\`)", "7"]
     ],
     "public/app/plugins/panel/canvas/components/CanvasTooltip.tsx:5381": [
-      [0, 0, 0, "\'@grafana/data/src/types/action\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/VizTooltipContent\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/VizTooltipFooter\' import is restricted from being used by a pattern. Import from the public export instead.", "2"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/VizTooltipHeader\' import is restricted from being used by a pattern. Import from the public export instead.", "3"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/types\' import is restricted from being used by a pattern. Import from the public export instead.", "4"],
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/plugins/CloseButton\' import is restricted from being used by a pattern. Import from the public export instead.", "5"]
+      [0, 0, 0, "\'@grafana/data/src/types/action\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/plugins/panel/canvas/editor/connectionEditor.tsx:5381": [
       [0, 0, 0, "\'@grafana/data/src/utils/OptionsUIBuilders\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
@@ -7386,8 +7164,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "\'@grafana/data/src/panel/PanelPlugin\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/plugins/panel/datagrid/components/DatagridContextMenu.tsx:5381": [
-      [0, 0, 0, "\'@grafana/data/src/transformations/transformers/convertFieldType\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/Menu/MenuDivider\' import is restricted from being used by a pattern. Import from the public export instead.", "1"]
+      [0, 0, 0, "\'@grafana/data/src/transformations/transformers/convertFieldType\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/plugins/panel/debug/CursorView.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -7400,17 +7177,11 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/gauge/GaugeMigrations.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/plugins/panel/gauge/GaugePanel.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/DataLinks/DataLinksContextMenu\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/plugins/panel/geomap/components/MarkersLegend.tsx:5381": [
       [0, 0, 0, "\'@grafana/data/src/field/scale\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
-    ],
-    "public/app/plugins/panel/geomap/editor/FrameSelectionEditor.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/MatchersUI/FieldsByFrameRefIdMatcher\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/plugins/panel/geomap/editor/GeomapStyleRulesEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -7434,8 +7205,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "12"]
     ],
     "public/app/plugins/panel/geomap/editor/StyleRuleEditor.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/MatchersUI/FieldValueMatcher\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/panel/geomap/editor/layerEditor.tsx:5381": [
       [0, 0, 0, "\'@grafana/data/src/utils/OptionsUIBuilders\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
@@ -7471,22 +7241,11 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/panel/heatmap/HeatmapPanel.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
-    ],
-    "public/app/plugins/panel/heatmap/HeatmapTooltip.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/VizTooltipContent\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/VizTooltipFooter\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/VizTooltipHeader\' import is restricted from being used by a pattern. Import from the public export instead.", "2"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/VizTooltipWrapper\' import is restricted from being used by a pattern. Import from the public export instead.", "3"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/types\' import is restricted from being used by a pattern. Import from the public export instead.", "4"]
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/panel/heatmap/migrations.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/plugins/panel/heatmap/module.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/options/builder\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/plugins/panel/heatmap/palettes.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -7516,24 +7275,13 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "16"]
     ],
     "public/app/plugins/panel/histogram/Histogram.tsx:5381": [
-      [0, 0, 0, "\'@grafana/data/src/transformations/transformers/histogram\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/utils\' import is restricted from being used by a pattern. Import from the public export instead.", "1"]
+      [0, 0, 0, "\'@grafana/data/src/transformations/transformers/histogram\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/plugins/panel/histogram/HistogramPanel.tsx:5381": [
-      [0, 0, 0, "\'@grafana/data/src/transformations/transformers/histogram\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2\' import is restricted from being used by a pattern. Import from the public export instead.", "1"]
-    ],
-    "public/app/plugins/panel/histogram/HistogramTooltip.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/VizTooltipContent\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/VizTooltipFooter\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/VizTooltipHeader\' import is restricted from being used by a pattern. Import from the public export instead.", "2"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/VizTooltipWrapper\' import is restricted from being used by a pattern. Import from the public export instead.", "3"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/types\' import is restricted from being used by a pattern. Import from the public export instead.", "4"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/utils\' import is restricted from being used by a pattern. Import from the public export instead.", "5"]
+      [0, 0, 0, "\'@grafana/data/src/transformations/transformers/histogram\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/plugins/panel/histogram/module.tsx:5381": [
-      [0, 0, 0, "\'@grafana/data/src/transformations/transformers/histogram\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/options/builder\' import is restricted from being used by a pattern. Import from the public export instead.", "1"]
+      [0, 0, 0, "\'@grafana/data/src/transformations/transformers/histogram\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/plugins/panel/histogram/utils.ts:5381": [
       [0, 0, 0, "\'@grafana/data/src/transformations/transformers/histogram\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
@@ -7550,9 +7298,6 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/logs/types.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./panelcfg.gen\`)", "0"]
     ],
-    "public/app/plugins/panel/news/component/News.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/unstable\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/plugins/panel/nodeGraph/Edge.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -7567,9 +7312,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
-    "public/app/plugins/panel/nodeGraph/editor/ArcOptionsEditor.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/MatchersUI/FieldNamePicker\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/plugins/panel/nodeGraph/index.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./NodeGraph\`)", "0"]
     ],
@@ -7579,48 +7321,22 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/nodeGraph/types.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./panelcfg.gen\`)", "0"]
     ],
-    "public/app/plugins/panel/piechart/PieChart.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/themes/mixins\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/utils/useComponetInstanceId\' import is restricted from being used by a pattern. Import from the public export instead.", "1"]
-    ],
     "public/app/plugins/panel/piechart/migrations.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "public/app/plugins/panel/piechart/module.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/options/builder/tooltip\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/plugins/panel/stat/StatMigrations.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/panel/stat/StatPanel.tsx:5381": [
-      [0, 0, 0, "\'@grafana/data/src/field/fieldOverrides\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/DataLinks/DataLinksContextMenu\' import is restricted from being used by a pattern. Import from the public export instead.", "1"]
-    ],
-    "public/app/plugins/panel/state-timeline/StateTimelinePanel.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
-    "public/app/plugins/panel/state-timeline/StateTimelineTooltip2.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/VizTooltipContent\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/VizTooltipFooter\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/VizTooltipHeader\' import is restricted from being used by a pattern. Import from the public export instead.", "2"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/VizTooltipWrapper\' import is restricted from being used by a pattern. Import from the public export instead.", "3"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/types\' import is restricted from being used by a pattern. Import from the public export instead.", "4"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/utils\' import is restricted from being used by a pattern. Import from the public export instead.", "5"]
+      [0, 0, 0, "\'@grafana/data/src/field/fieldOverrides\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/plugins/panel/state-timeline/migrations.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
-    "public/app/plugins/panel/status-history/StatusHistoryPanel.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
-    "public/app/plugins/panel/table/TablePanel.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Table/types\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/plugins/panel/table/cells/SparklineCellOptionsEditor.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Table/SparklineCell\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "1"]
+      [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "public/app/plugins/panel/table/migrations.ts:5381": [
       [0, 0, 0, "\'@grafana/data/src/transformations/transformers/reduce\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
@@ -7641,17 +7357,6 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/timeseries/SpanNullsEditor.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
-    "public/app/plugins/panel/timeseries/TimeSeriesPanel.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
-    "public/app/plugins/panel/timeseries/TimeSeriesTooltip.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/VizTooltipContent\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/VizTooltipFooter\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/VizTooltipHeader\' import is restricted from being used by a pattern. Import from the public export instead.", "2"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/VizTooltipWrapper\' import is restricted from being used by a pattern. Import from the public export instead.", "3"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/types\' import is restricted from being used by a pattern. Import from the public export instead.", "4"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/utils\' import is restricted from being used by a pattern. Import from the public export instead.", "5"]
-    ],
     "public/app/plugins/panel/timeseries/migrations.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
@@ -7664,14 +7369,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"]
     ],
-    "public/app/plugins/panel/timeseries/module.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/options/builder/tooltip\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/plugins/panel/timeseries/plugins/AnnotationsPlugin2.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/plugins/panel/timeseries/plugins/ThresholdControlsPlugin.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/internal\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/plugins/panel/timeseries/plugins/annotations2/AnnotationEditor2.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -7686,42 +7385,29 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/timeseries/utils.ts:5381": [
       [0, 0, 0, "\'@grafana/data/src/transformations/transformers/convertFieldType\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
       [0, 0, 0, "\'@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
-      [0, 0, 0, "\'@grafana/data/src/transformations/transformers/nulls/nullToValue\' import is restricted from being used by a pattern. Import from the public export instead.", "2"],
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/internal\' import is restricted from being used by a pattern. Import from the public export instead.", "3"]
+      [0, 0, 0, "\'@grafana/data/src/transformations/transformers/nulls/nullToValue\' import is restricted from being used by a pattern. Import from the public export instead.", "2"]
     ],
     "public/app/plugins/panel/trend/TrendPanel.tsx:5381": [
-      [0, 0, 0, "\'@grafana/data/src/transformations/transformers/joinDataFrames\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2\' import is restricted from being used by a pattern. Import from the public export instead.", "1"]
-    ],
-    "public/app/plugins/panel/trend/module.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/options/builder/tooltip\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
+      [0, 0, 0, "\'@grafana/data/src/transformations/transformers/joinDataFrames\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/plugins/panel/xychart/SeriesEditor.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/MatchersUI/FieldNamePicker\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"],
-      [0, 0, 0, "Do not use any type assertions.", "4"]
+      [0, 0, 0, "Do not use any type assertions.", "3"]
     ],
     "public/app/plugins/panel/xychart/XYChartPanel.tsx:5381": [
-      [0, 0, 0, "\'@grafana/data/src/themes/colorManipulator\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/utils\' import is restricted from being used by a pattern. Import from the public export instead.", "2"]
+      [0, 0, 0, "\'@grafana/data/src/themes/colorManipulator\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/plugins/panel/xychart/XYChartTooltip.tsx:5381": [
-      [0, 0, 0, "\'@grafana/data/src/themes/colorManipulator\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/VizTooltipContent\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/VizTooltipFooter\' import is restricted from being used by a pattern. Import from the public export instead.", "2"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/VizTooltipHeader\' import is restricted from being used by a pattern. Import from the public export instead.", "3"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/VizTooltipWrapper\' import is restricted from being used by a pattern. Import from the public export instead.", "4"],
-      [0, 0, 0, "\'@grafana/ui/src/components/VizTooltip/types\' import is restricted from being used by a pattern. Import from the public export instead.", "5"]
+      [0, 0, 0, "\'@grafana/data/src/themes/colorManipulator\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/plugins/panel/xychart/migrations.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/panel/xychart/scatter.ts:5381": [
       [0, 0, 0, "\'@grafana/data/src/themes/colorManipulator\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/uPlot/types\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Do not use any type assertions.", "3"],
       [0, 0, 0, "Do not use any type assertions.", "4"],
@@ -7735,11 +7421,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "12"],
       [0, 0, 0, "Do not use any type assertions.", "13"],
       [0, 0, 0, "Do not use any type assertions.", "14"],
-      [0, 0, 0, "Do not use any type assertions.", "15"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "15"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "16"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "17"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "18"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "19"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "18"]
     ],
     "public/app/plugins/panel/xychart/utils.ts:5381": [
       [0, 0, 0, "\'@grafana/data/src/field/fieldState\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
@@ -7875,11 +7560,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
-    ],
-    "scripts/cli/generateSassVariableFiles.ts:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/themes/_variables.dark.scss.tmpl\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/themes/_variables.light.scss.tmpl\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
-      [0, 0, 0, "\'@grafana/ui/src/themes/_variables.scss.tmpl\' import is restricted from being used by a pattern. Import from the public export instead.", "2"]
     ]
   }`
 };

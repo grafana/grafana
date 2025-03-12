@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { Field, GrafanaTheme2 } from '@grafana/data/';
 import { InstantQueryRefIdIndex } from '@grafana/prometheus';
-import { useStyles2 } from '@grafana/ui/';
+import { useStyles2 } from '@grafana/ui';
 
 import { rawListItemColumnWidth } from './RawListItem';
 

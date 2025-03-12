@@ -2,7 +2,7 @@ import { Fragment } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { ScrollContainer, Text } from '@grafana/ui';
-import { SkeletonComponent, attachSkeleton } from '@grafana/ui/src/unstable';
+import { SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 
 import { Settings } from './AdminSettings';
 
