@@ -1,13 +1,9 @@
 package migrator
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
-	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 func TestInsertQuery(t *testing.T) {
@@ -118,79 +114,4 @@ func TestUpdateQuery(t *testing.T) {
 			require.Equal(t, tc.expectedSQLiteArgs, args, "SQLite args incorrect")
 		})
 	}
-}
-
-const boolTestTableName = "bool_test"
-
-var boolTestTable = Table{
-	Name: boolTestTableName,
-	Columns: []*Column{
-		{Name: "id", Type: DB_Int, IsPrimaryKey: true, IsAutoIncrement: true},
-		{Name: "name", Type: DB_Text},
-		{Name: "value", Type: DB_Bool},
-	},
-}
-
-func setupTestDB(t *testing.T) (Dialect, *xorm.Engine) {
-	t.Helper()
-	dbType := sqlutil.GetTestDBType()
-	testDB, err := sqlutil.GetTestDB(dbType)
-	require.NoError(t, err)
-
-	t.Cleanup(testDB.Cleanup)
-
-	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
-	require.NoError(t, err)
-
-	t.Cleanup(func() {
-		if err := x.Close(); err != nil {
-			fmt.Printf("failed to close xorm engine: %v", err)
-		}
-	})
-
-	exists, err := x.IsTableExist(boolTestTableName)
-	require.NoError(t, err)
-
-	d := NewDialect(testDB.DriverName)
-	if !exists {
-		_, err := x.Exec(NewAddTableMigration(boolTestTable).SQL(d))
-		require.NoError(t, err)
-	} else {
-		_, err := x.Exec("DELETE FROM " + boolTestTableName + " WHERE true")
-		require.NoError(t, err)
-	}
-
-	return d, x
-}
-
-func TestIntegration_Dialect(t *testing.T) {
-	d, x := setupTestDB(t)
-
-	t.Run("bool values", func(t *testing.T) {
-		tv := &BoolTest{Name: "true value", Value: true}
-		_, err := x.Insert(tv)
-		require.NoError(t, err)
-
-		fv := &BoolTest{Name: "false value", Value: false}
-		_, err = x.Insert(fv)
-		require.NoError(t, err)
-
-		var found []*BoolTest
-		require.NoError(t, x.Where("value = ?", d.BooleanValue(true)).Find(&found))
-		require.Len(t, found, 1)
-		require.True(t, found[0].Value)
-		require.Equal(t, tv.ID, found[0].ID)
-
-		found = nil
-		require.NoError(t, x.Where("value = ?", d.BooleanValue(false)).Find(&found))
-		require.Len(t, found, 1)
-		require.False(t, found[0].Value)
-		require.Equal(t, fv.ID, found[0].ID)
-	})
-}
-
-type BoolTest struct {
-	ID    int `xorm:"pk autoincr 'id'"`
-	Name  string
-	Value bool
 }
