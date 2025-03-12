@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { ReactNode, MutableRefObject, useCallback, useEffect, useRef, useState } from 'react';
 
 import { AbsoluteTimeRange, CoreApp, LogRowModel, TimeRange } from '@grafana/data';
-import { convertRawToRange, isRelativeTime, isRelativeTimeRange } from '@grafana/data/src/datetime/rangeutil';
+import { convertRawToRange, isRelativeTime, isRelativeTimeRange } from '@grafana/data/internal';
 import { config, reportInteraction } from '@grafana/runtime';
 import { LogsSortOrder, TimeZone } from '@grafana/schema';
 import { Button, Icon } from '@grafana/ui';

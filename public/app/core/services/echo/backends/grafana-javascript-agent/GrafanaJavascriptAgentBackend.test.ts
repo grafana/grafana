@@ -1,5 +1,5 @@
 import { BuildInfo } from '@grafana/data';
-import { GrafanaEdition } from '@grafana/data/src/types/config';
+import { GrafanaEdition } from '@grafana/data/internal';
 import { Faro, Instrumentation } from '@grafana/faro-core';
 import * as faroWebSdkModule from '@grafana/faro-web-sdk';
 import { BrowserConfig, FetchTransport } from '@grafana/faro-web-sdk';

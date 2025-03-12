@@ -5,7 +5,7 @@
 import { produce } from 'immer';
 import { omit } from 'lodash';
 
-import { insertAfterImmutably, insertBeforeImmutably } from '@grafana/data/src/utils/arrayUtils';
+import { insertAfterImmutably, insertBeforeImmutably } from '@grafana/data/internal';
 import { ROUTES_META_SYMBOL, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import {

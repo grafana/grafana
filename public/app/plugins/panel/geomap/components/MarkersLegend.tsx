@@ -4,8 +4,13 @@ import { useMemo } from 'react';
 import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
-import { DataFrame, formattedValueToString, getFieldColorModeForField, GrafanaTheme2 } from '@grafana/data';
-import { getMinMaxAndDelta } from '@grafana/data/src/field/scale';
+import {
+  getMinMaxAndDelta,
+  DataFrame,
+  formattedValueToString,
+  getFieldColorModeForField,
+  GrafanaTheme2,
+} from '@grafana/data';
 import { useStyles2, VizLegendItem } from '@grafana/ui';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';

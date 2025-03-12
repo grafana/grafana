@@ -4,7 +4,7 @@ import { of } from 'rxjs';
 import { render } from 'test/test-utils';
 
 import { getDefaultTimeRange, LoadingState, PanelData, PanelProps } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config, getPluginLinkExtensions, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';

@@ -11,11 +11,7 @@ import {
   TransformerCategory,
   GrafanaTheme2,
 } from '@grafana/data';
-import {
-  GroupByFieldOptions,
-  GroupByOperationID,
-  GroupByTransformerOptions,
-} from '@grafana/data/src/transformations/transformers/groupBy';
+import { GroupByFieldOptions, GroupByOperationID, GroupByTransformerOptions } from '@grafana/data/internal';
 import { useTheme2, Select, StatsPicker, InlineField, Stack, Alert } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';

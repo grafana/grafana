@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { getTimeZoneInfo, GrafanaTheme2, InternalTimeZones, TIME_FORMAT } from '@grafana/data';
-import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
+import { convertRawToRange } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import {
   SceneComponentProps,
