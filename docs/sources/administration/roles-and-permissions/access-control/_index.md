@@ -18,7 +18,7 @@ weight: 120
 # Role-based access control (RBAC)
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud).
+Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
 {{% /admonition %}}
 
 RBAC provides a standardized way of granting, changing, and revoking access when it comes to viewing and modifying Grafana resources, such as dashboards, reports, and administrative settings.
@@ -77,8 +77,8 @@ You can use RBAC to modify the permissions associated with any basic role, which
 Note that any modification to any of these basic role is not propagated to the other basic roles.
 For example, if you modify Viewer basic role and grant additional permission, Editors or Admins won't have that additional grant.
 
-For more information about the permissions associated with each basic role, refer to [Basic role definitions]({{< relref "./rbac-fixed-basic-role-definitions/#basic-role-assignments" >}}).
-To interact with the API and view or modify basic roles permissions, refer to [the table]({{< relref "./manage-rbac-roles/#basic-role-uid-mapping" >}}) that maps basic role names to the associated UID.
+For more information about the permissions associated with each basic role, refer to [Basic role definitions](rbac-fixed-basic-role-definitions/#basic-role-assignments).
+To interact with the API and view or modify basic roles permissions, refer to [the table](manage-rbac-roles/#basic-role-uid-mapping) that maps basic role names to the associated UID.
 
 {{% admonition type="note" %}}
 You cannot use a service account to modify basic roles via the RBAC API. To update basic roles, you must be a Grafana administrator and use basic authentication with the request.
@@ -86,31 +86,31 @@ You cannot use a service account to modify basic roles via the RBAC API. To upda
 
 ### Fixed roles
 
-Grafana Enterprise includes the ability for you to assign discrete fixed roles to users, teams, and service accounts. This gives you fine-grained control over user permissions than you would have with basic roles alone. These roles are called "fixed" because you cannot change or delete fixed roles. You can also create _custom_ roles of your own; see more information in the [custom roles section]({{< relref "#custom-roles" >}}) below.
+Grafana Enterprise includes the ability for you to assign discrete fixed roles to users, teams, and service accounts. This gives you fine-grained control over user permissions than you would have with basic roles alone. These roles are called "fixed" because you cannot change or delete fixed roles. You can also create _custom_ roles of your own; see more information in the [custom roles section](#custom-roles) below.
 
 Assign fixed roles when the basic roles do not meet your permission requirements. For example, you might want a user with the basic viewer role to also edit dashboards. Or, you might want anyone with the editor role to also add and manage users. Fixed roles provide users more granular access to create, view, and update the following Grafana resources:
 
-- [Alerting]({{< relref "../../../alerting/" >}})
-- [Annotations]({{< relref "../../../dashboards/build-dashboards/annotate-visualizations" >}})
-- [API keys]({{< relref "../../api-keys/" >}})
-- [Dashboards and folders]({{< relref "../../../dashboards/" >}})
-- [Data sources]({{< relref "../../../datasources/" >}})
-- [Explore]({{< relref "../../../explore/" >}})
-- [Feature Toggles]({{< relref "../../feature-toggles/" >}})
-- [Folders]({{< relref "../../../dashboards/manage-dashboards/#create-a-dashboard-folder" >}})
-- [LDAP]({{< relref "../../../setup-grafana/configure-security/configure-authentication/ldap/" >}})
-- [Library panels]({{< relref "../../../dashboards/build-dashboards/manage-library-panels" >}})
-- [Licenses]({{< relref "../../stats-and-license/" >}})
-- [Organizations]({{< relref "../../organization-management/" >}})
-- [Provisioning]({{< relref "../../provisioning/" >}})
-- [Reports]({{< relref "../../../dashboards/create-reports/" >}})
-- [Roles]({{< relref "../../" >}})
-- [Settings]({{< relref "../../../setup-grafana/configure-grafana/settings-updates-at-runtime" >}})
-- [Service accounts]({{< relref "../../service-accounts/" >}})
-- [Teams]({{< relref "../../team-management/" >}})
-- [Users]({{< relref "../../user-management/" >}})
+- [Alerting](../../../alerting/)
+- [Annotations](../../../dashboards/build-dashboards/annotate-visualizations/)
+- [API keys](../../api-keys/)
+- [Dashboards and folders](../../../dashboards/)
+- [Data sources](../../../datasources/)
+- [Explore](../../../explore/)
+- [Feature Toggles](../../feature-toggles/)
+- [Folders](../../../dashboards/manage-dashboards/#create-a-dashboard-folder)
+- [LDAP](../../../setup-grafana/configure-security/configure-authentication/ldap/)
+- [Library panels](../../../dashboards/build-dashboards/manage-library-panels/)
+- [Licenses](../../stats-and-license/)
+- [Organizations](../../organization-management/)
+- [Provisioning](../../provisioning/)
+- [Reports](../../../dashboards/create-reports/)
+- [Roles](../../)
+- [Settings](../../../setup-grafana/configure-grafana/settings-updates-at-runtime/)
+- [Service accounts](../../service-accounts/)
+- [Teams](../../team-management/)
+- [Users](../../user-management/)
 
-To learn more about the permissions you can grant for each resource, refer to [RBAC role definitions]({{< relref "./rbac-fixed-basic-role-definitions/" >}}).
+To learn more about the permissions you can grant for each resource, refer to [RBAC role definitions](rbac-fixed-basic-role-definitions/).
 
 ### Custom roles
 
@@ -126,11 +126,11 @@ Consider creating a custom role when fixed roles do not meet your permissions re
 
 You can use either of the following methods to create, assign, and manage custom roles:
 
-- Grafana provisioning: You can use a YAML file to configure roles. For more information about using provisioning to create custom roles, refer to [Manage RBAC roles]({{< relref "./manage-rbac-roles/" >}}). For more information about using provisioning to assign RBAC roles to users or teams, refer to [Assign RBAC roles]({{< relref "./assign-rbac-roles/" >}}).
-- RBAC API: As an alternative, you can use the Grafana HTTP API to create and manage roles. For more information about the HTTP API, refer to [RBAC API]({{< relref "../../../developers/http_api/access_control/" >}}).
+- Grafana provisioning: You can use a YAML file to configure roles. For more information about using provisioning to create custom roles, refer to [Manage RBAC roles](manage-rbac-roles/). For more information about using provisioning to assign RBAC roles to users or teams, refer to [Assign RBAC roles](assign-rbac-roles/).
+- RBAC API: As an alternative, you can use the Grafana HTTP API to create and manage roles. For more information about the HTTP API, refer to [RBAC API](../../../developers/http_api/access_control/).
 
 ### Limitation
 
 If you have created a folder with the name `General` or `general`, you cannot manage its permissions with RBAC.
 
-If you set [folder permissions]({{< relref "../../user-management/manage-dashboard-permissions/#grant-dashboard-folder-permissions" >}}) for a folder named `General` or `general`, the system disregards the folder when RBAC is enabled.
+If you set [folder permissions](../../user-management/manage-dashboard-permissions/#grant-dashboard-folder-permissions) for a folder named `General` or `general`, the system disregards the folder when RBAC is enabled.
