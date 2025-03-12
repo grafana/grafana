@@ -47,17 +47,6 @@ func NewCloudMonitoringQuery() *CloudMonitoringQuery {
 	return &CloudMonitoringQuery{}
 }
 
-// Defines the supported queryTypes.
-type QueryType string
-
-const (
-	QueryTypeTIMESERIESLIST  QueryType = "timeSeriesList"
-	QueryTypeTIMESERIESQUERY QueryType = "timeSeriesQuery"
-	QueryTypeSLO             QueryType = "slo"
-	QueryTypeANNOTATION      QueryType = "annotation"
-	QueryTypePROMQL          QueryType = "promQL"
-)
-
 // Time Series List sub-query properties.
 type TimeSeriesList struct {
 	// GCP project to execute the query against.
@@ -162,6 +151,17 @@ type PromQLQuery struct {
 func NewPromQLQuery() *PromQLQuery {
 	return &PromQLQuery{}
 }
+
+// Defines the supported queryTypes.
+type QueryType string
+
+const (
+	QueryTypeTIMESERIESLIST  QueryType = "timeSeriesList"
+	QueryTypeTIMESERIESQUERY QueryType = "timeSeriesQuery"
+	QueryTypeSLO             QueryType = "slo"
+	QueryTypeANNOTATION      QueryType = "annotation"
+	QueryTypePROMQL          QueryType = "promQL"
+)
 
 // @deprecated This type is for migration purposes only. Replaced by TimeSeriesList Metric sub-query properties.
 type MetricQuery struct {
