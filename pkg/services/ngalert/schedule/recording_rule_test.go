@@ -18,6 +18,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -574,15 +575,15 @@ func setupDatasourceWriter(t *testing.T, target *writer.TestRemoteWriteTarget, r
 
 	dss := &dsfakes.FakeDataSourceService{}
 	p1, _ := dss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-		UID:  dsUID,
-		Type: datasources.DS_PROMETHEUS,
+		UID:      dsUID,
+		Type:     datasources.DS_PROMETHEUS,
+		JsonData: simplejson.MustJson([]byte(`{"prometheusType":"Prometheus"}`)),
 	})
 	p1.URL = target.DatasourceURL()
 
 	cfg := writer.DatasourceWriterConfig{
-		Timeout:               time.Second * 5,
-		DefaultDatasourceUID:  "",
-		RemoteWritePathSuffix: writer.RemoteWriteSuffix,
+		Timeout:              time.Second * 5,
+		DefaultDatasourceUID: "",
 	}
 
 	return writer.NewDatasourceWriter(cfg, dss, provider, clock.NewMock(),

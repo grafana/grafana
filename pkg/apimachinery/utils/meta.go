@@ -607,6 +607,22 @@ func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {
 		if name.IsValid() && name.Kind() == reflect.String {
 			return name.String()
 		}
+
+		// Unstructured uses Object subtype
+		object := spec.FieldByName("Object")
+		if object.IsValid() && object.Kind() == reflect.Map {
+			key := reflect.ValueOf("title")
+			value := object.MapIndex(key)
+			if value.IsValid() {
+				if value.CanInterface() {
+					v := value.Interface()
+					t, ok := v.(string)
+					if ok {
+						return t
+					}
+				}
+			}
+		}
 	}
 
 	obj, ok := m.obj.(*unstructured.Unstructured)
