@@ -7,7 +7,7 @@ import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { Alert, Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { useDeleteRepositoryMutation } from '../api';
+import { RepositoryViewList, useDeleteRepositoryMutation } from '../api';
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks';
 import { StepStatus } from '../hooks/useStepStatus';
@@ -32,6 +32,7 @@ export function WizardContent({
   getNextButtonText,
   onOptionSelect,
   stepSuccess,
+  settingsData, // from before adding things
 }: {
   activeStep: WizardStep;
   completedSteps: WizardStep[];
@@ -42,6 +43,7 @@ export function WizardContent({
   getNextButtonText: (step: WizardStep) => string;
   onOptionSelect: (requiresMigration: boolean) => void;
   stepSuccess: boolean;
+  settingsData: RepositoryViewList | undefined;
 }) {
   const { watch, setValue, getValues, trigger } = useFormContext<WizardFormData>();
   const navigate = useNavigate();
@@ -111,7 +113,11 @@ export function WizardContent({
       try {
         const formData = getValues();
         const spec = dataToSpec(formData.repository);
-        await submitData(spec);
+        const rsp = await submitData(spec);
+        if (rsp.error) {
+          console.log('Error (will be rendered inline)', rsp);
+          return;
+        }
         // Navigate after successful save
         handleNext();
       } catch (error) {
@@ -176,7 +182,7 @@ export function WizardContent({
       <div className={styles.content}>
         {activeStep === 'connection' && <ConnectStep />}
         {activeStep === 'bootstrap' && (
-          <BootstrapStep onOptionSelect={onOptionSelect} onStepUpdate={handleStepUpdate} />
+          <BootstrapStep onOptionSelect={onOptionSelect} onStepUpdate={handleStepUpdate} settingsData={settingsData} />
         )}
         {activeStep === 'migrate' && requiresMigration && <MigrateStep onStepUpdate={handleStepUpdate} />}
         {activeStep === 'pull' && !requiresMigration && <PullStep onStepUpdate={handleStepUpdate} />}

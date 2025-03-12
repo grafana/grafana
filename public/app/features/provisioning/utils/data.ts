@@ -21,6 +21,7 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
       spec.local = {
         path: data.path,
       };
+      spec.workflows = spec.workflows.filter((v) => v !== 'branch'); // branch only supported by github
       break;
   }
 
