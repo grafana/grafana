@@ -188,9 +188,6 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		}
 	}
 
-	// enable sync (won't be saved)
-	rw.Config().Spec.Sync.Enabled = true
-
 	// Delegate the import to a sync (from the already checked out go-git repository!)
 	progress.SetMessage(ctx, "pulling resources")
 	err = w.syncWorker.Process(ctx, rw, provisioning.Job{
