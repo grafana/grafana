@@ -102,7 +102,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
               key="rule-group-edit"
               icon="pen"
               tooltip={t('alerting.rule-group-action.edit', 'edit rule group')}
-              to={groups.editPageLink('grafana', folderUID, group.name)}
+              to={groups.editPageLink('grafana', folderUID, group.name, { includeReturnTo: true })}
             />
           );
         }

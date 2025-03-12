@@ -1,5 +1,7 @@
 import { RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 
+import { createReturnTo } from '../hooks/useReturnTo';
+
 import { createRelativeUrl } from './url';
 
 export const createListFilterLink = (values: Array<[string, string]>) => {
@@ -22,8 +24,11 @@ export const groups = {
       ? groups.detailsPageLink('grafana', namespace.uid, groupName)
       : groups.detailsPageLink(groupIdentifier.rulesSource.uid, namespace.name, groupName);
   },
-  editPageLink: (dsUid: string, namespaceId: string, groupName: string) =>
-    createRelativeUrl(
-      `/alerting/${dsUid}/namespaces/${encodeURIComponent(namespaceId)}/groups/${encodeURIComponent(groupName)}/edit`
-    ),
+  editPageLink: (dsUid: string, namespaceId: string, groupName: string, options?: { includeReturnTo: boolean }) => {
+    const params: Record<string, string> = options?.includeReturnTo ? { returnTo: createReturnTo() } : {};
+    return createRelativeUrl(
+      `/alerting/${dsUid}/namespaces/${encodeURIComponent(namespaceId)}/groups/${encodeURIComponent(groupName)}/edit`,
+      params
+    );
+  },
 };

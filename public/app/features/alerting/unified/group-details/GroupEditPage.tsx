@@ -35,6 +35,7 @@ import { UpdateGroupDelta, useUpdateRuleGroup } from '../hooks/ruleGroup/useUpda
 import { isLoading, useAsync } from '../hooks/useAsync';
 import { useFolder } from '../hooks/useFolder';
 import { useRuleGroupConsistencyCheck } from '../hooks/usePrometheusConsistencyCheck';
+import { useReturnTo } from '../hooks/useReturnTo';
 import { SwapOperation } from '../reducers/ruler/ruleGroups';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/formDefaults';
 import { ruleGroupIdentifierV2toV1 } from '../utils/groupIdentifier';
@@ -173,6 +174,7 @@ interface GroupEditFormData {
 function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
   const styles = useStyles2(getStyles);
   const appInfo = useAppNotification();
+  const { returnTo } = useReturnTo(groups.detailsPageLinkFromGroupIdentifier(groupIdentifier));
   const { folder } = useFolder(groupIdentifier.groupOrigin === 'grafana' ? groupIdentifier.namespace.uid : '');
 
   const { waitForGroupConsistency } = useRuleGroupConsistencyCheck();
@@ -310,11 +312,7 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
         <Button type="submit" disabled={isSubmitting} icon={isSubmitting ? 'spinner' : undefined}>
           <Trans i18nKey="alerting.group-edit.form.save">Save</Trans>
         </Button>
-        <LinkButton
-          variant="secondary"
-          disabled={isSubmitting}
-          href={groups.detailsPageLinkFromGroupIdentifier(groupIdentifier)}
-        >
+        <LinkButton variant="secondary" disabled={isSubmitting} href={returnTo}>
           <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
         </LinkButton>
         {groupIdentifier.groupOrigin === 'datasource' && (
