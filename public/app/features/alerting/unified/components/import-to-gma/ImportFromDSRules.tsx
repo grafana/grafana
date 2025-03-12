@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { Controller, useForm } from 'react-hook-form';
 
-import { DataSourceInstanceSettings, GrafanaTheme2, urlUtil } from '@grafana/data';
+import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
 import { Box, Button, InlineField, InlineSwitch, Spinner, useStyles2 } from '@grafana/ui';
+
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
-
 
 interface ImportFormValues {
   selectedDatasource?: DataSourceInstanceSettings;
@@ -16,13 +16,14 @@ interface ImportFormValues {
 }
 
 const ImportFromDSRules = () => {
-
   const {
     register,
     handleSubmit,
     setError,
     clearErrors,
     watch,
+    control,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<ImportFormValues>({
     defaultValues: {
@@ -45,31 +46,8 @@ const ImportFromDSRules = () => {
       return;
     }
 
-    try {
-      const queryParams = new URLSearchParams({
-        pauseRecordingRules: String(data.pauseRecordingRules),
-        pauseAlerts: String(data.pauseAlertingRules),
-      });
-      const url = `/api/ruler/${data.selectedDatasource.uid}/api/v1/rules/convert?${queryParams.toString()}`;
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to import rules: ${response.status} ${response.statusText} ${errorText}`);
-      }
-
-      await response.json();
-      window.location.href = urlUtil.renderUrl('alerting/list', {});
-    } catch (err) {
-      if (err instanceof Error) {
-        setError('selectedDatasource', { type: 'manual', message: err.message });
-      }
-    }
+    // await response calling api to import rules ..if we get an error show and not redirect
+    // if success show success message and redirect to alerting page /list
   };
 
   return (
@@ -93,10 +71,9 @@ const ImportFromDSRules = () => {
                   <DataSourcePicker
                     {...field}
                     current={field.value}
-                    // onChange={(ds: DataSourceInstanceSettings | null) => {
-                    //   setValue('selectedDatasource', ds, { shouldDirty: true });
-                    //   clearErrors('selectedDatasource');
-                    // }}
+                    onChange={(ds: DataSourceInstanceSettings) => {
+                      setValue('selectedDatasource', ds);
+                    }}
                     noDefault={true}
                     placeholder="Select a datasource"
                     alerting={true}
@@ -109,6 +86,7 @@ const ImportFromDSRules = () => {
                 rules={{
                   required: { value: true, message: 'Please select a datasource' },
                 }}
+                control={control}
               />
             </InlineField>
           </Box>
@@ -122,8 +100,8 @@ const ImportFromDSRules = () => {
             >
               <InlineSwitch
                 {...register('pauseAlertingRules')}
-              // checked={pauseAlertingRules}
-              // onChange={() => setValue('pauseAlertingRules', !pauseAlertingRules, { shouldDirty: true })}
+                // checked={pauseAlertingRules}
+                // onChange={() => setValue('pauseAlertingRules', !pauseAlertingRules, { shouldDirty: true })}
               />
             </InlineField>
           </Box>
@@ -137,8 +115,8 @@ const ImportFromDSRules = () => {
             >
               <InlineSwitch
                 {...register('pauseRecordingRules')}
-              // checked={pauseRecordingRules}
-              // onChange={() => setValue('pauseRecordingRules', !pauseRecordingRules, { shouldDirty: true })}
+                // checked={pauseRecordingRules}
+                // onChange={() => setValue('pauseRecordingRules', !pauseRecordingRules, { shouldDirty: true })}
               />
             </InlineField>
           </Box>
