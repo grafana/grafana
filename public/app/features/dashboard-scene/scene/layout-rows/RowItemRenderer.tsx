@@ -28,9 +28,6 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const styles = useStyles2(getStyles);
   const clearStyles = useStyles2(clearButtonStyles);
 
-  if (isConditionallyHidden && !showHiddenElements) {
-    return null;
-  }
   const shouldGrow = !isCollapsed && height === 'expand';
   const isHiddenButVisibleElement = showHiddenElements && isConditionallyHidden;
   const isHiddenButVisibleHeader = showHiddenElements && isHeaderHidden;
@@ -39,6 +36,10 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const [selectableHighlight, setSelectableHighlight] = useState(false);
   const onHeaderEnter = useCallback(() => setSelectableHighlight(true), []);
   const onHeaderLeave = useCallback(() => setSelectableHighlight(false), []);
+
+  if (isConditionallyHidden && !showHiddenElements) {
+    return null;
+  }
 
   return (
     <div
