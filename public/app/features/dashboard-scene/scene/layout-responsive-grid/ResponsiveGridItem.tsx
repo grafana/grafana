@@ -19,13 +19,12 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 
 import { getCloneKey } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
-import { closestOfType, Point, Rect } from '../layout-manager/utils';
+import { Point, Rect } from '../layout-manager/utils';
 import { DashboardLayoutItem, IntermediateLayoutItem } from '../types/DashboardLayoutItem';
 import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
 import { getOptions } from './ResponsiveGridItemEditor';
 import { ResponsiveGridItemRenderer } from './ResponsiveGridItemRenderer';
-import { ResponsiveGridLayout } from './ResponsiveGridLayout';
 
 export interface ResponsiveGridItemStatePlacement {
   /**
@@ -204,12 +203,6 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
 
     if (!gridItem) {
       throw new Error('Grid item not found. Unable to convert to intermediate representation');
-    }
-
-    const layout = closestOfType(this, (o) => o instanceof ResponsiveGridLayout);
-
-    if (!layout) {
-      console.warn('Unable to find parent layout');
     }
 
     // calculate origin and bounding box of layout item

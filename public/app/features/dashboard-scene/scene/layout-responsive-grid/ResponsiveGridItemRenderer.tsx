@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import classNames from 'classnames';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
@@ -21,17 +21,17 @@ export function ResponsiveGridItemRenderer({ model, order }: ResponsiveGridItemP
   const layoutOrchestrator = closestOfType(model, (s) => s instanceof LayoutOrchestrator);
   const { activeLayoutItemRef } = layoutOrchestrator!.useState();
   const activeLayoutItem = activeLayoutItemRef?.resolve();
-  const counter = useRef(0);
+  // const counter = useRef(0);
 
   const isDragging = model === activeLayoutItem;
 
-  console.log(`ResponsiveGridItem ${model.state.key}: ${counter.current++}. Dragging: ${isDragging}`);
+  // console.log(`ResponsiveGridItem ${model.state.key}: ${counter.current++}. Dragging: ${isDragging}`);
 
   useEffect(() => {
     // Compute and cache the grid item's bounding box.
     // Don't re-calculate while an item is being dragged.
     if (!activeLayoutItem) {
-      console.log(`Storing bounding box for grid item ${model.state.key}`);
+      // console.log(`Storing bounding box for grid item ${model.state.key}`);
       model.cachedBoundingBox = model.computeBoundingBox();
     }
   });
@@ -42,6 +42,7 @@ export function ResponsiveGridItemRenderer({ model, order }: ResponsiveGridItemP
           width: model.cachedBoundingBox.right - model.cachedBoundingBox.left,
           height: model.cachedBoundingBox.bottom - model.cachedBoundingBox.top,
           translate: `${-layoutOrchestrator.dragOffset.left}px ${-layoutOrchestrator.dragOffset.top}px`,
+          // --x/y-pos are set in LayoutOrchestrator
           transform: `translate(var(--x-pos), var(--y-pos))`,
         }
       : {};

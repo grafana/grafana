@@ -15,7 +15,7 @@ interface DropZonePlaceholderProps {
 export const DropZonePlaceholder = forwardRef<HTMLDivElement, DropZonePlaceholderProps>(
   ({ width, height, top, left }, ref) => {
     const styles = useStyles2(getStyles);
-    console.log(`DropZonePlaceHolder: w: ${width}, h: ${height}, l: ${left}, t: ${top}`);
+    // console.log(`DropZonePlaceHolder: w: ${width}, h: ${height}, l: ${left}, t: ${top}`);
 
     return (
       <Portal>
