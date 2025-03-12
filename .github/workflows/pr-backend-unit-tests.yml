@@ -53,7 +53,8 @@ jobs:
         with:
           key: go-test-cache-${{ github.ref_name }}
           path: /home/runner/.cache/go-build
- grafana-enterprise:
+
+  grafana-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     name: Grafana Enterprise
