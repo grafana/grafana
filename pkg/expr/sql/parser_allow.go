@@ -147,6 +147,12 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 		return
 	case "variance", "var_pop":
 		return
+	case "group_concat":
+		return
+	case "row_number", "rank", "dense_rank", "lead", "lag":
+		return
+	case "first_value", "last_value", "ntile":
+		return
 
 	// Mathematical functions
 	case "abs":
@@ -157,7 +163,13 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 		return
 	case "mod", "log", "log10", "exp":
 		return
-	case "sign":
+	case "sign", "ln", "truncate":
+		return
+	case "sin", "cos", "tan":
+		return
+	case "asin", "acos", "atan", "atan2":
+		return
+	case "rand", "pi":
 		return
 
 	// String functions
@@ -166,6 +178,18 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 	case "lower", "upper":
 		return
 	case "substring", "trim":
+		return
+	case "left", "right":
+		return
+	case "ltrim", "rtrim":
+		return
+	case "replace", "reverse":
+		return
+	case "lcase", "ucase", "mid", "repeat":
+		return
+	case "position", "instr", "locate":
+		return
+	case "ascii", "ord", "char":
 		return
 
 	// Date functions
@@ -181,9 +205,29 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 		return
 	case "unix_timestamp", "from_unixtime":
 		return
+	case "current_date", "current_time", "current_timestamp", "sysdate":
+		return
+	case "extract", "hour", "minute", "second":
+		return
+	case "dayname", "monthname", "dayofweek", "dayofmonth", "dayofyear":
+		return
+	case "week", "quarter", "time_to_sec", "sec_to_time":
+		return
+	case "timestampdiff", "timestampadd":
+		return
 
 	// Type conversion
 	case "cast", "convert":
+		return
+
+	// JSON functions
+	case "json_extract", "json_object", "json_array", "json_merge_patch", "json_valid":
+		return
+	case "json_contains", "json_length", "json_type", "json_keys":
+		return
+	case "json_search", "json_quote", "json_unquote":
+		return
+	case "json_set", "json_insert", "json_replace", "json_remove":
 		return
 
 	default:
