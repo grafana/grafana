@@ -70,57 +70,6 @@ func NewTempoQuery() *TempoQuery {
 	return &TempoQuery{}
 }
 
-type TempoQueryType string
-
-const (
-	TempoQueryTypeTraceql       TempoQueryType = "traceql"
-	TempoQueryTypeTraceqlSearch TempoQueryType = "traceqlSearch"
-	TempoQueryTypeServiceMap    TempoQueryType = "serviceMap"
-	TempoQueryTypeUpload        TempoQueryType = "upload"
-	TempoQueryTypeNativeSearch  TempoQueryType = "nativeSearch"
-	TempoQueryTypeTraceId       TempoQueryType = "traceId"
-	TempoQueryTypeClear         TempoQueryType = "clear"
-)
-
-type MetricsQueryType string
-
-const (
-	MetricsQueryTypeRange   MetricsQueryType = "range"
-	MetricsQueryTypeInstant MetricsQueryType = "instant"
-)
-
-// The state of the TraceQL streaming search query
-type SearchStreamingState string
-
-const (
-	SearchStreamingStatePending   SearchStreamingState = "pending"
-	SearchStreamingStateStreaming SearchStreamingState = "streaming"
-	SearchStreamingStateDone      SearchStreamingState = "done"
-	SearchStreamingStateError     SearchStreamingState = "error"
-)
-
-// The type of the table that is used to display the search results
-type SearchTableType string
-
-const (
-	SearchTableTypeTraces SearchTableType = "traces"
-	SearchTableTypeSpans  SearchTableType = "spans"
-	SearchTableTypeRaw    SearchTableType = "raw"
-)
-
-// static fields are pre-set in the UI, dynamic fields are added by the user
-type TraceqlSearchScope string
-
-const (
-	TraceqlSearchScopeIntrinsic       TraceqlSearchScope = "intrinsic"
-	TraceqlSearchScopeUnscoped        TraceqlSearchScope = "unscoped"
-	TraceqlSearchScopeEvent           TraceqlSearchScope = "event"
-	TraceqlSearchScopeInstrumentation TraceqlSearchScope = "instrumentation"
-	TraceqlSearchScopeLink            TraceqlSearchScope = "link"
-	TraceqlSearchScopeResource        TraceqlSearchScope = "resource"
-	TraceqlSearchScopeSpan            TraceqlSearchScope = "span"
-)
-
 type TraceqlFilter struct {
 	// Uniquely identify the filter, will not be used in the query generation
 	Id string `json:"id"`
@@ -140,6 +89,57 @@ type TraceqlFilter struct {
 func NewTraceqlFilter() *TraceqlFilter {
 	return &TraceqlFilter{}
 }
+
+// static fields are pre-set in the UI, dynamic fields are added by the user
+type TraceqlSearchScope string
+
+const (
+	TraceqlSearchScopeIntrinsic       TraceqlSearchScope = "intrinsic"
+	TraceqlSearchScopeUnscoped        TraceqlSearchScope = "unscoped"
+	TraceqlSearchScopeEvent           TraceqlSearchScope = "event"
+	TraceqlSearchScopeInstrumentation TraceqlSearchScope = "instrumentation"
+	TraceqlSearchScopeLink            TraceqlSearchScope = "link"
+	TraceqlSearchScopeResource        TraceqlSearchScope = "resource"
+	TraceqlSearchScopeSpan            TraceqlSearchScope = "span"
+)
+
+// The type of the table that is used to display the search results
+type SearchTableType string
+
+const (
+	SearchTableTypeTraces SearchTableType = "traces"
+	SearchTableTypeSpans  SearchTableType = "spans"
+	SearchTableTypeRaw    SearchTableType = "raw"
+)
+
+type MetricsQueryType string
+
+const (
+	MetricsQueryTypeRange   MetricsQueryType = "range"
+	MetricsQueryTypeInstant MetricsQueryType = "instant"
+)
+
+type TempoQueryType string
+
+const (
+	TempoQueryTypeTraceql       TempoQueryType = "traceql"
+	TempoQueryTypeTraceqlSearch TempoQueryType = "traceqlSearch"
+	TempoQueryTypeServiceMap    TempoQueryType = "serviceMap"
+	TempoQueryTypeUpload        TempoQueryType = "upload"
+	TempoQueryTypeNativeSearch  TempoQueryType = "nativeSearch"
+	TempoQueryTypeTraceId       TempoQueryType = "traceId"
+	TempoQueryTypeClear         TempoQueryType = "clear"
+)
+
+// The state of the TraceQL streaming search query
+type SearchStreamingState string
+
+const (
+	SearchStreamingStatePending   SearchStreamingState = "pending"
+	SearchStreamingStateStreaming SearchStreamingState = "streaming"
+	SearchStreamingStateDone      SearchStreamingState = "done"
+	SearchStreamingStateError     SearchStreamingState = "error"
+)
 
 type StringOrArrayOfString struct {
 	String        *string  `json:"String,omitempty"`
