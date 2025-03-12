@@ -50,7 +50,7 @@ import { RuleEditorSection } from '../RuleEditorSection';
 import { errorFromCurrentCondition, errorFromPreviewData, findRenamedDataQueryReferences, refIdExists } from '../util';
 
 import { CloudDataSourceSelector } from './CloudDataSourceSelector';
-import { SimpleConditionEditor, SimpleConditionIdentifier, getSimpleConditionFromExpressions } from './SimpleCondition';
+import { SimpleConditionEditor, getSimpleConditionFromExpressions } from './SimpleCondition';
 import { SmartAlertTypeDetector } from './SmartAlertTypeDetector';
 import { DESCRIPTIONS } from './descriptions';
 import {
@@ -160,13 +160,14 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       }
       // we need to be sure the condition is set once we switch to simple mode
       if (simplifiedQueryStep) {
-        setValue('condition', SimpleConditionIdentifier.thresholdId);
-        runQueries(getValues('queries'), SimpleConditionIdentifier.thresholdId);
+        const thresholdId = expressionQueries[expressionQueries.length - 1].refId;
+        setValue('condition', thresholdId); // we set the condition to the last expression,as threshold is the last expression in case of simple mode
+        runQueries(getValues('queries'), thresholdId);
       } else {
         runQueries(getValues('queries'), condition || (getValues('condition') ?? ''));
       }
     },
-    [isCloudAlertRuleType, runQueries, getValues, simplifiedQueryStep, setValue]
+    [isCloudAlertRuleType, runQueries, getValues, simplifiedQueryStep, setValue, expressionQueries]
   );
 
   // whenever we update the queries we have to update the form too
@@ -441,17 +442,17 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const switchMode =
     isGrafanaAlertingType && isSwitchModeEnabled
       ? {
-          isAdvancedMode: !simplifiedQueryStep,
-          setAdvancedMode: (isAdvanced: boolean) => {
-            if (!getValues('editorSettings.simplifiedQueryEditor')) {
-              if (!areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries)) {
-                setShowResetModal(true);
-                return;
-              }
+        isAdvancedMode: !simplifiedQueryStep,
+        setAdvancedMode: (isAdvanced: boolean) => {
+          if (!getValues('editorSettings.simplifiedQueryEditor')) {
+            if (!areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries)) {
+              setShowResetModal(true);
+              return;
             }
-            setValue('editorSettings.simplifiedQueryEditor', !isAdvanced);
-          },
-        }
+          }
+          setValue('editorSettings.simplifiedQueryEditor', !isAdvanced);
+        },
+      }
       : undefined;
 
   return (

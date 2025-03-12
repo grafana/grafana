@@ -791,11 +791,11 @@ export const reduceExpression: AlertQuery<ExpressionQuery> = {
   },
 };
 export const thresholdExpression: AlertQuery<ExpressionQuery> = {
-  refId: SimpleConditionIdentifier.thresholdId,
+  refId: 'C',
   queryType: 'expression',
   datasourceUid: '__expr__',
   model: {
     type: ExpressionQueryType.threshold,
-    refId: SimpleConditionIdentifier.thresholdId,
+    refId: 'C',
   },
 };
