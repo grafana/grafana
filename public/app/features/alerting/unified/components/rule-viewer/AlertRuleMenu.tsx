@@ -1,4 +1,5 @@
 import { AppEvents } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { ComponentSize, Dropdown, Menu } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
@@ -51,18 +52,16 @@ const AlertRuleMenu = ({
   const [deleteSupported, deleteAllowed] = useRulerRuleAbility(rulerRule, groupIdentifier, AlertRuleAction.Delete);
   const canDelete = deleteSupported && deleteAllowed;
 
-  // Let's commment lines below since we don't have the api to remove permanently yet
-
-  // const [deletePermanentlySupported, deletePermanentlyAllowed] = useRulerRuleAbility(
-  //   rulerRule,
-  //   groupIdentifier,
-  //   AlertRuleAction.DeletePermanently
-  // );
-  // const canDeletePermanently =
-  //   deletePermanentlySupported &&
-  //   deletePermanentlyAllowed &&
-  //   config.featureToggles.alertingRuleRecoverDeleted &&
-  //   config.featureToggles.alertRuleRestore;
+  const [deletePermanentlySupported, deletePermanentlyAllowed] = useRulerRuleAbility(
+    rulerRule,
+    groupIdentifier,
+    AlertRuleAction.DeletePermanently
+  );
+  const canDeletePermanently =
+    deletePermanentlySupported &&
+    deletePermanentlyAllowed &&
+    config.featureToggles.alertingRuleRecoverDeleted &&
+    config.featureToggles.alertRuleRestore;
 
   const [duplicateSupported, duplicateAllowed] = useRulerRuleAbility(
     rulerRule,
@@ -155,16 +154,14 @@ const AlertRuleMenu = ({
           />
         </>
       )}
-      {/* {canDeletePermanently && rulerRule && (
-        <>
-          <Menu.Item
-            label={t('alerting.alert-menu.delete-permanently', 'Delete Permanently')}
-            icon="exclamation-triangle"
-            destructive
-            onClick={() => handleDeletePermanently(rulerRule, groupIdentifier)}
-          />
-        </>
-      )} */}
+      {canDeletePermanently && rulerRule && (
+        <Menu.Item
+          label={t('alerting.alert-menu.delete-permanently', 'Delete Permanently')}
+          icon="exclamation-triangle"
+          destructive
+          onClick={() => handleDeletePermanently(rulerRule, groupIdentifier)}
+        />
+      )}
     </>
   );
 

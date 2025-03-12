@@ -16,7 +16,6 @@ import { useProduceNewRuleGroup } from './useProduceNewRuleGroup';
 export function useDeleteRulePermanentlyFromGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
-  // todo: update with a new endpoint not yet implemented
   const [deleteRuleGroupPermanently] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useMutation();
 
   return useAsync(async (ruleGroup: RuleGroupIdentifier, ruleIdentifier: EditableRuleIdentifier) => {
@@ -34,6 +33,7 @@ export function useDeleteRulePermanentlyFromGroup() {
         namespace: namespaceName,
         group: groupName,
         notificationOptions: { successMessage },
+        deletePermanently: true,
       }).unwrap();
     }
 

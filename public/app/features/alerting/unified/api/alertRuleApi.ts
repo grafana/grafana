@@ -283,15 +283,20 @@ export const alertRuleApi = alertingApi.injectEndpoints({
 
     deleteRuleGroupFromNamespace: build.mutation<
       RulerRuleGroupDTO,
-      WithNotificationOptions<{ rulerConfig: RulerDataSourceConfig; namespace: string; group: string }>
+      WithNotificationOptions<{
+        rulerConfig: RulerDataSourceConfig;
+        namespace: string;
+        group: string;
+        deletePermanently?: boolean;
+      }>
     >({
-      query: ({ rulerConfig, namespace, group, notificationOptions }) => {
+      query: ({ rulerConfig, namespace, group, notificationOptions, deletePermanently }) => {
         const successMessage = t('alerting.rule-groups.delete.success', 'Successfully deleted rule group');
         const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group);
 
         return {
           url: path,
-          params,
+          params: { ...params, deletePermanently: deletePermanently ? 'true' : undefined },
           method: 'DELETE',
           notificationOptions: {
             successMessage,
