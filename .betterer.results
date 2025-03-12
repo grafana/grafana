@@ -887,7 +887,8 @@ exports[`better eslint`] = {
     "public/app/app.ts:5381": [
       [0, 0, 0, "\'@grafana/runtime/src/components/PanelDataErrorView\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
       [0, 0, 0, "\'@grafana/runtime/src/components/PanelRenderer\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
-      [0, 0, 0, "\'@grafana/runtime/src/components/PluginPage\' import is restricted from being used by a pattern. Import from the public export instead.", "2"]
+      [0, 0, 0, "\'@grafana/runtime/src/components/PluginPage\' import is restricted from being used by a pattern. Import from the public export instead.", "2"],
+      [0, 0, 0, "\'@grafana/runtime/src/unstable\' import is restricted from being used by a pattern. Import from the public export instead.", "3"]
     ],
     "public/app/core/TableModel.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -2882,6 +2883,9 @@ exports[`better eslint`] = {
     ],
     "public/app/features/auth-config/utils/data.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/features/bookmarks/BookmarksPage.tsx:5381": [
+      [0, 0, 0, "\'@grafana/runtime/src/unstable\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/features/browse-dashboards/api/browseDashboardsAPI.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`@reduxjs/toolkit/query/react\`)", "0"]
