@@ -258,15 +258,15 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				}
 				require.Equal(t, expectedFor, grafanaRule.For, tc.name)
 
-				expectedLabels := make(map[string]string, len(promRule.Labels)+len(tc.promGroup.Labels))
-				maps.Copy(expectedLabels, tc.promGroup.Labels)
-				maps.Copy(expectedLabels, promRule.Labels)
-
 				uidData := fmt.Sprintf("%d|%s|%s|%d", tc.orgID, tc.namespace, tc.promGroup.Name, j)
 				u := uuid.NewSHA1(uuid.NameSpaceOID, []byte(uidData))
 				require.Equal(t, u.String(), grafanaRule.UID, tc.name)
 
+				expectedLabels := make(map[string]string, len(promRule.Labels)+len(tc.promGroup.Labels))
+				maps.Copy(expectedLabels, tc.promGroup.Labels)
+				maps.Copy(expectedLabels, promRule.Labels)
 				require.Equal(t, expectedLabels, grafanaRule.Labels, tc.name)
+
 				require.Equal(t, promRule.Annotations, grafanaRule.Annotations, tc.name)
 
 				evalOffset := time.Duration(0)
@@ -281,6 +281,12 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				require.Equal(t, models.Duration(evalOffset), grafanaRule.Data[0].RelativeTimeRange.To)
 				require.Equal(t, models.Duration(10*time.Minute+evalOffset), grafanaRule.Data[0].RelativeTimeRange.From)
 				require.Equal(t, util.Pointer(1), grafanaRule.MissingSeriesEvalsToResolve)
+
+				if promRule.Annotations != nil {
+					require.Equal(t, promRule.Annotations, grafanaRule.Annotations, tc.name)
+				} else {
+					require.Empty(t, grafanaRule.Annotations, tc.name)
+				}
 
 				originalRuleDefinition, err := yaml.Marshal(promRule)
 				require.NoError(t, err)
@@ -743,6 +749,105 @@ func TestPrometheusRulesToGrafana_KeepOriginalRuleDefinition(t *testing.T) {
 			} else {
 				require.Nil(t, grafanaGroup.Rules[0].Metadata.PrometheusStyleRule)
 			}
+		})
+	}
+}
+
+func TestPrometheusRulestoGrafana_TemplateConversion(t *testing.T) {
+	orgID := int64(1)
+	defaultInterval := 2 * time.Minute
+
+	testCases := []struct {
+		name           string
+		namespace      string
+		promRule       PrometheusRule
+		expLalbels     map[string]string
+		expAnnotations map[string]string
+		expectError    bool
+	}{
+		{
+			name: "rule without templates in labels and annotations",
+			promRule: PrometheusRule{
+				Alert: "alert-1",
+				Expr:  "cpu_usage > 80",
+				Labels: map[string]string{
+					"label-1": "label-value-1",
+				},
+				Annotations: map[string]string{
+					"annotation-1": "annotation-value-1",
+				},
+			},
+			expLalbels: map[string]string{
+				"label-1": "label-value-1",
+			},
+			expAnnotations: map[string]string{
+				"annotation-1": "annotation-value-1",
+			},
+			expectError: false,
+		},
+		{
+			name: "rule with templates in labels and annotations",
+			promRule: PrometheusRule{
+				Alert: "alert-1",
+				Expr:  "cpu_usage > 80",
+				Labels: map[string]string{
+					"label-1":               "label-value-1",
+					"label-simple-variable": "{{ .Values.Something }}",
+					"label-value-keep":      "{{ .Value.something }}",
+					"label-value-replace":   "{{ .Value }}",
+					"label-$value-replace":  "{{ $value }}",
+				},
+				Annotations: map[string]string{
+					"annotation-1":               "annotation-value-1",
+					"annotation-simple-variable": "{{ .Values.AlsoSomething }}",
+					"annotation-value-keep":      "{{ .Value.something }}",
+					"annotation-value-replace":   "{{ .Value }}",
+				},
+			},
+			expLalbels: map[string]string{
+				"label-1":               "label-value-1",
+				"label-simple-variable": "{{ .Values.Something }}",
+				"label-value-keep":      "{{ .Value.something }}",
+				"label-value-replace":   "{{ .Values.query.Value }}",
+				"label-$value-replace":  "{{ .Values.query.Value }}",
+			},
+			expAnnotations: map[string]string{
+				"annotation-1":               "annotation-value-1",
+				"annotation-simple-variable": "{{ .Values.AlsoSomething }}",
+				"annotation-value-keep":      "{{ .Value.something }}",
+				"annotation-value-replace":   "{{ .Values.query.Value }}",
+			},
+			expectError: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := Config{
+				DatasourceUID:   "datasource-uid",
+				DatasourceType:  datasources.DS_PROMETHEUS,
+				DefaultInterval: defaultInterval,
+			}
+			converter, err := NewConverter(cfg)
+			require.NoError(t, err)
+
+			promGroup := PrometheusRuleGroup{
+				Name:     "test-group-1",
+				Interval: prommodel.Duration(10 * time.Second),
+				Rules:    []PrometheusRule{tc.promRule},
+			}
+			grafanaGroup, err := converter.PrometheusRulesToGrafana(orgID, tc.namespace, promGroup)
+
+			if tc.expectError {
+				require.Error(t, err, tc.name)
+				return
+			}
+
+			require.NoError(t, err, tc.name)
+			require.Len(t, grafanaGroup.Rules, 1)
+
+			require.Equal(t, tc.expLalbels, grafanaGroup.Rules[0].Labels)
+			require.Equal(t, tc.expAnnotations, grafanaGroup.Rules[0].Annotations)
 		})
 	}
 }

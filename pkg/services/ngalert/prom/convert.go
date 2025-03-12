@@ -222,6 +222,26 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 	maps.Copy(labels, promGroup.Labels)
 	maps.Copy(labels, rule.Labels)
 
+	queryValueVar := fmt.Sprintf(".Values.%s.Value", queryRefID)
+	replacements := map[string]string{
+		".Value": queryValueVar,
+		"$value": queryValueVar,
+	}
+	r := NewVariableReplacer(replacements)
+
+	// Apply template conversion
+	err = r.Replace(labels)
+	if err != nil {
+		return models.AlertRule{}, err
+	}
+
+	annotations := make(map[string]string, len(rule.Annotations))
+	maps.Copy(annotations, rule.Annotations)
+	err = r.Replace(annotations)
+	if err != nil {
+		return models.AlertRule{}, err
+	}
+
 	originalRuleDefinition, err := yaml.Marshal(rule)
 	if err != nil {
 		return models.AlertRule{}, fmt.Errorf("failed to marshal original rule definition: %w", err)
@@ -235,7 +255,7 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 		Condition:    query[len(query)-1].RefID,
 		NoDataState:  p.cfg.NoDataState,
 		ExecErrState: p.cfg.ExecErrState,
-		Annotations:  rule.Annotations,
+		Annotations:  annotations,
 		Labels:       labels,
 		For:          forInterval,
 		RuleGroup:    promGroup.Name,
