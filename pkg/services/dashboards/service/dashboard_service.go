@@ -719,7 +719,10 @@ func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.C
 		return nil, err
 	}
 
-	dr.setDefaultFolderPermissions(ctx, dto, f, true)
+	// Only set default permissions if the Folder API Server is disabled.
+	if !dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
+		dr.setDefaultFolderPermissions(ctx, dto, f, true)
+	}
 	return f, nil
 }
 

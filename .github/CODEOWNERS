@@ -71,6 +71,7 @@
 /pkg/registry/apis/provisioning @grafana/grafana-git-ui-sync-team
 
 /apps/alerting/ @grafana/alerting-backend
+/apps/dashboard/ @grafana/grafana-app-platform-squad @grafana/dashboards-squad
 /apps/playlist/ @grafana/grafana-app-platform-squad
 /apps/investigations/ @fcjack @matryer @svennergr
 /apps/advisor/ @grafana/plugins-platform-backend
@@ -797,6 +798,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/remove-milestone.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/scripts/json-file-to-job-output.js @grafana/plugins-platform-frontend
 /.github/workflows/stale.yml @grafana/grafana-developer-enablement-squad
+/.github/workflows/storybook-verification.yml @grafana/grafana-frontend-platform
 /.github/workflows/update-changelog.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/update-make-docs.yml @grafana/docs-tooling
 /.github/workflows/scripts/kinds/verify-kinds.go @grafana/platform-monitoring
