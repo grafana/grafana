@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import classNames from 'classnames';
-import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
@@ -21,14 +20,6 @@ export function ResponsiveGridItemRenderer({ model }: ResponsiveGridItemProps) {
   const { activeLayoutItemRef } = layoutOrchestrator.useState();
   const activeLayoutItem = activeLayoutItemRef?.resolve();
   const isDragging = model === activeLayoutItem;
-
-  useEffect(() => {
-    // Compute and cache the grid item's bounding box.
-    // Don't re-calculate while an item is being dragged.
-    if (!activeLayoutItem) {
-      model.cachedBoundingBox = model.computeBoundingBox();
-    }
-  });
 
   const dragStyles =
     isDragging && layoutOrchestrator && model.cachedBoundingBox

@@ -149,21 +149,15 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
   }
 
   public cachedBoundingBox: Rect | undefined;
-  public computeBoundingBox(): Rect {
+  public computeBoundingBox() {
     const itemContainer = this.containerRef.current;
     if (!itemContainer || this.state.isHidden) {
       // We can't actually calculate the dimensions of the rendered grid item :(
       throw new Error('Unable to compute bounding box.');
     }
 
-    const { top, left, bottom, right } = itemContainer.getBoundingClientRect();
-
-    return {
-      top,
-      left,
-      bottom,
-      right,
-    };
+    this.cachedBoundingBox = itemContainer.getBoundingClientRect();
+    return this.cachedBoundingBox;
   }
 
   public distanceToPoint(point: Point): number {

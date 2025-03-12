@@ -52,7 +52,7 @@ export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<Resp
           display: currentLayoutIsActive && model.activeIndex !== undefined ? 'grid' : 'none',
         }}
       ></div>
-      {children.map((item, i) => {
+      {children.map((item) => {
         const Component = item.Component as ComponentType<ResponsiveGridItemProps>;
         // const Wrapper = isLazy ? LazyLoader : 'div';
 

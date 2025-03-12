@@ -98,6 +98,11 @@ export class ResponsiveGridLayout extends SceneObjectBase<ResponsiveGridLayoutSt
     e.preventDefault();
     e.stopPropagation();
 
+    // Refresh bounding boxes for all responsive grid items
+    for (const child of this.state.children) {
+      child.computeBoundingBox();
+    }
+
     this.layoutOrchestrator.onDragStart(e.nativeEvent, panel);
   };
 
@@ -142,7 +147,8 @@ export class ResponsiveGridLayout extends SceneObjectBase<ResponsiveGridLayoutSt
       const distance = gridItem.distanceToPoint(point);
       if (distance < minDistance && gridItem.cachedBoundingBox) {
         minDistance = distance;
-        closestRect = gridItem.cachedBoundingBox;
+        const { top, bottom, left, right } = gridItem.cachedBoundingBox;
+        closestRect = { top, bottom, left, right };
         closestIndex = i;
         // css grid rows/columns are 1-indexed
         closest = { row: curRow + 1, column: curColumn + 1 };
