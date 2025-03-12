@@ -13,15 +13,18 @@ import (
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
+	"github.com/blevesearch/bleve/v2/analysis/analyzer/keyword"
+	"github.com/blevesearch/bleve/v2/analysis/analyzer/standard"
 	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/blevesearch/bleve/v2/search"
 	"github.com/blevesearch/bleve/v2/search/query"
 	bleveSearch "github.com/blevesearch/bleve/v2/search/searcher"
 	index "github.com/blevesearch/bleve_index_api"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
+
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -117,7 +120,10 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	var index bleve.Index
 
 	build := true
-	mapper := getBleveMappings(fields)
+	mapper, err := getBleveMappings(fields)
+	if err != nil {
+		return nil, err
+	}
 
 	if size > b.opts.FileThreshold {
 		resourceDir := filepath.Join(b.opts.Root, key.Namespace,
@@ -257,6 +263,8 @@ type bleveIndex struct {
 
 // Write implements resource.DocumentIndex.
 func (b *bleveIndex) Write(v *resource.IndexableDocument) error {
+	v = v.UpdateCopyFields()
+
 	// remove references (for now!)
 	v.References = nil
 	if b.batch != nil {
@@ -291,32 +299,45 @@ func (b *bleveIndex) Flush() (err error) {
 	return err
 }
 
-func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.ListRepositoryObjectsRequest) (*resource.ListRepositoryObjectsResponse, error) {
+func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resource.ListManagedObjectsRequest) (*resource.ListManagedObjectsResponse, error) {
 	if req.NextPageToken != "" {
 		return nil, fmt.Errorf("next page not implemented yet")
 	}
-	if req.Name == "" {
-		return &resource.ListRepositoryObjectsResponse{
-			Error: resource.NewBadRequestError("empty repository name"),
+	if req.Kind == "" {
+		return &resource.ListManagedObjectsResponse{
+			Error: resource.NewBadRequestError("empty manager kind"),
+		}, nil
+	}
+	if req.Id == "" {
+		return &resource.ListManagedObjectsResponse{
+			Error: resource.NewBadRequestError("empty manager id"),
 		}, nil
 	}
 
+	q := bleve.NewBooleanQuery()
+	q.AddMust(&query.TermQuery{
+		Term:     req.Kind,
+		FieldVal: resource.SEARCH_FIELD_MANAGER_KIND,
+	})
+	q.AddMust(&query.TermQuery{
+		Term:     req.Id,
+		FieldVal: resource.SEARCH_FIELD_MANAGER_ID,
+	})
+
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
-		Query: &query.TermQuery{
-			Term:     req.Name,
-			FieldVal: resource.SEARCH_FIELD_REPOSITORY_NAME,
-		},
+		Query: q,
 		Fields: []string{
 			resource.SEARCH_FIELD_TITLE,
 			resource.SEARCH_FIELD_FOLDER,
-			resource.SEARCH_FIELD_REPOSITORY_NAME,
-			resource.SEARCH_FIELD_REPOSITORY_PATH,
-			resource.SEARCH_FIELD_REPOSITORY_HASH,
-			resource.SEARCH_FIELD_REPOSITORY_TIME,
+			resource.SEARCH_FIELD_MANAGER_KIND,
+			resource.SEARCH_FIELD_MANAGER_ID,
+			resource.SEARCH_FIELD_SOURCE_PATH,
+			resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+			resource.SEARCH_FIELD_SOURCE_TIME,
 		},
 		Sort: search.SortOrder{
 			&search.SortField{
-				Field: resource.SEARCH_FIELD_REPOSITORY_PATH,
+				Field: resource.SEARCH_FIELD_SOURCE_PATH,
 				Type:  search.SortFieldAsString,
 				Desc:  false,
 			},
@@ -347,6 +368,10 @@ func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.Li
 		if ok {
 			return intV
 		}
+		floatV, ok := v.(float64)
+		if ok {
+			return int64(floatV)
+		}
 		str, ok := v.(string)
 		if ok {
 			t, _ := time.Parse(time.RFC3339, str)
@@ -355,13 +380,13 @@ func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.Li
 		return 0
 	}
 
-	rsp := &resource.ListRepositoryObjectsResponse{}
+	rsp := &resource.ListManagedObjectsResponse{}
 	for _, hit := range found.Hits {
-		item := &resource.ListRepositoryObjectsResponse_Item{
+		item := &resource.ListManagedObjectsResponse_Item{
 			Object: &resource.ResourceKey{},
-			Hash:   asString(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_HASH]),
-			Path:   asString(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_PATH]),
-			Time:   asTime(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_TIME]),
+			Hash:   asString(hit.Fields[resource.SEARCH_FIELD_SOURCE_CHECKSUM]),
+			Path:   asString(hit.Fields[resource.SEARCH_FIELD_SOURCE_PATH]),
+			Time:   asTime(hit.Fields[resource.SEARCH_FIELD_SOURCE_TIME]),
 			Title:  asString(hit.Fields[resource.SEARCH_FIELD_TITLE]),
 			Folder: asString(hit.Fields[resource.SEARCH_FIELD_FOLDER]),
 		}
@@ -374,27 +399,32 @@ func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.Li
 	return rsp, nil
 }
 
-func (b *bleveIndex) CountRepositoryObjects(ctx context.Context) ([]*resource.CountRepositoryObjectsResponse_ResourceCount, error) {
+func (b *bleveIndex) CountManagedObjects(ctx context.Context) ([]*resource.CountManagedObjectsResponse_ResourceCount, error) {
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
 		Query: bleve.NewMatchAllQuery(),
 		Size:  0,
 		Facets: bleve.FacetsRequest{
-			"count": bleve.NewFacetRequest(resource.SEARCH_FIELD_REPOSITORY_NAME, 1000), // typically less then 5
+			"count": bleve.NewFacetRequest(resource.SEARCH_FIELD_MANAGED_BY, 1000), // typically less then 5
 		},
 	})
 	if err != nil {
 		return nil, err
 	}
-	vals := make([]*resource.CountRepositoryObjectsResponse_ResourceCount, 0)
+	vals := make([]*resource.CountManagedObjectsResponse_ResourceCount, 0)
 	f, ok := found.Facets["count"]
 	if ok && f.Terms != nil {
 		for _, v := range f.Terms.Terms() {
-			vals = append(vals, &resource.CountRepositoryObjectsResponse_ResourceCount{
-				Repository: v.Term,
-				Group:      b.key.Group,
-				Resource:   b.key.Resource,
-				Count:      int64(v.Count),
-			})
+			val := v.Term
+			idx := strings.Index(val, ":")
+			if idx > 0 {
+				vals = append(vals, &resource.CountManagedObjectsResponse_ResourceCount{
+					Kind:     val[0:idx],
+					Id:       val[idx+1:],
+					Group:    b.key.Group,
+					Resource: b.key.Resource,
+					Count:    int64(v.Count),
+				})
+			}
 		}
 	}
 	return vals, nil
@@ -590,12 +620,26 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 	// Add a text query
 	if req.Query != "" && req.Query != "*" {
 		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
-		// mimic the behavior of the sql search
-		query := strings.ToLower(req.Query)
-		if !strings.Contains(query, "*") {
-			query = "*" + query + "*"
-		}
-		queries = append(queries, bleve.NewWildcardQuery(query))
+
+		// There are multiple ways to match the query string to documents. The following queries are ordered by priority:
+
+		// Query 1: Match the exact query string
+		queryExact := bleve.NewMatchQuery(req.Query)
+		queryExact.SetBoost(10.0)
+		queryExact.Analyzer = keyword.Name // don't analyze the query input - treat it as a single token
+
+		// Query 2: Phrase query with standard analyzer
+		queryPhrase := bleve.NewMatchPhraseQuery(req.Query)
+		queryExact.SetBoost(5.0)
+		queryPhrase.Analyzer = standard.Name
+
+		// Query 3: Match query with standard analyzer
+		queryAnalyzed := bleve.NewMatchQuery(req.Query)
+		queryAnalyzed.Analyzer = standard.Name
+
+		// At least one of the queries must match
+		searchQuery := bleve.NewDisjunctionQuery(queryExact, queryAnalyzed, queryPhrase)
+		queries = append(queries, searchQuery)
 	}
 
 	switch len(queries) {
@@ -658,11 +702,18 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 	sorting := getSortFields(req)
 	searchrequest.SortBy(sorting)
 
-	// Always sort by *something*, otherwise the order is unstable
+	// When no sort fields are provided, sort by score if there is a query, otherwise sort by title
 	if len(sorting) == 0 {
-		searchrequest.Sort = append(searchrequest.Sort, &search.SortDocID{
-			Desc: false,
-		})
+		if req.Query != "" && req.Query != "*" {
+			searchrequest.Sort = append(searchrequest.Sort, &search.SortScore{
+				Desc: true,
+			})
+		} else {
+			searchrequest.Sort = append(searchrequest.Sort, &search.SortField{
+				Field: resource.SEARCH_FIELD_TITLE_PHRASE,
+				Desc:  false,
+			})
+		}
 	}
 
 	return searchrequest, nil
@@ -752,7 +803,7 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 		boolQuery.AddMustNot(mustNotQueries...)
 
 		// must still have a value
-		notEmptyQuery := bleve.NewWildcardQuery("*")
+		notEmptyQuery := bleve.NewMatchAllQuery()
 		boolQuery.AddMust(notEmptyQuery)
 
 		return boolQuery, nil

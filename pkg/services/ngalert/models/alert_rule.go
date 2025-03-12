@@ -266,7 +266,9 @@ func NewUserUID(requester interface{ GetIdentifier() string }) *UserUID {
 
 // AlertRule is the model for alert rules in unified alerting.
 type AlertRule struct {
-	ID              int64
+	ID int64
+	// Uniquely identifies alert rule across all organizations and time
+	GUID            string
 	OrgID           int64
 	Title           string
 	Condition       string
@@ -292,6 +294,11 @@ type AlertRule struct {
 	IsPaused             bool
 	NotificationSettings []NotificationSettings
 	Metadata             AlertRuleMetadata
+	// MissingSeriesEvalsToResolve specifies the number of consecutive evaluation intervals
+	// required before resolving an alert state (a dimension) when data is missing.
+	// If nil, alerts resolve after 2 missing evaluation intervals
+	// (i.e., resolution occurs during the second evaluation where data is absent).
+	MissingSeriesEvalsToResolve *int
 }
 
 type AlertRuleMetadata struct {
@@ -327,8 +334,8 @@ type AlertRuleWithOptionals struct {
 	AlertRule
 	// This parameter is to know if an optional API field was sent and, therefore, patch it with the current field from
 	// DB in case it was not sent.
-	HasPause    bool
-	HasMetadata bool
+	HasPause          bool
+	HasEditorSettings bool
 }
 
 // AlertsRulesBy is a function that defines the ordering of alert rules.
@@ -395,19 +402,18 @@ func WithoutInternalLabels() LabelOption {
 }
 
 func (alertRule *AlertRule) ImportedFromPrometheus() bool {
-	if alertRule.Metadata.PrometheusStyleRule == nil {
-		return false
-	}
-
-	return alertRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition != ""
+	_, err := alertRule.PrometheusRuleDefinition()
+	return err == nil
 }
 
-func (alertRule *AlertRule) PrometheusRuleDefinition() string {
-	if !alertRule.ImportedFromPrometheus() {
-		return ""
+func (alertRule *AlertRule) PrometheusRuleDefinition() (string, error) {
+	if alertRule.Metadata.PrometheusStyleRule != nil {
+		if alertRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition != "" {
+			return alertRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition, nil
+		}
 	}
 
-	return alertRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition
+	return "", fmt.Errorf("prometheus rule definition is missing")
 }
 
 // GetLabels returns the labels specified as part of the alert rule.
@@ -577,6 +583,18 @@ func (alertRule *AlertRule) GetGroupKey() AlertRuleGroupKey {
 	return AlertRuleGroupKey{OrgID: alertRule.OrgID, NamespaceUID: alertRule.NamespaceUID, RuleGroup: alertRule.RuleGroup}
 }
 
+// GetMissingSeriesEvalsToResolve returns the number of consecutive evaluation intervals
+// to wait before resolving an alert rule instance when its data is missing.
+// If not configured, it returns the default value (2), which means the alert
+// resolves after missing for two evaluation intervals.
+func (alertRule *AlertRule) GetMissingSeriesEvalsToResolve() int {
+	if alertRule.MissingSeriesEvalsToResolve == nil {
+		return 2 // default value
+	}
+
+	return *alertRule.MissingSeriesEvalsToResolve
+}
+
 // PreSave sets default values and loads the updated model for each alert query.
 func (alertRule *AlertRule) PreSave(timeNow func() time.Time, userUID *UserUID) error {
 	for i, q := range alertRule.Data {
@@ -658,6 +676,10 @@ func validateAlertRuleFields(rule *AlertRule) error {
 		return err
 	}
 
+	if rule.MissingSeriesEvalsToResolve != nil && *rule.MissingSeriesEvalsToResolve <= 0 {
+		return fmt.Errorf("%w: field `missing_series_evals_to_resolve` must be greater than 0", ErrAlertRuleFailedValidation)
+	}
+
 	return nil
 }
 
@@ -707,24 +729,26 @@ func (alertRule *AlertRule) Copy() *AlertRule {
 		return nil
 	}
 	result := AlertRule{
-		ID:              alertRule.ID,
-		OrgID:           alertRule.OrgID,
-		Title:           alertRule.Title,
-		Condition:       alertRule.Condition,
-		Updated:         alertRule.Updated,
-		UpdatedBy:       alertRule.UpdatedBy,
-		IntervalSeconds: alertRule.IntervalSeconds,
-		Version:         alertRule.Version,
-		UID:             alertRule.UID,
-		NamespaceUID:    alertRule.NamespaceUID,
-		RuleGroup:       alertRule.RuleGroup,
-		RuleGroupIndex:  alertRule.RuleGroupIndex,
-		NoDataState:     alertRule.NoDataState,
-		ExecErrState:    alertRule.ExecErrState,
-		For:             alertRule.For,
-		Record:          alertRule.Record,
-		IsPaused:        alertRule.IsPaused,
-		Metadata:        alertRule.Metadata,
+		ID:                          alertRule.ID,
+		GUID:                        alertRule.GUID,
+		OrgID:                       alertRule.OrgID,
+		Title:                       alertRule.Title,
+		Condition:                   alertRule.Condition,
+		Updated:                     alertRule.Updated,
+		UpdatedBy:                   alertRule.UpdatedBy,
+		IntervalSeconds:             alertRule.IntervalSeconds,
+		Version:                     alertRule.Version,
+		UID:                         alertRule.UID,
+		NamespaceUID:                alertRule.NamespaceUID,
+		RuleGroup:                   alertRule.RuleGroup,
+		RuleGroupIndex:              alertRule.RuleGroupIndex,
+		NoDataState:                 alertRule.NoDataState,
+		ExecErrState:                alertRule.ExecErrState,
+		For:                         alertRule.For,
+		Record:                      alertRule.Record,
+		IsPaused:                    alertRule.IsPaused,
+		Metadata:                    alertRule.Metadata,
+		MissingSeriesEvalsToResolve: alertRule.MissingSeriesEvalsToResolve,
 	}
 
 	if alertRule.DashboardUID != nil {
@@ -787,6 +811,7 @@ func ClearRecordingRuleIgnoredFields(rule *AlertRule) {
 	rule.Condition = ""
 	rule.For = 0
 	rule.NotificationSettings = nil
+	rule.MissingSeriesEvalsToResolve = nil
 }
 
 // GetAlertRuleByUIDQuery is the query for retrieving/deleting an alert rule by UID and organisation ID.
@@ -902,9 +927,10 @@ func (c Condition) IsValid() bool {
 
 // PatchPartialAlertRule patches `ruleToPatch` by `existingRule` following the rule that if a field of `ruleToPatch` is empty or has the default value, it is populated by the value of the corresponding field from `existingRule`.
 // There are several exceptions:
-// 1. Following fields are not patched and therefore will be ignored: AlertRule.ID, AlertRule.OrgID, AlertRule.Updated, AlertRule.Version, AlertRule.UID, AlertRule.DashboardUID, AlertRule.PanelID, AlertRule.Annotations and AlertRule.Labels
-// 2. There are fields that are patched together:
-//   - AlertRule.Condition and AlertRule.Data
+//  1. Following fields are not patched and therefore will be ignored: AlertRule.ID, AlertRule.OrgID, AlertRule.Updated, AlertRule.Version,
+//     AlertRule.UID, AlertRule.DashboardUID, AlertRule.PanelID, AlertRule.Annotations, AlertRule.Labels, AlertRule.Metadata (except for EditorSettings)
+//  2. There are fields that are patched together:
+//     - AlertRule.Condition and AlertRule.Data
 //
 // If either of the pair is specified, neither is patched.
 func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOptionals) {
@@ -936,12 +962,12 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOp
 	if !ruleToPatch.HasPause {
 		ruleToPatch.IsPaused = existingRule.IsPaused
 	}
+	if !ruleToPatch.HasEditorSettings {
+		ruleToPatch.Metadata.EditorSettings = existingRule.Metadata.EditorSettings
+	}
 
-	// Currently metadata contains only editor settings, so we can just copy it.
-	// If we add more fields to metadata, we might need to handle them separately,
-	// and/or merge or update their values.
-	if !ruleToPatch.HasMetadata {
-		ruleToPatch.Metadata = existingRule.Metadata
+	if ruleToPatch.GUID == "" {
+		ruleToPatch.GUID = existingRule.GUID
 	}
 }
 
@@ -1007,6 +1033,8 @@ type Record struct {
 	Metric string
 	// From contains a query RefID, indicating which expression node is the output of the recording rule.
 	From string
+	// TargetDatasourceUID is the data source to write the result of the recording rule.
+	TargetDatasourceUID string
 }
 
 func (r *Record) Fingerprint() data.Fingerprint {
@@ -1021,6 +1049,7 @@ func (r *Record) Fingerprint() data.Fingerprint {
 
 	writeString(r.Metric)
 	writeString(r.From)
+	writeString(r.TargetDatasourceUID)
 	return data.Fingerprint(h.Sum64())
 }
 

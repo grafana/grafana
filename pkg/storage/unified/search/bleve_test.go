@@ -7,20 +7,18 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
-	"github.com/grafana/grafana/pkg/services/user"
-
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -78,9 +76,8 @@ func TestBleveBackend(t *testing.T) {
 					Group:     "dashboard.grafana.app",
 					Resource:  "dashboards",
 				},
-				Title:       "aaa (dash)",
-				TitlePhrase: "aaa (dash)",
-				Folder:      "xxx",
+				Title:  "aaa (dash)",
+				Folder: "xxx",
 				Fields: map[string]any{
 					DASHBOARD_PANEL_TYPES:       []string{"timeseries", "table"},
 					DASHBOARD_ERRORS_TODAY:      25,
@@ -90,11 +87,14 @@ func TestBleveBackend(t *testing.T) {
 					utils.LabelKeyDeprecatedInternalID: "10", // nolint:staticcheck
 				},
 				Tags: []string{"aa", "bb"},
-				RepoInfo: &utils.ResourceRepositoryInfo{
-					Name:      "repo-1",
-					Path:      "path/to/aaa.json",
-					Hash:      "xyz",
-					Timestamp: asTimePointer(1609462800000), // 2021
+				Manager: &utils.ManagerProperties{
+					Kind:     utils.ManagerKindRepo,
+					Identity: "repo-1",
+				},
+				Source: &utils.SourceProperties{
+					Path:            "path/to/aaa.json",
+					Checksum:        "xyz",
+					TimestampMillis: 1609462800000, // 2021
 				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
@@ -106,9 +106,8 @@ func TestBleveBackend(t *testing.T) {
 					Group:     "dashboard.grafana.app",
 					Resource:  "dashboards",
 				},
-				Title:       "bbb (dash)",
-				TitlePhrase: "bbb (dash)",
-				Folder:      "xxx",
+				Title:  "bbb (dash)",
+				Folder: "xxx",
 				Fields: map[string]any{
 					DASHBOARD_PANEL_TYPES:       []string{"timeseries"},
 					DASHBOARD_ERRORS_TODAY:      40,
@@ -119,11 +118,14 @@ func TestBleveBackend(t *testing.T) {
 					"region":                           "east",
 					utils.LabelKeyDeprecatedInternalID: "11", // nolint:staticcheck
 				},
-				RepoInfo: &utils.ResourceRepositoryInfo{
-					Name:      "repo-1",
-					Path:      "path/to/bbb.json",
-					Hash:      "hijk",
-					Timestamp: asTimePointer(1640998800000), // 2022
+				Manager: &utils.ManagerProperties{
+					Kind:     utils.ManagerKindRepo,
+					Identity: "repo-1",
+				},
+				Source: &utils.SourceProperties{
+					Path:            "path/to/bbb.json",
+					Checksum:        "hijk",
+					TimestampMillis: 1640998800000, // 2022
 				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
@@ -134,12 +136,14 @@ func TestBleveBackend(t *testing.T) {
 					Group:     "dashboard.grafana.app",
 					Resource:  "dashboards",
 				},
-				Name:        "ccc",
-				Title:       "ccc (dash)",
-				TitlePhrase: "ccc (dash)",
-				Folder:      "zzz",
-				RepoInfo: &utils.ResourceRepositoryInfo{
-					Name: "repo2",
+				Name:   "ccc",
+				Title:  "ccc (dash)",
+				Folder: "zzz",
+				Manager: &utils.ManagerProperties{
+					Kind:     utils.ManagerKindRepo,
+					Identity: "repo2",
+				},
+				Source: &utils.SourceProperties{
 					Path: "path/in/repo2.yaml",
 				},
 				Fields: map[string]any{},
@@ -256,13 +260,15 @@ func TestBleveBackend(t *testing.T) {
 		require.Equal(t, 0, len(rsp.Results.Rows))
 
 		// Now look for repositories
-		found, err := index.ListRepositoryObjects(ctx, &resource.ListRepositoryObjectsRequest{
-			Name: "repo-1",
+		found, err := index.ListManagedObjects(ctx, &resource.ListManagedObjectsRequest{
+			Kind: "repo",
+			Id:   "repo-1",
 		})
 		require.NoError(t, err)
 		jj, err := json.MarshalIndent(found, "", "  ")
 		require.NoError(t, err)
 		fmt.Printf("%s\n", string(jj))
+		// NOTE "hash" -> "checksum" requires changing the protobuf
 		require.JSONEq(t, `{
 			"items": [
 				{
@@ -294,20 +300,22 @@ func TestBleveBackend(t *testing.T) {
 			]
 		}`, string(jj))
 
-		counts, err := index.CountRepositoryObjects(ctx)
+		counts, err := index.CountManagedObjects(ctx)
 		require.NoError(t, err)
 		jj, err = json.MarshalIndent(counts, "", "  ")
 		require.NoError(t, err)
 		fmt.Printf("%s\n", string(jj))
 		require.JSONEq(t, `[
 			{
-				"repository": "repo-1",
+				"kind": "repo",
+				"id": "repo-1",
 				"group": "dashboard.grafana.app",
 				"resource": "dashboards",
 				"count": 2
 			},
 			{
-				"repository": "repo2",
+				"kind": "repo",
+				"id": "repo2",
 				"group": "dashboard.grafana.app",
 				"resource": "dashboards",
 				"count": 1
@@ -332,13 +340,15 @@ func TestBleveBackend(t *testing.T) {
 					Group:     "folder.grafana.app",
 					Resource:  "folders",
 				},
-				Title:       "zzz (folder)",
-				TitlePhrase: "zzz (folder)",
-				RepoInfo: &utils.ResourceRepositoryInfo{
-					Name:      "repo-1",
-					Path:      "path/to/folder.json",
-					Hash:      "xxxx",
-					Timestamp: asTimePointer(300),
+				Title: "zzz (folder)",
+				Manager: &utils.ManagerProperties{
+					Kind:     utils.ManagerKindRepo,
+					Identity: "repo-1",
+				},
+				Source: &utils.SourceProperties{
+					Path:            "path/to/folder.json",
+					Checksum:        "xxxx",
+					TimestampMillis: 300,
 				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
@@ -349,8 +359,7 @@ func TestBleveBackend(t *testing.T) {
 					Group:     "folder.grafana.app",
 					Resource:  "folders",
 				},
-				Title:       "yyy (folder)",
-				TitlePhrase: "yyy (folder)",
+				Title: "yyy (folder)",
 				Labels: map[string]string{
 					"region": "west",
 				},
@@ -557,14 +566,6 @@ func TestGetSortFields(t *testing.T) {
 		sortFields := getSortFields(searchReq)
 		assert.Equal(t, []string{"description"}, sortFields)
 	})
-}
-
-func asTimePointer(milli int64) *time.Time {
-	if milli > 0 {
-		t := time.UnixMilli(milli)
-		return &t
-	}
-	return nil
 }
 
 var _ authlib.AccessClient = (*StubAccessClient)(nil)

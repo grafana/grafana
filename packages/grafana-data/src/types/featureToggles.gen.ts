@@ -36,7 +36,6 @@ export interface FeatureToggles {
   autoMigrateStatPanel?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
-  vizActions?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   grpcServer?: boolean;
@@ -255,4 +254,9 @@ export interface FeatureToggles {
   alertingRuleVersionHistoryRestore?: boolean;
   newShareReportDrawer?: boolean;
   rendererDisableAppPluginsPreload?: boolean;
+  assetSriChecks?: boolean;
+  alertRuleRestore?: boolean;
+  grafanaManagedRecordingRulesDatasources?: boolean;
+  inviteUserExperimental?: boolean;
+  extraLanguages?: boolean;
 }

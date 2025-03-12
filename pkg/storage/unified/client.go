@@ -51,7 +51,7 @@ type clientMetrics struct {
 }
 
 // This adds a UnifiedStorage client into the wire dependency tree
-func ProvideUnifiedStorageClient(opts *Options) (resource.ResourceClient, error) {
+func ProvideUnifiedStorageClient(opts *Options, storageMetrics *resource.StorageMetrics) (resource.ResourceClient, error) {
 	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	client, err := newClient(options.StorageOptions{
@@ -59,7 +59,7 @@ func ProvideUnifiedStorageClient(opts *Options) (resource.ResourceClient, error)
 		DataPath:     apiserverCfg.Key("storage_path").MustString(filepath.Join(opts.Cfg.DataPath, "grafana-apiserver")),
 		Address:      apiserverCfg.Key("address").MustString(""), // client address
 		BlobStoreURL: apiserverCfg.Key("blob_url").MustString(""),
-	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs)
+	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics)
 	if err == nil {
 		// Used to get the folder stats
 		client = federated.NewFederatedClient(
@@ -79,6 +79,7 @@ func newClient(opts options.StorageOptions,
 	reg prometheus.Registerer,
 	authzc types.AccessClient,
 	docs resource.DocumentBuilderSupplier,
+	storageMetrics *resource.StorageMetrics,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 	switch opts.StorageType {
@@ -134,7 +135,7 @@ func newClient(opts options.StorageOptions,
 		if err != nil {
 			return nil, err
 		}
-		server, err := sql.NewResourceServer(db, cfg, tracer, reg, authzc, searchOptions)
+		server, err := sql.NewResourceServer(db, cfg, tracer, reg, authzc, searchOptions, storageMetrics)
 		if err != nil {
 			return nil, err
 		}

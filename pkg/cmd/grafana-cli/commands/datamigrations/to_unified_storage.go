@@ -11,7 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 
 	authlib "github.com/grafana/authlib/types"
@@ -196,14 +196,14 @@ func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient
 		Reg:      prometheus.NewPedanticRegistry(),
 		Authzc:   authlib.FixedAccessClient(true), // always true!
 		Docs:     nil,                             // document supplier
-	})
+	}, nil)
 }
 
-func newParquetClient(file *os.File) (resource.BatchStoreClient, error) {
+func newParquetClient(file *os.File) (resource.BulkStoreClient, error) {
 	writer, err := parquet.NewParquetWriter(file)
 	if err != nil {
 		return nil, err
 	}
-	client := parquet.NewBatchResourceWriterClient(writer)
+	client := parquet.NewBulkResourceWriterClient(writer)
 	return client, nil
 }
