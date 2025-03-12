@@ -11,7 +11,7 @@ import { DashboardScene } from '../../scene/DashboardScene';
 import { SaveDashboardDrawer } from '../SaveDashboardDrawer';
 import { DashboardChangeInfo } from '../shared';
 
-import { SaveProvisionedDashboard, Props } from './SaveProvisionedDashboard';
+import { SaveProvisionedDashboard, SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
 import * as hooks from './hooks';
 
 jest.mock('@grafana/runtime', () => {
@@ -103,7 +103,7 @@ jest.mock('../SaveDashboardForm', () => {
   };
 });
 
-function setup(props: Partial<Props> = {}) {
+function setup(props: Partial<SaveProvisionedDashboardProps> = {}) {
   const user = userEvent.setup();
 
   // Create a minimal dashboard model for testing
@@ -114,7 +114,7 @@ function setup(props: Partial<Props> = {}) {
     schemaVersion: 36,
   };
 
-  const defaultProps: Props = {
+  const defaultProps: SaveProvisionedDashboardProps = {
     dashboard: {
       useState: () => ({
         meta: { folderUid: 'folder-uid', slug: 'test-dashboard' },
