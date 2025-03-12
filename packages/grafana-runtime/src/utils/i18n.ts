@@ -13,6 +13,6 @@ export let useT: UseTHook = () => {
   };
 };
 
-export function setUseTHook(useT: UseTHook) {
-  useT = useT;
+export function setUseTHook(useTParam: UseTHook) {
+  useT = useTParam;
 }
