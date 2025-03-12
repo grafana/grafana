@@ -1,7 +1,7 @@
 import { StoryFn } from '@storybook/react';
 
 import { GraphSeriesXY, FieldType, dateTime, FieldColorModeId } from '@grafana/data';
-import { LegendDisplayMode } from '@grafana/schema';
+import { LegendDisplayMode, LegendPlacement } from '@grafana/schema';
 
 import { GraphWithLegend, GraphWithLegendProps } from './GraphWithLegend';
 
@@ -136,5 +136,5 @@ WithLegend.args = {
   timeZone: 'browser',
   width: 600,
   height: 300,
-  placement: 'bottom',
+  placement: LegendPlacement.Bottom,
 };
