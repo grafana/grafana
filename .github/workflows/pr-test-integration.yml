@@ -30,6 +30,7 @@ jobs:
           restore-keys: |
             go-test-cache-${{ github.base_ref }}-sqlite
             go-test-cache-main-sqlite
+          path: /home/runner/.cache/go-build
       - run: |
           make gen-go
           go test -tags=sqlite -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
