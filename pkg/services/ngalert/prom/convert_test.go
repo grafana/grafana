@@ -267,8 +267,6 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				maps.Copy(expectedLabels, promRule.Labels)
 				require.Equal(t, expectedLabels, grafanaRule.Labels, tc.name)
 
-				require.Equal(t, promRule.Annotations, grafanaRule.Annotations, tc.name)
-
 				evalOffset := time.Duration(0)
 				if tc.config.EvaluationOffset != nil {
 					evalOffset = *tc.config.EvaluationOffset
@@ -808,16 +806,103 @@ func TestPrometheusRulestoGrafana_TemplateConversion(t *testing.T) {
 				"label-1":               "label-value-1",
 				"label-simple-variable": "{{ .Values.Something }}",
 				"label-value-keep":      "{{ .Value.something }}",
-				"label-value-replace":   "{{ .Values.query.Value }}",
-				"label-$value-replace":  "{{ .Values.query.Value }}",
+				"label-value-replace":   "{{.Values.query.Value}}",
+				"label-$value-replace":  "{{.Values.query.Value}}",
 			},
 			expAnnotations: map[string]string{
 				"annotation-1":               "annotation-value-1",
 				"annotation-simple-variable": "{{ .Values.AlsoSomething }}",
 				"annotation-value-keep":      "{{ .Value.something }}",
-				"annotation-value-replace":   "{{ .Values.query.Value }}",
+				"annotation-value-replace":   "{{.Values.query.Value}}",
 			},
 			expectError: false,
+		},
+		{
+			name: "rule with complex template control structures",
+			promRule: PrometheusRule{
+				Alert: "complex-alert",
+				Expr:  "rate(errors[5m]) > 0.5",
+				Labels: map[string]string{
+					"severity":      "{{ if gt .Value 0.9 }}critical{{ else if gt .Value 0.5 }}warning{{ else }}info{{ end }}",
+					"dynamic_label": `{{ if eq .Labels.environment "production" }}prod-alert{{ else }}test-alert{{ end }}`,
+				},
+				Annotations: map[string]string{
+					"summary":     "Error rate is {{ .Value | printf \"%.2f\" }}",
+					"description": "{{ if gt .Value 0.9 }}Critical{{ else }}Warning{{ end }}: Error rate exceeded threshold (current value: {{ .Value }})",
+				},
+			},
+			expLalbels: map[string]string{
+				"severity":      "{{if gt .Values.query.Value 0.9}}critical{{else}}{{if gt .Values.query.Value 0.5}}warning{{else}}info{{end}}{{end}}",
+				"dynamic_label": `{{ if eq .Labels.environment "production" }}prod-alert{{ else }}test-alert{{ end }}`,
+			},
+			expAnnotations: map[string]string{
+				"summary":     "Error rate is {{.Values.query.Value | printf \"%.2f\"}}",
+				"description": "{{if gt .Values.query.Value 0.9}}Critical{{else}}Warning{{end}}: Error rate exceeded threshold (current value: {{.Values.query.Value}})",
+			},
+			expectError: false,
+		},
+		{
+			name: "summary-description-runbook",
+			promRule: PrometheusRule{
+				Alert: "InstanceDown",
+				Expr:  "up == 0",
+				For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+				Labels: map[string]string{
+					"severity": "critical",
+				},
+				Annotations: map[string]string{
+					"summary":     "Instance {{ $labels.instance }} down",
+					"description": "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 5 minutes. Current value: {{ .Value }}",
+					"dashboard":   "https://grafana.example.org/d/abc123/dashboard?var-instance={{ $labels.instance }}&var-job={{ $labels.job }}",
+					"runbook":     "https://runbooks.example.org/alerts/instance_down.md",
+				},
+			},
+			expLalbels: map[string]string{
+				"severity": "critical",
+			},
+			expAnnotations: map[string]string{
+				"summary":     "Instance {{ $labels.instance }} down",
+				"description": "{{$labels.instance}} of job {{$labels.job}} has been down for more than 5 minutes. Current value: {{.Values.query.Value}}",
+				"dashboard":   "https://grafana.example.org/d/abc123/dashboard?var-instance={{ $labels.instance }}&var-job={{ $labels.job }}",
+				"runbook":     "https://runbooks.example.org/alerts/instance_down.md",
+			},
+			expectError: false,
+		},
+		// Test mixing .Value and $value in the same template
+		{
+			name: "mixed variable styles",
+			promRule: PrometheusRule{
+				Alert: "mixed-vars",
+				Expr:  "rate(errors[5m]) > 0.5",
+				Labels: map[string]string{
+					"severity": "warning",
+				},
+				Annotations: map[string]string{
+					"description": "Error rate is high. Current value: {{ .Value }}. Formatted: {{ $value | printf \"%.2f\" }}",
+				},
+			},
+			expLalbels: map[string]string{
+				"severity": "warning",
+			},
+			expAnnotations: map[string]string{
+				"description": "Error rate is high. Current value: {{.Values.query.Value}}. Formatted: {{.Values.query.Value | printf \"%.2f\"}}",
+			},
+			expectError: false,
+		},
+		// Test with invalid template syntax
+		{
+			name: "invalid template syntax",
+			promRule: PrometheusRule{
+				Alert: "syntax-error",
+				Expr:  "up == 0",
+				Labels: map[string]string{
+					"severity": "critical",
+				},
+				Annotations: map[string]string{
+					"description": "This template has a syntax error: {{ .Value ",
+				},
+			},
+			expectError: true,
 		},
 	}
 

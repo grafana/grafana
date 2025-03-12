@@ -221,7 +221,13 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 	labels := make(map[string]string, len(rule.Labels)+len(promGroup.Labels))
 	maps.Copy(labels, promGroup.Labels)
 	maps.Copy(labels, rule.Labels)
+	annotations := make(map[string]string, len(rule.Annotations))
+	maps.Copy(annotations, rule.Annotations)
 
+	// In Prometheus $value and .Value return the query result,
+	// but in Grafana it's a string with all query node results.
+	// To make it work in Grafana we need to replace $value and .Value
+	// with its Grafana equivalent: .Values.<queryRefID>.Value
 	queryValueVar := fmt.Sprintf(".Values.%s.Value", queryRefID)
 	replacements := map[string]string{
 		".Value": queryValueVar,
@@ -230,15 +236,10 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 	r := NewVariableReplacer(replacements)
 
 	// Apply template conversion
-	err = r.Replace(labels)
-	if err != nil {
+	if err := r.Replace(labels); err != nil {
 		return models.AlertRule{}, err
 	}
-
-	annotations := make(map[string]string, len(rule.Annotations))
-	maps.Copy(annotations, rule.Annotations)
-	err = r.Replace(annotations)
-	if err != nil {
+	if err := r.Replace(annotations); err != nil {
 		return models.AlertRule{}, err
 	}
 
