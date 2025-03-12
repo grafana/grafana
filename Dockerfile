@@ -60,7 +60,7 @@ WORKDIR /tmp/grafana
 
 COPY go.* ./
 COPY .bingo .bingo
-COPY .citools .citools
+COPY .citools/bra .citools/bra
 
 # Include vendored dependencies
 COPY pkg/util/xorm pkg/util/xorm

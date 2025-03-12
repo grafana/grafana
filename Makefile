@@ -235,10 +235,8 @@ build-plugin-go: ## Build decoupled plugins
 build: build-go build-js ## Build backend and frontend.
 
 .PHONY: run
-run: $(BRA) ## Build and run web server on filesystem changes. See /.bra.toml for configuration.
-	$(BRA) run
-#run: ## Build and run web server on filesystem changes. See /.bra.toml for configuration.
-	#$(GO) tool bra run
+run: ## Build and run web server on filesystem changes. See /.bra.toml for configuration.
+	$(GO) tool bra run
 
 .PHONY: run-go
 run-go: ## Build and run web server immediately.
