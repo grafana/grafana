@@ -4,7 +4,7 @@ import { PromOperationId, PromVisualQuery } from './types';
 
 describe('buildVisualQueryFromString', () => {
   describe('info function support', () => {
-    it('should parse info function properly', () => {
+    it('should throw error when trying to parse info function', () => {
       expect(
         buildVisualQueryFromString(
           'sum by (cluster, sdk_language) ( info( rate(server_req_dur_sec_count{instance="the-instance"}[2m]), {sdk_language="go"} ) )'
@@ -39,7 +39,13 @@ describe('buildVisualQueryFromString', () => {
             },
           ],
         },
-        errors: [],
+        errors: [
+          {
+            from: 33,
+            text: 'Query parsing is ambiguous.',
+            to: 121,
+          },
+        ],
       });
     });
   });
