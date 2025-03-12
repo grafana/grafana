@@ -1,10 +1,11 @@
 import { GetRepositoryFilesResponse, GetResourceStatsResponse, RepositoryViewList } from '../api';
 
 export type Target = 'instance' | 'folder';
+export type Operation = 'pull' | 'migrate';
 
 export interface ModeOption {
   target: Target;
-  operation: 'pull' | 'migrate';
+  operation: Operation;
   label: string;
   description: string;
   disabledReason?: string;
@@ -19,7 +20,6 @@ export interface SystemState {
   folderConnected?: boolean;
 }
 
-// possible values
 const migrateInstance: ModeOption = {
   target: 'instance',
   operation: 'migrate',
@@ -50,7 +50,7 @@ export function getState(
   const state: SystemState = {
     loading,
     resourceCount: 0,
-    fileCount: files?.items?.length ?? 0,
+    fileCount: 0,
     actions: [],
     disabled: [],
   };
@@ -64,6 +64,15 @@ export function getState(
       }
       if (v.target === 'instance') {
         state.folderConnected = true;
+      }
+    });
+  }
+
+  if (files?.items) {
+    files.items.forEach((v) => {
+      const p = v.path ?? '';
+      if (p.endsWith('.json') || p.endsWith('.yaml')) {
+        state.fileCount++;
       }
     });
   }

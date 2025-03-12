@@ -118,8 +118,15 @@ export function WizardContent({
           console.log('Error (will be rendered inline)', rsp);
           return;
         }
-        // Navigate after successful save
-        handleNext();
+
+        // Fill in the k8s name from the initial POST response
+        const name = rsp.data?.metadata?.name;
+        if (name?.length) {
+          setValue('repositoryName', name);
+          handleNext(); // Navigate after successful save
+        } else {
+          console.error('Saved without a name', rsp);
+        }
       } catch (error) {
         console.error('Repository connection failed:', error);
         handleStatusChange(false);
@@ -182,7 +189,12 @@ export function WizardContent({
       <div className={styles.content}>
         {activeStep === 'connection' && <ConnectStep />}
         {activeStep === 'bootstrap' && (
-          <BootstrapStep onOptionSelect={onOptionSelect} onStepUpdate={handleStepUpdate} settingsData={settingsData} />
+          <BootstrapStep
+            onOptionSelect={onOptionSelect}
+            onStepUpdate={handleStepUpdate}
+            settingsData={settingsData}
+            repoName={repoName!}
+          />
         )}
         {activeStep === 'migrate' && requiresMigration && <MigrateStep onStepUpdate={handleStepUpdate} />}
         {activeStep === 'pull' && !requiresMigration && <PullStep onStepUpdate={handleStepUpdate} />}

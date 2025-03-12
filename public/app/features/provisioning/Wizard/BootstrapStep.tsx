@@ -27,9 +27,10 @@ interface Props {
   onOptionSelect: (requiresMigration: boolean) => void;
   onStepUpdate: (status: StepStatus, error?: string) => void;
   settingsData: RepositoryViewList | undefined;
+  repoName: string;
 }
 
-export function BootstrapStep({ onOptionSelect, onStepUpdate, settingsData }: Props) {
+export function BootstrapStep({ onOptionSelect, onStepUpdate, settingsData, repoName }: Props) {
   const {
     register,
     control,
@@ -38,12 +39,10 @@ export function BootstrapStep({ onOptionSelect, onStepUpdate, settingsData }: Pr
     formState: { errors },
   } = useFormContext<WizardFormData>();
 
-  const currentRepoName = watch('repositoryName');
   const selectedTarget = watch('repository.sync.target');
 
   const resourceStats = useGetResourceStatsQuery();
-  const filesQuery = useGetRepositoryFilesQuery({ name: currentRepoName || '' }, { skip: !currentRepoName });
-
+  const filesQuery = useGetRepositoryFilesQuery({ name: repoName });
   const [selectedOption, setSelectedOption] = useState<ModeOption | null>(null);
 
   const loading = useMemo(() => {
@@ -51,7 +50,7 @@ export function BootstrapStep({ onOptionSelect, onStepUpdate, settingsData }: Pr
   }, [resourceStats.isLoading, filesQuery.isLoading]);
 
   const state = useMemo(() => {
-    const v = getState(loading, currentRepoName ?? '', settingsData, resourceStats.data, filesQuery.data);
+    const v = getState(loading, repoName, settingsData, filesQuery.data, resourceStats.data);
     if (v.actions.length) {
       const first = v.actions[0];
       setSelectedOption(first);
@@ -61,7 +60,7 @@ export function BootstrapStep({ onOptionSelect, onStepUpdate, settingsData }: Pr
     return v;
   }, [
     loading,
-    currentRepoName,
+    repoName,
     settingsData,
     resourceStats.data,
     filesQuery.data,
@@ -126,58 +125,44 @@ export function BootstrapStep({ onOptionSelect, onStepUpdate, settingsData }: Pr
           name="repository.sync.target"
           control={control}
           defaultValue={undefined}
-          render={({ field }) => (
+          render={() => (
             <>
-              {state.actions.map((action, index) => {
-                //handleOptionSelect
-
-                //   <BootstrapOptionCard
-                //   option={option}
-                //   isSelected={isSelected}
-                //   optionState={optionState}
-                //   index={index}
-                //   onSelect={onOptionSelect}
-                //   onChange={field.onChange}
-                // />
-                return (
-                  <Card
-                    key={`${action.target}-${action.operation}`}
-                    isSelected={action === selectedOption}
-                    onClick={() => {
-                      handleOptionSelect(action);
-                    }}
-                    autoFocus={index === 0}
-                  >
-                    <Card.Heading>
-                      <Text color="primary" element="h4">
-                        {action.label}
-                      </Text>
-                    </Card.Heading>
-                    <Card.Description>{action.description}</Card.Description>
-                  </Card>
-                );
-              })}
+              {state.actions.map((action, index) => (
+                <Card
+                  key={`${action.target}-${action.operation}`}
+                  isSelected={action === selectedOption}
+                  onClick={() => {
+                    handleOptionSelect(action);
+                  }}
+                  autoFocus={index === 0}
+                >
+                  <Card.Heading>
+                    <Text color="primary" element="h4">
+                      {action.label}
+                    </Text>
+                  </Card.Heading>
+                  <Card.Description>{action.description}</Card.Description>
+                </Card>
+              ))}
             </>
           )}
         />
 
         {state.disabled.map((action) => (
-          <Box paddingLeft={2} paddingRight={2}>
-            <Tooltip content={action.disabledReason || ''} placement="top">
-              <div style={{ pointerEvents: 'auto' }}>
-                <div style={{ pointerEvents: 'none' }}>
-                  <Card disabled={true} tabIndex={-1}>
-                    <Card.Heading>
-                      <Stack direction="row" alignItems="center" gap={2}>
-                        <Text color="secondary">{action.label}</Text>
-                        <Badge color="blue" text="Not available" icon="info" />
-                      </Stack>
-                    </Card.Heading>
-                    <Card.Description>{action.description}</Card.Description>
-                  </Card>
-                </div>
+          <Box paddingLeft={2} paddingRight={2} key={`${action.target}-${action.operation}`}>
+            <div style={{ pointerEvents: 'auto' }}>
+              <div style={{ pointerEvents: 'none' }}>
+                <Card disabled={true} tabIndex={-1}>
+                  <Card.Heading>
+                    <Stack direction="row" alignItems="center" gap={2}>
+                      <Text color="secondary">{action.label}</Text>
+                      <Badge color="blue" text="Not available" icon="info" />
+                    </Stack>
+                  </Card.Heading>
+                  <Card.Description>{action.disabledReason ?? action.description}</Card.Description>
+                </Card>
               </div>
-            </Tooltip>
+            </div>
           </Box>
         ))}
 
