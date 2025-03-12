@@ -45,7 +45,7 @@ import {
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
 import { setPluginPage } from '@grafana/runtime/src/components/PluginPage';
-import { setUseTHook } from '@grafana/runtime/src/unstable';
+import { setUseTranslateHook } from '@grafana/runtime/src/unstable';
 import config, { updateConfig } from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -254,7 +254,7 @@ export class GrafanaApp {
 
       setReturnToPreviousHook(useReturnToPreviousInternal);
       setChromeHeaderHeightHook(useChromeHeaderHeight);
-      setUseTHook(useTranslateInternal);
+      setUseTranslateHook(useTranslateInternal);
 
       if (config.featureToggles.crashDetection) {
         initializeCrashDetection();
