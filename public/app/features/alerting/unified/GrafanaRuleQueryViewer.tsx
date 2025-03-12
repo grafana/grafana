@@ -3,7 +3,7 @@ import { keyBy, startCase, uniqueId } from 'lodash';
 import * as React from 'react';
 
 import { DataSourceInstanceSettings, GrafanaTheme2, PanelData, urlUtil } from '@grafana/data';
-import { secondsToHms } from '@grafana/data/src/datetime/rangeutil';
+import { secondsToHms } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { Preview } from '@grafana/sql/src/components/visual-query-builder/Preview';
