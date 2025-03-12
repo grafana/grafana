@@ -1,5 +1,3 @@
-import { createRef } from 'react';
-
 import {
   SceneObjectState,
   SceneObjectBase,
@@ -26,16 +24,12 @@ interface LayoutOrchestratorState extends SceneObjectState {
 export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState> implements DashboardLayoutManager {
   public isDashboardLayoutManager: true = true;
 
-  /**
-   * Ref to the div containing the dropzone placeholder/preview.
-   * Needed for updating css transform without causing react to re-render.
-   */
-  public placeholderRef = createRef<HTMLDivElement>();
-
   public descriptor: Readonly<LayoutRegistryItem<{}>> = this.state.manager.descriptor;
 
+  /** Offset from top-left corner of drag handle. */
   public dragOffset = { top: 0, left: 0 };
-  /** Used in `SceneCSSGridLayout`'s `onPointerDown` method */
+
+  /** Used in `ResponsiveGridLayout`'s `onPointerDown` method */
   public onDragStart = (e: PointerEvent, panel: VizPanel) => {
     const closestLayoutItem = closestOfType(panel, isDashboardLayoutItem);
     if (!closestLayoutItem) {
@@ -52,10 +46,10 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
     document.body.classList.add('dragging-active');
   };
 
-  /** Called every tick while a panel is actively being dragged */
-
+  /** The drop zone closest to the current mouse position while dragging. */
   public activeDropZone: (DropZone & { layout: SceneObjectRef<SceneLayout2> }) | undefined;
 
+  /** Called every tick while a panel is actively being dragged */
   public onDrag = (e: PointerEvent) => {
     const layoutItemContainer = this.state.activeLayoutItemRef?.resolve().containerRef.current;
     if (!layoutItemContainer) {
@@ -64,21 +58,13 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
     }
 
     const cursorPos: Point = { x: e.clientX, y: e.clientY };
-    // layoutItemContainer.style.position = 'fixed';
-    // layoutItemContainer.style.top = '0';
-    // layoutItemContainer.style.left = '0';
-    // layoutItemContainer.style.translate = `${-this.dragOffset.left}px ${-this.dragOffset.top}px`;
+
     layoutItemContainer.style.setProperty('--x-pos', `${cursorPos.x}px`);
     layoutItemContainer.style.setProperty('--y-pos', `${cursorPos.y}px`);
-    // this.layoutItemDragTransform = `translate(${cursorPos.x}px, ${cursorPos.y}px)`;
     const closestDropZone = this.findClosestDropZone(cursorPos);
     if (!dropZonesAreEqual(this.activeDropZone, closestDropZone)) {
-      console.log('Entered new drop zone!');
-      console.log(closestDropZone);
       this.activeDropZone = closestDropZone;
-      // update placeholder width/height
-      if (this.activeDropZone && this.placeholderRef.current) {
-        console.log('Updating placeholder dimensions');
+      if (this.activeDropZone) {
         this.setState({
           placeholderSize: {
             top: this.activeDropZone.top,
@@ -102,15 +88,8 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
     document.body.classList.remove('dragging-active');
 
     const activeLayoutItem = this.state.activeLayoutItemRef?.resolve();
+    const activeLayoutItemContainer = activeLayoutItem?.containerRef.current;
     const targetLayout = this.activeDropZone?.layout.resolve();
-    // clear inline styles
-    activeLayoutItem?.containerRef.current?.removeAttribute('style');
-
-    this.setState({
-      activeLayoutItemRef: undefined,
-      placeholderSize: undefined,
-    });
-    this.activeDropZone = undefined;
 
     if (!activeLayoutItem) {
       console.error('No active layout item');
@@ -121,6 +100,12 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
     }
 
     this.moveLayoutItem(activeLayoutItem, targetLayout);
+    this.setState({
+      activeLayoutItemRef: undefined,
+      placeholderSize: undefined,
+    });
+    this.activeDropZone = undefined;
+    activeLayoutItemContainer?.removeAttribute('style');
   };
 
   /** Moves layoutItem from its current layout to targetLayout to the location of the current placeholder.
@@ -201,7 +186,7 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
 
     return (
       <>
-        <DropZonePlaceholder ref={model.placeholderRef} width={width} height={height} top={top} left={left} />
+        <DropZonePlaceholder width={width} height={height} top={top} left={left} />
         <model.state.manager.Component model={manager} />
       </>
     );

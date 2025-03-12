@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import classNames from 'classnames';
-import { forwardRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Portal, useStyles2 } from '@grafana/ui';
@@ -12,24 +11,20 @@ interface DropZonePlaceholderProps {
   left: number;
 }
 
-export const DropZonePlaceholder = forwardRef<HTMLDivElement, DropZonePlaceholderProps>(
-  ({ width, height, top, left }, ref) => {
-    const styles = useStyles2(getStyles);
-    // console.log(`DropZonePlaceHolder: w: ${width}, h: ${height}, l: ${left}, t: ${top}`);
+export const DropZonePlaceholder = ({ width, height, top, left }: DropZonePlaceholderProps) => {
+  const styles = useStyles2(getStyles);
 
-    return (
-      <Portal>
-        <div
-          className={classNames(styles.placeholder, {
-            [styles.visible]: width > 0 && height > 0,
-          })}
-          style={{ width, height, transform: `translate(${left}px, ${top}px)` }}
-          ref={ref}
-        ></div>
-      </Portal>
-    );
-  }
-);
+  return (
+    <Portal>
+      <div
+        className={classNames(styles.placeholder, {
+          [styles.visible]: width > 0 && height > 0,
+        })}
+        style={{ width, height, transform: `translate(${left}px, ${top}px)` }}
+      ></div>
+    </Portal>
+  );
+};
 
 const getStyles = (theme: GrafanaTheme2) => ({
   placeholder: css({
@@ -41,17 +36,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     pointerEvents: 'none',
     background: theme.colors.primary.transparent,
     boxShadow: `0 0 4px ${theme.colors.primary.border}`,
-    '@keyframes activate': {
-      '0%': {
-        transition: 'unset',
-      },
-      '100%': {
-        transition: 'transform 150ms ease',
-      },
-    },
-    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-      animation: '0s linear 151ms 1 normal forwards running activate',
-    },
   }),
   visible: css({
     visibility: 'visible',

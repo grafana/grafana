@@ -1,4 +1,4 @@
-import { CSSProperties, PointerEvent } from 'react';
+import { createRef, CSSProperties, PointerEvent } from 'react';
 
 import { SceneObject, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 
@@ -7,7 +7,7 @@ import { DropZone, getClosest, Point, Rect, SceneLayout2 } from '../layout-manag
 import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
-import { ResponsiveGridRenderer } from './ResponsiveGridLayoutRenderer';
+import { ResponsiveGridLayoutRenderer } from './ResponsiveGridLayoutRenderer';
 
 export interface ResponsiveGridLayoutState extends SceneObjectState, ResponsiveGridLayoutOptions {
   children: ResponsiveGridItem[];
@@ -51,7 +51,7 @@ export interface ResponsiveGridLayoutOptions {
 export class ResponsiveGridLayout extends SceneObjectBase<ResponsiveGridLayoutState> implements SceneLayout2 {
   public layoutOrchestrator: LayoutOrchestrator | undefined;
 
-  public static Component = ResponsiveGridRenderer;
+  public static Component = ResponsiveGridLayoutRenderer;
 
   public constructor(state: Partial<ResponsiveGridLayoutState>) {
     super({
@@ -86,6 +86,7 @@ export class ResponsiveGridLayout extends SceneObjectBase<ResponsiveGridLayoutSt
     return { onDragStart: this.onPointerDown };
   };
 
+  public containerRef = createRef<HTMLDivElement>();
   public onPointerDown = (e: PointerEvent, panel: VizPanel) => {
     // const noContainer = !this.container;
     const cannotDrag = this.cannotDrag(e.target);
@@ -117,7 +118,11 @@ export class ResponsiveGridLayout extends SceneObjectBase<ResponsiveGridLayoutSt
     return this.container;
   }
 
-  public activeOrder: number | undefined;
+  public activeIndex: number | undefined;
+  public activeGridCell = { row: 1, column: 1 };
+  public columnCount = 1;
+  // maybe not needed?
+  public rowCount = 1;
 
   /**
    * Find the drop zone in this layout closest to the provided `point`.
@@ -129,40 +134,25 @@ export class ResponsiveGridLayout extends SceneObjectBase<ResponsiveGridLayoutSt
     let closestRect: Rect = { top: 0, bottom: 0, left: 0, right: 0 };
 
     let closestIndex: number | undefined;
+    let closest = { row: 1, column: 1 };
     this.state.children.forEach((gridItem, i) => {
+      let curColumn = i % this.columnCount;
+      let curRow = Math.floor(i / this.columnCount);
       const distance = gridItem.distanceToPoint(point);
       if (distance < minDistance && gridItem.cachedBoundingBox) {
         minDistance = distance;
         closestRect = gridItem.cachedBoundingBox;
         closestIndex = i;
+        // css grid rows/columns are 1-indexed
+        closest = { row: curRow + 1, column: curColumn + 1 };
       }
     });
 
-    this.activeOrder = closestIndex;
+    this.activeIndex = closestIndex;
+    this.activeGridCell = closest;
 
     return { ...closestRect, distanceToPoint: minDistance };
   }
-
-  // public calculateDropZones() {
-  //   if (!this.container) {
-  //     return [];
-  //   }
-
-  //   const visibleBoundingBoxes = this.state.children
-  //     .map((layoutItem) => layoutItem.cachedBoundingBox)
-  //     .filter((layoutItem) => layoutItem !== undefined);
-
-  //   // If there are no visible children, temporarily add one to calculate dimensions
-  //   if (!visibleBoundingBoxes.length) {
-  //     const child = this.container.appendChild(document.createElement('div'));
-  //     child.setAttribute('data-order', '99999');
-  //     const gridCells = calculateGridCells(this.container).filter((c) => c.order >= 0);
-  //     this.container.removeChild(child);
-  //     return gridCells;
-  //   }
-
-  //   return calculateGridCells(this.container).filter((c) => c.order >= 0);
-  // }
 
   importLayoutItem(layoutItem: DashboardLayoutItem): void {
     const layoutItemIR = layoutItem.toIntermediate();
@@ -171,11 +161,13 @@ export class ResponsiveGridLayout extends SceneObjectBase<ResponsiveGridLayoutSt
     layoutItemIR.body.clearParent();
 
     const newLayoutItem = new ResponsiveGridItem({ body: layoutItemIR.body });
-    layoutChildren.splice(this.activeOrder ?? 0, 0, newLayoutItem);
+    layoutChildren.splice(this.activeIndex ?? 0, 0, newLayoutItem);
 
     this.setState({
       children: layoutChildren,
     });
+
+    newLayoutItem.activate();
   }
 
   removeLayoutItem(layoutItem: DashboardLayoutItem): void {
@@ -187,43 +179,11 @@ export class ResponsiveGridLayout extends SceneObjectBase<ResponsiveGridLayoutSt
   }
 }
 
-// function getGridStyles(gridElement: HTMLElement) {
-//   const gridStyles = getComputedStyle(gridElement);
-
-//   return {
-//     templateRows: gridStyles.gridTemplateRows.split(' ').map((row) => parseFloat(row)),
-//     templateColumns: gridStyles.gridTemplateColumns.split(' ').map((col) => parseFloat(col)),
-//     rowGap: parseFloat(gridStyles.rowGap),
-//     columnGap: parseFloat(gridStyles.columnGap),
-//   };
-// }
-
 export interface GridCell extends Rect {
   order: number;
   rowIndex: number;
   columnIndex: number;
 }
-
-// function canScroll(el: HTMLElement) {
-//   const oldScroll = el.scrollTop;
-//   el.scrollTop = Number.MAX_SAFE_INTEGER;
-//   const newScroll = el.scrollTop;
-//   el.scrollTop = oldScroll;
-
-//   return newScroll > 0;
-// }
-
-// function closestScroll(el?: HTMLElement | null): {
-//   scrollTop: number;
-//   scrollTopMax: number;
-//   wrapper?: HTMLElement | null;
-// } {
-//   if (el && canScroll(el)) {
-//     return { scrollTop: el.scrollTop, scrollTopMax: el.scrollHeight - el.clientHeight - 5, wrapper: el };
-//   }
-
-//   return el ? closestScroll(el.parentElement) : { scrollTop: 0, scrollTopMax: 0, wrapper: el };
-// }
 
 function findLayoutOrchestrator(root: SceneObject | undefined) {
   if (!root) {

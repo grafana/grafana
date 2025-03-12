@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useRef, ComponentType, type PointerEventHandler, MutableRefObject } from 'react';
+import { ComponentType, type PointerEventHandler, MutableRefObject, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
@@ -21,25 +21,33 @@ export interface DragAndDropProps {
   };
 }
 
-export function ResponsiveGridRenderer({ model }: SceneComponentProps<ResponsiveGridLayout>) {
+export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<ResponsiveGridLayout>) {
   const { children, isHidden } = model.useState();
   const styles = useStyles2(getStyles, model.state);
-  const containerRef = useRef<HTMLDivElement>(null);
   const layoutOrchestrator = closestOfType(model, (s) => s instanceof LayoutOrchestrator);
   const { activeLayoutItemRef } = layoutOrchestrator!.useState();
   const activeLayoutItem = activeLayoutItemRef?.resolve();
   const currentLayoutIsActive = children.some((c) => c === activeLayoutItem);
+
+  useEffect(() => {
+    if (model.containerRef.current) {
+      const computedStyles = getComputedStyle(model.containerRef.current);
+      model.columnCount = computedStyles.gridTemplateColumns.split(' ').length;
+      model.rowCount = computedStyles.gridTemplateRows.split(' ').length;
+    }
+  });
 
   if (isHidden || !layoutOrchestrator) {
     return null;
   }
 
   return (
-    <div className={styles.container} ref={containerRef}>
+    <div className={styles.container} ref={model.containerRef}>
       <div
         style={{
-          order: model.activeOrder,
-          display: currentLayoutIsActive && model.activeOrder !== undefined ? 'grid' : 'none',
+          gridRow: model.activeGridCell.row,
+          gridColumn: model.activeGridCell.column,
+          display: currentLayoutIsActive && model.activeIndex !== undefined ? 'grid' : 'none',
         }}
       ></div>
       {children.map((item, i) => {
@@ -47,11 +55,10 @@ export function ResponsiveGridRenderer({ model }: SceneComponentProps<Responsive
         // const Wrapper = isLazy ? LazyLoader : 'div';
 
         return (
-          <Component key={item.state.key!} model={item} order={i} />
+          <Component key={item.state.key!} model={item} />
           // <Wrapper
           //   key={item.state.key!}
           //   className={classNames(styles.itemWrapper, { [styles.dragging]: isDragging })}
-          //   data-order={isHidden ? -1 : i}
           //   id={item.state.key}
           // >
           //   <Component model={item}  />

@@ -11,27 +11,20 @@ import { closestOfType } from '../layout-manager/utils';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
 
-export interface ResponsiveGridItemProps extends SceneComponentProps<ResponsiveGridItem> {
-  order: number;
-}
+export interface ResponsiveGridItemProps extends SceneComponentProps<ResponsiveGridItem> {}
 
-export function ResponsiveGridItemRenderer({ model, order }: ResponsiveGridItemProps) {
-  const { body, isHidden } = model.useState();
+export function ResponsiveGridItemRenderer({ model }: ResponsiveGridItemProps) {
+  const { body } = model.useState();
   const styles = useStyles2(getStyles);
   const layoutOrchestrator = closestOfType(model, (s) => s instanceof LayoutOrchestrator);
   const { activeLayoutItemRef } = layoutOrchestrator!.useState();
   const activeLayoutItem = activeLayoutItemRef?.resolve();
-  // const counter = useRef(0);
-
   const isDragging = model === activeLayoutItem;
-
-  // console.log(`ResponsiveGridItem ${model.state.key}: ${counter.current++}. Dragging: ${isDragging}`);
 
   useEffect(() => {
     // Compute and cache the grid item's bounding box.
     // Don't re-calculate while an item is being dragged.
     if (!activeLayoutItem) {
-      // console.log(`Storing bounding box for grid item ${model.state.key}`);
       model.cachedBoundingBox = model.computeBoundingBox();
     }
   });
@@ -57,9 +50,8 @@ export function ResponsiveGridItemRenderer({ model, order }: ResponsiveGridItemP
     </>
   ) : (
     <div
-      data-order={isHidden ? -1 : order}
       className={classNames(styles.wrapper, { [styles.dragging]: isDragging })}
-      style={{ order, ...dragStyles }}
+      style={dragStyles}
       ref={model.containerRef}
     >
       <body.Component model={body} />
