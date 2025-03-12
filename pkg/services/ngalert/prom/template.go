@@ -3,7 +3,6 @@ package prom
 
 import (
 	"reflect"
-	"sort"
 	"strings"
 	"text/template/parse"
 )
@@ -35,12 +34,23 @@ import (
 //	// templates now contains:
 //		{"message": "{{ if eq .Values.query.Value 10 }}High value{{ else }}Low value{{ end }}"}
 type VariableReplacer struct {
-	replacements map[string]string
+	replacements map[string][]string
 }
 
 func NewVariableReplacer(replacements map[string]string) *VariableReplacer {
+	r := make(map[string][]string, len(replacements))
+	for k, v := range replacements {
+		// Split the variable into a slice of strings,
+		// removing the leading dot if present.
+		nv := strings.Split(v, ".")
+		if nv[0] == "" {
+			nv = nv[1:]
+		}
+		r[k] = nv
+	}
+
 	return &VariableReplacer{
-		replacements: replacements,
+		replacements: r,
 	}
 }
 
@@ -70,129 +80,228 @@ func (r *VariableReplacer) replaceVariables(tmpl string) (string, error) {
 
 	// Add temporary prefix with the variables that are expected by the template,
 	// otherwise the parsing fails.
-	tmpPrefix := `{{- $value := "" -}}{{- $labels := "" -}}`
-	tmpl = tmpPrefix + tmpl
+	tmpPrefix := `{{$value := ""}}{{$labels := ""}}`
 
-	tree, err := p.Parse(tmpl, "{{", "}}", map[string]*parse.Tree{})
+	tree, err := p.Parse(tmpPrefix+tmpl, "{{", "}}", map[string]*parse.Tree{})
 	if err != nil {
 		return "", err
 	}
 
-	// Find all variable nodes
-	nodes, err := r.walkNodes(tree.Root)
+	// Find and replace all variables in the template
+	replaced, err := r.walkNodes(tree.Root)
 	if err != nil {
 		return "", err
 	}
 
-	// Sort nodes by position in the template string
-	// to process them in order
-	sort.Slice(nodes, func(i, j int) bool {
-		return nodes[i].Pos < nodes[j].Pos
-	})
-
-	// Construct the new template string by replacing variables
-	var result strings.Builder
-	pos := 0
-	for _, n := range nodes {
-		if new, ok := r.replacements[n.Ident]; ok {
-			// Add text up to this variable
-			result.WriteString(tmpl[pos:n.Pos])
-			// Add the replacement
-			result.WriteString(new)
-			// Update position in the original template to the end of the variable
-			pos = n.Pos + len(n.Ident)
-		}
+	// If no variables were replaced, return the original template
+	// to avoid unnecessary changing the template.
+	if !replaced {
+		return tmpl, nil
 	}
 
-	// Add any remaining text after the last processed variable
-	if pos < len(tmpl) {
-		result.WriteString(tmpl[pos:])
-	}
-
-	resultTmpl := result.String()[len(tmpPrefix):]
-
-	return resultTmpl, nil
+	return tree.Root.String()[len(tmpPrefix):], nil
 }
 
-// variableNode represents a variable in a template with its position.
-type variableNode struct {
-	Pos   int    // Position in the template string
-	Ident string // Name of the variable
+// walkNodes recursively traverses the AST to find all variable nodes
+// and replaces them with the new values from the replacements map if needed.
+func (r *VariableReplacer) walkNodes(node parse.Node) (bool, error) {
+	_, replaced := walk(node, r.replacements)
+	return replaced, nil
 }
 
-// walkNodes recursively traverses the AST to find all variable nodes.
-// It returns a slice of variable nodes found in the tree.
-func (r *VariableReplacer) walkNodes(root parse.Node) ([]*variableNode, error) {
-	var err error
-	result := []*variableNode{}
-
-	var walk func(node parse.Node)
-	walk = func(node parse.Node) {
-		if node == nil || reflect.ValueOf(node).IsNil() {
-			return
-		}
-
-		switch n := node.(type) {
-		// Variable nodes
-		case *parse.VariableNode:
-			if len(n.Ident) > 0 {
-				v := &variableNode{
-					Pos:   int(n.Pos),
-					Ident: strings.Join(n.Ident, "."),
-				}
-				result = append(result, v)
-			}
-		case *parse.FieldNode:
-			if len(n.Ident) > 0 {
-				v := &variableNode{
-					Pos: int(n.Pos),
-					// Preprend the dot to the variable name if it's a field variable
-					// to match it with the template.
-					Ident: "." + strings.Join(n.Ident, "."),
-				}
-				result = append(result, v)
-			}
-
-		// Nodes with args
-		case *parse.ActionNode:
-			walk(n.Pipe)
-		case *parse.ChainNode:
-			walk(n.Node)
-		case *parse.CommandNode:
-			for _, arg := range n.Args {
-				walk(arg)
-			}
-		case *parse.ListNode:
-			for _, node := range n.Nodes {
-				walk(node)
-			}
-		case *parse.PipeNode:
-			for _, cmd := range n.Cmds {
-				walk(cmd)
-			}
-
-		// Control structure nodes
-		case *parse.IfNode:
-			walk(n.Pipe)
-			walk(n.List)
-			walk(n.ElseList)
-		case *parse.RangeNode:
-			walk(n.Pipe)
-			walk(n.List)
-			walk(n.ElseList)
-		case *parse.WithNode:
-			walk(n.Pipe)
-			walk(n.List)
-			walk(n.ElseList)
-		case *parse.BranchNode:
-			walk(n.Pipe)
-			walk(n.List)
-			walk(n.ElseList)
-		case *parse.TemplateNode:
-			walk(n.Pipe)
-		}
+func walk(node parse.Node, replacements map[string][]string) (parse.Node, bool) {
+	if node == nil || reflect.ValueOf(node).IsNil() {
+		return node, false
 	}
 
-	walk(root)
-	return result, err
+	var replaced bool
+
+	switch n := node.(type) {
+	case *parse.VariableNode:
+		return variableNode(n, replacements)
+	case *parse.FieldNode:
+		return fieldNode(n, replacements)
+	case *parse.ActionNode:
+		return actionNode(n, replacements)
+	case *parse.ChainNode:
+		return chainNode(n, replacements)
+	case *parse.CommandNode:
+		return commandNode(n, replacements)
+	case *parse.ListNode:
+		return listNode(n, replacements)
+	case *parse.PipeNode:
+		return pipeNode(n, replacements)
+	case *parse.IfNode:
+		return ifNode(n, replacements)
+	case *parse.RangeNode:
+		return rangeNode(n, replacements)
+	case *parse.WithNode:
+		return withNode(n, replacements)
+	case *parse.TemplateNode:
+		return templateNode(n, replacements)
+	}
+
+	return node, replaced
+}
+
+// variableNode handles simple variable nodes, for example `{{ $value }}`.
+func variableNode(n *parse.VariableNode, replacements map[string][]string) (parse.Node, bool) {
+	if nv, ok := replacements[strings.Join(n.Ident, ".")]; ok {
+		return &parse.FieldNode{Ident: nv}, true
+	}
+	return n, false
+}
+
+// fieldNode handles parse.FieldNode nodes, for example `{{ .Value }}`,
+// or `{{ $.Value.Something }}`.
+func fieldNode(n *parse.FieldNode, replacements map[string][]string) (parse.Node, bool) {
+	if len(n.Ident) == 0 {
+		return n, false
+	}
+
+	var global bool
+	var key []string
+	if n.Ident[0] == "$" {
+		key = n.Ident[1:]
+		global = true
+	} else {
+		key = n.Ident
+	}
+
+	if nv, ok := replacements["."+strings.Join(key, ".")]; ok {
+		if global {
+			n.Ident = append([]string{"$"}, nv...)
+		} else {
+			n.Ident = nv
+		}
+		return n, true
+	}
+
+	return n, false
+}
+
+// actionNode handles parse.ActionNode objects, which represent any `{{ ... }}`
+// in the template that isn't a control structure (if/range/with/etc.),
+// for example `{{ printf .Name }}`.
+//
+// We walk the PipeNode inside it to handle any contained variable references.
+func actionNode(n *parse.ActionNode, replacements map[string][]string) (parse.Node, bool) {
+	pipe, replaced := walk(n.Pipe, replacements)
+	n.Pipe = pipe.(*parse.PipeNode)
+	return n, replaced
+}
+
+// chainNode handles parse.ChainNode objects. A ChainNode is something like
+// `(somePipeline).Field`, e.g. `{{ (index .Items 0).Name }}`.
+func chainNode(n *parse.ChainNode, replacements map[string][]string) (parse.Node, bool) {
+	node, replaced := walk(n.Node, replacements)
+	n.Node = node
+	return n, replaced
+}
+
+// commandNode handles individual commands
+// inside pipelines (e.g., `.Name | printf "%s"`) and their arguments.
+func commandNode(n *parse.CommandNode, replacements map[string][]string) (parse.Node, bool) {
+	replaced := false
+	for i, arg := range n.Args {
+		newArg, argReplaced := walk(arg, replacements)
+		n.Args[i] = newArg
+		replaced = replaced || argReplaced
+	}
+	return n, replaced
+}
+
+// listNode handles parse.ListNode objects, for example a block of text
+// and actions inside `{{if ...}}...{{end}}`.
+func listNode(n *parse.ListNode, replacements map[string][]string) (parse.Node, bool) {
+	replaced := false
+	for i, child := range n.Nodes {
+		newChild, childReplaced := walk(child, replacements)
+		n.Nodes[i] = newChild
+		replaced = replaced || childReplaced
+	}
+	return n, replaced
+}
+
+// pipeNode handles parse.PipeNode objects, representing a pipeline like
+// `{{ .Value | printf "%.2f" }}`. It holds multiple CommandNodes that we walk.
+func pipeNode(n *parse.PipeNode, replacements map[string][]string) (parse.Node, bool) {
+	replaced := false
+	for i, cmd := range n.Cmds {
+		newCmd, cmdReplaced := walk(cmd, replacements)
+		n.Cmds[i] = newCmd.(*parse.CommandNode)
+		replaced = replaced || cmdReplaced
+	}
+	return n, replaced
+}
+
+// ifNode handles parse.IfNode objects, which represent `{{if ...}} ... {{end}}` blocks.
+// We walk the pipeline in the 'if', then the 'then' ListNode and then the
+// optional 'else' ListNode.
+func ifNode(n *parse.IfNode, replacements map[string][]string) (parse.Node, bool) {
+	pipe, pipeReplaced := walk(n.Pipe, replacements)
+	n.Pipe = pipe.(*parse.PipeNode)
+
+	list, listReplaced := walk(n.List, replacements)
+	n.List = list.(*parse.ListNode)
+
+	elseReplaced := false
+	if n.ElseList != nil {
+		elseList, elseListReplaced := walk(n.ElseList, replacements)
+		n.ElseList = elseList.(*parse.ListNode)
+		elseReplaced = elseListReplaced
+	}
+
+	return n, pipeReplaced || listReplaced || elseReplaced
+}
+
+// rangeNode handles parse.RangeNode objects, representing `{{range ...}} ... {{end}}`
+// loops. Similar to ifNode, we walk the pipeline, the main ListNode, and the
+// optional elseList.
+func rangeNode(n *parse.RangeNode, replacements map[string][]string) (parse.Node, bool) {
+	pipe, pipeReplaced := walk(n.Pipe, replacements)
+	n.Pipe = pipe.(*parse.PipeNode)
+
+	list, listReplaced := walk(n.List, replacements)
+	n.List = list.(*parse.ListNode)
+
+	elseReplaced := false
+	if n.ElseList != nil {
+		elseList, elseListReplaced := walk(n.ElseList, replacements)
+		n.ElseList = elseList.(*parse.ListNode)
+		elseReplaced = elseListReplaced
+	}
+
+	return n, pipeReplaced || listReplaced || elseReplaced
+}
+
+// withNode handles parse.WithNode objects, representing `{{with ...}} ... {{end}}`
+// blocks. We walk the pipeline, and the contained ListNodes.
+func withNode(n *parse.WithNode, replacements map[string][]string) (parse.Node, bool) {
+	pipe, pipeReplaced := walk(n.Pipe, replacements)
+	n.Pipe = pipe.(*parse.PipeNode)
+
+	list, listReplaced := walk(n.List, replacements)
+	n.List = list.(*parse.ListNode)
+
+	elseReplaced := false
+	if n.ElseList != nil {
+		elseList, elseListReplaced := walk(n.ElseList, replacements)
+		n.ElseList = elseList.(*parse.ListNode)
+		elseReplaced = elseListReplaced
+	}
+
+	return n, pipeReplaced || listReplaced || elseReplaced
+}
+
+// templateNode handles `{{template "otherTemplate" .}}`.
+// If it has a pipe, we walk that pipe for variable references.
+func templateNode(n *parse.TemplateNode, replacements map[string][]string) (parse.Node, bool) {
+	replaced := false
+	if n.Pipe != nil {
+		var p parse.Node
+		p, replaced = walk(n.Pipe, replacements)
+		n.Pipe = p.(*parse.PipeNode)
+	}
+	return n, replaced
 }
