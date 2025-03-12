@@ -143,17 +143,23 @@ var example_all_allowed_functions = `SELECT
   MIN(value) AS agg_min,
   MAX(value) AS agg_max,
   STDDEV(value) AS agg_stddev,
+  STD(value) AS agg_std,
+  STDDEV_POP(value) AS agg_stddev_pop,
   VARIANCE(value) AS agg_variance,
+  VAR_POP(value) AS agg_var_pop,
   
   -- Mathematical functions
   ABS(value) AS math_abs,
   ROUND(value, 2) AS math_round,
   FLOOR(value) AS math_floor,
   CEILING(value) AS math_ceiling,
+  CEIL(value) AS math_ceil,
   SQRT(ABS(value)) AS math_sqrt,
   POW(value, 2) AS math_pow,
+  POWER(value, 2) AS math_power,
   MOD(value, 10) AS math_mod,
   LOG(value) AS math_log,
+  LOG10(value) AS math_log10,
   EXP(value) AS math_exp,
   SIGN(value) AS math_sign,
   
@@ -167,6 +173,8 @@ var example_all_allowed_functions = `SELECT
   TRIM(name) AS str_trim,
   
   -- Date functions
+  STR_TO_DATE('2023-01-01', '%Y-%m-%d') AS date_str_to_date,
+  DATE_FORMAT(NOW(), '%Y-%m-%d') AS date_format,
   NOW() AS date_now,
   CURDATE() AS date_curdate,
   CURTIME() AS date_curtime,
