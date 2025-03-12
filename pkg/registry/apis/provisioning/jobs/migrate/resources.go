@@ -91,7 +91,7 @@ func (j *migrationJob) loadResources(ctx context.Context) error {
 			if history > count {
 				count = history // the number of items we will process
 			}
-			j.progress.SetTotal(int(count))
+			j.progress.SetTotal(ctx, int(count))
 		}
 
 		opts.OnlyCount = false // this time actually write

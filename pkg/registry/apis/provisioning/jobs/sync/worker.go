@@ -274,7 +274,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 		return len(changes[i].Path) > len(changes[j].Path)
 	})
 
-	r.progress.SetTotal(len(changes))
+	r.progress.SetTotal(ctx, len(changes))
 	r.progress.SetMessage(ctx, "replicating changes")
 
 	// Create folder structure first
@@ -331,7 +331,7 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 		return nil
 	}
 
-	r.progress.SetTotal(len(diff))
+	r.progress.SetTotal(ctx, len(diff))
 	r.progress.SetMessage(ctx, "replicating versioned changes")
 
 	for _, change := range diff {

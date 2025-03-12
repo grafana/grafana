@@ -92,7 +92,7 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	)
 
 	isFromLegacy := dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, w.storageStatus)
-	progress.SetTotal(10) // will show a progress bar
+	progress.SetTotal(ctx, 10) // will show a progress bar
 	if repo.Config().Spec.GitHub != nil {
 		progress.SetMessage(ctx, "clone "+repo.Config().Spec.GitHub.URL)
 		reader, writer := io.Pipe()

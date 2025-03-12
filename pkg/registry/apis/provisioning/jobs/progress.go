@@ -90,8 +90,10 @@ func (r *jobProgressRecorder) GetRef() string {
 	return r.ref
 }
 
-func (r *jobProgressRecorder) SetTotal(total int) {
+func (r *jobProgressRecorder) SetTotal(ctx context.Context, total int) {
 	r.total = total
+
+	r.notify(ctx)
 }
 
 func (r *jobProgressRecorder) TooManyErrors() error {
