@@ -59,9 +59,9 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location
   dashboard-variable:
     - pattern: /docs/grafana/
-      destination: docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
     - pattern: /docs/grafana-cloud/
-      destination: docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
   feature-toggle:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles
