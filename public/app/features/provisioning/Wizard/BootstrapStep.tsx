@@ -19,12 +19,18 @@ import {
 } from '@grafana/ui';
 
 import { useGetFrontendSettingsQuery, useGetRepositoryFilesQuery } from '../api';
+import { StepStatus } from '../hooks/useStepStatus';
 import { checkSyncSettings } from '../utils';
 
 import { WizardFormData } from './types';
 
 type Target = 'instance' | 'folder';
 type Operation = 'pull' | 'migrate';
+
+interface Props {
+  onOptionSelect: (requiresMigration: boolean) => void;
+  onStepUpdate: (status: StepStatus, error?: string) => void;
+}
 
 interface ModeOption {
   value: Target;
@@ -55,19 +61,13 @@ const modeOptions: ModeOption[] = [
 ];
 
 const backendSrv = getBackendSrv();
-type Props = {
-  onOptionSelect: (requiresMigration: boolean) => void;
-  onStatusChange: (success: boolean) => void;
-  onRunningChange: (isRunning: boolean) => void;
-  onErrorChange: (error: string | null) => void;
-};
 
 interface OptionState {
   isDisabled: boolean;
   disabledReason?: string;
 }
 
-export function BootstrapStep({ onOptionSelect, onStatusChange, onRunningChange, onErrorChange }: Props) {
+export function BootstrapStep({ onOptionSelect, onStepUpdate }: Props) {
   const {
     register,
     control,
@@ -83,7 +83,7 @@ export function BootstrapStep({ onOptionSelect, onStatusChange, onRunningChange,
   const [hasInitialized, setHasInitialized] = useState(false);
 
   const { value: counts, loading: isLoadingCounts } = useAsync(async () => {
-    onRunningChange(true);
+    onStepUpdate('running');
     try {
       // Fetch dashboard count
       const dashboardData = await backendSrv.get('/apis/dashboard.grafana.app/v0alpha1/namespaces/default/search', {
@@ -99,8 +99,7 @@ export function BootstrapStep({ onOptionSelect, onStatusChange, onRunningChange,
         type: 'dashboard',
       });
 
-      onStatusChange(true);
-      onErrorChange(null);
+      onStepUpdate('success');
 
       return {
         dashboardCount: dashboardData.totalHits || 0,
@@ -108,14 +107,11 @@ export function BootstrapStep({ onOptionSelect, onStatusChange, onRunningChange,
       };
     } catch (error) {
       console.error('Error fetching counts:', error);
-      onErrorChange(error instanceof Error ? error.message : 'Failed to fetch resource counts');
-      onStatusChange(false);
+      onStepUpdate('error', error instanceof Error ? error.message : 'Failed to fetch resource counts');
       return {
         dashboardCount: 0,
         folderCount: 0,
       };
-    } finally {
-      onRunningChange(false);
     }
   }, []);
 

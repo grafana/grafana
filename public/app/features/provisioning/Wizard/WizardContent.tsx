@@ -52,8 +52,6 @@ export function WizardContent({
   const [deleteRepository] = useDeleteRepositoryMutation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
-  const [isJobRunning, setIsJobRunning] = useState(false);
-  const [hasError, setHasError] = useState(false);
 
   const [stepStatus, setStepStatus] = useState<StepStatus>('idle');
   const [stepError, setStepError] = useState<string | undefined>();
@@ -63,19 +61,6 @@ export function WizardContent({
     setStepStatus(status);
     setStepError(error);
   }, []);
-
-  const handleJobRunningChange = (isRunning: boolean): void => {
-    setIsJobRunning(isRunning);
-  };
-
-  const handleJobStatusChange = (success: boolean): void => {
-    handleStatusChange(success);
-    setHasError(!success);
-  };
-
-  const handleJobErrorChange = (error: string | null) => {
-    setHasError(!!error);
-  };
 
   const handleCancel = async () => {
     if (activeStep === 'connection') {
@@ -137,7 +122,7 @@ export function WizardContent({
     } else {
       // For job steps, only proceed if the job was successful
       if (isJobStep(activeStep)) {
-        if (stepSuccess && !isJobRunning) {
+        if (stepSuccess) {
           handleNext();
         }
       } else {
@@ -207,12 +192,7 @@ export function WizardContent({
       <div className={styles.content}>
         {activeStep === 'connection' && <ConnectStep />}
         {activeStep === 'bootstrap' && (
-          <BootstrapStep
-            onOptionSelect={onOptionSelect}
-            onStatusChange={handleJobStatusChange}
-            onRunningChange={handleJobRunningChange}
-            onErrorChange={handleJobErrorChange}
-          />
+          <BootstrapStep onOptionSelect={onOptionSelect} onStepUpdate={handleStepUpdate} />
         )}
         {activeStep === 'migrate' && requiresMigration && <MigrateStep onStepUpdate={handleStepUpdate} />}
         {activeStep === 'pull' && !requiresMigration && <PullStep onStepUpdate={handleStepUpdate} />}
@@ -223,7 +203,7 @@ export function WizardContent({
 
       <Stack gap={2} justifyContent="flex-end">
         <Button
-          variant={hasError ? 'primary' : 'secondary'}
+          variant={stepStatus === 'error' ? 'primary' : 'secondary'}
           onClick={handleCancel}
           disabled={isSubmitting || isCancelling}
         >
