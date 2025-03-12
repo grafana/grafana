@@ -217,12 +217,19 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: () => ['Admin'],
       component: shouldAllowRecoveringDeletedRules()
         ? importAlertingComponent(
-            () =>
-              import(
+          () =>
+            import(
                 /* webpackChunkName: "RecentlyDeleted" */ 'app/features/alerting/unified/components/rules/deleted-rules/DeletedRulesPage'
-              )
-          )
+            )
+        )
         : () => <Navigate replace to="/alerting/list" />,
+    },
+    {
+      path: '/alerting/import-datasource-managed-rules',
+      roles: () => ['Admin'],
+      component: importAlertingComponent(
+        () => import(/* webpackChunkName: "AlertingImportFromDSRules"*/ 'app/features/alerting/unified/import-to-gma/ImportFromDSRules')
+      ),
     },
     {
       path: '/alerting/new/:type?',
