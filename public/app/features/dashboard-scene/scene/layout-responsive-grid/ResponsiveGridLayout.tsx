@@ -168,15 +168,10 @@ export class ResponsiveGridLayout extends SceneObjectBase<ResponsiveGridLayoutSt
     const layoutItemIR = layoutItem.toIntermediate();
     const layoutChildren = [...this.state.children];
 
-    if (layoutItemIR.order !== undefined) {
-      layoutItemIR.body.clearParent();
+    layoutItemIR.body.clearParent();
 
-      const newLayoutItem = new ResponsiveGridItem({ body: layoutItemIR.body });
-      layoutChildren.splice(layoutItemIR.order, 0, newLayoutItem);
-    } else {
-      // need to calculate splice index based on IR layout item bbox relative to other layout items
-      console.warn('Not implemented');
-    }
+    const newLayoutItem = new ResponsiveGridItem({ body: layoutItemIR.body });
+    layoutChildren.splice(this.activeOrder ?? 0, 0, newLayoutItem);
 
     this.setState({
       children: layoutChildren,
@@ -192,16 +187,16 @@ export class ResponsiveGridLayout extends SceneObjectBase<ResponsiveGridLayoutSt
   }
 }
 
-function getGridStyles(gridElement: HTMLElement) {
-  const gridStyles = getComputedStyle(gridElement);
+// function getGridStyles(gridElement: HTMLElement) {
+//   const gridStyles = getComputedStyle(gridElement);
 
-  return {
-    templateRows: gridStyles.gridTemplateRows.split(' ').map((row) => parseFloat(row)),
-    templateColumns: gridStyles.gridTemplateColumns.split(' ').map((col) => parseFloat(col)),
-    rowGap: parseFloat(gridStyles.rowGap),
-    columnGap: parseFloat(gridStyles.columnGap),
-  };
-}
+//   return {
+//     templateRows: gridStyles.gridTemplateRows.split(' ').map((row) => parseFloat(row)),
+//     templateColumns: gridStyles.gridTemplateColumns.split(' ').map((col) => parseFloat(col)),
+//     rowGap: parseFloat(gridStyles.rowGap),
+//     columnGap: parseFloat(gridStyles.columnGap),
+//   };
+// }
 
 export interface GridCell extends Rect {
   order: number;
@@ -209,69 +204,26 @@ export interface GridCell extends Rect {
   columnIndex: number;
 }
 
-export function calculateGridCells(gridElement: HTMLElement) {
-  const { templateRows, templateColumns, rowGap, columnGap } = getGridStyles(gridElement);
-  const gridBoundingBox = gridElement.getBoundingClientRect();
-  const { scrollTop } = closestScroll(gridElement);
-  const gridOrigin = { x: gridBoundingBox.left, y: gridBoundingBox.top + scrollTop };
-  const ids = [...gridElement.children]
-    .map((c, i) => Number.parseInt(c.getAttribute('data-order') ?? `${i}`, 10))
-    .filter((v) => v >= 0);
+// function canScroll(el: HTMLElement) {
+//   const oldScroll = el.scrollTop;
+//   el.scrollTop = Number.MAX_SAFE_INTEGER;
+//   const newScroll = el.scrollTop;
+//   el.scrollTop = oldScroll;
 
-  const gridCells: GridCell[] = [];
-  let yTotal = gridOrigin.y;
-  for (let rowIndex = 0; rowIndex < templateRows.length; rowIndex++) {
-    const height = templateRows[rowIndex];
-    const row = {
-      top: yTotal,
-      bottom: yTotal + height,
-    };
-    yTotal = row.bottom + rowGap;
+//   return newScroll > 0;
+// }
 
-    let xTotal = gridOrigin.x;
-    for (let colIndex = 0; colIndex < templateColumns.length; colIndex++) {
-      const width = templateColumns[colIndex];
-      const column = {
-        left: xTotal,
-        right: xTotal + width,
-      };
+// function closestScroll(el?: HTMLElement | null): {
+//   scrollTop: number;
+//   scrollTopMax: number;
+//   wrapper?: HTMLElement | null;
+// } {
+//   if (el && canScroll(el)) {
+//     return { scrollTop: el.scrollTop, scrollTopMax: el.scrollHeight - el.clientHeight - 5, wrapper: el };
+//   }
 
-      xTotal = column.right + columnGap;
-      gridCells.push({
-        left: column.left,
-        right: column.right,
-        top: row.top,
-        bottom: row.bottom,
-        rowIndex: rowIndex + 1,
-        columnIndex: colIndex + 1,
-        order: ids[rowIndex * templateColumns.length + colIndex],
-      });
-    }
-  }
-
-  return gridCells;
-}
-
-function canScroll(el: HTMLElement) {
-  const oldScroll = el.scrollTop;
-  el.scrollTop = Number.MAX_SAFE_INTEGER;
-  const newScroll = el.scrollTop;
-  el.scrollTop = oldScroll;
-
-  return newScroll > 0;
-}
-
-function closestScroll(el?: HTMLElement | null): {
-  scrollTop: number;
-  scrollTopMax: number;
-  wrapper?: HTMLElement | null;
-} {
-  if (el && canScroll(el)) {
-    return { scrollTop: el.scrollTop, scrollTopMax: el.scrollHeight - el.clientHeight - 5, wrapper: el };
-  }
-
-  return el ? closestScroll(el.parentElement) : { scrollTop: 0, scrollTopMax: 0, wrapper: el };
-}
+//   return el ? closestScroll(el.parentElement) : { scrollTop: 0, scrollTopMax: 0, wrapper: el };
+// }
 
 function findLayoutOrchestrator(root: SceneObject | undefined) {
   if (!root) {

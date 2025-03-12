@@ -10,11 +10,6 @@ export interface IntermediateLayoutItem {
   origin: Point;
   width: number;
   height: number;
-
-  /** Some layouts may have an internal concept of "order",
-   * for example, the index from left to right in a row-oriented flex layout.
-   */
-  order?: number;
 }
 
 /**

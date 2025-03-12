@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash';
-import React, { CSSProperties } from 'react';
+import React from 'react';
 
 import {
   SceneObject,
@@ -25,14 +25,6 @@ import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcess
 
 import { getOptions } from './ResponsiveGridItemEditor';
 import { ResponsiveGridItemRenderer } from './ResponsiveGridItemRenderer';
-
-export interface ResponsiveGridItemStatePlacement {
-  /**
-   * Useful for making content span across multiple rows or columns
-   */
-  gridColumn?: CSSProperties['gridColumn'];
-  gridRow?: CSSProperties['gridRow'];
-}
 
 export interface ResponsiveGridItemState extends SceneObjectState {
   body: VizPanel;
@@ -207,8 +199,6 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
 
     // calculate origin and bounding box of layout item
     const rect = gridItem.getBoundingClientRect();
-    const dataOrder = gridItem.getAttribute('data-order');
-    const order = Number.parseInt(dataOrder ?? '-1', 10);
 
     return {
       body: this.state.body,
@@ -218,7 +208,6 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
       },
       width: rect.width,
       height: rect.height,
-      order,
     };
   }
 }

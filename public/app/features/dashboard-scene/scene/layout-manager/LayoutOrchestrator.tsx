@@ -43,6 +43,7 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
       return;
     }
 
+    document.body.setPointerCapture(e.pointerId);
     const targetRect = (e.target as HTMLElement).getBoundingClientRect();
     this.dragOffset = { top: e.y - targetRect.top, left: e.x - targetRect.left };
     this.setState({ activeLayoutItemRef: closestLayoutItem.getRef() });
@@ -122,7 +123,7 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
     this.moveLayoutItem(activeLayoutItem, targetLayout);
   };
 
-  /** Moves layoutItem from its current layout to targetLayout.
+  /** Moves layoutItem from its current layout to targetLayout to the location of the current placeholder.
    * Throws if layoutItem does not belong to any layout. */
   private moveLayoutItem(layoutItem: DashboardLayoutItem, targetLayout: SceneLayout2) {
     const sourceLayout = closestOfType(layoutItem, isSceneLayout);
