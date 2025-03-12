@@ -664,6 +664,15 @@ func (a apiClient) GetDeletedRulesWithStatus(t *testing.T) (apimodels.NamespaceC
 	return sendRequestJSON[apimodels.NamespaceConfigResponse](t, req, http.StatusOK)
 }
 
+func (a apiClient) DeleteRuleFromTrashByGUID(t *testing.T, ruleGUID string) (int, string) {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/ruler/grafana/api/v1/trash/rule/guid/%s", a.url, ruleGUID), nil)
+	require.NoError(t, err)
+	raw, status, err := sendRequestRaw(t, req)
+	require.NoError(t, err)
+	return status, string(raw)
+}
+
 func (a apiClient) ExportRulesWithStatus(t *testing.T, params *apimodels.AlertRulesExportParameters) (int, string) {
 	t.Helper()
 	u, err := url.Parse(fmt.Sprintf("%s/api/ruler/grafana/api/v1/export/rules", a.url))

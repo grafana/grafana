@@ -4756,6 +4756,27 @@ func TestIntegrationRuleSoftDelete(t *testing.T) {
 			requireStatusCode(t, http.StatusForbidden, status, raw)
 		})
 	})
+
+	t.Run("permanently delete rule from deleted rules", func(t *testing.T) {
+		rules, status, raw := adminClient.GetDeletedRulesWithStatus(t)
+		requireStatusCode(t, http.StatusOK, status, raw)
+		require.NotEmpty(t, rules[""][0].Rules)
+		ruleGUID := rules[""][0].Rules[0].GrafanaManagedAlert.GUID
+		t.Run("non-admins should not be able to do it", func(t *testing.T) {
+			status, raw := editorClient.DeleteRuleFromTrashByGUID(t, ruleGUID)
+			requireStatusCode(t, http.StatusForbidden, status, raw)
+		})
+
+		status, raw = adminClient.DeleteRuleFromTrashByGUID(t, ruleGUID)
+		requireStatusCode(t, http.StatusOK, status, raw)
+
+		rules, status, raw = adminClient.GetDeletedRulesWithStatus(t)
+		requireStatusCode(t, http.StatusOK, status, raw)
+		idx := slices.IndexFunc(rules[""][0].Rules, func(node apimodels.GettableExtendedRuleNode) bool {
+			return node.GrafanaManagedAlert.GUID == ruleGUID
+		})
+		require.Equalf(t, -1, idx, "rule with is expected to be deleted but it was returned by list operation")
+	})
 }
 
 func TestIntegrationRulePermanentlyDelete(t *testing.T) {
