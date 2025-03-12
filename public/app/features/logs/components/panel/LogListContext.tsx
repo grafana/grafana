@@ -6,17 +6,24 @@ import { PopoverContent } from '@grafana/ui';
 import { GetRowContextQueryFn } from './LogLineMenu';
 
 export interface LogListContextData {
+  displayedFields: string[];
   getRowContextQuery?: GetRowContextQueryFn;
   logSupportsContext?: (row: LogRowModel) => boolean;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
   onUnpinLine?: (row: LogRowModel) => void;
+  showTime: boolean;
   pinLineButtonTooltipTitle?: PopoverContent;
   pinnedLogs?: string[];
+  wrapLogMessage: boolean;
 }
 
-export const LogListContext = createContext<LogListContextData>({});
+export const LogListContext = createContext<LogListContextData>({
+  displayedFields: [],
+  showTime: true,
+  wrapLogMessage: false,
+});
 
 export const useLogListContextData = (key: keyof LogListContextData) => {
   const data: LogListContextData = useContext(LogListContext);
