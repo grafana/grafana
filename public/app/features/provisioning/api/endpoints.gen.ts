@@ -1,5 +1,5 @@
 import { baseAPI as api } from './baseAPI';
-export const addTagTypes = ['Job', 'Repository'] as const;
+export const addTagTypes = ['Job', 'Repository', 'Provisioning'] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({
     addTagTypes,
@@ -128,6 +128,102 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Repository'],
       }),
+      createRepositoryExport: build.mutation<CreateRepositoryExportResponse, CreateRepositoryExportArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/export`, method: 'POST', body: queryArg.body }),
+        invalidatesTags: ['Repository'],
+      }),
+      getRepositoryFiles: build.query<GetRepositoryFilesResponse, GetRepositoryFilesArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/files/`,
+          params: {
+            ref: queryArg.ref,
+          },
+        }),
+        providesTags: ['Repository'],
+      }),
+      getRepositoryFilesWithPath: build.query<GetRepositoryFilesWithPathResponse, GetRepositoryFilesWithPathArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/files/${queryArg.path}`,
+          params: {
+            ref: queryArg.ref,
+          },
+        }),
+        providesTags: ['Repository'],
+      }),
+      replaceRepositoryFilesWithPath: build.mutation<
+        ReplaceRepositoryFilesWithPathResponse,
+        ReplaceRepositoryFilesWithPathArg
+      >({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/files/${queryArg.path}`,
+          method: 'PUT',
+          body: queryArg.body,
+          params: {
+            ref: queryArg.ref,
+            message: queryArg.message,
+          },
+        }),
+        invalidatesTags: ['Repository'],
+      }),
+      createRepositoryFilesWithPath: build.mutation<
+        CreateRepositoryFilesWithPathResponse,
+        CreateRepositoryFilesWithPathArg
+      >({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/files/${queryArg.path}`,
+          method: 'POST',
+          body: queryArg.body,
+          params: {
+            ref: queryArg.ref,
+            message: queryArg.message,
+          },
+        }),
+        invalidatesTags: ['Repository'],
+      }),
+      deleteRepositoryFilesWithPath: build.mutation<
+        DeleteRepositoryFilesWithPathResponse,
+        DeleteRepositoryFilesWithPathArg
+      >({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/files/${queryArg.path}`,
+          method: 'DELETE',
+          params: {
+            ref: queryArg.ref,
+            message: queryArg.message,
+          },
+        }),
+        invalidatesTags: ['Repository'],
+      }),
+      getRepositoryHistory: build.query<GetRepositoryHistoryResponse, GetRepositoryHistoryArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/history`,
+          params: {
+            ref: queryArg.ref,
+          },
+        }),
+        providesTags: ['Repository'],
+      }),
+      getRepositoryHistoryWithPath: build.query<GetRepositoryHistoryWithPathResponse, GetRepositoryHistoryWithPathArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/history/${queryArg.path}`,
+          params: {
+            ref: queryArg.ref,
+          },
+        }),
+        providesTags: ['Repository'],
+      }),
+      createRepositoryMigrate: build.mutation<CreateRepositoryMigrateResponse, CreateRepositoryMigrateArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/migrate`, method: 'POST', body: queryArg.body }),
+        invalidatesTags: ['Repository'],
+      }),
+      getRepositoryRenderWithPath: build.query<GetRepositoryRenderWithPathResponse, GetRepositoryRenderWithPathArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/render/${queryArg.path}` }),
+        providesTags: ['Repository'],
+      }),
+      getRepositoryResources: build.query<GetRepositoryResourcesResponse, GetRepositoryResourcesArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/resources` }),
+        providesTags: ['Repository'],
+      }),
       getRepositoryStatus: build.query<GetRepositoryStatusResponse, GetRepositoryStatusArg>({
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/status`,
@@ -150,6 +246,30 @@ const injectedRtkApi = api
           },
         }),
         invalidatesTags: ['Repository'],
+      }),
+      createRepositorySync: build.mutation<CreateRepositorySyncResponse, CreateRepositorySyncArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/sync`, method: 'POST', body: queryArg.body }),
+        invalidatesTags: ['Repository'],
+      }),
+      createRepositoryTest: build.mutation<CreateRepositoryTestResponse, CreateRepositoryTestArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/test`, method: 'POST', body: queryArg.body }),
+        invalidatesTags: ['Repository'],
+      }),
+      getRepositoryWebhook: build.query<GetRepositoryWebhookResponse, GetRepositoryWebhookArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/webhook` }),
+        providesTags: ['Repository'],
+      }),
+      createRepositoryWebhook: build.mutation<CreateRepositoryWebhookResponse, CreateRepositoryWebhookArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/webhook`, method: 'POST' }),
+        invalidatesTags: ['Repository'],
+      }),
+      getFrontendSettings: build.query<GetFrontendSettingsResponse, GetFrontendSettingsArg>({
+        query: () => ({ url: `/settings` }),
+        providesTags: ['Provisioning', 'Repository'],
+      }),
+      getResourceStats: build.query<GetResourceStatsResponse, GetResourceStatsArg>({
+        query: () => ({ url: `/stats` }),
+        providesTags: ['Provisioning', 'Repository'],
       }),
     }),
     overrideExisting: false,
@@ -356,6 +476,124 @@ export type DeleteRepositoryArg = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
 };
+export type CreateRepositoryExportResponse = /** status 200 OK */ Job;
+export type CreateRepositoryExportArg = {
+  /** name of the Job */
+  name: string;
+  body: {
+    /** Target branch for export (only git) */
+    branch?: string;
+    /** The source folder (or empty) to export */
+    folder?: string;
+    /** Include the identifier in the exported metadata */
+    identifier: boolean;
+    /** Prefix in target file system */
+    prefix?: string;
+  };
+};
+export type GetRepositoryFilesResponse = /** status 200 OK */ {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items?: any[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: any;
+};
+export type GetRepositoryFilesArg = {
+  /** name of the ResourceWrapper */
+  name: string;
+  /** branch or commit hash */
+  ref?: string;
+};
+export type GetRepositoryFilesWithPathResponse = /** status 200 OK */ ResourceWrapper;
+export type GetRepositoryFilesWithPathArg = {
+  /** name of the ResourceWrapper */
+  name: string;
+  /** path to the resource */
+  path: string;
+  /** branch or commit hash */
+  ref?: string;
+};
+export type ReplaceRepositoryFilesWithPathResponse = /** status 200 OK */ ResourceWrapper;
+export type ReplaceRepositoryFilesWithPathArg = {
+  /** name of the ResourceWrapper */
+  name: string;
+  /** path to the resource */
+  path: string;
+  /** branch or commit hash */
+  ref?: string;
+  /** optional message sent with any changes */
+  message?: string;
+  body: {
+    [key: string]: any;
+  };
+};
+export type CreateRepositoryFilesWithPathResponse = /** status 200 OK */ ResourceWrapper;
+export type CreateRepositoryFilesWithPathArg = {
+  /** name of the ResourceWrapper */
+  name: string;
+  /** path to the resource */
+  path: string;
+  /** branch or commit hash */
+  ref?: string;
+  /** optional message sent with any changes */
+  message?: string;
+  body: {
+    [key: string]: any;
+  };
+};
+export type DeleteRepositoryFilesWithPathResponse = /** status 200 OK */ ResourceWrapper;
+export type DeleteRepositoryFilesWithPathArg = {
+  /** name of the ResourceWrapper */
+  name: string;
+  /** path to the resource */
+  path: string;
+  /** branch or commit hash */
+  ref?: string;
+  /** optional message sent with any changes */
+  message?: string;
+};
+export type GetRepositoryHistoryResponse = /** status 200 OK */ string;
+export type GetRepositoryHistoryArg = {
+  /** name of the HistoryList */
+  name: string;
+  /** branch or commit hash */
+  ref?: string;
+};
+export type GetRepositoryHistoryWithPathResponse = /** status 200 OK */ string;
+export type GetRepositoryHistoryWithPathArg = {
+  /** name of the HistoryList */
+  name: string;
+  /** path to the resource */
+  path: string;
+  /** branch or commit hash */
+  ref?: string;
+};
+export type CreateRepositoryMigrateResponse = /** status 200 OK */ Job;
+export type CreateRepositoryMigrateArg = {
+  /** name of the Job */
+  name: string;
+  body: {
+    /** Preserve history (if possible) */
+    history?: boolean;
+    /** Include the identifier in the exported metadata */
+    identifier: boolean;
+    /** Target file prefix */
+    prefix?: string;
+  };
+};
+export type GetRepositoryRenderWithPathResponse = unknown;
+export type GetRepositoryRenderWithPathArg = {
+  /** name of the Repository */
+  name: string;
+  /** path to the resource */
+  path: string;
+};
+export type GetRepositoryResourcesResponse = /** status 200 OK */ ResourceList;
+export type GetRepositoryResourcesArg = {
+  /** name of the ResourceList */
+  name: string;
+};
 export type GetRepositoryStatusResponse = /** status 200 OK */ Repository;
 export type GetRepositoryStatusArg = {
   /** name of the Repository */
@@ -377,6 +615,43 @@ export type ReplaceRepositoryStatusArg = {
   fieldValidation?: string;
   repository: Repository;
 };
+export type CreateRepositorySyncResponse = /** status 200 OK */ Job;
+export type CreateRepositorySyncArg = {
+  /** name of the Job */
+  name: string;
+  body: {
+    /** Incremental synchronization for versioned repositories */
+    incremental: boolean;
+  };
+};
+export type CreateRepositoryTestResponse = /** status 200 OK */ TestResults;
+export type CreateRepositoryTestArg = {
+  /** name of the TestResults */
+  name: string;
+  body: {
+    /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+    apiVersion?: string;
+    /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+    kind?: string;
+    metadata?: any;
+    spec?: any;
+    status?: any;
+  };
+};
+export type GetRepositoryWebhookResponse = /** status 200 OK */ WebhookResponse;
+export type GetRepositoryWebhookArg = {
+  /** name of the WebhookResponse */
+  name: string;
+};
+export type CreateRepositoryWebhookResponse = /** status 200 OK */ WebhookResponse;
+export type CreateRepositoryWebhookArg = {
+  /** name of the WebhookResponse */
+  name: string;
+};
+export type GetFrontendSettingsResponse = /** status 200 undefined */ RepositoryViewList;
+export type GetFrontendSettingsArg = void;
+export type GetResourceStatsResponse = /** status 200 undefined */ ResourceStats;
+export type GetResourceStatsArg = void;
 export type Time = string;
 export type FieldsV1 = object;
 export type ManagedFieldsEntry = {
@@ -624,7 +899,6 @@ export type HealthStatus = {
 export type ResourceCount = {
   count: number;
   group: string;
-  repository?: string;
   resource: string;
 };
 export type SyncStatus = {
@@ -731,6 +1005,181 @@ export type Status = {
   /** Status of the operation. One of: "Success" or "Failure". More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status */
   status?: string;
 };
+export type ResourceRepositoryInfo = {
+  /** The name (identifier) */
+  name: string;
+  /** The namespace this belongs to */
+  namespace: string;
+  /** The display name for this repository */
+  title: string;
+  /** The repository type
+    
+    Possible enum values:
+     - `"github"`
+     - `"local"` */
+  type: 'github' | 'local';
+};
+export type Unstructured = {
+  [key: string]: any;
+};
+export type ResourceType = {
+  /** For non-k8s native formats, what did this start as
+    
+    Possible enum values:
+     - `"access-control"` Access control https://github.com/grafana/grafana/blob/v11.3.1/conf/provisioning/access-control/sample.yaml
+     - `"alerting"` Alert configuration https://github.com/grafana/grafana/blob/v11.3.1/conf/provisioning/alerting/sample.yaml
+     - `"dashboard"` Dashboard JSON
+     - `"datasources"` Datasource definitions eg: https://github.com/grafana/grafana/blob/v11.3.1/conf/provisioning/datasources/sample.yaml */
+  classic?: 'access-control' | 'alerting' | 'dashboard' | 'datasources';
+  group?: string;
+  kind?: string;
+  resource?: string;
+  version?: string;
+};
+export type ResourceObjects = {
+  /** The action required/used for dryRun
+    
+    Possible enum values:
+     - `"create"`
+     - `"delete"`
+     - `"update"` */
+  action?: 'create' | 'delete' | 'update';
+  /** The value returned from a dryRun request */
+  dryRun?: Unstructured;
+  /** The same value, currently saved in the grafana database */
+  existing?: Unstructured;
+  /** The resource from the repository with all modifications applied eg, the name, folder etc will all be applied to this object */
+  file?: Unstructured;
+  /** The identified type for this object */
+  type: ResourceType;
+  /** For write events, this will return the value that was added or updated */
+  upsert?: Unstructured;
+};
+export type ResourceUrLs = {
+  /** Compare this version to the target branch */
+  compareURL?: string;
+  /** A URL that will create a new pull requeset for this branch */
+  newPullRequestURL?: string;
+  /** A URL pointing to the repository this lives in */
+  repositoryURL?: string;
+  /** A URL pointing to the this file in the repository */
+  sourceURL?: string;
+};
+export type ResourceWrapper = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** If errors exist, show them here */
+  errors?: string[];
+  /** The repo hash value */
+  hash?: string;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  /** Path to the remote file */
+  path?: string;
+  /** The request ref (or branch if exists) */
+  ref?: string;
+  /** Basic repository info */
+  repository: ResourceRepositoryInfo;
+  /** Different flavors of the same object */
+  resource: ResourceObjects;
+  /** The modified time in the remote file system */
+  timestamp?: Time;
+  /** Typed links for this file (only supported by external systems, github etc) */
+  urls?: ResourceUrLs;
+};
+export type ResourceListItem = {
+  folder?: string;
+  group: string;
+  /** the k8s identifier */
+  hash: string;
+  name: string;
+  path: string;
+  resource: string;
+  time?: number;
+  title?: string;
+};
+export type ResourceList = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items?: ResourceListItem[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: ListMeta;
+};
+export type TestResults = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** HTTP status code */
+  code: number;
+  /** Optional details */
+  details?: Unstructured;
+  /** Error descriptions */
+  errors?: string[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  /** Is the connection healthy */
+  success: boolean;
+};
+export type WebhookResponse = {
+  /** Optional message */
+  added?: string;
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** HTTP Status code 200 implies that the payload was understood but nothing is required 202 implies that an async job has been scheduled to handle the request */
+  code?: number;
+  /** Jobs to be processed When the response is 202 (Accepted) the queued jobs will be returned */
+  job?: JobSpec;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+};
+export type RepositoryView = {
+  /** The k8s name for this repository */
+  name: string;
+  /** Edit options within the repository */
+  readOnly: boolean;
+  /** When syncing, where values are saved
+    
+    Possible enum values:
+     - `"folder"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name
+     - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
+  target: 'folder' | 'instance';
+  /** Repository display */
+  title: string;
+  /** The repository type
+    
+    Possible enum values:
+     - `"github"`
+     - `"local"` */
+  type: 'github' | 'local';
+};
+export type RepositoryViewList = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: RepositoryView[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  /** The backend is using legacy storage FIXME: Not sure where this should be exposed... but we need it somewhere The UI should force the onboarding workflow when this is true */
+  legacyStorage?: boolean;
+};
+export type ManagerStats = {
+  /** Manager identity */
+  id?: string;
+  /** Manager kind */
+  kind?: string;
+  /** stats */
+  stats: ResourceCount[];
+};
+export type ResourceStats = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** Stats across all unified storage When legacy storage is still used, this will offer a shim */
+  instance?: ResourceCount[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  /** Stats for each manager */
+  managed?: ManagerStats[];
+  metadata?: any;
+};
 export const {
   useListJobQuery,
   useGetJobQuery,
@@ -740,6 +1189,23 @@ export const {
   useGetRepositoryQuery,
   useReplaceRepositoryMutation,
   useDeleteRepositoryMutation,
+  useCreateRepositoryExportMutation,
+  useGetRepositoryFilesQuery,
+  useGetRepositoryFilesWithPathQuery,
+  useReplaceRepositoryFilesWithPathMutation,
+  useCreateRepositoryFilesWithPathMutation,
+  useDeleteRepositoryFilesWithPathMutation,
+  useGetRepositoryHistoryQuery,
+  useGetRepositoryHistoryWithPathQuery,
+  useCreateRepositoryMigrateMutation,
+  useGetRepositoryRenderWithPathQuery,
+  useGetRepositoryResourcesQuery,
   useGetRepositoryStatusQuery,
   useReplaceRepositoryStatusMutation,
+  useCreateRepositorySyncMutation,
+  useCreateRepositoryTestMutation,
+  useGetRepositoryWebhookQuery,
+  useCreateRepositoryWebhookMutation,
+  useGetFrontendSettingsQuery,
+  useGetResourceStatsQuery,
 } = injectedRtkApi;

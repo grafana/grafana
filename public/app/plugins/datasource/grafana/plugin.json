@@ -13,7 +13,8 @@
     "logos": {
       "small": "img/icn-grafanadb.svg",
       "large": "img/icn-grafanadb.svg"
-    }
+    },
+    "links": [{ "name": "Raise issue", "url": "https://github.com/grafana/grafana/issues/new" }]
   },
   "backend": true,
   "annotations": true,
