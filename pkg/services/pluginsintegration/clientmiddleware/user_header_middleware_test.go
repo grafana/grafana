@@ -12,7 +12,7 @@ import (
 )
 
 func TestUserHeaderMiddleware(t *testing.T) {
-	t.Run("When anononymous user in reqContext", func(t *testing.T) {
+	t.Run("When anonymous user in reqContext", func(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "/some/thing", nil)
 		require.NoError(t, err)
 
@@ -58,6 +58,36 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				require.NotNil(t, cdt.CheckHealthReq)
 				require.Empty(t, cdt.CheckHealthReq.Headers)
 			})
+
+			t.Run("Should not forward user header when calling SubscribeStream", func(t *testing.T) {
+				_, err = cdt.MiddlewareHandler.SubscribeStream(req.Context(), &backend.SubscribeStreamRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{},
+				})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.SubscribeStreamReq)
+				require.Empty(t, cdt.SubscribeStreamReq.Headers)
+			})
+
+			t.Run("Should not forward user header when calling PublishStream", func(t *testing.T) {
+				_, err = cdt.MiddlewareHandler.PublishStream(req.Context(), &backend.PublishStreamRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{},
+				})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.PublishStreamReq)
+				require.Empty(t, cdt.PublishStreamReq.Headers)
+			})
+
+			t.Run("Should not forward user header when calling RunStream", func(t *testing.T) {
+				err = cdt.MiddlewareHandler.RunStream(req.Context(), &backend.RunStreamRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{},
+				}, &backend.StreamSender{})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.RunStreamReq)
+				require.Empty(t, cdt.RunStreamReq.Headers)
+			})
 		})
 
 		t.Run("And requests are for an app", func(t *testing.T) {
@@ -101,6 +131,36 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CheckHealthReq)
 				require.Empty(t, cdt.CheckHealthReq.Headers)
+			})
+
+			t.Run("Should not forward user header when calling SubscribeStream", func(t *testing.T) {
+				_, err = cdt.MiddlewareHandler.SubscribeStream(req.Context(), &backend.SubscribeStreamRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{},
+				})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.SubscribeStreamReq)
+				require.Empty(t, cdt.SubscribeStreamReq.Headers)
+			})
+
+			t.Run("Should not forward user header when calling PublishStream", func(t *testing.T) {
+				_, err = cdt.MiddlewareHandler.PublishStream(req.Context(), &backend.PublishStreamRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{},
+				})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.PublishStreamReq)
+				require.Empty(t, cdt.PublishStreamReq.Headers)
+			})
+
+			t.Run("Should not forward user header when calling RunStream", func(t *testing.T) {
+				err = cdt.MiddlewareHandler.RunStream(req.Context(), &backend.RunStreamRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{},
+				}, &backend.StreamSender{})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.RunStreamReq)
+				require.Empty(t, cdt.RunStreamReq.Headers)
 			})
 		})
 	})
@@ -153,6 +213,39 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				require.Len(t, cdt.CheckHealthReq.Headers, 1)
 				require.Equal(t, "admin", cdt.CheckHealthReq.GetHTTPHeader(proxyutil.UserHeaderName))
 			})
+
+			t.Run("Should forward user header when calling SubscribeStream", func(t *testing.T) {
+				_, err = cdt.MiddlewareHandler.SubscribeStream(req.Context(), &backend.SubscribeStreamRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{},
+				})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.SubscribeStreamReq)
+				require.Len(t, cdt.SubscribeStreamReq.Headers, 1)
+				require.Equal(t, "admin", cdt.SubscribeStreamReq.GetHTTPHeader(proxyutil.UserHeaderName))
+			})
+
+			t.Run("Should forward user header when calling PublishStream", func(t *testing.T) {
+				_, err = cdt.MiddlewareHandler.PublishStream(req.Context(), &backend.PublishStreamRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{},
+				})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.PublishStreamReq)
+				require.Len(t, cdt.PublishStreamReq.Headers, 1)
+				require.Equal(t, "admin", cdt.PublishStreamReq.GetHTTPHeader(proxyutil.UserHeaderName))
+			})
+
+			t.Run("Should forward user header when calling RunStream", func(t *testing.T) {
+				err = cdt.MiddlewareHandler.RunStream(req.Context(), &backend.RunStreamRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{},
+				}, &backend.StreamSender{})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.RunStreamReq)
+				require.Len(t, cdt.RunStreamReq.Headers, 1)
+				require.Equal(t, "admin", cdt.RunStreamReq.GetHTTPHeader(proxyutil.UserHeaderName))
+			})
 		})
 
 		t.Run("And requests are for an app", func(t *testing.T) {
@@ -198,6 +291,39 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				require.NotNil(t, cdt.CheckHealthReq)
 				require.Len(t, cdt.CheckHealthReq.Headers, 1)
 				require.Equal(t, "admin", cdt.CheckHealthReq.GetHTTPHeader(proxyutil.UserHeaderName))
+			})
+
+			t.Run("Should forward user header when calling SubscribeStream", func(t *testing.T) {
+				_, err = cdt.MiddlewareHandler.SubscribeStream(req.Context(), &backend.SubscribeStreamRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{},
+				})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.SubscribeStreamReq)
+				require.Len(t, cdt.SubscribeStreamReq.Headers, 1)
+				require.Equal(t, "admin", cdt.SubscribeStreamReq.GetHTTPHeader(proxyutil.UserHeaderName))
+			})
+
+			t.Run("Should forward user header when calling PublishStream", func(t *testing.T) {
+				_, err = cdt.MiddlewareHandler.PublishStream(req.Context(), &backend.PublishStreamRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{},
+				})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.PublishStreamReq)
+				require.Len(t, cdt.PublishStreamReq.Headers, 1)
+				require.Equal(t, "admin", cdt.PublishStreamReq.GetHTTPHeader(proxyutil.UserHeaderName))
+			})
+
+			t.Run("Should forward user header when calling RunStream", func(t *testing.T) {
+				err = cdt.MiddlewareHandler.RunStream(req.Context(), &backend.RunStreamRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{},
+				}, &backend.StreamSender{})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.RunStreamReq)
+				require.Len(t, cdt.RunStreamReq.Headers, 1)
+				require.Equal(t, "admin", cdt.RunStreamReq.GetHTTPHeader(proxyutil.UserHeaderName))
 			})
 		})
 	})
