@@ -24,7 +24,7 @@ import {
   measureText,
   UPLOT_AXIS_FONT_SIZE,
 } from '@grafana/ui';
-import { getStackingGroups, preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
+import { getStackingGroups, preparePlotData2 } from '@grafana/ui/internal';
 
 import { defaultFieldConfig, FieldConfig, Options } from './panelcfg.gen';
 
