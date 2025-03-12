@@ -33,10 +33,6 @@ export function MigrateStep({ onStepUpdate }: MigrateStepProps) {
       description="Migrating all dashboards from this instance to your repository, including their identifiers and complete
         history. After this one-time migration, all future updates will be automatically saved to the repository."
       startJob={startMigration}
-    >
-      <Alert severity="info" title="Note">
-        Dashboards will be unavailable while running this process.
-      </Alert>
-    </JobStep>
+    />
   );
 }

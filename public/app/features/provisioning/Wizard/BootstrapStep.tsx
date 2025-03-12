@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import {
+  Alert,
   Badge,
   Box,
   Card,
@@ -126,6 +127,13 @@ export function BootstrapStep({ onOptionSelect, onStepUpdate }: Props) {
         };
       }
 
+      if (option.value === 'folder' && option.operation === 'pull' && settingsQuery.data?.legacyStorage) {
+        return {
+          isDisabled: true,
+          disabledReason: 'The instance must first be migrated',
+        };
+      }
+
       // Disable pull instance option if there are existing dashboards or folders
       if (option.value === 'instance' && option.operation === 'pull' && resourceCount > 0) {
         return {
@@ -136,7 +144,8 @@ export function BootstrapStep({ onOptionSelect, onStepUpdate }: Props) {
       }
 
       // Disable migrate option if there are existing files
-      if (option.operation === 'migrate' && fileCount > 0) {
+      // When using: settingsQuery.data?.legacyStorage this is the only option
+      if (option.operation === 'migrate' && (otherInstanceConnected || otherFolderConnected)) {
         return {
           isDisabled: true,
           disabledReason: 'Cannot migrate when repository has existing files. Please delete existing files first.',
@@ -160,7 +169,7 @@ export function BootstrapStep({ onOptionSelect, onStepUpdate }: Props) {
 
       return { isDisabled: false };
     },
-    [settingsQuery.data?.legacyStorage, resourceCount, fileCount, otherInstanceConnected, otherFolderConnected]
+    [settingsQuery.data?.legacyStorage, resourceCount, otherInstanceConnected, otherFolderConnected]
   );
 
   // Add sorted options after getOptionState is defined
@@ -318,24 +327,38 @@ export function BootstrapStep({ onOptionSelect, onStepUpdate }: Props) {
 
         {/* Add migration options */}
         {selectedOption?.operation === 'migrate' && (
-          <FieldSet label="Migrate options">
-            <Stack direction="column" gap={2}>
-              <Stack direction="row" gap={2} alignItems="center">
-                <Switch {...register('migrate.identifier')} defaultChecked={true} />
-                <Text>Include identifiers</Text>
-                <Tooltip content="Include unique identifiers for each dashboard to maintain references" placement="top">
-                  <Icon name="info-circle" />
-                </Tooltip>
+          <>
+            <Alert severity="info" title="Note">
+              Dashboards will be unavailable while running this process.
+            </Alert>
+            {fileCount && (
+              <Alert title="Files exist in the target" severity="info">
+                The {resourceCount} resources will be added to the repository. Grafana will have both the current
+                resources and anything from the repository when done.
+              </Alert>
+            )}
+            <FieldSet label="Migrate options">
+              <Stack direction="column" gap={2}>
+                <Stack direction="row" gap={2} alignItems="center">
+                  <Switch {...register('migrate.identifier')} defaultChecked={true} />
+                  <Text>Include identifiers</Text>
+                  <Tooltip
+                    content="Include unique identifiers for each dashboard to maintain references"
+                    placement="top"
+                  >
+                    <Icon name="info-circle" />
+                  </Tooltip>
+                </Stack>
+                <Stack direction="row" gap={2} alignItems="center">
+                  <Switch {...register('migrate.history')} defaultChecked={true} />
+                  <Text>Include history</Text>
+                  <Tooltip content="Include complete dashboard version history" placement="top">
+                    <Icon name="info-circle" />
+                  </Tooltip>
+                </Stack>
               </Stack>
-              <Stack direction="row" gap={2} alignItems="center">
-                <Switch {...register('migrate.history')} defaultChecked={true} />
-                <Text>Include history</Text>
-                <Tooltip content="Include complete dashboard version history" placement="top">
-                  <Icon name="info-circle" />
-                </Tooltip>
-              </Stack>
-            </Stack>
-          </FieldSet>
+            </FieldSet>
+          </>
         )}
 
         {/* Only show title field if folder sync */}
