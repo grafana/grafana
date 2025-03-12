@@ -1,4 +1,4 @@
-import {LegendDisplayMode, LegendPlacement, SortOrder, TooltipDisplayMode} from '@grafana/schema';
+import { LegendDisplayMode, LegendPlacement, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
 import {
   CandlestickColors,

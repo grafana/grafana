@@ -1,6 +1,6 @@
-import {identity, isEqual, sortBy} from 'lodash';
+import { identity, isEqual, sortBy } from 'lodash';
 import * as React from 'react';
-import {useEffect, useMemo, useRef, useState} from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   AbsoluteTimeRange,
@@ -17,7 +17,7 @@ import {
   ThresholdsConfig,
   TimeRange,
 } from '@grafana/data';
-import {PanelRenderer} from '@grafana/runtime';
+import { PanelRenderer } from '@grafana/runtime';
 import {
   GraphDrawStyle,
   GraphThresholdsStyleConfig,
@@ -28,17 +28,17 @@ import {
   TooltipDisplayMode,
   VizLegendOptions,
 } from '@grafana/schema';
-import {PanelContext, PanelContextProvider, SeriesVisibilityChangeMode, useTheme2} from '@grafana/ui';
-import {GraphFieldConfig} from 'app/plugins/panel/graph/types';
-import {defaultGraphConfig, getGraphFieldConfig} from 'app/plugins/panel/timeseries/config';
-import {Options as TimeSeriesOptions} from 'app/plugins/panel/timeseries/panelcfg.gen';
-import {ExploreGraphStyle} from 'app/types';
+import { PanelContext, PanelContextProvider, SeriesVisibilityChangeMode, useTheme2 } from '@grafana/ui';
+import { GraphFieldConfig } from 'app/plugins/panel/graph/types';
+import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
+import { Options as TimeSeriesOptions } from 'app/plugins/panel/timeseries/panelcfg.gen';
+import { ExploreGraphStyle } from 'app/types';
 
-import {seriesVisibilityConfigFactory} from '../../dashboard/dashgrid/SeriesVisibilityConfigFactory';
-import {useExploreDataLinkPostProcessor} from '../hooks/useExploreDataLinkPostProcessor';
+import { seriesVisibilityConfigFactory } from '../../dashboard/dashgrid/SeriesVisibilityConfigFactory';
+import { useExploreDataLinkPostProcessor } from '../hooks/useExploreDataLinkPostProcessor';
 
-import {applyGraphStyle, applyThresholdsConfig} from './exploreGraphStyleUtils';
-import {useStructureRev} from './useStructureRev';
+import { applyGraphStyle, applyThresholdsConfig } from './exploreGraphStyleUtils';
+import { useStructureRev } from './useStructureRev';
 
 interface Props {
   data: DataFrame[];

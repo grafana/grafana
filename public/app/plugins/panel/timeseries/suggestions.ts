@@ -13,10 +13,10 @@ import {
   LineInterpolation,
   StackingMode,
 } from '@grafana/schema';
-import {getDashboardSrv} from 'app/features/dashboard/services/DashboardSrv';
-import {SuggestionName} from 'app/types/suggestions';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { SuggestionName } from 'app/types/suggestions';
 
-import {Options} from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 
 export class TimeSeriesSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {

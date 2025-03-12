@@ -1,6 +1,6 @@
-import {isNil, omitBy} from 'lodash';
+import { isNil, omitBy } from 'lodash';
 
-import {FieldConfigSource, PanelTypeChangedHandler} from '@grafana/data';
+import { FieldConfigSource, PanelTypeChangedHandler } from '@grafana/data';
 import {
   LegendDisplayMode,
   LegendPlacement,
@@ -9,8 +9,8 @@ import {
   TooltipDisplayMode,
 } from '@grafana/schema/dist/esm/common/common.gen';
 
-import {defaultHistogramConfig} from './config';
-import {FieldConfig as HistogramFieldConfig, Options} from './panelcfg.gen';
+import { defaultHistogramConfig } from './config';
+import { FieldConfig as HistogramFieldConfig, Options } from './panelcfg.gen';
 
 /*
  * This is called when the panel changes from another panel
