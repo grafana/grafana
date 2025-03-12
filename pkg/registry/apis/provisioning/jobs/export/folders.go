@@ -18,12 +18,12 @@ import (
 // FIXME: revise logging in this method
 func (r *exportJob) loadFolders(ctx context.Context) error {
 	logger := r.logger
-	r.progress.SetMessage("reading folder tree")
+	r.progress.SetMessage(ctx, "reading folder tree")
 
 	repoName := r.target.Config().Name
 
 	// TODO: should this be logging or message or both?
-	r.progress.SetMessage("read folder tree from unified storage")
+	r.progress.SetMessage(ctx, "read folder tree from unified storage")
 	client, _, err := r.client.ForResource(schema.GroupVersionResource{
 		Group:    folders.GROUP,
 		Version:  folders.VERSION,
@@ -54,7 +54,7 @@ func (r *exportJob) loadFolders(ctx context.Context) error {
 	}
 
 	// create folders first is required so that empty folders exist when finished
-	r.progress.SetMessage("write folders")
+	r.progress.SetMessage(ctx, "write folders")
 
 	err = r.folderTree.Walk(ctx, func(ctx context.Context, folder resources.Folder) error {
 		p := folder.Path + "/"

@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, InfoBox, Portal, useStyles2, useTheme2 } from '@grafana/ui';
-import { getModalStyles } from '@grafana/ui/src/components/Modal/getModalStyles';
+import { getModalStyles } from '@grafana/ui/internal';
 
 interface Props {
   maxConcurrentSessions?: number;

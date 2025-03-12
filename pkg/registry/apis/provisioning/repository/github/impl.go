@@ -104,7 +104,8 @@ func (r *githubClient) GetTree(ctx context.Context, owner, repository, ref strin
 			return nil, false, ErrServiceUnavailable
 		}
 		if ghErr.Response.StatusCode == http.StatusNotFound {
-			return nil, false, ErrResourceNotFound
+			// Github returns a 404 if the ref is empty not only if not found
+			return []RepositoryContent{}, false, nil
 		}
 		return nil, false, err
 	}

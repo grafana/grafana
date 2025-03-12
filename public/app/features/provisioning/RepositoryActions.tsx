@@ -5,7 +5,6 @@ import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
 import { Repository } from './api';
 import { PROVISIONING_URL } from './constants';
-import { getRemoteURL } from './utils/git';
 
 interface RepositoryActionsProps {
   repository: Repository;
@@ -20,8 +19,8 @@ export function RepositoryActions({
   onExportClick,
   onMigrateClick,
 }: RepositoryActionsProps) {
-  const remoteURL = getRemoteURL(repository);
   const name = repository.metadata?.name ?? '';
+  const remoteURL = repository.spec?.github?.url ?? '';
 
   return (
     <Stack>

@@ -4,8 +4,11 @@ import (
 	"context"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -122,7 +125,12 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 	// Get the stats based on what a migration could support
 	if dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, o.storageStatus) {
 		rsp, err := o.legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
-			Namespace:   namespace,
+			Namespace: namespace,
+			Resources: []schema.GroupResource{{
+				Group: dashboard.GROUP, Resource: dashboard.DASHBOARD_RESOURCE,
+			}, {
+				Group: folders.GROUP, Resource: folders.RESOURCE,
+			}},
 			WithHistory: false,
 			OnlyCount:   true,
 		})
@@ -136,6 +144,7 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 				Count:    v.Count,
 			})
 		}
+		return stats, nil
 	}
 
 	// Get full instance stats

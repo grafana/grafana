@@ -4,7 +4,7 @@ import { config } from '@grafana/runtime';
 import { Alert, ControlledCollapse, Field } from '@grafana/ui';
 
 import { checkPublicAccess } from './GettingStarted/features';
-import { PROVISIONING_URL } from './constants';
+import { GETTING_STARTED_URL } from './constants';
 
 export interface ConfigFormGithubCollpaseProps {
   previews: React.ReactElement;
@@ -26,7 +26,7 @@ export function ConfigFormGithubCollpase({ previews }: ConfigFormGithubCollpaseP
           title={'Public URL not configured'}
           severity={'warning'}
           buttonContent={<span>Instructions</span>}
-          onRemove={() => navigate(`${PROVISIONING_URL}/setup`)}
+          onRemove={() => navigate(GETTING_STARTED_URL)}
         >
           Changes in git will eventually be pulled depending on the synchronization interval. Pull requests will not be
           proccessed

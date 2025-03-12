@@ -65,7 +65,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	)
 
 	if repo.Config().Spec.GitHub != nil {
-		progress.SetMessage("clone target")
+		progress.SetMessage(ctx, "clone target")
 		buffered, err = gogit.Clone(ctx, repo.Config(), gogit.GoGitCloneOptions{
 			Root:                   r.clonedir,
 			SingleCommitBeforePush: true,
@@ -91,20 +91,20 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	worker := newExportJob(ctx, rw, *options, clients, progress)
 
 	// Load and write all folders
-	progress.SetMessage("start folder export")
+	progress.SetMessage(ctx, "start folder export")
 	err = worker.loadFolders(ctx)
 	if err != nil {
 		return err
 	}
 
-	progress.SetMessage("start resource export")
+	progress.SetMessage(ctx, "start resource export")
 	err = worker.loadResources(ctx)
 	if err != nil {
 		return err
 	}
 
 	if buffered != nil {
-		progress.SetMessage("push changes")
+		progress.SetMessage(ctx, "push changes")
 		if err := buffered.Push(ctx, os.Stdout); err != nil {
 			return fmt.Errorf("error pushing changes: %w", err)
 		}
