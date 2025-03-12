@@ -8,7 +8,7 @@ import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { LogMessageAnsi } from '../LogMessageAnsi';
 
 import { LogLineMenu } from './LogLineMenu';
-import { useLogIsPinned } from './LogListContext';
+import { useLogIsPinned, useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 import { FIELD_GAP_MULTIPLIER, hasUnderOrOverflow, getLineHeight, LogFieldDimension } from './virtualization';
 
@@ -105,6 +105,8 @@ const Log = ({ displayedFields, log, showTime, styles, wrapLogMessage }: LogProp
 };
 
 const LogLineBody = ({ log }: { log: LogListModel }) => {
+  const { syntaxHighlighting } = useLogListContext();
+
   if (log.hasAnsi) {
     const needsHighlighter =
       log.searchWords && log.searchWords.length > 0 && log.searchWords[0] && log.searchWords[0].length > 0;
@@ -114,6 +116,10 @@ const LogLineBody = ({ log }: { log: LogListModel }) => {
         <LogMessageAnsi value={log.body} highlight={highlight} />
       </span>
     );
+  }
+
+  if (!syntaxHighlighting) {
+    return <span className="field">{log.body}</span>;
   }
 
   return <span className="field log-syntax-highlight" dangerouslySetInnerHTML={{ __html: log.highlightedBody }} />;

@@ -29,9 +29,11 @@ export interface LogListContextData {
   setDisplayedFields: (displayedFields: string[]) => void;
   setLogListState: Dispatch<SetStateAction<LogListState>>;
   setPinnedLogs: (pinnedlogs: string[]) => void;
+  setSyntaxHighlighting: (syntaxHighlighting: boolean) => void;
   setShowTime: (showTime: boolean) => void;
   setWrapLogMessage: (showTime: boolean) => void;
   showTime: boolean;
+  syntaxHighlighting: boolean;
   wrapLogMessage: boolean;
 }
 
@@ -42,8 +44,10 @@ export const LogListContext = createContext<LogListContextData>({
   setLogListState: () => {},
   setPinnedLogs: () => {},
   setShowTime: () => {},
+  setSyntaxHighlighting: () => {},
   setWrapLogMessage: () => {},
   showTime: true,
+  syntaxHighlighting: true,
   wrapLogMessage: false,
 });
 
@@ -61,12 +65,16 @@ export const useLogIsPinned = (log: LogRowModel) => {
   return pinnedLogs?.some((logId) => logId === log.rowId);
 };
 
-type LogListState = Pick<LogListContextData, 'displayedFields' | 'pinnedLogs' | 'showTime' | 'wrapLogMessage'>;
+type LogListState = Pick<
+  LogListContextData,
+  'displayedFields' | 'pinnedLogs' | 'showTime' | 'syntaxHighlighting' | 'wrapLogMessage'
+>;
 export const LogListContextProvider = (props: LogListContextData) => {
   const [logListState, setLogListState] = useState<LogListState>({
     displayedFields: props.displayedFields,
     pinnedLogs: props.pinnedLogs,
     showTime: props.showTime,
+    syntaxHighlighting: true,
     wrapLogMessage: props.wrapLogMessage,
   });
 
@@ -109,12 +117,20 @@ export const LogListContextProvider = (props: LogListContextData) => {
     [logListState]
   );
 
+  const setSyntaxHighlighting = useCallback(
+    (syntaxHighlighting: boolean) => {
+      setLogListState({ ...logListState, syntaxHighlighting });
+    },
+    [logListState]
+  );
+
   const setWrapLogMessage = useCallback(
     (wrapLogMessage: boolean) => {
       setLogListState({ ...logListState, wrapLogMessage });
     },
     [logListState]
   );
+
   return (
     <LogListContext.Provider
       value={{
@@ -132,8 +148,10 @@ export const LogListContextProvider = (props: LogListContextData) => {
         setLogListState,
         setPinnedLogs,
         setShowTime,
+        setSyntaxHighlighting,
         setWrapLogMessage,
         showTime: logListState.showTime,
+        syntaxHighlighting: logListState.syntaxHighlighting,
         wrapLogMessage: logListState.wrapLogMessage,
       }}
     >
