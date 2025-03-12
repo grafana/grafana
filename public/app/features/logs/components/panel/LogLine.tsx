@@ -161,7 +161,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.fontSize,
       wordBreak: 'break-all',
       '&:hover': {
-        opacity: 0.7,
+        background: `hsla(0, 0%, 0%, 0.1)`,
       },
       '&.infinite-scroll': {
         '&::before': {
