@@ -73,7 +73,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	logger.Info("process pull request")
 	defer logger.Info("pull request processed")
 
-	progress.SetMessage("listing pull request files")
+	progress.SetMessage(ctx, "listing pull request files")
 	base := cfg.GitHub.Branch
 	ref := options.Hash
 	files, err := prRepo.CompareFiles(ctx, base, ref)
@@ -81,17 +81,17 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		return fmt.Errorf("failed to list pull request files: %s", err.Error())
 	}
 
-	progress.SetMessage("clearing pull request comments")
+	progress.SetMessage(ctx, "clearing pull request comments")
 	if err := prRepo.ClearAllPullRequestFileComments(ctx, options.PR); err != nil {
 		return fmt.Errorf("failed to clear pull request comments: %+v", err)
 	}
 
 	if len(files) == 0 {
-		progress.SetMessage("no files to process")
+		progress.SetFinalMessage(ctx, "no files to process")
 		return nil
 	}
 
-	progress.SetMessage("processing pull request files")
+	progress.SetMessage(ctx, "processing pull request files")
 	previews := make([]resourcePreview, 0, len(files))
 	for _, f := range files {
 		result := jobs.JobResourceResult{
@@ -139,11 +139,11 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	}
 
 	if len(previews) == 0 {
-		progress.SetMessage("no previews to add")
+		progress.SetFinalMessage(ctx, "no previews to add")
 		return nil
 	}
 
-	progress.SetMessage("generating previews comment")
+	progress.SetMessage(ctx, "generating previews comment")
 	comment, err := c.previewer.GenerateComment(previews)
 	if err != nil {
 		return fmt.Errorf("generate comment: %w", err)
