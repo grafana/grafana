@@ -294,8 +294,8 @@ type Cfg struct {
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheSettings
 
-	ViewersCanEdit  bool // Deprecated: no longer used
-	EditorsCanAdmin bool // Deprecated: no longer used
+	// Deprecated: no longer used
+	ViewersCanEdit bool
 
 	ApiKeyMaxSecondsToLive int64
 
@@ -1733,15 +1733,11 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.ExternalUserMngAnalytics = users.Key("external_manage_analytics").MustBool(false)
 	cfg.ExternalUserMngAnalyticsParams = valueAsString(users, "external_manage_analytics_params", "")
 
-	// Deprecated
+	//nolint:staticcheck
 	cfg.ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
+	//nolint:staticcheck
 	if cfg.ViewersCanEdit {
 		cfg.Logger.Warn("[Deprecated] The viewers_can_edit configuration setting is deprecated. Please upgrade viewers to editors.")
-	}
-	// Deprecated
-	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)
-	if cfg.EditorsCanAdmin {
-		cfg.Logger.Warn("[Deprecated] The editors_can_admin configuration setting is deprecated. Please upgrade editors to admin.")
 	}
 
 	userInviteMaxLifetimeVal := valueAsString(users, "user_invite_max_lifetime_duration", "24h")

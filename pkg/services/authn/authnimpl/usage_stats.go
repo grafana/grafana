@@ -31,13 +31,9 @@ func (s *Service) getUsageStats(ctx context.Context) (map[string]any, error) {
 	// FIXME: Move this to accesscontrol OSS.
 	// FIXME: Access Control OSS usage stats is currently disabled if Enterprise is enabled.
 	m["stats.authz.viewers_can_edit.count"] = 0
+	//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
 	if s.cfg.ViewersCanEdit {
 		m["stats.authz.viewers_can_edit.count"] = 1
-	}
-
-	m["stats.authz.editors_can_admin.count"] = 0
-	if s.cfg.EditorsCanAdmin {
-		m["stats.authz.editors_can_admin.count"] = 1
 	}
 
 	for _, client := range s.clients {
