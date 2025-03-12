@@ -73,8 +73,9 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 	r.notify(ctx)
 }
 
-func (r *jobProgressRecorder) SetMessage(msg string) {
+func (r *jobProgressRecorder) SetMessage(ctx context.Context, msg string) {
 	r.message = msg
+	logging.FromContext(ctx).Info("job progress message", "message", msg)
 }
 
 func (r *jobProgressRecorder) GetMessage() string {

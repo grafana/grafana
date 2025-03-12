@@ -84,12 +84,12 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		},
 	}
 
-	progress.SetMessage("update sync status at start")
+	progress.SetMessage(ctx, "update sync status at start")
 	if err := r.patchStatus(ctx, cfg, patchOperations); err != nil {
 		return fmt.Errorf("update repo with job status at start: %w", err)
 	}
 
-	progress.SetMessage("execute sync job")
+	progress.SetMessage(ctx, "execute sync job")
 	syncJob, err := r.createJob(ctx, rw, progress)
 	if err != nil {
 		return fmt.Errorf("failed to create sync job: %w", err)
@@ -105,7 +105,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 
 	// Update final status using JSON patch
-	progress.SetMessage("update status and stats")
+	progress.SetMessage(ctx, "update status and stats")
 	patchOperations = []map[string]interface{}{
 		{
 			"op":    "replace",
@@ -131,7 +131,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 
 	if syncError == nil {
-		progress.SetMessage("job completed successfully")
+		progress.SetMessage(ctx, "job completed successfully")
 	}
 
 	return syncError
@@ -230,7 +230,7 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) 
 
 		if cfg.Status.Sync.LastRef != "" && options.Incremental {
 			if currentRef == cfg.Status.Sync.LastRef {
-				r.progress.SetMessage("same commit as last sync")
+				r.progress.SetMessage(ctx, "same commit as last sync")
 				return nil
 			}
 
@@ -253,7 +253,7 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) 
 	}
 
 	if len(changes) == 0 {
-		r.progress.SetMessage("no changes to sync")
+		r.progress.SetMessage(ctx, "no changes to sync")
 		return nil
 	}
 
@@ -275,7 +275,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 	})
 
 	r.progress.SetTotal(len(changes))
-	r.progress.SetMessage("replicating changes")
+	r.progress.SetMessage(ctx, "replicating changes")
 
 	// Create folder structure first
 	for _, change := range changes {
@@ -314,7 +314,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 		r.progress.Record(ctx, r.writeResourceFromFile(ctx, change.Path, "", change.Action))
 	}
 
-	r.progress.SetMessage("changes replicated")
+	r.progress.SetMessage(ctx, "changes replicated")
 
 	return nil
 }
@@ -327,12 +327,12 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 	}
 
 	if len(diff) < 1 {
-		r.progress.SetMessage("no changes detected between commits")
+		r.progress.SetMessage(ctx, "no changes detected between commits")
 		return nil
 	}
 
 	r.progress.SetTotal(len(diff))
-	r.progress.SetMessage("replicating versioned changes")
+	r.progress.SetMessage(ctx, "replicating versioned changes")
 
 	for _, change := range diff {
 		if err := r.progress.TooManyErrors(); err != nil {
@@ -362,7 +362,7 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 		}
 	}
 
-	r.progress.SetMessage("versioned changes replicated")
+	r.progress.SetMessage(ctx, "versioned changes replicated")
 
 	return nil
 }

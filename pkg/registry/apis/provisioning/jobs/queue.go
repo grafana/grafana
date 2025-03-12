@@ -29,7 +29,7 @@ type JobQueue interface {
 
 type JobProgressRecorder interface {
 	Record(ctx context.Context, result JobResourceResult)
-	SetMessage(msg string)
+	SetMessage(ctx context.Context, msg string)
 	GetMessage() string
 	SetRef(ref string)
 	GetRef() string

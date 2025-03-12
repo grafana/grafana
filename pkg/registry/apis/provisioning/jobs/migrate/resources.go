@@ -70,7 +70,7 @@ func (j *migrationJob) loadResources(ctx context.Context) error {
 	}}
 
 	for _, kind := range kinds {
-		j.progress.SetMessage(fmt.Sprintf("migrate %s resource", kind.Resource))
+		j.progress.SetMessage(ctx, fmt.Sprintf("migrate %s resource", kind.Resource))
 		gr := kind.GroupResource()
 		opts := legacy.MigrateOptions{
 			Namespace:   j.namespace,

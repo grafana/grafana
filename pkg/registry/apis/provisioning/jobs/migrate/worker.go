@@ -94,12 +94,12 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	isFromLegacy := dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, w.storageStatus)
 	progress.SetTotal(10) // will show a progress bar
 	if repo.Config().Spec.GitHub != nil {
-		progress.SetMessage("clone " + repo.Config().Spec.GitHub.URL)
+		progress.SetMessage(ctx, "clone "+repo.Config().Spec.GitHub.URL)
 		reader, writer := io.Pipe()
 		go func() {
 			scanner := bufio.NewScanner(reader)
 			for scanner.Scan() {
-				progress.SetMessage(scanner.Text())
+				progress.SetMessage(ctx, scanner.Text())
 			}
 		}()
 
@@ -134,7 +134,7 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	}
 
 	if options.History {
-		progress.SetMessage("loading users")
+		progress.SetMessage(ctx, "loading users")
 		err = worker.loadUsers(ctx)
 		if err != nil {
 			return fmt.Errorf("error loading users: %w", err)
@@ -142,13 +142,13 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	}
 
 	if isFromLegacy {
-		progress.SetMessage("exporting folders")
+		progress.SetMessage(ctx, "exporting folders")
 		err = worker.loadFolders(ctx)
 		if err != nil {
 			return err
 		}
 
-		progress.SetMessage("exporting resources")
+		progress.SetMessage(ctx, "exporting resources")
 		err = worker.loadResources(ctx)
 		if err != nil {
 			return err
@@ -167,12 +167,12 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	}
 
 	if buffered != nil {
-		progress.SetMessage("pushing changes")
+		progress.SetMessage(ctx, "pushing changes")
 		reader, writer := io.Pipe()
 		go func() {
 			scanner := bufio.NewScanner(reader)
 			for scanner.Scan() {
-				progress.SetMessage(scanner.Text())
+				progress.SetMessage(ctx, scanner.Text())
 			}
 		}()
 
