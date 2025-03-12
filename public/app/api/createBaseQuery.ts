@@ -45,7 +45,7 @@ export function handleRequestError(error: unknown) {
   console.log('handleRequestError', { error });
 
   if (isFetchError(error)) {
-    return { error: new RequestError(error.data.message, error.status) };
+    return { error: new RequestError(error.data.message, error.status, error?.data?.messageId) };
   } else if (error instanceof Error) {
     return { error };
   } else {
@@ -55,13 +55,19 @@ export function handleRequestError(error: unknown) {
 
 export class RequestError extends Error {
   private readonly _statusCode: number;
+  private readonly _messageId: string;
 
-  constructor(message: string, statusCode: number, options?: ErrorOptions) {
+  constructor(message: string, statusCode: number, messageId?: string, options?: ErrorOptions) {
     super(message, options);
     this._statusCode = statusCode;
+    this._messageId = messageId || '';
   }
 
   public get statusCode() {
     return this._statusCode;
+  }
+
+  public get messageId() {
+    return this._messageId;
   }
 }

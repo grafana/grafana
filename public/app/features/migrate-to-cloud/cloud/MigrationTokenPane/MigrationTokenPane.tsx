@@ -10,7 +10,6 @@ import {
   useDeleteCloudMigrationTokenMutation,
   useGetCloudMigrationTokenQuery,
 } from '../../api';
-import { maybeAPIError } from '../../api/errors';
 import { TokenErrorAlert } from '../TokenErrorAlert';
 
 import { CreateTokenModal } from './CreateTokenModal';
@@ -25,17 +24,14 @@ export const MigrationTokenPane = () => {
   const [createTokenMutation, createTokenResponse] = useCreateCloudMigrationTokenMutation();
   const [deleteTokenMutation, deleteTokenResponse] = useDeleteCloudMigrationTokenMutation();
 
-  const getTokenQueryError = maybeAPIError(getTokenQuery.error);
+  const getTokenQueryError = getTokenQuery.error;
   console.log('getTokenQuery2', { data: getTokenQuery?.data, error: getTokenQuery?.error });
 
   // GetCloudMigrationToken returns a 404 error if no token exists.
   // When a token is deleted and the GetCloudMigrationToken query is refreshed, RTKQ will retain
   // both the last successful data ("we have a token!") AND the new error. So we need to explicitly
   // check that we don't have an error AND that we have a token.
-  const hasToken =
-    Boolean(getTokenQuery.data?.id) &&
-    getTokenQueryError instanceof RequestError &&
-    getTokenQueryError.statusCode !== 404;
+  const hasToken = Boolean(getTokenQuery.data?.id) && (getTokenQueryError as RequestError)?.statusCode !== 404;
   const isLoading = getTokenQuery.isFetching || createTokenResponse.isLoading;
 
   const handleGenerateToken = useCallback(async () => {
@@ -69,7 +65,11 @@ export const MigrationTokenPane = () => {
           <Text color="secondary">
             <Trans i18nKey="migrate-to-cloud.migration-token.status">
               Current status:{' '}
-              <TokenStatus hasToken={hasToken} isFetching={isLoading} errorMessageId={getTokenQueryError?.messageId} />
+              <TokenStatus
+                hasToken={hasToken}
+                isFetching={isLoading}
+                errorMessageId={(getTokenQueryError as RequestError)?.messageId}
+              />
             </Trans>
           </Text>
         )}
