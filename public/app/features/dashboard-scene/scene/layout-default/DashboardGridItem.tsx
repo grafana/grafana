@@ -157,6 +157,8 @@ export class DashboardGridItem
               name: variable.state.name,
               value: variableValues[index],
               text: String(variableTexts[index]),
+              isMulti: variable.state.isMulti,
+              includeAll: variable.state.includeAll,
             }),
           ],
         }),
