@@ -1,10 +1,11 @@
-import { ReactNode, useState } from 'react';
+import { skipToken } from '@reduxjs/toolkit/query';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { useAsync } from 'react-use';
 
-import { Stack, Text } from '@grafana/ui';
+import { Box, Spinner, Stack, Text } from '@grafana/ui';
 
 import { JobStatus } from '../JobStatus';
+import { useListJobQuery } from '../api';
 import { StepStatus, useStepStatus } from '../hooks/useStepStatus';
 
 import { WizardFormData } from './types';
@@ -19,59 +20,92 @@ interface JobStepProps {
 export type { JobStepProps };
 
 export function JobStep({ onStepUpdate, description, startJob, children }: JobStepProps) {
+  const hasInitialized = useRef(false);
   const { watch } = useFormContext<WizardFormData>();
   const repositoryName = watch('repositoryName');
   const stepStatus = useStepStatus({ onStepUpdate });
   const [jobName, setJobName] = useState<string>();
 
-  useAsync(async () => {
-    if (!repositoryName) {
+  // Query the job status if we have a job name
+  const jobQuery = useListJobQuery(jobName ? { watch: true, fieldSelector: `metadata.name=${jobName}` } : skipToken);
+
+  useEffect(() => {
+    if (!repositoryName || hasInitialized.current) {
       return;
     }
 
-    try {
-      stepStatus.setRunning();
-      const response = await startJob(repositoryName);
+    hasInitialized.current = true;
+    let isMounted = true;
 
-      if (!response?.metadata?.name) {
-        stepStatus.setError('Invalid response from operation');
-        throw new Error('Invalid response from operation');
+    const executeJob = async () => {
+      try {
+        if (!isMounted) {
+          return;
+        }
+
+        stepStatus.setRunning();
+        const response = await startJob(repositoryName);
+
+        if (!response?.metadata?.name) {
+          stepStatus.setError('Invalid response from operation');
+          return;
+        }
+        setJobName(response.metadata.name);
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+        stepStatus.setError(error instanceof Error ? error.message : 'Failed to start operation');
       }
+    };
 
-      setJobName(response.metadata.name);
-    } catch (error) {
-      stepStatus.setError(error instanceof Error ? error.message : 'Failed to start operation');
-      throw error; // Re-throw to mark the async operation as failed
-    }
+    executeJob();
+    return () => {
+      isMounted = false;
+    };
   }, [repositoryName, startJob, stepStatus]);
+
+  const job = jobQuery.data?.items?.[0];
+  const showSpinner = !job;
 
   return (
     <Stack direction="column" gap={2}>
       {description && <Text color="secondary">{description}</Text>}
       {children}
 
-      {jobName && (
-        <JobStatus
-          name={jobName}
-          onStatusChange={(success) => {
-            if (success) {
-              stepStatus.setSuccess();
-            } else {
-              stepStatus.setError('Job failed');
-            }
-          }}
-          onRunningChange={(isRunning) => {
-            if (isRunning) {
-              stepStatus.setRunning();
-            }
-          }}
-          onErrorChange={(error) => {
-            if (error) {
-              stepStatus.setError(error);
-            }
-          }}
-        />
-      )}
+      <Box>
+        {showSpinner && (
+          <Stack direction="row" alignItems="center" gap={2}>
+            <Spinner size={24} />
+            <Text element="h4" weight="bold">
+              Starting...
+            </Text>
+          </Stack>
+        )}
+
+        {job && (
+          <JobStatus
+            name={jobName!}
+            onStatusChange={(success) => {
+              if (success) {
+                stepStatus.setSuccess();
+              } else {
+                stepStatus.setError('Job failed');
+              }
+            }}
+            onRunningChange={(isRunning) => {
+              if (isRunning) {
+                stepStatus.setRunning();
+              }
+            }}
+            onErrorChange={(error) => {
+              if (error) {
+                stepStatus.setError(error);
+              }
+            }}
+          />
+        )}
+      </Box>
     </Stack>
   );
 }

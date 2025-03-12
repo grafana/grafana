@@ -39,7 +39,7 @@ export function JobStatus({ name, onStatusChange, onRunningChange, onErrorChange
     }
   }, [job, onStatusChange, onErrorChange, onRunningChange]);
 
-  if (!name || jobQuery.isLoading || !job) {
+  if (jobQuery.isLoading || !job) {
     return (
       <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
         <Spinner size={24} />

@@ -1,3 +1,5 @@
+import { ReactNode } from 'react';
+
 import { useCreateRepositorySyncMutation } from '../api';
 import { StepStatus } from '../hooks/useStepStatus';
 
@@ -5,9 +7,10 @@ import { JobStep } from './JobStep';
 
 interface PullStepProps {
   onStepUpdate: (status: StepStatus, error?: string) => void;
+  description?: ReactNode;
 }
 
-export function PullStep({ onStepUpdate }: PullStepProps) {
+export function PullStep({ onStepUpdate, description }: PullStepProps) {
   const [syncRepo] = useCreateRepositorySyncMutation();
 
   const startSync = async (repositoryName: string) => {
@@ -21,7 +24,7 @@ export function PullStep({ onStepUpdate }: PullStepProps) {
   return (
     <JobStep
       onStepUpdate={onStepUpdate}
-      description="Pulling all content from your repository to this Grafana instance. This ensures your dashboards and other resources are synchronized with the repository."
+      description={description || 'Pulling repository content...'}
       startJob={startSync}
     />
   );
