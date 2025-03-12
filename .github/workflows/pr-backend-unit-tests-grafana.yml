@@ -1,4 +1,4 @@
-name: Backend Unit Tests - Grafana
+name: Backend
 
 on:
   workflow_dispatch:
@@ -18,52 +18,50 @@ permissions:
   contents: read
   id-token: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  backend-unit-testing-coverage:
+  main:
     # Run this workflow only for PRs from forks; if it gets merged into `main` or `release-*`, 
     # the `pr-backend-unit-tests-enterprise` workflow will run instead
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
-    name: Backend Unit Testing & Coverage
-    runs-on: ubuntu-latest
+    name: Unit Tests (Grafana)
+    runs-on: ubuntu-latest-8-cores
     continue-on-error: true
-    env:
-      TEST_TYPE: 'be-unit-grafana'
-      WIRE_TAGS: 'oss'
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-          cache: true
-          
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential shared-mime-info
-
+      - name: Restore GOCACHE
+        uses: actions/cache/restore@v4
+        with:
+          key: go-test-cache-${{ github.ref_name }}
+          restore-keys: |
+            go-test-cache-${{ github.base_ref }}
+            go-test-cache-main
+          path: /home/runner/.cache/go-build
       - name: Generate Go code
         run: make gen-go
-
       - name: Run unit tests
         run: make test-go-unit
-        env:
-          GO_UNIT_COVER_PROFILE: '${{ env.TEST_TYPE }}.cov'
-          GO_TEST_OUTPUT: '/tmp/${{ env.TEST_TYPE }}.log'
-          GO_UNIT_TEST_COVERPKG: 'github.com/grafana/grafana/...'
-
-      - name: Process and upload coverage
-        uses: ./.github/actions/test-coverage-processor
+      - name: "Generate token"
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         with:
-          test-type: '${{ env.TEST_TYPE }}'
-          coverage-file: '${{ env.TEST_TYPE }}.cov'
-          codecov-token: ${{ secrets.CODECOV_TOKEN }}
-          codecov-flag: '${{ env.TEST_TYPE }}'
-          codecov-name: '${{ env.TEST_TYPE }}'
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+      - name: Clear GOCACHE
+        run: gh cache delete go-test-cache-${{ github.ref_name }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+      - name: Save GOCACHE
+        uses: actions/cache/save@v4
+        with:
+          key: go-test-cache-${{ github.ref_name }}
+          path: /home/runner/.cache/go-build

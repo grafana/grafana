@@ -1,33 +1,21 @@
-name: Backend Unit Tests - Grafana + Enterprise
+name: Backend
 
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-      - 'release-**'
-    paths-ignore:
-      - 'docs/**'
-      - '**/*.md'
   pull_request:
     paths-ignore:
       - 'docs/**'
       - '**/*.md'
 
-permissions:
-  contents: read
-  id-token: write
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  backend-unit-testing-coverage:
+  unit-tests:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
-    name: Backend Unit Testing & Coverage
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    env:
-      TEST_TYPE: 'be-unit-enterprise'
-      WIRE_TAGS: 'enterprise'
+    name: Unit Tests (Enterprise)
+    runs-on: ubuntu-latest-8-cores
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -35,18 +23,13 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential shared-mime-info
-          go install github.com/mfridman/tparse@c1754a1f484ac5cd422697b0fec635177ddc8507 # v0.17.0
-      - name: Restore build dependencies
+      - name: Restore GOCACHE
         uses: actions/cache/restore@v4
         with:
-          key: go-test-cache-${{ github.ref_name }}
+          key: go-test-cache-${{ github.ref_name }}-enterprise
           restore-keys: |
-            go-test-cache-${{ github.head_ref }}
-            go-test-cache-main
+            go-test-cache-${{ github.base_ref }}-enterprise
+            go-test-cache-main-enterprise
           path: /home/runner/.cache/go-build
       - name: Setup Enterprise
         uses: ./.github/actions/setup-enterprise
@@ -55,54 +38,20 @@ jobs:
       - name: Generate Go code
         run: make gen-go
       - name: Run unit tests
-        run: GODEBUG=gocachetest=1 make test-go-unit
-        env:
-          # GO_UNIT_COVER_PROFILE: '${{ env.TEST_TYPE }}.cov'
-          # GO_TEST_OUTPUT: ''
-          # GO_UNIT_TEST_COVERPKG: 'github.com/grafana/grafana/...'
-          GO_UNIT_COVERAGE: false
-      # Run Grafana Bench only on pushes to `main` or `release-*`
-      - name: Install Grafana Bench
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release-'))
-        uses: ./.github/actions/setup-grafana-bench
-        with:
-          github-app-name: 'grafana-ci-bot'
-      - name: Process output for Bench
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release-'))
-        run: |
-          grafana-bench report \
-            --trigger pr-backend-unit-tests-oss \
-            --report-input go \
-            --report-output log \
-            --grafana-version "$(git rev-parse HEAD)" \
-            --suite-name grafana-oss-and-enterprise-unit-tests \
-            /tmp/${{ env.TEST_TYPE }}.log
-
-      - name: Process and upload coverage
-        uses: ./.github/actions/test-coverage-processor
-        with:
-          test-type: '${{ env.TEST_TYPE }}'
-          coverage-file: '${{ env.TEST_TYPE }}.cov'
-          codecov-token: ${{ secrets.CODECOV_TOKEN }}
-          codecov-flag: '${{ env.TEST_TYPE }}'
-          codecov-name: '${{ env.TEST_TYPE }}'
+        run: make test-go-unit
       - name: "Generate token"
         id: generate_token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         with:
           app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
           private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
-      - name: Clear build cache
-        run: gh cache delete go-test-cache-${{ github.ref_name }}
+      - name: Clear GOCACHE
+        run: gh cache delete go-test-cache-${{ github.ref_name }}-enterprise
         continue-on-error: true
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
-      - name: Save build cache
+      - name: Save GOCACHE
         uses: actions/cache/save@v4
         with:
-          key: go-test-cache-${{ github.ref_name }}
+          key: go-test-cache-${{ github.ref_name }}-enterprise
           path: /home/runner/.cache/go-build
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
