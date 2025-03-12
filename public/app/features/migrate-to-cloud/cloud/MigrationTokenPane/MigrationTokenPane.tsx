@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 
 import { reportInteraction } from '@grafana/runtime';
 import { Box, Button, Text } from '@grafana/ui';
+import { RequestError } from 'app/api/createBaseQuery';
 import { t, Trans } from 'app/core/internationalization';
 
 import {
@@ -31,7 +32,10 @@ export const MigrationTokenPane = () => {
   // When a token is deleted and the GetCloudMigrationToken query is refreshed, RTKQ will retain
   // both the last successful data ("we have a token!") AND the new error. So we need to explicitly
   // check that we don't have an error AND that we have a token.
-  const hasToken = Boolean(getTokenQuery.data?.id) && getTokenQueryError?.statusCode !== 404;
+  const hasToken =
+    Boolean(getTokenQuery.data?.id) &&
+    getTokenQueryError instanceof RequestError &&
+    getTokenQueryError.statusCode !== 404;
   const isLoading = getTokenQuery.isFetching || createTokenResponse.isLoading;
 
   const handleGenerateToken = useCallback(async () => {
