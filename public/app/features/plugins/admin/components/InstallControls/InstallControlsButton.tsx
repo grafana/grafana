@@ -184,9 +184,9 @@ function shouldDisableUninstall(isUninstalling: boolean, plugin: CatalogPlugin) 
     return plugin.isUninstallingFromInstance || !plugin.isFullyInstalled || plugin.isUpdatingFromInstance;
   }
 
-  if (isDisabledAngularPlugin(plugin)) {
-    return true;
-  }
+  // if (isDisabledAngularPlugin(plugin)) {
+  //   return true;
+  // }
 
   return isUninstalling;
 }
