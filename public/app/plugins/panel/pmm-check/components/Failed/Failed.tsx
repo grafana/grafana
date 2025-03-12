@@ -7,7 +7,7 @@ import { CheckService } from 'app/percona/check/Check.service';
 import { FailedCheckSummary } from 'app/percona/check/types';
 import { getPerconaSettings, getPerconaUser } from 'app/percona/shared/core/selectors';
 import { logger } from 'app/percona/shared/helpers/logger';
-import { isPmmAdmin } from 'app/percona/shared/helpers/permissions';
+import { isPmmAdmin, isEditor } from 'app/percona/shared/helpers/permissions';
 import { useSelector } from 'app/types';
 
 import { PMM_DATABASE_CHECKS_PANEL_URL, PMM_SETTINGS_URL } from '../../CheckPanel.constants';
@@ -37,7 +37,7 @@ export const Failed: FC = () => {
   }, []);
 
   useEffect(() => {
-    if (isPmmAdmin(config.bootData.user)) {
+    if (isPmmAdmin(config.bootData.user) || isEditor(config.bootData.user)) {
       fetchAlerts();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -47,7 +47,7 @@ export const Failed: FC = () => {
     return <Spinner />;
   }
 
-  if (!isAuthorized) {
+  if (!isAuthorized && !isEditor(config.bootData.user)) {
     return (
       <div className={styles.Empty} data-testid="unauthorized">
         {Messages.insufficientPermissions}
