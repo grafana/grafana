@@ -3,6 +3,7 @@ import { Fragment, ReactNode, useMemo } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
+import { ConditionalRenderingGroupKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { Divider, Dropdown, Field, Menu, RadioButtonGroup, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
@@ -58,6 +59,16 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
     } else {
       rootGroup.setState({ value: rootGroup.state.value.filter((condition) => condition !== this) });
     }
+  }
+
+  public serialize(): ConditionalRenderingGroupKind {
+    return {
+      kind: 'ConditionalRenderingGroup',
+      spec: {
+        condition: this.state.condition,
+        groups: this.state.value.map((condition) => condition.serialize()),
+      },
+    };
   }
 }
 

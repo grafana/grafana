@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { ReactNode, useMemo } from 'react';
 
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
+import { ConditionalRenderingVariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { Combobox, ComboboxOption, Field, Input, Stack, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
@@ -51,6 +52,17 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
 
   public render(): ReactNode {
     return <ConditionalRenderingVariableRenderer model={this} />;
+  }
+
+  public serialize(): ConditionalRenderingVariableKind {
+    return {
+      kind: 'ConditionalRenderingVariable',
+      spec: {
+        variable: this.state.value.name,
+        operator: this.state.value.operator,
+        value: this.state.value.value,
+      },
+    };
   }
 
   public getVariableOptions(): Array<ComboboxOption<string>> {

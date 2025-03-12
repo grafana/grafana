@@ -2,6 +2,7 @@ import { ReactNode, useMemo } from 'react';
 
 import { PanelData, SelectableValue } from '@grafana/data';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
+import { ConditionalRenderingDataKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { RadioButtonGroup, Stack } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
@@ -11,7 +12,6 @@ import { RowItem } from '../scene/layout-rows/RowItem';
 import { ConditionHeader } from './ConditionHeader';
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
 import { handleDeleteNonGroupCondition } from './shared';
-
 export type DataConditionValue = boolean;
 
 interface ConditionalRenderingDataState extends ConditionalRenderingBaseState<DataConditionValue> {}
@@ -88,6 +88,15 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
 
   public onDelete() {
     handleDeleteNonGroupCondition(this);
+  }
+
+  public serialize(): ConditionalRenderingDataKind {
+    return {
+      kind: 'ConditionalRenderingData',
+      spec: {
+        value: this.state.value,
+      },
+    };
   }
 }
 

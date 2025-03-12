@@ -7,7 +7,7 @@ import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
 
 import { layoutSerializerRegistry } from './layoutSerializerRegistry';
-import { getLayout } from './utils';
+import { getConditionalRendering, getLayout } from './utils';
 
 export class RowsLayoutSerializer implements LayoutManagerSerializer {
   serialize(layoutManager: RowsLayoutManager): DashboardV2Spec['layout'] {
@@ -25,6 +25,7 @@ export class RowsLayoutSerializer implements LayoutManagerSerializer {
               title: row.state.title,
               collapsed: row.state.isCollapsed ?? false,
               layout: layout,
+              conditionalRendering: row.state.conditionalRendering?.serialize(),
             },
           };
 
@@ -58,11 +59,13 @@ export class RowsLayoutSerializer implements LayoutManagerSerializer {
       if (row.spec.repeat) {
         behaviors.push(new RowItemRepeaterBehavior({ variableName: row.spec.repeat.value }));
       }
+
       return new RowItem({
         title: row.spec.title,
         isCollapsed: row.spec.collapsed,
         $behaviors: behaviors,
         layout: layoutSerializerRegistry.get(layout.kind).serializer.deserialize(layout, elements, preload),
+        conditionalRendering: getConditionalRendering(row),
       });
     });
     return new RowsLayoutManager({ rows });
