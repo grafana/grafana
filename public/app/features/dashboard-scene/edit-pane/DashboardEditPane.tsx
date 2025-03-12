@@ -21,7 +21,7 @@ import { DashboardAddPane } from './DashboardAddPane';
 import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
 import { ElementSelection } from './ElementSelection';
-import { NewObjectAddedToCanvasEvent } from './shared';
+import { NewObjectAddedToCanvasEvent, ObjectRemovedFromCanvasEvent } from './shared';
 import { useEditableElement } from './useEditableElement';
 
 export interface DashboardEditPaneState extends SceneObjectState {
@@ -51,6 +51,12 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     this._subs.add(
       dashboard.subscribeToEvent(NewObjectAddedToCanvasEvent, ({ payload }) => {
         this.newObjectAddedToCanvas(payload);
+      })
+    );
+
+    this._subs.add(
+      dashboard.subscribeToEvent(ObjectRemovedFromCanvasEvent, ({ payload }) => {
+        this.clearSelection();
       })
     );
   }

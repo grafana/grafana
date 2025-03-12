@@ -7,6 +7,7 @@ import {
 } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 
+import { ObjectRemovedFromCanvasEvent } from '../../edit-pane/shared';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -115,6 +116,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     if (currentTab === tabToRemove) {
       const nextTabIndex = this.state.currentTabIndex > 0 ? this.state.currentTabIndex - 1 : 0;
       this.setState({ tabs: this.state.tabs.filter((t) => t !== tabToRemove), currentTabIndex: nextTabIndex });
+      this.publishEvent(new ObjectRemovedFromCanvasEvent(tabToRemove), true);
       return;
     }
 
@@ -122,6 +124,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     const tabs = filteredTab.length === 0 ? [new TabItem()] : filteredTab;
 
     this.setState({ tabs, currentTabIndex: 0 });
+    this.publishEvent(new ObjectRemovedFromCanvasEvent(tabToRemove), true);
   }
 
   public addTabBefore(tab: TabItem) {

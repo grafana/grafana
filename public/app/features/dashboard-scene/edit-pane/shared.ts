@@ -58,3 +58,7 @@ export function hasEditableElement(sceneObj: SceneObject | undefined): boolean {
 export class NewObjectAddedToCanvasEvent extends BusEventWithPayload<SceneObject> {
   static type = 'new-object-added-to-canvas';
 }
+
+export class ObjectRemovedFromCanvasEvent extends BusEventWithPayload<SceneObject> {
+  static type = 'object-removed-from-canvas';
+}
