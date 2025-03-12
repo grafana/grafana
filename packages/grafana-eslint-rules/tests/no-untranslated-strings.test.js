@@ -14,14 +14,12 @@ RuleTester.setDefaultConfig({
   },
 });
 
-const transError = 'No untranslated strings. Wrap text with <Trans />';
-const propsError = 'No untranslated strings in text props. Wrap text with <Trans /> or use t()';
-
 const filename = 'public/app/features/some-feature/SomeFile.tsx';
 
 const ruleTester = new RuleTester();
 
 ruleTester.run('eslint no-untranslated-strings', noUntranslatedStrings, {
+  test: [],
   valid: [
     {
       name: 'Text in Trans component',
@@ -63,19 +61,37 @@ ruleTester.run('eslint no-untranslated-strings', noUntranslatedStrings, {
       code: `
 const Foo = () => <div>Untranslated text</div>`,
       filename,
-      errors: [{ message: transError }],
-      output: `
+      errors: [
+        {
+          messageId: 'noUntranslatedStrings',
+          suggestions: [
+            {
+              messageId: 'wrapWithTrans',
+              output: `
 import { Trans } from 'app/core/internationalization';
 const Foo = () => <div><Trans i18nKey="some-feature.foo.untranslated-text">Untranslated text</Trans></div>`,
+            },
+          ],
+        },
+      ],
     },
 
     {
       name: 'Text inside JSXElement, not in a function',
       code: `const thing = <div>foo</div>`,
       filename,
-      errors: [{ message: transError }],
-      output: `import { Trans } from 'app/core/internationalization';
+      errors: [
+        {
+          messageId: 'noUntranslatedStrings',
+          suggestions: [
+            {
+              messageId: 'wrapWithTrans',
+              output: `import { Trans } from 'app/core/internationalization';
 const thing = <div><Trans i18nKey="some-feature.thing.foo">foo</Trans></div>`,
+            },
+          ],
+        },
+      ],
     },
 
     {
@@ -83,10 +99,19 @@ const thing = <div><Trans i18nKey="some-feature.thing.foo">foo</Trans></div>`,
       code: `
 const Foo = () => <div>This is a longer string that we will translate</div>`,
       filename,
-      errors: [{ message: transError }],
-      output: `
+      errors: [
+        {
+          messageId: 'noUntranslatedStrings',
+          suggestions: [
+            {
+              messageId: 'wrapWithTrans',
+              output: `
 import { Trans } from 'app/core/internationalization';
 const Foo = () => <div><Trans i18nKey="some-feature.foo.longer-string-translate">This is a longer string that we will translate</Trans></div>`,
+            },
+          ],
+        },
+      ],
     },
 
     {
@@ -94,10 +119,19 @@ const Foo = () => <div><Trans i18nKey="some-feature.foo.longer-string-translate"
       code: `
 const Foo = () => <div>lots of sho rt word s to be filt ered</div>`,
       filename,
-      errors: [{ message: transError }],
-      output: `
+      errors: [
+        {
+          messageId: 'noUntranslatedStrings',
+          suggestions: [
+            {
+              messageId: 'wrapWithTrans',
+              output: `
 import { Trans } from 'app/core/internationalization';
 const Foo = () => <div><Trans i18nKey="some-feature.foo.lots-of-sho-rt-word-s">lots of sho rt word s to be filt ered</Trans></div>`,
+            },
+          ],
+        },
+      ],
     },
 
     {
@@ -105,10 +139,19 @@ const Foo = () => <div><Trans i18nKey="some-feature.foo.lots-of-sho-rt-word-s">l
       code: `
 const foo = <>hello</>`,
       filename,
-      errors: [{ message: transError }],
-      output: `
+      errors: [
+        {
+          messageId: 'noUntranslatedStrings',
+          suggestions: [
+            {
+              messageId: 'wrapWithTrans',
+              output: `
 import { Trans } from 'app/core/internationalization';
 const foo = <><Trans i18nKey="some-feature.foo.hello">hello</Trans></>`,
+            },
+          ],
+        },
+      ],
     },
 
     {
@@ -116,10 +159,19 @@ const foo = <><Trans i18nKey="some-feature.foo.hello">hello</Trans></>`,
       code: `
 const Foo = () => <div><TestingComponent someProp={<>Test</>} /></div>`,
       filename,
-      errors: [{ message: transError }],
-      output: `
+      errors: [
+        {
+          messageId: 'noUntranslatedStrings',
+          suggestions: [
+            {
+              messageId: 'wrapWithTrans',
+              output: `
 import { Trans } from 'app/core/internationalization';
 const Foo = () => <div><TestingComponent someProp={<><Trans i18nKey="some-feature.foo.test">Test</Trans></>} /></div>`,
+            },
+          ],
+        },
+      ],
     },
 
     {
@@ -128,10 +180,19 @@ const Foo = () => <div><TestingComponent someProp={<><Trans i18nKey="some-featur
 import { t } from 'app/core/internationalization';
 const Foo = () => <div id="someid" title="foo"/>`,
       filename,
-      errors: [{ message: propsError }],
-      output: `
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProp',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
 import { t } from 'app/core/internationalization';
 const Foo = () => <div id="someid" title={t("some-feature.foo.someid-title-foo", "foo")}/>`,
+            },
+          ],
+        },
+      ],
     },
 
     {
@@ -140,10 +201,19 @@ const Foo = () => <div id="someid" title={t("some-feature.foo.someid-title-foo",
 import { Trans } from 'app/core/internationalization';
 const Foo = () => <div>Untranslated text</div>`,
       filename,
-      errors: [{ message: transError }],
-      output: `
+      errors: [
+        {
+          messageId: 'noUntranslatedStrings',
+          suggestions: [
+            {
+              messageId: 'wrapWithTrans',
+              output: `
 import { Trans } from 'app/core/internationalization';
 const Foo = () => <div><Trans i18nKey="some-feature.foo.untranslated-text">Untranslated text</Trans></div>`,
+            },
+          ],
+        },
+      ],
     },
 
     {
@@ -152,10 +222,19 @@ const Foo = () => <div><Trans i18nKey="some-feature.foo.untranslated-text">Untra
 import { t } from 'app/core/internationalization';
 const Foo = () => <div title="foo" />`,
       filename,
-      errors: [{ message: propsError }],
-      output: `
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProp',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
 import { t } from 'app/core/internationalization';
 const Foo = () => <div title={t("some-feature.foo.title-foo", "foo")} />`,
+            },
+          ],
+        },
+      ],
     },
 
     {
@@ -164,10 +243,19 @@ const Foo = () => <div title={t("some-feature.foo.title-foo", "foo")} />`,
 import { Trans } from 'app/core/internationalization';
 const Foo = () => <div title="foo" />`,
       filename,
-      errors: [{ message: propsError }],
-      output: `
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProp',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
 import { Trans, t } from 'app/core/internationalization';
 const Foo = () => <div title={t("some-feature.foo.title-foo", "foo")} />`,
+            },
+          ],
+        },
+      ],
     },
 
     {
@@ -179,14 +267,23 @@ class Foo extends React.Component {
   }
 }`,
       filename,
-      errors: [{ message: transError }],
-      output: `
+      errors: [
+        {
+          messageId: 'noUntranslatedStrings',
+          suggestions: [
+            {
+              messageId: 'wrapWithTrans',
+              output: `
 import { Trans } from 'app/core/internationalization';
 class Foo extends React.Component {
   render() {
     return <div><Trans i18nKey="some-feature.foo.untranslated-text">untranslated text</Trans></div>;
   }
 }`,
+            },
+          ],
+        },
+      ],
     },
 
     {
@@ -194,10 +291,19 @@ class Foo extends React.Component {
       code: `
 const Foo = () => <div title="foo" />`,
       filename,
-      errors: [{ message: propsError }],
-      output: `
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProp',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
 import { t } from 'app/core/internationalization';
 const Foo = () => <div title={t("some-feature.foo.title-foo", "foo")} />`,
+            },
+          ],
+        },
+      ],
     },
 
     {
@@ -205,10 +311,19 @@ const Foo = () => <div title={t("some-feature.foo.title-foo", "foo")} />`,
       code: `
 const Foo = () => <div title='"foo"' />`,
       filename,
-      errors: [{ message: propsError }],
-      output: `
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProp',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
 import { t } from 'app/core/internationalization';
 const Foo = () => <div title={t("some-feature.foo.title-foo", '"foo"')} />`,
+            },
+          ],
+        },
+      ],
     },
 
     {
@@ -224,8 +339,13 @@ const Foo = () => {
 }
 `,
       filename,
-      errors: [{ message: transError }],
-      output: `
+      errors: [
+        {
+          messageId: 'noUntranslatedStrings',
+          suggestions: [
+            {
+              messageId: 'wrapWithTrans',
+              output: `
 import { Trans } from 'app/core/internationalization';
 const Foo = () => {
   const getSomething = () => {
@@ -235,6 +355,10 @@ const Foo = () => {
   return <div>{getSomething()}</div>;
 }
 `,
+            },
+          ],
+        },
+      ],
     },
 
     /**
@@ -245,20 +369,24 @@ const Foo = () => {
       name: 'Multiple untranslated strings in one element',
       code: `const Foo = () => <div>test {name} example</div>`,
       filename,
-      errors: [{ message: transError }],
+      errors: [
+        {
+          messageId: 'noUntranslatedStrings',
+        },
+      ],
     },
 
     {
       name: 'Cannot fix entirely non-alphanumeric text',
       code: `const Foo = () => <div>-</div>`,
       filename,
-      errors: [{ message: transError }],
+      errors: [{ messageId: 'noUntranslatedStrings' }],
     },
     {
       name: 'Cannot fix text with expression sibling',
       code: `const Foo = () => <div>{name} Hello</div>`,
       filename,
-      errors: [{ message: transError }],
+      errors: [{ messageId: 'noUntranslatedStrings' }],
     },
 
     {
@@ -270,21 +398,21 @@ const Foo = () => {
   }
 }`,
       filename,
-      errors: [{ message: transError }],
+      errors: [{ messageId: 'noUntranslatedStrings' }],
     },
 
     {
       name: 'Cannot fix text containing HTML entities',
       code: `const Foo = () => <div>Something&nbsp;</div>`,
       filename,
-      errors: [{ message: transError }],
+      errors: [{ messageId: 'noUntranslatedStrings' }],
     },
 
     {
       name: 'Cannot fix text that is too long',
       code: `const Foo = () => <div>This is something with lots of text that we don't want to translate automatically</div>`,
       filename,
-      errors: [{ message: transError }],
+      errors: [{ messageId: 'noUntranslatedStrings' }],
     },
 
     {
@@ -292,35 +420,35 @@ const Foo = () => {
       name: 'Cannot fix prop text that is too long',
       code: `const Foo = () => <div title="This is something with lots of text that we don't want to translate automatically" />`,
       filename,
-      errors: [{ message: propsError }],
+      errors: [{ messageId: 'noUntranslatedStringsProp' }],
     },
 
     {
       name: 'Cannot fix text with HTML sibling',
       code: `const Foo = () => <div>something <code>foo bar</code></div>`,
       filename,
-      errors: [{ message: transError }],
+      errors: [{ messageId: 'noUntranslatedStrings' }],
     },
 
     {
       name: 'JSXAttribute not in a function',
       code: `<div title="foo" />`,
       filename,
-      errors: [{ message: propsError }],
+      errors: [{ messageId: 'noUntranslatedStringsProp' }],
     },
 
     {
       name: 'Cannot fix JSXExpression in attribute',
       code: `const Foo = () => <div title={"foo"} />`,
       filename,
-      errors: [{ message: propsError }],
+      errors: [{ messageId: 'noUntranslatedStringsProp' }],
     },
 
     {
       name: 'Cannot fix text outside correct directory location',
       code: `const Foo = () => <div>Untranslated text</div>`,
       filename: 'public/something-else/foo/SomeOtherFile.tsx',
-      errors: [{ message: transError }],
+      errors: [{ messageId: 'noUntranslatedStrings' }],
     },
   ],
 });
