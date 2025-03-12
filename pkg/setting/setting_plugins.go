@@ -58,6 +58,9 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		if cfg.IsFeatureToggleEnabled("grafanaAdvisor") { // Use literal string to avoid circular dependency
 			preinstallPlugins["grafana-advisor-app"] = InstallPlugin{"grafana-advisor-app", "", ""}
 		}
+		if cfg.IsFeatureToggleEnabled("exploreMetricsUseExternalAppPlugin") { // Use literal string to avoid circular dependency
+			preinstallPlugins["grafana-metricsdrilldown-app"] = InstallPlugin{"grafana-metricsdrilldown-app", "", ""}
+		}
 		// Add the plugins defined in the configuration
 		for _, plugin := range rawInstallPlugins {
 			parts := strings.Split(plugin, "@")

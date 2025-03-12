@@ -1248,12 +1248,12 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	panelsSection := iniFile.Section("panels")
 	cfg.DisableSanitizeHtml = panelsSection.Key("disable_sanitize_html").MustBool(false)
 
-	if err := cfg.readPluginSettings(iniFile); err != nil {
+	// nolint:staticcheck
+	if err := cfg.readFeatureToggles(iniFile); err != nil {
 		return err
 	}
 
-	// nolint:staticcheck
-	if err := cfg.readFeatureToggles(iniFile); err != nil {
+	if err := cfg.readPluginSettings(iniFile); err != nil {
 		return err
 	}
 
