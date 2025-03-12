@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { useEffect, useRef, useState } from 'react';
 
 import { CoreApp, LogRowModel, dateTimeForTimeZone } from '@grafana/data';
-import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
+import { convertRawToRange } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import { LogsSortOrder } from '@grafana/schema';
 

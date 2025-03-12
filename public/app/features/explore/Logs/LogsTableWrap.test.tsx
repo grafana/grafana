@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { ComponentProps } from 'react';
 
 import { createTheme, ExploreLogsPanelState, LogsSortOrder, standardTransformersRegistry, toUtc } from '@grafana/data';
-import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
+import { organizeFieldsTransformer } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 
 import { extractFieldsTransformer } from '../../transformers/extractFields/extractFields';
