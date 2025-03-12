@@ -1,6 +1,15 @@
-import { createContext, Dispatch, ReactNode, SetStateAction, useCallback, useContext, useState } from 'react';
+import {
+  createContext,
+  Dispatch,
+  ReactNode,
+  SetStateAction,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 
-import { CoreApp, LogRowModel } from '@grafana/data';
+import { CoreApp, LogRowModel, shallowCompare } from '@grafana/data';
 import { PopoverContent } from '@grafana/ui';
 
 import { GetRowContextQueryFn } from './LogLineMenu';
@@ -60,6 +69,25 @@ export const LogListContextProvider = (props: LogListContextData) => {
     showTime: props.showTime,
     wrapLogMessage: props.wrapLogMessage,
   });
+
+  useEffect(() => {
+    if (!shallowCompare(logListState.displayedFields, props.displayedFields)) {
+      setLogListState({
+        ...logListState,
+        displayedFields: props.displayedFields,
+      });
+    }
+  }, [logListState, props.displayedFields]);
+
+  useEffect(() => {
+    if (!shallowCompare(logListState.pinnedLogs ?? [], props.pinnedLogs ?? [])) {
+      setLogListState({
+        ...logListState,
+        pinnedLogs: props.pinnedLogs,
+      });
+    }
+  }, [logListState, props.pinnedLogs]);
+
   const setDisplayedFields = useCallback(
     (displayedFields: string[]) => {
       setLogListState({ ...logListState, displayedFields });
