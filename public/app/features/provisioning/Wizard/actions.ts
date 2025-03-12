@@ -12,7 +12,6 @@ export interface ModeOption {
 }
 
 export interface SystemState {
-  loading: boolean;
   resourceCount: number;
   fileCount: number;
   actions: ModeOption[];
@@ -41,31 +40,19 @@ const pullFolder: ModeOption = {
 };
 
 export function getState(
-  loading: boolean,
   repoName: string,
   settings?: RepositoryViewList,
   files?: GetRepositoryFilesResponse,
   stats?: GetResourceStatsResponse
 ): SystemState {
   const state: SystemState = {
-    loading,
     resourceCount: 0,
     fileCount: 0,
     actions: [],
     disabled: [],
   };
   if (settings?.items) {
-    settings.items.forEach((v) => {
-      if (v.name === repoName) {
-        return; // do not count yourself
-      }
-      if (v.target === 'folder') {
-        state.folderConnected = true;
-      }
-      if (v.target === 'instance') {
-        state.folderConnected = true;
-      }
-    });
+    state.folderConnected = settings.items.some((item) => item.target === 'folder' && item.name !== repoName);
   }
 
   if (files?.items) {

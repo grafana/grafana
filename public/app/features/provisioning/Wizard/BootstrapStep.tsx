@@ -45,12 +45,8 @@ export function BootstrapStep({ onOptionSelect, onStepUpdate, settingsData, repo
   const filesQuery = useGetRepositoryFilesQuery({ name: repoName });
   const [selectedOption, setSelectedOption] = useState<ModeOption | null>(null);
 
-  const loading = useMemo(() => {
-    return resourceStats.isLoading || filesQuery.isLoading;
-  }, [resourceStats.isLoading, filesQuery.isLoading]);
-
   const state = useMemo(() => {
-    const v = getState(loading, repoName, settingsData, filesQuery.data, resourceStats.data);
+    const v = getState(repoName, settingsData, filesQuery.data, resourceStats.data);
     if (v.actions.length) {
       const first = v.actions[0];
       setSelectedOption(first);
@@ -58,16 +54,7 @@ export function BootstrapStep({ onOptionSelect, onStepUpdate, settingsData, repo
       setValue('repository.sync.target', first.target);
     }
     return v;
-  }, [
-    loading,
-    repoName,
-    settingsData,
-    resourceStats.data,
-    filesQuery.data,
-    setValue,
-    onOptionSelect,
-    setSelectedOption,
-  ]);
+  }, [repoName, settingsData, resourceStats.data, filesQuery.data, setValue, onOptionSelect, setSelectedOption]);
 
   const handleOptionSelect = useCallback(
     (option: ModeOption) => {
@@ -91,10 +78,10 @@ export function BootstrapStep({ onOptionSelect, onStepUpdate, settingsData, repo
     [setValue, onOptionSelect]
   );
 
-  if (loading) {
+  if (resourceStats.isLoading || filesQuery.isLoading) {
     return (
       <Box padding={4}>
-        <LoadingPlaceholder text="Loading repository settings..." />
+        <LoadingPlaceholder text="Loading resource information..." />
       </Box>
     );
   }
