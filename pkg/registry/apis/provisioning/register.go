@@ -230,7 +230,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					// Writing files is only allowed fo Editor and higher.
 					isViewer := id.GetOrgRole().Includes(identity.RoleViewer)
 					isEditor := id.GetOrgRole().Includes(identity.RoleEditor)
-					isReadOperation := a.GetVerb() == apiutils.VerbGet || a.GetVerb() == apiutils.VerbList || a.GetVerb() == apiutils.VerbWatch
+					isReadOperation := a.GetVerb() == apiutils.VerbGet
 
 					if isEditor || (isViewer && isReadOperation) {
 						return authorizer.DecisionAllow, "", nil
