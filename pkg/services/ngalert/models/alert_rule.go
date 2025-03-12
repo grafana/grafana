@@ -970,9 +970,6 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOp
 		ruleToPatch.GUID = existingRule.GUID
 	}
 
-	if ruleToPatch.GUID == "" {
-		ruleToPatch.GUID = existingRule.GUID
-	}
 }
 
 func ValidateRuleGroupInterval(intervalSeconds, baseIntervalSeconds int64) error {
