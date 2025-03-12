@@ -416,7 +416,6 @@ const Foo = () => {
     },
 
     {
-      // only: true,
       name: 'Cannot fix prop text that is too long',
       code: `const Foo = () => <div title="This is something with lots of text that we don't want to translate automatically" />`,
       filename,
