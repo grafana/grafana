@@ -12,10 +12,14 @@ export const createListFilterLink = (values: Array<[string, string]>) => {
 export const alertListPageLink = createRelativeUrl(`/alerting/list`);
 
 export const groups = {
-  detailsPageLink: (dsUid: string, namespaceId: string, groupName: string) =>
-    createRelativeUrl(
-      `/alerting/${dsUid}/namespaces/${encodeURIComponent(namespaceId)}/groups/${encodeURIComponent(groupName)}/view`
-    ),
+  detailsPageLink: (dsUid: string, namespaceId: string, groupName: string, options?: { includeReturnTo: boolean }) => {
+    const params: Record<string, string> = options?.includeReturnTo ? { returnTo: createReturnTo() } : {};
+
+    return createRelativeUrl(
+      `/alerting/${dsUid}/namespaces/${encodeURIComponent(namespaceId)}/groups/${encodeURIComponent(groupName)}/view`,
+      params
+    );
+  },
   detailsPageLinkFromGroupIdentifier: (groupIdentifier: RuleGroupIdentifierV2) => {
     const { groupOrigin, namespace, groupName } = groupIdentifier;
     const isGrafanaOrigin = groupOrigin === 'grafana';

@@ -2,7 +2,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { Alert, Badge, Button, LinkButton, Text, withErrorBoundary } from '@grafana/ui';
+import { Alert, Badge, Button, LinkButton, Text, TextLink, withErrorBoundary } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { Trans, t } from 'app/core/internationalization';
 import { FolderDTO } from 'app/types';
@@ -18,10 +18,12 @@ import { useFolder } from '../hooks/useFolder';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/formDefaults';
 import { useRulesAccess } from '../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
-import { stringifyErrorLike } from '../utils/misc';
+import { makeFolderLink, stringifyErrorLike } from '../utils/misc';
 import { createListFilterLink, groups } from '../utils/navigation';
 import { calcRuleEvalsToStartAlerting, getRuleName, isAlertingRulerRule, isGrafanaAlertingRule } from '../utils/rules';
 import { formatPrometheusDuration, safeParsePrometheusDuration } from '../utils/time';
+
+import { Title } from './Title';
 
 type GroupPageRouteParams = {
   sourceId?: string;
@@ -34,13 +36,14 @@ const { usePrometheusRuleNamespacesQuery, useGetRuleGroupForNamespaceQuery } = a
 
 function GroupDetailsPage() {
   const { sourceId = '', namespaceId = '', groupName = '' } = useParams<GroupPageRouteParams>();
+  const isGrafanaRuleGroup = sourceId === GRAFANA_RULES_SOURCE_NAME;
 
-  const { folder, loading: isFolderLoading } = useFolder(sourceId === 'grafana' ? namespaceId : '');
+  const { folder, loading: isFolderLoading } = useFolder(isGrafanaRuleGroup ? namespaceId : '');
   const {
     data: dsFeatures,
     isLoading: isDsFeaturesLoading,
     error: dsFeaturesError,
-  } = useDiscoverDsFeaturesQuery({ uid: sourceId === 'grafana' ? GrafanaRulesSourceSymbol : sourceId });
+  } = useDiscoverDsFeaturesQuery({ uid: isGrafanaRuleGroup ? GrafanaRulesSourceSymbol : sourceId });
 
   const {
     data: promGroup,
@@ -77,6 +80,18 @@ function GroupDetailsPage() {
   const namespaceName = folder?.title ?? namespaceId;
   const namespaceUrl = createListFilterLink([['namespace', namespaceName]]);
 
+  const namespaceLabel = isGrafanaRuleGroup
+    ? t('alerting.group-details.folder', 'Folder')
+    : t('alerting.group-details.namespace', 'Namespace');
+
+  const namespaceValue = folder ? (
+    <TextLink href={makeFolderLink(folder.uid)} inline={false}>
+      {folder.title}
+    </TextLink>
+  ) : (
+    namespaceId
+  );
+
   return (
     <AlertingPageWrapper
       pageNav={{
@@ -86,9 +101,9 @@ function GroupDetailsPage() {
           url: namespaceUrl,
         },
       }}
-      title={groupName}
+      renderTitle={(title) => <Title name={title} folder={folder} namespaceId={namespaceId} />}
       info={[
-        { label: t('alerting.group-details.namespace', 'Namespace'), value: namespaceName },
+        { label: namespaceLabel, value: namespaceValue },
         { label: t('alerting.group-details.interval', 'Interval'), value: groupInterval },
       ]}
       navId="alert-list"
