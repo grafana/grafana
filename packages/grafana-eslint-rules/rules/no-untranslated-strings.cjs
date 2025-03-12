@@ -29,11 +29,13 @@ const noUntranslatedStrings = createRule({
 
         if (isUntranslatedProp) {
           const errorCanBeFixed = canBeFixed(node, context);
+          const pathsThatAreFixable = context.options[0]?.forceFix || [];
+          const shouldFix = pathsThatAreFixable.some((path) => context.filename.includes(path));
           return context.report({
             node,
             messageId: 'noUntranslatedStringsProp',
             // If you want to mass auto-fix, uncomment the below and run for the subfolder you want to fix
-            // fix: canBeFixed(node, context) ? getTFixers(node, context) : undefined,
+            fix: shouldFix && errorCanBeFixed ? getTFixers(node, context) : undefined,
             suggest: errorCanBeFixed
               ? [
                   {
@@ -79,11 +81,12 @@ const noUntranslatedStrings = createRule({
 
         if (untranslatedTextNodes.length && !parentHasText) {
           const errorCanBeFixed = canBeFixed(node, context);
+          const pathsThatAreFixable = context.options[0]?.forceFix || [];
+          const shouldFix = pathsThatAreFixable.some((path) => context.filename.includes(path));
           context.report({
             node,
             messageId: 'noUntranslatedStrings',
-            // If you want to mass auto-fix, uncomment the below and run for the subfolder you want to fix
-            // fix: errorCanBeFixed ? getTransFixers(node, context) : undefined,
+            fix: shouldFix && errorCanBeFixed ? getTransFixers(node, context) : undefined,
             suggest: errorCanBeFixed
               ? [
                   {
@@ -111,7 +114,21 @@ const noUntranslatedStrings = createRule({
       wrapWithTrans: 'Wrap text with <Trans /> for manual key assignment',
       wrapWithT: 'Wrap text with t() for manual key assignment',
     },
-    schema: [],
+    schema: [
+      {
+        type: 'object',
+        properties: {
+          forceFix: {
+            type: 'array',
+            items: {
+              type: 'string',
+            },
+            uniqueItems: true,
+          },
+        },
+        additionalProperties: false,
+      },
+    ],
   },
   defaultOptions: [],
 });
