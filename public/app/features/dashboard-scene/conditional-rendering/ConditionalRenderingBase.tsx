@@ -1,15 +1,10 @@
 import { ReactNode } from 'react';
 
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import {
-  ConditionalRenderingGroupKind,
-  ConditionalRenderingVariableKind,
-  ConditionalRenderingDataKind,
-  ConditionalRenderingTimeIntervalKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
 import { ConditionalRendering } from './ConditionalRendering';
 import { ConditionalRenderingGroup } from './ConditionalRenderingGroup';
+import { ConditionalRenderingKindTypes } from './serializers';
 import { ConditionValues } from './shared';
 
 export interface ConditionalRenderingBaseState<V = ConditionValues> extends SceneObjectState {
@@ -23,11 +18,7 @@ export abstract class ConditionalRenderingBase<
 
   public abstract readonly title: string;
 
-  public abstract serialize():
-    | ConditionalRenderingGroupKind
-    | ConditionalRenderingVariableKind
-    | ConditionalRenderingDataKind
-    | ConditionalRenderingTimeIntervalKind;
+  public abstract serialize(): ConditionalRenderingKindTypes;
 
   public abstract evaluate(): boolean;
 
