@@ -46,7 +46,8 @@ type provisioningTestHelper struct {
 	Jobs         *apis.K8sResourceClient
 	Folders      *apis.K8sResourceClient
 	Dashboards   *apis.K8sResourceClient
-	REST         *rest.RESTClient
+	AdminREST    *rest.RESTClient
+	ViewerREST   *rest.RESTClient
 }
 
 type grafanaOption func(opts *testinfra.GrafanaOpts)
@@ -125,6 +126,10 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		Group: "provisioning.grafana.app", Version: "v0alpha1",
 	})
 
+	viewerClient := helper.Org1.Viewer.RESTClient(t, &schema.GroupVersion{
+		Group: "provisioning.grafana.app", Version: "v0alpha1",
+	})
+
 	deleteAll := func(client *apis.K8sResourceClient) error {
 		ctx := context.Background()
 		list, err := client.Resource.List(ctx, metav1.ListOptions{})
@@ -148,7 +153,8 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		K8sTestHelper:    helper,
 
 		Repositories: repositories,
-		REST:         restClient,
+		AdminREST:    restClient,
+		ViewerREST:   viewerClient,
 		Jobs:         jobs,
 		Folders:      folders,
 		Dashboards:   dashboards,
@@ -185,7 +191,8 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 			_, err := helper.Repositories.Resource.Create(ctx, input, createOptions)
 			require.NoError(t, err, "failed to create resource")
 
-			output, err := helper.Repositories.Resource.Get(ctx, mustNestedString(input.Object, "metadata", "name"), metav1.GetOptions{})
+			name := mustNestedString(input.Object, "metadata", "name")
+			output, err := helper.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
 			require.NoError(t, err, "failed to read back resource")
 
 			// Move encrypted token mutation
@@ -202,8 +209,39 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 			outputJSON, err := json.MarshalIndent(output.Object["spec"], "", "  ")
 			require.NoError(t, err, "failed to marshal JSON from read back resource")
 			require.JSONEq(t, string(expectedOutput), string(outputJSON))
+
+			// A viewer should not be able to see the same thing
+			var statusCode int
+			rsp := helper.ViewerREST.Get().
+				Namespace("default").
+				Resource("repositories").
+				Name(name).
+				Do(context.Background())
+			require.Error(t, rsp.Error())
+			rsp.StatusCode(&statusCode)
+			require.Equal(t, http.StatusForbidden, statusCode)
+
+			// Viewer can see file listing
+			rsp = helper.ViewerREST.Get().
+				Namespace("default").
+				Resource("repositories").
+				Name(name).
+				Suffix("files/").
+				Do(context.Background())
+			require.NoError(t, rsp.Error())
 		})
 	}
+
+	// Viewer can see settings listing
+	settings := &provisioning.RepositoryViewList{}
+	rsp := helper.ViewerREST.Get().
+		Namespace("default").
+		Suffix("settings").
+		Do(context.Background())
+	require.NoError(t, rsp.Error())
+	err := rsp.Into(settings)
+	require.NoError(t, err)
+	require.Len(t, settings.Items, 5) // a list of the 5 resources we added
 }
 
 func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
@@ -316,7 +354,7 @@ func TestIntegrationProvisioning_SafePathUsages(t *testing.T) {
 	require.NoError(t, err)
 
 	const repo = "local-devenv"
-	result := helper.REST.Post().
+	result := helper.AdminREST.Post().
 		Namespace("default").
 		Resource("repositories").
 		Name(repo).
@@ -325,7 +363,7 @@ func TestIntegrationProvisioning_SafePathUsages(t *testing.T) {
 		Do(ctx)
 	require.NoError(t, result.Error(), "expecting to be able to create file")
 
-	result = helper.REST.Post().
+	result = helper.AdminREST.Post().
 		Namespace("default").
 		Resource("repositories").
 		Name(repo).
@@ -373,7 +411,7 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	require.Error(t, err, "no all-panels dashboard should exist")
 
 	// Now, we import it, such that it may exist
-	result := helper.REST.Post().
+	result := helper.AdminREST.Post().
 		Namespace("default").
 		Resource("repositories").
 		Name(repo).
