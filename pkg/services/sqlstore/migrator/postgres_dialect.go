@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
+
 	"xorm.io/xorm"
 )
 
@@ -36,6 +37,10 @@ func (db *PostgresDialect) LikeStr() string {
 
 func (db *PostgresDialect) AutoIncrStr() string {
 	return ""
+}
+
+func (db *PostgresDialect) BooleanValue(value bool) any {
+	return value
 }
 
 func (db *PostgresDialect) BooleanStr(value bool) string {

@@ -55,6 +55,11 @@ func (s *SpannerDialect) SQLType(col *Column) string {
 }
 
 func (s *SpannerDialect) BatchSize() int { return 1000 }
+
+func (s *SpannerDialect) BooleanValue(b bool) any {
+	return b
+}
+
 func (s *SpannerDialect) BooleanStr(b bool) string {
 	if b {
 		return "true"

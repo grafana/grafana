@@ -9,6 +9,7 @@ import (
 
 	"github.com/VividCortex/mysqlerr"
 	"github.com/go-sql-driver/mysql"
+
 	"xorm.io/xorm"
 )
 
@@ -33,6 +34,13 @@ func (db *MySQLDialect) Quote(name string) string {
 
 func (db *MySQLDialect) AutoIncrStr() string {
 	return "AUTO_INCREMENT"
+}
+
+func (db *MySQLDialect) BooleanValue(value bool) interface{} {
+	if value {
+		return 1
+	}
+	return 0
 }
 
 func (db *MySQLDialect) BooleanStr(value bool) string {
