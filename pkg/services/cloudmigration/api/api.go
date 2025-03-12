@@ -4,8 +4,6 @@ import (
 	"errors"
 	"net/http"
 
-	"go.opentelemetry.io/otel/codes"
-
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -15,6 +13,8 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
+
+	"go.opentelemetry.io/otel/codes"
 )
 
 type CloudMigrationAPI struct {
@@ -88,8 +88,6 @@ func (cma *CloudMigrationAPI) GetToken(c *contextmodel.ReqContext) response.Resp
 
 		if !errors.Is(err, cloudmigration.ErrTokenNotFound) {
 			logger.Error("fetching cloud migration access token", "err", err.Error())
-		} else {
-			logger.Error("GetToken: cloudmigration.ErrTokenNotFound", "status_code", response.Err(err).Status(), "error", err.Error())
 		}
 
 		return response.ErrOrFallback(http.StatusInternalServerError, "fetching cloud migration access token", err)

@@ -10,7 +10,6 @@ interface RequestOptions extends BackendSrvRequest {
 
 export function createBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<RequestOptions> {
   async function backendSrvBaseQuery(requestOptions: RequestOptions) {
-    let url = baseURL + requestOptions.url;
     try {
       const { data: responseData, ...meta } = await lastValueFrom(
         getBackendSrv().fetch({
@@ -22,14 +21,6 @@ export function createBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<R
       );
       return { data: responseData, meta };
     } catch (error) {
-      console.log('backendSrvBaseQuery catch', {
-        error,
-        url,
-        method: requestOptions?.method,
-        requestId: requestOptions?.requestId,
-        body: requestOptions?.body,
-      });
-
       if (requestOptions.manageError) {
         return requestOptions.manageError(error);
       } else {
