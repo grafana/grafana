@@ -142,18 +142,19 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	}
 
 	if isFromLegacy {
-		progress.SetMessage(ctx, "exporting folders")
+		progress.SetMessage(ctx, "exporting legacy folders")
 		err = worker.loadFolders(ctx)
 		if err != nil {
 			return err
 		}
 
-		progress.SetMessage(ctx, "exporting resources")
+		progress.SetMessage(ctx, "exporting legacy resources")
 		err = worker.loadResources(ctx)
 		if err != nil {
 			return err
 		}
 	} else {
+		progress.SetMessage(ctx, "exporting resources")
 		err = w.exportWorker.Process(ctx, rw, provisioning.Job{
 			Spec: provisioning.JobSpec{
 				Push: &provisioning.ExportJobOptions{
