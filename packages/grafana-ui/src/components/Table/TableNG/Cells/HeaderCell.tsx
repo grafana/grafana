@@ -8,20 +8,20 @@ import { Field, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../../../themes';
 import { Icon } from '../../../Icon/Icon';
 import { Filter } from '../Filter/Filter';
-import { TableColumnResizeActionCallback, FilterType, TableRow } from '../types';
+import { TableColumnResizeActionCallback, FilterType, TableRow, TableSummaryRow } from '../types';
 
 interface HeaderCellProps {
-  column: Column<any>;
+  column: Column<TableRow, TableSummaryRow>;
   rows: TableRow[];
   field: Field;
   onSort: (columnKey: string, direction: SortDirection, isMultiSort: boolean) => void;
-  direction: SortDirection | undefined;
-  justifyContent?: Property.JustifyContent;
-  filter: any;
-  setFilter: (value: any) => void;
+  direction?: SortDirection;
+  justifyContent: Property.JustifyContent;
+  filter: FilterType;
+  setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
   filterable: boolean;
   onColumnResize?: TableColumnResizeActionCallback;
-  headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
+  headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>;
   crossFilterOrder: React.MutableRefObject<string[]>;
   crossFilterRows: React.MutableRefObject<{ [key: string]: TableRow[] }>;
 }

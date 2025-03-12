@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"math/rand"
 	"net/http"
 	"path"
@@ -15,6 +16,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/alertmanager/pkg/labels"
@@ -4642,6 +4644,102 @@ func TestIntegrationRuleVersions(t *testing.T) {
 	t.Run("should NotFound after rule was deleted", func(t *testing.T) {
 		_, status, raw := apiClient.GetRuleVersionsWithStatus(t, uid)
 		require.Equalf(t, http.StatusNotFound, status, "Expected status 404, got %d: %s", status, raw)
+	})
+}
+
+func TestIntegrationRuleSoftDelete(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
+	// Setup Grafana and its Database
+	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		EnableQuota:           true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+		EnableFeatureToggles:  []string{featuremgmt.FlagAlertRuleRestore},
+	})
+
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
+
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "admin",
+		Login:          "admin",
+	})
+
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
+		Password:       "password",
+		Login:          "editor",
+	})
+
+	adminClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
+	editorClient := newAlertingApiClient(grafanaListedAddr, "editor", "password")
+
+	deleted, status, data := adminClient.GetDeletedRulesWithStatus(t)
+	requireStatusCode(t, http.StatusOK, status, data)
+	require.Emptyf(t, deleted, "Expected empty list of deleted rules, got %v", deleted)
+
+	// Create the namespace we'll save our alerts to.
+	adminClient.CreateFolder(t, "folder1", "folder1")
+
+	var group apimodels.RuleGroupConfigResponse
+	{ // create rules and some history
+		postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1-post.json"))
+		require.NoError(t, err)
+		var group1 apimodels.PostableRuleGroupConfig
+		require.NoError(t, json.Unmarshal(postGroupRaw, &group1))
+
+		// Create rule under folder1
+		response := adminClient.PostRulesGroup(t, "folder1", &group1)
+		require.NotEmptyf(t, response.Created, "Expected created to be set")
+
+		// create some versions of the rule
+		for i := 0; i < 3; i++ {
+			groups, status := adminClient.GetRulesGroup(t, "folder1", group1.Name)
+			require.Equal(t, http.StatusAccepted, status)
+			group1 = convertGettableRuleGroupToPostable(groups.GettableRuleGroupConfig)
+			group1.Rules[0].Annotations[util.GenerateShortUID()] = util.GenerateShortUID()
+			_ = adminClient.PostRulesGroup(t, "folder1", &group1)
+		}
+		group, status = adminClient.GetRulesGroup(t, "folder1", group1.Name)
+		require.Equal(t, http.StatusAccepted, status)
+	}
+
+	// deleting group by using editor user
+	status, body := editorClient.DeleteRulesGroup(t, "folder1", group.Name)
+	require.Equalf(t, http.StatusAccepted, status, "failed to delete group. Response: %s", body)
+
+	t.Run("should see deleted rules", func(t *testing.T) {
+		rules, status, raw := adminClient.GetDeletedRulesWithStatus(t)
+		requireStatusCode(t, http.StatusOK, status, raw)
+
+		require.Containsf(t, rules, "", "All rules should be in empty folder but got %v", slices.Collect(maps.Keys(rules)))
+		require.Lenf(t, rules[""], 1, "All deleted rules should be in single group but got %d", len(rules[""]))
+		require.Equalf(t, "", rules[""][0].Name, "All deleted rules should be in empty group but got %v", rules[""][0].Name)
+
+		require.Len(t, rules[""][0].Rules, len(group.Rules))
+		require.Empty(t, cmp.Diff(group.Rules, rules[""][0].Rules, cmpopts.IgnoreFields(apimodels.GettableGrafanaRule{}, "UID", "Version", "Updated", "UpdatedBy")))
+		rule := rules[""][0].Rules[0]
+		require.Equalf(t, "editor", rule.GrafanaManagedAlert.UpdatedBy.Name, "Field 'UpdatedBy' should be set by editor but got %v ", rule.GrafanaManagedAlert.UpdatedBy)
+	})
+
+	t.Run("only admin should be able to see deleted rules", func(t *testing.T) {
+		t.Run("editor", func(t *testing.T) {
+			_, status, raw := editorClient.GetDeletedRulesWithStatus(t)
+			requireStatusCode(t, http.StatusForbidden, status, raw)
+		})
+		t.Run("viewer", func(t *testing.T) {
+			createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+				DefaultOrgRole: string(org.RoleViewer),
+				Password:       "password",
+				Login:          "viewer",
+			})
+			client := newAlertingApiClient(grafanaListedAddr, "viewer", "password")
+			_, status, raw := client.GetDeletedRulesWithStatus(t)
+			requireStatusCode(t, http.StatusForbidden, status, raw)
+		})
 	})
 }
 

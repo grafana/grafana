@@ -57,7 +57,7 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features 
 			// TODO: add TLS support
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
 			grpc.WithPerRPCCredentials(
-				newGRPCTokenAuth(authzServiceAudience, fmt.Sprintf("stacks-%s", cfg.StackID), tokenClient),
+				NewGRPCTokenAuth(AuthzServiceAudience, fmt.Sprintf("stacks-%s", cfg.StackID), tokenClient),
 			),
 		}
 
@@ -172,7 +172,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 
 	authenticator := authnlib.NewAccessTokenAuthenticator(
 		authnlib.NewAccessTokenVerifier(
-			authnlib.VerifierConfig{AllowedAudiences: []string{authzServiceAudience}},
+			authnlib.VerifierConfig{AllowedAudiences: []string{AuthzServiceAudience}},
 			authnlib.NewKeyRetriever(authnlib.KeyRetrieverConfig{
 				SigningKeysURL: z.cfg.ZanzanaServer.SigningKeysURL,
 			}),

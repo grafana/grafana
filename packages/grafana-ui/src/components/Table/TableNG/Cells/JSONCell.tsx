@@ -1,28 +1,36 @@
 import { css, cx } from '@emotion/css';
 import { Property } from 'csstype';
-import { isString } from 'lodash';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../../themes';
+import { JSONCellProps } from '../types';
+import { getCellLinks } from '../utils';
 import { Button, clearLinkButtonStyles } from '../../../Button';
 import { DataLinksContextMenu } from '../../../DataLinks/DataLinksContextMenu';
-import { CellNGProps } from '../types';
-import { getCellLinks } from '../utils';
 
-export const JSONCell = ({ value, justifyContent, field, rowIdx }: Omit<CellNGProps, 'theme'>) => {
+export const JSONCell = ({ value, justifyContent, field, rowIdx }: JSONCellProps) => {
   const styles = useStyles2(getStyles, justifyContent);
   const clearButtonStyle = useStyles2(clearLinkButtonStyles);
 
-  let localValue = value;
-  let displayValue = localValue;
+  let displayValue = value;
 
-  if (isString(localValue)) {
+  // Handle string values that might be JSON
+  if (typeof value === 'string') {
     try {
-      localValue = JSON.parse(localValue);
-    } catch {} // ignore errors
+      const parsed = JSON.parse(value);
+      displayValue = JSON.stringify(parsed, null, ' ');
+    } catch {
+      displayValue = value; // Keep original if not valid JSON
+    }
   } else {
-    displayValue = JSON.stringify(localValue, null, ' ');
+    // For non-string values, stringify them
+    try {
+      displayValue = JSON.stringify(value, null, ' ');
+    } catch (error) {
+      // Handle circular references or other stringify errors
+      displayValue = String(value);
+    }
   }
 
   const hasLinks = Boolean(getCellLinks(field, rowIdx)?.length);

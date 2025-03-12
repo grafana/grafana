@@ -2,8 +2,19 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Card, Grid, useStyles2 } from '@grafana/ui';
-import { PluginAngularBadge } from 'app/features/plugins/admin/components/Badges';
+import { featureEnabled } from '@grafana/runtime';
+import { Card, Grid, useStyles2, Stack, Badge } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
+import {
+  PluginAngularBadge,
+  PluginDeprecatedBadge,
+  PluginDisabledBadge,
+  PluginInstalledBadge,
+  PluginUpdateAvailableBadge,
+} from 'app/features/plugins/admin/components/Badges';
+import { getBadgeColor } from 'app/features/plugins/admin/components/Badges/sharedStyles';
+import { isPluginUpdatable } from 'app/features/plugins/admin/helpers';
+import { CatalogPlugin } from 'app/features/plugins/admin/types';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   heading: css({
@@ -40,13 +51,28 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export type CardGridItem = {
-  id: string;
-  name: string;
-  description: string;
-  url: string;
+function PluginEnterpriseBadgeWithoutSignature() {
+  const customBadgeStyles = useStyles2(getBadgeColor);
+
+  if (featureEnabled('enterprise.plugins')) {
+    return <Badge text={t('get-enterprise.title', 'Enterprise')} color="blue" />;
+  }
+
+  return (
+    <Badge
+      icon="lock"
+      role="img"
+      aria-label={t('lock-icon', 'lock icon')}
+      text={t('get-enterprise.title', 'Enterprise')}
+      color="darkgrey"
+      className={customBadgeStyles}
+      title={t('get-enterprise.requires-license', 'Requires a Grafana Enterprise license')}
+    />
+  );
+}
+
+export type CardGridItem = CatalogPlugin & {
   logo?: string;
-  angularDetected?: boolean;
 };
 
 export interface CardGridProps {
@@ -75,12 +101,16 @@ export const CardGrid = ({ items, onClickItem }: CardGridProps) => {
           <Card.Figure align="center" className={styles.figure}>
             <img className={styles.logo} src={item.logo} alt="" />
           </Card.Figure>
-
-          {item.angularDetected ? (
-            <Card.Meta className={styles.meta}>
-              <PluginAngularBadge />
-            </Card.Meta>
-          ) : null}
+          <Card.Meta className={styles.meta}>
+            <Stack height="auto" wrap="wrap">
+              {item.isEnterprise && <PluginEnterpriseBadgeWithoutSignature />}
+              {item.isDeprecated && <PluginDeprecatedBadge />}
+              {item.isInstalled && <PluginInstalledBadge />}
+              {item.isDisabled && <PluginDisabledBadge error={item.error} />}
+              {isPluginUpdatable(item) && <PluginUpdateAvailableBadge plugin={item} />}
+              {item.angularDetected && <PluginAngularBadge />}
+            </Stack>
+          </Card.Meta>
         </Card>
       ))}
     </Grid>

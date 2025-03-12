@@ -55,7 +55,6 @@ export { PromQueryEditorSelector } from './querybuilder/components/PromQueryEdit
 export { PromQueryLegendEditor } from './querybuilder/components/PromQueryLegendEditor';
 export { QueryPreview } from './querybuilder/components/QueryPreview';
 export { MetricsModal } from './querybuilder/components/metrics-modal/MetricsModal';
-export { PromQail } from './querybuilder/components/promQail/PromQail';
 
 // SRC/
 // Main export

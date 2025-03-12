@@ -5,16 +5,12 @@ import { GrafanaTheme2, formattedValueToString } from '@grafana/data';
 import { TableCellDisplayMode, TableCellOptions } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes';
+import { AutoCellProps } from '../types';
 import { clearLinkButtonStyles } from '../../../Button';
 import { DataLinksContextMenu } from '../../../DataLinks/DataLinksContextMenu';
-import { CellNGProps } from '../types';
 import { getCellLinks } from '../utils';
 
-interface AutoCellProps extends CellNGProps {
-  cellOptions: TableCellOptions;
-}
-
-export default function AutoCell({ value, field, justifyContent, cellOptions, rowIdx }: AutoCellProps) {
+export default function AutoCell({ value, field, justifyContent, rowIdx, cellOptions }: AutoCellProps) {
   const styles = useStyles2(getStyles, justifyContent);
 
   const displayValue = field.display!(value);

@@ -23,7 +23,7 @@ const defaultScale: ThresholdsConfig = {
 };
 
 export const BarGaugeCell = (props: TableCellProps) => {
-  const { field, innerWidth, tableStyles, cell, cellProps, row, actions } = props;
+  const { field, innerWidth, tableStyles, cell, cellProps, row } = props;
   const displayValue = field.display!(cell.value);
   const cellOptions = getCellOptions(field);
 
@@ -55,7 +55,6 @@ export const BarGaugeCell = (props: TableCellProps) => {
   };
 
   const hasLinks = Boolean(getLinks().length);
-  const hasActions = Boolean(actions?.length);
   const alignmentFactors = getAlignmentFactor(field, displayValue, cell.row.index);
 
   const renderComponent = (menuProps: DataLinksContextMenuApi) => {
@@ -84,8 +83,8 @@ export const BarGaugeCell = (props: TableCellProps) => {
 
   return (
     <div {...cellProps} className={tableStyles.cellContainer}>
-      {hasLinks || hasActions ? (
-        <DataLinksContextMenu links={getLinks} actions={actions} style={{ display: 'flex', width: '100%' }}>
+      {hasLinks ? (
+        <DataLinksContextMenu links={getLinks} style={{ display: 'flex', width: '100%' }}>
           {(api) => renderComponent(api)}
         </DataLinksContextMenu>
       ) : (

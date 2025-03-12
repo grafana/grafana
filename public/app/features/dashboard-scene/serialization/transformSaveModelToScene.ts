@@ -22,6 +22,7 @@ import {
   SceneInteractionProfileEvent,
   SceneObjectState,
 } from '@grafana/scenes';
+import { isWeekStart } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -35,7 +36,6 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
-import { DashboardScopesFacade } from '../scene/DashboardScopesFacade';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
@@ -240,10 +240,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
     preserveDashboardSceneStateInLocalStorage,
     addPanelsOnLoadBehavior,
-    new DashboardScopesFacade({
-      reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
-      uid,
-    }),
     new DashboardReloadBehavior({
       reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
       uid,
@@ -274,7 +270,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       to: oldModel.time.to,
       fiscalYearStartMonth: oldModel.fiscalYearStartMonth,
       timeZone: oldModel.timezone,
-      weekStart: oldModel.weekStart,
+      weekStart: isWeekStart(oldModel.weekStart) ? oldModel.weekStart : undefined,
       UNSAFE_nowDelay: oldModel.timepicker?.nowDelay,
     }),
     $variables: variables,
@@ -282,7 +278,9 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     $data: new DashboardDataLayerSet({ annotationLayers, alertStatesLayer }),
     controls: new DashboardControls({
       variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
-      timePicker: new SceneTimePicker({}),
+      timePicker: new SceneTimePicker({
+        quickRanges: oldModel.timepicker.quick_ranges,
+      }),
       refreshPicker: new SceneRefreshPicker({
         refresh: oldModel.refresh,
         intervals: oldModel.timepicker.refresh_intervals,

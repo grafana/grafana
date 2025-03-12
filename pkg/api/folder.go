@@ -94,11 +94,11 @@ func (hs *HTTPServer) GetFolders(c *contextmodel.ReqContext) response.Response {
 		hits := make([]dtos.FolderSearchHit, 0)
 		for _, f := range folders {
 			hits = append(hits, dtos.FolderSearchHit{
-				ID:         f.ID, // nolint:staticcheck
-				UID:        f.UID,
-				Title:      f.Title,
-				ParentUID:  f.ParentUID,
-				Repository: f.Repository,
+				ID:        f.ID, // nolint:staticcheck
+				UID:       f.UID,
+				Title:     f.Title,
+				ParentUID: f.ParentUID,
+				ManagedBy: f.ManagedBy,
 			})
 			metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetFolders).Inc()
 		}
@@ -199,8 +199,11 @@ func (hs *HTTPServer) CreateFolder(c *contextmodel.ReqContext) response.Response
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	if err := hs.setDefaultFolderPermissions(c.Req.Context(), cmd.OrgID, cmd.SignedInUser, folder); err != nil {
-		hs.log.Error("Could not set the default folder permissions", "folder", folder.Title, "user", cmd.SignedInUser, "error", err)
+	// Only set default permissions if the Folder API Server is disabled.
+	if !hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
+		if err := hs.setDefaultFolderPermissions(c.Req.Context(), cmd.OrgID, cmd.SignedInUser, folder); err != nil {
+			hs.log.Error("Could not set the default folder permissions", "folder", folder.Title, "user", cmd.SignedInUser, "error", err)
+		}
 	}
 
 	// Clear permission cache for the user who's created the folder, so that new permissions are fetched for their next call
@@ -427,7 +430,7 @@ func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, f *folder.Folde
 			Version:       f.Version,
 			AccessControl: acMetadata,
 			ParentUID:     f.ParentUID,
-			Repository:    f.Repository,
+			ManagedBy:     f.ManagedBy,
 		}, nil
 	}
 
