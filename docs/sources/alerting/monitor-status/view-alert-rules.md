@@ -68,4 +68,4 @@ To view or restore previous versions for an alert rule, complete the following s
 1. Click the **Versions** tab.  
    The page displays a list of the previous rule versions.
 
-On the Alert rule's Versions page you can view,compare and restore the previous rule versions.
+On the Alert rule's Versions page you can view, compare and restore the previous rule versions.
