@@ -9,27 +9,17 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-// KeyFunc is a function that returns a string key for a value
 type KeyFunc[T any] func(T) string
+type ProcessFunc[T any] func(context.Context, T) error
 
-// ProcessFunc is a function that processes a value
-type ProcessFunc[T any] func(ctx context.Context, value T) error
-
-// debouncerMetrics holds metrics for the debouncer
 type debouncerMetrics struct {
-	// itemsAddedCounter counts the number of items added to the debouncer
-	itemsAddedCounter prometheus.Counter
-	// itemsDroppedCounter counts the number of items dropped due to a full buffer
-	itemsDroppedCounter prometheus.Counter
-	// itemsProcessedCounter counts the number of items processed
-	itemsProcessedCounter prometheus.Counter
-	// processingErrorsCounter counts the number of errors during processing
-	processingErrorsCounter prometheus.Counter
-	// processingDurationHistogram measures the time taken to process items
+	itemsAddedCounter           prometheus.Counter
+	itemsDroppedCounter         prometheus.Counter
+	itemsProcessedCounter       prometheus.Counter
+	processingErrorsCounter     prometheus.Counter
 	processingDurationHistogram prometheus.Histogram
 }
 
-// newDebouncerMetrics creates a new set of metrics for the debouncer
 func newDebouncerMetrics(reg prometheus.Registerer, name string) *debouncerMetrics {
 	return &debouncerMetrics{
 		itemsAddedCounter: promauto.With(reg).NewCounter(prometheus.CounterOpts{
@@ -56,25 +46,16 @@ func newDebouncerMetrics(reg prometheus.Registerer, name string) *debouncerMetri
 	}
 }
 
-// DebouncerCfg contains options for creating a new Debouncer
 type DebouncerCfg[T any] struct {
-	// BufferSize is the size of the buffer for incoming items
-	BufferSize int
-	// KeyFunc is a function that returns a string key for a value
-	KeyFunc KeyFunc[T]
-	// MinWait is the minimum time to wait before processing the same key again
-	MinWait time.Duration
-	// MaxWait is the maximum time to wait before processing a key
-	MaxWait time.Duration
-	// MetricsRegisterer is the registerer for metrics
+	BufferSize        int
+	KeyFunc           KeyFunc[T]
+	MinWait           time.Duration
+	MaxWait           time.Duration
 	MetricsRegisterer prometheus.Registerer
-	// Name is the name prefix for metrics
-	Name string
-	// ErrorHandler is a function that handles errors during processing
-	ErrorHandler func(T, error)
+	Name              string
+	ErrorHandler      func(T, error)
 }
 
-// Debouncer is a utility for debouncing events
 type Debouncer[T any] struct {
 	cfg          DebouncerCfg[T]
 	buffer       chan T
@@ -87,9 +68,7 @@ type Debouncer[T any] struct {
 	errorHandler func(T, error)
 }
 
-// NewDebouncer creates a new debouncer with the given buffer size
 func NewDebouncer[T any](cfg DebouncerCfg[T]) *Debouncer[T] {
-	// Set default values
 	if cfg.BufferSize <= 0 {
 		cfg.BufferSize = 100
 	}
@@ -103,7 +82,6 @@ func NewDebouncer[T any](cfg DebouncerCfg[T]) *Debouncer[T] {
 		panic("KeyFunc is required")
 	}
 
-	// Create metrics if registerer and name are provided
 	var metrics *debouncerMetrics
 	if cfg.MetricsRegisterer != nil && cfg.Name != "" {
 		metrics = newDebouncerMetrics(cfg.MetricsRegisterer, cfg.Name)
@@ -118,7 +96,6 @@ func NewDebouncer[T any](cfg DebouncerCfg[T]) *Debouncer[T] {
 	}
 }
 
-// Add adds a value to the buffer
 func (d *Debouncer[T]) Add(value T) bool {
 	select {
 	case d.buffer <- value:
@@ -134,14 +111,22 @@ func (d *Debouncer[T]) Add(value T) bool {
 	}
 }
 
-// Start starts the debouncer with the given process function
-func (d *Debouncer[T]) Start(ctx context.Context, processFunc func(context.Context, T) error) {
+func (d *Debouncer[T]) Start(ctx context.Context, processFunc ProcessFunc[T]) {
 	d.ctx, d.cancel = context.WithCancel(ctx)
 	d.wg.Add(1)
-	go d.worker(processFunc)
+	go func() {
+		defer d.wg.Done()
+		for {
+			select {
+			case <-d.ctx.Done():
+				return
+			case value := <-d.buffer:
+				d.processValue(value, processFunc)
+			}
+		}
+	}()
 }
 
-// Stop stops the debouncer
 func (d *Debouncer[T]) Stop() {
 	if d.cancel != nil {
 		d.cancel()
@@ -149,58 +134,45 @@ func (d *Debouncer[T]) Stop() {
 	}
 }
 
-// SetMinWait sets the minimum wait time
 func (d *Debouncer[T]) SetMinWait(minWait time.Duration) {
 	d.cfg.MinWait = minWait
 }
 
-// SetMaxWait sets the maximum wait time
 func (d *Debouncer[T]) SetMaxWait(maxWait time.Duration) {
 	d.cfg.MaxWait = maxWait
 }
 
-// worker processes values from the buffer
-func (d *Debouncer[T]) worker(processFunc func(context.Context, T) error) {
-	defer d.wg.Done()
-
-	for {
-		select {
-		case <-d.ctx.Done():
-			return
-		case value := <-d.buffer:
-			d.processValue(value, processFunc)
-		}
-	}
-}
-
-// processValue processes a value
-func (d *Debouncer[T]) processValue(value T, processFunc func(context.Context, T) error) {
+func (d *Debouncer[T]) processValue(value T, processFunc ProcessFunc[T]) {
 	key := d.cfg.KeyFunc(value)
 	d.debouncersMu.Lock()
 	defer d.debouncersMu.Unlock()
 
-	// Get or create a debouncer for this key
 	debouncer, ok := d.debouncers[key]
 	if !ok {
 		debouncer = newKeyDebouncer[T](d.cfg.MinWait, d.cfg.MaxWait)
 		d.debouncers[key] = debouncer
 	}
 
-	// Update the debouncer with the new value
-	debouncer.update(value, func(v T) {
+	wrappedProcessFunc := func(v T) {
 		d.processWithMetrics(d.ctx, v, key, processFunc)
-	})
+
+		d.debouncersMu.Lock()
+		defer d.debouncersMu.Unlock()
+		if current, exists := d.debouncers[key]; exists && current == debouncer {
+			delete(d.debouncers, key)
+		}
+	}
+
+	debouncer.update(value, wrappedProcessFunc)
 }
 
-// processWithMetrics wraps the process function with metrics
-func (d *Debouncer[T]) processWithMetrics(ctx context.Context, value T, key string, processFunc func(context.Context, T) error) {
+func (d *Debouncer[T]) processWithMetrics(ctx context.Context, value T, key string, processFunc ProcessFunc[T]) {
 	if d.metrics != nil {
 		timer := prometheus.NewTimer(d.metrics.processingDurationHistogram)
 		defer timer.ObserveDuration()
 		d.metrics.itemsProcessedCounter.Inc()
 	}
 
-	// Process the value
 	err := processFunc(ctx, value)
 	if err != nil && d.errorHandler != nil {
 		d.errorHandler(value, err)
@@ -223,10 +195,8 @@ type keyDebouncer[T any] struct {
 // newKeyDebouncer creates a new key debouncer
 func newKeyDebouncer[T any](minWait, maxWait time.Duration) *keyDebouncer[T] {
 	return &keyDebouncer[T]{
-		minTimer: time.NewTimer(0),
-		maxTimer: time.NewTimer(0),
-		minWait:  minWait,
-		maxWait:  maxWait,
+		minWait: minWait,
+		maxWait: maxWait,
 	}
 }
 
@@ -235,37 +205,22 @@ func (d *keyDebouncer[T]) update(value T, processFunc func(T)) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	// Store the value
 	d.value = value
 
-	// Stop and drain the min timer if it's active
-	if !d.minTimer.Stop() {
-		select {
-		case <-d.minTimer.C:
-		default:
-		}
+	// Reset min timer
+	if d.minTimer != nil {
+		d.minTimer.Stop()
 	}
-
-	// Reset the min timer with the configured minWait
-	d.minTimer.Reset(d.minWait)
-
-	// If the max timer is not active, start it
-	if d.maxTimer.Stop() {
-		// Reset the max timer
-		d.maxTimer.Reset(d.maxWait)
-
-		// Start a goroutine to process after max wait
-		go func() {
-			<-d.maxTimer.C
-			d.process(processFunc)
-		}()
-	}
-
-	// Start a goroutine to process after min wait
-	go func() {
-		<-d.minTimer.C
+	d.minTimer = time.AfterFunc(d.minWait, func() {
 		d.process(processFunc)
-	}()
+	})
+
+	// Ensure max timer is only set once per burst
+	if d.maxTimer == nil {
+		d.maxTimer = time.AfterFunc(d.maxWait, func() {
+			d.process(processFunc)
+		})
+	}
 }
 
 // process processes the current value
@@ -273,10 +228,15 @@ func (d *keyDebouncer[T]) process(processFunc func(T)) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	// Stop the timers
-	d.minTimer.Stop()
-	d.maxTimer.Stop()
+	// Stop timers and clear references
+	if d.minTimer != nil {
+		d.minTimer.Stop()
+		d.minTimer = nil
+	}
+	if d.maxTimer != nil {
+		d.maxTimer.Stop()
+		d.maxTimer = nil
+	}
 
-	// Process the value
 	processFunc(d.value)
 }

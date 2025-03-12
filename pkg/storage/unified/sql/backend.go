@@ -157,8 +157,8 @@ func (b *backend) initLocked(ctx context.Context) error {
 		metrics: b.storageMetrics,
 
 		bufferSize: 1000,
-		minWait:    time.Second * 5,
-		maxWait:    time.Second * 30,
+		minWait:    time.Second * 30,
+		maxWait:    time.Minute * 5,
 
 		keyFunc: func(key *resource.ResourceKey) string {
 			return key.Namespace + ":" + key.Group + ":" + key.Resource
