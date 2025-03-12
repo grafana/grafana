@@ -1415,12 +1415,12 @@ export const defaultConditionalRenderingGroupKind = (): ConditionalRenderingGrou
 
 export interface ConditionalRenderingGroupSpec {
 	condition: "and" | "or";
-	groups: (ConditionalRenderingGroupKind | ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeIntervalKind)[];
+	items: (ConditionalRenderingGroupKind | ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeIntervalKind)[];
 }
 
 export const defaultConditionalRenderingGroupSpec = (): ConditionalRenderingGroupSpec => ({
 	condition: "and",
-	groups: [],
+	items: [],
 });
 
 export interface ConditionalRenderingVariableKind {

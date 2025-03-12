@@ -66,7 +66,7 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
       kind: 'ConditionalRenderingGroup',
       spec: {
         condition: this.state.condition,
-        groups: this.state.value.map((condition) => condition.serialize()),
+        items: this.state.value.map((condition) => condition.serialize()),
       },
     };
   }

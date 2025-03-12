@@ -923,7 +923,7 @@ ConditionalRenderingGroupKind: {
 
 ConditionalRenderingGroupSpec: {
   condition: "and" | "or"
-  groups: [...ConditionalRenderingGroupKind | ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeIntervalKind]
+  items: [...ConditionalRenderingGroupKind | ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeIntervalKind]
 }
 
 ConditionalRenderingVariableKind: {
