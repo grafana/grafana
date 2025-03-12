@@ -98,7 +98,6 @@ function setup(props: Partial<Props> = {}) {
 
   const mockDashboard: Dashboard = {
     title: 'Test Dashboard',
-    uid: 'test-dashboard',
     panels: [],
     schemaVersion: 36,
   };
@@ -227,7 +226,6 @@ describe('SaveProvisionedDashboardForm', () => {
     const mockDashboard = {
       title: 'New Dashboard',
       description: 'New Description',
-      uid: 'test-dashboard',
       panels: [],
       schemaVersion: 36,
     };
@@ -362,7 +360,6 @@ describe('SaveProvisionedDashboardForm', () => {
     const mockDashboard = {
       title: 'New Dashboard',
       description: 'New Description',
-      uid: 'test-dashboard',
       panels: [],
       schemaVersion: 36,
     };

@@ -139,9 +139,7 @@ export function SaveProvisionedDashboardForm({
       ref = loadedFromRef; // the original ref from URL or undefined
     }
 
-    // Quick hack to send the current UID without changing the whole shape
-    (saveModel as any)['uid'] = meta.uid;
-    action({ ref, name: repo, path, message: comment, body: saveModel });
+    action({ ref, name: repo, path, message: comment, body: { ...saveModel, uid: meta.uid } });
   };
 
   const workflows = getWorkflowOptions(repositoryConfig, loadedFromRef);
