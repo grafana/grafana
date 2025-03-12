@@ -154,10 +154,6 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
     return this.state.manager.getVizPanels();
   }
 
-  hasVizPanels(): boolean {
-    return this.state.manager.hasVizPanels();
-  }
-
   editModeChanged(isEditing: boolean): void {
     return this.state.manager.editModeChanged?.(isEditing);
   }

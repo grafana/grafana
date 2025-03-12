@@ -2,7 +2,6 @@ package folders
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -11,18 +10,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -39,12 +34,11 @@ var (
 )
 
 type legacyStorage struct {
-	service              folder.Service
-	namespacer           request.NamespaceMapper
-	tableConverter       rest.TableConvertor
-	cfg                  *setting.Cfg
-	features             featuremgmt.FeatureToggles
-	folderPermissionsSvc accesscontrol.FolderPermissionsService
+	service        folder.Service
+	namespacer     request.NamespaceMapper
+	tableConverter rest.TableConvertor
+	cfg            *setting.Cfg
+	features       featuremgmt.FeatureToggles
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -138,11 +132,12 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		UID:          &name,
 		OrgID:        info.OrgID,
 	})
-	if err != nil || dto == nil {
-		if errors.Is(err, dashboards.ErrFolderNotFound) || err == nil {
-			err = resourceInfo.NewNotFound(name)
-		}
+	if err != nil {
 		statusErr := apierrors.ToFolderStatusError(err)
+		return nil, &statusErr
+	}
+	if dto == nil {
+		statusErr := apierrors.ToFolderStatusError(dashboards.ErrFolderNotFound)
 		return nil, &statusErr
 	}
 
@@ -200,11 +195,6 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return nil, &statusErr
 	}
 
-	err = s.setDefaultFolderPermissions(ctx, info.OrgID, user, out)
-	if err != nil {
-		return nil, err
-	}
-
 	// #TODO can we directly convert instead of doing a Get? the result of the Create
 	// has more data than the one of Get so there is more we can include in the k8s resource
 	// this way
@@ -214,34 +204,6 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return nil, err
 	}
 	return r, nil
-}
-
-func (s *legacyStorage) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, folder *folder.Folder) error {
-	if !s.cfg.RBAC.PermissionsOnCreation("folder") {
-		return nil
-	}
-
-	var permissions []accesscontrol.SetResourcePermissionCommand
-
-	if user.IsIdentityType(claims.TypeUser) {
-		userID, err := user.GetInternalID()
-		if err != nil {
-			return err
-		}
-
-		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-			UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
-		})
-	}
-	isNested := folder.ParentUID != ""
-	if !isNested || !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
-			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
-		}...)
-	}
-	_, err := s.folderPermissionsSvc.SetPermissions(ctx, orgID, folder.UID, permissions...)
-	return err
 }
 
 func (s *legacyStorage) Update(ctx context.Context,

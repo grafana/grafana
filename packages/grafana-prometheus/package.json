@@ -22,9 +22,9 @@
     "./LICENSE_AGPL"
   ],
   "publishConfig": {
-    "main": "dist/index.js",
-    "module": "dist/esm/index.js",
-    "types": "dist/index.d.ts",
+    "main": "./dist/cjs/index.cjs",
+    "module": "./dist/esm/index.mjs",
+    "types": "./dist/cjs/index.d.cts",
     "access": "public"
   },
   "scripts": {
@@ -32,7 +32,7 @@
     "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
+    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json"
   },
   "dependencies": {
@@ -64,7 +64,7 @@
     "moment-timezone": "0.5.47",
     "monaco-promql": "1.7.4",
     "pluralize": "8.0.0",
-    "prismjs": "1.29.0",
+    "prismjs": "1.30.0",
     "react-highlight-words": "0.21.0",
     "react-use": "17.6.0",
     "react-window": "1.8.11",

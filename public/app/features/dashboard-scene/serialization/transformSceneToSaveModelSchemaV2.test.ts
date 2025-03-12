@@ -406,6 +406,18 @@ function getMinimalSceneState(body: DashboardLayoutManager): Partial<DashboardSc
       timePicker: new SceneTimePicker({
         isOnCanvas: true,
         hidePicker: true,
+        quickRanges: [
+          {
+            display: 'Last 6 hours',
+            from: 'now-6h',
+            to: 'now',
+          },
+          {
+            display: 'Last 3 days',
+            from: 'now-3d',
+            to: 'now',
+          },
+        ],
       }),
     }),
 
