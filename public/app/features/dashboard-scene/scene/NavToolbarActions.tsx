@@ -415,25 +415,27 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => <ShareButton key="new-share-dashboard-button" dashboard={dashboard} />,
   });
 
-  toolbarActions.push({
-    group: 'settings',
-    condition: isEditing && dashboard.canEditDashboard() && isShowingDashboard,
-    render: () => (
-      <Button
-        onClick={() => {
-          dashboard.onOpenSettings();
-        }}
-        tooltip={t('dashboard.toolbar.dashboard-settings.tooltip', 'Dashboard settings')}
-        fill="text"
-        size="sm"
-        key="settings"
-        variant="secondary"
-        data-testid={selectors.components.NavToolbar.editDashboard.settingsButton}
-      >
-        <Trans i18nKey="dashboard.toolbar.dashboard-settings.label">Settings</Trans>
-      </Button>
-    ),
-  });
+  if (!dashboardNewLayouts) {
+    toolbarActions.push({
+      group: 'settings',
+      condition: isEditing && dashboard.canEditDashboard() && isShowingDashboard,
+      render: () => (
+        <Button
+          onClick={() => {
+            dashboard.onOpenSettings();
+          }}
+          tooltip={t('dashboard.toolbar.dashboard-settings.tooltip', 'Dashboard settings')}
+          fill="text"
+          size="sm"
+          key="settings"
+          variant="secondary"
+          data-testid={selectors.components.NavToolbar.editDashboard.settingsButton}
+        >
+          <Trans i18nKey="dashboard.toolbar.dashboard-settings.label">Settings</Trans>
+        </Button>
+      ),
+    });
+  }
 
   toolbarActions.push({
     group: 'main-buttons',

@@ -1007,6 +1007,9 @@
     }
   },
   "dashboard": {
+    "actions": {
+      "open-settings": "Settings"
+    },
     "add-menu": {
       "import": "Import from library",
       "paste-panel": "Paste panel",

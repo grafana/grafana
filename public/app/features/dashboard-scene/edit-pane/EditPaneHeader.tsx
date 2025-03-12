@@ -22,6 +22,7 @@ export function EditPaneHeader({ element }: EditPaneHeaderProps) {
     <div className={styles.wrapper}>
       <Text variant="h5">{elementInfo.typeName}</Text>
       <Stack direction="row" gap={1}>
+        {element.renderActions && element.renderActions()}
         {(onCopy || onDelete) && (
           <Dropdown
             overlay={
