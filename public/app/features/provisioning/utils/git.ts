@@ -1,5 +1,3 @@
-import { Repository } from '../api';
-
 /**
  * Validates a Git branch name according to the following rules:
  * 1. The branch name cannot start with `/`, end with `/`, `.`, or whitespace.
@@ -13,16 +11,4 @@ export function validateBranchName(branchName?: string) {
   const branchNameRegex = /^(?!\/|.*\/\/|.*\.\.|.*@{)(?!.*[~^:?*[\]\\]).+(?<!\/|\.|\s)$/;
 
   return branchName && branchNameRegex.test(branchName!);
-}
-
-export function getRemoteURL(repo: Repository) {
-  if (repo.spec?.type === 'github') {
-    const spec = repo.spec.github;
-    let url = spec?.url || '';
-    if (spec?.branch) {
-      url += `/tree/${spec.branch}`;
-    }
-    return url;
-  }
-  return undefined;
 }
