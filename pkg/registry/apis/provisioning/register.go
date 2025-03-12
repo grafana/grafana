@@ -125,7 +125,7 @@ func NewAPIBuilder(
 		},
 		render:         render,
 		clonedir:       clonedir,
-		resourceLister: resources.NewResourceLister(unified),
+		resourceLister: resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus),
 		legacyMigrator: legacyMigrator,
 		storageStatus:  storageStatus,
 		unified:        unified,
@@ -347,6 +347,19 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	targetError := b.verifySingleInstanceTarget(cfg)
 	if targetError != nil {
 		list = append(list, targetError)
+	}
+
+	testResults, err := repository.TestRepository(ctx, repo)
+	if err != nil {
+		list = append(list, field.Invalid(field.NewPath("spec"),
+			"Repository test failed", "Unable to verify repository: "+err.Error()))
+	}
+
+	if !testResults.Success {
+		for _, err := range testResults.Errors {
+			list = append(list, field.Invalid(field.NewPath("spec"),
+				"Repository test failed", err))
+		}
 	}
 
 	if len(list) > 0 {
@@ -737,23 +750,7 @@ spec:
 		}
 	}
 	compBase := "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1."
-	schema := oas.Components.Schemas[compBase+"ResourceStats"].Properties["items"]
-	schema.Items = &spec.SchemaOrArray{
-		Schema: &spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				AllOf: []spec.Schema{
-					{
-						SchemaProps: spec.SchemaProps{
-							Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "ResourceCount"),
-						},
-					},
-				},
-			},
-		},
-	}
-	oas.Components.Schemas[compBase+"ResourceStats"].Properties["items"] = schema
-
-	schema = oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"]
+	schema := oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"]
 	schema.Items = &spec.SchemaOrArray{
 		Schema: &spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -768,6 +765,44 @@ spec:
 		},
 	}
 	oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"] = schema
+
+	countSpec := &spec.SchemaOrArray{
+		Schema: &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				AllOf: []spec.Schema{
+					{
+						SchemaProps: spec.SchemaProps{
+							Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "ResourceCount"),
+						},
+					},
+				},
+			},
+		},
+	}
+	managerSpec := &spec.SchemaOrArray{
+		Schema: &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				AllOf: []spec.Schema{
+					{
+						SchemaProps: spec.SchemaProps{
+							Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "ManagerStats"),
+						},
+					},
+				},
+			},
+		},
+	}
+	schema = oas.Components.Schemas[compBase+"ResourceStats"].Properties["instance"]
+	schema.Items = countSpec
+	oas.Components.Schemas[compBase+"ResourceStats"].Properties["instance"] = schema
+
+	schema = oas.Components.Schemas[compBase+"ResourceStats"].Properties["managed"]
+	schema.Items = managerSpec
+	oas.Components.Schemas[compBase+"ResourceStats"].Properties["managed"] = schema
+
+	schema = oas.Components.Schemas[compBase+"ManagerStats"].Properties["stats"]
+	schema.Items = countSpec
+	oas.Components.Schemas[compBase+"ManagerStats"].Properties["stats"] = schema
 
 	return oas, nil
 }

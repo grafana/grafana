@@ -146,10 +146,6 @@ func (r *githubClient) GetTree(ctx context.Context, owner, repository, basePath,
 		}
 	}
 
-	if basePath != "" {
-		// First, we need to find the base path in the tree we just fetched, then we set tree to the response of another GetTree call with that folder's SHA.
-	}
-
 	entries := make([]RepositoryContent, 0, len(tree.Entries))
 	for _, te := range tree.Entries {
 		rrc := &realRepositoryContent{

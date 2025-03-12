@@ -49,7 +49,7 @@ export function getDefaultValues(repository?: RepositorySpec): RepositoryFormDat
   if (!repository) {
     return {
       type: 'github',
-      title: '',
+      title: 'Github Repository',
       token: '',
       url: '',
       branch: 'main',

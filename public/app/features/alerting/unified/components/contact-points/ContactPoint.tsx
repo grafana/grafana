@@ -223,15 +223,13 @@ const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: Conta
       <Stack direction="row" gap={1}>
         {/* this is shown when the last delivery failed – we don't show any additional metadata */}
         {failedToSend ? (
-          <>
-            <MetaText color="error" icon="exclamation-circle">
-              <Tooltip content={diagnostics.lastNotifyAttemptError!}>
-                <span>
-                  <Trans i18nKey="alerting.contact-points.last-delivery-failed">Last delivery attempt failed</Trans>
-                </span>
-              </Tooltip>
-            </MetaText>
-          </>
+          <MetaText color="error" icon="exclamation-circle">
+            <Tooltip content={diagnostics.lastNotifyAttemptError!}>
+              <span>
+                <Trans i18nKey="alerting.contact-points.last-delivery-failed">Last delivery attempt failed</Trans>
+              </span>
+            </Tooltip>
+          </MetaText>
         ) : (
           <>
             {/* this is shown when we have a last delivery attempt */}
