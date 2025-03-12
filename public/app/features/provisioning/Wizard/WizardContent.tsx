@@ -112,7 +112,8 @@ export function WizardContent({
         const formData = getValues();
         const spec = dataToSpec(formData.repository);
         await submitData(spec);
-        // Don't navigate here - let the useEffect handle it
+        // Navigate after successful save
+        handleNext();
       } catch (error) {
         console.error('Repository connection failed:', error);
         handleStatusChange(false);
@@ -141,14 +142,12 @@ export function WizardContent({
           type: AppEvents.alertSuccess.name,
           payload: ['Repository saved'],
         });
-        // Move to next step after successful save
         handleStatusChange(true);
-        handleNext();
       }
     } else if (saveRequest.isError) {
       handleStatusChange(false);
     }
-  }, [saveRequest.isSuccess, saveRequest.isError, saveRequest.data, setValue, handleStatusChange, handleNext]);
+  }, [saveRequest.isSuccess, saveRequest.isError, saveRequest.data, setValue, handleStatusChange]);
 
   // Helper to check if current step needs job status
   const isJobStep = (step: string) => {
