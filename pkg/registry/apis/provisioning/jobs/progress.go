@@ -51,7 +51,7 @@ type jobProgressRecorder struct {
 func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
 	return &jobProgressRecorder{
 		started:    time.Now(),
-		progressFn: maybeNotifyProgress(5*time.Second, ProgressFn),
+		progressFn: maybeNotifyProgress(2*time.Second, ProgressFn),
 		summaries:  make(map[string]*provisioning.JobResourceSummary),
 	}
 }
@@ -77,6 +77,7 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 func (r *jobProgressRecorder) SetMessage(ctx context.Context, msg string) {
 	r.message = msg
 	logging.FromContext(ctx).Info("job progress message", "message", msg)
+	r.notify(ctx)
 }
 
 func (r *jobProgressRecorder) SetFinalMessage(ctx context.Context, msg string) {
