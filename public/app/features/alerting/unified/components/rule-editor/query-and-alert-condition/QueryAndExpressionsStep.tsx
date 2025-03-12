@@ -23,7 +23,12 @@ import {
 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { ExpressionDatasourceUID, ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
+import {
+  ExpressionDatasourceUID,
+  ExpressionQuery,
+  ExpressionQueryType,
+  expressionTypes,
+} from 'app/features/expressions/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
@@ -50,7 +55,7 @@ import { RuleEditorSection } from '../RuleEditorSection';
 import { errorFromCurrentCondition, errorFromPreviewData, findRenamedDataQueryReferences, refIdExists } from '../util';
 
 import { CloudDataSourceSelector } from './CloudDataSourceSelector';
-import { SimpleConditionEditor, SimpleConditionIdentifier, getSimpleConditionFromExpressions } from './SimpleCondition';
+import { SimpleConditionEditor, getSimpleConditionFromExpressions } from './SimpleCondition';
 import { SmartAlertTypeDetector } from './SmartAlertTypeDetector';
 import { DESCRIPTIONS } from './descriptions';
 import {
@@ -158,15 +163,22 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         // Grafana Managed rules and recording rules do
         return;
       }
-      // we need to be sure the condition is set once we switch to simple mode
+
       if (simplifiedQueryStep) {
-        setValue('condition', SimpleConditionIdentifier.thresholdId);
-        runQueries(getValues('queries'), SimpleConditionIdentifier.thresholdId);
+        const lastExpression = expressionQueries.at(-1);
+        if (!lastExpression) {
+          return;
+        }
+
+        const condition = lastExpression.refId;
+        // we need to be sure the condition is set once we switch to simple mode
+        setValue('condition', condition);
+        runQueries(getValues('queries'), condition);
       } else {
         runQueries(getValues('queries'), condition || (getValues('condition') ?? ''));
       }
     },
-    [isCloudAlertRuleType, runQueries, getValues, simplifiedQueryStep, setValue]
+    [isCloudAlertRuleType, expressionQueries, simplifiedQueryStep, setValue, runQueries, getValues]
   );
 
   // whenever we update the queries we have to update the form too
@@ -241,7 +253,11 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       // As a workaround we update form values as soon as possible to avoid stale state
       // This way we can access up to date queries in runQueriesPreview without waiting for re-render
       const previousQueries = getValues('queries');
-      const expressionQueries = previousQueries.filter((query) => isExpressionQuery(query.model));
+
+      // @ts-ignore
+      const expressionQueries = previousQueries.filter<AlertQuery<ExpressionQuery>>((query) =>
+        isExpressionQuery(query.model)
+      );
       setValue('queries', [...updatedQueries, ...expressionQueries], { shouldValidate: false });
       updateExpressionAndDatasource(updatedQueries);
 

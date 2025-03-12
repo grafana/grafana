@@ -10,7 +10,6 @@ import {
 import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { SimpleConditionIdentifier } from './SimpleCondition';
 import {
   QueriesAndExpressionsState,
   addNewDataQuery,
@@ -28,22 +27,22 @@ import {
 } from './reducer';
 
 const reduceExpression: AlertQuery<ExpressionQuery> = {
-  refId: SimpleConditionIdentifier.reducerId,
+  refId: 'B',
   queryType: 'expression',
   datasourceUid: '__expr__',
   model: {
     type: ExpressionQueryType.reduce,
-    refId: SimpleConditionIdentifier.reducerId,
+    refId: 'B',
     settings: { mode: ReducerMode.Strict },
   },
 };
 const thresholdExpression: AlertQuery<ExpressionQuery> = {
-  refId: SimpleConditionIdentifier.thresholdId,
+  refId: 'C',
   queryType: 'expression',
   datasourceUid: '__expr__',
   model: {
     type: ExpressionQueryType.threshold,
-    refId: SimpleConditionIdentifier.thresholdId,
+    refId: 'C',
   },
 };
 

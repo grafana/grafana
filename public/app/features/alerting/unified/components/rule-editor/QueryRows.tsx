@@ -14,6 +14,7 @@ import {
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, Card, Icon, Stack } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -236,8 +237,10 @@ function copyModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit
 }
 
 function newModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<AlertQuery, 'datasource'> {
-  const isInstant = getInstantFromDataQuery(item.model, settings.type);
-  return {
+  const isExpression = isExpressionQuery(item);
+  const isInstant = isExpression ? false : getInstantFromDataQuery(item);
+
+  const newQuery = {
     refId: item.refId,
     relativeTimeRange: item.relativeTimeRange,
     queryType: '',
@@ -249,6 +252,12 @@ function newModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<
       instant: isInstant,
     },
   };
+
+  if (isInstant) {
+    newQuery.model.instant = isInstant;
+  }
+
+  return newQuery;
 }
 
 interface DatasourceNotFoundProps {
