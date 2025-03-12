@@ -5,7 +5,7 @@ import Skeleton from 'react-loading-skeleton';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { CellProps, Stack, Text, Icon, useStyles2 } from '@grafana/ui';
-import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
+import { getSvgSize } from '@grafana/ui/internal';
 import { Trans } from 'app/core/internationalization';
 import { useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 

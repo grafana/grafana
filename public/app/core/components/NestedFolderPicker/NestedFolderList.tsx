@@ -6,8 +6,7 @@ import { FixedSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { IconButton, useStyles2 } from '@grafana/ui';
-import { Text } from '@grafana/ui/src/components/Text/Text';
+import { IconButton, useStyles2, Text } from '@grafana/ui';
 import { Indent } from 'app/core/components/Indent/Indent';
 import { Trans } from 'app/core/internationalization';
 import { childrenByParentUIDSelector, rootItemsSelector } from 'app/features/browse-dashboards/state';

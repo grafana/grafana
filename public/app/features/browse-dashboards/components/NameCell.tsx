@@ -4,7 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Icon, IconButton, Link, Spinner, useStyles2, Text } from '@grafana/ui';
-import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
+import { getSvgSize } from '@grafana/ui/internal';
 import { t } from 'app/core/internationalization';
 import { getIconForItem } from 'app/features/search/service/utils';
 

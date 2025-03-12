@@ -3,7 +3,7 @@ import { FormEvent, memo } from 'react';
 import * as React from 'react';
 
 import { Checkbox, Portal, useStyles2, useTheme2 } from '@grafana/ui';
-import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
+import { getSelectStyles } from '@grafana/ui/internal';
 
 import { getStyles } from './styles';
 

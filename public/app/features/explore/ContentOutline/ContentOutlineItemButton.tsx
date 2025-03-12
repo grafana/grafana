@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { IconName, isIconName, GrafanaTheme2 } from '@grafana/data';
 import { Button, Icon, Tooltip, useTheme2 } from '@grafana/ui';
-import { TooltipPlacement } from '@grafana/ui/src/components/Tooltip';
+import { TooltipPlacement } from '@grafana/ui/internal';
 
 type CommonProps = {
   contentOutlineExpanded?: boolean;

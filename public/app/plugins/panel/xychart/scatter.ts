@@ -15,7 +15,7 @@ import {
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { AxisPlacement, FieldColorModeId, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
-import { FacetedData, FacetSeries } from '@grafana/ui/src/components/uPlot/types';
+import { FacetedData, FacetSeries } from '@grafana/ui/internal';
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 import { valuesToFills } from '../heatmap/utils';

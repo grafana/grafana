@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2, useStyles2, ColorPicker, IconButton } from '@grafana/ui';
-import { ColorSwatch } from '@grafana/ui/src/components/ColorPicker/ColorSwatch';
+import { ColorSwatch } from '@grafana/ui/internal';
 
 export interface ColorValueEditorSettings {
   placeholder?: string;

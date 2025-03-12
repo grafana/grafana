@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data/';
-import { Stack, Text } from '@grafana/ui';
-import { useStyles2 } from '@grafana/ui/';
+import { Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { useAlertingHomePageExtensions } from '../plugins/useAlertingHomePageExtensions';
 

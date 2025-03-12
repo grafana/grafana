@@ -1,8 +1,7 @@
 import { useState } from 'react';
 
 import { Action, DataFrame, VariableSuggestion } from '@grafana/data';
-import { Button } from '@grafana/ui/src/components/Button';
-import { Modal } from '@grafana/ui/src/components/Modal/Modal';
+import { Button, Modal } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
 import { ActionEditor } from './ActionEditor';

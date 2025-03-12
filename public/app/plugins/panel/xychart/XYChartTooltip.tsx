@@ -2,11 +2,14 @@ import { ReactNode } from 'react';
 
 import { DataFrame, InterpolateFunction, LinkModel } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
-import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
-import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
-import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
-import { VizTooltipWrapper } from '@grafana/ui/src/components/VizTooltip/VizTooltipWrapper';
-import { ColorIndicator, VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
+import {
+  VizTooltipContent,
+  VizTooltipFooter,
+  VizTooltipHeader,
+  VizTooltipWrapper,
+  ColorIndicator,
+  VizTooltipItem,
+} from '@grafana/ui/internal';
 
 import { getFieldActions } from '../status-history/utils';
 

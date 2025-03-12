@@ -5,8 +5,7 @@ import { renderMarkdown, LinkModelSupplier, ScopedVars, IconName } from '@grafan
 import { GrafanaTheme2 } from '@grafana/data/';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, getTemplateSrv } from '@grafana/runtime';
-import { Tooltip, PopoverContent, Icon, Themeable2, withTheme2 } from '@grafana/ui';
-import { useStyles2 } from '@grafana/ui/';
+import { Tooltip, PopoverContent, Icon, Themeable2, withTheme2, useStyles2 } from '@grafana/ui';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { InspectTab } from 'app/features/inspector/types';

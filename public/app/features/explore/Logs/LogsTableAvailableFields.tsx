@@ -1,4 +1,4 @@
-import { useTheme2 } from '@grafana/ui/src';
+import { useTheme2 } from '@grafana/ui';
 
 import { getLogsFieldsStyles } from './LogsTableActiveFields';
 import { LogsTableEmptyFields } from './LogsTableEmptyFields';

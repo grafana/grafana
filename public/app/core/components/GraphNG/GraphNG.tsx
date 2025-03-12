@@ -16,11 +16,7 @@ import {
 } from '@grafana/data';
 import { DashboardCursorSync, VizLegendOptions } from '@grafana/schema';
 import { Themeable2, VizLayout } from '@grafana/ui';
-import { UPlotChart } from '@grafana/ui/src/components/uPlot/Plot';
-import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
-import { Renderers, UPlotConfigBuilder } from '@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder';
-import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
-import { pluginLog } from '@grafana/ui/src/components/uPlot/utils';
+import { UPlotChart, AxisProps, Renderers, UPlotConfigBuilder, ScaleProps, pluginLog } from '@grafana/ui/internal';
 
 import { GraphNGLegendEvent, XYFieldMatchers } from './types';
 import { preparePlotFrame as defaultPreparePlotFrame } from './utils';
