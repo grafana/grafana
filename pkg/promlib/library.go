@@ -24,9 +24,8 @@ type Service struct {
 }
 
 type instance struct {
-	queryData  *querydata.QueryData
-	resource   *resource.Resource
-	featureMap map[string]bool
+	queryData *querydata.QueryData
+	resource  *resource.Resource
 }
 
 type ExtendOptions func(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options, log log.Logger) error
@@ -69,8 +68,14 @@ func newInstanceSettings(httpClientProvider *sdkhttpclient.Provider, log log.Log
 			return nil, fmt.Errorf("error creating http client: %v", err)
 		}
 
+		featureToggles := backend.GrafanaConfigFromContext(ctx).FeatureToggles()
+		featureMap := map[string]bool{
+			featuremgmt.FlagPromQLScope:                    featureToggles.IsEnabled("promQLScope"),
+			featuremgmt.FlagPrometheusRunQueriesInParallel: featureToggles.IsEnabled("prometheusRunQueriesInParallel"),
+		}
+
 		// New version using custom client and better response parsing
-		qd, err := querydata.New(httpClient, settings, log)
+		qd, err := querydata.New(httpClient, settings, log, featureMap)
 		if err != nil {
 			return nil, err
 		}
@@ -81,15 +86,9 @@ func newInstanceSettings(httpClientProvider *sdkhttpclient.Provider, log log.Log
 			return nil, err
 		}
 
-		featureToggles := backend.GrafanaConfigFromContext(ctx).FeatureToggles()
-
 		return instance{
 			queryData: qd,
 			resource:  r,
-			featureMap: map[string]bool{
-				featuremgmt.FlagPromQLScope:                    featureToggles.IsEnabled("promQLScope"),
-				featuremgmt.FlagPrometheusRunQueriesInParallel: featureToggles.IsEnabled("prometheusRunQueriesInParallel"),
-			},
 		}, nil
 	}
 }
