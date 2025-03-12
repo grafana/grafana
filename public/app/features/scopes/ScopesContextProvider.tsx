@@ -30,23 +30,33 @@ export function useScopesServices() {
 
 interface ScopesContextProviderProps {
   children: ReactNode;
+  services?: {
+    scopesService: ScopesService;
+    scopesSelectorService: ScopesSelectorService;
+    scopesDashboardsService: ScopesDashboardsService;
+  };
 }
 
-export const ScopesContextProvider = ({ children }: ScopesContextProviderProps) => {
-  const services = useMemo(() => {
-    const client = new ScopesApiClient();
-    const dashboardService = new ScopesDashboardsService(client);
-    const selectorService = new ScopesSelectorService(client, dashboardService);
-    return {
-      scopesService: new ScopesService(selectorService, dashboardService),
-      scopesSelectorService: selectorService,
-      scopesDashboardsService: dashboardService,
-    };
-  }, []);
+export function defaultScopesServices() {
+  const client = new ScopesApiClient();
+  const dashboardService = new ScopesDashboardsService(client);
+  const selectorService = new ScopesSelectorService(client, dashboardService);
+  return {
+    scopesService: new ScopesService(selectorService, dashboardService),
+    scopesSelectorService: selectorService,
+    scopesDashboardsService: dashboardService,
+    client,
+  };
+}
+
+export const ScopesContextProvider = ({ children, services }: ScopesContextProviderProps) => {
+  const memoizedServices = useMemo(() => {
+    return services ?? defaultScopesServices();
+  }, [services]);
 
   return (
-    <ScopesContext.Provider value={services.scopesService}>
-      <ScopesServicesContext.Provider value={services}>{children}</ScopesServicesContext.Provider>
+    <ScopesContext.Provider value={memoizedServices.scopesService}>
+      <ScopesServicesContext.Provider value={memoizedServices}>{children}</ScopesServicesContext.Provider>
     </ScopesContext.Provider>
   );
 };

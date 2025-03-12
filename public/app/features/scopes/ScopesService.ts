@@ -13,12 +13,15 @@ export interface State {
 }
 
 /**
- * The ScopesService is mainly an aggregation of the ScopesSelectorService and ScopesDashboardsService which hande
+ * The ScopesService is mainly an aggregation of the ScopesSelectorService and ScopesDashboardsService which handle
  * the scope selection mechanics and then loading and showing related dashboards. We aggregate the state of these
  * here in single service to serve as a public facade we can later publish through the grafana/runtime to plugins.
  */
 export class ScopesService implements ScopesContextValue {
+  // Only internal part of the state.
   private readonly _state: BehaviorSubject<State>;
+
+  // This will contain the combined state that will be public.
   private readonly _stateObservable: BehaviorSubject<ScopesContextValueState>;
 
   constructor(
@@ -44,6 +47,7 @@ export class ScopesService implements ScopesContextValue {
       // things we use here change.
       this.selectorService.stateObservable.pipe(
         map((state) => ({
+          // We do mapping here bu mainly to make the distinctUntilChanged simpler
           selectedScopes: state.selectedScopes.map(({ scope }) => scope),
           loading: state.loading,
         })),
@@ -70,6 +74,10 @@ export class ScopesService implements ScopesContextValue {
       .subscribe(this._stateObservable);
   }
 
+  /**
+   * This updates only the internal state of this service.
+   * @param newState
+   */
   private updateState = (newState: Partial<State>) => {
     this._state.next({ ...this._state.getValue(), ...newState });
   };
@@ -104,6 +112,4 @@ export class ScopesService implements ScopesContextValue {
       this.updateState({ enabled });
     }
   };
-
-  public toggleDrawer = () => this.dashboardsService.setDrawerOpened(!this.dashboardsService.state.drawerOpened);
 }

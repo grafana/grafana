@@ -175,9 +175,5 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     }, {});
   };
 
-  public setDrawerOpened = (drawerOpened: boolean) => {
-    if (this.state.drawerOpened !== drawerOpened) {
-      this.updateState({ drawerOpened });
-    }
-  };
+  public toggleDrawer = () => this.updateState({ drawerOpened: !this.state.drawerOpened });
 }

@@ -20,7 +20,7 @@ export const ScopesSelector = () => {
   const styles = useStyles2(getStyles, menuDockedAndOpen);
   const scopes = useScopes();
 
-  const { scopesService, scopesSelectorService } = useScopesServices();
+  const { scopesService, scopesSelectorService, scopesDashboardsService } = useScopesServices();
 
   const { nodes, selectedScopes, opened, loadingNodeName, treeScopes } = useObservable(
     scopesSelectorService.stateObservable ?? new Observable(),
@@ -49,7 +49,7 @@ export const ScopesSelector = () => {
         tooltip={dashboardsIconLabel}
         data-testid="scopes-dashboards-expand"
         disabled={readOnly}
-        onClick={scopesService.toggleDrawer}
+        onClick={scopesDashboardsService.toggleDrawer}
       />
 
       <ScopesInput
