@@ -420,6 +420,14 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGro
 	return srv.updateAlertRulesInGroup(c, groupKey, rules, deletePermanently)
 }
 
+func (srv RulerSrv) RouteDeleteAlertRuleFromTrashByGUID(ctx *contextmodel.ReqContext, guid string) response.Response {
+	_, err := srv.store.DeleteRuleFromTrashByGUID(ctx.Req.Context(), ctx.SignedInUser.GetOrgID(), guid)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to delete rule from trash")
+	}
+	return response.Empty(http.StatusOK)
+}
+
 func (srv RulerSrv) checkGroupLimits(group apimodels.PostableRuleGroupConfig) error {
 	if srv.cfg.RulesPerRuleGroupLimit > 0 && int64(len(group.Rules)) > srv.cfg.RulesPerRuleGroupLimit {
 		srv.log.Warn("Large rule group was edited. Large groups are discouraged and may be rejected in the future.",
