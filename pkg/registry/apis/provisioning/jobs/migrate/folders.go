@@ -106,7 +106,6 @@ func (j *migrationJob) loadFolders(ctx context.Context) error {
 			return result.Error
 		}
 
-		j.progress.Record(ctx, result)
 		return nil
 	})
 	if err != nil {

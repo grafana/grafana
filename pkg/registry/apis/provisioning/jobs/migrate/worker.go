@@ -166,13 +166,14 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		}
 	}
 
+	logger := logging.FromContext(ctx)
 	if buffered != nil {
 		progress.SetMessage(ctx, "pushing changes")
 		reader, writer := io.Pipe()
 		go func() {
 			scanner := bufio.NewScanner(reader)
 			for scanner.Scan() {
-				progress.SetMessage(ctx, scanner.Text())
+				logger.Info("push output", "text", scanner.Text())
 			}
 		}()
 
@@ -204,6 +205,7 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 			logger.Warn("error trying to revert dual write settings after an error", "err", err)
 		}
 	}
+
 	return err
 }
 
