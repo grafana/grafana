@@ -59,7 +59,6 @@ export { type ButtonLinkProps, getButtonStyles } from '../components/Button';
 export {
   type TableSortByFieldState,
   type TableFieldOptions,
-  TableCellDisplayMode,
   FILTER_FOR_OPERATOR,
   FILTER_OUT_OPERATOR,
 } from '../components/Table/types';
