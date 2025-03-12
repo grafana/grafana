@@ -64,7 +64,6 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
     }
 
     let data: PanelData[] = [];
-    let hasData = false;
 
     // get ResponsiveGridItem or RowItem
     const item = this.getConditionalLogicRoot().parent;
@@ -93,27 +92,17 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
       return false;
     }
 
-    // outer loop for PanelData[]
-    outer: for (let p = 0; p < data.length; p++) {
-      const panelData = data[p];
+    for (let panelDataIdx = 0; panelDataIdx < data.length; panelDataIdx++) {
+      const series = data[panelDataIdx]?.series ?? [];
 
-      if (!panelData?.series.length) {
-        continue outer;
-      }
-
-      // inner loop for PanelData.series
-      for (let i = 0; i < panelData.series.length; i++) {
-        // early break if any data is detected
-        if (hasData) {
-          break outer;
-        }
-        if (panelData?.series[i].length) {
-          hasData = true;
+      for (let seriesIdx = 0; seriesIdx < series.length; seriesIdx++) {
+        if (series[seriesIdx].length > 0) {
+          return true;
         }
       }
     }
 
-    return hasData;
+    return false;
   }
 
   public render(): ReactNode {
