@@ -6,7 +6,6 @@ import (
 	"slices"
 	"strconv"
 	"time"
-	"unsafe"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -858,16 +857,14 @@ func readHistogram(iter *sdkjsoniter.Iterator, hist *histogramInfo) error {
 }
 
 func appendValueFromString(iter *sdkjsoniter.Iterator, field *data.Field) error {
-	// Read the string directly into our buffer
-	buf, err := iter.ReadStringAsSlice()
-	if err != nil {
+	var err error
+	var s string
+	if s, err = iter.ReadString(); err != nil {
 		return err
 	}
 
-	// #nosec G103
-	// Convert string to float64 without allocation
-	v, err := strconv.ParseFloat(*(*string)(unsafe.Pointer(&buf)), 64)
-	if err != nil {
+	var v float64
+	if v, err = strconv.ParseFloat(s, 64); err != nil {
 		return err
 	}
 
