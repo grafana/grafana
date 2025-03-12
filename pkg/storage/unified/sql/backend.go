@@ -170,8 +170,9 @@ func (b *backend) initLocked(ctx context.Context) error {
 	b.historyPruner.startWorker(ctx, func(ctx context.Context, key *resource.ResourceKey) error {
 		return dbConn.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 			res, err := dbutil.Exec(ctx, tx, sqlResourceHistoryPrune, &sqlPruneHistoryRequest{
-				SQLTemplate: sqltemplate.New(b.dialect),
-				Key:         key,
+				SQLTemplate:  sqltemplate.New(b.dialect),
+				HistoryLimit: 100,
+				Key:          key,
 			})
 			if err != nil {
 				return fmt.Errorf("failed to prune history: %w", err)
