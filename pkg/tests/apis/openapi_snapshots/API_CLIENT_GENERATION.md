@@ -84,3 +84,96 @@ yarn generate-apis
 ```
 
 This will create an `endpoints.gen.ts` file in the path specified in the previous step.
+
+### 6. Create the index file for your hooks
+
+In the same `api` folder where the `endpoints.gen.ts` file has been saved, you have to create an index file from which you can import the types and hooks needed. By doing this, we selectively export hooks/types from `endpoints.gen.ts`.
+
+In our case, the dashboard index will be like:
+
+```jsx
+import { generatedAPI } from './endpoints.gen';
+
+export const dashboardAPI = generatedAPI;
+export const { useCreateDashboardMutation} = dashboardAPI;
+// eslint-disable-next-line no-barrel-files/no-barrel-files
+export { type Dashboard } from './endpoints.gen';
+
+```
+
+There are some use cases where the hook will not work and that is a clue to review if it needs to be modified. The hooks can be tweaked by using `enhanceEndpoints`.
+
+TODO: Add examples of `enhanceEndpoints` usage
+
+### 7. Add information to the store
+
+The last, but not least, step to be done is adding the middleware and reducers to the store. You have available the oficial documentation in [RTK Query](https://redux-toolkit.js.org/tutorials/rtk-query#add-the-service-to-your-store)
+
+In Grafana, the reducers are added to `public/app/core/reducers/root.ts`:
+
+```jsx
+  const rootReducers = {
+    ...sharedReducers,
+    ...alertingReducers,
+    ...teamsReducers,
+    ...apiKeysReducers,
+    ...foldersReducers,
+    ...dashboardReducers,
+    ...exploreReducers,
+    ...dataSourcesReducers,
+    ...usersReducers,
+    ...serviceAccountsReducer,
+    ...userReducers,
+    ...invitesReducers,
+    ...organizationReducers,
+    ...browseDashboardsReducers,
+    ...ldapReducers,
+    ...importDashboardReducers,
+    ...panelEditorReducers,
+    ...panelsReducers,
+    ...templatingReducers,
+    ...supportBundlesReducer,
+    ...authConfigReducers,
+    plugins: pluginsReducer,
+    [alertingApi.reducerPath]: alertingApi.reducer,
+    [publicDashboardApi.reducerPath]: publicDashboardApi.reducer,
+    [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
+    [cloudMigrationAPI.reducerPath]: cloudMigrationAPI.reducer,
+    [iamApi.reducerPath]: iamApi.reducer,
+    [userPreferencesAPI.reducerPath]: userPreferencesAPI.reducer,
+    [provisioningAPI.reducerPath]: provisioningAPI.reducer,
+    [folderAPI.reducerPath]: folderAPI.reducer,
+    [dashboardAPI.reducerPath]: dashboardAPI.reducer,
+  };
+```
+
+And the middlewares are added to `public/app/store/configureStore.ts`:
+
+```jsx
+export function configureStore(initialState?: Partial<StoreState>) {
+  const store = reduxConfigureStore({
+    reducer: createRootReducer(),
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware({ thunk: true, serializableCheck: false, immutableCheck: false }).concat(
+        listenerMiddleware.middleware,
+        alertingApi.middleware,
+        publicDashboardApi.middleware,
+        browseDashboardsAPI.middleware,
+        cloudMigrationAPI.middleware,
+        userPreferencesAPI.middleware,
+        iamApi.middleware,
+        provisioningAPI.middleware,
+        folderAPI.middleware,
+        dashboardAPI.middleware
+        ...extraMiddleware
+      ),
+    devTools: process.env.NODE_ENV !== 'production',
+    preloadedState: {
+      navIndex: buildInitialState(),
+      ...initialState,
+    },
+  });
+```
+
+After this step is done, it is time to use your hooks across Grafana. 
+Enjoy coding!
