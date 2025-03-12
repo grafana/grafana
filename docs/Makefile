@@ -8,8 +8,11 @@ MAKEFLAGS += --no-builtin-rule
 include docs.mk
 
 .PHONY: sources/panels-visualizations/query-transform-data/transform-data/index.md
-sources/panels-visualizations/query-transform-data/transform-data/index.md: ## Generate the Transform Data page source.
-sources/panels-visualizations/query-transform-data/transform-data/index.md:
-	cd $(CURDIR)/.. && npx tsc ./scripts/docs/generate-transformations.ts && \
+sources/panels-visualizations/query-transform-data/transform-data/index.md: ## Generate the Transform Data page source. Create a temporary TypeScript configuration that skips type checking of library files. This avoids errors with third-party type definitions like the Intl.Segmenter issue 
+	cd $(CURDIR)/.. && \
+	echo '{"compilerOptions":{"skipLibCheck":true,"target":"es2020","module":"commonjs","esModuleInterop":true},"include":["./scripts/docs/generate-transformations.ts"]}' > temp-tsconfig.json && \
+	npx tsc -p temp-tsconfig.json && \
 	node ./scripts/docs/generate-transformations.js > $(CURDIR)/$@ && \
-	npx prettier -w $(CURDIR)/$@
+	chmod +x node_modules/.bin/prettier && \
+	npx prettier -w $(CURDIR)/$@ && \
+	rm temp-tsconfig.json
