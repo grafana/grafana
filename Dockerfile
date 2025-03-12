@@ -63,6 +63,7 @@ COPY .bingo .bingo
 COPY .citools/bra .citools/bra
 COPY .citools/cue .citools/cue
 COPY .citools/cog .citools/cog
+COPY .citools/lefthook .citools/lefthook
 
 # Include vendored dependencies
 COPY pkg/util/xorm pkg/util/xorm
