@@ -666,6 +666,14 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   public getCache() {
     return this.activeManager.getCache();
   }
+
+  public setDashboardCache(cacheKey: string, dashboard: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>) {
+    if (isDashboardV2Resource(dashboard)) {
+      this.v2Manager.setDashboardCache(cacheKey, dashboard);
+    } else {
+      this.v1Manager.setDashboardCache(cacheKey, dashboard);
+    }
+  }
 }
 
 const managers: {

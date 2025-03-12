@@ -7,12 +7,12 @@ describe('getDashboardsApiVersion', () => {
     jest.resetModules();
   });
 
-  it('should return unified when dashboardScene is disabled and kubernetesDashboards is enabled', () => {
+  it('should return v1 when dashboardScene is disabled and kubernetesDashboards is enabled', () => {
     config.featureToggles = {
       dashboardScene: false,
       kubernetesDashboards: true,
     };
-    expect(getDashboardsApiVersion()).toBe('unified');
+    expect(getDashboardsApiVersion()).toBe('v1');
   });
 
   it('should return legacy when dashboardScene is disabled and kubernetesDashboards is disabled', () => {
@@ -52,12 +52,12 @@ describe('getDashboardsApiVersion', () => {
       expect(getDashboardsApiVersion()).toBe('legacy');
     });
 
-    it('should return unified when kubernetesDashboards is enabled', () => {
+    it('should return v1 when kubernetesDashboards is enabled', () => {
       config.featureToggles = {
         dashboardScene: false,
         kubernetesDashboards: true,
       };
-      expect(getDashboardsApiVersion()).toBe('unified');
+      expect(getDashboardsApiVersion()).toBe('v1');
     });
   });
 });
