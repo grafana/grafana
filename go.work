@@ -6,6 +6,7 @@ go 1.24.1
 use (
 	. // skip:golangci-lint
 	./.citools/bra
+	./.citools/cog
 	./.citools/cue
 	./apps/advisor
 	./apps/alerting/notifications
