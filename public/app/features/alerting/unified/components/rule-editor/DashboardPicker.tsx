@@ -5,7 +5,7 @@ import { useDebounce } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList } from 'react-window';
 
-import { GrafanaTheme2 } from '@grafana/data/src';
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   Alert,
   Button,
