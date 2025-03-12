@@ -19,9 +19,7 @@ export function usePromQueryFieldEffects(
 
   // Effect for initial load
   useEffect(() => {
-    if (languageProvider) {
-      refreshMetrics(languageProviderInitRef);
-    }
+    refreshMetrics(languageProviderInitRef);
     refreshHint();
 
     return () => {
