@@ -10,6 +10,3 @@
  */
 
 export { useTranslate as useT, setUseTranslateHook } from './utils/i18n';
-
-// Dummy export to make it a valid module. Remove when we have real exports.
-// export const unstable = {};
