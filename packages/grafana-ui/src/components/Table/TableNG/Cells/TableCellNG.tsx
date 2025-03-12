@@ -101,12 +101,11 @@ export function TableCellNG(props: TableCellNGProps) {
           height={height}
           justifyContent={justifyContent}
           value={value}
-          rowIdx={rowIdx}
         />
       );
       break;
     case TableCellDisplayMode.JSONView:
-      cell = <JSONCell value={value} justifyContent={justifyContent} rowIdx={rowIdx} />;
+      cell = <JSONCell value={value} justifyContent={justifyContent} />;
       break;
     case TableCellDisplayMode.DataLinks:
       cell = <DataLinksCell field={field} rowIdx={rowIdx} />;
@@ -116,15 +115,7 @@ export function TableCellNG(props: TableCellNGProps) {
       break;
     case TableCellDisplayMode.Auto:
     default:
-      cell = (
-        <AutoCell
-          value={value}
-          field={field}
-          justifyContent={justifyContent}
-          cellOptions={cellOptions}
-          rowIdx={rowIdx}
-        />
-      );
+      cell = <AutoCell value={value} field={field} justifyContent={justifyContent} />;
   }
 
   const handleMouseEnter = () => {

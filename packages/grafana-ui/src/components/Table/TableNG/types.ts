@@ -179,13 +179,11 @@ export interface ImageCellProps {
   field: Field;
   height: number;
   justifyContent: Property.JustifyContent;
-  rowIdx: number;
   value: TableCellValue;
 }
 
 export interface JSONCellProps {
   justifyContent: Property.JustifyContent;
-  rowIdx: number;
   value: TableCellValue;
 }
 
@@ -208,8 +206,6 @@ export interface AutoCellProps {
   value: TableCellValue;
   field: Field;
   justifyContent: Property.JustifyContent;
-  cellOptions: TableCellOptions;
-  rowIdx: number;
 }
 
 // Comparator for sorting table values
