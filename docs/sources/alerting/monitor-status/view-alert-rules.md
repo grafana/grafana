@@ -59,13 +59,13 @@ Select a group to expand it and view the list of alert rules within that group.
 
 For details on how rule states and alert instance states are displayed, refer to [View alert state](ref:view-alert-state).
 
-## View and compare alert rules versions.
+## View, compare and restore alert rules versions.
 
-To view previous alert rules for an alert, complete the following steps.
+To view or restore previous versions for an alert rule, complete the following steps.
 
 1. Navigate to **Alerts & IRM -> Alerting -> Alert rules**.
 1. Select an alert rule and click **View**.
 1. Click the **Versions** tab.  
    The page displays a list of the previous rule versions.
 
-On the Alert rule's Versions page you can view and compare the previous rule versions.
+On the Alert rule's Versions page you can view, compare and restore the previous rule versions.
