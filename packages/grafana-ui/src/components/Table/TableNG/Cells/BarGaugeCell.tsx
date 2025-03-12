@@ -6,7 +6,7 @@ import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@g
 import { BarGauge } from '../../../BarGauge/BarGauge';
 import { DataLinksContextMenu, DataLinksContextMenuApi } from '../../../DataLinks/DataLinksContextMenu';
 import { BarGaugeCellProps } from '../types';
-import { extractPixelValue, getCellOptions, getAlignmentFactor } from '../utils';
+import { extractPixelValue, getCellOptions, getAlignmentFactor, getCellLinks } from '../utils';
 
 const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
@@ -46,15 +46,7 @@ export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: Bar
       cellOptions.valueDisplayMode !== undefined ? cellOptions.valueDisplayMode : BarGaugeValueMode.Text;
   }
 
-  const getLinks = () => {
-    if (!isFunction(field.getLinks)) {
-      return [];
-    }
-
-    return field.getLinks({ valueRowIndex: rowIdx });
-  };
-
-  const hasLinks = Boolean(getLinks().length);
+  const hasLinks = Boolean(getCellLinks(field, rowIdx)?.length);
 
   const alignmentFactors = getAlignmentFactor(field, displayValue, rowIdx!);
 
@@ -85,7 +77,10 @@ export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: Bar
   return (
     <>
       {hasLinks ? (
-        <DataLinksContextMenu links={getLinks} style={{ display: 'flex', width: '100%' }}>
+        <DataLinksContextMenu
+          links={() => getCellLinks(field, rowIdx) || []}
+          style={{ display: 'flex', width: '100%' }}
+        >
           {(api) => renderComponent(api)}
         </DataLinksContextMenu>
       ) : (
