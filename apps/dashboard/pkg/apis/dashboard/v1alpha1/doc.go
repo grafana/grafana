@@ -1,6 +1,6 @@
 // +k8s:openapi-gen=true
 // +k8s:defaulter-gen=TypeMeta
-// +k8s:conversion-gen=github.com/grafana/grafana/apps/dashboard/pkg/apis
+// +k8s:conversion-gen=github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard
 // +groupName=dashboard.grafana.app
 
 // NOTE (@radiohead): we do not use package-wide deepcopy generation
