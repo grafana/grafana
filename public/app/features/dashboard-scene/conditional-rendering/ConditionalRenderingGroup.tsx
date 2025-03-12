@@ -71,11 +71,16 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
   }
 
   public serialize(): ConditionalRenderingGroupKind {
+    if (this.state.value.some((item) => item instanceof ConditionalRenderingGroup)) {
+      throw new Error('ConditionalRenderingGroup cannot contain nested ConditionalRenderingGroups');
+    }
     return {
       kind: 'ConditionalRenderingGroup',
       spec: {
         condition: this.state.condition,
-        items: this.state.value.map((condition) => condition.serialize()),
+        items: this.state.value
+          .map((condition) => condition.serialize())
+          .filter((item) => item.kind !== 'ConditionalRenderingGroup'),
       },
     };
   }
