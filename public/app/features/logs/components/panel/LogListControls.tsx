@@ -81,7 +81,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(2.5),
       flexDirection: 'column',
       justifyContent: 'flex-start',
-      width: theme.spacing(2.75),
+      width: theme.spacing(3),
       paddingTop: theme.spacing(0.5),
       paddingLeft: theme.spacing(0.5),
     }),
