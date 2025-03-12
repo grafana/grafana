@@ -54,6 +54,7 @@ export function SaveProvisionedDashboardForm({
   isGitHub,
 }: Props) {
   const navigate = useNavigate();
+  const { meta, isDirty } = dashboard.useState();
   const [action, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
   const {
     register,
@@ -63,9 +64,8 @@ export function SaveProvisionedDashboardForm({
     control,
     setValue,
   } = useForm<FormData>({ defaultValues });
-  const { meta } = dashboard.useState();
+
   const [ref, workflow, path] = watch(['ref', 'workflow', 'path']);
-  const { isDirty } = dashboard.state;
 
   useEffect(() => {
     const appEvents = getAppEvents();

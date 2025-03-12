@@ -64,7 +64,7 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
       description: defaultDescription ?? '',
       workflow: getDefaultWorkflow(repository),
     },
-    isNew: !managerIdentity,
+    isNew: !meta.k8s?.name,
     repositoryConfig: repository,
     isGitHub: repository?.type === 'github',
   };
