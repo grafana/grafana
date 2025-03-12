@@ -10,6 +10,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   grafana:
     # Run this workflow only for PRs from forks; if it gets merged into `main` or `release-*`, 
