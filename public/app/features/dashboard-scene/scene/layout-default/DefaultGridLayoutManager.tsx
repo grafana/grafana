@@ -15,7 +15,7 @@ import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
 
-import { NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
+import { NewObjectAddedToCanvasEvent, ObjectRemovedFromCanvasEvent } from '../../edit-pane/shared';
 import { isClonedKey, joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import {
@@ -108,6 +108,8 @@ export class DefaultGridLayoutManager
     this.state.grid.setState({
       children: layout.state.children.filter((child) => child !== gridItem),
     });
+
+    this.publishEvent(new ObjectRemovedFromCanvasEvent(panel), true);
   }
 
   public duplicatePanel(vizPanel: VizPanel) {
