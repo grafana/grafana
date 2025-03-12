@@ -1,7 +1,7 @@
 import * as e2e from '@grafana/e2e-selectors';
 import { expect, test } from '@grafana/plugin-e2e';
 
-test.describe.only('Loki editor', () => {
+test.describe('Loki editor', () => {
   test('Autocomplete features should work as expected.', async ({ page }) => {
     // Go to loki datasource in explore
     await page.goto(
