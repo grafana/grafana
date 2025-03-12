@@ -11,8 +11,7 @@ import { DashboardScene } from '../../scene/DashboardScene';
 import { SaveDashboardDrawer } from '../SaveDashboardDrawer';
 import { DashboardChangeInfo } from '../shared';
 
-import { SaveProvisionedDashboard, SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
-import * as hooks from './hooks';
+import { SaveProvisionedDashboardForm, Props } from './SaveProvisionedDashboardForm';
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
@@ -43,16 +42,6 @@ jest.mock('app/core/components/Select/FolderPicker', () => {
   };
 });
 
-// Mock the hooks
-jest.mock('./hooks', () => {
-  const actual = jest.requireActual('./hooks');
-  return {
-    ...actual,
-    useDefaultValues: jest.fn(),
-  };
-});
-
-// Mock the useCreateOrUpdateRepositoryFile hook
 jest.mock('app/features/provisioning/hooks', () => {
   const actual = jest.requireActual('app/features/provisioning/hooks');
   return {
@@ -63,7 +52,6 @@ jest.mock('app/features/provisioning/hooks', () => {
   };
 });
 
-// Mock the validation service
 jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => {
   const actual = jest.requireActual('app/features/manage-dashboards/services/ValidationSrv');
   return {
@@ -74,21 +62,11 @@ jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => {
   };
 });
 
-// Mock the useNavigate hook
 jest.mock('react-router-dom-v5-compat', () => {
   const actual = jest.requireActual('react-router-dom-v5-compat');
   return {
     ...actual,
     useNavigate: () => jest.fn(),
-  };
-});
-
-// Mock the useUrlParams hook
-jest.mock('app/core/navigation/hooks', () => {
-  const actual = jest.requireActual('app/core/navigation/hooks');
-  return {
-    ...actual,
-    useUrlParams: () => [new URLSearchParams()],
   };
 });
 
@@ -103,10 +81,21 @@ jest.mock('../SaveDashboardForm', () => {
   };
 });
 
-function setup(props: Partial<SaveProvisionedDashboardProps> = {}) {
+// Mock getWorkflowOptions
+jest.mock('./defaults', () => {
+  const actual = jest.requireActual('./defaults');
+  return {
+    ...actual,
+    getWorkflowOptions: jest.fn().mockReturnValue([
+      { label: 'Write directly', value: 'write', description: 'Write directly to the repository' },
+      { label: 'Create branch', value: 'branch', description: 'Create a new branch' },
+    ]),
+  };
+});
+
+function setup(props: Partial<Props> = {}) {
   const user = userEvent.setup();
 
-  // Create a minimal dashboard model for testing
   const mockDashboard: Dashboard = {
     title: 'Test Dashboard',
     uid: 'test-dashboard',
@@ -114,12 +103,13 @@ function setup(props: Partial<SaveProvisionedDashboardProps> = {}) {
     schemaVersion: 36,
   };
 
-  const defaultProps: SaveProvisionedDashboardProps = {
+  const defaultProps: Props = {
     dashboard: {
       useState: () => ({
         meta: { folderUid: 'folder-uid', slug: 'test-dashboard' },
         title: 'Test Dashboard',
         description: 'Test Description',
+        isDirty: true,
       }),
       state: { isDirty: true },
       setState: jest.fn(),
@@ -141,12 +131,33 @@ function setup(props: Partial<SaveProvisionedDashboardProps> = {}) {
       hasRefreshChange: false,
       message: 'Test message',
     } as unknown as DashboardChangeInfo,
+    isNew: true,
+    isGitHub: true,
+    defaultValues: {
+      ref: 'dashboard/2023-01-01-abcde',
+      path: 'test-dashboard.json',
+      repo: 'test-repo',
+      comment: '',
+      folder: {
+        uid: 'folder-uid',
+        title: '',
+      },
+      title: 'Test Dashboard',
+      description: 'Test Description',
+      workflow: 'write',
+    },
+    repositoryConfig: {
+      type: 'github',
+      workflows: ['write', 'branch'],
+      sync: { enabled: false, target: 'folder' },
+      title: 'Test Repository',
+    },
     ...props,
   };
 
   return {
     user,
-    ...render(<SaveProvisionedDashboard {...defaultProps} />),
+    ...render(<SaveProvisionedDashboardForm {...defaultProps} />),
     props: defaultProps,
   };
 }
@@ -159,51 +170,25 @@ const mockRequestBase = {
   data: { resource: { upsert: {} } },
 };
 
-describe('SaveProvisionedDashboard', () => {
+describe('SaveProvisionedDashboardForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Setup default mocks
     const mockAppEvents = {
       publish: jest.fn(),
     };
     (getAppEvents as jest.Mock).mockReturnValue(mockAppEvents);
 
-    // Mock useDefaultValues
-    (hooks.useDefaultValues as jest.Mock).mockReturnValue({
-      values: {
-        ref: 'dashboard/2023-01-01-abcde',
-        path: 'test-dashboard.json',
-        repo: 'test-repo',
-        comment: '',
-        folder: {
-          uid: 'folder-uid',
-          title: '',
-        },
-        title: 'Test Dashboard',
-        description: 'Test Description',
-        workflow: 'write',
-      },
-      isNew: true,
-      isGitHub: true,
-      repositoryConfig: {
-        type: 'github',
-        workflows: ['write', 'branch'],
-      },
-    });
-
-    // Mock useCreateOrUpdateRepositoryFile
     const mockAction = jest.fn();
     const mockRequest = {
       ...mockRequestBase,
-      isSuccess: true,
+      isSuccess: false,
       isError: false,
       isLoading: false,
       error: null,
     };
     (useCreateOrUpdateRepositoryFile as jest.Mock).mockReturnValue([mockAction, mockRequest]);
 
-    // Mock validateNewDashboardName
     (validationSrv.validateNewDashboardName as jest.Mock).mockResolvedValue(true);
   });
 
@@ -222,45 +207,31 @@ describe('SaveProvisionedDashboard', () => {
   });
 
   it('should render the form with correct fields for an existing dashboard', () => {
-    (hooks.useDefaultValues as jest.Mock).mockReturnValue({
-      values: {
-        ref: 'dashboard/2023-01-01-abcde',
-        path: 'test-dashboard.json',
-        repo: 'test-repo',
-        comment: '',
-        folder: {
-          uid: 'folder-uid',
-          title: '',
-        },
-        title: 'Test Dashboard',
-        description: 'Test Description',
-        workflow: 'write',
-      },
+    setup({
       isNew: false,
-      isGitHub: true,
-      repositoryConfig: {
-        type: 'github',
-        workflows: ['write', 'branch'],
-      },
     });
 
-    setup();
-
-    // For existing dashboards, common options should be present
     expect(screen.getByTestId('common-options')).toBeInTheDocument();
 
-    // Common fields should still be present
     expect(screen.getByRole('textbox', { name: /path/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
     expect(screen.getByRole('radiogroup')).toBeInTheDocument();
 
-    // Title and description fields should not be present for existing dashboards
     expect(screen.queryByRole('textbox', { name: /title/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('textbox', { name: /description/i })).not.toBeInTheDocument();
   });
 
   it('should save a new dashboard successfully', async () => {
     const { user, props } = setup();
+
+    const mockDashboard = {
+      title: 'New Dashboard',
+      description: 'New Description',
+      uid: 'test-dashboard',
+      panels: [],
+      schemaVersion: 36,
+    };
+    props.dashboard.getSaveAsModel = jest.fn().mockReturnValue(mockDashboard);
 
     const mockAction = jest.fn();
     const mockRequest = {
@@ -277,7 +248,6 @@ describe('SaveProvisionedDashboard', () => {
     const pathInput = screen.getByRole('textbox', { name: /path/i });
     const commentInput = screen.getByRole('textbox', { name: /comment/i });
 
-    // Clear and fill inputs
     await user.clear(titleInput);
     await user.clear(descriptionInput);
     await user.clear(pathInput);
@@ -288,36 +258,35 @@ describe('SaveProvisionedDashboard', () => {
     await user.type(pathInput, 'test-dashboard.json');
     await user.type(commentInput, 'Initial commit');
 
-    // Check form values before submission
     expect(titleInput).toHaveValue('New Dashboard');
     expect(descriptionInput).toHaveValue('New Description');
     expect(pathInput).toHaveValue('test-dashboard.json');
     expect(commentInput).toHaveValue('Initial commit');
 
-    // Submit the form
     const submitButton = screen.getByRole('button', { name: /save/i });
     await user.click(submitButton);
 
-    // Wait for useEffect to be called after request.isSuccess is set to true
     await waitFor(() => {
       expect(props.dashboard.setState).toHaveBeenCalledWith({ isDirty: false });
     });
+
     await waitFor(() => {
-      // Check if the action was called
-      expect(mockAction).toHaveBeenCalled();
+      expect(mockAction).toHaveBeenCalledWith({
+        ref: undefined,
+        name: 'test-repo',
+        path: 'test-dashboard.json',
+        message: 'Initial commit',
+        body: mockDashboard,
+      });
     });
 
-    // Check if success alert was published
     const appEvents = getAppEvents();
     expect(appEvents.publish).toHaveBeenCalledWith({
       type: AppEvents.alertSuccess.name,
       payload: ['Dashboard changes saved'],
     });
 
-    // Check if modal was closed
     expect(props.dashboard.closeModal).toHaveBeenCalled();
-
-    // Check if location was updated
     expect(locationService.partial).toHaveBeenCalledWith({
       viewPanel: null,
       editPanel: null,
@@ -325,38 +294,15 @@ describe('SaveProvisionedDashboard', () => {
   });
 
   it('should update an existing dashboard successfully', async () => {
-    const defaultValues = {
-      ref: 'dashboard/2023-01-01-abcde',
-      path: 'test-dashboard.json',
-      repo: 'test-repo',
-      comment: '',
-      folder: {
-        uid: 'folder-uid',
-        title: '',
-      },
-      title: 'Test Dashboard',
-      description: 'Test Description',
-      workflow: 'write',
-    };
-
-    (hooks.useDefaultValues as jest.Mock).mockReturnValue({
-      values: defaultValues,
-      isNew: false,
-      isGitHub: true,
-      repositoryConfig: {
-        type: 'github',
-        workflows: ['write', 'branch'],
-      },
-    });
-
     const { user, props } = setup({
+      isNew: false,
       dashboard: {
         useState: () => ({
-          meta: { folderUid: 'folder-uid', slug: 'test-dashboard' },
+          meta: { folderUid: 'folder-uid', slug: 'test-dashboard', k8s: { name: 'test-dashboard' } },
           title: 'Test Dashboard',
           description: 'Test Description',
+          isDirty: true,
         }),
-        state: { isDirty: true }, // Mark dashboard as dirty
         setState: jest.fn(),
         closeModal: jest.fn(),
         getSaveAsModel: jest.fn().mockReturnValue({
@@ -384,38 +330,26 @@ describe('SaveProvisionedDashboard', () => {
     await user.clear(pathInput);
 
     await user.type(commentInput, 'Update dashboard');
-    await user.type(pathInput, defaultValues.path);
+    await user.type(pathInput, 'test-dashboard.json');
 
     const submitButton = screen.getByRole('button', { name: /save/i });
     await user.click(submitButton);
 
-    // Wait for useEffect to be called after request.isSuccess is set to true
     await waitFor(() => {
       expect(props.dashboard.setState).toHaveBeenCalledWith({ isDirty: false });
     });
 
-    // Check if the action was called with correct parameters
     await waitFor(() => {
       expect(mockAction).toHaveBeenCalledWith({
-        ref: undefined, // write workflow uses loadedFromRef which is undefined in test
-        name: defaultValues.repo,
-        path: defaultValues.path,
+        ref: undefined,
+        name: 'test-repo',
+        path: 'test-dashboard.json',
         message: 'Update dashboard',
         body: expect.any(Object),
       });
     });
 
-    // Check if success alert was published
-    const appEvents = getAppEvents();
-    expect(appEvents.publish).toHaveBeenCalledWith({
-      type: AppEvents.alertSuccess.name,
-      payload: ['Dashboard changes saved'],
-    });
-
-    // Check if modal was closed
     expect(props.dashboard.closeModal).toHaveBeenCalled();
-
-    // Check if location was updated
     expect(locationService.partial).toHaveBeenCalledWith({
       viewPanel: null,
       editPanel: null,
@@ -423,7 +357,16 @@ describe('SaveProvisionedDashboard', () => {
   });
 
   it('should show error when save fails', async () => {
-    const { user } = setup();
+    const { user, props } = setup();
+
+    const mockDashboard = {
+      title: 'New Dashboard',
+      description: 'New Description',
+      uid: 'test-dashboard',
+      panels: [],
+      schemaVersion: 36,
+    };
+    props.dashboard.getSaveAsModel = jest.fn().mockReturnValue(mockDashboard);
 
     const mockAction = jest.fn();
     const mockRequest = {
@@ -440,7 +383,6 @@ describe('SaveProvisionedDashboard', () => {
     const pathInput = screen.getByRole('textbox', { name: /path/i });
     const commentInput = screen.getByRole('textbox', { name: /comment/i });
 
-    // Clear and fill inputs
     await user.clear(titleInput);
     await user.clear(descriptionInput);
     await user.clear(pathInput);
@@ -448,14 +390,22 @@ describe('SaveProvisionedDashboard', () => {
 
     await user.type(titleInput, 'New Dashboard');
     await user.type(descriptionInput, 'New Description');
-    await user.type(pathInput, 'test-dashboard.json');
-    await user.type(commentInput, 'Initial commit');
+    await user.type(pathInput, 'error-dashboard.json');
+    await user.type(commentInput, 'Error commit');
 
-    // Submit the form
     const submitButton = screen.getByRole('button', { name: /save/i });
     await user.click(submitButton);
 
-    // Check if error alert was published
+    await waitFor(() => {
+      expect(mockAction).toHaveBeenCalledWith({
+        ref: undefined,
+        name: 'test-repo',
+        path: 'error-dashboard.json',
+        message: 'Error commit',
+        body: mockDashboard,
+      });
+    });
+
     await waitFor(() => {
       const appEvents = getAppEvents();
       expect(appEvents.publish).toHaveBeenCalledWith({
@@ -469,11 +419,11 @@ describe('SaveProvisionedDashboard', () => {
     setup({
       dashboard: {
         useState: () => ({
-          meta: { folderUid: 'folder-uid', slug: 'test-dashboard' },
+          meta: { folderUid: 'folder-uid', slug: 'test-dashboard', k8s: { name: 'test-dashboard' } },
           title: 'Test Dashboard',
           description: 'Test Description',
+          isDirty: false,
         }),
-        state: { isDirty: false }, // Not dirty
         setState: jest.fn(),
         closeModal: jest.fn(),
         getSaveAsModel: jest.fn().mockReturnValue({}),
@@ -481,7 +431,19 @@ describe('SaveProvisionedDashboard', () => {
       } as unknown as DashboardScene,
     });
 
-    // Save button should be disabled
     expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
+  });
+
+  it('should show read-only alert when repository has no workflows', () => {
+    setup({
+      repositoryConfig: {
+        type: 'github',
+        workflows: [],
+        sync: { enabled: false, target: 'folder' },
+        title: 'Read-only Repository',
+      },
+    });
+
+    expect(screen.getByText('This repository is read only')).toBeInTheDocument();
   });
 });
