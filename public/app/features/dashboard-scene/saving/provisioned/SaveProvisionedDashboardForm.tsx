@@ -83,6 +83,7 @@ export function SaveProvisionedDashboardForm({
       });
 
       // Load the new URL
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const upsert = request.data.resource.upsert as Resource<Dashboard>;
       if (isNew && upsert?.metadata?.name) {
         const url = locationUtil.assureBaseUrl(
