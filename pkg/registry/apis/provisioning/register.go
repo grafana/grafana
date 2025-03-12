@@ -206,18 +206,16 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					// Doing something with the repository itself.
 					if id.GetOrgRole().Includes(identity.RoleAdmin) {
 						return authorizer.DecisionAllow, "", nil
-					} else {
-						return authorizer.DecisionDeny, "admin role is required", nil
 					}
+					return authorizer.DecisionDeny, "admin role is required", nil
 
 				case "test", "export", "migrate":
 					// Testing doesn't make sense for non-admins.
 					// Exporting and migrating are potentially dangerous.
 					if id.GetOrgRole().Includes(identity.RoleAdmin) {
 						return authorizer.DecisionAllow, "", nil
-					} else {
-						return authorizer.DecisionDeny, "admin role is required", nil
 					}
+					return authorizer.DecisionDeny, "admin role is required", nil
 
 				case "webhook":
 					// When the resource is a webhook, we'll deal with permissions manually by checking signatures or similar in the webhook handler.
@@ -257,33 +255,30 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				default:
 					if id.GetIsGrafanaAdmin() {
 						return authorizer.DecisionAllow, "", nil
-					} else {
-						return authorizer.DecisionDeny, "unmapped subresource defaults to no access", nil
 					}
+					return authorizer.DecisionDeny, "unmapped subresource defaults to no access", nil
 				}
 
 			case "stats":
 				// This can leak information one shouldn't necessarily have access to.
 				if id.GetOrgRole().Includes(identity.RoleAdmin) {
 					return authorizer.DecisionAllow, "", nil
-				} else {
-					return authorizer.DecisionDeny, "admin role is required", nil
 				}
+				return authorizer.DecisionDeny, "admin role is required", nil
 
 			case "settings":
 				// This is strictly a read operation. It is handy on the frontend for viewers.
 				if id.GetOrgRole().Includes(identity.RoleViewer) {
 					return authorizer.DecisionAllow, "", nil
-				} else {
-					return authorizer.DecisionDeny, "viewer role is required", nil
 				}
+				return authorizer.DecisionDeny, "viewer role is required", nil
+
 			default:
 				// We haven't bothered with this kind yet.
 				if id.GetIsGrafanaAdmin() {
 					return authorizer.DecisionAllow, "", nil
-				} else {
-					return authorizer.DecisionDeny, "unmapped kind defaults to no access", nil
 				}
+				return authorizer.DecisionDeny, "unmapped kind defaults to no access", nil
 			}
 		})
 }
