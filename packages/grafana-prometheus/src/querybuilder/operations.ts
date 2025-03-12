@@ -123,14 +123,6 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       addOperationHandler: addOperationWithRangeVector,
       changeTypeHandler: operationTypeChangedHandlerForRangeFunction,
     }),
-    createFunction({
-      id: PromOperationId.Info,
-      params: [getRangeVectorParamDef()],
-      alternativesKey: 'info function',
-      category: PromVisualQueryOperationCategory.Functions,
-      renderer: functionRendererLeft,
-      addOperationHandler: defaultAddOperationHandler,
-    }),
     ...binaryScalarOperations,
     {
       id: PromOperationId.NestedQuery,
