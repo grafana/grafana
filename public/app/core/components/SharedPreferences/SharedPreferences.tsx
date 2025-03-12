@@ -178,7 +178,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
             description={
               config.featureToggles.grafanaconThemes && config.feedbackLinksEnabled ? (
                 <Trans i18nKey="shared-preferences.fields.theme-description">
-                  Enjoying the limited edition themes? Tell us what you'd like to see{' '}
+                  Enjoying the experimental themes? Tell us what you'd like to see{' '}
                   <TextLink
                     variant="bodySmall"
                     external
