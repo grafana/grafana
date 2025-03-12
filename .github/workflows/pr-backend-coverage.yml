@@ -37,7 +37,7 @@ jobs:
       - name: Generate Go code
         run: make gen-go
       - name: Run unit tests
-        run: COVER_OPTS="-coverprofile=be-unit.cov -coverpkg=github.com/grafana/grafana/..." GO_TEST_OUTPUT="/tmp/unit.log" make test-go-unit
+        run: COVER_OPTS="-coverprofile=be-unit.cov -coverpkg=github.com/grafana/grafana/..." GO_TEST_OUTPUT="/tmp/unit.log" make test-go-unit-cov
       - name: Process and upload coverage
         uses: ./.github/actions/test-coverage-processor
         with:

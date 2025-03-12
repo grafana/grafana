@@ -249,7 +249,12 @@ test-go: test-go-unit test-go-integration
 
 .PHONY: test-go-unit
 test-go-unit: ## Run unit tests for backend with flags.
-	@echo "test backend unit tests"
+	@echo "backend unit tests"
+	$(GO) test $(GO_RACE_FLAG) -v -short -timeout=30m $(GO_TEST_FILES) $(GO_TEST_OUTPUT)
+
+.PHONY: test-go-unit-cov
+test-go-unit-cov: ## Run unit tests for backend with flags and coverage
+	@echo "backend unit tests with coverage"
 	$(GO) test $(GO_RACE_FLAG) -v -short $(if $(filter true,$(GO_UNIT_COVERAGE)),-covermode=atomic -coverprofile=$(GO_UNIT_COVER_PROFILE) $(if $(GO_UNIT_TEST_COVERPKG),-coverpkg=$(GO_UNIT_TEST_COVERPKG)),) -timeout=30m $(GO_TEST_FILES) $(GO_TEST_OUTPUT)
 
 .PHONY: test-go-unit-pretty
