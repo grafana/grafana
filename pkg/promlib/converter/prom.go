@@ -673,16 +673,13 @@ func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt 
 
 		if histogram != nil {
 			histogram.yMin.Labels = labels
-			histogram.yMax.Labels = Labels
-			histogram.count.Labels = Labels
-			histogram.yLayout.Labels = Labels
+			histogram.yMax.Labels = labels
+			histogram.count.Labels = labels
+			histogram.yLayout.Labels = labels
 			histogram.time.Labels = labels
-			frame := data.NewFrame(valueField.Name, histogram.time, histogram.yMin, histogram.yMax, histogram.count, histogram.yLayout)
+			frame := data.NewFrame("", histogram.time, histogram.yMin, histogram.yMax, histogram.count, histogram.yLayout)
 			frame.Meta = &data.FrameMeta{
 				Type: "heatmap-cells",
-			}
-			if frame.Name == data.TimeSeriesValueFieldName {
-				frame.Name = "" // only set the name if useful
 			}
 			rsp.Frames = append(rsp.Frames, frame)
 		} else {
