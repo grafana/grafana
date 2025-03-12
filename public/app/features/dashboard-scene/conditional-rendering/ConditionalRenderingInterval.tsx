@@ -19,6 +19,20 @@ export class ConditionalRenderingInterval extends ConditionalRenderingBase<Condi
     return t('dashboard.conditional-rendering.interval.label', 'Time range interval');
   }
 
+  public constructor(state: ConditionalRenderingIntervalState) {
+    super(state);
+
+    this.addActivationHandler(() => this._activationHandler());
+  }
+
+  private _activationHandler() {
+    this._subs.add(
+      sceneGraph.getTimeRange(this).subscribeToState(() => {
+        this.getConditionalLogicRoot().notifyChange();
+      })
+    );
+  }
+
   public evaluate(): boolean {
     try {
       const interval = rangeUtil.intervalToSeconds(this.state.value);

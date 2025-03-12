@@ -15,6 +15,23 @@ export abstract class ConditionalRenderingBase<
 > extends SceneObjectBase<S> {
   public static Component = ConditionalRenderingBaseRenderer;
 
+  public constructor(state: S) {
+    super(state);
+
+    this.addActivationHandler(() => this._baseActivationHandler());
+  }
+
+  private _baseActivationHandler() {
+    // Similarly to the ConditionalRendering activation handler,
+    // this ensures that all children are activated when conditional rendering is activated
+    // We need this in order to allow children to subscribe to variable changes etc.
+    this.forEachChild((child) => {
+      if (!child.isActive) {
+        this._subs.add(child.activate());
+      }
+    });
+  }
+
   public abstract readonly title: string;
 
   public abstract evaluate(): boolean;

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { ReactNode, useMemo } from 'react';
 
-import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
+import { SceneComponentProps, sceneGraph, VariableDependencyConfig } from '@grafana/scenes';
 import { Combobox, ComboboxOption, Field, Input, Stack, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
@@ -21,6 +21,14 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
   public get title(): string {
     return t('dashboard.conditional-rendering.variable.label', 'Variable');
   }
+
+  protected _variableDependency = new VariableDependencyConfig(this, {
+    onAnyVariableChanged: (v) => {
+      if (v.state.name === this.state.value.name) {
+        this.getConditionalLogicRoot().notifyChange();
+      }
+    },
+  });
 
   public evaluate(): boolean {
     if (!this.state.value.name) {
