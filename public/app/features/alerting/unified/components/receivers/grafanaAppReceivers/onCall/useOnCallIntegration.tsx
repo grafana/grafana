@@ -3,6 +3,7 @@ import { useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
+import { Badge } from '@grafana/ui';
 import { getIrmIfPresentOrOnCallPluginId } from 'app/features/alerting/unified/utils/config';
 
 import { useAppNotification } from '../../../../../../../core/copy/appNotification';
@@ -11,7 +12,6 @@ import { NotifierDTO } from '../../../../../../../types';
 import { ONCALL_INTEGRATION_V2_FEATURE, onCallApi } from '../../../../api/onCallApi';
 import { usePluginBridge } from '../../../../hooks/usePluginBridge';
 import { option } from '../../../../utils/notifier-types';
-import { GRAFANA_APP_RECEIVERS_SOURCE_IMAGE } from '../types';
 
 import { GRAFANA_ONCALL_INTEGRATION_TYPE, ReceiverTypes } from './onCall';
 
@@ -235,12 +235,12 @@ export function useOnCallIntegration() {
   return {
     integrationStatus,
     onCallNotifierMeta: {
-      enabled: !!isOnCallEnabled,
+      enabled: !isOnCallEnabled,
       order: -1, // The default is 0. We want OnCall to be the first on the list
       description: isOnCallEnabled
-        ? 'Connect effortlessly to Grafana OnCall'
-        : 'Enable Grafana OnCall plugin to use this integration',
-      iconUrl: GRAFANA_APP_RECEIVERS_SOURCE_IMAGE[getIrmIfPresentOrOnCallPluginId()],
+        ? `Simple way to handle alerts and manage incidents`
+        : `Enable Grafana IRM to use this integration`,
+      badge: <Badge color="blue" text="Recommended" />,
     },
     extendOnCallNotifierFeatures,
     extendOnCallReceivers,
