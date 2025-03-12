@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/promlib/instrumentation"
 	"github.com/grafana/grafana/pkg/promlib/querydata"
 	"github.com/grafana/grafana/pkg/promlib/resource"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 type Service struct {
@@ -69,13 +68,9 @@ func newInstanceSettings(httpClientProvider *sdkhttpclient.Provider, log log.Log
 		}
 
 		featureToggles := backend.GrafanaConfigFromContext(ctx).FeatureToggles()
-		featureMap := map[string]bool{
-			featuremgmt.FlagPromQLScope:                    featureToggles.IsEnabled("promQLScope"),
-			featuremgmt.FlagPrometheusRunQueriesInParallel: featureToggles.IsEnabled("prometheusRunQueriesInParallel"),
-		}
 
 		// New version using custom client and better response parsing
-		qd, err := querydata.New(httpClient, settings, log, featureMap)
+		qd, err := querydata.New(httpClient, settings, log, featureToggles)
 		if err != nil {
 			return nil, err
 		}

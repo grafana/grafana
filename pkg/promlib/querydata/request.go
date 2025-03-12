@@ -46,14 +46,14 @@ type QueryData struct {
 	URL                string
 	TimeInterval       string
 	exemplarSampler    func() exemplar.Sampler
-	featureMap         map[string]bool
+	featureToggles     backend.FeatureToggles
 }
 
 func New(
 	httpClient *http.Client,
 	settings backend.DataSourceInstanceSettings,
 	plog log.Logger,
-	featureMap map[string]bool,
+	featureToggles backend.FeatureToggles,
 ) (*QueryData, error) {
 	jsonData, err := utils.GetJsonData(settings)
 	if err != nil {
@@ -88,7 +88,7 @@ func New(
 		ID:                 settings.ID,
 		URL:                settings.URL,
 		exemplarSampler:    exemplarSampler,
-		featureMap:         featureMap,
+		featureToggles:     featureToggles,
 	}, nil
 }
 
@@ -101,9 +101,9 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	var (
-		hasPromQLScopeFeatureFlag         = s.isFeatureEnabled("promQLScope")
-		hasPrometheusDataplaneFeatureFlag = s.isFeatureEnabled("prometheusDataplane")
-		hasPrometheusRunQueriesInParallel = s.isFeatureEnabled("prometheusRunQueriesInParallel")
+		hasPromQLScopeFeatureFlag         = s.featureToggles.IsEnabled("promQLScope")
+		hasPrometheusDataplaneFeatureFlag = s.featureToggles.IsEnabled("prometheusDataplane")
+		hasPrometheusRunQueriesInParallel = s.featureToggles.IsEnabled("prometheusRunQueriesInParallel")
 	)
 
 	if hasPrometheusRunQueriesInParallel {
@@ -294,13 +294,6 @@ func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *mode
 		}
 	}()
 	return s.parseResponse(ctx, q, res)
-}
-
-func (s *QueryData) isFeatureEnabled(feature string) bool {
-	if val, ok := s.featureMap[feature]; ok {
-		return val
-	}
-	return false
 }
 
 func addDataResponse(res *backend.DataResponse, dr *backend.DataResponse) {
