@@ -64,7 +64,8 @@ export function useScopes(): ScopesContextValue | undefined {
           setEnabled: context.setEnabled,
         }
       : undefined;
-    // Not sure why it thinks
+    // Not sure why it thinks the context?.state is not required, but we want to recreate this when the state changes.
+    // context.stateObservable is readOnly so that is not needed, others are methods which should not change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [context, context?.state]);
 }
