@@ -69,33 +69,39 @@ export function ProvisioningWizard() {
   };
 
   const handleNext = async () => {
-    // Call verify if must
     const currentStepIndex = availableSteps.findIndex((s) => s.id === activeStep);
     const isLastStep = currentStepIndex === availableSteps.length - 1;
-    if (currentStepIndex < availableSteps.length - 1) {
-      if (activeStep === 'connection') {
-        // Validate repository form data before proceeding
-        const isValid = await methods.trigger('repository');
-        if (!isValid) {
-          return;
-        }
-      }
 
-      // If we're on the bootstrap step, determine the next step based on the migration flag
-      if (activeStep === 'bootstrap') {
-        setActiveStep(requiresMigration ? 'migrate' : 'pull');
+    if (activeStep === 'connection') {
+      // Validate repository form data before proceeding
+      const isValid = await methods.trigger('repository');
+      if (!isValid) {
         return;
       }
+    }
 
-      // If we're on the last step, mark it as completed
-      if (isLastStep) {
-        setCompletedSteps((prev) => [...prev, activeStep]);
-      }
-      setActiveStep(availableSteps[currentStepIndex + 1].id);
-      setStepSuccess(false);
-    } else if (isLastStep) {
+    // If we're on the bootstrap step, determine the next step based on the migration flag
+    if (activeStep === 'bootstrap') {
+      const nextStep = requiresMigration ? 'migrate' : 'pull';
+      setActiveStep(nextStep);
+      return;
+    }
+
+    // Only navigate to provisioning URL if we're on the actual last step and it's completed
+    if (isLastStep && stepSuccess) {
       settingsQuery.refetch();
       navigate(PROVISIONING_URL);
+      return;
+    }
+
+    // For all other cases, proceed to next step
+    if (currentStepIndex < availableSteps.length - 1) {
+      setActiveStep(availableSteps[currentStepIndex + 1].id);
+      setStepSuccess(false);
+      // Update completed steps only if the current step was successful
+      if (stepSuccess) {
+        setCompletedSteps((prev) => [...prev, activeStep]);
+      }
     }
   };
 
