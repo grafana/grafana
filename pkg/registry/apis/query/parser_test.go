@@ -166,6 +166,40 @@ func TestQuerySplitting(t *testing.T) {
 	})
 }
 
+func TestSqlInputs(t *testing.T) {
+	parser := newQueryParser(
+		expr.NewExpressionQueryReader(featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)),
+		nil,
+		tracing.InitializeTracerForTest(),
+		log.NewNopLogger(),
+	)
+
+	parsedRequestInfo, err := parser.parseRequest(context.Background(), &query.QueryDataRequest{
+		QueryDataRequest: data.QueryDataRequest{
+			Queries: []data.DataQuery{
+				data.NewDataQuery(map[string]any{
+					"refId": "A",
+					"datasource": &data.DataSourceRef{
+						Type: "prometheus",
+						UID:  "local-prom",
+					},
+				}),
+				data.NewDataQuery(map[string]any{
+					"refId": "B",
+					"datasource": &data.DataSourceRef{
+						Type: "__expr__",
+						UID:  "__expr__",
+					},
+					"type":       "sql",
+					"expression": "Select time, value + 10 from A",
+				}),
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, parsedRequestInfo.SqlInputs["B"], struct{}{})
+}
+
 type legacyDataSourceRetriever struct{}
 
 func (s *legacyDataSourceRetriever) GetDataSourceFromDeprecatedFields(ctx context.Context, name string, id int64) (*data.DataSourceRef, error) {
