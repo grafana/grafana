@@ -21,7 +21,9 @@ const (
 )
 
 const (
-	queryRefID          = "query"
+	// QueryRefID is the ID used for the main query in converted Prometheus rules.
+	// It is exported to be used in template rendering for Prometheus compatibility mode.
+	QueryRefID          = "query"
 	prometheusMathRefID = "prometheus_math"
 	thresholdRefID      = "threshold"
 )
@@ -198,7 +200,7 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 
 	if isRecordingRule {
 		record = &models.Record{
-			From:                queryRefID,
+			From:                QueryRefID,
 			Metric:              rule.Record,
 			TargetDatasourceUID: p.cfg.DatasourceUID,
 		}
@@ -220,6 +222,17 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 	labels := make(map[string]string, len(rule.Labels)+len(promGroup.Labels))
 	maps.Copy(labels, promGroup.Labels)
 	maps.Copy(labels, rule.Labels)
+	err = convertTemplates(labels)
+	if err != nil {
+		return models.AlertRule{}, fmt.Errorf("failed to convert labels: %w", err)
+	}
+
+	annotations := make(map[string]string, len(rule.Annotations))
+	maps.Copy(annotations, rule.Annotations)
+	err = convertTemplates(annotations)
+	if err != nil {
+		return models.AlertRule{}, fmt.Errorf("failed to convert annotations: %w", err)
+	}
 
 	originalRuleDefinition, err := yaml.Marshal(rule)
 	if err != nil {
@@ -234,7 +247,7 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 		Condition:    query[len(query)-1].RefID,
 		NoDataState:  p.cfg.NoDataState,
 		ExecErrState: p.cfg.ExecErrState,
-		Annotations:  rule.Annotations,
+		Annotations:  annotations,
 		Labels:       labels,
 		For:          forInterval,
 		RuleGroup:    promGroup.Name,

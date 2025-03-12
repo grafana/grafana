@@ -196,7 +196,7 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				if promRule.Record != "" {
 					require.Equal(t, fmt.Sprintf("[%s] %s", tc.promGroup.Name, promRule.Record), grafanaRule.Title)
 					require.NotNil(t, grafanaRule.Record)
-					require.Equal(t, grafanaRule.Record.From, queryRefID)
+					require.Equal(t, grafanaRule.Record.From, QueryRefID)
 					require.Equal(t, promRule.Record, grafanaRule.Record.Metric)
 					require.Equal(t, tc.config.DatasourceUID, grafanaRule.Record.TargetDatasourceUID)
 				} else {
@@ -209,16 +209,23 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				}
 				require.Equal(t, expectedFor, grafanaRule.For, tc.name)
 
-				expectedLabels := make(map[string]string, len(promRule.Labels)+len(tc.promGroup.Labels))
-				maps.Copy(expectedLabels, tc.promGroup.Labels)
-				maps.Copy(expectedLabels, promRule.Labels)
-
 				uidData := fmt.Sprintf("%d|%s|%s|%d", tc.orgID, tc.namespace, tc.promGroup.Name, j)
 				u := uuid.NewSHA1(uuid.NameSpaceOID, []byte(uidData))
 				require.Equal(t, u.String(), grafanaRule.UID, tc.name)
 
+				expectedLabels := make(map[string]string, len(promRule.Labels)+len(tc.promGroup.Labels))
+				maps.Copy(expectedLabels, tc.promGroup.Labels)
+				maps.Copy(expectedLabels, promRule.Labels)
 				require.Equal(t, expectedLabels, grafanaRule.Labels, tc.name)
-				require.Equal(t, promRule.Annotations, grafanaRule.Annotations, tc.name)
+
+				var expectedAnnotations map[string]string
+				if promRule.Annotations == nil {
+					expectedAnnotations = map[string]string{}
+				} else {
+					expectedAnnotations = promRule.Annotations
+				}
+				require.Equal(t, expectedAnnotations, grafanaRule.Annotations, tc.name)
+
 				require.Equal(t, models.Duration(0*time.Minute), grafanaRule.Data[0].RelativeTimeRange.To)
 				require.Equal(t, models.Duration(10*time.Minute), grafanaRule.Data[0].RelativeTimeRange.From)
 
