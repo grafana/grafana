@@ -13,6 +13,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { DashboardDTO } from 'app/types';
 
 import { appEvents } from '../../../core/core';
+import { loadDashboardFromProvisioning } from '../../provisioning/dashboardLoader';
 import { ResponseTransformers } from '../api/ResponseTransformers';
 import { getDashboardAPI } from '../api/dashboard_api';
 import { DashboardWithAccessInfo } from '../api/types';
@@ -123,6 +124,8 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
 
     if (type === 'script' && slug) {
       promise = this.loadScriptedDashboard(slug);
+    } else if (type === 'provisioning' && uid) {
+      promise = loadDashboardFromProvisioning(slug!, uid);
       // needed for the old architecture
       // in scenes this is handled through loadSnapshot method
     } else if (type === 'snapshot' && slug) {
