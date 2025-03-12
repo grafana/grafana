@@ -160,9 +160,11 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       }
       // we need to be sure the condition is set once we switch to simple mode
       if (simplifiedQueryStep) {
-        const thresholdId = expressionQueries[expressionQueries.length - 1].refId;
-        setValue('condition', thresholdId); // we set the condition to the last expression,as threshold is the last expression in case of simple mode
-        runQueries(getValues('queries'), thresholdId);
+        const thresholdId = expressionQueries.at(-1)?.refId;
+        if (thresholdId) {
+          setValue('condition', thresholdId); // we set the condition to the last expression,as threshold is the last expression in case of simple mode
+          runQueries(getValues('queries'), thresholdId);
+        }
       } else {
         runQueries(getValues('queries'), condition || (getValues('condition') ?? ''));
       }
@@ -442,17 +444,17 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const switchMode =
     isGrafanaAlertingType && isSwitchModeEnabled
       ? {
-          isAdvancedMode: !simplifiedQueryStep,
-          setAdvancedMode: (isAdvanced: boolean) => {
-            if (!getValues('editorSettings.simplifiedQueryEditor')) {
-              if (!areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries)) {
-                setShowResetModal(true);
-                return;
-              }
+        isAdvancedMode: !simplifiedQueryStep,
+        setAdvancedMode: (isAdvanced: boolean) => {
+          if (!getValues('editorSettings.simplifiedQueryEditor')) {
+            if (!areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries)) {
+              setShowResetModal(true);
+              return;
             }
-            setValue('editorSettings.simplifiedQueryEditor', !isAdvanced);
-          },
-        }
+          }
+          setValue('editorSettings.simplifiedQueryEditor', !isAdvanced);
+        },
+      }
       : undefined;
 
   return (

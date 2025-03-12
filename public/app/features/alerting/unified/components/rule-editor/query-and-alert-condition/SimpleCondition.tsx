@@ -164,11 +164,11 @@ function updateReduceExpression(
 
   const newReduceExpression = reduceExpression
     ? produce(reduceExpression?.model, (draft) => {
-        if (draft && draft.conditions) {
-          draft.reducer = reducer;
-          draft.conditions[0].reducer.type = getReducerType(reducer) ?? ReducerID.last;
-        }
-      })
+      if (draft && draft.conditions) {
+        draft.reducer = reducer;
+        draft.conditions[0].reducer.type = getReducerType(reducer) ?? ReducerID.last;
+      }
+    })
     : undefined;
   newReduceExpression && dispatch(updateExpression(newReduceExpression));
 }
@@ -178,7 +178,7 @@ function updateThresholdFunction(
   expressionQueriesList: Array<AlertQuery<ExpressionQuery>>,
   dispatch: Dispatch<UnknownAction>
 ) {
-  const thresholdExpression = expressionQueriesList[expressionQueriesList.length - 1];
+  const thresholdExpression = expressionQueriesList.at(-1);
   const newThresholdExpression = produce(thresholdExpression, (draft) => {
     if (draft && draft.model.conditions) {
       draft.model.conditions[0].evaluator.type = evaluator;
@@ -194,7 +194,7 @@ function updateThresholdValue(
   dispatch: Dispatch<UnknownAction>
 ) {
   //thresholdExpression is always the last element in the expressionQueriesList
-  const thresholdExpression = expressionQueriesList[expressionQueriesList.length - 1];
+  const thresholdExpression = expressionQueriesList.at(-1);
 
   const newThresholdExpression = produce(thresholdExpression, (draft) => {
     if (draft && draft.model.conditions) {
