@@ -6,7 +6,7 @@
     {
       "metadata": {
         "name": "ABTestFeatureToggleA",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2025-01-13T21:13:13Z"
       },
       "spec": {
@@ -20,7 +20,7 @@
     {
       "metadata": {
         "name": "ABTestFeatureToggleB",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2025-01-13T21:13:13Z"
       },
       "spec": {
@@ -34,7 +34,7 @@
     {
       "metadata": {
         "name": "accessActionSets",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-04-12T16:19:25Z"
       },
       "spec": {
@@ -47,7 +47,7 @@
     {
       "metadata": {
         "name": "addFieldFromCalculationStatFunctions",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-11-03T14:39:58Z"
       },
       "spec": {
@@ -61,7 +61,7 @@
     {
       "metadata": {
         "name": "aiGeneratedDashboardChanges",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-03-05T12:01:31Z"
       },
       "spec": {
@@ -74,8 +74,8 @@
     {
       "metadata": {
         "name": "alertRuleRestore",
-        "resourceVersion": "1741727214014",
-        "creationTimestamp": "2025-03-11T21:06:54Z"
+        "resourceVersion": "1741804652203",
+        "creationTimestamp": "2025-03-12T18:37:32Z"
       },
       "spec": {
         "description": "Enables the alert rule restore feature",
@@ -87,7 +87,7 @@
     {
       "metadata": {
         "name": "alertStateHistoryLokiOnly",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-03-30T18:53:21Z"
       },
       "spec": {
@@ -99,7 +99,7 @@
     {
       "metadata": {
         "name": "alertStateHistoryLokiPrimary",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-03-30T18:53:21Z"
       },
       "spec": {
@@ -111,7 +111,7 @@
     {
       "metadata": {
         "name": "alertStateHistoryLokiSecondary",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-03-30T18:53:21Z"
       },
       "spec": {
@@ -123,8 +123,8 @@
     {
       "metadata": {
         "name": "alertingAlertmanagerExtraDedupStage",
-        "resourceVersion": "1741727214014",
-        "creationTimestamp": "2025-03-11T21:06:54Z"
+        "resourceVersion": "1741804652203",
+        "creationTimestamp": "2025-03-12T18:37:32Z"
       },
       "spec": {
         "description": "enables extra deduplication stage in alertmanager that checks that timestamps of the pipeline and the current state are matching",
@@ -138,8 +138,8 @@
     {
       "metadata": {
         "name": "alertingAlertmanagerExtraDedupStageStopPipeline",
-        "resourceVersion": "1741727214014",
-        "creationTimestamp": "2025-03-11T21:06:54Z"
+        "resourceVersion": "1741804652203",
+        "creationTimestamp": "2025-03-12T18:37:32Z"
       },
       "spec": {
         "description": "works together with alertingAlertmanagerExtraDedupStage, if enabled, it will stop the pipeline if the timestamps are not matching. Otherwise, it will emit a warning",
@@ -153,7 +153,7 @@
     {
       "metadata": {
         "name": "alertingApiServer",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-06-20T20:52:03Z"
       },
       "spec": {
@@ -167,7 +167,7 @@
     {
       "metadata": {
         "name": "alertingBacktesting",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2022-12-14T14:44:14Z"
       },
       "spec": {
@@ -179,7 +179,7 @@
     {
       "metadata": {
         "name": "alertingCentralAlertHistory",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-05-29T15:01:38Z"
       },
       "spec": {
@@ -192,8 +192,8 @@
     {
       "metadata": {
         "name": "alertingConversionAPI",
-        "resourceVersion": "1741727214014",
-        "creationTimestamp": "2025-03-11T21:06:54Z"
+        "resourceVersion": "1741804652203",
+        "creationTimestamp": "2025-03-12T18:37:32Z"
       },
       "spec": {
         "description": "Enable the alerting conversion API",
@@ -206,7 +206,7 @@
     {
       "metadata": {
         "name": "alertingDisableSendAlertsExternal",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-05-23T12:29:19Z"
       },
       "spec": {
@@ -220,7 +220,7 @@
     {
       "metadata": {
         "name": "alertingFilterV2",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-09-11T11:29:26Z"
       },
       "spec": {
@@ -233,7 +233,7 @@
     {
       "metadata": {
         "name": "alertingInsights",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-09-14T12:58:04Z"
       },
       "spec": {
@@ -248,8 +248,8 @@
     {
       "metadata": {
         "name": "alertingJiraIntegration",
-        "resourceVersion": "1741727214014",
-        "creationTimestamp": "2025-03-11T21:06:54Z"
+        "resourceVersion": "1741804652203",
+        "creationTimestamp": "2025-03-12T18:37:32Z"
       },
       "spec": {
         "description": "Enables the new Jira integration for contact points in cloud alert managers.",
@@ -262,7 +262,7 @@
     {
       "metadata": {
         "name": "alertingListViewV2",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-05-24T14:40:49Z"
       },
       "spec": {
@@ -275,7 +275,7 @@
     {
       "metadata": {
         "name": "alertingNoDataErrorExecution",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-08-15T14:27:15Z"
       },
       "spec": {
@@ -289,7 +289,7 @@
     {
       "metadata": {
         "name": "alertingNotificationsStepMode",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-11-22T11:07:45Z"
       },
       "spec": {
@@ -303,7 +303,7 @@
     {
       "metadata": {
         "name": "alertingPrometheusRulesPrimary",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-09-27T12:27:16Z"
       },
       "spec": {
@@ -316,7 +316,7 @@
     {
       "metadata": {
         "name": "alertingQueryAndExpressionsStepMode",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-09-26T06:33:14Z"
       },
       "spec": {
@@ -330,7 +330,7 @@
     {
       "metadata": {
         "name": "alertingQueryOptimization",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-01-10T20:52:58Z"
       },
       "spec": {
@@ -343,8 +343,8 @@
     {
       "metadata": {
         "name": "alertingRuleVersionHistoryRestore",
-        "resourceVersion": "1741727214014",
-        "creationTimestamp": "2025-03-11T21:06:54Z"
+        "resourceVersion": "1741804652203",
+        "creationTimestamp": "2025-03-12T18:37:32Z"
       },
       "spec": {
         "description": "Enables the alert rule version history restore feature",
@@ -359,8 +359,8 @@
     {
       "metadata": {
         "name": "alertingSaveStateCompressed",
-        "resourceVersion": "1741727214014",
-        "creationTimestamp": "2025-03-11T21:06:54Z"
+        "resourceVersion": "1741804652203",
+        "creationTimestamp": "2025-03-12T18:37:32Z"
       },
       "spec": {
         "description": "Enables the compressed protobuf-based alert state storage",
@@ -372,7 +372,7 @@
     {
       "metadata": {
         "name": "alertingSaveStatePeriodic",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-01-23T16:03:30Z"
       },
       "spec": {
@@ -384,7 +384,7 @@
     {
       "metadata": {
         "name": "alertingSimplifiedRouting",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-11-10T13:14:39Z"
       },
       "spec": {
@@ -397,7 +397,7 @@
     {
       "metadata": {
         "name": "alertingUIOptimizeReducer",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-11-18T10:59:00Z"
       },
       "spec": {
@@ -411,7 +411,7 @@
     {
       "metadata": {
         "name": "alertmanagerRemoteOnly",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-10-30T16:27:08Z"
       },
       "spec": {
@@ -423,7 +423,7 @@
     {
       "metadata": {
         "name": "alertmanagerRemotePrimary",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-10-30T16:27:08Z"
       },
       "spec": {
@@ -435,7 +435,7 @@
     {
       "metadata": {
         "name": "alertmanagerRemoteSecondary",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-10-30T16:27:08Z"
       },
       "spec": {
@@ -447,7 +447,7 @@
     {
       "metadata": {
         "name": "angularDeprecationUI",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-08-29T14:05:47Z"
       },
       "spec": {
@@ -461,7 +461,7 @@
     {
       "metadata": {
         "name": "annotationPermissionUpdate",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-10-31T13:30:13Z"
       },
       "spec": {
@@ -474,7 +474,7 @@
     {
       "metadata": {
         "name": "appPlatformGrpcClientAuth",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-10-14T10:47:18Z"
       },
       "spec": {
@@ -488,7 +488,7 @@
     {
       "metadata": {
         "name": "appSidecar",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-09-09T12:45:05Z"
       },
       "spec": {
@@ -500,8 +500,8 @@
     {
       "metadata": {
         "name": "assetSriChecks",
-        "resourceVersion": "1741727214014",
-        "creationTimestamp": "2025-03-11T21:06:54Z"
+        "resourceVersion": "1741804652203",
+        "creationTimestamp": "2025-03-12T18:37:32Z"
       },
       "spec": {
         "description": "Enables SRI checks for Grafana JavaScript assets",
@@ -513,7 +513,7 @@
     {
       "metadata": {
         "name": "authZGRPCServer",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-06-13T09:41:35Z"
       },
       "spec": {
@@ -527,7 +527,7 @@
     {
       "metadata": {
         "name": "autoMigrateGraphPanel",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-02-08T22:00:48Z"
       },
       "spec": {
@@ -540,7 +540,7 @@
     {
       "metadata": {
         "name": "autoMigrateOldPanels",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-03-23T04:02:36Z"
       },
       "spec": {
@@ -553,7 +553,7 @@
     {
       "metadata": {
         "name": "autoMigratePiechartPanel",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-02-14T16:06:25Z"
       },
       "spec": {
@@ -566,7 +566,7 @@
     {
       "metadata": {
         "name": "autoMigrateStatPanel",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-02-14T16:06:25Z"
       },
       "spec": {
@@ -579,7 +579,7 @@
     {
       "metadata": {
         "name": "autoMigrateTablePanel",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-02-14T16:06:25Z"
       },
       "spec": {
@@ -592,7 +592,7 @@
     {
       "metadata": {
         "name": "autoMigrateWorldmapPanel",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-02-14T16:06:25Z"
       },
       "spec": {
@@ -605,7 +605,7 @@
     {
       "metadata": {
         "name": "awsAsyncQueryCaching",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-07-21T15:34:07Z"
       },
       "spec": {
@@ -618,7 +618,7 @@
     {
       "metadata": {
         "name": "awsDatasourcesTempCredentials",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-07-06T15:06:11Z"
       },
       "spec": {
@@ -630,7 +630,7 @@
     {
       "metadata": {
         "name": "azureMonitorDisableLogLimit",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-10-24T13:32:09Z"
       },
       "spec": {
@@ -643,7 +643,7 @@
     {
       "metadata": {
         "name": "azureMonitorEnableUserAuth",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-11-27T14:01:54Z"
       },
       "spec": {
@@ -656,7 +656,7 @@
     {
       "metadata": {
         "name": "azureMonitorPrometheusExemplars",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-06-06T16:53:17Z"
       },
       "spec": {
@@ -668,7 +668,7 @@
     {
       "metadata": {
         "name": "cachingOptimizeSerializationMemoryUsage",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-10-12T16:56:49Z"
       },
       "spec": {
@@ -680,7 +680,7 @@
     {
       "metadata": {
         "name": "canvasPanelNesting",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2022-05-31T19:03:34Z"
       },
       "spec": {
@@ -694,7 +694,7 @@
     {
       "metadata": {
         "name": "canvasPanelPanZoom",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-01-02T19:52:21Z"
       },
       "spec": {
@@ -707,7 +707,7 @@
     {
       "metadata": {
         "name": "cloudRBACRoles",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-01-10T13:19:01Z"
       },
       "spec": {
@@ -723,7 +723,7 @@
     {
       "metadata": {
         "name": "cloudWatchBatchQueries",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-10-20T19:09:41Z"
       },
       "spec": {
@@ -735,7 +735,7 @@
     {
       "metadata": {
         "name": "cloudWatchCrossAccountQuerying",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2022-11-28T11:39:12Z"
       },
       "spec": {
@@ -749,7 +749,7 @@
     {
       "metadata": {
         "name": "cloudWatchNewLabelParsing",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-04-05T15:57:56Z"
       },
       "spec": {
@@ -762,7 +762,7 @@
     {
       "metadata": {
         "name": "cloudWatchRoundUpEndTime",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-06-27T15:10:28Z"
       },
       "spec": {
@@ -775,7 +775,7 @@
     {
       "metadata": {
         "name": "configurableSchedulerTick",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-07-26T16:44:12Z"
       },
       "spec": {
@@ -789,7 +789,7 @@
     {
       "metadata": {
         "name": "correlations",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2022-09-16T13:14:27Z"
       },
       "spec": {
@@ -803,7 +803,7 @@
     {
       "metadata": {
         "name": "crashDetection",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-11-12T15:07:27Z"
       },
       "spec": {
@@ -816,7 +816,7 @@
     {
       "metadata": {
         "name": "dashboardNewLayouts",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-10-23T08:55:45Z"
       },
       "spec": {
@@ -829,7 +829,7 @@
     {
       "metadata": {
         "name": "dashboardRestore",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-05-16T17:36:26Z"
       },
       "spec": {
@@ -843,7 +843,7 @@
     {
       "metadata": {
         "name": "dashboardScene",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-11-13T08:51:21Z"
       },
       "spec": {
@@ -857,7 +857,7 @@
     {
       "metadata": {
         "name": "dashboardSceneForViewers",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-11-02T19:02:25Z"
       },
       "spec": {
@@ -871,7 +871,7 @@
     {
       "metadata": {
         "name": "dashboardSceneSolo",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-02-11T08:08:47Z"
       },
       "spec": {
@@ -885,7 +885,7 @@
     {
       "metadata": {
         "name": "dashgpt",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-08-30T20:22:05Z"
       },
       "spec": {
@@ -899,7 +899,7 @@
     {
       "metadata": {
         "name": "dataplaneAggregator",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-08-09T08:41:07Z"
       },
       "spec": {
@@ -912,7 +912,7 @@
     {
       "metadata": {
         "name": "dataplaneFrontendFallback",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-04-07T21:13:19Z"
       },
       "spec": {
@@ -927,7 +927,7 @@
     {
       "metadata": {
         "name": "datasourceAPIServers",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-09-19T08:28:27Z"
       },
       "spec": {
@@ -940,7 +940,7 @@
     {
       "metadata": {
         "name": "datasourceConnectionsTab",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2025-01-21T17:39:48Z"
       },
       "spec": {
@@ -953,7 +953,7 @@
     {
       "metadata": {
         "name": "datasourceQueryTypes",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-05-23T16:46:28Z"
       },
       "spec": {
@@ -966,7 +966,7 @@
     {
       "metadata": {
         "name": "disableAngular",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-03-23T15:43:45Z"
       },
       "spec": {
@@ -980,7 +980,7 @@
     {
       "metadata": {
         "name": "disableClassicHTTPHistogram",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-06-18T19:37:44Z"
       },
       "spec": {
@@ -994,7 +994,7 @@
     {
       "metadata": {
         "name": "disableEnvelopeEncryption",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2022-05-24T08:34:47Z"
       },
       "spec": {
@@ -1008,7 +1008,7 @@
     {
       "metadata": {
         "name": "disableNumericMetricsSortingInExpressions",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-04-16T14:52:47Z"
       },
       "spec": {
@@ -1021,7 +1021,7 @@
     {
       "metadata": {
         "name": "disableSSEDataplane",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-04-12T16:24:34Z"
       },
       "spec": {
@@ -1033,7 +1033,7 @@
     {
       "metadata": {
         "name": "disableSecretsCompatibility",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2022-07-12T20:27:37Z"
       },
       "spec": {
@@ -1046,7 +1046,7 @@
     {
       "metadata": {
         "name": "editPanelCSVDragAndDrop",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-01-24T09:43:44Z"
       },
       "spec": {
@@ -1059,7 +1059,7 @@
     {
       "metadata": {
         "name": "elasticsearchCrossClusterSearch",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-12-12T22:20:04Z"
       },
       "spec": {
@@ -1071,7 +1071,7 @@
     {
       "metadata": {
         "name": "elasticsearchImprovedParsing",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2025-01-15T17:05:54Z"
       },
       "spec": {
@@ -1083,7 +1083,7 @@
     {
       "metadata": {
         "name": "enableDatagridEditing",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-04-24T14:46:31Z"
       },
       "spec": {
@@ -1096,7 +1096,7 @@
     {
       "metadata": {
         "name": "enableExtensionsAdminPage",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-11-05T15:55:10Z"
       },
       "spec": {
@@ -1109,7 +1109,7 @@
     {
       "metadata": {
         "name": "enableNativeHTTPHistogram",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-10-03T18:23:55Z"
       },
       "spec": {
@@ -1123,7 +1123,7 @@
     {
       "metadata": {
         "name": "enableSCIM",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-11-07T14:38:46Z"
       },
       "spec": {
@@ -1135,7 +1135,7 @@
     {
       "metadata": {
         "name": "enableScopesInMetricsExplore",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-11-06T13:11:33Z"
       },
       "spec": {
@@ -1149,7 +1149,7 @@
     {
       "metadata": {
         "name": "exploreLogsAggregatedMetrics",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-08-29T13:55:59Z"
       },
       "spec": {
@@ -1162,7 +1162,7 @@
     {
       "metadata": {
         "name": "exploreLogsLimitedTimeRange",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-08-29T13:55:59Z"
       },
       "spec": {
@@ -1175,7 +1175,7 @@
     {
       "metadata": {
         "name": "exploreLogsShardSplitting",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-08-29T13:55:59Z"
       },
       "spec": {
@@ -1188,7 +1188,7 @@
     {
       "metadata": {
         "name": "exploreMetrics",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-04-09T18:15:18Z"
       },
       "spec": {
@@ -1202,7 +1202,7 @@
     {
       "metadata": {
         "name": "exploreMetricsRelatedLogs",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-11-05T16:28:43Z"
       },
       "spec": {
@@ -1215,8 +1215,8 @@
     {
       "metadata": {
         "name": "exploreMetricsUseExternalAppPlugin",
-        "resourceVersion": "1741727214014",
-        "creationTimestamp": "2025-03-11T21:06:54Z"
+        "resourceVersion": "1741804652203",
+        "creationTimestamp": "2025-03-12T18:37:32Z"
       },
       "spec": {
         "description": "Use the externalized Metrics Drilldown (formerly known as Explore Metrics) app plugin",
@@ -1230,7 +1230,7 @@
     {
       "metadata": {
         "name": "expressionParser",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-02-17T00:59:11Z"
       },
       "spec": {
@@ -1243,7 +1243,7 @@
     {
       "metadata": {
         "name": "externalCorePlugins",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-09-22T08:50:13Z"
       },
       "spec": {
@@ -1255,7 +1255,7 @@
     {
       "metadata": {
         "name": "externalServiceAccounts",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-09-28T07:26:37Z"
       },
       "spec": {
@@ -1268,8 +1268,8 @@
     {
       "metadata": {
         "name": "extraLanguages",
-        "resourceVersion": "1741727214014",
-        "creationTimestamp": "2025-03-11T21:06:54Z"
+        "resourceVersion": "1741804652203",
+        "creationTimestamp": "2025-03-12T18:37:32Z"
       },
       "spec": {
         "description": "Enables additional languages",
@@ -1281,7 +1281,7 @@
     {
       "metadata": {
         "name": "extraThemes",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-05-10T13:37:04Z"
       },
       "spec": {
@@ -1294,7 +1294,7 @@
     {
       "metadata": {
         "name": "extractFieldsNameDeduplication",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-11-02T15:47:42Z"
       },
       "spec": {
@@ -1307,7 +1307,7 @@
     {
       "metadata": {
         "name": "failWrongDSUID",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-06-20T10:56:39Z"
       },
       "spec": {
@@ -1319,7 +1319,7 @@
     {
       "metadata": {
         "name": "faroDatasourceSelector",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-05-05T00:35:10Z"
       },
       "spec": {
@@ -1332,7 +1332,7 @@
     {
       "metadata": {
         "name": "featureHighlights",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2022-02-03T11:53:23Z"
       },
       "spec": {
@@ -1346,7 +1346,7 @@
     {
       "metadata": {
         "name": "featureToggleAdminPage",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-07-18T20:43:32Z"
       },
       "spec": {
@@ -1360,7 +1360,7 @@
     {
       "metadata": {
         "name": "feedbackButton",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-12-02T17:08:15Z"
       },
       "spec": {
@@ -1373,8 +1373,8 @@
     {
       "metadata": {
         "name": "fetchRulesUsingPost",
-        "resourceVersion": "1741727214014",
-        "creationTimestamp": "2025-03-11T21:06:54Z"
+        "resourceVersion": "1741804652203",
+        "creationTimestamp": "2025-03-12T18:37:32Z"
       },
       "spec": {
         "description": "Use a POST request to list rules by passing down the namespaces user has access to",
@@ -1387,7 +1387,7 @@
     {
       "metadata": {
         "name": "formatString",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-10-13T18:17:12Z"
       },
       "spec": {
@@ -1401,7 +1401,7 @@
     {
       "metadata": {
         "name": "frontendSandboxMonitorOnly",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-07-05T11:48:25Z"
       },
       "spec": {
@@ -1414,7 +1414,7 @@
     {
       "metadata": {
         "name": "grafanaAPIServerEnsureKubectlAccess",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-12-06T20:21:21Z"
       },
       "spec": {
@@ -1428,7 +1428,7 @@
     {
       "metadata": {
         "name": "grafanaAPIServerWithExperimentalAPIs",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-10-06T18:55:22Z"
       },
       "spec": {
@@ -1442,7 +1442,7 @@
     {
       "metadata": {
         "name": "grafanaAdvisor",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2025-01-20T10:08:00Z"
       },
       "spec": {
@@ -1454,7 +1454,7 @@
     {
       "metadata": {
         "name": "grafanaManagedRecordingRules",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-04-22T17:53:16Z"
       },
       "spec": {
@@ -1468,8 +1468,8 @@
     {
       "metadata": {
         "name": "grafanaManagedRecordingRulesDatasources",
-        "resourceVersion": "1741727214014",
-        "creationTimestamp": "2025-03-11T21:06:54Z"
+        "resourceVersion": "1741804652203",
+        "creationTimestamp": "2025-03-12T18:37:32Z"
       },
       "spec": {
         "description": "Enables writing to data sources for Grafana-managed recording rules.",
@@ -1482,8 +1482,8 @@
     {
       "metadata": {
         "name": "grafanaconThemes",
-        "resourceVersion": "1741727214014",
-        "creationTimestamp": "2025-03-11T21:06:54Z"
+        "resourceVersion": "1741804652203",
+        "creationTimestamp": "2025-03-12T18:37:32Z"
       },
       "spec": {
         "description": "Enables the temporary themes for GrafanaCon",
@@ -1497,7 +1497,7 @@
     {
       "metadata": {
         "name": "groupAttributeSync",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-09-09T15:29:43Z"
       },
       "spec": {
@@ -1510,7 +1510,7 @@
     {
       "metadata": {
         "name": "groupByVariable",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-02-14T17:18:04Z"
       },
       "spec": {
@@ -1524,7 +1524,7 @@
     {
       "metadata": {
         "name": "groupToNestedTableTransformation",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-02-07T14:28:26Z"
       },
       "spec": {
@@ -1538,7 +1538,7 @@
     {
       "metadata": {
         "name": "grpcServer",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2022-09-26T20:25:34Z"
       },
       "spec": {
@@ -1551,7 +1551,7 @@
     {
       "metadata": {
         "name": "homeSetupGuide",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-09-25T17:20:04Z"
       },
       "spec": {
@@ -1564,7 +1564,7 @@
     {
       "metadata": {
         "name": "improvedExternalSessionHandling",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-09-17T10:54:39Z"
       },
       "spec": {
@@ -1577,7 +1577,7 @@
     {
       "metadata": {
         "name": "improvedExternalSessionHandlingSAML",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2025-01-09T17:02:49Z"
       },
       "spec": {
@@ -1590,7 +1590,7 @@
     {
       "metadata": {
         "name": "individualCookiePreferences",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-02-21T10:19:07Z"
       },
       "spec": {
@@ -1602,7 +1602,7 @@
     {
       "metadata": {
         "name": "influxdbBackendMigration",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2022-02-09T18:26:16Z",
         "deletionTimestamp": "2023-01-17T14:11:26Z"
       },
@@ -1617,7 +1617,7 @@
     {
       "metadata": {
         "name": "influxdbRunQueriesInParallel",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-02-01T10:58:24Z"
       },
       "spec": {
@@ -1629,7 +1629,7 @@
     {
       "metadata": {
         "name": "influxqlStreamingParser",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-11-29T17:29:35Z"
       },
       "spec": {
@@ -1641,7 +1641,7 @@
     {
       "metadata": {
         "name": "investigationsBackend",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-12-18T08:31:03Z"
       },
       "spec": {
@@ -1654,8 +1654,8 @@
     {
       "metadata": {
         "name": "inviteUserExperimental",
-        "resourceVersion": "1741727214014",
-        "creationTimestamp": "2025-03-11T21:06:54Z"
+        "resourceVersion": "1741804652203",
+        "creationTimestamp": "2025-03-12T18:37:32Z"
       },
       "spec": {
         "description": "Renders invite user button along the app",
@@ -1669,7 +1669,7 @@
     {
       "metadata": {
         "name": "jaegerBackendMigration",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-11-15T14:40:20Z"
       },
       "spec": {
@@ -1681,7 +1681,7 @@
     {
       "metadata": {
         "name": "jitterAlertRulesWithinGroups",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-01-18T18:48:11Z"
       },
       "spec": {
@@ -1695,7 +1695,7 @@
     {
       "metadata": {
         "name": "k8SFolderCounts",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-12-27T17:10:44Z"
       },
       "spec": {
@@ -1708,7 +1708,7 @@
     {
       "metadata": {
         "name": "k8SFolderMove",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-12-27T17:10:44Z"
       },
       "spec": {
@@ -1721,7 +1721,7 @@
     {
       "metadata": {
         "name": "kubernetesAggregator",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-02-12T20:59:35Z"
       },
       "spec": {
@@ -1734,7 +1734,7 @@
     {
       "metadata": {
         "name": "kubernetesClientDashboardsFolders",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2025-02-18T21:15:35Z"
       },
       "spec": {
@@ -1746,7 +1746,7 @@
     {
       "metadata": {
         "name": "kubernetesDashboards",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-06-05T14:34:23Z"
       },
       "spec": {
@@ -1759,7 +1759,7 @@
     {
       "metadata": {
         "name": "kubernetesFeatureToggles",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-01-18T05:32:44Z"
       },
       "spec": {
@@ -1773,7 +1773,7 @@
     {
       "metadata": {
         "name": "kubernetesPlaylists",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-10-05T19:00:36Z",
         "deletionTimestamp": "2024-08-13T08:03:28Z"
       },
@@ -1788,7 +1788,7 @@
     {
       "metadata": {
         "name": "kubernetesRestore",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2025-01-03T14:48:47Z"
       },
       "spec": {
@@ -1800,7 +1800,7 @@
     {
       "metadata": {
         "name": "kubernetesSnapshots",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-12-05T22:31:49Z"
       },
       "spec": {
@@ -1813,7 +1813,7 @@
     {
       "metadata": {
         "name": "libraryPanelRBAC",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-10-11T23:30:50Z"
       },
       "spec": {
@@ -1826,7 +1826,7 @@
     {
       "metadata": {
         "name": "live-service-web-worker",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2022-01-26T17:44:20Z"
       },
       "spec": {
@@ -1839,7 +1839,7 @@
     {
       "metadata": {
         "name": "logQLScope",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-11-11T11:53:24Z"
       },
       "spec": {
@@ -1854,7 +1854,7 @@
     {
       "metadata": {
         "name": "logRequestsInstrumentedAsUnknown",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2022-06-10T08:56:55Z"
       },
       "spec": {
@@ -1866,7 +1866,7 @@
     {
       "metadata": {
         "name": "logRowsPopoverMenu",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-11-16T09:48:10Z"
       },
       "spec": {
@@ -1880,7 +1880,7 @@
     {
       "metadata": {
         "name": "logsContextDatasourceUi",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-01-27T14:12:01Z"
       },
       "spec": {
@@ -1895,7 +1895,7 @@
     {
       "metadata": {
         "name": "logsExploreTableDefaultVisualization",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-05-02T15:28:15Z"
       },
       "spec": {
@@ -1908,7 +1908,7 @@
     {
       "metadata": {
         "name": "logsExploreTableVisualisation",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-07-12T13:52:42Z"
       },
       "spec": {
@@ -1922,7 +1922,7 @@
     {
       "metadata": {
         "name": "logsInfiniteScrolling",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-11-09T10:54:03Z"
       },
       "spec": {
@@ -1936,7 +1936,7 @@
     {
       "metadata": {
         "name": "lokiExperimentalStreaming",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-06-19T10:03:51Z"
       },
       "spec": {
@@ -1948,7 +1948,7 @@
     {
       "metadata": {
         "name": "lokiLabelNamesQueryApi",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-12-13T14:31:41Z"
       },
       "spec": {
@@ -1961,7 +1961,7 @@
     {
       "metadata": {
         "name": "lokiLogsDataplane",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-07-13T07:58:00Z"
       },
       "spec": {
@@ -1973,7 +1973,7 @@
     {
       "metadata": {
         "name": "lokiPredefinedOperations",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-06-02T10:52:36Z"
       },
       "spec": {
@@ -1986,7 +1986,7 @@
     {
       "metadata": {
         "name": "lokiQueryHints",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-12-18T20:43:16Z"
       },
       "spec": {
@@ -2000,7 +2000,7 @@
     {
       "metadata": {
         "name": "lokiQuerySplitting",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-02-09T17:27:02Z"
       },
       "spec": {
@@ -2015,7 +2015,7 @@
     {
       "metadata": {
         "name": "lokiQuerySplittingConfig",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-03-20T15:51:36Z"
       },
       "spec": {
@@ -2028,7 +2028,7 @@
     {
       "metadata": {
         "name": "lokiRunQueriesInParallel",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-09-19T09:34:01Z"
       },
       "spec": {
@@ -2040,7 +2040,7 @@
     {
       "metadata": {
         "name": "lokiSendDashboardPanelNames",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-08-22T19:30:43Z"
       },
       "spec": {
@@ -2052,7 +2052,7 @@
     {
       "metadata": {
         "name": "lokiShardSplitting",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-10-23T11:21:03Z"
       },
       "spec": {
@@ -2065,7 +2065,7 @@
     {
       "metadata": {
         "name": "lokiStructuredMetadata",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-11-16T16:06:14Z"
       },
       "spec": {
@@ -2078,8 +2078,8 @@
     {
       "metadata": {
         "name": "managedDualWriter",
-        "resourceVersion": "1741727214014",
-        "creationTimestamp": "2025-03-11T21:06:54Z"
+        "resourceVersion": "1741804652203",
+        "creationTimestamp": "2025-03-12T18:37:32Z"
       },
       "spec": {
         "description": "Pick the dual write mode from database configs",
@@ -2092,7 +2092,7 @@
     {
       "metadata": {
         "name": "metricsSummary",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-08-28T14:02:12Z"
       },
       "spec": {
@@ -2105,7 +2105,7 @@
     {
       "metadata": {
         "name": "mlExpressions",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-07-13T17:37:50Z"
       },
       "spec": {
@@ -2117,7 +2117,7 @@
     {
       "metadata": {
         "name": "mysqlAnsiQuotes",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2022-10-12T11:43:35Z"
       },
       "spec": {
@@ -2129,7 +2129,7 @@
     {
       "metadata": {
         "name": "nestedFolders",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2022-10-26T14:15:14Z"
       },
       "spec": {
@@ -2142,7 +2142,7 @@
     {
       "metadata": {
         "name": "newDashboardSharingComponent",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-05-03T15:02:18Z"
       },
       "spec": {
@@ -2156,7 +2156,7 @@
     {
       "metadata": {
         "name": "newDashboardWithFiltersAndGroupBy",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-04-04T11:25:21Z"
       },
       "spec": {
@@ -2170,7 +2170,7 @@
     {
       "metadata": {
         "name": "newFiltersUI",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-08-30T12:48:13Z"
       },
       "spec": {
@@ -2183,7 +2183,7 @@
     {
       "metadata": {
         "name": "newFolderPicker",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-01-15T11:43:19Z"
       },
       "spec": {
@@ -2196,8 +2196,8 @@
     {
       "metadata": {
         "name": "newLogsPanel",
-        "resourceVersion": "1741727214014",
-        "creationTimestamp": "2025-03-11T21:06:54Z"
+        "resourceVersion": "1741804652203",
+        "creationTimestamp": "2025-03-12T18:37:32Z"
       },
       "spec": {
         "description": "Enables the new logs panel in Explore",
@@ -2209,7 +2209,7 @@
     {
       "metadata": {
         "name": "newPDFRendering",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-02-08T12:09:34Z"
       },
       "spec": {
@@ -2222,8 +2222,8 @@
     {
       "metadata": {
         "name": "newShareReportDrawer",
-        "resourceVersion": "1741727214014",
-        "creationTimestamp": "2025-03-11T21:06:54Z"
+        "resourceVersion": "1741804652203",
+        "creationTimestamp": "2025-03-12T18:37:32Z"
       },
       "spec": {
         "description": "Enables the report creation drawer in a dashboard",
@@ -2236,7 +2236,7 @@
     {
       "metadata": {
         "name": "nodeGraphDotLayout",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-01-31T16:26:12Z"
       },
       "spec": {
@@ -2249,7 +2249,7 @@
     {
       "metadata": {
         "name": "oauthRequireSubClaim",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-03-25T13:22:24Z"
       },
       "spec": {
@@ -2263,7 +2263,7 @@
     {
       "metadata": {
         "name": "onPremToCloudMigrations",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-01-22T16:09:08Z"
       },
       "spec": {
@@ -2276,7 +2276,7 @@
     {
       "metadata": {
         "name": "panelFilterVariable",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-11-03T12:15:54Z"
       },
       "spec": {
@@ -2290,7 +2290,7 @@
     {
       "metadata": {
         "name": "panelMonitoring",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-10-09T05:19:08Z"
       },
       "spec": {
@@ -2304,7 +2304,7 @@
     {
       "metadata": {
         "name": "panelTitleSearch",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2022-02-15T18:26:03Z"
       },
       "spec": {
@@ -2317,7 +2317,7 @@
     {
       "metadata": {
         "name": "passwordlessMagicLinkAuthentication",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-11-14T13:50:55Z"
       },
       "spec": {
@@ -2331,7 +2331,7 @@
     {
       "metadata": {
         "name": "pdfTables",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-11-06T13:39:22Z"
       },
       "spec": {
@@ -2343,7 +2343,7 @@
     {
       "metadata": {
         "name": "permissionsFilterRemoveSubquery",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-08-02T07:39:25Z"
       },
       "spec": {
@@ -2355,7 +2355,7 @@
     {
       "metadata": {
         "name": "pinNavItems",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-06-10T11:40:03Z"
       },
       "spec": {
@@ -2368,7 +2368,7 @@
     {
       "metadata": {
         "name": "playlistsReconciler",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-12-20T03:09:31Z"
       },
       "spec": {
@@ -2381,7 +2381,7 @@
     {
       "metadata": {
         "name": "pluginProxyPreserveTrailingSlash",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-06-05T11:36:14Z"
       },
       "spec": {
@@ -2394,7 +2394,7 @@
     {
       "metadata": {
         "name": "pluginsAPIMetrics",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-09-21T11:36:32Z"
       },
       "spec": {
@@ -2407,8 +2407,8 @@
     {
       "metadata": {
         "name": "pluginsCDNSyncLoader",
-        "resourceVersion": "1741727214014",
-        "creationTimestamp": "2025-03-11T21:06:54Z"
+        "resourceVersion": "1741804652203",
+        "creationTimestamp": "2025-03-12T18:37:32Z"
       },
       "spec": {
         "description": "Load plugins from CDN synchronously",
@@ -2419,7 +2419,7 @@
     {
       "metadata": {
         "name": "pluginsDetailsRightPanel",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-08-13T09:55:30Z"
       },
       "spec": {
@@ -2432,7 +2432,7 @@
     {
       "metadata": {
         "name": "pluginsFrontendSandbox",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-06-05T08:51:36Z"
       },
       "spec": {
@@ -2444,7 +2444,7 @@
     {
       "metadata": {
         "name": "pluginsSkipHostEnvVars",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-11-15T17:09:14Z"
       },
       "spec": {
@@ -2456,7 +2456,7 @@
     {
       "metadata": {
         "name": "pluginsSriChecks",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-10-04T12:55:09Z"
       },
       "spec": {
@@ -2468,7 +2468,7 @@
     {
       "metadata": {
         "name": "preinstallAutoUpdate",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-11-07T12:14:25Z"
       },
       "spec": {
@@ -2481,7 +2481,7 @@
     {
       "metadata": {
         "name": "preserveDashboardStateWhenNavigating",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-05-27T12:28:06Z"
       },
       "spec": {
@@ -2495,7 +2495,7 @@
     {
       "metadata": {
         "name": "promQLScope",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-01-29T20:22:17Z"
       },
       "spec": {
@@ -2510,7 +2510,7 @@
     {
       "metadata": {
         "name": "prometheusAzureOverrideAudience",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2022-05-30T15:43:32Z",
         "deletionTimestamp": "2023-07-16T21:30:14Z"
       },
@@ -2524,7 +2524,7 @@
     {
       "metadata": {
         "name": "prometheusCodeModeMetricNamesSearch",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-04-04T20:38:23Z"
       },
       "spec": {
@@ -2537,7 +2537,7 @@
     {
       "metadata": {
         "name": "prometheusRunQueriesInParallel",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-08-12T12:31:39Z"
       },
       "spec": {
@@ -2549,7 +2549,7 @@
     {
       "metadata": {
         "name": "prometheusSpecialCharsInLabelValues",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-12-18T21:31:08Z"
       },
       "spec": {
@@ -2562,7 +2562,7 @@
     {
       "metadata": {
         "name": "prometheusUsesCombobox",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-10-23T11:18:33Z"
       },
       "spec": {
@@ -2574,7 +2574,7 @@
     {
       "metadata": {
         "name": "provisioning",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-11-22T09:03:50Z"
       },
       "spec": {
@@ -2587,7 +2587,7 @@
     {
       "metadata": {
         "name": "publicDashboardsEmailSharing",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-01-03T19:45:15Z"
       },
       "spec": {
@@ -2601,7 +2601,7 @@
     {
       "metadata": {
         "name": "publicDashboardsScene",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-03-22T14:48:21Z"
       },
       "spec": {
@@ -2615,7 +2615,7 @@
     {
       "metadata": {
         "name": "queryLibrary",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2022-10-07T18:31:45Z",
         "deletionTimestamp": "2023-03-20T16:00:14Z"
       },
@@ -2628,7 +2628,7 @@
     {
       "metadata": {
         "name": "queryOverLive",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2022-01-26T17:44:20Z"
       },
       "spec": {
@@ -2641,7 +2641,7 @@
     {
       "metadata": {
         "name": "queryService",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-04-19T09:26:21Z"
       },
       "spec": {
@@ -2654,7 +2654,7 @@
     {
       "metadata": {
         "name": "queryServiceFromUI",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-04-19T09:26:21Z"
       },
       "spec": {
@@ -2667,7 +2667,7 @@
     {
       "metadata": {
         "name": "queryServiceRewrite",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-04-19T09:26:21Z"
       },
       "spec": {
@@ -2680,7 +2680,7 @@
     {
       "metadata": {
         "name": "recordedQueriesMulti",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-06-14T12:34:22Z"
       },
       "spec": {
@@ -2693,7 +2693,7 @@
     {
       "metadata": {
         "name": "recoveryThreshold",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-10-10T14:51:50Z"
       },
       "spec": {
@@ -2707,7 +2707,7 @@
     {
       "metadata": {
         "name": "refactorVariablesTimeRange",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-06-06T13:12:09Z"
       },
       "spec": {
@@ -2720,7 +2720,7 @@
     {
       "metadata": {
         "name": "regressionTransformation",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-11-24T14:49:16Z"
       },
       "spec": {
@@ -2733,7 +2733,7 @@
     {
       "metadata": {
         "name": "reloadDashboardsOnParamsChange",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-10-25T12:56:54Z"
       },
       "spec": {
@@ -2747,7 +2747,7 @@
     {
       "metadata": {
         "name": "renderAuthJWT",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-04-03T16:53:38Z"
       },
       "spec": {
@@ -2760,8 +2760,8 @@
     {
       "metadata": {
         "name": "rendererDisableAppPluginsPreload",
-        "resourceVersion": "1741727214014",
-        "creationTimestamp": "2025-03-11T21:06:54Z"
+        "resourceVersion": "1741804652203",
+        "creationTimestamp": "2025-03-12T18:37:32Z"
       },
       "spec": {
         "description": "Disable pre-loading app plugins when the request is coming from the renderer",
@@ -2775,7 +2775,7 @@
     {
       "metadata": {
         "name": "reportingRetries",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-08-31T07:47:47Z"
       },
       "spec": {
@@ -2788,7 +2788,7 @@
     {
       "metadata": {
         "name": "reportingUseRawTimeRange",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-11-14T20:08:03Z"
       },
       "spec": {
@@ -2801,7 +2801,7 @@
     {
       "metadata": {
         "name": "rolePickerDrawer",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-09-26T12:51:38Z"
       },
       "spec": {
@@ -2813,7 +2813,7 @@
     {
       "metadata": {
         "name": "scopeApi",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-11-27T07:58:25Z"
       },
       "spec": {
@@ -2827,7 +2827,7 @@
     {
       "metadata": {
         "name": "scopeFilters",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-03-05T15:41:19Z"
       },
       "spec": {
@@ -2841,7 +2841,7 @@
     {
       "metadata": {
         "name": "showDashboardValidationWarnings",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2022-10-14T13:51:05Z"
       },
       "spec": {
@@ -2853,7 +2853,7 @@
     {
       "metadata": {
         "name": "sqlDatasourceDatabaseSelection",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-06-06T16:28:52Z"
       },
       "spec": {
@@ -2867,7 +2867,7 @@
     {
       "metadata": {
         "name": "sqlExpressions",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-02-27T21:16:00Z"
       },
       "spec": {
@@ -2879,7 +2879,7 @@
     {
       "metadata": {
         "name": "sseGroupByDatasource",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-09-07T20:02:07Z"
       },
       "spec": {
@@ -2891,7 +2891,7 @@
     {
       "metadata": {
         "name": "ssoSettingsApi",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-11-08T09:50:01Z"
       },
       "spec": {
@@ -2905,7 +2905,7 @@
     {
       "metadata": {
         "name": "ssoSettingsLDAP",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-06-18T11:31:27Z"
       },
       "spec": {
@@ -2919,7 +2919,7 @@
     {
       "metadata": {
         "name": "ssoSettingsSAML",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-03-14T11:04:45Z"
       },
       "spec": {
@@ -2933,7 +2933,7 @@
     {
       "metadata": {
         "name": "storage",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2022-03-17T17:19:23Z"
       },
       "spec": {
@@ -2945,8 +2945,8 @@
     {
       "metadata": {
         "name": "tableNG",
-        "resourceVersion": "1741727214014",
-        "creationTimestamp": "2025-03-11T21:06:54Z"
+        "resourceVersion": "1741804652203",
+        "creationTimestamp": "2025-03-12T18:37:32Z"
       },
       "spec": {
         "description": "Allows access to the new react-data-grid based table component.",
@@ -2957,7 +2957,7 @@
     {
       "metadata": {
         "name": "tableSharedCrosshair",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-12-13T09:33:14Z"
       },
       "spec": {
@@ -2970,7 +2970,7 @@
     {
       "metadata": {
         "name": "teamHttpHeadersMimir",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2025-01-13T10:42:47Z"
       },
       "spec": {
@@ -2982,8 +2982,8 @@
     {
       "metadata": {
         "name": "templateVariablesUsesCombobox",
-        "resourceVersion": "1741727214014",
-        "creationTimestamp": "2025-03-11T21:06:54Z"
+        "resourceVersion": "1741804652203",
+        "creationTimestamp": "2025-03-12T18:37:32Z"
       },
       "spec": {
         "description": "Use new combobox component for template variables",
@@ -2995,7 +2995,7 @@
     {
       "metadata": {
         "name": "timeRangeProvider",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-10-22T10:52:33Z"
       },
       "spec": {
@@ -3007,7 +3007,7 @@
     {
       "metadata": {
         "name": "tlsMemcached",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-05-09T19:12:08Z"
       },
       "spec": {
@@ -3020,7 +3020,7 @@
     {
       "metadata": {
         "name": "traceQLStreaming",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-07-26T13:33:16Z"
       },
       "spec": {
@@ -3034,7 +3034,7 @@
     {
       "metadata": {
         "name": "transformationsRedesign",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-07-12T16:35:49Z"
       },
       "spec": {
@@ -3049,7 +3049,7 @@
     {
       "metadata": {
         "name": "unifiedHistory",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-12-13T10:41:18Z"
       },
       "spec": {
@@ -3062,7 +3062,7 @@
     {
       "metadata": {
         "name": "unifiedRequestLog",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-03-31T13:38:09Z"
       },
       "spec": {
@@ -3076,7 +3076,7 @@
     {
       "metadata": {
         "name": "unifiedStorageBigObjectsSupport",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-10-17T10:18:29Z"
       },
       "spec": {
@@ -3088,7 +3088,7 @@
     {
       "metadata": {
         "name": "unifiedStorageSearch",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-09-30T19:46:14Z"
       },
       "spec": {
@@ -3102,7 +3102,7 @@
     {
       "metadata": {
         "name": "unifiedStorageSearchPermissionFiltering",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2025-01-22T11:38:37Z"
       },
       "spec": {
@@ -3116,7 +3116,7 @@
     {
       "metadata": {
         "name": "unifiedStorageSearchSprinkles",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-12-18T17:00:54Z"
       },
       "spec": {
@@ -3130,7 +3130,7 @@
     {
       "metadata": {
         "name": "unifiedStorageSearchUI",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-12-19T18:21:48Z"
       },
       "spec": {
@@ -3144,7 +3144,7 @@
     {
       "metadata": {
         "name": "useSessionStorageForRedirection",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-09-23T09:31:23Z"
       },
       "spec": {
@@ -3156,21 +3156,8 @@
     },
     {
       "metadata": {
-        "name": "useV2DashboardsAPI",
-        "resourceVersion": "1741727214014",
-        "creationTimestamp": "2024-12-17T21:17:09Z"
-      },
-      "spec": {
-        "description": "Use the v2 kubernetes API in the frontend for dashboards",
-        "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
-        "requiresRestart": true
-      }
-    },
-    {
-      "metadata": {
         "name": "userStorageAPI",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-11-12T11:56:41Z"
       },
       "spec": {
@@ -3183,7 +3170,7 @@
     {
       "metadata": {
         "name": "wargamesTesting",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2023-09-13T18:32:01Z"
       },
       "spec": {
@@ -3195,7 +3182,7 @@
     {
       "metadata": {
         "name": "zanzana",
-        "resourceVersion": "1741727214014",
+        "resourceVersion": "1741804652203",
         "creationTimestamp": "2024-06-19T13:59:47Z"
       },
       "spec": {
