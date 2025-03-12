@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { debounce, initial } from 'lodash';
+import { debounce } from 'lodash';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { VariableSizeList } from 'react-window';
 
@@ -19,7 +19,7 @@ import { PopoverContent, useTheme2 } from '@grafana/ui';
 import { InfiniteScroll } from './InfiniteScroll';
 import { getGridTemplateColumns } from './LogLine';
 import { GetRowContextQueryFn } from './LogLineMenu';
-import { LogListContext, useLogListContext } from './LogListContext';
+import { LogListContextProvider, useLogListContext } from './LogListContext';
 import { LogListControls } from './LogListControls';
 import { preProcessLogs, LogListModel } from './processing';
 import {
@@ -55,32 +55,55 @@ interface Props {
   showControls: boolean;
   showTime: boolean;
   sortOrder: LogsSortOrder;
+  storageKey?: string;
   timeRange: TimeRange;
   timeZone: string;
   wrapLogMessage: boolean;
 }
 
-type LogListComponentProps = Omit<Props, 'showTime' | 'wrapLogMessage' | 'displayedFields'>;
+type LogListComponentProps = Omit<Props, 'app' | 'displayedFields' | 'showTime' | 'wrapLogMessage'>;
 
 export const LogList = ({
   app,
+  displayedFields,
   containerElement,
   eventBus,
   forceEscape = false,
   getFieldLinks,
+  getRowContextQuery,
   initialScrollPosition = 'top',
   loadMore,
   logs,
+  logSupportsContext,
+  onPermalinkClick,
+  onPinLine,
+  onOpenContext,
+  onUnpinLine,
+  pinLineButtonTooltipTitle,
+  pinnedLogs,
   showControls,
+  showTime,
   sortOrder,
   timeRange,
   timeZone,
-  ...logListContext
+  wrapLogMessage,
 }: Props) => {
   return (
-    <LogListContext.Provider value={logListContext}>
+    <LogListContextProvider
+      app={app}
+      displayedFields={displayedFields}
+      getRowContextQuery={getRowContextQuery}
+      logSupportsContext={logSupportsContext}
+      onPermalinkClick={onPermalinkClick}
+      onPinLine={onPinLine}
+      onOpenContext={onOpenContext}
+      onUnpinLine={onUnpinLine}
+      pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
+      pinnedLogs={pinnedLogs}
+      showTime={showTime}
+      wrapLogMessage={wrapLogMessage}
+    >
       <LogListComponent
-        app={app}
         containerElement={containerElement}
         eventBus={eventBus}
         forceEscape={forceEscape}
@@ -93,12 +116,11 @@ export const LogList = ({
         timeRange={timeRange}
         timeZone={timeZone}
       />
-    </LogListContext.Provider>
+    </LogListContextProvider>
   );
 };
 
 const LogListComponent = ({
-  app,
   containerElement,
   eventBus,
   forceEscape = false,
@@ -111,6 +133,7 @@ const LogListComponent = ({
   timeRange,
   timeZone,
 }: LogListComponentProps) => {
+  const { app, displayedFields, showTime, wrapLogMessage } = useLogListContext();
   const [processedLogs, setProcessedLogs] = useState<LogListModel[]>([]);
   const [listHeight, setListHeight] = useState(
     app === CoreApp.Explore ? window.innerHeight * 0.75 : containerElement.clientHeight
@@ -119,7 +142,6 @@ const LogListComponent = ({
   const listRef = useRef<VariableSizeList | null>(null);
   const widthRef = useRef(containerElement.clientWidth);
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  const { displayedFields, showTime, wrapLogMessage } = useLogListContext();
   const dimensions = useMemo(
     () => (wrapLogMessage ? [] : calculateFieldDimensions(processedLogs, displayedFields)),
     [displayedFields, processedLogs, wrapLogMessage]
