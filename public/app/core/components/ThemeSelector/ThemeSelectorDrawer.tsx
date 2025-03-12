@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, ThemeRegistryItem } from '@grafana/data';
-import { Drawer, RadioButtonDot, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
+import { FeatureState, GrafanaTheme2, ThemeRegistryItem } from '@grafana/data';
+import { config, reportInteraction } from '@grafana/runtime';
+import { Drawer, FeatureBadge, RadioButtonDot, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { changeTheme } from 'app/core/services/theme';
 
@@ -19,12 +20,16 @@ export function ThemeSelectorDrawer({ onClose }: Props) {
   const currentTheme = useTheme2();
 
   const onChange = (theme: ThemeRegistryItem) => {
+    reportInteraction('grafana_preferences_theme_changed', {
+      toTheme: theme.id,
+      preferenceType: 'user',
+    });
     changeTheme(theme.id, false);
   };
 
   const subTitle = (
     <Trans i18nKey="shared-preferences.fields.theme-description">
-      Enjoying the limited edition themes? Tell us what you'd like to see{' '}
+      Enjoying the experimental themes? Tell us what you'd like to see{' '}
       <TextLink
         variant="bodySmall"
         external
@@ -36,11 +41,17 @@ export function ThemeSelectorDrawer({ onClose }: Props) {
   );
 
   return (
-    <Drawer title={t('profile.change-theme', 'Change theme')} onClose={onClose} size="md" subtitle={subTitle}>
+    <Drawer
+      title={t('profile.change-theme', 'Change theme')}
+      onClose={onClose}
+      size="md"
+      subtitle={config.feedbackLinksEnabled ? subTitle : undefined}
+    >
       <div className={styles.grid} role="radiogroup">
         {themes.map((themeOption) => (
           <ThemeCard
             themeOption={themeOption}
+            isExperimental={themeOption.isExtra}
             key={themeOption.id}
             onSelect={() => onChange(themeOption)}
             isSelected={currentTheme.name === themeOption.name}
@@ -53,11 +64,12 @@ export function ThemeSelectorDrawer({ onClose }: Props) {
 
 interface ThemeCardProps {
   themeOption: ThemeRegistryItem;
+  isExperimental?: boolean;
   isSelected?: boolean;
   onSelect: () => void;
 }
 
-function ThemeCard({ themeOption, isSelected, onSelect }: ThemeCardProps) {
+function ThemeCard({ themeOption, isExperimental, isSelected, onSelect }: ThemeCardProps) {
   const theme = themeOption.build();
   const label = getTranslatedThemeName(themeOption);
   const styles = useStyles2(getStyles);
@@ -72,6 +84,7 @@ function ThemeCard({ themeOption, isSelected, onSelect }: ThemeCardProps) {
           onChange={onSelect}
           checked={isSelected}
         />
+        {isExperimental && <FeatureBadge featureState={FeatureState.experimental} />}
       </div>
       <ThemePreview theme={theme} />
     </div>
@@ -91,13 +104,17 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.default,
       display: 'flex',
       flexDirection: 'column',
+      overflow: 'hidden',
       cursor: 'pointer',
       '&:hover': {
         border: `1px solid ${theme.colors.border.medium}`,
       },
     }),
     header: css({
+      alignItems: 'center',
       borderBottom: `1px solid ${theme.colors.border.weak}`,
+      display: 'flex',
+      justifyContent: 'space-between',
       padding: theme.spacing(1),
       // The RadioButtonDot is not correctly implemented at the moment, missing cursor (And click ability for the label and input)
       '> label': {
