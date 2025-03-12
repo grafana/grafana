@@ -1,7 +1,5 @@
 import { useFormContext } from 'react-hook-form';
 
-import { Alert } from '@grafana/ui';
-
 import { useCreateRepositoryMigrateMutation } from '../api';
 import { StepStatus } from '../hooks/useStepStatus';
 
