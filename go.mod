@@ -558,8 +558,8 @@ require (
 )
 
 require (
-	github.com/grafana/grafana/pkg/apis v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana/pkg/infra/tracing v0.0.0-00010101000000-000000000000
+	github.com/grafana/grafana/pkg/apis v0.0.0-00010101000000-000000000000 // @grafana/grafana-search-and-storage
+	github.com/grafana/grafana/pkg/infra/tracing v0.0.0-00010101000000-000000000000 // @grafana/grafana-backend-group
 )
 
 require (
