@@ -63,11 +63,11 @@ const (
 
 // resourceVersionManager handles resource version operations
 type resourceVersionManager struct {
-	dialect sqltemplate.Dialect
-	db      db.DB
-	tracer  trace.Tracer
-	batchMu sync.RWMutex
-	batchCh map[string]chan *writeOp
+	dialect    sqltemplate.Dialect
+	db         db.DB
+	tracer     trace.Tracer
+	batchMu    sync.RWMutex
+	batchChMap map[string]chan *writeOp
 
 	maxBatchSize     int           // The maximum number of operations to batch together
 	maxBatchWaitTime time.Duration // The maximum time to wait for a batch to be ready
@@ -121,7 +121,7 @@ func NewResourceVersionManager(opts ResourceManagerOptions) (*resourceVersionMan
 		dialect:          opts.Dialect,
 		db:               opts.DB,
 		tracer:           opts.Tracer,
-		batchCh:          make(map[string]chan *writeOp),
+		batchChMap:       make(map[string]chan *writeOp),
 		maxBatchSize:     opts.MaxBatchSize,
 		maxBatchWaitTime: opts.MaxBatchWaitTime,
 	}, nil
@@ -153,10 +153,10 @@ func (m *resourceVersionManager) ExecWithRV(ctx context.Context, key *resource.R
 	batchKey := fmt.Sprintf("%s/%s", key.Group, key.Resource)
 
 	m.batchMu.Lock()
-	ch, ok := m.batchCh[batchKey]
+	ch, ok := m.batchChMap[batchKey]
 	if !ok {
 		ch = make(chan *writeOp, m.maxBatchSize)
-		m.batchCh[batchKey] = ch
+		m.batchChMap[batchKey] = ch
 		go m.startBatchProcessor(key.Group, key.Resource)
 	}
 	m.batchMu.Unlock()
@@ -189,7 +189,7 @@ func (m *resourceVersionManager) startBatchProcessor(group, resource string) {
 	batchKey := fmt.Sprintf("%s/%s", group, resource)
 
 	m.batchMu.Lock()
-	ch, ok := m.batchCh[batchKey]
+	ch, ok := m.batchChMap[batchKey]
 	if !ok {
 		m.batchMu.Unlock()
 		return
