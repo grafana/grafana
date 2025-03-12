@@ -18,6 +18,9 @@ GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 GO_BUILD_FLAGS += $(GO_RACE_FLAG)
 GO_TEST_OUTPUT := $(shell [ -n "$(GO_TEST_OUTPUT)" ] && echo '-json | tee $(GO_TEST_OUTPUT) | tparse -all')
+GO_UNIT_COVERAGE ?= true
+GO_UNIT_COVER_PROFILE ?= unit.cov
+GO_INTEGRATION_COVER_PROFILE ?= integration.cov
 GIT_BASE = remotes/origin/main
 
 # GNU xargs has flag -r, and BSD xargs (e.g. MacOS) has that behaviour by default
@@ -246,8 +249,13 @@ test-go: test-go-unit test-go-integration
 
 .PHONY: test-go-unit
 test-go-unit: ## Run unit tests for backend with flags.
-	@echo "test backend unit tests"
-	$(GO) test $(GO_RACE_FLAG) -short -covermode=atomic -coverprofile=unit.cov -timeout=30m $(GO_TEST_FILES) $(GO_TEST_OUTPUT)
+	@echo "backend unit tests"
+	$(GO) test $(GO_RACE_FLAG) -v -short -timeout=30m $(GO_TEST_FILES) $(GO_TEST_OUTPUT)
+
+.PHONY: test-go-unit-cov
+test-go-unit-cov: ## Run unit tests for backend with flags and coverage
+	@echo "backend unit tests with coverage"
+	$(GO) test $(GO_RACE_FLAG) -v -short $(if $(filter true,$(GO_UNIT_COVERAGE)),-covermode=atomic -coverprofile=$(GO_UNIT_COVER_PROFILE) $(if $(GO_UNIT_TEST_COVERPKG),-coverpkg=$(GO_UNIT_TEST_COVERPKG)),) -timeout=30m $(GO_TEST_FILES) $(GO_TEST_OUTPUT)
 
 .PHONY: test-go-unit-pretty
 test-go-unit-pretty: check-tparse
@@ -260,7 +268,7 @@ test-go-unit-pretty: check-tparse
 .PHONY: test-go-integration
 test-go-integration: ## Run integration tests for backend with flags.
 	@echo "test backend integration tests"
-	$(GO) test $(GO_RACE_FLAG) -count=1 -run "^TestIntegration" -covermode=atomic -coverprofile=integration.cov -timeout=5m $(GO_INTEGRATION_TESTS) $(GO_TEST_OUTPUT)
+	$(GO) test $(GO_RACE_FLAG) -count=1 -run "^TestIntegration" -covermode=atomic -coverprofile=$(GO_INTEGRATION_COVER_PROFILE)  -timeout=5m $(GO_INTEGRATION_TESTS) $(GO_TEST_OUTPUT)
 
 .PHONY: test-go-integration-alertmanager
 test-go-integration-alertmanager: ## Run integration tests for the remote alertmanager (config taken from the mimir_backend block).
