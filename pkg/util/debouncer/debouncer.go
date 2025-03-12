@@ -192,7 +192,7 @@ func (d *Debouncer[T]) processValue(value T, processFunc ProcessFunc[T]) {
 	}
 
 	wrappedProcessFunc := func(v T) {
-		d.processWithMetrics(d.ctx, v, key, processFunc)
+		d.processWithMetrics(d.ctx, v, processFunc)
 
 		d.debouncersMu.Lock()
 		defer d.debouncersMu.Unlock()
@@ -204,19 +204,15 @@ func (d *Debouncer[T]) processValue(value T, processFunc ProcessFunc[T]) {
 	debouncer.update(value, wrappedProcessFunc)
 }
 
-func (d *Debouncer[T]) processWithMetrics(ctx context.Context, value T, key string, processFunc ProcessFunc[T]) {
-	if d.metrics != nil {
-		timer := prometheus.NewTimer(d.metrics.processingDurationHistogram)
-		defer timer.ObserveDuration()
-		d.metrics.itemsProcessedCounter.Inc()
-	}
+func (d *Debouncer[T]) processWithMetrics(ctx context.Context, value T, processFunc ProcessFunc[T]) {
+	timer := prometheus.NewTimer(d.metrics.processingDurationHistogram)
+	defer timer.ObserveDuration()
+	d.metrics.itemsProcessedCounter.Inc()
 
 	err := processFunc(ctx, value)
 	if err != nil && d.errorHandler != nil {
 		d.errorHandler(value, err)
-		if d.metrics != nil {
-			d.metrics.processingErrorsCounter.Inc()
-		}
+		d.metrics.processingErrorsCounter.Inc()
 	}
 }
 
