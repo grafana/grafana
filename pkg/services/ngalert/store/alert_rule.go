@@ -1271,3 +1271,20 @@ func getINSubQueryArgs[T any](inputSlice []T) ([]any, []string) {
 
 	return args, in
 }
+
+func (st DBstore) DeleteRuleFromTrashByGUID(ctx context.Context, orgID int64, ruleGUID string) (int64, error) {
+	affectedRows := int64(-1)
+	err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		st.Logger.FromContext(ctx).Debug("Deleting a deleted rule by GUID", "ruleGUID", ruleGUID)
+		result, err := sess.Exec("DELETE FROM alert_rule_version WHERE rule_uid='' AND rule_org_id = ? AND rule_guid = ? ", orgID, ruleGUID)
+		if err != nil {
+			return err
+		}
+		affectedRows, err = result.RowsAffected()
+		if err != nil {
+			st.Logger.FromContext(ctx).Warn("Failed to get rows affected by the delete operation", "error", err)
+		}
+		return nil
+	})
+	return affectedRows, err
+}

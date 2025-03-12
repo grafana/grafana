@@ -130,6 +130,14 @@ func (f *RuleStore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user
 	return nil
 }
 
+func (f *RuleStore) DeleteRuleFromTrashByGUID(ctx context.Context, orgID int64, ruleGUID string) (int64, error) {
+	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
+		Name:   "DeleteRuleFromTrashByGUID",
+		Params: []any{orgID, ruleGUID},
+	})
+	return 0, nil
+}
+
 func (f *RuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertRuleByUIDQuery) (*models.AlertRule, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
