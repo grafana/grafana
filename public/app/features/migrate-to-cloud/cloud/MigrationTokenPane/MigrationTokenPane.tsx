@@ -52,9 +52,8 @@ export const MigrationTokenPane = () => {
     const resp = await deleteTokenMutation({ uid: getTokenQuery.data.id });
     if (!('error' in resp)) {
       setShowDeleteModal(false);
-      getTokenQuery.refetch();
     }
-  }, [deleteTokenMutation, getTokenQuery]);
+  }, [deleteTokenMutation, getTokenQuery.data]);
 
   return (
     <>
