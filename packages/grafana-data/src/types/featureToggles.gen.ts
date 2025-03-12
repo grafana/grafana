@@ -1054,4 +1054,5 @@ export interface FeatureToggles {
   * @default true
   */
   alertingRuleRecoverDeleted?: boolean;
+  alertingMigrationUI?: boolean;
 }

@@ -966,4 +966,8 @@ const (
 	// FlagAlertingRuleRecoverDeleted
 	// Enables the UI functionality to recover and view deleted alert rules
 	FlagAlertingRuleRecoverDeleted = "alertingRuleRecoverDeleted"
+
+	// FlagAlertingMigrationUI
+	// Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules
+	FlagAlertingMigrationUI = "alertingMigrationUI"
 )
