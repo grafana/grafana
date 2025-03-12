@@ -12,6 +12,7 @@
     "logos": {
       "small": "img/icn-timeseries-panel.svg",
       "large": "img/icn-timeseries-panel.svg"
-    }
+    },
+    "links": [{ "name": "Raise issue", "url": "https://github.com/grafana/grafana/issues/new" }]
   }
 }
