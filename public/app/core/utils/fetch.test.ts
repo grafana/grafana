@@ -184,6 +184,12 @@ describe('parseResponseBody', () => {
     expect(body).toEqual(value);
   });
 
+  it('parses stream', async () => {
+    const value = new ReadableStream();
+    const body = await parseResponseBody({ ...rsp, body: value }, 'stream');
+    expect(body).toEqual(value);
+  });
+
   it('undefined text', async () => {
     const value = 'RAW TEXT';
     const body = await parseResponseBody({
