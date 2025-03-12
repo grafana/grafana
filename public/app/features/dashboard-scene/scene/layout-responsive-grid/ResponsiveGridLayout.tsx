@@ -88,8 +88,8 @@ export class ResponsiveGridLayout extends SceneObjectBase<ResponsiveGridLayoutSt
   };
 
   public containerRef = createRef<HTMLDivElement>();
+  public scrollPos: ReturnType<typeof closestScroll> | undefined;
   public onPointerDown = (e: PointerEvent, panel: VizPanel) => {
-    // const noContainer = !this.container;
     const cannotDrag = this.cannotDrag(e.target);
     if (cannotDrag || !this.layoutOrchestrator) {
       return;
@@ -103,6 +103,7 @@ export class ResponsiveGridLayout extends SceneObjectBase<ResponsiveGridLayoutSt
       child.computeBoundingBox();
     }
 
+    this.scrollPos = closestScroll(this.containerRef.current);
     this.layoutOrchestrator.onDragStart(e.nativeEvent, panel);
   };
 
@@ -113,15 +114,6 @@ export class ResponsiveGridLayout extends SceneObjectBase<ResponsiveGridLayoutSt
     // cancel dragging if the element being interacted with has an ancestor with the drag cancel class set
     // or if the drag class isn't set on an ancestor
     return el instanceof Element && (el.closest(`.${dragCancelClass}`) || !el.closest(`.${dragClass}`));
-  }
-
-  private container: HTMLElement | undefined;
-  public setContainer(el: HTMLElement) {
-    this.container = el;
-  }
-
-  public getContainer() {
-    return this.container;
   }
 
   public activeIndex: number | undefined;
@@ -199,4 +191,25 @@ function findLayoutOrchestrator(root: SceneObject | undefined) {
 
   const dashboard = getClosest(root, (s) => (s instanceof DashboardScene ? s : undefined));
   return dashboard?.state.layoutOrchestrator;
+}
+
+export function closestScroll(el?: HTMLElement | null): {
+  scrollTop: number;
+  scrollTopMax: number;
+  wrapper?: HTMLElement | null;
+} {
+  if (el && canScroll(el)) {
+    return { scrollTop: el.scrollTop, scrollTopMax: el.scrollHeight - el.clientHeight - 5, wrapper: el };
+  }
+
+  return el ? closestScroll(el.parentElement) : { scrollTop: 0, scrollTopMax: 0, wrapper: el };
+}
+
+function canScroll(el: HTMLElement) {
+  const oldScroll = el.scrollTop;
+  el.scrollTop = Number.MAX_SAFE_INTEGER;
+  const newScroll = el.scrollTop;
+  el.scrollTop = oldScroll;
+
+  return newScroll > 0;
 }

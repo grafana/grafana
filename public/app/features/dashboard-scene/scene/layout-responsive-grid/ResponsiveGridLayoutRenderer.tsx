@@ -26,18 +26,25 @@ export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<Resp
   const styles = useStyles2(getStyles, model.state);
   const dashboard = closestOfType(model, (s) => s instanceof DashboardScene);
 
+  const layoutOrchestrator = dashboard!.state.layoutOrchestrator!;
+  const { activeLayoutItemRef } = layoutOrchestrator.useState();
+  const activeLayoutItem = activeLayoutItemRef?.resolve();
+  const currentLayoutIsActive = children.some((c) => c === activeLayoutItem);
+
   useEffect(() => {
     if (model.containerRef.current) {
       const computedStyles = getComputedStyle(model.containerRef.current);
       model.columnCount = computedStyles.gridTemplateColumns.split(' ').length;
       model.rowCount = computedStyles.gridTemplateRows.split(' ').length;
+
+      // when the contents of a scrollable area are changed, most (all?) browsers
+      // seem to automatically adjust the scroll position
+      // this hack keeps the scroll position fixed
+      if (currentLayoutIsActive && model.scrollPos) {
+        model.scrollPos.wrapper?.scrollTo(0, model.scrollPos.scrollTop);
+      }
     }
   });
-
-  const layoutOrchestrator = dashboard!.state.layoutOrchestrator!;
-  const { activeLayoutItemRef } = layoutOrchestrator.useState();
-  const activeLayoutItem = activeLayoutItemRef?.resolve();
-  const currentLayoutIsActive = children.some((c) => c === activeLayoutItem);
 
   if (isHidden || !layoutOrchestrator) {
     return null;
