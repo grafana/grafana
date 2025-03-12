@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"go.opentelemetry.io/otel/attribute"
@@ -381,12 +382,24 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 			if !ok {
 				dr, ok := qdr.Responses[refId]
 				if ok {
-					// somewhere before this we have to do the equivalent of nodes.go 414 or whatever
+					_, isSqlInput := req.SqlInputs[refId]
+
+					if isSqlInput {
+						sqlInputResults, err := handleSqlInput(ctx, &dr)
+						if err != nil {
+							expressionsLogger.Error("error handling sql input results", "error", err)
+							sqlInputResults.Error = err
+						}
+						vars[refId] = sqlInputResults
+						continue
+					}
+
 					_, res, err := b.converter.Convert(ctx, req.RefIDTypes[refId], dr.Frames)
 					if err != nil {
 						expressionsLogger.Error("error converting frames for expressions", "error", err)
 						res.Error = err
 					}
+
 					vars[refId] = res
 				} else {
 					expressionsLogger.Error("missing variable in handle expressions", "refId", refId, "expressionRefId", expression.RefID)
@@ -412,6 +425,44 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 		}
 	}
 	return qdr, nil
+}
+
+// copied from pkg/expr/nodes.go from within the Execute method
+func handleSqlInput(ctx context.Context, dr *backend.DataResponse) (mathexp.Results, error) {
+	dataFrames := dr.Frames
+	var result mathexp.Results
+	var needsConversion bool
+	// Convert it if Multi:
+	if len(dataFrames) > 1 {
+		needsConversion = true
+	}
+
+	// Convert it if Wide (has labels):
+	if len(dataFrames) == 1 {
+		for _, field := range dataFrames[0].Fields {
+			if len(field.Labels) > 0 {
+				needsConversion = true
+				break
+			}
+		}
+	}
+
+	if needsConversion {
+		convertedFrames, err := expr.ConvertToLong(dataFrames)
+		if err != nil {
+			return result, fmt.Errorf("failed to convert data frames to long format for sql: %w", err)
+		}
+		result.Values = mathexp.Values{
+			mathexp.TableData{Frame: convertedFrames[0]},
+		}
+		return result, nil
+	}
+
+	// Otherwise it is already Long format; return as is
+	result.Values = mathexp.Values{
+		mathexp.TableData{Frame: dataFrames[0]},
+	}
+	return result, nil
 }
 
 func (b *QueryAPIBuilder) convertQueryWithoutExpression(ctx context.Context, req datasourceRequest,
