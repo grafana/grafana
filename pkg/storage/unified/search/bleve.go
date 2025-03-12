@@ -803,7 +803,7 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 		boolQuery.AddMustNot(mustNotQueries...)
 
 		// must still have a value
-		notEmptyQuery := bleve.NewMatchAllQuery()
+		notEmptyQuery := bleve.NewWildcardQuery("*")
 		boolQuery.AddMust(notEmptyQuery)
 
 		return boolQuery, nil
