@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
-import { useAsync } from 'react-use';
 
-import { getBackendSrv } from '@grafana/runtime';
 import {
   Badge,
   Box,
@@ -18,7 +16,7 @@ import {
   Tooltip,
 } from '@grafana/ui';
 
-import { useGetFrontendSettingsQuery, useGetRepositoryFilesQuery } from '../api';
+import { useGetFrontendSettingsQuery, useGetRepositoryFilesQuery, useGetResourceStatsQuery } from '../api';
 import { StepStatus } from '../hooks/useStepStatus';
 import { checkSyncSettings } from '../utils';
 
@@ -60,8 +58,6 @@ const modeOptions: ModeOption[] = [
   },
 ];
 
-const backendSrv = getBackendSrv();
-
 interface OptionState {
   isDisabled: boolean;
   disabledReason?: string;
@@ -77,43 +73,11 @@ export function BootstrapStep({ onOptionSelect, onStepUpdate }: Props) {
   } = useFormContext<WizardFormData>();
 
   const settingsQuery = useGetFrontendSettingsQuery();
+  const resourceStats = useGetResourceStatsQuery();
   const currentRepoName = watch('repositoryName');
   const selectedTarget = watch('repository.sync.target');
   const [selectedOption, setSelectedOption] = useState<ModeOption | null>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
-
-  const { value: counts, loading: isLoadingCounts } = useAsync(async () => {
-    onStepUpdate('running');
-    try {
-      // Fetch dashboard count
-      const dashboardData = await backendSrv.get('/apis/dashboard.grafana.app/v0alpha1/namespaces/default/search', {
-        query: '*',
-        limit: 0,
-        type: 'dashboard',
-      });
-
-      // Fetch folder count
-      const folderData = await backendSrv.get('/apis/dashboard.grafana.app/v0alpha1/namespaces/default/search', {
-        query: '*',
-        limit: 0,
-        type: 'dashboard',
-      });
-
-      onStepUpdate('success');
-
-      return {
-        dashboardCount: dashboardData.totalHits || 0,
-        folderCount: folderData.totalHits || 0,
-      };
-    } catch (error) {
-      console.error('Error fetching counts:', error);
-      onStepUpdate('error', error instanceof Error ? error.message : 'Failed to fetch resource counts');
-      return {
-        dashboardCount: 0,
-        folderCount: 0,
-      };
-    }
-  }, []);
 
   // Get repository files count
   const { data: filesData, isLoading: isLoadingFiles } = useGetRepositoryFilesQuery(
@@ -121,10 +85,19 @@ export function BootstrapStep({ onOptionSelect, onStepUpdate }: Props) {
     { skip: !currentRepoName }
   );
 
-  const dashboardCount = counts?.dashboardCount || 0;
-  const folderCount = counts?.folderCount || 0;
   const fileCount = filesData?.items?.length || 0;
-  const hasLoadedCounts = counts !== undefined;
+
+  // showing the counts seems more intresting
+  const resourceCount = useMemo(() => {
+    let count = 0;
+    if (!resourceStats.data?.instance) {
+      return count;
+    }
+    for (const x of resourceStats.data.instance) {
+      count += x.count;
+    }
+    return count;
+  }, [resourceStats.data]);
 
   // Check for other repositories excluding the current one
   const [otherInstanceConnected, otherFolderConnected] = useMemo(() => {
@@ -154,7 +127,7 @@ export function BootstrapStep({ onOptionSelect, onStepUpdate }: Props) {
       }
 
       // Disable pull instance option if there are existing dashboards or folders
-      if (option.value === 'instance' && option.operation === 'pull' && (dashboardCount > 0 || folderCount > 0)) {
+      if (option.value === 'instance' && option.operation === 'pull' && resourceCount > 0) {
         return {
           isDisabled: true,
           disabledReason:
@@ -187,14 +160,7 @@ export function BootstrapStep({ onOptionSelect, onStepUpdate }: Props) {
 
       return { isDisabled: false };
     },
-    [
-      settingsQuery.data?.legacyStorage,
-      dashboardCount,
-      folderCount,
-      fileCount,
-      otherInstanceConnected,
-      otherFolderConnected,
-    ]
+    [settingsQuery.data?.legacyStorage, resourceCount, fileCount, otherInstanceConnected, otherFolderConnected]
   );
 
   // Add sorted options after getOptionState is defined
@@ -221,8 +187,8 @@ export function BootstrapStep({ onOptionSelect, onStepUpdate }: Props) {
     [setValue, onOptionSelect, getOptionState]
   );
 
-  const isLoading = settingsQuery.isLoading || isLoadingCounts || isLoadingFiles;
-  const hasAllData = Boolean(settingsQuery.data) && hasLoadedCounts && (!currentRepoName || filesData !== undefined);
+  const isLoading = settingsQuery.isLoading || resourceStats.isLoading || isLoadingFiles;
+  const hasAllData = Boolean(settingsQuery.data) && resourceStats.data && (!currentRepoName || filesData !== undefined);
 
   // Store initialization function in a ref to avoid dependency issues
   const initializeRef = useRef((options: typeof sortedModeOptions) => {
@@ -286,7 +252,7 @@ export function BootstrapStep({ onOptionSelect, onStepUpdate }: Props) {
                 Grafana
               </Text>
               <Stack direction="row" gap={2}>
-                <Text variant="h3">{dashboardCount + folderCount} resources</Text>
+                <Text variant="h3">{resourceCount} resources</Text>
               </Stack>
             </Stack>
             <Stack direction="column" gap={1} alignItems="center">
