@@ -1203,17 +1203,17 @@ func (st DBstore) RenameTimeIntervalInNotificationSettings(
 
 func ruleConstraintViolationToErr(sess *db.Session, rule ngmodels.AlertRule, err error, logger log.Logger) error {
 	msg := err.Error()
-	if strings.Contains(msg, "UQE_alert_rule_org_id_namespace_uid_title") || strings.Contains(msg, "alert_rule.org_id, alert_rule.namespace_uid, alert_rule.title") {
+	if strings.Contains(msg, "UQE_alert_rule_org_id_namespace_uid_rule_group_title") || strings.Contains(msg, "alert_rule.org_id, alert_rule.namespace_uid, alert_rule.rule_group, alert_rule.title") {
 		// return verbose conflicting alert rule error response
 		// see: https://github.com/grafana/grafana/issues/89755
 		var fetched_uid string
 		var existingPartialAlertRule ngmodels.AlertRule
-		ok, uid_fetch_err := sess.Table("alert_rule").Cols("uid").Where("org_id = ? AND title = ? AND namespace_uid = ?", rule.OrgID, rule.Title, rule.NamespaceUID).Get(&fetched_uid)
+		ok, uid_fetch_err := sess.Table("alert_rule").Cols("uid").Where("org_id = ? AND title = ? AND namespace_uid = ? AND rule_group", rule.OrgID, rule.Title, rule.NamespaceUID, rule.RuleGroup).Get(&fetched_uid)
 		if uid_fetch_err != nil {
 			logger.Error("Error fetching uid from alert_rule table", "reason", uid_fetch_err.Error())
 		}
 		if ok {
-			existingPartialAlertRule = ngmodels.AlertRule{UID: fetched_uid, Title: rule.Title, NamespaceUID: rule.NamespaceUID}
+			existingPartialAlertRule = ngmodels.AlertRule{UID: fetched_uid, Title: rule.Title, NamespaceUID: rule.NamespaceUID, RuleGroup: rule.RuleGroup}
 		}
 		return ngmodels.ErrAlertRuleConflictVerbose(existingPartialAlertRule, rule, ngmodels.ErrAlertRuleUniqueConstraintViolation)
 	} else if strings.Contains(msg, "UQE_alert_rule_org_id_uid") || strings.Contains(msg, "alert_rule.org_id, alert_rule.uid") {
