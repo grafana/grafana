@@ -36,23 +36,26 @@ type JobResourceResult struct {
 }
 
 type jobProgressRecorder struct {
-	started      time.Time
-	total        int
-	ref          string
-	message      string
-	finalMessage string
-	resultCount  int
-	errorCount   int
-	errors       []string
-	progressFn   ProgressFn
-	summaries    map[string]*provisioning.JobResourceSummary
+	started             time.Time
+	total               int
+	ref                 string
+	message             string
+	finalMessage        string
+	resultCount         int
+	errorCount          int
+	errors              []string
+	notifyImmediatelyFn ProgressFn
+	maybeNotifyFn       ProgressFn
+	summaries           map[string]*provisioning.JobResourceSummary
 }
 
 func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
 	return &jobProgressRecorder{
-		started:    time.Now(),
-		progressFn: maybeNotifyProgress(2*time.Second, ProgressFn),
-		summaries:  make(map[string]*provisioning.JobResourceSummary),
+		started: time.Now(),
+		// Have a faster notifier for messages and total
+		notifyImmediatelyFn: maybeNotifyProgress(500*time.Millisecond, ProgressFn),
+		maybeNotifyFn:       maybeNotifyProgress(5*time.Second, ProgressFn),
+		summaries:           make(map[string]*provisioning.JobResourceSummary),
 	}
 }
 
@@ -71,13 +74,13 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 	}
 
 	r.updateSummary(result)
-	r.notify(ctx)
+	r.maybeNotify(ctx)
 }
 
 func (r *jobProgressRecorder) SetMessage(ctx context.Context, msg string) {
 	r.message = msg
 	logging.FromContext(ctx).Info("job progress message", "message", msg)
-	r.notify(ctx)
+	r.notifyImmediately(ctx)
 }
 
 func (r *jobProgressRecorder) SetFinalMessage(ctx context.Context, msg string) {
@@ -96,7 +99,7 @@ func (r *jobProgressRecorder) GetRef() string {
 func (r *jobProgressRecorder) SetTotal(ctx context.Context, total int) {
 	r.total = total
 
-	r.notify(ctx)
+	r.notifyImmediately(ctx)
 }
 
 func (r *jobProgressRecorder) TooManyErrors() error {
@@ -160,7 +163,7 @@ func (r *jobProgressRecorder) progress() float64 {
 	return float64(r.resultCount) / float64(r.total) * 100
 }
 
-func (r *jobProgressRecorder) notify(ctx context.Context) {
+func (r *jobProgressRecorder) notifyImmediately(ctx context.Context) {
 	jobStatus := provisioning.JobStatus{
 		State:    provisioning.JobStateWorking,
 		Message:  r.message,
@@ -170,7 +173,22 @@ func (r *jobProgressRecorder) notify(ctx context.Context) {
 	}
 
 	logger := logging.FromContext(ctx)
-	if err := r.progressFn(ctx, jobStatus); err != nil {
+	if err := r.notifyImmediatelyFn(ctx, jobStatus); err != nil {
+		logger.Warn("error notifying immediate progress", "err", err)
+	}
+}
+
+func (r *jobProgressRecorder) maybeNotify(ctx context.Context) {
+	jobStatus := provisioning.JobStatus{
+		State:    provisioning.JobStateWorking,
+		Message:  r.message,
+		Errors:   r.errors,
+		Progress: r.progress(),
+		Summary:  r.summary(),
+	}
+
+	logger := logging.FromContext(ctx)
+	if err := r.maybeNotifyFn(ctx, jobStatus); err != nil {
 		logger.Warn("error notifying progress", "err", err)
 	}
 }
