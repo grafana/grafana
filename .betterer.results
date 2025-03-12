@@ -3143,12 +3143,14 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "9"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "10"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "11"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "12"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "12"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "13"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "14"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "15"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "16"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "17"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "17"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "18"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "19"]
     ],
     "public/app/features/dashboard-scene/saving/SaveProvisionedDashboardForm.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -3166,7 +3168,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Do not use any type assertions.", "3"],
       [0, 0, 0, "Do not use any type assertions.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
+      [0, 0, 0, "Do not use any type assertions.", "5"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
     ],
     "public/app/features/dashboard-scene/saving/shared.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
@@ -3714,8 +3717,9 @@ exports[`better eslint`] = {
     ],
     "public/app/features/dashboard/components/SaveDashboard/SaveDashboardDiff.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
     ],
     "public/app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],

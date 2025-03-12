@@ -8,9 +8,8 @@ import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
-import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
+import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { isDashboardV2Resource, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
@@ -293,6 +292,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 
           break;
         case DashboardRoutes.Home:
+          // TODO: Move this fetching to APIClient.getHomeDashboard() to be able to redirect to the correct api depending on the format for the saved dashboard
           rsp = await getBackendSrv().get<HomeDashboardDTO | HomeDashboardRedirectDTO>('/api/dashboards/home');
 
           if (isRedirectResponse(rsp)) {
@@ -302,7 +302,9 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           }
 
           if (isDashboardV2Spec(rsp.dashboard)) {
-            throw new Error('v2 dashboard spec is not supported. Enable useV2DashboardsAPI feature toggle');
+            throw new Error(
+              'You are trying to load a v2 dashboard spec as v1. Use DashboardScenePageStateManagerV2 instead.'
+            );
           }
 
           if (rsp?.meta) {
@@ -501,6 +503,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
           rsp = await buildNewDashboardSaveModelV2(urlFolderUid);
           break;
         case DashboardRoutes.Home:
+          // TODO: Move this fetching to APIClient.getHomeDashboard() to be able to redirect to the correct api depending on the format for the saved dashboard
           const dto = await getBackendSrv().get<HomeDashboardDTO | HomeDashboardRedirectDTO>('/api/dashboards/home');
 
           if (isRedirectResponse(dto)) {
@@ -509,16 +512,15 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
             return null;
           }
 
-          rsp = ResponseTransformers.ensureV2Response(dto);
-
           // if custom home dashboard is v2 spec already, ignore the spec transformation
-          if (isDashboardV2Spec(dto.dashboard)) {
-            rsp.spec = dto.dashboard;
+          if (!isDashboardV2Resource(dto)) {
+            throw new Error('Custom home dashboard is not a v2 spec');
           }
 
-          rsp.access.canSave = false;
-          rsp.access.canShare = false;
-          rsp.access.canStar = false;
+          rsp = dto;
+          dto.access.canSave = false;
+          dto.access.canShare = false;
+          dto.access.canStar = false;
 
           break;
         case DashboardRoutes.Public: {
@@ -569,32 +571,143 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
   }
 }
 
+export class UnifiedDashboardScenePageStateManager extends DashboardScenePageStateManagerBase<
+  DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>
+> {
+  private v1Manager: DashboardScenePageStateManager;
+  private v2Manager: DashboardScenePageStateManagerV2;
+  private activeManager: DashboardScenePageStateManager | DashboardScenePageStateManagerV2;
+
+  constructor(initialState: Partial<DashboardScenePageState>) {
+    super(initialState);
+    this.v1Manager = new DashboardScenePageStateManager(initialState);
+    this.v2Manager = new DashboardScenePageStateManagerV2(initialState);
+
+    // Start with v2 if newDashboardLayout is enabled, otherwise v1
+    this.activeManager = this.v1Manager;
+  }
+
+  private async withVersionHandling<T>(
+    operation: (manager: DashboardScenePageStateManager | DashboardScenePageStateManagerV2) => Promise<T>
+  ): Promise<T> {
+    try {
+      const result = await operation(this.activeManager);
+      // need to sync the state of the active manager with the unified manager
+      // in cases when components are subscribed to unified manager's state
+      this.setState(this.activeManager.state);
+      return result;
+    } catch (error) {
+      if (error instanceof DashboardVersionError) {
+        const manager = error.data.storedVersion === 'v2alpha1' ? this.v2Manager : this.v1Manager;
+        this.activeManager = manager;
+        return await operation(manager);
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  public async fetchDashboard(options: LoadDashboardOptions) {
+    return this.withVersionHandling<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null>((manager) =>
+      manager.fetchDashboard(options)
+    );
+  }
+
+  public async reloadDashboard(params: LoadDashboardOptions['params']) {
+    return this.withVersionHandling((manager) => manager.reloadDashboard(params));
+  }
+
+  public getDashboardFromCache(uid: string) {
+    return this.activeManager.getDashboardFromCache(uid);
+  }
+
+  transformResponseToScene(
+    rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null,
+    options: LoadDashboardOptions
+  ): DashboardScene | null {
+    if (!rsp) {
+      return null;
+    }
+
+    if (isDashboardV2Resource(rsp)) {
+      this.activeManager = this.v2Manager;
+      return this.v2Manager.transformResponseToScene(rsp, options);
+    }
+
+    return this.v1Manager.transformResponseToScene(rsp, options);
+  }
+
+  public async loadSnapshotScene(slug: string): Promise<DashboardScene> {
+    try {
+      return await this.v1Manager.loadSnapshotScene(slug);
+    } catch (error) {
+      if (error instanceof DashboardVersionError && error.data.storedVersion === 'v2alpha1') {
+        return await this.v2Manager.loadSnapshotScene(slug);
+      }
+      throw new Error('Snapshot not found');
+    }
+  }
+
+  public async loadSnapshot(slug: string) {
+    return this.withVersionHandling((manager) => manager.loadSnapshot(slug));
+  }
+
+  public clearDashboardCache() {
+    this.v1Manager.clearDashboardCache();
+    this.v2Manager.clearDashboardCache();
+  }
+
+  public clearSceneCache() {
+    this.v1Manager.clearSceneCache();
+    this.v2Manager.clearSceneCache();
+    this.cache = {};
+  }
+
+  public getCache() {
+    return this.activeManager.getCache();
+  }
+
+  public setDashboardCache(cacheKey: string, dashboard: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>) {
+    if (isDashboardV2Resource(dashboard)) {
+      this.v2Manager.setDashboardCache(cacheKey, dashboard);
+    } else {
+      this.v1Manager.setDashboardCache(cacheKey, dashboard);
+    }
+  }
+}
+
 const managers: {
   v1?: DashboardScenePageStateManager;
   v2?: DashboardScenePageStateManagerV2;
+  unified?: UnifiedDashboardScenePageStateManager;
 } = {
   v1: undefined,
   v2: undefined,
+  unified: undefined,
 };
 
-export function getDashboardScenePageStateManager(
-  v: 'v2'
-): DashboardScenePageStateManagerLike<DashboardWithAccessInfo<DashboardV2Spec>>;
-export function getDashboardScenePageStateManager(): DashboardScenePageStateManagerLike<DashboardDTO>;
+export function getDashboardScenePageStateManager(): UnifiedDashboardScenePageStateManager;
+export function getDashboardScenePageStateManager(v: 'v1'): DashboardScenePageStateManager;
+export function getDashboardScenePageStateManager(v: 'v2'): DashboardScenePageStateManagerV2;
 
-export function getDashboardScenePageStateManager(
-  v?: 'v2'
-): DashboardScenePageStateManagerLike<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>> {
-  if (v === 'v2') {
-    if (!managers.v2) {
-      managers.v2 = new DashboardScenePageStateManagerV2({});
-    }
-
-    return managers.v2;
-  } else {
+export function getDashboardScenePageStateManager(v?: 'v1' | 'v2') {
+  if (v === 'v1') {
     if (!managers.v1) {
       managers.v1 = new DashboardScenePageStateManager({});
     }
     return managers.v1;
   }
+
+  if (v === 'v2') {
+    if (!managers.v2) {
+      managers.v2 = new DashboardScenePageStateManagerV2({});
+    }
+    return managers.v2;
+  }
+
+  if (!managers.unified) {
+    managers.unified = new UnifiedDashboardScenePageStateManager({});
+  }
+
+  return managers.unified;
 }

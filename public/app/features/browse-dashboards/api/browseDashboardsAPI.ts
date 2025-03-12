@@ -8,11 +8,10 @@ import { createBaseQuery, handleRequestError } from 'app/api/createBaseQuery';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
+import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import {
-  DashboardDTO,
   DescendantCount,
   DescendantCountDTO,
   FolderDTO,
@@ -240,26 +239,16 @@ export const browseDashboardsAPI = createApi({
         // Move all the dashboards sequentially
         // TODO error handling here
         for (const dashboardUID of selectedDashboards) {
-          if (config.featureToggles.useV2DashboardsAPI) {
-            const fullDash = await getDashboardAPI('v2').getDashboardDTO(dashboardUID);
-
-            await getDashboardAPI('v2').saveDashboard({
-              dashboard: fullDash.spec,
-              folderUid: destinationUID,
-              overwrite: false,
-              message: '',
-              k8s: fullDash.metadata,
-            });
-          } else {
-            const fullDash: DashboardDTO = await getDashboardAPI().getDashboardDTO(dashboardUID);
-
-            await getDashboardAPI().saveDashboard({
-              dashboard: fullDash.dashboard,
-              folderUid: destinationUID,
-              overwrite: false,
-              message: '',
-            });
-          }
+          const fullDash = await getDashboardAPI().getDashboardDTO(dashboardUID);
+          const dashboard = isDashboardV2Resource(fullDash) ? fullDash.spec : fullDash.dashboard;
+          const k8s = isDashboardV2Resource(fullDash) ? fullDash.metadata : undefined;
+          await getDashboardAPI().saveDashboard({
+            dashboard,
+            folderUid: destinationUID,
+            overwrite: false,
+            message: '',
+            k8s,
+          });
         }
         return { data: undefined };
       },
@@ -308,21 +297,20 @@ export const browseDashboardsAPI = createApi({
             const name = response?.title;
 
             if (name) {
-              const payload =
-                config.featureToggles.useV2DashboardsAPI || config.featureToggles.kubernetesDashboards
-                  ? ['Dashboard moved to Recently deleted']
-                  : [
-                      t('browse-dashboards.soft-delete.success', 'Dashboard {{name}} moved to Recently deleted', {
-                        name,
-                      }),
-                    ];
+              const payload = config.featureToggles.kubernetesDashboards
+                ? ['Dashboard moved to Recently deleted']
+                : [
+                    t('browse-dashboards.soft-delete.success', 'Dashboard {{name}} moved to Recently deleted', {
+                      name,
+                    }),
+                  ];
 
               appEvents.publish({
                 type: AppEvents.alertSuccess.name,
                 payload,
               });
             }
-          } else if (config.featureToggles.useV2DashboardsAPI || config.featureToggles.kubernetesDashboards) {
+          } else if (config.featureToggles.kubernetesDashboards) {
             appEvents.publish({
               type: AppEvents.alertSuccess.name,
               payload: ['Dashboard deleted'],
@@ -344,8 +332,7 @@ export const browseDashboardsAPI = createApi({
     saveDashboard: builder.mutation<SaveDashboardResponseDTO, SaveDashboardCommand<Dashboard | DashboardV2Spec>>({
       queryFn: async (cmd) => {
         try {
-          // When we use the `useV2DashboardsAPI` flag, we can save 'v2' schema dashboards
-          if (config.featureToggles.useV2DashboardsAPI && isV2DashboardCommand(cmd)) {
+          if (isV2DashboardCommand(cmd)) {
             const response = await getDashboardAPI('v2').saveDashboard(cmd);
             return { data: response };
           }

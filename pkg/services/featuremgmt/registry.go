@@ -1560,13 +1560,6 @@ var (
 			Expression:   "true",
 		},
 		{
-			Name:            "useV2DashboardsAPI",
-			Description:     "Use the v2 kubernetes API in the frontend for dashboards",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaDashboardsSquad,
-			RequiresRestart: true, // changes the API routing
-		},
-		{
 			Name:         "feedbackButton",
 			Description:  "Enables a button to send feedback from the Grafana UI",
 			Stage:        FeatureStageExperimental,
