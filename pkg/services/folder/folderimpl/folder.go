@@ -154,6 +154,7 @@ func (s *Service) DBMigration(db db.DB) {
 	ctx := context.Background()
 	err := db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var err error
+		deleteOldFolders := true
 		if db.GetDialect().DriverName() == migrator.SQLite {
 			// covered by UQE_folder_org_id_uid
 			_, err = sess.Exec(`
@@ -168,6 +169,10 @@ func (s *Service) DBMigration(db db.DB) {
 				SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true
 				ON CONFLICT(uid, org_id) DO UPDATE SET title=excluded.title, updated=excluded.updated
 			`)
+		} else if db.GetDialect().DriverName() == migrator.Spanner {
+			// We may eventually make this migration work with Spanner, but for now don't do anything.
+			// We intend to store dashboards and folders only in unified storage when using spanner.
+			deleteOldFolders = false
 		} else {
 			// covered by UQE_folder_org_id_uid
 			_, err = sess.Exec(`
@@ -180,11 +185,13 @@ func (s *Service) DBMigration(db db.DB) {
 			return err
 		}
 
-		// covered by UQE_folder_org_id_uid
-		_, err = sess.Exec(`
+		if deleteOldFolders {
+			// covered by UQE_folder_org_id_uid
+			_, err = sess.Exec(`
 			DELETE FROM folder WHERE NOT EXISTS
 				(SELECT 1 FROM dashboard WHERE dashboard.uid = folder.uid AND dashboard.org_id = folder.org_id AND dashboard.is_folder = true)
 		`)
+		}
 		return err
 	})
 	if err != nil {
