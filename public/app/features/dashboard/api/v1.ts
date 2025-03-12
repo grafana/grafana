@@ -70,7 +70,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       getDashboardUrl({
         uid: v.metadata.name,
         currentQueryParams: '',
-        slug: kbn.slugifyForUrl(v.spec.title),
+        slug: kbn.slugifyForUrl(v.spec.title.trim()),
       })
     );
 

@@ -143,7 +143,7 @@ export class K8sDashboardV2API
       getDashboardUrl({
         uid: v.metadata.name,
         currentQueryParams: '',
-        slug: kbn.slugifyForUrl(v.spec.title),
+        slug: kbn.slugifyForUrl(v.spec.title.trim()),
       })
     );
 

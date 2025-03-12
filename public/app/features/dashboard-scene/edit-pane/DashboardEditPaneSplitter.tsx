@@ -67,8 +67,10 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
     containerStyle.overflow = 'unset';
   }
 
-  const onBodyRef = (ref: HTMLDivElement) => {
-    dashboard.onSetScrollRef(new DivScrollElement(ref));
+  const onBodyRef = (ref: HTMLDivElement | null) => {
+    if (ref) {
+      dashboard.onSetScrollRef(new DivScrollElement(ref));
+    }
   };
 
   return (
