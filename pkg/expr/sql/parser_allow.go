@@ -136,16 +136,54 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 	b = true // so don't have to return true in every case but default
 
 	switch strings.ToLower(f.Name.String()) {
-	case "if":
+	// Conditional functions
+	case "if", "coalesce", "ifnull", "nullif":
 		return
 
+	// Aggregation functions
 	case "sum", "avg", "count", "min", "max":
 		return
-
-	case "coalesce":
+	case "stddev", "std", "stddev_pop":
+		return
+	case "variance", "var_pop":
 		return
 
+	// Mathematical functions
+	case "abs":
+		return
+	case "round", "floor", "ceiling", "ceil":
+		return
+	case "sqrt", "pow", "power":
+		return
+	case "mod", "log", "log10", "exp":
+		return
+	case "sign":
+		return
+
+	// String functions
+	case "concat", "length", "char_length":
+		return
+	case "lower", "upper":
+		return
+	case "substring", "trim":
+		return
+
+	// Date functions
 	case "str_to_date":
+		return
+	case "date_format", "now", "curdate", "curtime":
+		return
+	case "date_add", "date_sub":
+		return
+	case "year", "month", "day", "weekday":
+		return
+	case "datediff":
+		return
+	case "unix_timestamp", "from_unixtime":
+		return
+
+	// Type conversion
+	case "cast", "convert":
 		return
 
 	default:
