@@ -82,17 +82,15 @@ export const NoRulesSplash = () => {
           ) : null
         }
       >
-        <>
-          <Trans i18nKey="alerting.list-view.empty.provisioning">
-            You can also define rules through file provisioning or Terraform.{' '}
-            <TextLink
-              href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/"
-              external
-            >
-              Learn more
-            </TextLink>
-          </Trans>
-        </>
+        <Trans i18nKey="alerting.list-view.empty.provisioning">
+          You can also define rules through file provisioning or Terraform.{' '}
+          <TextLink
+            href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/"
+            external
+          >
+            Learn more
+          </TextLink>
+        </Trans>
       </EmptyState>
     </div>
   );
