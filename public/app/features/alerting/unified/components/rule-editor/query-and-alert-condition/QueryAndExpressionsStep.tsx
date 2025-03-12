@@ -442,17 +442,17 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const switchMode =
     isGrafanaAlertingType && isSwitchModeEnabled
       ? {
-        isAdvancedMode: !simplifiedQueryStep,
-        setAdvancedMode: (isAdvanced: boolean) => {
-          if (!getValues('editorSettings.simplifiedQueryEditor')) {
-            if (!areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries)) {
-              setShowResetModal(true);
-              return;
+          isAdvancedMode: !simplifiedQueryStep,
+          setAdvancedMode: (isAdvanced: boolean) => {
+            if (!getValues('editorSettings.simplifiedQueryEditor')) {
+              if (!areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries)) {
+                setShowResetModal(true);
+                return;
+              }
             }
-          }
-          setValue('editorSettings.simplifiedQueryEditor', !isAdvanced);
-        },
-      }
+            setValue('editorSettings.simplifiedQueryEditor', !isAdvanced);
+          },
+        }
       : undefined;
 
   return (

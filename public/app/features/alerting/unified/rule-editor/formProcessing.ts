@@ -95,8 +95,7 @@ export function areQueriesTransformableToSimpleCondition(
       reduceExpression.model.settings?.mode === undefined);
 
   const thresholdExpressionIndex = expressionQueries.findIndex(
-    (query) =>
-      query.model.type === ExpressionQueryType.threshold 
+    (query) => query.model.type === ExpressionQueryType.threshold
   );
   const thresholdExpression = expressionQueries.at(thresholdExpressionIndex);
   const conditions = thresholdExpression?.model.conditions ?? [];
