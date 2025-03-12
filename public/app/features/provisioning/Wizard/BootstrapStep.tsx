@@ -21,6 +21,7 @@ import { useGetFrontendSettingsQuery, useGetRepositoryFilesQuery, useGetResource
 import { StepStatus } from '../hooks/useStepStatus';
 import { checkSyncSettings } from '../utils';
 
+import { BootstrapOptionCard } from './BootstrapOptionCard';
 import { WizardFormData } from './types';
 
 type Target = 'instance' | 'folder';
@@ -283,42 +284,16 @@ export function BootstrapStep({ onOptionSelect, onStepUpdate }: Props) {
                 const optionState = getOptionState(option);
                 const isSelected = option.value === field.value && selectedOption?.operation === option.operation;
 
-                return optionState.isDisabled ? (
-                  <Box key={`${option.value}-${option.operation}`} paddingLeft={2} paddingRight={2}>
-                    <Tooltip content={optionState.disabledReason || ''} placement="top">
-                      <div style={{ pointerEvents: 'auto' }}>
-                        <div style={{ pointerEvents: 'none' }}>
-                          <Card disabled={true} tabIndex={-1}>
-                            <Card.Heading>
-                              <Stack direction="row" alignItems="center" gap={2}>
-                                <Text color="secondary">{option.label}</Text>
-                                <Badge color="blue" text="Not available" icon="info" />
-                              </Stack>
-                            </Card.Heading>
-                            <Card.Description>{option.description}</Card.Description>
-                          </Card>
-                        </div>
-                      </div>
-                    </Tooltip>
-                  </Box>
-                ) : (
-                  <Card
+                return (
+                  <BootstrapOptionCard
                     key={`${option.value}-${option.operation}`}
+                    option={option}
                     isSelected={isSelected}
-                    onClick={() => {
-                      field.onChange(option.value);
-                      handleOptionSelect(option);
-                    }}
-                    tabIndex={0}
-                    autoFocus={index === 0}
-                  >
-                    <Card.Heading>
-                      <Text color="primary" element="h4">
-                        {option.label}
-                      </Text>
-                    </Card.Heading>
-                    <Card.Description>{option.description}</Card.Description>
-                  </Card>
+                    optionState={optionState}
+                    index={index}
+                    onSelect={handleOptionSelect}
+                    onChange={field.onChange}
+                  />
                 );
               })}
             </>
