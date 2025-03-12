@@ -28,6 +28,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.JobSpec":                schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.JobStatus":              schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.LocalRepositoryConfig":  schema_pkg_apis_provisioning_v0alpha1_LocalRepositoryConfig(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ManagerStats":           schema_pkg_apis_provisioning_v0alpha1_ManagerStats(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.MigrateJobOptions":      schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.PullRequestJobOptions":  schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.Repository":             schema_pkg_apis_provisioning_v0alpha1_Repository(ref),
@@ -761,6 +762,49 @@ func schema_pkg_apis_provisioning_v0alpha1_LocalRepositoryConfig(ref common.Refe
 	}
 }
 
+func schema_pkg_apis_provisioning_v0alpha1_ManagerStats(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Manager kind",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"id": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Manager identity",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"stats": {
+						SchemaProps: spec.SchemaProps{
+							Description: "stats",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceCount"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"stats"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceCount"},
+	}
+}
+
 func schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -1187,12 +1231,6 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceCount(ref common.ReferenceCal
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"repository": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
 					"group": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -1468,14 +1506,15 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceStats(ref common.ReferenceCal
 							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
-					"items": {
+					"instance": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
 								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "Stats across all unified storage When legacy storage is still used, this will offer a shim",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -1486,11 +1525,30 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceStats(ref common.ReferenceCal
 							},
 						},
 					},
+					"managed": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Stats for each manager",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ManagerStats"),
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceCount", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ManagerStats", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceCount", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
