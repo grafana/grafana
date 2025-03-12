@@ -35,14 +35,15 @@ func setupTestEnv(t testing.TB) *Service {
 	cfg := setting.NewCfg()
 
 	ac := &Service{
-		cache:         localcache.ProvideService(),
-		cfg:           cfg,
-		features:      featuremgmt.WithFeatures(),
-		log:           log.New("accesscontrol"),
-		registrations: accesscontrol.RegistrationList{},
-		roles:         accesscontrol.BuildBasicRoleDefinitions(),
-		store:         database.ProvideService(db.InitTestDB(t)),
-		permRegistry:  permreg.ProvidePermissionRegistry(),
+		cache:          localcache.ProvideService(),
+		cfg:            cfg,
+		features:       featuremgmt.WithFeatures(),
+		log:            log.New("accesscontrol"),
+		registrations:  accesscontrol.RegistrationList{},
+		roles:          accesscontrol.BuildBasicRoleDefinitions(),
+		store:          database.ProvideService(db.InitTestDB(t)),
+		permRegistry:   permreg.ProvidePermissionRegistry(),
+		actionResolver: resourcepermissions.NewActionSetService(),
 	}
 	require.NoError(t, ac.RegisterFixedRoles(context.Background()))
 	return ac
