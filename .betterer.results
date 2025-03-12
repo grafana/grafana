@@ -5,6 +5,12 @@
 //
 exports[`better eslint`] = {
   value: `{
+    "apps/dashboard/tshack/v0alpha1_spec_gen.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "apps/dashboard/tshack/v1alpha1_spec_gen.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
     "e2e/old-arch/utils/support/types.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -2381,10 +2387,8 @@ exports[`better eslint`] = {
     ],
     "public/app/features/alerting/unified/components/rules/CloudRules.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/alerting/unified/components/rules/EditRuleGroupModal.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
@@ -5675,10 +5679,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
-    ],
-    "public/app/features/scopes/index.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`./ScopesDashboards\`)", "0"],
-      [0, 0, 0, "Do not re-export imported variable (\`./instance\`)", "1"]
     ],
     "public/app/features/search/page/components/ActionRow.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]

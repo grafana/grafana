@@ -45,7 +45,15 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
   }
 
   public addItem(item: ConditionsRenderingConditions) {
-    this.setStateAndNotify({ value: [...this.state.value, item] });
+    // We don't use `setStateAndNotify` here because
+    // We need to set a parent and activate the new condition before notifying the root
+    this.setState({ value: [...this.state.value, item] });
+
+    if (this.isActive && !item.isActive) {
+      item.activate();
+    }
+
+    this.getConditionalLogicRoot().notifyChange();
   }
 
   public static createEmpty(): ConditionalRenderingGroup {
@@ -59,6 +67,7 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
     } else {
       rootGroup.setState({ value: rootGroup.state.value.filter((condition) => condition !== this) });
     }
+    this.getConditionalLogicRoot().notifyChange();
   }
 
   public serialize(): ConditionalRenderingGroupKind {
