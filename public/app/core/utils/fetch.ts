@@ -115,7 +115,7 @@ export const parseBody = (options: BackendSrvRequest, isAppJson: boolean) => {
 
 export async function parseResponseBody<T>(
   response: Response,
-  responseType?: 'json' | 'text' | 'arraybuffer' | 'blob'
+  responseType?: 'json' | 'text' | 'arraybuffer' | 'blob' | 'stream'
 ): Promise<T> {
   if (responseType) {
     switch (responseType) {
@@ -142,6 +142,9 @@ export async function parseResponseBody<T>(
         // this specifically returns a Promise<string>
         // TODO refactor this function to remove the type assertions
         return response.text() as Promise<T>;
+
+      case 'stream':
+        return response.body as unknown as Promise<T>;
     }
   }
 

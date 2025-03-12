@@ -68,7 +68,7 @@ export type BackendSrvRequest = {
    *
    * By default values are json parsed from text
    */
-  responseType?: 'json' | 'text' | 'arraybuffer' | 'blob';
+  responseType?: 'json' | 'text' | 'arraybuffer' | 'blob' | 'stream';
 
   /**
    * Used to cancel an open connection
