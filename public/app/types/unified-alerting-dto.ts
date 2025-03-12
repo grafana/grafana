@@ -262,6 +262,7 @@ export interface PostableGrafanaRuleDefinition {
   record?: {
     metric: string;
     from: string;
+    target_datasource_uid?: string;
   };
   intervalSeconds?: number;
 }
@@ -277,6 +278,12 @@ export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   updated_by?: UpdatedBy | null;
   version?: number;
 }
+
+// types for Grafana-managed recording and alerting rules
+export type GrafanaAlertingRuleDefinition = Omit<GrafanaRuleDefinition, 'record'>;
+export type GrafanaRecordingRuleDefinition = GrafanaRuleDefinition & {
+  record: GrafanaRuleDefinition['record'];
+};
 
 export interface RulerGrafanaRuleDTO<T = GrafanaRuleDefinition> {
   grafana_alert: T;

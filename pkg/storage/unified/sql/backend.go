@@ -40,6 +40,7 @@ type BackendOptions struct {
 	PollingInterval time.Duration
 	WatchBufferSize int
 	IsHA            bool
+	storageMetrics  *resource.StorageMetrics
 
 	// testing
 	SimulatedNetworkLatency time.Duration // slows down the create transactions by a fixed amount
@@ -69,6 +70,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		dbProvider:              opts.DBProvider,
 		pollingInterval:         opts.PollingInterval,
 		watchBufferSize:         opts.WatchBufferSize,
+		storageMetrics:          opts.storageMetrics,
 		bulkLock:                &bulkLock{running: make(map[string]bool)},
 		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
 	}, nil
@@ -85,8 +87,9 @@ type backend struct {
 	initErr  error
 
 	// o11y
-	log    log.Logger
-	tracer trace.Tracer
+	log            log.Logger
+	tracer         trace.Tracer
+	storageMetrics *resource.StorageMetrics
 
 	// database
 	dbProvider db.DBProvider

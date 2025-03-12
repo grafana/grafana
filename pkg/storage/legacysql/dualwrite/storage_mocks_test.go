@@ -106,3 +106,12 @@ func (m storageMock) DeleteCollection(ctx context.Context, deleteValidation rest
 	}
 	return args.Get(0).(runtime.Object), args.Error(1)
 }
+
+type updatedObjInfoObj struct{}
+
+func (u updatedObjInfoObj) UpdatedObject(ctx context.Context, oldObj runtime.Object) (newObj runtime.Object, err error) { // nolint:staticcheck
+	// nolint:staticcheck
+	oldObj = exampleObj
+	return oldObj, nil
+}
+func (u updatedObjInfoObj) Preconditions() *metav1.Preconditions { return &metav1.Preconditions{} }

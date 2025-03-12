@@ -38,14 +38,19 @@ jobs:
           FROM_COMMIT=$(go list -m -json github.com/grafana/alerting | jq -r '.Version' | grep -oP '(?<=-)[a-f0-9]+$')
           echo "from_commit=$FROM_COMMIT" >> $GITHUB_OUTPUT
 
+      - name: Get current branch name
+        id: current-branch-name
+        run: echo "name=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> "$GITHUB_OUTPUT"
+
       - name: Get latest commit
         id: latest-commit
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TO_COMMIT=$(gh api repos/grafana/alerting/commits/main --jq '.sha')
-          if [ -z "$TO_COMMIT" ]; then
-            echo "Failed to fetch latest commit"
+          BRANCH="${{ steps.current-branch-name.outputs.name }}"
+          TO_COMMIT=$(gh api repos/grafana/alerting/commits/$BRANCH  --jq '.sha')
+           if [ -z "$TO_COMMIT" ]; then
+            echo "Branch $BRANCH not found in alerting repo, falling back to main branch"
             exit 1
           fi
           echo "to_commit=$TO_COMMIT" >> $GITHUB_OUTPUT

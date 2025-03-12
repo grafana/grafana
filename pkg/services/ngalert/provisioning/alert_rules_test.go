@@ -229,6 +229,97 @@ func TestAlertRuleService(t *testing.T) {
 		require.Equal(t, ruleMetadata, readGroup.Rules[0].Metadata)
 	})
 
+	t.Run("updating a group with editor settings should override its prometheus rule definition", func(t *testing.T) {
+		namespaceUID := "my-namespace"
+		groupTitle := "test-group-123"
+
+		// create the rule group via the rule store, to persist the editor settings
+		rule := createTestRule(util.GenerateShortUID(), groupTitle, orgID, namespaceUID)
+		ruleMetadata := models.AlertRuleMetadata{
+			EditorSettings: models.EditorSettings{
+				SimplifiedQueryAndExpressionsSection: true,
+			},
+			PrometheusStyleRule: &models.PrometheusStyleRule{
+				OriginalRuleDefinition: "old",
+			},
+		}
+		rule.Metadata = ruleMetadata
+		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.AlertRule{rule})
+		require.NoError(t, err)
+		require.Len(t, r, 1)
+
+		// Set the UID for the rule to update it
+		rule.UID = r[0].UID
+		// clear the editor settings in the metadata to check that the existing setting is not overridden
+		rule.Metadata = models.AlertRuleMetadata{
+			PrometheusStyleRule: &models.PrometheusStyleRule{
+				OriginalRuleDefinition: "new",
+			},
+		}
+
+		// Now update the rule group with the rule to update its metadata
+		group := models.AlertRuleGroup{
+			Title:     groupTitle,
+			Interval:  60,
+			FolderUID: namespaceUID,
+			Rules:     []models.AlertRule{rule},
+		}
+
+		err = ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		readGroup, err := ruleService.GetRuleGroup(context.Background(), u, namespaceUID, groupTitle)
+		require.NoError(t, err)
+		require.NotEmpty(t, readGroup.Rules)
+		require.Len(t, readGroup.Rules, 1)
+
+		// check that the editor settings are still there
+		require.True(t, readGroup.Rules[0].Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection)
+		// check the new prometheus rule definition
+		require.Equal(t, "new", readGroup.Rules[0].Metadata.PrometheusStyleRule.OriginalRuleDefinition)
+	})
+
+	t.Run("updating a group should override its prometheus rule definition", func(t *testing.T) {
+		namespaceUID := "my-namespace"
+		groupTitle := "test-group-123"
+
+		// create the rule group via the rule store, to persist the editor settings
+		rule := createTestRule(util.GenerateShortUID(), groupTitle, orgID, namespaceUID)
+		ruleMetadata := models.AlertRuleMetadata{
+			PrometheusStyleRule: &models.PrometheusStyleRule{
+				OriginalRuleDefinition: "old",
+			},
+		}
+		rule.Metadata = ruleMetadata
+		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.AlertRule{rule})
+		require.NoError(t, err)
+		require.Len(t, r, 1)
+
+		// Set the UID for the rule to update it
+		rule.UID = r[0].UID
+		// make the metadata empty
+		rule.Metadata = models.AlertRuleMetadata{}
+
+		// Now update the rule group with the rule to update its metadata
+		group := models.AlertRuleGroup{
+			Title:     groupTitle,
+			Interval:  60,
+			FolderUID: namespaceUID,
+			Rules:     []models.AlertRule{rule},
+		}
+
+		err = ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		readGroup, err := ruleService.GetRuleGroup(context.Background(), u, namespaceUID, groupTitle)
+		require.NoError(t, err)
+		require.NotEmpty(t, readGroup.Rules)
+		require.Len(t, readGroup.Rules, 1)
+
+		// check that the prometheus rule definition is empty
+		require.Nil(t, readGroup.Rules[0].Metadata.PrometheusStyleRule)
+	})
+
 	t.Run("updating a rule should not override its editor settings", func(t *testing.T) {
 		rule := createTestRule(util.GenerateShortUID(), "my-group", orgID, "my-folder")
 		ruleMetadata := models.AlertRuleMetadata{
@@ -581,6 +672,42 @@ func TestAlertRuleService(t *testing.T) {
 				name:   "should not be able to update from provenance file to none",
 				from:   models.ProvenanceFile,
 				to:     models.ProvenanceNone,
+				errNil: false,
+			},
+			{
+				name:   "should be able to update from provenance none to 'converted prometheus'",
+				from:   models.ProvenanceNone,
+				to:     models.ProvenanceConvertedPrometheus,
+				errNil: true,
+			},
+			{
+				name:   "should be able to update from provenance 'converted prometheus' to none",
+				from:   models.ProvenanceConvertedPrometheus,
+				to:     models.ProvenanceNone,
+				errNil: true,
+			},
+			{
+				name:   "should not be able to update from provenance 'converted prometheus' to api",
+				from:   models.ProvenanceConvertedPrometheus,
+				to:     models.ProvenanceAPI,
+				errNil: false,
+			},
+			{
+				name:   "should not be able to update from provenance 'converted prometheus' to file",
+				from:   models.ProvenanceConvertedPrometheus,
+				to:     models.ProvenanceFile,
+				errNil: false,
+			},
+			{
+				name:   "should not be able to update from provenance api to 'converted prometheus'",
+				from:   models.ProvenanceAPI,
+				to:     models.ProvenanceConvertedPrometheus,
+				errNil: false,
+			},
+			{
+				name:   "should not be able to update from provenance file to 'converted prometheus'",
+				from:   models.ProvenanceFile,
+				to:     models.ProvenanceConvertedPrometheus,
 				errNil: false,
 			},
 		}
@@ -1508,6 +1635,40 @@ func TestReplaceGroup(t *testing.T) {
 			require.Len(t, updates, 1)
 		})
 	})
+
+	t.Run("alert rule metadata should be updated correctly", func(t *testing.T) {
+		service, _, _, _ := initServiceWithData(t)
+
+		rule := dummyRule("test#3", orgID)
+		// the rule must have a UID to be updated, otherwise it will be created as new
+		// and the previous version will be deleted
+		rule.UID = util.GenerateShortUID()
+		rule.Metadata = models.AlertRuleMetadata{
+			EditorSettings: models.EditorSettings{
+				SimplifiedQueryAndExpressionsSection: true,
+			},
+			PrometheusStyleRule: &models.PrometheusStyleRule{
+				OriginalRuleDefinition: "old",
+			},
+		}
+		group := models.AlertRuleGroup{
+			Title:     rule.RuleGroup,
+			Interval:  rule.IntervalSeconds,
+			FolderUID: rule.NamespaceUID,
+			Rules:     []models.AlertRule{rule},
+		}
+
+		err := service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceNone)
+		require.NoError(t, err)
+
+		rule.Metadata.PrometheusStyleRule.OriginalRuleDefinition = "new"
+		err = service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceNone)
+		require.NoError(t, err)
+
+		rule, _, err = service.GetAlertRule(context.Background(), u, rule.UID)
+		require.NoError(t, err)
+		require.Equal(t, "new", rule.Metadata.PrometheusStyleRule.OriginalRuleDefinition)
+	})
 }
 
 func TestDeleteRuleGroup(t *testing.T) {
@@ -1601,7 +1762,7 @@ func TestDeleteRuleGroup(t *testing.T) {
 func TestDeleteRuleGroups(t *testing.T) {
 	orgID1 := rand.Int63()
 	orgID2 := rand.Int63()
-	u := &user.SignedInUser{OrgID: orgID1}
+	u := &user.SignedInUser{OrgID: orgID1, UserUID: "test-test"}
 
 	// Create groups across different orgs and namespaces
 	groupKey1 := models.AlertRuleGroupKey{
@@ -1680,6 +1841,7 @@ func TestDeleteRuleGroups(t *testing.T) {
 			// Verify only rules from group1 in org1 were deleted
 			deletes := getDeletedRules(t, ruleStore)
 			require.Len(t, deletes, 1)
+			require.Equal(t, "test-test", deletes[0].userID)
 			require.ElementsMatch(t, getUIDs(rules1), deletes[0].uids)
 		})
 
@@ -1920,8 +2082,9 @@ func getDeleteQueries(ruleStore *fakes.RuleStore) []fakes.GenericRecordedQuery {
 }
 
 type deleteRuleOperation struct {
-	orgID int64
-	uids  []string
+	orgID  int64
+	userID string
+	uids   []string
 }
 
 func getDeletedRules(t *testing.T, ruleStore *fakes.RuleStore) []deleteRuleOperation {
@@ -1933,12 +2096,20 @@ func getDeletedRules(t *testing.T, ruleStore *fakes.RuleStore) []deleteRuleOpera
 		orgID, ok := q.Params[0].(int64)
 		require.True(t, ok, "orgID parameter should be int64")
 
-		uids, ok := q.Params[1].([]string)
+		uid := ""
+		userUID, ok := q.Params[1].(*models.UserUID)
+		require.True(t, ok, "parameter should be UserUID")
+		if userUID != nil {
+			uid = string(*userUID)
+		}
+
+		uids, ok := q.Params[2].([]string)
 		require.True(t, ok, "uids parameter should be []string")
 
 		operations = append(operations, deleteRuleOperation{
-			orgID: orgID,
-			uids:  uids,
+			orgID:  orgID,
+			userID: uid,
+			uids:   uids,
 		})
 	}
 	return operations
@@ -1952,9 +2123,10 @@ func createAlertRuleService(t *testing.T, folderService folder.Service) AlertRul
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval: time.Second * 10,
 		},
-		Logger:        log.NewNopLogger(),
-		FolderService: folderService,
-		Bus:           bus.ProvideBus(tracing.InitializeTracerForTest()),
+		Logger:         log.NewNopLogger(),
+		FolderService:  folderService,
+		Bus:            bus.ProvideBus(tracing.InitializeTracerForTest()),
+		FeatureToggles: featuremgmt.WithFeatures(),
 	}
 	// store := fakes.NewRuleStore(t)
 	quotas := MockQuotaChecker{}

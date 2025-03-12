@@ -81,7 +81,7 @@ func TestCalculateChanges(t *testing.T) {
 		submittedMap := groupByUID(t, rules)
 		submitted := make([]*models.AlertRuleWithOptionals, 0, len(rules))
 		for _, rule := range rules {
-			submitted = append(submitted, &models.AlertRuleWithOptionals{AlertRule: *rule, HasMetadata: true})
+			submitted = append(submitted, &models.AlertRuleWithOptionals{AlertRule: *rule, HasEditorSettings: true})
 		}
 
 		fakeStore := fakes.NewRuleStore(t)
@@ -169,6 +169,12 @@ func TestCalculateChanges(t *testing.T) {
 					r.For = 0
 				},
 			},
+			{
+				name: "GUID is empty",
+				mutator: func(r *models.AlertRule) {
+					r.GUID = ""
+				},
+			},
 		}
 
 		dbRule := gen.With(gen.WithOrgID(orgId)).GenerateRef()
@@ -216,7 +222,7 @@ func TestCalculateChanges(t *testing.T) {
 		submittedMap := groupByUID(t, rules)
 		submitted := make([]*models.AlertRuleWithOptionals, 0, len(rules))
 		for _, rule := range rules {
-			submitted = append(submitted, &models.AlertRuleWithOptionals{AlertRule: *rule, HasMetadata: true})
+			submitted = append(submitted, &models.AlertRuleWithOptionals{AlertRule: *rule, HasEditorSettings: true})
 		}
 
 		changes, err := CalculateChanges(context.Background(), fakeStore, groupKey, submitted)

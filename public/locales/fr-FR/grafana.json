@@ -184,7 +184,8 @@
       "rule-identifier": "",
       "rule-type": "",
       "state-error-timeout": "",
-      "state-no-data": ""
+      "state-no-data": "",
+      "target-datasource-uid": ""
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -209,6 +210,8 @@
       "alerting": "",
       "alerting-change-description": "",
       "annotations": "",
+      "compare": "",
+      "compare-with-latest": "",
       "compareVersions": "",
       "comparing-versions": "",
       "condition": "",
@@ -228,17 +231,22 @@
       "provisioning": "",
       "provisioning-change-description": "",
       "queryAndAlertCondition": "",
-      "reset": "",
       "restore": "",
+      "restore-manually": "",
       "restore-modal": {
         "body": "",
+        "confirm": "",
+        "error": "",
         "summary": "",
         "title": ""
       },
+      "restore-version": "",
       "rule_group": "",
       "unknown": "",
       "unknown-change-description": "",
-      "user-id": ""
+      "user-id": "",
+      "warning-restore-manually": "",
+      "warning-restore-manually-title": ""
     },
     "annotations": {
       "description": "",
@@ -315,6 +323,10 @@
       "empty-state": {
         "title": ""
       },
+      "key-value-map": {
+        "add": "",
+        "confirm-add": ""
+      },
       "last-delivery-attempt": "",
       "last-delivery-failed": "",
       "no-contact-points-found": "",
@@ -367,6 +379,8 @@
     "list-view": {
       "empty": {
         "new-alert-rule": "",
+        "new-ds-managed-recording-rule": "",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "",
         "provisioning": ""
       },
@@ -492,6 +506,10 @@
       },
       "preview": "",
       "previewCondition": ""
+    },
+    "recording-rules": {
+      "description-target-data-source": "",
+      "label-target-data-source": ""
     },
     "rule-form": {
       "evaluation": {
@@ -1043,35 +1061,32 @@
         },
         "modal": {
           "title": ""
-        }
+        },
+        "repeat": {
+          "title": "",
+          "variable": {
+            "title": ""
+          }
+        },
+        "title": ""
       }
     },
     "edit-pane": {
-      "objects": {
-        "multi-select": {
-          "selection-number": ""
-        }
+      "elements": {
+        "dashboard": "",
+        "objects": "",
+        "panel": "",
+        "panels": "",
+        "row": "",
+        "rows": "",
+        "tab": "",
+        "tabs": ""
       },
       "open": "",
-      "panels": {
-        "multi-select": {
-          "selection-number": ""
-        }
-      },
       "row": {
         "header": {
           "hide": "",
           "title": ""
-        },
-        "multi-select": {
-          "options-header": "",
-          "selection-number": ""
-        }
-      },
-      "tab": {
-        "multi-select": {
-          "options-header": "",
-          "selection-number": ""
         }
       }
     },
@@ -1146,10 +1161,27 @@
       "rows": "Nombre total de lignes",
       "table-title": "Statistiques"
     },
+    "layout": {
+      "common": {
+        "copy": "",
+        "copy-or-duplicate": "",
+        "delete": "",
+        "duplicate": "",
+        "layout": ""
+      }
+    },
     "options": {
       "description": "",
-      "title": "",
       "title-option": ""
+    },
+    "outline": {
+      "tree": {
+        "item": {
+          "collapse": "",
+          "empty": "",
+          "expand": ""
+        }
+      }
     },
     "panel-edit": {
       "alerting-tab": {
@@ -1161,6 +1193,12 @@
       "description": "",
       "item-options": {
         "hide-no-data": "",
+        "repeat": {
+          "variable": {
+            "description": "",
+            "title": ""
+          }
+        },
         "title": ""
       },
       "name": "",
@@ -1177,9 +1215,28 @@
     "rows-layout": {
       "description": "",
       "name": "",
+      "option": {
+        "height": "",
+        "hide-header": "",
+        "repeat": "",
+        "title": ""
+      },
+      "options": {
+        "height-expand": "",
+        "height-min": ""
+      },
       "row": {
         "collapse": "",
         "expand": "",
+        "menu": {
+          "add": "",
+          "add-panel": "",
+          "add-row-above": "",
+          "add-row-below": "",
+          "move-down": "",
+          "move-row": "",
+          "move-up": ""
+        },
         "new": "",
         "repeat": {
           "learn-more": "",
@@ -1187,30 +1244,28 @@
         }
       },
       "row-options": {
-        "height": {
-          "expand": "",
-          "hide-row-header": "",
-          "min": "",
-          "title": ""
-        },
-        "repeat": {
-          "title": "",
-          "variable": {
-            "title": ""
-          }
-        },
-        "title": "",
         "title-option": ""
       }
     },
     "tabs-layout": {
       "description": "",
+      "menu": {
+        "move-tab": ""
+      },
       "name": "",
       "tab": {
+        "menu": {
+          "add": "",
+          "add-panel": "",
+          "add-tab-above": "",
+          "add-tab-after": "",
+          "add-tab-before": "",
+          "move-left": "",
+          "move-right": ""
+        },
         "new": ""
       },
       "tab-options": {
-        "title": "",
         "title-option": ""
       }
     },
@@ -1285,7 +1340,8 @@
     "viz-panel": {
       "options": {
         "description": "",
-        "title": "",
+        "open-edit": "",
+        "plugin-type-image": "",
         "title-option": "",
         "transparent-background": ""
       }
@@ -1852,6 +1908,16 @@
       "text-color-swatch": "",
       "transparent-swatch": ""
     },
+    "page-toolbar": {
+      "go-back": "",
+      "search-dashboard-name": "",
+      "search-links": "",
+      "search-parent-folder": ""
+    },
+    "pagination": {
+      "next-page": "",
+      "previous-page": ""
+    },
     "secret-form-field": {
       "reset": ""
     },
@@ -2223,6 +2289,14 @@
       "links": "",
       "log-line": "",
       "no-details": ""
+    },
+    "log-line-menu": {
+      "copy-link": "",
+      "copy-log": "",
+      "icon-label": "",
+      "pin-to-outline": "",
+      "show-context": "",
+      "unpin-from-outline": ""
     },
     "log-row-message": {
       "ellipsis": "",
@@ -2840,6 +2914,10 @@
     }
   },
   "navigation": {
+    "invite-user": {
+      "invite-button": "",
+      "invite-tooltip": ""
+    },
     "item": {
       "add-bookmark": "",
       "remove-bookmark": ""
@@ -3047,7 +3125,8 @@
       "old-password-required": "Vous devez saisir l'ancien mot de passe",
       "passwords-must-match": "Les mots de passe doivent être identiques",
       "strong-password-validation-register": "Selon notre politique, votre mot de passe n'est pas suffisamment sécurisé"
-    }
+    },
+    "change-theme": ""
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
@@ -3454,7 +3533,6 @@
   "share-dashboard": {
     "menu": {
       "export-json-title": "",
-      "invite-user-title": "",
       "share-externally-title": "",
       "share-internally-title": "",
       "share-snapshot-title": ""
