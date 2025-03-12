@@ -1,19 +1,6 @@
 import { Badge, Box, Card, Stack, Text, Tooltip } from '@grafana/ui';
 
-type Target = 'instance' | 'folder';
-type Operation = 'pull' | 'migrate';
-
-interface ModeOption {
-  value: Target;
-  operation: Operation;
-  label: string;
-  description: string;
-}
-
-interface OptionState {
-  isDisabled: boolean;
-  disabledReason?: string;
-}
+import { ModeOption, OptionState, Target } from './types';
 
 interface Props {
   option: ModeOption;

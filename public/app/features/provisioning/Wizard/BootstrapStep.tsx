@@ -19,8 +19,8 @@ import { useGetFrontendSettingsQuery, useGetRepositoryFilesQuery, useGetResource
 import { StepStatus } from '../hooks/useStepStatus';
 import { checkSyncSettings } from '../utils';
 
-import { BootstrapOptionsList, ModeOption, modeOptions } from './BootstrapOptionsList';
-import { WizardFormData } from './types';
+import { BootstrapOptionsList } from './BootstrapOptionsList';
+import { ModeOption, WizardFormData, modeOptions } from './types';
 
 interface Props {
   onOptionSelect: (requiresMigration: boolean) => void;
