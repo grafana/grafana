@@ -48,11 +48,11 @@ func (f *folderReader) Write(ctx context.Context, key *resource.ResourceKey, val
 
 func (j *migrationJob) loadFolders(ctx context.Context) error {
 	logger := j.logger
-	j.progress.SetMessage("reading folder tree")
+	j.progress.SetMessage(ctx, "reading folder tree")
 
 	repoName := j.target.Config().Name
 
-	j.progress.SetMessage("migrate folder tree from legacy")
+	j.progress.SetMessage(ctx, "migrate folder tree from legacy")
 	reader := &folderReader{
 		tree:           j.folderTree,
 		targetRepoName: repoName,
@@ -70,7 +70,7 @@ func (j *migrationJob) loadFolders(ctx context.Context) error {
 	}
 
 	// create folders first is required so that empty folders exist when finished
-	j.progress.SetMessage("write folders")
+	j.progress.SetMessage(ctx, "write folders")
 
 	err = j.folderTree.Walk(ctx, func(ctx context.Context, folder resources.Folder) error {
 		p := folder.Path + "/"
@@ -106,7 +106,6 @@ func (j *migrationJob) loadFolders(ctx context.Context) error {
 			return result.Error
 		}
 
-		j.progress.Record(ctx, result)
 		return nil
 	})
 	if err != nil {

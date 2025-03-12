@@ -70,7 +70,7 @@ func (j *migrationJob) loadResources(ctx context.Context) error {
 	}}
 
 	for _, kind := range kinds {
-		j.progress.SetMessage(fmt.Sprintf("migrate %s resource", kind.Resource))
+		j.progress.SetMessage(ctx, fmt.Sprintf("migrate %s resource", kind.Resource))
 		gr := kind.GroupResource()
 		opts := legacy.MigrateOptions{
 			Namespace:   j.namespace,
@@ -91,7 +91,7 @@ func (j *migrationJob) loadResources(ctx context.Context) error {
 			if history > count {
 				count = history // the number of items we will process
 			}
-			j.progress.SetTotal(int(count))
+			j.progress.SetTotal(ctx, int(count))
 		}
 
 		opts.OnlyCount = false // this time actually write

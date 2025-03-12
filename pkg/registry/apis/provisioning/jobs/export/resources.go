@@ -26,7 +26,7 @@ func (r *exportJob) loadResources(ctx context.Context) error {
 	}}
 
 	for _, kind := range kinds {
-		r.progress.SetMessage(fmt.Sprintf("reading %s resource", kind.Resource))
+		r.progress.SetMessage(ctx, fmt.Sprintf("reading %s resource", kind.Resource))
 		if err := r.loadResourcesFromAPIServer(ctx, kind); err != nil {
 			return fmt.Errorf("error loading %s %w", kind.Resource, err)
 		}
