@@ -351,7 +351,9 @@ export const RowsList = (props: RowsListProps) => {
               rowStyled={rowBg !== undefined}
               rowExpanded={rowExpanded}
               textWrapped={textWrapFinal !== undefined}
-              height={Number(style.height)}
+              // VariableSizeList overrides calculated in buildCellContainerStyle height of the cell,
+              // so we need to subtract 1 to respect the row border
+              height={Number(style.height) - 1}
               getActions={getActions}
               replaceVariables={replaceVariables}
               setInspectCell={setInspectCell}
