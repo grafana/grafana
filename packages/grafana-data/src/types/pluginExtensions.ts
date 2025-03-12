@@ -176,7 +176,6 @@ export type PluginExtensionEventHelpers<Context extends object = object> = {
 
 // Extension Points available in core Grafana
 export enum PluginExtensionPoints {
-  AdaptiveTelemetryQueryActionsV1 = 'grafana/adaptivetelemetry/query/action/v1',
   AlertInstanceAction = 'grafana/alerting/instance/action',
   AlertingHomePage = 'grafana/alerting/home',
   AlertingAlertingRuleAction = 'grafana/alerting/alertingrule/action',
@@ -187,6 +186,7 @@ export enum PluginExtensionPoints {
   ExploreToolbarAction = 'grafana/explore/toolbar/action',
   UserProfileTab = 'grafana/user/profile/tab',
   TraceViewDetails = 'grafana/traceview/details',
+  QueryEditorRowAdaptiveTelemetryV1 = 'grafana/query-editor-row/adaptivetelemetry/v1',
 }
 
 export type PluginExtensionPanelContext = {
@@ -201,7 +201,7 @@ export type PluginExtensionPanelContext = {
   data?: PanelData;
 };
 
-export type PluginExtensionAdaptiveTelemetryQueryActionsV1Context = {
+export type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context = {
   /** An ordered list of lower-case [a-z]+ string identifiers to provide context clues of where this component is being embedded and how we might want to consider displaying it */
   contextHints?: string[];
   query?: DataQuery;

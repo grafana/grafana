@@ -11,7 +11,7 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourcePluginContextProvider,
-  PluginExtensionAdaptiveTelemetryQueryActionsV1Context,
+  PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
   EventBusExtended,
   EventBusSrv,
   HistoryItem,
@@ -676,8 +676,8 @@ function MaybeQueryLibrarySaveButton(props: { query: DataQuery }) {
 
 function AdaptiveTelemetryQueryActions({ query }: { query: DataQuery }) {
   try {
-    const { isLoading, components } = usePluginComponents<PluginExtensionAdaptiveTelemetryQueryActionsV1Context>({
-      extensionPointId: PluginExtensionPoints.AdaptiveTelemetryQueryActionsV1,
+    const { isLoading, components } = usePluginComponents<PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context>({
+      extensionPointId: PluginExtensionPoints.QueryEditorRowAdaptiveTelemetryV1,
     });
 
     if (isLoading || !components.length) {
