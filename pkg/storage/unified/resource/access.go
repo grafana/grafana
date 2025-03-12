@@ -138,7 +138,7 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 
 	if !claims.NamespaceMatches(id.GetNamespace(), req.Namespace) {
 		span.SetAttributes(attribute.Bool("allowed", false))
-		span.SetStatus(codes.Error, "Subject empty")
+		span.SetStatus(codes.Error, "namespace missmatch")
 		span.RecordError(claims.ErrNamespaceMissmatch)
 		return claims.CheckResponse{Allowed: false}, claims.ErrNamespaceMissmatch
 	}
@@ -187,7 +187,7 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 	}
 	if !claims.NamespaceMatches(id.GetNamespace(), req.Namespace) {
 		span.SetAttributes(attribute.Bool("allowed", false))
-		span.SetStatus(codes.Error, "Subject empty")
+		span.SetStatus(codes.Error, "namespace missmatch")
 		span.RecordError(claims.ErrNamespaceMissmatch)
 		return nil, claims.ErrNamespaceMissmatch
 	}
