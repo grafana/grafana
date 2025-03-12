@@ -128,6 +128,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 				"GrafanaManagedAlert.Data.Model",
 				"GrafanaManagedAlert.NamespaceUID",
 				"GrafanaManagedAlert.NamespaceID",
+				"GrafanaManagedAlert.GUID",
 			}
 
 			// compare expected and actual and ignore the dynamic fields
@@ -449,6 +450,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 				"GrafanaManagedAlert.Data.Model",
 				"GrafanaManagedAlert.NamespaceUID",
 				"GrafanaManagedAlert.NamespaceID",
+				"GrafanaManagedAlert.GUID",
 			}
 
 			// compare expected and actual and ignore the dynamic fields
@@ -1180,6 +1182,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"is_paused": false,
 				"version": 1,
 				"uid": "uid",
+				"guid": "guid",
 				"namespace_uid": "nsuid",
 				"rule_group": "anotherrulegroup",
 				"no_data_state": "NoData",
@@ -1221,6 +1224,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"is_paused": false,
 				"version": 1,
 				"uid": "uid",
+				"guid": "guid",
 				"namespace_uid": "nsuid",
 				"rule_group": "anotherrulegroup",
 				"no_data_state": "Alerting",
@@ -1274,6 +1278,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"is_paused": false,
 				"version": 1,
 				"uid": "uid",
+				"guid": "guid",
 				"namespace_uid": "nsuid",
 				"rule_group": "anotherrulegroup",
 				"no_data_state": "NoData",
@@ -1640,6 +1645,7 @@ func TestIntegrationRuleCreate(t *testing.T) {
 				"GrafanaManagedAlert.UID",
 				"GrafanaManagedAlert.ID",
 				"GrafanaManagedAlert.NamespaceID",
+				"GrafanaManagedAlert.GUID",
 			}
 
 			// compare expected and actual and ignore the dynamic fields
@@ -2575,6 +2581,7 @@ func TestIntegrationQuota(t *testing.T) {
 						  "is_paused": false,
 						  "version":2,
 						  "uid":"uid",
+						  "guid": "guid",
 						  "namespace_uid":"nsuid",
 						  "rule_group":"arulegroup",
 						  "no_data_state":"NoData",
@@ -2688,6 +2695,7 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 									"is_paused": false,
 									"version": 1,
 									"uid": "uid",
+									"guid": "guid",
 									"namespace_uid": "nsuid",
 									"rule_group": "arulegroup",
 									"no_data_state": "NoData",
@@ -3169,7 +3177,8 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "intervalSeconds":60,
 						  "is_paused": false,
 						  "version":1,
-						  "uid":"uid",
+						  "uid":"uid", 
+                          "guid": "guid",
 						  "namespace_uid":"nsuid",
 						  "rule_group":"arulegroup",
 						  "no_data_state":"NoData",
@@ -3214,6 +3223,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "is_paused": false,
 						  "version":1,
 						  "uid":"uid",
+                          "guid": "guid",
 						  "namespace_uid":"nsuid",
 						  "rule_group":"arulegroup",
 						  "no_data_state":"Alerting",
@@ -3559,6 +3569,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "is_paused": false,
 						  "version":3,
 						  "uid":"uid",
+						  "guid": "guid",
 						  "namespace_uid":"nsuid",
 						  "rule_group":"arulegroup",
 						  "no_data_state":"NoData",
@@ -3603,6 +3614,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "is_paused": false,
 						  "version":3,
 						  "uid":"uid",
+						  "guid": "guid",
 						  "namespace_uid":"nsuid",
 						  "rule_group":"arulegroup",
 						  "no_data_state":"Alerting",
@@ -3740,6 +3752,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		                  "is_paused": false,
 		                  "version":4,
 		                  "uid":"uid",
+						  "guid": "guid",
 		                  "namespace_uid":"nsuid",
 		                  "rule_group":"arulegroup",
 		                  "no_data_state":"Alerting",
@@ -3857,6 +3870,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  "is_paused":false,
 					  "version":5,
 					  "uid":"uid",
+					  "guid": "guid",
 					  "namespace_uid":"nsuid",
 					  "rule_group":"arulegroup",
 					  "no_data_state":"Alerting",
@@ -3953,6 +3967,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  "is_paused":false,
 					  "version":5,
 					  "uid":"uid",
+                      "guid": "guid",
 					  "namespace_uid":"nsuid",
 					  "rule_group":"arulegroup",
 					  "no_data_state":"Alerting",
@@ -4926,6 +4941,7 @@ func rulesNamespaceWithoutVariableValues(t *testing.T, b []byte) (string, map[st
 				rule.GrafanaManagedAlert.NamespaceUID = "nsuid"
 				rule.GrafanaManagedAlert.Updated = time.Date(2021, time.Month(2), 21, 1, 10, 30, 0, time.UTC)
 				rule.GrafanaManagedAlert.UpdatedBy.UID = "uid"
+				rule.GrafanaManagedAlert.GUID = "guid"
 			}
 		}
 	}
