@@ -273,8 +273,10 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 			return ErrResp(http.StatusInternalServerError, err, "failed to get deleted rules")
 		}
 		result := apimodels.NamespaceConfigResponse{}
-		result[""] = []apimodels.GettableRuleGroupConfig{
-			toGettableRuleGroupConfig("", rules, map[string]ngmodels.Provenance{}, srv.resolveUserIdToNameFn(c.Req.Context())),
+		if len(rules) > 0 {
+			result[""] = []apimodels.GettableRuleGroupConfig{
+				toGettableRuleGroupConfig("", rules, map[string]ngmodels.Provenance{}, srv.resolveUserIdToNameFn(c.Req.Context())),
+			}
 		}
 		return response.JSON(http.StatusOK, result)
 	}

@@ -1734,6 +1734,19 @@
     },
     {
       "metadata": {
+        "name": "extraLanguages",
+        "resourceVersion": "1741626708204",
+        "creationTimestamp": "2025-03-10T17:11:48Z"
+      },
+      "spec": {
+        "description": "Enables additional languages",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "extraThemes",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-05-10T13:37:04Z"
@@ -1985,6 +1998,20 @@
     },
     {
       "metadata": {
+        "name": "grafanaManagedRecordingRulesDatasources",
+        "resourceVersion": "1741291902441",
+        "creationTimestamp": "2025-03-06T20:11:42Z"
+      },
+      "spec": {
+        "description": "Enables writing to data sources for Grafana-managed recording rules.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "grafanaconThemes",
         "resourceVersion": "1738661140740",
         "creationTimestamp": "2025-02-04T09:25:40Z"
@@ -2211,6 +2238,21 @@
     },
     {
       "metadata": {
+        "name": "inviteUserExperimental",
+        "resourceVersion": "1741358664069",
+        "creationTimestamp": "2025-03-07T14:44:24Z"
+      },
+      "spec": {
+        "description": "Renders invite user button along the app",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "jaegerBackendMigration",
         "resourceVersion": "1731599633815",
         "creationTimestamp": "2024-11-15T14:40:20Z"
@@ -2407,13 +2449,18 @@
     {
       "metadata": {
         "name": "logQLScope",
-        "resourceVersion": "1730842404843",
-        "creationTimestamp": "2024-11-11T11:53:24Z"
+        "resourceVersion": "1741643492217",
+        "creationTimestamp": "2024-11-11T11:53:24Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-10 21:51:32.217697 +0000 UTC"
+        }
       },
       "spec": {
         "description": "In-development feature that will allow injection of labels into loki queries.",
         "stage": "privatePreview",
         "codeowner": "@grafana/observability-logs",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -3252,16 +3299,18 @@
     {
       "metadata": {
         "name": "promQLScope",
-        "resourceVersion": "1735845919509",
+        "resourceVersion": "1741643492217",
         "creationTimestamp": "2024-01-29T20:22:17Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-01-02 19:25:19.509884 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-03-10 21:51:32.217697 +0000 UTC"
         }
       },
       "spec": {
         "description": "In-development feature that will allow injection of labels into prometheus queries.",
         "stage": "GA",
         "codeowner": "@grafana/oss-big-tent",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
         "expression": "true"
       }
     },
@@ -3799,7 +3848,7 @@
         }
       },
       "spec": {
-        "description": "Enables using SQL and DuckDB functions as Expressions.",
+        "description": "Enables SQL Expressions, which can execute SQL queries against data source results.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services"
       }
@@ -3867,14 +3916,18 @@
     {
       "metadata": {
         "name": "ssoSettingsSAML",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-03-14T11:04:45Z"
+        "resourceVersion": "1741342789814",
+        "creationTimestamp": "2024-03-14T11:04:45Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-07 10:19:49.814084 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use the new SSO Settings API to configure the SAML connector",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
-        "allowSelfServe": true
+        "allowSelfServe": true,
+        "expression": "true"
       }
     },
     {

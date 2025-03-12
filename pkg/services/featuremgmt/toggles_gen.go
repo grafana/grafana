@@ -536,7 +536,7 @@ const (
 	FlagLogQLScope = "logQLScope"
 
 	// FlagSqlExpressions
-	// Enables using SQL and DuckDB functions as Expressions.
+	// Enables SQL Expressions, which can execute SQL queries against data source results.
 	FlagSqlExpressions = "sqlExpressions"
 
 	// FlagNodeGraphDotLayout
@@ -958,6 +958,18 @@ const (
 	// FlagAlertRuleRestore
 	// Enables the alert rule restore feature
 	FlagAlertRuleRestore = "alertRuleRestore"
+
+	// FlagGrafanaManagedRecordingRulesDatasources
+	// Enables writing to data sources for Grafana-managed recording rules.
+	FlagGrafanaManagedRecordingRulesDatasources = "grafanaManagedRecordingRulesDatasources"
+
+	// FlagInviteUserExperimental
+	// Renders invite user button along the app
+	FlagInviteUserExperimental = "inviteUserExperimental"
+
+	// FlagExtraLanguages
+	// Enables additional languages
+	FlagExtraLanguages = "extraLanguages"
 
 	// FlagAlertingRuleRecoverDeleted
 	// Enables the UI functionality to recover and view deleted alert rules

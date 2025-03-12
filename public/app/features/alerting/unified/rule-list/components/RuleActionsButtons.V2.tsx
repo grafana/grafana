@@ -12,7 +12,7 @@ import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 import { useDeletePermanentlyModal } from '../../components/rule-viewer/DeletePermanentlyModal ';
 import { AlertRuleAction, useRulerRuleAbility } from '../../hooks/useAbilities';
 import * as ruleId from '../../utils/rule-id';
-import { isGrafanaAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
+import { isProvisionedRule, rulerRuleType } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
 
 interface Props {
@@ -39,7 +39,7 @@ export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }:
     { identifier: RuleIdentifier; isProvisioned: boolean } | undefined
   >(undefined);
 
-  const isProvisioned = isGrafanaRulerRule(rule) && Boolean(rule.grafana_alert.provenance);
+  const isProvisioned = isProvisionedRule(rule);
 
   const [editRuleSupported, editRuleAllowed] = useRulerRuleAbility(rule, groupIdentifier, AlertRuleAction.Update);
 
@@ -76,7 +76,7 @@ export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }:
       />
       {deleteModal}
       {deletePermanentlyModal}
-      {isGrafanaAlertingRule(rule) && showSilenceDrawer && (
+      {rulerRuleType.grafana.alertingRule(rule) && showSilenceDrawer && (
         <SilenceGrafanaRuleDrawer rulerRule={rule} onClose={() => setShowSilenceDrawer(false)} />
       )}
       {redirectToClone?.identifier && (
