@@ -129,6 +129,7 @@ type updateStep struct {
 	PluginPreinstall   plugininstaller.Preinstall
 	ManagedPlugins     managedplugins.Manager
 	ProvisionedPlugins provisionedplugins.Manager
+	provisionedPlugins []string
 	log                log.Logger
 }
 
@@ -217,10 +218,12 @@ func (s *updateStep) isManaged(ctx context.Context, pluginID string) bool {
 }
 
 func (s *updateStep) isProvisioned(ctx context.Context, pluginID string) bool {
-	provisionedPlugins, err := s.ProvisionedPlugins.ProvisionedPlugins(ctx)
-	if err != nil {
-		return false
+	if s.provisionedPlugins == nil {
+		var err error
+		s.provisionedPlugins, err = s.ProvisionedPlugins.ProvisionedPlugins(ctx)
+		if err != nil {
+			return false
+		}
 	}
-
-	return slices.Contains(provisionedPlugins, pluginID)
+	return slices.Contains(s.provisionedPlugins, pluginID)
 }
