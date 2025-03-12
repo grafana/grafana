@@ -41,7 +41,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
     const selectedTable = tables.find((t) => t.name === selected.value);
     if (selectedTable) {
       const updatedBuilderQuery: BuilderQueryExpression = {
-        ...builderQuery,
+        ...DEFAULT_LOGS_BUILDER_QUERY,
         from: {
           property: { name: selectedTable.name, type: BuilderQueryEditorPropertyType.String },
           type: BuilderQueryEditorExpressionType.Property,

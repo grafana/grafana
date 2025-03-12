@@ -14,6 +14,7 @@ import { AzureLogAnalyticsMetadataTable, AzureMonitorQuery, EngineSchema } from 
 import { AggregateSection } from './AggregationSection';
 import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
 import { FilterSection } from './FilterSection';
+import { FuzzySearch } from './FuzzySearch';
 import { GroupBySection } from './GroupBySection';
 import KQLPreview from './KQLPreview';
 import { TableSection } from './TableSection';
@@ -100,7 +101,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
         <GroupBySection {...props} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
         <EditorRow>
           <EditorFieldGroup>
-            <EditorField label="Limit">
+            <EditorField label="Limit" optional={true}>
               <Input
                 className="width-10"
                 type="number"
@@ -115,6 +116,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
             </EditorField>
           </EditorFieldGroup>
         </EditorRow>
+        <FuzzySearch {...props} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
         <KQLPreview
           query={query.azureLogAnalytics?.query || ''}
           hidden={isKQLPreviewHidden}

@@ -1,4 +1,8 @@
-import { BuilderQueryExpression } from '../../dataquery.gen';
+import {
+  BuilderQueryEditorExpressionType,
+  BuilderQueryEditorWhereArrayExpression,
+  BuilderQueryExpression,
+} from '../../dataquery.gen';
 import { AzureLogAnalyticsMetadataColumn } from '../../types';
 
 export class AzureMonitorKustoQueryParser {
@@ -10,10 +14,10 @@ export class AzureMonitorKustoQueryParser {
     aggregation?: string,
     filters?: string
   ): string {
-    const { from, columns, groupBy, limit } = builderQuery;
+    const { from, columns, groupBy, limit, where } = builderQuery;
 
     if (!from || !from.property.name) {
-      return ''; // If no table is specified, return an empty string.
+      return '';
     }
 
     const selectedTable = from.property.name;
@@ -22,25 +26,12 @@ export class AzureMonitorKustoQueryParser {
     const datetimeColumn = this.getDatetimeColumn(allColumns);
     const shouldApplyTimeFilter = this.shouldApplyTimeFilter(selectedColumns, datetimeColumn);
 
-    // Append the table source
     this.appendFrom(selectedTable, parts);
-
-    // Append where conditions
-    this.appendWhere(selectedColumns, filters, datetimeColumn, shouldApplyTimeFilter, allColumns, parts);
-
-    // Extract groupBy expressions if available
+    this.appendWhere(selectedColumns, filters, datetimeColumn, shouldApplyTimeFilter, allColumns, parts, where);
     const groupByStrings = groupBy?.expressions?.map((expression) => expression.property.name) || [];
-
-    // Append aggregation (if applicable)
     this.appendSummarize(selectedColumns, aggregation, groupByStrings, datetimeColumn, parts);
-
-    // Append selected columns if any
     this.appendProject(selectedColumns, parts);
-
-    // Append order by if necessary
-    this.appendOrderBy(datetimeColumn, selectedColumns, groupByStrings, shouldApplyTimeFilter, parts);
-
-    // Append limit if applicable
+    this.appendOrderBy(datetimeColumn, selectedColumns, groupByStrings, parts);
     this.appendLimit(limit, parts);
 
     return parts.join('\n| ');
@@ -64,7 +55,8 @@ export class AzureMonitorKustoQueryParser {
     datetimeColumn: string,
     shouldApplyTimeFilter: boolean,
     columns: AzureLogAnalyticsMetadataColumn[],
-    parts: string[]
+    parts: string[],
+    where: BuilderQueryEditorWhereArrayExpression | undefined
   ) {
     const whereConditions = new Set<string>();
 
@@ -81,6 +73,45 @@ export class AzureMonitorKustoQueryParser {
       if (validFilters.length > 0) {
         whereConditions.add(validFilters.join(' and '));
       }
+    }
+    if (where && where.expressions && Array.isArray(where.expressions)) {
+      where.expressions.forEach((condition) => {
+        if ('expressions' in condition) {
+          this.appendWhere(selectedColumns, filters, datetimeColumn, shouldApplyTimeFilter, columns, parts, {
+            type: condition.type,
+            expressions: condition.expressions,
+          });
+        } else if (
+          condition.type === BuilderQueryEditorExpressionType.Operator &&
+          condition.operator &&
+          condition.property
+        ) {
+          const operatorName = condition.operator?.name;
+          const operatorValue = condition.operator?.value;
+          const columnName = condition.property?.name;
+
+          if (operatorName && operatorValue && columnName) {
+            if (operatorName === 'has' && columnName === '*') {
+              const operatorValueStr = String(operatorValue);
+              const conditionsArray = Array.from(whereConditions);
+
+              conditionsArray.forEach((existingCondition: string) => {
+                if (existingCondition.includes(operatorValueStr)) {
+                  whereConditions.delete(existingCondition);
+                }
+              });
+
+              whereConditions.add(`${columnName} has '${operatorValueStr}'`);
+            } else {
+              whereConditions.add(`${columnName} ${operatorName} '${operatorValue}'`);
+            }
+          }
+        } else if (condition?.property?.name === '$__timeFilter(TimeGenerated)') {
+          if (!Array.from(whereConditions).some((condition) => condition.includes('$__timeFilter(TimeGenerated)'))) {
+            whereConditions.add(`$__timeFilter(TimeGenerated)`);
+          }
+        }
+      });
     }
 
     if (whereConditions.size > 0) {
@@ -108,10 +139,9 @@ export class AzureMonitorKustoQueryParser {
         groupByParts.add(`bin(${datetimeColumn}, 1h)`);
       }
 
-      // Special handling for percentile aggregation
       if (aggregation.startsWith('percentile')) {
-        const percentileValue = selectedColumns.includes('percentileParam') ? 15 : undefined; // Get the percentile value
-        const column = selectedColumns.includes('percentileColumn') ? 'TenantId' : ''; // Get the column (e.g., 'TenantId')
+        const percentileValue = selectedColumns.includes('percentileParam') ? 15 : undefined;
+        const column = selectedColumns.includes('percentileColumn') ? 'TenantId' : '';
         parts.push(`summarize ${aggregation}(${percentileValue}, ${column})`);
       } else {
         if (groupByParts.has(datetimeColumn)) {
@@ -135,9 +165,8 @@ export class AzureMonitorKustoQueryParser {
         parts.push(`summarize by ${Array.from(groupByParts).join(', ')}`);
       }
     } else if (hasValidAggregation && !summarizeAlreadyAdded) {
-      // Handle percentiles or other aggregations
       if (aggregation === 'percentile') {
-        parts.push(`summarize ${aggregation}(15, TenantId)`); // Adjust with actual percentile and column
+        parts.push(`summarize ${aggregation}(15, TenantId)`);
       } else {
         parts.push(`summarize ${aggregation}`);
       }
@@ -154,7 +183,6 @@ export class AzureMonitorKustoQueryParser {
     datetimeColumn: string,
     selectedColumns: string[],
     groupBy: string[] | undefined,
-    shouldApplyTimeFilter: boolean,
     parts: string[]
   ) {
     const hasDatetimeGroupBy = groupBy?.some((col) => col === datetimeColumn);

@@ -68,7 +68,6 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
   };
 
   const updateAggregatesAndQuery = (newAggregates: BuilderQueryEditorReduceExpression[]) => {
-    console.log('newAggregates', newAggregates);
     const validAggregates = newAggregates.filter((agg) => agg.reduce?.name);
 
     const aggregation =

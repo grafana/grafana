@@ -230,11 +230,16 @@ export const getAggregations = (reduceExpressions: any[] = []) => {
 export const getFilters = (whereExpressions: any[] = []) => {
   return whereExpressions
     .map((exp) => {
+      // Check if the expression is a valid operator expression
       if ('property' in exp && exp.property?.name && exp.operator?.name && exp.operator?.value !== undefined) {
+        // Skip "has" conditions
+        if (exp.operator.name === 'has') {
+          return null;
+        }
         return `${exp.property.name} ${exp.operator.name} ${exp.operator.value}`;
       }
       return null;
     })
-    .filter((filter) => filter !== null)
-    .join(' and ');
+    .filter((filter) => filter !== null) // Remove null values (i.e., "has" conditions)
+    .join(' and '); // Join the filters with "and"
 };
