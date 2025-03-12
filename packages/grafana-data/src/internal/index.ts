@@ -1,8 +1,8 @@
 /**
- * This file is used to share internal grafana/ui code with Grafana core.
+ * This file is used to share internal grafana/data code with Grafana core.
  * Note that these exports are also used within Enterprise.
  *
- * Through the exports declared in package.json we can import this code in core Grafana and the grafana/ui
+ * Through the exports declared in package.json we can import this code in core Grafana and the grafana/data
  * package will continue to be able to access all code when it's published to npm as it's private to the package.
  *
  * During the yarn pack lifecycle the exports[./internal] property is deleted from the package.json
