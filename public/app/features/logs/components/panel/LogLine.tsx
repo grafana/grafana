@@ -220,7 +220,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     logLineMessage: css({
       fontFamily: theme.typography.fontFamily,
-      textAlign: 'center',
+      justifyContent: 'center',
     }),
     timestamp: css({
       color: theme.colors.text.disabled,
