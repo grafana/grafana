@@ -12,6 +12,7 @@ import { RowItem } from '../scene/layout-rows/RowItem';
 import { ConditionHeader } from './ConditionHeader';
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
 import { handleDeleteNonGroupCondition } from './shared';
+
 export type DataConditionValue = boolean;
 
 interface ConditionalRenderingDataState extends ConditionalRenderingBaseState<DataConditionValue> {}
