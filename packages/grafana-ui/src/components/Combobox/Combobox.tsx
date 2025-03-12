@@ -134,6 +134,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
   const {
     options: filteredOptions,
+    groupStartIndices,
     updateOptions,
     asyncLoading,
     asyncError,
@@ -184,19 +185,17 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       const rangeToReturn = Array.from({ length: endIndex - startIndex + 1 }, (_, i) => startIndex + i);
 
       // If the first item doesn't have a group, no need to find a header for it
-      if (filteredOptions[rangeToReturn[0]]?.group) {
-        // Find the first group header that's not in view
-        for (let offscreenIndex = startIndex - 1; offscreenIndex >= 0; offscreenIndex--) {
-          if (isNewGroup(filteredOptions[offscreenIndex], filteredOptions[offscreenIndex - 1])) {
-            rangeToReturn.unshift(offscreenIndex);
-            break;
-          }
+      const firstDisplayedOption = filteredOptions[rangeToReturn[0]];
+      if (firstDisplayedOption?.group) {
+        const groupStartIndex = groupStartIndices.get(firstDisplayedOption.group);
+        if (groupStartIndex !== undefined && groupStartIndex < rangeToReturn[0]) {
+          rangeToReturn.unshift(groupStartIndex);
         }
       }
 
       return rangeToReturn;
     },
-    [filteredOptions]
+    [filteredOptions, groupStartIndices]
   );
 
   const rowVirtualizer = useVirtualizer({
