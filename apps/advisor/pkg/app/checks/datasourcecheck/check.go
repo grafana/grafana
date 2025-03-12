@@ -2,17 +2,18 @@ package datasourcecheck
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/util"
-	"k8s.io/klog/v2"
 )
 
 type check struct {
@@ -20,6 +21,7 @@ type check struct {
 	PluginStore           pluginstore.Store
 	PluginContextProvider pluginContextProvider
 	PluginClient          plugins.Client
+	log                   log.Logger
 }
 
 func New(
@@ -33,6 +35,7 @@ func New(
 		PluginStore:           pluginStore,
 		PluginContextProvider: pluginContextProvider,
 		PluginClient:          pluginClient,
+		log:                   log.New("advisor.datasourcecheck"),
 	}
 }
 
@@ -58,6 +61,7 @@ func (c *check) Steps() []checks.Step {
 		&healthCheckStep{
 			PluginContextProvider: c.PluginContextProvider,
 			PluginClient:          c.PluginClient,
+			log:                   c.log,
 		},
 	}
 }
@@ -102,6 +106,7 @@ func (s *uidValidationStep) Run(ctx context.Context, obj *advisor.CheckSpec, i a
 type healthCheckStep struct {
 	PluginContextProvider pluginContextProvider
 	PluginClient          plugins.Client
+	log                   log.Logger
 }
 
 func (s *healthCheckStep) Title() string {
@@ -134,7 +139,7 @@ func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any
 	pCtx, err := s.PluginContextProvider.GetWithDataSource(ctx, ds.Type, requester, ds)
 	if err != nil {
 		// Unable to check health check
-		klog.Error("Failed to get plugin context", "datasource_uid", ds.UID, "error", err)
+		s.log.Error("Failed to get plugin context", "datasource_uid", ds.UID, "error", err)
 		return nil, nil
 	}
 	req := &backend.CheckHealthRequest{
@@ -143,6 +148,15 @@ func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any
 	}
 	resp, err := s.PluginClient.CheckHealth(ctx, req)
 	if err != nil || resp.Status != backend.HealthStatusOk {
+		if err != nil {
+			s.log.Debug("Failed to check health", "datasource_uid", ds.UID, "error", err)
+			if errors.Is(err, plugins.ErrMethodNotImplemented) || errors.Is(err, plugins.ErrPluginUnavailable) {
+				// The plugin does not support backend health checks
+				return nil, nil
+			}
+		} else {
+			s.log.Debug("Failed to check health", "datasource_uid", ds.UID, "status", resp.Status, "message", resp.Message)
+		}
 		return checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityHigh,
 			s.ID(),

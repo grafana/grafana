@@ -39,6 +39,10 @@ export type PluginExtensionComponent<Props = {}> = PluginExtensionBase & {
   component: React.ComponentType<Props>;
 };
 
+export type ComponentTypeWithExtensionMeta<Props = {}> = React.ComponentType<Props> & {
+  meta: PluginExtensionComponentMeta;
+};
+
 export type PluginExtensionFunction<Signature = () => void> = PluginExtensionBase & {
   type: PluginExtensionTypes.function;
   fn: Signature;
@@ -181,6 +185,7 @@ export enum PluginExtensionPoints {
   DataSourceConfig = 'grafana/datasources/config',
   ExploreToolbarAction = 'grafana/explore/toolbar/action',
   UserProfileTab = 'grafana/user/profile/tab',
+  TraceViewDetails = 'grafana/traceview/details',
 }
 
 export type PluginExtensionPanelContext = {

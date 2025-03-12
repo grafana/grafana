@@ -16,7 +16,9 @@ weight: 200
 
 Grafana Metrics Drilldown is a query-less experience for browsing **Prometheus-compatible** metrics. Quickly find related metrics with just a few simple clicks, without needing to write PromQL queries to retrieve metrics.
 
-With Grafana Metrics Drilldown, you can:
+{{< docs/shared source="grafana" lookup="plugins/rename-note.md" version="<GRAFANA_VERSION>" >}}
+
+With Metrics Drilldown, you can:
 
 - Easily segment metrics based on their labels, so you can immediately spot anomalies and identify issues.
 - Automatically display the optimal visualization for each metric type (gauge vs. counter, for example) without manual setup.
@@ -25,13 +27,13 @@ With Grafana Metrics Drilldown, you can:
 - View a history of user steps when navigating through metrics and their filters.
 - Seamlessly pivot to related telemetry, including log data.
 
-{{< docs/play title="Grafana Metrics Drilldown" url="https://play.grafana.org/explore/metrics/trail?from=now-1h&to=now&var-ds=grafanacloud-demoinfra-prom&var-filters=&refresh=&metricPrefix=all" >}}
+{{< docs/play title="Metrics Drilldown" url="https://play.grafana.org/explore/metrics/trail?from=now-1h&to=now&var-ds=grafanacloud-demoinfra-prom&var-filters=&refresh=&metricPrefix=all" >}}
 
-You can access Grafana Metrics Drilldown either as a standalone experience or as part of Grafana dashboards.
+You can access Metrics Drilldown either as a standalone experience or as part of Grafana dashboards.
 
 ## Standalone experience
 
-To access Grafana Metrics Drilldown as a standalone experience:
+To access Metrics Drilldown as a standalone experience:
 
 1. Click the arrow next to **Drilldown** in the Grafana left-side menu and click **Metrics**. You are taken to an overview page that shows recent metrics, bookmarks, and the option to select a new metric exploration.
 1. To get started with a new exploration, click **Let's start!**.
@@ -63,7 +65,7 @@ After you have gathered your metrics exploration data you can:
 
 ## Dashboard experience
 
-To access Grafana Metrics Drilldown via a dashboard:
+To access Metrics Drilldown via a dashboard:
 
 1. Navigate to your dashboard.
 1. Select a time series panel.

@@ -4,20 +4,14 @@
 
 package v0alpha1
 
-import (
-	provisioningv0alpha1 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-)
-
 // GitHubRepositoryConfigApplyConfiguration represents a declarative configuration of the GitHubRepositoryConfig type for use
 // with apply.
 type GitHubRepositoryConfigApplyConfiguration struct {
-	URL                       *string                         `json:"url,omitempty"`
-	Branch                    *string                         `json:"branch,omitempty"`
-	Token                     *string                         `json:"token,omitempty"`
-	EncryptedToken            []byte                          `json:"encryptedToken,omitempty"`
-	Workflows                 []provisioningv0alpha1.Workflow `json:"workflows,omitempty"`
-	BranchWorkflow            *bool                           `json:"branchWorkflow,omitempty"`
-	GenerateDashboardPreviews *bool                           `json:"generateDashboardPreviews,omitempty"`
+	URL                       *string `json:"url,omitempty"`
+	Branch                    *string `json:"branch,omitempty"`
+	Token                     *string `json:"token,omitempty"`
+	EncryptedToken            []byte  `json:"encryptedToken,omitempty"`
+	GenerateDashboardPreviews *bool   `json:"generateDashboardPreviews,omitempty"`
 }
 
 // GitHubRepositoryConfigApplyConfiguration constructs a declarative configuration of the GitHubRepositoryConfig type for use with
@@ -57,24 +51,6 @@ func (b *GitHubRepositoryConfigApplyConfiguration) WithEncryptedToken(values ...
 	for i := range values {
 		b.EncryptedToken = append(b.EncryptedToken, values[i])
 	}
-	return b
-}
-
-// WithWorkflows adds the given value to the Workflows field in the declarative configuration
-// and returns the receiver, so that objects can be build by chaining "With" function invocations.
-// If called multiple times, values provided by each call will be appended to the Workflows field.
-func (b *GitHubRepositoryConfigApplyConfiguration) WithWorkflows(values ...provisioningv0alpha1.Workflow) *GitHubRepositoryConfigApplyConfiguration {
-	for i := range values {
-		b.Workflows = append(b.Workflows, values[i])
-	}
-	return b
-}
-
-// WithBranchWorkflow sets the BranchWorkflow field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the BranchWorkflow field is set to the value of the last call.
-func (b *GitHubRepositoryConfigApplyConfiguration) WithBranchWorkflow(value bool) *GitHubRepositoryConfigApplyConfiguration {
-	b.BranchWorkflow = &value
 	return b
 }
 

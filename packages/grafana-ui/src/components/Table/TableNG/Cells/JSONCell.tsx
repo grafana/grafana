@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../../../themes';
 import { JSONCellProps } from '../types';
 
-export const JSONCell = ({ value, justifyContent, rowIdx }: JSONCellProps) => {
+export const JSONCell = ({ value, justifyContent }: JSONCellProps) => {
   const styles = useStyles2(getStyles, justifyContent);
 
   let displayValue = value;

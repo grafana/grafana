@@ -6,7 +6,7 @@ import { GrafanaTheme2, formattedValueToString } from '@grafana/data';
 import { useStyles2 } from '../../../../themes';
 import { AutoCellProps } from '../types';
 
-export default function AutoCell({ value, field, justifyContent, cellOptions, rowIdx }: AutoCellProps) {
+export default function AutoCell({ value, field, justifyContent }: AutoCellProps) {
   const styles = useStyles2(getStyles, justifyContent);
 
   const displayValue = field.display!(value);

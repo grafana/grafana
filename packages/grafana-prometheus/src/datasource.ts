@@ -391,9 +391,16 @@ export class PrometheusDatasource
     // - Issue that led to the introduction of utcOffsetSec: https://github.com/grafana/grafana/issues/17278
     // - Implementation PR: https://github.com/grafana/grafana/pull/17477
     let utcOffset = request.range.to.utcOffset();
-    if (request.timezone !== 'browser') {
+    if (request.timezone === 'browser') {
+      // we need to check if the request is a relative or absolute range.
+      // if it is absolute time range then utcOffset must be 0. we don't care the offset
+      // because we are already sending the from and to values in utc. we don't need to adjust them again
+      // for relative ranges we need utcOffset to adjust query range.
+      utcOffset = this.isUsingRelativeTimeRange(request.range) ? utcOffset : 0;
+    } else {
       utcOffset = tz(request.timezone).utcOffset();
     }
+
     const processedTargets: PromQuery[] = [];
     const processedTarget = {
       ...target,
@@ -993,6 +1000,14 @@ export class PrometheusDatasource
       }
       return this.interpolateQueryExpr(value, variable);
     };
+  }
+
+  isUsingRelativeTimeRange(range: TimeRange): boolean {
+    if (typeof range.raw.from !== 'string' || typeof range.raw.to !== 'string') {
+      return false;
+    }
+
+    return range.raw.from.includes('now') || range.raw.to.includes('now');
   }
 
   getDebounceTimeInMilliseconds(): number {
