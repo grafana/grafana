@@ -112,7 +112,7 @@ export function ChannelSubForm<R extends ChannelValues>({
               {name}
               {meta?.badge}
             </Stack>
-          ) as string,
+          ),
           value: type,
           description: meta?.description,
           isDisabled: meta ? !meta.enabled : false,
