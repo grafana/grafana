@@ -109,25 +109,22 @@ export function TableCellNG(props: TableCellNGProps) {
       cell = <JSONCell value={value} justifyContent={justifyContent} field={field} rowIdx={rowIdx} />;
       break;
     case TableCellDisplayMode.DataLinks:
-      cell = (
-        <DataLinksCell value={value} field={field} theme={theme} justifyContent={justifyContent} rowIdx={rowIdx} />
-      );
+      cell = <DataLinksCell field={field} rowIdx={rowIdx} />;
       break;
     case TableCellDisplayMode.Actions:
-      cell = (
-        <ActionsCell
-          value={value}
-          field={field}
-          theme={theme}
-          justifyContent={justifyContent}
-          rowIdx={rowIdx}
-          actions={actions}
-        />
-      );
+      cell = <ActionsCell actions={actions} />;
       break;
     case TableCellDisplayMode.Auto:
     default:
-      cell = <AutoCell value={value} field={field} justifyContent={justifyContent} rowIdx={rowIdx} />;
+      cell = (
+        <AutoCell
+          value={value}
+          field={field}
+          justifyContent={justifyContent}
+          rowIdx={rowIdx}
+          cellOptions={cellOptions}
+        />
+      );
   }
 
   const handleMouseEnter = () => {

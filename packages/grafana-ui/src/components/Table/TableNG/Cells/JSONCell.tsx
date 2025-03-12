@@ -4,10 +4,10 @@ import { Property } from 'csstype';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../../themes';
-import { JSONCellProps } from '../types';
-import { getCellLinks } from '../utils';
 import { Button, clearLinkButtonStyles } from '../../../Button';
 import { DataLinksContextMenu } from '../../../DataLinks/DataLinksContextMenu';
+import { JSONCellProps } from '../types';
+import { getCellLinks } from '../utils';
 
 export const JSONCell = ({ value, justifyContent, field, rowIdx }: JSONCellProps) => {
   const styles = useStyles2(getStyles, justifyContent);

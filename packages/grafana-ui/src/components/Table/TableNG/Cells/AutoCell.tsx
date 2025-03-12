@@ -5,9 +5,9 @@ import { GrafanaTheme2, formattedValueToString } from '@grafana/data';
 import { TableCellDisplayMode, TableCellOptions } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes';
-import { AutoCellProps } from '../types';
 import { clearLinkButtonStyles } from '../../../Button';
 import { DataLinksContextMenu } from '../../../DataLinks/DataLinksContextMenu';
+import { AutoCellProps } from '../types';
 import { getCellLinks } from '../utils';
 
 export default function AutoCell({ value, field, justifyContent, rowIdx, cellOptions }: AutoCellProps) {
