@@ -163,108 +163,95 @@ func convertNumericWideToNumericLong(frames data.Frames) (data.Frames, error) {
 }
 
 func convertTimeSeriesMultiToTimeSeriesLong(frames data.Frames) (data.Frames, error) {
-	// Collect all time values and ensure no duplicates
-	timeSet := make(map[time.Time]struct{})
-	labelKeys := make(map[string]struct{})     // Collect all unique label keys
-	numericFields := make(map[string]struct{}) // Collect unique numeric field names
-
-	for _, frame := range frames {
-		for _, field := range frame.Fields {
-			if field.Type() == data.FieldTypeTime {
-				for i := 0; i < field.Len(); i++ {
-					t := field.At(i).(time.Time)
-					timeSet[t] = struct{}{}
-				}
-			} else if field.Type().Numeric() {
-				numericFields[field.Name] = struct{}{}
-				if field.Labels != nil {
-					for key := range field.Labels {
-						labelKeys[key] = struct{}{}
-					}
-				}
-			}
-		}
+	type rowKey struct {
+		t      time.Time
+		labels data.Labels
 	}
 
-	// Create a sorted slice of unique time values
-	times := make([]time.Time, 0, len(timeSet))
-	for t := range timeSet {
-		times = append(times, t)
-	}
-	sort.Slice(times, func(i, j int) bool { return times[i].Before(times[j]) })
+	var rows []rowKey
+	var timeFieldName string
+	var valueFieldName string
+	var values []float64
 
-	// Create output fields: Time, one numeric field per unique numeric name, and label fields
-	timeField := data.NewField("Time", nil, times)
-	outputNumericFields := make(map[string]*data.Field)
-	for name := range numericFields {
-		outputNumericFields[name] = data.NewField(name, nil, make([]float64, len(times)))
-	}
-	outputLabelFields := make(map[string]*data.Field)
-	for key := range labelKeys {
-		outputLabelFields[key] = data.NewField(key, nil, make([]string, len(times)))
-	}
+	labelKeysSet := map[string]struct{}{}
 
-	// Map time to index for quick lookup
-	timeIndexMap := make(map[time.Time]int, len(times))
-	for i, t := range times {
-		timeIndexMap[t] = i
-	}
-
-	// Populate output fields
 	for _, frame := range frames {
 		var timeField *data.Field
+		var valueField *data.Field
+
+		// Identify time and value fields
 		for _, field := range frame.Fields {
 			if field.Type() == data.FieldTypeTime {
 				timeField = field
-				break
-			}
-		}
-
-		if timeField == nil {
-			return nil, fmt.Errorf("no time field found in frame")
-		}
-
-		for _, field := range frame.Fields {
-			if field.Type().Numeric() {
-				for i := 0; i < field.Len(); i++ {
-					t := timeField.At(i).(time.Time)
-					val, err := field.FloatAt(i)
-					if err != nil {
-						val = 0 // Default value for missing data
-					}
-					idx := timeIndexMap[t]
-					if outputField, exists := outputNumericFields[field.Name]; exists {
-						outputField.Set(idx, val)
-					}
-
-					// Add labels for the numeric field
-					for key, value := range field.Labels {
-						if outputField, exists := outputLabelFields[key]; exists {
-							outputField.Set(idx, value)
-						}
+				timeFieldName = field.Name
+			} else if field.Type().Numeric() {
+				valueField = field
+				valueFieldName = field.Name
+				if field.Labels != nil {
+					for k := range field.Labels {
+						labelKeysSet[k] = struct{}{}
 					}
 				}
 			}
 		}
+
+		if timeField == nil || valueField == nil {
+			return nil, fmt.Errorf("frame missing time or value field")
+		}
+
+		for i := 0; i < timeField.Len(); i++ {
+			t := timeField.At(i).(time.Time)
+			v, err := valueField.FloatAt(i)
+			if err != nil {
+				v = 0
+			}
+			rows = append(rows, rowKey{t: t, labels: valueField.Labels})
+			values = append(values, v)
+		}
 	}
 
-	// Build the output frame
-	outputFields := []*data.Field{timeField}
-	for _, field := range outputNumericFields {
-		outputFields = append(outputFields, field)
-	}
-	for _, field := range outputLabelFields {
-		outputFields = append(outputFields, field)
-	}
-	outputFrame := data.NewFrame("time_series_long", outputFields...)
+	// Build time and value columns
+	timeCol := make([]time.Time, len(rows))
+	valueCol := make([]float64, len(rows))
 
-	// Set metadata
-	if outputFrame.Meta == nil {
-		outputFrame.Meta = &data.FrameMeta{}
+	labelKeys := make([]string, 0, len(labelKeysSet))
+	for k := range labelKeysSet {
+		labelKeys = append(labelKeys, k)
 	}
-	outputFrame.Meta.Type = data.FrameTypeTimeSeriesLong
+	sort.Strings(labelKeys)
 
-	return data.Frames{outputFrame}, nil
+	labelCols := make(map[string][]string, len(labelKeys))
+	for _, k := range labelKeys {
+		labelCols[k] = make([]string, len(rows))
+	}
+
+	for i, row := range rows {
+		timeCol[i] = row.t
+		valueCol[i] = values[i]
+		for _, key := range labelKeys {
+			if val, ok := row.labels[key]; ok {
+				labelCols[key][i] = val
+			} else {
+				labelCols[key][i] = ""
+			}
+		}
+	}
+
+	// Assemble output fields
+	fields := []*data.Field{
+		data.NewField(timeFieldName, nil, timeCol),
+		data.NewField(valueFieldName, nil, valueCol),
+	}
+	for _, k := range labelKeys {
+		fields = append(fields, data.NewField(k, nil, labelCols[k]))
+	}
+
+	frame := data.NewFrame("time_series_long", fields...)
+	frame.Meta = &data.FrameMeta{
+		Type: data.FrameTypeTimeSeriesLong,
+	}
+
+	return data.Frames{frame}, nil
 }
 
 func convertTimeSeriesWideToTimeSeriesLong(frames data.Frames) (data.Frames, error) {
