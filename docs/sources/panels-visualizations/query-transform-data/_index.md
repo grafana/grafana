@@ -193,6 +193,7 @@ To add a query, follow these steps:
    - Write or construct a query in the query language of your data source.
    - Click **+ Add query from library**, search or filter for the query you want to use, and click **Select query** (Grafana Enterprise and Cloud only).
 
+1. (Optional) To save the query for reuse, click the save to query library icon.
 1. Click **Run queries**.
 
 Grafana queries the data source and visualizes the data.

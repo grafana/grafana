@@ -110,7 +110,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
    {{< figure class="float-right"  src="/media/docs/grafana/dashboards/screenshot-data-source-selector-10.0.png" max-width="800px" alt="Select data source modal" >}}
 
    The **Edit panel** view opens with your data source selected.
-   You can change the panel data source later using the drop-down in the **Query** tab of the panel editor if needed.
+   You can change the panel data source later using the drop-down in the **Queries** tab of the panel editor if needed.
 
    For more information about data sources, refer to [Data sources](ref:data-sources) for specific guidelines.
 
