@@ -74,6 +74,7 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 	index := make(map[string]int) // index lookup
 	rsp := parsedRequestInfo{
 		RefIDTypes: make(map[string]string, len(input.Queries)),
+		SqlInputs:  make(map[string]struct{}),
 	}
 
 	for _, q := range input.Queries {
