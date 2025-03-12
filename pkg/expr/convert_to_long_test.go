@@ -77,16 +77,16 @@ func TestConvertTimeSeriesMultiToLong(t *testing.T) {
 		expected := data.NewFrame("time_series_long",
 			data.NewField("t", nil, []time.Time{
 				tLGA[0],
-				tLGA[1],
 				tMIA[0],
 				tMIA[1],
+				tLGA[1],
 				tMIA[2],
 			}),
 			data.NewField("slothCount", nil, []float64{
-				3, 5, 6, 7, 9,
+				3, 6, 7, 5, 9,
 			}),
 			data.NewField("city", nil, []string{
-				"LGA", "LGA", "MIA", "MIA", "MIA",
+				"LGA", "MIA", "MIA", "LGA", "MIA",
 			}),
 		)
 		expected.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesLong}
@@ -119,13 +119,16 @@ func TestConvertTimeSeriesMultiToLong(t *testing.T) {
 
 		expected := data.NewFrame("time_series_long",
 			data.NewField("ts", nil, []time.Time{
-				times[0], times[1], times[0], times[1],
+				times[0], // 0s - foo
+				times[0], // 0s - bar
+				times[1], // 15s - foo
+				times[1], // 15s - bar
 			}),
 			data.NewField("val", nil, []float64{
-				1, 2, 3, 4,
+				1, 3, 2, 4,
 			}),
 			data.NewField("namespace", nil, []string{
-				"foo", "foo", "bar", "bar",
+				"foo", "bar", "foo", "bar",
 			}),
 		)
 		expected.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesLong}
@@ -162,16 +165,16 @@ func TestConvertTimeSeriesMultiToLong(t *testing.T) {
 
 		expected := data.NewFrame("time_series_long",
 			data.NewField("ts", nil, []time.Time{
-				time.Unix(0, 0),
-				time.Unix(30, 0),
-				time.Unix(15, 0),
-				time.Unix(30, 0),
+				time.Unix(0, 0),  // foo
+				time.Unix(15, 0), // bar
+				time.Unix(30, 0), // foo
+				time.Unix(30, 0), // bar
 			}),
 			data.NewField("val", nil, []float64{
-				10, 20, 30, 40,
+				10, 30, 20, 40,
 			}),
 			data.NewField("namespace", nil, []string{
-				"foo", "foo", "bar", "bar",
+				"foo", "bar", "foo", "bar",
 			}),
 		)
 		expected.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesLong}
@@ -182,6 +185,51 @@ func TestConvertTimeSeriesMultiToLong(t *testing.T) {
 
 		if diff := cmp.Diff(expected, output[0], data.FrameTestCompareOptions()...); diff != "" {
 			require.FailNowf(t, "UnalignedTimestamps mismatch (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("MultipleMetricsAndLabels", func(t *testing.T) {
+		times := []time.Time{
+			time.Unix(100, 0),
+			time.Unix(200, 0),
+		}
+
+		input := data.Frames{
+			data.NewFrame("metrics",
+				data.NewField("t", nil, times),
+				data.NewField("cpu", data.Labels{"host": "node-a"}, []float64{0.6, 0.7}),
+				data.NewField("mem", data.Labels{"env": "prod"}, []float64{1280, 1310}),
+			),
+		}
+
+		expected := data.NewFrame("time_series_long",
+			data.NewField("t", nil, []time.Time{
+				times[0],
+				times[0],
+				times[1],
+				times[1],
+			}),
+			data.NewField("cpu", nil, []float64{
+				0.6, 0, 0.7, 0,
+			}),
+			data.NewField("mem", nil, []float64{
+				0, 1280, 0, 1310,
+			}),
+			data.NewField("env", nil, []string{
+				"", "prod", "", "prod",
+			}),
+			data.NewField("host", nil, []string{
+				"node-a", "", "node-a", "",
+			}),
+		)
+		expected.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesLong}
+
+		output, err := convertTimeSeriesMultiToTimeSeriesLong(input)
+		require.NoError(t, err)
+		require.Len(t, output, 1)
+
+		if diff := cmp.Diff(expected, output[0], data.FrameTestCompareOptions()...); diff != "" {
+			require.FailNowf(t, "MultipleMetricsAndLabels mismatch (-want +got):\n%s", diff)
 		}
 	})
 }
