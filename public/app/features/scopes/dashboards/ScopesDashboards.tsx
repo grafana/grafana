@@ -7,7 +7,8 @@ import { useScopes } from '@grafana/runtime';
 import { Button, LoadingPlaceholder, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-import { ScopesDashboardsService } from './ScopesDashboardsService';
+import { useScopesServices } from '../ScopesContextProvider';
+
 import { ScopesDashboardsTree } from './ScopesDashboardsTree';
 import { ScopesDashboardsTreeSearch } from './ScopesDashboardsTreeSearch';
 
@@ -15,17 +16,11 @@ export function ScopesDashboards() {
   const styles = useStyles2(getStyles);
   const scopes = useScopes();
 
-  const scopesDashboardsService = ScopesDashboardsService.instance;
+  const { scopesDashboardsService } = useScopesServices();
 
-  useObservable(scopesDashboardsService?.stateObservable ?? new Observable(), scopesDashboardsService?.state);
+  useObservable(scopesDashboardsService.stateObservable ?? new Observable(), scopesDashboardsService.state);
 
-  if (
-    !scopes ||
-    !scopesDashboardsService ||
-    !scopes.state.enabled ||
-    !scopes.state.drawerOpened ||
-    scopes.state.readOnly
-  ) {
+  if (!scopes || !scopes.state.enabled || !scopes.state.drawerOpened || scopes.state.readOnly) {
     return null;
   }
 

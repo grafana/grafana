@@ -1,13 +1,52 @@
-import { ReactNode } from 'react';
+import { createContext, ReactNode, useMemo, useContext } from 'react';
 
 import { ScopesContext } from '@grafana/runtime';
 
+import { ScopesApiClient } from './ScopesApiClient';
 import { ScopesService } from './ScopesService';
+import { ScopesDashboardsService } from './dashboards/ScopesDashboardsService';
+import { ScopesSelectorService } from './selector/ScopesSelectorService';
+
+type Services = {
+  scopesService: ScopesService;
+  scopesSelectorService: ScopesSelectorService;
+  scopesDashboardsService: ScopesDashboardsService;
+};
+
+/**
+ * We use this separate context to provide a private service to internal code, compared to the restricted public API
+ * provided by the `ScopesContext`.
+ */
+export const ScopesServicesContext = createContext<Services | undefined>(undefined);
+export function useScopesServices() {
+  const services = useContext(ScopesServicesContext);
+  if (!services) {
+    throw new Error(
+      'Using `useScopesServices` but ScopesServicesContext is empty. Did you forget to wrap your component in a `ScopesContextProvider`?'
+    );
+  }
+  return services;
+}
 
 interface ScopesContextProviderProps {
   children: ReactNode;
 }
 
 export const ScopesContextProvider = ({ children }: ScopesContextProviderProps) => {
-  return <ScopesContext.Provider value={ScopesService.instance}>{children}</ScopesContext.Provider>;
+  const services = useMemo(() => {
+    const client = new ScopesApiClient();
+    const dashboardService = new ScopesDashboardsService(client);
+    const selectorService = new ScopesSelectorService(client, dashboardService);
+    return {
+      scopesService: new ScopesService(selectorService, dashboardService),
+      scopesSelectorService: selectorService,
+      scopesDashboardsService: dashboardService,
+    };
+  }, []);
+
+  return (
+    <ScopesContext.Provider value={services.scopesService}>
+      <ScopesServicesContext.Provider value={services}>{children}</ScopesServicesContext.Provider>
+    </ScopesContext.Provider>
+  );
 };

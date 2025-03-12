@@ -1,14 +1,19 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useMemo } from 'react';
 import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
 import { Scope } from '@grafana/data';
 
 export interface ScopesContextValueState {
+  // Whether the drawer with the related dashboards is open
   drawerOpened: boolean;
   enabled: boolean;
+
+  // loading state of the scopes
   loading: boolean;
   readOnly: boolean;
+
+  // Currently selected scopes
   value: Scope[];
 }
 
@@ -49,13 +54,17 @@ export function useScopes(): ScopesContextValue | undefined {
 
   useObservable(context?.stateObservable ?? new Observable(), context?.state);
 
-  return context
-    ? {
-        state: context.state,
-        stateObservable: context.stateObservable,
-        changeScopes: context.changeScopes,
-        setReadOnly: context.setReadOnly,
-        setEnabled: context.setEnabled,
-      }
-    : undefined;
+  return useMemo(() => {
+    return context
+      ? {
+          state: context.state,
+          stateObservable: context.stateObservable,
+          changeScopes: context.changeScopes,
+          setReadOnly: context.setReadOnly,
+          setEnabled: context.setEnabled,
+        }
+      : undefined;
+    // Not sure why it thinks
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [context, context?.state]);
 }

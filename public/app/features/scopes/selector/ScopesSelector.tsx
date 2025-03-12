@@ -8,8 +8,9 @@ import { Button, Drawer, IconButton, Spinner, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t, Trans } from 'app/core/internationalization';
 
+import { useScopesServices } from '../ScopesContextProvider';
+
 import { ScopesInput } from './ScopesInput';
-import { ScopesSelectorService } from './ScopesSelectorService';
 import { ScopesTree } from './ScopesTree';
 
 export const ScopesSelector = () => {
@@ -19,18 +20,19 @@ export const ScopesSelector = () => {
   const styles = useStyles2(getStyles, menuDockedAndOpen);
   const scopes = useScopes();
 
-  const scopesSelectorService = ScopesSelectorService.instance;
+  const { scopesService, scopesSelectorService } = useScopesServices();
 
-  useObservable(scopesSelectorService?.stateObservable ?? new Observable(), scopesSelectorService?.state);
+  const { nodes, selectedScopes, opened, loadingNodeName, treeScopes } = useObservable(
+    scopesSelectorService.stateObservable ?? new Observable(),
+    scopesSelectorService.state
+  );
 
-  if (!scopes || !scopesSelectorService || !scopes.state.enabled) {
+  if (!scopes || !scopes.state.enabled) {
     return null;
   }
 
   const { readOnly, drawerOpened, loading } = scopes.state;
-  const { nodes, selectedScopes, opened, loadingNodeName, treeScopes } = scopesSelectorService.state;
-  const { toggleDrawer, open, removeAllScopes, closeAndApply, closeAndReset, updateNode, toggleNodeSelect } =
-    scopesSelectorService;
+  const { open, removeAllScopes, closeAndApply, closeAndReset, updateNode, toggleNodeSelect } = scopesSelectorService;
 
   const dashboardsIconLabel = readOnly
     ? t('scopes.dashboards.toggle.disabled', 'Suggested dashboards list is disabled due to read only mode')
@@ -47,7 +49,7 @@ export const ScopesSelector = () => {
         tooltip={dashboardsIconLabel}
         data-testid="scopes-dashboards-expand"
         disabled={readOnly}
-        onClick={toggleDrawer}
+        onClick={scopesService.toggleDrawer}
       />
 
       <ScopesInput
@@ -55,7 +57,11 @@ export const ScopesSelector = () => {
         scopes={selectedScopes}
         disabled={readOnly}
         loading={loading}
-        onInputClick={open}
+        onInputClick={() => {
+          if (!scopesService.state.readOnly) {
+            open();
+          }
+        }}
         onRemoveAllClick={removeAllScopes}
       />
 
