@@ -48,27 +48,28 @@ export function getRawDashboardV2Changes(
   // Transform initial dashboard values to v2 spec format to ensure consistent comparison of time settings,
   // variables and refresh values. This handles cases where the initial dashboard is in v1 format
   // but was converted to v2 during runtime due to dynamic dashboard features being used.
-  const initialSaveModelV2 = convertToV2SpecIfNeeded(initial);
-  const hasTimeChanged = getHasTimeChanged(initialSaveModelV2.timeSettings, initialSaveModelV2.timeSettings);
-  const hasVariableValueChanges = applyVariableChangesV2(initialSaveModelV2, initialSaveModelV2, saveVariables);
-  const hasRefreshChanged = initialSaveModelV2.timeSettings.autoRefresh !== initialSaveModelV2.timeSettings.autoRefresh;
+  const initialSaveModel = convertToV2SpecIfNeeded(initial);
+  const changedSaveModel = changed;
+  const hasTimeChanged = getHasTimeChanged(changedSaveModel.timeSettings, initialSaveModel.timeSettings);
+  const hasVariableValueChanges = applyVariableChangesV2(changedSaveModel, initialSaveModel, saveVariables);
+  const hasRefreshChanged = changedSaveModel.timeSettings.autoRefresh !== initialSaveModel.timeSettings.autoRefresh;
 
   if (!saveTimeRange) {
-    initialSaveModelV2.timeSettings.from = initialSaveModelV2.timeSettings.from;
-    initialSaveModelV2.timeSettings.to = initialSaveModelV2.timeSettings.to;
+    changedSaveModel.timeSettings.from = initialSaveModel.timeSettings.from;
+    changedSaveModel.timeSettings.to = initialSaveModel.timeSettings.to;
   }
 
   if (!saveRefresh) {
-    initialSaveModelV2.timeSettings.autoRefresh = initialSaveModelV2.timeSettings.autoRefresh;
+    changedSaveModel.timeSettings.autoRefresh = initialSaveModel.timeSettings.autoRefresh;
   }
 
   // Calculate differences using the non-transformed to v2 spec values to be able to compare the initial and changed dashboard values
-  const diff = jsonDiff(initial, initialSaveModelV2);
+  const diff = jsonDiff(initial, changedSaveModel);
   const diffCount = Object.values(diff).reduce((acc, cur) => acc + cur.length, 0);
 
   return {
-    changedSaveModel: changed,
-    initialSaveModel: initial,
+    changedSaveModel,
+    initialSaveModel,
     diffs: diff,
     diffCount,
     hasChanges: diffCount > 0,
