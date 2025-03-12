@@ -2,15 +2,15 @@ import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'reac
 import { useAsync } from 'react-use';
 import { Subscription } from 'rxjs';
 
-import { openai } from '@grafana/llm';
+import { llm } from '@grafana/llm';
 import { createMonitoringLogger } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
-import { isLLMPluginEnabled, DEFAULT_OAI_MODEL } from './utils';
+import { isLLMPluginEnabled, DEFAULT_LLM_MODEL } from './utils';
 
 // Declared instead of imported from utils to make this hook modular
 // Ideally we will want to move the hook itself to a different scope later.
-type Message = openai.Message;
+type Message = llm.Message;
 
 const genAILogger = createMonitoringLogger('features.dashboards.genai');
 
@@ -29,11 +29,11 @@ interface Options {
 }
 
 const defaultOptions = {
-  model: DEFAULT_OAI_MODEL,
+  model: DEFAULT_LLM_MODEL,
   temperature: 1,
 };
 
-interface UseOpenAIStreamResponse {
+interface UseLLMStreamResponse {
   setMessages: Dispatch<SetStateAction<Message[]>>;
   stopGeneration: () => void;
   messages: Message[];
@@ -47,7 +47,7 @@ interface UseOpenAIStreamResponse {
 }
 
 // TODO: Add tests
-export function useOpenAIStream({ model, temperature, onResponse }: Options = defaultOptions): UseOpenAIStreamResponse {
+export function useLLMStream({ model, temperature, onResponse }: Options = defaultOptions): UseLLMStreamResponse {
   // The messages array to send to the LLM, updated when the button is clicked.
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -65,7 +65,7 @@ export function useOpenAIStream({ model, temperature, onResponse }: Options = de
       setMessages([]);
       setError(e);
       notifyError(
-        'Failed to generate content using OpenAI',
+        'Failed to generate content using LLM',
         'Please try again or if the problem persists, contact your organization admin.'
       );
       console.error(e);
@@ -93,7 +93,7 @@ export function useOpenAIStream({ model, temperature, onResponse }: Options = de
     setStreamStatus(StreamStatus.GENERATING);
     setError(undefined);
     // Stream the completions. Each element is the next stream chunk.
-    const stream = openai
+    const stream = llm
       .streamChatCompletions({
         model,
         temperature,
@@ -102,7 +102,7 @@ export function useOpenAIStream({ model, temperature, onResponse }: Options = de
       .pipe(
         // Accumulate the stream content into a stream of strings, where each
         // element contains the accumulated message so far.
-        openai.accumulateContent()
+        llm.accumulateContent()
         // The stream is just a regular Observable, so we can use standard rxjs
         // functionality to update state, e.g. recording when the stream
         // has completed.
@@ -148,7 +148,7 @@ export function useOpenAIStream({ model, temperature, onResponse }: Options = de
     let timeout: NodeJS.Timeout | undefined;
     if (streamStatus === StreamStatus.GENERATING && reply === '') {
       timeout = setTimeout(() => {
-        onError(new Error(`OpenAI stream timed out after ${TIMEOUT}ms`));
+        onError(new Error(`LLM stream timed out after ${TIMEOUT}ms`));
       }, TIMEOUT);
     }
 
