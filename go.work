@@ -8,6 +8,7 @@ use (
 	./.citools/bra
 	./.citools/cog
 	./.citools/cue
+	./.citools/jb
 	./.citools/lefthook
 	./apps/advisor
 	./apps/alerting/notifications

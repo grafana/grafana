@@ -64,6 +64,7 @@ COPY .citools/bra .citools/bra
 COPY .citools/cue .citools/cue
 COPY .citools/cog .citools/cog
 COPY .citools/lefthook .citools/lefthook
+COPY .citools/jb .citools/jb
 
 # Include vendored dependencies
 COPY pkg/util/xorm pkg/util/xorm
