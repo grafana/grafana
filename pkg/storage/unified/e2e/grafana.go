@@ -5,8 +5,6 @@ import (
 	"net/url"
 	"os"
 
-	_ "embed"
-
 	"github.com/grafana/e2e"
 	gapi "github.com/grafana/grafana-api-golang-client"
 )
