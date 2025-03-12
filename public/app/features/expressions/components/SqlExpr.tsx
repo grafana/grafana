@@ -45,12 +45,17 @@ export const SqlExpr = ({ onChange, refIds, query }: Props) => {
     return () => resizeObserver.disconnect();
   }, []);
 
+  const editorLanguageDefinition = {
+    id: 'mysql',
+  };
+
   return (
     <div ref={containerRef} className={styles.editorContainer}>
       <SQLEditor
         query={query.expression || initialQuery}
         onChange={onEditorChange}
         height={dimensions.height - EDITOR_BORDER_ADJUSTMENT}
+        language={editorLanguageDefinition}
       />
     </div>
   );
