@@ -15,14 +15,3 @@ export function validateBranchName(branchName?: string) {
   return branchName && branchNameRegex.test(branchName!);
 }
 
-export function getRemoteURL(repo: Repository) {
-  if (repo.spec?.type === 'github') {
-    const spec = repo.spec.github;
-    let url = spec?.url || '';
-    if (spec?.branch) {
-      url += `/tree/${spec.branch}`;
-    }
-    return url;
-  }
-  return undefined;
-}
