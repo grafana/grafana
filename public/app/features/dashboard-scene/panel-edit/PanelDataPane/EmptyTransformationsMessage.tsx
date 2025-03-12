@@ -27,7 +27,7 @@ export function EmptyTransformationsMessage(props: EmptyTransformationsProps) {
           onClick={props.onShowPicker}
           data-testid={selectors.components.Transforms.addTransformationButton}
         >
-          Add transformation
+          <Trans i18nKey="dashboard-scene.empty-transformations-message.add-transformation">Add transformation</Trans>
         </Button>
       </Stack>
     </Box>

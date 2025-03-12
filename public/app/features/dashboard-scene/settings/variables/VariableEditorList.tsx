@@ -57,8 +57,12 @@ export function VariableEditorList({
       >
         <thead>
           <tr>
-            <th>Variable</th>
-            <th>Definition</th>
+            <th>
+              <Trans i18nKey="dashboard-scene.variable-editor-list.variable">Variable</Trans>
+            </th>
+            <th>
+              <Trans i18nKey="dashboard-scene.variable-editor-list.definition">Definition</Trans>
+            </th>
             <th colSpan={5} />
           </tr>
         </thead>
@@ -90,7 +94,7 @@ export function VariableEditorList({
       <Stack>
         <VariablesDependenciesButton variables={variables} />
         <Button data-testid={selectors.pages.Dashboard.Settings.Variables.List.newButton} onClick={onAdd} icon="plus">
-          New variable
+          <Trans i18nKey="dashboard-scene.variable-editor-list.new-variable">New variable</Trans>
         </Button>
       </Stack>
     </Stack>

@@ -18,6 +18,7 @@ import {
 import { DataFrame } from '@grafana/data/';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Dropdown, Menu, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { downloadDataFrameAsCsv, downloadLogsModelAsTxt } from '../../inspector/utils/download';
 import { LogLabels, LogLabelsList } from '../../logs/components/LogLabels';
@@ -140,7 +141,7 @@ export const LogsMetaRow = memo(
           label: '',
           value: (
             <Button variant="primary" fill="outline" size="sm" onClick={clearDetectedFields}>
-              Show original line
+              <Trans i18nKey="explore.logs-meta-row.show-original-line">Show original line</Trans>
             </Button>
           ),
         }
@@ -165,9 +166,18 @@ export const LogsMetaRow = memo(
     }
     const downloadMenu = (
       <Menu>
-        <Menu.Item label="txt" onClick={() => downloadLogs(DownloadFormat.Text)} />
-        <Menu.Item label="json" onClick={() => downloadLogs(DownloadFormat.Json)} />
-        <Menu.Item label="csv" onClick={() => downloadLogs(DownloadFormat.CSV)} />
+        <Menu.Item
+          label={t('explore.logs-meta-row.download-menu.label-txt', 'txt')}
+          onClick={() => downloadLogs(DownloadFormat.Text)}
+        />
+        <Menu.Item
+          label={t('explore.logs-meta-row.download-menu.label-json', 'json')}
+          onClick={() => downloadLogs(DownloadFormat.Json)}
+        />
+        <Menu.Item
+          label={t('explore.logs-meta-row.download-menu.label-csv', 'csv')}
+          onClick={() => downloadLogs(DownloadFormat.CSV)}
+        />
       </Menu>
     );
     return (
@@ -185,7 +195,7 @@ export const LogsMetaRow = memo(
             {!config.exploreHideLogsDownload && (
               <Dropdown overlay={downloadMenu}>
                 <ToolbarButton isOpen={false} variant="canvas" icon="download-alt">
-                  Download
+                  <Trans i18nKey="explore.logs-meta-row.download">Download</Trans>
                 </ToolbarButton>
               </Dropdown>
             )}

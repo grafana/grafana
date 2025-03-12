@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { DeleteButton, Icon, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { ApiKey } from 'app/types';
 
 interface Props {
@@ -19,10 +20,18 @@ export const ServiceAccountTokensTable = ({ tokens, timeZone, tokenActionsDisabl
     <table className={cx(styles.section, 'filter-table')}>
       <thead>
         <tr>
-          <th>Name</th>
-          <th>Expires</th>
-          <th>Created</th>
-          <th>Last used at</th>
+          <th>
+            <Trans i18nKey="serviceaccounts.service-account-tokens-table.name">Name</Trans>
+          </th>
+          <th>
+            <Trans i18nKey="serviceaccounts.service-account-tokens-table.expires">Expires</Trans>
+          </th>
+          <th>
+            <Trans i18nKey="serviceaccounts.service-account-tokens-table.created">Created</Trans>
+          </th>
+          <th>
+            <Trans i18nKey="serviceaccounts.service-account-tokens-table.last-used-at">Last used at</Trans>
+          </th>
           <th />
           <th />
         </tr>
@@ -96,7 +105,11 @@ interface TokenExpirationProps {
 const TokenExpiration = ({ timeZone, token }: TokenExpirationProps) => {
   const styles = useStyles2(getStyles);
   if (!token.expiration) {
-    return <span className={styles.neverExpire}>Never</span>;
+    return (
+      <span className={styles.neverExpire}>
+        <Trans i18nKey="serviceaccounts.token-expiration.never">Never</Trans>
+      </span>
+    );
   }
   if (token.secondsUntilExpiration) {
     return (

@@ -7,6 +7,7 @@ import {
   AdHocFiltersVariable,
 } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { reportExploreMetrics } from '../interactions';
 import { VAR_OTEL_AND_METRIC_FILTERS, VAR_OTEL_GROUP_LEFT, VAR_OTEL_RESOURCES } from '../shared';
@@ -87,7 +88,7 @@ export class AddToFiltersGraphAction extends SceneObjectBase<AddToFiltersGraphAc
 
     return (
       <Button variant="secondary" size="sm" fill="solid" onClick={model.onClick}>
-        Add to filters
+        <Trans i18nKey="trails.add-to-filters-graph-action.add-to-filters">Add to filters</Trans>
       </Button>
     );
   };

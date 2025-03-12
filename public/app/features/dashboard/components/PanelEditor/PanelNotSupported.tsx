@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { locationService } from '@grafana/runtime';
 import { Button, VerticalGroup } from '@grafana/ui';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
+import { Trans } from 'app/core/internationalization';
 
 import { PanelEditorTabId } from './types';
 
@@ -21,7 +22,7 @@ export function PanelNotSupported({ message }: Props): JSX.Element {
         <h2>{message}</h2>
         <div>
           <Button size="md" variant="secondary" icon="arrow-left" onClick={onBackToQueries}>
-            Go back to Queries
+            <Trans i18nKey="dashboard.panel-not-supported.go-back-to-queries">Go back to Queries</Trans>
           </Button>
         </div>
       </VerticalGroup>

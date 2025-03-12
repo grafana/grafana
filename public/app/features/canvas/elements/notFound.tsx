@@ -1,5 +1,7 @@
 import { PureComponent } from 'react';
 
+import { Trans } from 'app/core/internationalization';
+
 import { CanvasElementItem, CanvasElementProps } from '../element';
 
 class NotFoundDisplay extends PureComponent<CanvasElementProps> {
@@ -7,7 +9,9 @@ class NotFoundDisplay extends PureComponent<CanvasElementProps> {
     const { config } = this.props;
     return (
       <div>
-        <h3>NOT FOUND:</h3>
+        <h3>
+          <Trans i18nKey="canvas.not-found-display.not-found">NOT FOUND:</Trans>
+        </h3>
         <pre>{JSON.stringify(config, null, 2)}</pre>
       </div>
     );

@@ -101,7 +101,7 @@ const AnnotationsStep = () => {
           contentText={`Annotations add metadata to provide more information on the alert in your alert notification messages.
           For example, add a Summary annotation to tell you which value caused the alert to fire or which server it happened on.
           Annotations can contain a combination of text and template code.`}
-          title="Annotations"
+          title={t('alerting.annotations-step.get-annotations-section-description.title-annotations', 'Annotations')}
         />
       </Stack>
     );
@@ -169,7 +169,7 @@ const AnnotationsStep = () => {
                       <Button
                         type="button"
                         className={styles.deleteAnnotationButton}
-                        aria-label="delete annotation"
+                        aria-label={t('alerting.annotations-step.aria-label-delete-annotation', 'delete annotation')}
                         icon="trash-alt"
                         variant="secondary"
                         onClick={() => remove(index)}
@@ -191,11 +191,11 @@ const AnnotationsStep = () => {
                 append({ key: '', value: '' });
               }}
             >
-              Add custom annotation
+              <Trans i18nKey="alerting.annotations-step.add-custom-annotation">Add custom annotation</Trans>
             </Button>
             {!selectedDashboard && (
               <Button type="button" variant="secondary" icon="dashboard" onClick={() => setShowPanelSelector(true)}>
-                Link dashboard and panel
+                <Trans i18nKey="alerting.annotations-step.link-dashboard-and-panel">Link dashboard and panel</Trans>
               </Button>
             )}
           </div>

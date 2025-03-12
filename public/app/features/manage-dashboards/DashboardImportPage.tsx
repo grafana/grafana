@@ -128,7 +128,9 @@ class UnthemedDashboardImport extends PureComponent<Props> {
 
     const GcomDashboardsLink = () => (
       <TextLink variant="bodySmall" href="https://grafana.com/grafana/dashboards/" external>
-        grafana.com/dashboards
+        <Trans i18nKey="manage-dashboards.unthemed-dashboard-import.gcom-dashboards-link.grafanacomdashboards">
+          grafana.com/dashboards
+        </Trans>
       </TextLink>
     );
 

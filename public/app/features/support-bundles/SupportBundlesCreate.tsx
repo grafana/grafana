@@ -4,6 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { Button, Field, Checkbox, LinkButton, Stack, Alert } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
+import { Trans } from 'app/core/internationalization';
 import { StoreState } from 'app/types';
 
 import { loadSupportBundleCollectors, createSupportBundle } from './state/actions';
@@ -81,9 +82,11 @@ export const SupportBundlesCreateUnconnected = ({
                       );
                     })}
                   <Stack>
-                    <Button type="submit">Create</Button>
+                    <Button type="submit">
+                      <Trans i18nKey="support-bundles.support-bundles-create-unconnected.create">Create</Trans>
+                    </Button>
                     <LinkButton href="/support-bundles" variant="secondary">
-                      Cancel
+                      <Trans i18nKey="support-bundles.support-bundles-create-unconnected.cancel">Cancel</Trans>
                     </LinkButton>
                   </Stack>
                 </>

@@ -7,6 +7,7 @@ import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Alert, Box, Stack, TabContent, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { t } from 'app/core/internationalization';
 import { AppNotificationSeverity } from 'app/types';
 
 import { AngularDeprecationPluginNotice } from '../../angularDeprecation/AngularDeprecationPluginNotice';
@@ -138,7 +139,10 @@ function NotFoundPlugin() {
   return (
     <Stack justifyContent="center" alignItems="center" height="100%">
       <Box>
-        <Alert severity={AppNotificationSeverity.Warning} title="Plugin not found">
+        <Alert
+          severity={AppNotificationSeverity.Warning}
+          title={t('plugins.not-found-plugin.title-plugin-not-found', 'Plugin not found')}
+        >
           That plugin cannot be found. Please check the url is correct or <br />
           go to the <a href="/plugins">plugin catalog</a>.
         </Alert>

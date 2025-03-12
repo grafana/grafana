@@ -9,6 +9,7 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { Alert, HorizontalGroup, InlineField, InlineFieldRow, Select, ValuePicker } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { getDistinctLabels } from '../utils';
@@ -29,9 +30,23 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
     }
 
     if (!input.length) {
-      warn = <Alert title="No input found">No input (or labels) found</Alert>;
+      warn = (
+        <Alert title={t('transformers.join-by-labels-transformer-editor.info.title-no-input-found', 'No input found')}>
+          <Trans i18nKey="transformers.join-by-labels-transformer-editor.info.no-input-or-labels-found">
+            No input (or labels) found
+          </Trans>
+        </Alert>
+      );
     } else if (distinct.size === 0) {
-      warn = <Alert title="No labels found">The input does not contain any labels</Alert>;
+      warn = (
+        <Alert
+          title={t('transformers.join-by-labels-transformer-editor.info.title-no-labels-found', 'No labels found')}
+        >
+          <Trans i18nKey="transformers.join-by-labels-transformer-editor.info.input-contain-labels">
+            The input does not contain any labels
+          </Trans>
+        </Alert>
+      );
     }
 
     // Show the selected values
@@ -97,7 +112,10 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
           invalid={!Boolean(options.value?.length)}
           label={'Value'}
           labelWidth={labelWidth}
-          tooltip="Select the label indicating the values name"
+          tooltip={t(
+            'transformers.join-by-labels-transformer-editor.tooltip-select-label-indicating-values',
+            'Select the label indicating the values name'
+          )}
         >
           <Select
             options={info.valueOptions}
