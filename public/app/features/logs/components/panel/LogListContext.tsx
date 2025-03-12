@@ -1,4 +1,4 @@
-import { createContext, Dispatch, ReactNode, SetStateAction, useContext, useState } from 'react';
+import { createContext, Dispatch, ReactNode, SetStateAction, useCallback, useContext, useState } from 'react';
 
 import { CoreApp, LogRowModel } from '@grafana/data';
 import { PopoverContent } from '@grafana/ui';
@@ -17,7 +17,11 @@ export interface LogListContextData {
   onUnpinLine?: (row: LogRowModel) => void;
   pinLineButtonTooltipTitle?: PopoverContent;
   pinnedLogs?: string[];
+  setDisplayedFields: (displayedFields: string[]) => void;
   setLogListState: Dispatch<SetStateAction<LogListState>>;
+  setPinnedLogs: (pinnedlogs: string[]) => void;
+  setShowTime: (showTime: boolean) => void;
+  setWrapLogMessage: (showTime: boolean) => void;
   showTime: boolean;
   wrapLogMessage: boolean;
 }
@@ -25,7 +29,11 @@ export interface LogListContextData {
 export const LogListContext = createContext<LogListContextData>({
   app: CoreApp.Unknown,
   displayedFields: [],
+  setDisplayedFields: () => {},
   setLogListState: () => {},
+  setPinnedLogs: () => {},
+  setShowTime: () => {},
+  setWrapLogMessage: () => {},
   showTime: true,
   wrapLogMessage: false,
 });
@@ -44,26 +52,6 @@ export const useLogIsPinned = (log: LogRowModel) => {
   return pinnedLogs?.some((logId) => logId === log.rowId);
 };
 
-export const setDisplayedFields = (displayedFields: string[]) => {
-  const { setLogListState, ...rest } = useContext(LogListContext);
-  setLogListState({ ...rest, displayedFields });
-};
-
-export const setPinnedLogs = (pinnedLogs: string[]) => {
-  const { setLogListState, ...rest } = useContext(LogListContext);
-  setLogListState({ ...rest, pinnedLogs });
-};
-
-export const setShowTime = (showTime: boolean) => {
-  const { setLogListState, ...rest } = useContext(LogListContext);
-  setLogListState({ ...rest, showTime });
-};
-
-export const setWrapLogMessage = (wrapLogMessage: boolean) => {
-  const { setLogListState, ...rest } = useContext(LogListContext);
-  setLogListState({ ...rest, wrapLogMessage });
-};
-
 type LogListState = Pick<LogListContextData, 'displayedFields' | 'pinnedLogs' | 'showTime' | 'wrapLogMessage'>;
 export const LogListContextProvider = (props: LogListContextData) => {
   const [logListState, setLogListState] = useState<LogListState>({
@@ -72,6 +60,33 @@ export const LogListContextProvider = (props: LogListContextData) => {
     showTime: props.showTime,
     wrapLogMessage: props.wrapLogMessage,
   });
+  const setDisplayedFields = useCallback(
+    (displayedFields: string[]) => {
+      setLogListState({ ...logListState, displayedFields });
+    },
+    [logListState]
+  );
+
+  const setPinnedLogs = useCallback(
+    (pinnedLogs: string[]) => {
+      setLogListState({ ...logListState, pinnedLogs });
+    },
+    [logListState]
+  );
+
+  const setShowTime = useCallback(
+    (showTime: boolean) => {
+      setLogListState({ ...logListState, showTime });
+    },
+    [logListState]
+  );
+
+  const setWrapLogMessage = useCallback(
+    (wrapLogMessage: boolean) => {
+      setLogListState({ ...logListState, wrapLogMessage });
+    },
+    [logListState]
+  );
   return (
     <LogListContext.Provider
       value={{
@@ -85,7 +100,11 @@ export const LogListContextProvider = (props: LogListContextData) => {
         onUnpinLine: props.onUnpinLine,
         pinLineButtonTooltipTitle: props.pinLineButtonTooltipTitle,
         pinnedLogs: logListState.pinnedLogs,
+        setDisplayedFields,
         setLogListState,
+        setPinnedLogs,
+        setShowTime,
+        setWrapLogMessage,
         showTime: logListState.showTime,
         wrapLogMessage: logListState.wrapLogMessage,
       }}
