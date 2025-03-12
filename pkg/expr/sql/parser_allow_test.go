@@ -27,6 +27,11 @@ func TestAllowQuery(t *testing.T) {
 			q:    example_case_statement,
 			err:  nil,
 		},
+		{
+			name: "all allowed functions",
+			q:    example_all_allowed_functions,
+			err:  nil,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -123,3 +128,61 @@ var example_case_statement = `SELECT
     ELSE 'Low'
   END AS category
 FROM metrics`
+
+var example_all_allowed_functions = `SELECT
+  -- Conditional functions
+  IF(value > 100, 'High', 'Low') AS conditional_if,
+  COALESCE(value, 0) AS conditional_coalesce,
+  IFNULL(value, 0) AS conditional_ifnull,
+  NULLIF(value, 0) AS conditional_nullif,
+  
+  -- Aggregation functions
+  SUM(value) AS agg_sum,
+  AVG(value) AS agg_avg,
+  COUNT(*) AS agg_count,
+  MIN(value) AS agg_min,
+  MAX(value) AS agg_max,
+  STDDEV(value) AS agg_stddev,
+  VARIANCE(value) AS agg_variance,
+  
+  -- Mathematical functions
+  ABS(value) AS math_abs,
+  ROUND(value, 2) AS math_round,
+  FLOOR(value) AS math_floor,
+  CEILING(value) AS math_ceiling,
+  SQRT(ABS(value)) AS math_sqrt,
+  POW(value, 2) AS math_pow,
+  MOD(value, 10) AS math_mod,
+  LOG(value) AS math_log,
+  EXP(value) AS math_exp,
+  SIGN(value) AS math_sign,
+  
+  -- String functions
+  CONCAT('value: ', CAST(value AS CHAR)) AS str_concat,
+  LENGTH(name) AS str_length,
+  CHAR_LENGTH(name) AS str_char_length,
+  LOWER(name) AS str_lower,
+  UPPER(name) AS str_upper,
+  SUBSTRING(name, 1, 5) AS str_substring,
+  TRIM(name) AS str_trim,
+  
+  -- Date functions
+  NOW() AS date_now,
+  CURDATE() AS date_curdate,
+  CURTIME() AS date_curtime,
+  DATE_ADD(created_at, INTERVAL 1 DAY) AS date_add,
+  DATE_SUB(created_at, INTERVAL 1 DAY) AS date_sub,
+  YEAR(created_at) AS date_year,
+  MONTH(created_at) AS date_month,
+  DAY(created_at) AS date_day,
+  WEEKDAY(created_at) AS date_weekday,
+  DATEDIFF(NOW(), created_at) AS date_datediff,
+  UNIX_TIMESTAMP(created_at) AS date_unix_timestamp,
+  FROM_UNIXTIME(1634567890) AS date_from_unixtime,
+  
+  -- Type conversion
+  CAST(value AS CHAR) AS type_cast,
+  CONVERT(value, CHAR) AS type_convert
+FROM metrics
+GROUP BY name, value, created_at
+LIMIT 10`

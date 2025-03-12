@@ -78,7 +78,7 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.ComparisonExpr:
 		return
 
-	case *sqlparser.ConvertExpr:
+	case *sqlparser.ConvertExpr, *sqlparser.ConvertType:
 		return
 
 	case sqlparser.GroupBy:
@@ -88,6 +88,9 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 		return
 
 	case *sqlparser.Into:
+		return
+
+	case *sqlparser.IntervalExpr:
 		return
 
 	case *sqlparser.JoinTableExpr, sqlparser.JoinCondition:
@@ -121,6 +124,9 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 		return
 
 	case sqlparser.TableName, sqlparser.TableExprs, sqlparser.TableIdent:
+		return
+
+	case *sqlparser.TrimExpr:
 		return
 
 	case *sqlparser.With:
@@ -168,7 +174,7 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 		return
 	case "lower", "upper":
 		return
-	case "substring", "trim":
+	case "substring":
 		return
 
 	// Date functions
@@ -186,7 +192,7 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 		return
 
 	// Type conversion
-	case "cast", "convert":
+	case "cast":
 		return
 
 	default:
