@@ -2,11 +2,11 @@ import debounce from 'debounce-promise';
 import { useCallback, useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { AsyncSelectProps, AsyncSelect } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { AnnoKeyFolder, AnnoKeyFolderTitle } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { isDashboardV2Resource } from 'app/features/dashboard/api/utils';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { DashboardDTO } from 'app/types';
 
@@ -57,34 +57,28 @@ export const DashboardPicker = ({
     (async () => {
       // value was manually changed from outside or we are rendering for the first time.
       // We need to fetch dashboard information.
-      const isUIReadyForV2 = config.featureToggles.useV2DashboardsAPI;
-      if (isUIReadyForV2) {
-        // When using getDashboardAPI, if isUIReadyForV2 is true, we will pass `v2` prop
-        // That will return a dashboard response using schema v2. We only ask for `v2` when the component is ready to process the new shape
-        const resWithSchemaV2 = await getDashboardAPI('v2').getDashboardDTO(value, undefined);
+      const dto = await getDashboardAPI().getDashboardDTO(value, undefined);
 
+      if (isDashboardV2Resource(dto)) {
         setCurrent({
           value: {
-            uid: resWithSchemaV2.metadata.name,
-            title: resWithSchemaV2.spec.title,
-            folderTitle: resWithSchemaV2.metadata.annotations?.[AnnoKeyFolderTitle],
-            folderUid: resWithSchemaV2.metadata.annotations?.[AnnoKeyFolder],
+            uid: dto.metadata.name,
+            title: dto.spec.title,
+            folderTitle: dto.metadata.annotations?.[AnnoKeyFolderTitle],
+            folderUid: dto.metadata.annotations?.[AnnoKeyFolder],
           },
-          label: formatLabel(resWithSchemaV2.metadata.annotations?.[AnnoKeyFolder], resWithSchemaV2.spec.title),
+          label: formatLabel(dto.metadata.annotations?.[AnnoKeyFolder], dto.spec.title),
         });
       } else {
-        // when using getDashboardAPI, if isUIReadyForV2 is false, we will always return the v1 schema version
-        const resWithSchemaV1 = await getDashboardAPI().getDashboardDTO(value, undefined);
-
-        if (resWithSchemaV1.dashboard) {
+        if (dto.dashboard) {
           setCurrent({
             value: {
-              uid: resWithSchemaV1.dashboard.uid,
-              title: resWithSchemaV1.dashboard.title,
-              folderTitle: resWithSchemaV1.meta.folderTitle,
-              folderUid: resWithSchemaV1.meta.folderUid,
+              uid: dto.dashboard.uid,
+              title: dto.dashboard.title,
+              folderTitle: dto.meta.folderTitle,
+              folderUid: dto.meta.folderUid,
             },
-            label: formatLabel(resWithSchemaV1.meta?.folderTitle, resWithSchemaV1.dashboard.title),
+            label: formatLabel(dto.meta?.folderTitle, dto.dashboard.title),
           });
         }
       }

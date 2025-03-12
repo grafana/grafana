@@ -4259,7 +4259,8 @@
       "metadata": {
         "name": "useV2DashboardsAPI",
         "resourceVersion": "1732535420861",
-        "creationTimestamp": "2024-12-17T21:17:09Z"
+        "creationTimestamp": "2024-12-17T21:17:09Z",
+        "deletionTimestamp": "2025-03-04T10:50:39Z"
       },
       "spec": {
         "description": "Use the v2 kubernetes API in the frontend for dashboards",
