@@ -240,7 +240,12 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 						return authorizer.DecisionDeny, "editor role is required for edits", nil
 					}
 
-				case "resources", "sync", "history", "render":
+				case "render":
+					// This is used to read a blob from unified storage, for GitHub PR comments.
+					// GH uses a proxy for all images, so we need to accept it, always.
+					return authorizer.DecisionAllow, "", nil
+
+				case "resources", "sync", "history":
 					// These are strictly read operations.
 					// Sync can also be somewhat destructive, but it's expected to be fine to import changes.
 					if id.GetOrgRole().Includes(identity.RoleEditor) {
