@@ -27,6 +27,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -312,8 +313,14 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 
 func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	obj := a.GetObject()
-	if obj == nil || a.GetOperation() == admission.Connect {
+	if obj == nil || a.GetOperation() == admission.Connect || a.GetOperation() == admission.Delete {
 		return nil // This is normal for sub-resource
+	}
+
+	// Do not validate objects we are trying to delete
+	meta, _ := utils.MetaAccessor(obj)
+	if meta.GetDeletionTimestamp() != nil {
+		return nil
 	}
 
 	repo, err := b.asRepository(ctx, obj)
