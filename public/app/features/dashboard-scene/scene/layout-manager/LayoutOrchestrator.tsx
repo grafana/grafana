@@ -1,31 +1,16 @@
-import {
-  SceneObjectState,
-  SceneObjectBase,
-  SceneObjectRef,
-  sceneGraph,
-  VizPanel,
-  SceneComponentProps,
-} from '@grafana/scenes';
-import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { SceneObjectState, SceneObjectBase, SceneObjectRef, sceneGraph, VizPanel } from '@grafana/scenes';
 
 import { DropZonePlaceholder } from '../layout-default/DropZonePlaceholder';
 import { DashboardLayoutItem, isDashboardLayoutItem } from '../types/DashboardLayoutItem';
-import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
-import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { closestOfType, DropZone, isSceneLayout, Point, SceneLayout2 } from './utils';
 
 interface LayoutOrchestratorState extends SceneObjectState {
-  manager: DashboardLayoutManager;
   activeLayoutItemRef?: SceneObjectRef<DashboardLayoutItem>;
-  placeholderSize?: { width: number; height: number; top: number; left: number };
+  placeholder?: DropZonePlaceholder;
 }
 
-export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState> implements DashboardLayoutManager {
-  public isDashboardLayoutManager: true = true;
-
-  public descriptor: Readonly<LayoutRegistryItem<{}>> = this.state.manager.descriptor;
-
+export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState> {
   /** Offset from top-left corner of drag handle. */
   public dragOffset = { top: 0, left: 0 };
 
@@ -66,12 +51,12 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
       this.activeDropZone = closestDropZone;
       if (this.activeDropZone) {
         this.setState({
-          placeholderSize: {
+          placeholder: new DropZonePlaceholder({
             top: this.activeDropZone.top,
             left: this.activeDropZone.left,
             width: this.activeDropZone.right - this.activeDropZone.left,
             height: this.activeDropZone.bottom - this.activeDropZone.top,
-          },
+          }),
         });
       }
     }
@@ -102,7 +87,12 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
     this.moveLayoutItem(activeLayoutItem, targetLayout);
     this.setState({
       activeLayoutItemRef: undefined,
-      placeholderSize: undefined,
+    });
+    this.state.placeholder?.setState({
+      top: 0,
+      left: 0,
+      width: 0,
+      height: 0,
     });
     this.activeDropZone = undefined;
     activeLayoutItemContainer?.removeAttribute('style');
@@ -134,63 +124,6 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
 
     return closestDropZone;
   }
-
-  // LayoutManager methods
-  getVizPanels(): VizPanel[] {
-    return this.state.manager.getVizPanels();
-  }
-
-  editModeChanged(isEditing: boolean): void {
-    return this.state.manager.editModeChanged?.(isEditing);
-  }
-
-  removePanel(panel: VizPanel): void {
-    return this.state.manager.removePanel?.(panel);
-  }
-
-  duplicatePanel(panel: VizPanel): void {
-    return this.state.manager.duplicatePanel?.(panel);
-  }
-
-  addPanel(panel: VizPanel): void {
-    return this.state.manager.addPanel(panel);
-  }
-
-  addNewTab(): void {
-    return;
-  }
-
-  toSaveModel() {
-    return this.state.manager.toSaveModel?.() ?? {};
-  }
-
-  activateRepeaters?(): void {
-    return this.state.manager.activateRepeaters?.();
-  }
-
-  getOptions?(): OptionsPaneItemDescriptor[] {
-    return this.state.manager.getOptions?.() ?? [];
-  }
-
-  public switchLayout(layoutManager: DashboardLayoutManager) {
-    this.setState({ manager: layoutManager });
-  }
-
-  public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
-    return this.state.manager.cloneLayout(ancestorKey, isSource);
-  }
-
-  public static Component = ({ model }: SceneComponentProps<LayoutOrchestrator>) => {
-    const { manager, placeholderSize } = model.useState();
-    const { width, height, top, left } = placeholderSize ?? { width: 0, height: 0, top: 0, left: 0 };
-
-    return (
-      <>
-        <DropZonePlaceholder width={width} height={height} top={top} left={left} />
-        <model.state.manager.Component model={manager} />
-      </>
-    );
-  };
 }
 
 function dropZonesAreEqual(a?: DropZone, b?: DropZone) {

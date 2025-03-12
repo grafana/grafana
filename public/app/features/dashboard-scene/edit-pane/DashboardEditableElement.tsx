@@ -6,7 +6,6 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { LayoutOrchestrator } from '../scene/layout-manager/LayoutOrchestrator';
 import { DashboardLayoutSelector } from '../scene/layouts-shared/DashboardLayoutSelector';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
@@ -27,14 +26,7 @@ export class DashboardEditableElement implements EditableDashboardElement {
     const dashboard = this.dashboard;
 
     // When layout changes we need to update options list
-    const { body: layoutOrchestrator } = dashboard.useState();
-
-    if (!(layoutOrchestrator instanceof LayoutOrchestrator)) {
-      return [];
-    }
-
-    //todo@kay need to rethink layout orchestrator...
-    const { manager } = layoutOrchestrator.useState();
+    const { body: manager } = dashboard.useState();
 
     const dashboardOptions = useMemo(() => {
       const editPaneHeaderOptions = new OptionsPaneCategoryDescriptor({ title: '', id: 'dashboard-options' })

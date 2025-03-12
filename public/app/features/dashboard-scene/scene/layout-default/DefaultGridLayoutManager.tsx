@@ -27,7 +27,6 @@ import {
   getGridItemKeyForPanelId,
   getDashboardSceneFor,
 } from '../../utils/utils';
-import { LayoutOrchestrator } from '../layout-manager/LayoutOrchestrator';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -445,8 +444,8 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
   const { children } = useSceneObjectState(model.state.grid, { shouldActivateOrKeepAlive: true });
   const dashboard = getDashboardSceneFor(model);
 
-  // If we are top level layout or parent is orchestrator and we have no children, show empty state
-  if ((model.parent === dashboard || model.parent instanceof LayoutOrchestrator) && children.length === 0) {
+  // If we are top level layout and we have no children, show empty state
+  if (model.parent === dashboard && children.length === 0) {
     return (
       <DashboardEmpty dashboard={dashboard} canCreate={!!dashboard.state.meta.canEdit} key="dashboard-empty-state" />
     );

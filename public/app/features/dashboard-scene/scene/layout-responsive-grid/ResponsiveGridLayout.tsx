@@ -2,6 +2,7 @@ import { createRef, CSSProperties, PointerEvent } from 'react';
 
 import { SceneObject, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 
+import { DashboardScene } from '../DashboardScene';
 import { LayoutOrchestrator } from '../layout-manager/LayoutOrchestrator';
 import { DropZone, getClosest, Point, Rect, SceneLayout2 } from '../layout-manager/utils';
 import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
@@ -190,5 +191,6 @@ function findLayoutOrchestrator(root: SceneObject | undefined) {
     return undefined;
   }
 
-  return getClosest(root, (s) => (s instanceof LayoutOrchestrator ? s : undefined));
+  const dashboard = getClosest(root, (s) => (s instanceof DashboardScene ? s : undefined));
+  return dashboard?.state.layoutOrchestrator;
 }

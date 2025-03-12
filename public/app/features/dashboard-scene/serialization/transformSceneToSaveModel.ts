@@ -36,8 +36,6 @@ import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
-import { LayoutOrchestrator } from '../scene/layout-manager/LayoutOrchestrator';
-import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { isClonedKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import {
@@ -57,12 +55,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   const timeRange = state.$timeRange!.state;
   const data = state.$data;
   const variablesSet = state.$variables;
-  let body: DashboardLayoutManager;
-  if (state.body instanceof LayoutOrchestrator) {
-    body = state.body.state.manager;
-  } else {
-    body = state.body;
-  }
+  let body = state.body;
 
   let panels: Panel[] = [];
   let variables: VariableModel[] = [];

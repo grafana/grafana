@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { LayoutOrchestrator } from '../layout-manager/LayoutOrchestrator';
+import { DashboardScene } from '../DashboardScene';
 import { closestOfType } from '../layout-manager/utils';
 
 import { ResponsiveGridItemProps } from './ResponsiveGridItemRenderer';
@@ -24,10 +24,7 @@ export interface DragAndDropProps {
 export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<ResponsiveGridLayout>) {
   const { children, isHidden } = model.useState();
   const styles = useStyles2(getStyles, model.state);
-  const layoutOrchestrator = closestOfType(model, (s) => s instanceof LayoutOrchestrator);
-  const { activeLayoutItemRef } = layoutOrchestrator!.useState();
-  const activeLayoutItem = activeLayoutItemRef?.resolve();
-  const currentLayoutIsActive = children.some((c) => c === activeLayoutItem);
+  const dashboard = closestOfType(model, (s) => s instanceof DashboardScene);
 
   useEffect(() => {
     if (model.containerRef.current) {
@@ -36,6 +33,11 @@ export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<Resp
       model.rowCount = computedStyles.gridTemplateRows.split(' ').length;
     }
   });
+
+  const layoutOrchestrator = dashboard!.state.layoutOrchestrator!;
+  const { activeLayoutItemRef } = layoutOrchestrator.useState();
+  const activeLayoutItem = activeLayoutItemRef?.resolve();
+  const currentLayoutIsActive = children.some((c) => c === activeLayoutItem);
 
   if (isHidden || !layoutOrchestrator) {
     return null;

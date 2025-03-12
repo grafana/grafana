@@ -28,7 +28,6 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
-import { LayoutOrchestrator } from '../scene/layout-manager/LayoutOrchestrator';
 import { NEW_LINK } from '../settings/links/utils';
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
@@ -231,8 +230,7 @@ describe('transformSceneToSaveModel', () => {
       const variable = scene.state.$variables?.state.variables[0] as MultiValueVariable;
       variable.changeValueTo(['a', 'b', 'c']);
 
-      const orchestrator = scene.state.body as LayoutOrchestrator;
-      const layout = orchestrator.state.manager as DefaultGridLayoutManager;
+      const layout = scene.state.body as DefaultGridLayoutManager;
       const grid = layout.state.grid;
       const rowWithRepeat = grid.state.children[1] as SceneGridRow;
       const rowRepeater = rowWithRepeat.state.$behaviors![0] as RowRepeaterBehavior;

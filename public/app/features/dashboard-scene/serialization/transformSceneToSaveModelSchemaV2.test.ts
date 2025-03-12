@@ -39,10 +39,9 @@ import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
-import { LayoutOrchestrator } from '../scene/layout-manager/LayoutOrchestrator';
 import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
-import { ResponsiveGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { ResponsiveGridLayout } from '../scene/layout-responsive-grid/ResponsiveGridLayout';
+import { ResponsiveGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../scene/layout-tabs/TabItem';
@@ -152,73 +151,71 @@ describe('transformSceneToSaveModelSchemaV2', () => {
           type: 'link',
         },
       ],
-      body: new LayoutOrchestrator({
-        manager: new DefaultGridLayoutManager({
-          grid: new SceneGridLayout({
-            isLazy: false,
-            children: [
-              new DashboardGridItem({
-                y: 0,
-                height: 10,
-                body: new VizPanel({
-                  key: 'panel-1',
-                  pluginId: 'timeseries',
-                  title: 'Test Panel',
-                  titleItems: [
-                    new VizPanelLinks({
-                      rawLinks: [
-                        { title: 'Test Link 1', url: 'http://test1.com', targetBlank: true },
-                        { title: 'Test Link 2', url: 'http://test2.com' },
-                      ],
-                      menu: new VizPanelLinksMenu({}),
-                    }),
-                  ],
-                  description: 'Test Description',
-                  hoverHeader: true,
-                  hoverHeaderOffset: 10,
-                  fieldConfig: { defaults: {}, overrides: [] },
-                  displayMode: 'transparent',
-                  pluginVersion: '7.0.0',
-                  $timeRange: new SceneTimeRange({
-                    timeZone: 'UTC',
-                    from: 'now-3h',
-                    to: 'now',
-                  }),
-                }),
-                // Props related to repeatable panels
-                // repeatedPanels?: VizPanel[],
-                // variableName?: string,
-                // itemHeight?: number,
-                // repeatDirection?: RepeatDirection,
-                // maxPerRow?: number,
-              }),
-              new SceneGridRow({
-                key: 'panel-4',
-                title: 'Test Row',
-                y: 10,
-                $behaviors: [new RowRepeaterBehavior({ variableName: 'customVar' })],
-                children: [
-                  new DashboardGridItem({
-                    y: 11,
-                    body: new VizPanel({
-                      key: 'panel-2',
-                      pluginId: 'graph',
-                      title: 'Test Panel 2',
-                      description: 'Test Description 2',
-                      fieldConfig: { defaults: {}, overrides: [] },
-                      displayMode: 'transparent',
-                      pluginVersion: '7.0.0',
-                      $timeRange: new SceneTimeRange({
-                        timeZone: 'UTC',
-                        from: 'now-3h',
-                        to: 'now',
-                      }),
-                    }),
+      body: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          isLazy: false,
+          children: [
+            new DashboardGridItem({
+              y: 0,
+              height: 10,
+              body: new VizPanel({
+                key: 'panel-1',
+                pluginId: 'timeseries',
+                title: 'Test Panel',
+                titleItems: [
+                  new VizPanelLinks({
+                    rawLinks: [
+                      { title: 'Test Link 1', url: 'http://test1.com', targetBlank: true },
+                      { title: 'Test Link 2', url: 'http://test2.com' },
+                    ],
+                    menu: new VizPanelLinksMenu({}),
                   }),
                 ],
+                description: 'Test Description',
+                hoverHeader: true,
+                hoverHeaderOffset: 10,
+                fieldConfig: { defaults: {}, overrides: [] },
+                displayMode: 'transparent',
+                pluginVersion: '7.0.0',
+                $timeRange: new SceneTimeRange({
+                  timeZone: 'UTC',
+                  from: 'now-3h',
+                  to: 'now',
+                }),
               }),
-            ],
-          }),
+              // Props related to repeatable panels
+              // repeatedPanels?: VizPanel[],
+              // variableName?: string,
+              // itemHeight?: number,
+              // repeatDirection?: RepeatDirection,
+              // maxPerRow?: number,
+            }),
+            new SceneGridRow({
+              key: 'panel-4',
+              title: 'Test Row',
+              y: 10,
+              $behaviors: [new RowRepeaterBehavior({ variableName: 'customVar' })],
+              children: [
+                new DashboardGridItem({
+                  y: 11,
+                  body: new VizPanel({
+                    key: 'panel-2',
+                    pluginId: 'graph',
+                    title: 'Test Panel 2',
+                    description: 'Test Description 2',
+                    fieldConfig: { defaults: {}, overrides: [] },
+                    displayMode: 'transparent',
+                    pluginVersion: '7.0.0',
+                    $timeRange: new SceneTimeRange({
+                      timeZone: 'UTC',
+                      from: 'now-3h',
+                      to: 'now',
+                    }),
+                  }),
+                }),
+              ],
+            }),
+          ],
         }),
       }),
       editPane: new DashboardEditPane(),

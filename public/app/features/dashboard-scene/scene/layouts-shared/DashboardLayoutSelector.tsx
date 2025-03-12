@@ -6,7 +6,7 @@ import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { LayoutOrchestrator } from '../layout-manager/LayoutOrchestrator';
+import { DashboardScene } from '../DashboardScene';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -71,9 +71,9 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
 
 function changeLayoutTo(layoutManager: DashboardLayoutManager, newLayoutDescriptor: LayoutRegistryItem) {
   try {
-    const layoutOrchestrator = sceneGraph.getAncestor(layoutManager, LayoutOrchestrator);
-    layoutOrchestrator.switchLayout(newLayoutDescriptor.createFromLayout(layoutManager));
+    const dashboard = sceneGraph.getAncestor(layoutManager, DashboardScene);
+    dashboard.switchLayout(newLayoutDescriptor.createFromLayout(layoutManager));
   } catch (err) {
-    console.warn(`Expected parent of layout manager with key "${layoutManager.state.key}" to be a layout orchestrator`);
+    console.warn(`Expected root of layout manager with key "${layoutManager.state.key}" to be a dashboard`);
   }
 }

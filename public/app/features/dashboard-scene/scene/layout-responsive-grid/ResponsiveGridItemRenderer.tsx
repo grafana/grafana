@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { LayoutOrchestrator } from '../layout-manager/LayoutOrchestrator';
+import { DashboardScene } from '../DashboardScene';
 import { closestOfType } from '../layout-manager/utils';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
@@ -16,8 +16,9 @@ export interface ResponsiveGridItemProps extends SceneComponentProps<ResponsiveG
 export function ResponsiveGridItemRenderer({ model }: ResponsiveGridItemProps) {
   const { body } = model.useState();
   const styles = useStyles2(getStyles);
-  const layoutOrchestrator = closestOfType(model, (s) => s instanceof LayoutOrchestrator);
-  const { activeLayoutItemRef } = layoutOrchestrator!.useState();
+  const dashboard = closestOfType(model, (s) => s instanceof DashboardScene);
+  const layoutOrchestrator = dashboard!.state.layoutOrchestrator!;
+  const { activeLayoutItemRef } = layoutOrchestrator.useState();
   const activeLayoutItem = activeLayoutItemRef?.resolve();
   const isDragging = model === activeLayoutItem;
 

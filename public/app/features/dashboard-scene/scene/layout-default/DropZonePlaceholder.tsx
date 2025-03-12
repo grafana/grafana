@@ -2,29 +2,33 @@ import { css } from '@emotion/css';
 import classNames from 'classnames';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { Portal, useStyles2 } from '@grafana/ui';
 
-interface DropZonePlaceholderProps {
+interface DropZonePlaceholderState extends SceneObjectState {
   width: number;
   height: number;
   top: number;
   left: number;
 }
 
-export const DropZonePlaceholder = ({ width, height, top, left }: DropZonePlaceholderProps) => {
-  const styles = useStyles2(getStyles);
+export class DropZonePlaceholder extends SceneObjectBase<DropZonePlaceholderState> {
+  static Component = ({ model }: SceneComponentProps<DropZonePlaceholder>) => {
+    const { width, height, left, top } = model.useState();
+    const styles = useStyles2(getStyles);
 
-  return (
-    <Portal>
-      <div
-        className={classNames(styles.placeholder, {
-          [styles.visible]: width > 0 && height > 0,
-        })}
-        style={{ width, height, transform: `translate(${left}px, ${top}px)` }}
-      ></div>
-    </Portal>
-  );
-};
+    return (
+      <Portal>
+        <div
+          className={classNames(styles.placeholder, {
+            [styles.visible]: width > 0 && height > 0,
+          })}
+          style={{ width, height, transform: `translate(${left}px, ${top}px)` }}
+        ></div>
+      </Portal>
+    );
+  };
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   placeholder: css({
