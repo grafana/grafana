@@ -521,7 +521,7 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 		sess.Join("INNER", "team", "team.id=team_member.team_id")
 
 		// explicitly check for serviceaccounts
-		sess.Where(fmt.Sprintf("%s.is_service_account=?", ss.db.GetDialect().Quote("user")), ss.db.GetDialect().BooleanStr(false))
+		sess.Where(fmt.Sprintf("%s.is_service_account=?", ss.db.GetDialect().Quote("user")), ss.db.GetDialect().BooleanValue(false))
 
 		if acUserFilter != nil {
 			sess.Where(acUserFilter.Where, acUserFilter.Args...)
@@ -549,7 +549,7 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 			sess.Where("team_member.user_id=?", query.UserID)
 		}
 		if query.External {
-			sess.Where("team_member.external=?", ss.db.GetDialect().BooleanStr(true))
+			sess.Where("team_member.external=?", ss.db.GetDialect().BooleanValue(true))
 		}
 		sess.Cols(
 			"team_member.org_id",
