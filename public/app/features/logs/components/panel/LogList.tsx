@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { debounce } from 'lodash';
+import { debounce, initial } from 'lodash';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { VariableSizeList } from 'react-window';
 
@@ -19,7 +19,7 @@ import { PopoverContent, useTheme2 } from '@grafana/ui';
 import { InfiniteScroll } from './InfiniteScroll';
 import { getGridTemplateColumns } from './LogLine';
 import { GetRowContextQueryFn } from './LogLineMenu';
-import { LogListContext } from './LogListContext';
+import { LogListContext, useLogListContext } from './LogListContext';
 import { LogListControls } from './LogListControls';
 import { preProcessLogs, LogListModel } from './processing';
 import {
@@ -60,10 +60,11 @@ interface Props {
   wrapLogMessage: boolean;
 }
 
+type LogListComponentProps = Omit<Props, 'showTime' | 'wrapLogMessage' | 'displayedFields'>;
+
 export const LogList = ({
   app,
   containerElement,
-  displayedFields = [],
   eventBus,
   forceEscape = false,
   getFieldLinks,
@@ -71,13 +72,45 @@ export const LogList = ({
   loadMore,
   logs,
   showControls,
-  showTime,
   sortOrder,
   timeRange,
   timeZone,
-  wrapLogMessage,
   ...logListContext
 }: Props) => {
+  return (
+    <LogListContext.Provider value={logListContext}>
+      <LogListComponent
+        app={app}
+        containerElement={containerElement}
+        eventBus={eventBus}
+        forceEscape={forceEscape}
+        getFieldLinks={getFieldLinks}
+        initialScrollPosition={initialScrollPosition}
+        loadMore={loadMore}
+        logs={logs}
+        showControls={showControls}
+        sortOrder={sortOrder}
+        timeRange={timeRange}
+        timeZone={timeZone}
+      />
+    </LogListContext.Provider>
+  );
+};
+
+const LogListComponent = ({
+  app,
+  containerElement,
+  eventBus,
+  forceEscape = false,
+  getFieldLinks,
+  initialScrollPosition = 'top',
+  loadMore,
+  logs,
+  showControls,
+  sortOrder,
+  timeRange,
+  timeZone,
+}: LogListComponentProps) => {
   const [processedLogs, setProcessedLogs] = useState<LogListModel[]>([]);
   const [listHeight, setListHeight] = useState(
     app === CoreApp.Explore ? window.innerHeight * 0.75 : containerElement.clientHeight
@@ -86,6 +119,7 @@ export const LogList = ({
   const listRef = useRef<VariableSizeList | null>(null);
   const widthRef = useRef(containerElement.clientWidth);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const { displayedFields, showTime, wrapLogMessage } = useLogListContext();
   const dimensions = useMemo(
     () => (wrapLogMessage ? [] : calculateFieldDimensions(processedLogs, displayedFields)),
     [displayedFields, processedLogs, wrapLogMessage]
@@ -152,46 +186,44 @@ export const LogList = ({
   }
 
   return (
-    <LogListContext.Provider value={logListContext}>
-      <div className={styles.logListContainer}>
-        <InfiniteScroll
-          displayedFields={displayedFields}
-          handleOverflow={handleOverflow}
-          logs={processedLogs}
-          loadMore={loadMore}
-          scrollElement={scrollRef.current}
-          showTime={showTime}
-          sortOrder={sortOrder}
-          timeRange={timeRange}
-          timeZone={timeZone}
-          setInitialScrollPosition={handleScrollPosition}
-          wrapLogMessage={wrapLogMessage}
-        >
-          {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
-            <VariableSizeList
-              className={styles.logList}
-              height={listHeight}
-              itemCount={itemCount}
-              itemSize={getLogLineSize.bind(null, processedLogs, containerElement, displayedFields, {
-                wrap: wrapLogMessage,
-                showControls,
-                showTime,
-              })}
-              itemKey={getItemKey}
-              layout="vertical"
-              onItemsRendered={onItemsRendered}
-              outerRef={scrollRef}
-              ref={listRef}
-              style={{ overflowY: 'scroll' }}
-              width="100%"
-            >
-              {Renderer}
-            </VariableSizeList>
-          )}
-        </InfiniteScroll>
-        {showControls && <LogListControls eventBus={eventBus} />}
-      </div>
-    </LogListContext.Provider>
+    <div className={styles.logListContainer}>
+      <InfiniteScroll
+        displayedFields={displayedFields}
+        handleOverflow={handleOverflow}
+        logs={processedLogs}
+        loadMore={loadMore}
+        scrollElement={scrollRef.current}
+        showTime={showTime}
+        sortOrder={sortOrder}
+        timeRange={timeRange}
+        timeZone={timeZone}
+        setInitialScrollPosition={handleScrollPosition}
+        wrapLogMessage={wrapLogMessage}
+      >
+        {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
+          <VariableSizeList
+            className={styles.logList}
+            height={listHeight}
+            itemCount={itemCount}
+            itemSize={getLogLineSize.bind(null, processedLogs, containerElement, displayedFields, {
+              wrap: wrapLogMessage,
+              showControls,
+              showTime,
+            })}
+            itemKey={getItemKey}
+            layout="vertical"
+            onItemsRendered={onItemsRendered}
+            outerRef={scrollRef}
+            ref={listRef}
+            style={{ overflowY: 'scroll' }}
+            width="100%"
+          >
+            {Renderer}
+          </VariableSizeList>
+        )}
+      </InfiniteScroll>
+      {showControls && <LogListControls eventBus={eventBus} />}
+    </div>
   );
 };
 
