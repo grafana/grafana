@@ -37,8 +37,7 @@ func testBasicOperations(t *testing.T, eng *Engine) {
 		require.NoError(t, err)
 		require.NotZero(t, obj.Id)
 
-		err = json.Unmarshal([]byte(`{"test": "test", "key": null}`), &obj.Json)
-		require.NoError(t, err)
+		obj.Json = json.RawMessage(`{"test": "test", "key": null}`)
 		_, err = sess.Update(obj)
 		require.NoError(t, err)
 	})
