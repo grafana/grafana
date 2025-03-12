@@ -45,39 +45,30 @@ export function getRawDashboardV2Changes(
   saveVariables?: boolean,
   saveRefresh?: boolean
 ) {
-  let initialSaveModel;
-
-  // Use ResponseTransformers to ensure the initial dashboard is a DashboardV2Spec
-  if (!isDashboardV2Spec(initial)) {
-    const dto: DashboardDTO = {
-      dashboard: initial as DashboardDataDTO,
-      meta: {},
-    };
-    initialSaveModel = ResponseTransformers.ensureV2Response(dto).spec;
-  } else {
-    initialSaveModel = initial;
-  }
-
-  const changedSaveModel = changed;
-  const hasTimeChanged = getHasTimeChanged(changedSaveModel.timeSettings, initialSaveModel.timeSettings);
-  const hasVariableValueChanges = applyVariableChangesV2(changedSaveModel, initialSaveModel, saveVariables);
-  const hasRefreshChanged = changedSaveModel.timeSettings.autoRefresh !== initialSaveModel.timeSettings.autoRefresh;
+  // Transform initial dashboard values to v2 spec format to ensure consistent comparison of time settings,
+  // variables and refresh values. This handles cases where the initial dashboard is in v1 format
+  // but was converted to v2 during runtime due to dynamic dashboard features being used.
+  const initialSaveModelV2 = convertToV2SpecIfNeeded(initial);
+  const hasTimeChanged = getHasTimeChanged(initialSaveModelV2.timeSettings, initialSaveModelV2.timeSettings);
+  const hasVariableValueChanges = applyVariableChangesV2(initialSaveModelV2, initialSaveModelV2, saveVariables);
+  const hasRefreshChanged = initialSaveModelV2.timeSettings.autoRefresh !== initialSaveModelV2.timeSettings.autoRefresh;
 
   if (!saveTimeRange) {
-    changedSaveModel.timeSettings.from = initialSaveModel.timeSettings.from;
-    changedSaveModel.timeSettings.to = initialSaveModel.timeSettings.to;
+    initialSaveModelV2.timeSettings.from = initialSaveModelV2.timeSettings.from;
+    initialSaveModelV2.timeSettings.to = initialSaveModelV2.timeSettings.to;
   }
 
   if (!saveRefresh) {
-    changedSaveModel.timeSettings.autoRefresh = initialSaveModel.timeSettings.autoRefresh;
+    initialSaveModelV2.timeSettings.autoRefresh = initialSaveModelV2.timeSettings.autoRefresh;
   }
 
-  const diff = jsonDiff(initial, changedSaveModel);
+  // Calculate differences using the non-transformed to v2 spec values to be able to compare the initial and changed dashboard values
+  const diff = jsonDiff(initial, initialSaveModelV2);
   const diffCount = Object.values(diff).reduce((acc, cur) => acc + cur.length, 0);
 
   return {
-    changedSaveModel,
-    initialSaveModel,
+    changedSaveModel: changed,
+    initialSaveModel: initial,
     diffs: diff,
     diffCount,
     hasChanges: diffCount > 0,
@@ -86,6 +77,18 @@ export function getRawDashboardV2Changes(
     hasRefreshChange: hasRefreshChanged,
     hasMigratedToV2: !isDashboardV2Spec(initial),
   };
+}
+
+function convertToV2SpecIfNeeded(initial: DashboardV2Spec | Dashboard): DashboardV2Spec {
+  if (isDashboardV2Spec(initial)) {
+    return initial;
+  }
+
+  const dto: DashboardDTO = {
+    dashboard: initial as DashboardDataDTO,
+    meta: {},
+  };
+  return ResponseTransformers.ensureV2Response(dto).spec;
 }
 
 export function getRawDashboardChanges(
