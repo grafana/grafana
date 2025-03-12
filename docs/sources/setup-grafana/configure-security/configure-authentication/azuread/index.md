@@ -22,7 +22,7 @@ weight: 800
 The Azure AD authentication allows you to use an Azure Active Directory tenant as an identity provider for Grafana. You can use Azure AD application roles to assign users and groups to Grafana roles from the Azure Portal.
 
 {{% admonition type="note" %}}
-If Users use the same email address in Azure AD that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to [Using the same email address to login with different identity providers]({{< relref "../../configure-authentication#using-the-same-email-address-to-login-with-different-identity-providers" >}}) for more information.
+If Users use the same email address in Azure AD that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to [Using the same email address to login with different identity providers](../#using-the-same-email-address-to-login-with-different-identity-providers) for more information.
 {{% /admonition %}}
 
 ## Create the Azure AD application
@@ -216,11 +216,11 @@ Refer to [Terraform Registry](https://registry.terraform.io/providers/grafana/gr
 
 ## Configure Azure AD authentication client using the Grafana configuration file
 
-Ensure that you have access to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}).
+Ensure that you have access to the [Grafana configuration file](../../../configure-grafana/#configuration-file-location).
 
 ### Enable Azure AD OAuth in Grafana
 
-Add the following to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}):
+Add the following to the [Grafana configuration file](../../../configure-grafana/#configuration-file-location):
 
 ```
 [auth.azuread]
@@ -250,7 +250,7 @@ GF_AUTH_AZUREAD_CLIENT_SECRET
 ```
 
 {{% admonition type="note" %}}
-Verify that the Grafana [root_url]({{< relref "../../../configure-grafana#root_url" >}}) is set in your Azure Application Redirect URLs.
+Verify that the Grafana [root_url](../../../configure-grafana/#root_url) is set in your Azure Application Redirect URLs.
 {{% /admonition %}}
 
 ### Configure refresh token
@@ -356,7 +356,7 @@ the correct teams.
 
 You can reference Azure AD groups by group object ID, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d`.
 
-To learn more, refer to the [Team Sync]({{< relref "../../configure-team-sync" >}}) documentation.
+To learn more, refer to the [Team Sync](../../configure-team-sync/) documentation.
 
 ## Common troubleshooting
 
@@ -410,7 +410,7 @@ force_use_graph_api = true
 By default, Azure AD authentication will map users to organization roles based on the most privileged application role assigned to the user in AzureAD.
 
 If no application role is found, the user is assigned the role specified by
-[the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
+[the `auto_assign_org_role` option](../../../configure-grafana/#auto_assign_org_role).
 You can disable this default role assignment by setting `role_attribute_strict = true`.
 It denies user access if no role or an invalid role is returned.
 
@@ -420,7 +420,7 @@ their organization membership will be reset to the default organization.
 ## Skip organization role sync
 
 If Azure AD authentication is not intended to sync user roles and organization membership and prevent the sync of org roles from AzureAD, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana or that your organization roles are synced from another provider.
-See [Configure Grafana]({{< relref "../../../configure-grafana#authazuread" >}}) for more details.
+See [Configure Grafana](../../../configure-grafana/#authazuread) for more details.
 
 ```ini
 [auth.azuread]

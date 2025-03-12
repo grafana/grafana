@@ -56,17 +56,17 @@ Use app plugins when you want an out-of-the-box monitoring experience.
 
 ### Managing access for app plugins
 
-Customize access to app plugins with [RBAC]({{< relref "../roles-and-permissions/access-control/#about-rbac" >}}).
+Customize access to app plugins with [RBAC](../roles-and-permissions/access-control/#about-rbac).
 
 By default, the Viewer, Editor and Admin roles have access to all app plugins that their Organization role allows them to access. Access is granted by the `fixed:plugins.app:reader` role.
 
 {{% admonition type="note" %}}
-To prevent users from seeing an app plugin, refer to [these permissions scenarios]({{< relref "../roles-and-permissions/access-control/plan-rbac-rollout-strategy#prevent-viewers-from-accessing-an-app-plugin" >}}).
+To prevent users from seeing an app plugin, refer to [these permissions scenarios](../roles-and-permissions/access-control/plan-rbac-rollout-strategy/#prevent-viewers-from-accessing-an-app-plugin).
 {{% /admonition %}}
 
 ## Plugin catalog
 
-The Grafana plugin catalog allows you to browse and manage plugins from within Grafana. Only Grafana server administrators and Organization administrators can access and use the plugin catalog. For more information about Grafana roles and permissions, refer to [Roles and permissions]({{< relref "../administration/roles-and-permissions" >}}).
+The Grafana plugin catalog allows you to browse and manage plugins from within Grafana. Only Grafana server administrators and Organization administrators can access and use the plugin catalog. For more information about Grafana roles and permissions, refer to [Roles and permissions](../roles-and-permissions/).
 
 The following access rules apply depending on the user role:
 
@@ -88,7 +88,7 @@ The Grafana plugin catalog is designed to work with a single Grafana server inst
 _Video shows the Plugin catalog in a previous version of Grafana._
 
 {{% admonition type="note" %}}
-If required, the Grafana plugin catalog can be disabled using the `plugin_admin_enabled` flag in the [configuration]({{< relref "../../setup-grafana/configure-grafana/#plugin_admin_enabled" >}}) file.
+If required, the Grafana plugin catalog can be disabled using the `plugin_admin_enabled` flag in the [configuration](../../setup-grafana/configure-grafana/#plugin_admin_enabled) file.
 {{% /admonition %}}
 
 <a id="#plugin-catalog-entry"></a>
@@ -153,7 +153,7 @@ If you're logged in to Grafana Cloud when you add a plugin, log out and then log
 
 Follow the instructions on the **Install** tab. You can either install the plugin with a Grafana CLI command or by downloading and uncompressing a zip file into the Grafana plugins directory. We recommend using Grafana CLI in most instances. The zip option is available if your Grafana server doesn't have access to the internet.
 
-For more information about Grafana CLI plugin commands, refer to [Plugin commands]({{< relref "../../cli/#plugins-commands" >}}).
+For more information about Grafana CLI plugin commands, refer to [Plugin commands](../../cli/#plugins-commands).
 
 #### Install a packaged plugin
 
@@ -163,7 +163,7 @@ After the user has downloaded the archive containing the plugin assets, they can
 unzip my-plugin-0.2.0.zip -d YOUR_PLUGIN_DIR/my-plugin
 ```
 
-The path to the plugin directory is defined in the configuration file. For more information, refer to [Configuration]({{< relref "../../setup-grafana/configure-grafana/#plugins" >}}).
+The path to the plugin directory is defined in the configuration file. For more information, refer to [Configuration](../../setup-grafana/configure-grafana/#plugins).
 
 ## Plugin signatures
 
@@ -203,7 +203,7 @@ All plugins are signed under a _signature level_. The signature level determines
 Unsigned plugins are not supported in Grafana Cloud.
 {{% /admonition %}}
 
-We strongly recommend that you don't run unsigned plugins in your Grafana instance. However, if you're aware of the risks and you still want to load an unsigned plugin, refer to [Configuration]({{< relref "../../setup-grafana/configure-grafana/#allow_loading_unsigned_plugins" >}}).
+We strongly recommend that you don't run unsigned plugins in your Grafana instance. However, if you're aware of the risks and you still want to load an unsigned plugin, refer to [Configuration](../../setup-grafana/configure-grafana/#allow_loading_unsigned_plugins).
 
 If you've allowed loading of an unsigned plugin, then Grafana writes a warning message to the server log:
 

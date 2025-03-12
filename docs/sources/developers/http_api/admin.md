@@ -22,7 +22,7 @@ The Admin HTTP API does not currently work with an API Token. API Tokens are cur
 the permission of server admin, only users can be given that permission. So in order to use these API calls you will have to use Basic Auth and the Grafana user
 must have the Grafana Admin permission. (The default admin user is called `admin` and has permission to use this API.)
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](../../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
 ## Fetch settings
 
@@ -365,7 +365,7 @@ Content-Type: application/json
 }
 ```
 
-Note that `OrgId` is an optional parameter that can be used to assign a new user to a different organization when [auto_assign_org]({{< relref "../../setup-grafana/configure-grafana/#auto-assign-org" >}}) is set to `true`.
+Note that `OrgId` is an optional parameter that can be used to assign a new user to a different organization when [auto_assign_org](../../../setup-grafana/configure-grafana/#auto-assign-org) is set to `true`.
 
 **Example Response**:
 
@@ -688,7 +688,7 @@ Content-Type: application/json
 
 `POST /api/admin/encryption/rotate-data-keys`
 
-[Rotates]({{< relref "../../setup-grafana/configure-security/configure-database-encryption/#rotate-data-keys" >}}) data encryption keys.
+[Rotates](../../../setup-grafana/configure-security/configure-database-encryption/#rotate-data-keys) data encryption keys.
 
 **Example Request**:
 
@@ -709,7 +709,7 @@ Content-Type: application/json
 
 `POST /api/admin/encryption/reencrypt-data-keys`
 
-[Re-encrypts]({{< relref "../../setup-grafana/configure-security/configure-database-encryption/#re-encrypt-data-keys" >}}) data encryption keys.
+[Re-encrypts](../../../setup-grafana/configure-security/configure-database-encryption/#re-encrypt-data-keys) data encryption keys.
 
 **Example Request**:
 
@@ -730,7 +730,7 @@ Content-Type: application/json
 
 `POST /api/admin/encryption/reencrypt-secrets`
 
-[Re-encrypts]({{< relref "../../setup-grafana/configure-security/configure-database-encryption/#re-encrypt-secrets" >}}) secrets.
+[Re-encrypts](../../../setup-grafana/configure-security/configure-database-encryption/#re-encrypt-secrets) secrets.
 
 **Example Request**:
 
@@ -751,7 +751,7 @@ Content-Type: application/json
 
 `POST /api/admin/encryption/rollback-secrets`
 
-[Rolls back]({{< relref "../../setup-grafana/configure-security/configure-database-encryption/#roll-back-secrets" >}}) secrets.
+[Rolls back](../../../setup-grafana/configure-security/configure-database-encryption/#roll-back-secrets) secrets.
 
 **Example Request**:
 
