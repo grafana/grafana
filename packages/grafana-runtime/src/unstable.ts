@@ -9,5 +9,7 @@
  * and be subject to the standard policies
  */
 
+export { useT, setUseTHook } from './utils/i18n';
+
 // Dummy export to make it a valid module. Remove when we have real exports.
-export const unstable = {};
+// export const unstable = {};
