@@ -127,6 +127,8 @@ interface SceneOptions {
   useRowRepeater?: boolean;
   throwError?: string;
   variableRefresh?: VariableRefresh;
+  isMulti?: boolean;
+  includeAll?: boolean;
 }
 
 export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel) {
@@ -170,8 +172,8 @@ export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel
     query: 'A.*',
     value: ALL_VARIABLE_VALUE,
     text: ALL_VARIABLE_TEXT,
-    isMulti: true,
-    includeAll: true,
+    isMulti: options.isMulti ?? true,
+    includeAll: options.includeAll ?? true,
     delayMs: options.variableQueryTime,
     optionsToReturn: [
       { label: 'A', value: '1' },
