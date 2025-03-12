@@ -28,13 +28,13 @@ To identify the factors that are contributing to the latency, you must compare a
 
 Use exemplars to help isolate problems within your data distribution by pinpointing query traces exhibiting high latency within a time interval. Once you localize the latency problem to a few exemplar traces, you can combine it with additional system based information or location properties to perform a root cause analysis faster, leading to quick resolutions to performance issues.
 
-Support for exemplars is available for the Prometheus data source only. Once you enable the functionality, exemplar data is available by default. For more information on exemplar configuration and how to enable exemplars, refer to [configuring exemplars in the Prometheus data source]({{< relref "../../datasources/prometheus/configure-prometheus-data-source#exemplars" >}}).
+Support for exemplars is available for the Prometheus data source only. Once you enable the functionality, exemplar data is available by default. For more information on exemplar configuration and how to enable exemplars, refer to [configuring exemplars in the Prometheus data source](../../datasources/prometheus/configure-prometheus-data-source/#exemplars).
 
 Grafana shows exemplars alongside a metric in the Explore view and in dashboards. Each exemplar displays as a highlighted star. You can hover your cursor over an exemplar to view the unique trace ID, which is a combination of a key value pair. To investigate further, click the blue button next to the `traceID` property.
 
 {{< figure src="/media/docs/grafana/exemplars/screenshot-exemplars.png" class="docs-image--no-shadow" max-width= "750px" caption="Screenshot showing the detail window of an exemplar" >}}
 
-Refer to [View exemplar data]({{< relref "#view-exemplar-data" >}}) for instructions on how to drill down and view exemplar trace details from metrics and logs. To know more about exemplars, refer to the blogpost [Intro to exemplars, which enable Grafana Tempo’s distributed tracing at massive scale](/blog/2021/03/31/intro-to-exemplars-which-enable-grafana-tempos-distributed-tracing-at-massive-scale/).
+Refer to [View exemplar data](#view-exemplar-data) for instructions on how to drill down and view exemplar trace details from metrics and logs. To know more about exemplars, refer to the blogpost [Intro to exemplars, which enable Grafana Tempo’s distributed tracing at massive scale](/blog/2021/03/31/intro-to-exemplars-which-enable-grafana-tempos-distributed-tracing-at-massive-scale/).
 
 ## View exemplar data
 
@@ -42,7 +42,7 @@ When support for exemplar support is enabled for a Prometheus data source, you c
 
 ### In Explore
 
-Explore visualizes exemplar traces as highlighted stars alongside metrics data. For more information on how Explore visualizes trace data, refer to [Tracing in Explore]({{< relref "../../explore/trace-integration" >}}).
+Explore visualizes exemplar traces as highlighted stars alongside metrics data. For more information on how Explore visualizes trace data, refer to [Tracing in Explore](../../explore/trace-integration/).
 
 To examine the details of an exemplar trace:
 
@@ -58,7 +58,7 @@ For more information on how to drill down and analyze the trace and span details
 
 ### In logs
 
-You can also view exemplar trace details from the Loki logs in Explore. Use regex within the Derived fields links for Loki to extract the `traceID` information. Now when you expand Loki logs, you can see a `traceID` property under the **Detected fields** section. To learn more about how to extract a part of a log message into an internal or external link, refer to [using derived fields in Loki]({{< relref "../../explore/logs-integration" >}}).
+You can also view exemplar trace details from the Loki logs in Explore. Use regex within the Derived fields links for Loki to extract the `traceID` information. Now when you expand Loki logs, you can see a `traceID` property under the **Detected fields** section. To learn more about how to extract a part of a log message into an internal or external link, refer to [using derived fields in Loki](../../explore/logs-integration/).
 
 To view the details of an exemplar trace:
 
