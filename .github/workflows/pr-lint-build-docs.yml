@@ -23,11 +23,12 @@ jobs:
           cache: 'yarn'
 
       - name: Install dependencies
-        run: yarn install --immutable || yarn install --immutable
+        run: yarn install --immutable
 
       - name: Lint docs
         run: yarn run prettier:checkDocs
         env:
+          # Increase memory for prettier due to large number of files
           NODE_OPTIONS: --max_old_space_size=8192
 
       - name: Build docs website
