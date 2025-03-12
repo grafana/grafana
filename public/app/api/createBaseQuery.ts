@@ -33,6 +33,8 @@ export function createBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<R
 }
 
 export function handleRequestError(error: unknown) {
+  console.log('handleRequestError', { error });
+
   if (isFetchError(error)) {
     return { error: new Error(error.data.message) };
   } else if (error instanceof Error) {

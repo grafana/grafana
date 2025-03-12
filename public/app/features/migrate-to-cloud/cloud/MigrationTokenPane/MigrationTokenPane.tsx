@@ -25,6 +25,7 @@ export const MigrationTokenPane = () => {
   const [deleteTokenMutation, deleteTokenResponse] = useDeleteCloudMigrationTokenMutation();
 
   const getTokenQueryError = maybeAPIError(getTokenQuery.error);
+  console.log('getTokenQuery', { data: getTokenQuery?.data, error: getTokenQuery?.error });
 
   // GetCloudMigrationToken returns a 404 error if no token exists.
   // When a token is deleted and the GetCloudMigrationToken query is refreshed, RTKQ will retain

@@ -2,6 +2,8 @@ import { isFetchError } from '@grafana/runtime';
 
 // TODO: candidate to hoist and share
 export function maybeAPIError(err: unknown) {
+  console.log('maybeAPIError', { err });
+
   if (!isFetchError<unknown>(err) || typeof err.data !== 'object' || !err.data) {
     return null;
   }
