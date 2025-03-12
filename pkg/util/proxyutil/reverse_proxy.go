@@ -3,6 +3,7 @@ package proxyutil
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -133,6 +134,8 @@ func errorHandler(logger glog.Logger) func(http.ResponseWriter, *http.Request, e
 
 		// nolint:errorlint
 		if timeoutErr, ok := err.(timeoutError); ok && timeoutErr.Timeout() {
+			fmt.Printf("====PROXY REQUEST TIMEOUT====: %v %v\n", r.RequestURI, err)
+
 			ctxLogger.Error("Proxy request timed out", "err", err)
 			w.WriteHeader(http.StatusGatewayTimeout)
 			return
