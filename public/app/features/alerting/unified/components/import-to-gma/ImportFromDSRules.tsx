@@ -1,25 +1,38 @@
 import { css } from '@emotion/css';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, FormProvider, useForm } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
-import { DataSourcePicker, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { Button, InlineField, InlineSwitch, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
+import { Trans, t } from 'app/core/internationalization';
 
 import { Folder } from '../../types/rule-form';
 import { createRelativeUrl } from '../../utils/url';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
+import { CloudRulesSourcePicker } from '../rule-editor/CloudRulesSourcePicker';
 
+import { NamespaceAndGroupFilter } from './NamespaceAndGroupFilter';
 
-interface ImportFormValues {
-  selectedDatasource?: DataSourceInstanceSettings;
+export interface ImportFormValues {
+  selectedDatasource: string | null;
   pauseAlertingRules: boolean;
   pauseRecordingRules: boolean;
   targetFolder?: Folder;
+  namespace?: string;
+  ruleGroup?: string;
 }
 
 const ImportFromDSRules = () => {
+  const formAPI = useForm<ImportFormValues>({
+    defaultValues: {
+      selectedDatasource: undefined,
+      pauseAlertingRules: true,
+      pauseRecordingRules: true,
+      targetFolder: undefined,
+    },
+  });
   const {
     register,
     handleSubmit,
@@ -28,18 +41,12 @@ const ImportFromDSRules = () => {
     control,
     setValue,
     formState: { errors, isSubmitting },
-  } = useForm<ImportFormValues>({
-    defaultValues: {
-      selectedDatasource: undefined,
-      pauseAlertingRules: true,
-      pauseRecordingRules: true,
-      targetFolder: undefined,
-    },
-  });
+  } = formAPI;
 
   const styles = useStyles2(getStyles);
 
   const targetFolder = watch('targetFolder');
+  const selectedDatasource = watch('selectedDatasource');
 
   const onSubmit = async (data: ImportFormValues) => {
     console.log(data);
@@ -50,115 +57,119 @@ const ImportFromDSRules = () => {
   };
 
   return (
-    <AlertingPageWrapper navId="alert-list" pageNav={{ text: 'Export alert rules from a datasource to Grafana-managed rules.' }}>
+    <AlertingPageWrapper
+      navId="alert-list"
+      pageNav={{
+        text: t('alerting.import-to-gma.pageTitle', 'Export alert rules from a datasource to Grafana-managed rules.'),
+      }}
+    >
       <Stack gap={2} direction={'column'}>
         <Text element="h2" variant="h5">
-          Migrate your alert rules from a datasource into Grafana.
+          <Trans i18nKey="alerting.import-to-gma.title">Migrate your alert rules from a datasource into Grafana.</Trans>
         </Text>
-
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <Stack gap={2} direction={'column'}>
-            <InlineField
-              transparent={true}
-              label="Datasource"
-              labelWidth={20}
-              invalid={!!errors.selectedDatasource}
-              error={errors.selectedDatasource?.message}
-            >
-              <Controller
-                render={({ field: { onChange, ref, ...field } }) => (
-                  <DataSourcePicker
-                    {...field}
-                    current={field.value}
-                    onChange={(ds: DataSourceInstanceSettings) => {
-                      setValue('selectedDatasource', ds);
-                    }}
-                    noDefault={true}
-                    placeholder="Select a datasource"
-                    alerting={true}
-                    filter={(ds) => !!ds.meta.alerting}
-                    width={50}
-                    type={['prometheus', 'loki']}
-                  />
-                )}
-                name="selectedDatasource"
-                rules={{
-                  required: { value: true, message: 'Please select a datasource' },
-                }}
-                control={control}
-              />
-            </InlineField>
-
-            <InlineField
-              transparent={true}
-              label="Target Folder"
-              labelWidth={20}
-              invalid={!!errors.selectedDatasource}
-              error={errors.selectedDatasource?.message}
-            >
-              <Controller
-                render={({ field: { onChange, ref, ...field } }) => (
-                  <Stack width={50}>
-                    <NestedFolderPicker
-                      showRootFolder={false}
-                      invalid={!!errors.targetFolder?.message}
+        <FormProvider {...formAPI}>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <Stack gap={2} direction={'column'}>
+              <InlineField
+                transparent={true}
+                label={t('alerting.import-to-gma.datasource.label', 'Datasource')}
+                labelWidth={20}
+                invalid={!!errors.selectedDatasource}
+                error={errors.selectedDatasource?.message}
+              >
+                <Controller
+                  render={({ field: { onChange, ref, ...field } }) => (
+                    <CloudRulesSourcePicker
                       {...field}
-                      value={targetFolder?.uid}
-                      onChange={(uid, title) => {
-                        if (uid && title) {
-                          setValue('targetFolder', { title, uid });
-                        } else {
-                          setValue('targetFolder', undefined);
-                        }
+                      onChange={(ds: DataSourceInstanceSettings) => {
+                        setValue('selectedDatasource', ds.name);
                       }}
                     />
-                  </Stack>
+                  )}
+                  name="selectedDatasource"
+                  rules={{
+                    required: {
+                      value: true,
+                      message: t('alerting.import-to-gma.datasource.required-message', 'Please select a datasource'),
+                    },
+                  }}
+                  control={control}
+                />
+              </InlineField>
 
-                )}
-                name="targetFolder"
-                rules={{
-                  required: { value: true, message: 'Please select a target folder' },
-                }}
-                control={control}
-              />
-            </InlineField>
-
-
-            <InlineField
-              transparent={true}
-              label="Pause alerting rules"
-              labelWidth={25}
-              tooltip="Exported alerting rules will be paused."
-            >
-              <InlineSwitch
-                {...register('pauseAlertingRules')}
-              />
-            </InlineField>
-
-            <InlineField
-              transparent={true}
-              label="Pause recording rules"
-              labelWidth={25}
-              tooltip="Exported recording rules will be paused."
-            >
-              <InlineSwitch
-                {...register('pauseRecordingRules')}
-              />
-            </InlineField>
-
-            <Stack>
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={isSubmitting || !watch('selectedDatasource') || !watch('targetFolder')}
-                onClick={() => clearErrors()}
+              <InlineField
+                transparent={true}
+                label={t('alerting.import-to-gma.target-folder.label', 'Target Folder')}
+                labelWidth={20}
+                invalid={!!errors.selectedDatasource}
+                error={errors.selectedDatasource?.message}
               >
-                {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
-                Export
-              </Button>
+                <Controller
+                  render={({ field: { onChange, ref, ...field } }) => (
+                    <Stack width={50}>
+                      <NestedFolderPicker
+                        showRootFolder={false}
+                        invalid={!!errors.targetFolder?.message}
+                        {...field}
+                        value={targetFolder?.uid}
+                        onChange={(uid, title) => {
+                          if (uid && title) {
+                            setValue('targetFolder', { title, uid });
+                          } else {
+                            setValue('targetFolder', undefined);
+                          }
+                        }}
+                      />
+                    </Stack>
+                  )}
+                  name="targetFolder"
+                  rules={{
+                    required: {
+                      value: true,
+                      message: t('alerting.import-to-gma.taget-folder.required', 'Please select a target folder'),
+                    },
+                  }}
+                  control={control}
+                />
+              </InlineField>
+
+              <InlineField
+                transparent={true}
+                label={t('alerting.import-to-gma.pause.label', 'Pause alerting rules')}
+                labelWidth={25}
+                tooltip={t('alerting.import-to-gma.pause.tooltip', 'Exported alerting rules will be paused.')}
+              >
+                <InlineSwitch {...register('pauseAlertingRules')} />
+              </InlineField>
+
+              <InlineField
+                transparent={true}
+                label={t('alerting.import-to-gma.pause-recording.label', 'Pause recording rules')}
+                labelWidth={25}
+                tooltip={t(
+                  'alerting.import-to-gma.pause-recording.tooltip',
+                  'Exported recording rules will be paused.'
+                )}
+              >
+                <InlineSwitch {...register('pauseRecordingRules')} />
+              </InlineField>
+
+              {selectedDatasource ? <NamespaceAndGroupFilter rulesSourceName={selectedDatasource} /> : null}
+
+              <Stack>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  disabled={isSubmitting || !watch('selectedDatasource') || !watch('targetFolder')}
+                  onClick={() => clearErrors()}
+                >
+                  {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
+                  <Trans i18nKey="alerting.import-to-gma.action-button">Export</Trans>
+                </Button>
+              </Stack>
             </Stack>
-          </Stack>
-        </form>
+          </form>
+        </FormProvider>
       </Stack>
     </AlertingPageWrapper>
   );

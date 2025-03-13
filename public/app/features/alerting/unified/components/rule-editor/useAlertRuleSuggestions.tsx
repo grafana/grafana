@@ -59,7 +59,7 @@ export function useAlertRuleSuggestions(rulesSourceName: string) {
   return { namespaceGroups, labels, isLoading: isPrometheusRulesLoading || isRulerRulesLoading || isFeaturesLoading };
 }
 
-function promNamespacesToNamespaceGroups(promNamespaces: RuleNamespace[]) {
+export function promNamespacesToNamespaceGroups(promNamespaces: RuleNamespace[]) {
   const groups = new Map<string, string[]>();
   promNamespaces.forEach((namespace) => {
     groups.set(
@@ -70,7 +70,7 @@ function promNamespacesToNamespaceGroups(promNamespaces: RuleNamespace[]) {
   return groups;
 }
 
-function rulerRulesToNamespaceGroups(rulerConfig: RulerRulesConfigDTO) {
+export function rulerRulesToNamespaceGroups(rulerConfig: RulerRulesConfigDTO) {
   const result = new Map<string, string[]>();
   Object.entries(rulerConfig).forEach(([namespace, groups]) => {
     result.set(
