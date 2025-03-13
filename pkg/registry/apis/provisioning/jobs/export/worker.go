@@ -54,16 +54,14 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	// Can write to external branch
-	if err := repository.IsWriteAllowed(repo.Config(), options.Branch); err != nil {
+	err := repository.IsWriteAllowed(repo.Config(), options.Branch)
+	if err != nil {
 		return err
 	}
 
-	var (
-		err      error
-		buffered *gogit.GoGitRepo
-	)
-
-	if repo.Config().Spec.GitHub != nil {
+	// Use the existing clone if already checked out
+	buffered, ok := repo.(*gogit.GoGitRepo)
+	if !ok && repo.Config().Spec.GitHub != nil {
 		progress.SetMessage(ctx, "clone target")
 		buffered, err = gogit.Clone(ctx, repo.Config(), gogit.GoGitCloneOptions{
 			Root:                   r.clonedir,
