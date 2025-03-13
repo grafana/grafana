@@ -54,14 +54,12 @@ export class ScopesApiClient {
   async fetchMultipleScopes(treeScopes: TreeScope[]): Promise<SelectedScope[]> {
     const scopes = await Promise.all(treeScopes.map(({ scopeName }) => this.fetchScope(scopeName)));
 
-    return scopes.reduce<SelectedScope[]>((acc, scope, idx) => {
-      acc.push({
+    return scopes.map<SelectedScope>((scope, idx) => {
+      return {
         scope,
         path: treeScopes[idx].path,
-      });
-
-      return acc;
-    }, []);
+      };
+    });
   }
 
   async fetchNode(parent: string, query: string): Promise<NodesMap> {
