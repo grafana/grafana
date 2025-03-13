@@ -75,9 +75,7 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgm
 		return nil, fmt.Errorf("bleve root is configured against a file (not folder)")
 	}
 
-	go updateIndexSizeMetric(opts.Root, indexMetrics)
-
-	return &bleveBackend{
+	bleveBackend := &bleveBackend{
 		log:          slog.Default().With("logger", "bleve-backend"),
 		tracer:       tracer,
 		cache:        make(map[resource.NamespacedResource]*bleveIndex),
@@ -85,7 +83,11 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgm
 		start:        time.Now(),
 		features:     features,
 		indexMetrics: indexMetrics,
-	}, nil
+	}
+
+	go bleveBackend.updateIndexSizeMetric(opts.Root)
+
+	return bleveBackend, nil
 }
 
 // This will return nil if the key does not exist
@@ -101,8 +103,8 @@ func (b *bleveBackend) GetIndex(ctx context.Context, key resource.NamespacedReso
 }
 
 // updateIndexSizeMetric sets the total size of all file-based indices metric.
-func updateIndexSizeMetric(indexPath string, indexMetrics *resource.BleveIndexMetrics) {
-	if indexMetrics == nil {
+func (b *bleveBackend) updateIndexSizeMetric(indexPath string) {
+	if b.indexMetrics == nil {
 		return
 	}
 
@@ -124,10 +126,12 @@ func updateIndexSizeMetric(indexPath string, indexMetrics *resource.BleveIndexMe
 		})
 
 		if err == nil {
-			indexMetrics.IndexSize.Set(float64(totalSize))
+			b.indexMetrics.IndexSize.Set(float64(totalSize))
+		} else {
+			b.log.Error("got error while trying to calculate bleve file index size", "error", err)
 		}
 
-		time.Sleep(5 * time.Second)
+		time.Sleep(60 * time.Second)
 	}
 }
 
