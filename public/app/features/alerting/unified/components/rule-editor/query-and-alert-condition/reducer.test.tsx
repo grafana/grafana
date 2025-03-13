@@ -34,6 +34,7 @@ const reduceExpression: AlertQuery<ExpressionQuery> = {
     type: ExpressionQueryType.reduce,
     refId: 'B',
     settings: { mode: ReducerMode.Strict },
+    expression: 'A',
   },
 };
 const thresholdExpression: AlertQuery<ExpressionQuery> = {
@@ -399,7 +400,7 @@ describe('Query and expressions reducer', () => {
     expect(newState).toMatchSnapshot();
   });
 
-  it('should not remove first reducer if reducer is not the first expression', () => {
+  it('should remove reducer even if reducer is not the first expression', () => {
     const initialState: QueriesAndExpressionsState = {
       queries: [alertQuery, thresholdExpression, reduceExpression],
     };
@@ -411,7 +412,7 @@ describe('Query and expressions reducer', () => {
         expressionQueries: [thresholdExpression, reduceExpression],
       })
     );
-    expect(newState).toEqual(initialState);
+    expect(newState).toMatchSnapshot();
   });
 
   it('should not remove first reducer if reducer is not the second query', () => {
