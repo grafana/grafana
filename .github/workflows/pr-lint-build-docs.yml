@@ -35,7 +35,15 @@ jobs:
       - name: Build docs website
         run: |
           mkdir -p hugo/content/docs/grafana/latest
-          echo -e '---\nredirectURL: /docs/grafana/latest/\ntype: redirect\nversioned: true\n---\n' > hugo/content/docs/grafana/_index.md
+          
+          cat << EOF > hugo/content/docs/grafana/_index.md
+          ---
+          redirectURL: /docs/grafana/latest/
+          type: redirect
+          versioned: true
+          ---
+          EOF
+          
           cp -r docs/sources/* hugo/content/docs/grafana/latest/
           
           docker run --rm -v $(pwd):/src grafana/docs-base:latest /bin/sh -c "cd /src/hugo && make prod"
