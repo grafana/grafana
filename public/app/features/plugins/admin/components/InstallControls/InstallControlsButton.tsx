@@ -189,12 +189,12 @@ export function InstallControlsButton({
 }
 
 function shouldDisableUninstall(isUninstalling: boolean, plugin: CatalogPlugin) {
-  if (config.pluginAdminExternalManageEnabled) {
-    return plugin.isUninstallingFromInstance || !plugin.isFullyInstalled || plugin.isUpdatingFromInstance;
-  }
-
   if (isDisabledAngularPlugin(plugin)) {
     return true;
+  }
+
+  if (config.pluginAdminExternalManageEnabled) {
+    return plugin.isUninstallingFromInstance || !plugin.isFullyInstalled || plugin.isUpdatingFromInstance;
   }
 
   return isUninstalling;
