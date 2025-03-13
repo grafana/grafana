@@ -15,11 +15,11 @@ import (
 	"k8s.io/utils/ptr"
 
 	claims "github.com/grafana/authlib/types"
+	dashboardOG "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboardOG "github.com/grafana/grafana/pkg/apis/dashboard"
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"

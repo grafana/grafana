@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
-	"github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
-	"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
