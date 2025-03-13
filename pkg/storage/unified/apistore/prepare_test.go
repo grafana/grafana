@@ -14,9 +14,9 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 
 	authtypes "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 )
 
 var scheme = runtime.NewScheme()
