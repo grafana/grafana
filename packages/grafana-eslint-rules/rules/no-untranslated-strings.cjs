@@ -2,8 +2,16 @@
 /** @typedef {import('@typescript-eslint/utils').TSESTree.Node} Node */
 /** @typedef {import('@typescript-eslint/utils').TSESTree.JSXElement} JSXElement */
 /** @typedef {import('@typescript-eslint/utils').TSESTree.JSXFragment} JSXFragment */
+/** @typedef {import('@typescript-eslint/utils').TSESLint.RuleModule<'noUntranslatedStrings' | 'noUntranslatedStringsProp' | 'wrapWithTrans' | 'wrapWithT', [{ forceFix: string[] }]>} RuleDefinition */
 
-const { getNodeValue, getTFixers, getTransFixers, canBeFixed, elementIsTrans } = require('./translation-utils.cjs');
+const {
+  getNodeValue,
+  getTFixers,
+  getTransFixers,
+  canBeFixed,
+  elementIsTrans,
+  shouldBeFixed,
+} = require('./translation-utils.cjs');
 
 const { ESLintUtils, AST_NODE_TYPES } = require('@typescript-eslint/utils');
 
@@ -14,6 +22,7 @@ const createRule = ESLintUtils.RuleCreator(
 /** @type {string[]} */
 const propsToCheck = ['label', 'description', 'placeholder', 'aria-label', 'title', 'text', 'tooltip'];
 
+/** @type {RuleDefinition} */
 const noUntranslatedStrings = createRule({
   create(context) {
     return {
@@ -28,14 +37,12 @@ const noUntranslatedStrings = createRule({
             (node.value.expression.type === 'Literal' || node.value.expression.type === 'TemplateLiteral'));
 
         if (isUntranslatedProp) {
+          const errorShouldBeFixed = shouldBeFixed(context);
           const errorCanBeFixed = canBeFixed(node, context);
-          const pathsThatAreFixable = context.options[0]?.forceFix || [];
-          const shouldFix = pathsThatAreFixable.some((path) => context.filename.includes(path));
           return context.report({
             node,
             messageId: 'noUntranslatedStringsProp',
-            // If you want to mass auto-fix, uncomment the below and run for the subfolder you want to fix
-            fix: shouldFix && errorCanBeFixed ? getTFixers(node, context) : undefined,
+            fix: errorShouldBeFixed && errorCanBeFixed ? getTFixers(node, context) : undefined,
             suggest: errorCanBeFixed
               ? [
                   {
@@ -80,13 +87,12 @@ const noUntranslatedStrings = createRule({
           : false;
 
         if (untranslatedTextNodes.length && !parentHasText) {
+          const errorShouldBeFixed = shouldBeFixed(context);
           const errorCanBeFixed = canBeFixed(node, context);
-          const pathsThatAreFixable = context.options[0]?.forceFix || [];
-          const shouldFix = pathsThatAreFixable.some((path) => context.filename.includes(path));
           context.report({
             node,
             messageId: 'noUntranslatedStrings',
-            fix: shouldFix && errorCanBeFixed ? getTransFixers(node, context) : undefined,
+            fix: errorShouldBeFixed && errorCanBeFixed ? getTransFixers(node, context) : undefined,
             suggest: errorCanBeFixed
               ? [
                   {
@@ -130,7 +136,7 @@ const noUntranslatedStrings = createRule({
       },
     ],
   },
-  defaultOptions: [],
+  defaultOptions: [{ forceFix: [] }],
 });
 
 module.exports = noUntranslatedStrings;

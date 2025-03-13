@@ -6,11 +6,7 @@
 /** @typedef {import('@typescript-eslint/utils').TSESTree.JSXText} JSXText */
 /** @typedef {import('@typescript-eslint/utils').TSESTree.JSXChild} JSXChild */
 /** @typedef {import('@typescript-eslint/utils/ts-eslint').RuleFixer} RuleFixer */
-/**
- * @template {string} T1
- * @template {unknown[]} T2
- * @typedef {import('@typescript-eslint/utils/ts-eslint').RuleContext<T1, T2>} RuleContext
- */
+/** @typedef {import('@typescript-eslint/utils/ts-eslint').RuleContext<'noUntranslatedStrings' | 'noUntranslatedStringsProp' | 'wrapWithTrans' | 'wrapWithT',  [{forceFix: string[]}]>} RuleContextWithOptions */
 
 const { AST_NODE_TYPES } = require('@typescript-eslint/utils');
 
@@ -39,9 +35,19 @@ function toKebabCase(str) {
 }
 
 /**
+ * Checks if we _should_ fix an error automatically
+ * @param {RuleContextWithOptions} context
+ * @returns {boolean} Whether the node should be fixed
+ */
+function shouldBeFixed(context) {
+  const pathsThatAreFixable = context.options[0]?.forceFix || [];
+  return pathsThatAreFixable.some((path) => context.filename.includes(path));
+}
+
+/**
  * Checks if a node can be fixed automatically
  * @param {JSXAttribute|JSXElement|JSXFragment} node The node to check
- * @param {RuleContext<"noUntranslatedStrings" | "noUntranslatedStringsProp", []>} context
+ * @param {RuleContextWithOptions} context
  * @returns {boolean} Whether the node can be fixed
  */
 function canBeFixed(node, context) {
@@ -96,7 +102,7 @@ function canBeFixed(node, context) {
 
 /**
  * Gets the translation prefix from the filename
- * @param {RuleContext<"noUntranslatedStrings" | "noUntranslatedStringsProp", []>} context
+ * @param {RuleContextWithOptions} context
  * @returns {string|null} The translation prefix or null
  */
 function getTranslationPrefix(context) {
@@ -111,7 +117,7 @@ function getTranslationPrefix(context) {
 /**
  * Gets the i18n key for a node
  * @param {JSXAttribute|JSXText} node The node
- * @param {RuleContext<"noUntranslatedStrings" | "noUntranslatedStringsProp", []>} context
+ * @param {RuleContextWithOptions} context
  * @returns {string} The i18n key
  */
 const getI18nKey = (node, context) => {
@@ -164,7 +170,7 @@ const getI18nKey = (node, context) => {
 /**
  * Gets component names from ancestors
  * @param {JSXAttribute|JSXText} node The node
- * @param {RuleContext<"noUntranslatedStrings" | "noUntranslatedStringsProp", []>} context
+ * @param {RuleContextWithOptions} context
  * @returns {string[]} The component names
  */
 function getComponentNames(node, context) {
@@ -193,7 +199,7 @@ function getComponentNames(node, context) {
  * @param {JSXElement|JSXFragment|JSXAttribute} node
  * @param {RuleFixer} fixer The fixer
  * @param {string} importName The import name
- * @param {RuleContext<"noUntranslatedStrings" | "noUntranslatedStringsProp", []>} context
+ * @param {RuleContextWithOptions} context
  * @returns {import('@typescript-eslint/utils/ts-eslint').RuleFix|undefined} The fix
  */
 function getImportsFixer(node, fixer, importName, context) {
@@ -234,7 +240,7 @@ function getImportsFixer(node, fixer, importName, context) {
 
 /**
  * @param {JSXElement|JSXFragment} node
- * @param {RuleContext<"noUntranslatedStrings" | "noUntranslatedStringsProp", []>} context
+ * @param {RuleContextWithOptions} context
  * @returns {(fixer: RuleFixer) => import('@typescript-eslint/utils/ts-eslint').RuleFix[]}
  */
 const getTransFixers = (node, context) => (fixer) => {
@@ -257,7 +263,7 @@ const getTransFixers = (node, context) => (fixer) => {
 
 /**
  * @param {JSXAttribute} node
- * @param {RuleContext<"noUntranslatedStrings" | "noUntranslatedStringsProp", []>} context
+ * @param {RuleContextWithOptions} context
  * @returns {(fixer: RuleFixer) => import('@typescript-eslint/utils/ts-eslint').RuleFix[]}
  */
 const getTFixers = (node, context) => (fixer) => {
@@ -299,5 +305,6 @@ module.exports = {
   getTransFixers,
   getTranslationPrefix,
   canBeFixed,
+  shouldBeFixed,
   elementIsTrans,
 };
