@@ -65,7 +65,7 @@ export function WizardContent({
     setStepError(error);
   }, []);
 
-  // A different repository is marked with instance target -- nothing will succede
+  // A different repository is marked with instance target -- nothing will succeed
   if (settingsQuery.data?.items.some((item) => item.target === 'instance' && item.name !== repoName)) {
     appEvents.publish({
       type: AppEvents.alertError.name,
