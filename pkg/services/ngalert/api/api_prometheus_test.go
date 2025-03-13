@@ -32,6 +32,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
+
+	. "github.com/grafana/grafana/pkg/services/ngalert/api/prometheus"
 )
 
 func Test_FormatValues(t *testing.T) {
@@ -79,7 +81,7 @@ func Test_FormatValues(t *testing.T) {
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			require.Equal(t, tt.expected, formatValues(tt.alertState))
+			require.Equal(t, tt.expected, FormatValues(tt.alertState))
 		})
 	}
 }
@@ -503,13 +505,13 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			rules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(5, 10)
 			ruleStore.PutRule(context.Background(), rules...)
 
-			api := PrometheusSrv{
-				log:     log.NewNopLogger(),
-				manager: fakeAIM,
-				status:  fakeSch,
-				store:   ruleStore,
-				authz:   &fakeRuleAccessControlService{},
-			}
+			api := NewPrometheusSrv(
+				log.NewNopLogger(),
+				fakeAIM,
+				fakeSch,
+				ruleStore,
+				&fakeRuleAccessControlService{},
+			)
 
 			response := api.RouteGetRuleStatuses(c)
 			require.Equal(t, http.StatusOK, response.Status())
@@ -565,13 +567,13 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		ruleStore.PutRule(context.Background(), rulesInGroup2...)
 		ruleStore.PutRule(context.Background(), rulesInGroup3...)
 
-		api := PrometheusSrv{
-			log:     log.NewNopLogger(),
-			manager: fakeAIM,
-			status:  newFakeSchedulerReader(t).setupStates(fakeAIM),
-			store:   ruleStore,
-			authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
-		}
+		api := NewPrometheusSrv(
+			log.NewNopLogger(),
+			fakeAIM,
+			newFakeSchedulerReader(t).setupStates(fakeAIM),
+			ruleStore,
+			accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
+		)
 
 		permissions := createPermissionsForRules(slices.Concat(rulesInGroup1, rulesInGroup2, rulesInGroup3), orgID)
 		user := &user.SignedInUser{
@@ -663,7 +665,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.NoError(t, json.Unmarshal(resp.Body(), result))
 
 			require.Len(t, result.Data.RuleGroups, 1)
-			folder, err := api.store.GetNamespaceByUID(context.Background(), "folder-1", orgID, user)
+			folder, err := ruleStore.GetNamespaceByUID(context.Background(), "folder-1", orgID, user)
 			require.NoError(t, err)
 			require.Equal(t, folder.Fullpath, result.Data.RuleGroups[0].File)
 			require.Equal(t, "rule-group-3", result.Data.RuleGroups[0].Name)
@@ -691,13 +693,13 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			ruleStore.PutRule(context.Background(), rules...)
 		}
 
-		api := PrometheusSrv{
-			log:     log.NewNopLogger(),
-			manager: fakeAIM,
-			status:  newFakeSchedulerReader(t).setupStates(fakeAIM),
-			store:   ruleStore,
-			authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
-		}
+		api := NewPrometheusSrv(
+			log.NewNopLogger(),
+			fakeAIM,
+			newFakeSchedulerReader(t).setupStates(fakeAIM),
+			ruleStore,
+			accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
+		)
 
 		permissions := createPermissionsForRules(allRules, orgID)
 		user := &user.SignedInUser{
@@ -722,7 +724,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Len(t, result.Data.RuleGroups, 9)
 			require.NotZero(t, len(result.Data.Totals))
 			for i := 0; i < 9; i++ {
-				folder, err := api.store.GetNamespaceByUID(context.Background(), fmt.Sprintf("namespace_%d", i/9), orgID, user)
+				folder, err := ruleStore.GetNamespaceByUID(context.Background(), fmt.Sprintf("namespace_%d", i/9), orgID, user)
 				require.NoError(t, err)
 				require.Equal(t, folder.Fullpath, result.Data.RuleGroups[i].File)
 				require.Equal(t, fmt.Sprintf("rule_group_%d", i), result.Data.RuleGroups[i].Name)
@@ -783,7 +785,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Empty(t, result.Data.NextToken)
 
 			for i := 0; i < 9; i++ {
-				folder, err := api.store.GetNamespaceByUID(context.Background(), fmt.Sprintf("namespace_%d", i/9), orgID, user)
+				folder, err := ruleStore.GetNamespaceByUID(context.Background(), fmt.Sprintf("namespace_%d", i/9), orgID, user)
 				require.NoError(t, err)
 				require.Equal(t, folder.Fullpath, returnedGroups[i].File)
 				require.Equal(t, fmt.Sprintf("rule_group_%d", i), returnedGroups[i].Name)
@@ -805,7 +807,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Len(t, result.Data.Totals, 0)
 			require.NotEmpty(t, result.Data.NextToken)
 
-			folder, err := api.store.GetNamespaceByUID(context.Background(), "namespace_0", orgID, user)
+			folder, err := ruleStore.GetNamespaceByUID(context.Background(), "namespace_0", orgID, user)
 			require.NoError(t, err)
 			require.Equal(t, folder.Fullpath, result.Data.RuleGroups[0].File)
 			require.Equal(t, "rule_group_0", result.Data.RuleGroups[0].Name)
@@ -835,13 +837,13 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			ruleStore.PutRule(context.Background(), rules...)
 			ruleStore.PutRule(context.Background(), gen.GenerateManyRef(2, 6)...)
 
-			api := PrometheusSrv{
-				log:     log.NewNopLogger(),
-				manager: fakeAIM,
-				status:  newFakeSchedulerReader(t).setupStates(fakeAIM),
-				store:   ruleStore,
-				authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
-			}
+			api := NewPrometheusSrv(
+				log.NewNopLogger(),
+				fakeAIM,
+				newFakeSchedulerReader(t).setupStates(fakeAIM),
+				ruleStore,
+				accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
+			)
 
 			c := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID, Permissions: createPermissionsForRules(rules, orgID)}}
 
@@ -1523,13 +1525,13 @@ func setupAPI(t *testing.T) (*fakes.RuleStore, *fakeAlertInstanceManager, Promet
 	fakeSch := newFakeSchedulerReader(t).setupStates(fakeAIM)
 	fakeAuthz := &fakeRuleAccessControlService{}
 
-	api := PrometheusSrv{
-		log:     log.NewNopLogger(),
-		manager: fakeAIM,
-		status:  fakeSch,
-		store:   fakeStore,
-		authz:   fakeAuthz,
-	}
+	api := *NewPrometheusSrv(
+		log.NewNopLogger(),
+		fakeAIM,
+		fakeSch,
+		fakeStore,
+		fakeAuthz,
+	)
 
 	return fakeStore, fakeAIM, api
 }

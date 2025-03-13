@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	apiprometheus "github.com/grafana/grafana/pkg/services/ngalert/api/prometheus"
 	"github.com/grafana/grafana/pkg/services/ngalert/backtesting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -64,7 +65,7 @@ type API struct {
 	DataProxy            *datasourceproxy.DataSourceProxyService
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	StateManager         *state.Manager
-	Scheduler            StatusReader
+	Scheduler            apiprometheus.StatusReader
 	AccessControl        ac.AccessControl
 	Policies             *provisioning.NotificationPolicyService
 	ReceiverService      *notifier.ReceiverService
@@ -119,7 +120,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterPrometheusApiEndpoints(NewForkingProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		&PrometheusSrv{log: logger, manager: api.StateManager, status: api.Scheduler, store: api.RuleStore, authz: ruleAuthzService},
+		apiprometheus.NewPrometheusSrv(logger, api.StateManager, api.Scheduler, api.RuleStore, ruleAuthzService),
 	), m)
 	// Register endpoints for proxying to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkingRuler(

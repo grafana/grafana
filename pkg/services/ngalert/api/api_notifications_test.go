@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	. "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"

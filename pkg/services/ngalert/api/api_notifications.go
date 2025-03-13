@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	. "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 

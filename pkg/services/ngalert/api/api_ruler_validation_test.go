@@ -14,11 +14,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	. "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+
+	. "github.com/grafana/grafana/pkg/services/ngalert/api/validation"
 )
 
 var allNoData = []apimodels.NoDataState{
@@ -187,7 +190,7 @@ func TestValidateCondition(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := validateCondition(tc.condition, tc.data, false)
+			err := ValidateCondition(tc.condition, tc.data, false)
 			if tc.errorMsg == "" {
 				require.NoError(t, err)
 			} else {
@@ -511,7 +514,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 				lim = *testCase.limits
 			}
 
-			alert, err := validateRuleNode(r, name, interval, orgId, folder.UID, lim)
+			alert, err := ValidateRuleNode(r, name, interval, orgId, folder.UID, lim)
 			require.NoError(t, err)
 			testCase.assert(t, r, alert)
 		})
@@ -519,7 +522,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 
 	t.Run("accepts empty group name", func(t *testing.T) {
 		r := validRule()
-		alert, err := validateRuleNode(&r, "", interval, orgId, folder.UID, limits)
+		alert, err := ValidateRuleNode(&r, "", interval, orgId, folder.UID, limits)
 		require.NoError(t, err)
 		require.Equal(t, "", alert.RuleGroup)
 	})
@@ -739,7 +742,7 @@ func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
 				lim = *testCase.limits
 			}
 
-			_, err := validateRuleNode(r, "", interval, orgId, folder.UID, lim)
+			_, err := ValidateRuleNode(r, "", interval, orgId, folder.UID, lim)
 			require.Error(t, err)
 			if testCase.expErr != "" {
 				require.ErrorContains(t, err, testCase.expErr)
@@ -835,7 +838,7 @@ func TestValidateRuleNode_UID(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			r := testCase.rule()
-			alert, err := validateRuleNode(r, name, interval, orgId, folder.UID, limits)
+			alert, err := ValidateRuleNode(r, name, interval, orgId, folder.UID, limits)
 			require.NoError(t, err)
 			testCase.assert(t, r, alert)
 		})
@@ -843,7 +846,7 @@ func TestValidateRuleNode_UID(t *testing.T) {
 
 	t.Run("accepts empty group name", func(t *testing.T) {
 		r := validRule()
-		alert, err := validateRuleNode(&r, "", interval, orgId, folder.UID, limits)
+		alert, err := ValidateRuleNode(&r, "", interval, orgId, folder.UID, limits)
 		require.NoError(t, err)
 		require.Equal(t, "", alert.RuleGroup)
 	})
@@ -939,7 +942,7 @@ func TestValidateRuleNodeFailures_UID(t *testing.T) {
 				interval = *testCase.interval
 			}
 
-			_, err := validateRuleNode(r, "", interval, orgId, folder.UID, limits)
+			_, err := ValidateRuleNode(r, "", interval, orgId, folder.UID, limits)
 			require.Error(t, err)
 			if testCase.assert != nil {
 				testCase.assert(t, r, err)
@@ -973,7 +976,7 @@ func TestValidateRuleNodeIntervalFailures(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			r := validRule()
-			_, err := validateRuleNode(&r, util.GenerateShortUID(), testCase.interval, rand.Int63(), randFolder().UID, limits)
+			_, err := ValidateRuleNode(&r, util.GenerateShortUID(), testCase.interval, rand.Int63(), randFolder().UID, limits)
 			require.Error(t, err)
 		})
 	}
@@ -1064,7 +1067,7 @@ func TestValidateRuleNodeNotificationSettings(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := validRule()
 			r.GrafanaManagedAlert.NotificationSettings = AlertRuleNotificationSettingsFromNotificationSettings([]models.NotificationSettings{tt.notificationSettings})
-			_, err := validateRuleNode(&r, util.GenerateShortUID(), cfg.BaseInterval*time.Duration(rand.Int63n(10)+1), rand.Int63(), randFolder().UID, limits)
+			_, err := ValidateRuleNode(&r, util.GenerateShortUID(), cfg.BaseInterval*time.Duration(rand.Int63n(10)+1), rand.Int63(), randFolder().UID, limits)
 
 			if tt.expErrorContains != "" {
 				require.Error(t, err)
@@ -1099,7 +1102,7 @@ func TestValidateRuleNodeEditorSettings(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := validRule()
 			r.GrafanaManagedAlert.Metadata = AlertRuleMetadataFromModelMetadata(models.AlertRuleMetadata{EditorSettings: tt.editorSettings})
-			newRule, err := validateRuleNode(&r, util.GenerateShortUID(), cfg.BaseInterval*time.Duration(rand.Int63n(10)+1), rand.Int63(), randFolder().UID, limits)
+			newRule, err := ValidateRuleNode(&r, util.GenerateShortUID(), cfg.BaseInterval*time.Duration(rand.Int63n(10)+1), rand.Int63(), randFolder().UID, limits)
 			require.NoError(t, err)
 			require.Equal(t, tt.editorSettings, newRule.Metadata.EditorSettings)
 		})
@@ -1116,7 +1119,7 @@ func TestValidateRuleNodeReservedLabels(t *testing.T) {
 			r.ApiRuleNode.Labels = map[string]string{
 				label: "true",
 			}
-			_, err := validateRuleNode(&r, util.GenerateShortUID(), cfg.BaseInterval*time.Duration(rand.Int63n(10)+1), rand.Int63(), randFolder().UID, limits)
+			_, err := ValidateRuleNode(&r, util.GenerateShortUID(), cfg.BaseInterval*time.Duration(rand.Int63n(10)+1), rand.Int63(), randFolder().UID, limits)
 			require.Error(t, err)
 			require.ErrorContains(t, err, label)
 		})
