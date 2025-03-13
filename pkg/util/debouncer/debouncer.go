@@ -209,14 +209,6 @@ func (g *Group[T]) Stop() {
 	}
 }
 
-func (g *Group[T]) SetMinWait(minWait time.Duration) {
-	g.opts.MinWait = minWait
-}
-
-func (g *Group[T]) SetMaxWait(maxWait time.Duration) {
-	g.opts.MaxWait = maxWait
-}
-
 func (g *Group[T]) processValue(value T) {
 	key := g.opts.KeyFunc(value)
 	g.debouncersMu.Lock()
