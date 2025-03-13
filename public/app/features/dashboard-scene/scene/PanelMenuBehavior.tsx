@@ -10,8 +10,6 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-
-import { pluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
 import { LocalValueVariable, sceneGraph, SceneGridRow, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { DataQuery, OptionsWithLegend } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
@@ -25,6 +23,8 @@ import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { InspectTab } from 'app/features/inspector/types';
 import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
+import { createPluginExtensionsGetter } from 'app/features/plugins/extensions/getPluginExtensions';
+import { pluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
 import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { addDataTrailPanelAction } from 'app/features/trails/Integrations/dashboardIntegration';
 import { dispatch } from 'app/store/store';
@@ -41,7 +41,6 @@ import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor, isLibra
 import { DashboardScene } from './DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
-import { createPluginExtensionsGetter } from 'app/features/plugins/extensions/getPluginExtensions';
 
 const getPluginExtensions = createPluginExtensionsGetter(pluginExtensionRegistries);
 
