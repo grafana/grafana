@@ -22,6 +22,19 @@ import { RequestErrorAlert } from './RequestErrorAlert';
 import { Step, Stepper } from './Stepper';
 import { WizardFormData, WizardStep } from './types';
 
+interface WizardContentProps {
+  activeStep: WizardStep;
+  completedSteps: WizardStep[];
+  availableSteps: Array<Step<WizardStep>>;
+  requiresMigration: boolean;
+  handleStatusChange: (success: boolean) => void;
+  handleNext: () => void;
+  getNextButtonText: (step: WizardStep) => string;
+  onOptionSelect: (requiresMigration: boolean) => void;
+  stepSuccess: boolean;
+  settingsData: RepositoryViewList | undefined;
+}
+
 export function WizardContent({
   activeStep,
   completedSteps,
@@ -33,18 +46,7 @@ export function WizardContent({
   onOptionSelect,
   stepSuccess,
   settingsData,
-}: {
-  activeStep: WizardStep;
-  completedSteps: WizardStep[];
-  availableSteps: Array<Step<WizardStep>>;
-  requiresMigration: boolean;
-  handleStatusChange: (success: boolean) => void;
-  handleNext: () => void;
-  getNextButtonText: (step: WizardStep) => string;
-  onOptionSelect: (requiresMigration: boolean) => void;
-  stepSuccess: boolean;
-  settingsData: RepositoryViewList | undefined;
-}) {
+}: WizardContentProps) {
   const { watch, setValue, getValues, trigger } = useFormContext<WizardFormData>();
   const navigate = useNavigate();
   const appEvents = getAppEvents();

@@ -68,7 +68,7 @@ export function getState(
     folderConnected,
   };
 
-  // Handle legacy storage separately
+  // Legacy storage can only migrate
   if (settings?.legacyStorage) {
     const disabledReason = 'Instance must be migrated first';
     state.actions = [migrateInstance];
