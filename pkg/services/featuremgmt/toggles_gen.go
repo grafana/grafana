@@ -966,4 +966,8 @@ const (
 	// FlagExtraLanguages
 	// Enables additional languages
 	FlagExtraLanguages = "extraLanguages"
+
+	// FlagAlertingRuleRecoverDeleted
+	// Enables the UI functionality to recover and view deleted alert rules
+	FlagAlertingRuleRecoverDeleted = "alertingRuleRecoverDeleted"
 )

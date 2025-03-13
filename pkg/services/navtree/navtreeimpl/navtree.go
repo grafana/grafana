@@ -483,6 +483,15 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 			})
 		}
 	}
+	if c.SignedInUser.GetOrgRole() == org.RoleAdmin && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertRuleRestore) && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingRuleRecoverDeleted) {
+		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+			Text:     "Recently deleted",
+			SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
+			Id:       "alerts-trash",
+			Url:      s.cfg.AppSubURL + "/alerting/trash",
+			Icon:     "trash",
+		})
+	}
 
 	if c.SignedInUser.GetOrgRole() == org.RoleAdmin {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
