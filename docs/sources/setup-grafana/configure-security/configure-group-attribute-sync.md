@@ -19,6 +19,9 @@ Groups are mapped to [fixed](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/
 This feature is currently in [private preview](https://grafana.com/docs/release-life-cycle/#private-preview) and behind the `groupAttributeSync` feature toggle. Please contact support to have this feature enabled.
 {{% /admonition %}}
 
+{{< docs/private-preview product="group attribute sync" >}}
+
+
 When a user logs in, Grafana checks the user's external group memberships and the configured group to role mappings to assign the corresponding roles to the user.
 If the user's group memberships change or a new mapping is created, the user's role assignments are updated the next time the user logs in.
 If a group mapping is removed, the role assignment to users for the group mapping is revoked immediately.
