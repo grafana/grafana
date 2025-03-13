@@ -37,11 +37,9 @@ export function createBaseQuery({ baseURL }: CreateBaseQueryOptions): BaseQueryF
 }
 
 export function handleRequestError(error: unknown) {
-  if (isFetchError(error)) {
+  if (isFetchError(error) || error instanceof Error) {
     return { error };
-  } else if (error instanceof Error) {
-    return { error: { message: error } };
   } else {
-    return { error: { message: new Error('Unknown error') } };
+    return { error: new Error('Unknown error') };
   }
 }
