@@ -58,20 +58,6 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 	if !ok {
 		return fmt.Errorf("invalid object type")
 	}
-	// // Populate ctx with the user that created the check
-	// meta, err := utils.MetaAccessor(obj)
-	// if err != nil {
-	// 	return err
-	// }
-	// createdBy := meta.GetCreatedBy()
-	// typ, uid, err := claims.ParseTypeID(createdBy)
-	// if err != nil {
-	// 	return err
-	// }
-	// ctx = identity.WithRequester(ctx, &user.SignedInUser{
-	// 	UserUID:      uid,
-	// 	FallbackType: typ,
-	// })
 	// Get the items to check
 	items, err := check.Items(ctx)
 	if err != nil {
