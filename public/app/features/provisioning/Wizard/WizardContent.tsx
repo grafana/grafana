@@ -7,7 +7,7 @@ import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { Alert, Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { useDeleteRepositoryMutation } from '../api';
+import { RepositoryViewList, useDeleteRepositoryMutation, useGetFrontendSettingsQuery } from '../api';
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks';
 import { StepStatus } from '../hooks/useStepStatus';
@@ -22,6 +22,21 @@ import { RequestErrorAlert } from './RequestErrorAlert';
 import { Step, Stepper } from './Stepper';
 import { WizardFormData, WizardStep } from './types';
 
+const appEvents = getAppEvents();
+
+interface WizardContentProps {
+  activeStep: WizardStep;
+  completedSteps: WizardStep[];
+  availableSteps: Array<Step<WizardStep>>;
+  requiresMigration: boolean;
+  handleStatusChange: (success: boolean) => void;
+  handleNext: () => void;
+  getNextButtonText: (step: WizardStep) => string;
+  onOptionSelect: (requiresMigration: boolean) => void;
+  stepSuccess: boolean;
+  settingsData?: RepositoryViewList;
+}
+
 export function WizardContent({
   activeStep,
   completedSteps,
@@ -32,61 +47,52 @@ export function WizardContent({
   getNextButtonText,
   onOptionSelect,
   stepSuccess,
-}: {
-  activeStep: WizardStep;
-  completedSteps: WizardStep[];
-  availableSteps: Array<Step<WizardStep>>;
-  requiresMigration: boolean;
-  handleStatusChange: (success: boolean) => void;
-  handleNext: () => void;
-  getNextButtonText: (step: WizardStep) => string;
-  onOptionSelect: (requiresMigration: boolean) => void;
-  stepSuccess: boolean;
-}) {
+  settingsData,
+}: WizardContentProps) {
   const { watch, setValue, getValues, trigger } = useFormContext<WizardFormData>();
   const navigate = useNavigate();
-  const appEvents = getAppEvents();
 
   const repoName = watch('repositoryName');
   const [submitData, saveRequest] = useCreateOrUpdateRepository(repoName);
   const [deleteRepository] = useDeleteRepositoryMutation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
-
   const [stepStatus, setStepStatus] = useState<StepStatus>('idle');
   const [stepError, setStepError] = useState<string | undefined>();
+
   const styles = useStyles2(getStyles);
+  const settingsQuery = useGetFrontendSettingsQuery();
+
+  const currentStep = availableSteps.find((s) => s.id === activeStep);
+  const currentStepIndex = availableSteps.findIndex((s) => s.id === activeStep);
 
   const handleStepUpdate = useCallback((status: StepStatus, error?: string) => {
     setStepStatus(status);
     setStepError(error);
   }, []);
 
-  const handleCancel = async () => {
-    if (activeStep === 'connection') {
-      navigate(PROVISIONING_URL);
-      return;
+  // A different repository is marked with instance target -- nothing will succeed
+  if (settingsQuery.data?.items.some((item) => item.target === 'instance' && item.name !== repoName)) {
+    appEvents.publish({
+      type: AppEvents.alertError.name,
+      payload: ['Instance repository already exists'],
+    });
+    if (repoName) {
+      console.warn('Should we delete the pending repo?', repoName);
     }
+    navigate(PROVISIONING_URL);
+    return null;
+  }
 
-    if (!repoName) {
-      navigate(PROVISIONING_URL);
-      return;
-    }
-
-    setIsCancelling(true);
+  const handleRepositoryDeletion = async (name: string) => {
     try {
-      // Delete repository if we're past the first step
-      await deleteRepository({ name: repoName });
+      await deleteRepository({ name });
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
         payload: ['Repository deleted'],
       });
-
       // Wait before redirecting to ensure deletion is indexed
-      setTimeout(() => {
-        navigate(PROVISIONING_URL);
-      }, 1500);
-      navigate(PROVISIONING_URL);
+      setTimeout(() => navigate(PROVISIONING_URL), 1500);
     } catch (error) {
       appEvents.publish({
         type: AppEvents.alertError.name,
@@ -96,8 +102,17 @@ export function WizardContent({
     }
   };
 
+  const handleCancel = async () => {
+    // For the first step, do not delete anything—just go back.
+    if (activeStep === 'connection' || !repoName) {
+      navigate(PROVISIONING_URL);
+      return;
+    }
+    setIsCancelling(true);
+    void handleRepositoryDeletion(repoName);
+  };
+
   const handleNextWithSubmit = async () => {
-    const currentStep = availableSteps.find((s) => s.id === activeStep);
     if (currentStep?.submitOnNext) {
       // Validate form data before proceeding
       if (activeStep === 'connection' || activeStep === 'bootstrap') {
@@ -111,9 +126,20 @@ export function WizardContent({
       try {
         const formData = getValues();
         const spec = dataToSpec(formData.repository);
-        await submitData(spec);
-        // Navigate after successful save
-        handleNext();
+        const rsp = await submitData(spec);
+        if (rsp.error) {
+          // Error is displayed in <RequestErrorAlert/>
+          return;
+        }
+
+        // Fill in the k8s name from the initial POST response
+        const name = rsp.data?.metadata?.name;
+        if (name) {
+          setValue('repositoryName', name);
+          handleNext();
+        } else {
+          console.error('Saved repository without a name:', rsp);
+        }
       } catch (error) {
         console.error('Repository connection failed:', error);
         handleStatusChange(false);
@@ -129,10 +155,10 @@ export function WizardContent({
   };
 
   useEffect(() => {
-    const appEvents = getAppEvents();
     if (saveRequest.isSuccess) {
-      if (saveRequest.data?.metadata?.name) {
-        setValue('repositoryName', saveRequest.data.metadata.name);
+      const newName = saveRequest.data?.metadata?.name;
+      if (newName) {
+        setValue('repositoryName', newName);
         appEvents.publish({
           type: AppEvents.alertSuccess.name,
           payload: ['Repository saved'],
@@ -142,14 +168,10 @@ export function WizardContent({
     } else if (saveRequest.isError) {
       handleStatusChange(false);
     }
-  }, [saveRequest.isSuccess, saveRequest.isError, saveRequest.data, setValue, handleStatusChange]);
+  }, [saveRequest, setValue, handleStatusChange]);
 
   const isNextButtonDisabled = () => {
-    if (isSubmitting || isCancelling || stepStatus === 'running' || stepStatus === 'error') {
-      return true;
-    }
-
-    return false;
+    return isSubmitting || isCancelling || stepStatus === 'running' || stepStatus === 'error';
   };
 
   return (
@@ -168,15 +190,21 @@ export function WizardContent({
       />
       <Box marginBottom={2}>
         <Text element="h2">
-          {availableSteps.findIndex((step) => step.id === activeStep) + 1}.{' '}
-          {availableSteps.find((step) => step.id === activeStep)?.title}
+          {currentStepIndex + 1}. {currentStep?.title}
         </Text>
       </Box>
+
       <RequestErrorAlert request={saveRequest} title="Repository verification failed" />
+
       <div className={styles.content}>
         {activeStep === 'connection' && <ConnectStep />}
         {activeStep === 'bootstrap' && (
-          <BootstrapStep onOptionSelect={onOptionSelect} onStepUpdate={handleStepUpdate} />
+          <BootstrapStep
+            onOptionSelect={onOptionSelect}
+            onStepUpdate={handleStepUpdate}
+            settingsData={settingsData}
+            repoName={repoName!}
+          />
         )}
         {activeStep === 'migrate' && requiresMigration && <MigrateStep onStepUpdate={handleStepUpdate} />}
         {activeStep === 'pull' && !requiresMigration && <PullStep onStepUpdate={handleStepUpdate} />}

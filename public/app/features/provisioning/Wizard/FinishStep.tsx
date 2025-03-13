@@ -45,22 +45,20 @@ export function FinishStep() {
         {isGithub && !isPublic && (
           <Alert
             title={'Public URL not configured'}
-            severity={'warning'}
+            severity="info"
             buttonContent={<span>Instructions</span>}
             onRemove={() => navigate(GETTING_STARTED_URL)}
           >
             Changes in git will eventually be pulled depending on the synchronization interval.
           </Alert>
         )}
-        {!isPublic && (
-          <Field label={'Interval (seconds)'}>
-            <Input
-              {...register('repository.sync.intervalSeconds', { valueAsNumber: true })}
-              type={'number'}
-              placeholder={'60'}
-            />
-          </Field>
-        )}
+        <Field label={'Interval (seconds)'}>
+          <Input
+            {...register('repository.sync.intervalSeconds', { valueAsNumber: true })}
+            type={'number'}
+            placeholder={'60'}
+          />
+        </Field>
       </FieldSet>
       <FieldSet label="Collaboration">
         <Field

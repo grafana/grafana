@@ -117,6 +117,7 @@ export function ProvisioningWizard() {
         getNextButtonText={getNextButtonText}
         onOptionSelect={setRequiresMigration}
         stepSuccess={stepSuccess}
+        settingsData={settingsQuery.data}
       />
     </FormProvider>
   );
