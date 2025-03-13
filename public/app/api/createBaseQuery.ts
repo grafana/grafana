@@ -10,11 +10,9 @@ interface RequestOptions extends BackendSrvRequest {
 
 interface CreateBaseQueryOptions {
   baseURL: string;
-  // Custom error handler for all endpoints
-  globalManageError?: RequestOptions['manageError'];
 }
 
-export function createBaseQuery({ baseURL, globalManageError }: CreateBaseQueryOptions): BaseQueryFn<RequestOptions> {
+export function createBaseQuery({ baseURL }: CreateBaseQueryOptions): BaseQueryFn<RequestOptions> {
   async function backendSrvBaseQuery(requestOptions: RequestOptions) {
     try {
       const { data: responseData, ...meta } = await lastValueFrom(
@@ -29,8 +27,6 @@ export function createBaseQuery({ baseURL, globalManageError }: CreateBaseQueryO
     } catch (error) {
       if (requestOptions.manageError) {
         return requestOptions.manageError(error);
-      } else if (globalManageError) {
-        return globalManageError(error);
       } else {
         return handleRequestError(error);
       }
@@ -42,10 +38,10 @@ export function createBaseQuery({ baseURL, globalManageError }: CreateBaseQueryO
 
 export function handleRequestError(error: unknown) {
   if (isFetchError(error)) {
-    return { error: new Error(error.data.message) };
-  } else if (error instanceof Error) {
     return { error };
+  } else if (error instanceof Error) {
+    return { error: { message: error } };
   } else {
-    return { error: new Error('Unknown error') };
+    return { error: { message: new Error('Unknown error') } };
   }
 }
