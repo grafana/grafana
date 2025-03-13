@@ -9,6 +9,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 
@@ -120,10 +121,28 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 		attribute.Bool("fallback_used", grpcutils.FallbackUsed(ctx)),
 	))
 	defer span.End()
+
 	if grpcutils.FallbackUsed(ctx) {
+		if req.Namespace == "" {
+			// cross namespace queries are not allowed when fallback is used
+			span.SetAttributes(attribute.Bool("allowed", false))
+			span.SetStatus(codes.Error, "Namespace empty")
+			err := fmt.Errorf("namespace empty")
+			span.RecordError(err)
+			return claims.CheckResponse{Allowed: false}, err
+		}
+
 		span.SetAttributes(attribute.Bool("allowed", true))
 		return claims.CheckResponse{Allowed: true}, nil
 	}
+
+	if !claims.NamespaceMatches(id.GetNamespace(), req.Namespace) {
+		span.SetAttributes(attribute.Bool("allowed", false))
+		span.SetStatus(codes.Error, "Namespace missmatch")
+		span.RecordError(claims.ErrNamespaceMissmatch)
+		return claims.CheckResponse{Allowed: false}, claims.ErrNamespaceMissmatch
+	}
+
 	if !c.IsCompatibleWithRBAC(req.Group, req.Resource) {
 		span.SetAttributes(attribute.Bool("allowed", true))
 		return claims.CheckResponse{Allowed: true}, nil
@@ -132,7 +151,8 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 	if err != nil {
 		c.logger.Error("Check", "group", req.Group, "resource", req.Resource, "error", err, "duration", time.Since(t), "traceid", tracing.TraceIDFromContext(ctx, false))
 		c.metrics.errorsTotal.WithLabelValues(req.Group, req.Resource, req.Verb).Inc()
-		span.SetAttributes(attribute.String("error", err.Error()))
+		span.SetStatus(codes.Error, fmt.Sprintf("check failed: %v", err))
+		span.RecordError(err)
 		return resp, err
 	}
 	span.SetAttributes(attribute.Bool("allowed", resp.Allowed))
@@ -152,7 +172,27 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 		attribute.Bool("fallback_used", fallbackUsed),
 	))
 	defer span.End()
-	if fallbackUsed || !c.IsCompatibleWithRBAC(req.Group, req.Resource) {
+	if fallbackUsed {
+		if req.Namespace == "" {
+			// cross namespace queries are not allowed when fallback is used
+			span.SetAttributes(attribute.Bool("allowed", false))
+			span.SetStatus(codes.Error, "Namespace empty")
+			err := fmt.Errorf("namespace empty")
+			span.RecordError(err)
+			return nil, err
+		}
+		return func(name, folder string) bool {
+			return true
+		}, nil
+	}
+	if !claims.NamespaceMatches(id.GetNamespace(), req.Namespace) {
+		span.SetAttributes(attribute.Bool("allowed", false))
+		span.SetStatus(codes.Error, "Namespace missmatch")
+		span.RecordError(claims.ErrNamespaceMissmatch)
+		return nil, claims.ErrNamespaceMissmatch
+	}
+
+	if !c.IsCompatibleWithRBAC(req.Group, req.Resource) {
 		return func(name, folder string) bool {
 			return true
 		}, nil
@@ -161,7 +201,8 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 	if err != nil {
 		c.logger.Error("Compile", "group", req.Group, "resource", req.Resource, "error", err, "traceid", tracing.TraceIDFromContext(ctx, false))
 		c.metrics.errorsTotal.WithLabelValues(req.Group, req.Resource, req.Verb).Inc()
-		span.SetAttributes(attribute.String("error", err.Error()))
+		span.SetStatus(codes.Error, fmt.Sprintf("compile failed: %v", err))
+		span.RecordError(err)
 		return nil, err
 	}
 	c.metrics.compileDuration.WithLabelValues(req.Group, req.Resource, req.Verb).Observe(time.Since(t).Seconds())

@@ -4,6 +4,7 @@ go 1.23.7
 
 replace (
 	github.com/grafana/grafana => ../../../..
+	github.com/grafana/grafana/apps/dashboard => ../../../../apps/dashboard
 	github.com/grafana/grafana/pkg/apimachinery => ../../../apimachinery
 	github.com/grafana/grafana/pkg/apiserver => ../../../apiserver
 	github.com/grafana/grafana/pkg/storage/unified/resource => ../resource
@@ -16,7 +17,8 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/grafana/authlib/types v0.0.0-20250224151205-5ef97131cc82
 	github.com/grafana/grafana v11.4.0-00010101000000-000000000000+incompatible
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250220154326-6e5de80ef295
+	github.com/grafana/grafana/apps/dashboard v0.0.0-20250220154326-6e5de80ef295
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250312121619-f64be062c432
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250220154326-6e5de80ef295
 	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250220154326-6e5de80ef295
 	github.com/stretchr/testify v1.10.0
@@ -211,7 +213,7 @@ require (
 	github.com/grafana/grafana-app-sdk/logging v0.30.0 // indirect
 	github.com/grafana/grafana-aws-sdk v0.31.5 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 // indirect
-	github.com/grafana/grafana-plugin-sdk-go v0.270.0 // indirect
+	github.com/grafana/grafana-plugin-sdk-go v0.272.0 // indirect
 	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250220163425-b4c4b9abbdc8 // indirect
 	github.com/grafana/grafana/pkg/promlib v0.0.8 // indirect
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20250220164708-c8d4ff28a450 // indirect
