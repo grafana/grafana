@@ -1,9 +1,7 @@
-import { render, screen } from '@testing-library/react';
-import { Provider } from 'react-redux';
+import { render, screen } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { contextSrv } from 'app/core/services/context_srv';
-import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 import { CombinedRuleGroup, CombinedRuleNamespace, RulerDataSourceConfig } from 'app/types/unified-alerting';
 
@@ -49,14 +47,10 @@ afterEach(() => {
 });
 
 describe('Rules group tests', () => {
-  const store = configureStore();
-
   function renderRulesGroup(namespace: CombinedRuleNamespace, group: CombinedRuleGroup) {
-    return render(
-      <Provider store={store}>
-        <RulesGroup group={group} namespace={namespace} expandAll={false} viewMode={'grouped'} />
-      </Provider>
-    );
+    return render(<RulesGroup group={group} namespace={namespace} expandAll={false} viewMode={'grouped'} />, {
+      historyOptions: { initialEntries: ['/alerting/list'] },
+    });
   }
 
   describe('Grafana rules', () => {
@@ -78,10 +72,49 @@ describe('Rules group tests', () => {
       groups: [group],
     };
 
+    beforeEach(() => {
+      mockUseHasRuler(true, GRAFANA_RULER_CONFIG);
+    });
+
     it('Should hide edit group button when no folder save permissions', async () => {
       // Act
-      mockUseHasRuler(true, GRAFANA_RULER_CONFIG);
       mockFolderApi(server).folder('cpu-usage', mockFolder({ uid: 'cpu-usage', canSave: false }));
+      renderRulesGroup(namespace, group);
+      expect(await screen.findByTestId('rule-group')).toBeInTheDocument();
+
+      // Assert
+      expect(ui.detailsButton.query()).toBeInTheDocument();
+      expect(ui.editGroupButton.query()).not.toBeInTheDocument();
+    });
+
+    it('Should render view and edit buttons when folder has save permissions and user can edit rules', async () => {
+      // Arrange
+      mockFolderApi(server).folder('cpu-usage', mockFolder({ uid: 'cpu-usage', canSave: true }));
+
+      // Act
+      renderRulesGroup(namespace, group);
+      expect(await screen.findByTestId('rule-group')).toBeInTheDocument();
+
+      // Assert
+      const detailsLink = await ui.detailsButton.find();
+      const editLink = await ui.editGroupButton.find();
+
+      expect(detailsLink).toHaveAttribute(
+        'href',
+        '/alerting/grafana/namespaces/cpu-usage/groups/TestGroup/view?returnTo=%2Falerting%2Flist'
+      );
+      expect(editLink).toHaveAttribute(
+        'href',
+        '/alerting/grafana/namespaces/cpu-usage/groups/TestGroup/edit?returnTo=%2Falerting%2Flist'
+      );
+    });
+
+    it('Should only render view button when folder has save permissions and user cannot edit rules', async () => {
+      // Arrange
+      grantUserPermissions([AccessControlAction.AlertingRuleRead]);
+      mockFolderApi(server).folder('cpu-usage', mockFolder({ uid: 'cpu-usage', canSave: true }));
+
+      // Act
       renderRulesGroup(namespace, group);
       expect(await screen.findByTestId('rule-group')).toBeInTheDocument();
 
@@ -121,8 +154,14 @@ describe('Rules group tests', () => {
 
       // Assert
       expect(mocks.useHasRuler).toHaveBeenCalled();
-      expect(detailsLink).toHaveAttribute('href', '/alerting/mimir/namespaces/TestNamespace/groups/TestGroup/view');
-      expect(editLink).toHaveAttribute('href', '/alerting/mimir/namespaces/TestNamespace/groups/TestGroup/edit');
+      expect(detailsLink).toHaveAttribute(
+        'href',
+        '/alerting/mimir/namespaces/TestNamespace/groups/TestGroup/view?returnTo=%2Falerting%2Flist'
+      );
+      expect(editLink).toHaveAttribute(
+        'href',
+        '/alerting/mimir/namespaces/TestNamespace/groups/TestGroup/edit?returnTo=%2Falerting%2Flist'
+      );
     });
 
     it('When ruler disabled should hide edit group button', () => {

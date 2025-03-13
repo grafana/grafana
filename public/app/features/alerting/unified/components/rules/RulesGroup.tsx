@@ -13,7 +13,7 @@ import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
 import { makeFolderLink } from '../../utils/misc';
 import { groups } from '../../utils/navigation';
-import { isFederatedRuleGroup, rulerRuleType, isPluginProvidedRule } from '../../utils/rules';
+import { isFederatedRuleGroup, isPluginProvidedRule, rulerRuleType } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
 import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
@@ -155,7 +155,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
         key="rule-group-details"
         icon="info-circle"
         tooltip={t('alerting.rule-group-action.details', 'rule group details')}
-        to={groups.detailsPageLink(rulesSource.uid, namespace.name, group.name)}
+        to={groups.detailsPageLink(rulesSource.uid, namespace.name, group.name, { includeReturnTo: true })}
       />
     );
     if (canEditGroup) {
