@@ -17,6 +17,7 @@ var (
 
 type KeyFunc[T any] func(T) string
 type ProcessFunc[T any] func(context.Context, T) error
+type ErrorFunc[T any] func(T, error)
 
 type metrics struct {
 	itemsAddedCounter           prometheus.Counter
@@ -71,33 +72,35 @@ func newMetrics(reg prometheus.Registerer, name string) *metrics {
 }
 
 type DebouncerOpts[T any] struct {
-	BufferSize   int
-	KeyFunc      KeyFunc[T]
-	MinWait      time.Duration
-	MaxWait      time.Duration
-	Reg          prometheus.Registerer
-	Name         string
-	ErrorHandler func(T, error)
+	BufferSize     int
+	KeyFunc        KeyFunc[T]
+	MinWait        time.Duration
+	MaxWait        time.Duration
+	Reg            prometheus.Registerer
+	Name           string
+	ErrorHandler   ErrorFunc[T]
+	ProcessHandler ProcessFunc[T]
 }
 
-type Debouncer[T any] struct {
+type Group[T any] struct {
 	opts   DebouncerOpts[T]
 	buffer chan T
 
 	// mutex protecting the debouncers map.
 	debouncersMu sync.Mutex
-	debouncers   map[string]*keyDebouncer[T]
+	debouncers   map[string]*debouncer[T]
 
-	wg           sync.WaitGroup
-	ctx          context.Context
-	cancel       context.CancelFunc
-	errorHandler func(T, error)
-	metrics      *metrics
+	wg             sync.WaitGroup
+	ctx            context.Context
+	cancel         context.CancelFunc
+	errorHandler   ErrorFunc[T]
+	processHandler ProcessFunc[T]
+	metrics        *metrics
 }
 
-// NewDebouncer creates a new debouncer for processing events with unique keys.
+// NewGroup creates a new debouncer group for processing events with unique keys.
 //
-// A debouncer helps optimize expensive operations by:
+// A debouncer group helps optimize expensive operations by:
 // 1. Grouping identical events that occur in rapid succession
 // 2. Processing each unique key only once after waiting periods expire
 //
@@ -111,30 +114,32 @@ type Debouncer[T any] struct {
 //
 // Example usage:
 //
-//	debouncer := NewDebouncer(DebouncerOpts[string]{
-//		BufferSize: 10,
-//		KeyFunc:    func(s string) string { return s },
-//		MinWait:    time.Second * 10,
-//		MaxWait:    time.Minute,
+//	group := debouncer.NewGroup(DebouncerOpts[string]{
+//		BufferSize:     10,
+//		KeyFunc:        func(s string) string { return s },
+//		ProcessHandler: func(ctx context.Context, key string) error {
+//		  // This is where you perform the expensive operation
+//		  return doSuperExpensiveCommand(key)
+//		}
+//		MinWait:        time.Second * 10,
+//		MaxWait:        time.Minute,
 //	})
 //
-//	debouncer.Start(ctx, func(key string) error {
-//		// This is where you perform the expensive operation
-//		return doSuperExpensiveCommand(key)
-//	})
+//	// Start the debouncer group.
+//	group.Start(ctx)
 //
 //	// Queue events
-//	if err := debouncer.Add("user-1"); err != nil {
+//	if err := group.Add("user-1"); err != nil {
 //	  // Do something with the error.
 //	}
 //	// Adding the same key resets MinWait but not MaxWait
-//	if err := debouncer.Add("user-1"); err != nil {
+//	if err := group.Add("user-1"); err != nil {
 //	  // Do something with the error.
 //	}
 //
 // The event will be processed when either MinWait expires (after the most recent add)
 // or MaxWait expires (after the first add), whichever comes first.
-func NewDebouncer[T any](opts DebouncerOpts[T]) *Debouncer[T] {
+func NewGroup[T any](opts DebouncerOpts[T]) (*Group[T], error) {
 	if opts.BufferSize <= 0 {
 		opts.BufferSize = 100
 	}
@@ -145,101 +150,110 @@ func NewDebouncer[T any](opts DebouncerOpts[T]) *Debouncer[T] {
 		opts.MaxWait = 5 * time.Minute
 	}
 	if opts.KeyFunc == nil {
-		panic("KeyFunc is required")
+		return nil, errors.New("keyFunc is required")
+	}
+
+	if opts.ProcessHandler == nil {
+		return nil, errors.New("processHandler is required")
+	}
+
+	if opts.ErrorHandler == nil {
+		opts.ErrorHandler = func(_ T, _ error) {}
 	}
 
 	if opts.Reg == nil {
 		opts.Reg = prometheus.NewRegistry()
 	}
 
-	return &Debouncer[T]{
-		opts:         opts,
-		buffer:       make(chan T, opts.BufferSize),
-		debouncers:   make(map[string]*keyDebouncer[T]),
-		metrics:      newMetrics(opts.Reg, opts.Name),
-		errorHandler: opts.ErrorHandler,
-	}
+	return &Group[T]{
+		opts:           opts,
+		buffer:         make(chan T, opts.BufferSize),
+		debouncers:     make(map[string]*debouncer[T]),
+		metrics:        newMetrics(opts.Reg, opts.Name),
+		processHandler: opts.ProcessHandler,
+		errorHandler:   opts.ErrorHandler,
+	}, nil
 }
 
-func (d *Debouncer[T]) Add(value T) error {
+func (g *Group[T]) Add(value T) error {
 	select {
-	case d.buffer <- value:
-		d.metrics.itemsAddedCounter.Inc()
+	case g.buffer <- value:
+		g.metrics.itemsAddedCounter.Inc()
 		return nil
 	default:
-		d.metrics.itemsDroppedCounter.Inc()
+		g.metrics.itemsDroppedCounter.Inc()
 		return ErrBufferFull
 	}
 }
 
-func (d *Debouncer[T]) Start(ctx context.Context, processFunc ProcessFunc[T]) {
-	d.ctx, d.cancel = context.WithCancel(ctx)
-	d.wg.Add(1)
+func (g *Group[T]) Start(ctx context.Context) {
+	g.ctx, g.cancel = context.WithCancel(ctx)
+	g.wg.Add(1)
 	go func() {
-		defer d.wg.Done()
+		defer g.wg.Done()
 		for {
 			select {
-			case <-d.ctx.Done():
+			case <-g.ctx.Done():
 				return
-			case value := <-d.buffer:
-				d.processValue(value, processFunc)
+			case value := <-g.buffer:
+				g.processValue(value)
 			}
 		}
 	}()
 }
 
-func (d *Debouncer[T]) Stop() {
-	if d.cancel != nil {
-		d.cancel()
-		d.wg.Wait()
+func (g *Group[T]) Stop() {
+	if g.cancel != nil {
+		g.cancel()
+		g.wg.Wait()
 	}
 }
 
-func (d *Debouncer[T]) SetMinWait(minWait time.Duration) {
-	d.opts.MinWait = minWait
+func (g *Group[T]) SetMinWait(minWait time.Duration) {
+	g.opts.MinWait = minWait
 }
 
-func (d *Debouncer[T]) SetMaxWait(maxWait time.Duration) {
-	d.opts.MaxWait = maxWait
+func (g *Group[T]) SetMaxWait(maxWait time.Duration) {
+	g.opts.MaxWait = maxWait
 }
 
-func (d *Debouncer[T]) processValue(value T, processFunc ProcessFunc[T]) {
-	key := d.opts.KeyFunc(value)
-	d.debouncersMu.Lock()
-	debouncer, ok := d.debouncers[key]
+func (g *Group[T]) processValue(value T) {
+	key := g.opts.KeyFunc(value)
+	g.debouncersMu.Lock()
+	deb, ok := g.debouncers[key]
 	if !ok {
-		debouncer = newKeyDebouncer[T](d.opts.MinWait, d.opts.MaxWait)
-		d.debouncers[key] = debouncer
+		deb = newDebouncer[T](g.opts.MinWait, g.opts.MaxWait)
+		g.debouncers[key] = deb
 	}
-	d.debouncersMu.Unlock()
+	g.debouncersMu.Unlock()
 
 	wrappedProcessFunc := func(v T) {
-		d.processWithMetrics(d.ctx, v, processFunc)
+		g.processWithMetrics(g.ctx, v, g.processHandler)
 
-		d.debouncersMu.Lock()
-		defer d.debouncersMu.Unlock()
-		if current, exists := d.debouncers[key]; exists && current == debouncer {
-			delete(d.debouncers, key)
+		g.debouncersMu.Lock()
+		defer g.debouncersMu.Unlock()
+		if current, exists := g.debouncers[key]; exists && current == deb {
+			delete(g.debouncers, key)
 		}
 	}
 
-	debouncer.update(value, wrappedProcessFunc)
+	deb.update(value, wrappedProcessFunc)
 }
 
-func (d *Debouncer[T]) processWithMetrics(ctx context.Context, value T, processFunc ProcessFunc[T]) {
-	timer := prometheus.NewTimer(d.metrics.processingDurationHistogram)
+func (g *Group[T]) processWithMetrics(ctx context.Context, value T, processFunc ProcessFunc[T]) {
+	timer := prometheus.NewTimer(g.metrics.processingDurationHistogram)
 	defer timer.ObserveDuration()
-	d.metrics.itemsProcessedCounter.Inc()
+	g.metrics.itemsProcessedCounter.Inc()
 
 	err := processFunc(ctx, value)
-	if err != nil && d.errorHandler != nil {
-		d.errorHandler(value, err)
-		d.metrics.processingErrorsCounter.Inc()
+	if err != nil && g.errorHandler != nil {
+		g.errorHandler(value, err)
+		g.metrics.processingErrorsCounter.Inc()
 	}
 }
 
-// keyDebouncer handles debouncing for a specific key.
-type keyDebouncer[T any] struct {
+// debouncer handles debouncing for a specific key.
+type debouncer[T any] struct {
 	// mutex that protects the whole debouncer process.
 	mu       sync.Mutex
 	value    T
@@ -249,16 +263,16 @@ type keyDebouncer[T any] struct {
 	maxWait  time.Duration
 }
 
-// newKeyDebouncer creates a new key debouncer.
-func newKeyDebouncer[T any](minWait, maxWait time.Duration) *keyDebouncer[T] {
-	return &keyDebouncer[T]{
+// newDebouncer creates a new key debouncer.
+func newDebouncer[T any](minWait, maxWait time.Duration) *debouncer[T] {
+	return &debouncer[T]{
 		minWait: minWait,
 		maxWait: maxWait,
 	}
 }
 
 // update updates the debouncer with a new value.
-func (d *keyDebouncer[T]) update(value T, processFunc func(T)) {
+func (d *debouncer[T]) update(value T, processFunc func(T)) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -280,7 +294,7 @@ func (d *keyDebouncer[T]) update(value T, processFunc func(T)) {
 }
 
 // process processes the current value.
-func (d *keyDebouncer[T]) process(processFunc func(T)) {
+func (d *debouncer[T]) process(processFunc func(T)) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 

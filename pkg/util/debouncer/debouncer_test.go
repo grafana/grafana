@@ -14,30 +14,32 @@ import (
 
 func TestDebouncer(t *testing.T) {
 	t.Run("should process values after min wait", func(t *testing.T) {
-		debouncer := NewDebouncer(DebouncerOpts[string]{
-			BufferSize: 10,
-			KeyFunc:    func(s string) string { return s },
-			MinWait:    10 * time.Millisecond,
-			MaxWait:    100 * time.Millisecond,
-		})
-
 		var processedMu sync.Mutex
 		processedValues := make(map[string]int)
+
+		group, err := NewGroup(DebouncerOpts[string]{
+			BufferSize: 10,
+			KeyFunc:    func(s string) string { return s },
+			ProcessHandler: func(ctx context.Context, value string) error {
+				processedMu.Lock()
+				processedValues[value]++
+				processedMu.Unlock()
+				return nil
+			},
+			MinWait: 10 * time.Millisecond,
+			MaxWait: 100 * time.Millisecond,
+		})
+		require.NoError(t, err)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		debouncer.Start(ctx, func(ctx context.Context, value string) error {
-			processedMu.Lock()
-			processedValues[value]++
-			processedMu.Unlock()
-			return nil
-		})
+		group.Start(ctx)
 
-		require.NoError(t, debouncer.Add("key1"))
-		require.NoError(t, debouncer.Add("key2"))
+		require.NoError(t, group.Add("key1"))
+		require.NoError(t, group.Add("key2"))
 		// Should be deduplicated.
-		require.NoError(t, debouncer.Add("key1"))
+		require.NoError(t, group.Add("key1"))
 
 		// Wait for processing.
 		time.Sleep(20 * time.Millisecond)
@@ -50,25 +52,27 @@ func TestDebouncer(t *testing.T) {
 	})
 
 	t.Run("should process values after max wait", func(t *testing.T) {
-		debouncer := NewDebouncer(DebouncerOpts[string]{
+		processed := make(map[string]int, 1)
+
+		group, err := NewGroup(DebouncerOpts[string]{
 			BufferSize: 10,
 			KeyFunc:    func(s string) string { return s },
-			MinWait:    100 * time.Millisecond,
+			ProcessHandler: func(ctx context.Context, value string) error {
+				processed[value]++
+				return nil
+			},
+			MinWait: 100 * time.Millisecond,
 			// Test max wait by setting it lower than min wait.
 			MaxWait: 20 * time.Millisecond,
 		})
-
-		processed := make(map[string]int, 1)
+		require.NoError(t, err)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		debouncer.Start(ctx, func(ctx context.Context, value string) error {
-			processed[value]++
-			return nil
-		})
+		group.Start(ctx)
 
-		require.NoError(t, debouncer.Add("key1"))
+		require.NoError(t, group.Add("key1"))
 		// Wait for max wait to trigger.
 		time.Sleep(30 * time.Millisecond)
 
@@ -76,72 +80,81 @@ func TestDebouncer(t *testing.T) {
 	})
 
 	t.Run("should handle buffer full", func(t *testing.T) {
-		debouncer := NewDebouncer(DebouncerOpts[string]{
-			BufferSize: 1,
-			KeyFunc:    func(s string) string { return s },
-			MinWait:    10 * time.Millisecond,
-			MaxWait:    100 * time.Millisecond,
+		group, err := NewGroup(DebouncerOpts[string]{
+			BufferSize:     1,
+			KeyFunc:        func(s string) string { return s },
+			ProcessHandler: func(ctx context.Context, value string) error { return nil },
+			MinWait:        10 * time.Millisecond,
+			MaxWait:        100 * time.Millisecond,
 		})
+		require.NoError(t, err)
 
-		require.NoError(t, debouncer.Add("key1"))
+		require.NoError(t, group.Add("key1"))
 		// Buffer should be full by now as we are not reading from it yet.
-		require.ErrorIs(t, debouncer.Add("key2"), ErrBufferFull)
+		require.ErrorIs(t, group.Add("key2"), ErrBufferFull)
 	})
 
 	t.Run("should track metrics", func(t *testing.T) {
-		debouncer := NewDebouncer(DebouncerOpts[string]{
+		var wg sync.WaitGroup
+
+		group, err := NewGroup(DebouncerOpts[string]{
 			BufferSize: 10,
 			KeyFunc:    func(s string) string { return s },
-			MinWait:    10 * time.Millisecond,
-			MaxWait:    100 * time.Millisecond,
-			Reg:        prometheus.NewPedanticRegistry(),
-			Name:       "test",
+			ProcessHandler: func(ctx context.Context, value string) error {
+				wg.Done()
+				return nil
+			},
+			MinWait: 10 * time.Millisecond,
+			MaxWait: 100 * time.Millisecond,
+			Reg:     prometheus.NewPedanticRegistry(),
+			Name:    "test",
 		})
+		require.NoError(t, err)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		var wg sync.WaitGroup
-		wg.Add(1)
-		debouncer.Start(ctx, func(ctx context.Context, value string) error {
-			wg.Done()
-			return nil
-		})
+		group.Start(ctx)
 
-		require.NoError(t, debouncer.Add("key1"))
-		require.NoError(t, debouncer.Add("key1"))
+		wg.Add(1)
+		require.NoError(t, group.Add("key1"))
+		require.NoError(t, group.Add("key1"))
 
 		wg.Wait()
 
-		require.Equal(t, float64(2), testutil.ToFloat64(debouncer.metrics.itemsAddedCounter))
-		require.Equal(t, float64(1), testutil.ToFloat64(debouncer.metrics.itemsProcessedCounter))
+		require.Equal(t, float64(2), testutil.ToFloat64(group.metrics.itemsAddedCounter))
+		require.Equal(t, float64(1), testutil.ToFloat64(group.metrics.itemsProcessedCounter))
 	})
 
 	t.Run("should handle errors", func(t *testing.T) {
-		errs := make(chan error, 10)
+		var (
+			wg          sync.WaitGroup
+			errs        = make(chan error, 10)
+			expectedErr = errors.New("test error")
+		)
 
-		debouncer := NewDebouncer(DebouncerOpts[string]{
-			BufferSize:   10,
-			KeyFunc:      func(s string) string { return s },
+		group, err := NewGroup(DebouncerOpts[string]{
+			BufferSize: 10,
+			KeyFunc:    func(s string) string { return s },
+			ProcessHandler: func(ctx context.Context, value string) error {
+				wg.Done()
+				return expectedErr
+			},
 			MinWait:      10 * time.Millisecond,
 			MaxWait:      100 * time.Millisecond,
 			Reg:          prometheus.NewPedanticRegistry(),
 			Name:         "test_errors",
 			ErrorHandler: func(_ string, err error) { errs <- err },
 		})
+		require.NoError(t, err)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		expectedErr := errors.New("test error")
-		var wg sync.WaitGroup
-		wg.Add(1)
-		debouncer.Start(ctx, func(ctx context.Context, value string) error {
-			wg.Done()
-			return expectedErr
-		})
+		group.Start(ctx)
 
-		require.NoError(t, debouncer.Add("key1"))
+		wg.Add(1)
+		require.NoError(t, group.Add("key1"))
 
 		wg.Wait()
 
@@ -152,48 +165,50 @@ func TestDebouncer(t *testing.T) {
 			t.Fatal("expected error")
 		}
 
-		require.Equal(t, float64(1), testutil.ToFloat64(debouncer.metrics.processingErrorsCounter))
+		require.Equal(t, float64(1), testutil.ToFloat64(group.metrics.processingErrorsCounter))
 	})
 
 	t.Run("should gracefully handle stops", func(t *testing.T) {
-		debouncer := NewDebouncer(DebouncerOpts[string]{
-			BufferSize: 10,
-			KeyFunc:    func(s string) string { return s },
-			MinWait:    50 * time.Millisecond,
-			MaxWait:    100 * time.Millisecond,
-		})
-
 		// Create a channel to signal when processing is done.
 		done := make(chan struct{})
 
-		// Start the debouncer with a context
+		group, err := NewGroup(DebouncerOpts[string]{
+			BufferSize: 10,
+			KeyFunc:    func(s string) string { return s },
+			ProcessHandler: func(ctx context.Context, item string) error {
+				// Start a goroutine to wait for context cancellation.
+				go func() {
+					<-ctx.Done()
+					close(done)
+				}()
+				return nil
+			},
+			MinWait: 50 * time.Millisecond,
+			MaxWait: 100 * time.Millisecond,
+		})
+		require.NoError(t, err)
+
+		// Start the group with a context
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		debouncer.Start(ctx, func(ctx context.Context, item string) error {
-			// Start a goroutine to wait for context cancellation.
-			go func() {
-				<-ctx.Done()
-				close(done)
-			}()
-			return nil
-		})
+		group.Start(ctx)
 
 		// Send an item to trigger processing.
-		require.NoError(t, debouncer.Add("key-1"))
+		require.NoError(t, group.Add("key-1"))
 
-		// Give the debouncer a moment to process the item.
+		// Give the group a moment to process the item.
 		time.Sleep(50 * time.Millisecond)
 
-		// Stop the debouncer, which should cancel the context.
-		debouncer.Stop()
+		// Stop the group, which should cancel the context.
+		group.Stop()
 
 		// Wait for the done signal or timeout.
 		select {
 		case <-done:
-			// Success - the debouncer was stopped and the context was canceled
+			// Success - the group was stopped and the context was canceled
 		case <-time.After(time.Second):
-			t.Fatal("Timed out waiting for debouncer to stop")
+			t.Fatal("Timed out waiting for group to stop")
 		}
 	})
 }
