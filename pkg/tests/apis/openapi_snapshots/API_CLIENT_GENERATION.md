@@ -121,30 +121,17 @@ In Grafana, the reducers are added to `public/app/core/reducers/root.ts`:
 And the middlewares are added to `public/app/store/configureStore.ts`:
 
 ```jsx
+import { dashboardAPI } from '<pathToYourAPI>';
 export function configureStore(initialState?: Partial<StoreState>) {
   const store = reduxConfigureStore({
     reducer: createRootReducer(),
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({ thunk: true, serializableCheck: false, immutableCheck: false }).concat(
-        listenerMiddleware.middleware,
-        alertingApi.middleware,
-        publicDashboardApi.middleware,
-        browseDashboardsAPI.middleware,
-        cloudMigrationAPI.middleware,
-        userPreferencesAPI.middleware,
-        iamApi.middleware,
-        provisioningAPI.middleware,
-        folderAPI.middleware,
+        ...,
         dashboardAPI.middleware
-        ...extraMiddleware
       ),
-    devTools: process.env.NODE_ENV !== 'production',
-    preloadedState: {
-      navIndex: buildInitialState(),
-      ...initialState,
-    },
+    ...,
   });
-```
 
 After this step is done, it is time to use your hooks across Grafana. 
 Enjoy coding!
