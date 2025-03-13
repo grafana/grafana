@@ -26,7 +26,7 @@ import { formatPrometheusDuration, safeParsePrometheusDuration } from '../utils/
 import { Title } from './Title';
 
 type GroupPageRouteParams = {
-  sourceId?: string;
+  dataSourceUid?: string;
   namespaceId?: string;
   groupName?: string;
 };
@@ -35,15 +35,15 @@ const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 const { usePrometheusRuleNamespacesQuery, useGetRuleGroupForNamespaceQuery } = alertRuleApi;
 
 function GroupDetailsPage() {
-  const { sourceId = '', namespaceId = '', groupName = '' } = useParams<GroupPageRouteParams>();
-  const isGrafanaRuleGroup = sourceId === GRAFANA_RULES_SOURCE_NAME;
+  const { dataSourceUid = '', namespaceId = '', groupName = '' } = useParams<GroupPageRouteParams>();
+  const isGrafanaRuleGroup = dataSourceUid === GRAFANA_RULES_SOURCE_NAME;
 
   const { folder, loading: isFolderLoading } = useFolder(isGrafanaRuleGroup ? namespaceId : '');
   const {
     data: dsFeatures,
     isLoading: isDsFeaturesLoading,
     error: dsFeaturesError,
-  } = useDiscoverDsFeaturesQuery({ uid: isGrafanaRuleGroup ? GrafanaRulesSourceSymbol : sourceId });
+  } = useDiscoverDsFeaturesQuery({ uid: isGrafanaRuleGroup ? GrafanaRulesSourceSymbol : dataSourceUid });
 
   const {
     data: promGroup,
@@ -155,7 +155,7 @@ function GroupActions({ dsFeatures, namespaceId, groupName, folder }: GroupActio
   const [isExporting, setIsExporting] = useState<boolean>(false);
 
   const isGrafanaSource = dsFeatures.uid === GRAFANA_RULES_SOURCE_NAME;
-  const canSaveInFolder = isGrafanaSource ? !!folder?.canSave : true;
+  const canSaveInFolder = isGrafanaSource ? Boolean(folder?.canSave) : true;
   const canEdit = Boolean(dsFeatures.rulerConfig) && canEditRules(dsFeatures.name) && canSaveInFolder;
 
   if (!canEdit) {

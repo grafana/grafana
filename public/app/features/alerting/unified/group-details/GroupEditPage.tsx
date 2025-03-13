@@ -45,7 +45,7 @@ import { alertListPageLink, createListFilterLink, groups } from '../utils/naviga
 import { DraggableRulesTable } from './components/DraggableRulesTable';
 
 type GroupEditPageRouteParams = {
-  sourceId?: string;
+  dataSourceUid?: string;
   namespaceId?: string;
   groupName?: string;
 };
@@ -54,11 +54,11 @@ const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 
 function GroupEditPage() {
   const dispatch = useDispatch();
-  const { sourceId = '', namespaceId = '', groupName = '' } = useParams<GroupEditPageRouteParams>();
+  const { dataSourceUid = '', namespaceId = '', groupName = '' } = useParams<GroupEditPageRouteParams>();
 
-  const { folder, loading: isFolderLoading } = useFolder(sourceId === 'grafana' ? namespaceId : '');
+  const { folder, loading: isFolderLoading } = useFolder(dataSourceUid === 'grafana' ? namespaceId : '');
 
-  const ruleSourceUid = sourceId === 'grafana' ? GrafanaRulesSourceSymbol : sourceId;
+  const ruleSourceUid = dataSourceUid === 'grafana' ? GrafanaRulesSourceSymbol : dataSourceUid;
   const {
     data: dsFeatures,
     isLoading: isDsFeaturesLoading,
@@ -110,14 +110,14 @@ function GroupEditPage() {
   }
 
   const groupIdentifier: RuleGroupIdentifierV2 =
-    sourceId === 'grafana'
+    dataSourceUid === 'grafana'
       ? {
           namespace: { uid: namespaceId },
           groupName: groupName,
           groupOrigin: 'grafana',
         }
       : {
-          rulesSource: { uid: sourceId, name: dsFeatures?.name ?? '', ruleSourceType: 'datasource' },
+          rulesSource: { uid: dataSourceUid, name: dsFeatures?.name ?? '', ruleSourceType: 'datasource' },
           namespace: { name: namespaceId },
           groupName: groupName,
           groupOrigin: 'datasource',

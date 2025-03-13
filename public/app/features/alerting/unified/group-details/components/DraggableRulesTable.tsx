@@ -116,8 +116,6 @@ const DraggableListItem = ({
   isClone = false,
   isDragging = false,
 }: DraggableListItemProps) => {
-  // const styles = useStyles2(getStyles);
-
   // @TODO does this work with Grafana-managed recording rules too? Double check that.
   const ruleName = getRuleName(rule);
   const pendingPeriod = isAlertingRulerRule(rule) || isGrafanaRulerRule(rule) ? rule.for : null;

@@ -265,7 +265,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
-      path: '/alerting/:sourceId/namespaces/:namespaceId/groups/:groupName/view',
+      path: '/alerting/:dataSourceUid/namespaces/:namespaceId/groups/:groupName/view',
       pageClass: 'page-alerting',
       roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
       component: importAlertingComponent(
@@ -276,7 +276,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
-      path: '/alerting/:sourceId/namespaces/:namespaceId/groups/:groupName/edit',
+      path: '/alerting/:dataSourceUid/namespaces/:namespaceId/groups/:groupName/edit',
       pageClass: 'page-alerting',
       roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
       component: importAlertingComponent(
