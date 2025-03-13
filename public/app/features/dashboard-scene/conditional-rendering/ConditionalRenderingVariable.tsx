@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { ReactNode, useMemo } from 'react';
 
-import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
+import { GrafanaTheme2 } from '@grafana/data';
+import { SceneComponentProps, sceneGraph, VariableDependencyConfig } from '@grafana/scenes';
 import { ConditionalRenderingVariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { Combobox, ComboboxOption, Field, Input, Stack, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
@@ -16,17 +17,26 @@ export type VariableConditionValue = {
   value: string;
 };
 
-interface ConditionalRenderingVariableState extends ConditionalRenderingBaseState<VariableConditionValue> {}
+type ConditionalRenderingVariableState = ConditionalRenderingBaseState<VariableConditionValue>;
 
 export class ConditionalRenderingVariable extends ConditionalRenderingBase<ConditionalRenderingVariableState> {
   public get title(): string {
     return t('dashboard.conditional-rendering.variable.label', 'Variable');
   }
 
+  protected _variableDependency = new VariableDependencyConfig(this, {
+    onAnyVariableChanged: (v) => {
+      if (v.state.name === this.state.value.name) {
+        this.getConditionalLogicRoot().notifyChange();
+      }
+    },
+  });
+
   public evaluate(): boolean {
     if (!this.state.value.name) {
       return true;
     }
+
     const variable = sceneGraph.getVariables(this).state.variables.find((v) => v.state.name === this.state.value.name);
 
     // name is defined but no variable found - return false
@@ -35,13 +45,7 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
     }
     const value = variable.getValue();
 
-    let hit: boolean;
-
-    if (Array.isArray(value)) {
-      hit = value.includes(this.state.value.value);
-    } else {
-      hit = value === this.state.value.value;
-    }
+    let hit = Array.isArray(value) ? value.includes(this.state.value.value) : value === this.state.value.value;
 
     if (this.state.value.operator === '!=') {
       hit = !hit;
@@ -65,19 +69,17 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
     };
   }
 
-  public getVariableOptions(): Array<ComboboxOption<string>> {
-    return sceneGraph
-      .getVariables(this)
-      .state.variables.map((v) => ({ value: v.state.name, label: v.state.label ?? v.state.name }));
-  }
-
   public onDelete() {
     handleDeleteNonGroupCondition(this);
   }
 }
 
 function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<ConditionalRenderingVariable>) {
-  const variableNames = useMemo(() => model.getVariableOptions(), [model]);
+  const variables = useMemo(() => sceneGraph.getVariables(model), [model]);
+  const variableNames = useMemo(
+    () => variables.state.variables.map((v) => ({ value: v.state.name, label: v.state.label ?? v.state.name })),
+    [variables.state.variables]
+  );
   const operatorOptions: Array<ComboboxOption<'=' | '!='>> = useMemo(
     () => [
       { value: '=', description: t('dashboard.conditional-rendering.variable.operator.equals', 'Equals') },
@@ -126,11 +128,11 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
   );
 }
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   variableNameSelect: css({
     flexGrow: 1,
   }),
   operatorSelect: css({
-    width: '6rem',
+    width: theme.spacing(12),
   }),
 });
