@@ -627,7 +627,7 @@ export class DashboardMigrator {
           return panel;
         }
         panel.type = wasAngularTable ? 'table-old' : 'table';
-        // Hacky way to migrate to auto migrate
+        // Hacky way to call the automigrate feature
         const newType = getPanelPluginToMigrateTo(panel);
         if (newType) {
           panel.autoMigrateFrom = panel.type;
