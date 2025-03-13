@@ -136,10 +136,12 @@ func QueryRows(ctx context.Context, x db.ContextExecer, tmpl *template.Template,
 	if err != nil {
 		return nil, fmt.Errorf("execute template %q: %w", tmpl.Name(), err)
 	}
+
 	query := sqltemplate.FormatSQL(rawQuery)
 
 	args := req.GetArgs()
 	ctx = withOtelAttrs(ctx, tmpl.Name(), req.DialectName())
+
 	rows, err := x.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, SQLError{

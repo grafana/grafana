@@ -45,9 +45,6 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 				if len(requirements) != 1 {
 					return nil, predicate, apierrors.NewBadRequest("single label supported with: " + v)
 				}
-				if !opts.Predicate.Field.Empty() {
-					return nil, predicate, apierrors.NewBadRequest("field selector not supported with: " + v)
-				}
 				if r.Operator() != selection.Equals {
 					return nil, predicate, apierrors.NewBadRequest("only = operator supported with: " + v)
 				}
@@ -68,8 +65,7 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 				}
 
 				req.Options.Labels = nil
-				req.Options.Fields = nil
-				return req, storage.Everything, nil
+				break
 			}
 
 			req.Options.Labels = append(req.Options.Labels, &resource.Requirement{
@@ -87,7 +83,7 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 			if r.Value != "" {
 				requirement.Values = append(requirement.Values, r.Value)
 			}
-			req.Options.Labels = append(req.Options.Labels, requirement)
+			req.Options.Fields = append(req.Options.Fields, requirement)
 		}
 	}
 
