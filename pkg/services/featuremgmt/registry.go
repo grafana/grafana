@@ -1790,6 +1790,15 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 			Expression:   "false",
 		},
+		{
+			Name:              "extensionsReadOnlyProxy",
+			Description:       "Use proxy-based read-only objects for plugin extensions instead of deep cloning",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaPluginsPlatformSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
+		},
 	}
 )
 
