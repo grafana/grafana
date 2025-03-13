@@ -239,3 +239,4 @@ alertRuleRestore,preview,@grafana/alerting-squad,false,false,false
 grafanaManagedRecordingRulesDatasources,experimental,@grafana/alerting-squad,false,false,false
 inviteUserExperimental,experimental,@grafana/sharing-squad,false,false,true
 extraLanguages,experimental,@grafana/grafana-frontend-platform,false,false,true
+noBackdropBlur,experimental,@grafana/grafana-frontend-platform,false,false,true

@@ -258,4 +258,5 @@ export interface FeatureToggles {
   grafanaManagedRecordingRulesDatasources?: boolean;
   inviteUserExperimental?: boolean;
   extraLanguages?: boolean;
+  noBackdropBlur?: boolean;
 }

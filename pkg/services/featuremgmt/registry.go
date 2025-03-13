@@ -1812,6 +1812,15 @@ var (
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: true,
 		},
+		{
+			Name:              "noBackdropBlur",
+			Description:       "Disables backdrop blur",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaFrontendPlatformSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
+		},
 	}
 )
 
