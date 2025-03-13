@@ -171,7 +171,7 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
                     <Icon name="info-circle" />
                   </Tooltip>
                 </Stack>
-                {repoType === 'github' && (
+                {repoType === 'github' && settingsData?.legacyStorage && (
                   <Stack direction="row" gap={2} alignItems="center">
                     <Switch {...register('migrate.history')} defaultChecked={true} />
                     <Text>Include history</Text>
