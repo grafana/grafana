@@ -1248,12 +1248,6 @@ func (s *Service) canMove(ctx context.Context, cmd *folder.MoveFolderCommand) (b
 	var evaluators []accesscontrol.Evaluator
 	currentFolderScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.UID)
 	for action, scopes := range permissions {
-		// Skip unexpanded action sets - they have no impact if action sets are not enabled
-		if !s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-			if action == "folders:view" || action == "folders:edit" || action == "folders:admin" {
-				continue
-			}
-		}
 		for _, scope := range newFolderAndParentUIDs {
 			if slices.Contains(scopes, scope) {
 				evaluators = append(evaluators, accesscontrol.EvalPermission(action, currentFolderScope))

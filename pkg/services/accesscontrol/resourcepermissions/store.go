@@ -771,18 +771,16 @@ func managedPermission(action, resource string, resourceID, resourceAttribute st
 
 // InMemoryActionSets is an in-memory implementation of the ActionSetStore.
 type InMemoryActionSets struct {
-	features           featuremgmt.FeatureToggles
 	log                log.Logger
 	actionSetToActions map[string][]string
 	actionToActionSets map[string][]string
 }
 
-func NewInMemoryActionSetStore(features featuremgmt.FeatureToggles) *InMemoryActionSets {
+func NewInMemoryActionSetStore() *InMemoryActionSets {
 	return &InMemoryActionSets{
 		actionSetToActions: make(map[string][]string),
 		actionToActionSets: make(map[string][]string),
 		log:                log.New("resourcepermissions.actionsets"),
-		features:           features,
 	}
 }
 

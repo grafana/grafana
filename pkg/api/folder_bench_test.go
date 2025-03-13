@@ -460,7 +460,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	cfg := setting.NewCfg()
-	actionSets := resourcepermissions.NewActionSetService(features)
+	actionSets := resourcepermissions.NewActionSetService()
 	fStore := folderimpl.ProvideStore(sc.db)
 	folderServiceWithFlagOn := folderimpl.ProvideService(
 		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore,

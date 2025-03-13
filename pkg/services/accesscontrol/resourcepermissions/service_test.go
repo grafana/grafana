@@ -228,15 +228,13 @@ func TestService_SetPermissions(t *testing.T) {
 func TestService_RegisterActionSets(t *testing.T) {
 	type registerActionSetsTest struct {
 		desc               string
-		actionSetsEnabled  bool
 		options            Options
 		expectedActionSets []ActionSet
 	}
 
 	tests := []registerActionSetsTest{
 		{
-			desc:              "should register folder action sets if action sets are enabled",
-			actionSetsEnabled: true,
+			desc: "should register folder action sets if action sets are enabled",
 			options: Options{
 				Resource: "folders",
 				PermissionsToActions: map[string][]string{
@@ -256,8 +254,7 @@ func TestService_RegisterActionSets(t *testing.T) {
 			},
 		},
 		{
-			desc:              "should register dashboard action set if action sets are enabled",
-			actionSetsEnabled: true,
+			desc: "should register dashboard action set if action sets are enabled",
 			options: Options{
 				Resource: "dashboards",
 				PermissionsToActions: map[string][]string{
@@ -271,27 +268,13 @@ func TestService_RegisterActionSets(t *testing.T) {
 				},
 			},
 		},
-		{
-			desc:              "should not register dashboard action set if action sets are not enabled",
-			actionSetsEnabled: false,
-			options: Options{
-				Resource: "dashboards",
-				PermissionsToActions: map[string][]string{
-					"View": {"dashboards:read"},
-				},
-			},
-			expectedActionSets: []ActionSet{},
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			features := featuremgmt.WithFeatures()
-			if tt.actionSetsEnabled {
-				features = featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets)
-			}
 			ac := acimpl.ProvideAccessControl(features)
-			actionSets := NewActionSetService(features)
+			actionSets := NewActionSetService()
 			_, err := New(
 				setting.NewCfg(), tt.options, features, routing.NewRouteRegister(), licensingtest.NewFakeLicensing(),
 				ac, &actest.FakeService{}, db.InitTestDB(t), nil, nil, actionSets,
@@ -317,7 +300,6 @@ func TestService_RegisterActionSets(t *testing.T) {
 func TestStore_RegisterActionSet(t *testing.T) {
 	type actionSetTest struct {
 		desc               string
-		features           featuremgmt.FeatureToggles
 		pluginID           string
 		pluginActions      []plugins.ActionSet
 		coreActionSets     []ActionSet
@@ -327,8 +309,7 @@ func TestStore_RegisterActionSet(t *testing.T) {
 
 	tests := []actionSetTest{
 		{
-			desc:     "should be able to register a plugin action set if the right feature toggles are enabled",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets),
+			desc:     "should be able to register a plugin action set",
 			pluginID: "test-app",
 			pluginActions: []plugins.ActionSet{
 				{
@@ -344,20 +325,7 @@ func TestStore_RegisterActionSet(t *testing.T) {
 			},
 		},
 		{
-			desc:     "should not register plugin action set if feature toggles are missing",
-			features: featuremgmt.WithFeatures(),
-			pluginID: "test-app",
-			pluginActions: []plugins.ActionSet{
-				{
-					Action:  "folders:view",
-					Actions: []string{"test-app.resource:read"},
-				},
-			},
-			expectedActionSets: []ActionSet{},
-		},
-		{
 			desc:     "should be able to register multiple plugin action sets",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets),
 			pluginID: "test-app",
 			pluginActions: []plugins.ActionSet{
 				{
@@ -382,7 +350,6 @@ func TestStore_RegisterActionSet(t *testing.T) {
 		},
 		{
 			desc:     "action set actions should be added not replaced",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets),
 			pluginID: "test-app",
 			pluginActions: []plugins.ActionSet{
 				{
@@ -425,7 +392,6 @@ func TestStore_RegisterActionSet(t *testing.T) {
 		},
 		{
 			desc:     "should not be able to register an action that doesn't have a plugin prefix",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets),
 			pluginID: "test-app",
 			pluginActions: []plugins.ActionSet{
 				{
@@ -441,7 +407,6 @@ func TestStore_RegisterActionSet(t *testing.T) {
 		},
 		{
 			desc:     "should not be able to register action set that is not in the allow list",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets),
 			pluginID: "test-app",
 			pluginActions: []plugins.ActionSet{
 				{
@@ -454,7 +419,7 @@ func TestStore_RegisterActionSet(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			asService := NewActionSetService(tt.features)
+			asService := NewActionSetService()
 
 			err := asService.RegisterActionSets(context.Background(), tt.pluginID, tt.pluginActions)
 			if tt.expectedErr {
@@ -511,7 +476,7 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, te
 	ac := acimpl.ProvideAccessControl(features)
 	service, err := New(
 		cfg, ops, features, routing.NewRouteRegister(), license,
-		ac, acService, sql, teamSvc, userSvc, NewActionSetService(features),
+		ac, acService, sql, teamSvc, userSvc, NewActionSetService(),
 	)
 	require.NoError(t, err)
 

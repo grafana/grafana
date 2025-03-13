@@ -32,7 +32,7 @@ func ProvideFolderPermissions(
 	cfg *setting.Cfg,
 	sqlStore *sqlstore.SQLStore,
 ) (*ossaccesscontrol.FolderPermissionsService, error) {
-	actionSets := resourcepermissions.NewActionSetService(features)
+	actionSets := resourcepermissions.NewActionSetService()
 
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
