@@ -2597,6 +2597,10 @@
     "alert-list-legacy": {
       "title": "Alert rules"
     },
+    "alerting": {
+      "subtitle": "Learn about problems in your systems moments after they occur",
+      "title": "Alerting"
+    },
     "alerting-admin": {
       "subtitle": "Manage Alertmanager configurations and enable receiving Grafana-managed alerts",
       "title": "Settings"
