@@ -9,3 +9,10 @@
  * preventing the code from being importable by plugins or other npm packages making it truly "internal".
  *
  */
+
+export { setPanelDataErrorView } from '../components/PanelDataErrorView';
+export { setPanelRenderer } from '../components/PanelRenderer';
+export { type PageInfoItem, setPluginPage } from '../components/PluginPage';
+
+export { ExpressionDatasourceRef } from '../utils/DataSourceWithBackend';
+export { standardStreamOptionsProvider, toStreamingDataResponse } from '../utils/DataSourceWithBackend';

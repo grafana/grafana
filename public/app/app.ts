@@ -42,10 +42,8 @@ import {
   setCorrelationsService,
   setPluginFunctionsHook,
 } from '@grafana/runtime';
-import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
-import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
-import { setPluginPage } from '@grafana/runtime/src/components/PluginPage';
-import { setUseTranslateHook } from '@grafana/runtime/src/unstable';
+import { setPanelDataErrorView, setPanelRenderer, setPluginPage } from '@grafana/runtime/internal';
+import { setUseTranslateHook } from '@grafana/runtime/unstable';
 import config, { updateConfig } from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
