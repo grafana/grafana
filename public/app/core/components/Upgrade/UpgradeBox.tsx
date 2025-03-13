@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { HTMLAttributes, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { reportExperimentView } from '@grafana/runtime/src';
+import { reportExperimentView } from '@grafana/runtime';
 import { Button, Icon, LinkButton, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
