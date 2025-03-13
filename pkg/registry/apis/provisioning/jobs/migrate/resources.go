@@ -219,7 +219,7 @@ func removeUnprovisioned(ctx context.Context, client dynamic.ResourceInterface, 
 			return fmt.Errorf("extract meta accessor: %w", err)
 		}
 
-		// Skip if folder is managed
+		// Skip if managed
 		_, ok := meta.GetManagerProperties()
 		if ok {
 			continue
