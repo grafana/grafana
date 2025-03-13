@@ -998,6 +998,9 @@
     }
   },
   "dashboard": {
+    "actions": {
+      "open-settings": ""
+    },
     "add-menu": {
       "import": "从库导入",
       "paste-panel": "粘贴面板",
