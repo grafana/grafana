@@ -68,6 +68,16 @@ const config: ConfigFile = {
       tag: true,
       hooks: true,
     },
+    '../public/app/features/dashboard/api/rtk/v2/endpoints.gen.ts': {
+      apiFile: '../public/app/features/dashboard/api/rtk/v2/baseAPI.ts',
+      schemaFile: '../data/openapi/dashboard.grafana.app-v2alpha1.json',
+      apiImport: 'baseAPI',
+      filterEndpoints: ['getDashboard'],
+      argSuffix: 'Arg',
+      responseSuffix: 'Response',
+      tag: true,
+      hooks: true,
+    },
   },
 };
 
