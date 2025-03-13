@@ -25,13 +25,13 @@ export class AzureMonitorKustoQueryParser {
     const parts: string[] = [];
     const datetimeColumn = this.getDatetimeColumn(allColumns);
     const shouldApplyTimeFilter = this.shouldApplyTimeFilter(selectedColumns, datetimeColumn);
+    const groupByStrings = groupBy?.expressions?.map((expression) => expression.property.name) || [];
 
     this.appendFrom(selectedTable, parts);
     this.appendWhere(selectedColumns, filters, datetimeColumn, shouldApplyTimeFilter, allColumns, parts, where);
-    const groupByStrings = groupBy?.expressions?.map((expression) => expression.property.name) || [];
-    this.appendSummarize(selectedColumns, aggregation, groupByStrings, datetimeColumn, parts);
     this.appendProject(selectedColumns, parts);
-    this.appendOrderBy(datetimeColumn, selectedColumns, groupByStrings, parts);
+    this.appendSummarize(selectedColumns, aggregation, groupByStrings, datetimeColumn, parts);
+    this.appendOrderBy(datetimeColumn, selectedColumns, groupByStrings, parts, aggregation);
     this.appendLimit(limit, parts);
 
     return parts.join('\n| ');
@@ -180,14 +180,24 @@ export class AzureMonitorKustoQueryParser {
     datetimeColumn: string,
     selectedColumns: string[],
     groupBy: string[] | undefined,
-    parts: string[]
+    parts: string[],
+    aggregation?: string
   ) {
     const hasDatetimeGroupBy = groupBy?.some((col) => col === datetimeColumn);
+    const hasBinApplied = parts.some((col) => col.includes('bin('));
+    const isOnlyTableSelected = selectedColumns.length === 0 && (!groupBy || groupBy.length === 0);
+    const hasAggregation = aggregation && aggregation.trim().length > 0;
 
-    const hasBinApplied = parts?.some((col) => col.includes('bin('));
+    if (hasAggregation) {
+      parts.pop();
+      parts.push(`summarize ${aggregation} by ${datetimeColumn}`);
+      return;
+    }
 
     if (hasDatetimeGroupBy && !hasBinApplied) {
       parts.push(`summarize ${selectedColumns.join(', ')} by bin(${datetimeColumn}, 1h)`);
+    } else if (isOnlyTableSelected) {
+      parts.push(`order by ${datetimeColumn} asc`);
     } else if (!groupBy?.length && selectedColumns.includes(datetimeColumn)) {
       parts.push(`order by ${datetimeColumn} asc`);
     }

@@ -101,6 +101,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
         <FilterSection {...props} onQueryUpdate={onQueryChange} allColumns={allColumns} query={query} />
         <AggregateSection {...props} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
         <GroupBySection {...props} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
+        <FuzzySearch {...props} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
         <EditorRow>
           <EditorFieldGroup>
             <EditorField label="Limit" optional={true}>
@@ -118,7 +119,6 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
             </EditorField>
           </EditorFieldGroup>
         </EditorRow>
-        <FuzzySearch {...props} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
         <KQLPreview
           query={query.azureLogAnalytics?.query || ''}
           hidden={isKQLPreviewHidden}

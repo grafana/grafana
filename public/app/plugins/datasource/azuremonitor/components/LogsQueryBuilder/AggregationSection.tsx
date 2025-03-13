@@ -30,10 +30,6 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
   const [aggregates, setAggregates] = useState<BuilderQueryEditorReduceExpression[]>([]);
   const builderQuery = query.azureLogAnalytics?.builderQuery;
 
-  if (!builderQuery) {
-    return;
-  }
-
   const hasLoadedAggregates = useRef(false);
 
   useEffect(() => {
@@ -48,6 +44,10 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
       hasLoadedAggregates.current = true;
     }
   }, [builderQuery?.reduce?.expressions, aggregates]);
+
+  if (!builderQuery) {
+    return <></>;
+  }
 
   const availableColumns: Array<SelectableValue<string>> = [];
   const columns = builderQuery.columns?.columns ?? [];

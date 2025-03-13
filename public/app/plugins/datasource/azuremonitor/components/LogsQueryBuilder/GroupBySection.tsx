@@ -30,15 +30,11 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
   templateVariableOptions,
 }) => {
   const builderQuery = query.azureLogAnalytics?.builderQuery;
-
-  const hasLoadedGroupBy = useRef(false);
   const [groupBys, setGroupBys] = useState<BuilderQueryEditorGroupByExpression[]>(() => {
     return builderQuery?.groupBy?.expressions || [];
   });
 
-  if (!builderQuery) {
-    return;
-  }
+  const hasLoadedGroupBy = useRef(false);
 
   useEffect(() => {
     if (!hasLoadedGroupBy.current && builderQuery?.groupBy?.expressions && groupBys.length === 0) {
@@ -46,6 +42,10 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
       hasLoadedGroupBy.current = true;
     }
   }, [builderQuery?.groupBy?.expressions, groupBys]);
+
+  if (!builderQuery) {
+    return <></>;
+  }
 
   const availableColumns: Array<SelectableValue<string>> = [];
   const columns = builderQuery.columns?.columns ?? [];

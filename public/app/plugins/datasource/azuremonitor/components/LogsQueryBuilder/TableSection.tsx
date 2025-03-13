@@ -1,8 +1,8 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/plugin-ui';
-import { Select } from '@grafana/ui';
+import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
+import { Button, Select } from '@grafana/ui';
 
 import {
   BuilderQueryExpression,
@@ -25,7 +25,7 @@ interface TableSectionProps {
 export const TableSection: React.FC<TableSectionProps> = (props) => {
   const { allColumns, query, tables, onQueryUpdate, templateVariableOptions } = props;
   const builderQuery = query.azureLogAnalytics?.builderQuery;
-  const selectedColumns = query.azureLogAnalytics?.builderQuery?.columns?.columns;
+  const selectedColumns = query.azureLogAnalytics?.builderQuery?.columns?.columns || [];
 
   const tableOptions: Array<SelectableValue<string>> = tables.map((t) => ({
     label: t.name,
@@ -38,7 +38,13 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
     type: col.type,
   }));
 
+  const selectAllOption: SelectableValue<string> = {
+    label: 'Select All Columns',
+    value: '__all_columns__',
+  };
+
   const selectableOptions: Array<SelectableValue<string>> = [
+    selectAllOption,
     ...columnOptions,
     ...(templateVariableOptions
       ? Array.isArray(templateVariableOptions)
@@ -71,7 +77,11 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
   };
 
   const handleColumnsChange = (selected: SelectableValue<string> | Array<SelectableValue<string>>) => {
-    const selectedArray = Array.isArray(selected) ? selected.map((col) => col.value!) : [selected.value!];
+    let selectedArray = Array.isArray(selected) ? selected.map((col) => col.value!) : [selected.value!];
+
+    if (selectedArray.includes('__all_columns__')) {
+      selectedArray = allColumns.map((col) => col.name);
+    }
 
     const updatedColumns = selectedArray.map((col) => ({
       name: col,
@@ -104,6 +114,36 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
     });
   };
 
+  const onDeleteAllColumns = () => {
+    const updatedBuilderQuery: BuilderQueryExpression = {
+      ...builderQuery,
+      columns: {
+        columns: [], // Clear all columns
+        type: BuilderQueryEditorExpressionType.Property,
+      },
+    };
+
+    // ✅ Generate the updated query string
+    const aggregation = getAggregations(updatedBuilderQuery.reduce?.expressions);
+    const filters = getFilters(updatedBuilderQuery.where?.expressions);
+    const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(
+      updatedBuilderQuery,
+      allColumns,
+      aggregation,
+      filters
+    );
+
+    // ✅ Trigger state update
+    onQueryUpdate({
+      ...query,
+      azureLogAnalytics: {
+        ...query.azureLogAnalytics,
+        builderQuery: updatedBuilderQuery,
+        query: updatedQueryString,
+      },
+    });
+  };
+
   return (
     <EditorRow>
       <EditorFieldGroup>
@@ -117,17 +157,20 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
           />
         </EditorField>
         <EditorField label="Columns">
-          <Select
-            aria-label="Columns"
-            isMulti
-            value={selectedColumns?.map((col) => ({ label: col, value: col })) || []}
-            options={selectableOptions}
-            placeholder="Select columns"
-            onChange={(e) => {
-              handleColumnsChange(e);
-            }}
-            isDisabled={!query.azureLogAnalytics?.builderQuery?.from?.property.name}
-          />
+          <InputGroup>
+            <Select
+              aria-label="Columns"
+              isMulti
+              value={selectedColumns.map((col) => ({ label: col, value: col })) || []}
+              options={selectableOptions}
+              placeholder="Select columns"
+              onChange={(e) => {
+                handleColumnsChange(e);
+              }}
+              isDisabled={!query.azureLogAnalytics?.builderQuery?.from?.property.name}
+            />
+            <Button variant="secondary" icon="times" onClick={onDeleteAllColumns} />
+          </InputGroup>
         </EditorField>
       </EditorFieldGroup>
     </EditorRow>
