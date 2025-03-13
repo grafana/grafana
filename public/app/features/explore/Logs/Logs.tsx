@@ -1073,6 +1073,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   showControls
                   showTime={showTime}
                   sortOrder={logsSortOrder}
+                  syntaxHighlighting={true}
                   timeRange={props.range}
                   timeZone={timeZone}
                   wrapLogMessage={wrapLogMessage}

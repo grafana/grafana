@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback } from 'react';
 
-import { EventBus, GrafanaTheme2 } from '@grafana/data';
+import { EventBus, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { IconButton, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
@@ -15,8 +15,16 @@ type Props = {
 
 export const LogListControls = ({ eventBus }: Props) => {
   const styles = useStyles2(getStyles);
-  const { setShowTime, setSyntaxHighlighting, setWrapLogMessage, showTime, syntaxHighlighting, wrapLogMessage } =
-    useLogListContext();
+  const {
+    setShowTime,
+    setSortOrder,
+    setSyntaxHighlighting,
+    setWrapLogMessage,
+    showTime,
+    sortOrder,
+    syntaxHighlighting,
+    wrapLogMessage,
+  } = useLogListContext();
 
   const onScrollToTopClick = useCallback(() => {
     reportInteraction('log_list_controls_scroll_top_clicked');
@@ -40,6 +48,10 @@ export const LogListControls = ({ eventBus }: Props) => {
     setShowTime(!showTime);
   }, [setShowTime, showTime]);
 
+  const onSortOrderClick = useCallback(() => {
+    setSortOrder(sortOrder === LogsSortOrder.Ascending ? LogsSortOrder.Descending : LogsSortOrder.Ascending);
+  }, [setSortOrder, sortOrder]);
+
   const onSyntaxHightlightingClick = useCallback(() => {
     setSyntaxHighlighting(!syntaxHighlighting);
   }, [setSyntaxHighlighting, syntaxHighlighting]);
@@ -56,6 +68,17 @@ export const LogListControls = ({ eventBus }: Props) => {
         variant="secondary"
         onClick={onScrollToBottomClick}
         tooltip={t('logs.logs-controls.scroll-bottom', 'Scroll to bottom')}
+        size="md"
+      />
+      <IconButton
+        name={sortOrder === LogsSortOrder.Descending ? 'sort-amount-up' : 'sort-amount-down'}
+        className={styles.controlButton}
+        onClick={onSortOrderClick}
+        tooltip={
+          sortOrder === LogsSortOrder.Descending
+            ? t('logs.logs-controls.newest-first', 'Newest logs first')
+            : t('logs.logs-controls.oldest-first', 'Oldest logs first')
+        }
         size="md"
       />
       <IconButton

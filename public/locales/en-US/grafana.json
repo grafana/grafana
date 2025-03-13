@@ -3985,7 +3985,11 @@
       }
     },
     "logs-controls": {
+      "disable-highlighting": "Disable highlighting",
+      "enable-highlighting": "Enable highlighting",
       "hide-timestamps": "Hide timestamps",
+      "newest-first": "Newest logs first",
+      "oldest-first": "Oldest logs first",
       "scroll-bottom": "Scroll to bottom",
       "scroll-top": "Scroll to top",
       "show-timestamps": "Show timestamps",

@@ -58,10 +58,14 @@ interface Props {
   storageKey?: string;
   timeRange: TimeRange;
   timeZone: string;
+  syntaxHighlighting: boolean;
   wrapLogMessage: boolean;
 }
 
-type LogListComponentProps = Omit<Props, 'app' | 'displayedFields' | 'showTime' | 'wrapLogMessage'>;
+type LogListComponentProps = Omit<
+  Props,
+  'app' | 'displayedFields' | 'showTime' | 'sortOrder' | 'syntaxHighlighting' | 'wrapLogMessage'
+>;
 
 export const LogList = ({
   app,
@@ -84,6 +88,7 @@ export const LogList = ({
   showControls,
   showTime,
   sortOrder,
+  syntaxHighlighting,
   timeRange,
   timeZone,
   wrapLogMessage,
@@ -101,6 +106,8 @@ export const LogList = ({
       pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
       pinnedLogs={pinnedLogs}
       showTime={showTime}
+      sortOrder={sortOrder}
+      syntaxHighlighting={syntaxHighlighting}
       wrapLogMessage={wrapLogMessage}
     >
       <LogListComponent
@@ -112,7 +119,6 @@ export const LogList = ({
         loadMore={loadMore}
         logs={logs}
         showControls={showControls}
-        sortOrder={sortOrder}
         timeRange={timeRange}
         timeZone={timeZone}
       />
@@ -129,11 +135,10 @@ const LogListComponent = ({
   loadMore,
   logs,
   showControls,
-  sortOrder,
   timeRange,
   timeZone,
 }: LogListComponentProps) => {
-  const { app, displayedFields, showTime, wrapLogMessage } = useLogListContext();
+  const { app, displayedFields, showTime, sortOrder, wrapLogMessage } = useLogListContext();
   const [processedLogs, setProcessedLogs] = useState<LogListModel[]>([]);
   const [listHeight, setListHeight] = useState(
     app === CoreApp.Explore ? window.innerHeight * 0.75 : containerElement.clientHeight
