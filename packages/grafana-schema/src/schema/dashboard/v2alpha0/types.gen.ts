@@ -825,6 +825,7 @@ export interface RowsLayoutRowSpec {
 	title?: string;
 	collapsed: boolean;
 	repeat?: RowRepeatOptions;
+	conditionalRendering?: ConditionalRenderingGroupKind;
 	layout: GridLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind;
 }
 
@@ -868,6 +869,7 @@ export const defaultResponsiveGridLayoutItemKind = (): ResponsiveGridLayoutItemK
 export interface ResponsiveGridLayoutItemSpec {
 	element: ElementReference;
 	repeat?: ResponsiveGridRepeatOptions;
+	conditionalRendering?: ConditionalRenderingGroupKind;
 }
 
 export const defaultResponsiveGridLayoutItemSpec = (): ResponsiveGridLayoutItemSpec => ({
@@ -1399,5 +1401,83 @@ export interface AdhocVariableKind {
 export const defaultAdhocVariableKind = (): AdhocVariableKind => ({
 	kind: "AdhocVariable",
 	spec: defaultAdhocVariableSpec(),
+});
+
+export interface ConditionalRenderingGroupKind {
+	kind: "ConditionalRenderingGroup";
+	spec: ConditionalRenderingGroupSpec;
+}
+
+export const defaultConditionalRenderingGroupKind = (): ConditionalRenderingGroupKind => ({
+	kind: "ConditionalRenderingGroup",
+	spec: defaultConditionalRenderingGroupSpec(),
+});
+
+export interface ConditionalRenderingGroupSpec {
+	condition: "and" | "or";
+	items: (ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeIntervalKind)[];
+}
+
+export const defaultConditionalRenderingGroupSpec = (): ConditionalRenderingGroupSpec => ({
+	condition: "and",
+	items: [],
+});
+
+export interface ConditionalRenderingVariableKind {
+	kind: "ConditionalRenderingVariable";
+	spec: ConditionalRenderingVariableSpec;
+}
+
+export const defaultConditionalRenderingVariableKind = (): ConditionalRenderingVariableKind => ({
+	kind: "ConditionalRenderingVariable",
+	spec: defaultConditionalRenderingVariableSpec(),
+});
+
+export interface ConditionalRenderingVariableSpec {
+	variable: string;
+	operator: "equals" | "notEquals";
+	value: string;
+}
+
+export const defaultConditionalRenderingVariableSpec = (): ConditionalRenderingVariableSpec => ({
+	variable: "",
+	operator: "equals",
+	value: "",
+});
+
+export interface ConditionalRenderingDataKind {
+	kind: "ConditionalRenderingData";
+	spec: ConditionalRenderingDataSpec;
+}
+
+export const defaultConditionalRenderingDataKind = (): ConditionalRenderingDataKind => ({
+	kind: "ConditionalRenderingData",
+	spec: defaultConditionalRenderingDataSpec(),
+});
+
+export interface ConditionalRenderingDataSpec {
+	value: boolean;
+}
+
+export const defaultConditionalRenderingDataSpec = (): ConditionalRenderingDataSpec => ({
+	value: false,
+});
+
+export interface ConditionalRenderingTimeIntervalKind {
+	kind: "ConditionalRenderingTimeInterval";
+	spec: ConditionalRenderingTimeIntervalSpec;
+}
+
+export const defaultConditionalRenderingTimeIntervalKind = (): ConditionalRenderingTimeIntervalKind => ({
+	kind: "ConditionalRenderingTimeInterval",
+	spec: defaultConditionalRenderingTimeIntervalSpec(),
+});
+
+export interface ConditionalRenderingTimeIntervalSpec {
+	value: string;
+}
+
+export const defaultConditionalRenderingTimeIntervalSpec = (): ConditionalRenderingTimeIntervalSpec => ({
+	value: "",
 });
 

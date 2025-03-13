@@ -833,10 +833,11 @@ func NewDashboardRowsLayoutRowKind() *DashboardRowsLayoutRowKind {
 
 // +k8s:openapi-gen=true
 type DashboardRowsLayoutRowSpec struct {
-	Title     *string                                                           `json:"title,omitempty"`
-	Collapsed bool                                                              `json:"collapsed"`
-	Repeat    *DashboardRowRepeatOptions                                        `json:"repeat,omitempty"`
-	Layout    DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind `json:"layout"`
+	Title                *string                                                           `json:"title,omitempty"`
+	Collapsed            bool                                                              `json:"collapsed"`
+	ConditionalRendering *DashboardConditionalRenderingGroupKind                           `json:"conditionalRendering,omitempty"`
+	Repeat               *DashboardRowRepeatOptions                                        `json:"repeat,omitempty"`
+	Layout               DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind `json:"layout"`
 }
 
 // NewDashboardRowsLayoutRowSpec creates a new DashboardRowsLayoutRowSpec object.
@@ -844,6 +845,105 @@ func NewDashboardRowsLayoutRowSpec() *DashboardRowsLayoutRowSpec {
 	return &DashboardRowsLayoutRowSpec{
 		Layout: *NewDashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind(),
 	}
+}
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingGroupKind struct {
+	Kind string                                 `json:"kind"`
+	Spec DashboardConditionalRenderingGroupSpec `json:"spec"`
+}
+
+// NewDashboardConditionalRenderingGroupKind creates a new DashboardConditionalRenderingGroupKind object.
+func NewDashboardConditionalRenderingGroupKind() *DashboardConditionalRenderingGroupKind {
+	return &DashboardConditionalRenderingGroupKind{
+		Kind: "ConditionalRenderingGroup",
+		Spec: *NewDashboardConditionalRenderingGroupSpec(),
+	}
+}
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingGroupSpec struct {
+	Condition DashboardConditionalRenderingGroupSpecCondition                                                                 `json:"condition"`
+	Items     []DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind `json:"items"`
+}
+
+// NewDashboardConditionalRenderingGroupSpec creates a new DashboardConditionalRenderingGroupSpec object.
+func NewDashboardConditionalRenderingGroupSpec() *DashboardConditionalRenderingGroupSpec {
+	return &DashboardConditionalRenderingGroupSpec{}
+}
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingVariableKind struct {
+	Kind string                                    `json:"kind"`
+	Spec DashboardConditionalRenderingVariableSpec `json:"spec"`
+}
+
+// NewDashboardConditionalRenderingVariableKind creates a new DashboardConditionalRenderingVariableKind object.
+func NewDashboardConditionalRenderingVariableKind() *DashboardConditionalRenderingVariableKind {
+	return &DashboardConditionalRenderingVariableKind{
+		Kind: "ConditionalRenderingVariable",
+		Spec: *NewDashboardConditionalRenderingVariableSpec(),
+	}
+}
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingVariableSpec struct {
+	Variable string                                            `json:"variable"`
+	Operator DashboardConditionalRenderingVariableSpecOperator `json:"operator"`
+	Value    string                                            `json:"value"`
+}
+
+// NewDashboardConditionalRenderingVariableSpec creates a new DashboardConditionalRenderingVariableSpec object.
+func NewDashboardConditionalRenderingVariableSpec() *DashboardConditionalRenderingVariableSpec {
+	return &DashboardConditionalRenderingVariableSpec{}
+}
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingDataKind struct {
+	Kind string                                `json:"kind"`
+	Spec DashboardConditionalRenderingDataSpec `json:"spec"`
+}
+
+// NewDashboardConditionalRenderingDataKind creates a new DashboardConditionalRenderingDataKind object.
+func NewDashboardConditionalRenderingDataKind() *DashboardConditionalRenderingDataKind {
+	return &DashboardConditionalRenderingDataKind{
+		Kind: "ConditionalRenderingData",
+		Spec: *NewDashboardConditionalRenderingDataSpec(),
+	}
+}
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingDataSpec struct {
+	Value bool `json:"value"`
+}
+
+// NewDashboardConditionalRenderingDataSpec creates a new DashboardConditionalRenderingDataSpec object.
+func NewDashboardConditionalRenderingDataSpec() *DashboardConditionalRenderingDataSpec {
+	return &DashboardConditionalRenderingDataSpec{}
+}
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingTimeIntervalKind struct {
+	Kind string                                        `json:"kind"`
+	Spec DashboardConditionalRenderingTimeIntervalSpec `json:"spec"`
+}
+
+// NewDashboardConditionalRenderingTimeIntervalKind creates a new DashboardConditionalRenderingTimeIntervalKind object.
+func NewDashboardConditionalRenderingTimeIntervalKind() *DashboardConditionalRenderingTimeIntervalKind {
+	return &DashboardConditionalRenderingTimeIntervalKind{
+		Kind: "ConditionalRenderingTimeInterval",
+		Spec: *NewDashboardConditionalRenderingTimeIntervalSpec(),
+	}
+}
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingTimeIntervalSpec struct {
+	Value string `json:"value"`
+}
+
+// NewDashboardConditionalRenderingTimeIntervalSpec creates a new DashboardConditionalRenderingTimeIntervalSpec object.
+func NewDashboardConditionalRenderingTimeIntervalSpec() *DashboardConditionalRenderingTimeIntervalSpec {
+	return &DashboardConditionalRenderingTimeIntervalSpec{}
 }
 
 // +k8s:openapi-gen=true
@@ -888,8 +988,9 @@ func NewDashboardResponsiveGridLayoutItemKind() *DashboardResponsiveGridLayoutIt
 
 // +k8s:openapi-gen=true
 type DashboardResponsiveGridLayoutItemSpec struct {
-	Element DashboardElementReference             `json:"element"`
-	Repeat  *DashboardResponsiveGridRepeatOptions `json:"repeat,omitempty"`
+	Element              DashboardElementReference               `json:"element"`
+	Repeat               *DashboardResponsiveGridRepeatOptions   `json:"repeat,omitempty"`
+	ConditionalRendering *DashboardConditionalRenderingGroupKind `json:"conditionalRendering,omitempty"`
 }
 
 // NewDashboardResponsiveGridLayoutItemSpec creates a new DashboardResponsiveGridLayoutItemSpec object.
@@ -1676,6 +1777,22 @@ const (
 )
 
 // +k8s:openapi-gen=true
+type DashboardConditionalRenderingGroupSpecCondition string
+
+const (
+	DashboardConditionalRenderingGroupSpecConditionAnd DashboardConditionalRenderingGroupSpecCondition = "and"
+	DashboardConditionalRenderingGroupSpecConditionOr  DashboardConditionalRenderingGroupSpecCondition = "or"
+)
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingVariableSpecOperator string
+
+const (
+	DashboardConditionalRenderingVariableSpecOperatorEquals    DashboardConditionalRenderingVariableSpecOperator = "equals"
+	DashboardConditionalRenderingVariableSpecOperatorNotEquals DashboardConditionalRenderingVariableSpecOperator = "notEquals"
+)
+
+// +k8s:openapi-gen=true
 type DashboardTimeSettingsSpecWeekStart string
 
 const (
@@ -1962,6 +2079,80 @@ func (resource *DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKin
 		}
 
 		resource.TabsLayoutKind = &dashboardTabsLayoutKind
+		return nil
+	}
+
+	return fmt.Errorf("could not unmarshal resource with `kind = %v`", discriminator)
+}
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind struct {
+	ConditionalRenderingVariableKind     *DashboardConditionalRenderingVariableKind     `json:"ConditionalRenderingVariableKind,omitempty"`
+	ConditionalRenderingDataKind         *DashboardConditionalRenderingDataKind         `json:"ConditionalRenderingDataKind,omitempty"`
+	ConditionalRenderingTimeIntervalKind *DashboardConditionalRenderingTimeIntervalKind `json:"ConditionalRenderingTimeIntervalKind,omitempty"`
+}
+
+// NewDashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind creates a new DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind object.
+func NewDashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind() *DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind {
+	return &DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind` as JSON.
+func (resource DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind) MarshalJSON() ([]byte, error) {
+	if resource.ConditionalRenderingVariableKind != nil {
+		return json.Marshal(resource.ConditionalRenderingVariableKind)
+	}
+	if resource.ConditionalRenderingDataKind != nil {
+		return json.Marshal(resource.ConditionalRenderingDataKind)
+	}
+	if resource.ConditionalRenderingTimeIntervalKind != nil {
+		return json.Marshal(resource.ConditionalRenderingTimeIntervalKind)
+	}
+
+	return nil, fmt.Errorf("no value for disjunction of refs")
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind` from JSON.
+func (resource *DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
+	parsedAsMap := make(map[string]interface{})
+	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
+		return err
+	}
+
+	discriminator, found := parsedAsMap["kind"]
+	if !found {
+		return errors.New("discriminator field 'kind' not found in payload")
+	}
+
+	switch discriminator {
+	case "ConditionalRenderingData":
+		var dashboardConditionalRenderingDataKind DashboardConditionalRenderingDataKind
+		if err := json.Unmarshal(raw, &dashboardConditionalRenderingDataKind); err != nil {
+			return err
+		}
+
+		resource.ConditionalRenderingDataKind = &dashboardConditionalRenderingDataKind
+		return nil
+	case "ConditionalRenderingTimeInterval":
+		var dashboardConditionalRenderingTimeIntervalKind DashboardConditionalRenderingTimeIntervalKind
+		if err := json.Unmarshal(raw, &dashboardConditionalRenderingTimeIntervalKind); err != nil {
+			return err
+		}
+
+		resource.ConditionalRenderingTimeIntervalKind = &dashboardConditionalRenderingTimeIntervalKind
+		return nil
+	case "ConditionalRenderingVariable":
+		var dashboardConditionalRenderingVariableKind DashboardConditionalRenderingVariableKind
+		if err := json.Unmarshal(raw, &dashboardConditionalRenderingVariableKind); err != nil {
+			return err
+		}
+
+		resource.ConditionalRenderingVariableKind = &dashboardConditionalRenderingVariableKind
 		return nil
 	}
 

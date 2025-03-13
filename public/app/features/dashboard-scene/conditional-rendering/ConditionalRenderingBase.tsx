@@ -4,6 +4,7 @@ import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState } fr
 
 import { ConditionalRendering } from './ConditionalRendering';
 import { ConditionalRenderingGroup } from './ConditionalRenderingGroup';
+import { ConditionalRenderingKindTypes } from './serializers';
 import { ConditionValues } from './shared';
 
 export interface ConditionalRenderingBaseState<V = ConditionValues> extends SceneObjectState {
@@ -33,6 +34,8 @@ export abstract class ConditionalRenderingBase<
   }
 
   public abstract readonly title: string;
+
+  public abstract serialize(): ConditionalRenderingKindTypes;
 
   public abstract evaluate(): boolean;
 
