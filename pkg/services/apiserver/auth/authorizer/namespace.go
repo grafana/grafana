@@ -40,6 +40,11 @@ func (auth namespaceAuthorizer) Authorize(ctx context.Context, a authorizer.Attr
 		return authorizer.DecisionDeny, "invalid namespace", err
 	}
 
+	// If we call a cluster resource we delegate to the next authorizer
+	if ns.Value == "" {
+		return authorizer.DecisionNoOpinion, "", nil
+	}
+
 	if ns.OrgID != ident.GetOrgID() {
 		return authorizer.DecisionDeny, "invalid org", nil
 	}
