@@ -23,6 +23,7 @@ type UserAuth struct {
 	OAuthIdToken      string
 	OAuthTokenType    string
 	OAuthExpiry       time.Time
+	UserUniqueId      string
 }
 
 type ExternalUserInfo struct {
@@ -44,6 +45,7 @@ type ExternalUserInfo struct {
 type SAMLSession struct {
 	NameID       string
 	SessionIndex string
+	UserUniqueID string
 }
 
 func (e *ExternalUserInfo) String() string {
@@ -72,10 +74,11 @@ type RequestURIKey struct{}
 // COMMANDS
 
 type SetAuthInfoCommand struct {
-	AuthModule string
-	AuthId     string
-	UserId     int64
-	OAuthToken *oauth2.Token
+	AuthModule   string
+	AuthId       string
+	UserId       int64
+	OAuthToken   *oauth2.Token
+	UserUniqueId string
 }
 
 type UpdateAuthInfoCommand struct {

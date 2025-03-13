@@ -46,4 +46,8 @@ func addUserAuthMigrations(mg *Migrator) {
 	mg.AddMigration("Add OAuth ID token to user_auth", NewAddColumnMigration(userAuthV1, &Column{
 		Name: "o_auth_id_token", Type: DB_Text, Nullable: true,
 	}))
+
+	mg.AddMigration("Add user_unique_id to user_auth", NewAddColumnMigration(userAuthV1, &Column{
+		Name: "user_unique_id", Type: DB_Text, Nullable: true,
+	}))
 }
