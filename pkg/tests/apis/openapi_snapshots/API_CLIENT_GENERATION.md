@@ -105,7 +105,7 @@ There are some use cases where the hook will not work, and that is a clue to see
 
 TODO: Add examples of `enhanceEndpoints` usage
 
-### 7. Add information to the store
+### 7. Add reducers and middleware to the redux store
 
 The last, but not least, step to be done is adding the middleware and reducers to the store. You have available the oficial documentation in [RTK Query](https://redux-toolkit.js.org/tutorials/rtk-query#add-the-service-to-your-store)
 
