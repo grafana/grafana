@@ -37,7 +37,7 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
   const hasLoadedAggregates = useRef(false);
 
   useEffect(() => {
-    if (!hasLoadedAggregates.current && builderQuery?.reduce?.expressions?.length) {
+    if (!hasLoadedAggregates.current && builderQuery?.reduce?.expressions?.length && aggregates.length === 0) {
       const parsedAggregates = builderQuery.reduce.expressions.map((agg) => ({
         property: agg.property ?? { type: BuilderQueryEditorPropertyType.String, name: '' },
         reduce: agg.reduce ?? { name: '', type: BuilderQueryEditorPropertyType.Function },
@@ -47,7 +47,7 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
       setAggregates(parsedAggregates);
       hasLoadedAggregates.current = true;
     }
-  }, [builderQuery?.reduce?.expressions]);
+  }, [builderQuery?.reduce?.expressions, aggregates]);
 
   const availableColumns: Array<SelectableValue<string>> = [];
   const columns = builderQuery.columns?.columns ?? [];

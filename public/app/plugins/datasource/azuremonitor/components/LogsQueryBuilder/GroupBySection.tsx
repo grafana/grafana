@@ -41,11 +41,11 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
   }
 
   useEffect(() => {
-    if (!hasLoadedGroupBy.current && builderQuery?.groupBy?.expressions) {
+    if (!hasLoadedGroupBy.current && builderQuery?.groupBy?.expressions && groupBys.length === 0) {
       setGroupBys(builderQuery.groupBy.expressions);
       hasLoadedGroupBy.current = true;
     }
-  }, [builderQuery?.groupBy?.expressions]);
+  }, [builderQuery?.groupBy?.expressions, groupBys]);
 
   const availableColumns: Array<SelectableValue<string>> = [];
   const columns = builderQuery.columns?.columns ?? [];

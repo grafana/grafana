@@ -103,12 +103,8 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
       .filter((f) => f.column && f.operator && f.value.trim() !== '')
       .map((f) => {
         let value = removeExtraQuotes(f.value.trim());
-
-        if (!value.startsWith("'") || !value.endsWith("'")) {
-          value = `'${value.replace(/'/g, "\\'")}'`;
-        }
-
-        return `${f.column} ${f.operator} ${value}`;
+  
+        return `${f.column} ${f.operator} '${value}'`;
       })
       .join(' and ');
   };
