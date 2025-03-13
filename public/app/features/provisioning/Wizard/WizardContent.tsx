@@ -32,7 +32,7 @@ export function WizardContent({
   getNextButtonText,
   onOptionSelect,
   stepSuccess,
-  settingsData, // from before adding things
+  settingsData,
 }: {
   activeStep: WizardStep;
   completedSteps: WizardStep[];
@@ -65,7 +65,7 @@ export function WizardContent({
     setStepError(error);
   }, []);
 
-  // Another different repository is marked with instance target
+  // A different repository is marked with instance target -- nothing will succede
   if (
     settingsQuery.data &&
     settingsQuery.data.items.some((item) => item.target === 'instance' && item.name !== repoName)
@@ -74,6 +74,9 @@ export function WizardContent({
       type: AppEvents.alertError.name,
       payload: ['Instance repository already exists'],
     });
+    if (repoName) {
+      console.warn('should we delete the pending repo?', repoName);
+    }
     navigate(PROVISIONING_URL);
     return;
   }
