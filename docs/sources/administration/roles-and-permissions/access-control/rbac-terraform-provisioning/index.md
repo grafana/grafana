@@ -93,7 +93,6 @@ provider "grafana" {
 }
 ```
 
-
 ## Provision basic roles
 
 The following example shows how to assign basic roles to users, teams, and service accounts. Basic roles are predefined in Grafana and provide a set of permissions for common use cases.
@@ -134,8 +133,6 @@ resource "grafana_role_assignment" "editor_role_assignment" {
   role_uid = "basic_editor"
   users    = [grafana_user.editor_user.id]
 }
-
-
 
 # Assign Admin role to a service account
 resource "grafana_role_assignment" "admin_role_assignment" {
