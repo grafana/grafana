@@ -58,10 +58,25 @@ export function getState(
       return path.endsWith('.json') || path.endsWith('.yaml') ? count + 1 : count;
     }, 0) ?? 0;
 
-  const resourceCount = stats?.instance?.reduce((sum, stat) => sum + stat.count, 0) ?? 0;
+  let counts: string[] = [];
+  let resourceCount = 0;
+  stats?.instance?.forEach((stat) => {
+    switch (stat.group) {
+      case 'folders': // fallthrough
+      case 'folder.grafana.app':
+        resourceCount += stat.count;
+        counts.push(`${stat.count} ${stat.count > 1 ? 'folders' : 'folder'}`);
+        break;
+      case 'dashboard.grafana.app':
+        resourceCount += stat.count;
+        counts.push(`${stat.count} ${stat.count > 1 ? 'dashboards' : 'dashboard'}`);
+        break;
+    }
+  });
 
   const state: SystemState = {
     resourceCount,
+    resourceCountString: counts.join(','),
     fileCount,
     actions: [],
     disabled: [],

@@ -1,3 +1,5 @@
+import { KeyValue } from '@grafana/data';
+
 import { SyncOptions } from '../api';
 import { RepositoryFormData } from '../types';
 
@@ -32,6 +34,8 @@ export interface ModeOption {
 
 export interface SystemState {
   resourceCount: number;
+  resourceCountString: string;
+
   fileCount: number;
   actions: ModeOption[];
   disabled: ModeOption[];

@@ -99,14 +99,16 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
                 Grafana
               </Text>
               <Stack direction="row" gap={2}>
-                <Text variant="h3">{state.resourceCount} resources</Text>
+                <Text variant="h3">
+                  <Text variant="h3">{state.fileCount > 0 ? state.resourceCountString : 'Empty'}</Text>
+                </Text>
               </Stack>
             </Stack>
             <Stack direction="column" gap={1} alignItems="center">
               <Text variant="h4" color="secondary">
                 Repository
               </Text>
-              <Text variant="h3">{state.fileCount} files</Text>
+              <Text variant="h3">{state.fileCount > 0 ? `${state.fileCount} files` : 'Empty'}</Text>
             </Stack>
           </Stack>
         </Box>
