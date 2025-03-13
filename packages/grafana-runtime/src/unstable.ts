@@ -9,5 +9,4 @@
  * and be subject to the standard policies
  */
 
-// Dummy export to make it a valid module. Remove when we have real exports.
-export const unstable = {};
+export { useTranslate as useT, setUseTranslateHook } from './utils/i18n';
