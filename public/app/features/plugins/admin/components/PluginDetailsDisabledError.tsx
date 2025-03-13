@@ -5,7 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Alert, Stack } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-import { getLatestCompatibleVersion, isNonAngularVersion } from '../helpers';
+import { getLatestCompatibleVersion, isDisabledAngularPlugin, isNonAngularVersion } from '../helpers';
 import { CatalogPlugin } from '../types';
 
 type Props = {
@@ -24,11 +24,13 @@ export function PluginDetailsDisabledError({ className, plugin }: Props): ReactE
   return (
     <Alert severity="error" title={title} className={className} data-testid={selectors.pages.PluginPage.disabledInfo}>
       {renderDescriptionFromError(plugin.error, plugin.id, isLatestCompatibleNotAngular)}
-      <p>
-        <Trans i18nKey="plugins.details.disabled-error.contact-server-admin">
-          Please contact your server administrator to get this resolved.
-        </Trans>
-      </p>
+      {!isDisabledAngularPlugin(plugin) && (
+        <p>
+          <Trans i18nKey="plugins.details.disabled-error.contact-server-admin">
+            Please contact your server administrator to get this resolved.
+          </Trans>
+        </p>
+      )}
       <Stack direction="column" gap={1}>
         <a
           href="https://grafana.com/docs/grafana/latest/administration/cli/#plugins-commands"

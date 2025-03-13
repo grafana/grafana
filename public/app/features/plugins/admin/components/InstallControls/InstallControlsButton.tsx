@@ -119,7 +119,10 @@ export function InstallControlsButton({
     }
   };
 
-  let disableUninstall = shouldDisableUninstall(isUninstalling, plugin);
+  let disableUninstall = shouldDisableUninstall(isUninstalling, plugin) ?? false;
+  const uninstallTooltip = isDisabledAngularPlugin(plugin)
+    ? 'To uninstall this plugin, upgrade to a compatible version first, then uninstall it.'
+    : '';
 
   let uninstallTitle = '';
   if (plugin.isPreinstalled.found) {
@@ -138,7 +141,13 @@ export function InstallControlsButton({
         onConfirm={onUninstall}
         onDismiss={hideConfirmModal}
       />
-      <Button variant="destructive" disabled={disableUninstall} onClick={showConfirmModal} title={uninstallTitle}>
+      <Button
+        variant="destructive"
+        disabled={disableUninstall}
+        onClick={showConfirmModal}
+        title={uninstallTitle}
+        tooltip={uninstallTooltip}
+      >
         {uninstallBtnText}
       </Button>
     </>

@@ -49,7 +49,7 @@ describe('PluginActions', () => {
 
       expect(screen.getByRole('button', { name: /update/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /uninstall/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /uninstall/i })).toBeEnabled();
+      expect(screen.getByRole('button', { name: /uninstall/i })).toHaveAttribute('aria-disabled', 'false');
     });
 
     it('should not render install controls for core plugins', () => {
@@ -80,7 +80,7 @@ describe('PluginActions', () => {
       expect(screen.queryByRole('button', { name: /install|uninstall|update/i })).not.toBeInTheDocument();
     });
 
-    it('should render install controls when there is an installed disabled angular plugin with a non-angular version available', () => {
+    it('should render install controls when there is an installed disabled angular plugin with a non-angular version available', async () => {
       jest.spyOn(helpers, 'getLatestCompatibleVersion').mockReturnValue(createVersion({ angularDetected: false }));
       const disabledAngularPlugin = createPluginStub({
         isInstalled: true,
@@ -91,7 +91,7 @@ describe('PluginActions', () => {
 
       expect(screen.getByRole('button', { name: /update/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /uninstall/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /uninstall/i })).toBeDisabled();
+      expect(screen.getByRole('button', { name: /uninstall/i })).toHaveAttribute('aria-disabled', 'true');
     });
 
     it('should not render install controls when there is an installed disabled angular plugin with no non-angular version available', () => {
