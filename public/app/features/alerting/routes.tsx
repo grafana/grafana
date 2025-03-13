@@ -1,3 +1,5 @@
+import { Navigate } from 'react-router-dom-v5-compat';
+
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { config } from 'app/core/config';
 import { GrafanaRouteComponent, RouteDescriptor } from 'app/core/navigation/types';
@@ -212,9 +214,13 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     {
       path: '/alerting/import-datasource-managed-rules',
       roles: () => ['Admin'],
-      component: importAlertingComponent(
-        () => import(/* webpackChunkName: "AlertingImportFromDSRules"*/ 'app/features/alerting/unified/components/import-to-gma/ImportFromDSRules')
-      ),
+      component:
+        config.featureToggles.alertingMigrationUI
+          ? SafeDynamicImport(
+            () =>
+              import(/* webpackChunkName: "AlertingImportFromDSRules"*/ 'app/features/alerting/unified/components/import-to-gma/ImportFromDSRules')
+          )
+          : () => <Navigate replace to="/alerting/list" />,
     },
     {
       path: '/alerting/new/:type?',
