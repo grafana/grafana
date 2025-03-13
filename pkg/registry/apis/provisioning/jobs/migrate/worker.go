@@ -219,8 +219,11 @@ func (w *MigrationWorker) migrateFromUnifiedStorage(ctx context.Context, repo re
 			},
 		},
 	}, progress); err != nil {
-		return err
+		return fmt.Errorf("export resources: %w", err)
 	}
+
+	// Reset the results after the export as pull will operate on the same resources
+	progress.ResetResults()
 
 	progress.SetMessage(ctx, "pulling resources")
 	err := w.syncWorker.Process(ctx, repo, provisioning.Job{
@@ -231,11 +234,11 @@ func (w *MigrationWorker) migrateFromUnifiedStorage(ctx context.Context, repo re
 		},
 	}, progress)
 	if err != nil {
-		return err
+		return fmt.Errorf("pull resources: %w", err)
 	}
 	dynamicClient, _, err := w.clients.New(repo.Config().Namespace)
 	if err != nil {
-		return fmt.Errorf("error getting client: %w", err)
+		return fmt.Errorf("getting client: %w", err)
 	}
 
 	progress.SetMessage(ctx, "removing unprovisioned folders")
