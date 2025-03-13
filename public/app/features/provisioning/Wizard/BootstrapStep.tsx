@@ -26,7 +26,7 @@ import { WizardFormData } from './types';
 interface Props {
   onOptionSelect: (requiresMigration: boolean) => void;
   onStepUpdate: (status: StepStatus, error?: string) => void;
-  settingsData: RepositoryViewList | undefined;
+  settingsData?: RepositoryViewList;
   repoName: string;
 }
 
