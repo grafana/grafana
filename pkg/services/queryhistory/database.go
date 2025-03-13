@@ -2,7 +2,6 @@ package queryhistory
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -401,7 +400,7 @@ func (s QueryHistoryService) enforceQueryHistoryRowLimit(ctx context.Context, li
 				sqlLimit = 10000
 			}
 
-			res, err := session.Exec(sql, strconv.FormatInt(sqlLimit, 10))
+			res, err := session.Exec(sql, sqlLimit)
 			if err != nil {
 				return err
 			}
