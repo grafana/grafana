@@ -20,7 +20,9 @@ export function RepositoryActions({
   onMigrateClick,
 }: RepositoryActionsProps) {
   const name = repository.metadata?.name ?? '';
-  const remoteURL = repository.spec?.github?.url ?? '';
+  const remoteURL = repository.spec?.github?.branch
+    ? `${repository.spec?.github?.url}/tree/${repository.spec?.github?.branch}`
+    : (repository.spec?.github?.url ?? '');
 
   return (
     <Stack>
