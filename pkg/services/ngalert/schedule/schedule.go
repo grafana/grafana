@@ -427,7 +427,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 	}
 
 	evaluate := func(ctx context.Context, f fingerprint, attempt int64, e *evaluation, span trace.Span, retry bool) error {
-		logger := logger.New("version", e.rule.Version, "fingerprint", f, "attempt", attempt, "eval_time", e.scheduledAt).FromContext(ctx) // LOGZ.IO GRAFANA CHANGE :: DEV-47164: Add observability to alerting
+		logger := logger.New("version", e.rule.Version, "fingerprint", f, "attempt", attempt, "eval_time", e.scheduledAt, "requestId", e.logzHeaders.Get(models.LogzioRequestIdHeaderName)).FromContext(ctx) // LOGZ.IO GRAFANA CHANGE :: DEV-47164: Add observability to alerting , DEV-46691 - Add request ID to logs
 		start := sch.clock.Now()
 
 		// LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
@@ -517,7 +517,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		))
 		if len(alerts.PostableAlerts) > 0 {
 			logger.Info("Sending postable alerts", "alerts", len(alerts.PostableAlerts)) // LOGZ.IO GRAFANA CHANGE :: DEV-47164: Add observability to alerting
-			sch.alertsSender.Send(ctx, key, alerts)
+			sch.alertsSender.Send(ctxWithLogzHeaders, key, alerts)
 		}
 		sendDuration.Observe(sch.clock.Now().Sub(start).Seconds())
 

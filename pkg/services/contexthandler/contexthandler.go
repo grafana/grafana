@@ -4,6 +4,7 @@ package contexthandler
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/models" // LOGZ.IO GRAFANA CHANGE :: DEV-46691 - Add request ID to logs
 	"net/http"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -42,6 +43,7 @@ type ContextHandler struct {
 }
 
 type reqContextKey = ctxkey.Key
+type RequestIdKey struct{} // LOGZ.IO GRAFANA CHANGE :: DEV-46691 - Add request ID to logs
 
 // FromContext returns the ReqContext value stored in a context.Context, if any.
 func FromContext(c context.Context) *contextmodel.ReqContext {
@@ -100,6 +102,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 
 		// inject ReqContext in the context
 		ctx = context.WithValue(ctx, reqContextKey{}, reqContext)
+		ctx = context.WithValue(ctx, RequestIdKey{}, reqContext.Req.Header.Get(models.LogzioRequestIdHeaderName)) // LOGZ.IO GRAFANA CHANGE :: DEV-46691 - Add request ID to logs
 		// store list of possible auth header in context
 		ctx = WithAuthHTTPHeaders(ctx, h.Cfg)
 		// Set the context for the http.Request.Context

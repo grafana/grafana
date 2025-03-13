@@ -7,6 +7,9 @@ import (
 	"net/url"
 )
 
+const LogzioRequestIdHeaderName string = "x-request-id"
+const LogzioInternalRequestIdHeaderName string = "logzIoRequestId"
+
 type LogzIoHeaders struct {
 	RequestHeaders http.Header
 }
@@ -17,6 +20,7 @@ var logzioHeadersWhitelist = []string{
 	"user-context",
 	"X-Logz-Query-Context",
 	"Query-Source",
+	LogzioRequestIdHeaderName,
 }
 
 func WithLogzHeaders(ctx context.Context, requestHeaders http.Header) context.Context {
@@ -40,6 +44,9 @@ func (logzioHeaders *LogzIoHeaders) GetDatasourceQueryHeaders(grafanaGeneratedHe
 					datasourceRequestHeaders.Set("User-Context", unescapedHeader)
 				}
 			} else {
+				if whitelistedHeader == LogzioRequestIdHeaderName {
+					datasourceRequestHeaders.Set(LogzioInternalRequestIdHeaderName, requestHeader)
+				}
 				datasourceRequestHeaders.Set(whitelistedHeader, requestHeader)
 			}
 		}

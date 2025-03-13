@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/grafana/grafana/pkg/infra/log"
+	mdl "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"io"
@@ -41,8 +42,16 @@ func (d *LogzioAlertsRouter) Send(ctx context.Context, key models.AlertRuleKey, 
 		logger.Info("No alerts to notify about")
 		return
 	}
-	// TODO: add relevant headers if needed? or remove if not
+
+	requestId := ""
 	headers := make(map[string]string)
+	logzIoHeaders, ok := mdl.LogzIoHeadersFromContext(ctx)
+	if ok {
+		requestId = logzIoHeaders.RequestHeaders.Get(mdl.LogzioRequestIdHeaderName)
+	}
+	if requestId != "" {
+		headers[mdl.LogzioInternalRequestIdHeaderName] = requestId
+	}
 	body := map[string]interface{}{
 		"alertRuleKey": key,
 		"alerts":       alerts,
