@@ -4,7 +4,8 @@ import { getScrollbarWidth } from '../../../utils/scrollbar';
 export const COLUMN = {
   DEFAULT_WIDTH: 150,
   EXPANDER_WIDTH: 50,
-  MIN_WIDTH: 36,
+  // This will need to eventually change to 36
+  MIN_WIDTH: 150,
 };
 
 /** Table layout and display constants */

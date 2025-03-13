@@ -199,7 +199,7 @@ export function getColumnWidth(field: Field, fieldConfig: TableNGProps['fieldCon
     ?.find(({ matcher: { id, options } }) => id === 'byName' && options === key)
     ?.properties?.find(({ id }) => id === 'width')?.value;
 
-  return overrideWidth ?? field.config?.custom?.width ?? fieldConfig?.defaults?.custom?.width ?? COLUMN.DEFAULT_WIDTH;
+  return overrideWidth ?? field.config?.custom?.width ?? fieldConfig?.defaults?.custom?.width ?? 'auto';
 }
 
 export function getTextAlign(field?: Field): Property.JustifyContent {
