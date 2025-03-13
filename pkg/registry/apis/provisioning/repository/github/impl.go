@@ -105,12 +105,13 @@ func (r *githubClient) GetTree(ctx context.Context, owner, repository, basePath,
 
 	subPaths := strings.Split(basePath, "/")
 	subPaths = keepNonEmpty(subPaths)
+	currentRef := ref
 
 	for {
-		// If subPaths is empty, we can read recursively. Otherwise, always read only the direct children.
+		// If subPaths is empty, we can read recursively, as we're reading the tree from the "base" of the repository. Otherwise, always read only the direct children.
 		recursive := recursive && len(subPaths) == 0
 
-		tree, _, err = r.gh.Git.GetTree(ctx, owner, repository, ref, recursive)
+		tree, _, err = r.gh.Git.GetTree(ctx, owner, repository, currentRef, recursive)
 		if err != nil {
 			var ghErr *github.ErrorResponse
 			if !errors.As(err, &ghErr) {
@@ -120,29 +121,36 @@ func (r *githubClient) GetTree(ctx context.Context, owner, repository, basePath,
 				return nil, false, ErrServiceUnavailable
 			}
 			if ghErr.Response.StatusCode == http.StatusNotFound {
+				if currentRef != ref {
+					// We're operating with a subpath which doesn't exist yet.
+					// Pretend as if there is simply no files.
+					return nil, false, nil
+				}
+				// currentRef == ref
+				// This indicates the repository or commitish reference doesn't exist. This should always return an error.
 				return nil, false, ErrResourceNotFound
 			}
 			return nil, false, err
 		}
 
 		// Prep for next iteration.
-		if len(subPaths) != 0 {
-			// the ref must be equal the SHA of the entry corresponding to subPaths[0]
-			ref = ""
-			for _, e := range tree.Entries {
-				if e.GetPath() == subPaths[0] {
-					ref = e.GetSHA()
-					break
-				}
-			}
-			subPaths = subPaths[1:]
-			if ref == "" {
-				// We couldn't find the folder in the tree...
-				return nil, false, ErrResourceNotFound
-			}
-		} else {
-			// We've got the tree we want.
+		if len(subPaths) == 0 {
+			// We're done: we've discovered the tree we want.
 			break
+		}
+
+		// the ref must be equal the SHA of the entry corresponding to subPaths[0]
+		currentRef = ""
+		for _, e := range tree.Entries {
+			if e.GetPath() == subPaths[0] {
+				currentRef = e.GetSHA()
+				break
+			}
+		}
+		subPaths = subPaths[1:]
+		if currentRef == "" {
+			// We couldn't find the folder in the tree...
+			return nil, false, nil
 		}
 	}
 
