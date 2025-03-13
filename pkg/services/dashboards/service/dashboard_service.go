@@ -249,7 +249,7 @@ func (dr *DashboardServiceImpl) GetProvisionedDashboardData(ctx context.Context,
 						// This can be caused by the indexer lag, so we wait briefly then retry one more time.
 						var statusErr *apierrors.StatusError
 						if errors.As(lastErr, &statusErr) {
-							if statusErr.Status().Reason == v1.StatusReasonNotFound {
+							if statusErr.Status().Reason == v1.StatusReasonNotFound && attempt < maxRetries {
 								time.Sleep(1 * time.Second)
 								continue
 							}
