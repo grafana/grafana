@@ -573,6 +573,117 @@ func TestRouteGetRuleHistoryByUID(t *testing.T) {
 	})
 }
 
+func TestRouteGetRuleGroups(t *testing.T) {
+	gen := models.RuleGen
+	t.Run("fine-grained access is enabled", func(t *testing.T) {
+		t.Run("should check access to rule group", func(t *testing.T) {
+			orgID := rand.Int63()
+			ruleStore := fakes.NewRuleStore(t)
+			folder1 := randFolder()
+			folder2 := randFolder()
+			ruleStore.Folders[orgID] = []*folder.Folder{folder1, folder2}
+
+			group1Key := models.GenerateGroupKey(orgID)
+			group1Key.NamespaceUID = folder1.UID
+			group2Key := models.GenerateGroupKey(orgID)
+			group2Key.NamespaceUID = folder2.UID
+
+			group1 := gen.With(gen.WithGroupKey(group1Key)).GenerateManyRef(2, 6)
+			group2 := gen.With(gen.WithGroupKey(group2Key)).GenerateManyRef(2, 6)
+			ruleStore.PutRule(context.Background(), append(group1, group2...)...)
+
+			t.Run("and do not return group if user does not have access to any of its rules", func(t *testing.T) {
+				permissions := createPermissionsForRules(group1, orgID)
+				request := createRequestContextWithPerms(orgID, permissions, nil)
+
+				response := createService(ruleStore).RouteGetRuleGroups(request)
+				require.Equal(t, http.StatusOK, response.Status())
+
+				result := &apimodels.NamespaceListResponse{}
+				require.NoError(t, json.Unmarshal(response.Body(), result))
+				require.NotNil(t, result)
+
+				require.Len(t, result.RuleGroups, 1)
+				require.Equal(t, group1Key.RuleGroup, result.RuleGroups[0].Name)
+				require.Equal(t, folder1.Fullpath, result.RuleGroups[0].File)
+			})
+		})
+	})
+
+	t.Run("pagination and limit", func(t *testing.T) {
+		orgID := rand.Int63()
+		folder := randFolder()
+		ruleStore := fakes.NewRuleStore(t)
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+
+		expectedGroups := gen.With(gen.WithOrgID(orgID), gen.WithNamespaceUID(folder.UID), gen.WithGroupPrefix("test")).GenerateManyRef(100)
+		ruleStore.PutRule(context.Background(), expectedGroups...)
+
+		t.Run("should return all by default", func(t *testing.T) {
+			perms := createPermissionsForRules(expectedGroups, orgID)
+			req := createRequestContextWithPerms(orgID, perms, nil)
+			response := createService(ruleStore).RouteGetRuleGroups(req)
+
+			require.Equal(t, http.StatusOK, response.Status())
+			result := &apimodels.NamespaceListResponse{}
+			require.NoError(t, json.Unmarshal(response.Body(), result))
+			require.NotNil(t, result)
+
+			require.Len(t, result.RuleGroups, len(expectedGroups))
+		})
+		t.Run("should limit the number of groups returned when `group_limit` specified", func(t *testing.T) {
+			perms := createPermissionsForRules(expectedGroups, orgID)
+			req := createRequestContextWithPerms(orgID, perms, nil)
+			req.Req.Form.Set("group_limit", "3")
+			response := createService(ruleStore).RouteGetRuleGroups(req)
+
+			require.Equal(t, http.StatusOK, response.Status())
+			result := &apimodels.NamespaceListResponse{}
+			require.NoError(t, json.Unmarshal(response.Body(), result))
+			require.NotNil(t, result)
+
+			require.Len(t, result.RuleGroups, 3)
+			require.NotNil(t, result.NextToken)
+			require.NotEmpty(t, result.NextToken)
+		})
+		t.Run("should be able to follow each of the pages using `group_next_token`", func(t *testing.T) {
+			perms := createPermissionsForRules(expectedGroups, orgID)
+			req1 := createRequestContextWithPerms(orgID, perms, nil)
+			req1.Req.Form.Set("group_limit", "50")
+			response1 := createService(ruleStore).RouteGetRuleGroups(req1)
+
+			require.Equal(t, http.StatusOK, response1.Status())
+			result1 := &apimodels.NamespaceListResponse{}
+			require.NoError(t, json.Unmarshal(response1.Body(), result1))
+			require.NotNil(t, result1)
+
+			require.Len(t, result1.RuleGroups, 50)
+			require.NotNil(t, result1.NextToken)
+			require.NotEmpty(t, result1.NextToken)
+
+			req2 := createRequestContextWithPerms(orgID, perms, nil)
+			req2.Req.Form.Set("group_limit", "50")
+			req2.Req.Form.Set("group_next_token", result1.NextToken)
+			response2 := createService(ruleStore).RouteGetRuleGroups(req2)
+
+			require.Equal(t, http.StatusOK, response2.Status())
+			result2 := &apimodels.NamespaceListResponse{}
+			require.NoError(t, json.Unmarshal(response2.Body(), result2))
+			require.NotNil(t, result2)
+
+			require.Len(t, result2.RuleGroups, 50)
+			require.Empty(t, result2.NextToken)
+
+			for _, group := range result1.RuleGroups {
+				require.NotContains(t, result2.RuleGroups, group)
+			}
+			for _, group := range result2.RuleGroups {
+				require.NotContains(t, result1.RuleGroups, group)
+			}
+		})
+	})
+}
+
 func TestRouteGetRulesConfig(t *testing.T) {
 	gen := models.RuleGen
 	t.Run("fine-grained access is enabled", func(t *testing.T) {

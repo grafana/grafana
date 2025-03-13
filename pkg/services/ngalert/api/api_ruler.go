@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"net/http"
@@ -20,6 +21,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	authz "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -257,6 +259,63 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 	}
 
 	return response.JSON(http.StatusAccepted, result)
+}
+
+// return list of rule groups paginated
+func (srv RulerSrv) RouteGetRuleGroups(c *contextmodel.ReqContext) response.Response {
+	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.SignedInUser.GetOrgID(), c.SignedInUser)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")
+	}
+
+	result := apimodels.NamespaceListResponse{
+		RuleGroups: make([]apimodels.RuleGroupSummary, 0),
+	}
+
+	if len(namespaceMap) == 0 {
+		srv.log.Debug("User has no access to any namespaces")
+		return response.JSON(http.StatusOK, result)
+	}
+
+	const defaultPageSize = -1
+	var namespaceListParams apimodels.NamespaceListParams
+	namespaceListParams.NextToken = c.Query("group_next_token")
+	if namespaceListParams.NextToken != "" {
+		// make sure it base64 decodes
+		if _, err := base64.URLEncoding.DecodeString(namespaceListParams.NextToken); err != nil {
+			return ErrResp(http.StatusBadRequest, err, "invalid next_token")
+		}
+	}
+	namespaceListParams.PageSize = c.QueryIntWithDefault("group_limit", defaultPageSize)
+
+	groups, err := srv.getAuthorizedRuleGroups(c.Req.Context(), namespaceMap, c.SignedInUser)
+	if err != nil {
+		return errorToResponse(err)
+	}
+
+	for _, group := range groups {
+		if namespaceListParams.NextToken != "" {
+			// skip until we find the next group
+			if !TokenGreaterThanOrEqual(GetRuleGroupNextToken(group.FolderFullpath, group.RuleGroup), namespaceListParams.NextToken) {
+				continue
+			}
+			namespaceListParams.NextToken = ""
+		}
+		if len(result.RuleGroups) == namespaceListParams.PageSize {
+			// hash the last group name and namespace uid for the next token
+			result.NextToken = GetRuleGroupNextToken(group.FolderFullpath, group.RuleGroup)
+			break
+		}
+
+		ruleGroupSummary := apimodels.RuleGroupSummary{
+			Name:      group.RuleGroup,
+			File:      group.FolderFullpath,
+			FolderUID: group.NamespaceUID,
+		}
+
+		result.RuleGroups = append(result.RuleGroups, ruleGroupSummary)
+	}
+	return response.JSON(http.StatusOK, result)
 }
 
 // RouteGetRulesConfig returns all alert rules that are available to the current user
@@ -747,6 +806,64 @@ type authorizedRuleGroupQuery struct {
 	NamespaceUIDs []string
 	DashboardUID  string
 	PanelID       int64
+}
+
+// returns a sorted list of authorized rule groups
+func (srv RulerSrv) getAuthorizedRuleGroups(ctx context.Context, namespaceMap map[string]*folder.Folder, user identity.Requester) ([]ngmodels.AlertRuleGroupKeyWithFolderFullpath, error) {
+	namespaceUIDs := make([]string, len(namespaceMap))
+	i := 0
+	for ns := range namespaceMap {
+		namespaceUIDs[i] = ns
+		i++
+	}
+
+	query := ngmodels.ListAlertRulesQuery{
+		OrgID:         user.GetOrgID(),
+		NamespaceUIDs: namespaceUIDs,
+	}
+	rules, err := srv.store.ListAlertRules(ctx, &query)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]ngmodels.AlertRuleGroupKeyWithFolderFullpath, 0)
+	visitedGroups := make(map[ngmodels.AlertRuleGroupKey]struct{})
+	for _, rule := range rules {
+		ruleGroup := rule.GetGroupKey()
+		hasPermission, err := srv.authz.HasAccessToRuleGroup(ctx, user, ngmodels.RulesGroup{rule})
+		if err != nil {
+			return nil, err
+		}
+		_, visited := visitedGroups[ruleGroup]
+		if hasPermission && !visited {
+			folder, ok := namespaceMap[ruleGroup.NamespaceUID]
+			if !ok {
+				id, _ := user.GetInternalID()
+				userNamespace := user.GetIdentityType()
+				srv.log.Error("Namespace not visible to the user", "user", id, "userNamespace", userNamespace, "namespace", ruleGroup.NamespaceUID)
+				continue
+			}
+			fullConfig := ngmodels.AlertRuleGroupKeyWithFolderFullpath{
+				AlertRuleGroupKey: ruleGroup,
+				FolderFullpath:    folder.Fullpath,
+			}
+			visitedGroups[ruleGroup] = struct{}{}
+			// sorted insert of full config
+			result = append(result, fullConfig)
+			compareNamespaceAndGroup := func(i int) bool {
+				existing := result[i]
+				nsComp := strings.Compare(existing.FolderFullpath, fullConfig.FolderFullpath)
+				if nsComp != 0 {
+					return nsComp > 0
+				}
+				return strings.Compare(existing.RuleGroup, fullConfig.RuleGroup) > 0
+			}
+			j := sort.Search(len(result)-1, compareNamespaceAndGroup)
+			copy(result[j+1:], result[j:])
+			result[j] = fullConfig
+		}
+	}
+	return result, nil
 }
 
 // searchAuthorizedAlertRules fetches rules according to the filters, groups them by models.AlertRuleGroupKey and filters out groups that the current user is not authorized to access.
