@@ -3,7 +3,6 @@ import { omit } from 'lodash';
 import { PureComponent, useState } from 'react';
 
 import {
-  DataQuery,
   DataSourceInstanceSettings,
   LoadingState,
   PanelData,
@@ -12,6 +11,7 @@ import {
   rangeUtil,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { Button, Card, Icon, Stack } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';

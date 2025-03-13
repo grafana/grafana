@@ -2,9 +2,10 @@ import { css, cx } from '@emotion/css';
 import { keyBy, startCase, uniqueId } from 'lodash';
 import * as React from 'react';
 
-import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2, PanelData, urlUtil } from '@grafana/data';
+import { DataSourceInstanceSettings, GrafanaTheme2, PanelData, urlUtil } from '@grafana/data';
 import { secondsToHms } from '@grafana/data/src/datetime/rangeutil';
 import { config } from '@grafana/runtime';
+import { DataSourceRef } from '@grafana/schema';
 import { Preview } from '@grafana/sql/src/components/visual-query-builder/Preview';
 import { Alert, Badge, ErrorBoundaryAlert, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
