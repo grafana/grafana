@@ -55,6 +55,7 @@ const LogsQueryEditor = ({
   const templateSrv = getTemplateSrv();
   const from = templateSrv?.replace('$__from');
   const to = templateSrv?.replace('$__to');
+  const templateVariableOptions = templateSrv.getVariables();
 
   const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
     if (selectedRows.length === 0) {
@@ -205,6 +206,7 @@ const LogsQueryEditor = ({
             schema={schema!}
             basicLogsEnabled={basicLogsEnabled}
             onQueryChange={onChange}
+            templateVariableOptions={templateVariableOptions}
           />
         ) : (
           <QueryField

@@ -14,7 +14,13 @@ import {
 import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
 
 import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
-import { getAggregations, toOperatorOptions, valueToDefinition } from './utils';
+import {
+  getAggregations,
+  isOperatorExpression,
+  removeExtraQuotes,
+  toOperatorOptions,
+  valueToDefinition,
+} from './utils';
 
 interface FilterSectionProps {
   query: AzureMonitorQuery;
@@ -48,18 +54,6 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
     : allColumns.map((col) => ({ label: col.name, value: col.name }));
 
   const selectableOptions = availableColumns.concat(safeTemplateVariables);
-
-  const isOperatorExpression = (exp: any): exp is BuilderQueryEditorOperatorExpression => {
-    return exp?.type === BuilderQueryEditorExpressionType.Operator && 'property' in exp && 'operator' in exp;
-  };
-
-  const removeExtraQuotes = (value: any): string => {
-    let strValue = String(value).trim();
-    if ((strValue.startsWith("'") && strValue.endsWith("'")) || (strValue.startsWith('"') && strValue.endsWith('"'))) {
-      return strValue.slice(1, -1);
-    }
-    return strValue;
-  };
 
   const [filters, setFilters] = useState<Array<{ column: string; operator: string; value: string }>>(() => {
     return (
@@ -108,9 +102,9 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
     return filters
       .filter((f) => f.column && f.operator && f.value.trim() !== '')
       .map((f) => {
-        let value = f.value.trim();
+        let value = removeExtraQuotes(f.value.trim());
 
-        if (!(value.startsWith("'") && value.endsWith("'"))) {
+        if (!value.startsWith("'") || !value.endsWith("'")) {
           value = `'${value.replace(/'/g, "\\'")}'`;
         }
 

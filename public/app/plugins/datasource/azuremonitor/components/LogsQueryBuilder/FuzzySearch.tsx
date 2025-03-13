@@ -8,13 +8,11 @@ import {
   BuilderQueryEditorExpressionType,
   BuilderQueryEditorOperatorExpression,
   BuilderQueryEditorPropertyType,
-  BuilderQueryEditorWhereArrayExpression,
-  BuilderQueryExpression,
 } from '../../dataquery.gen';
 import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
 
 import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
-import { getAggregations, getFilters } from './utils';
+import { getAggregations, getFilters, isOperatorExpression, removeExtraQuotes } from './utils';
 
 interface FuzzySearchProps {
   query: AzureMonitorQuery;
@@ -40,18 +38,6 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedColumn, setSelectedColumn] = useState<string>('');
   const [isOpen, setIsOpen] = useState<boolean>(false);
-
-  const isOperatorExpression = (exp: any): exp is BuilderQueryEditorOperatorExpression => {
-    return exp?.type === BuilderQueryEditorExpressionType.Operator && 'operator' in exp && 'property' in exp;
-  };
-
-  const removeExtraQuotes = (value: any): string => {
-    let strValue = String(value).trim();
-    if ((strValue.startsWith("'") && strValue.endsWith("'")) || (strValue.startsWith('"') && strValue.endsWith('"'))) {
-      return strValue.slice(1, -1);
-    }
-    return strValue;
-  };
 
   useEffect(() => {
     if (!hasLoadedFuzzySearch.current && builderQuery?.where?.expressions) {
