@@ -587,10 +587,6 @@ const (
 	// Updates CloudWatch label parsing to be more accurate
 	FlagCloudWatchNewLabelParsing = "cloudWatchNewLabelParsing"
 
-	// FlagAccessActionSets
-	// Introduces action sets for resource permissions. Also ensures that all folder editors and admins can create subfolders without needing any additional permissions.
-	FlagAccessActionSets = "accessActionSets"
-
 	// FlagDisableNumericMetricsSortingInExpressions
 	// In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.
 	FlagDisableNumericMetricsSortingInExpressions = "disableNumericMetricsSortingInExpressions"
@@ -896,7 +892,7 @@ const (
 	FlagElasticsearchImprovedParsing = "elasticsearchImprovedParsing"
 
 	// FlagExploreMetricsUseExternalAppPlugin
-	// Use the externalized Metrics Drilldown (formerly known as Explore Metrics) app plugin
+	// Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin
 	FlagExploreMetricsUseExternalAppPlugin = "exploreMetricsUseExternalAppPlugin"
 
 	// FlagDatasourceConnectionsTab
