@@ -60,8 +60,8 @@ export const LogListControls = ({ eventBus }: Props) => {
       />
       <IconButton
         name="clock-nine"
-        variant={showTime ? 'primary' : 'secondary'}
-        className={styles.controlButton}
+        aria-pressed={showTime}
+        className={showTime ? styles.controlButtonActive : styles.controlButton}
         onClick={onShowTimestampsClick}
         tooltip={
           showTime
@@ -72,8 +72,8 @@ export const LogListControls = ({ eventBus }: Props) => {
       />
       <IconButton
         name="wrap-text"
-        className={styles.controlButton}
-        variant={wrapLogMessage ? 'primary' : 'secondary'}
+        className={wrapLogMessage ? styles.controlButtonActive : styles.controlButton}
+        aria-pressed={wrapLogMessage}
         onClick={onWrapLogMessageClick}
         tooltip={
           wrapLogMessage
@@ -84,11 +84,11 @@ export const LogListControls = ({ eventBus }: Props) => {
       />
       <IconButton
         name="brackets-curly"
-        className={styles.controlButton}
-        variant={syntaxHighlighting ? 'primary' : 'secondary'}
+        className={syntaxHighlighting ? styles.controlButtonActive : styles.controlButton}
+        aria-pressed={syntaxHighlighting}
         onClick={onSyntaxHightlightingClick}
         tooltip={
-          wrapLogMessage
+          syntaxHighlighting
             ? t('logs.logs-controls.disable-highlighting', 'Disable highlighting')
             : t('logs.logs-controls.enable-highlighting', 'Enable highlighting')
         }
@@ -112,7 +112,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     navContainer: css({
       maxHeight: '100%',
       display: 'flex',
-      gap: theme.spacing(2.5),
+      gap: theme.spacing(2),
       flexDirection: 'column',
       justifyContent: 'flex-start',
       width: theme.spacing(3),
@@ -125,6 +125,24 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     controlButton: css({
       margin: 0,
+      color: theme.colors.text.secondary,
+      height: theme.spacing(2),
+    }),
+    controlButtonActive: css({
+      margin: 0,
+      color: theme.colors.text.secondary,
+      height: theme.spacing(2.5),
+      '&:before': {
+        display: 'block',
+        content: '" "',
+        position: 'absolute',
+        height: 2,
+        borderRadius: theme.shape.radius.default,
+        bottom: -4,
+        backgroundImage: theme.colors.gradients.brandHorizontal,
+        width: '95%',
+        opacity: 1,
+      },
     }),
   };
 };
