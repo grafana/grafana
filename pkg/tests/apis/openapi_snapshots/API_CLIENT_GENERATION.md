@@ -52,9 +52,9 @@ Open [generate-rtk-apis.ts](scripts/generate-rtk-apis.ts) and add the following 
 | schemaFile | File with the schema that was automatically created in the second step. Although it is in openapi_snapshots, you should link the one saved in `data/openapi`.|
 |apiImport| Function name exported in the API definition (baseAPI.ts file).|
 | filterEndpoints | The `operationId` of the particular route you want to work with. You can check the available operationIds in the specific group's spec file. As seen in the `migrate-to-cloud` one, it is an array|
-| tag | Must be set to `true`, to automatically attach tags to endpoints. this is needed for proper cache invalidation. See more info in the [RTK Query documentation](https://redux-toolkit.js.org/rtk-query/usage/automated-refetching#:~:text=RTK%20Query%20uses,an%20active%20subscription.). |
+| tag | Must be set to `true`, to automatically attach tags to endpoints. This is needed for proper cache invalidation. See more info in the [official documentation](https://redux-toolkit.js.org/rtk-query/usage/automated-refetching#:~:text=RTK%20Query%20uses,an%20active%20subscription.). |
 | hooks | Must be set to `false` since we only want to export the hooks from the index file, not the generated one. |
-
+<br/>
 > More info in [Redux Toolkit](https://redux-toolkit.js.org/rtk-query/usage/code-generation#simple-usage) 
 
 In our example, the information added will be:
@@ -97,7 +97,24 @@ export { type Dashboard } from './endpoints.gen';
 
 There are some use cases where the hook will not work, and that is a clue to see if it needs to be modified. The hooks can be tweaked by using `enhanceEndpoints`.
 
-TODO: Add examples of `enhanceEndpoints` usage
+```jsx
+export const dashboardsAPI = generatedApi.enhanceEndpoints({
+  endpoints: {
+    // Need to mutate the generated query to set the Content-Type header correctly
+    createDashboard: (endpointDefinition) => {
+      const originalQuery = endpointDefinition.query;
+      if (originalQuery) {
+        endpointDefinition.query = (requestOptions) => ({
+          ...originalQuery(requestOptions),
+          headers: {
+            'Content-Type': 'application/merge-patch+json',
+          },
+        });
+      }
+    },
+  },
+});
+```
 
 ### 7. Add reducers and middleware to the redux store
 
