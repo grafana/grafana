@@ -33,6 +33,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state/#view-alert-state-on-panels
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/view-alert-state/#view-alert-state-on-panels
+  images-in-notifications:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/images-in-notifications/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/images-in-notifications/
 ---
 
 # Create and link alert rules to panels
@@ -41,12 +46,9 @@ Grafana allows you to link an alert rule to a dashboard panel. This can help you
 
 - Inform alert responders about where to investigate and which data to examine.
 - Visualize the alert state directly from dashboards.
+- Include a screenshot of the panel in notification messages.
 
 An alert rule is linked to a panel by setting the [`dashboardUId` and `panelId` annotations](ref:annotations). Both annotations must be set together.
-
-{{% admonition type="tutorial" %}}
-For a hands-on example of integrating alert rules with dashboards, check out [Part 5 of our Get Started with Grafana Alerting tutorial](http://www.grafana.com/tutorials/alerting-get-started-pt5/).
-{{% /admonition %}}
 
 ## Link alert rules to panels
 
@@ -58,6 +60,8 @@ When configuring the alert rule, you can set the dashboard and panel annotations
 1. Complete the alert rule configuration and click **Save rule** to initiate the alert rule.
 
 You can then [view the alert state on the panel](ref:view-alert-state-on-panels).
+
+By default, notification messages include a link to the dashboard panel. Additionally, you can [enable displaying panel screenshots in notifications](ref:images-in-notifications).
 
 {{< figure src="/media/docs/alerting/panel-displays-alert-state.png" max-width="1200px" caption="A panel displaying the alert status and state changes." >}}
 
@@ -75,6 +79,8 @@ To streamline alert creation, you can create an alert rule directly from a panel
 
 You can then [view the alert state on the panel](ref:view-alert-state-on-panels).
 
+By default, notification messages include a link to the dashboard panel. Additionally, you can [enable displaying panel screenshots in notifications](ref:images-in-notifications).
+
 {{% admonition type="note" %}}
 Changes to panel and alert rule queries aren't synchronized. If you change a query, you have to update it in both the panel and the alert rule.
 {{% /admonition %}}
@@ -86,3 +92,7 @@ This option is available only in [time series panels](ref:time-series-visualizat
 1. Hover over the top-right corner of the panel and click the panel menu icon.
 1. Click **Edit**.
 1. Click the **Alert** tab to view existing alert rules or create a new one.
+
+{{< admonition type="tip" >}}
+For a practical example that links a panel to an alert rule, refer to [Part 5 of our Get Started with Grafana Alerting tutorial](http://www.grafana.com/tutorials/alerting-get-started-pt5/).
+{{% /admonition %}}
