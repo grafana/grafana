@@ -503,26 +503,27 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `MQTT`
 
-| Name          | Secure setting |
-| ------------- | -------------- |
-| brokerUrl     |                |
-| clientId      |                |
-| topic         |                |
-| messageFormat |                |
-| username      |                |
-| password      | yes            |
-| retain        |                |
-| qos           |                |
-| tlsConfig     |                |
+| Name                 | Secure setting |
+| -------------------- | -------------- |
+| `brokerUrl`          |                |
+| `clientId`           |                |
+| `topic`              |                |
+| `messageFormat`      |                |
+| `username`           |                |
+| `password`           | yes            |
+| `retain`             |                |
+| `qos`                |                |
+| `tlsConfig`          |                |
+| `addGroupKeyToTopic` |                |
 
 ##### TLS config
 
-| Name               | Secure setting |
-| ------------------ | -------------- |
-| insecureSkipVerify |                |
-| clientCertificate  | yes            |
-| clientKey          | yes            |
-| caCertificate      | yes            |
+| Name                 | Secure setting |
+| -------------------- | -------------- |
+| `insecureSkipVerify` |                |
+| `clientCertificate`  | yes            |
+| `clientKey`          | yes            |
+| `caCertificate`      | yes            |
 
 #### Alert notification `pagerduty`
 
