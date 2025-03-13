@@ -47,7 +47,7 @@ export class ConditionalRenderingVariableSerializer implements ConditionalRender
     return new ConditionalRenderingVariable({
       value: {
         name: model.spec.variable,
-        operator: model.spec.operator,
+        operator: model.spec.operator === 'equals' ? '=' : '!=',
         value: model.spec.value,
       },
     });

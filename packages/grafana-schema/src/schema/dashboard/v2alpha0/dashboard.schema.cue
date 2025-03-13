@@ -933,7 +933,7 @@ ConditionalRenderingVariableKind: {
 
 ConditionalRenderingVariableSpec: {
   variable: string
-  operator: "=" | "!="
+  operator: "equals" | "notEquals"
   value: string
 }
 

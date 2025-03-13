@@ -1435,13 +1435,13 @@ export const defaultConditionalRenderingVariableKind = (): ConditionalRenderingV
 
 export interface ConditionalRenderingVariableSpec {
 	variable: string;
-	operator: "=" | "!=";
+	operator: "equals" | "notEquals";
 	value: string;
 }
 
 export const defaultConditionalRenderingVariableSpec = (): ConditionalRenderingVariableSpec => ({
 	variable: "",
-	operator: "=",
+	operator: "equals",
 	value: "",
 });
 

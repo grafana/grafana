@@ -1788,8 +1788,8 @@ const (
 type DashboardConditionalRenderingVariableSpecOperator string
 
 const (
-	DashboardConditionalRenderingVariableSpecOperator DashboardConditionalRenderingVariableSpecOperator = "="
-	DashboardConditionalRenderingVariableSpecOperator DashboardConditionalRenderingVariableSpecOperator = "!="
+	DashboardConditionalRenderingVariableSpecOperatorEquals    DashboardConditionalRenderingVariableSpecOperator = "equals"
+	DashboardConditionalRenderingVariableSpecOperatorNotEquals DashboardConditionalRenderingVariableSpecOperator = "notEquals"
 )
 
 // +k8s:openapi-gen=true
