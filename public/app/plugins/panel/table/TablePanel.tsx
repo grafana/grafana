@@ -79,7 +79,7 @@ export function TablePanel(props: Props) {
 
   const names = frames.map((frame, index) => {
     return {
-      label: getFrameDisplayName(frame),
+      label: `${frame.refId}: ${getFrameDisplayName(frame)}`,
       value: index,
     };
   });
