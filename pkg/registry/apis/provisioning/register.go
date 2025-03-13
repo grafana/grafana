@@ -27,7 +27,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -176,15 +176,110 @@ func RegisterAPIService(
 
 func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
-		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
-			// TODO: Implement a better webhook authoriser somehow.
-			if a.GetSubresource() == "webhook" {
-				// for now????
+		func(ctx context.Context, a authorizer.Attributes) (decision authorizer.Decision, reason string, err error) {
+			if identity.IsServiceIdentity(ctx) {
+				// A Grafana sub-system should have full access. We trust them to make wise decisions.
 				return authorizer.DecisionAllow, "", nil
 			}
 
-			// fallback to the standard authorizer
-			return authorizer.DecisionNoOpinion, "", nil
+			// Different routes may need different permissions.
+			// * Reading and modifying a repository's configuration requires administrator privileges.
+			// * Reading a repository's limited configuration (/stats & /settings) requires viewer privileges.
+			// * Reading a repository's files requires viewer privileges.
+			// * Editing a repository's files requires editor privileges.
+			// * Syncing a repository requires editor privileges.
+			// * Exporting a repository requires administrator privileges.
+			// * Migrating a repository requires administrator privileges.
+			// * Testing a repository configuration requires administrator privileges.
+			// * Viewing a repository's history requires editor privileges.
+
+			id, err := identity.GetRequester(ctx)
+			if err != nil {
+				return authorizer.DecisionDeny, "failed to find requester", err
+			}
+
+			switch a.GetResource() {
+			case provisioning.RepositoryResourceInfo.GetName():
+				// TODO: Support more fine-grained permissions than the basic roles. Especially on Enterprise.
+				switch a.GetSubresource() {
+				case "":
+					// Doing something with the repository itself.
+					if id.GetOrgRole().Includes(identity.RoleAdmin) {
+						return authorizer.DecisionAllow, "", nil
+					}
+					return authorizer.DecisionDeny, "admin role is required", nil
+
+				case "test", "export", "migrate":
+					// Testing doesn't make sense for non-admins.
+					// Exporting and migrating are potentially dangerous.
+					if id.GetOrgRole().Includes(identity.RoleAdmin) {
+						return authorizer.DecisionAllow, "", nil
+					}
+					return authorizer.DecisionDeny, "admin role is required", nil
+
+				case "webhook":
+					// When the resource is a webhook, we'll deal with permissions manually by checking signatures or similar in the webhook handler.
+					// The user in this context is usually an anonymous user, but may also be an authenticated synthetic check by the Grafana instance's operator as well.
+					// For context on the anonymous user, check the authn/clients/provisioning.go file.
+					return authorizer.DecisionAllow, "", nil
+
+				case "files":
+					// Reading files is allowed for everyone, so as to allow code reviews and similar.
+					// Writing files is only allowed fo Editor and higher.
+					isViewer := id.GetOrgRole().Includes(identity.RoleViewer)
+					isEditor := id.GetOrgRole().Includes(identity.RoleEditor)
+					isReadOperation := a.GetVerb() == apiutils.VerbGet
+
+					if isEditor || (isViewer && isReadOperation) {
+						return authorizer.DecisionAllow, "", nil
+					} else if isReadOperation {
+						return authorizer.DecisionDeny, "viewer role is required for reads", nil
+					} else {
+						return authorizer.DecisionDeny, "editor role is required for edits", nil
+					}
+
+				case "render":
+					// This is used to read a blob from unified storage, for GitHub PR comments.
+					// GH uses a proxy for all images, so we need to accept it, always.
+					return authorizer.DecisionAllow, "", nil
+
+				case "resources", "sync", "history":
+					// These are strictly read operations.
+					// Sync can also be somewhat destructive, but it's expected to be fine to import changes.
+					if id.GetOrgRole().Includes(identity.RoleEditor) {
+						return authorizer.DecisionAllow, "", nil
+					} else {
+						return authorizer.DecisionDeny, "editor role is required", nil
+					}
+
+				default:
+					if id.GetIsGrafanaAdmin() {
+						return authorizer.DecisionAllow, "", nil
+					}
+					return authorizer.DecisionDeny, "unmapped subresource defaults to no access", nil
+				}
+
+			case "stats":
+				// This can leak information one shouldn't necessarily have access to.
+				if id.GetOrgRole().Includes(identity.RoleAdmin) {
+					return authorizer.DecisionAllow, "", nil
+				}
+				return authorizer.DecisionDeny, "admin role is required", nil
+
+			case "settings":
+				// This is strictly a read operation. It is handy on the frontend for viewers.
+				if id.GetOrgRole().Includes(identity.RoleViewer) {
+					return authorizer.DecisionAllow, "", nil
+				}
+				return authorizer.DecisionDeny, "viewer role is required", nil
+
+			default:
+				// We haven't bothered with this kind yet.
+				if id.GetIsGrafanaAdmin() {
+					return authorizer.DecisionAllow, "", nil
+				}
+				return authorizer.DecisionDeny, "unmapped kind defaults to no access", nil
+			}
 		})
 }
 
@@ -318,7 +413,7 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	}
 
 	// Do not validate objects we are trying to delete
-	meta, _ := utils.MetaAccessor(obj)
+	meta, _ := apiutils.MetaAccessor(obj)
 	if meta.GetDeletionTimestamp() != nil {
 		return nil
 	}
