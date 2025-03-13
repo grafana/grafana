@@ -16,14 +16,25 @@ import (
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+type RuleStoreReader interface {
+	GetUserVisibleNamespaces(context.Context, int64, identity.Requester) (map[string]*folder.Folder, error)
+	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (ngmodels.RulesGroup, error)
+}
+
+type RuleGroupAccessControlService interface {
+	HasAccessToRuleGroup(ctx context.Context, user identity.Requester, rules ngmodels.RulesGroup) (bool, error)
+}
 
 type StatusReader interface {
 	Status(key ngmodels.AlertRuleKey) (ngmodels.RuleStatus, bool)
@@ -33,8 +44,18 @@ type PrometheusSrv struct {
 	log     log.Logger
 	manager state.AlertInstanceManager
 	status  StatusReader
-	store   RuleStore
-	authz   RuleAccessControlService
+	store   RuleStoreReader
+	authz   RuleGroupAccessControlService
+}
+
+func NewPrometheusSrv(log log.Logger, manager state.AlertInstanceManager, status StatusReader, store RuleStoreReader, authz RuleGroupAccessControlService) *PrometheusSrv {
+	return &PrometheusSrv{
+		log:     log,
+		manager: manager,
+		status:  status,
+		store:   store,
+		authz:   authz,
+	}
 }
 
 const queryIncludeInternalLabels = "includeInternalLabels"
@@ -99,7 +120,7 @@ func PrepareAlertStatuses(manager state.AlertInstanceManager, opts AlertStatuses
 		valString := ""
 
 		if alertState.State == eval.Alerting || alertState.State == eval.Pending {
-			valString = formatValues(alertState)
+			valString = FormatValues(alertState)
 		}
 
 		alertResponse.Data.Alerts = append(alertResponse.Data.Alerts, &apimodels.Alert{
@@ -117,7 +138,7 @@ func PrepareAlertStatuses(manager state.AlertInstanceManager, opts AlertStatuses
 	return alertResponse
 }
 
-func formatValues(alertState *state.State) string {
+func FormatValues(alertState *state.State) string {
 	var fv string
 	values := alertState.GetLastEvaluationValuesForCondition()
 
@@ -546,7 +567,7 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sr StatusRe
 			activeAt := alertState.StartsAt
 			valString := ""
 			if alertState.State == eval.Alerting || alertState.State == eval.Pending {
-				valString = formatValues(alertState)
+				valString = FormatValues(alertState)
 			}
 			stateKey := strings.ToLower(alertState.State.String())
 			totals[stateKey] += 1
