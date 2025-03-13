@@ -14,7 +14,7 @@ import * as errors from './errors';
 import { log } from './logs/log';
 import { AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
-import { generateExtensionId, getExtensionPointPluginDependencies, isGrafanaDevMode } from './utils';
+import { generateExtensionId, getExtensionPointPluginDependencies, getReadOnlyProxy, isGrafanaDevMode } from './utils';
 import { isExtensionPointIdValid, isExtensionPointMetaInfoMissing } from './validators';
 
 // Returns an array of component extensions for the given extension point
@@ -92,7 +92,7 @@ export function createComponentWithMeta<Props extends JSX.IntrinsicAttributes>(
 ): ComponentTypeWithExtensionMeta<Props> {
   const { component: Component, ...config } = registryItem;
   function ComponentWithMeta(props: Props) {
-    return <Component {...props} />;
+    return <Component {...getReadOnlyProxy(props)} />;
   }
 
   ComponentWithMeta.displayName = Component.displayName;
