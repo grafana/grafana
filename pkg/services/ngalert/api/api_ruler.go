@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -15,12 +14,10 @@ import (
 
 	"github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -32,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/prom"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -64,9 +60,6 @@ type RulerSrv struct {
 	conditionValidator ConditionValidator
 	authz              RuleAccessControlService
 	userService        user.Service
-
-	// This is required for converting Prometheus rules to GMA
-	proxySvc *LotexRuler
 
 	amConfigStore  AMConfigStore
 	amRefresher    AMRefresher
@@ -375,149 +368,6 @@ func (srv RulerSrv) RouteGetRuleByUID(c *contextmodel.ReqContext, ruleUID string
 	return response.JSON(http.StatusOK, result)
 }
 
-func (srv RulerSrv) RoutePostRulesGroupConvert(c *contextmodel.ReqContext, dsUID string) response.Response {
-	pauseRecordingRules := c.QueryBoolWithDefault("pauseRecordingRules", true)
-	pauseAlerts := c.QueryBoolWithDefault("pauseAlerts", true)
-	targetFolderUID := c.Query("targetFolderUID")
-	namespaceFilter := c.Query("namespace")
-	groupFilter := c.Query("group")
-
-	// 1. Fetch rules from datasource
-	_, err := getDatasourceByUID(c, srv.proxySvc.DataProxy.DataSourceCache, apimodels.LoTexRulerBackend)
-	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "failed to get datasource by UID")
-	}
-
-	promGroups := map[string][]prom.PrometheusRuleGroup{}
-	resp := srv.proxySvc.requester.withReq(c, http.MethodGet, withPath(*c.Req.URL, MimirPrefix), nil, yamlExtractor(&promGroups), nil)
-
-	// 2. Convert Prometheus Rules to GMA
-	promGroups = map[string][]prom.PrometheusRuleGroup{}
-	nsMap := make(map[string]string) // File -> NamespaceUID
-	if err := json.Unmarshal(resp.Body(), &promGroups); err != nil {
-		return errorToResponse(err)
-	}
-
-	grafanaGroups := make([]*ngmodels.AlertRuleGroup, 0, len(promGroups))
-	for ns, rgs := range promGroups {
-		// Check Namespace filter
-		if namespaceFilter != "" && ns != namespaceFilter {
-			continue
-		}
-
-		// Need to filter groups here so we don't end up
-		// unnecessarily creating empty namespaces
-		if groupFilter != "" {
-			filteredRgs := make([]prom.PrometheusRuleGroup, 0, len(rgs))
-			for _, rg := range rgs {
-				if rg.Name != groupFilter {
-					continue
-				}
-				filteredRgs = append(filteredRgs, rg)
-			}
-			rgs = filteredRgs
-		}
-
-		srv.log.FromContext(c.Req.Context()).Debug("Creating a new namespace", "title", ns)
-		namespace, err := srv.store.GetOrCreateNamespaceByTitle(
-			c.Req.Context(),
-			ns,
-			c.SignedInUser.GetOrgID(),
-			c.SignedInUser,
-			targetFolderUID,
-		)
-
-		if err != nil {
-			logger.Error("Failed to create a new namespace", "error", err)
-			return toNamespaceErrorResponse(err)
-		}
-		nsMap[ns] = namespace.UID
-
-		promConverter, err := prom.NewConverter(prom.Config{DatasourceUID: dsUID})
-		if err != nil {
-			return errorToResponse(err)
-		}
-		for _, rg := range rgs {
-			grafanaGroup, err := promConverter.PrometheusRulesToGrafana(c.SignedInUser.GetOrgID(), namespace.UID, rg)
-			if err != nil {
-				logger.Error("Failed to convert Prometheus rules to Grafana rules", "error", err)
-				return response.Err(err)
-			}
-			grafanaGroups = append(grafanaGroups, grafanaGroup)
-		}
-	}
-
-	// 3. Update the GMA Rules in the DB
-	changes := apimodels.UpdateRuleGroupResponse{
-		Created: []string{},
-		Updated: []string{},
-		Deleted: []string{},
-	}
-
-	var errResponse *response.NormalResponse
-	err = srv.xactManager.InTransaction(c.Req.Context(), func(ctx context.Context) error {
-		for _, grafanaGroup := range grafanaGroups {
-			groupKey := ngmodels.AlertRuleGroupKey{
-				OrgID:        c.SignedInUser.GetOrgID(),
-				NamespaceUID: grafanaGroup.FolderUID,
-				RuleGroup:    grafanaGroup.Title,
-			}
-
-			rules := make([]*ngmodels.AlertRuleWithOptionals, 0, len(grafanaGroup.Rules))
-			for _, r := range grafanaGroup.Rules {
-				if r.Record != nil && pauseRecordingRules {
-					r.IsPaused = true
-				} else if pauseAlerts {
-					r.IsPaused = true
-				}
-				rules = append(rules, &ngmodels.AlertRuleWithOptionals{
-					AlertRule: r,
-				})
-			}
-
-			srv.log.FromContext(ctx).Info("Saving Prometheus rule group", "group", groupKey.RuleGroup, "namespace_uid", grafanaGroup.FolderUID, "rule_count", len(rules), "datasource_uid", grafanaGroup.Rules[0].Data[0].DatasourceUID)
-			updateResp := srv.updateAlertRulesInGroup(c, groupKey, rules)
-			if updateResp.Status() == nil {
-				changes.Message = gc.Message
-				changes.Created = append(changes.Created, gc.Created...)
-				changes.Updated = append(changes.Updated, gc.Updated...)
-				changes.Deleted = append(changes.Deleted, gc.Deleted...)
-			} else {
-				srv.log.FromContext(ctx).Info("Failed to save Prometheus rule group", "group", groupKey.RuleGroup, "namespace_uid", grafanaGroup.FolderUID, "err", updateResp)
-			}
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return response.Err(err)
-	}
-
-	return response.JSON(http.StatusAccepted, changes)
-}
-
-func convertAPIToPrometheusModel(group apimodels.RuleGroup) prom.PrometheusRuleGroup {
-	rules := make([]prom.PrometheusRule, 0, len(group.Rules))
-	for _, r := range group.Rules {
-		rule := prom.PrometheusRule{
-			Alert:         r.Name,
-			Expr:          r.Query,
-			For:           gtime.FormatInterval(time.Duration(r.Duration * float64(time.Second))),
-			KeepFiringFor: "", // Unsupported
-			Labels:        r.Labels.Map(),
-			Annotations:   r.Annotations.Map(),
-			Record:        "", // Can we ever have a recording rule here?
-		}
-		rules = append(rules, rule)
-	}
-
-	return prom.PrometheusRuleGroup{
-		Name:  group.Name,
-		Rules: rules,
-	}
-}
-
 func (srv RulerSrv) RouteGetRuleVersionsByUID(c *contextmodel.ReqContext, ruleUID string) response.Response {
 	ctx := c.Req.Context()
 	// make sure the user has access to the current version of the rule. Also, check if it exists
@@ -719,17 +569,17 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 
 	if err != nil {
 		if errors.As(err, &errutil.Error{}) {
-			return nil, response.Err(err)
+			return response.Err(err)
 		} else if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
-			return nil, ErrResp(http.StatusNotFound, err, "failed to update rule group")
+			return ErrResp(http.StatusNotFound, err, "failed to update rule group")
 		} else if errors.Is(err, ngmodels.ErrAlertRuleFailedValidation) || errors.Is(err, errProvisionedResource) {
-			return nil, ErrResp(http.StatusBadRequest, err, "failed to update rule group")
+			return ErrResp(http.StatusBadRequest, err, "failed to update rule group")
 		} else if errors.Is(err, ngmodels.ErrQuotaReached) {
-			return nil, ErrResp(http.StatusForbidden, err, "")
+			return ErrResp(http.StatusForbidden, err, "")
 		} else if errors.Is(err, store.ErrOptimisticLock) {
-			return nil, ErrResp(http.StatusConflict, err, "")
+			return ErrResp(http.StatusConflict, err, "")
 		}
-		return nil, ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
+		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
 
 	if srv.featureManager.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingSimplifiedRouting) && dbConfig != nil {
@@ -740,31 +590,30 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 		}
 	}
 
-	return changesToResponse(finalChanges), nil
+	return changesToResponse(finalChanges)
 }
 
-func changesToResponse(finalChanges *store.GroupDelta) *apimodels.UpdateRuleGroupResponse {
-	result := apimodels.UpdateRuleGroupResponse{
+func changesToResponse(finalChanges *store.GroupDelta) response.Response {
+	body := apimodels.UpdateRuleGroupResponse{
 		Message: "rule group updated successfully",
 		Created: make([]string, 0, len(finalChanges.New)),
 		Updated: make([]string, 0, len(finalChanges.Update)),
 		Deleted: make([]string, 0, len(finalChanges.Delete)),
 	}
 	if finalChanges.IsEmpty() {
-		result.Message = "no changes detected in the rule group"
+		body.Message = "no changes detected in the rule group"
 	} else {
 		for _, r := range finalChanges.New {
-			result.Created = append(result.Created, r.UID)
+			body.Created = append(body.Created, r.UID)
 		}
 		for _, r := range finalChanges.Update {
-			result.Updated = append(result.Updated, r.Existing.UID)
+			body.Updated = append(body.Updated, r.Existing.UID)
 		}
 		for _, r := range finalChanges.Delete {
-			result.Deleted = append(result.Deleted, r.UID)
+			body.Deleted = append(body.Deleted, r.UID)
 		}
 	}
-
-	return &result
+	return response.JSON(http.StatusAccepted, body)
 }
 
 func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, provenanceRecords map[string]ngmodels.Provenance, userIdToName userIDToUserInfoFn) apimodels.GettableRuleGroupConfig {
