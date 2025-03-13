@@ -2,24 +2,27 @@ import { css } from '@emotion/css';
 import { Controller, useForm } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
-import { DataSourcePicker } from '@grafana/runtime';
-import { Box, Button, InlineField, InlineSwitch, Spinner, useStyles2 } from '@grafana/ui';
+import { DataSourcePicker, locationService } from '@grafana/runtime';
+import { Button, InlineField, InlineSwitch, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 
+import { Folder } from '../../types/rule-form';
+import { createRelativeUrl } from '../../utils/url';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
+
 
 interface ImportFormValues {
   selectedDatasource?: DataSourceInstanceSettings;
   pauseAlertingRules: boolean;
   pauseRecordingRules: boolean;
-  folderTarget?: string;
+  targetFolder?: Folder;
 }
 
 const ImportFromDSRules = () => {
   const {
     register,
     handleSubmit,
-    setError,
     clearErrors,
     watch,
     control,
@@ -30,35 +33,35 @@ const ImportFromDSRules = () => {
       selectedDatasource: undefined,
       pauseAlertingRules: true,
       pauseRecordingRules: true,
-      folderTarget: undefined,
+      targetFolder: undefined,
     },
   });
 
   const styles = useStyles2(getStyles);
 
-  // const selectedDatasource = watch('selectedDatasource');
-  // const pauseAlertingRules = watch('pauseAlertingRules');
-  // const pauseRecordingRules = watch('pauseRecordingRules');
+  const targetFolder = watch('targetFolder');
 
   const onSubmit = async (data: ImportFormValues) => {
-    if (!data.selectedDatasource) {
-      setError('selectedDatasource', { type: 'manual', message: 'Please select a datasource.' });
-      return;
-    }
-
+    // if (!data.selectedDatasource) {
+    //   setError('selectedDatasource', { type: 'manual', message: 'Please select a datasource.' });
+    //   return;
+    // }
+    console.log(data);
     // await response calling api to import rules ..if we get an error show and not redirect
     // if success show success message and redirect to alerting page /list
+    const ruleListUrl = createRelativeUrl('/alerting/list');
+    locationService.push(ruleListUrl);
   };
 
   return (
     <AlertingPageWrapper navId="alert-list" pageNav={{ text: 'Import alert rules from a datasource' }}>
-      <Box maxWidth={300}>
-        <p style={{ textAlign: 'left', marginBottom: '20px' }}>
+      <Stack gap={2} direction={'column'}>
+        <Text element="h2" variant="h5">
           Migrate your alert rules from a datasource into Grafana.
-        </p>
+        </Text>
 
         <form onSubmit={handleSubmit(onSubmit)}>
-          <Box marginBottom={4}>
+          <Stack gap={2} direction={'column'}>
             <InlineField
               transparent={true}
               label="Datasource"
@@ -78,7 +81,7 @@ const ImportFromDSRules = () => {
                     placeholder="Select a datasource"
                     alerting={true}
                     filter={(ds) => !!ds.meta.alerting}
-                    width={40}
+                    width={50}
                     type={['prometheus', 'loki']}
                   />
                 )}
@@ -89,9 +92,42 @@ const ImportFromDSRules = () => {
                 control={control}
               />
             </InlineField>
-          </Box>
 
-          <Box marginBottom={4}>
+            <InlineField
+              transparent={true}
+              label="Folder"
+              labelWidth={20}
+              invalid={!!errors.selectedDatasource}
+              error={errors.selectedDatasource?.message}
+            >
+              <Controller
+                render={({ field: { onChange, ref, ...field } }) => (
+                  <Stack width={50}>
+                    <NestedFolderPicker
+                      showRootFolder={false}
+                      invalid={!!errors.targetFolder?.message}
+                      {...field}
+                      value={targetFolder?.uid}
+                      onChange={(uid, title) => {
+                        if (uid && title) {
+                          setValue('targetFolder', { title, uid });
+                        } else {
+                          setValue('targetFolder', undefined);
+                        }
+                      }}
+                    />
+                  </Stack>
+
+                )}
+                name="targetFolder"
+                rules={{
+                  required: { value: true, message: 'Please select a target folder' },
+                }}
+                control={control}
+              />
+            </InlineField>
+
+
             <InlineField
               transparent={true}
               label="Pause alerting rules"
@@ -100,13 +136,11 @@ const ImportFromDSRules = () => {
             >
               <InlineSwitch
                 {...register('pauseAlertingRules')}
-                // checked={pauseAlertingRules}
-                // onChange={() => setValue('pauseAlertingRules', !pauseAlertingRules, { shouldDirty: true })}
+              // checked={pauseAlertingRules}
+              // onChange={() => setValue('pauseAlertingRules', !pauseAlertingRules, { shouldDirty: true })}
               />
             </InlineField>
-          </Box>
 
-          <Box marginBottom={4}>
             <InlineField
               transparent={true}
               label="Pause recording rules"
@@ -115,25 +149,23 @@ const ImportFromDSRules = () => {
             >
               <InlineSwitch
                 {...register('pauseRecordingRules')}
-                // checked={pauseRecordingRules}
-                // onChange={() => setValue('pauseRecordingRules', !pauseRecordingRules, { shouldDirty: true })}
               />
             </InlineField>
-          </Box>
 
-          <Box display="flex" justifyContent="left">
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={isSubmitting || !watch('selectedDatasource')}
-              onClick={() => clearErrors()}
-            >
-              {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
-              Import
-            </Button>
-          </Box>
+            <Stack>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={isSubmitting || !watch('selectedDatasource') || !watch('targetFolder')}
+                onClick={() => clearErrors()}
+              >
+                {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
+                Import
+              </Button>
+            </Stack>
+          </Stack>
         </form>
-      </Box>
+      </Stack>
     </AlertingPageWrapper>
   );
 };
