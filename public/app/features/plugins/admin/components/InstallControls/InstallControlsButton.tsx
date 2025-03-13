@@ -9,7 +9,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
 import { useDispatch } from 'app/types';
 
-// import { isDisabledAngularPlugin } from '../../helpers';
+import { isDisabledAngularPlugin } from '../../helpers';
 import {
   useInstallStatus,
   useUninstallStatus,
@@ -184,9 +184,9 @@ function shouldDisableUninstall(isUninstalling: boolean, plugin: CatalogPlugin) 
     return plugin.isUninstallingFromInstance || !plugin.isFullyInstalled || plugin.isUpdatingFromInstance;
   }
 
-  // if (isDisabledAngularPlugin(plugin)) {
-  //   return true;
-  // }
+  if (isDisabledAngularPlugin(plugin)) {
+    return true;
+  }
 
   return isUninstalling;
 }
