@@ -47,15 +47,17 @@ export function BootstrapStep({ onOptionSelect, onStepUpdate, settingsData, repo
   const [selectedOption, setSelectedOption] = useState<ModeOption | null>(null);
 
   const state = useMemo(() => {
-    const v = getState(repoName, settingsData, filesQuery.data, resourceStats.data);
-    if (v.actions.length) {
-      const first = v.actions[0];
+    return getState(repoName, settingsData, filesQuery.data, resourceStats.data);
+  }, [repoName, settingsData, resourceStats.data, filesQuery.data]);
+
+  useEffect(() => {
+    if (state.actions.length && !selectedOption) {
+      const first = state.actions[0];
       setSelectedOption(first);
       onOptionSelect(first.operation === 'migrate');
       setValue('repository.sync.target', first.target);
     }
-    return v;
-  }, [repoName, settingsData, resourceStats.data, filesQuery.data, setValue, onOptionSelect, setSelectedOption]);
+  }, [state, selectedOption, setValue, onOptionSelect]);
 
   const handleOptionSelect = useCallback(
     (option: ModeOption) => {
