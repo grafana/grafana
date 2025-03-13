@@ -713,7 +713,6 @@ func TestGetProvisionedDashboardData(t *testing.T) {
 		require.NoError(t, err)
 		k8sCliMock.AssertExpectations(t)
 	})
-
 }
 
 func TestGetProvisionedDashboardDataByDashboardID(t *testing.T) {
