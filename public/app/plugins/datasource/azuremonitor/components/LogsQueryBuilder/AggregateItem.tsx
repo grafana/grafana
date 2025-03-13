@@ -1,4 +1,5 @@
 import { range } from 'lodash';
+import React, { useState, useEffect } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { InputGroup, AccessoryButton } from '@grafana/plugin-ui';
@@ -9,6 +10,7 @@ import {
   BuilderQueryEditorPropertyType,
   BuilderQueryEditorReduceExpression,
 } from '../../dataquery.gen';
+
 interface AggregateItemProps {
   aggregate: Partial<BuilderQueryEditorReduceExpression>;
   columns: Array<SelectableValue<string>>;
@@ -24,8 +26,13 @@ const AggregateItem: React.FC<AggregateItemProps> = ({
   columns,
   templateVariableOptions,
 }) => {
-  const isPercentile = aggregate.reduce?.name === 'percentile';
-  const isCountAggregate = aggregate.reduce?.name === 'count';
+  const [isPercentile, setIsPercentile] = useState(aggregate.reduce?.name.includes('percentile'));
+  const [isCountAggregate, setIsCountAggregate] = useState(aggregate.reduce?.name.includes('count'));
+
+  useEffect(() => {
+    setIsPercentile(aggregate.reduce?.name.includes('percentile'));
+    setIsCountAggregate(aggregate.reduce?.name.includes('count'));
+  }, [aggregate.reduce?.name]);
 
   const safeTemplateVariables: Array<SelectableValue<string>> =
     templateVariableOptions && templateVariableOptions.value
@@ -78,7 +85,6 @@ const AggregateItem: React.FC<AggregateItemProps> = ({
           { label: 'count', value: 'count' },
           { label: 'min', value: 'min' },
           { label: 'max', value: 'max' },
-          { label: 'count', value: 'count' },
           { label: 'dcount', value: 'dcount' },
           { label: 'stdev', value: 'stdev' },
         ]}

@@ -15,8 +15,6 @@ export class AzureMonitorKustoQueryParser {
     filters?: string
   ): string {
     const { from, columns, groupBy, limit, where } = builderQuery;
-    console.log('where', where);
-    console.log('filters', filters);
 
     if (!from || !from.property.name) {
       return '';
@@ -62,22 +60,19 @@ export class AzureMonitorKustoQueryParser {
   ) {
     const whereConditions = new Set<string>();
 
-    // ✅ Ensure $__timeFilter is only added ONCE
     if (shouldApplyTimeFilter && !whereConditions.has(`$__timeFilter(${datetimeColumn})`)) {
       whereConditions.add(`$__timeFilter(${datetimeColumn})`);
     }
 
-    // ✅ Split filters and add them INDIVIDUALLY
     if (filters) {
       const validFilters = filters.split(' and ').filter((filter) => {
         const filterColumn = filter.split(' ')[0];
         return selectedColumns.includes(filterColumn) || columns.some((col) => col.name === filterColumn);
       });
 
-      validFilters.forEach((filter) => whereConditions.add(filter)); // ✅ Ensure filters are added as separate conditions
+      validFilters.forEach((filter) => whereConditions.add(filter));
     }
 
-    // ✅ Process where.expressions safely
     if (where && where.expressions && Array.isArray(where.expressions)) {
       where.expressions.forEach((condition) => {
         if ('expressions' in condition) {
@@ -91,13 +86,19 @@ export class AzureMonitorKustoQueryParser {
           condition.property
         ) {
           const operatorName = condition.operator?.name;
-          const operatorValue = condition.operator?.value;
+          let operatorValue = String(condition.operator?.value).trim();
           const columnName = condition.property?.name;
 
           if (operatorName && operatorValue && columnName) {
+            if (
+              (operatorValue.startsWith("'") && operatorValue.endsWith("'")) ||
+              (operatorValue.startsWith('"') && operatorValue.endsWith('"'))
+            ) {
+              operatorValue = operatorValue.slice(1, -1);
+            }
+
             const newCondition = `${columnName} ${operatorName} '${operatorValue}'`;
 
-            // ✅ Ensure this condition is NOT already in whereConditions before adding
             if (!whereConditions.has(newCondition)) {
               whereConditions.add(newCondition);
             }
@@ -106,7 +107,6 @@ export class AzureMonitorKustoQueryParser {
       });
     }
 
-    // ✅ Add final WHERE clause to the query parts
     if (whereConditions.size > 0) {
       parts.push(`where ${Array.from(whereConditions).join(' and ')}`);
     }

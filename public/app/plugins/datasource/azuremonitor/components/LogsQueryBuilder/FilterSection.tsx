@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
@@ -30,7 +30,6 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
   templateVariableOptions,
 }) => {
   const styles = useStyles2(getStyles);
-  const [filters, setFilters] = useState<Array<{ column: string; operator: string; value: string }>>([]);
   const builderQuery = query.azureLogAnalytics?.builderQuery;
 
   if (!builderQuery) {
@@ -49,6 +48,61 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
     : allColumns.map((col) => ({ label: col.name, value: col.name }));
 
   const selectableOptions = availableColumns.concat(safeTemplateVariables);
+
+  const isOperatorExpression = (exp: any): exp is BuilderQueryEditorOperatorExpression => {
+    return exp?.type === BuilderQueryEditorExpressionType.Operator && 'property' in exp && 'operator' in exp;
+  };
+
+  const removeExtraQuotes = (value: any): string => {
+    let strValue = String(value).trim();
+    if ((strValue.startsWith("'") && strValue.endsWith("'")) || (strValue.startsWith('"') && strValue.endsWith('"'))) {
+      return strValue.slice(1, -1);
+    }
+    return strValue;
+  };
+
+  const [filters, setFilters] = useState<Array<{ column: string; operator: string; value: string }>>(() => {
+    return (
+      builderQuery?.where?.expressions
+        ?.filter(isOperatorExpression)
+        ?.filter((exp) => !exp.property?.name?.startsWith('$__timeFilter'))
+        .filter((exp) => !exp.operator?.name?.startsWith('has'))
+        ?.map((exp) => ({
+          column: exp.property?.name || '',
+          operator: exp.operator?.name || '==',
+          value: removeExtraQuotes(exp.operator?.value ?? ''),
+        })) || []
+    );
+  });
+
+  const hasLoadedFilters = useRef(false);
+
+  useEffect(() => {
+    if (!hasLoadedFilters.current && builderQuery?.where?.expressions && selectableOptions.length > 0) {
+      const filteredExpressions = builderQuery.where.expressions
+        .filter(isOperatorExpression)
+        .filter((exp) => {
+          const columnName = exp.property?.name?.trim();
+          const isTimeFilter = columnName?.startsWith('$__timeFilter');
+          const isFuzzySearch = exp.operator?.name === 'has';
+          const isValidColumn = selectableOptions.some((col) => col.value === columnName);
+
+          if (isTimeFilter || isFuzzySearch) {
+            return false;
+          }
+
+          return isValidColumn;
+        })
+        .map((exp) => ({
+          column: exp.property?.name || '',
+          operator: exp.operator?.name || '==',
+          value: removeExtraQuotes(exp.operator?.value ?? ''),
+        }));
+
+      setFilters(filteredExpressions);
+      hasLoadedFilters.current = true;
+    }
+  }, [builderQuery?.where?.expressions, selectableOptions]);
 
   const formatFilters = (filters: Array<{ column: string; operator: string; value: string }>): string => {
     return filters

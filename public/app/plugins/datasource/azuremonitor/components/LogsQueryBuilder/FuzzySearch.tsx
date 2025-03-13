@@ -1,10 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorRow, EditorFieldGroup, EditorField, InputGroup } from '@grafana/plugin-ui';
 import { Button, Input, Select } from '@grafana/ui';
 
-import { BuilderQueryEditorExpressionType, BuilderQueryEditorPropertyType } from '../../dataquery.gen';
+import {
+  BuilderQueryEditorExpressionType,
+  BuilderQueryEditorOperatorExpression,
+  BuilderQueryEditorPropertyType,
+  BuilderQueryEditorWhereArrayExpression,
+  BuilderQueryExpression,
+} from '../../dataquery.gen';
 import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
 
 import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
@@ -23,14 +29,43 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
   allColumns,
   templateVariableOptions,
 }) => {
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [selectedColumn, setSelectedColumn] = useState<string>('');
-  const [isOpen, setIsOpen] = useState<boolean>(false);
   const builderQuery = query.azureLogAnalytics?.builderQuery;
 
   if (!builderQuery) {
-    return null;
+    return;
   }
+
+  const hasLoadedFuzzySearch = useRef(false);
+
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [selectedColumn, setSelectedColumn] = useState<string>('');
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+
+  const isOperatorExpression = (exp: any): exp is BuilderQueryEditorOperatorExpression => {
+    return exp?.type === BuilderQueryEditorExpressionType.Operator && 'operator' in exp && 'property' in exp;
+  };
+
+  const removeExtraQuotes = (value: any): string => {
+    let strValue = String(value).trim();
+    if ((strValue.startsWith("'") && strValue.endsWith("'")) || (strValue.startsWith('"') && strValue.endsWith('"'))) {
+      return strValue.slice(1, -1);
+    }
+    return strValue;
+  };
+
+  useEffect(() => {
+    if (!hasLoadedFuzzySearch.current && builderQuery?.where?.expressions) {
+      const fuzzyCondition = builderQuery.where.expressions.find(
+        (condition) => isOperatorExpression(condition) && condition.operator?.name === 'has'
+      );
+
+      if (fuzzyCondition && isOperatorExpression(fuzzyCondition)) {
+        setSearchTerm(removeExtraQuotes(String(fuzzyCondition.operator?.value ?? '')));
+        setSelectedColumn(fuzzyCondition.property?.name ?? '');
+        setIsOpen(true);
+      }
+    }
+  }, [builderQuery?.where?.expressions]);
 
   const columnOptions: Array<SelectableValue<string>> = allColumns.map((col) => ({
     label: col.name,
@@ -57,16 +92,13 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
         updatedBuilderQuery.where.expressions &&
         Array.isArray(updatedBuilderQuery.where.expressions)
       ) {
-        const existingConditionIndex = updatedBuilderQuery.where.expressions.findIndex(
-          (condition) =>
-            condition.type === BuilderQueryEditorExpressionType.Operator &&
-            'operator' in condition &&
-            condition.operator?.name === 'has'
-        );
+        const isOperatorExpression = (exp: any): exp is BuilderQueryEditorOperatorExpression => {
+          return exp?.type === BuilderQueryEditorExpressionType.Operator && 'operator' in exp && 'property' in exp;
+        };
 
-        if (existingConditionIndex !== -1) {
-          updatedBuilderQuery.where.expressions.splice(existingConditionIndex, 1);
-        }
+        updatedBuilderQuery.where.expressions = updatedBuilderQuery.where.expressions.filter(
+          (condition) => !(isOperatorExpression(condition) && condition.operator?.name === 'has')
+        );
 
         updatedBuilderQuery.where.expressions.push({
           type: BuilderQueryEditorExpressionType.Operator,
@@ -99,6 +131,41 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
     setSearchTerm('');
     setSelectedColumn('');
     setIsOpen(false);
+
+    if (builderQuery.where?.expressions) {
+      const updatedBuilderQuery = { ...builderQuery };
+
+      if (!updatedBuilderQuery.where) {
+        updatedBuilderQuery.where = { expressions: [], type: BuilderQueryEditorExpressionType.And };
+      }
+
+      let updatedWhereExpressions: BuilderQueryEditorOperatorExpression[] = updatedBuilderQuery.where.expressions
+        .filter(isOperatorExpression)
+        .filter((condition) => condition.operator?.name !== 'has');
+
+      updatedBuilderQuery.where =
+        updatedWhereExpressions.length > 0
+          ? { expressions: updatedWhereExpressions, type: BuilderQueryEditorExpressionType.And }
+          : undefined;
+
+      const aggregation = getAggregations(updatedBuilderQuery.reduce?.expressions);
+      const filters = getFilters(updatedWhereExpressions);
+      const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(
+        updatedBuilderQuery,
+        allColumns,
+        aggregation,
+        filters
+      );
+
+      onQueryUpdate({
+        ...query,
+        azureLogAnalytics: {
+          ...query.azureLogAnalytics,
+          builderQuery: updatedBuilderQuery,
+          query: updatedQueryString,
+        },
+      });
+    }
   };
 
   return (

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorList, EditorRow } from '@grafana/plugin-ui';
@@ -29,12 +29,23 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
   allColumns,
   templateVariableOptions,
 }) => {
-  const [groupBys, setGroupBys] = useState<BuilderQueryEditorGroupByExpression[]>([]);
   const builderQuery = query.azureLogAnalytics?.builderQuery;
+
+  const hasLoadedGroupBy = useRef(false);
+  const [groupBys, setGroupBys] = useState<BuilderQueryEditorGroupByExpression[]>(() => {
+    return builderQuery?.groupBy?.expressions || [];
+  });
 
   if (!builderQuery) {
     return;
   }
+
+  useEffect(() => {
+    if (!hasLoadedGroupBy.current && builderQuery?.groupBy?.expressions) {
+      setGroupBys(builderQuery.groupBy.expressions);
+      hasLoadedGroupBy.current = true;
+    }
+  }, [builderQuery?.groupBy?.expressions]);
 
   const availableColumns: Array<SelectableValue<string>> = [];
   const columns = builderQuery.columns?.columns ?? [];
@@ -66,6 +77,7 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
       }));
 
     setGroupBys(cleaned);
+
     let groupByClauses: string[] = [];
 
     cleaned.forEach((gb) => {

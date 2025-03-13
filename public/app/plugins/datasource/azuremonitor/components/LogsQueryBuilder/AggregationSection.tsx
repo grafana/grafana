@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorList, EditorRow } from '@grafana/plugin-ui';
@@ -33,6 +33,21 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
   if (!builderQuery) {
     return;
   }
+
+  const hasLoadedAggregates = useRef(false);
+
+  useEffect(() => {
+    if (!hasLoadedAggregates.current && builderQuery?.reduce?.expressions?.length) {
+      const parsedAggregates = builderQuery.reduce.expressions.map((agg) => ({
+        property: agg.property ?? { type: BuilderQueryEditorPropertyType.String, name: '' },
+        reduce: agg.reduce ?? { name: '', type: BuilderQueryEditorPropertyType.Function },
+        focus: false,
+      }));
+
+      setAggregates(parsedAggregates);
+      hasLoadedAggregates.current = true;
+    }
+  }, [builderQuery?.reduce?.expressions]);
 
   const availableColumns: Array<SelectableValue<string>> = [];
   const columns = builderQuery.columns?.columns ?? [];
