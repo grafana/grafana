@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { LinkButton, LoadingPlaceholder, Pagination, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
@@ -55,7 +56,7 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
   const canViewCloudRules = viewExternalRuleSupported && viewExternalRuleAllowed;
 
   const canCreateGrafanaRules = createRuleSupported && createRuleAllowed;
-  const canMigrateToGMA = canCreateGrafanaRules && canViewCloudRules;
+  const canMigrateToGMA = canCreateGrafanaRules && canViewCloudRules && config.featureToggles.alertingMigrationUI;
 
   return (
     <section className={styles.wrapper}>

@@ -227,9 +227,13 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     {
       path: '/alerting/import-datasource-managed-rules',
       roles: () => ['Admin'],
-      component: importAlertingComponent(
-        () => import(/* webpackChunkName: "AlertingImportFromDSRules"*/ 'app/features/alerting/unified/components/import-to-gma/ImportFromDSRules')
-      ),
+      component:
+        config.featureToggles.alertingMigrationUI
+          ? SafeDynamicImport(
+            () =>
+              import(/* webpackChunkName: "AlertingImportFromDSRules"*/ 'app/features/alerting/unified/components/import-to-gma/ImportFromDSRules')
+          )
+          : () => <Navigate replace to="/alerting/list" />,
     },
     {
       path: '/alerting/new/:type?',
