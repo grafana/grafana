@@ -9,7 +9,7 @@ import { Observable } from 'rxjs';
 import { Field, GrafanaTheme2 } from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
 import { useStyles2, useTheme2 } from '@grafana/ui';
-import { useTableStyles, TableCell } from '@grafana/ui/internal';
+import { useTableStyles, TableCell, Trans } from '@grafana/ui/internal';
 import { useCustomFlexLayout } from 'app/features/browse-dashboards/components/customFlexTableLayout';
 
 import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelection';
@@ -168,7 +168,11 @@ export const SearchResultsTable = React.memo(
     );
 
     if (!rows.length) {
-      return <div className={styles.noData}>No data</div>;
+      return (
+        <div className={styles.noData}>
+          <Trans i18nKey="grafana-ui.table.no-values-label">No data</Trans>
+        </div>
+      );
     }
 
     return (
