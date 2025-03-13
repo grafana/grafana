@@ -100,7 +100,7 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
               </Text>
               <Stack direction="row" gap={2}>
                 <Text variant="h3">
-                  <Text variant="h3">{state.fileCount > 0 ? state.resourceCountString : 'Empty'}</Text>
+                  <Text variant="h3">{state.resourceCount > 0 ? state.resourceCountString : 'Empty'}</Text>
                 </Text>
               </Stack>
             </Stack>
