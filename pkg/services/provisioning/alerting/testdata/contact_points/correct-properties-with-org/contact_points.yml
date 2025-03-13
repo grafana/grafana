@@ -4,6 +4,6 @@ contactPoints:
     orgId: 1337
     receivers:
     - uid: first_uid
-      type: prometheus-alertmanager
+      type: slack # LOGZ.IO GRAFANA CHANGE :: DEV-47388 Remove unsupported contact points - changed tested type to slack
       settings:
         url: http://test:9000

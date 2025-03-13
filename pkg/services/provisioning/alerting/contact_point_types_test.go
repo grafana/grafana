@@ -72,7 +72,7 @@ func validReceiverV1(t *testing.T) ReceiverV1 {
 	)
 	err := yaml.Unmarshal([]byte("my_uid"), &uid)
 	require.NoError(t, err)
-	err = yaml.Unmarshal([]byte("prometheus-alertmanager"), &_type)
+	err = yaml.Unmarshal([]byte("slack"), &_type) // LOGZ.IO GRAFANA CHANGE :: DEV-47388 Remove unsupported contact points - changed tested type to slack
 	require.NoError(t, err)
 	err = yaml.Unmarshal([]byte(`{"url": "http://test-url"}`), &settings)
 	require.NoError(t, err)
