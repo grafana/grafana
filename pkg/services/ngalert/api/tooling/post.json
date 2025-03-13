@@ -396,6 +396,9 @@
     },
     "metric": {
      "type": "string"
+    },
+    "targetDatasourceUid": {
+     "type": "string"
     }
    },
    "title": "Record is the provisioned export of models.Record.",
@@ -3492,6 +3495,11 @@
      "description": "Name of the recorded metric.",
      "example": "grafana_alerts_ratio",
      "type": "string"
+    },
+    "target_datasource_uid": {
+     "description": "Which data source should be used to write the output of the recording rule, specified by UID.",
+     "example": "my-prom",
+     "type": "string"
     }
    },
    "required": [
@@ -4355,6 +4363,15 @@
      "description": "Name of the associated template definition for this result.",
      "type": "string"
     },
+    "scope": {
+     "description": "Scope that was successfully used to interpolate the template. If the root scope \".\" fails, more specific\nscopes will be tried, such as \".Alerts', or \".Alert\".",
+     "enum": [
+      ".",
+      ".Alerts",
+      ".Alert"
+     ],
+     "type": "string"
+    },
     "text": {
      "description": "Interpolated value of the template.",
      "type": "string"
@@ -4933,7 +4950,6 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert",
     "type": "object"
@@ -5058,7 +5074,6 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence",
     "type": "object"
@@ -6890,6 +6905,49 @@
      }
     },
     "summary": "Gets a single rule group in Prometheus-compatible format if it was imported from a Prometheus-compatible source.",
+    "tags": [
+     "convert_prometheus"
+    ]
+   }
+  },
+  "/convert/{DatasourceUID}/config/v1/rules": {
+   "post": {
+    "consumes": [
+     "application/json"
+    ],
+    "description": "Converts rule groups from specified Prometheus datasource to Grafana-Managed",
+    "operationId": "RouteConvertPrometheusPostDatasource",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "DatasourceUID",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "ConvertPrometheusResponse",
+      "schema": {
+       "$ref": "#/definitions/ConvertPrometheusResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
+     "404": {
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
+      }
+     }
+    },
     "tags": [
      "convert_prometheus"
     ]

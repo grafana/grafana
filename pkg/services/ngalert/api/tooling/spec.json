@@ -1596,6 +1596,49 @@
         }
       }
     },
+    "/convert/{DatasourceUID}/config/v1/rules": {
+      "post": {
+        "description": "Converts rule groups from specified Prometheus datasource to Grafana-Managed",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "convert_prometheus"
+        ],
+        "operationId": "RouteConvertPrometheusPostDatasource",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "DatasourceUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "ConvertPrometheusResponse",
+            "schema": {
+              "$ref": "#/definitions/ConvertPrometheusResponse"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "404": {
+            "description": "NotFound",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          }
+        }
+      }
+    },
     "/prometheus/grafana/api/v1/alerts": {
       "get": {
         "description": "gets the current alerts",
@@ -4583,6 +4626,9 @@
           "type": "string"
         },
         "metric": {
+          "type": "string"
+        },
+        "targetDatasourceUid": {
           "type": "string"
         }
       }
@@ -7685,6 +7731,11 @@
           "description": "Name of the recorded metric.",
           "type": "string",
           "example": "grafana_alerts_ratio"
+        },
+        "target_datasource_uid": {
+          "description": "Which data source should be used to write the output of the recording rule, specified by UID.",
+          "type": "string",
+          "example": "my-prom"
         }
       }
     },
@@ -8544,6 +8595,15 @@
           "description": "Name of the associated template definition for this result.",
           "type": "string"
         },
+        "scope": {
+          "description": "Scope that was successfully used to interpolate the template. If the root scope \".\" fails, more specific\nscopes will be tried, such as \".Alerts', or \".Alert\".",
+          "type": "string",
+          "enum": [
+            ".",
+            ".Alerts",
+            ".Alert"
+          ]
+        },
         "text": {
           "description": "Interpolated value of the template.",
           "type": "string"
@@ -9121,7 +9181,6 @@
       }
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "type": "object",
@@ -9246,7 +9305,6 @@
       }
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "type": "object",
