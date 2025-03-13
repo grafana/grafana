@@ -15,6 +15,7 @@ const pullInstance: ModeOption = {
   label: 'Pull from Repository to Instance',
   description: 'Pull resources from repository into this Grafana instance',
 };
+
 const pullFolder: ModeOption = {
   target: 'folder',
   operation: 'pull',
@@ -22,81 +23,70 @@ const pullFolder: ModeOption = {
   description: 'Pull repository resources into a specific folder',
 };
 
+function getDisabledReason(action: ModeOption, resourceCount: number, folderConnected?: boolean) {
+  // Disable pull instance if there are existing dashboards or folders
+  if (action.target === 'instance' && action.operation === 'pull' && resourceCount > 0) {
+    return 'Cannot pull to instance when you have existing resources. Please migrate your existing resources first.';
+  }
+
+  if (!folderConnected) {
+    return undefined;
+  }
+
+  if (action.operation === 'migrate') {
+    return 'Cannot migrate when a folder is already mounted.';
+  }
+
+  if (action.target === 'instance') {
+    return 'Instance-wide connection is disabled because folders are connected to repositories.';
+  }
+
+  return undefined;
+}
+
 export function getState(
   repoName: string,
   settings?: RepositoryViewList,
   files?: GetRepositoryFilesResponse,
   stats?: GetResourceStatsResponse
 ): SystemState {
+  const folderConnected = settings?.items?.some((item) => item.target === 'folder' && item.name !== repoName);
+
+  const fileCount =
+    files?.items?.reduce((count, file) => {
+      const path = file.path ?? '';
+      return path.endsWith('.json') || path.endsWith('.yaml') ? count + 1 : count;
+    }, 0) ?? 0;
+
+  const resourceCount = stats?.instance?.reduce((sum, stat) => sum + stat.count, 0) ?? 0;
+
   const state: SystemState = {
-    resourceCount: 0,
-    fileCount: 0,
+    resourceCount,
+    fileCount,
     actions: [],
     disabled: [],
+    folderConnected,
   };
-  if (settings?.items) {
-    state.folderConnected = settings.items.some((item) => item.target === 'folder' && item.name !== repoName);
-  }
 
-  if (files?.items) {
-    files.items.forEach((v) => {
-      const p = v.path ?? '';
-      if (p.endsWith('.json') || p.endsWith('.yaml')) {
-        state.fileCount++;
-      }
-    });
-  }
-
-  if (stats?.instance) {
-    for (const x of stats.instance) {
-      state.resourceCount += x.count;
-    }
-  }
-
-  // Legacy can only migate
+  // Handle legacy storage separately
   if (settings?.legacyStorage) {
+    const disabledReason = 'Instance must be migrated first';
     state.actions = [migrateInstance];
     state.disabled = [
-      {
-        ...pullInstance,
-        disabledReason: 'Instance must be migrated first',
-      },
-      {
-        ...pullFolder,
-        disabledReason: 'Instance must be migrated first',
-      },
+      { ...pullInstance, disabledReason },
+      { ...pullFolder, disabledReason },
     ];
     return state;
   }
 
-  [migrateInstance, pullInstance, pullFolder].forEach((action) => {
-    // Disable pull instance option if there are existing dashboards or folders
-    if (action.target === 'instance' && action.operation === 'pull' && state.resourceCount > 0) {
-      state.disabled.push({
-        ...action,
-        disabledReason:
-          'Cannot pull to instance when you have existing resources. Please migrate your existing resources first.',
-      });
-      return;
+  const actionsToEvaluate = [migrateInstance, pullInstance, pullFolder];
+  actionsToEvaluate.forEach((action) => {
+    const reason = getDisabledReason(action, resourceCount, folderConnected);
+    if (reason) {
+      state.disabled.push({ ...action, disabledReason: reason });
+    } else {
+      state.actions.push(action);
     }
-
-    if (action.operation === 'migrate' && state.folderConnected) {
-      state.disabled.push({
-        ...action,
-        disabledReason: 'Cannot migrate when a folder is already mounted.',
-      });
-      return;
-    }
-
-    if (action.target === 'instance' && state.folderConnected) {
-      state.disabled.push({
-        ...action,
-        disabledReason: 'Instance-wide connection is disabled because folders are connected to repositories.',
-      });
-      return;
-    }
-
-    state.actions.push(action);
   });
 
   return state;
