@@ -118,12 +118,11 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
     const updatedBuilderQuery: BuilderQueryExpression = {
       ...builderQuery,
       columns: {
-        columns: [], // Clear all columns
+        columns: [],
         type: BuilderQueryEditorExpressionType.Property,
       },
     };
 
-    // ✅ Generate the updated query string
     const aggregation = getAggregations(updatedBuilderQuery.reduce?.expressions);
     const filters = getFilters(updatedBuilderQuery.where?.expressions);
     const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(
@@ -133,7 +132,6 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
       filters
     );
 
-    // ✅ Trigger state update
     onQueryUpdate({
       ...query,
       azureLogAnalytics: {

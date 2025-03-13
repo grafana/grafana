@@ -28,6 +28,7 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
   templateVariableOptions,
 }) => {
   const builderQuery = query.azureLogAnalytics?.builderQuery;
+  const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
 
   if (!builderQuery) {
     return;
@@ -40,6 +41,16 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
   useEffect(() => {
+    const currentTable = builderQuery?.from?.property.name || null;
+
+    if (prevTable.current !== currentTable) {
+      setSearchTerm('');
+      setSelectedColumn('');
+      setIsOpen(false);
+      hasLoadedFuzzySearch.current = false;
+      prevTable.current = currentTable;
+    }
+
     if (!hasLoadedFuzzySearch.current && builderQuery?.where?.expressions) {
       const fuzzyCondition = builderQuery.where.expressions.find(
         (condition) => isOperatorExpression(condition) && condition.operator?.name === 'has'
@@ -51,7 +62,7 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
         setIsOpen(true);
       }
     }
-  }, [builderQuery?.where?.expressions]);
+  }, [builderQuery]);
 
   const columnOptions: Array<SelectableValue<string>> = allColumns.map((col) => ({
     label: col.name,
@@ -64,7 +75,8 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
       : [templateVariableOptions]
     : [];
 
-  const selectableOptions = columnOptions.concat(safeTemplateVariables);
+  const defaultColumn: SelectableValue<string> = { label: 'All Columns *', value: '*' };
+  const selectableOptions = [defaultColumn, ...columnOptions, ...safeTemplateVariables];
 
   const handleChange = (newSearchTerm: string, column: string) => {
     setSearchTerm(newSearchTerm);
@@ -171,7 +183,7 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
                 <Select
                   aria-label="Select Column"
                   options={selectableOptions}
-                  value={selectedColumn}
+                  value={selectedColumn === '' ? defaultColumn : selectedColumn}
                   onChange={(e) => handleChange(searchTerm ?? '', e.value ?? '')}
                   width="auto"
                 />

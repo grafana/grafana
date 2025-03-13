@@ -229,7 +229,6 @@ export const getAggregations = (reduceExpressions: BuilderQueryEditorReduceExpre
 };
 
 export const getFilters = (whereExpressions: any[] = []) => {
-  // @ts-ignore
   return whereExpressions
     .map((exp) => {
       if ('property' in exp && exp.property?.name && exp.operator?.name && exp.operator?.value !== undefined) {
@@ -245,12 +244,10 @@ export const getFilters = (whereExpressions: any[] = []) => {
 };
 
 export const isOperatorExpression = (exp: any): exp is BuilderQueryEditorOperatorExpression => {
-  // @ts-ignore
   return exp?.type === BuilderQueryEditorExpressionType.Operator && 'operator' in exp && 'property' in exp;
 };
 
 export const removeExtraQuotes = (value: any): string => {
-  // @ts-ignore
   let strValue = String(value).trim();
   if ((strValue.startsWith("'") && strValue.endsWith("'")) || (strValue.startsWith('"') && strValue.endsWith('"'))) {
     return strValue.slice(1, -1);

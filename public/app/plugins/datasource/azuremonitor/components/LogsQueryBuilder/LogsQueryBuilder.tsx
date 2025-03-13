@@ -109,7 +109,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
                 className="width-10"
                 type="number"
                 placeholder="Enter limit"
-                value={limit ?? ''}
+                value={limit ?? 1000}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   const newValue = e.target.value.replace(/[^0-9]/g, '');
                   setLimit(newValue ? Number(newValue) : undefined);

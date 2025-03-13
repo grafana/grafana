@@ -37,6 +37,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
 }) => {
   const styles = useStyles2(getStyles);
   const builderQuery = query.azureLogAnalytics?.builderQuery;
+  const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
 
   if (!builderQuery) {
     return;
@@ -72,6 +73,14 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
   const hasLoadedFilters = useRef(false);
 
   useEffect(() => {
+    const currentTable = builderQuery?.from?.property.name || null;
+
+    if (prevTable.current !== currentTable) {
+      setFilters([]);
+      hasLoadedFilters.current = false;
+      prevTable.current = currentTable;
+    }
+
     if (!hasLoadedFilters.current && builderQuery?.where?.expressions && selectableOptions.length > 0) {
       const filteredExpressions = builderQuery.where.expressions
         .filter(isOperatorExpression)
@@ -96,7 +105,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
       setFilters(filteredExpressions);
       hasLoadedFilters.current = true;
     }
-  }, [builderQuery?.where?.expressions, selectableOptions]);
+  }, [builderQuery, selectableOptions]);
 
   const formatFilters = (filters: Array<{ column: string; operator: string; value: string }>): string => {
     return filters

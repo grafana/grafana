@@ -121,48 +121,30 @@ export class AzureMonitorKustoQueryParser {
   ) {
     const hasValidAggregation = !!(aggregation && aggregation.trim());
     const summarizeAlreadyAdded = parts.some((part) => part.startsWith('summarize'));
-    const hasTimeFilter = parts.find((p) => p.includes('$__timeFilter'));
+    const groupByParts = new Set<string>();
 
-    if (hasValidAggregation && groupBy && groupBy.length > 0) {
-      const groupByParts = new Set<string>();
+    if (groupBy && groupBy.length > 0) {
+      if (hasValidAggregation) {
+        groupBy.forEach((col) => groupByParts.add(col));
 
-      groupBy.forEach((col) => groupByParts.add(col));
-
-      if (hasTimeFilter && datetimeColumn) {
-        groupByParts.add(`bin(${datetimeColumn}, 1h)`);
-      }
-
-      if (aggregation.startsWith('percentile')) {
-        const percentileValue = selectedColumns.includes('percentileParam') ? 15 : undefined;
-        const column = selectedColumns.includes('percentileColumn') ? 'TenantId' : '';
-        parts.push(`summarize ${aggregation}(${percentileValue}, ${column})`);
-      } else {
-        if (groupByParts.has(datetimeColumn)) {
-          groupByParts.delete(datetimeColumn);
+        if (aggregation.startsWith('percentile')) {
+          const percentileValue = selectedColumns.includes('percentileParam') ? 15 : undefined;
+          const column = selectedColumns.includes('percentileColumn');
+          parts.push(`summarize ${aggregation}(${percentileValue}, ${column})`);
+        } else {
+          if (!summarizeAlreadyAdded) {
+            parts.push(`summarize ${aggregation} by ${Array.from(groupByParts).join(', ')}`);
+          }
         }
+      } else if (!hasValidAggregation) {
+        groupBy.forEach((col) => groupByParts.add(col));
 
-        if (groupByParts.size > 0 && !summarizeAlreadyAdded) {
-          parts.push(`summarize ${aggregation} by ${Array.from(groupByParts).join(', ')}`);
+        if (!summarizeAlreadyAdded) {
+          parts.push(`summarize by ${Array.from(groupByParts).join(', ')}`);
         }
-      }
-    } else if (!hasValidAggregation && groupBy && groupBy.length > 0) {
-      const groupByParts = new Set<string>();
-
-      groupBy.forEach((col) => groupByParts.add(col));
-
-      if (selectedColumns.includes(datetimeColumn)) {
-        groupByParts.add(`bin(${datetimeColumn}, 1h)`);
-      }
-
-      if (groupByParts.size > 0 && !summarizeAlreadyAdded) {
-        parts.push(`summarize by ${Array.from(groupByParts).join(', ')}`);
       }
     } else if (hasValidAggregation && !summarizeAlreadyAdded) {
-      if (aggregation === 'percentile') {
-        parts.push(`summarize ${aggregation}(15, TenantId)`);
-      } else {
-        parts.push(`summarize ${aggregation}`);
-      }
+      parts.push(`summarize ${aggregation}`);
     }
   }
 
@@ -184,18 +166,10 @@ export class AzureMonitorKustoQueryParser {
     aggregation?: string
   ) {
     const hasDatetimeGroupBy = groupBy?.some((col) => col === datetimeColumn);
-    const hasBinApplied = parts.some((col) => col.includes('bin('));
     const isOnlyTableSelected = selectedColumns.length === 0 && (!groupBy || groupBy.length === 0);
-    const hasAggregation = aggregation && aggregation.trim().length > 0;
 
-    if (hasAggregation) {
-      parts.pop();
-      parts.push(`summarize ${aggregation} by ${datetimeColumn}`);
-      return;
-    }
-
-    if (hasDatetimeGroupBy && !hasBinApplied) {
-      parts.push(`summarize ${selectedColumns.join(', ')} by bin(${datetimeColumn}, 1h)`);
+    if (hasDatetimeGroupBy) {
+      parts.push(`summarize ${selectedColumns})`);
     } else if (isOnlyTableSelected) {
       parts.push(`order by ${datetimeColumn} asc`);
     } else if (!groupBy?.length && selectedColumns.includes(datetimeColumn)) {

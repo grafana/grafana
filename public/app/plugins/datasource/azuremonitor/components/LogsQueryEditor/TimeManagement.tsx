@@ -85,6 +85,7 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
       setDisabledTimePicker(false);
     }
   }, [query.azureLogAnalytics?.basicLogsQuery]);
+
   return (
     <>
       <InlineField
@@ -92,57 +93,63 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
         tooltip={
           <span>
             Specifies the time-range used to query. The <code>Query</code> option will only use time-ranges specified in
-            the query. <code>Dashboard</code> will only use the Grafana time-range.
+            the query. <code>Dashboard</code> will only use the Grafana time-range. In Logs Builder mode, only Dashboard
+            time will be used.
           </span>
         }
       >
         <RadioButtonGroup
           options={[
-            { label: 'Query', value: 'query' },
+            { label: 'Query', value: 'query', disabled: query.azureLogAnalytics?.mode === 'builder' },
             { label: 'Dashboard', value: 'dashboard' },
           ]}
-          value={query.azureLogAnalytics?.dashboardTime ? 'dashboard' : 'query'}
+          value={
+            query.azureLogAnalytics?.dashboardTime || query.azureLogAnalytics?.mode === 'builder'
+              ? 'dashboard'
+              : 'query'
+          }
           size={'md'}
           onChange={(val) => onChange(setDashboardTime(query, val))}
           disabled={disabledTimePicker}
           disabledOptions={disabledTimePicker ? ['query'] : []}
         />
       </InlineField>
-      {query.azureLogAnalytics?.dashboardTime && (
-        <InlineField
-          label="Time Column"
-          tooltip={
-            <span>
-              Specifies the time column used for filtering. Defaults to the first tables <code>timeSpan</code> column,
-              the first <code>datetime</code> column found or <code>TimeGenerated</code>.
-            </span>
-          }
-        >
-          <Select
-            options={[
-              {
-                label: 'Default time columns',
-                options: defaultTimeColumns ?? [{ value: 'TimeGenerated', label: 'TimeGenerated' }],
-              },
-              {
-                label: 'Other time columns',
-                options: timeColumns ?? [],
-              },
-            ]}
-            onChange={handleTimeColumnChange}
-            value={
-              query.azureLogAnalytics?.timeColumn
-                ? query.azureLogAnalytics?.timeColumn
-                : defaultTimeColumns
-                  ? defaultTimeColumns[0]
-                  : timeColumns
-                    ? timeColumns[0]
-                    : { value: 'TimeGenerated', label: 'TimeGenerated' }
+      {query.azureLogAnalytics?.dashboardTime ||
+        (query.azureLogAnalytics?.mode === 'builder' && (
+          <InlineField
+            label="Time Column"
+            tooltip={
+              <span>
+                Specifies the time column used for filtering. Defaults to the first tables <code>timeSpan</code> column,
+                the first <code>datetime</code> column found or <code>TimeGenerated</code>.
+              </span>
             }
-            allowCustomValue
-          />
-        </InlineField>
-      )}
+          >
+            <Select
+              options={[
+                {
+                  label: 'Default time columns',
+                  options: defaultTimeColumns ?? [{ value: 'TimeGenerated', label: 'TimeGenerated' }],
+                },
+                {
+                  label: 'Other time columns',
+                  options: timeColumns ?? [],
+                },
+              ]}
+              onChange={handleTimeColumnChange}
+              value={
+                query.azureLogAnalytics?.timeColumn
+                  ? query.azureLogAnalytics?.timeColumn
+                  : defaultTimeColumns
+                    ? defaultTimeColumns[0]
+                    : timeColumns
+                      ? timeColumns[0]
+                      : { value: 'TimeGenerated', label: 'TimeGenerated' }
+              }
+              allowCustomValue
+            />
+          </InlineField>
+        ))}
     </>
   );
 }

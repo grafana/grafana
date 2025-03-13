@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorFieldGroup, EditorList, EditorRow } from '@grafana/plugin-ui';
+import { EditorField, EditorFieldGroup, EditorList, EditorRow, InputGroup } from '@grafana/plugin-ui';
 import { Button } from '@grafana/ui';
 
 import {
@@ -30,6 +30,7 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
   templateVariableOptions,
 }) => {
   const builderQuery = query.azureLogAnalytics?.builderQuery;
+  const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
   const [groupBys, setGroupBys] = useState<BuilderQueryEditorGroupByExpression[]>(() => {
     return builderQuery?.groupBy?.expressions || [];
   });
@@ -37,11 +38,19 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
   const hasLoadedGroupBy = useRef(false);
 
   useEffect(() => {
+    const currentTable = builderQuery?.from?.property.name || null;
+
+    if (prevTable.current !== currentTable) {
+      setGroupBys([]);
+      hasLoadedGroupBy.current = false;
+      prevTable.current = currentTable;
+    }
+
     if (!hasLoadedGroupBy.current && builderQuery?.groupBy?.expressions && groupBys.length === 0) {
       setGroupBys(builderQuery.groupBy.expressions);
       hasLoadedGroupBy.current = true;
     }
-  }, [builderQuery?.groupBy?.expressions, groupBys]);
+  }, [builderQuery, groupBys]);
 
   if (!builderQuery) {
     return <></>;
@@ -67,14 +76,12 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
   }
 
   const handleGroupByChange = (newItems: Array<Partial<BuilderQueryEditorGroupByExpression>>) => {
-    let cleaned: BuilderQueryEditorGroupByExpression[] = newItems
-      .filter((g) => g.property?.name)
-      .map((g) => ({
-        type: BuilderQueryEditorExpressionType.Group_by,
-        property: g.property ?? { type: BuilderQueryEditorPropertyType.String, name: '' },
-        interval: g.interval,
-        focus: g.focus ?? false,
-      }));
+    let cleaned: BuilderQueryEditorGroupByExpression[] = newItems.map((g) => ({
+      type: BuilderQueryEditorExpressionType.Group_by,
+      property: g.property ?? { type: BuilderQueryEditorPropertyType.String, name: '' },
+      interval: g.interval,
+      focus: g.focus ?? false,
+    }));
 
     setGroupBys(cleaned);
 
@@ -167,31 +174,32 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
     });
   };
 
-  const addGroupBy = () => {
-    setGroupBys([
-      ...groupBys,
-      {
-        type: BuilderQueryEditorExpressionType.Group_by,
-        property: { type: BuilderQueryEditorPropertyType.String, name: '' },
-        interval: undefined,
-        focus: true,
-      },
-    ]);
-  };
-
   return (
     <EditorRow>
       <EditorFieldGroup>
         <EditorField label="Group by" optional={true}>
-          {groupBys.length > 0 ? (
-            <EditorList
-              items={groupBys}
-              onChange={handleGroupByChange}
-              renderItem={makeRenderGroupBy(availableColumns, onDeleteGroupBy, templateVariableOptions)}
-            />
-          ) : (
-            <Button variant="secondary" icon="plus" onClick={addGroupBy} />
-          )}
+          <InputGroup>
+            {groupBys.length > 0 ? (
+              <EditorList
+                items={groupBys}
+                onChange={handleGroupByChange}
+                renderItem={makeRenderGroupBy(availableColumns, onDeleteGroupBy, templateVariableOptions)}
+              />
+            ) : (
+              <Button
+                variant="secondary"
+                icon="plus"
+                onClick={() =>
+                  handleGroupByChange([
+                    {
+                      type: BuilderQueryEditorExpressionType.Group_by,
+                      property: { type: BuilderQueryEditorPropertyType.String, name: '' },
+                    },
+                  ])
+                }
+              />
+            )}
+          </InputGroup>
         </EditorField>
       </EditorFieldGroup>
     </EditorRow>

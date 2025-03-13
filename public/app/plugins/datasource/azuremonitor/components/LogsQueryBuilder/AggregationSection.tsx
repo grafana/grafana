@@ -29,21 +29,32 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
 }) => {
   const [aggregates, setAggregates] = useState<BuilderQueryEditorReduceExpression[]>([]);
   const builderQuery = query.azureLogAnalytics?.builderQuery;
+  const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
 
   const hasLoadedAggregates = useRef(false);
 
   useEffect(() => {
+    const currentTable = builderQuery?.from?.property.name || null;
+
+    if (prevTable.current !== currentTable) {
+      setAggregates([]);
+      hasLoadedAggregates.current = false;
+      prevTable.current = currentTable;
+    }
+
     if (!hasLoadedAggregates.current && builderQuery?.reduce?.expressions?.length && aggregates.length === 0) {
-      const parsedAggregates = builderQuery.reduce.expressions.map((agg) => ({
-        property: agg.property ?? { type: BuilderQueryEditorPropertyType.String, name: '' },
-        reduce: agg.reduce ?? { name: '', type: BuilderQueryEditorPropertyType.Function },
-        focus: false,
-      }));
+      const parsedAggregates = builderQuery.reduce.expressions
+        .filter((agg) => agg.reduce?.name)
+        .map((agg) => ({
+          property: agg.property ?? { type: BuilderQueryEditorPropertyType.String, name: '' },
+          reduce: agg.reduce ?? { name: '', type: BuilderQueryEditorPropertyType.Function },
+          focus: false,
+        }));
 
       setAggregates(parsedAggregates);
       hasLoadedAggregates.current = true;
     }
-  }, [builderQuery?.reduce?.expressions, aggregates]);
+  }, [builderQuery, aggregates]);
 
   if (!builderQuery) {
     return <></>;
