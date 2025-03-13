@@ -125,11 +125,7 @@ export function BootstrapStep({ onOptionSelect, onStepUpdate, settingsData, repo
                   }}
                   autoFocus={index === 0}
                 >
-                  <Card.Heading>
-                    <Text color="primary" element="h4">
-                      {action.label}
-                    </Text>
-                  </Card.Heading>
+                  <Card.Heading>{action.label}</Card.Heading>
                   <Card.Description>{action.description}</Card.Description>
                 </Card>
               ))}
