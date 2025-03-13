@@ -47,7 +47,7 @@ export function RepositoryActions({
       <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`}>
         Settings
       </LinkButton>
-      <DeleteRepositoryButton name={name} />
+      <DeleteRepositoryButton name={name} redirectTo={PROVISIONING_URL} />
     </Stack>
   );
 }
