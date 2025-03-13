@@ -17,6 +17,7 @@ import {
 } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
+import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { getCloneKey } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
 import { Point, Rect } from '../layout-manager/utils';
@@ -32,6 +33,7 @@ export interface ResponsiveGridItemState extends SceneObjectState {
   repeatedPanels?: VizPanel[];
   variableName?: string;
   isHidden?: boolean;
+  conditionalRendering?: ConditionalRendering;
 }
 
 export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState> implements DashboardLayoutItem {
@@ -44,7 +46,7 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
   public readonly isDashboardLayoutItem = true;
 
   public constructor(state: ResponsiveGridItemState) {
-    super(state);
+    super({ ...state, conditionalRendering: state?.conditionalRendering ?? ConditionalRendering.createEmpty() });
     this.addActivationHandler(() => this._activationHandler());
   }
 
@@ -54,6 +56,14 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
     if (this.state.variableName) {
       this.performRepeat();
     }
+
+    const deactivate = this.state.conditionalRendering?.activate();
+
+    return () => {
+      if (deactivate) {
+        deactivate();
+      }
+    };
   }
 
   public getOptions(): OptionsPaneCategoryDescriptor {
