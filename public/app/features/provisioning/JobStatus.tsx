@@ -112,7 +112,10 @@ function RepositoryLink({ name }: RepositoryLinkProps) {
     return null;
   }
 
-  const repoHref = repo.spec?.github?.url;
+  const repoHref =
+    repo.spec?.github?.url && repo.spec?.github?.branch
+      ? `${repo.spec.github.url}/tree/${repo.spec.github.branch}`
+      : repo.spec?.github?.url;
   const folderHref = repo.spec?.sync.target === 'folder' ? `/dashboards/f/${repo.metadata?.name}` : '/dashboards';
 
   if (!repoHref) {
