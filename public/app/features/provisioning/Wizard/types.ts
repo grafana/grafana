@@ -1,5 +1,3 @@
-import { KeyValue } from '@grafana/data';
-
 import { SyncOptions } from '../api';
 import { RepositoryFormData } from '../types';
 
