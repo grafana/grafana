@@ -120,7 +120,7 @@ export const dashboardsAPI = generatedApi.enhanceEndpoints({
 
 The last, but not least, step to be done is adding the middleware and reducers to the store. 
 
-In Grafana, the reducers are added to `public/app/core/reducers/root.ts`:
+In Grafana, the reducers are added to [`root.ts`](public/app/core/reducers/root.ts):
 
 ```jsx
   import { dashboardAPI } from '<pathToYourAPI>';
@@ -130,7 +130,7 @@ In Grafana, the reducers are added to `public/app/core/reducers/root.ts`:
   };
 ```
 
-And the middlewares are added to `public/app/store/configureStore.ts`:
+And the middlewares are added to [`configureStore.ts`](public/app/store/configureStore.ts):
 
 ```jsx
 import { dashboardAPI } from '<pathToYourAPI>';
