@@ -58,7 +58,7 @@ func newMetrics(reg prometheus.Registerer, name string) *metrics {
 			},
 		}),
 		processingDurationHistogram: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
-			Name:                            name + "_debouncer_processing_duration_seconds",
+			Name:                            "debouncer_processing_duration_seconds",
 			Help:                            "Time taken to process items",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
@@ -115,7 +115,7 @@ type Group[T any] struct {
 // Example usage:
 //
 //	group := debouncer.NewGroup(DebouncerOpts[string]{
-//		BufferSize:     10,
+//		BufferSize:     1000,
 //		KeyFunc:        func(s string) string { return s },
 //		ProcessHandler: func(ctx context.Context, key string) error {
 //		  // This is where you perform the expensive operation
@@ -209,27 +209,30 @@ func (g *Group[T]) Stop() {
 	}
 }
 
-func (g *Group[T]) processValue(value T) {
-	key := g.opts.KeyFunc(value)
+func (g *Group[T]) processValue(key T) {
+	keyStr := g.opts.KeyFunc(key)
 	g.debouncersMu.Lock()
-	deb, ok := g.debouncers[key]
+	deb, ok := g.debouncers[keyStr]
 	if !ok {
-		deb = newDebouncer[T](g.opts.MinWait, g.opts.MaxWait)
-		g.debouncers[key] = deb
+		deb = newDebouncer[T](g.opts.MinWait, g.opts.MaxWait, key, func(v T) {
+			g.processWithMetrics(g.ctx, v, g.processHandler)
+
+			g.debouncersMu.Lock()
+			defer g.debouncersMu.Unlock()
+			if current, exists := g.debouncers[keyStr]; exists && current == deb {
+				delete(g.debouncers, keyStr)
+			}
+		})
+		g.wg.Add(1)
+		go func() {
+			defer g.wg.Done()
+			deb.run(g.ctx)
+		}()
+		g.debouncers[keyStr] = deb
 	}
 	g.debouncersMu.Unlock()
 
-	wrappedProcessFunc := func(v T) {
-		g.processWithMetrics(g.ctx, v, g.processHandler)
-
-		g.debouncersMu.Lock()
-		defer g.debouncersMu.Unlock()
-		if current, exists := g.debouncers[key]; exists && current == deb {
-			delete(g.debouncers, key)
-		}
-	}
-
-	deb.update(value, wrappedProcessFunc)
+	deb.reset()
 }
 
 func (g *Group[T]) processWithMetrics(ctx context.Context, value T, processFunc ProcessFunc[T]) {
@@ -245,59 +248,64 @@ func (g *Group[T]) processWithMetrics(ctx context.Context, value T, processFunc 
 
 // debouncer handles debouncing for a specific key.
 type debouncer[T any] struct {
-	// mutex that protects the whole debouncer process.
-	mu       sync.Mutex
-	value    T
-	minTimer *time.Timer
-	maxTimer *time.Timer
-	minWait  time.Duration
-	maxWait  time.Duration
+	key         T
+	resetChan   chan struct{}
+	minWait     time.Duration
+	maxWait     time.Duration
+	processFunc func(T)
 }
 
 // newDebouncer creates a new key debouncer.
-func newDebouncer[T any](minWait, maxWait time.Duration) *debouncer[T] {
-	return &debouncer[T]{
-		minWait: minWait,
-		maxWait: maxWait,
+func newDebouncer[T any](minWait, maxWait time.Duration, key T, processFunc func(T)) *debouncer[T] {
+	deb := &debouncer[T]{
+		key:         key,
+		resetChan:   make(chan struct{}, 1),
+		minWait:     minWait,
+		maxWait:     maxWait,
+		processFunc: processFunc,
+	}
+	return deb
+}
+
+// reset triggers a timer reset for the minWait.
+func (d *debouncer[T]) reset() {
+	select {
+	case d.resetChan <- struct{}{}:
+		// Value sent successfully.
+	default:
+		// Value was dropped. Is not an issue as
+		// a reset is already about to being processed.
 	}
 }
 
-// update updates the debouncer with a new value.
-func (d *debouncer[T]) update(value T, processFunc func(T)) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
+// run manages the debouncing process for a specific key.
+func (d *debouncer[T]) run(ctx context.Context) {
+	// Create timers after getting the first updateChan.
+	minTimer := time.NewTimer(d.minWait)
+	maxTimer := time.NewTimer(d.maxWait)
+	defer func() {
+		minTimer.Stop()
+		maxTimer.Stop()
+	}()
 
-	d.value = value
-
-	if d.minTimer != nil {
-		d.minTimer.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-d.resetChan:
+			if !minTimer.Stop() {
+				select {
+				case <-minTimer.C:
+				default:
+				}
+			}
+			minTimer.Reset(d.minWait)
+		case <-minTimer.C:
+			d.processFunc(d.key)
+			return
+		case <-maxTimer.C:
+			d.processFunc(d.key)
+			return
+		}
 	}
-	d.minTimer = time.AfterFunc(d.minWait, func() {
-		d.process(processFunc)
-	})
-
-	// Ensure max timer is only set once.
-	if d.maxTimer == nil {
-		d.maxTimer = time.AfterFunc(d.maxWait, func() {
-			d.process(processFunc)
-		})
-	}
-}
-
-// process processes the current value.
-func (d *debouncer[T]) process(processFunc func(T)) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	// Stop timers and clear references.
-	if d.minTimer != nil {
-		d.minTimer.Stop()
-		d.minTimer = nil
-	}
-	if d.maxTimer != nil {
-		d.maxTimer.Stop()
-		d.maxTimer = nil
-	}
-
-	processFunc(d.value)
 }
