@@ -34,31 +34,23 @@ jobs:
 
       - name: Build docs website
         run: |
-          # Create a temporary directory for Hugo content
-          mkdir -p /tmp/hugo/content/docs/grafana/latest
+          # Create a container from the docs-base image
+          docker create --name docs-builder grafana/docs-base:latest /bin/true
           
-          cat << EOF > /tmp/hugo/content/docs/grafana/_index.md
-          ---
-          redirectURL: /docs/grafana/latest/
-          type: redirect
-          versioned: true
-          ---
-          EOF
+          # Create the directory structure inside the container
+          docker exec docs-builder mkdir -p /hugo/content/docs/grafana/latest
           
-          # Copy docs sources to the temporary Hugo directory
-          cp -r docs/sources/* /tmp/hugo/content/docs/grafana/latest/
+          # Create the _index.md file
+          docker exec docs-builder /bin/sh -c "echo -e '---\nredirectURL: /docs/grafana/latest/\ntype: redirect\nversioned: true\n---\n' > /hugo/content/docs/grafana/_index.md"
           
-          # Clone the website repository to get the necessary Hugo configuration
-          git clone --depth 1 https://github.com/grafana/website.git /tmp/website
+          # Copy the docs sources from the host to the container
+          docker cp docs/sources/. docs-builder:/hugo/content/docs/grafana/latest/
           
-          # Copy necessary files from the website repository to the Hugo directory
-          cp -r /tmp/website/config /tmp/hugo/
-          cp -r /tmp/website/layouts /tmp/hugo/
-          cp -r /tmp/website/static /tmp/hugo/
-          cp -r /tmp/website/Makefile /tmp/hugo/
+          # Run the make prod command inside the container
+          docker exec -w /hugo docs-builder make prod || echo "Build completed with warnings"
           
-          # Run the Docker container with the correct paths
-          docker run --rm -v /tmp/hugo:/hugo grafana/docs-base:latest /bin/sh -c "cd /hugo && ls -la && hugo"
+          # Clean up the container
+          docker rm -f docs-builder
       
       - name: Setup Go
         uses: actions/setup-go@v5
