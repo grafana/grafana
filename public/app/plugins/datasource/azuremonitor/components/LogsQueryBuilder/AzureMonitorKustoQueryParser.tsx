@@ -60,7 +60,7 @@ export class AzureMonitorKustoQueryParser {
   ) {
     const whereConditions = new Set<string>();
 
-    if (shouldApplyTimeFilter) {
+    if (shouldApplyTimeFilter && !whereConditions.has(`$__timeFilter(${datetimeColumn})`)) {
       whereConditions.add(`$__timeFilter(${datetimeColumn})`);
     }
 
@@ -92,16 +92,23 @@ export class AzureMonitorKustoQueryParser {
 
           if (operatorName && operatorValue && columnName) {
             if (operatorName === 'has' && columnName === '*') {
-              const operatorValueStr = String(operatorValue);
+              let cleanedOperator = String(operatorValue).trim();
+
+              while (cleanedOperator.startsWith('"') || cleanedOperator.startsWith("'")) {
+                cleanedOperator = cleanedOperator.slice(1);
+              }
+              while (cleanedOperator.endsWith('"') || cleanedOperator.endsWith("'")) {
+                cleanedOperator = cleanedOperator.slice(0, -1);
+              }
               const conditionsArray = Array.from(whereConditions);
 
               conditionsArray.forEach((existingCondition: string) => {
-                if (existingCondition.includes(operatorValueStr)) {
+                if (existingCondition.includes(cleanedOperator)) {
                   whereConditions.delete(existingCondition);
                 }
               });
 
-              whereConditions.add(`${columnName} has '${operatorValueStr}'`);
+              whereConditions.add(`${columnName} has '${cleanedOperator}'`);
             } else {
               whereConditions.add(`${columnName} ${operatorName} '${operatorValue}'`);
             }
@@ -175,9 +182,13 @@ export class AzureMonitorKustoQueryParser {
 
   private static appendProject(selectedColumns: string[], parts: string[]) {
     if (selectedColumns.length > 0) {
+      if (selectedColumns.includes('TimeGenerated') && !parts.some((p) => p.includes('$__timeFilter(TimeGenerated)'))) {
+        parts.splice(1, 0, `where $__timeFilter(TimeGenerated)`); 
+      }
+  
       parts.push(`project ${selectedColumns.join(', ')}`);
     }
-  }
+  }  
 
   private static appendOrderBy(
     datetimeColumn: string,

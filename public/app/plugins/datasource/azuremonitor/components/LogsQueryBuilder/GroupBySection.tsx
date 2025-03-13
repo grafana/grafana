@@ -20,9 +20,10 @@ interface GroupBySectionProps {
   query: AzureMonitorQuery;
   allColumns: AzureLogAnalyticsMetadataColumn[];
   onQueryUpdate: (newQuery: AzureMonitorQuery) => void;
+  templateVariableOptions: SelectableValue<string>;
 }
 
-export const GroupBySection: React.FC<GroupBySectionProps> = ({ query, onQueryUpdate, allColumns }) => {
+export const GroupBySection: React.FC<GroupBySectionProps> = ({ query, onQueryUpdate, allColumns, templateVariableOptions }) => {
   const [groupBys, setGroupBys] = useState<BuilderQueryEditorGroupByExpression[]>([]);
   const builderQuery = query.azureLogAnalytics?.builderQuery;
 
@@ -169,7 +170,7 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({ query, onQueryUp
             <EditorList
               items={groupBys}
               onChange={handleGroupByChange}
-              renderItem={makeRenderGroupBy(availableColumns, onDeleteGroupBy)}
+              renderItem={makeRenderGroupBy(availableColumns, onDeleteGroupBy, templateVariableOptions)}
             />
           ) : (
             <Button variant="secondary" icon="plus" onClick={addGroupBy} />
@@ -182,7 +183,8 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({ query, onQueryUp
 
 const makeRenderGroupBy = (
   columns: Array<SelectableValue<string>>,
-  onDeleteGroupBy: (propertyName: string) => void
+  onDeleteGroupBy: (propertyName: string) => void,
+  templateVariableOptions: SelectableValue<string>
 ) => {
   return (
     item: Partial<BuilderQueryEditorGroupByExpression>,
@@ -201,6 +203,7 @@ const makeRenderGroupBy = (
         onDeleteItem();
       }}
       columns={columns}
+      templateVariableOptions={templateVariableOptions}
     />
   );
 };

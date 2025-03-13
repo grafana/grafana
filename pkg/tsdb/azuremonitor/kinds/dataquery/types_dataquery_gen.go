@@ -181,6 +181,207 @@ const (
 	ResultFormatLogs       ResultFormat = "logs"
 )
 
+type LogsEditorMode string
+
+const (
+	LogsEditorModeBuilder LogsEditorMode = "builder"
+	LogsEditorModeRaw     LogsEditorMode = "raw"
+)
+
+type BuilderQueryExpression struct {
+	From    *BuilderQueryEditorPropertyExpression     `json:"from,omitempty"`
+	Columns *BuilderQueryEditorColumnsExpression      `json:"columns,omitempty"`
+	Where   *BuilderQueryEditorWhereArrayExpression   `json:"where,omitempty"`
+	Reduce  *BuilderQueryEditorReduceExpressionArray  `json:"reduce,omitempty"`
+	GroupBy *BuilderQueryEditorGroupByExpressionArray `json:"groupBy,omitempty"`
+	Limit   *int64                                    `json:"limit,omitempty"`
+}
+
+// NewBuilderQueryExpression creates a new BuilderQueryExpression object.
+func NewBuilderQueryExpression() *BuilderQueryExpression {
+	return &BuilderQueryExpression{}
+}
+
+type BuilderQueryEditorPropertyExpression struct {
+	Property BuilderQueryEditorProperty       `json:"property"`
+	Type     BuilderQueryEditorExpressionType `json:"type"`
+}
+
+// NewBuilderQueryEditorPropertyExpression creates a new BuilderQueryEditorPropertyExpression object.
+func NewBuilderQueryEditorPropertyExpression() *BuilderQueryEditorPropertyExpression {
+	return &BuilderQueryEditorPropertyExpression{
+		Property: *NewBuilderQueryEditorProperty(),
+	}
+}
+
+type BuilderQueryEditorProperty struct {
+	Type BuilderQueryEditorPropertyType `json:"type"`
+	Name string                         `json:"name"`
+}
+
+// NewBuilderQueryEditorProperty creates a new BuilderQueryEditorProperty object.
+func NewBuilderQueryEditorProperty() *BuilderQueryEditorProperty {
+	return &BuilderQueryEditorProperty{}
+}
+
+type BuilderQueryEditorPropertyType string
+
+const (
+	BuilderQueryEditorPropertyTypeNumber   BuilderQueryEditorPropertyType = "number"
+	BuilderQueryEditorPropertyTypeString   BuilderQueryEditorPropertyType = "string"
+	BuilderQueryEditorPropertyTypeBoolean  BuilderQueryEditorPropertyType = "boolean"
+	BuilderQueryEditorPropertyTypeDatetime BuilderQueryEditorPropertyType = "datetime"
+	BuilderQueryEditorPropertyTypeTimeSpan BuilderQueryEditorPropertyType = "time_span"
+	BuilderQueryEditorPropertyTypeFunction BuilderQueryEditorPropertyType = "function"
+	BuilderQueryEditorPropertyTypeInterval BuilderQueryEditorPropertyType = "interval"
+)
+
+type BuilderQueryEditorExpressionType string
+
+const (
+	BuilderQueryEditorExpressionTypeProperty          BuilderQueryEditorExpressionType = "property"
+	BuilderQueryEditorExpressionTypeOperator          BuilderQueryEditorExpressionType = "operator"
+	BuilderQueryEditorExpressionTypeReduce            BuilderQueryEditorExpressionType = "reduce"
+	BuilderQueryEditorExpressionTypeFunctionParameter BuilderQueryEditorExpressionType = "function_parameter"
+	BuilderQueryEditorExpressionTypeGroupBy           BuilderQueryEditorExpressionType = "group_by"
+	BuilderQueryEditorExpressionTypeOr                BuilderQueryEditorExpressionType = "or"
+	BuilderQueryEditorExpressionTypeAnd               BuilderQueryEditorExpressionType = "and"
+)
+
+type BuilderQueryEditorColumnsExpression struct {
+	Columns []string                         `json:"columns,omitempty"`
+	Type    BuilderQueryEditorExpressionType `json:"type"`
+}
+
+// NewBuilderQueryEditorColumnsExpression creates a new BuilderQueryEditorColumnsExpression object.
+func NewBuilderQueryEditorColumnsExpression() *BuilderQueryEditorColumnsExpression {
+	return &BuilderQueryEditorColumnsExpression{}
+}
+
+type BuilderQueryEditorWhereArrayExpression struct {
+	Expressions []any                            `json:"expressions"`
+	Type        BuilderQueryEditorExpressionType `json:"type"`
+}
+
+// NewBuilderQueryEditorWhereArrayExpression creates a new BuilderQueryEditorWhereArrayExpression object.
+func NewBuilderQueryEditorWhereArrayExpression() *BuilderQueryEditorWhereArrayExpression {
+	return &BuilderQueryEditorWhereArrayExpression{}
+}
+
+type BuilderQueryEditorOperatorExpression struct {
+	Property BuilderQueryEditorProperty       `json:"property"`
+	Operator BuilderQueryEditorOperator       `json:"operator"`
+	Type     BuilderQueryEditorExpressionType `json:"type"`
+}
+
+// NewBuilderQueryEditorOperatorExpression creates a new BuilderQueryEditorOperatorExpression object.
+func NewBuilderQueryEditorOperatorExpression() *BuilderQueryEditorOperatorExpression {
+	return &BuilderQueryEditorOperatorExpression{
+		Property: *NewBuilderQueryEditorProperty(),
+		Operator: *NewBuilderQueryEditorOperator(),
+	}
+}
+
+type BuilderQueryEditorOperator struct {
+	Name       string                         `json:"name"`
+	Value      BuilderQueryEditorOperatorType `json:"value"`
+	LabelValue *string                        `json:"labelValue,omitempty"`
+}
+
+// NewBuilderQueryEditorOperator creates a new BuilderQueryEditorOperator object.
+func NewBuilderQueryEditorOperator() *BuilderQueryEditorOperator {
+	return &BuilderQueryEditorOperator{
+		Value: *NewBuilderQueryEditorOperatorType(),
+	}
+}
+
+type BuilderQueryEditorOperatorType = StringOrBoolOrFloat64OrSelectableValue
+
+// NewBuilderQueryEditorOperatorType creates a new BuilderQueryEditorOperatorType object.
+func NewBuilderQueryEditorOperatorType() *BuilderQueryEditorOperatorType {
+	return NewStringOrBoolOrFloat64OrSelectableValue()
+}
+
+type SelectableValue struct {
+	Label string `json:"label"`
+	Value string `json:"value"`
+}
+
+// NewSelectableValue creates a new SelectableValue object.
+func NewSelectableValue() *SelectableValue {
+	return &SelectableValue{}
+}
+
+type BuilderQueryEditorWhereExpression struct {
+	Expressions []BuilderQueryEditorOperatorExpression `json:"expressions"`
+	Type        BuilderQueryEditorExpressionType       `json:"type"`
+}
+
+// NewBuilderQueryEditorWhereExpression creates a new BuilderQueryEditorWhereExpression object.
+func NewBuilderQueryEditorWhereExpression() *BuilderQueryEditorWhereExpression {
+	return &BuilderQueryEditorWhereExpression{}
+}
+
+type BuilderQueryEditorReduceExpressionArray struct {
+	Expressions []BuilderQueryEditorReduceExpression `json:"expressions"`
+	Type        BuilderQueryEditorExpressionType     `json:"type"`
+}
+
+// NewBuilderQueryEditorReduceExpressionArray creates a new BuilderQueryEditorReduceExpressionArray object.
+func NewBuilderQueryEditorReduceExpressionArray() *BuilderQueryEditorReduceExpressionArray {
+	return &BuilderQueryEditorReduceExpressionArray{}
+}
+
+type BuilderQueryEditorReduceExpression struct {
+	Property   BuilderQueryEditorProperty                      `json:"property"`
+	Reduce     BuilderQueryEditorProperty                      `json:"reduce"`
+	Parameters []BuilderQueryEditorFunctionParameterExpression `json:"parameters,omitempty"`
+	Focus      *bool                                           `json:"focus,omitempty"`
+}
+
+// NewBuilderQueryEditorReduceExpression creates a new BuilderQueryEditorReduceExpression object.
+func NewBuilderQueryEditorReduceExpression() *BuilderQueryEditorReduceExpression {
+	return &BuilderQueryEditorReduceExpression{
+		Property: *NewBuilderQueryEditorProperty(),
+		Reduce:   *NewBuilderQueryEditorProperty(),
+	}
+}
+
+type BuilderQueryEditorFunctionParameterExpression struct {
+	Value     string                           `json:"value"`
+	FieldType BuilderQueryEditorPropertyType   `json:"fieldType"`
+	Type      BuilderQueryEditorExpressionType `json:"type"`
+}
+
+// NewBuilderQueryEditorFunctionParameterExpression creates a new BuilderQueryEditorFunctionParameterExpression object.
+func NewBuilderQueryEditorFunctionParameterExpression() *BuilderQueryEditorFunctionParameterExpression {
+	return &BuilderQueryEditorFunctionParameterExpression{}
+}
+
+type BuilderQueryEditorGroupByExpressionArray struct {
+	Expressions []BuilderQueryEditorGroupByExpression `json:"expressions"`
+	Type        BuilderQueryEditorExpressionType      `json:"type"`
+}
+
+// NewBuilderQueryEditorGroupByExpressionArray creates a new BuilderQueryEditorGroupByExpressionArray object.
+func NewBuilderQueryEditorGroupByExpressionArray() *BuilderQueryEditorGroupByExpressionArray {
+	return &BuilderQueryEditorGroupByExpressionArray{}
+}
+
+type BuilderQueryEditorGroupByExpression struct {
+	Property BuilderQueryEditorProperty       `json:"property"`
+	Interval *BuilderQueryEditorProperty      `json:"interval,omitempty"`
+	Focus    *bool                            `json:"focus,omitempty"`
+	Type     BuilderQueryEditorExpressionType `json:"type"`
+}
+
+// NewBuilderQueryEditorGroupByExpression creates a new BuilderQueryEditorGroupByExpression object.
+func NewBuilderQueryEditorGroupByExpression() *BuilderQueryEditorGroupByExpression {
+	return &BuilderQueryEditorGroupByExpression{
+		Property: *NewBuilderQueryEditorProperty(),
+	}
+}
+
 type AzureResourceGraphQuery struct {
 	// Azure Resource Graph KQL query to be executed.
 	Query *string `json:"query,omitempty"`
@@ -226,285 +427,6 @@ type AzureTracesFilter struct {
 // NewAzureTracesFilter creates a new AzureTracesFilter object.
 func NewAzureTracesFilter() *AzureTracesFilter {
 	return &AzureTracesFilter{}
-}
-
-type ResultFormat string
-
-const (
-	ResultFormatTable      ResultFormat = "table"
-	ResultFormatTimeSeries ResultFormat = "time_series"
-	ResultFormatTrace      ResultFormat = "trace"
-	ResultFormatLogs       ResultFormat = "logs"
-)
-
-type LogsEditorMode string
-
-const (
-	LogsEditorModeBuilder LogsEditorMode = "builder"
-	LogsEditorModeRaw     LogsEditorMode = "raw"
-)
-
-type BuilderQueryEditorExpressionType string
-
-const (
-	BuilderQueryEditorExpressionTypeProperty          BuilderQueryEditorExpressionType = "property"
-	BuilderQueryEditorExpressionTypeOperator          BuilderQueryEditorExpressionType = "operator"
-	BuilderQueryEditorExpressionTypeReduce            BuilderQueryEditorExpressionType = "reduce"
-	BuilderQueryEditorExpressionTypeFunctionParameter BuilderQueryEditorExpressionType = "function_parameter"
-	BuilderQueryEditorExpressionTypeGroupBy           BuilderQueryEditorExpressionType = "group_by"
-	BuilderQueryEditorExpressionTypeOr                BuilderQueryEditorExpressionType = "or"
-	BuilderQueryEditorExpressionTypeAnd               BuilderQueryEditorExpressionType = "and"
-)
-
-type BuilderQueryEditorPropertyType string
-
-const (
-	BuilderQueryEditorPropertyTypeNumber   BuilderQueryEditorPropertyType = "number"
-	BuilderQueryEditorPropertyTypeString   BuilderQueryEditorPropertyType = "string"
-	BuilderQueryEditorPropertyTypeBoolean  BuilderQueryEditorPropertyType = "boolean"
-	BuilderQueryEditorPropertyTypeDatetime BuilderQueryEditorPropertyType = "datetime"
-	BuilderQueryEditorPropertyTypeTimeSpan BuilderQueryEditorPropertyType = "time_span"
-	BuilderQueryEditorPropertyTypeFunction BuilderQueryEditorPropertyType = "function"
-	BuilderQueryEditorPropertyTypeInterval BuilderQueryEditorPropertyType = "interval"
-)
-
-type BuilderQueryEditorProperty struct {
-	Type BuilderQueryEditorPropertyType `json:"type"`
-	Name string                         `json:"name"`
-}
-
-// NewBuilderQueryEditorProperty creates a new BuilderQueryEditorProperty object.
-func NewBuilderQueryEditorProperty() *BuilderQueryEditorProperty {
-	return &BuilderQueryEditorProperty{}
-}
-
-type BuilderQueryEditorPropertyExpression struct {
-	Property BuilderQueryEditorProperty       `json:"property"`
-	Type     BuilderQueryEditorExpressionType `json:"type"`
-}
-
-// NewBuilderQueryEditorPropertyExpression creates a new BuilderQueryEditorPropertyExpression object.
-func NewBuilderQueryEditorPropertyExpression() *BuilderQueryEditorPropertyExpression {
-	return &BuilderQueryEditorPropertyExpression{
-		Property: *NewBuilderQueryEditorProperty(),
-	}
-}
-
-type BuilderQueryEditorColumnsExpression struct {
-	Columns []string                         `json:"columns,omitempty"`
-	Type    BuilderQueryEditorExpressionType `json:"type"`
-}
-
-// NewBuilderQueryEditorColumnsExpression creates a new BuilderQueryEditorColumnsExpression object.
-func NewBuilderQueryEditorColumnsExpression() *BuilderQueryEditorColumnsExpression {
-	return &BuilderQueryEditorColumnsExpression{}
-}
-
-type SelectableValue struct {
-	Label string `json:"label"`
-	Value string `json:"value"`
-}
-
-// NewSelectableValue creates a new SelectableValue object.
-func NewSelectableValue() *SelectableValue {
-	return &SelectableValue{}
-}
-
-type BuilderQueryEditorOperatorType = StringOrBoolOrFloat64OrSelectableValue
-
-// NewBuilderQueryEditorOperatorType creates a new BuilderQueryEditorOperatorType object.
-func NewBuilderQueryEditorOperatorType() *BuilderQueryEditorOperatorType {
-	return NewStringOrBoolOrFloat64OrSelectableValue()
-}
-
-type BuilderQueryEditorOperator struct {
-	Name       string                         `json:"name"`
-	Value      BuilderQueryEditorOperatorType `json:"value"`
-	LabelValue *string                        `json:"labelValue,omitempty"`
-}
-
-// NewBuilderQueryEditorOperator creates a new BuilderQueryEditorOperator object.
-func NewBuilderQueryEditorOperator() *BuilderQueryEditorOperator {
-	return &BuilderQueryEditorOperator{
-		Value: *NewBuilderQueryEditorOperatorType(),
-	}
-}
-
-type BuilderQueryEditorOperatorExpression struct {
-	Property BuilderQueryEditorProperty       `json:"property"`
-	Operator BuilderQueryEditorOperator       `json:"operator"`
-	Type     BuilderQueryEditorExpressionType `json:"type"`
-}
-
-// NewBuilderQueryEditorOperatorExpression creates a new BuilderQueryEditorOperatorExpression object.
-func NewBuilderQueryEditorOperatorExpression() *BuilderQueryEditorOperatorExpression {
-	return &BuilderQueryEditorOperatorExpression{
-		Property: *NewBuilderQueryEditorProperty(),
-		Operator: *NewBuilderQueryEditorOperator(),
-	}
-}
-
-type BuilderQueryEditorWhereExpression struct {
-	Expressions []BuilderQueryEditorOperatorExpression `json:"expressions"`
-	Type        BuilderQueryEditorExpressionType       `json:"type"`
-}
-
-// NewBuilderQueryEditorWhereExpression creates a new BuilderQueryEditorWhereExpression object.
-func NewBuilderQueryEditorWhereExpression() *BuilderQueryEditorWhereExpression {
-	return &BuilderQueryEditorWhereExpression{}
-}
-
-type BuilderQueryEditorWhereArrayExpression struct {
-	Expressions []any                            `json:"expressions"`
-	Type        BuilderQueryEditorExpressionType `json:"type"`
-}
-
-// NewBuilderQueryEditorWhereArrayExpression creates a new BuilderQueryEditorWhereArrayExpression object.
-func NewBuilderQueryEditorWhereArrayExpression() *BuilderQueryEditorWhereArrayExpression {
-	return &BuilderQueryEditorWhereArrayExpression{}
-}
-
-type BuilderQueryEditorFunctionParameterExpression struct {
-	Value     string                           `json:"value"`
-	FieldType BuilderQueryEditorPropertyType   `json:"fieldType"`
-	Type      BuilderQueryEditorExpressionType `json:"type"`
-}
-
-// NewBuilderQueryEditorFunctionParameterExpression creates a new BuilderQueryEditorFunctionParameterExpression object.
-func NewBuilderQueryEditorFunctionParameterExpression() *BuilderQueryEditorFunctionParameterExpression {
-	return &BuilderQueryEditorFunctionParameterExpression{}
-}
-
-type BuilderQueryEditorReduceExpression struct {
-	Property   BuilderQueryEditorProperty                      `json:"property"`
-	Reduce     BuilderQueryEditorProperty                      `json:"reduce"`
-	Parameters []BuilderQueryEditorFunctionParameterExpression `json:"parameters,omitempty"`
-	Focus      *bool                                           `json:"focus,omitempty"`
-}
-
-// NewBuilderQueryEditorReduceExpression creates a new BuilderQueryEditorReduceExpression object.
-func NewBuilderQueryEditorReduceExpression() *BuilderQueryEditorReduceExpression {
-	return &BuilderQueryEditorReduceExpression{
-		Property: *NewBuilderQueryEditorProperty(),
-		Reduce:   *NewBuilderQueryEditorProperty(),
-	}
-}
-
-type BuilderQueryEditorReduceExpressionArray struct {
-	Expressions []BuilderQueryEditorReduceExpression `json:"expressions"`
-	Type        BuilderQueryEditorExpressionType     `json:"type"`
-}
-
-// NewBuilderQueryEditorReduceExpressionArray creates a new BuilderQueryEditorReduceExpressionArray object.
-func NewBuilderQueryEditorReduceExpressionArray() *BuilderQueryEditorReduceExpressionArray {
-	return &BuilderQueryEditorReduceExpressionArray{}
-}
-
-type BuilderQueryEditorGroupByExpression struct {
-	Property BuilderQueryEditorProperty       `json:"property"`
-	Interval *BuilderQueryEditorProperty      `json:"interval,omitempty"`
-	Focus    *bool                            `json:"focus,omitempty"`
-	Type     BuilderQueryEditorExpressionType `json:"type"`
-}
-
-// NewBuilderQueryEditorGroupByExpression creates a new BuilderQueryEditorGroupByExpression object.
-func NewBuilderQueryEditorGroupByExpression() *BuilderQueryEditorGroupByExpression {
-	return &BuilderQueryEditorGroupByExpression{
-		Property: *NewBuilderQueryEditorProperty(),
-	}
-}
-
-type BuilderQueryEditorGroupByExpressionArray struct {
-	Expressions []BuilderQueryEditorGroupByExpression `json:"expressions"`
-	Type        BuilderQueryEditorExpressionType      `json:"type"`
-}
-
-// NewBuilderQueryEditorGroupByExpressionArray creates a new BuilderQueryEditorGroupByExpressionArray object.
-func NewBuilderQueryEditorGroupByExpressionArray() *BuilderQueryEditorGroupByExpressionArray {
-	return &BuilderQueryEditorGroupByExpressionArray{}
-}
-
-type BuilderQueryExpression struct {
-	From    *BuilderQueryEditorPropertyExpression     `json:"from,omitempty"`
-	Columns *BuilderQueryEditorColumnsExpression      `json:"columns,omitempty"`
-	Where   *BuilderQueryEditorWhereArrayExpression   `json:"where,omitempty"`
-	Reduce  *BuilderQueryEditorReduceExpressionArray  `json:"reduce,omitempty"`
-	GroupBy *BuilderQueryEditorGroupByExpressionArray `json:"groupBy,omitempty"`
-	Limit   *int64                                    `json:"limit,omitempty"`
-}
-
-// NewBuilderQueryExpression creates a new BuilderQueryExpression object.
-func NewBuilderQueryExpression() *BuilderQueryExpression {
-	return &BuilderQueryExpression{}
-}
-
-type AzureResourceGraphQuery struct {
-	// Azure Resource Graph KQL query to be executed.
-	Query *string `json:"query,omitempty"`
-	// Specifies the format results should be returned as. Defaults to table.
-	ResultFormat *string `json:"resultFormat,omitempty"`
-}
-
-// NewAzureResourceGraphQuery creates a new AzureResourceGraphQuery object.
-func NewAzureResourceGraphQuery() *AzureResourceGraphQuery {
-	return &AzureResourceGraphQuery{}
-}
-
-type AzureMonitorResource struct {
-	Subscription    *string `json:"subscription,omitempty"`
-	ResourceGroup   *string `json:"resourceGroup,omitempty"`
-	ResourceName    *string `json:"resourceName,omitempty"`
-	MetricNamespace *string `json:"metricNamespace,omitempty"`
-	Region          *string `json:"region,omitempty"`
-}
-
-// NewAzureMonitorResource creates a new AzureMonitorResource object.
-func NewAzureMonitorResource() *AzureMonitorResource {
-	return &AzureMonitorResource{}
-}
-
-type AzureMetricDimension struct {
-	// Name of Dimension to be filtered on.
-	Dimension *string `json:"dimension,omitempty"`
-	// String denoting the filter operation. Supports 'eq' - equals,'ne' - not equals, 'sw' - starts with. Note that some dimensions may not support all operators.
-	Operator *string `json:"operator,omitempty"`
-	// Values to match with the filter.
-	Filters []string `json:"filters,omitempty"`
-	// @deprecated filter is deprecated in favour of filters to support multiselect.
-	Filter *string `json:"filter,omitempty"`
-}
-
-// NewAzureMetricDimension creates a new AzureMetricDimension object.
-func NewAzureMetricDimension() *AzureMetricDimension {
-	return &AzureMetricDimension{}
-}
-
-type GrafanaTemplateVariableQueryType string
-
-const (
-	GrafanaTemplateVariableQueryTypeAppInsightsMetricNameQuery GrafanaTemplateVariableQueryType = "AppInsightsMetricNameQuery"
-	GrafanaTemplateVariableQueryTypeAppInsightsGroupByQuery    GrafanaTemplateVariableQueryType = "AppInsightsGroupByQuery"
-	GrafanaTemplateVariableQueryTypeSubscriptionsQuery         GrafanaTemplateVariableQueryType = "SubscriptionsQuery"
-	GrafanaTemplateVariableQueryTypeResourceGroupsQuery        GrafanaTemplateVariableQueryType = "ResourceGroupsQuery"
-	GrafanaTemplateVariableQueryTypeResourceNamesQuery         GrafanaTemplateVariableQueryType = "ResourceNamesQuery"
-	GrafanaTemplateVariableQueryTypeMetricNamespaceQuery       GrafanaTemplateVariableQueryType = "MetricNamespaceQuery"
-	GrafanaTemplateVariableQueryTypeMetricNamesQuery           GrafanaTemplateVariableQueryType = "MetricNamesQuery"
-	GrafanaTemplateVariableQueryTypeWorkspacesQuery            GrafanaTemplateVariableQueryType = "WorkspacesQuery"
-	GrafanaTemplateVariableQueryTypeUnknownQuery               GrafanaTemplateVariableQueryType = "UnknownQuery"
-)
-
-type BaseGrafanaTemplateVariableQuery struct {
-	RawQuery *string `json:"rawQuery,omitempty"`
-}
-
-// NewBaseGrafanaTemplateVariableQuery creates a new BaseGrafanaTemplateVariableQuery object.
-func NewBaseGrafanaTemplateVariableQuery() *BaseGrafanaTemplateVariableQuery {
-	return &BaseGrafanaTemplateVariableQuery{}
-}
-
-type UnknownQuery struct {
-	RawQuery *string `json:"rawQuery,omitempty"`
-	Kind     string  `json:"kind"`
 }
 
 type GrafanaTemplateVariableQuery = AppInsightsMetricNameQueryOrAppInsightsGroupByQueryOrSubscriptionsQueryOrResourceGroupsQueryOrResourceNamesQueryOrMetricNamespaceQueryOrMetricDefinitionsQueryOrMetricNamesQueryOrWorkspacesQueryOrUnknownQuery

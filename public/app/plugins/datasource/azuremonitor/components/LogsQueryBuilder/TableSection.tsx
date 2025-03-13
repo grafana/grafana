@@ -12,17 +12,18 @@ import {
 import { AzureMonitorQuery, AzureLogAnalyticsMetadataColumn, AzureLogAnalyticsMetadataTable } from '../../types';
 
 import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
-import { DEFAULT_LOGS_BUILDER_QUERY } from './utils';
+import { DEFAULT_LOGS_BUILDER_QUERY, getAggregations, getFilters } from './utils';
 
 interface TableSectionProps {
   allColumns: AzureLogAnalyticsMetadataColumn[];
   tables: AzureLogAnalyticsMetadataTable[];
   query: AzureMonitorQuery;
   onQueryUpdate: (newQuery: AzureMonitorQuery) => void;
+  templateVariableOptions: SelectableValue<string>;
 }
 
 export const TableSection: React.FC<TableSectionProps> = (props) => {
-  const { allColumns, query, tables, onQueryUpdate } = props;
+  const { allColumns, query, tables, onQueryUpdate, templateVariableOptions } = props;
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const selectedColumns = query.azureLogAnalytics?.builderQuery?.columns?.columns;
 
@@ -64,11 +65,13 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
     const selectedArray = Array.isArray(selected) ? selected.map((col) => col.value!) : [selected.value!];
 
     const updatedBuilderQuery: BuilderQueryExpression = {
-      ...DEFAULT_LOGS_BUILDER_QUERY,
       ...builderQuery,
       columns: { columns: selectedArray, type: BuilderQueryEditorExpressionType.Property },
     };
-    const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(updatedBuilderQuery, allColumns);
+
+    const aggregation = getAggregations(updatedBuilderQuery.reduce?.expressions);
+    const filters = getFilters(updatedBuilderQuery.where?.expressions);
+    const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(updatedBuilderQuery, allColumns, aggregation, filters);
 
     onQueryUpdate({
       ...query,
@@ -97,7 +100,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
             aria-label="Columns"
             isMulti
             value={selectedColumns}
-            options={columnOptions}
+            options={columnOptions.concat(templateVariableOptions)}
             placeholder="Select columns"
             onChange={(e) => {
               handleColumnsChange(e);

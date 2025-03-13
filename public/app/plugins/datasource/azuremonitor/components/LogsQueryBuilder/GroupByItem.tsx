@@ -15,10 +15,11 @@ interface GroupByItemProps {
   columns: Array<SelectableValue<string>>;
   onChange: (item: BuilderQueryEditorGroupByExpression) => void;
   onDelete: () => void;
+  templateVariableOptions: SelectableValue<string>;
 }
 
-export const GroupByItem: React.FC<GroupByItemProps> = ({ groupBy, onChange, onDelete, columns }) => {
-  const columnOptions =
+export const GroupByItem: React.FC<GroupByItemProps> = ({ groupBy, onChange, onDelete, columns, templateVariableOptions }) => {
+  const columnOptions: SelectableValue<string> =
     columns.length > 0
       ? columns.map((c) => ({ label: c.label, value: c.value }))
       : [{ label: 'No columns available', value: '' }];
@@ -47,7 +48,7 @@ export const GroupByItem: React.FC<GroupByItemProps> = ({ groupBy, onChange, onD
         aria-label="column"
         width="auto"
         value={groupBy.property?.name ? { label: groupBy.property.name, value: groupBy.property.name } : null}
-        options={columnOptions}
+        options={columnOptions.concat(templateVariableOptions)}
         allowCustomValue
         onChange={handleChange}
       />

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 
+import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { Alert, Input } from '@grafana/ui';
 
@@ -25,6 +26,7 @@ interface LogsQueryBuilderProps {
   basicLogsEnabled: boolean;
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
   schema: EngineSchema;
+  templateVariableOptions: SelectableValue<string>;
 }
 
 export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {

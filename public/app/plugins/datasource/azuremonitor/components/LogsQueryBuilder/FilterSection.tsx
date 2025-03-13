@@ -19,9 +19,10 @@ interface FilterSectionProps {
   query: AzureMonitorQuery;
   allColumns: AzureLogAnalyticsMetadataColumn[];
   onQueryUpdate: (newQuery: AzureMonitorQuery) => void;
+  templateVariableOptions: SelectableValue<string>;
 }
 
-export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, query, allColumns }) => {
+export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, query, allColumns, templateVariableOptions }) => {
   const styles = useStyles2(getStyles);
   const [filters, setFilters] = useState<Array<{ column: string; operator: string; value: string }>>([]);
   const builderQuery = query.azureLogAnalytics?.builderQuery;
@@ -147,7 +148,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, que
                       aria-label="column"
                       width={30}
                       value={filter.column ? valueToDefinition(filter.column) : null}
-                      options={availableColumns}
+                      options={availableColumns.concat(templateVariableOptions)}
                       onChange={(e) => e.value && onChangeFilter(index, 'column', e.value)}
                     />
                     <Select

@@ -14,9 +14,10 @@ interface AggregateItemProps {
   columns: Array<SelectableValue<string>>;
   onChange: (item: BuilderQueryEditorReduceExpression) => void;
   onDelete: () => void;
+  templateVariableOptions: SelectableValue<string>;
 }
 
-const AggregateItem: React.FC<AggregateItemProps> = ({ aggregate, onChange, onDelete, columns }) => {
+const AggregateItem: React.FC<AggregateItemProps> = ({ aggregate, onChange, onDelete, columns, templateVariableOptions }) => {
   const isPercentile = aggregate.reduce?.name === 'percentile';
   const isCountAggregate = aggregate.reduce?.name === 'count';
 
@@ -100,7 +101,7 @@ const AggregateItem: React.FC<AggregateItemProps> = ({ aggregate, onChange, onDe
           aria-label="column"
           width="auto"
           value={aggregate.property?.name ? { label: aggregate.property?.name, value: aggregate.property?.name } : null}
-          options={columns}
+          options={columns.concat(templateVariableOptions)}
           onChange={(e) => {
             const newColumn = e.value;
             onChange({

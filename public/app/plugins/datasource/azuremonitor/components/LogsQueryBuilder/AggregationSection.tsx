@@ -18,14 +18,14 @@ interface AggregateSectionProps {
   query: AzureMonitorQuery;
   allColumns: AzureLogAnalyticsMetadataColumn[];
   onQueryUpdate: (newQuery: AzureMonitorQuery) => void;
-  templateVariableOptions?: SelectableValue<string>;
+  templateVariableOptions: SelectableValue<string>;
 }
 
 export const AggregateSection: React.FC<AggregateSectionProps> = ({
   query,
   allColumns,
   onQueryUpdate,
-  templateVariableOptions,
+  templateVariableOptions
 }) => {
   const [aggregates, setAggregates] = useState<BuilderQueryEditorReduceExpression[]>([]);
   const builderQuery = query.azureLogAnalytics?.builderQuery;
@@ -146,7 +146,7 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
             <EditorList
               items={aggregates}
               onChange={onChange}
-              renderItem={makeRenderAggregate(availableColumns, onDeleteAggregate)}
+              renderItem={makeRenderAggregate(availableColumns, onDeleteAggregate, templateVariableOptions)}
             />
           </EditorField>
         </EditorFieldGroup>
@@ -157,7 +157,8 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
 
 function makeRenderAggregate(
   availableColumns: Array<SelectableValue<string>>,
-  onDeleteAggregate: (aggregate: Partial<BuilderQueryEditorReduceExpression>) => void
+  onDeleteAggregate: (aggregate: Partial<BuilderQueryEditorReduceExpression>) => void,
+  templateVariableOptions: SelectableValue<string>
 ) {
   return function renderAggregate(
     item: Partial<BuilderQueryEditorReduceExpression>,
@@ -169,6 +170,7 @@ function makeRenderAggregate(
         onChange={onChange}
         onDelete={() => onDeleteAggregate(item)}
         columns={availableColumns}
+        templateVariableOptions={templateVariableOptions}
       />
     );
   };

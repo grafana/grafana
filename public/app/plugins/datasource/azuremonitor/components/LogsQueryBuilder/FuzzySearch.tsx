@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 
+import { SelectableValue } from '@grafana/data';
 import { EditorRow, EditorFieldGroup, EditorField, InputGroup } from '@grafana/plugin-ui';
 import { Button, Input, Select } from '@grafana/ui';
 
@@ -13,9 +14,10 @@ interface FuzzySearchProps {
   query: AzureMonitorQuery;
   allColumns: AzureLogAnalyticsMetadataColumn[];
   onQueryUpdate: (newQuery: AzureMonitorQuery) => void;
+  templateVariableOptions: SelectableValue<string>;
 }
 
-export const FuzzySearch: React.FC<FuzzySearchProps> = ({ onQueryUpdate, query, allColumns }) => {
+export const FuzzySearch: React.FC<FuzzySearchProps> = ({ onQueryUpdate, query, allColumns, templateVariableOptions }) => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedColumn, setSelectedColumn] = useState<string>('');
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -25,7 +27,7 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({ onQueryUpdate, query, 
     return null;
   }
 
-  const columnOptions = allColumns.map((col) => ({
+  const columnOptions: SelectableValue<string> = allColumns.map((col) => ({
     label: col.name,
     value: col.name,
   }));
@@ -102,7 +104,7 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({ onQueryUpdate, query, 
                 />
                 <Select
                   aria-label="Select Column"
-                  options={columnOptions}
+                  options={columnOptions.concat(templateVariableOptions)}
                   value={selectedColumn}
                   onChange={(e) => handleChange(searchTerm ?? '', e.value ?? '')}
                   width="auto"
