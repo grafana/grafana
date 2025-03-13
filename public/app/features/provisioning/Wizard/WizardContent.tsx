@@ -7,7 +7,7 @@ import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { Alert, Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { RepositoryViewList, useDeleteRepositoryMutation } from '../api';
+import { RepositoryViewList, useDeleteRepositoryMutation, useGetFrontendSettingsQuery } from '../api';
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks';
 import { StepStatus } from '../hooks/useStepStatus';
@@ -54,6 +54,7 @@ export function WizardContent({
   const [deleteRepository] = useDeleteRepositoryMutation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const settingsQuery = useGetFrontendSettingsQuery();
 
   const [stepStatus, setStepStatus] = useState<StepStatus>('idle');
   const [stepError, setStepError] = useState<string | undefined>();
@@ -63,6 +64,19 @@ export function WizardContent({
     setStepStatus(status);
     setStepError(error);
   }, []);
+
+  // Another different repository is marked with instance target
+  if (
+    settingsQuery.data &&
+    settingsQuery.data.items.some((item) => item.target === 'instance' && item.name !== repoName)
+  ) {
+    appEvents.publish({
+      type: AppEvents.alertError.name,
+      payload: ['Instance repository already exists'],
+    });
+    navigate(PROVISIONING_URL);
+    return;
+  }
 
   const handleCancel = async () => {
     if (activeStep === 'connection') {

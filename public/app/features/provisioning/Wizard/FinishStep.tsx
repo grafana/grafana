@@ -52,15 +52,13 @@ export function FinishStep() {
             Changes in git will eventually be pulled depending on the synchronization interval.
           </Alert>
         )}
-        {!isPublic && (
-          <Field label={'Interval (seconds)'}>
-            <Input
-              {...register('repository.sync.intervalSeconds', { valueAsNumber: true })}
-              type={'number'}
-              placeholder={'60'}
-            />
-          </Field>
-        )}
+        <Field label={'Interval (seconds)'}>
+          <Input
+            {...register('repository.sync.intervalSeconds', { valueAsNumber: true })}
+            type={'number'}
+            placeholder={'60'}
+          />
+        </Field>
       </FieldSet>
       <FieldSet label="Collaboration">
         <Field

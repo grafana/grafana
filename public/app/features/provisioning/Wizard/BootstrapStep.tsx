@@ -40,6 +40,7 @@ export function BootstrapStep({ onOptionSelect, onStepUpdate, settingsData, repo
   } = useFormContext<WizardFormData>();
 
   const selectedTarget = watch('repository.sync.target');
+  const repoType = watch('repository.type');
 
   const resourceStats = useGetResourceStatsQuery();
   const filesQuery = useGetRepositoryFilesQuery({ name: repoName });
@@ -179,13 +180,15 @@ export function BootstrapStep({ onOptionSelect, onStepUpdate, settingsData, repo
                     <Icon name="info-circle" />
                   </Tooltip>
                 </Stack>
-                <Stack direction="row" gap={2} alignItems="center">
-                  <Switch {...register('migrate.history')} defaultChecked={true} />
-                  <Text>Include history</Text>
-                  <Tooltip content="Include complete dashboard version history" placement="top">
-                    <Icon name="info-circle" />
-                  </Tooltip>
-                </Stack>
+                {repoType === 'github' && (
+                  <Stack direction="row" gap={2} alignItems="center">
+                    <Switch {...register('migrate.history')} defaultChecked={true} />
+                    <Text>Include history</Text>
+                    <Tooltip content="Include complete dashboard version history" placement="top">
+                      <Icon name="info-circle" />
+                    </Tooltip>
+                  </Stack>
+                )}
               </Stack>
             </FieldSet>
           </>

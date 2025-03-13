@@ -32,7 +32,9 @@ export function ConnectStep() {
         options={typeOptions}
         value={type}
         onChange={(value) => {
-          setValue('repository.type', value?.value as 'github' | 'local');
+          const repoType = value?.value as 'github' | 'local';
+          setValue('repository.type', repoType);
+          setValue('repository.workflows', repoType === 'github' ? ['branch', 'write'] : ['write']);
         }}
       />
 
