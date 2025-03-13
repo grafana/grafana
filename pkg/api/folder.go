@@ -220,8 +220,7 @@ func (hs *HTTPServer) CreateFolder(c *contextmodel.ReqContext) response.Response
 }
 
 func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, folder *folder.Folder) error {
-	isNested := folder.ParentUID != ""
-	if (isNested && hs.Features.IsEnabled(ctx, featuremgmt.FlagNestedFolders)) || !hs.Cfg.RBAC.PermissionsOnCreation("folder") {
+	if folder.ParentUID != "" || !hs.Cfg.RBAC.PermissionsOnCreation("folder") {
 		return nil
 	}
 

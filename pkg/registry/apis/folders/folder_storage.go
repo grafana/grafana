@@ -133,8 +133,7 @@ func (s *folderStorage) DeleteCollection(ctx context.Context, deleteValidation r
 }
 
 func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, uid string, parentUID string) error {
-	isNested := parentUID != ""
-	if (isNested && s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders)) || !s.cfg.RBAC.PermissionsOnCreation("folder") {
+	if parentUID != "" || !s.cfg.RBAC.PermissionsOnCreation("folder") {
 		return nil
 	}
 
