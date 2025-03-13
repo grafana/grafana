@@ -10,7 +10,7 @@ module.exports = (env = {}) => {
     ...baseConfig,
 
     entry: {
-      swagger: './public/swagger/index.tsx',
+      app: './public/swagger/index.tsx',
     },
 
     // Output to a different directory so each build doesn't clobber each other
