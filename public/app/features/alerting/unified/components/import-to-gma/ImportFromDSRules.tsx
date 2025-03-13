@@ -170,7 +170,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
   buttonSpinner: css({
     marginRight: theme.spacing(1),
   }),
-  error: css({
-    color: theme.colors.error.text,
-  }),
 });
