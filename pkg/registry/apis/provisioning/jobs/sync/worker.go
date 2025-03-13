@@ -66,7 +66,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		return fmt.Errorf("sync not supported until storage has migrated")
 	}
 
-	rw, ok := repo.(repository.ReaderWriter)
+	rw, ok := repo.(repository.Reader)
 	if !ok {
 		return fmt.Errorf("sync job submitted for repository that does not support read-write -- this is a bug")
 	}
@@ -134,7 +134,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 }
 
 // start a job and run it
-func (r *SyncWorker) createJob(ctx context.Context, repo repository.ReaderWriter, progress jobs.JobProgressRecorder) (*syncJob, error) {
+func (r *SyncWorker) createJob(ctx context.Context, repo repository.Reader, progress jobs.JobProgressRecorder) (*syncJob, error) {
 	cfg := repo.Config()
 	parser, err := r.parsers.GetParser(ctx, repo)
 	if err != nil {
@@ -190,7 +190,7 @@ type resourceID struct {
 
 // created once for each sync execution
 type syncJob struct {
-	repository      repository.ReaderWriter
+	repository      repository.Reader
 	progress        jobs.JobProgressRecorder
 	parser          *resources.Parser
 	lister          resources.ResourceLister
@@ -458,16 +458,9 @@ func (r *syncJob) writeResourceFromFile(ctx context.Context, path string, ref st
 	result.Resource = parsed.GVR.Resource
 	result.Group = parsed.GVK.Group
 
-	switch action {
-	case repository.FileActionCreated:
-		_, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
-		result.Error = err
-	case repository.FileActionUpdated:
-		_, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
-		result.Error = err
-	default:
-		result.Error = fmt.Errorf("unsupported action: %s", action)
-	}
+	// Update will also create (for resources we care about)
+	_, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
+	result.Error = err
 	return result
 }
 

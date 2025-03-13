@@ -62,7 +62,7 @@ func (r *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, v
 	return nil
 }
 
-func (j *migrationJob) loadResources(ctx context.Context) error {
+func (j *migrationJob) migrateLegacyResources(ctx context.Context) error {
 	kinds := []schema.GroupVersionResource{{
 		Group:    dashboard.GROUP,
 		Resource: dashboard.DASHBOARD_RESOURCE,

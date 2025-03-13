@@ -105,7 +105,7 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 
 		buffered, err = gogit.Clone(ctx, repo.Config(), gogit.GoGitCloneOptions{
 			Root:                   w.clonedir,
-			SingleCommitBeforePush: !options.History,
+			SingleCommitBeforePush: !(options.History && isFromLegacy),
 		}, w.secrets, writer)
 		if err != nil {
 			return fmt.Errorf("unable to clone target: %w", err)
@@ -116,6 +116,29 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	rw, ok := repo.(repository.ReaderWriter)
 	if !ok {
 		return errors.New("migration job submitted targeting repository that is not a ReaderWriter")
+	}
+
+	// If we are already using unified storage, export then import
+	if !isFromLegacy {
+		progress.SetMessage(ctx, "exporting unified storage resources")
+		if err = w.exportWorker.Process(ctx, rw, provisioning.Job{
+			Spec: provisioning.JobSpec{
+				Push: &provisioning.ExportJobOptions{
+					Identifier: options.Identifier,
+				},
+			},
+		}, progress); err != nil {
+			return err
+		}
+
+		progress.SetMessage(ctx, "pulling resources")
+		return w.syncWorker.Process(ctx, rw, provisioning.Job{
+			Spec: provisioning.JobSpec{
+				Pull: &provisioning.SyncJobOptions{
+					Incremental: false,
+				},
+			},
+		}, progress)
 	}
 
 	dynamicClient, _, err := w.clients.New(repo.Config().Namespace)
@@ -141,40 +164,25 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		}
 	}
 
-	if isFromLegacy {
-		progress.SetMessage(ctx, "exporting legacy folders")
-		err = worker.loadFolders(ctx)
-		if err != nil {
-			return err
-		}
-
-		progress.SetMessage(ctx, "exporting legacy resources")
-		err = worker.loadResources(ctx)
-		if err != nil {
-			return err
-		}
-	} else {
-		progress.SetMessage(ctx, "exporting resources")
-		err = w.exportWorker.Process(ctx, rw, provisioning.Job{
-			Spec: provisioning.JobSpec{
-				Push: &provisioning.ExportJobOptions{
-					Identifier: options.Identifier,
-				},
-			},
-		}, progress)
-		if err != nil {
-			return err
-		}
+	progress.SetMessage(ctx, "exporting legacy folders")
+	err = worker.loadFolders(ctx)
+	if err != nil {
+		return err
 	}
 
-	logger := logging.FromContext(ctx)
+	progress.SetMessage(ctx, "exporting legacy resources")
+	err = worker.migrateLegacyResources(ctx)
+	if err != nil {
+		return err
+	}
+
 	if buffered != nil {
 		progress.SetMessage(ctx, "pushing changes")
 		reader, writer := io.Pipe()
 		go func() {
 			scanner := bufio.NewScanner(reader)
 			for scanner.Scan() {
-				logger.Info("push output", "text", scanner.Text())
+				progress.SetMessage(ctx, scanner.Text())
 			}
 		}()
 
@@ -183,11 +191,9 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		}
 	}
 
-	if isFromLegacy {
-		progress.SetMessage(ctx, "resetting unified storage")
-		if err = worker.wipeUnifiedAndSetMigratedFlag(ctx, w.storageStatus); err != nil {
-			return fmt.Errorf("unable to reset unified storage %w", err)
-		}
+	progress.SetMessage(ctx, "resetting unified storage")
+	if err = worker.wipeUnifiedAndSetMigratedFlag(ctx, w.storageStatus); err != nil {
+		return fmt.Errorf("unable to reset unified storage %w", err)
 	}
 
 	// Delegate the import to a sync (from the already checked out go-git repository!)
@@ -199,14 +205,14 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 			},
 		},
 	}, progress)
-	if err != nil && isFromLegacy { // this will have an error when too many errors exist
+
+	if err != nil { // this will have an error when too many errors exist
 		progress.SetMessage(ctx, "error importing resources, reverting")
 		if e2 := stopReadingUnifiedStorage(ctx, w.storageStatus); e2 != nil {
 			logger := logging.FromContext(ctx)
 			logger.Warn("error trying to revert dual write settings after an error", "err", err)
 		}
 	}
-
 	return err
 }
 
