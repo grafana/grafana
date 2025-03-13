@@ -117,8 +117,7 @@ module.exports = [
         {
           forceFix: [
             // Add paths here that are happy to be auto fixed by this rule,
-            // for example
-            // 'public/app/features/alerting'
+            'public/app/features/alerting',
           ],
         },
       ],
