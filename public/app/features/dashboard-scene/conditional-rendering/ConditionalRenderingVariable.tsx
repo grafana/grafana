@@ -3,6 +3,7 @@ import { ReactNode, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, sceneGraph, VariableDependencyConfig } from '@grafana/scenes';
+import { ConditionalRenderingVariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { Combobox, ComboboxOption, Field, Input, Stack, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
@@ -35,13 +36,13 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
     if (!this.state.value.name) {
       return true;
     }
+
     const variable = sceneGraph.getVariables(this).state.variables.find((v) => v.state.name === this.state.value.name);
 
     // name is defined but no variable found - return false
     if (!variable) {
       return false;
     }
-
     const value = variable.getValue();
 
     let hit = Array.isArray(value) ? value.includes(this.state.value.value) : value === this.state.value.value;
@@ -55,6 +56,17 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
 
   public render(): ReactNode {
     return <ConditionalRenderingVariableRenderer model={this} />;
+  }
+
+  public serialize(): ConditionalRenderingVariableKind {
+    return {
+      kind: 'ConditionalRenderingVariable',
+      spec: {
+        variable: this.state.value.name,
+        operator: this.state.value.operator === '=' ? 'equals' : 'notEquals',
+        value: this.state.value.value,
+      },
+    };
   }
 
   public onDelete() {
