@@ -26,7 +26,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     scopesBridge,
     layoutOrchestrator,
   } = model.useState();
-  const { placeholder } = layoutOrchestrator!.useState();
+  const { placeholder } = layoutOrchestrator.useState();
   const { type } = useParams();
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);

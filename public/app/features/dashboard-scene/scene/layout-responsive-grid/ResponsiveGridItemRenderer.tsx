@@ -16,7 +16,7 @@ export function ResponsiveGridItemRenderer({ model }: ResponsiveGridItemProps) {
   const { body } = model.useState();
   const styles = useStyles2(getStyles);
   const dashboard = closestOfType(model, (s) => s instanceof DashboardScene);
-  const layoutOrchestrator = dashboard!.state.layoutOrchestrator!;
+  const layoutOrchestrator = dashboard!.state.layoutOrchestrator;
   const { activeLayoutItemRef } = layoutOrchestrator.useState();
   const activeLayoutItem = activeLayoutItemRef?.resolve();
   const isDragging = model === activeLayoutItem;

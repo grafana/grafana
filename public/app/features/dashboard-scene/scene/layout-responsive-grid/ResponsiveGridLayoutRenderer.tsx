@@ -26,7 +26,7 @@ export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<Resp
   const styles = useStyles2(getStyles, model.state);
   const dashboard = closestOfType(model, (s) => s instanceof DashboardScene);
 
-  const layoutOrchestrator = dashboard!.state.layoutOrchestrator!;
+  const layoutOrchestrator = dashboard!.state.layoutOrchestrator;
   const { activeLayoutItemRef } = layoutOrchestrator.useState();
   const activeLayoutItem = activeLayoutItemRef?.resolve();
   const currentLayoutIsActive = children.some((c) => c === activeLayoutItem);
