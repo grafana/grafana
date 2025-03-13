@@ -99,9 +99,9 @@ const RuleViewer = () => {
       info={createMetadata(rule)}
       subTitle={
         <Stack direction="column">
-          {isPaused && <InfoPausedRule />}
           {summary}
           {/* alerts and notifications and stuff */}
+          {isPaused && <InfoPausedRule />}
           {isFederatedRule && <FederatedRuleWarning />}
           {/* indicator for rules in a provisioned group */}
           {isProvisioned && (
