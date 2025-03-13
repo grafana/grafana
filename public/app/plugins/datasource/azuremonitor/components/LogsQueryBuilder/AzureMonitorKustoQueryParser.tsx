@@ -15,6 +15,8 @@ export class AzureMonitorKustoQueryParser {
     filters?: string
   ): string {
     const { from, columns, groupBy, limit, where } = builderQuery;
+    console.log('where', where);
+    console.log('filters', filters);
 
     if (!from || !from.property.name) {
       return '';
@@ -60,20 +62,22 @@ export class AzureMonitorKustoQueryParser {
   ) {
     const whereConditions = new Set<string>();
 
+    // ✅ Ensure $__timeFilter is only added ONCE
     if (shouldApplyTimeFilter && !whereConditions.has(`$__timeFilter(${datetimeColumn})`)) {
       whereConditions.add(`$__timeFilter(${datetimeColumn})`);
     }
 
+    // ✅ Split filters and add them INDIVIDUALLY
     if (filters) {
       const validFilters = filters.split(' and ').filter((filter) => {
         const filterColumn = filter.split(' ')[0];
         return selectedColumns.includes(filterColumn) || columns.some((col) => col.name === filterColumn);
       });
 
-      if (validFilters.length > 0) {
-        whereConditions.add(validFilters.join(' and '));
-      }
+      validFilters.forEach((filter) => whereConditions.add(filter)); // ✅ Ensure filters are added as separate conditions
     }
+
+    // ✅ Process where.expressions safely
     if (where && where.expressions && Array.isArray(where.expressions)) {
       where.expressions.forEach((condition) => {
         if ('expressions' in condition) {
@@ -91,36 +95,18 @@ export class AzureMonitorKustoQueryParser {
           const columnName = condition.property?.name;
 
           if (operatorName && operatorValue && columnName) {
-            if (operatorName === 'has' && columnName === '*') {
-              let cleanedOperator = String(operatorValue).trim();
+            const newCondition = `${columnName} ${operatorName} '${operatorValue}'`;
 
-              while (cleanedOperator.startsWith('"') || cleanedOperator.startsWith("'")) {
-                cleanedOperator = cleanedOperator.slice(1);
-              }
-              while (cleanedOperator.endsWith('"') || cleanedOperator.endsWith("'")) {
-                cleanedOperator = cleanedOperator.slice(0, -1);
-              }
-              const conditionsArray = Array.from(whereConditions);
-
-              conditionsArray.forEach((existingCondition: string) => {
-                if (existingCondition.includes(cleanedOperator)) {
-                  whereConditions.delete(existingCondition);
-                }
-              });
-
-              whereConditions.add(`${columnName} has '${cleanedOperator}'`);
-            } else {
-              whereConditions.add(`${columnName} ${operatorName} '${operatorValue}'`);
+            // ✅ Ensure this condition is NOT already in whereConditions before adding
+            if (!whereConditions.has(newCondition)) {
+              whereConditions.add(newCondition);
             }
-          }
-        } else if (condition?.property?.name === '$__timeFilter(TimeGenerated)') {
-          if (!Array.from(whereConditions).some((condition) => condition.includes('$__timeFilter(TimeGenerated)'))) {
-            whereConditions.add(`$__timeFilter(TimeGenerated)`);
           }
         }
       });
     }
 
+    // ✅ Add final WHERE clause to the query parts
     if (whereConditions.size > 0) {
       parts.push(`where ${Array.from(whereConditions).join(' and ')}`);
     }
@@ -183,12 +169,12 @@ export class AzureMonitorKustoQueryParser {
   private static appendProject(selectedColumns: string[], parts: string[]) {
     if (selectedColumns.length > 0) {
       if (selectedColumns.includes('TimeGenerated') && !parts.some((p) => p.includes('$__timeFilter(TimeGenerated)'))) {
-        parts.splice(1, 0, `where $__timeFilter(TimeGenerated)`); 
+        parts.splice(1, 0, `where $__timeFilter(TimeGenerated)`);
       }
-  
+
       parts.push(`project ${selectedColumns.join(', ')}`);
     }
-  }  
+  }
 
   private static appendOrderBy(
     datetimeColumn: string,

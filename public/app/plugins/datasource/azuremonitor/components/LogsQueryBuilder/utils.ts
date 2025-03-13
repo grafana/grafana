@@ -8,8 +8,6 @@ import {
   BuilderQueryEditorPropertyType,
   BuilderQueryEditorOperatorType,
   BuilderQueryEditorReduceExpression,
-  BuilderQueryEditorWhereArrayExpression,
-  BuilderQueryEditorOperatorExpression,
 } from '../../dataquery.gen';
 import { QueryEditorPropertyType } from '../../types';
 
@@ -198,7 +196,6 @@ export const parseQueryToBuilder = (query: string): BuilderQueryExpression => {
       }
     }
 
-    // Handle limit clause
     if (line.startsWith('| limit ')) {
       const limitValue = parseInt(line.replace('| limit ', '').trim(), 10);
       if (!isNaN(limitValue)) {

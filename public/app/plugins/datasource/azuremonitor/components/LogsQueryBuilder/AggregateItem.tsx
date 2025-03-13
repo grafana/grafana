@@ -17,9 +17,24 @@ interface AggregateItemProps {
   templateVariableOptions: SelectableValue<string>;
 }
 
-const AggregateItem: React.FC<AggregateItemProps> = ({ aggregate, onChange, onDelete, columns, templateVariableOptions }) => {
+const AggregateItem: React.FC<AggregateItemProps> = ({
+  aggregate,
+  onChange,
+  onDelete,
+  columns,
+  templateVariableOptions,
+}) => {
   const isPercentile = aggregate.reduce?.name === 'percentile';
   const isCountAggregate = aggregate.reduce?.name === 'count';
+
+  const safeTemplateVariables: Array<SelectableValue<string>> =
+    templateVariableOptions && templateVariableOptions.value
+      ? Array.isArray(templateVariableOptions)
+        ? templateVariableOptions
+        : [templateVariableOptions]
+      : [];
+
+  const selectableOptions = columns.concat(safeTemplateVariables);
 
   const handlePercentileChange = (e: SelectableValue<string>) => {
     const percentileValue = e.value || '';
@@ -101,7 +116,7 @@ const AggregateItem: React.FC<AggregateItemProps> = ({ aggregate, onChange, onDe
           aria-label="column"
           width="auto"
           value={aggregate.property?.name ? { label: aggregate.property?.name, value: aggregate.property?.name } : null}
-          options={columns.concat(templateVariableOptions)}
+          options={selectableOptions}
           onChange={(e) => {
             const newColumn = e.value;
             onChange({

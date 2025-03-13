@@ -23,7 +23,12 @@ interface GroupBySectionProps {
   templateVariableOptions: SelectableValue<string>;
 }
 
-export const GroupBySection: React.FC<GroupBySectionProps> = ({ query, onQueryUpdate, allColumns, templateVariableOptions }) => {
+export const GroupBySection: React.FC<GroupBySectionProps> = ({
+  query,
+  onQueryUpdate,
+  allColumns,
+  templateVariableOptions,
+}) => {
   const [groupBys, setGroupBys] = useState<BuilderQueryEditorGroupByExpression[]>([]);
   const builderQuery = query.azureLogAnalytics?.builderQuery;
 

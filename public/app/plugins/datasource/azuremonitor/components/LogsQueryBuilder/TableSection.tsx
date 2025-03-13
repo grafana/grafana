@@ -19,7 +19,7 @@ interface TableSectionProps {
   tables: AzureLogAnalyticsMetadataTable[];
   query: AzureMonitorQuery;
   onQueryUpdate: (newQuery: AzureMonitorQuery) => void;
-  templateVariableOptions: SelectableValue<string>;
+  templateVariableOptions?: SelectableValue<string>;
 }
 
 export const TableSection: React.FC<TableSectionProps> = (props) => {
@@ -37,6 +37,15 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
     value: col.name,
     type: col.type,
   }));
+
+  const selectableOptions: Array<SelectableValue<string>> = [
+    ...columnOptions,
+    ...(templateVariableOptions
+      ? Array.isArray(templateVariableOptions)
+        ? templateVariableOptions
+        : [templateVariableOptions]
+      : []),
+  ];
 
   const handleTableChange = (selected: SelectableValue<string>) => {
     const selectedTable = tables.find((t) => t.name === selected.value);
@@ -64,14 +73,26 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
   const handleColumnsChange = (selected: SelectableValue<string> | Array<SelectableValue<string>>) => {
     const selectedArray = Array.isArray(selected) ? selected.map((col) => col.value!) : [selected.value!];
 
+    const updatedColumns = selectedArray.map((col) => ({
+      name: col,
+      type: col.startsWith('$')
+        ? BuilderQueryEditorPropertyType.String
+        : allColumns.find((c) => c.name === col)?.type || BuilderQueryEditorPropertyType.String,
+    }));
+
     const updatedBuilderQuery: BuilderQueryExpression = {
       ...builderQuery,
-      columns: { columns: selectedArray, type: BuilderQueryEditorExpressionType.Property },
+      columns: { columns: updatedColumns.map((col) => col.name), type: BuilderQueryEditorExpressionType.Property },
     };
 
     const aggregation = getAggregations(updatedBuilderQuery.reduce?.expressions);
     const filters = getFilters(updatedBuilderQuery.where?.expressions);
-    const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(updatedBuilderQuery, allColumns, aggregation, filters);
+    const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(
+      updatedBuilderQuery,
+      allColumns,
+      aggregation,
+      filters
+    );
 
     onQueryUpdate({
       ...query,
@@ -99,8 +120,8 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
           <Select
             aria-label="Columns"
             isMulti
-            value={selectedColumns}
-            options={columnOptions.concat(templateVariableOptions)}
+            value={selectedColumns?.map((col) => ({ label: col, value: col })) || []}
+            options={selectableOptions}
             placeholder="Select columns"
             onChange={(e) => {
               handleColumnsChange(e);

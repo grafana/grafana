@@ -25,7 +25,7 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
   query,
   allColumns,
   onQueryUpdate,
-  templateVariableOptions
+  templateVariableOptions,
 }) => {
   const [aggregates, setAggregates] = useState<BuilderQueryEditorReduceExpression[]>([]);
   const builderQuery = query.azureLogAnalytics?.builderQuery;

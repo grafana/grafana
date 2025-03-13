@@ -17,7 +17,12 @@ interface FuzzySearchProps {
   templateVariableOptions: SelectableValue<string>;
 }
 
-export const FuzzySearch: React.FC<FuzzySearchProps> = ({ onQueryUpdate, query, allColumns, templateVariableOptions }) => {
+export const FuzzySearch: React.FC<FuzzySearchProps> = ({
+  onQueryUpdate,
+  query,
+  allColumns,
+  templateVariableOptions,
+}) => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedColumn, setSelectedColumn] = useState<string>('');
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -27,10 +32,18 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({ onQueryUpdate, query, 
     return null;
   }
 
-  const columnOptions: SelectableValue<string> = allColumns.map((col) => ({
+  const columnOptions: Array<SelectableValue<string>> = allColumns.map((col) => ({
     label: col.name,
     value: col.name,
   }));
+
+  const safeTemplateVariables: Array<SelectableValue<string>> = templateVariableOptions
+    ? Array.isArray(templateVariableOptions)
+      ? templateVariableOptions
+      : [templateVariableOptions]
+    : [];
+
+  const selectableOptions = columnOptions.concat(safeTemplateVariables);
 
   const handleChange = (newSearchTerm: string, column: string) => {
     setSearchTerm(newSearchTerm);
@@ -104,7 +117,7 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({ onQueryUpdate, query, 
                 />
                 <Select
                   aria-label="Select Column"
-                  options={columnOptions.concat(templateVariableOptions)}
+                  options={selectableOptions}
                   value={selectedColumn}
                   onChange={(e) => handleChange(searchTerm ?? '', e.value ?? '')}
                   width="auto"

@@ -7,6 +7,7 @@ import { Button, Input, Label, Select, useStyles2 } from '@grafana/ui';
 
 import {
   BuilderQueryEditorExpressionType,
+  BuilderQueryEditorOperatorExpression,
   BuilderQueryEditorPropertyType,
   BuilderQueryExpression,
 } from '../../dataquery.gen';
@@ -22,7 +23,12 @@ interface FilterSectionProps {
   templateVariableOptions: SelectableValue<string>;
 }
 
-export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, query, allColumns, templateVariableOptions }) => {
+export const FilterSection: React.FC<FilterSectionProps> = ({
+  onQueryUpdate,
+  query,
+  allColumns,
+  templateVariableOptions,
+}) => {
   const styles = useStyles2(getStyles);
   const [filters, setFilters] = useState<Array<{ column: string; operator: string; value: string }>>([]);
   const builderQuery = query.azureLogAnalytics?.builderQuery;
@@ -31,97 +37,115 @@ export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, que
     return;
   }
 
-  const availableColumns: Array<SelectableValue<string>> = [];
-  const columns = builderQuery.columns?.columns ?? [];
+  const safeTemplateVariables: Array<SelectableValue<string>> =
+    templateVariableOptions && templateVariableOptions.value
+      ? Array.isArray(templateVariableOptions)
+        ? templateVariableOptions
+        : [templateVariableOptions]
+      : [];
 
-  if (columns.length > 0) {
-    availableColumns.push(
-      ...columns.map((col) => ({
-        label: col,
-        value: col,
-      }))
-    );
-  } else {
-    availableColumns.push(
-      ...allColumns.map((col) => ({
-        label: col.name,
-        value: col.name,
-      }))
-    );
-  }
+  const availableColumns: Array<SelectableValue<string>> = builderQuery.columns?.columns?.length
+    ? builderQuery.columns.columns.map((col) => ({ label: col, value: col }))
+    : allColumns.map((col) => ({ label: col.name, value: col.name }));
+
+  const selectableOptions = availableColumns.concat(safeTemplateVariables);
 
   const formatFilters = (filters: Array<{ column: string; operator: string; value: string }>): string => {
     return filters
       .filter((f) => f.column && f.operator && f.value.trim() !== '')
-      .map((f) => `${f.column} ${f.operator} '${f.value}'`)
+      .map((f) => {
+        let value = f.value.trim();
+
+        if (!(value.startsWith("'") && value.endsWith("'"))) {
+          value = `'${value.replace(/'/g, "\\'")}'`;
+        }
+
+        return `${f.column} ${f.operator} ${value}`;
+      })
       .join(' and ');
   };
 
-  const updateFilters = (newFilters: Array<{ column: string; operator: string; value: string }>) => {
-    setFilters(newFilters);
+  const onChangeFilter = (index: number, key: keyof (typeof filters)[0], value: string) => {
+    let updatedFilters = [...filters];
 
-    if (builderQuery) {
+    if (index === -1) {
+      updatedFilters.push({ column: '', operator: '==', value: '' });
+      index = updatedFilters.length - 1;
+    } else {
+      updatedFilters[index] = { ...updatedFilters[index], [key]: value || '' };
+    }
+
+    setFilters(updatedFilters);
+
+    if (builderQuery?.where?.expressions) {
+      let updatedWhereExpressions: BuilderQueryEditorOperatorExpression[] = [];
+
+      if (updatedFilters.length > 0) {
+        updatedWhereExpressions = updatedFilters.map((filter) => ({
+          type: BuilderQueryEditorExpressionType.Operator,
+          operator: { name: filter.operator, value: filter.value },
+          property: { name: filter.column, type: BuilderQueryEditorPropertyType.String },
+        }));
+      }
+
       const updatedBuilderQuery: BuilderQueryExpression = {
         ...builderQuery,
-        from: {
-          property: { name: builderQuery.from?.property.name!, type: BuilderQueryEditorPropertyType.String },
-          type: BuilderQueryEditorExpressionType.Property,
-        },
+        where: updatedWhereExpressions.length
+          ? { ...builderQuery.where, expressions: updatedWhereExpressions }
+          : undefined,
       };
 
-      const updatedFilters = newFilters
-        .map((filter) => `${filter.column} ${filter.operator} '${filter.value}'`)
-        .join(' and ');
+      const formattedFilters = updatedFilters.length ? formatFilters(updatedFilters) : '';
 
       const aggregation = getAggregations(builderQuery.reduce?.expressions);
       const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(
         updatedBuilderQuery,
         allColumns,
         aggregation,
-        updatedFilters
+        formattedFilters
       );
 
-      const formattedFilters = formatFilters(newFilters);
-      if (formattedFilters) {
-        onQueryUpdate({
-          ...query,
-          azureLogAnalytics: {
-            ...query.azureLogAnalytics,
-            builderQuery: updatedBuilderQuery,
-            query: updatedQueryString,
-          },
-        });
-      }
+      onQueryUpdate({
+        ...query,
+        azureLogAnalytics: {
+          ...query.azureLogAnalytics,
+          builderQuery: updatedBuilderQuery,
+          query: updatedQueryString,
+        },
+      });
     }
-  };
-
-  const onChangeFilter = (index: number, key: keyof (typeof filters)[0], value: string) => {
-    const newFilters = filters.map((f, i) => (i === index ? { ...f, [key]: value || '' } : f));
-    updateFilters(newFilters);
   };
 
   const onDeleteFilter = (index: number) => {
     const newFilters = filters.filter((_, i) => i !== index);
     setFilters(newFilters);
 
-    const updatedFilters =
-      newFilters.length > 0 ? newFilters.map((f) => `${f.column} ${f.operator} '${f.value}'`).join(' and ') : '';
+    if (builderQuery?.where?.expressions) {
+      let updatedWhereExpressions: BuilderQueryEditorOperatorExpression[] = [];
 
-    if (builderQuery) {
+      if (newFilters.length > 0) {
+        updatedWhereExpressions = newFilters.map((filter) => ({
+          type: BuilderQueryEditorExpressionType.Operator,
+          operator: { name: filter.operator, value: filter.value },
+          property: { name: filter.column, type: BuilderQueryEditorPropertyType.String },
+        }));
+      }
+
       const updatedBuilderQuery: BuilderQueryExpression = {
         ...builderQuery,
-        from: {
-          property: { name: builderQuery.from?.property.name!, type: BuilderQueryEditorPropertyType.String },
-          type: BuilderQueryEditorExpressionType.Property,
-        },
+        where: updatedWhereExpressions.length
+          ? { ...builderQuery.where, expressions: updatedWhereExpressions }
+          : undefined,
       };
+
+      const formattedFilters = newFilters.length ? formatFilters(newFilters) : '';
 
       const aggregation = getAggregations(builderQuery.reduce?.expressions);
       const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(
         updatedBuilderQuery,
         allColumns,
         aggregation,
-        updatedFilters
+        formattedFilters
       );
 
       onQueryUpdate({
@@ -148,7 +172,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, que
                       aria-label="column"
                       width={30}
                       value={filter.column ? valueToDefinition(filter.column) : null}
-                      options={availableColumns.concat(templateVariableOptions)}
+                      options={selectableOptions}
                       onChange={(e) => e.value && onChangeFilter(index, 'column', e.value)}
                     />
                     <Select
@@ -175,11 +199,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, que
                 ))}
               </div>
             )}
-            <Button
-              variant="secondary"
-              onClick={() => updateFilters([...filters, { column: '', operator: '==', value: '' }])}
-              icon="plus"
-            />
+            <Button variant="secondary" onClick={() => onChangeFilter(-1, 'column', '')} icon="plus" />
           </>
         </EditorField>
       </EditorFieldGroup>
