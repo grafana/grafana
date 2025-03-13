@@ -42,10 +42,6 @@ const ImportFromDSRules = () => {
   const targetFolder = watch('targetFolder');
 
   const onSubmit = async (data: ImportFormValues) => {
-    // if (!data.selectedDatasource) {
-    //   setError('selectedDatasource', { type: 'manual', message: 'Please select a datasource.' });
-    //   return;
-    // }
     console.log(data);
     // await response calling api to import rules ..if we get an error show and not redirect
     // if success show success message and redirect to alerting page /list
@@ -54,7 +50,7 @@ const ImportFromDSRules = () => {
   };
 
   return (
-    <AlertingPageWrapper navId="alert-list" pageNav={{ text: 'Import alert rules from a datasource' }}>
+    <AlertingPageWrapper navId="alert-list" pageNav={{ text: 'Export alert rules from a datasource to Grafana-managed rules.' }}>
       <Stack gap={2} direction={'column'}>
         <Text element="h2" variant="h5">
           Migrate your alert rules from a datasource into Grafana.
@@ -95,7 +91,7 @@ const ImportFromDSRules = () => {
 
             <InlineField
               transparent={true}
-              label="Folder"
+              label="Target Folder"
               labelWidth={20}
               invalid={!!errors.selectedDatasource}
               error={errors.selectedDatasource?.message}
@@ -132,12 +128,10 @@ const ImportFromDSRules = () => {
               transparent={true}
               label="Pause alerting rules"
               labelWidth={25}
-              tooltip="Imported alerting rules will be paused."
+              tooltip="Exported alerting rules will be paused."
             >
               <InlineSwitch
                 {...register('pauseAlertingRules')}
-              // checked={pauseAlertingRules}
-              // onChange={() => setValue('pauseAlertingRules', !pauseAlertingRules, { shouldDirty: true })}
               />
             </InlineField>
 
@@ -145,7 +139,7 @@ const ImportFromDSRules = () => {
               transparent={true}
               label="Pause recording rules"
               labelWidth={25}
-              tooltip="Imported recording rules will be paused."
+              tooltip="Exported recording rules will be paused."
             >
               <InlineSwitch
                 {...register('pauseRecordingRules')}
@@ -160,7 +154,7 @@ const ImportFromDSRules = () => {
                 onClick={() => clearErrors()}
               >
                 {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
-                Import
+                Export
               </Button>
             </Stack>
           </Stack>
