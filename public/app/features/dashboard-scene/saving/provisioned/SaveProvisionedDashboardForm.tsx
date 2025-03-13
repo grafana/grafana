@@ -54,7 +54,7 @@ export function SaveProvisionedDashboardForm({
   isGitHub,
 }: Props) {
   const navigate = useNavigate();
-  const { meta, isDirty } = dashboard.useState();
+  const { meta } = dashboard.useState();
   const [action, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
   const {
     register,
@@ -238,7 +238,7 @@ export function SaveProvisionedDashboardForm({
           </>
         )}
         <Stack gap={2}>
-          <Button variant="primary" type="submit" disabled={request.isLoading || !isDirty}>
+          <Button variant="primary" type="submit" disabled={request.isLoading}>
             {request.isLoading ? 'Saving...' : 'Save'}
           </Button>
           <Button variant="secondary" onClick={drawer.onClose} fill="outline">
