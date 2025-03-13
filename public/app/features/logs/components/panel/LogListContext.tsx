@@ -99,6 +99,15 @@ export const LogListContextProvider = (props: Props) => {
   });
 
   useEffect(() => {
+    if (props.dedupStrategy !== logListState.dedupStrategy) {
+      setLogListState({
+        ...logListState,
+        dedupStrategy: props.dedupStrategy,
+      });
+    }
+  }, [logListState, props.dedupStrategy]);
+
+  useEffect(() => {
     if (!shallowCompare(logListState.displayedFields, props.displayedFields)) {
       setLogListState({
         ...logListState,
@@ -115,6 +124,42 @@ export const LogListContextProvider = (props: Props) => {
       });
     }
   }, [logListState, props.pinnedLogs]);
+
+  useEffect(() => {
+    if (props.showTime !== logListState.showTime) {
+      setLogListState({
+        ...logListState,
+        showTime: props.showTime,
+      });
+    }
+  }, [logListState, props.showTime]);
+
+  useEffect(() => {
+    if (props.sortOrder !== logListState.sortOrder) {
+      setLogListState({
+        ...logListState,
+        sortOrder: props.sortOrder,
+      });
+    }
+  }, [logListState, props.sortOrder]);
+
+  useEffect(() => {
+    if (props.syntaxHighlighting !== logListState.syntaxHighlighting) {
+      setLogListState({
+        ...logListState,
+        syntaxHighlighting: props.syntaxHighlighting,
+      });
+    }
+  }, [logListState, props.syntaxHighlighting]);
+
+  useEffect(() => {
+    if (props.wrapLogMessage !== logListState.wrapLogMessage) {
+      setLogListState({
+        ...logListState,
+        wrapLogMessage: props.wrapLogMessage,
+      });
+    }
+  }, [logListState, props.wrapLogMessage]);
 
   const setDedupStrategy = useCallback(
     (dedupStrategy: LogsDedupStrategy) => {
