@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -62,7 +64,7 @@ func (r *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, v
 	return nil
 }
 
-func (j *migrationJob) loadResources(ctx context.Context) error {
+func (j *migrationJob) migrateLegacyResources(ctx context.Context) error {
 	kinds := []schema.GroupVersionResource{{
 		Group:    dashboard.GROUP,
 		Resource: dashboard.DASHBOARD_RESOURCE,
@@ -197,4 +199,47 @@ func (j *migrationJob) write(ctx context.Context, obj *unstructured.Unstructured
 	}
 
 	return result
+}
+
+func removeUnprovisioned(ctx context.Context, client dynamic.ResourceInterface, progress jobs.JobProgressRecorder) error {
+	rawList, err := client.List(ctx, metav1.ListOptions{Limit: 10000})
+	if err != nil {
+		return fmt.Errorf("failed to list resources: %w", err)
+	}
+
+	if rawList.GetContinue() != "" {
+		return fmt.Errorf("unable to list all resources in one request: %s", rawList.GetContinue())
+	}
+
+	for _, item := range rawList.Items {
+		// Create a pointer to the item since MetaAccessor requires a pointer
+		itemPtr := &item
+		meta, err := utils.MetaAccessor(itemPtr)
+		if err != nil {
+			return fmt.Errorf("extract meta accessor: %w", err)
+		}
+
+		// Skip if managed
+		_, ok := meta.GetManagerProperties()
+		if ok {
+			continue
+		}
+
+		result := jobs.JobResourceResult{
+			Name:     item.GetName(),
+			Resource: item.GetKind(),
+			Group:    item.GroupVersionKind().Group,
+			Action:   repository.FileActionDeleted,
+		}
+
+		if err = client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil {
+			result.Error = fmt.Errorf("failed to delete folder: %w", err)
+			progress.Record(ctx, result)
+			return result.Error
+		}
+
+		progress.Record(ctx, result)
+	}
+
+	return nil
 }

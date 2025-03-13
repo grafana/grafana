@@ -8,7 +8,9 @@ import (
 	"io"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -21,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type MigrationWorker struct {
@@ -105,7 +108,7 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 
 		buffered, err = gogit.Clone(ctx, repo.Config(), gogit.GoGitCloneOptions{
 			Root:                   w.clonedir,
-			SingleCommitBeforePush: !options.History,
+			SingleCommitBeforePush: !(options.History && isFromLegacy),
 		}, w.secrets, writer)
 		if err != nil {
 			return fmt.Errorf("unable to clone target: %w", err)
@@ -118,7 +121,16 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		return errors.New("migration job submitted targeting repository that is not a ReaderWriter")
 	}
 
-	dynamicClient, _, err := w.clients.New(repo.Config().Namespace)
+	if isFromLegacy {
+		return w.migrateFromLegacy(ctx, rw, buffered, *options, progress)
+	}
+
+	return w.migrateFromUnifiedStorage(ctx, rw, *options, progress)
+}
+
+// migrateFromLegacy will export the resources from legacy storage and import them into the target repository
+func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.ReaderWriter, buffered *gogit.GoGitRepo, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
+	dynamicClient, _, err := w.clients.New(rw.Config().Namespace)
 	if err != nil {
 		return fmt.Errorf("error getting client: %w", err)
 	}
@@ -128,7 +140,7 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		return fmt.Errorf("error getting parser: %w", err)
 	}
 
-	worker, err := newMigrationJob(ctx, rw, *options, dynamicClient, parser, w.bulk, w.legacyMigrator, progress)
+	worker, err := newMigrationJob(ctx, rw, options, dynamicClient, parser, w.bulk, w.legacyMigrator, progress)
 	if err != nil {
 		return fmt.Errorf("error creating job: %w", err)
 	}
@@ -141,40 +153,25 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		}
 	}
 
-	if isFromLegacy {
-		progress.SetMessage(ctx, "exporting legacy folders")
-		err = worker.loadFolders(ctx)
-		if err != nil {
-			return err
-		}
-
-		progress.SetMessage(ctx, "exporting legacy resources")
-		err = worker.loadResources(ctx)
-		if err != nil {
-			return err
-		}
-	} else {
-		progress.SetMessage(ctx, "exporting resources")
-		err = w.exportWorker.Process(ctx, rw, provisioning.Job{
-			Spec: provisioning.JobSpec{
-				Push: &provisioning.ExportJobOptions{
-					Identifier: options.Identifier,
-				},
-			},
-		}, progress)
-		if err != nil {
-			return err
-		}
+	progress.SetMessage(ctx, "exporting legacy folders")
+	err = worker.migrateLegacyFolders(ctx)
+	if err != nil {
+		return err
 	}
 
-	logger := logging.FromContext(ctx)
+	progress.SetMessage(ctx, "exporting legacy resources")
+	err = worker.migrateLegacyResources(ctx)
+	if err != nil {
+		return err
+	}
+
 	if buffered != nil {
 		progress.SetMessage(ctx, "pushing changes")
 		reader, writer := io.Pipe()
 		go func() {
 			scanner := bufio.NewScanner(reader)
 			for scanner.Scan() {
-				logger.Info("push output", "text", scanner.Text())
+				progress.SetMessage(ctx, scanner.Text())
 			}
 		}()
 
@@ -183,11 +180,9 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		}
 	}
 
-	if isFromLegacy {
-		progress.SetMessage(ctx, "resetting unified storage")
-		if err = worker.wipeUnifiedAndSetMigratedFlag(ctx, w.storageStatus); err != nil {
-			return fmt.Errorf("unable to reset unified storage %w", err)
-		}
+	progress.SetMessage(ctx, "resetting unified storage")
+	if err = worker.wipeUnifiedAndSetMigratedFlag(ctx, w.storageStatus); err != nil {
+		return fmt.Errorf("unable to reset unified storage %w", err)
 	}
 
 	// Reset the results after the export as pull will operate on the same resources
@@ -202,7 +197,8 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 			},
 		},
 	}, progress)
-	if err != nil && isFromLegacy { // this will have an error when too many errors exist
+
+	if err != nil { // this will have an error when too many errors exist
 		progress.SetMessage(ctx, "error importing resources, reverting")
 		if e2 := stopReadingUnifiedStorage(ctx, w.storageStatus); e2 != nil {
 			logger := logging.FromContext(ctx)
@@ -211,6 +207,58 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	}
 
 	return err
+}
+
+// migrateFromUnifiedStorage will export the resources from unified storage and import them into the target repository
+func (w *MigrationWorker) migrateFromUnifiedStorage(ctx context.Context, repo repository.ReaderWriter, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
+	progress.SetMessage(ctx, "exporting unified storage resources")
+	if err := w.exportWorker.Process(ctx, repo, provisioning.Job{
+		Spec: provisioning.JobSpec{
+			Push: &provisioning.ExportJobOptions{
+				Identifier: options.Identifier,
+			},
+		},
+	}, progress); err != nil {
+		return err
+	}
+
+	progress.SetMessage(ctx, "pulling resources")
+	err := w.syncWorker.Process(ctx, repo, provisioning.Job{
+		Spec: provisioning.JobSpec{
+			Pull: &provisioning.SyncJobOptions{
+				Incremental: false,
+			},
+		},
+	}, progress)
+	if err != nil {
+		return err
+	}
+	dynamicClient, _, err := w.clients.New(repo.Config().Namespace)
+	if err != nil {
+		return fmt.Errorf("error getting client: %w", err)
+	}
+
+	progress.SetMessage(ctx, "removing unprovisioned folders")
+	err = removeUnprovisioned(ctx, dynamicClient.Resource(schema.GroupVersionResource{
+		Group:    folders.GROUP,
+		Version:  folders.VERSION,
+		Resource: folders.RESOURCE,
+	}), progress)
+	if err != nil {
+		return fmt.Errorf("remove unprovisioned folders: %w", err)
+	}
+
+	progress.SetMessage(ctx, "removing unprovisioned dashboards")
+	err = removeUnprovisioned(ctx, dynamicClient.Resource(schema.GroupVersionResource{
+		Group:    dashboard.GROUP,
+		Resource: dashboard.DASHBOARD_RESOURCE,
+		Version:  "v1alpha1",
+	}), progress)
+	if err != nil {
+		return fmt.Errorf("remove unprovisioned dashboards: %w", err)
+	}
+
+	return nil
 }
 
 // MigrationJob holds all context for a running job

@@ -58,13 +58,13 @@ func (c *renderConnector) Connect(
 			responder.Error(apierrors.NewBadRequest("invalid request path"))
 			return
 		}
-		filePath := strings.TrimPrefix(r.URL.Path[idx+len(prefix):], "/")
-		if len(filePath) == 0 {
+		blobID := strings.TrimPrefix(r.URL.Path[idx+len(prefix):], "/")
+		if len(blobID) == 0 {
 			responder.Error(apierrors.NewNotFound(provisioning.RepositoryResourceInfo.GroupResource(), "render"))
 			return
 		}
-		if validBlobID(filePath) {
-			responder.Error(apierrors.NewBadRequest("invalid file path"))
+		if !validBlobID(blobID) {
+			responder.Error(apierrors.NewBadRequest(fmt.Sprintf("invalid blob id: %s", blobID)))
 			return
 		}
 
@@ -76,7 +76,7 @@ func (c *renderConnector) Connect(
 				Name:      name,
 			},
 			MustProxyBytes: true,
-			Uid:            filePath,
+			Uid:            blobID,
 		})
 		if err != nil {
 			responder.Error(err)
