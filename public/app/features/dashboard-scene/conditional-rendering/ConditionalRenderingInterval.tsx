@@ -2,6 +2,7 @@ import { ReactNode, useState } from 'react';
 
 import { rangeUtil } from '@grafana/data';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
+import { ConditionalRenderingTimeIntervalKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { Field, Input, Stack } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
@@ -53,6 +54,15 @@ export class ConditionalRenderingInterval extends ConditionalRenderingBase<Condi
 
   public onDelete() {
     handleDeleteNonGroupCondition(this);
+  }
+
+  public serialize(): ConditionalRenderingTimeIntervalKind {
+    return {
+      kind: 'ConditionalRenderingTimeInterval',
+      spec: {
+        value: this.state.value,
+      },
+    };
   }
 }
 

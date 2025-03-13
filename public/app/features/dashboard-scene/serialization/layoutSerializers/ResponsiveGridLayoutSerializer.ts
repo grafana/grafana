@@ -7,7 +7,7 @@ import { DashboardLayoutManager, LayoutManagerSerializer } from '../../scene/typ
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getGridItemKeyForPanelId } from '../../utils/utils';
 
-import { buildLibraryPanel, buildVizPanel } from './utils';
+import { buildLibraryPanel, buildVizPanel, getConditionalRendering } from './utils';
 
 export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
   serialize(layoutManager: ResponsiveGridLayoutManager): DashboardV2Spec['layout'] {
@@ -34,6 +34,12 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
               },
             },
           };
+
+          const conditionalRenderingRootGroup = child.state.conditionalRendering?.serialize();
+          // Only serialize the conditional rendering if it has items
+          if (conditionalRenderingRootGroup?.spec.items.length) {
+            layoutItem.spec.conditionalRendering = conditionalRenderingRootGroup;
+          }
 
           if (child.state.variableName) {
             layoutItem.spec.repeat = {
@@ -62,6 +68,7 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
         key: getGridItemKeyForPanelId(panel.spec.id),
         body: panel.kind === 'LibraryPanel' ? buildLibraryPanel(panel) : buildVizPanel(panel),
         variableName: item.spec.repeat?.value,
+        conditionalRendering: getConditionalRendering(item),
       });
     });
 

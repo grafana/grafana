@@ -1,4 +1,5 @@
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { ConditionalRenderingGroupKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
 import { ConditionalRenderingGroup } from './ConditionalRenderingGroup';
 
@@ -35,6 +36,10 @@ export class ConditionalRendering extends SceneObjectBase<ConditionalRenderingSt
 
   public static createEmpty(): ConditionalRendering {
     return new ConditionalRendering({ rootGroup: ConditionalRenderingGroup.createEmpty() });
+  }
+
+  public serialize(): ConditionalRenderingGroupKind {
+    return this.state.rootGroup.serialize();
   }
 }
 
